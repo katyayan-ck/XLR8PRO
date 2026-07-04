@@ -48,6 +48,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use App\Models\CRM\QuoteAction;
 
 
 class BookingCrudController extends CrudController
@@ -1454,6 +1455,7 @@ class BookingCrudController extends CrudController
 
     protected function setupCreateOperation()
     {
+
         $quotation = null;
 
         if ($quotationId = request('quotation_id')) {
@@ -1699,6 +1701,15 @@ class BookingCrudController extends CrudController
         ]);
 
         $booking = new Booking();
+        $quotation = null;
+
+        if ($request->filled('quotation_no')) {
+
+            $quotation = Quotation::where(
+                'quotation_no',
+                $request->quotation_no
+            )->first();
+        }
         $booking->b_type           = $customerType;
         $booking->b_cat            = $request->input('customercat');
         $booking->b_mode           = $request->input('bookingmode');
@@ -1807,6 +1818,85 @@ class BookingCrudController extends CrudController
             Log::info('✅ [BOOKING] Booking saved successfully', [
                 'booking_id' => $booking->id
             ]);
+            /*
+            |--------------------------------------------------------------------------
+            | Quotation -> Booking Conversion
+            |--------------------------------------------------------------------------
+            */
+
+            if ($quotation) {
+
+                /*
+            |-------------------------------------------------------
+            | Update quotation status
+            |-------------------------------------------------------
+            */
+
+                $quotation->status = 'booked';
+                $quotation->save();
+
+                /*
+            |-------------------------------------------------------
+            | Create Quote History
+            |-------------------------------------------------------
+            */
+
+                QuoteAction::create([
+
+                    'quotation_no' => $quotation->quotation_no,
+
+                    'action_by' => backpack_user()->id,
+
+                    'action' => 'BOOKED',
+
+                    'revision' => $quotation->revision,
+
+                    'requested' => $quotation->proposed_data,
+
+                    'onroad' => $quotation->onroad_price,
+
+                    'status' => 'booked',
+
+                    'remarks' => 'Converted into Booking #' . $booking->id,
+
+                ]);
+
+                /*
+            |-------------------------------------------------------
+            | Insurance
+            |-------------------------------------------------------
+            */
+
+                XlInsurance::updateOrCreate(
+
+                    ['bid' => $booking->id],
+
+                    [
+
+                        'pol_type' => $quotation->proposed_data['policy_type'] ?? null,
+
+                    ]
+
+                );
+
+                /*
+            |-------------------------------------------------------
+            | RTO
+            |-------------------------------------------------------
+            */
+
+                XlRto::updateOrCreate(
+
+                    ['bid' => $booking->id],
+
+                    [
+
+                        'rgn_type' => $quotation->proposed_data['registration_type'] ?? null,
+
+                    ]
+
+                );
+            }
 
             try {
 
@@ -1847,13 +1937,11 @@ class BookingCrudController extends CrudController
             }
         } catch (\Exception $e) {
 
-            Log::error('💥 [BOOKING] save failed', [
-                'message' => $e->getMessage(),
-            ]);
-
-            return redirect()->back()
-                ->withInput()
-                ->with('error', 'Booking save failed');
+            dd(
+                $e->getMessage(),
+                $e->getFile(),
+                $e->getLine()
+            );
         }
 
         Log::info('📁 [FILE] Checking amountproof upload...', [
@@ -2260,6 +2348,7 @@ class BookingCrudController extends CrudController
 
     protected function setupUpdateOperation()
     {
+
         CRUD::setValidation(BookingRequest::class);
         $this->crud->setEditView('admin.booking.edit');
 

@@ -1,10 +1,14 @@
+@php
+
+$q = $data['quotation']?->proposed_data ?? [];
+
+$quotation = $data['quotation'] ?? null;
+
+$enquiry = $quotation?->enquiry;
+
+@endphp
 @extends(backpack_view('blank'))
 
-@php
-$quotation = $data['quotation'] ?? null;
-$q = $quotation?->proposed_data ?? [];
-$enquiry = $quotation?->enquiry;
-@endphp
 
 @section('header')
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
@@ -49,7 +53,12 @@ $enquiry = $quotation?->enquiry;
             <form id="bookingForm" class="forms-sample" method="POST" action="{{ backpack_url('booking') }}"
                 enctype="multipart/form-data">
                 @csrf
-                <input type="hidden" name="quotation_id" value="{{ $data['quotation']->id ?? '' }}">
+                @if($quotation)
+
+                <input type="hidden" name="quotation_no" value="{{ $quotation->quotation_no }}">
+
+                @endif
+
                 <div class="card p-3">
                     <div class="card-body">
                         <h2 class="mb-3">Payment Details</h2>
@@ -72,8 +81,8 @@ $enquiry = $quotation?->enquiry;
                                     <select name="customercat" id="customercat" class="form-control form-select"
                                         required>
                                         <option value="Individual" selected>Individual</option>
-                                        <option value="CSD-CPC">CSD-CPC</option>
-                                        <option value="Corporate">Corporate</option>
+                                        <option value="CSD">CSD</option>
+                                        <option value="Firm">Firm</option>
                                     </select>
                                 </div>
                             </div>
@@ -165,8 +174,8 @@ $enquiry = $quotation?->enquiry;
                                 <div class="form-group">
                                     <label id="customernamelabel" for="name">Customer Name <span
                                             class="required-mark">*</span></label>
-                                    <input name="name" id="name" class="form-control" required
-                                        value="{{ old('name', $enquiry->full_name ?? '') }}">
+                                    <input type="text" name="name" id="name" class="form-control" required value="{{ old('name', optional($enquiry)->display_name
+    ?? trim(optional($enquiry)->first_name.' '.optional($enquiry)->last_name)) }}" @if($quotation) readonly @endif>
                                 </div>
                             </div>
 
@@ -197,11 +206,13 @@ $enquiry = $quotation?->enquiry;
                             <div class="col-sm-3">
                                 <div class="form-group">
                                     <label for="mobile">
-                                        Contact No. <span class="required-mark">*</span>
+                                        Contact No.
+                                        <span class="required-mark">*</span>
                                     </label>
 
                                     <input type="text" name="mobile" id="mobile" class="form-control" required
-                                        value="{{ old('mobile', $enquiry->mobile ?? '') }}">
+                                        maxlength="10" value="{{ old('mobile', $enquiry->mobile ?? '') }}"
+                                        @if($quotation) readonly @endif>
                                 </div>
                             </div>
 
@@ -516,93 +527,86 @@ $enquiry = $quotation?->enquiry;
                         <div class="row">
                             <div class="col-sm-3">
                                 <div class="form-group">
-                                    <label for="segment">Segment <span class="required-mark">*</span></label>
+                                    <label for="segment">
+                                        Segment <span class="required-mark">*</span>
+                                    </label>
 
-                                    <select name="segment" id="segment" class="form-control form-select" required {{
-                                        isset($quotation) ? 'disabled' : '' }}>
+                                    <select name="segment" id="segment" class="form-control form-select" required
+                                        @if($quotation) disabled @endif>
 
                                         <option value="">Please Select Segment...</option>
 
                                         @foreach($data['segments'] ?? [] as $segment)
-                                        <option value="{{ $segment->code }}" @selected(old('segment', $q['segment_code']
-                                            ?? '' )==$segment->code)>
+                                        <option value="{{ $segment->code }}" {{ old('segment', $q['segment_code'] ?? ''
+                                            )==$segment->code ? 'selected' : '' }}>
                                             {{ $segment->name }}
                                         </option>
                                         @endforeach
 
                                     </select>
 
-                                    @if(isset($quotation))
-                                    <input type="hidden" name="segment" value="{{ $q['segment_code'] ?? '' }}">
+                                    @if($quotation)
+                                    <input type="hidden" name="segment" value="{{ $q['segment_code'] }}">
                                     @endif
                                 </div>
                             </div>
 
                             <div class="col-sm-3">
                                 <div class="form-group">
-                                    <label for="model">Model <span class="required-mark">*</span></label>
+                                    <label for="model">
+                                        Model <span class="required-mark">*</span>
+                                    </label>
 
-                                    <select name="model" id="model" class="form-control form-select" required {{
-                                        isset($quotation) ? 'disabled' : '' }}>
+                                    <input type="text" class="form-control"
+                                        value="{{ $quotation?->vehicleModel?->name }}" @if(!$quotation) hidden @endif
+                                        readonly>
 
-                                        @if(isset($quotation))
-                                        <option value="{{ $q['model_code'] }}">
-                                            {{ $quotation->vehicleModel?->name }}
-                                        </option>
-                                        @else
-                                        <option value="">Please Select...</option>
-                                        @endif
-
-                                    </select>
-
-                                    @if(isset($quotation))
+                                    @if($quotation)
                                     <input type="hidden" name="model" value="{{ $q['model_code'] }}">
+                                    @else
+                                    <select name="model" id="model" class="form-control form-select" required disabled>
+                                        <option value="">Please Select...</option>
+                                    </select>
                                     @endif
                                 </div>
                             </div>
 
                             <div class="col-sm-3">
                                 <div class="form-group">
-                                    <label for="variant">Variant <span class="required-mark">*</span></label>
+                                    <label for="variant">
+                                        Variant <span class="required-mark">*</span>
+                                    </label>
 
-                                    <select name="variant" id="variant" class="form-control form-select" required {{
-                                        isset($quotation) ? 'disabled' : '' }}>
+                                    <input type="text" class="form-control"
+                                        value="{{ $quotation?->variant?->display_name }}" @if(!$quotation) hidden @endif
+                                        readonly>
 
-                                        @if(isset($quotation))
-                                        <option value="{{ $q['variant_code'] }}">
-                                            {{ $quotation->variant?->name }}
-                                        </option>
-                                        @else
-                                        <option value="">Please Select...</option>
-                                        @endif
-
-                                    </select>
-
-                                    @if(isset($quotation))
+                                    @if($quotation)
                                     <input type="hidden" name="variant" value="{{ $q['variant_code'] }}">
+                                    @else
+                                    <select name="variant" id="variant" class="form-control form-select" required
+                                        disabled>
+                                        <option value="">Please Select...</option>
+                                    </select>
                                     @endif
                                 </div>
                             </div>
 
                             <div class="col-sm-3">
                                 <div class="form-group">
-                                    <label for="color">Color <span class="required-mark">*</span></label>
+                                    <label for="color">
+                                        Color <span class="required-mark">*</span>
+                                    </label>
 
-                                    <select name="color" id="color" class="form-control form-select" required {{
-                                        isset($quotation) ? 'disabled' : '' }}>
+                                    <input type="text" class="form-control" value="{{ $quotation?->color?->name }}"
+                                        @if(!$quotation) hidden @endif readonly>
 
-                                        @if(isset($quotation))
-                                        <option value="{{ $q['color_code'] }}">
-                                            {{ $quotation->color?->name }}
-                                        </option>
-                                        @else
-                                        <option value="">Please Select...</option>
-                                        @endif
-
-                                    </select>
-
-                                    @if(isset($quotation))
+                                    @if($quotation)
                                     <input type="hidden" name="color" value="{{ $q['color_code'] }}">
+                                    @else
+                                    <select name="color" id="color" class="form-control form-select" required disabled>
+                                        <option value="">Please Select...</option>
+                                    </select>
                                     @endif
 
                                     <input type="hidden" id="vhid" name="vhid">
@@ -611,8 +615,12 @@ $enquiry = $quotation?->enquiry;
 
                             <div class="col-sm-2">
                                 <div class="form-group">
-                                    <label for="seating">Seating<span class="required-mark">*</span></label>
-                                    <input type="text" name="seating" id="seating" class="form-control" value="0"
+                                    <label for="seating">
+                                        Seating
+                                    </label>
+
+                                    <input type="text" name="seating" id="seating" class="form-control"
+                                        value="{{ old('seating', $quotation?->variant?->seating_capacity ?? 0) }}"
                                         readonly>
                                 </div>
                             </div>
@@ -621,26 +629,23 @@ $enquiry = $quotation?->enquiry;
 
                             <div class="col-sm-6">
                                 <div class="form-group">
-                                    <label for="accessories">Select Accessories</label>
 
-                                    <select name="accessories[]" id="accessories" class="form-select" multiple {{
-                                        isset($quotation) ? 'disabled' : '' }}>
+                                    <label>Select Accessories</label>
 
-                                        @if(isset($quotation))
-                                        @foreach($data['accessories_dropdown'] as $item)
-                                        <option value="{{ $item->part_no }}" @selected(in_array($item->part_no,
-                                            $q['accessories'] ?? []))>
-                                            {{ $item->item }}
-                                        </option>
-                                        @endforeach
-                                        @endif
+                                    @if($quotation)
 
-                                    </select>
+                                    <textarea class="form-control" rows="3"
+                                        readonly>{{ collect($q['accessories'] ?? [])->implode(', ') }}</textarea>
 
-                                    @if(isset($quotation))
                                     @foreach($q['accessories'] ?? [] as $acc)
                                     <input type="hidden" name="accessories[]" value="{{ $acc }}">
                                     @endforeach
+
+                                    @else
+
+                                    <select name="accessories[]" id="accessories" class="form-select" multiple disabled>
+                                    </select>
+
                                     @endif
 
                                 </div>
@@ -648,10 +653,12 @@ $enquiry = $quotation?->enquiry;
 
                             <div class="col-sm-2">
                                 <div class="form-group">
-                                    <label for="apackamount">Accessories Amount</label>
+
+                                    <label>Accessories Amount</label>
 
                                     <input type="text" name="apackamount" id="apackamount" class="form-control"
                                         value="{{ old('apackamount', $q['accessories_amount'] ?? 0) }}" readonly>
+
                                 </div>
                             </div>
 
@@ -1032,15 +1039,6 @@ $enquiry = $quotation?->enquiry;
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    $quotation = null;
-
-    if (request()->filled('quotation_id')) {
-
-        $quotation = \App\Models\Module\CRM\Quotation::with([
-            'enquiry',
-            'accessories'
-        ])->findOrFail(request('quotation_id'));
-    }
     let uploadedFile = null;
     let salesUsers = @json($data['allusers'] ?? []);
     console.log('✅ SLS Users Loaded:', salesUsers.length);
@@ -1080,7 +1078,6 @@ $enquiry = $quotation?->enquiry;
         `;
     }
 }
-    
     function openProofModal(url, name) {
 
     document.getElementById('proofModalFileName').innerText = name;
@@ -1114,7 +1111,7 @@ $('#proofModal').on('show.bs.modal', function () {
         const accessories = $('#accessories');
 
         $('#customercat').on('change', function() {
-            const isFirm = this.value === 'Corporate';
+            const isFirm = this.value === 'Firm';
             $('#ownedByOption').toggle(isFirm);
 
             if (!isFirm && $('#careof').val() === '5') {
@@ -1562,27 +1559,18 @@ $('#financier').on('change', function() {
         });
         
 
-        $('#customercat').on('change', function () {
+        $('#customercat').on('change', function() {
+    const isFirm = this.value === 'Firm';
 
-    const isCorporate = this.value === 'Corporate';
-
-    if (isCorporate) {
-
+    if (isFirm) {
         $('#careof').html(`
             <option value="">Please Select...</option>
             <option value="5" selected>Owned By</option>
         `);
-
-        $('#customernamelabel').html(
-            'Corporate Name <span class="required-mark">*</span>'
-        );
-
-        $('#careofnamelabel').html(
-            'Owner Name <span class="required-mark">*</span>'
-        );
-
+        // Care Of Name enabled aur required rakho
+        $('#careofname').prop('disabled', false).prop('required', true);
+        toggleRequiredMark($('#careofname'), true);
     } else {
-
         $('#careof').html(`
             <option value="">Please Select...</option>
             <option value="1">Son of</option>
@@ -1590,25 +1578,12 @@ $('#financier').on('change', function() {
             <option value="3">Married to</option>
             <option value="4">Guardian Name</option>
         `);
-
-        $('#customernamelabel').html(
-            'Customer Name <span class="required-mark">*</span>'
-        );
-
-        $('#careofnamelabel').html(
-            'Care Of Name <span class="required-mark">*</span>'
-        );
+        $('#careofname').prop('disabled', false).prop('required', true);
+        toggleRequiredMark($('#careofname'), true);
     }
 
-    $('#careof')
-        .prop('disabled', false)
-        .prop('required', true);
-
-    $('#careofname')
-        .prop('disabled', false)
-        .prop('required', true);
-
-}).trigger('change');
+    $('#customernamelabel').text(isFirm ? 'Firm Name' : 'Customer Name');
+});
 
         $('#coltype').on('change', function() {
             toggleCollectionFields(this.value);
@@ -1697,13 +1672,7 @@ $('#financier').on('change', function() {
         url: '../get-models/' + segment,
         method: 'GET',
         success: function(data) {
-            populateSelect(
-                $('#model'),
-                data,
-                'name',
-                'code',
-                "{{ $q['model_code'] ?? '' }}"
-            );
+            populateSelect($('#model'), data, 'name', 'code');
             $('#model').prop('disabled', false);
             resetFields($('#variant'), $('#color'), $('#chassis'));
         },
@@ -1717,16 +1686,9 @@ $('#model').on('change', function() {
         url: '../get-variants/' + encodeURIComponent(modelId),  // ← this
         method: 'GET',
         success: function(data) {
-            populateSelect(
-                $('#variant'),
-                data,
-                'name',
-                'code',
-                "{{ $q['variant_code'] ?? '' }}",
-                function(option,item){
-                    option.dataset.seating = item.seating_capacity || 0;
-                }
-            );
+            populateSelect($('#variant'), data, 'name', 'code', null, function(option, item) {
+                option.dataset.seating = item.seating_capacity || '0';
+            });
             $('#variant').prop('disabled', false);
             resetFields($('#color'), $('#chassis'));
             resetAccessories();
@@ -1762,16 +1724,9 @@ $('#variant').on('change', function() {
             }
 
             if (colorsArray.length > 0) {
-                populateSelect(
-                    $('#color'),
-                    colorsArray,
-                    'name',
-                    'code',
-                    "{{ $q['color_code'] ?? '' }}",
-                    function(option,item){
-                        option.dataset.variantCode = item.variant_code || '';
-                    }
-                );
+                populateSelect($('#color'), colorsArray, 'name', 'code', null, function(option, item) {
+                    option.dataset.variantCode = item.variant_code || '';
+                });
                 $('#color').prop('disabled', false);
                 resetFields($('#chassis'));
             } else {
@@ -2225,39 +2180,20 @@ function toggleFinanceFields(mode) {
         $('#difference').val(Math.round(expected - offered - bonus));
     }
 
-    function populateSelect(
-    selector,
-    data,
-    textKey,
-    valueKey,
-    selectedValue = null,
-    callback = null
-) {
-    const select = selector;
+    function populateSelect(selector, data, textKey, valueKey, extra = null, callback = null) {
+        const select = selector;
+        select.html('<option value="0" selected disabled>Please Select...</option>');
 
-    select.empty();
-    select.append('<option value="">Please Select...</option>');
+        $.each(data, function(_, item) {
+            const option = new Option(item[textKey], item[valueKey]);
+            if (callback) callback(option, item);
+            select.append(option);
+        });
 
-    $.each(data, function (_, item) {
-
-        const option = new Option(
-            item[textKey],
-            item[valueKey],
-            false,
-            item[valueKey] == selectedValue
-        );
-
-        if (callback) {
-            callback(option, item);
+        if (extra) {
+            select.append(extra);
         }
-
-        select.append(option);
-    });
-
-    if (selectedValue) {
-        select.val(selectedValue).trigger('change.select2');
     }
-}
 
     function resetFields(...fields) {
         fields.forEach(field => {
@@ -2398,7 +2334,6 @@ const initialBookingSource = $('#bookingsource').val();
             });
         });
 </script>
-
 
 @endsection
 @endpush

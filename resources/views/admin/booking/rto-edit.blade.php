@@ -263,16 +263,26 @@
 
                 <div class="col-md-3">
                     <label class="form-label">Registration Type</label>
-                    <select name="registration_type" id="registration_type" class="form-control form-select">
+                    <select name="registration_type" class="form-control form-select">
+
                         <option value="">Select Registration Type</option>
-                        <option value="0" {{ old('registration_type', $rto->rgn_type ?? '') == '0' ? 'selected' : ''
-                            }}>Exempted (Reg & Hypo Fee Only)</option>
-                        <option value="1" {{ old('registration_type', $rto->rgn_type ?? '') == '1' ? 'selected' : ''
-                            }}>TRC Only</option>
-                        <option value="2" {{ old('registration_type', $rto->rgn_type ?? '') == '2' ? 'selected' : ''
-                            }}>Tax Only</option>
-                        <option value="3" {{ old('registration_type', $rto->rgn_type ?? '') == '3' ? 'selected' : ''
-                            }}>TRC + Tax</option>
+
+                        <option value="0" {{ old('registration_type', $rto->rgn_type ?? '') == '0' ? 'selected' : '' }}>
+                            Exempted (Reg & Hypo Fee Only)
+                        </option>
+
+                        <option value="1" {{ old('registration_type', $rto->rgn_type ?? '') == '1' ? 'selected' : '' }}>
+                            TRC Only
+                        </option>
+
+                        <option value="2" {{ old('registration_type', $rto->rgn_type ?? '') == '2' ? 'selected' : '' }}>
+                            Tax Only
+                        </option>
+
+                        <option value="3" {{ old('registration_type', $rto->rgn_type ?? '') == '3' ? 'selected' : '' }}>
+                            TRC + Tax
+                        </option>
+
                     </select>
                     @error('registration_type') <span class="text-danger small">{{ $message }}</span> @enderror
                 </div>

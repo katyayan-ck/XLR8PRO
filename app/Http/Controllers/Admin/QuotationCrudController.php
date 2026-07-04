@@ -55,6 +55,7 @@ class QuotationCrudController extends CrudController
         $this->crud->setListView('admin.quotation.list');
 
         $quotations = Quotation::with('enquiry')
+            ->whereNotIn('status', ['booked'])
             ->latest('id')
             ->get();
 
