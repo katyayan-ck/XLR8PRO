@@ -5,13 +5,13 @@ namespace App\Http\Controllers\Admin;
 use App\Models\CRM\Lead;
 use App\Models\CRM\LeadSource;
 use App\Services\OrgService;
-use Carbon\Carbon;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class LeadCrudController extends CrudController
@@ -258,7 +258,7 @@ class LeadCrudController extends CrudController
             'occupation' => 'nullable|string|max:150',
 
         ]);
-        if (!empty($validated['expected_delivery_date'])) {
+        if (! empty($validated['expected_delivery_date'])) {
 
             $validated['expected_delivery_date'] =
                 Carbon::createFromFormat(
@@ -386,7 +386,7 @@ class LeadCrudController extends CrudController
 
         ]);
 
-        if (!empty($validated['expected_delivery_date'])) {
+        if (! empty($validated['expected_delivery_date'])) {
 
             $validated['expected_delivery_date'] = Carbon::createFromFormat(
                 'd-m-Y',

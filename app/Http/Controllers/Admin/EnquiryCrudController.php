@@ -422,6 +422,8 @@ class EnquiryCrudController extends CrudController
 
             'occupation' => $lead->occupation,
 
+            'segment_code' => $lead->segment_code,
+
             'model_code' => $lead->model_code,
 
             'variant_code' => $lead->variant_code,
