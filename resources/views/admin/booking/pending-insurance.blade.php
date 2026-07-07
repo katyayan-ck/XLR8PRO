@@ -16,7 +16,12 @@
                 <h2 class="card-title mb-0 fw-bold text-black">
                     {{ request('insurance_type', 'pending') === 'closed' ? 'Closed' : 'Pending' }} Insurance Dashboard
                 </h2>
-
+                <a href="{{ backpack_url('insurance/import') }}"
+                    class="btn btn-success btn-sm d-flex align-items-center gap-2"
+                    onclick="return confirm('Are you sure you want to import latest data from Google Sheet?')">
+                    <i class="la la-cloud-download"></i>
+                    <span>Import Now</span>
+                </a>
 
             </div>
 

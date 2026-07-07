@@ -133,4 +133,14 @@ class CommonHelper
             ->orderBy('name')
             ->get();
     }
+
+
+    // public static function getVehicleColors($variantCode)
+    // {
+    //     return Variant::select('color_code as code', 'color as name', 'color_code')
+    //         ->where('is_active', 1)
+    //         ->where('code', strtoupper(trim($variantCode)))  // code = variantCode (fullModelCode minus last 2)
+    //         ->orderBy('color')
+    //         ->get();
+    // }
 }
