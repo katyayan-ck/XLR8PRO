@@ -38,16 +38,16 @@
 
                                 <!-- Basic Info -->
                                 <div class="col-md-3 mb-3">
-                                    <label>Enquiry No <span class="required-mark">*</span></label>
+                                    <label>Enquiry No <span class="required-mark"> </span></label>
                                     <input type="text" name="enquiry_no" class="form-control" required>
                                 </div>
 
                                 <div class="col-md-3 mb-3">
-                                    <label>Enquiry Date <span class="required-mark">*</span></label>
+                                    <label>Enquiry Date <span class="required-mark"> </span></label>
                                     <input type="date" name="enquiry_date" class="form-control" required>
                                 </div>
 
-                                <div class="col-md-3 mb-3">
+                                {{-- <div class="col-md-3 mb-3">
 
                                     <label>
 
@@ -71,18 +71,28 @@
 
                                     </select>
 
+                                </div> --}}
+
+                                <div class="col-md-3 mb-3">
+
+                                    <label>Lead No</label>
+
+                                    <input type="text" class="form-control" value="{{ request('lead_no') }}" readonly>
+
+                                    <input type="hidden" id="lead_no" name="lead_no" value="{{ request('lead_no') }}">
+
                                 </div>
 
 
                                 <!-- Person -->
                                 <div class="col-md-4 mb-3">
-                                    <label>Customer (Person) <span class="required-mark">*</span></label>
+                                    <label>Customer (Person) <span class="required-mark"> </span></label>
                                     <input name="person_code" id="person_code" class="form-control" required>
                                 </div>
 
                                 <!-- Source -->
                                 <div class="col-md-3 mb-3">
-                                    <label>Source <span class="required-mark">*</span></label>
+                                    <label>Source <span class="required-mark"> </span></label>
 
                                     <select name="source_code" id="source_code" class="form-control form-select" required>
 
@@ -109,7 +119,7 @@
 
                                 <!-- Customer Info -->
                                 <div class="col-md-3 mb-3">
-                                    <label>First Name <span class="required-mark">*</span></label>
+                                    <label>First Name <span class="required-mark"> </span></label>
                                     <input type="text" name="first_name" class="form-control" required>
                                 </div>
                                 <div class="col-md-3 mb-3">
@@ -118,7 +128,7 @@
                                 </div>
 
                                 <div class="col-md-3 mb-3">
-                                    <label>Mobile <span class="required-mark">*</span></label>
+                                    <label>Mobile <span class="required-mark"> </span></label>
                                     <input type="text" name="mobile" class="form-control" required>
                                 </div>
 
@@ -138,7 +148,7 @@
                                 <div class="col-md-4 mb-3">
 
                                     <label class="form-label">
-                                        Segment *
+                                        Segment  
                                     </label>
 
                                     <select name="segment_code" id="segment_code" class="form-control form-select" required>
@@ -161,7 +171,7 @@
                                 </div>
 
                                 <div class="col-md-3 mb-3">
-                                    <label>Model <span class="required-mark">*</span></label>
+                                    <label>Model <span class="required-mark"> </span></label>
                                     <select name="model_code" id="model_code" class="form-control form-select" required>
 
                                         <option value="">
@@ -172,14 +182,14 @@
                                 </div>
 
                                 <div class="col-md-3 mb-3">
-                                    <label>Variant <span class="required-mark">*</span></label>
+                                    <label>Variant <span class="required-mark"> </span></label>
                                     <select name="variant_code" id="variant_code" class="form-control form-select" required>
                                         <option value="">Select Variant...</option>
                                     </select>
                                 </div>
 
                                 <div class="col-md-3 mb-3">
-                                    <label>Color <span class="required-mark">*</span></label>
+                                    <label>Color <span class="required-mark"> </span></label>
                                     <select name="color_code" id="color_code" class="form-control form-select" required>
                                         <option value="">Select Color...</option>
                                     </select>
@@ -219,7 +229,7 @@
                                 <div class="col-md-4 mb-3">
                                     <div class="form-group">
                                         <label for="saleconsultant">
-                                            Sales Consultant <span class="required-mark">*</span>
+                                            Sales Consultant <span class="required-mark"> </span>
                                         </label>
 
                                         <select name="sales_consultant_id" id="sales_consultant_id"
@@ -236,7 +246,7 @@
                                 </div>
 
                                 <div class="col-md-3 mb-3">
-                                    <label>Status <span class="required-mark">*</span></label>
+                                    <label>Status <span class="required-mark"> </span></label>
                                     <select name="status" class="form-control form-select" required>
                                         <option value="new" {{ old('status', 'new') == 'new' ? 'selected' : '' }}>New
                                         </option>
@@ -265,7 +275,7 @@
                                 </div>
 
                                 <div class="col-md-3 mb-3">
-                                    <label>Priority <span class="required-mark">*</span></label>
+                                    <label>Priority <span class="required-mark"> </span></label>
                                     <select name="priority" class="form-control form-select" required>
                                         <option value="high"
                                             {{ old('priority', 'medium') == 'high' ? 'selected' : '' }}>High
@@ -335,34 +345,32 @@
             $('#variant_code').prop('disabled', true);
             $('#color_code').prop('disabled', true);
 
-            $('#lead_no').on('change', function() {
+            const selectedLead = "{{ request('lead_no') }}";
 
-                let leadNo = $(this).val();
+            if (selectedLead !== '') {
 
-                if (leadNo == '') {
+                $('#lead_no')
+                    .val(selectedLead)
+                    .trigger('change');
 
-                    $('#source_code').val('');
-                    $('#referral_details').val('');
-                    $('#first_name').val('');
-                    $('#last_name').val('');
-                    $('#mobile').val('');
-                    $('#email').val('');
-                    $('#occupation').val('');
-                    $('#model_code').val('');
+            }
 
-                    $('#variant_code')
-                        .html('<option value="">Select Variant</option>');
+            let leadNo = $('#lead_no').val();
 
-                    $('#color_code')
-                        .html('<option value="">Select Color</option>');
+                if (leadNo) {
 
-                    return;
+                    loadLead(leadNo);
 
                 }
 
+            function loadLead(leadNo) {
+
+                if (!leadNo) {
+                    return;
+                }
+
                 $.get(
-                    "{{ backpack_url('enquiry/lead') }}/" +
-                    encodeURIComponent(leadNo),
+                    "{{ backpack_url('enquiry/lead') }}/" + encodeURIComponent(leadNo),
 
                     function(lead) {
 
@@ -380,26 +388,19 @@
 
                         $('input[name="occupation"]').val(lead.occupation);
 
-                        $('#segment_code')
-                            .val(lead.segment_code)
-                            .trigger('change');
+                        $('#segment_code').val(lead.segment_code).trigger('change');
 
                         setTimeout(function() {
 
-                            $('#model_code')
-                                .val(lead.model_code)
-                                .trigger('change');
+                            $('#model_code').val(lead.model_code).trigger('change');
 
                             setTimeout(function() {
 
-                                $('#variant_code')
-                                    .val(lead.variant_code)
-                                    .trigger('change');
+                                $('#variant_code').val(lead.variant_code).trigger('change');
 
                                 setTimeout(function() {
 
-                                    $('#color_code')
-                                        .val(lead.color_code);
+                                    $('#color_code').val(lead.color_code);
 
                                 }, 300);
 
@@ -407,12 +408,11 @@
 
                         }, 300);
 
-
                     }
 
                 );
 
-            });
+            }
 
         });
 
