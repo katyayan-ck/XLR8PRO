@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Models\CRM\Lead;
 use App\Models\CRM\LeadSource;
 use App\Services\OrgService;
+use Carbon\Carbon;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
@@ -257,6 +258,15 @@ class LeadCrudController extends CrudController
             'occupation' => 'nullable|string|max:150',
 
         ]);
+        if (!empty($validated['expected_delivery_date'])) {
+
+            $validated['expected_delivery_date'] =
+                Carbon::createFromFormat(
+                    'd-m-Y',
+                    $validated['expected_delivery_date']
+                )->format('Y-m-d');
+
+        }
 
         /*
         |--------------------------------------------------------------------------
@@ -375,6 +385,15 @@ class LeadCrudController extends CrudController
             'referral_details' => 'nullable|string|max:255',
 
         ]);
+
+        if (!empty($validated['expected_delivery_date'])) {
+
+            $validated['expected_delivery_date'] = Carbon::createFromFormat(
+                'd-m-Y',
+                $validated['expected_delivery_date']
+            )->format('Y-m-d');
+
+        }
 
         $validated['updated_by'] =
             backpack_user()->id;

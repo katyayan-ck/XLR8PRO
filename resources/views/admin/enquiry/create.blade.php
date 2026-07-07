@@ -4,25 +4,44 @@
 
 
 @push('after_styles')
-    <style>
-        .card {
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-        }
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+    .card {
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    }
 
-        .form-control:focus,
-        .form-select:focus {
-            border-color: #80bdff;
-            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25);
-        }
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #80bdff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25);
+    }
 
-        .required-mark {
-            color: red;
-        }
-    </style>
+    .required-mark {
+        color: red;
+    }
+</style>
 @endpush
 
 @section('content')
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header text-black">
+                    <h2 class="mb-0">Add Hot Enquiry</h2>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ backpack_url('enquiry') }}" enctype="multipart/form-data">
+                        @csrf
+
+                        <div class="row">
+
+                            <!-- Basic Info -->
+                            <div class="col-md-3 mb-3">
+                                <label>Enquiry No </label>
+                                <input type="text" name="enquiry_no" class="form-control" required>
+                            </div>
     <div class="container-fluid">
         <div class="row">
             <div class="col-12">
@@ -49,40 +68,38 @@
 
                                 {{-- <div class="col-md-3 mb-3">
 
-                                    <label>
+                            <div class="col-md-3 mb-3">
+                                <label>
+                                    Enquiry Date
+                                    <span class="required-mark">*</span>
+                                </label>
 
-                                        Lead
+                                <input type="text" id="enquiry_date" name="enquiry_date" class="form-control"
+                                    value="{{ old('enquiry_date', now()->format('Y-m-d')) }}" autocomplete="off"
+                                    required>
+                            </div>
 
-                                    </label>
+                            <div class="col-md-3 mb-3">
 
-                                    <select name="lead_no" id="lead_no" class="form-control form-select">
+                                <label>
 
-                                        <option value="">
-                                            Create Without Lead
-                                        </option>
+                                    Lead
 
-                                        @foreach ($leads as $leadNo => $lead)
-                                            <option value="{{ $leadNo }}">
+                                </label>
 
-                                                {{ $lead }}
+                                <select name="lead_no" id="lead_no" class="form-control form-select">
 
-                                            </option>
-                                        @endforeach
+                                    <option value="">
+                                        Create Without Lead
+                                    </option>
 
-                                    </select>
+                                    @foreach ($leads as $leadNo => $lead)
+                                    <option value="{{ $leadNo }}">
 
-                                </div> --}}
+                                        {{ $lead }}
 
-                                <div class="col-md-3 mb-3">
-
-                                    <label>Lead No</label>
-
-                                    <input type="text" class="form-control" value="{{ request('lead_no') }}" readonly>
-
-                                    <input type="hidden" id="lead_no" name="lead_no" value="{{ request('lead_no') }}">
-
-                                </div>
-
+                                    </option>
+                                    @endforeach
 
                                 <!-- Person -->
                                 <div class="col-md-4 mb-3">
@@ -94,28 +111,27 @@
                                 <div class="col-md-3 mb-3">
                                     <label>Source <span class="required-mark"> </span></label>
 
-                                    <select name="source_code" id="source_code" class="form-control form-select" required>
 
-                                        <option value="">
-                                            Select Source
-                                        </option>
+                            <!-- Person -->
+                            <div class="col-md-3 mb-3">
+                                <label>Customer (Person) </label>
+                                <input name="person_code" id="person_code" class="form-control" required>
+                            </div>
 
-                                        @foreach ($sources as $code => $name)
-                                            <option value="{{ $code }}"
-                                                {{ old('source_code') == $code ? 'selected' : '' }}>
+                            <!-- Source -->
+                            <div class="col-md-3 mb-3">
+                                <label>Source </label>
 
-                                                {{ $name }}
+                                <select name="source_code" id="source_code" class="form-control form-select" required>
 
-                                            </option>
-                                        @endforeach
+                                    <option value="">
+                                        Select Source
+                                    </option>
 
-                                    </select>
-                                </div>
+                                    @foreach ($sources as $code => $name)
+                                    <option value="{{ $code }}" {{ old('source_code')==$code ? 'selected' : '' }}>
 
-                                <div class="col-md-5 mb-3">
-                                    <label>Referral Details</label>
-                                    <input type="text" name="referral_details" class="form-control">
-                                </div>
+                                        {{ $name }}
 
                                 <!-- Customer Info -->
                                 <div class="col-md-3 mb-3">
@@ -132,54 +148,61 @@
                                     <input type="text" name="mobile" class="form-control" required>
                                 </div>
 
-                                <div class="col-md-3 mb-3">
-                                    <label>Email</label>
-                                    <input type="email" name="email" class="form-control">
-                                </div>
+                            <div class="col-md-3 mb-3">
+                                <label>Referral Details</label>
+                                <input type="text" name="referral_details" class="form-control">
+                            </div>
 
-                                <div class="col-md-3 mb-3">
-                                    <label>Occupation</label>
-                                    <input type="text" name="occupation" class="form-control"
-                                        value="{{ old('occupation') }}">
-                                </div>
+                            <!-- Customer Info -->
+                            <div class="col-md-3 mb-3">
+                                <label>First Name </label>
+                                <input type="text" name="first_name" class="form-control" required>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label>Last Name</label>
+                                <input type="text" name="last_name" class="form-control">
+                            </div>
 
-                                <!-- Vehicle Details -->
+                            <div class="col-md-3 mb-3">
+                                <label>Mobile </label>
+                                <input type="text" name="mobile" class="form-control" required>
+                            </div>
 
-                                <div class="col-md-4 mb-3">
+                            <div class="col-md-3 mb-3">
+                                <label>Email</label>
+                                <input type="email" name="email" class="form-control">
+                            </div>
 
                                     <label class="form-label">
                                         Segment  
                                     </label>
 
-                                    <select name="segment_code" id="segment_code" class="form-control form-select" required>
+                            <!-- Vehicle Details -->
 
-                                        <option value="">
-                                            Select Segment
-                                        </option>
+                            <div class="col-md-3 mb-3">
 
-                                        @foreach ($segments as $code => $name)
-                                            <option value="{{ $code }}"
-                                                {{ old('segment_code') == $code ? 'selected' : '' }}>
+                                <label class="form-label">
+                                    Segment
+                                </label>
 
-                                                {{ $name }}
+                                <select name="segment_code" id="segment_code" class="form-control form-select" required>
 
-                                            </option>
-                                        @endforeach
+                                    <option value="">
+                                        Select Segment
+                                    </option>
 
-                                    </select>
+                                    @foreach ($segments as $code => $name)
+                                    <option value="{{ $code }}" {{ old('segment_code')==$code ? 'selected' : '' }}>
 
-                                </div>
+                                        {{ $name }}
 
                                 <div class="col-md-3 mb-3">
                                     <label>Model <span class="required-mark"> </span></label>
                                     <select name="model_code" id="model_code" class="form-control form-select" required>
 
-                                        <option value="">
-                                            Select Model
-                                        </option>
+                                </select>
 
-                                    </select>
-                                </div>
+                            </div>
 
                                 <div class="col-md-3 mb-3">
                                     <label>Variant <span class="required-mark"> </span></label>
@@ -195,35 +218,34 @@
                                     </select>
                                 </div>
 
-                                <div class="col-md-4 mb-3">
-                                    <label>Place of Registration</label>
-                                    <input type="text" name="place_of_registration" class="form-control"
-                                        value="{{ old('place_of_registration') }}">
-                                </div>
+                                </select>
+                            </div>
 
-                                <div class="col-md-3 mb-3">
-                                    <label>Registration By</label>
-                                    <input type="text" name="registration_by" class="form-control"
-                                        value="{{ old('registration_by') }}">
-                                </div>
+                            <div class="col-md-3 mb-3">
+                                <label>Variant </label>
+                                <select name="variant_code" id="variant_code" class="form-control form-select" required>
+                                    <option value="">Select Variant...</option>
+                                </select>
+                            </div>
 
-                                <div class="col-md-3 mb-3">
-                                    <label>Insurance By</label>
-                                    <input type="text" name="insurance_by" class="form-control"
-                                        value="{{ old('insurance_by') }}">
-                                </div>
+                            <div class="col-md-3 mb-3">
+                                <label>Color </label>
+                                <select name="color_code" id="color_code" class="form-control form-select" required>
+                                    <option value="">Select Color...</option>
+                                </select>
+                            </div>
 
-                                <div class="col-md-3 mb-3">
-                                    <label>Expected Delivery Date</label>
-                                    <input type="date" name="expected_delivery_date" class="form-control"
-                                        value="{{ old('expected_delivery_date') }}">
-                                </div>
+                            <div class="col-md-3 mb-3">
+                                <label>Place of Registration</label>
+                                <input type="text" name="place_of_registration" class="form-control"
+                                    value="{{ old('place_of_registration') }}">
+                            </div>
 
-                                <div class="col-md-3 mb-3">
-                                    <label>DMS Enquiry No</label>
-                                    <input type="text" name="dms_enquiry_no" class="form-control"
-                                        value="{{ old('dms_enquiry_no') }}">
-                                </div>
+                            <div class="col-md-3 mb-3">
+                                <label>Registration By</label>
+                                <input type="text" name="registration_by" class="form-control"
+                                    value="{{ old('registration_by') }}">
+                            </div>
 
                                 <!-- Sales Consultant -->
                                 <div class="col-md-4 mb-3">
@@ -269,10 +291,9 @@
                                     </select>
                                 </div>
 
-                                <div class="col-12 mb-3">
-                                    <label>Lost Reason</label>
-                                    <textarea name="lost_reason" class="form-control" rows="2">{{ old('lost_reason') }}</textarea>
-                                </div>
+                                <input type="text" id="expected_delivery_date" name="expected_delivery_date"
+                                    class="form-control" value="{{ old('expected_delivery_date') }}" autocomplete="off">
+                            </div>
 
                                 <div class="col-md-3 mb-3">
                                     <label>Priority <span class="required-mark"> </span></label>
@@ -286,60 +307,114 @@
                                         <option value="low" {{ old('priority', 'medium') == 'low' ? 'selected' : '' }}>
                                             Low
                                         </option>
+                                        @endforeach
                                     </select>
                                 </div>
-
-                                <!-- More fields can be added below -->
-
-                                <div class="col-12 mb-3">
-                                    <label>Notes</label>
-                                    <textarea name="notes" class="form-control" rows="3"></textarea>
-                                </div>
-
-                                <div class="col-12 mb-3">
-                                    <label>Conversion Notes</label>
-                                    <textarea name="conversion_notes" class="form-control" rows="3">{{ old('conversion_notes') }}</textarea>
-                                </div>
-
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label">Has RSA?</label>
-                                    <div class="form-check form-switch mt-2">
-                                        <input type="hidden" name="has_rsa" value="0">
-                                        <input type="checkbox" name="has_rsa" value="1" class="form-check-input"
-                                            {{ old('has_rsa', 0) ? 'checked' : '' }}>
-                                    </div>
-                                </div>
-
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label">Has Extended Warranty?</label>
-                                    <div class="form-check form-switch mt-2">
-                                        <input type="hidden" name="has_extended_warranty" value="0">
-                                        <input type="checkbox" name="has_extended_warranty" value="1"
-                                            class="form-check-input"
-                                            {{ old('has_extended_warranty', 0) ? 'checked' : '' }}>
-                                    </div>
-                                </div>
-
                             </div>
 
-                            <div class="mt-4">
-                                <button type="submit" class="btn btn-success btn-lg px-5">
-                                    <i class="la la-save"></i> Create Enquiry
-                                </button>
-                                <a href="{{ backpack_url('hot-enquiry-list') }}"
-                                    class="btn btn-secondary btn-lg">Cancel</a>
+                            <div class="col-md-3 mb-3">
+                                <label>Status </label>
+                                <select name="status" class="form-control form-select" required>
+                                    <option value="new" {{ old('status', 'new' )=='new' ? 'selected' : '' }}>New
+                                    </option>
+                                    <option value="in_followup" {{ old('status')=='in_followup' ? 'selected' : '' }}>In
+                                        Followup</option>
+                                    <option value="quotation_sent" {{ old('status')=='quotation_sent' ? 'selected' : ''
+                                        }}>Quotation Sent</ option>
+                                    <option value="quotation_approved" {{ old('status')=='quotation_approved'
+                                        ? 'selected' : '' }}>Quotation
+                                        Approved</option>
+                                    <option value="booking_done" {{ old('status')=='booking_done' ? 'selected' : '' }}>
+                                        Booking Done</option>
+                                    <option value="lost" {{ old('status')=='lost' ? 'selected' : '' }}>Lost
+                                    </option>
+                                    <option value="cancelled" {{ old('status')=='cancelled' ? 'selected' : '' }}>
+                                        Cancelled</option>
+                                </select>
                             </div>
-                        </form>
-                    </div>
+
+                            <div class="col-6 mb-3">
+                                <label>Lost Reason</label>
+                                <textarea name="lost_reason" class="form-control"
+                                    rows="2">{{ old('lost_reason') }}</textarea>
+                            </div>
+
+                            <div class="col-md-3 mb-3">
+                                <label>Priority </label>
+                                <select name="priority" class="form-control form-select" required>
+                                    <option value="high" {{ old('priority', 'medium' )=='high' ? 'selected' : '' }}>High
+                                    </option>
+                                    <option value="medium" {{ old('priority', 'medium' )=='medium' ? 'selected' : '' }}>
+                                        Medium</option>
+                                    <option value="low" {{ old('priority', 'medium' )=='low' ? 'selected' : '' }}>
+                                        Low
+                                    </option>
+                                </select>
+                            </div>
+
+                            <!-- More fields can be added below -->
+
+                            <div class="col-5 mb-3">
+                                <label>Notes</label>
+                                <textarea name="notes" class="form-control" rows="3"></textarea>
+                            </div>
+
+                            <div class="col-4 mb-3">
+                                <label>Conversion Notes</label>
+                                <textarea name="conversion_notes" class="form-control"
+                                    rows="3">{{ old('conversion_notes') }}</textarea>
+                            </div>
+
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Has RSA?</label>
+                                <div class="form-check form-switch mt-2">
+                                    <input type="hidden" name="has_rsa" value="0">
+                                    <input type="checkbox" name="has_rsa" value="1" class="form-check-input" {{
+                                        old('has_rsa', 0) ? 'checked' : '' }}>
+                                </div>
+                            </div>
+
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Has Extended Warranty?</label>
+                                <div class="form-check form-switch mt-2">
+                                    <input type="hidden" name="has_extended_warranty" value="0">
+                                    <input type="checkbox" name="has_extended_warranty" value="1"
+                                        class="form-check-input" {{ old('has_extended_warranty', 0) ? 'checked' : '' }}>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-success btn-lg px-5">
+                                <i class="la la-save"></i> Create Enquiry
+                            </button>
+                            <a href="{{ backpack_url('hot-enquiry-list') }}" class="btn btn-secondary btn-lg">Cancel</a>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
+</div>
 @endsection
 
 @push('after_scripts')
-    <script>
-        $(document).ready(function() {
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+<script>
+    $(document).ready(function() {
+            flatpickr("#enquiry_date", {
+                dateFormat: "Y-m-d",
+                defaultDate: "today",
+                allowInput: false,
+                maxDate: "today"
+            });
+            flatpickr("#expected_delivery_date", {
+                dateFormat: "Y-m-d",
+                allowInput: false,
+                minDate: "today"
+            });
 
             $('#model_code').prop('disabled', true);
             $('#variant_code').prop('disabled', true);
@@ -582,5 +657,5 @@
             });
 
         });
-    </script>
+</script>
 @endpush

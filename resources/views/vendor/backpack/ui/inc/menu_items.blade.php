@@ -128,8 +128,7 @@
         <x-backpack::menu-dropdown-item title="Lead List" icon="la la-list" :link="backpack_url('lead')" />
 
         <x-backpack::menu-dropdown-item title="Lead Source" icon="la la-tags" :link="backpack_url('lead-source')" />
-        <x-backpack::menu-dropdown-item title="Quotation" icon="la la-file-alt"
-            :link="backpack_url('quotation-form')" />
+
 
 
     </x-backpack::menu-dropdown>
@@ -143,6 +142,8 @@
             :link="backpack_url('enquiries/hot-enquiry-list')" />
         <x-backpack::menu-dropdown-item title="Unassigned Enquiries" icon="la la-user-times"
             :link="backpack_url('enquiries/unassigned-enquiries')" />
+        <x-backpack::menu-dropdown-item title="Quotation" icon="la la-file-alt"
+            :link="backpack_url('quotation-form')" />
     </x-backpack::menu-dropdown>
 
     {{-- Booking --}}

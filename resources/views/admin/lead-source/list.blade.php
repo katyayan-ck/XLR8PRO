@@ -127,17 +127,34 @@
             htmlRenderer: params => params.value || ''
         },
         onGridReady: params => {
-            gridApi = params.api;
+    gridApi = params.api;
 
-            const defaultFields = ['serial_no', 'code', 'name', 'description', 'is_active', 'action']; //sort_order is removed from frontend part
+    const defaultFields = [
+        'serial_no',
+        'code',
+        'name',
+        'description',
+        'is_active',
+        'action'
+    ];
 
-            const allCols = gridApi.getAllGridColumns().map(col => col.getColId());
+    const allCols = gridApi.getAllGridColumns().map(col => col.getColId());
 
-            gridApi.setColumnsVisible(allCols, false);
-            gridApi.setColumnsVisible(defaultFields, true);
+    gridApi.setColumnsVisible(allCols, false);
+    gridApi.setColumnsVisible(defaultFields, true);
 
-            setTimeout(() => gridApi.autoSizeAllColumns(), 300);
-        }
+    // NEWEST ENTRY ON TOP
+    gridApi.applyColumnState({
+        state: [
+            {
+                colId: 'serial_no',
+                sort: 'asc'
+            }
+        ]
+    });
+
+    setTimeout(() => gridApi.autoSizeAllColumns(), 300);
+}
     };
 
     // ==================== Customise Headers Popup (Flat Version) ====================

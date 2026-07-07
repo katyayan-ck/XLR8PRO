@@ -9,7 +9,9 @@ use App\Http\Controllers\Admin\VariantCrudController;
 use App\Http\Controllers\Admin\ColorCrudController;
 use App\Http\Controllers\Admin\PermissionCrudController;
 use App\Http\Controllers\Admin\LeadCrudController;
+use App\Http\Controllers\Admin\LeadSourceCrudController;
 use App\Http\Controllers\Admin\EnquiryCrudController;
+
 
 Route::group([
     'prefix' => config('backpack.base.route_prefix', 'admin'),
@@ -189,12 +191,19 @@ Route::group([
     )->name('lead.destroy');
 
     Route::get(
-    'lead/models/{segmentCode}',
-    [LeadCrudController::class, 'getModels']
+        'lead/models/{segmentCode}',
+        [LeadCrudController::class, 'getModels']
     );
     // =========== LEAD SOURCE ===================
 
-    Route::crud('lead-source', 'LeadSourceCrudController');
+    // AJAX route FIRST
+Route::get(
+    'lead-source/check-code',
+    [LeadSourceCrudController::class, 'checkCode']
+)->name('lead-source.check-code');
+
+// CRUD route AFTER
+Route::crud('lead-source', 'LeadSourceCrudController');
 
     // =========== ENQUIRY ========================
     Route::crud(
@@ -218,9 +227,9 @@ Route::group([
     );
 
     Route::get(
-    'enquiry/models/{segmentCode}',
-    [EnquiryCrudController::class, 'getModels']
-);
+        'enquiry/models/{segmentCode}',
+        [EnquiryCrudController::class, 'getModels']
+    );
 
     Route::get('enquiries/add-hot-enquiry', [App\Http\Controllers\Admin\EnquiryCrudController::class, 'create'])
         ->name('enquiry.create');
@@ -240,8 +249,7 @@ Route::group([
     Route::get('enquiry/variants/{model_code}', [App\Http\Controllers\Admin\EnquiryCrudController::class, 'getVariants']);
     Route::get('enquiry/colors/{variant_code}', [App\Http\Controllers\Admin\EnquiryCrudController::class, 'getColors']);
     Route::get(
-    'enquiry/lead/{leadNo}',
-    [EnquiryCrudController::class, 'getLead']
-);
-
+        'enquiry/lead/{leadNo}',
+        [EnquiryCrudController::class, 'getLead']
+    );
 }); // ← This should be the last line

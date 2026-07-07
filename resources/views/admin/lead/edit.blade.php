@@ -3,6 +3,8 @@
 @section('title', 'Edit Lead')
 
 @push('after_styles')
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
     <style>
         .card {
@@ -67,7 +69,7 @@
 
                                         First Name
 
-                                        <span class="text-danger">*</span>
+                                         
 
                                     </label>
 
@@ -108,7 +110,7 @@
 
                                         Contact No.
 
-                                        <span class="text-danger">*</span>
+                                         
 
                                     </label>
 
@@ -134,7 +136,7 @@
 
                                     <label>
                                         Segment
-                                        <span class="text-danger">*</span>
+                                         
                                     </label>
 
                                     <select name="segment_code" id="segment_code" class="form-control form-select" required>
@@ -161,7 +163,7 @@
 
                                         Model
 
-                                        <span class="text-danger">*</span>
+                                         
 
                                     </label>
 
@@ -189,7 +191,7 @@
 
                                         Variant
 
-                                        <span class="text-danger">*</span>
+                                         
 
                                     </label>
 
@@ -217,7 +219,7 @@
 
                                         Color
 
-                                        <span class="text-danger">*</span>
+                                         
 
                                     </label>
 
@@ -245,7 +247,7 @@
 
                                         Lead Source
 
-                                        <span class="text-danger">*</span>
+                                         
 
                                     </label>
 
@@ -291,9 +293,19 @@
 
                                     </label>
 
-                                    <input type="date" name="expected_delivery_date" class="form-control"
-                                        value="{{ old('expected_delivery_date', optional($lead->expected_delivery_date)->format('Y-m-d')) }}">
-
+                                    <input
+    type="text"
+    name="expected_delivery_date"
+    id="expected_delivery_date"
+    class="form-control"
+    value="{{ old(
+        'expected_delivery_date',
+        $lead->expected_delivery_date
+            ? \Carbon\Carbon::parse($lead->expected_delivery_date)->format('d-m-Y')
+            : ''
+    ) }}"
+    placeholder="DD-MM-YYYY"
+    autocomplete="off">
                                 </div>
 
                                 <div class="col-md-3 mb-3">
@@ -381,12 +393,17 @@
 
 @endsection
 @push('after_scripts')
-
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.js"></script>
     <script>
 
 
 
         $(document).ready(function () {
+            flatpickr("#expected_delivery_date", {
+                dateFormat: "d-m-Y",
+                allowInput: true,
+                minDate: "today"
+            });
 
             if (!$('#model_code').val()) {
                 $('#variant_code').prop('disabled', true);
