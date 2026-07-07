@@ -36,10 +36,9 @@ class LeadSourceCrudController extends CrudController
             'name',
             'description',
             'is_active',
-           // 'sort_order'
         ])
-        ->orderBy('name' , 'asc', )->get();
-        
+        ->orderBy('created_at', 'desc')->get();
+
         $gridData = $leadSources->map(function ($source, $index) {
             $mapped = $source->toArray();
             $mapped['serial_no'] = $index + 1;
@@ -67,7 +66,7 @@ class LeadSourceCrudController extends CrudController
                     ['field' => 'code',         'headerName' => 'Code'],
                     ['field' => 'name',         'headerName' => 'Source Name'],
                     ['field' => 'description',  'headerName' => 'Description'],
-                   // ['field' => 'sort_order',   'headerName' => 'Sort Order'],
+                    // ['field' => 'sort_order',   'headerName' => 'Sort Order'],
                     ['field' => 'is_active',    'headerName' => 'Is Active'],
                     ['field' => 'action',       'headerName' => 'Actions']
                 ],
@@ -84,6 +83,15 @@ class LeadSourceCrudController extends CrudController
             'title' => 'Add New Lead Source',
         ]);
     }
+    public function checkCode(Request $request)
+    {
+        $exists = LeadSource::where('code', strtoupper(trim($request->code)))
+                    ->exists();
+
+        return response()->json([
+            'exists' => $exists
+        ]);
+    }
 
     public function store(Request $request)
     {
@@ -92,7 +100,7 @@ class LeadSourceCrudController extends CrudController
             'code'        => 'required|string|min:3|max:10|unique:xlr8_crm_lead_sources,code',
             'name'        => 'required|string|max:255',
             'description' => 'nullable|string',
-          //  'sort_order'  => 'nullable|integer|min:0',
+            //  'sort_order'  => 'nullable|integer|min:0',
             'is_active'   => 'boolean',
         ]);
 

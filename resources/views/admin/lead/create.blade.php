@@ -56,7 +56,7 @@
 
                                         First Name
 
-                                        <span class="text-danger">*</span>
+                                          
 
                                     </label>
 
@@ -95,7 +95,7 @@
 
                                         Contact No.
 
-                                        <span class="text-danger">*</span>
+                                          
 
                                     </label>
 
@@ -119,7 +119,7 @@
                                 <div class="col-md-4 mb-3">
 
                                     <label class="form-label">
-                                        Segment *
+                                        Segment
                                     </label>
 
                                     <select name="segment_code" id="segment_code" class="form-control form-select" required>
@@ -148,7 +148,7 @@
 
                                         Model
 
-                                        <span class="text-danger">*</span>
+                                          
 
                                     </label>
 
@@ -176,7 +176,7 @@
 
                                         Variant
 
-                                        <span class="text-danger">*</span>
+                                          
 
                                     </label>
 
@@ -194,7 +194,7 @@
 
                                         Color
 
-                                        <span class="text-danger">*</span>
+                                          
 
                                     </label>
                                     <select name="color_code" id="color_code" class="form-control form-select" required>
@@ -212,7 +212,6 @@
 
                                         Source
 
-                                        <span class="required-mark">*</span>
 
                                     </label>
 

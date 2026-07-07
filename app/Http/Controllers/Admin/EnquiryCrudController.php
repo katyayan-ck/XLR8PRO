@@ -86,6 +86,14 @@ class EnquiryCrudController extends CrudController
 
             $mapped['serial_no'] = $index + 1;
 
+            $mapped['enquiry_date'] = $enquiry->enquiry_date
+                ? \Carbon\Carbon::parse($enquiry->enquiry_date)->format('d-m-Y')
+                : '-';
+
+            $mapped['expected_delivery_date'] = $enquiry->expected_delivery_date
+                ? \Carbon\Carbon::parse($enquiry->expected_delivery_date)->format('d-m-Y')
+                : '-';
+
             $mapped['first_name'] = $enquiry->first_name;
 
             $mapped['last_name'] = $enquiry->last_name;
