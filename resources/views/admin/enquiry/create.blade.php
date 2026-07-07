@@ -42,6 +42,31 @@
                                 <label>Enquiry No </label>
                                 <input type="text" name="enquiry_no" class="form-control" required>
                             </div>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header text-black">
+                        <h2 class="mb-0">Add Hot Enquiry</h2>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{{ backpack_url('enquiry') }}" enctype="multipart/form-data">
+                            @csrf
+
+                            <div class="row">
+
+                                <!-- Basic Info -->
+                                <div class="col-md-3 mb-3">
+                                    <label>Enquiry No <span class="required-mark"> </span></label>
+                                    <input type="text" name="enquiry_no" class="form-control" required>
+                                </div>
+
+                                <div class="col-md-3 mb-3">
+                                    <label>Enquiry Date <span class="required-mark"> </span></label>
+                                    <input type="date" name="enquiry_date" class="form-control" required>
+                                </div>
+
+                                {{-- <div class="col-md-3 mb-3">
 
                             <div class="col-md-3 mb-3">
                                 <label>
@@ -76,9 +101,15 @@
                                     </option>
                                     @endforeach
 
-                                </select>
+                                <!-- Person -->
+                                <div class="col-md-4 mb-3">
+                                    <label>Customer (Person) <span class="required-mark"> </span></label>
+                                    <input name="person_code" id="person_code" class="form-control" required>
+                                </div>
 
-                            </div>
+                                <!-- Source -->
+                                <div class="col-md-3 mb-3">
+                                    <label>Source <span class="required-mark"> </span></label>
 
 
                             <!-- Person -->
@@ -102,11 +133,20 @@
 
                                         {{ $name }}
 
-                                    </option>
-                                    @endforeach
+                                <!-- Customer Info -->
+                                <div class="col-md-3 mb-3">
+                                    <label>First Name <span class="required-mark"> </span></label>
+                                    <input type="text" name="first_name" class="form-control" required>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label>Last Name</label>
+                                    <input type="text" name="last_name" class="form-control">
+                                </div>
 
-                                </select>
-                            </div>
+                                <div class="col-md-3 mb-3">
+                                    <label>Mobile <span class="required-mark"> </span></label>
+                                    <input type="text" name="mobile" class="form-control" required>
+                                </div>
 
                             <div class="col-md-3 mb-3">
                                 <label>Referral Details</label>
@@ -133,11 +173,9 @@
                                 <input type="email" name="email" class="form-control">
                             </div>
 
-                            <div class="col-md-3 mb-3">
-                                <label>Occupation</label>
-                                <input type="text" name="occupation" class="form-control"
-                                    value="{{ old('occupation') }}">
-                            </div>
+                                    <label class="form-label">
+                                        Segment  
+                                    </label>
 
                             <!-- Vehicle Details -->
 
@@ -158,20 +196,27 @@
 
                                         {{ $name }}
 
-                                    </option>
-                                    @endforeach
+                                <div class="col-md-3 mb-3">
+                                    <label>Model <span class="required-mark"> </span></label>
+                                    <select name="model_code" id="model_code" class="form-control form-select" required>
 
                                 </select>
 
                             </div>
 
-                            <div class="col-md-3 mb-3">
-                                <label>Model </label>
-                                <select name="model_code" id="model_code" class="form-control form-select" required>
+                                <div class="col-md-3 mb-3">
+                                    <label>Variant <span class="required-mark"> </span></label>
+                                    <select name="variant_code" id="variant_code" class="form-control form-select" required>
+                                        <option value="">Select Variant...</option>
+                                    </select>
+                                </div>
 
-                                    <option value="">
-                                        Select Model
-                                    </option>
+                                <div class="col-md-3 mb-3">
+                                    <label>Color <span class="required-mark"> </span></label>
+                                    <select name="color_code" id="color_code" class="form-control form-select" required>
+                                        <option value="">Select Color...</option>
+                                    </select>
+                                </div>
 
                                 </select>
                             </div>
@@ -202,39 +247,65 @@
                                     value="{{ old('registration_by') }}">
                             </div>
 
-                            <div class="col-md-3 mb-3">
-                                <label>Insurance By</label>
-                                <input type="text" name="insurance_by" class="form-control"
-                                    value="{{ old('insurance_by') }}">
-                            </div>
+                                <!-- Sales Consultant -->
+                                <div class="col-md-4 mb-3">
+                                    <div class="form-group">
+                                        <label for="saleconsultant">
+                                            Sales Consultant <span class="required-mark"> </span>
+                                        </label>
 
-                            <div class="col-md-3 mb-3">
-                                <label>Expected Delivery Date</label>
+                                        <select name="sales_consultant_id" id="sales_consultant_id"
+                                            class="form-control form-select" required>
+                                            <option value="">Please Select...</option>
+
+                                            @foreach ($saleconsultants as $consultant)
+                                                <option value="{{ $consultant['person_code'] }}">
+                                                    {{ $consultant['display_name'] }} - {{ $consultant['employee_code'] }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-3 mb-3">
+                                    <label>Status <span class="required-mark"> </span></label>
+                                    <select name="status" class="form-control form-select" required>
+                                        <option value="new" {{ old('status', 'new') == 'new' ? 'selected' : '' }}>New
+                                        </option>
+                                        <option value="in_followup"
+                                            {{ old('status') == 'in_followup' ? 'selected' : '' }}>In
+                                            Followup</option>
+                                        <option value="quotation_sent"
+                                            {{ old('status') == 'quotation_sent' ? 'selected' : '' }}>Quotation Sent</
+                                                option>
+                                        <option value="quotation_approved"
+                                            {{ old('status') == 'quotation_approved' ? 'selected' : '' }}>Quotation
+                                            Approved</option>
+                                        <option value="booking_done"
+                                            {{ old('status') == 'booking_done' ? 'selected' : '' }}>
+                                            Booking Done</option>
+                                        <option value="lost" {{ old('status') == 'lost' ? 'selected' : '' }}>Lost
+                                        </option>
+                                        <option value="cancelled" {{ old('status') == 'cancelled' ? 'selected' : '' }}>
+                                            Cancelled</option>
+                                    </select>
+                                </div>
 
                                 <input type="text" id="expected_delivery_date" name="expected_delivery_date"
                                     class="form-control" value="{{ old('expected_delivery_date') }}" autocomplete="off">
                             </div>
 
-                            <div class="col-md-3 mb-3">
-                                <label>DMS Enquiry No</label>
-                                <input type="text" name="dms_enquiry_no" class="form-control"
-                                    value="{{ old('dms_enquiry_no') }}">
-                            </div>
-
-                            <!-- Sales Consultant -->
-                            <div class="col-md-3 mb-3">
-                                <div class="form-group">
-                                    <label for="saleconsultant">
-                                        Sales Consultant
-                                    </label>
-
-                                    <select name="sales_consultant_id" id="sales_consultant_id"
-                                        class="form-control form-select" required>
-                                        <option value="">Please Select...</option>
-
-                                        @foreach ($saleconsultants as $consultant)
-                                        <option value="{{ $consultant['person_code'] }}">
-                                            {{ $consultant['display_name'] }} - {{ $consultant['employee_code'] }}
+                                <div class="col-md-3 mb-3">
+                                    <label>Priority <span class="required-mark"> </span></label>
+                                    <select name="priority" class="form-control form-select" required>
+                                        <option value="high"
+                                            {{ old('priority', 'medium') == 'high' ? 'selected' : '' }}>High
+                                        </option>
+                                        <option value="medium"
+                                            {{ old('priority', 'medium') == 'medium' ? 'selected' : '' }}>
+                                            Medium</option>
+                                        <option value="low" {{ old('priority', 'medium') == 'low' ? 'selected' : '' }}>
+                                            Low
                                         </option>
                                         @endforeach
                                     </select>
@@ -349,34 +420,32 @@
             $('#variant_code').prop('disabled', true);
             $('#color_code').prop('disabled', true);
 
-            $('#lead_no').on('change', function() {
+            const selectedLead = "{{ request('lead_no') }}";
 
-                let leadNo = $(this).val();
+            if (selectedLead !== '') {
 
-                if (leadNo == '') {
+                $('#lead_no')
+                    .val(selectedLead)
+                    .trigger('change');
 
-                    $('#source_code').val('');
-                    $('#referral_details').val('');
-                    $('#first_name').val('');
-                    $('#last_name').val('');
-                    $('#mobile').val('');
-                    $('#email').val('');
-                    $('#occupation').val('');
-                    $('#model_code').val('');
+            }
 
-                    $('#variant_code')
-                        .html('<option value="">Select Variant</option>');
+            let leadNo = $('#lead_no').val();
 
-                    $('#color_code')
-                        .html('<option value="">Select Color</option>');
+                if (leadNo) {
 
-                    return;
+                    loadLead(leadNo);
 
                 }
 
+            function loadLead(leadNo) {
+
+                if (!leadNo) {
+                    return;
+                }
+
                 $.get(
-                    "{{ backpack_url('enquiry/lead') }}/" +
-                    encodeURIComponent(leadNo),
+                    "{{ backpack_url('enquiry/lead') }}/" + encodeURIComponent(leadNo),
 
                     function(lead) {
 
@@ -394,26 +463,19 @@
 
                         $('input[name="occupation"]').val(lead.occupation);
 
-                        $('#segment_code')
-                            .val(lead.segment_code)
-                            .trigger('change');
+                        $('#segment_code').val(lead.segment_code).trigger('change');
 
                         setTimeout(function() {
 
-                            $('#model_code')
-                                .val(lead.model_code)
-                                .trigger('change');
+                            $('#model_code').val(lead.model_code).trigger('change');
 
                             setTimeout(function() {
 
-                                $('#variant_code')
-                                    .val(lead.variant_code)
-                                    .trigger('change');
+                                $('#variant_code').val(lead.variant_code).trigger('change');
 
                                 setTimeout(function() {
 
-                                    $('#color_code')
-                                        .val(lead.color_code);
+                                    $('#color_code').val(lead.color_code);
 
                                 }, 300);
 
@@ -421,12 +483,11 @@
 
                         }, 300);
 
-
                     }
 
                 );
 
-            });
+            }
 
         });
 

@@ -2,30 +2,31 @@
 
 namespace App\Http\Controllers\Admin;
 
-use Backpack\CRUD\app\Http\Controllers\CrudController;
-use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
-
-use Illuminate\Http\Request;
-
 use App\Models\CRM\Lead;
 use App\Models\CRM\LeadSource;
-
 use App\Services\OrgService;
 use Carbon\Carbon;
+use Backpack\CRUD\app\Http\Controllers\CrudController;
+use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
+use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
+use Illuminate\Http\Request;
 
 class LeadCrudController extends CrudController
 {
-    use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
+    use CreateOperation;
+    use DeleteOperation;
+    use ListOperation;
+    use UpdateOperation;
 
     public function setup()
     {
         CRUD::setModel(Lead::class);
 
         CRUD::setRoute(
-            config('backpack.base.route_prefix') . '/lead'
+            config('backpack.base.route_prefix').'/lead'
         );
 
         CRUD::setEntityNameStrings(
@@ -52,7 +53,7 @@ class LeadCrudController extends CrudController
             'segment',
             'model',
             'variant',
-            'color'
+            'color',
         ])
             ->orderByDesc('id')
             ->get();
@@ -70,7 +71,7 @@ class LeadCrudController extends CrudController
 
             $mapped['customer_name'] =
                 trim(
-                    $lead->first_name . ' ' .
+                    $lead->first_name.' '.
                     $lead->last_name
                 );
 
@@ -95,26 +96,26 @@ class LeadCrudController extends CrudController
             $mapped['color_name'] =
                 $lead->color?->name ?? '—';
 
-            $editUrl =
-                backpack_url(
-                    "lead/{$lead->id}/edit"
-                );
+            $editUrl = backpack_url("lead/{$lead->id}/edit");
+
+            $processUrl = backpack_url(
+                'enquiries/add-hot-enquiry?lead_no='.urlencode($lead->lead_no)
+            );
 
             $mapped['action'] = '
-
                 <div class="d-flex gap-2 justify-content-center">
 
-                    <a href="' . $editUrl . '"
-
-                       class="btn btn-sm btn-primary">
-
+                    <a href="'.$editUrl.'"
+                    class="btn btn-sm btn-primary">
                         Edit
-
                     </a>
 
-                </div>
+                    <a href="'.$processUrl.'"
+                    class="btn btn-sm btn-success">
+                        Process
+                    </a>
 
-            ';
+                </div>';
 
             return $mapped;
 
@@ -134,69 +135,69 @@ class LeadCrudController extends CrudController
 
                         [
                             'field' => 'serial_no',
-                            'headerName' => 'S.No'
+                            'headerName' => 'S.No',
                         ],
 
                         [
                             'field' => 'lead_no',
-                            'headerName' => 'Lead No'
+                            'headerName' => 'Lead No',
                         ],
 
                         [
                             'field' => 'customer_name',
-                            'headerName' => 'Customer'
+                            'headerName' => 'Customer',
                         ],
 
                         [
                             'field' => 'mobile',
-                            'headerName' => 'Contact No.'
+                            'headerName' => 'Contact No.',
                         ],
 
                         [
                             'field' => 'source_name',
-                            'headerName' => 'Lead Source'
+                            'headerName' => 'Lead Source',
                         ],
 
                         [
                             'field' => 'segment_name',
-                            'headerName' => 'Segment'
+                            'headerName' => 'Segment',
                         ],
 
                         [
                             'field' => 'model_name',
-                            'headerName' => 'Model'
+                            'headerName' => 'Model',
                         ],
 
                         [
                             'field' => 'variant_name',
-                            'headerName' => 'Variant'
+                            'headerName' => 'Variant',
                         ],
 
                         [
                             'field' => 'color_name',
-                            'headerName' => 'Color'
+                            'headerName' => 'Color',
                         ],
 
                         [
                             'field' => 'priority',
-                            'headerName' => 'Priority'
+                            'headerName' => 'Priority',
                         ],
 
                         [
                             'field' => 'status',
-                            'headerName' => 'Status'
+                            'headerName' => 'Status',
                         ],
 
                         [
                             'field' => 'action',
-                            'headerName' => 'Actions'
-                        ]
+                            'headerName' => 'Actions',
+                        ],
 
                     ],
 
-                    'data' => $gridData
+                    'data' => $gridData,
 
-                ]
+                ],
 
             ]
 
@@ -225,50 +226,36 @@ class LeadCrudController extends CrudController
     {
         $validated = $request->validate([
 
-            'source_code' =>
-                'required|exists:xlr8_crm_lead_sources,code',
+            'source_code' => 'required|exists:xlr8_crm_lead_sources,code',
 
-            'first_name' =>
-                'required|string|max:100',
+            'first_name' => 'required|string|max:100',
 
-            'mobile' =>
-                'required|digits:10',
+            'mobile' => 'required|digits:10',
 
-            'segment_code' =>
-                'required|exists:xlr8_vehicle_segment,code',
+            'segment_code' => 'required|exists:xlr8_vehicle_segment,code',
 
-            'model_code' =>
-                'required|exists:xlr8_vehicle_model,code',
+            'model_code' => 'required|exists:xlr8_vehicle_model,code',
 
-            'variant_code' =>
-                'required|exists:xlr8_vehicle_variant,code',
+            'variant_code' => 'required|exists:xlr8_vehicle_variant,code',
 
-            'color_code' =>
-                'required|exists:xlr8_vehicle_color,code',
+            'color_code' => 'required|exists:xlr8_vehicle_color,code',
 
-            'expected_delivery_date' =>
-                'nullable|date',
+            'expected_delivery_date' => 'nullable|date',
 
-            'priority' =>
-                'required|string',
+            'priority' => 'required|string',
 
             // 'status' =>
             //     'required|string',
 
-            'notes' =>
-                'nullable|string',
+            'notes' => 'nullable|string',
 
-            'referral_details' =>
-                'nullable|string|max:255',
+            'referral_details' => 'nullable|string|max:255',
 
-            'last_name' =>
-                'nullable|string|max:100',
+            'last_name' => 'nullable|string|max:100',
 
-            'email' =>
-                'nullable|email|max:150',
+            'email' => 'nullable|email|max:150',
 
-            'occupation' =>
-                'nullable|string|max:150',
+            'occupation' => 'nullable|string|max:150',
 
         ]);
         if (!empty($validated['expected_delivery_date'])) {
@@ -300,7 +287,7 @@ class LeadCrudController extends CrudController
         }
 
         $validated['lead_no'] =
-            'LD' . str_pad($nextNo, 6, '0', STR_PAD_LEFT);
+            'LD'.str_pad($nextNo, 6, '0', STR_PAD_LEFT);
 
         /*
         |--------------------------------------------------------------------------
@@ -337,17 +324,15 @@ class LeadCrudController extends CrudController
 
                 'lead' => $lead,
 
-                'sources' =>
-
-                    LeadSource::where(
-                        'is_active',
-                        1
-                    )
-                        ->orderBy('name')
-                        ->pluck(
-                            'name',
-                            'code'
-                        ),
+                'sources' => LeadSource::where(
+                    'is_active',
+                    1
+                )
+                    ->orderBy('name')
+                    ->pluck(
+                        'name',
+                        'code'
+                    ),
 
                 'segments' => OrgService::segments(),
 
@@ -355,7 +340,7 @@ class LeadCrudController extends CrudController
 
                 'variants' => OrgService::variants($lead->model_code),
 
-                'colors' => OrgService::colors($lead->variant_code)
+                'colors' => OrgService::colors($lead->variant_code),
 
             ]
         );
@@ -369,50 +354,35 @@ class LeadCrudController extends CrudController
 
         $validated = $request->validate([
 
-            'source_code' =>
-                'required|exists:xlr8_crm_lead_sources,code',
+            'source_code' => 'required|exists:xlr8_crm_lead_sources,code',
 
-            'first_name' =>
-                'required|string|max:100',
+            'first_name' => 'required|string|max:100',
 
-            'last_name' =>
-                'nullable|string|max:100',
+            'last_name' => 'nullable|string|max:100',
 
-            'mobile' =>
-                'required|digits:10',
+            'mobile' => 'required|digits:10',
 
-            'email' =>
-                'nullable|email|max:150',
+            'email' => 'nullable|email|max:150',
 
-            'occupation' =>
-                'nullable|string|max:150',
+            'occupation' => 'nullable|string|max:150',
 
-            'segment_code' =>
-                'required|exists:xlr8_vehicle_segment,code',
+            'segment_code' => 'required|exists:xlr8_vehicle_segment,code',
 
-            'model_code' =>
-                'required|exists:xlr8_vehicle_model,code',
+            'model_code' => 'required|exists:xlr8_vehicle_model,code',
 
-            'variant_code' =>
-                'required|exists:xlr8_vehicle_variant,code',
+            'variant_code' => 'required|exists:xlr8_vehicle_variant,code',
 
-            'color_code' =>
-                'required|exists:xlr8_vehicle_color,code',
+            'color_code' => 'required|exists:xlr8_vehicle_color,code',
 
-            'expected_delivery_date' =>
-                'nullable|date',
+            'expected_delivery_date' => 'nullable|date',
 
-            'priority' =>
-                'required|string',
+            'priority' => 'required|string',
 
-            'status' =>
-                'required|string',
+            'status' => 'required|string',
 
-            'notes' =>
-                'nullable|string',
+            'notes' => 'nullable|string',
 
-            'referral_details' =>
-                'nullable|string|max:255',
+            'referral_details' => 'nullable|string|max:255',
 
         ]);
 

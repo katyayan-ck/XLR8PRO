@@ -364,6 +364,7 @@ class RtoCrudController extends CrudController
                         'updated_at'              => $now,
                         'updated_by'              => $userId,
                     ];
+
                 } elseif (in_array($sheetType, ['hsrp_bkn', 'hsrp_chr'])) {
 
                     $data = [
@@ -389,6 +390,7 @@ class RtoCrudController extends CrudController
                         'updated_at'            => $now,
                         'updated_by'            => $userId,
                     ];
+
                 }
 
                 try {
@@ -528,7 +530,7 @@ class RtoCrudController extends CrudController
         if (isset($buckets[$fallback])) {
             \Log::info("RTO Import resolveRuleId: Used fallback bucket", [
                 'pending_at'      => $pendingAt,
-                'requested_bucket' => $rgnNoBucket,
+                'requested_bucket'=> $rgnNoBucket,
                 'fallback_bucket' => $fallback,
                 'gid'             => $gid,
                 'row'             => $row,
@@ -573,8 +575,7 @@ class RtoCrudController extends CrudController
                 if ($year >= 2000 && $year <= 2100) {
                     return $date->format('Y-m-d');
                 }
-            } catch (\Exception $e) {
-            }
+            } catch (\Exception $e) {}
         }
 
         // Explicit format list
@@ -622,8 +623,7 @@ class RtoCrudController extends CrudController
             if ($year >= 2000 && $year <= 2100) {
                 return $d->format('Y-m-d');
             }
-        } catch (\Exception $e) {
-        }
+        } catch (\Exception $e) {}
 
         \Log::warning("RTO Import parseDate: Could not parse", [
             'raw' => $raw,
