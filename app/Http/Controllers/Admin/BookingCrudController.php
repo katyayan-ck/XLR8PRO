@@ -11223,4 +11223,26 @@ class BookingCrudController extends CrudController
             'date'   => $record->trans_date ?? '',
         ]);
     }
+    public function otfSave(Request $request, $id)
+    {
+        
+        //dd($request->all());
+        $booking = Booking::findOrFail($id);
+    
+        // Handle chassis image upload (cropper writes back into this same file input)
+        if ($request->hasFile('chassis_image')) {
+            $booking->addMedia($request->file('chassis_image'))
+                ->toMediaCollection('chassis_image');
+        }
+    
+        // Everything except CSRF token and the file goes straight into JSON
+        $data = $request->except(['_token', '_method', 'chassis_image']);
+    
+        $booking->final_data = json_encode($data);
+        $booking->save();
+    
+        return redirect()
+            ->back()
+            ->with('success', 'OTF form saved successfully.');
+    }
 }

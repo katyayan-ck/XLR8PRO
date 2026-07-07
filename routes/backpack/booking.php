@@ -464,4 +464,6 @@ Route::group([
 
     Route::get('booking/{id}/check-field-payment', 'BookingCrudController@checkFieldPayment')
         ->name('booking.check-field-payment');
+    Route::post('booking/otf/{id}/save', 'BookingCrudController@otfSave')
+    ->name('booking.otf.save');
 });

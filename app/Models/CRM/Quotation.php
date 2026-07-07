@@ -30,6 +30,7 @@ class Quotation extends BaseModel
         'standard_data',
         'requested_data',
         'proposed_data',
+        'final_data',
         'onroad_price',
         'invoice_price',
         'status',

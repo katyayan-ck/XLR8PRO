@@ -344,9 +344,21 @@ use Illuminate\Support\Facades\DB;
 
         </div>
 
-        <form method="POST" enctype="multipart/form-data">
+        <form method="POST" action="{{ route('booking.otf.save', $booking->id) }}" enctype="multipart/form-data">
 
             @csrf
+            @if(session('success'))
+                <div class="alert alert-success">{{ session('success') }}</div>
+            @endif
+            @if($errors->any())
+                <div class="alert alert-danger">
+                    <ul class="mb-0">
+                        @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
             <div class="card">
 
                 <div class="card-body">
@@ -1733,6 +1745,10 @@ use Illuminate\Support\Facades\DB;
         <i class="la la-eye"></i>
         Form Preview
 
+    </button>
+    <button type="submit" class="btn btn-success btn-lg px-5 py-2">
+        <i class="la la-save"></i>
+        Save OTF
     </button>
 
 </div>
