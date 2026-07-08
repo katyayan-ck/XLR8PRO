@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
 use Illuminate\Http\Request;
-use App\Models\Admin\Branch;   // ← Correct model
+use App\Models\Admin\Branch; 
 
 class BranchCrudController extends CrudController
 {
@@ -22,7 +22,7 @@ class BranchCrudController extends CrudController
 
     public function setup()
     {
-        CRUD::setModel(Branch::class);                    // ← Fixed
+        CRUD::setModel(Branch::class);                    
         CRUD::setRoute(config('backpack.base.route_prefix') . '/branch');
         CRUD::setEntityNameStrings('branch', 'branches');
     }
@@ -108,19 +108,19 @@ class BranchCrudController extends CrudController
 
     public function update(Request $request, $code)
     {
-        $branch = Branch::where('code', $code)->firstOrFail();   // ← Fixed
+        $branch = Branch::where('code', $code)->firstOrFail();   
 
         $validated = $request->validate([
             'code' => 'required|string|min:3|max:10|unique:xlr8_admin_branch,code,' . $branch->id,
             'name'           => 'required|string|max:255',
-            'description'    => 'nullable|string',     // ✅
+            'description'    => 'nullable|string',    
             'phone'          => 'nullable|string',
             'email'          => 'nullable|email',
-            'address'        => 'nullable|string',     // ✅
+            'address'        => 'nullable|string',    
             'city' => 'nullable|string|max:100',
             'pincode' => 'nullable|digits:6',
-            'latitude'  => 'nullable|numeric|between:-90,90',    // ✅
-            'longitude' => 'nullable|numeric|between:-180,180',    // ✅
+            'latitude'  => 'nullable|numeric|between:-90,90',    
+            'longitude' => 'nullable|numeric|between:-180,180',    
             'is_head_office' => 'boolean',
             'is_active'      => 'boolean',
         ]);

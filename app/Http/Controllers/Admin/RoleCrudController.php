@@ -7,7 +7,7 @@ use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
 use Illuminate\Http\Request;
 use App\Models\IAM\Role;
 use App\Models\IAM\Permission;
-use Spatie\Permission\Models\Role as SpatieRole; // Agar original Spatie model bhi use karna ho to
+use Spatie\Permission\Models\Role as SpatieRole; 
 
 class RoleCrudController extends CrudController
 {
@@ -25,7 +25,7 @@ class RoleCrudController extends CrudController
 
     protected function setupListOperation()
     {
-    $this->crud->addClause('where', 'is_post', false); // To show only non-post roles
+    $this->crud->addClause('where', 'is_post', false); 
     $this->crud->setListView('admin.role.list');
     }
 

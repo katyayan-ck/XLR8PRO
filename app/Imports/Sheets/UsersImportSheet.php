@@ -21,13 +21,10 @@ class UsersImportSheet extends BaseSheetImport
         $personCode = $this->derivePersonCode($row);
         $now = Carbon::now();
 
-        // 1. Person
         $this->createOrUpdatePerson($row, $personCode, $now);
 
-        // 2. Employee
         $this->createOrUpdateEmployee($row, $empCode, $personCode, $now);
 
-        // 3. User
         $this->createOrUpdateUser($row, $empCode, $personCode, $now);
 
         $this->countInsert();
@@ -59,7 +56,6 @@ class UsersImportSheet extends BaseSheetImport
             'updated_at'   => $now,
         ], ['person_code' => $personCode]);
 
-        // Primary mobile & email
         $mobile = $this->cleanPhone($row['Personal Contact Number*'] ?? null);
         if ($mobile) {
             $this->upsert('xlr8_admin_person_contacts', [

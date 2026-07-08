@@ -85,7 +85,6 @@ class FinanceCrudController extends CrudController
 
                 $actualRow = $rowIndex + 2;
 
-                // Empty row skip
                 if (empty($row[$gs_pos['financier_code'] ?? 0]) &&
                     empty($row[$gs_pos['trans_description'] ?? 0])) {
                     $skipped++;

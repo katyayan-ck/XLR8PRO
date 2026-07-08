@@ -72,7 +72,6 @@ trait CodeGenerator
         $upper = strtoupper(trim($name));
         if (isset($map[$upper])) return $map[$upper];
 
-        // Fallback: initials of each word, max 8 chars
         $words = explode(' ', $upper);
         $code  = '';
         foreach ($words as $w) {

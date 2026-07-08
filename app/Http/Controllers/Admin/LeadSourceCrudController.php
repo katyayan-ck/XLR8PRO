@@ -66,7 +66,6 @@ class LeadSourceCrudController extends CrudController
                     ['field' => 'code',         'headerName' => 'Code'],
                     ['field' => 'name',         'headerName' => 'Source Name'],
                     ['field' => 'description',  'headerName' => 'Description'],
-                    // ['field' => 'sort_order',   'headerName' => 'Sort Order'],
                     ['field' => 'is_active',    'headerName' => 'Is Active'],
                     ['field' => 'action',       'headerName' => 'Actions']
                 ],
@@ -95,12 +94,10 @@ class LeadSourceCrudController extends CrudController
 
     public function store(Request $request)
     {
-        //dd($request -> all());
         $validated = $request->validate([
             'code'        => 'required|string|min:3|max:10|unique:xlr8_crm_lead_sources,code',
             'name'        => 'required|string|max:255',
             'description' => 'nullable|string',
-            //  'sort_order'  => 'nullable|integer|min:0',
             'is_active'   => 'boolean',
         ]);
 
@@ -108,7 +105,6 @@ class LeadSourceCrudController extends CrudController
 
         \Alert::success('Lead Source created successfully!')->flash();
 
-        // Clear cache so new source appears in dropdowns immediately
         LeadSource::clearCache();
 
         return redirect(backpack_url('lead-source'));
@@ -134,7 +130,6 @@ class LeadSourceCrudController extends CrudController
             'code'        => 'required|string|min:3|max:10|unique:xlr8_crm_lead_sources,code,' . $id,
             'name'        => 'required|string|max:255',
             'description' => 'nullable|string',
-            //'sort_order'  => 'nullable|integer|min:0',
             'is_active'   => 'boolean',
         ]);
 
@@ -142,7 +137,6 @@ class LeadSourceCrudController extends CrudController
 
         \Alert::success('Lead Source updated successfully!')->flash();
 
-        // Clear cache after update
         LeadSource::clearCache();
 
         return redirect(backpack_url('lead-source'));

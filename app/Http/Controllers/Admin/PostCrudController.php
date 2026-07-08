@@ -98,11 +98,9 @@ class PostCrudController extends CrudController
             'loc_code'      => 'nullable|string|exists:xlr8_admin_location,code',
             'max_occupants' => 'integer|min:1|max:10',
             'is_active'     => 'boolean',
-            // Org scopes
             'org_scopes'         => 'nullable|array',
             'org_scopes.*.type'  => 'required_with:org_scopes|in:' . implode(',', PostOrgScope::TYPES),
             'org_scopes.*.value' => 'nullable|string',
-            // Vehicle scopes
             'vehicle_scopes'         => 'nullable|array',
             'vehicle_scopes.*.type'  => 'required_with:vehicle_scopes|in:' . implode(',', PostVehicleScope::TYPES),
             'vehicle_scopes.*.value' => 'nullable|string',
@@ -118,7 +116,6 @@ class PostCrudController extends CrudController
                 maxOccupants:$validated['max_occupants'] ?? 1,
             );
 
-            // Save org scopes
             foreach ($request->input('org_scopes', []) as $scope) {
                 PostOrgScope::create([
                     'post_code'   => $post->post_code,
@@ -128,7 +125,6 @@ class PostCrudController extends CrudController
                 ]);
             }
 
-            // Save vehicle scopes
             foreach ($request->input('vehicle_scopes', []) as $scope) {
                 PostVehicleScope::create([
                     'post_code'   => $post->post_code,
@@ -188,7 +184,6 @@ class PostCrudController extends CrudController
                 'is_active'     => $validated['is_active']     ?? $post->is_active,
             ]);
 
-            // Replace org scopes
             PostOrgScope::where('post_code', $post->post_code)->delete();
             foreach ($request->input('org_scopes', []) as $scope) {
                 PostOrgScope::create([
@@ -199,7 +194,6 @@ class PostCrudController extends CrudController
                 ]);
             }
 
-            // Replace vehicle scopes
             PostVehicleScope::where('post_code', $post->post_code)->delete();
             foreach ($request->input('vehicle_scopes', []) as $scope) {
                 PostVehicleScope::create([

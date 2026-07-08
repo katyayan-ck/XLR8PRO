@@ -48,7 +48,6 @@ class ImportRbacMaster extends Command
             return self::FAILURE;
         }
 
-        // ── Report ────────────────────────────────────────────────────────────
         $this->info(str_repeat('─', 60));
         $this->info('Import Complete!');
         $this->table(
@@ -66,7 +65,6 @@ class ImportRbacMaster extends Command
                 $this->line("  ⚠ {$err}");
             }
 
-            // Write to importlogs if table exists
             if (\Schema::hasTable('importlogs')) {
                 DB::table('importlogs')->insert([
                     'importtype'    => 'rbac_master',

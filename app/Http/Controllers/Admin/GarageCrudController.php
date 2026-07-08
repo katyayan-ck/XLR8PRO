@@ -72,11 +72,11 @@ class GarageCrudController extends CrudController
                     ['field' => 'serial_no',    'headerName' => 'S.No'],
                     ['field' => 'name',         'headerName' => 'Garage Name'],
                     ['field' => 'person_name',  'headerName' => 'Associated Person'],
-                    ['field' => 'type',         'headerName' => 'Type'],           // ← Added
-                    ['field' => 'address',      'headerName' => 'Address'],        // ← Added
+                    ['field' => 'type',         'headerName' => 'Type'],           
+                    ['field' => 'address',      'headerName' => 'Address'],        
                     ['field' => 'city',         'headerName' => 'City'],
                     ['field' => 'state',        'headerName' => 'State'],
-                    ['field' => 'pincode',      'headerName' => 'Pincode'],        // ← Added
+                    ['field' => 'pincode',      'headerName' => 'Pincode'],        
                     ['field' => 'mobile',       'headerName' => 'Mobile'],
                     ['field' => 'is_active',    'headerName' => 'Active'],
                     ['field' => 'action',       'headerName' => 'Actions']
@@ -103,12 +103,12 @@ class GarageCrudController extends CrudController
         $validated = $request->validate([
             'person_id' => 'nullable|exists:xlr8_admin_person,id',
             'name'      => 'required|string|max:255',
-            'type'      => 'required|string|max:100',           // ← Required
-            'address'   => 'required|string|max:255',           // ← Required
-            'city'      => 'required|string|max:100',           // ← Required
-            'state'     => 'required|string|max:100',           // ← Required
-            'pincode'   => 'required|digits:6',                 // ← Required + 6 digits
-            'mobile'    => 'required|digits:10',                // ← Required + 10 digits
+            'type'      => 'required|string|max:100',           
+            'address'   => 'required|string|max:255',           
+            'city'      => 'required|string|max:100',           
+            'state'     => 'required|string|max:100',           
+            'pincode'   => 'required|digits:6',                 
+            'mobile'    => 'required|digits:10',                 
             'is_active' => 'boolean',
         ]);
 

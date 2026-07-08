@@ -52,9 +52,6 @@ class User extends Authenticatable
         'deleted_at'          => 'datetime',
     ];
 
-    // ─────────────────────────────────────────────────────────────
-    // RELATIONSHIPS
-    // ─────────────────────────────────────────────────────────────
 
     public function employee()
     {
@@ -76,21 +73,12 @@ class User extends Authenticatable
         return $this->scopes()->where('is_active', true);
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // DASHBOARD HELPERS (All active now)
-    // ─────────────────────────────────────────────────────────────
-    public function getAccessProfileAttribute(): ?array
+       public function getAccessProfileAttribute(): ?array
     {
         return OrgService::getCurrentUser();
     }
 
-    // public function getDisplayNameAttribute(): string
-    // {
-    //     return $this->person?->display_name
-    //         ?? $this->employee?->person?->display_name
-    //         ?? $this->username
-    //         ?? 'N/A';
-    // }
+    
 
     public function primaryBranchCode(): ?string
     {
@@ -137,7 +125,6 @@ class User extends Authenticatable
         return $this->person?->all_emails ?? collect();
     }
 
-    // Relations used by dashboard
     public function branches()
     {
         return $this->belongsToMany(\App\Models\Admin\Branch::class, 'xlr8_admin_emp_branch_pivot', 'employee_code', 'branch_code');
@@ -158,9 +145,7 @@ class User extends Authenticatable
         return $this->belongsToMany(\App\Models\Admin\Division::class, 'xlr8_admin_emp_division_pivot', 'employee_code', 'div_code');
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // DATA SCOPING HELPERS
-    // ─────────────────────────────────────────────────────────────
+   
 
     public function hasScope(string $type, string $code): bool
     {
@@ -197,7 +182,6 @@ class User extends Authenticatable
             ->toArray();
     }
 
-    // In class User extends Authenticatable
 
     public function getDisplayNameAttribute(): string
     {
@@ -234,9 +218,7 @@ class User extends Authenticatable
             ->toArray();
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // BOOT
-    // ─────────────────────────────────────────────────────────────
+   
 
     protected static function boot()
     {

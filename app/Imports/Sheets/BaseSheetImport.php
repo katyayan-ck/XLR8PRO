@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
-/**
- * BaseSheetImport - Enhanced with per-row detailed logging
- */
 abstract class BaseSheetImport
 {
     protected string $sheetName = 'Unknown';
@@ -123,7 +120,6 @@ abstract class BaseSheetImport
         Log::channel('import')->info("[$this->sheetName] $message");
     }
 
-    // ... (keep all your existing helpers: s(), n(), b(), code(), etc.)
     protected function s(mixed $value): string { return trim((string)($value ?? '')); }
     protected function n(mixed $value): ?string {
         $v = trim((string)($value ?? ''));
@@ -139,7 +135,6 @@ abstract class BaseSheetImport
         return $maxLen > 0 ? substr($v, 0, $maxLen) : $v;
     }
 
-    /** Safe int with null fallback */
     protected function i(mixed $value, ?int $default = null): ?int
     {
         if ($value === null || trim((string) $value) === '') return $default;
@@ -147,7 +142,6 @@ abstract class BaseSheetImport
     }
 
     
-    /** Split comma/semicolon-separated codes into array */
     protected function splitCodes(mixed $value): array
     {
         if (!$value) return [];
@@ -155,9 +149,6 @@ abstract class BaseSheetImport
         return array_values(array_filter(array_map('trim', $parts)));
     }
 
-    /**
-     * Parse date from string, DateTime, Carbon, or Excel serial number.
-     */
     protected function parseDate(mixed $value): ?string
     {
         if ($value === null || trim((string) $value) === '') return null;
@@ -166,7 +157,6 @@ abstract class BaseSheetImport
             return Carbon::instance($value)->format('Y-m-d');
         }
 
-        // Excel serial number
         if (is_numeric($value) && (int) $value > 1000 && (int) $value < 100000) {
             try {
                 $ts = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToTimestamp((int) $value);

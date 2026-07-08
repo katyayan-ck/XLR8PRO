@@ -244,8 +244,6 @@ class LeadCrudController extends CrudController
 
             'priority' => 'required|string',
 
-            // 'status' =>
-            //     'required|string',
 
             'notes' => 'nullable|string',
 
@@ -268,11 +266,7 @@ class LeadCrudController extends CrudController
 
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Lead Number
-        |--------------------------------------------------------------------------
-        */
+        
 
         $lastLead = Lead::latest('id')->first();
 
@@ -289,15 +283,8 @@ class LeadCrudController extends CrudController
         $validated['lead_no'] =
             'LD'.str_pad($nextNo, 6, '0', STR_PAD_LEFT);
 
-        /*
-        |--------------------------------------------------------------------------
-        | Default Values
-        |--------------------------------------------------------------------------
-        */
-
         $validated['capture_date'] = now()->toDateString();
 
-        // $validated['status'] = Lead::STATUS_NEW;
 
         $validated['created_by'] = backpack_user()->id;
 

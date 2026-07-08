@@ -39,7 +39,6 @@ class SpareRequestCrudController extends CrudController
         $this->setupCreateOperation();
     }
 
-    // Fetch Parts for Autocomplete
     public function fetchParts(Request $request)
     {
         $query = $request->get('query');
@@ -59,7 +58,6 @@ class SpareRequestCrudController extends CrudController
 
         return response()->json($parts);
     }
-    // Add this method in SpareRequestCrudController
     public function data()
     {
         $records = DB::table('xlr8_spare_request as req')
@@ -83,8 +81,7 @@ class SpareRequestCrudController extends CrudController
             ])
             ->leftJoin('xlr8_spare_req_details as details', 'req.id', '=', 'details.spare_req_id')
             ->leftJoin('branches as branch', 'req.srv_brnch_id', '=', 'branch.id')
-            // ❌ REMOVE THIS if column not exists
-            // ->whereNull('req.deleted_at')
+            
             ->groupBy(
                 'req.id',
                 'req.created_at',

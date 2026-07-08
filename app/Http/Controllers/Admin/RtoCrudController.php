@@ -20,41 +20,9 @@ class RtoCrudController extends CrudController
         return '';
     }
 
-    // =========================================================================
-    //  RTO Google Sheets Import
-    //
-    //  Spreadsheet : https://docs.google.com/spreadsheets/d/1pZAC7e7uxc-5nco2ERABj6dWPqfK511m0tQPcXGyhZk
-    //
-    //  Sheet GIDs  :
-    //    0          → RTO Manual
-    //    991896693  → HSRP BKN
-    //    253943540  → HSRP CHR
-    //    950100465  → Vaahan (TC0056)
-    //    475945448  → Vaahan (TC0281)
-    //
-    //  "Pending At" column (Vaahan sheets only) contains a text label such as
-    //  "DEALER-NEW-RC-APPROVAL".  We match it against xlr8_booking_rto_rule
-    //  using TWO keys:
-    //    1. pending_at  — the label text (case-insensitive)
-    //    2. rgn_no      — derived from the sheet's "Registration No" cell:
-    //         • blank / "NEW"            → rule rgn_no is '' or NULL  (same bucket)
-    //         • "TRC"                    → rule rgn_no = 'TRC'
-    //         • any real reg number      → rule rgn_no = 'Registration No'
-    //  The matched rule's `id` is stored as `pendat_id` in xlr8_booking_rto.
-    // =========================================================================
-
     public function import()
     {
-        // =====================================================================
-        //  CONFIGURATION
-        // =====================================================================
-
-        $spreadsheetId = '1pZAC7e7uxc-5nco2ERABj6dWPqfK511m0tQPcXGyhZk';
-
-        // exact sheet name => [ type, api-safe name ]
-        // Sheet names that look like cell refs (e.g. 'TC0281') must be
-        // single-quoted when sent to the Sheets API, otherwise the API
-        // parses them as column+row and throws a 400 error.
+        
         $sheetNames = [
             'RTO Manual'      => ['type' => 'rto_manual', 'safe' => 'RTO Manual'],
             'HSRP BKN'        => ['type' => 'hsrp_bkn',  'safe' => 'HSRP BKN'],
@@ -63,10 +31,7 @@ class RtoCrudController extends CrudController
             'TC0281'          => ['type' => 'vaahan',    'safe' => "'TC0281'"],
         ];
 
-        // =====================================================================
-        //  ENUM MAPS  (sheet text → DB integer)
-        // =====================================================================
-
+        
         $saleTypeMap = [
             'within state'  => 1,
             'outside state' => 2,
@@ -103,11 +68,7 @@ class RtoCrudController extends CrudController
             'special' => 3,
         ];
 
-        // =====================================================================
-        //  PRE-LOAD LOOKUP TABLES
-        // =====================================================================
-
-        // --- bookings: chassis_no / dms_otf  →  id ---
+       
         $bookingByChassis = \DB::table('xlr8_booking_master')
             ->whereNotNull('chassis_no')
             ->pluck('id', 'chassis_no')
@@ -118,51 +79,36 @@ class RtoCrudController extends CrudController
             ->pluck('id', 'dms_otf')
             ->toArray();
 
-        // --- rto rules: [pending_at_lower][rgn_no_bucket] → rule id ---
-        //
-        // rgn_no in the rules table is one of four values:
-        //   ''  / NULL        → bucket 'blank'
-        //   'NEW'             → bucket 'blank'   (treated same as empty)
-        //   'Registration No' → bucket 'rgn'
-        //   'TRC'             → bucket 'trc'
-        //
-        // We build a two-level map so lookups are O(1) per row.
+        
         $rtoRules = \DB::table('xlr8_booking_rto_rule')
             ->where('status', 1)
             ->whereNull('deleted_at')
             ->get(['id', 'pending_at', 'rgn_no']);
 
-        $ruleMap = [];   // [ 'dealer-new-rc-approval' => [ 'blank' => 79, 'rgn' => 80 ], ... ]
-
+        $ruleMap = [];   
         foreach ($rtoRules as $rule) {
             $paKey     = strtolower(trim((string) $rule->pending_at));
             $rgnRaw    = strtolower(trim((string) $rule->rgn_no));
 
-            // Normalise rgn_no → bucket
             if ($rgnRaw === 'registration no') {
                 $bucket = 'rgn';
             } elseif ($rgnRaw === 'trc') {
                 $bucket = 'trc';
             } else {
-                // '' / null / 'new' all collapse to 'blank'
                 $bucket = 'blank';
             }
 
             $ruleMap[$paKey][$bucket] = (int) $rule->id;
         }
 
-        // =====================================================================
-        //  COLUMN MAPS  (DB field  =>  Google Sheet header — case-insensitive partial match)
-        // =====================================================================
+      
 
         $columnMaps = [
 
-            // -----------------------------------------------------------------
-            //  RTO Manual  (gid 991896693)
-            // -----------------------------------------------------------------
+          
             'rto_manual' => [
                 'dms_otf'                 => 'OTF No.',
-                'chassis_no'              => 'Chassis No',          // matches "Chassis No", "Chassis No.", "ChassisNo"
+                'chassis_no'              => 'Chassis No',         
                 'sale_type'               => 'Sale Type',
                 'permit'                  => 'Permit',
                 'body_type'               => 'Body Type',
@@ -179,10 +125,6 @@ class RtoCrudController extends CrudController
                 'vh_rgn_no'               => 'Registration No.',
             ],
 
-            // -----------------------------------------------------------------
-            //  HSRP BKN  (gid 253943540)  &  HSRP CHR  (gid 950100465)
-            //  Same column layout — only hsrp_location differs
-            // -----------------------------------------------------------------
             'hsrp_bkn' => [
                 'vh_rgn_no'             => 'vehicleregno',
                 'chassis_no'            => 'ChassisNo',
@@ -209,21 +151,16 @@ class RtoCrudController extends CrudController
                 'affixation_date'       => 'Affixationdate',
             ],
 
-            // -----------------------------------------------------------------
-            //  Vaahan / TC0056 / TC0281  (gid 475945448)
-            //  Columns: Application No | Registration No | Purpose | Pending At
-            // -----------------------------------------------------------------
+           
             'vaahan' => [
                 'app_no'     => 'Application No',
                 'vh_rgn_no'  => 'Registration No',
                 'purpose'    => 'Purpose',
-                'pending_at' => 'Pending At',     // raw text — resolved to pending_at_id below
+                'pending_at' => 'Pending At',    
             ],
         ];
 
-        // =====================================================================
-        //  PROCESS SHEETS
-        // =====================================================================
+       
 
         $totalImported = 0;
         $totalSkipped  = 0;
@@ -245,9 +182,7 @@ class RtoCrudController extends CrudController
                 continue;
             }
 
-            // ------------------------------------------------------------------
-            //  Build header  →  column-index map  (case-insensitive partial match)
-            // ------------------------------------------------------------------
+           
             $gscolarr = $columnMaps[$sheetType] ?? [];
             $gs_pos   = array_fill_keys(array_keys($gscolarr), null);
 
@@ -270,17 +205,9 @@ class RtoCrudController extends CrudController
 
                 $actualRow = $rowIndex + 2;
 
-                // Utility: safely fetch a cell by its DB-field name
+               
                 $get = fn(string $field): mixed => $row[$gs_pos[$field] ?? -1] ?? null;
 
-                // ----------------------------------------------------------
-                //  Per-sheet row anchor + bid resolution
-                //
-                //  rto_manual / hsrp_*  → chassis_no is the anchor
-                //  vaahan               → app_no is the anchor (no chassis column)
-                //                         find the existing rto row by app_no and
-                //                         update only pendat_id + purpose on it
-                // ----------------------------------------------------------
                 if ($sheetType === 'vaahan') {
 
                     $appNo = trim((string) $get('app_no'));
@@ -300,7 +227,7 @@ class RtoCrudController extends CrudController
 
                     $pendatId = $this->resolveRuleId($rawPendingAt, $rgnNoBucket, $ruleMap, $sheetName, $actualRow);
 
-                    // Update the existing xlr8_booking_rto row matched by app_no
+                  
                     $affected = \DB::table('xlr8_booking_rto')
                         ->where('app_no', $appNo)
                         ->whereNull('deleted_at')
@@ -319,10 +246,10 @@ class RtoCrudController extends CrudController
                     } else {
                         $imported++;
                     }
-                    continue;  // skip the generic updateOrInsert below
+                    continue;  
                 }
 
-                // rto_manual + hsrp_* path — chassis is the anchor
+              
                 $chassis = strtoupper(trim((string) ($get('chassis_no') ?? '')));
 
                 if (empty($chassis)) {
@@ -330,15 +257,10 @@ class RtoCrudController extends CrudController
                     continue;
                 }
 
-                // ----------------------------------------------------------
-                //  Resolve bid (booking id)
-                // ----------------------------------------------------------
+               
                 $otf = trim((string) ($get('dms_otf') ?? $get('app_no') ?? ''));
                 $bid = $this->resolveBid($chassis, $otf, $bookingByChassis, $bookingByOtf, $sheetName, $actualRow);
 
-                // ----------------------------------------------------------
-                //  Build insert/update payload per sheet type
-                // ----------------------------------------------------------
                 if ($sheetType === 'rto_manual') {
 
                     $data = [
@@ -432,14 +354,7 @@ class RtoCrudController extends CrudController
             : redirect()->back()->with('warning', $message);
     }
 
-    // =========================================================================
-    //  PRIVATE HELPERS
-    // =========================================================================
-
-    /**
-     * Resolve booking id: chassis_no first, then dms_otf / app_no.
-     * Returns int|null.
-     */
+   
     private function resolveBid(
         string  $chassis,
         string  $otf,
@@ -464,11 +379,7 @@ class RtoCrudController extends CrudController
         return null;
     }
 
-    /**
-     * Map a text cell value to an enum integer via a lookup map.
-     * Comparison is case-insensitive and trims whitespace.
-     * Returns null when the value is empty or not found.
-     */
+   
     private function mapEnum(mixed $raw, array $map): ?int
     {
         if (empty($raw)) {
@@ -478,22 +389,7 @@ class RtoCrudController extends CrudController
         return $map[strtolower(trim((string) $raw))] ?? null;
     }
 
-    /**
-     * Resolve a Vaahan row's "Pending At" label + rgn_no bucket
-     * to the matching xlr8_booking_rto_rule.id (stored as pendat_id).
-     *
-     * $ruleMap structure (built during pre-load):
-     *   [ 'dealer-new-rc-approval' => [ 'blank' => 79, 'rgn' => 80 ], ... ]
-     *
-     * Bucket values passed in:
-     *   'blank'  — vh_rgn_no was empty or "NEW"
-     *   'trc'    — vh_rgn_no was "TRC"
-     *   'rgn'    — vh_rgn_no is a real registration number
-     *
-     * Fallback: if the exact bucket has no rule, try the other non-trc
-     * bucket (blank ↔ rgn) before giving up, so minor mismatches don't
-     * silently drop data.
-     */
+   
     private function resolveRuleId(
         string $pendingAt,
         string $rgnNoBucket,
@@ -518,14 +414,10 @@ class RtoCrudController extends CrudController
 
         $buckets = $ruleMap[$paKey];
 
-        // Primary: exact bucket match
         if (isset($buckets[$rgnNoBucket])) {
             return $buckets[$rgnNoBucket];
         }
 
-        // Fallback: for blank/rgn, try the other one (both represent
-        // "no real reg number yet" vs "reg number exists" but some rules
-        // may only have one variant)
         $fallback = ($rgnNoBucket === 'blank') ? 'rgn' : 'blank';
         if (isset($buckets[$fallback])) {
             \Log::info("RTO Import resolveRuleId: Used fallback bucket", [
@@ -538,7 +430,6 @@ class RtoCrudController extends CrudController
             return $buckets[$fallback];
         }
 
-        // Last resort: return whatever rule exists for this pending_at
         $firstId = reset($buckets);
         \Log::warning("RTO Import resolveRuleId: No bucket match, using first available rule", [
             'pending_at' => $pendingAt,
@@ -549,11 +440,6 @@ class RtoCrudController extends CrudController
         ]);
         return $firstId ?: null;
     }
-
-    /**
-     * Parse a cell value to Y-m-d string.
-     * Handles Excel serial numbers, DateTime objects, and common string formats.
-     */
     private function parseDate(mixed $raw, mixed $gid = null, int $row = 0): ?string
     {
         if (empty($raw) || trim((string) $raw) === '') {
@@ -567,7 +453,6 @@ class RtoCrudController extends CrudController
             return null;
         }
 
-        // Excel serial number (Google Sheets also returns these for date cells)
         if (is_numeric($raw)) {
             try {
                 $date = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject((float) $raw);
@@ -578,7 +463,6 @@ class RtoCrudController extends CrudController
             } catch (\Exception $e) {}
         }
 
-        // Explicit format list
         $formats = [
             'd/m/Y',
             'd-m-Y',
@@ -600,7 +484,6 @@ class RtoCrudController extends CrudController
             }
         }
 
-        // 2-digit year: "1-Apr-26"
         if (preg_match('/^(\d{1,2})[-\/]([A-Za-z]{3})[-\/](\d{2})$/', $raw, $m)) {
             $d = \DateTime::createFromFormat('j-M-Y', $m[1] . '-' . $m[2] . '-20' . $m[3]);
             if ($d !== false) {
@@ -608,7 +491,6 @@ class RtoCrudController extends CrudController
             }
         }
 
-        // 2-digit year: "13/04/26"
         if (preg_match('/^(\d{1,2})\/(\d{2})\/(\d{2})$/', $raw, $m)) {
             $d = \DateTime::createFromFormat('d/m/Y', $m[1] . '/' . $m[2] . '/20' . $m[3]);
             if ($d !== false) {
@@ -616,7 +498,6 @@ class RtoCrudController extends CrudController
             }
         }
 
-        // Carbon fallback
         try {
             $d    = \Carbon\Carbon::parse($raw);
             $year = (int) $d->format('Y');
@@ -634,9 +515,6 @@ class RtoCrudController extends CrudController
         return null;
     }
 
-    /**
-     * Clean an amount string like "1,08,025.00" → 108025 (int).
-     */
     private function parseAmount(mixed $raw): ?int
     {
         if (empty($raw)) {

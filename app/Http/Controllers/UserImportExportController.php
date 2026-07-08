@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-//use App\Services\Exporters\UserExporter;
 use App\Services\Importers\UserImporter;
 use Exception;
 use Illuminate\Http\Request;
@@ -11,40 +10,36 @@ use Illuminate\Support\Str;
 
 class UserImportExportController extends Controller
 {
-    /**
-     * Show import form
-     */
+   
     public function showImportForm()
     {
         return view('admin.users.import');
     }
 
-    /**
-     * Handle file upload and import
-     */
+   
     public function import(Request $request)
     {
         try {
             $request->validate([
-                'file' => 'required|file|mimes:xlsx,xls,csv|max:10240', // 10MB max
+                'file' => 'required|file|mimes:xlsx,xls,csv|max:10240', 
             ]);
 
-            // Store uploaded file temporarily
+           
             $file = $request->file('file');
             $filename = 'import_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
             $path = $file->storeAs('imports', $filename, 'local');
             $fullPath = storage_path('app/' . $path);
 
-            // Execute import
+            
             $importer = new UserImporter($fullPath);
             $result = $importer->execute();
 
-            // Clean up temp file
+           
             if (file_exists($fullPath)) {
                 unlink($fullPath);
             }
 
-            // Return result
+          
             if ($result['success']) {
                 return response()->json([
                     'success' => true,
@@ -67,17 +62,12 @@ class UserImportExportController extends Controller
         }
     }
 
-    /**
-     * Show export form
-     */
     public function showExportForm()
     {
         return view('admin.users.export');
     }
 
-    /**
-     * Handle export
-     */
+    
     public function export(Request $request)
     {
         try {
@@ -88,7 +78,6 @@ class UserImportExportController extends Controller
                 'status' => 'nullable|in:active,inactive,all',
             ]);
 
-            // Build filters
             $filters = [];
             if ($request->branch_id) {
                 $filters['branch_id'] = $request->branch_id;
@@ -103,12 +92,11 @@ class UserImportExportController extends Controller
                 $filters['is_active'] = ($request->status === 'active');
             }
 
-            // Create exporter
+            
             $exporter = new UserExporter();
             $exporter->withFilters($filters);
             $result = $exporter->execute();
 
-            // Return download
             if ($result['success']) {
                 return response()->download($result['path'], $result['filename']);
             } else {
@@ -119,32 +107,27 @@ class UserImportExportController extends Controller
         }
     }
 
-    /**
-     * Download template
-     */
+    
     public function downloadTemplate()
     {
         $filename = 'user_import_template.xlsx';
         $path = resource_path('templates/' . $filename);
 
         if (!file_exists($path)) {
-            // Create template if it doesn't exist
             $this->generateTemplate($path);
         }
 
         return response()->download($path, 'vdms_user_import_template.xlsx');
     }
 
-    /**
-     * Generate import template
-     */
+   
     private function generateTemplate($path)
     {
         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Users');
 
-        // Headers
+        
         $headers = [
             'Person Code',
             'First Name',
@@ -175,7 +158,6 @@ class UserImportExportController extends Controller
             'Accessible Locations',
         ];
 
-        // Write headers
         foreach ($headers as $col => $header) {
             $cell = $sheet->getCellByColumnAndRow($col + 1, 1);
             $cell->setValue($header);
@@ -189,7 +171,7 @@ class UserImportExportController extends Controller
             ]));
         }
 
-        // Add instructions
+        /
         $sheet->setCellValue('A' . 3, 'INSTRUCTIONS:');
         $sheet->getStyle('A3')->setFont(new \PhpOffice\PhpSpreadsheet\Style\Font(['bold' => true, 'italic' => true]));
 
@@ -211,23 +193,17 @@ class UserImportExportController extends Controller
             $sheet->setCellValue('A' . (4 + $idx), $instruction);
         }
 
-        // Auto-fit columns
         foreach (range(1, count($headers)) as $col) {
             $sheet->getColumnDimensionByColumn($col)->setAutoSize(true);
         }
 
-        // Save
         @mkdir(dirname($path), 0755, true);
         $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
         $writer->save($path);
     }
 
-    /**
-     * Get import history
-     */
-    public function importHistory()
+        public function importHistory()
     {
-        // Fetch from audit logs or create a dedicated import_logs table
         $imports = \DB::table('import_logs')
             ->orderBy('created_at', 'desc')
             ->paginate(20);
@@ -235,9 +211,7 @@ class UserImportExportController extends Controller
         return view('admin.users.import-history', compact('imports'));
     }
 
-    /**
-     * Get export history
-     */
+    
     public function exportHistory()
     {
         $exports = \DB::table('export_logs')

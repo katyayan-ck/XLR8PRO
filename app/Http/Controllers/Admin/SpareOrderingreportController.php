@@ -26,9 +26,8 @@ class SpareOrderingreportController extends Controller
             $consumption = (int)($item->total_consumption ?? 0);
             $pendingReq  = (int)($item->total_required_qty ?? 0);
 
-            // Old logic jaisa calculation
             $netRequirement = max(0, $pendingReq + $consumption - $totalStock);
-            $toOrderSuggested = $netRequirement;   // agar MOQ chahiye to baad mein add kar denge
+            $toOrderSuggested = $netRequirement;   
 
             $orderValue = $toOrderSuggested * (float)($item->order_price ?? 0);
 

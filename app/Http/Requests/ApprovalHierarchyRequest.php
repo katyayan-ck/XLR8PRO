@@ -13,7 +13,6 @@ class ApprovalHierarchyRequest extends FormRequest
      */
     public function authorize()
     {
-        // only allow updates if the user is logged in
         return backpack_auth()->check();
     }
 
@@ -25,7 +24,6 @@ class ApprovalHierarchyRequest extends FormRequest
     public function rules()
     {
         return [
-            // 'name' => 'required|min:5|max:255'
         ];
     }
 

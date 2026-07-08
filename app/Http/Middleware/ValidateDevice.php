@@ -34,11 +34,9 @@ class ValidateDevice
             ], 401);
         }
 
-        // ✅ FIX: Extract device_id from token abilities properly
         $abilities = $token->abilities;
         $deviceId = null;
 
-        // Look for device_id in abilities (format: "device_id:xxxxx")
         foreach ($abilities as $ability) {
             if (strpos($ability, 'device_id:') === 0) {
                 $deviceId = substr($ability, strlen('device_id:'));
@@ -55,14 +53,12 @@ class ValidateDevice
             ], 401);
         }
 
-        // Verify device session exists and is valid
         $deviceSession = DeviceSession::where('user_id', $user->id)
             ->where('device_id', $deviceId)
             ->whereNull('deleted_at')
             ->first();
 
         if (!$deviceSession) {
-            // Log security event
             OtpAttemptLog::create([
                 'user_id' => $user->id,
                 'mobile' => $user->phone,
@@ -81,13 +77,11 @@ class ValidateDevice
             ], 401);
         }
 
-        // Update last activity
         $deviceSession->update([
             'last_active_at' => now(),
             'updated_by' => $user->id,
         ]);
 
-        // Store device session in request for later use
         $request->attributes->set('device_session', $deviceSession);
 
         return $next($request);

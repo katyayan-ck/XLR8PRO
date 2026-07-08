@@ -6,7 +6,7 @@ use App\Http\Requests\UserRequest;
 use App\Models\User;
 use App\Services\AuthService;
 use App\Services\RBACService;
-// use App\Services\DataScopeService;
+
 
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanel;
@@ -52,7 +52,7 @@ class UserCrudController extends CrudController
     public function __construct(
         protected RBACService $rbacService,
         protected AuthService $authService,
-        // protected DataScopeService $dataScopeService
+        
     ) {}
 
     /**
@@ -69,11 +69,9 @@ class UserCrudController extends CrudController
         $this->crud->setRoute(config('backpack.base.route_prefix') . '/user');
         $this->crud->setEntityNameStrings('user', 'users');
 
-        // Set breadcrumb for navigation
         $this->crud->setCreateContentClass('col-md-8');
         $this->crud->setEditContentClass('col-md-8');
 
-        // Allow all operations by default, permission checks in individual methods
         $this->crud->allowAccess(['list', 'create', 'update', 'delete', 'show']);
     }
 
@@ -89,18 +87,15 @@ class UserCrudController extends CrudController
      */
     protected function setupListOperation(): void
     {
-        // Authorization check - user must have 'user.view' permission
         if (!backpack_user()->can('user.view')) {
             abort(403, 'Unauthorized. You do not have permission to view users.');
         }
 
-        // Log list operation for audit trail
         Log::info('User list accessed', [
             'user_id' => backpack_user()->id,
             'timestamp' => now(),
         ]);
 
-        // Add columns to display in list view
         $this->crud->addColumn([
             'name' => 'code',
             'label' => 'User Code',
@@ -141,7 +136,6 @@ class UserCrudController extends CrudController
             'format' => 'Y-m-d H:i:s',
         ]);
 
-        // Add filters
         $this->crud->addFilter([
             'name' => 'is_active',
             'type' => 'dropdown',
@@ -153,7 +147,6 @@ class UserCrudController extends CrudController
             $this->crud->addClause('where', 'is_active', $value);
         });
 
-        // Add search functionality
         $this->crud->setColumnDetailsStrippedOfNonTextTags();
     }
 
@@ -169,15 +162,12 @@ class UserCrudController extends CrudController
      */
     protected function setupCreateOperation(): void
     {
-        // Authorization check
         if (!backpack_user()->can('user.create')) {
             abort(403, 'Unauthorized. You do not have permission to create users.');
         }
 
-        // Set validation request class
         $this->crud->setValidationClass(UserRequest::class);
 
-        // User Code - Auto-generated or manual entry
         $this->crud->addField([
             'name' => 'code',
             'label' => 'User Code',
@@ -189,7 +179,6 @@ class UserCrudController extends CrudController
             'wrapperAttributes' => ['class' => 'form-group col-md-6'],
         ]);
 
-        // User Name
         $this->crud->addField([
             'name' => 'name',
             'label' => 'Full Name',
@@ -201,7 +190,6 @@ class UserCrudController extends CrudController
             'wrapperAttributes' => ['class' => 'form-group col-md-6'],
         ]);
 
-        // Email
         $this->crud->addField([
             'name' => 'email',
             'label' => 'Email Address',
@@ -213,7 +201,6 @@ class UserCrudController extends CrudController
             'wrapperAttributes' => ['class' => 'form-group col-md-6'],
         ]);
 
-        // Password
         $this->crud->addField([
             'name' => 'password',
             'label' => 'Password',
@@ -227,7 +214,6 @@ class UserCrudController extends CrudController
             'wrapperAttributes' => ['class' => 'form-group col-md-6'],
         ]);
 
-        // Link to Person (optional)
         $this->crud->addField([
             'name' => 'person_id',
             'label' => 'Link to Person',
@@ -241,7 +227,6 @@ class UserCrudController extends CrudController
             'wrapperAttributes' => ['class' => 'form-group col-md-6'],
         ]);
 
-        // Link to Employee (optional)
         $this->crud->addField([
             'name' => 'employee_id',
             'label' => 'Link to Employee',
@@ -255,7 +240,6 @@ class UserCrudController extends CrudController
             'wrapperAttributes' => ['class' => 'form-group col-md-6'],
         ]);
 
-        // Active Status
         $this->crud->addField([
             'name' => 'is_active',
             'label' => 'Account Status',
@@ -263,7 +247,6 @@ class UserCrudController extends CrudController
             'wrapperAttributes' => ['class' => 'form-group col-md-6'],
         ], 'create');
 
-        // Roles assignment
         $this->crud->addField([
             'name' => 'roles',
             'label' => 'Assign Roles',
@@ -288,12 +271,10 @@ class UserCrudController extends CrudController
      */
     protected function setupUpdateOperation(): void
     {
-        // Authorization check
         if (!backpack_user()->can('user.edit')) {
             abort(403, 'Unauthorized. You do not have permission to edit users.');
         }
 
-        // Log user update
         Log::info('User update initiated', [
             'user_id' => backpack_user()->id,
             'target_user_id' => $this->crud->getCurrentEntry()->id ?? null,
@@ -302,7 +283,6 @@ class UserCrudController extends CrudController
 
         $this->crud->setValidationClass(UserRequest::class);
 
-        // Add same fields as create, but with modifications for update
         $this->crud->addField([
             'name' => 'code',
             'label' => 'User Code',
@@ -333,7 +313,6 @@ class UserCrudController extends CrudController
             'wrapperAttributes' => ['class' => 'form-group col-md-6'],
         ], 'update');
 
-        // Password (optional during update)
         $this->crud->addField([
             'name' => 'password',
             'label' => 'Password',
@@ -346,7 +325,6 @@ class UserCrudController extends CrudController
             'wrapperAttributes' => ['class' => 'form-group col-md-6'],
         ], 'update');
 
-        // Person link
         $this->crud->addField([
             'name' => 'person_id',
             'label' => 'Link to Person',
@@ -356,7 +334,6 @@ class UserCrudController extends CrudController
             'wrapperAttributes' => ['class' => 'form-group col-md-6'],
         ], 'update');
 
-        // Employee link
         $this->crud->addField([
             'name' => 'employee_id',
             'label' => 'Link to Employee',
@@ -366,7 +343,6 @@ class UserCrudController extends CrudController
             'wrapperAttributes' => ['class' => 'form-group col-md-6'],
         ], 'update');
 
-        // Active status
         $this->crud->addField([
             'name' => 'is_active',
             'label' => 'Account Status',
@@ -374,7 +350,6 @@ class UserCrudController extends CrudController
             'wrapperAttributes' => ['class' => 'form-group col-md-6'],
         ], 'update');
 
-        // Roles
         $this->crud->addField([
             'name' => 'roles',
             'label' => 'Assign Roles',
@@ -400,12 +375,10 @@ class UserCrudController extends CrudController
     public function store()
     {
         try {
-            // Hash password before save
             if (request('password')) {
                 request()->merge(['password' => Hash::make(request('password'))]);
             }
 
-            // Log user creation
             Log::info('User created', [
                 'created_by' => backpack_user()->id,
                 'user_code' => request('code'),
@@ -440,15 +413,12 @@ class UserCrudController extends CrudController
     public function update()
     {
         try {
-            // Hash password only if provided and not empty
             if (request('password') && request('password') !== '') {
                 request()->merge(['password' => Hash::make(request('password'))]);
             } else {
-                // Remove password field if empty (don't update)
                 request()->request->remove('password');
             }
 
-            // Log user update
             Log::info('User updated', [
                 'updated_by' => backpack_user()->id,
                 'user_id' => $this->crud->getCurrentEntry()->id,
@@ -483,12 +453,10 @@ class UserCrudController extends CrudController
         try {
             $user = $this->crud->getCurrentEntry();
 
-            // Prevent deleting the last super admin
             if ($user->isSuperAdmin() && User::isSuperAdmin()->count() === 1) {
                 return back()->withError('Cannot delete the last super admin user.');
             }
 
-            // Log user deletion
             Log::warning('User deleted', [
                 'deleted_by' => backpack_user()->id,
                 'user_id' => $user->id,

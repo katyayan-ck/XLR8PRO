@@ -77,7 +77,7 @@ class PostPermissionCrudController extends CrudController
 
         return view('admin.post-permission.create', [
             'title'       => 'Add New Post Permission',
-            'posts' => \App\Models\IAM\Post::withoutGlobalScopes()->orderBy('id')->get(),          // Changed to 'id'
+            'posts' => \App\Models\IAM\Post::withoutGlobalScopes()->orderBy('id')->get(),         
             'permissions' => \App\Models\IAM\Permission::orderBy('name')->get(),
         ]);
     }
@@ -106,7 +106,7 @@ class PostPermissionCrudController extends CrudController
         return view('admin.post-permission.edit', [
             'title'          => 'Edit Post Permission',
             'postPermission' => $postPermission,
-            'posts'          => \App\Models\IAM\Post::orderBy('id')->get(),      // Changed to 'id'
+            'posts'          => \App\Models\IAM\Post::orderBy('id')->get(),      
             'permissions'    => \App\Models\IAM\Permission::orderBy('name')->get(),
         ]);
     }

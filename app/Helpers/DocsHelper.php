@@ -169,7 +169,6 @@ class DocsHelper
 
     public static function getGroups($uid)
     {
-        // dd($uid);
         $groups = DocsGroups::where('user_id', $uid)->where('docs_count', '>', 0)->get();
         $data = array();
         foreach ($groups as $group) {
@@ -185,13 +184,12 @@ class DocsHelper
                 $row['cart'] = false;
             $data[] = $row;
         }
-        //dd($data);
+     
         return $data;
     }
 
     public static function addToGroup($did, $gid, $uid)
     {
-        ////print_r("<br>Searching for GID : $gid, UID : $uid, DID : $did<br>");
         if ($gid != 0) {
 
             $group = DocsGroups::where('user_id', $uid)->where('id', $gid)->first();
@@ -206,14 +204,12 @@ class DocsHelper
                 $group->save();
             }
         }
-        ////print_r("...Found it..");
         $docs = explode(",", $group->docs);
         if (!in_array($did, $docs)) {
             $docs[] = $did;
             $group->docs = implode(",", $docs);
             $group->docs_count++;
             $group->save();
-            ////print_r("...Added..");
         }
         return true;
     }
@@ -223,11 +219,8 @@ class DocsHelper
         $dg = DocsGroups::find($id);
         $docsa = explode(",", $dg->docs);
         $docsa = array_filter($docsa);
-        //  ////print_r($docsa);
-        $data = array(); //whereRaw("find_in_set($uid , users)")
+        $data = array(); 
         $docs = Documents::whereIn('id', $docsa)->get();
-        // ////print_r("<br>...<br>...");
-        // ////print_r($docs->toarray());
         foreach ($docs as $doc) {
 
             $row = array();
@@ -260,17 +253,11 @@ class DocsHelper
         $dg = DocsGroups::find($id);
         $docsa = explode(",", $dg->docs);
         $docsa = array_filter($docsa);
-        $data = array(); //
+        $data = array(); 
         $docs = Documents::whereNotIn('id', $docsa)->get();
-        //////print_r($docs->toArray());
-        // ////print_r("<br>...<br>...");
         foreach ($docs as $doc) {
-            //  ////print_r("<br>...<br>...");
-            // ////print_r($doc->toArray());
             $users = explode(",", $doc->users);
             if (in_array($uid, $users)) {
-                //   ////print_r("<br>...<br>...");
-                //  ////print_r("Adding");
                 $row = array();
                 $row['id'] = $doc->id;
                 $row['pid'] = $doc->fy_id;
@@ -294,7 +281,6 @@ class DocsHelper
                 $data[] = $row;
             }
         }
-        // ////print_r($data);
         return $data;
     }
 
@@ -340,7 +326,7 @@ class DocsHelper
     }
     public static function removeFromGroup($did, $gid, $uid)
     {
-        // dd($uid);
+       
         if ($gid != 0) {
             $group = DocsGroups::where('user_id', $uid)->where('id', $gid)->first();
             if (!$group)
@@ -381,7 +367,6 @@ class DocsHelper
         if ($cat) {
             $uids = explode(",", $cat->user_ids);
             $users = User::select('id', 'name')->whereIn('id', $uids)->get()->toArray();
-            //////print_r($users);
             return $users;
         } else
             return false;

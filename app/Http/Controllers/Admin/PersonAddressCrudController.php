@@ -73,7 +73,7 @@ class PersonAddressCrudController extends CrudController
                     ['field' => 'person_name',    'headerName' => 'Person'],
                     ['field' => 'type',           'headerName' => 'Type'],
                     ['field' => 'address_line_1', 'headerName' => 'Address Line 1'],
-                    ['field' => 'address_line_2', 'headerName' => 'Address Line 2'],   // ← ADD THIS
+                    ['field' => 'address_line_2', 'headerName' => 'Address Line 2'],  
                     ['field' => 'city',           'headerName' => 'City'],
                     ['field' => 'state',          'headerName' => 'State'],
                     ['field' => 'pincode',        'headerName' => 'Pincode'],

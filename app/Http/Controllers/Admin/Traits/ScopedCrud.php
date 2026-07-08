@@ -29,7 +29,7 @@ trait ScopedCrud
         $scopes = $user->userDataScopes()->byType($scopeType)->active()->get();
 
         if ($scopes->isEmpty()) {
-            return; // all
+            return; 
         }
 
         $hasWildcard = $scopes->contains(function ($scope) {
@@ -50,7 +50,7 @@ trait ScopedCrud
         if (!empty($accessibleIds)) {
             $this->crud->addClause('whereIn', 'id', $accessibleIds);
         } else {
-            $this->crud->addClause('whereRaw', '1=0'); // deny if no access
+            $this->crud->addClause('whereRaw', '1=0'); 
         }
     }
 
@@ -79,7 +79,7 @@ trait ScopedCrud
         }
 
         if (!$applied) {
-            // No parent filters, allow all
+           
         }
     }
 
@@ -101,8 +101,5 @@ trait ScopedCrud
         'variant' => [
             ['parent_type' => 'vehicle_model', 'foreign_key' => 'vehicle_model_id'],
         ],
-        // Add for color if needed, e.g., if colors per variant
-        // 'color' => [],
-        // 'division' => [],
     ];
 }

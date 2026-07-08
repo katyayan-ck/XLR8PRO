@@ -123,7 +123,7 @@ class QuotationCrudController extends CrudController
 
                 'revision' => $quotation->revision,
 
-                // Charges
+               
                 'ex_showroom_price' => $data['ex_showroom_price'] ?? '',
                 'policy_type' => $insurance_type_map[$data['policy_type'] ?? ''] ?? '-',
                 'registration_type' => $registration_type_map[$data['registration_type'] ?? ''] ?? '-',
@@ -153,14 +153,14 @@ class QuotationCrudController extends CrudController
                 'charger_swapping_amount' => $data['charger_swapping_amount'] ?? '',
                 'tcs' => $data['tcs'] ?? '',
 
-                // Totals
+               
                 'onroad_price' => number_format($quotation->onroad_price, 2),
                 'invoice_price' => number_format($quotation->invoice_price, 2),
                 'total_receivable' => $data['total_receivable'] ?? '',
                 'total_discount' => $data['total_discount'] ?? '',
                 'net_receivable' => $data['net_receivable_summary'] ?? '',
 
-                // Discounts
+                
                 'oem_scheme_discount' => $data['oem_scheme_discount'] ?? '',
                 'fame_subsidy' => $data['fame_subsidy'] ?? '',
                 'exchange_bonus' => $data['exchange_bonus'] ?? '',

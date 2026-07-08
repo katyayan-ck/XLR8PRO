@@ -276,7 +276,6 @@ class VariantCrudController extends CrudController
             'is_active' => 'nullable|boolean',
         ]);
 
-        // Prevent deactivation if active Colors exist
         if (
             $variant->is_active == 1 &&
             !$request->boolean('is_active')

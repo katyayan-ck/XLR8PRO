@@ -28,8 +28,7 @@ class BranchSheet extends BaseSheetImport
 
         $now = Carbon::now();
 
-        // Existence check on `code` (unique column in schema) — NOT branch_code
-        // branch.code and branch.branch_code hold the same short value for branches.
+       
         $this->upsert('xlr8_admin_branch', [
             'code'           => $branchCode,
             'branch_code'    => $branchCode,

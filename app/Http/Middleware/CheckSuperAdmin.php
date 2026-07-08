@@ -28,12 +28,10 @@ class CheckSuperAdmin
     {
         $user = auth()->user();
 
-        // Check if user is authenticated
         if (!$user) {
             return $this->unauthorized($request, 'Unauthenticated');
         }
 
-        // Check if user has super admin role
         if (!$user->isSuperAdmin()) {
             return $this->unauthorized($request, 'Super admin access required');
         }
