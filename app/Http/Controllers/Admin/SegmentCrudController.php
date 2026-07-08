@@ -50,7 +50,6 @@ class SegmentCrudController extends CrudController
                 </div>
             ';
 
-            // Display Active/Inactive nicely
             $mapped['is_active'] = $segment->is_active ? 'Active' : 'Inactive';
 
             return $mapped;
@@ -63,7 +62,6 @@ class SegmentCrudController extends CrudController
                     ['field' => 'serial_no', 'headerName' => 'S.No'],
                     ['field' => 'code', 'headerName' => 'Code'],
                     ['field' => 'name', 'headerName' => 'Segment Name'],
-                    // ['field' => 'description', 'headerName' => 'Description'],
                     ['field' => 'is_active', 'headerName' => 'Active'],
                     ['field' => 'action', 'headerName' => 'Actions']
                 ],
@@ -103,7 +101,6 @@ class SegmentCrudController extends CrudController
             'is_active' => 'boolean',
         ]);
 
-        // Prevent deactivation if active Sub Segments exist
         if (
             $segment->is_active == 1 &&
             !$request->boolean('is_active')
@@ -152,7 +149,7 @@ class SegmentCrudController extends CrudController
     ini_set('max_execution_time', 300);
 
     $spreadsheetId = '1peFpdSoJwXDEVlHcp7M4vgWFexOcOg3qR-cpRZTxS4w';
-    $sheetGid      = '1898588560'; // Vehicle Info tab
+    $sheetGid      = '1898588560'; 
 
     $gscolarr = [
         'model_code'     => 'Model Code',
@@ -192,7 +189,6 @@ class SegmentCrudController extends CrudController
             return redirect()->back();
         }
 
-        // Detect column positions from header row, same pattern as finance import
         $gs_pos = array_fill_keys(array_keys($gscolarr), null);
 
         foreach ($values[0] as $key => $header) {
@@ -204,9 +200,7 @@ class SegmentCrudController extends CrudController
                 }
             }
         }
-        //dd($gs_pos); // Debug: Check the detected column positions
-
-        // KeyValue maps (Fuel, Body Make, etc.)
+        
         $keyvalues = \DB::table('xlr8_utils_keyvalue')
             ->whereIn('keyword_code', ['FUEL_TYPE', 'BODY_MAKE', 'BODY_TYPE', 'PERMIT', 'VEHICLE_STATUS'])
             ->get()
@@ -284,14 +278,12 @@ class SegmentCrudController extends CrudController
             $segmentCode    = $segmentMapping[$rawSegment] ?? strtoupper(substr($rawSegment, 0, 5));
             $subSegmentCode = !empty($rawSubSegment) ? substr($rawSubSegment, 0, 15) : null;
 
-            // === KeyValue lookups (auto-create) ===
             $fuelTypeId = $this->getOrCreateKeyValue($fuelMap, 'FUEL_TYPE', $fuelStr, $now);
             $bodyMakeId = $this->getOrCreateKeyValue($bodyMakeMap, 'BODY_MAKE', $bodyMakeStr, $now);
             $bodyTypeId = $this->getOrCreateKeyValue($bodyTypeMap, 'BODY_TYPE', $bodyTypeStr, $now);
             $permitId   = $this->getOrCreateKeyValue($permitMap, 'PERMIT', $permitStr, $now);
             $statusId   = $this->getOrCreateKeyValue($statusMap, 'VEHICLE_STATUS', $statusStr, $now);
 
-            // === Segment ===
             if ($segmentCode && !isset($seenSegments[$segmentCode])) {
                 if (!\DB::table('xlr8_vehicle_segment')->where('code', $segmentCode)->exists()) {
                     \DB::table('xlr8_vehicle_segment')->insert([
@@ -306,7 +298,6 @@ class SegmentCrudController extends CrudController
                 $seenSegments[$segmentCode] = true;
             }
 
-            // === Subsegment ===
             if ($subSegmentCode && $segmentCode) {
                 $subKey = "{$segmentCode}|{$subSegmentCode}";
                 if (!isset($seenSubsegments[$subKey])) {
@@ -327,7 +318,6 @@ class SegmentCrudController extends CrudController
                 }
             }
 
-            // === Model ===
             if (!isset($seenModels[$modelCode])) {
                 if (!\DB::table('xlr8_vehicle_model')
                     ->where('code', $modelCode)->exists()) {

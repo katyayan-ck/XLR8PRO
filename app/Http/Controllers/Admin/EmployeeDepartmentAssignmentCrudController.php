@@ -54,7 +54,6 @@ class EmployeeDepartmentAssignmentCrudController extends CrudController
 
             $mapped['department_name'] = $assign->department?->name ?? '—';
 
-            // Format dates to dd/mm/yyyy
             $mapped['from_date'] = $assign->from_date?->format('d/m/Y') ?? '—';
             $mapped['to_date']   = $assign->to_date?->format('d/m/Y') ?? '—';
 

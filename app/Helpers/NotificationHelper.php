@@ -13,7 +13,6 @@ use Kreait\Firebase\Factory;
 use Kreait\Firebase\Messaging\CloudMessage;
 
 use Carbon\Carbon;
-//Carbon::parse($qrec->created_at)->format('Y-m-d H:i:s')
 class NotificationHelper
 {
     public static function get_notifications($type = "N", $uid = false, $stt = "ALL")
@@ -25,7 +24,6 @@ class NotificationHelper
         $ntype = array("A" => "Alert", "N" => "Notification", "M" => "Message");
         $rtype = array(1 => "Quote", 2 => "Task", 3 => "VehicleData", 4 => "Pricing");
         $data = array();
-        //print_r("<BR><BR>Searching for $type of user $uid <BR><BR>");
         $un = UserNotif::where('user_id', $uid)->where('type', $type);
         if ($stt == "UNREAD")
             $un = $un->where('status', 1);
@@ -35,7 +33,6 @@ class NotificationHelper
             $un = $un->where('status', '<', 3);
 
         $un = $un->with('message')->orderBy('created_at', 'desc')->get();
-        //print_r($un->toarray());
         if ($un) {
             foreach ($un as $noty) {
                 $row = array();
@@ -66,11 +63,8 @@ class NotificationHelper
         $data['notifications'] = $data['alerts'] = $data['messages'] = array("total" => 0, "read" => 0, "unread" => 0);
         $type = array("N" => "notifications", "A" => "alerts", "M" => "messages");
         $mode = array(1 => "unread", 2 => "read");
-        // $mode = null;
         $un = UserNotif::select('id', 'type', 'status')->where('user_id', $uid)->where('status', '<', 3)->get();
         foreach ($un as $rec) {
-            // print_r($rec->toarray());
-            // print_r("<br>");
             $data[$type[$rec->type]]['total']++;
             $data[$type[$rec->type]][$mode[$rec->status]]++;
         }
@@ -147,8 +141,7 @@ class NotificationHelper
         $un->user_id = $uid;
         $un->save();
         $rtype = array(1 => "QUOTE", 2 => "TASK");
-        //$type, $target, $title, $body, $rtype, $rid, $img = false, $data = false, $color = false
-        $fcm = null; //User::find($uid)->fcm_token;
+        $fcm = null; 
         if (isset($fcm) && !empty($fcm) && $fcm != null)
             self::sendNoty("FCM", $fcm, $ttl, $msg, $rtype[$ref], $refid);
         return;
@@ -212,14 +205,11 @@ class NotificationHelper
                 $rft = $rtype[$mtype];
             $nots = Notification::where('target', $uid)->where('ref_type', $rft)->where('ref_id', $mid)->get();
             if ($nots) {
-                //print_r("<br>Noty found...");
                 $count = 0;
                 foreach ($nots as $noty) {
                     $un = UserNotif::where('note_id', $noty->id)->where('user_id', $uid)->get();
                     foreach ($un as $rec) {
-                        // print_r("<br>Notif found...");
                         if ($rec->status != $actype[$act]) {
-                            // print_r("<br>Status Diff found...");
                             $rec->status = $actype[$act];
                             $rec->save();
                             if ($rec->status == 3)

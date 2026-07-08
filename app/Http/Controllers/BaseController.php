@@ -39,9 +39,7 @@ abstract class BaseController extends Controller
 {
     use AuthorizesRequests;
 
-    // ═══════════════════════════════════════════════════════════════════════════════
-    // SUCCESS RESPONSES
-    // ═══════════════════════════════════════════════════════════════════════════════
+   
 
     /**
      * Return successful response JSON (uniform format: no 'meta', timestamp direct)
@@ -100,10 +98,7 @@ abstract class BaseController extends Controller
         );
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════════
-    // ERROR RESPONSES
-    // ═══════════════════════════════════════════════════════════════════════════════
-
+   
     /**
      * Return error response (uniform format, optional data/errors)
      * 
@@ -192,9 +187,7 @@ abstract class BaseController extends Controller
         );
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════════
-    // EXCEPTION HANDLING
-    // ═══════════════════════════════════════════════════════════════════════════════
+    
 
     /**
      * Handle exceptions uniformly with mapping to custom codes
@@ -209,10 +202,10 @@ abstract class BaseController extends Controller
         string $operation,
         array $context = []
     ): JsonResponse {
-        // Log the exception first
+       
         $this->logException($e, $operation, $context);
 
-        // Handle custom ApplicationExceptions
+       
         if ($e instanceof ApplicationException) {
             return $this->errorResponse(
                 $e->getMessage(),
@@ -222,7 +215,6 @@ abstract class BaseController extends Controller
             );
         }
 
-        // Map Laravel built-in exceptions to uniform format
         if ($e instanceof LaravelValidationException) {
             return $this->errorResponse(
                 'Validation failed',
@@ -238,7 +230,7 @@ abstract class BaseController extends Controller
             return $this->notFoundResponse('Resource');
         }
 
-        // Generic fallback for other exceptions
+       
         return $this->errorResponse(
             'An unexpected error occurred',
             ErrorCodeEnum::SYSTEM_ERROR->value,
@@ -311,9 +303,7 @@ abstract class BaseController extends Controller
         Log::info("Audit: {$action} {$resource}", $auditData);
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════════
-    // AUTHORIZATION
-    // ═══════════════════════════════════════════════════════════════════════════════
+ 
 
     /**
      * Check authorization and throw exception if not allowed

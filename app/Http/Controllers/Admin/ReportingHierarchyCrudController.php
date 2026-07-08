@@ -24,6 +24,6 @@ class ReportingHierarchyCrudController extends CrudController
     protected function setupReorderOperation()
     {
         $this->crud->set('reorder.label', 'user.name');
-        $this->crud->set('reorder.max_level', 0); // Unlimited
+        $this->crud->set('reorder.max_level', 0);
     }
 }

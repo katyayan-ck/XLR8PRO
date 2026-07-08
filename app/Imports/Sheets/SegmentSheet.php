@@ -10,14 +10,12 @@ use Illuminate\Support\Facades\DB;
 
 class SegmentSheet implements ToCollection, WithHeadingRow
 {
-    // Default brand — all segments belong to MHN (Mahindra) in this workbook
     const DEFAULT_BRAND = 'MHN';
 
     public function __construct(protected RbacMasterImport $master) {}
 
     public function collection(Collection $rows): void
     {
-        // Ensure brand exists first
         DB::table('xlr8_vehicle_brand')->updateOrInsert(
             ['code' => self::DEFAULT_BRAND],
             ['name' => 'Mahindra', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()]

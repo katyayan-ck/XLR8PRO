@@ -22,13 +22,12 @@ class VerticalSheet extends BaseSheetImport
         if (!$code || !$name) { $this->skip("Row {$rowIndex}: missing code/name"); return; }
 
         $now = Carbon::now();
-        // FIXED: existence check on `code` (not vert_code). Both are written same value.
         $this->upsert('xlr8_admin_vertical', [
             'code'       => $code,           
             'name'       => $name,
             'is_active'  => $this->b($row['is_active'] ?? 'Yes', true),
             'created_at' => $now,
             'updated_at' => $now,
-        ], ['code' => $code]);       // FIXED: match on `code`, not `vert_code`
+        ], ['code' => $code]);     
     }
 }

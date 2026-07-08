@@ -148,7 +148,6 @@ class BrandCrudController extends CrudController
         $permitMap   = $this->buildKeyMap($keyvalues->get('PERMIT',        collect()));
         $statusMap   = $this->buildKeyMap($keyvalues->get('VEHICLE_STATUS', collect()));
  
-        // ── Segment mapping (PV → PERSL, CV → COMML) ────────────────────
         $segmentMapping = [
             'LMM'        => 'LMM',
             'BEV'        => 'BEV',
@@ -171,7 +170,6 @@ class BrandCrudController extends CrudController
             'skipped'    => 0,
         ];
  
-        // Track processed codes within this import to avoid redundant DB hits
         $seenSegments    = [];
         $seenSubsegments = [];
         $seenModels      = [];
@@ -184,11 +182,10 @@ class BrandCrudController extends CrudController
         ]);
  
         foreach (array_slice($rows, 1) as $rowIndex => $row) {
-            $excelRow = $rowIndex + 2;  // human-readable row number for logs
+            $excelRow = $rowIndex + 2; 
  
-            // ── Raw values ───────────────────────────────────────────────
-            $fullModelCode  = trim($row[0]  ?? '');   // e.g. 1AM2NW1T9MBB1BL
-            $rawOemModel    = trim($row[1]  ?? '');   // e.g. ALFA LOAD DUO
+            $fullModelCode  = trim($row[0]  ?? '');  
+            $rawOemModel    = trim($row[1]  ?? '');   
             $oemVariant     = trim($row[2]  ?? '');
             $rawSegment     = strtoupper(trim($row[3]  ?? ''));
             $rawSubSegment  = strtoupper(trim($row[4]  ?? ''));
@@ -209,7 +206,6 @@ class BrandCrudController extends CrudController
             $colourName     = trim($row[19] ?? '');
             $statusStr      = strtoupper(trim($row[20] ?? 'ACTIVE'));
  
-            // ── Guard: mandatory fields ──────────────────────────────────
             if (empty($fullModelCode) || empty($rawOemModel)) {
                 \Log::warning("Row {$excelRow} SKIPPED — Empty Model Code or OEM Model", [
                     'model_code' => $fullModelCode,
@@ -228,16 +224,14 @@ class BrandCrudController extends CrudController
             }
  
             try {
-                // ── Derived codes ────────────────────────────────────────
-                $variantCode = substr($fullModelCode, 0, -2);   // strip last 2 = colour suffix
-                $colorCode   = strtoupper(substr($fullModelCode, -2)); // last 2 chars
+                $variantCode = substr($fullModelCode, 0, -2);  
+                $colorCode   = strtoupper(substr($fullModelCode, -2)); 
  
                 $modelCode      = strtoupper(substr($rawOemModel, 0, 30));
                 $segmentCode    = $segmentMapping[$rawSegment] ?? strtoupper(substr($rawSegment, 0, 5));
                 $subSegmentCode = !empty($rawSubSegment) ? substr($rawSubSegment, 0, 15) : null;
  
-                // ── KeyValue ID lookups (auto-create if missing) ────────────────
-                // FUEL TYPE
+               
                 $fuelTypeId = $fuelMap[$fuelStr] ?? null;
                 if (!empty($fuelStr) && $fuelTypeId === null) {
                     \Log::warning("Row {$excelRow} — Auto-creating fuel: [{$fuelStr}]");
@@ -254,7 +248,7 @@ class BrandCrudController extends CrudController
                     $fuelMap[$fuelStr] = $fuelTypeId;
                 }
                 
-                // BODY MAKE
+                
                 $bodyMakeId = $bodyMakeMap[$bodyMakeStr] ?? null;
                 if (!empty($bodyMakeStr) && $bodyMakeId === null) {
                     \Log::warning("Row {$excelRow} — Auto-creating body_make: [{$bodyMakeStr}]");
@@ -271,7 +265,6 @@ class BrandCrudController extends CrudController
                     $bodyMakeMap[$bodyMakeStr] = $bodyMakeId;
                 }
                 
-                // BODY TYPE
                 $bodyTypeId = $bodyTypeMap[$bodyTypeStr] ?? null;
                 if (!empty($bodyTypeStr) && $bodyTypeId === null) {
                     \Log::warning("Row {$excelRow} — Auto-creating body_type: [{$bodyTypeStr}]");
@@ -288,7 +281,7 @@ class BrandCrudController extends CrudController
                     $bodyTypeMap[$bodyTypeStr] = $bodyTypeId;
                 }
                 
-                // PERMIT
+              
                 $permitId = $permitMap[$permitStr] ?? null;
                 if (!empty($permitStr) && $permitId === null) {
                     \Log::warning("Row {$excelRow} — Auto-creating permit: [{$permitStr}]");
@@ -305,7 +298,7 @@ class BrandCrudController extends CrudController
                     $permitMap[$permitStr] = $permitId;
                 }
                 
-                // VEHICLE STATUS
+               
                 $statusId = $statusMap[$statusStr] ?? null;
                 if (!empty($statusStr) && $statusId === null) {
                     \Log::warning("Row {$excelRow} — Auto-creating status: [{$statusStr}]");
@@ -322,7 +315,6 @@ class BrandCrudController extends CrudController
                     $statusMap[$statusStr] = $statusId;
                 }
                 
-                // ── 1. Segment ───────────────────────────────────────────
                 if ($segmentCode && !isset($seenSegments[$segmentCode])) {
                     if (!\DB::table('xlr8_vehicle_segment')
                         ->where('brand_code', $brandCode)
@@ -343,7 +335,6 @@ class BrandCrudController extends CrudController
                     $seenSegments[$segmentCode] = true;
                 }
  
-                // ── 2. Subsegment ────────────────────────────────────────
                 if ($subSegmentCode && $segmentCode) {
                     $subKey = "{$segmentCode}|{$subSegmentCode}";
                     if (!isset($seenSubsegments[$subKey])) {
@@ -369,7 +360,6 @@ class BrandCrudController extends CrudController
                     }
                 }
  
-                // ── 3. Model ─────────────────────────────────────────────
                 if (!isset($seenModels[$modelCode])) {
                     if (!\DB::table('xlr8_vehicle_model')
                         ->where('brand_code', $brandCode)
@@ -393,7 +383,6 @@ class BrandCrudController extends CrudController
                     $seenModels[$modelCode] = true;
                 }
  
-                // ── 4. Variant ───────────────────────────────────────────
                 if (!isset($seenVariants[$variantCode])) {
                     if (!\DB::table('xlr8_vehicle_variant')
                         ->where('brand_code', $brandCode)
@@ -432,7 +421,6 @@ class BrandCrudController extends CrudController
                     $seenVariants[$variantCode] = true;
                 }
  
-                // ── 5. Colour ────────────────────────────────────────────
                 $colorKey = "{$modelCode}|{$variantCode}|{$colorCode}";
                 if (!isset($seenColors[$colorKey])) {
                     if (!\DB::table('xlr8_vehicle_color')
@@ -499,11 +487,7 @@ class BrandCrudController extends CrudController
  
     return redirect()->back();
 }
- 
-/**
- * Build UPPERCASE_KEY → id map from a keyvalue collection.
- * Indexes both `key` and `value` columns so either can match.
- */
+
 private function buildKeyMap(\Illuminate\Support\Collection $rows): array
 {
     $map = [];
@@ -514,7 +498,6 @@ private function buildKeyMap(\Illuminate\Support\Collection $rows): array
         if (!empty($kv->value)) {
             $map[strtoupper(trim($kv->value))] = $kv->id;
         }
-        // Also index by code column since that's what your DB uses
         if (!empty($kv->code)) {
             $map[strtoupper(trim($kv->code))] = $kv->id;
         }

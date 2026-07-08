@@ -137,33 +137,7 @@ class DepartmentCrudController extends CrudController
         ]);
     }
 
-    // public function update(Request $request, $id)
-    // {
-    //     $department = Department::findOrFail($id);
-
-    //     $validated = $request->validate([
-    //         'code' => 'required|string|min:3|max:10|unique:xlr8_admin_department,code,' . $id,
-    //         'name' => 'required|string|max:255',
-    //         'description' => 'nullable|string',
-
-    //         'department_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-
-    //         'is_active' => 'nullable|boolean',
-    //     ]);
-
-    //     $department->update($validated);
-
-    //     if ($request->hasFile('department_image')) {
-
-    //         $department
-    //             ->addMediaFromRequest('department_image')
-    //             ->toMediaCollection('department_image');
-    //     }
-
-    //     \Alert::success('Department updated successfully!')->flash();
-
-    //     return redirect(backpack_url('department'));
-    // }
+   
     public function update(Request $request, $id)
     {
         $department = Department::findOrFail($id);

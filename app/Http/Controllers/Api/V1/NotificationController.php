@@ -43,10 +43,6 @@ class NotificationController extends BaseController
         $this->middleware('auth:sanctum')->except([]);
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════════
-    // DEVICE MANAGEMENT ENDPOINTS
-    // ═══════════════════════════════════════════════════════════════════════════════
-
     /**
      * Register device FCM token
      *
@@ -118,7 +114,7 @@ class NotificationController extends BaseController
                 auth('sanctum')->user(),
                 $validated['device_id'],
                 $validated['device_name'],
-                strtolower($validated['platform']),  // Normalize to lowercase if needed
+                strtolower($validated['platform']), 
                 $validated['fcm_token'],
                 $validated['metadata'] ?? []
             );
@@ -383,9 +379,6 @@ class NotificationController extends BaseController
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════════
-    // NOTIFICATION ENDPOINTS
-    // ═══════════════════════════════════════════════════════════════════════════════
 
     /**
      * Get unread notifications count

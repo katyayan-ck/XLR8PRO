@@ -14,7 +14,6 @@ use CommonHelper;
 use NotificationHelper;
 
 use Carbon\Carbon;
-//Carbon::parse($qrec->created_at)->format('Y-m-d H:i:s')
 class TaskHelper
 {
     public static function getTypes()
@@ -94,7 +93,6 @@ class TaskHelper
     {
         $data = array();
         $task = ToDo::find($id);
-        // print_r($task->toArray());
         $comm = ChatHelper::get_communication(2, $id);
         $data['task_id'] = $task->id;
         $data['task_type'] = CommonHelper::enumValueById($task->task_type);
@@ -164,14 +162,12 @@ class TaskHelper
         $data['status'] = $tst;
         $data['user_can'] = array();
         if (!empty($comm['status'])) {
-            //dd($comm);
             foreach ($comm['status'] as $his) {
 
                 $data['history']['status'][] = $his;
             }
         }
         if (!empty($comm['comm'])) {
-            //dd($comm);
             foreach ($comm['comm'] as $his) {
                 $data['history']['communication'][] = $his;
             }
@@ -204,15 +200,10 @@ class TaskHelper
             $pata = array('user' => "UNAUTHORISED");
             $pata['user_id'] = $cuser;
             $pata['user_name'] = CommonHelper::getUserName($cuser);
-            /* $pata['id_assignee'] = $data['id_assignee'];
-					$pata['assignee'] = $data['assignee'] ;
-					$pata['id_follower'] = $data['id_follower'];
-					$pata['follower'] = $data['follower'];
-					$pata['id_snooper'] = $data['id_snooper'];
-				$pata['snooper'] = $data['snooper']; */
+            
             $data = $pata;
         }
-        //dd($data);
+       
 
         return $data;
     }
@@ -282,9 +273,9 @@ class TaskHelper
                             NotificationHelper::notify($person, "Task Edited  Id : " . $td->id, $td->title, 2, $td->id, "N");
                         }
                     }
-                    //die;
+                 
                     if (!empty($fdoc)) {
-                        $td->addMedia($fdoc)->toMediaCollection('docs'); //
+                        $td->addMedia($fdoc)->toMediaCollection('docs'); 
                     }
 
                     return $td->id;
@@ -313,20 +304,18 @@ class TaskHelper
                 $urole = "SNOOPER";
             else
                 $urole = "UNAUTHORISED";
-            // print_r("<br> User is : $urole");
+           
             if ($urole != "SNOOPER" && $urole != "UNAUTHORISED") {
                 $commid = ChatHelper::get_commid(2, $td->id, "Task Created");
 
                 $act = false;
                 $user = CommonHelper::getUserName($uid);
                 if ($status == 0) {
-                    // print_r("<br> Status not changed");
                     $sub = $user . " added a remark";
 
                     ChatHelper::add_followup($commid, $remark, $sub, $file, 2);
                     $act = true;
                 } else {
-                    //  print_r("<br> Status Changed");
                     $action = "Staus Changed";
                     $pr = $td->status;
                     if ($pr == 1)
@@ -353,7 +342,6 @@ class TaskHelper
                         $post = "CLOSE";
                     elseif ($status == 6)
                         $post = "REOPEN";
-                    //print_r("<br> from $pre to $post");
                     if ($urole == "ASSIGNEE") {
                         if (($pr == 1 || $pr == 2 || $pr == 3) && ($status == 2 || $status == 3 || $status == 4))
                             $act = true;
@@ -366,16 +354,12 @@ class TaskHelper
                     if ($act) {
 
                         $sub = $user . " changed status from $pre to $post";
-                        //$commid, $content, $remark, $file = null, $stt = 2
-                        //print_r("<br> Act is true, adding followup with subject : $sub");
                         ChatHelper::add_followup($commid, $remark, $sub, $file, 1);
                         $td->status = $status;
                         $td->save();
-                        // print_r("<br> Follow up added status changed");
                     }
                 }
                 if ($act) {
-                    // print_r("<br> Act is true, sending notifications");
                     foreach ($assignee as $pr)
                         if (!empty($pr))
                             NotificationHelper::notify($pr, $sub, $remark, 2, $td->id, "N");
@@ -415,7 +399,6 @@ class TaskHelper
         if ($td) {
             ChatHelper::add_communication(2, "Task Created", $td->title, $td->id);
             $commid = ChatHelper::get_commid(2, $td->id, "Task Created");
-            //  $commid, $content, $remark, $file = null, $stt = 2
             ChatHelper::add_followup($commid, $td->title, "Task Created", null, 1);
             NotificationHelper::notify($td->owner, "New Task Created. Id : " . $td->id, $td->title, 2, $td->id, "N");
             $ac = 0;
@@ -459,9 +442,9 @@ class TaskHelper
                     NotificationHelper::notify($person, "New Task to Snoop : " . $td->id,  $td->title, 2, $td->id, "N");
                 }
             }
-            //die;
+          
             if (!empty($fdoc)) {
-                $td->addMedia($fdoc)->toMediaCollection('docs'); //
+                $td->addMedia($fdoc)->toMediaCollection('docs'); 
             }
 
             return $td->id;
@@ -473,8 +456,6 @@ class TaskHelper
     {
         $trec = ToDo::find($tid);
         $members = Tasker::where('task_id', $tid)->get();
-        // print_r("<br>Menebers : <br>");
-        // print_r($members->toarray());
         $temp = array();
         $temp['id'] = $trec->id;
         $temp['task_type'] = CommonHelper::enumValueById($trec->task_type);
@@ -495,7 +476,6 @@ class TaskHelper
 
 
         foreach ($members as $tm) {
-            //print_r("<br>" . $tm->member_id . " " . $tm->association);
             if ($tm->association == "OWNER") {
                 $temp['owner'][] = CommonHelper::getUserName($tm->member_id);
                 $temp['id_owner'][] = $tm->member_id;

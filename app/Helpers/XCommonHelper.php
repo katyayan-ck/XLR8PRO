@@ -8,7 +8,7 @@ use Carbon\Carbon;
 use App\Models\EnumCols;
 use App\Models\EnumMaster;
 
-//User System Models
+
 use App\User;
 use App\Models\X_Designation;
 use App\Models\X_Department;
@@ -27,25 +27,11 @@ use Illuminate\Support\Facades\Log;
 
 
 
-/**
-
- * Class XCommonHelper
-
- * A helper class providing various static methods to facilitate operations
-
- * related to EnumCols and EnumMaster models.
-
- * It includes methods for retrieving, creating, and handling enumerations.
-
- */
-
 class XCommonHelper
 
 {
 
-    /**
-     * Get enum ID by keyword and value, create if $new=true and not exists.
-     */
+    
     public static function getEnumIdNew(string $keyword, string $value, bool $new = false): ?int
     {
         $col = EnumCols::where('keyword', $keyword)->first();
@@ -73,9 +59,7 @@ class XCommonHelper
         return $enum ? $enum->id : null;
     }
 
-    /**
-     * Get all enum ids for a keyword (optionally active only).
-     */
+   
     public static function getAllEnumIds(string $keyword, bool $onlyActive = true): array
     {
         $col = EnumCols::where('keyword', $keyword)->first();
@@ -129,7 +113,7 @@ class XCommonHelper
 
     public static function checkRoNumber($ro_no)
     {
-        $ro_no = trim((string) $ro_no); // Ensure string and remove whitespace
+        $ro_no = trim((string) $ro_no);
         \Log::info('Checking RO number: ' . $ro_no . ' (Type: ' . gettype($ro_no) . ', Length: ' . strlen($ro_no) . ')');
         $record = XlSpareClosure::where('ro_no', $ro_no)->first();
         \Log::info('Record found: ' . ($record ? json_encode($record->toArray()) : 'None'));
@@ -154,7 +138,7 @@ class XCommonHelper
 
     public static function getLocationsByState($state_id)
     {
-        // Fetch locations where parent is equal to the provided state_id
+       
         return PinCodes::where('parent', $state_id)->get(['id', 'name']);
     }
     public static function createRole($name, $permissions = [])
@@ -225,7 +209,7 @@ class XCommonHelper
             if (isset($departs[$id]))
                 $data[$id] = $departs[$id];
             else
-                $data[$id] = ["name" => "Unknown Department"]; //"Unknown Department";
+                $data[$id] = ["name" => "Unknown Department"]; 
         }
         return $data;
     }
@@ -292,9 +276,7 @@ class XCommonHelper
 
     public static function branchesId2Names($ids)
     {
-        //print_r("<br>\nReceived Ids :");
-        //print_r($ids);
-        //print_r("<br>\n ID Count :" . count($ids) . " and value : " . $ids[0]);
+       
         if (count($ids) == 1 && $ids[0] != 0)
             return array(0 => ['name' => "All"]);
         $data = array();
@@ -459,7 +441,6 @@ class XCommonHelper
         foreach ($ids as $dept) {
             $tds = X_Division::select('id', 'name', 'dept_id', 'abbr')->where('dept_id', $dept)->where('status', 1)->get()->toArray();
             foreach ($tds as $td) {
-                //print_r($td);
                 $divs[$td['id']] = array(
                     'id' => $td['id'],
                     'name' => $td['name'],
@@ -479,9 +460,9 @@ class XCommonHelper
         foreach ($ids as $br) {
             $tls = X_Location::select('id', 'name', 'branch_id', 'abbr')->where('branch_id', $br)->where('status', 1)->get()->toArray();
 
-            // print_r($tls);
+            
             foreach ($tls as $tl) {
-                //print_r($tl['name']);
+            
                 $locs[$tl['id']] = array(
                     'id' => $tl['id'],
                     'name' => $tl['name'],
@@ -491,7 +472,7 @@ class XCommonHelper
                 );
             }
         }
-        //print_r($locs);
+       
         return $locs;
     }
 
@@ -511,14 +492,7 @@ class XCommonHelper
 
 
 
-    /**
-     * Retrieves the column ID based on the given column name. If the column does not exist and
-     * the $new parameter is true, a new column will be created.
-     *
-     * @param string $col_name The name of the column to retrieve.
-     * @param bool $new Indicates whether to create a new column if it doesn't exist.
-     * @return int|false Returns the column ID or false if not found and $new is false.
-     */
+    
     public static function getColId($col_name, $new = false)
     {
         $enum_cols = EnumCols::where('keyword', $col_name)->first();

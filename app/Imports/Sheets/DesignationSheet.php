@@ -21,7 +21,6 @@ class DesignationSheet extends BaseSheetImport
 
     protected function processRow(array $row, int $rowIndex): void
     {
-        // IMPORTANT: writes to `code` ONLY — desig_code column was DROPPED from table.
         $code = $this->code($row['code'] ?? null, 10);
         if (!$code) { $this->skip("Row {$rowIndex}: missing designation code"); return; }
 

@@ -56,7 +56,6 @@ class PersonCrudController extends CrudController
             $mapped['serial_no'] = $index + 1;
             $mapped['full_name'] = trim("{$person->first_name} {$person->middle_name} {$person->last_name}");
 
-            // Format DOB as dd/mm/yyyy
             $mapped['dob'] = $person->dob?->format('d/m/Y') ?? '—';
 
             $editUrl = backpack_url("person/{$person->id}/edit");
@@ -109,7 +108,7 @@ class PersonCrudController extends CrudController
             'salutation'      => 'nullable|in:Mr,Mrs,Ms,Dr',
             'first_name'      => 'required|string|max:100',
             'middle_name'     => 'nullable|string|max:100',
-            'last_name'       => 'nullable|string|max:100',           // ← Changed to nullable
+            'last_name'       => 'nullable|string|max:100',           
             'display_name'    => 'nullable|string|max:255',
             'gender' => 'nullable|in:Male,Female,Other,Prefer not to say',
             'dob'             => 'nullable|date',
@@ -149,7 +148,7 @@ class PersonCrudController extends CrudController
             'salutation'      => 'nullable|in:Mr,Mrs,Ms,Dr',
             'first_name'      => 'required|string|max:100',
             'middle_name'     => 'nullable|string|max:100',
-            'last_name'       => 'nullable|string|max:100',           // ← Changed to nullable
+            'last_name'       => 'nullable|string|max:100',          
             'display_name'    => 'nullable|string|max:255',
             'gender' => 'nullable|in:Male,Female,Other,Prefer not to say',
             'dob'             => 'nullable|date',

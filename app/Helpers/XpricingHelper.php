@@ -170,7 +170,7 @@ class XpricingHelper
 
     public static function selectTechnicians()
     {
-        $designation_ids = [22621, 22622]; // Technician and Technician - Trainee
+        $designation_ids = [22621, 22622]; 
 
         $users = User::select('id', 'name', 'emp_code', 'mile_id', 'mobile', 'email', 'branch', 'location', 'segment', 'vertical', 'models', 'designation', 'department')
             ->where(function ($query) use ($designation_ids) {
@@ -223,7 +223,6 @@ class XpricingHelper
 
     {
 
-        //self::updatePriceList();
 
         $plshow = self::getPriceHoldStatus();
 
@@ -241,7 +240,7 @@ class XpricingHelper
 
         $mdata = XVehicleMaster::where('status', 1)->where('segment_id', $sgid)->orderBy('custom_model', 'asc')->orderBy('display_name', 'asc')->orderBy('vin', 'desc')->get();
 
-        //dd($mdata->toArray());
+        
 
         $vhdata = array();
 
@@ -275,11 +274,9 @@ class XpricingHelper
 
                     $vh["rto_tape"] = 0;
 
-                    $vh["rsa"] = 0; //self::getRSA($vdata->display_name);
+                    $vh["rsa"] = 0; 
 
-                    $vh["nildep"]  = 0; //self::getInsurance($vdata->id);
-
-                    //fuel_id  ||  segment_id  ||  permit_id  ||  rto_tape  ||  accessories  ||  accessories_mnp  ||  tcs   invoice  ||  onroad  ||  stock
+                    $vh["nildep"]  = 0; 
 
                     $vh["bhrto"] = $vh["rto"] = 0;
 
@@ -307,23 +304,11 @@ class XpricingHelper
 
                     $vh["loyalty"] = array();
 
-                    //$enl = ExtrasHelper::getXchange($vh["vhid"]);
+                   
 
-                    // foreach ($enl as $tel) {
+                    $vh["corp"] =  array(); 
 
-                    //     if ($tel['type'] == "Exchange")
-
-                    //         $vh["exchange"][] = $tel;
-
-                    //     if ($tel['type'] == "Loyalty")
-
-                    //         $vh["loyalty"][] = $tel;
-
-                    // }
-
-                    $vh["corp"] =  array(); //ExtrasHelper::getCorporate($vdata->Vehicle->cm_id);
-
-                    $vh["shield"] =  array(); //ExtrasHelper::getShield($vdata->Vehicle->cm_id);
+                    $vh["shield"] =  array(); 
 
                     $vh["cond_disc"] = true;
                 } else {
@@ -338,11 +323,10 @@ class XpricingHelper
 
                     $vh["rto_tape"] = $vdata->rto_tape;
 
-                    $vh["rsa"] = $vdata->rsa; //self::getRSA($vdata->display_name);
+                    $vh["rsa"] = $vdata->rsa; 
 
-                    $vh["nildep"]  = $vdata->insurance; //self::getInsurance($vdata->id);
+                    $vh["nildep"]  = $vdata->insurance; 
 
-                    //fuel_id  ||  segment_id  ||  permit_id  ||  rto_tape  ||  accessories  ||  accessories_mnp  ||  tcs   invoice  ||  onroad  ||  stock
 
                     $vh["bhrto"] = $vh["rto"] = $vdata->rto;
 
@@ -370,24 +354,11 @@ class XpricingHelper
 
                     $vh["loyalty"] = array();
 
-                    //$enl = ExtrasHelper::getXchange($vh["vhid"]);
+                    
 
-                    // foreach ($enl as $tel) {
+                    $vh["corp"] =  array(); 
 
-                    //     if ($tel['type'] == "Exchange")
-
-                    //         $vh["exchange"][] = $tel;
-
-                    //     if ($tel['type'] == "Loyalty")
-
-                    //         $vh["loyalty"][] = $tel;
-
-                    // }
-
-                    $vh["corp"] =  array(); //ExtrasHelper::getCorporate($vdata->Vehicle->cm_id);
-
-                    $vh["shield"] =  array(); //ExtrasHelper::getShield($vdata->Vehicle->cm_id);
-
+                    $vh["shield"] =  array(); 
                     $vh["cond_disc"] = true;
                 }
 
@@ -397,9 +368,7 @@ class XpricingHelper
             }
         }
 
-        //dd($vhdata[59]);
-
-        // $data["data"] = $vhdata;
+        
 
         return $vhdata;
     }
@@ -410,7 +379,6 @@ class XpricingHelper
 
     {
 
-        //self::updatePriceList();
 
 
 
@@ -418,7 +386,7 @@ class XpricingHelper
 
         $mdata = XCsd::get();
 
-        //dd($mdata->toArray());
+        
 
         $vhdata = array();
 
@@ -454,11 +422,9 @@ class XpricingHelper
 
                     $vh["rsa"] = 0;
 
-                    $vh["shield"] = 0; //self::getRSA($vdata->display_name);
+                    $vh["shield"] = 0; 
 
-                    $vh["nildep"]  = 0; //self::getInsurance($vdata->id);
-
-                    //fuel_id  ||  segment_id  ||  permit_id  ||  rto_tape  ||  accessories  ||  accessories_mnp  ||  tcs   invoice  ||  onroad  ||  stock
+                    $vh["nildep"]  = 0; 
 
                     $vh["rto"] = 0;
 
@@ -483,11 +449,10 @@ class XpricingHelper
 
                     $vh["rsa"] = $vdata->rsa;
 
-                    $vh["shield"] = $vdata->shield; //self::getRSA($vdata->display_name);
+                    $vh["shield"] = $vdata->shield; 
 
-                    $vh["nildep"]  = $vdata->insurance; //self::getInsurance($vdata->id);
+                    $vh["nildep"]  = $vdata->insurance; 
 
-                    //fuel_id  ||  segment_id  ||  permit_id  ||  rto_tape  ||  accessories  ||  accessories_mnp  ||  tcs   invoice  ||  onroad  ||  stock
 
                     $vh["rto"] = $vdata->rto;
 
@@ -500,10 +465,7 @@ class XpricingHelper
             }
         }
 
-        //dd($vhdata[59]);
-
-        // $data["data"] = $vhdata;
-
+      
         return $vhdata;
     }
 
@@ -525,15 +487,14 @@ class XpricingHelper
 
             $sl = strlen($seg);
 
-            // print_r("<br>Segment is $seg and length is $sl<br>");
+           
 
             $suff = substr($seg, strlen($seg) - 3, 3);
 
-            // print_r("<br>suff : $suff<br>");
 
             if ($suff == " EV") {
 
-                //print_r("Got EV<br>");
+               
 
                 $seg = substr($seg, 0, strlen($seg) - 3);
 
@@ -542,8 +503,7 @@ class XpricingHelper
                 $ev = true;
             } else {
 
-                // print_r("Not EV<br>");
-
+                
                 $ev = false;
 
                 $sid = CommonHelper::getSegID($seg);
@@ -558,11 +518,7 @@ class XpricingHelper
                 $list = XVehicleMaster::select('id', 'custom_model', 'display_name')->where('status', 1)->where('segment_id', $sid)->where('fuel_id', '!=', $evn)->get();
         }
 
-        // print_r("<br>List is <br>");
-
-        //  print_r($list->toarray());
-
-        // $data = array();
+   
 
         $data = array();
 
@@ -664,19 +620,6 @@ class XpricingHelper
             $data[] = $tmp;
         }
 
-        // array_multisort(
-
-        //     array_column($data, 'head'),
-
-        //     SORT_ASC,
-
-        //     array_column($data, 'subhead'),
-
-        //     SORT_ASC,
-
-        //     $data
-
-        // );
 
         return $data;
     }
@@ -704,19 +647,6 @@ class XpricingHelper
             $data[] = $tmp;
         }
 
-        // array_multisort(
-
-        //     array_column($data, 'head'),
-
-        //     SORT_ASC,
-
-        //     array_column($data, 'subhead'),
-
-        //     SORT_ASC,
-
-        //     $data
-
-        // );
 
         return $data;
     }
@@ -748,19 +678,7 @@ class XpricingHelper
             $data[] = $tmp;
         }
 
-        // array_multisort(
-
-        //     array_column($data, 'head'),
-
-        //     SORT_ASC,
-
-        //     array_column($data, 'subhead'),
-
-        //     SORT_ASC,
-
-        //     $data
-
-        // );
+         
 
         return $data;
     }
@@ -788,20 +706,7 @@ class XpricingHelper
             $data[] = $tmp;
         }
 
-        // array_multisort(
-
-        //     array_column($data, 'head'),
-
-        //     SORT_ASC,
-
-        //     array_column($data, 'subhead'),
-
-        //     SORT_ASC,
-
-        //     $data
-
-        // );
-
+       
         return $data;
     }
 
@@ -810,7 +715,6 @@ class XpricingHelper
     public static function getAccessories($seg, $cm, $vrnt)
     {
 
-        //Xessories::select('id', 'item_id', 'price')->where('display_name', $dname)->orderby('price', 'asc')->get();
 
         $key1  = "segment";
 
@@ -981,13 +885,11 @@ class XpricingHelper
 
                 $adds[$addon->id] = $addon->name;
 
-            //print_r($adds);
-
-            // print_r($insextra->toarray());
+           
 
             $cadds = explode("-", $insextra->combo_1_details);
 
-            // print_r($cadds);
+          
 
             $dd = array();
 
@@ -1210,7 +1112,7 @@ class XpricingHelper
 
 
 
-        //print_r($list->toarray());
+       
 
         $data = array();
 
@@ -1418,37 +1320,7 @@ class XpricingHelper
                     }
                 }
 
-                // $loyalty_details = array();
-
-                // if (isset($loyalty[$vh->display_name])) {
-
-                //     $tloyalty = $loyalty[$vh->display_name];
-
-                //     foreach ($tloyalty as $item) {
-
-                //         $loyalty_details[] = array('scheme' => $item->scheme, 'amount' => $item->mnm + $item->dealer);
-
-                //     }
-
-                // }
-
-                // $ms_details = array();
-
-                // if (isset($master[$vh->display_name])) {
-
-                //     $tmaster = $master[$vh->display_name];
-
-                //     $ms_details['scheme'] = $tmaster->scheme;
-
-                //     $ms_details['amount'] = $tmaster->mnm + $tmaster->dealer;
-
-                //     $ms_details['scrappage_bonus'] = ($tmaster->corp == 1) ? true : false;
-
-                //     $ms_details['exchange_bonus'] = ($tmaster->exch == 1) ? true : false;
-
-                //     $ms_details['loyalty_bonus'] = ($tmaster->loyl == 1) ? true : false;
-
-                // }
+               
 
                 $tmp[$seg]["models"][$vh->custom_model]["variants"][$vh->display_name] = array("name" => $vh->display_name, "fuel" => $fuel, "seating" => $seating, "wheels" => $wheels, "features" => self::getVhFeat($vh->display_name), "pricing" => array("exshowroom" => $vh->exshowroom, "incidental_charges" => $vh->incidental_charges, "fastag" => $vh->fastag, "trc" => $vh->trc, "rsa" => $vh->rsa, "rsa_data" => $rsa_details, "shield" => $vh->shield, "shield_data" => $shield_details, "apack" => $vh->accessories, "minimum_apack_value" => $vh->accessories_mnp, "rsa_discount" => $vh->rsa_discount, "shield_discount" => $vh->shield_discount, "apack_discount" => $vh->accessories_discount, "corporate_bonus" => $corp_details, "exchange_bonus" => $xchange_details,  "year" => array()));
             }
@@ -1498,13 +1370,10 @@ class XpricingHelper
 
                         $adds[$addon->id] = $addon->name;
 
-                    //print_r($adds);
-
-                    // print_r($insextra->toarray());
 
                     $cadds = explode("-", $insextra->combo_1_details);
 
-                    // print_r($cadds);
+                   
 
                     $dd = array();
 
@@ -1762,13 +1631,11 @@ class XpricingHelper
 
                         $adds[$addon->id] = $addon->name;
 
-                    //print_r($adds);
-
-                    // print_r($insextra->toarray());
+                   
 
                     $cadds = explode("-", $insextra->combo_1_details);
 
-                    // print_r($cadds);
+                  
 
                     $dd = array();
 
@@ -2077,7 +1944,6 @@ class XpricingHelper
 
         if ($list) {
 
-            //print_r($list->toarray());
 
             $acorp = ($list->corp == 1) ? 1 : 0;
 
@@ -2101,7 +1967,7 @@ class XpricingHelper
 
         $rec = PriceSettings::where('key_name', 'price_hold')->first();
 
-        //dd($rec->toarray());
+   
 
         if ($rec->value == "true")
 
@@ -2114,7 +1980,7 @@ class XpricingHelper
 
 
 
-    public static function setPriceHoldStatus($status = false) //send "true" to enable price hold and "false" to disable price hold
+    public static function setPriceHoldStatus($status = false)
 
     {
 
@@ -2517,7 +2383,6 @@ class XpricingHelper
 
             $amt = 0;
 
-        //$atax = $amt * $extra->addon_tax_rate / 100;
 
         $total += $amt;
 
@@ -2534,7 +2399,7 @@ class XpricingHelper
 
         $data = XPriceHeads::select('id', 'oem_label', 'db_col')->get()->toArray();
 
-        //dd($data);
+       
 
         return $data;
     }
@@ -2555,7 +2420,7 @@ class XpricingHelper
 
                 $res[$d->key_name] = $d->value;
 
-        //dd($res);
+      
 
         return $res;
     }
@@ -2595,7 +2460,7 @@ class XpricingHelper
 
         $data = XessoriesItems::select('id', 'name')->get()->toArray();
 
-        //dd($data);
+       
 
         return $data;
     }
@@ -2608,7 +2473,7 @@ class XpricingHelper
 
         $data = XRtoHeads::select('id', 'label', 'name')->get()->toArray();
 
-        //dd($data);
+       
 
         return $data;
     }
@@ -2621,7 +2486,7 @@ class XpricingHelper
 
         $data = XInsAddons::select('id', 'name', 'slug')->get()->toArray();
 
-        //dd($data);
+        
 
         return $data;
     }
@@ -2742,7 +2607,7 @@ class XpricingHelper
 
         foreach ($vhs as $vh) {
 
-            //print_r($vh->id . " " . $vh->display_name . "<br> ");
+            
 
             $rto = XRtoData::where('vehicle_id', $vh->id)->first();
 
@@ -2756,7 +2621,7 @@ class XpricingHelper
 
                 $vh->rto = 0;
 
-                //print_r("<br>");
+                
 
             }
 
@@ -2768,7 +2633,7 @@ class XpricingHelper
 
                 $vh->insurance = 0;
 
-                // print_r("<br>");
+                
 
             }
 
@@ -2813,7 +2678,7 @@ class XpricingHelper
 
 
 
-        //self::pricelist();
+       
 
     }
 
@@ -2857,7 +2722,7 @@ class XpricingHelper
 
         XSchemeMaster::truncate();
 
-        // XVehicleMaster::truncate();
+      
 
         XRSA::truncate();
 
@@ -2867,69 +2732,6 @@ class XpricingHelper
 
         return;
 
-        // if (empty($tr)) {
-
-        //     Xessories::truncate();
-
-        //     XCorp::truncate();
-
-        //     XCsd::truncate();
-
-        //     XchangeNloyalty::truncate();
-
-        //     XInsExtra::truncate();
-
-        //     XInsIRDA::truncate();
-
-        //     XSchemeMaster::truncate();
-
-        //     XPriceMaster::truncate();
-
-        //     XRSA::truncate();
-
-        //     XRtoData::truncate();
-
-        //     XShield::truncate();
-
-        // } else {
-
-        //     foreach ($tr as $t) {
-
-        //         if ($t == 'apack')
-
-        //             Xessories::truncate();
-
-        //         else if ($t == 'csd')
-
-        //             XCsd::truncate();
-
-        //         else if ($t == 'corpenl') {
-
-        //             XchangeNloyalty::truncate();
-
-        //             XCorp::truncate();
-
-        //             XSchemeMaster::truncate();
-
-        //         } else if ($t == 'ins') {
-
-        //             XInsExtra::truncate();
-
-        //             XInsIRDA::truncate();
-
-        //         } else if ($t == 'rsa') {
-
-        //             XRSA::truncate();
-
-        //             XShield::truncate();
-
-        //         } else if ($t == 'rto')
-
-        //             XRtoData::truncate();
-
-        //     }
-
-        //}
 
     }
 

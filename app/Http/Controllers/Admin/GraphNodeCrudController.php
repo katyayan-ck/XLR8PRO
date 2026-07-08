@@ -86,7 +86,6 @@ class GraphNodeCrudController extends CrudController
             'attributes' => 'nullable|string',
         ]);
 
-        // Convert JSON string to array/object if valid
         $attributes = !empty($validated['attributes'])
             ? json_decode($validated['attributes'], true)
             : (object)[];

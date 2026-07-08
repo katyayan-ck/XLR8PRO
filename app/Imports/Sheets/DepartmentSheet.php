@@ -23,7 +23,6 @@ class DepartmentSheet extends BaseSheetImport
         if (!$name) { $this->skip("Row {$rowIndex}: missing name for [{$code}]"); return; }
 
         $now = Carbon::now();
-        // Write only to `code` — dept_code column dropped by migration
         $this->upsert('xlr8_admin_department', [
             'code'        => $code,
             'name'        => $name,

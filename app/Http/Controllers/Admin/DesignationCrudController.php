@@ -131,36 +131,6 @@ class DesignationCrudController extends CrudController
         ]);
     }
 
-    // public function store(Request $request)
-    // {
-    //     $validated = $request->validate([
-    //         'code'        => 'required|string|unique:xlr8_admin_designation,code',
-    //         'name'        => 'required|string|max:255',
-    //         'description' => 'nullable|string',
-    //         'rank' => 'nullable|in:1,2,3,4,5',
-
-    //         'designation_image'
-    //         => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-    //         'is_top_mgmt'   => 'boolean',
-    //         'parent_desig_code' => 'nullable|string|max:255',
-    //         'is_active'   => 'boolean',
-    //     ]);
-    //     $validated['rank'] = $validated['rank'] ?? 0;
-
-    //     $designation =
-    //         Designation::create($validated);
-
-    //     if ($request->hasFile('designation_image')) {
-
-    //         $designation
-    //             ->addMediaFromRequest('designation_image')
-    //             ->toMediaCollection('designation_image');
-    //     }
-
-    //     \Alert::success('Designation created successfully!')->flash();
-
-    //     return redirect(backpack_url('designation'));
-    // }
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -174,7 +144,7 @@ class DesignationCrudController extends CrudController
             'is_active' => 'boolean',
         ]);
 
-        // Default values
+        
         $validated['rank'] = $validated['rank'] ?? 0;
         $validated['guard_name'] = 'web';
 
@@ -205,35 +175,6 @@ class DesignationCrudController extends CrudController
         ]);
     }
 
-    // public function update(Request $request, $id)
-    // {
-    //     $designation = Designation::findOrFail($id);
-
-    //     $validated = $request->validate([
-    //         'code'        => 'required|string|unique:xlr8_admin_designation,code,' . $id,
-    //         'name'        => 'required|string|max:255',
-    //         'description' => 'nullable|string',
-    //         'rank' => 'nullable|in:1,2,3,4,5',
-
-    //         'designation_image'
-    //         => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-    //         'is_top_mgmt'   => 'boolean',
-    //         'parent_desig_code' => 'nullable|string|max:255',
-    //         'is_active'   => 'boolean',
-    //     ]);
-    //     $validated['rank'] = $validated['rank'] ?? 0;
-
-    //     if ($request->hasFile('designation_image')) {
-
-    //         $designation
-    //             ->addMediaFromRequest('designation_image')
-    //             ->toMediaCollection('designation_image');
-    //     }
-
-    //     \Alert::success('Designation updated successfully!')->flash();
-
-    //     return redirect(backpack_url('designation'));
-    // }
     public function update(Request $request, $id)
     {
         $designation = Designation::findOrFail($id);

@@ -15,7 +15,6 @@ use App\Helpers\CommonHelper;
 use QuotesHelper;
 
 use Carbon\Carbon;
-//Carbon::parse($qrec->created_at)->format('Y-m-d H:i:s')
 class ChatHelper
 {
     public static function get_communication($type, $id)
@@ -23,7 +22,6 @@ class ChatHelper
         $thread = Communication::where('type', $type)->where('reference_id', $id)->first();
         $data = array("status" => array(), "comm" => array());
         if ($thread) {
-            //Carbon::createFromTimeStamp(strtotime($comment->created_at))->diffForHumans()
             $chats = Thread::where('comm_id', $thread->id)->orderBy('sequence', 'ASC')->where('status', 2)->get();
             foreach ($chats as $chat) {
                 $row = array("timestamp" => $chat->created_at->diffForHumans(), "actor_id" => $chat->created_by, "actor" => CommonHelper::getUserName($chat->created_by), "details" => $chat->content, "action" => $chat->remark, "image" => '');
@@ -50,7 +48,6 @@ class ChatHelper
 
     public static function add_communication($type, $sub, $content, $refid, $rem = null, $assignee = null, $depart = null, $relation = null, $extra = null, $file = null)
     {
-        //print_r("<br>Adding Communication for Type : $type, Subject : $sub, Content  : $content, Ref : $refid, Remarl : $rem, For : $assignee");
         $comm = Communication::where('type', $type)->where('reference_id', $refid)->where('subject', 'Quote Created')->first();
         if (!$comm) {
             $comm = new Communication;
@@ -64,12 +61,10 @@ class ChatHelper
             $comm->related_to = $relation;
             $comm->extra_data = $extra;
             $comm->save();
-            //print_r("<br>New Comm Created");
             if (!empty($file))
-                $comm->addMedia($file)->toMediaCollection('comm-docs'); //
+                $comm->addMedia($file)->toMediaCollection('comm-docs'); 
         }
-        //print_r($comm);
-        //die();
+        
         return $comm->id;
     }
 

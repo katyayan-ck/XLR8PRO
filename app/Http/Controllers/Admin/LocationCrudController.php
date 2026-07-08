@@ -31,7 +31,7 @@ class LocationCrudController extends CrudController
     {
         $this->crud->setListView('admin.location.list');
 
-        $locations = Location::with('branch')   // relationship must work
+        $locations = Location::with('branch')   
             ->select([
                 'id',
                 'branch_code',
@@ -70,7 +70,6 @@ class LocationCrudController extends CrudController
             $mapped['is_lmmws'] = $loc->is_lmmws ? 'Yes' : 'No';
 
 
-            // Show Branch Name in List (Important)
             $mapped['branch'] = $loc->branch?->name ?? $loc->branch_code ?? '—';
 
             $editUrl = backpack_url("location/{$loc->id}/edit");
@@ -167,14 +166,14 @@ class LocationCrudController extends CrudController
 
         $location = Location::findOrFail($id);
 
-        $branches = Branch::orderBy('name')->get();   // ← Variable mein store kiya
+        $branches = Branch::orderBy('name')->get();   
 
-        // dd($branches);   // ← Debugging line (yeh data dikhaayega)
+        
 
         return view('admin.location.edit', [
             'title'     => 'Edit Location - ' . $location->name,
             'location'  => $location,
-            'branches'  => $branches,        // ← Yahan bhi same variable use kiya
+            'branches'  => $branches,       
         ]);
     }
 

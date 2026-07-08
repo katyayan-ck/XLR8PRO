@@ -42,10 +42,7 @@ class ExportController extends Controller
         }
     }
 
-    /**
-     * Stream vehicle data as CSV (pure PHP, no Excel library)
-     * GET /export/vehicle-data-simple-csv
-     */
+    
     public function vehicleDataSimpleCsv()
     {
         try {
@@ -54,11 +51,11 @@ class ExportController extends Controller
 
             $filename = 'VehicleDataExport_' . now()->format('d-m-Y-H-i-s') . '.csv';
 
-            // Create CSV response
+           
             $callback = function () use ($data) {
                 $file = fopen('php://output', 'w');
 
-                // Add headers
+                
                 if ($data->count() > 0) {
                     $firstRow = $data->first();
                     if (is_array($firstRow)) {
@@ -66,7 +63,6 @@ class ExportController extends Controller
                     }
                 }
 
-                // Add data rows
                 foreach ($data as $row) {
                     if (is_array($row)) {
                         fputcsv($file, $row);

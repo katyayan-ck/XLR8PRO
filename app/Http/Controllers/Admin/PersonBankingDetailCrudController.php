@@ -77,8 +77,8 @@ class PersonBankingDetailCrudController extends CrudController
                     ['field' => 'account_holder_name', 'headerName' => 'Account Holder'],
                     ['field' => 'account_number',      'headerName' => 'Account Number'],
                     ['field' => 'ifsc_code',           'headerName' => 'IFSC Code'],
-                    ['field' => 'branch_name',         'headerName' => 'Branch Name'],     // ← Added
-                    ['field' => 'swift_code',          'headerName' => 'Swift Code'],      // ← Added
+                    ['field' => 'branch_name',         'headerName' => 'Branch Name'],     
+                    ['field' => 'swift_code',          'headerName' => 'Swift Code'],      
                     ['field' => 'account_type',        'headerName' => 'Account Type'],
                     ['field' => 'is_primary',          'headerName' => 'Primary'],
                     ['field' => 'is_verified',         'headerName' => 'Verified'],
@@ -106,9 +106,9 @@ class PersonBankingDetailCrudController extends CrudController
         $validated = $request->validate([
             'person_id'           => 'required|exists:xlr8_admin_person,id',
             'bank_name'           => 'required|string|max:255',
-            'account_holder_name' => 'required|string|max:255|regex:/^[a-zA-Z\s.]+$/u', // Letters, space, dot only
-            'account_number'      => 'required|numeric|digits_between:8,20',           // Only numbers, 8-20 digits
-            'ifsc_code'           => 'required|string|size:11|regex:/^[A-Z]{4}0[A-Z0-9]{6}$/', // Strict IFSC format
+            'account_holder_name' => 'required|string|max:255|regex:/^[a-zA-Z\s.]+$/u',
+            'account_number'      => 'required|numeric|digits_between:8,20',           
+            'ifsc_code'           => 'required|string|size:11|regex:/^[A-Z]{4}0[A-Z0-9]{6}$/', 
             'account_type'        => 'required|in:savings,current,fd,rd,other',
             'branch_name'         => 'nullable|string|max:255',
             'swift_code'          => 'nullable|string|max:50',

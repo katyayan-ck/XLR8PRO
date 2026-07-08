@@ -16,7 +16,6 @@ class SendHistoryNotification implements ShouldQueue
 
     public function handle()
     {
-        // Add your NotificationService logic here (Firebase + in-app)
-        // Example: app(NotificationService::class)->sendHistoryAlert($this->thread);
+       
     }
 }

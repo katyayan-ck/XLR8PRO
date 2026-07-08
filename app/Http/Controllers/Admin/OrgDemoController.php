@@ -20,11 +20,11 @@ class OrgDemoController extends CrudController
             'models'       => OrgService::models(),
             'variants'     => OrgService::variants(),
 
-            // Filtered examples
+          
             'churuLocations' => OrgService::locations('CHR'),
             'salesDivisions' => OrgService::divisions('SLS'),
 
-            // User examples
+            
             'usersByPost'    => OrgService::usersByPost('SLS_CNS_CHR_003', 'CHR'),
             'usersByDesig'   => OrgService::usersByDesignation('CNS', 'CHR'),
         ]);

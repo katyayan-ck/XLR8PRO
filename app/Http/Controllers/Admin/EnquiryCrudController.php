@@ -37,7 +37,6 @@ class EnquiryCrudController extends CrudController
     {
         $this->crud->setListView('admin.enquiry.list');
 
-        // $enquiries = Enquiry::with('source')
         $enquiries = Enquiry::with([
             'source',
             'segment',
@@ -294,13 +293,12 @@ class EnquiryCrudController extends CrudController
             'has_extended_warranty' => 'boolean',
             'expected_delivery_date' => 'nullable|date',
             'dms_enquiry_no' => 'nullable|string|max:50',
-            'sales_consultant_id' => 'nullable|string|max:100',  // assuming users table
+            'sales_consultant_id' => 'nullable|string|max:100',  
             'status' => 'required|string|in:new,in_followup,quotation_sent,quotation_approved,booking_done,lost,cancelled',
             'lost_reason' => 'nullable|string|max:255',
             'priority' => 'required|string|in:high,medium,low',
             'notes' => 'nullable|string',
             'conversion_notes' => 'nullable|string',
-            // Add more validation rules as needed
         ]);
 
         $enquiry = Enquiry::create($validated);

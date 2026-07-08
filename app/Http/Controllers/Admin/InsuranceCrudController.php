@@ -22,21 +22,18 @@ class InsuranceCrudController extends CrudController
 
     public function import()
     {
-        // ================== CONFIGURATION ==================
         $spreadsheetId = '1n4aJilDZo1WtY0QPYOp9dzQqKHyOJFm6qfA3gewADm4';
 
-        // ✅ Sare GIDs yahan add karo
         $sheetGids = [
-            '0',           // Sheet 1 — full mapping
-            '324376505',   // NIA sheet — partial mapping (6 columns only)
+            '0',           
+            '324376505',   
         ];
 
-        // ================== PER-SHEET COLUMN MAPS ==================
-        // Each GID has its own: DB column => Google Sheet header (case-insensitive partial match)
+        
 
         $columnMaps = [
 
-            // ---------- Sheet 1 (gid=0): full mapping ----------
+          
             '0' => [
                 'pol_no'                => 'Policy No',
                 'pol_date'              => 'Created Date',
@@ -79,7 +76,6 @@ class InsuranceCrudController extends CrudController
                 'insurer_code'          => 'Insurance Company',
             ],
 
-            // ---------- NIA sheet (gid=324376505): 6 columns only ----------
             '324376505' => [
                 'pol_no'             => 'Policy Number',
                 'insured_name'       => 'Policy Holder Name',
@@ -95,9 +91,7 @@ class InsuranceCrudController extends CrudController
         $totalSkipped  = 0;
         $now           = now();
 
-        // ================== LOAD INSURERS ONCE ==================
-        // xlr8_booking_insurer se saare records ek baar load karo
-        // Format: [ ['id'=>1, 'name'=>'Acko General...', 'short_name'=>'Acko'], ... ]
+      
         $allInsurers = \DB::table('xlr8_booking_insurer')
                           ->whereNull('deleted_at')
                           ->where('status', 1)
@@ -124,7 +118,6 @@ class InsuranceCrudController extends CrudController
                 continue;
             }
 
-            // ================== COLUMN MAPPING ==================
             $gs_pos = array_fill_keys(array_keys($gscolarr), null);
 
             foreach ($values[0] as $key => $header) {
@@ -146,7 +139,6 @@ class InsuranceCrudController extends CrudController
 
                 $actualRow = $rowIndex + 2;
 
-                // Empty row skip — pol_no aur insured_name dono empty ho to skip
                 $polNo       = trim($row[$gs_pos['pol_no']] ?? '');
                 $insuredName = trim($row[$gs_pos['insured_name']] ?? '');
 
@@ -156,8 +148,7 @@ class InsuranceCrudController extends CrudController
                 }
 
                 if ($gid === '324376505') {
-                    // ================== NIA SHEET INSERT ==================
-                    // NIA = 'New India Assurance Co. Ltd.' — short_name hardcoded
+                   
                     $insertData = [
                         'insurer_code'       => 'NIA',
                         'pol_no'             => substr($polNo, 0, 50),
@@ -172,13 +163,10 @@ class InsuranceCrudController extends CrudController
                         'created_by'         => auth()->id() ?? 1,
                     ];
                 } else {
-                    // ================== SHEET 1: INSURER LOOKUP ==================
-                    // Sheet mein 'Insurance Company' column ka raw value hai (full name)
-                    // xlr8_booking_insurer.name mein search karo → short_name uthao
+                   
                     $rawInsurerName = trim($row[$gs_pos['insurer_code']] ?? '');
                     $insurerCode    = $this->resolveInsurerCode($rawInsurerName, $allInsurers, $gid, $actualRow);
 
-                    // ================== SHEET 1 DATE PARSING ==================
                     $polDate          = $this->parseDate($row[$gs_pos['pol_date']] ?? null, $gid, $actualRow);
                     $polEffectiveDate = $this->parseDate($row[$gs_pos['pol_effective_date']] ?? null, $gid, $actualRow);
                     $polExpiryDate    = $this->parseDate($row[$gs_pos['pol_expiry_date']] ?? null, $gid, $actualRow);
@@ -190,7 +178,6 @@ class InsuranceCrudController extends CrudController
                     $cpaStart         = $this->parseDate($row[$gs_pos['cpa_cover_start']] ?? null, $gid, $actualRow);
                     $cpaEnd           = $this->parseDate($row[$gs_pos['cpa_cover_end']] ?? null, $gid, $actualRow);
 
-                    // ================== SHEET 1 INSERT ==================
                     $insertData = [
                         'insurer_code'              => $insurerCode,
                         'pol_no'                    => substr($polNo, 0, 50),
@@ -283,16 +270,7 @@ class InsuranceCrudController extends CrudController
         }
     }
 
-    /**
-     * Sheet ke raw insurer name ko xlr8_booking_insurer se match karke short_name return karo.
-     *
-     * Match strategy (upar se neeche try karta hai):
-     *   1. Exact match on name          (case-insensitive)
-     *   2. DB name contains sheet value (sheet value is a substring of DB name)
-     *   3. Sheet value contains DB name (DB name is a substring of sheet value)
-     *
-     * Agar koi match nahi mila to null return karo aur warning log karo.
-     */
+   
     private function resolveInsurerCode(string $raw, array $allInsurers, $gid = null, $row = null): ?string
     {
         if (empty($raw)) {
@@ -301,21 +279,18 @@ class InsuranceCrudController extends CrudController
 
         $rawLower = strtolower($raw);
 
-        // Pass 1: exact match on full name
         foreach ($allInsurers as $insurer) {
             if (strtolower($insurer->name) === $rawLower) {
                 return $insurer->short_name;
             }
         }
 
-        // Pass 2: DB name contains sheet value
         foreach ($allInsurers as $insurer) {
             if (stripos($insurer->name, $raw) !== false) {
                 return $insurer->short_name;
             }
         }
 
-        // Pass 3: sheet value contains DB name
         foreach ($allInsurers as $insurer) {
             if (stripos($raw, $insurer->name) !== false) {
                 return $insurer->short_name;
@@ -331,9 +306,7 @@ class InsuranceCrudController extends CrudController
         return null;
     }
 
-    /**
-     * Parse date from various formats to Y-m-d
-     */
+   
     private function parseDate($raw, $gid = null, $row = null): ?string
     {
         if (empty($raw) || trim($raw) === '') {
@@ -342,13 +315,11 @@ class InsuranceCrudController extends CrudController
 
         $raw = trim($raw);
 
-        // Known non-date values — silently return null (no warning logged)
         $ignoredValues = ['na', 'n/a', 'nil', '-', '--', 'none', '31-dec-1899'];
         if (in_array(strtolower($raw), $ignoredValues)) {
             return null;
         }
 
-        // Excel serial number
         if (is_numeric($raw)) {
             try {
                 $date = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject((float)$raw);
@@ -359,7 +330,6 @@ class InsuranceCrudController extends CrudController
             } catch (\Exception $e) {}
         }
 
-        // Explicit format list
         $formats = [
             'd/m/Y',
             'd-m-Y',
@@ -381,19 +351,16 @@ class InsuranceCrudController extends CrudController
             }
         }
 
-        // 2-digit year: 1-Apr-26
         if (preg_match('/^(\d{1,2})[-\/]([A-Za-z]{3})[-\/](\d{2})$/', $raw, $m)) {
             $date = \DateTime::createFromFormat('j-M-Y', $m[1] . '-' . $m[2] . '-20' . $m[3]);
             if ($date !== false) return $date->format('Y-m-d');
         }
 
-        // 2-digit year: 13/04/26
         if (preg_match('/^(\d{1,2})\/(\d{2})\/(\d{2})$/', $raw, $m)) {
             $date = \DateTime::createFromFormat('d/m/Y', $m[1] . '/' . $m[2] . '/20' . $m[3]);
             if ($date !== false) return $date->format('Y-m-d');
         }
 
-        // Carbon fallback
         try {
             $date = \Carbon\Carbon::parse($raw);
             $year = (int)$date->format('Y');

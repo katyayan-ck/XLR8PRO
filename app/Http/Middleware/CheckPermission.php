@@ -33,12 +33,10 @@ class CheckPermission
     {
         $user = auth()->user();
 
-        // No authenticated user
         if (!$user) {
             return $this->unauthorized($request);
         }
 
-        // Check if user has any of the required permissions (OR logic)
         if (!$this->hasAnyPermission($user, $permissions)) {
             return $this->unauthorized($request);
         }
@@ -73,10 +71,8 @@ class CheckPermission
      */
     private function checkPermission($user, string $permission): bool
     {
-        // Remove any whitespace
         $permission = trim($permission);
 
-        // Check for wildcard permission (e.g., branch.*)
         if (str_ends_with($permission, '.*')) {
             $prefix = substr($permission, 0, -2);
             return $user->hasPermissionTo($prefix . '.view') ||
@@ -85,7 +81,6 @@ class CheckPermission
                 $user->hasPermissionTo($prefix . '.delete');
         }
 
-        // Standard permission check
         return $user->hasPermissionTo($permission);
     }
 

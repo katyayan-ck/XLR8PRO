@@ -64,7 +64,6 @@ class EmpPostAssignmentCrudController extends CrudController
         $this->crud->hasAccessOrFail('create');
         $this->crud->setCreateView('admin.emp-post-assignment.create');
 
-        // Only show employees without a current primary assignment (eligible for onboarding)
         $employees = Employee::with('person')
             ->whereDoesntHave('postAssignments', fn ($q) =>
                 $q->where('assignment_type', 'primary')->whereNull('to_date')
@@ -73,7 +72,6 @@ class EmpPostAssignmentCrudController extends CrudController
             ->orderBy('code')
             ->get();
 
-        // Only vacant posts
         $posts = Post::withoutGlobalScopes()
             ->withCount('currentEmployees')
             ->active()

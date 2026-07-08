@@ -21,7 +21,6 @@ trait PivotWriter
         $this->writePostPivot($emp, $dto);
     }
 
-    // ── Branch ────────────────────────────────────────────────────
 
     private function writeBranchPivots(Employee $emp, EmployeeRowDTO $dto): void
     {
@@ -42,7 +41,6 @@ trait PivotWriter
         }
     }
 
-    // ── Location ──────────────────────────────────────────────────
 
     private function writeLocationPivots(Employee $emp, EmployeeRowDTO $dto): void
     {
@@ -67,7 +65,6 @@ trait PivotWriter
         }
     }
 
-    // ── Department ────────────────────────────────────────────────
 
     private function writeDeptPivot(Employee $emp, EmployeeRowDTO $dto): void
     {
@@ -89,7 +86,6 @@ trait PivotWriter
         );
     }
 
-    // ── Vertical ──────────────────────────────────────────────────
 
     private function writeVerticalPivots(Employee $emp, EmployeeRowDTO $dto): void
     {
@@ -105,7 +101,6 @@ trait PivotWriter
         }
     }
 
-    // ── Segment ───────────────────────────────────────────────────
 
     private function writeSegmentPivots(Employee $emp, EmployeeRowDTO $dto): void
     {
@@ -121,7 +116,6 @@ trait PivotWriter
         }
     }
 
-    // ── Sub-Segment ───────────────────────────────────────────────
 
     private function writeSubSegmentPivots(Employee $emp, EmployeeRowDTO $dto): void
     {
@@ -137,7 +131,6 @@ trait PivotWriter
         }
     }
 
-    // ── Post ──────────────────────────────────────────────────────
 
     private function writePostPivot(Employee $emp, EmployeeRowDTO $dto): void
     {
@@ -163,12 +156,6 @@ trait PivotWriter
         );
     }
 
-    // ── ANY sentinel expansion ────────────────────────────────────
-
-    /**
-     * If the array contains 'ANY' or 'ALL', call $allResolver to get
-     * every available code of that type. Otherwise return as-is.
-     */
     private function expandAny(array $values, callable $allResolver): array
     {
         $upper = array_map('strtoupper', $values);

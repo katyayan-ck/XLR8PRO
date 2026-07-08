@@ -22,7 +22,6 @@ class PostSheet extends BaseSheetImport
         $branchCode = $this->code($row['Branch Code'] ?? null, 5);
         $locCode    = $this->code($row['Location Code'] ?? null, 10);
 
-        // Incremental guards
         if ($desigCode && !DB::table('xlr8_admin_designation')->where('code', $desigCode)->exists()) {
             $this->logRow($rowIndex, '❌ FAIL', "designation {$desigCode} not found");
             return;

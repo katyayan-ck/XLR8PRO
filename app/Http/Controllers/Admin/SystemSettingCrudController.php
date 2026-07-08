@@ -20,7 +20,6 @@ class SystemSettingCrudController extends CrudController
         $this->crud->setRoute(config('backpack.base.route_prefix') . '/system-settings');
         $this->crud->setEntityNameStrings('system setting', 'system settings');
 
-        // Prevent deletion of core settings
         $this->crud->allowAccess(['list', 'create', 'update', 'show']);
     }
 
@@ -83,7 +82,6 @@ class SystemSettingCrudController extends CrudController
             'type' => 'boolean',
         ]);
 
-        // Add filter for topic
         $this->crud->addFilter([
             'name' => 'topic',
             'type' => 'select2',
@@ -94,7 +92,6 @@ class SystemSettingCrudController extends CrudController
             $this->crud->addClause('where', 'topic', $value);
         });
 
-        // Add search
         $this->crud->setDefaultPageLength(50);
     }
 

@@ -63,15 +63,12 @@ class SparePartwiseController extends Controller
                 DB::raw('COUNT(DISTINCT details.spare_req_id) as total_ro_count'),
                 DB::raw('MIN(details.created_at) as earliest_ro_date'),
 
-                // Workshop Breakup
                 DB::raw('SUM(CASE WHEN req.workshop_type_id = 1 THEN details.req_quan ELSE 0 END) as workshop_req_qty'),
                 DB::raw('COUNT(DISTINCT CASE WHEN req.workshop_type_id = 1 THEN details.spare_req_id END) as workshop_ro_count'),
 
-                // Bodyshop Breakup
                 DB::raw('SUM(CASE WHEN req.workshop_type_id = 2 THEN details.req_quan ELSE 0 END) as bodyshop_req_qty'),
                 DB::raw('COUNT(DISTINCT CASE WHEN req.workshop_type_id = 2 THEN details.spare_req_id END) as bodyshop_ro_count'),
 
-                // CS Count (agar alag ho to adjust kar sakte hain)
                 DB::raw('COUNT(DISTINCT CASE WHEN req.workshop_type_id NOT IN (1,2) THEN details.spare_req_id END) as total_cs_count'),
 
                 DB::raw('COALESCE(stock.total_cls_qnty, 0) as physical_stock_qty'),

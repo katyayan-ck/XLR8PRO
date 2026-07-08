@@ -1,6 +1,5 @@
 <?php 
 
-// app/Http/Controllers/Admin/VehicleAccessoryCrudController.php
 
 namespace App\Http\Controllers\Admin;
 

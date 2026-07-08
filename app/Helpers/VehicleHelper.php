@@ -27,7 +27,6 @@
 	{
 		public static function findApprover($vid,$branch)
 		{
-			//print_r("<br><Br>Showing result for Vehicle : $vid of Branch : $branch<br><Br>");
 			$vh = Vehicle::find($vid);
 			$cmid = $vh->cm_id;
 			$tmp = Approver::select('user_id','emp_code','level','branch','discounting_limit','od_highest')->whereRaw("find_in_set($cmid,model)")->whereRaw("find_in_set($branch,branch)")->orderby('level')->get();
@@ -37,15 +36,12 @@
 			$users = User::with('person')->get();
 			foreach($tmp as $app)
 			{
-				//print_r("<br><br>");
-				//print_r($app->toarray());
 				
 				$apps[$app->level] = array('uid' => $app->user_id, 'level' => $app->level, 'dlimit' => $app->discounting_limit, 'olimit' => $app->od_highest);
 				if($apps[$app->level]['dlimit'] == 0)
 				$apps[$app->level]['uid'] = 0;
 			}
 			
-			//dd($apps);
 			return $apps;
 		}
 		
@@ -85,10 +81,9 @@
 				$vehicles[$vh->cm_id] = array();
 				$vehicles[$vh->cm_id][] = array('name' => $vh->local_name, 'status' => $vh->status, 'mg' => $vh->mg, 'mgid' => $vh->mg_id);
 			}
-			//dd($cms);
 			foreach($cms as $cm)
 			{
-				//dd($cm);
+				
 				$tmp = array("id" => $cm['id'], "model" => $cm['mg'], "cm" => $cm['name'], "avhs" => "", "dvhs" => "", "status" => "Inactive");
 				if(isset($vehicles[$cm['id']]))
 				{
@@ -96,7 +91,6 @@
 					$flag= 'Inactive';
 					foreach($vehicles[$cm['id']] as $itm)
 					{
-						//$tmp['vehicles'] .= " ".$itm['name'];
 						if($itm['status']==1)
 						{
 							$flag = 'Active';
@@ -114,7 +108,6 @@
 						}
 					}
 					$tmp['status']=$flag;
-					//CommonHelper::updateCM($key,$vehicles[$key][0]['mg'],$vehicles[$key][0]['mgid']);
 				}
 				
 				$data[] = $tmp;
@@ -158,7 +151,6 @@
 					$vehicles[$vh->mg_id][] = array('name' => $vh->local_name, 'status' => $vh->status, 'mg' => $vh->mg);
 				}
 			}
-			//print_r($cms);
 			foreach($cmg as $key=>$val)
 			{
 				$tmp = array("id" => $key, "mg" => $val['mg'], "cmg" => $val['cmg'], "avhs" => "", "dvhs" => "", "status" => "Inactive");
@@ -168,7 +160,6 @@
 					$flag= 'Inactive';
 					foreach($vehicles[$key] as $itm)
 					{
-						//$tmp['vehicles'] .= " ".$itm['name'];
 						if($itm['status']==1)
 						{
 							$flag = 'Active';
@@ -274,12 +265,9 @@
 		public static function getVline($vid)
 		{
 			$vline = array();
-			////print_r("<br>Searching for VID : $vid<br>");
 			$vh = Vehicle::select('id','name','code','local_name','segment','subsegment','permit_id','weight','bodymake_id','bodytype_id','fuel_type_id','wheels','cc_capacity','color','status','head_type','parent')->where('id',$vid)->first()->toArray();
 			
 			$vline['variant'] = (array) $vh;
-			////print_r("<br>Level 4<br>");
-			////print_r($vline);
 			$vh = Vehicle::select('id','name','code','local_name','segment','subsegment','permit_id','weight','bodymake_id','bodytype_id','fuel_type_id','wheels','cc_capacity','color','status','head_type','parent')->where('id',$vh['parent'])->first()->toArray();
 			$vline['model'] = (array) $vh;
 			
@@ -291,7 +279,6 @@
 			$vhs = Vehicle::where('head_type',4)->where('status',1)->get();
 			
 			$accpd = $rsad = $xchd = $shieldd = $corpd = $vmd = $featd = $specd = array();
-			//Fetch RSA
 			$tmp = RSARate::where('vehicle_id',0)->orderby('cm1')->orderby('coverage')->get();
 			$trans = CommonHelper::GetKeyValues("TRANSMISSION");
 			$segs = CommonHelper::GetKeyValues("SEGMENT");
@@ -300,16 +287,7 @@
 			$bms = CommonHelper::GetKeyValues("BODY-MAKE");
 			$fuels = CommonHelper::GetKeyValues("FUEL-TYPE");
 			$mcolors = $vcolors = array();
-			/* 
-				foreach($tmp as $dt)
-				{
-				if(!isset($rsad[$dt->cm1]))
-				$rsad[$dt->cm1] = array();
-				$rsad[$dt->cm1][] = array('years' => $dt->coverage, 'price' => $dt->amount);
-			} */
-			//dd($rsad);
 			
-			//Fetch Master Colors
 			$tmp = Colors::get();
 			foreach($tmp as $dt)
 			{
@@ -317,7 +295,6 @@
 			}
 			
 			
-			//Fetch Vehicle Active Colors
 			$tmp = VehicleColorPivot::get();
 			foreach($tmp as $dt)
 			{
@@ -334,67 +311,14 @@
 				}
 			}	
 			
-			
-			
-			//Fetch Accessories Packs
-			
-			/* $tmp = AccPacks::orderby('model')->get();
-				foreach($tmp as $dt)
-				{
-				if(!isset($accpd[$dt->id]))
-				$accpd[$dt->id] = array(
-				'id' => $dt->id, 'for' => $dt->model, 
-				"name" => $dt->name, 'mrp' => $dt->mrp, 
-				'msp' => $dt->mpp,
-				'pack' => array(), 'extra' => array());
-				}
-				
-				//Fetch Accessories
-				$tmp = Accessories::orderby('pack_id')->orderby('fixed')->orderby('name')->get();
-				foreach($tmp as $dt)
-				{
-				
-				if($dt->fixed == 1)
-				{
-				$mndt = ($dt->mendatory == 1)?true:false;
-				$accpd[$dt->pack_id]['pack'][] = array('id' => $dt->id, "name" => $dt->name, 'price' => $dt->price, 'mendatory' => $mndt);
-				}
-				else
-				$accpd[$dt->pack_id]['extra'][] = array('id' => $dt->id, "name" => $dt->name, 'price' => $dt->price);
-				}
-				//$accpd = ExtrasHelper::get_apack($vhs->apack_id); 
-				//dd($accpd);
-				//Fetch Exchange n Loyalty
-				
-				
-				//dd($xchd);
-				$shieldd = ShieldRate::where('vehicle_id',0)->orderby('cm_id')->get()->toarray();
-				//dd($shieldd);
-				$tmp = CorpBonusRate::where('vehicle_id',0)->orderby('base_model_id')->orderby('id')->get();
-				foreach($tmp as $dt)
-				{
-				if(!isset($corpd[$dt->base_model_id]))
-				$corpd[$dt->base_model_id] = array('id' => $dt->base_model_id, 'name' => strtoupper($dt->group_name), 'bonus' =>array());
-				$tdisc = $dt->discount + $dt->dealer_discount;
-				$corpd[$dt->base_model_id]['bonus'][] = array(
-				'id'=> $dt->id,
-				'category'=> $dt->category,
-				'discount'=> $tdisc
-				);
-			} */
-			//dd($corpd);
 			$tmp = EnumMaster::select('id','master_id','value')->whereIn('master_id',[25,26])->get();
 			foreach($tmp as $dt)
 			$vmd[$dt->id] = $dt->value;
-			//dd($vmd);
-			//Fetch Specifications $featd = $specd =
 			$tmp = VehicleMeta::select('id','head_id','subhead_id','value','cm_id','custom_model','keyword_id')->get();
 			foreach($tmp as $dt)
 			{
-				//print_r("<h3>DT</h3>");print_r($dt->toarray());
-				if($dt->keyword_id == 25)//Specifications
+				if($dt->keyword_id == 25)
 				{
-					//print_r("<br>Adding Specification : ".$dt->id);
 					if(!isset($specd[$dt->cm_id]))
 					$specd[$dt->cm_id] = array('id' => $dt->cm_id, 'data' => array());
 					if(isset($vmd[$dt->head_id]))
@@ -414,7 +338,6 @@
 				}
 				else
 				{
-					//print_r("<br>Adding Feature : ".$dt->id);
 					if(!isset($featd[$dt->cm_id]))
 					$featd[$dt->cm_id] = array('id' => $dt->cm_id, 'data' => array());
 					if(isset($vmd[$dt->head_id]))
@@ -433,8 +356,6 @@
 					);
 				}
 			}
-			//dd($specd);
-			//dd($featd);
 			$updated = null;
 			
 			$vehicles = array();
@@ -442,8 +363,6 @@
 			foreach($vhs as $vh)
 			{
 				
-				//$vdata = self::getVline($vh->id);
-				//$bm = Vehicle::find($vdata['base_model']['id']);
 				$vehicle = array();
 				$vehicle['id'] = $vh->id;
 				$vehicle['model_group_id'] = $vh->mg_id;
@@ -477,18 +396,11 @@
 				$vehicle['width'] =  $vh->width;
 				$vehicle['weight'] = $vh->weight;
 				$vehicle['wheels'] = $vh->wheels;
-				/* $vehicle['colors'] = ColorHelper::getVehicleColors($vh->id); */
+				
 				
 				$vehicle['rsa'] = ExtrasHelper::getRSA($vh->cm1);
 				$tmp1 = ExtrasHelper::get_apack($vh->apack_id);
-				/* 	$tmp2 = array();
-					foreach($tmp1["essential"] as $val)
-					$tmp2[]=$val;
-					$tmp1["essential"] = $tmp2;
-					$tmp2 = array();
-					foreach($tmp1["extra"] as $val)
-					$tmp2[]=$val;
-				$tmp1["extra"] = $tmp2; */
+				
 				$vehicle['accessories']= $tmp1;
 				$vehicle['shield']= ExtrasHelper::getShield($vh->cm_id);
 				$vehicle['corporate_bonus'] = ExtrasHelper::getCorporate($vh->cm_id);
@@ -497,8 +409,8 @@
 				$xchd = ExtrasHelper::getXchange($vh->id);
 				foreach($xchd as $tmp)
 				{
-					//print_r("<br><br>Processing : ");print_r($tmp);
-					if($tmp['type'] == "Exchange")//'Loyalty':'Exchange'
+					
+					if($tmp['type'] == "Exchange")
 					{
 						if($vehicle['exchange_bonus']== Null)
 						$vehicle['exchange_bonus']= array();
@@ -556,7 +468,7 @@
 		
 		public static function getSpecificationHeads()
 		{
-			$info = CommonHelper::enumGetValues("VH-SPEC-TYPE");////print_r($info);
+			$info = CommonHelper::enumGetValues("VH-SPEC-TYPE");
 			$tmp = array();
 			$theads=array();
 			foreach($info as $itm)
@@ -592,7 +504,7 @@
 			array_column($heads, 'subhead'), SORT_ASC,
 			$heads);
 			$vdata = $sdata["data"];
-			//$headings = self::getFnSHeadings($type,$seg,$vid);
+			
 			foreach($heads as $head)
 			{
 				$tmp=array("head"=>$head['head'],"subhead"=>$head['subhead']);
@@ -619,7 +531,7 @@
 		
 		public static function getCustomModel($all = false, $segs = false)
 		{
-			//print_r("<br>In VH::getCustomModel with all: $all, segs : $segs");
+			
 			$vlist = Vehicle::select('id','name','local_name','cm1','cm_id','status','segment')->where('head_type',4);
 			if($segs != false)
 			{
@@ -634,8 +546,7 @@
 			if(!$all)
 			$vlist = $vlist->where('status',1);
 			$vlist = $vlist->orderby('segment')->orderby('cm1')->get();
-			//print_r("<br> Here is vlist : <br>");
-			//print_r($vlist->toarray());
+			
 			$cms = array('bykey' =>array(),'byvalue' => array(),'byseg' => array());
 			foreach($vlist as $item)
 			{
@@ -648,15 +559,12 @@
 					$cms['byseg'][$item['segment']][$item->cm_id]= $item->cm_id;
 				}
 			}
-			//dd($cms);
-			//asort($cms['bykey']);
-			//ksort($cms['byvalue']);
+			
 			return $cms;
 		}
 		
 		public static function getModelGroup($all = false, $segment = false)
 		{
-			//print_r("<br>Getting model grp for $all, $segment <br>");
 			if($segment==false)
 			{
 				if($all)
@@ -671,11 +579,11 @@
 				else
 				$blist = Vehicle::select('id','name','local_name','status')->where('segment',$segment)->where('head_type',2)->where('status',1)->get();
 			}
-			//print_r($blist->toarray());
+			
 			$bms = array();
 			foreach($blist as $bitem)
 			{
-				//print_r("<BR> Processing : ");print_r($bitem->toarray());
+				
 				$bms[$bitem->id] = $bitem->name;
 			}
 			asort($bms);
@@ -715,23 +623,8 @@
 		
 		public static function getFeatureHeads($seg,$vid,$vids)
 		{
-			/* $data = array();
-				////print_r("<br><br>  Vids : <br>");////print_r($vids);
-				if($vid==0)
-				{
-				foreach($vids as $vhid)
-				{
-				$hlist = VehicleMeta::where('keyword_id',26)->where('vehicle_id',$vhid)->get();
-				////print_r("<br><br>  hlist : <br>");////print_r($hlist->toArray());
-				foreach($hlist as $itm)
-				{
-				if(!isset($data[$itm->subhead_id]))
-				$data[$itm->subhead_id] = array("head_id" => $itm->head_id,"head" => CommonHelper::enumValueById($itm->head_id), "subhead_id" => $itm->subhead_id, "subhead" => CommonHelper::enumValueById($itm->subhead_id));
-				}
-				}
-				}
-			////print_r("<br><br>  data : <br>");////print_r($data); */
-			$info = CommonHelper::enumGetValues("VH-FEATURES-TYPE");////print_r($info);
+			
+			$info = CommonHelper::enumGetValues("VH-FEATURES-TYPE");
 			$tmp = array();
 			$theads=array();
 			foreach($info as $itm)
@@ -776,7 +669,6 @@
 				$vehicle['csd_index'] = $vh->csd_code;
 				else
 				$vehicle['csd_index'] = $vh->code;
-				//$vehicle['csd_index'] = $vh->csd_code;
 				$vehicle['image'] = null;
 				$vehicle['segment'] = CommonHelper::enumValueById($vh->segment);
 				$vehicle['subsegment'] = CommonHelper::enumValueById($vh->subsegment);
@@ -804,68 +696,28 @@
 		}
 		
 		
-		//"TREO",[basemodel] => TREO [model] => ZOR GRAND [variant] => PU [code] => 1EV2DD1TUFLB1WD
+		
 		public static function getVehicleId($type,$mg,$bm,$variant)
 		{
-			//print_r("Received ( type = $type, MG = $basemodel, BM = $model, Var = $variant, Color = $color, Code = $code");
-			/* if($type=="TREO")
-				{
-				$bmr = self::createVehicle(2,1,$basemodel);
-				$mdlr = self::createVehicle(3,$bmr->id,$model);
-				$varrec = self::createVehicle(4,$mdlr->id,$variant,"TREO",$code);//4,###,"PU","1EV2DD1TUFLB1WD"
-				}
-				else
-			{ */
+			
 			$mgr = self::createVehicle(2,1,$mg);
-			//$bmr = self::createVehicle(3,$mgr->id,$bm);
 			
 			$varrec = self::createVehicle(4,$mgr->id,$bm,$variant,$mgr->id,$mgr->local_name);
-			/* } */
+	
 			return $varrec;
 		}
 		
-		////////////////////////////////////////////////////////////////////////////////////////
-		//
-		// Create a new Vehicle Entry with supplied values
-		//
-		////////////////////////////////////////////////////////////////////////////////////////
 		
 		public static function createVehicle($lvl,$parent,$name,$code = NULL, $mgid = Null, $mg = Null)
 		{
 			
-			////print_r("<h3>Vehicle Not Found Child of $parent:: Level - $lvl, Name : $name</h3>");
-			/* if($type == "TREO")
-				{
-				//[lvl] = 4,[parent] = ###,[name] = "PU",[code] = "1EV2DD1TUFLB1WD"
-				$data = Vehicle::where('parent',$parent)->where('code',$code)->first();
-				
-				if($data)
-				{
-				return $data;
-				////print_r("<h3>Vehicle Found Child of $parent:: Level - $lvl, Name : $name</h3>");
-				}
-				else
-				{
-				$data = new Vehicle;
-				$data->head_type = $lvl;
-				$data->parent = $parent;
-				$data->local_name = $data->name = $name;
-				$data->code = $code;
-				if($lvl == 4)
-				$data->status = 2;
-				else
-				$data->status = 1;
-				$data->save();
-				}
-				}
-				else
-			{ */
+			
+			
 			$data = Vehicle::where('head_type',$lvl)->where('parent',$parent)->where('oem_name',$name)->first();
 			
 			if($data)
 			{
 				return $data;
-				////print_r("<h3>Vehicle Found Child of $parent:: Level - $lvl, Name : $name</h3>");
 			}
 			else
 			{
@@ -893,7 +745,7 @@
 				$data->status = 1;
 				$data->save();
 			}
-			/* } */
+		
 			
 			return $data;
 		}
@@ -976,19 +828,7 @@
 		}
 		
 		
-		
-		////////////////////////////////////////////////////////////////////////////////////////
-		//
-		// function Name : 
-		// purpose :
-		// params :
-		// return value : 0 for DISABED, 1 for Active, 2 for Inactive, 3 for Missing from latest Pricelist Import
-		// remarks : 
-		// used in :
-		//
-		////////////////////////////////////////////////////////////////////////////////////////
-		
-		public static function updateStatus($vid,$status)
+				public static function updateStatus($vid,$status)
 		{
 			if(self::Vehicle_Completion($vid) == 0)
 			return $status;
@@ -1033,18 +873,14 @@
 		
 		public static function updateAllVehicle()
 		{
-			//Status 1-OK, 2-InComplete, 3-Suspended, 0- disabled
 			$vehicles = Vehicle::where('head_type',4)->get();
 			$i=1;
-			////print_r($vehicles->toarray());
 			foreach($vehicles as $vehicle)
 			{
-				//print_r("<br>Cheking # $i : Vid - ".$vehicle->id.", current status : ".$vehicle->status);
 				$i++;
 				if($vehicle->status > 0)
 				{
 					$stt = self::Vehicle_Completion($vehicle->toArray());
-					//print_r("<br>Received STT : $stt <br>");
 					if($stt>0)
 					{
 						$vehicle->status = 2;
@@ -1052,23 +888,12 @@
 					else
 					$vehicle->status = 1;	
 					$vehicle->save();
-					//print_r("<br><b>NEW STATUS : ".$vehicle->status."</b><br><br>");
 				}
 				
 			}
 			return;
 		}
-		////////////////////////////////////////////////////////////////////////////////////////
-		//
-		// function Name : Vehicle_Completion
-		// purpose :
-		// params :
-		// return value :
-		// remarks :
-		// used in :
-		//
-		////////////////////////////////////////////////////////////////////////////////////////
-		public static function get_segments()
+				public static function get_segments()
 		{
 			$recs = Vehicle::select('id','segment','cm1','cm_id','name','local_name','mg','mg_id')->where('head_type',4)->where('status',1)->orderby('segment')->orderby('id')->get()->toArray();
 			$segments = array();
@@ -1162,38 +987,30 @@
 			$missing =0;
 			$vinfo = array("cm1", "local_name", "transmission_type","fuel_type_id", "seating", "wheels", "bodymake_id", "bodytype_id",  "segment", "ins_zone_1", "permit_id", "inscomp_id", "carrier_type_id","ins_zone_2", "permit2_id", "inscomp2_id", "carrier_type2_id","cc_capacity","weight");
 			$vid = $vrec['id'];
-			//print_r($vrec);
 			$fuel = CommonHelper::enumValueById($vrec["fuel_type_id"]);
 			$permit = CommonHelper::enumValueById($vrec["permit_id"]);
 			foreach($vinfo as $vi)
 			{
-				//print_r("<br>Checking $vi : ".$vrec[$vi]."...");
 				if($fuel == "ELECTRIC" && ( $vi =="cc_capacity" || $vi =="weight"))
 				{
-					//print_r("<br>...Skipping CC for Electric...");
 					continue;
 				}
 				elseif($permit != "GOODS" && $vi =="weight")
 				{
-					//print_r("<br>...Skipping GWV for NonGoods...");
 					continue;
 				}
 				elseif(($permit == "MISC" || $permit == "GOODS" ||  empty($vrec->permit2_id)) && ($vi =="ins_zone_2" || $vi =="permit2_id" || $vi =="inscomp2_id" || $vi =="carrier_type2_id"))
 				{
-					//print_r("<br>...Skipping Second Set for $permit...");
 					continue;
 				}
 				
 				if(empty($vrec[$vi]))
 				{
 					$missing++;
-					//print_r("<br>$vi is Missing, Value : ".$vrec[$vi]);
 				}
 			}
 			
-			//print_r(", Missing : $missing<br><br>");
-			////print_r($vrec);
-			//dd();
+			
 			return $missing;
 		}
 		
@@ -1223,7 +1040,6 @@
 			}
 		}
 		
-		/// downline($id,$level) :: get model_baseModel downline by ID and Level
 		public static function downline($vid,$level)
 		{
 			$downline = array();
@@ -1239,11 +1055,9 @@
 						if($dli->head_type == 2)
 						{
 							$tmp = DB::table('bmpl_custom_models')->select('id','base_model_id')->where('base_model_id',$dli['id'])->get()->toArray();
-							////print_r($tmp);
 							if($tmp->count() >= 1)
 							$flag = false;
 						}
-						////print_r("<br>$flag<br>");
 						if($flag)
 						$temp['downline'] = self::downline($dli['id'],$level+1);
 					}
