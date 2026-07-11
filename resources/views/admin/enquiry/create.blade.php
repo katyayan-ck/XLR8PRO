@@ -45,6 +45,15 @@
                                 <div class="card-body">
 
                                     <div class="row">
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">
+                                                Enquiry No
+                                                <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="text" name="enquiry_no" class="form-control"
+                                                value="{{ old('enquiry_no', isset($enquiry) ? $enquiry->enquiry_no : '') }}"
+                                                required>
+                                        </div>
 
                                         {{-- Customer First Name --}}
                                         <div class="col-md-3 mb-3">
@@ -118,37 +127,6 @@
 
                                     <div class="row">
 
-                                        {{-- Segment --}}
-                                        <div class="col-md-3 mb-3">
-
-                                            <label class="form-label">
-
-                                                Segment
-
-                                                <span class="text-danger">*</span>
-
-                                            </label>
-
-                                            <select name="segment_code" id="segment_code" class="form-control form-select"
-                                                required>
-
-                                                <option value="">
-                                                    Select Segment
-                                                </option>
-
-                                                @foreach ($segments as $code => $name)
-                                                    <option value="{{ $code }}"
-                                                        {{ old('segment_code') == $code ? 'selected' : '' }}>
-
-                                                        {{ $name }}
-
-                                                    </option>
-                                                @endforeach
-
-                                            </select>
-
-                                        </div>
-
                                         {{-- Enquiry Type --}}
                                         <div class="col-md-3 mb-3">
 
@@ -162,25 +140,11 @@
 
                                                 <option value="">Select Enquiry Type</option>
 
-                                                <option value="Telephone"
-                                                    {{ old('enquiry_type') == 'Telephone' ? 'selected' : '' }}>
-                                                    Telephone
-                                                </option>
-
-                                                <option value="Field"
-                                                    {{ old('enquiry_type') == 'Field' ? 'selected' : '' }}>
-                                                    Field
-                                                </option>
-
-                                                <option value="Digital"
-                                                    {{ old('enquiry_type') == 'Digital' ? 'selected' : '' }}>
-                                                    Digital
-                                                </option>
-
-                                                <option value="Walk-In"
-                                                    {{ old('enquiry_type') == 'Walk-In' ? 'selected' : '' }}>
-                                                    Walk - In
-                                                </option>
+                                                @foreach ($enquiry_types as $etype)
+                                                    <option value="{{ $etype['code'] }}">
+                                                        {{ $etype['value'] }}
+                                                    </option>
+                                                @endforeach
 
                                             </select>
 
@@ -224,40 +188,87 @@
 
                                         </div>
 
-                                        {{-- Planned Campaign --}}
                                         <div class="col-md-4 mb-3">
 
                                             <label class="form-label">
-
                                                 Planned Campaign
-
                                                 <span class="text-danger">*</span>
-
                                             </label>
 
-                                            <select name="planned_campaign" class="form-control form-select" required>
+                                            <select name="planned_campaign" id="planned_campaign"
+                                                class="form-control form-select" required>
 
-                                                <option value="">
-                                                    Select Planned Campaign
-                                                </option>
+                                                <option value="">Select Planned Campaign</option>
+
+                                                @foreach ($campaigns as $name)
+                                                    <option value="{{ $name }}">
+                                                        {{ $name }}
+                                                    </option>
+                                                @endforeach
 
                                             </select>
 
                                         </div>
 
-                                        {{-- Further Details --}}
-                                        <div class="col-md-5 mb-3">
+                                        <div class="row d-none" id="referenceFields">
 
-                                            <label class="form-label">
+                                            <div class="col-md-4 mb-3">
 
-                                                Further Details in case of Reference
+                                                <label class="form-label">
+                                                    Referred By
+                                                    <span class="text-danger">*</span>
+                                                </label>
 
-                                                <span class="text-danger">*</span>
+                                                <select name="referred_by" id="referred_by"
+                                                    class="form-control form-select">
 
-                                            </label>
+                                                    <option value="">Select Referred By</option>
 
-                                            <input type="text" name="reference_details" class="form-control"
-                                                value="{{ old('reference_details') }}" required>
+                                                    <option value="Customer"
+                                                        {{ old('referred_by') == 'Customer' ? 'selected' : '' }}>
+                                                        Customer
+                                                    </option>
+
+                                                    <option value="Team Member"
+                                                        {{ old('referred_by') == 'Team Member' ? 'selected' : '' }}>
+                                                        Team Member
+                                                    </option>
+
+                                                    <option value="Promoter"
+                                                        {{ old('referred_by') == 'Promoter' ? 'selected' : '' }}>
+                                                        Promoter
+                                                    </option>
+
+                                                </select>
+
+                                            </div>
+
+                                            <div class="col-md-4 mb-3">
+
+                                                <label class="form-label">
+                                                    Referee Phone Number
+                                                    <span class="text-danger">*</span>
+                                                </label>
+
+                                                <input type="text" name="referee_phone" id="referee_phone"
+                                                    class="form-control" maxlength="10"
+                                                    value="{{ old('referee_phone') }}">
+
+                                            </div>
+
+                                            <div class="col-md-4 mb-3">
+
+                                                <label class="form-label">
+                                                    Referee Name
+                                                    <span class="text-danger">*</span>
+                                                </label>
+
+                                                <select name="person_code" id="referee_name"
+                                                    class="form-control form-select">
+                                                    <option value="">Select Name</option>
+                                                </select>
+
+                                            </div>
 
                                         </div>
 
@@ -272,8 +283,17 @@
 
                                             </label>
 
-                                            <input type="date" name="likely_purchase_date" class="form-control"
-                                                value="{{ old('likely_purchase_date') }}" required>
+                                            <select name="likely_purchase_date" class="form-control form-select">
+
+                                                <option value="">Select Likely Purchase Date</option>
+
+                                                @foreach ($likely_purchase_dates as $item)
+                                                    <option value="{{ $item['code'] }}">
+                                                        {{ $item['value'] }}
+                                                    </option>
+                                                @endforeach
+
+                                            </select>
 
                                         </div>
 
@@ -294,6 +314,37 @@
 
                                     <div class="row">
 
+                                        {{-- Segment --}}
+                                        <div class="col-md-3 mb-3">
+
+                                            <label class="form-label">
+
+                                                Segment
+
+                                                <span class="text-danger">*</span>
+
+                                            </label>
+
+                                            <select name="segment_code" id="segment_code"
+                                                class="form-control form-select" required>
+
+                                                <option value="">
+                                                    Select Segment
+                                                </option>
+
+                                                @foreach ($segments as $code => $name)
+                                                    <option value="{{ $code }}"
+                                                        {{ old('segment_code') == $code ? 'selected' : '' }}>
+
+                                                        {{ $name }}
+
+                                                    </option>
+                                                @endforeach
+
+                                            </select>
+
+                                        </div>
+
                                         {{-- Model --}}
                                         <div class="col-md-3 mb-3">
                                             <label class="form-label">
@@ -311,72 +362,19 @@
                                             </select>
                                         </div>
 
-                                        {{-- Fuel Type --}}
+                                        {{-- Variant --}}
                                         <div class="col-md-3 mb-3">
 
                                             <label class="form-label">
-                                                Fuel Type
+                                                Variant
                                                 <span class="text-danger">*</span>
                                             </label>
 
-                                            <select name="fuel_type" class="form-control form-select" required>
+                                            <select name="variant_code" id="variant_code"
+                                                class="form-control form-select" required>
 
                                                 <option value="">
-                                                    Select Fuel Type
-                                                </option>
-
-                                            </select>
-
-                                        </div>
-
-                                        {{-- Transmission --}}
-                                        <div class="col-md-3 mb-3">
-
-                                            <label class="form-label">
-                                                Transmission
-                                                <span class="text-danger">*</span>
-                                            </label>
-
-                                            <select name="transmission" class="form-control form-select" required>
-
-                                                <option value="">
-                                                    Select Transmission
-                                                </option>
-
-                                            </select>
-
-                                        </div>
-
-                                        {{-- Drivetrain --}}
-                                        <div class="col-md-3 mb-3">
-
-                                            <label class="form-label">
-                                                Drivetrain
-                                                <span class="text-danger">*</span>
-                                            </label>
-
-                                            <select name="drivetrain" class="form-control form-select" required>
-
-                                                <option value="">
-                                                    Select Drivetrain
-                                                </option>
-
-                                            </select>
-
-                                        </div>
-
-                                        {{-- Seating --}}
-                                        <div class="col-md-3 mb-3">
-
-                                            <label class="form-label">
-                                                Seating
-                                                <span class="text-danger">*</span>
-                                            </label>
-
-                                            <select name="seating" class="form-control form-select" required>
-
-                                                <option value="">
-                                                    Select Seating
+                                                    Select Variant
                                                 </option>
 
                                             </select>
@@ -402,22 +400,56 @@
 
                                         </div>
 
-                                        {{-- Variant --}}
+                                        {{-- Fuel Type --}}
                                         <div class="col-md-3 mb-3">
 
                                             <label class="form-label">
-                                                Variant
+                                                Fuel Type
                                                 <span class="text-danger">*</span>
                                             </label>
 
-                                            <select name="variant_code" id="variant_code"
-                                                class="form-control form-select" required>
+                                            <input type="text" id="fuel_type" class="form-control" readonly>
 
-                                                <option value="">
-                                                    Select Variant
-                                                </option>
+                                            <input type="hidden" id="fuel_type_id" name="fuel_type">
 
-                                            </select>
+                                        </div>
+
+                                        {{-- Transmission --}}
+                                        <div class="col-md-3 mb-3">
+
+                                            <label class="form-label">
+                                                Transmission
+                                                <span class="text-danger">*</span>
+                                            </label>
+
+                                            <input type="text" id="transmission" name="transmission"
+                                                class="form-control" readonly>
+
+                                        </div>
+
+                                        {{-- Drivetrain --}}
+                                        <div class="col-md-3 mb-3">
+
+                                            <label class="form-label">
+                                                Drivetrain
+                                                <span class="text-danger">*</span>
+                                            </label>
+
+                                            <input type="text" id="drivetrain" name="drivetrain" class="form-control"
+                                                readonly>
+
+                                        </div>
+
+                                        {{-- Seating --}}
+                                        <div class="col-md-3 mb-3">
+
+                                            <label class="form-label">
+                                                Seating
+                                                <span class="text-danger">*</span>
+                                            </label>
+
+                                            <input type="text" id="seating" name="seating" class="form-control"
+                                                readonly>
 
                                         </div>
 
@@ -430,38 +462,15 @@
                                                     Usage Area
                                                 </label>
 
-                                                <select name="usage_area" id="usage_area"
-                                                    class="form-control form-select">
+                                                <select name="usage_area" class="form-control form-select">
 
                                                     <option value="">Select Usage Area</option>
 
-                                                    <option value="Intra City">
-                                                        Intra City (Within City Limits Only)
-                                                    </option>
-
-                                                    <option value="Inter City">
-                                                        Inter City (One City to Another City)
-                                                    </option>
-
-                                                    <option value="Only Rural">
-                                                        Only Rural
-                                                    </option>
-
-                                                    <option value="City to Rural">
-                                                        City to Rural
-                                                    </option>
-
-                                                    <option value="City Outskirts">
-                                                        City Outskirts
-                                                    </option>
-
-                                                    <option value="City Municipal Area">
-                                                        City Municipal Area - LMM Only for Pass Permit
-                                                    </option>
-
-                                                    <option value="Inside City But Outside Municipal Area">
-                                                        Inside City But Outside Municipal Area - LMM Only for Pass Permit
-                                                    </option>
+                                                    @foreach ($usage_areas as $item)
+                                                        <option value="{{ $item['code'] }}">
+                                                            {{ $item['value'] }}
+                                                        </option>
+                                                    @endforeach
 
                                                 </select>
 
@@ -473,18 +482,15 @@
                                                     KM Travelled Daily
                                                 </label>
 
-                                                <select name="km_travelled_daily" id="km_travelled_daily"
-                                                    class="form-control form-select">
+                                                <select name="km_travelled_daily" class="form-control form-select">
 
                                                     <option value="">Select KM Travelled Daily</option>
 
-                                                    <option value="0-49">0 - 49 KM</option>
-
-                                                    <option value="50-99">50 - 99 KM</option>
-
-                                                    <option value="100-199">100 - 199 KM</option>
-
-                                                    <option value=">=200">≥ 200 KM</option>
+                                                    @foreach ($km_travelled_daily as $item)
+                                                        <option value="{{ $item['code'] }}">
+                                                            {{ $item['value'] }}
+                                                        </option>
+                                                    @endforeach
 
                                                 </select>
 
@@ -501,29 +507,11 @@
 
                                                     <option value="">Select Application Type</option>
 
-                                                    <option value="Captive">
-                                                        Captive (For Goods Permit Only)
-                                                    </option>
-
-                                                    <option value="MLO (Owner Cum Driver)">
-                                                        MLO (Owner Cum Driver) - For Goods Permit Only
-                                                    </option>
-
-                                                    <option value="Corporate & Institutional (Load)">
-                                                        Corporate & Institutional (Load)
-                                                    </option>
-
-                                                    <option value="Corporate & Institutional (Passenger)">
-                                                        Corporate & Institutional (Passenger)
-                                                    </option>
-
-                                                    <option value="Commercial">
-                                                        Commercial
-                                                    </option>
-
-                                                    <option value="Personal">
-                                                        Personal
-                                                    </option>
+                                                    @foreach ($application_types as $item)
+                                                        <option value="{{ $item['code'] }}">
+                                                            {{ $item['value'] }}
+                                                        </option>
+                                                    @endforeach
 
                                                 </select>
 
@@ -536,9 +524,15 @@
                                                 </label>
 
                                                 <select name="application" id="application"
-                                                    class="form-control form-select" disabled>
+                                                    class="form-control form-select">
 
                                                     <option value="">Select Application</option>
+
+                                                    @foreach ($applications as $item)
+                                                        <option value="{{ $item['code'] }}">
+                                                            {{ $item['value'] }}
+                                                        </option>
+                                                    @endforeach
 
                                                 </select>
 
@@ -576,11 +570,16 @@
                                                 <span class="text-danger">*</span>
                                             </label>
 
-                                            <select name="dealer_branch" class="form-control form-select" required>
+                                            <select name="dealer_branch" id="dealer_branch"
+                                                class="form-control form-select" required>
 
-                                                <option value="">
-                                                    Select Dealer Branch
-                                                </option>
+                                                <option value="">Select Dealer Branch</option>
+
+                                                @foreach ($branches as $code => $name)
+                                                    <option value="{{ $code }}">
+                                                        {{ $name }}
+                                                    </option>
+                                                @endforeach
 
                                             </select>
 
@@ -594,11 +593,10 @@
                                                 <span class="text-danger">*</span>
                                             </label>
 
-                                            <select name="dealer_location" class="form-control form-select" required>
+                                            <select name="dealer_location" id="dealer_location"
+                                                class="form-control form-select" required>
 
-                                                <option value="">
-                                                    Select Dealer Location
-                                                </option>
+                                                <option value="">Select Dealer Location</option>
 
                                             </select>
 
@@ -662,30 +660,15 @@
                                                 <span class="text-danger">*</span>
                                             </label>
 
-                                            <select name="followup_type" id="followup_type"
-                                                class="form-control form-select" required>
+                                            <select name="followup_type" class="form-control form-select">
 
                                                 <option value="">Select Follow Up Type</option>
 
-                                                <option value="Call"
-                                                    {{ old('followup_type') == 'Call' ? 'selected' : '' }}>
-                                                    Call
-                                                </option>
-
-                                                <option value="Test Drive"
-                                                    {{ old('followup_type') == 'Test Drive' ? 'selected' : '' }}>
-                                                    Test Drive
-                                                </option>
-
-                                                <option value="Customer Location Visit"
-                                                    {{ old('followup_type') == 'Customer Location Visit' ? 'selected' : '' }}>
-                                                    Customer Location Visit
-                                                </option>
-
-                                                <option value="Showroom Visit"
-                                                    {{ old('followup_type') == 'Showroom Visit' ? 'selected' : '' }}>
-                                                    Showroom Visit
-                                                </option>
+                                                @foreach ($follow_up_types as $item)
+                                                    <option value="{{ $item['code'] }}">
+                                                        {{ $item['value'] }}
+                                                    </option>
+                                                @endforeach
 
                                             </select>
 
@@ -738,31 +721,17 @@
                                         <div class="col-md-3 mb-3">
                                             <label class="form-label">
                                                 Occupation Type
-                                                <small class="text-muted">(Optional)</small>
                                             </label>
 
-                                            <select name="occupation_type" id="occupation_type"
-                                                class="form-control form-select">
+                                            <select name="occupation_type" class="form-control form-select">
 
                                                 <option value="">Select Occupation Type</option>
 
-                                                <option value="Business">Business</option>
-
-                                                <option value="Salaried Pvt.">Salaried Pvt.</option>
-
-                                                <option value="Self Employed Pro">Self Employed Pro</option>
-
-                                                <option value="Salaried Govt. / PSU / Pensioner">
-                                                    Salaried Govt. / PSU / Pensioner
-                                                </option>
-
-                                                <option value="Agri Based">Agri Based</option>
-
-                                                <option value="Housewife">Housewife</option>
-
-                                                <option value="Student">Student</option>
-
-                                                <option value="CSD - CPC">CSD - CPC</option>
+                                                @foreach ($occupation_types as $item)
+                                                    <option value="{{ $item['code'] }}">
+                                                        {{ $item['value'] }}
+                                                    </option>
+                                                @endforeach
 
                                             </select>
                                         </div>
@@ -774,14 +743,15 @@
                                                 <small class="text-muted">(Optional)</small>
                                             </label>
 
-                                            <select name="customer_type" id="customer_type"
-                                                class="form-control form-select">
+                                            <select name="customer_type" class="form-control form-select">
 
                                                 <option value="">Select Customer Type</option>
 
-                                                <option value="Individual">Individual</option>
-
-                                                <option value="Corporate">Corporate</option>
+                                                @foreach ($customer_types as $item)
+                                                    <option value="{{ $item['code'] }}">
+                                                        {{ $item['value'] }}
+                                                    </option>
+                                                @endforeach
 
                                             </select>
                                         </div>
@@ -793,22 +763,15 @@
                                                 <small class="text-muted">(Optional)</small>
                                             </label>
 
-                                            <select name="occupation_sub_type" id="occupation_sub_type"
-                                                class="form-control form-select">
+                                            <select name="occupation_sub_type" class="form-control form-select">
 
                                                 <option value="">Select Occupation Sub Type</option>
 
-                                                <option value="MSME">MSME</option>
-
-                                                <option value="Retail">Retail</option>
-
-                                                <option value="Distributor">Distributor</option>
-
-                                                <option value="Pharma">Pharma</option>
-
-                                                <option value="Trading">Trading</option>
-
-                                                <option value="IT">IT</option>
+                                                @foreach ($occupation_sub_types as $item)
+                                                    <option value="{{ $item['code'] }}">
+                                                        {{ $item['value'] }}
+                                                    </option>
+                                                @endforeach
 
                                             </select>
                                         </div>
@@ -834,9 +797,12 @@
                                             <select name="gender" class="form-control form-select">
 
                                                 <option value="">Select Gender</option>
-                                                <option value="Male">Male</option>
-                                                <option value="Female">Female</option>
-                                                <option value="Other">Other</option>
+
+                                                @foreach ($genders as $item)
+                                                    <option value="{{ $item['code'] }}">
+                                                        {{ $item['value'] }}
+                                                    </option>
+                                                @endforeach
 
                                             </select>
                                         </div>
@@ -856,19 +822,17 @@
                                         <div class="col-md-3 mb-3">
                                             <label class="form-label">
                                                 Marital Status
-                                                <small class="text-muted">(Optional)</small>
                                             </label>
 
                                             <select name="marital_status" class="form-control form-select">
 
-                                                <option value="">
-                                                    Select Marital Status
-                                                </option>
+                                                <option value="">Select Marital Status</option>
 
-                                                <option value="Single">Single</option>
-                                                <option value="Married">Married</option>
-                                                <option value="Divorced">Divorced</option>
-                                                <option value="Widowed">Widowed</option>
+                                                @foreach ($marital_statuses as $item)
+                                                    <option value="{{ $item['code'] }}">
+                                                        {{ $item['value'] }}
+                                                    </option>
+                                                @endforeach
 
                                             </select>
                                         </div>
@@ -893,15 +857,13 @@
 
                                             <select name="age_group" class="form-control form-select">
 
-                                                <option value="">
-                                                    Select Age Group
-                                                </option>
+                                                <option value="">Select Age Group</option>
 
-                                                <option value="18-25">18-25</option>
-                                                <option value="26-35">26-35</option>
-                                                <option value="36-45">36-45</option>
-                                                <option value="46-60">46-60</option>
-                                                <option value="60+">60+</option>
+                                                @foreach ($age_groups as $item)
+                                                    <option value="{{ $item['code'] }}">
+                                                        {{ $item['value'] }}
+                                                    </option>
+                                                @endforeach
 
                                             </select>
                                         </div>
@@ -1063,7 +1025,7 @@
 
                                         </div>
 
-                                        <div class="row d-none" id="exchangeVehicleSection">
+                                        <div class="row d-none" id="exchangeFields">
 
                                             {{-- Make --}}
                                             <div class="col-md-4 mb-3">
@@ -1072,8 +1034,8 @@
                                                     Make
                                                 </label>
 
-                                                <input type="text" name="exchange_make" class="form-control"
-                                                    value="{{ old('exchange_make') }}">
+                                                <input type="text" id="exchange_make" name="exchange_make"
+                                                    class="form-control" value="{{ old('exchange_make') }}">
 
                                             </div>
 
@@ -1084,8 +1046,8 @@
                                                     Model
                                                 </label>
 
-                                                <input type="text" name="exchange_model" class="form-control"
-                                                    value="{{ old('exchange_model') }}">
+                                                <input type="text" id="exchange_model" name="exchange_model"
+                                                    class="form-control" value="{{ old('exchange_model') }}">
 
                                             </div>
 
@@ -1096,8 +1058,8 @@
                                                     Vehicle No.
                                                 </label>
 
-                                                <input type="text" name="vehicle_no" class="form-control"
-                                                    value="{{ old('vehicle_no') }}">
+                                                <input type="text" id="vehicle_no" name="vehicle_no"
+                                                    class="form-control" value="{{ old('vehicle_no') }}">
 
                                             </div>
 
@@ -1139,28 +1101,6 @@
 
                                             </button>
 
-                                            <button type="submit" name="save_action" value="save_and_new"
-                                                class="btn btn-primary btn-lg">
-
-                                                <i class="la la-plus"></i>
-
-                                                Save & New
-
-                                            </button>
-
-                                        </div>
-
-                                        <div>
-
-                                            <a href="{{ backpack_url('enquiries/hot-enquiry-list') }}"
-                                                class="btn btn-secondary btn-lg">
-
-                                                <i class="la la-times"></i>
-
-                                                Cancel
-
-                                            </a>
-
                                         </div>
 
                                     </div>
@@ -1181,11 +1121,73 @@
 
 @push('after_scripts')
     <script>
+        function loadKeywordDropdown(keyword, parent, target, placeholder = 'Select Option', selected = '') {
+
+            if (!parent) {
+
+                $(target)
+                    .html(`<option value="">${placeholder}</option>`)
+                    .prop('disabled', true);
+
+                return;
+            }
+
+            $.ajax({
+
+                url: "{{ route('admin.master.keyword-values', ['keyword' => '__KEYWORD__', 'parent' => '__PARENT__']) }}"
+                    .replace('__KEYWORD__', encodeURIComponent(keyword))
+                    .replace('__PARENT__', encodeURIComponent(parent)),
+
+                type: "GET",
+
+                beforeSend: function() {
+
+                    $(target)
+                        .html('<option>Loading...</option>')
+                        .prop('disabled', true);
+
+                },
+
+                success: function(response) {
+
+                    let html = `<option value="">${placeholder}</option>`;
+
+                    $.each(response, function(_, item) {
+
+                        html += `
+                        <option value="${item.code}"
+                            ${selected == item.code ? 'selected' : ''}>
+                            ${item.value}
+                        </option>
+                    `;
+
+                    });
+
+                    $(target)
+                        .html(html)
+                        .prop('disabled', false);
+
+                },
+
+                error: function() {
+
+                    $(target)
+                        .html(`<option value="">${placeholder}</option>`)
+                        .prop('disabled', true);
+
+                }
+
+            });
+
+        }
+
         $(function() {
 
-            // ================================
-            // Initial State
-            // ================================
+            /*
+            |--------------------------------------------------------------------------
+            | Initial State
+            |--------------------------------------------------------------------------
+            */
 
             $('#model_code').prop('disabled', true);
             $('#variant_code').prop('disabled', true);
@@ -1194,329 +1196,182 @@
             $('#bevSection').hide();
             // $('#commercialSection').hide();
 
+            $('#exchangeVehicleSection').hide();
 
-            // =========================================
-            // Enquiry Type -> Enquiry Source
-            // =========================================
-
-            const enquirySources = {
-
-                Telephone: [
-                    "Newspaper",
-                    "Television",
-                    "Hoarding",
-                    "Activations",
-                    "Outbound Calling",
-                    "Reference",
-                    "Broker",
-                    "Mitra",
-                    "Financier"
-                ],
-
-                Field: [
-                    "Newspaper",
-                    "Television",
-                    "Hoarding",
-                    "Activations",
-                    "Outbound Calling",
-                    "Reference",
-                    "Broker",
-                    "Mitra",
-                    "Financier"
-                ],
-
-                Digital: [
-                    "Activations",
-                    "WAP (Workshop as Promoter)",
-                    "Dealer Website",
-                    "Dealer Social Media",
-                    "Car Portals",
-                    "Brand Website",
-                    "Financier",
-                    "Hyperlocal"
-                ],
-
-                "Walk-In": [
-                    "Walk-In"
-                ]
-
-            };
+            $('#source_code').prop('disabled', true);
+            $('#sub_source').prop('disabled', true);
+            $('#application').prop('disabled', true);
 
 
-            function populateEnquirySource(type) {
+            /*
+            |--------------------------------------------------------------------------
+            | Enquiry Type -> Enquiry Source
+            |--------------------------------------------------------------------------
+            */
 
-                let dropdown = $('#source_code');
+            $('#enquiry_type').on('change', function() {
 
-                dropdown.empty();
+                let enquiryType = $(this).val();
 
-                dropdown.append(
-                    '<option value="">Select Enquiry Source</option>'
+                loadKeywordDropdown(
+                    'ENQ_SOURCE',
+                    enquiryType,
+                    '#source_code',
+                    'Select Enquiry Source'
                 );
 
-                if (!type || !enquirySources[type]) {
-                    return;
-                }
-
-                $.each(enquirySources[type], function(i, item) {
-
-                    dropdown.append(
-                        $('<option>', {
-                            value: item,
-                            text: item
-                        })
-                    );
-
-                });
-
-            }
-
-
-            $('#enquiry_type').change(function() {
-
-                populateEnquirySource($(this).val());
+                $('#sub_source')
+                    .html('<option value="">Select Enquiry Sub Source</option>')
+                    .prop('disabled', true);
 
             });
 
-            // ========================================
-            // Enquiry Source -> Enquiry Sub Source
-            // ========================================
 
-            const hyperlocalSubSources = [
-
-                "Google",
-                "Social",
-                "Organic"
-
-            ];
+            /*
+            |--------------------------------------------------------------------------
+            | Enquiry Source -> Enquiry Sub Source
+            |--------------------------------------------------------------------------
+            */
 
             $('#source_code').on('change', function() {
 
                 let source = $(this).val();
 
-                let subSource = $('#sub_source');
-
-                subSource.empty();
-
-                subSource.append(
-                    '<option value="">Select Enquiry Sub Source</option>'
+                loadKeywordDropdown(
+                    'ENQUIRY_SUB_SOURCE',
+                    source,
+                    '#sub_source',
+                    'Select Enquiry Sub Source'
                 );
 
-                if (source === "Hyperlocal") {
+            });
 
-                    subSource.prop('disabled', false);
 
-                    $.each(hyperlocalSubSources, function(i, item) {
+            /*
+            |--------------------------------------------------------------------------
+            | Purchase Type
+            |--------------------------------------------------------------------------
+            */
 
-                        subSource.append(
+            $(document).ready(function() {
 
-                            '<option value="' + item + '">' +
-                            item +
-                            '</option>'
+                function toggleExchangeFields() {
 
-                        );
+                    let purchaseType = $('#purchase_type').val();
 
-                    });
+                    if (
+                        purchaseType === 'Exchange Buy' ||
+                        purchaseType === 'Additional Buy' ||
+                        purchaseType === 'Scrappage'
+                    ) {
 
-                } else {
+                        $('#exchangeFields').show();
 
-                    subSource.val('');
+                        $('#exchange_make').prop('required', true);
+                        $('#exchange_model').prop('required', true);
+                        $('#vehicle_no').prop('required', true);
 
-                    subSource.prop('disabled', true);
+                    } else {
 
+                        $('#exchangeFields').hide();
+
+                        $('#exchange_make,#exchange_model,#vehicle_no')
+                            .val('')
+                            .prop('required', false);
+
+                    }
                 }
+
+                $('#purchase_type').on('change', toggleExchangeFields);
+
+                toggleExchangeFields();
 
             });
 
-            // ======================================
-            // Purchase Type
-            // ======================================
 
-            $('#exchangeVehicleSection').hide();
-
-            $('#purchase_type').on('change', function() {
-
-                let purchaseType = $(this).val();
-
-                if (
-                    purchaseType === 'Exchange Buy' ||
-                    purchaseType === 'Additional Buy' ||
-                    purchaseType === 'Scrappage'
-                ) {
-
-                    $('#exchangeVehicleSection').removeClass('d-none').show();
-
-                } else {
-
-                    $('#exchangeVehicleSection').addClass('d-none').hide();
-
-                    $('input[name="exchange_make"]').val('');
-                    $('input[name="exchange_model"]').val('');
-                    $('input[name="vehicle_no"]').val('');
-
-                }
-
-            });
-
-            // Trigger on page load (for old values/edit form)
-            $('#purchase_type').trigger('change');
-
-            // ======================================
-            // Application Type -> Application
-            // ======================================
-
-            const applicationOptions = [
-
-                "Agri Based",
-                "Airlines & Airports",
-                "Beverages",
-                "BPO & ITES",
-                "Caterer / Decorator",
-                "Charitable Institutions",
-                "Construction",
-                "Consumer Durables",
-                "Contract",
-                "Dairy / Milk",
-                "Family / Business Usage",
-                "Fishery",
-                "FMCG",
-                "Food Chain & Restaurants",
-                "Fruit & Vegetables",
-                "Furniture",
-                "Garments",
-                "Grocery Items",
-                "Hospitals",
-                "Industrial Goods",
-                "Logistics & Ecommerce",
-                "LPG",
-                "Municipal Applications",
-                "Others",
-                "Packers",
-                "Pharma",
-                "Poultry",
-                "Refrigerated Products",
-                "School & Colleges",
-                "Staff Transportation",
-                "Stand Operator",
-                "Spares & Auto Ancillaries",
-                "Tours & Travels",
-                "Wood / Timber / Plywood"
-
-            ];
+            /*
+            |--------------------------------------------------------------------------
+            | Application Type -> Application
+            |--------------------------------------------------------------------------
+            */
 
             $('#application_type').on('change', function() {
 
-                let type = $(this).val();
+                let applicationType = $(this).val();
 
-                let application = $('#application');
-
-                application.empty();
-
-                application.append(
-                    '<option value="">Select Application</option>'
+                loadKeywordDropdown(
+                    'APPLICATION',
+                    applicationType,
+                    '#application',
+                    'Select Application'
                 );
-
-                if (type === '' || type === 'Personal') {
-
-                    application.prop('disabled', true);
-
-                    return;
-
-                }
-
-                application.prop('disabled', false);
-
-                $.each(applicationOptions, function(i, item) {
-
-                    application.append(
-
-                        $('<option>', {
-
-                            value: item,
-                            text: item
-
-                        })
-
-                    );
-
-                });
 
             });
 
-            // Trigger on page load
+
+            /*
+            |--------------------------------------------------------------------------
+            | Page Load Triggers
+            |--------------------------------------------------------------------------
+            */
+
+            $('#purchase_type').trigger('change');
             $('#application_type').trigger('change');
+            $('#enquiry_type').trigger('change');
 
 
-            // =========================================
-            // Segment -> Model
-            // =========================================
+            /*
+            |--------------------------------------------------------------------------
+            | Segment -> Model
+            |--------------------------------------------------------------------------
+            */
 
-            $('#segment_code').change(function() {
+            $('#segment_code').on('change', function() {
 
                 let segmentCode = $(this).val();
+                let segmentText = $('#segment_code option:selected').text().trim().toUpperCase();
 
-                let segmentText = $('#segment_code option:selected')
-                    .text()
-                    .trim()
-                    .toUpperCase();
+                $('#bevSection').toggle(segmentText === 'BEV');
+                // $('#commercialSection').toggle(segmentText === 'LMM' || segmentText === 'COMMERCIAL');
 
-
-                $('#bevSection').hide();
-                // $('#commercialSection').hide();
-
-                // if (segmentText === "BEV") {
-
-                //     $('#bevSection').show();
-
-                // }
-
-                // if (
-                //     segmentText === "LMM" ||
-                //     segmentText === "COMMERCIAL"
-                // ) {
-
-                //     $('#commercialSection').show();
-
-                // }
-
-
+                // Reset fields
                 $('#model_code')
-                    .html('<option>Loading...</option>')
+                    .html('<option value="">Select Model</option>')
                     .prop('disabled', true);
 
                 $('#variant_code')
-                    .html('<option>Select Variant</option>')
+                    .html('<option value="">Select Variant</option>')
                     .prop('disabled', true);
 
                 $('#color_code')
-                    .html('<option>Select Color</option>')
+                    .html('<option value="">Select Color</option>')
                     .prop('disabled', true);
 
+                $('#fuel_type').val('');
+                $('#fuel_type_id').val('');
 
-                if (segmentCode == '') {
+                $('#transmission').val('');
+                $('#drivetrain').val('');
+                $('#seating').val('');
+
+                if (!segmentCode) {
                     return;
                 }
-
 
                 $.get(
                     "{{ backpack_url('enquiry/models') }}/" + segmentCode,
                     function(response) {
 
-                        let options =
-                            '<option value="">Select Model</option>';
+                        let html = '<option value="">Select Model</option>';
 
-                        $.each(response, function(code, name) {
+                        $.each(response, function(code, value) {
 
-                            options +=
-                                '<option value="' +
-                                code +
-                                '">' +
-                                name +
-                                '</option>';
+                            html += `<option value="${code}">${value}</option>`;
 
                         });
 
                         $('#model_code')
-                            .html(options)
+                            .html(html)
                             .prop('disabled', false);
 
                     }
@@ -1525,96 +1380,236 @@
             });
 
 
-            // =========================================
-            // Model -> Variant
-            // =========================================
+            /*
+            |--------------------------------------------------------------------------
+            | Model -> Variant
+            |--------------------------------------------------------------------------
+            */
 
-            $('#model_code').change(function() {
+            $('#model_code').on('change', function() {
 
                 let modelCode = $(this).val();
 
                 $('#variant_code')
-                    .html('<option>Loading...</option>')
+                    .html('<option value="">Loading...</option>')
                     .prop('disabled', true);
 
                 $('#color_code')
-                    .html('<option>Select Color</option>')
+                    .html('<option value="">Select Color</option>')
                     .prop('disabled', true);
 
-                if (modelCode == '') {
+                $('#fuel_type').val('');
+                $('#fuel_type_id').val('');
+
+                $('#transmission').val('');
+                $('#drivetrain').val('');
+                $('#seating').val('');
+
+                if (!modelCode) {
                     return;
                 }
 
                 $.get(
                     "{{ backpack_url('enquiry/variants') }}/" + modelCode,
+
                     function(response) {
 
-                        let options =
-                            '<option value="">Select Variant</option>';
+                        let html = '<option value="">Select Variant</option>';
 
-                        $.each(response, function(code, name) {
+                        $.each(response, function(code, item) {
 
-                            options +=
-                                '<option value="' +
-                                code +
-                                '">' +
-                                name +
-                                '</option>';
+                            html += `
+                    <option
+                        value="${code}"
+                        data-fuel="${item.fuel_type ?? ''}"
+                        data-fuel-id="${item.fuel_type_id ?? ''}"
+                        data-transmission="${item.transmission ?? ''}"
+                        data-drivetrain="${item.drivetrain ?? ''}"
+                        data-seating="${item.seating ?? ''}">
+                        ${item.name}
+                    </option>
+                `;
 
                         });
 
                         $('#variant_code')
-                            .html(options)
+                            .html(html)
                             .prop('disabled', false);
 
                     }
+
                 );
 
             });
 
 
-            // =========================================
-            // Variant -> Color
-            // =========================================
+            /*
+            |--------------------------------------------------------------------------
+            | Variant -> Auto Fill + Color
+            |--------------------------------------------------------------------------
+            */
 
-            $('#variant_code').change(function() {
+            $('#variant_code').on('change', function() {
 
                 let variantCode = $(this).val();
 
+                let selected = $(this).find(':selected');
+
+                // Auto Fill
+                $('#fuel_type').val(selected.data('fuel'));
+                $('#fuel_type_id').val(selected.data('fuel-id'));
+
+                $('#transmission').val(selected.data('transmission'));
+                $('#drivetrain').val(selected.data('drivetrain'));
+                $('#seating').val(selected.data('seating'));
+
                 $('#color_code')
-                    .html('<option>Loading...</option>')
+                    .html('<option value="">Loading...</option>')
                     .prop('disabled', true);
 
-                if (variantCode == '') {
+                if (!variantCode) {
                     return;
                 }
 
                 $.get(
                     "{{ backpack_url('enquiry/colors') }}/" + variantCode,
+
                     function(response) {
 
-                        let options =
-                            '<option value="">Select Color</option>';
+                        let html = '<option value="">Select Color</option>';
 
-                        $.each(response, function(code, name) {
+                        $.each(response, function(code, value) {
 
-                            options +=
-                                '<option value="' +
-                                code +
-                                '">' +
-                                name +
-                                '</option>';
+                            html += `<option value="${code}">${value}</option>`;
 
                         });
 
                         $('#color_code')
-                            .html(options)
+                            .html(html)
                             .prop('disabled', false);
+
+                    }
+
+                );
+
+            });
+
+            $(document).on('change', '#dealer_branch', function() {
+
+                console.log('Branch Changed');
+
+                let branchCode = $(this).val();
+
+                $('#dealer_location').html('<option>Loading...</option>');
+
+                $.get(
+                    "{{ backpack_url('enquiry/locations') }}/" + branchCode,
+                    function(response) {
+
+                        console.log(response);
+
+                        let html = '<option value="">Select Dealer Location</option>';
+
+                        $.each(response, function(code, name) {
+                            html += `<option value="${code}">${name}</option>`;
+                        });
+
+                        $('#dealer_location').html(html);
+                    }
+                );
+            });
+
+            function toggleExchangeFields() {
+
+                let purchaseType = $('#purchase_type').val();
+
+                if (['Exchange Buy', 'Additional Buy', 'Scrappage'].includes(purchaseType)) {
+
+                    $('#exchangeFields').removeClass('d-none');
+
+                    $('#exchange_make,#exchange_model,#vehicle_no').prop('required', true);
+
+                } else {
+
+                    $('#exchangeFields').addClass('d-none');
+
+                    $('#exchange_make,#exchange_model,#vehicle_no')
+                        .val('')
+                        .prop('required', false);
+
+                }
+            }
+
+            $('#purchase_type').on('change', toggleExchangeFields);
+            toggleExchangeFields();
+
+            function toggleReferenceFields() {
+
+                let source = $('#source_code').val();
+
+                if (source === 'REFERENCE') {
+
+                    $('#referenceFields').removeClass('d-none');
+
+                    $('#referred_by,#referee_phone,#referee_name')
+                        .prop('required', true);
+
+                } else {
+
+                    $('#referenceFields').addClass('d-none');
+
+                    $('#referred_by,#referee_phone,#referee_name')
+                        .prop('required', false)
+                        .val('');
+
+                }
+
+            }
+
+            $('#source_code').on('change', toggleReferenceFields);
+
+            toggleReferenceFields();
+
+            $('#referee_phone').on('keyup change', function() {
+
+                let mobile = $(this).val();
+
+                let type = $('#referred_by').val();
+
+                if (mobile.length != 10 || !type) {
+                    return;
+                }
+
+                $.get(
+                    "{{ route('enquiry.reference-users') }}", {
+                        type: type,
+                        mobile: mobile
+                    },
+                    function(response) {
+
+                        let html = '<option value="">Select Name</option>';
+
+                        $.each(response, function(code, name) {
+                            html += '<option value="' + code + '">' + name + '</option>';
+                        });
+
+                        $('#referee_name').html(html);
 
                     }
                 );
 
             });
+
+            /*
+            |--------------------------------------------------------------------------
+            | Final Page Load
+            |--------------------------------------------------------------------------
+            */
+
+            $('#purchase_type').trigger('change');
+            $('#application_type').trigger('change');
+            $('#enquiry_type').trigger('change');
+            $('#segment_code').trigger('change');
 
         });
     </script>
