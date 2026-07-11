@@ -7,13 +7,12 @@
                 <div
                     class="card-header bg-gradient-primary d-flex justify-content-between align-items-center flex-nowrap flex-md-nowrap flex-wrap gap-3">
                     <h2 class="card-title mb-0 fw-bold text-black text-nowrap">
-                        {{ $title ?? 'All Enquiries' }}
+                        {{ $title ?? 'Campaign List' }}
                     </h2>
 
                     <div class="d-flex align-items-center gap-3 flex-nowrap">
-                        <a href="{{ backpack_url('enquiries/add-hot-enquiry') }}"
-                            class="btn btn-blue btn-sm fw-bold shadow-sm">
-                            <i class="la la-plus me-1"></i> Add New Enquiry
+                        <a href="{{ route('campaign.create') }}" class="btn btn-blue btn-sm fw-bold shadow-sm">
+                            <i class="la la-plus me-1"></i>Add Campaign
                         </a>
                     </div>
                 </div>
@@ -91,74 +90,31 @@
         const columnDefs = [
 
             ...ALL_COLUMNS.filter(col => [
+
                 'serial_no',
-                'enquiry_no',
-                'enquiry_type',
-                'source_name',
-                'sub_source',
-                'person_code',
-                'reference_details',
-                'referred_by',
-                'referee_phone',
-                'referee_name',
-                'planned_campaign_name',
-                'likely_purchase_date',
-                'activity_type',
-                'activity_segment',
-                'activity_model',
-                'activity_start_date',
-                'activity_end_date',
-                'activity_branch',
-                'activity_location',
-                'first_name',
-                'last_name',
-                'full_name',
-                'mobile',
-                'email',
-                'occupation_type',
-                'occupation_sub_type',
-                'customer_type',
-                'company_name',
-                'gender',
-                'dob',
-                'marital_status',
-                'marriage_date',
-                'age_group',
-                'zipcode',
-                'tehsil',
-                'district',
-                'city',
-                'has_ev',
-                'purchase_type',
-                'exchange_make',
-                'exchange_model',
-                'vehicle_no',
-                'remarks',
+
+                'name',
+
                 'segment_name',
+
                 'model_name',
-                'variant_name',
-                'color_name',
-                'fuel_type',
-                'transmission',
-                'drivetrain',
-                'seating',
-                'usage_area',
-                'km_travelled_daily',
-                'application_type',
-                'application',
-                'place_of_registration',
-                'dealer_branch',
-                'dealer_location',
-                'sales_consultant_id',
-                'followup_type',
-                'followup_date',
-                'followup_time'
+
+                'activity_name',
+
+                'start_date',
+
+                'end_date',
+
+                'branch_name',
+
+                'location_name',
+
             ].includes(col.field)),
 
             ...ALL_COLUMNS.filter(col => ['action'].includes(col.field)).map(col => {
 
                 col.pinned = 'right';
-                col.width = 140;
+                col.width = 120;
                 col.sortable = false;
                 col.filter = false;
                 col.cellRenderer = 'htmlRenderer';
@@ -192,21 +148,27 @@
                 gridApi = params.api;
 
                 const defaultFields = [
+
                     'serial_no',
-                    'enquiry_no',
-                    'first_name',
-                    'last_name',
-                    'mobile',
-                    'source_name',
-                    'planned_campaign_name',
+
+                    'name',
+
                     'segment_name',
+
                     'model_name',
-                    'variant_name',
-                    'color_name',
-                    'dealer_branch',
-                    'dealer_location',
-                    'followup_date',
+
+                    'activity_name',
+
+                    'start_date',
+
+                    'end_date',
+
+                    'branch_name',
+
+                    'location_name',
+
                     'action'
+
                 ];
 
                 const allCols = gridApi.getAllGridColumns().map(col => col.getColId());
@@ -239,7 +201,7 @@
                 checkbox.type = 'checkbox';
                 checkbox.checked = gridApi.getColumn(col.field)?.isVisible() ?? false;
 
-                if (['serial_no', 'enquiry_no', 'full_name', 'action'].includes(col.field)) {
+                if (['serial_no', 'name', 'action'].includes(col.field)) {
                     checkbox.disabled = true;
                 }
 
@@ -298,21 +260,27 @@
 
             document.getElementById('btnDefaultHeaders').addEventListener('click', () => {
                 const defaultFields = [
+
                     'serial_no',
-                    'enquiry_no',
-                    'first_name',
-                    'last_name',
-                    'mobile',
-                    'source_name',
-                    'planned_campaign_name',
+
+                    'name',
+
                     'segment_name',
+
                     'model_name',
-                    'variant_name',
-                    'color_name',
-                    'dealer_branch',
-                    'dealer_location',
-                    'followup_date',
+
+                    'activity_name',
+
+                    'start_date',
+
+                    'end_date',
+
+                    'branch_name',
+
+                    'location_name',
+
                     'action'
+
                 ];
                 const allCols = gridApi.getAllGridColumns().map(c => c.getColId());
 
@@ -338,8 +306,8 @@
 
                 const wb = XLSX.utils.book_new();
                 const ws = XLSX.utils.json_to_sheet(rows);
-                XLSX.utils.book_append_sheet(wb, ws, "Enquiries");
-                XLSX.writeFile(wb, `enquiries-${new Date().toISOString().slice(0, 10)}.xlsx`);
+                XLSX.utils.book_append_sheet(wb, ws, "Campaign");
+                XLSX.writeFile(wb, `campaign-${new Date().toISOString().slice(0, 10)}.xlsx`);
             });
 
             document.getElementById('exportPdf').addEventListener('click', () => {
@@ -370,7 +338,7 @@
                     },
                 });
 
-                doc.save(`enquiries-${new Date().toISOString().slice(0, 10)}.pdf`);
+                doc.save(`campaign-${new Date().toISOString().slice(0, 10)}.pdf`);
             });
         });
     </script>

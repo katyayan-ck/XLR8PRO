@@ -20,37 +20,115 @@ class Enquiry extends BaseModel
     protected $table = 'xlr8_crm_enquiries';
 
     protected $fillable = [
+
         'enquiry_no',
-        'enquiry_date',
-        'lead_no',
-        'person_code',
+        'enquiry_type',
         'source_code',
-        'referral_details',
+        'sub_source',
+
+        'person_code',
+
+        'reference_details',
+        'referred_by',
+        'referee_phone',
+        'referee_name',
+
+        'planned_campaign',
+
+        'likely_purchase_date',
+
+        'activity_type',
+        'activity_segment',
+        'activity_model',
+        'activity_start_date',
+        'activity_end_date',
+        'activity_branch',
+        'activity_location',
+
         'first_name',
         'last_name',
         'mobile',
         'email',
-        'occupation',
+
+        'occupation_type',
+        'occupation_sub_type',
+
+        'customer_type',
+
+        'company_name',
+
+        'gender',
+
+        'dob',
+
+        'marital_status',
+        'marriage_date',
+
+        'age_group',
+
+        'zipcode',
+        'tehsil',
+        'district',
+        'city',
+
+        'has_ev',
+
+        'purchase_type',
+
+        'exchange_make',
+        'exchange_model',
+        'vehicle_no',
+
+        'remarks',
+
         'segment_code',
         'model_code',
         'variant_code',
         'color_code',
+
+        'fuel_type',
+        'transmission',
+        'drivetrain',
+        'seating',
+
+        'usage_area',
+        'km_travelled_daily',
+
+        'application_type',
+        'application',
+
         'place_of_registration',
-        'registration_by',
-        'insurance_by',
-        'has_rsa',
-        'has_extended_warranty',
-        'expected_delivery_date',
-        'dms_enquiry_no',
+
+        'dealer_branch',
+        'dealer_location',
+
         'sales_consultant_id',
-        'status',
-        'lost_reason',
-        'priority',
-        'notes',
-        'conversion_notes',
+
+        'followup_type',
+        'followup_date',
+        'followup_time',
+
+        'created_by',
+        'updated_by',
+        'deleted_by',
+
     ];
 
-    protected $casts = [];
+    protected $casts = [
+
+        // 'likely_purchase_date' => 'date',
+
+        'activity_start_date' => 'date',
+
+        'activity_end_date' => 'date',
+
+        'dob' => 'date',
+
+        'marriage_date' => 'date',
+
+        'followup_date' => 'date',
+
+    ];
 
     public function __construct(array $attributes = [])
     {
@@ -65,15 +143,47 @@ class Enquiry extends BaseModel
     }
 
     protected array $columnTransformations = [
+
+        'enquiry_no' => 'uppercase|trim',
+
         'first_name' => 'trim|ucwords',
+
         'last_name' => 'trim|ucwords',
+
         'mobile' => 'trim',
+
         'email' => 'trim|lowercase',
-        'model_code' => 'uppercase|trim',
-        'variant_code' => 'uppercase|trim',
-        'color_code' => 'uppercase|trim',
+
+        'reference_details' => 'trim',
+
+        'referred_by' => 'trim',
+
+        'referee_phone' => 'trim',
+
+        'referee_name' => 'trim|ucwords',
+
+        'company_name' => 'trim',
+
+        'exchange_make' => 'trim',
+
+        'exchange_model' => 'trim',
+
+        'vehicle_no' => 'uppercase|trim',
+
+        'remarks' => 'trim',
+
         'source_code' => 'uppercase|trim',
-        'lead_no' => 'uppercase|trim',
+
+        'sub_source' => 'uppercase|trim',
+
+        'segment_code' => 'uppercase|trim',
+
+        'model_code' => 'uppercase|trim',
+
+        'variant_code' => 'uppercase|trim',
+
+        'color_code' => 'uppercase|trim',
+
     ];
 
     public const STATUS_NEW = 'new';
@@ -109,6 +219,15 @@ class Enquiry extends BaseModel
     public function vehicleModel()
     {
         return $this->belongsTo(VehicleModel::class, 'model_code', 'model_code');
+    }
+
+    public function campaign()
+    {
+        return $this->belongsTo(
+            Campaign::class,
+            'planned_campaign',
+            'name'
+        );
     }
 
     public function model()
