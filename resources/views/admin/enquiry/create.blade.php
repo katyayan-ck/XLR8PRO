@@ -6,6 +6,7 @@
 
 
 @push('after_styles')
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <style>
         .card {
             border-radius: 12px;
@@ -84,8 +85,8 @@
                                                 <span class="text-danger">*</span>
                                             </label>
 
-                                            <input type="text" name="mobile" maxlength="10" class="form-control"
-                                                value="{{ old('mobile') }}" required>
+                                            <input type="text" id="mobile" name="mobile" maxlength="10"
+                                                class="form-control" value="{{ old('mobile') }}" required>
                                         </div>
 
                                         {{-- Email --}}
@@ -192,11 +193,10 @@
 
                                             <label class="form-label">
                                                 Planned Campaign
-                                                <span class="text-danger">*</span>
                                             </label>
 
                                             <select name="planned_campaign" id="planned_campaign"
-                                                class="form-control form-select" required>
+                                                class="form-control form-select">
 
                                                 <option value="">Select Planned Campaign</option>
 
@@ -256,18 +256,32 @@
 
                                             </div>
 
-                                            <div class="col-md-4 mb-3">
+                                            {{-- <div class="col-md-4 mb-3">
 
                                                 <label class="form-label">
                                                     Referee Name
                                                     <span class="text-danger">*</span>
                                                 </label>
 
-                                                <select name="person_code" id="referee_name"
+                                                <select name="referee_name" id="referee_name"
                                                     class="form-control form-select">
                                                     <option value="">Select Name</option>
                                                 </select>
 
+                                            </div> --}}
+
+                                            <div id="referee_name_dropdown" style="display:none;">
+                                                <label class="form-label">Referee Name</label>
+                                                <select name="person_code" id="person_code"
+                                                    class="form-control form-select">
+                                                    <option value="">Select Name</option>
+                                                </select>
+                                            </div>
+
+                                            <div id="referee_name_manual" style="display:none;">
+                                                <label class="form-label">Referee Name</label>
+                                                <input type="text" name="referee_name" id="referee_name"
+                                                    class="form-control">
                                             </div>
 
                                         </div>
@@ -682,8 +696,9 @@
                                                 <span class="text-danger">*</span>
                                             </label>
 
-                                            <input type="date" name="followup_date" class="form-control"
-                                                value="{{ old('followup_date') }}" required>
+                                            <input type="text" id="followup_date" name="followup_date"
+                                                class="form-control" value="{{ old('followup_date') }}"
+                                                placeholder="Select Follow Up Date">
 
                                         </div>
 
@@ -814,8 +829,8 @@
                                                 <small class="text-muted">(Optional)</small>
                                             </label>
 
-                                            <input type="date" name="dob" class="form-control"
-                                                value="{{ old('dob') }}">
+                                            <input type="text" id="dob" name="dob" class="form-control"
+                                                value="{{ old('dob') }}" placeholder="Select Date of Birth">
                                         </div>
 
                                         {{-- Marital Status --}}
@@ -844,8 +859,9 @@
                                                 <small class="text-muted">(Optional)</small>
                                             </label>
 
-                                            <input type="date" name="marriage_date" class="form-control"
-                                                value="{{ old('marriage_date') }}">
+                                            <input type="text" id="marriage_date" name="marriage_date"
+                                                class="form-control" value="{{ old('marriage_date') }}"
+                                                placeholder="Select Marriage Date">
                                         </div>
 
                                         {{-- Age Group --}}
@@ -888,50 +904,46 @@
 
                                         {{-- Zip Code --}}
                                         <div class="col-md-3 mb-3">
-
                                             <label class="form-label">
                                                 Zip Code
                                                 <small class="text-muted">(Optional)</small>
                                             </label>
 
-                                            <input type="text" name="zipcode" class="form-control"
-                                                value="{{ old('zipcode') }}">
+                                            <input type="text" id="zipcode" name="zipcode" maxlength="6"
+                                                class="form-control" value="{{ old('zipcode') }}">
                                         </div>
 
                                         {{-- Tehsil --}}
                                         <div class="col-md-3 mb-3">
-
                                             <label class="form-label">
                                                 Tehsil
                                                 <small class="text-muted">(Optional)</small>
                                             </label>
 
-                                            <input type="text" name="tehsil" class="form-control"
-                                                value="{{ old('tehsil') }}">
+                                            <input type="text" id="tehsil" name="tehsil" class="form-control"
+                                                value="{{ old('tehsil') }}" readonly>
                                         </div>
 
                                         {{-- District --}}
                                         <div class="col-md-3 mb-3">
-
                                             <label class="form-label">
                                                 District
                                                 <small class="text-muted">(Optional)</small>
                                             </label>
 
-                                            <input type="text" name="district" class="form-control"
-                                                value="{{ old('district') }}">
+                                            <input type="text" id="district" name="district" class="form-control"
+                                                value="{{ old('district') }}" readonly>
                                         </div>
 
                                         {{-- City --}}
                                         <div class="col-md-3 mb-3">
-
                                             <label class="form-label">
                                                 City
                                                 <small class="text-muted">(Optional)</small>
                                             </label>
 
-                                            <input type="text" name="city" class="form-control"
-                                                value="{{ old('city') }}">
+                                            <input type="text" id="city" name="city" class="form-control"
+                                                value="{{ old('city') }}" readonly>
                                         </div>
 
                                     </div>
@@ -1082,6 +1094,7 @@
                                 </div>
 
                             </div>
+                            <div id="duplicateEnquiry" style="display:none;"></div>
 
                             {{-- =========================== FORM ACTIONS =========================== --}}
 
@@ -1120,6 +1133,8 @@
 @endsection
 
 @push('after_scripts')
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         function loadKeywordDropdown(keyword, parent, target, placeholder = 'Select Option', selected = '') {
 
@@ -1192,6 +1207,7 @@
             $('#model_code').prop('disabled', true);
             $('#variant_code').prop('disabled', true);
             $('#color_code').prop('disabled', true);
+            $('#planned_campaign').prop('disabled', true);
 
             $('#bevSection').hide();
             // $('#commercialSection').hide();
@@ -1237,12 +1253,53 @@
 
                 let source = $(this).val();
 
-                loadKeywordDropdown(
-                    'ENQUIRY_SUB_SOURCE',
-                    source,
-                    '#sub_source',
-                    'Select Enquiry Sub Source'
-                );
+                // Existing Reference logic
+                toggleReferenceFields();
+
+                /*
+                |--------------------------------------------------------------------------
+                | Enquiry Sub Source
+                |--------------------------------------------------------------------------
+                */
+                if (source === 'HYPERLOCAL') {
+
+                    $('#sub_source').prop('disabled', false);
+
+                    loadKeywordDropdown(
+                        'ENQUIRY_SUB_SOURCE',
+                        source,
+                        '#sub_source',
+                        'Select Enquiry Sub Source'
+                    );
+
+                } else {
+
+                    $('#sub_source')
+                        .html('<option value="">Select Enquiry Sub Source</option>')
+                        .val('')
+                        .prop('disabled', true);
+
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | Planned Campaign
+                |--------------------------------------------------------------------------
+                */
+                if (source === 'ACTIVATIONS') {
+
+                    $('#planned_campaign')
+                        .prop('disabled', false)
+                        .prop('required', true);
+
+                } else {
+
+                    $('#planned_campaign')
+                        .val('')
+                        .prop('disabled', true)
+                        .prop('required', false);
+
+                }
 
             });
 
@@ -1253,40 +1310,59 @@
             |--------------------------------------------------------------------------
             */
 
-            $(document).ready(function() {
 
-                function toggleExchangeFields() {
 
-                    let purchaseType = $('#purchase_type').val();
+            let maxDob = new Date();
+            maxDob.setFullYear(maxDob.getFullYear() - 18);
 
-                    if (
-                        purchaseType === 'Exchange Buy' ||
-                        purchaseType === 'Additional Buy' ||
-                        purchaseType === 'Scrappage'
-                    ) {
-
-                        $('#exchangeFields').show();
-
-                        $('#exchange_make').prop('required', true);
-                        $('#exchange_model').prop('required', true);
-                        $('#vehicle_no').prop('required', true);
-
-                    } else {
-
-                        $('#exchangeFields').hide();
-
-                        $('#exchange_make,#exchange_model,#vehicle_no')
-                            .val('')
-                            .prop('required', false);
-
-                    }
-                }
-
-                $('#purchase_type').on('change', toggleExchangeFields);
-
-                toggleExchangeFields();
-
+            flatpickr("#dob", {
+                dateFormat: "Y-m-d",
+                maxDate: maxDob,
+                allowInput: false
             });
+
+            flatpickr("#followup_date", {
+                dateFormat: "Y-m-d",
+                minDate: "today",
+                allowInput: false
+            });
+
+            flatpickr("#marriage_date", {
+                dateFormat: "Y-m-d",
+                maxDate: "today",
+                allowInput: false
+            });
+
+            function toggleExchangeFields() {
+
+                let purchaseType = $('#purchase_type').val();
+
+                if (
+                    purchaseType === 'Exchange Buy' ||
+                    purchaseType === 'Additional Buy' ||
+                    purchaseType === 'Scrappage'
+                ) {
+
+                    $('#exchangeFields').show();
+
+                    $('#exchange_make').prop('required', true);
+                    $('#exchange_model').prop('required', true);
+                    $('#vehicle_no').prop('required', true);
+
+                } else {
+
+                    $('#exchangeFields').hide();
+
+                    $('#exchange_make,#exchange_model,#vehicle_no')
+                        .val('')
+                        .prop('required', false);
+
+                }
+            }
+
+            $('#purchase_type').on('change', toggleExchangeFields);
+
+            toggleExchangeFields();
 
 
             /*
@@ -1330,6 +1406,8 @@
 
                 let segmentCode = $(this).val();
                 let segmentText = $('#segment_code option:selected').text().trim().toUpperCase();
+
+                checkDuplicateEnquiry();
 
                 $('#bevSection').toggle(segmentText === 'BEV');
                 // $('#commercialSection').toggle(segmentText === 'LMM' || segmentText === 'COMMERCIAL');
@@ -1519,27 +1597,6 @@
                 );
             });
 
-            function toggleExchangeFields() {
-
-                let purchaseType = $('#purchase_type').val();
-
-                if (['Exchange Buy', 'Additional Buy', 'Scrappage'].includes(purchaseType)) {
-
-                    $('#exchangeFields').removeClass('d-none');
-
-                    $('#exchange_make,#exchange_model,#vehicle_no').prop('required', true);
-
-                } else {
-
-                    $('#exchangeFields').addClass('d-none');
-
-                    $('#exchange_make,#exchange_model,#vehicle_no')
-                        .val('')
-                        .prop('required', false);
-
-                }
-            }
-
             $('#purchase_type').on('change', toggleExchangeFields);
             toggleExchangeFields();
 
@@ -1565,6 +1622,8 @@
                 }
 
             }
+
+            $('#source_code').trigger('change');
 
             $('#source_code').on('change', toggleReferenceFields);
 
@@ -1593,23 +1652,92 @@
                             html += '<option value="' + code + '">' + name + '</option>';
                         });
 
-                        $('#referee_name').html(html);
+                        $('#referee_name').empty().append(html);
 
                     }
                 );
 
             });
 
+            function checkDuplicateEnquiry() {
+
+                let mobile = $('#mobile').val();
+                let segment = $('#segment_code').val();
+
+                if (mobile.length != 10 || !segment) {
+                    return;
+                }
+
+                // console.log("Checking...", mobile, segment);
+
+                $.get("{{ route('enquiry.check-duplicate') }}", {
+                    mobile: mobile,
+                    segment_code: segment
+                }, function(response) {
+
+                    // console.log(response);
+
+                    if (response.exists) {
+
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Duplicate Enquiry',
+                            html: 'Enquiry No : <b>' + response.enquiry_no + '</b>'
+                        });
+
+                    }
+
+                });
+
+            }
+
+            $('#mobile,#segment_code').on('keyup change', checkDuplicateEnquiry);
+
+            $('#mobile,#segment_code').on('keyup change', checkDuplicateEnquiry);
+
             /*
             |--------------------------------------------------------------------------
             | Final Page Load
             |--------------------------------------------------------------------------
             */
-
-            $('#purchase_type').trigger('change');
-            $('#application_type').trigger('change');
-            $('#enquiry_type').trigger('change');
             $('#segment_code').trigger('change');
+
+            $('#zipcode').on('blur', function() {
+
+                let pincode = $(this).val();
+
+                if (pincode.length != 6) {
+                    $('#tehsil,#district,#city')
+                        .val('')
+                        .prop('readonly', false);
+                    return;
+                }
+
+                $.get(
+                    "{{ route('enquiry.location-by-pincode') }}", {
+                        pincode: pincode
+                    },
+                    function(response) {
+
+                        if (!response.success) {
+
+                            $('#tehsil,#district,#city')
+                                .val('')
+                                .prop('readonly', false);
+
+                            return;
+                        }
+
+                        $('#tehsil').val(response.tehsil);
+                        $('#district').val(response.district);
+                        $('#city').val(response.city);
+
+                        $('#tehsil,#district,#city').prop('readonly', true);
+
+                    }
+                );
+
+            });
 
         });
     </script>

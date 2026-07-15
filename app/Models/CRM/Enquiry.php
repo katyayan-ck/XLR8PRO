@@ -201,10 +201,10 @@ class Enquiry extends BaseModel
         return $this->belongsTo(Lead::class, 'lead_no', 'lead_no');
     }
 
-    public function source()
-    {
-        return $this->belongsTo(LeadSource::class, 'source_code', 'code');
-    }
+    // public function source()
+    // {
+    //     return $this->belongsTo(LeadSource::class, 'source_code', 'code');
+    // }
 
     public function person()
     {

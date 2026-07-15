@@ -16,9 +16,11 @@ use App\Models\Vehicle\Color;
 use App\Models\Vehicle\Segment;
 use App\Models\Vehicle\SubSegment;
 use App\Models\Vehicle\Variant;
+use App\Models\Admin\Person;
 use App\Models\Vehicle\VehicleModel;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use App\Models\Admin\PinCodes;
 
 class OrgService
 {
@@ -686,28 +688,72 @@ class OrgService
         switch ($type) {
 
             case 'Customer':
-                return \App\Models\Admin\Person::where('primary_mobile', $mobile)
-                    ->selectRaw("person_code as code,concat(first_name,' ',last_name) as name")
-                    ->orderBy('first_name')
-                    ->pluck('name', 'code')
+
+                return Person::whereHas('contacts', function ($q) use ($mobile) {
+                    $q->where('data_type', 'Mobile')
+                        ->where('contact_detail', $mobile);
+                })
+                    ->orderBy('display_name')
+                    ->pluck('display_name', 'person_code')
                     ->toArray();
 
             case 'Team Member':
-                return User::with('person')
-                    ->whereHas('person', fn($q) => $q->where('primary_mobile', $mobile))
+
+                return User::whereHas('person.contacts', function ($q) use ($mobile) {
+                    $q->where('data_type', 'Mobile')
+                        ->where('contact_detail', $mobile);
+                })
                     ->get()
-                    ->mapWithKeys(fn($u) => [
-                        $u->person_code => $u->display_name . ' (' . $u->employee_code . ')'
-                    ])->toArray();
+                    ->mapWithKeys(function ($user) {
+                        return [
+                            $user->person_code => $user->display_name . ' (' . $user->employee_code . ')'
+                        ];
+                    })
+                    ->toArray();
 
             case 'Promoter':
+
                 return XL_DSA_MASTER::where('mobile', $mobile)
                     ->orderBy('name')
                     ->pluck('name', 'id')
                     ->toArray();
 
             default:
+
                 return [];
         }
     }
+
+    public static function getPostOfficesByPincode($pincode)
+    {
+        return PinCodes::where('level', 'POSTOFFICE')
+            ->where('pincode', $pincode)
+            ->orderBy('name')
+            ->pluck('name', 'id')
+            ->toArray();
+    }
+
+    public static function getLocationByPincode($pincode)
+{
+    $postOffice = PinCodes::with(
+        'parentLocation.parentLocation.parentLocation'
+    )
+    ->where('level', 'POSTOFFICE')
+    ->where('pincode', $pincode)
+    ->first();
+
+    if (!$postOffice) {
+        return [];
+    }
+
+    $tehsil = $postOffice->parentLocation;
+    $district = $tehsil?->parentLocation;
+    $state = $district?->parentLocation;
+
+    return [
+        'tehsil'  => $tehsil?->name,
+        'district'=> $district?->name,
+        'city'    => $state?->name,
+    ];
+}
 }

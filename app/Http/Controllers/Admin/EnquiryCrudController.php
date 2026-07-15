@@ -13,6 +13,7 @@ use Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
 use App\Models\CRM\Campaign;
+use App\Models\Admin\PinCodes;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -40,7 +41,7 @@ class EnquiryCrudController extends CrudController
         $this->crud->setListView('admin.enquiry.list');
 
         $enquiries = Enquiry::with([
-            'source',
+            // 'source',
             'segment',
             'model',
             'variant',
@@ -58,7 +59,7 @@ class EnquiryCrudController extends CrudController
 
             $mapped['full_name'] = $enquiry->full_name;
 
-            $mapped['source_name'] = $enquiry->source?->name ?? '—';
+            $mapped['source_name'] = $enquiry->source_code ?? '—';
 
             $mapped['segment_name'] = $enquiry->segment?->name ?? '—';
 
@@ -541,6 +542,25 @@ class EnquiryCrudController extends CrudController
                 $request->type,
                 $request->mobile
             )
+        );
+    }
+
+    public function checkDuplicateEnquiry(Request $request)
+    {
+        $enquiry = Enquiry::where('mobile', $request->mobile)
+            ->where('segment_code', $request->segment_code)
+            ->first();
+
+        return response()->json([
+            'exists' => $enquiry ? true : false,
+            'enquiry_no' => $enquiry?->enquiry_no
+        ]);
+    }
+
+    public function locationByPincode(Request $request)
+    {
+        return response()->json(
+            OrgService::getLocationByPincode($request->pincode)
         );
     }
 }
