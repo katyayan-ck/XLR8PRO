@@ -314,6 +314,14 @@ Route::group([
         [CampaignCrudController::class, 'getLocations']
     );
 
-    Route::get('enquiry/reference-users',[EnquiryCrudController::class,'getReferenceUsers'])
-    ->name('enquiry.reference-users');
+    Route::get('enquiry/reference-users', [EnquiryCrudController::class, 'getReferenceUsers'])
+        ->name('enquiry.reference-users');
+
+    Route::get('enquiry/check-duplicate', [EnquiryCrudController::class, 'checkDuplicateEnquiry'])
+        ->name('enquiry.check-duplicate');
+
+    Route::get(
+    'enquiry/location-by-pincode',
+    [EnquiryCrudController::class, 'locationByPincode']
+)->name('enquiry.location-by-pincode');
 }); // ← This should be the last line
