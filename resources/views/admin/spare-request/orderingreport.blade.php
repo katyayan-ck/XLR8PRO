@@ -144,7 +144,7 @@
         const gridDiv = document.querySelector('#myGrid');
         agGrid.createGrid(gridDiv, gridOptions);
 
-        // Quick Filter
+        
         document.getElementById('quickFilter').addEventListener('input', e => {
             gridApi.setGridOption('quickFilterText', e.target.value);
         });
@@ -156,7 +156,7 @@
             gridApi.setSortModel(null);
         });
 
-        // Export CSV
+       
         document.getElementById('exportCsv').addEventListener('click', () => {
             const rows = [];
             gridApi.forEachNodeAfterFilterAndSort(node => rows.push(node.data));
@@ -166,7 +166,7 @@
             XLSX.writeFile(wb, `parts-ordering-report-${new Date().toISOString().slice(0,10)}.xlsx`);
         });
 
-        // Export PDF (placeholder)
+        
         document.getElementById('exportPdf').addEventListener('click', () => {
             alert("PDF Export feature coming soon...");
         });

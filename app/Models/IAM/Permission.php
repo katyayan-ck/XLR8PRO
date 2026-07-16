@@ -32,9 +32,7 @@ class Permission extends SpatiePermission
         'process_code' => ['trim', 'uppercase_alphanumeric_dash_underscore'],
     ];
 
-    // ─────────────────────────────────────────────────────────────
     // MANUAL AUDIT (Because it extends SpatiePermission, not BaseModel)
-    // ─────────────────────────────────────────────────────────────
 
     protected static function resolveActorId(): ?int
     {
@@ -64,9 +62,7 @@ class Permission extends SpatiePermission
         });
     }
 
-    // ─────────────────────────────────────────────────────────────
     // RELATIONS (Code-based)
-    // ─────────────────────────────────────────────────────────────
 
     public function module()
     {

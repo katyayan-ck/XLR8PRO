@@ -18,7 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'validate_device' => \App\Http\Middleware\ValidateDevice::class,
         ]);
     })
-    ->withCommands([                                        // ← ADD THIS
+    ->withCommands([                                        
         \App\Console\Commands\ImportRbacMasterCommand::class,
         \App\Console\Commands\ImportUsersCommand::class,
     ])

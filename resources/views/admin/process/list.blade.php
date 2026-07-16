@@ -343,7 +343,7 @@ const columnDefs = [
             setTimeout(() => gridApi.autoSizeColumns(gridApi.getAllDisplayedColumns().map(c => c.getColId()), false), 200);
         });
 
-        // Excel Export
+        
         document.getElementById('exportCsv').addEventListener('click', () => {
             const visibleColumns = gridApi.getAllDisplayedColumns()
                 .map(col => col.getColDef())
@@ -362,7 +362,7 @@ const columnDefs = [
             XLSX.writeFile(wb, `processes-${new Date().toISOString().slice(0,10)}.xlsx`);
         });
 
-        // PDF Export
+        
         document.getElementById('exportPdf').addEventListener('click', () => {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();

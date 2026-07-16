@@ -341,7 +341,6 @@
     function removeExistingPhoto(key) {
         document.getElementById('chip-' + key)?.remove();
 
-        // Server ko batane ke liye hidden input
         let input = document.createElement('input');
         input.type = 'hidden';
         input.name = `delete_photos[${key}]`;

@@ -659,12 +659,10 @@ class OrgService
             return $default;
         }
 
-        // col_type 3 = DSA → XL_DSA_MASTER se naam lo
         if ($colType === 3) {
             return XL_DSA_MASTER::find((int) $code)?->name ?? $default;
         }
 
-        // Default → User model se person_code match karo
         $user = User::with('person')
             ->where('person_code', $code)
             ->orWhere('employee_code', $code)

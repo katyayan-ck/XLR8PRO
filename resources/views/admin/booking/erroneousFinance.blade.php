@@ -175,9 +175,7 @@ function importWithGid() {
 
 
 
-    // ────────────────────────────────────────────────
     // ALL_COLUMNS from controller → $gridConfig['columns']
-    // ────────────────────────────────────────────────
     const ALL_COLUMNS = @json($gridConfig['columns'] ?? []);
 
     function getCols(fields) {
@@ -186,9 +184,7 @@ function importWithGid() {
 
     let gridApi;
 
-    // ────────────────────────────────────────────────
     // Default visible fields → only Y marked ones
-    // ────────────────────────────────────────────────
     const DEFAULT_VISIBLE_FIELDS = [
         // Primary - Y
         'serial_no',
@@ -218,9 +214,7 @@ function importWithGid() {
         'action'
     ];
 
-    // ────────────────────────────────────────────────
     // Grouped columns with pinning & centering
-    // ────────────────────────────────────────────────
     const columnGroups = [
         {
             headerName: 'Primary',
@@ -311,7 +305,7 @@ function importWithGid() {
         },
 
         components: {
-            htmlRenderer: params => params.value || '',  // Raw HTML for action column
+            htmlRenderer: params => params.value || '', 
         },
 
         onGridReady: params => {
@@ -336,9 +330,7 @@ function importWithGid() {
         }
     };
 
-    // ────────────────────────────────────────────────
-    // Customise Headers – grouped + parent/child sync
-    // ────────────────────────────────────────────────
+     – grouped + parent/child sync
     function openColumnBubble() {
         const bubble = document.getElementById('columnBubble');
         const tbody  = document.getElementById('columnBubbleBody');
@@ -431,9 +423,6 @@ function importWithGid() {
         bubble.style.display = 'block';
     }
 
-    // ────────────────────────────────────────────────
-    // Event Listeners
-    // ────────────────────────────────────────────────
     document.getElementById('btnCustomiseHeaders')?.addEventListener('click', e => {
         e.stopPropagation();
         openColumnBubble();
@@ -499,7 +488,7 @@ function importWithGid() {
             document.getElementById('quickFilter').value = '';
         });
 
-        // Excel Export
+        
         document.getElementById('exportCsv')?.addEventListener('click', () => {
             const visibleColumns = gridApi.getAllDisplayedColumns()
                 .map(col => col.getColDef())
@@ -520,7 +509,7 @@ function importWithGid() {
             XLSX.writeFile(workbook, `int-in-finance-${new Date().toISOString().slice(0,10)}.xlsx`);
         });
 
-        // PDF Export
+        
         document.getElementById('exportExcel')?.addEventListener('click', () => {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('l', 'pt', 'a4');

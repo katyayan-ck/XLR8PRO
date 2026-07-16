@@ -220,19 +220,19 @@ document.getElementById('btnDefaultHeaders')?.addEventListener('click', () => {
         const gridDiv = document.querySelector('#myGrid');
         gridApi = agGrid.createGrid(gridDiv, gridOptions);
 
-        // Quick Search
+        
         document.getElementById('quickFilter')?.addEventListener('input', e => {
             gridApi.setGridOption('quickFilterText', e.target.value);
         });
 
-        // Reset
+        
         document.getElementById('resetAll')?.addEventListener('click', () => {
             gridApi.setFilterModel(null);
             gridApi.setGridOption('quickFilterText', '');
             document.getElementById('quickFilter').value = '';
         });
 
-        // Excel Export (action exclude)
+         (action exclude)
         document.getElementById('exportCsv')?.addEventListener('click', () => {
     const visibleColumns = gridApi.getAllDisplayedColumns()
         .map(col => col.getColDef())

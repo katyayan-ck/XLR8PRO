@@ -100,11 +100,11 @@
         const columnDef = {
             headerName: col.headerName,
             headerClass: headerClass || 'text-center',
-            width: col.width || (col.children ? 180 : 80),  // S.No. ke liye chhota width
+            width: col.width || (col.children ? 180 : 80),  
             pinned: col.pinned || (isSnoColumn ? 'left' : false),
             cellClass: col.cellClass || (isSnoColumn ? 'text-center fw-bold' : 'text-center'),
-            sortable: col.sortable !== false && !isSnoColumn,   // S.No. pe sort band
-            filter: col.filter !== false && !isSnoColumn,       // S.No. pe filter band
+            sortable: col.sortable !== false && !isSnoColumn,   
+            filter: col.filter !== false && !isSnoColumn,       
             resizable: true,
         };
 

@@ -72,8 +72,7 @@ if (typeof window.crud.addOrRemoveCrudCheckedItem !== 'function') {
                         tableConfig.checkedItems.push(primaryKeyValue);
                     }
                     
-                    // if shift has been pressed, also select all elements
-                    // between the last checked item and this one
+                    
                     if (tableConfig.lastCheckedItem && e.shiftKey) {
                         let getNodeindex = elm => [...elm.parentNode.children].indexOf(elm);
                         let first = document.querySelector(`#${tableId} input.crud_bulk_actions_line_checkbox[data-primary-key-value="${tableConfig.lastCheckedItem}"]`).closest('tr');
@@ -87,10 +86,10 @@ if (typeof window.crud.addOrRemoveCrudCheckedItem !== 'function') {
                         }
                     }
                     
-                    // remember that this one was the last checked item
+                    
                     tableConfig.lastCheckedItem = primaryKeyValue;
                 } else {
-                    // remove item from checkedItems
+                    
                     let index = tableConfig.checkedItems.indexOf(primaryKeyValue);
                     if (index > -1) tableConfig.checkedItems.splice(index, 1);
                 }

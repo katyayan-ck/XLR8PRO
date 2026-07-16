@@ -37,9 +37,7 @@ class Process extends BaseModel
         return 'code';
     }
 
-    // ─────────────────────────────────────────────────────────────
     // RELATIONS (Code-based)
-    // ─────────────────────────────────────────────────────────────
 
     public function module()
     {
@@ -51,9 +49,7 @@ class Process extends BaseModel
         return $this->hasMany(Permission::class, 'process_code', 'code');
     }
 
-    // ─────────────────────────────────────────────────────────────
     // SCOPES
-    // ─────────────────────────────────────────────────────────────
 
     // public function scopeActive($query)
     // {

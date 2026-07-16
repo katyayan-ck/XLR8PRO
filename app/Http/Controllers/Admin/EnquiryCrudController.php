@@ -27,7 +27,7 @@ class EnquiryCrudController extends CrudController
     public function setup()
     {
         CRUD::setModel(Enquiry::class);
-        CRUD::setRoute(config('backpack.base.route_prefix') . '/enquiry');
+        CRUD::setRoute(config('backpack.base.route_prefix') . '/enquiries');
         CRUD::setEntityNameStrings('enquiry', 'enquiries');
     }
 
@@ -545,6 +545,437 @@ class EnquiryCrudController extends CrudController
         );
     }
 
+    public function referenceList()
+    {
+        $this->crud->setListView('admin.enquiry.reference-enquiry');
+
+       $enquiries = Enquiry::where('current_origin', 'REFERENCE')
+            ->where('real_status', 1)
+            ->with(['model', 'variant'])
+            ->orderByDesc('created_at')
+            ->get();
+
+        $gridData = $enquiries->map(function ($enquiry, $index) {
+
+            $editUrl = backpack_url("enquiry/{$enquiry->id}/edit");
+
+            return [
+                'serial_no' => $index + 1,
+                'enq_date_and_time' => $enquiry->enquiry_date
+                    ? Carbon::parse($enquiry->enquiry_date)->format('d-m-Y H:i')
+                    : '—',
+                'referred_by' => $enquiry->referred_by ?? '—',
+                'referee_phone' => $enquiry->referee_phone ?? '—',
+                'customer_name' => $enquiry->full_name,
+                'customer_phone' => $enquiry->mobile ?? '—',
+                'model_code' => $enquiry->model?->name ?? $enquiry->model_code ?? '—',
+                'variant_code' => $enquiry->variant?->display_name ?? $enquiry->variant_code ?? '—',
+                'action' => '
+                    <div class="d-flex justify-content-center gap-2">
+                        <a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a>
+                    </div>',
+            ];
+
+        })->values();
+
+        return view('admin.enquiry.reference-enquiry', [
+            'title' => 'Reference Enquiries',
+            'gridConfig' => [
+                'columns' => [
+                    ['field' => 'serial_no',     'headerName' => 'S.No'],
+                    ['field' => 'enq_date_and_time',    'headerName' => 'Enquiry Date & Time'],
+                    ['field' => 'referred_by',  'headerName' => 'Referred By'],
+                    ['field' => 'referee_phone',     'headerName' => 'Referee Mobile'],
+                    ['field' => 'customer_name',    'headerName' => 'Customer Name'],
+                    ['field' => 'customer_phone',        'headerName' => 'Customer Mobile'],
+                    ['field' => 'model_code',    'headerName' => 'Model'],
+                    ['field' => 'variant_code',  'headerName' => 'Variant'],
+                    ['field' => 'action',        'headerName' => 'Action']
+                ],
+                'data' => $gridData
+            ]
+        ]);
+    }
+
+    public function virtualNumberList()
+    {
+        $this->crud->setListView('admin.enquiry.virtual-number-enquiry');
+
+        $enquiries = Enquiry::where('current_origin', 'VIRTUAL')
+            ->where('real_status', 1)
+            ->with(['model', 'variant'])
+            ->orderByDesc('created_at')
+            ->get();
+
+        $gridData = $enquiries->map(function ($enquiry, $index) {
+
+            $editUrl = backpack_url("enquiry/{$enquiry->id}/edit");
+
+            return [
+                'serial_no' => $index + 1,
+                'virtual_no' => $enquiry->virtual_no ?? '—',
+                'call_date_and_time' => $enquiry->virtual_call_date
+                    ? Carbon::parse($enquiry->virtual_call_date)->format('d-m-Y H:i')
+                    : '—',
+                'call_duration' => $enquiry->call_duration ?? '—',
+                'call_status' => $enquiry->call_status ?? '—',
+                'customer_phone' => $enquiry->mobile ?? '—',
+                'action' => '
+                    <div class="d-flex justify-content-center gap-2">
+                        <a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a>
+                    </div>',
+            ];
+
+        })->values();
+
+        return view('admin.enquiry.virtual-number-enquiry', [
+            'title' => 'Virtual Number Enquiries',
+            'gridConfig' => [
+                'columns' => [
+                    ['field' => 'serial_no',     'headerName' => 'S.No'],
+                    ['field' => 'virtual_no',    'headerName' => 'Virtual No'],
+                    ['field' => 'call_date_and_time',  'headerName' => 'Call Date & Time'],
+                    ['field' => 'call_duration',     'headerName' => 'Call Duration'],
+                    ['field' => 'call_status',     'headerName' => 'Status'],
+                    ['field' => 'customer_phone',        'headerName' => 'Customer Mobile'],
+                    ['field' => 'action',        'headerName' => 'Action']
+                ],
+                'data' => $gridData
+            ]
+        ]);
+    }
+    public function whatsappCampaignList()
+    {
+        $this->crud->setListView('admin.enquiry.whatsapp-campaign-enquiry');
+
+        $enquiries = Enquiry::where('current_origin', 'WHATSAPP')
+            ->where('real_status', 1)
+            ->with(['model', 'variant'])
+            ->orderByDesc('created_at')
+            ->get();
+
+        $gridData = $enquiries->map(function ($enquiry, $index) {
+
+            $editUrl = backpack_url("enquiry/{$enquiry->id}/edit");
+
+            return [
+                'serial_no' => $index + 1,
+                'enq_date_and_time' => $enquiry->enquiry_date
+                    ? Carbon::parse($enquiry->enquiry_date)->format('d-m-Y H:i')
+                    : '—',
+                'campaign_name' => $enquiry->wapp_campaign_name ?? '—',
+                'campaign_date' => $enquiry->wapp_campaign_date
+                    ? Carbon::parse($enquiry->wapp_campaign_date)->format('d-m-Y')
+                    : '—',
+                'campaign_segment' => $enquiry->wapp_campaign_segment ?? '—',
+                'campaign_model' => $enquiry->wapp_campaign_model ?? '—',
+                'customer_name' => $enquiry->full_name,
+                'customer_phone' => $enquiry->mobile ?? '—',
+                'tehsil' => $enquiry->tehsil ?? '—',
+                'model_code' => $enquiry->model?->name ?? $enquiry->model_code ?? '—',
+                'variant_code' => $enquiry->variant?->display_name ?? $enquiry->variant_code ?? '—',
+                'action' => '
+                    <div class="d-flex justify-content-center gap-2">
+                        <a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a>
+                    </div>',
+            ];
+
+        })->values();
+
+        return view('admin.enquiry.whatsapp-campaign-enquiry', [
+            'title' => 'WhatsApp Campaign Enquiries',
+            'gridConfig' => [
+                'columns' => [
+                    ['field' => 'serial_no',     'headerName' => 'S.No'],
+                    ['field' => 'enq_date_and_time',     'headerName' => 'Enquiry Date & Time'],
+                    ['field' => 'campaign_name',    'headerName' => 'Campaign Name'],
+                    ['field' => 'campaign_date',  'headerName' => 'Campaign Date'],
+                    ['field' => 'campaign_segment',     'headerName' => 'Campaign Segment'],
+                    ['field' => 'campaign_model',        'headerName' => 'Campaign Model'],
+                    ['field' => 'customer_name',        'headerName' => 'Customer Name'],
+                    ['field' => 'customer_phone',        'headerName' => 'Customer Mobile'],
+                    ['field' => 'tehsil',        'headerName' => 'Tehsil'],
+                    ['field' => 'model_code',        'headerName' => 'Model'],
+                    ['field' => 'variant_code',        'headerName' => 'Variant'],
+                    ['field' => 'action',        'headerName' => 'Action']
+                ],
+                'data' => $gridData
+            ]
+        ]);
+    }
+
+    public function assignedLongList()
+    {
+        $this->crud->setListView('admin.enquiry.assigned-long-enquiry');
+
+       $enquiries = Enquiry::where('current_origin', 'LONG')
+            ->where('real_status', 1)
+            ->with(['model', 'variant'])
+            ->orderByDesc('created_at')
+            ->get();
+
+        $gridData = $enquiries->map(function ($enquiry, $index) {
+
+            $editUrl = backpack_url("enquiry/{$enquiry->id}/edit");
+
+            return [
+                'serial_no' => $index + 1,
+                'long_enq_no' => $enquiry->enquiry_no ?? '—',
+                'long_enq_date_and_time' => $enquiry->enquiry_date
+                    ? Carbon::parse($enquiry->enquiry_date)->format('d-m-Y H:i')
+                    : '—',
+                'long_assign_date_and_time' => $enquiry->enq_assign_date
+                    ? Carbon::parse($enquiry->enq_assign_date)->format('d-m-Y H:i')
+                    : '—',
+                'customer_first_name' => $enquiry->full_name,
+                'customer_phone' => $enquiry->mobile ?? '—',
+                'enq_type' => $enquiry->enquiry_type ?? '—',
+                'enq_source' => $enquiry->source?->name ?? $enquiry->source_code ?? '—',
+                'enq_sub_source' => $enquiry->sub_source ?? '—',
+                'likely_purchase_date' => $enquiry->likely_purchase_date ?? '—',
+                'model_code' => $enquiry->model?->name ?? $enquiry->model_code ?? '—',
+                'variant_code' => $enquiry->variant?->display_name ?? $enquiry->variant_code ?? '—',
+                'color_code' => $enquiry->color?->name ?? $enquiry->color_code ?? '—',
+                'sc_name' => $enquiry->salesConsultant?->name ?? '—',
+                'sc_mile_id' => $enquiry->sc_mile_id ?? '—',
+                'customer_type' => $enquiry->customer_type ?? '—',
+                'zip_code' => $enquiry->zipcode ?? '—',
+                'action' => '
+                    <div class="d-flex justify-content-center gap-2">
+                        <a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a>
+                    </div>',
+            ];
+
+        })->values();
+
+        return view('admin.enquiry.assigned-long-enquiry', [
+            'title' => 'Assigned Long Enquiries',
+            'gridConfig' => [
+                'columns' => [
+                    ['field' => 'serial_no',     'headerName' => 'S.No'],
+                    ['field' => 'long_enq_no',    'headerName' => 'Long Enquiry No'],
+                    ['field' => 'long_enq_date_and_time',  'headerName' => 'Long Enquiry Date & Time'],
+                    ['field' => 'long_assign_date_and_time',  'headerName' => 'Long Assigned Date & Time'],
+                    ['field' => 'customer_first_name',     'headerName' => 'Customer Name'],
+                    ['field' => 'customer_phone',        'headerName' => 'Customer Mobile'],
+                    ['field' => 'enq_type',        'headerName' => 'Enquiry Type'],
+                    ['field' => 'enq_source',        'headerName' => 'Enquiry Source'],
+                    ['field' => 'enq_sub_source',        'headerName' => 'Enquiry Sub Source'],
+                    ['field' => 'likely_purchase_date',        'headerName' => 'Likely Purchase Date'],
+                    ['field' => 'model_code',    'headerName' => 'Model'],
+                    ['field' => 'variant_code',  'headerName' => 'Variant'],
+                    ['field' => 'color_code',    'headerName' => 'Color'],
+                    ['field' => 'sc_name',    'headerName' => 'SC Name'],
+                    ['field' => 'sc_mile_id',    'headerName' => 'SC Mile Id'],
+                    ['field' => 'customer_type',        'headerName' => 'Customer Type'],
+                    ['field' => 'zip_code',        'headerName' => 'Zip Code'],
+                    ['field' => 'action',        'headerName' => 'Action']
+                ],
+                'data' => $gridData
+            ]
+        ]);
+    }
+
+    public function unassignedLongList()
+    {
+        $this->crud->setListView('admin.enquiry.unassigned-long-enquiry');
+
+        $enquiries = Enquiry::where('current_origin', 'LONG')
+            ->where('real_status', 1)
+            ->with(['model', 'variant'])
+            ->orderByDesc('created_at')
+            ->get();
+        $gridData = $enquiries->map(function ($enquiry, $index) {
+
+            $editUrl = backpack_url("enquiry/{$enquiry->id}/edit");
+
+            return [
+                'serial_no' => $index + 1,
+                'long_enq_no' => $enquiry->enquiry_no ?? '—',
+                'long_enq_date_and_time' => $enquiry->enquiry_date
+                    ? Carbon::parse($enquiry->enquiry_date)->format('d-m-Y H:i')
+                    : '—',
+                'long-assign_date_and_time' => $enquiry->enq_assign_date
+                    ? Carbon::parse($enquiry->enq_assign_date)->format('d-m-Y H:i')
+                    : '—',
+                'customer_first_name' => $enquiry->full_name,
+                'customer_phone' => $enquiry->mobile ?? '—',
+                'enq_type' => $enquiry->enquiry_type ?? '—',
+                'enq_source' => $enquiry->source?->name ?? $enquiry->source_code ?? '—',
+                'enq_sub_source' => $enquiry->sub_source ?? '—',
+                'likely_purchase_date' => $enquiry->likely_purchase_date ?? '—',
+                'model_code' => $enquiry->model?->name ?? $enquiry->model_code ?? '—',
+                'variant_code' => $enquiry->variant?->display_name ?? $enquiry->variant_code ?? '—',
+                'color_code' => $enquiry->color?->name ?? $enquiry->color_code ?? '—',
+                'customer_type' => $enquiry->customer_type ?? '—',
+                'zip_code' => $enquiry->zipcode ?? '—',
+                'action' => '
+                    <div class="d-flex justify-content-center gap-2">
+                        <a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a>
+                    </div>',
+            ];
+
+        })->values();
+
+        return view('admin.enquiry.unassigned-long-enquiry', [
+            'title' => 'Unassigned Long Enquiries',
+            'gridConfig' => [
+                'columns' => [
+                    ['field' => 'serial_no',     'headerName' => 'S.No'],
+                    ['field' => 'long_enq_no',    'headerName' => 'Long Enquiry No'],
+                    ['field' => 'long_enq_date_and_time',  'headerName' => 'Long Enquiry Date & Time'],
+                    ['field' => 'customer_first_name',     'headerName' => 'Customer Name'],
+                    ['field' => 'customer_phone',        'headerName' => 'Customer Mobile'],
+                    ['field' => 'enq_type',        'headerName' => 'Enquiry Type'],
+                    ['field' => 'enq_source',        'headerName' => 'Enquiry Source'],
+                    ['field' => 'enq_sub_source',        'headerName' => 'Enquiry Sub Source'],
+                    ['field' => 'likely_purchase_date',        'headerName' => 'Likely Purchase Date'],
+                    ['field' => 'model_code',    'headerName' => 'Model'],
+                    ['field' => 'variant_code',  'headerName' => 'Variant'],
+                    ['field' => 'color_code',    'headerName' => 'Color'],
+                    ['field' => 'customer_type',        'headerName' => 'Customer Type'],
+                    ['field' => 'zip_code',        'headerName' => 'Zip Code'],
+                    ['field' => 'action',        'headerName' => 'Action']
+                ],
+                'data' => $gridData
+            ]
+        ]);
+    }
+
+    public function assignedQuickList()
+    {
+        $this->crud->setListView('admin.enquiry.assigned-quick-enquiry');
+
+        $enquiries = Enquiry::where('current_origin', 'QUICK')
+            ->where('real_status', 1)
+            ->with(['model', 'variant'])
+            ->orderByDesc('created_at')
+            ->get();
+
+        $gridData = $enquiries->map(function ($enquiry, $index) {
+
+            $editUrl = backpack_url("enquiry/{$enquiry->id}/edit");
+
+            return [
+                'serial_no' => $index + 1,
+                'quick_enq_no' => $enquiry->enquiry_no ?? '—',
+                'quick_enq_date_and_time' => $enquiry->enquiry_date
+                    ? Carbon::parse($enquiry->enquiry_date)->format('d-m-Y H:i')
+                    : '—',
+                'quick-assign_date_and_time' => $enquiry->enq_assign_date
+                    ? Carbon::parse($enquiry->enq_assign_date)->format('d-m-Y H:i')
+                    : '—',
+                'customer_first_name' => $enquiry->full_name,
+                'customer_phone' => $enquiry->mobile ?? '—',
+                'enq_type' => $enquiry->enquiry_type ?? '—',
+                'enq_source' => $enquiry->source?->name ?? $enquiry->source_code ?? '—',
+                'enq_sub_source' => $enquiry->sub_source ?? '—',
+                'likely_purchase_date' => $enquiry->likely_purchase_date ?? '—',
+                'model_code' => $enquiry->model?->name ?? $enquiry->model_code ?? '—',
+                'variant_code' => $enquiry->variant?->display_name ?? $enquiry->variant_code ?? '—',
+                'color_code' => $enquiry->color?->name ?? $enquiry->color_code ?? '—',
+                'sc_name' => $enquiry->salesConsultant?->name ?? '—',
+                'sc_mile_id' => $enquiry->sc_mile_id ?? '—',
+                'enq_stage' => $enquiry->stage ?? '—',
+                'action' => '
+                    <div class="d-flex justify-content-center gap-2">
+                        <a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a>
+                    </div>',
+            ];
+
+        })->values();
+
+        return view('admin.enquiry.assigned-quick-enquiry', [
+            'title' => 'Assigned Quick Enquiries',
+            'gridConfig' => [
+                'columns' => [
+                    ['field' => 'serial_no',     'headerName' => 'S.No'],
+                    ['field' => 'quick_enq_no',    'headerName' => 'Quick Enquiry No'],
+                    ['field' => 'quick_enq_date_and_time',  'headerName' => 'Quick Enquiry Date & Time'],
+                    ['field' => 'quick_assign_date_and_time',  'headerName' => 'Quick Assigned Date & Time'],
+                    ['field' => 'customer_first_name',     'headerName' => 'Customer Name'],
+                    ['field' => 'customer_phone',        'headerName' => 'Customer Mobile'],
+                    ['field' => 'enq_type',        'headerName' => 'Enquiry Type'],
+                    ['field' => 'enq_source',        'headerName' => 'Enquiry Source'],
+                    ['field' => 'enq_sub_source',        'headerName' => 'Enquiry Sub Source'],
+                    ['field' => 'likely_purchase_date',        'headerName' => 'Likely Purchase Date'],
+                    ['field' => 'model_code',    'headerName' => 'Model'],
+                    ['field' => 'variant_code',  'headerName' => 'Variant'],
+                    ['field' => 'color_code',    'headerName' => 'Color'],
+                    ['field' => 'sc_name',    'headerName' => 'SC Name'],
+                    ['field' => 'sc_mile_id',    'headerName' => 'SC Mile Id'],
+                    ['field' => 'enq_stage',        'headerName' => 'Enquiry Stage'],
+                    ['field' => 'action',        'headerName' => 'Action']
+                ],
+                'data' => $gridData
+            ]
+        ]);
+    }
+
+    public function unassignedQuickList()
+    {
+        $this->crud->setListView('admin.enquiry.unassigned-quick-enquiry');
+
+        $enquiries = Enquiry::where('current_origin', 'QUICK')
+            ->where('real_status', 1)
+            ->with(['model', 'variant'])
+            ->orderByDesc('created_at')
+            ->get();
+
+        $gridData = $enquiries->map(function ($enquiry, $index) {
+
+            $editUrl = backpack_url("enquiry/{$enquiry->id}/edit");
+
+            return [
+                'serial_no' => $index + 1,
+                'quick_enq_no' => $enquiry->enquiry_no ?? '—',
+                'quick_enq_date_and_time' => $enquiry->enquiry_date
+                    ? Carbon::parse($enquiry->enquiry_date)->format('d-m-Y H:i')
+                    : '—',
+                'customer_first_name' => $enquiry->full_name,
+                'customer_phone' => $enquiry->mobile ?? '—',
+                'enq_type' => $enquiry->enquiry_type ?? '—',
+                'enq_source' => $enquiry->source?->name ?? $enquiry->source_code ?? '—',
+                'enq_sub_source' => $enquiry->sub_source ?? '—',
+                'likely_purchase_date' => $enquiry->likely_purchase_date ?? '—',
+                'model_code' => $enquiry->model?->name ?? $enquiry->model_code ?? '—',
+                'variant_code' => $enquiry->variant?->display_name ?? $enquiry->variant_code ?? '—',
+                'color_code' => $enquiry->color?->name ?? $enquiry->color_code ?? '—',
+                'enq_stage' => $enquiry->stage ?? '—',
+                'action' => '
+                    <div class="d-flex justify-content-center gap-2">
+                        <a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a>
+                    </div>',
+            ];
+
+        })->values();
+
+        return view('admin.enquiry.unassigned-quick-enquiry', [
+            'title' => 'Unassigned Quick Enquiries',
+            'gridConfig' => [
+                'columns' => [
+                    ['field' => 'serial_no',     'headerName' => 'S.No'],
+                    ['field' => 'quick_enq_no',    'headerName' => 'Quick Enquiry No'],
+                    ['field' => 'quick_enq_date_and_time',  'headerName' => 'Quick Enquiry Date & Time'],
+                    ['field' => 'customer_first_name',     'headerName' => 'Customer Name'],
+                    ['field' => 'customer_phone',        'headerName' => 'Customer Mobile'],
+                    ['field' => 'enq_type',        'headerName' => 'Enquiry Type'],
+                    ['field' => 'enq_source',        'headerName' => 'Enquiry Source'],
+                    ['field' => 'enq_sub_source',        'headerName' => 'Enquiry Sub Source'],
+                    ['field' => 'likely_purchase_date',        'headerName' => 'Likely Purchase Date'],
+                    ['field' => 'model_code',    'headerName' => 'Model'],
+                    ['field' => 'variant_code',  'headerName' => 'Variant'],
+                    ['field' => 'color_code',    'headerName' => 'Color'],
+                    ['field' => 'enq_stage',        'headerName' => 'Enquiry Stage'],
+                    ['field' => 'action',        'headerName' => 'Action']
+                ],
+                'data' => $gridData
+            ]
+        ]);
+    }
+
+
+}
     public function checkDuplicateEnquiry(Request $request)
     {
         $enquiry = Enquiry::where('mobile', $request->mobile)

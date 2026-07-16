@@ -108,6 +108,8 @@ class Enquiry extends BaseModel
         'followup_date',
         'followup_time',
 
+        'real_status',
+
         'created_by',
         'updated_by',
         'deleted_by',
@@ -272,6 +274,93 @@ class Enquiry extends BaseModel
     public function scopeForConsultant($query, int $userId)
     {
         return $query->where('sales_consultant_id', $userId);
+    }
+
+    // ==================== CURRENT-ORIGIN / REAL-STATUS BASE SCOPES ====================
+
+    // real_status = 1 => live/active record (this is the "status 1" flag)
+    // public function scopeActive($query)
+    // {
+    //     return $query->where('real_status', 1);
+    // }
+
+    public function scopeCurrentOrigin($query, string $origin)
+    {
+        return $query->where('current_origin', strtoupper($origin));
+    }
+
+    public function scopeQuick($query)
+    {
+        return $query->currentOrigin('QUICK')->active();
+    }
+
+    public function scopeLong($query)
+    {
+        return $query->currentOrigin('LONG')->active();
+    }
+
+    public function scopeReference($query)
+    {
+        return $query->currentOrigin('REFERENCE')->active();
+    }
+
+    public function scopeVirtual($query)
+    {
+        return $query->currentOrigin('VIRTUAL')->active();
+    }
+
+    public function scopeWhatsapp($query)
+    {
+        return $query->currentOrigin('WHATSAPP')->active();
+    }
+
+    // ==================== ASSIGNED / UNASSIGNED SCOPES ====================
+    // Assigned  = sales_consultant_id OR sc_mile_id has a value
+    // Unassigned = both sales_consultant_id AND sc_mile_id are blank
+
+    public function scopeAssigned($query)
+    {
+        return $query->where(function ($q) {
+            $q->where(function ($q2) {
+                $q2->whereNotNull('sales_consultant_id')->where('sales_consultant_id', '!=', '');
+            })->orWhere(function ($q2) {
+                $q2->whereNotNull('sc_mile_id')->where('sc_mile_id', '!=', '');
+            });
+        });
+    }
+
+    public function scopeUnassigned($query)
+    {
+        return $query->where(function ($q) {
+            $q->where(function ($q2) {
+                $q2->whereNull('sales_consultant_id')->orWhere('sales_consultant_id', '');
+            })->where(function ($q2) {
+                $q2->whereNull('sc_mile_id')->orWhere('sc_mile_id', '');
+            });
+        });
+    }
+
+    // ==================== PER-BLADE COMBINED SCOPES ====================
+    // These map 1:1 to the dropdown pages so controllers just call these.
+
+    public function scopeAssignedQuick($query)
+    {
+        return $query->quick()->assigned();
+    }
+
+    public function scopeUnassignedQuick($query)
+    {
+        return $query->quick()->unassigned();
+    }
+
+    public function scopeAssignedLong($query)
+    {
+        return $query->long()->assigned();
+    }
+
+    public function scopeUnassignedLong($query)
+    {
+        return $query->long()->unassigned();
     }
 
     public function getFullNameAttribute(): string

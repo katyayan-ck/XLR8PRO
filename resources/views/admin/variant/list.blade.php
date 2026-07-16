@@ -221,17 +221,16 @@
             bubble.style.display = 'block';
         }
 
-        // ==================== Event Listeners ====================
         document.addEventListener('DOMContentLoaded', () => {
             const gridDiv = document.querySelector('#myGrid');
             agGrid.createGrid(gridDiv, gridOptions);
 
-            // Quick Filter
+            
             document.getElementById('quickFilter')?.addEventListener('input', e => {
                 gridApi.setGridOption('quickFilterText', e.target.value);
             });
 
-            // Reset Button
+            
             document.getElementById('resetAll')?.addEventListener('click', () => {
                 gridApi.setFilterModel(null);
                 gridApi.setSortModel(null);
@@ -239,7 +238,7 @@
                 document.getElementById('quickFilter').value = '';
             });
 
-            // Customise Headers
+            
             document.getElementById('btnCustomiseHeaders')?.addEventListener('click', e => {
                 e.stopPropagation();
                 openColumnBubble();
@@ -256,7 +255,7 @@
                 if (bubble) bubble.style.display = 'none';
             });
 
-            // All Headers
+            
             document.getElementById('btnAllHeaders')?.addEventListener('click', () => {
                 const allFields = columnDefs
                     .flatMap(group => group.children || [group])
@@ -267,7 +266,7 @@
                 setTimeout(() => gridApi.autoSizeAllColumns(), 200);
             });
 
-            // Default Headers
+            
             document.getElementById('btnDefaultHeaders')?.addEventListener('click', () => {
                 const allFields = columnDefs
                     .flatMap(group => group.children || [group])
@@ -283,7 +282,7 @@
                 }, 200);
             });
 
-            // Excel Export
+            
             document.getElementById('exportCsv')?.addEventListener('click', () => {
                 const visibleColumns = gridApi.getAllDisplayedColumns()
                     .map(col => col.getColDef())
@@ -304,7 +303,7 @@
                 XLSX.writeFile(wb, `variants-${new Date().toISOString().slice(0, 10)}.xlsx`);
             });
 
-            // PDF Export
+            
             document.getElementById('exportPdf')?.addEventListener('click', () => {
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF('l', 'pt', 'a4');

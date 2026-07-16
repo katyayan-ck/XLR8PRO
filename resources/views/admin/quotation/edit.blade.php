@@ -697,7 +697,6 @@ $('#coating').on('change', function () {
 
 });
 
-// Page load par bhi apply ho jaye
 $('#coating').trigger('change');
 
 $('#shield').on('change', function () {

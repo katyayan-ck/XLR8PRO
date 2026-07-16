@@ -1536,7 +1536,6 @@ $('#financier').on('change', function() {
     const shortName = $(this).find(':selected').data('shortname') || '';
     $('#financiershortname').val(shortName);
 });
-    // Bind event listeners
     function bindEventListeners() {
         $('#customertype').on('change', function() {
             toggleCustomerFields(this.value);
@@ -1567,7 +1566,6 @@ $('#financier').on('change', function() {
             <option value="">Please Select...</option>
             <option value="5" selected>Owned By</option>
         `);
-        // Care Of Name enabled aur required rakho
         $('#careofname').prop('disabled', false).prop('required', true);
         toggleRequiredMark($('#careofname'), true);
     } else {

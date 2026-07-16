@@ -141,7 +141,6 @@
 <script>
     flatpickr(".flatpickr", { dateFormat: "Y-m-d" });
 
-    // Model → Variant Fetch (Safe Version)
     $('#model').on('change', function() {
         let modelName = $(this).val().trim();
 

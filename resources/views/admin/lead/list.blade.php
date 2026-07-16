@@ -187,7 +187,6 @@
             }
 
         };
-        // ==================== CUSTOMISE HEADERS ====================
 
         function openColumnBubble() {
 
@@ -513,7 +512,7 @@
                         }
 
                     );
-                // Default Headers
+                
                 document
                     .getElementById(
                         'btnDefaultHeaders'
@@ -592,7 +591,7 @@
 
                     );
 
-                // Excel Export
+                
 
                 document
                     .getElementById(
@@ -678,7 +677,7 @@
 
                     );
 
-                // PDF Export
+                
 
                 document
                     .getElementById(
