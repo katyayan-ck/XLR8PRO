@@ -20,37 +20,117 @@ class Enquiry extends BaseModel
     protected $table = 'xlr8_crm_enquiries';
 
     protected $fillable = [
+
         'enquiry_no',
-        'enquiry_date',
-        'lead_no',
-        'person_code',
+        'enquiry_type',
         'source_code',
-        'referral_details',
+        'sub_source',
+
+        'person_code',
+
+        'reference_details',
+        'referred_by',
+        'referee_phone',
+        'referee_name',
+
+        'planned_campaign',
+
+        'likely_purchase_date',
+
+        'activity_type',
+        'activity_segment',
+        'activity_model',
+        'activity_start_date',
+        'activity_end_date',
+        'activity_branch',
+        'activity_location',
+
         'first_name',
         'last_name',
         'mobile',
         'email',
-        'occupation',
+
+        'occupation_type',
+        'occupation_sub_type',
+
+        'customer_type',
+
+        'company_name',
+
+        'gender',
+
+        'dob',
+
+        'marital_status',
+        'marriage_date',
+
+        'age_group',
+
+        'zipcode',
+        'tehsil',
+        'district',
+        'city',
+
+        'has_ev',
+
+        'purchase_type',
+
+        'exchange_make',
+        'exchange_model',
+        'vehicle_no',
+
+        'remarks',
+
         'segment_code',
         'model_code',
         'variant_code',
         'color_code',
+
+        'fuel_type',
+        'transmission',
+        'drivetrain',
+        'seating',
+
+        'usage_area',
+        'km_travelled_daily',
+
+        'application_type',
+        'application',
+
         'place_of_registration',
-        'registration_by',
-        'insurance_by',
-        'has_rsa',
-        'has_extended_warranty',
-        'expected_delivery_date',
-        'dms_enquiry_no',
+
+        'dealer_branch',
+        'dealer_location',
+
         'sales_consultant_id',
-        'status',
-        'lost_reason',
-        'priority',
-        'notes',
-        'conversion_notes',
+
+        'followup_type',
+        'followup_date',
+        'followup_time',
+
+        'real_status',
+
+        'created_by',
+        'updated_by',
+        'deleted_by',
+
     ];
 
-    protected $casts = [];
+    protected $casts = [
+
+        // 'likely_purchase_date' => 'date',
+
+        'activity_start_date' => 'date',
+
+        'activity_end_date' => 'date',
+
+        'dob' => 'date',
+
+        'marriage_date' => 'date',
+
+        'followup_date' => 'date',
+
+    ];
 
     public function __construct(array $attributes = [])
     {
@@ -65,15 +145,47 @@ class Enquiry extends BaseModel
     }
 
     protected array $columnTransformations = [
+
+        'enquiry_no' => 'uppercase|trim',
+
         'first_name' => 'trim|ucwords',
+
         'last_name' => 'trim|ucwords',
+
         'mobile' => 'trim',
+
         'email' => 'trim|lowercase',
-        'model_code' => 'uppercase|trim',
-        'variant_code' => 'uppercase|trim',
-        'color_code' => 'uppercase|trim',
+
+        'reference_details' => 'trim',
+
+        'referred_by' => 'trim',
+
+        'referee_phone' => 'trim',
+
+        'referee_name' => 'trim|ucwords',
+
+        'company_name' => 'trim',
+
+        'exchange_make' => 'trim',
+
+        'exchange_model' => 'trim',
+
+        'vehicle_no' => 'uppercase|trim',
+
+        'remarks' => 'trim',
+
         'source_code' => 'uppercase|trim',
-        'lead_no' => 'uppercase|trim',
+
+        'sub_source' => 'uppercase|trim',
+
+        'segment_code' => 'uppercase|trim',
+
+        'model_code' => 'uppercase|trim',
+
+        'variant_code' => 'uppercase|trim',
+
+        'color_code' => 'uppercase|trim',
+
     ];
 
     public const STATUS_NEW = 'new';
@@ -110,6 +222,18 @@ class Enquiry extends BaseModel
     {
         return $this->belongsTo(VehicleModel::class, 'model_code', 'model_code');
     }
+
+
+    
+
+    // public function campaign()
+    // {
+    //     return $this->belongsTo(
+    //         Campaign::class,
+    //         'planned_campaign',
+    //         'name'
+    //     );
+    // }
 
     public function model()
     {
@@ -153,6 +277,93 @@ class Enquiry extends BaseModel
     public function scopeForConsultant($query, int $userId)
     {
         return $query->where('sales_consultant_id', $userId);
+    }
+
+    // ==================== CURRENT-ORIGIN / REAL-STATUS BASE SCOPES ====================
+
+    // real_status = 1 => live/active record (this is the "status 1" flag)
+    // public function scopeActive($query)
+    // {
+    //     return $query->where('real_status', 1);
+    // }
+
+    public function scopeCurrentOrigin($query, string $origin)
+    {
+        return $query->where('current_origin', strtoupper($origin));
+    }
+
+    public function scopeQuick($query)
+    {
+        return $query->currentOrigin('QUICK')->active();
+    }
+
+    public function scopeLong($query)
+    {
+        return $query->currentOrigin('LONG')->active();
+    }
+
+    public function scopeReference($query)
+    {
+        return $query->currentOrigin('REFERENCE')->active();
+    }
+
+    public function scopeVirtual($query)
+    {
+        return $query->currentOrigin('VIRTUAL')->active();
+    }
+
+    public function scopeWhatsapp($query)
+    {
+        return $query->currentOrigin('WHATSAPP')->active();
+    }
+
+    // ==================== ASSIGNED / UNASSIGNED SCOPES ====================
+    // Assigned  = sales_consultant_id OR sc_mile_id has a value
+    // Unassigned = both sales_consultant_id AND sc_mile_id are blank
+
+    public function scopeAssigned($query)
+    {
+        return $query->where(function ($q) {
+            $q->where(function ($q2) {
+                $q2->whereNotNull('sales_consultant_id')->where('sales_consultant_id', '!=', '');
+            })->orWhere(function ($q2) {
+                $q2->whereNotNull('sc_mile_id')->where('sc_mile_id', '!=', '');
+            });
+        });
+    }
+
+    public function scopeUnassigned($query)
+    {
+        return $query->where(function ($q) {
+            $q->where(function ($q2) {
+                $q2->whereNull('sales_consultant_id')->orWhere('sales_consultant_id', '');
+            })->where(function ($q2) {
+                $q2->whereNull('sc_mile_id')->orWhere('sc_mile_id', '');
+            });
+        });
+    }
+
+    // ==================== PER-BLADE COMBINED SCOPES ====================
+    // These map 1:1 to the dropdown pages so controllers just call these.
+
+    public function scopeAssignedQuick($query)
+    {
+        return $query->quick()->assigned();
+    }
+
+    public function scopeUnassignedQuick($query)
+    {
+        return $query->quick()->unassigned();
+    }
+
+    public function scopeAssignedLong($query)
+    {
+        return $query->long()->assigned();
+    }
+
+    public function scopeUnassignedLong($query)
+    {
+        return $query->long()->unassigned();
     }
 
     public function getFullNameAttribute(): string

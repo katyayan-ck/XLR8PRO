@@ -164,7 +164,7 @@
                 body: rows,
                 startY: 50,
                 styles: { fontSize: 8 },
-                headStyles: { fillColor: [23, 162, 184] }, // info blue
+                headStyles: { fillColor: [23, 162, 184] }, 
             });
             doc.save('invoiced-bookings.pdf');
         });

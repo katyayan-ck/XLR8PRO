@@ -264,7 +264,7 @@
         },
 
         components: {
-            htmlRenderer: params => params.value || '',  // Raw HTML for action column
+            htmlRenderer: params => params.value || '', 
         },
 
         onGridReady: params => {
@@ -496,7 +496,7 @@
                 body: rows,
                 startY: 50,
                 styles: { fontSize: 8 },
-                headStyles: { fillColor: [220, 53, 69] }, // red theme
+                headStyles: { fillColor: [220, 53, 69] }, 
             });
 
             doc.save('finance-not-interested.pdf');

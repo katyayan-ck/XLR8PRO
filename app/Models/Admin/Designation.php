@@ -48,10 +48,7 @@ class Designation extends SpatieRole implements HasMedia
         return 'code';
     }
 
-    // ─────────────────────────────────────────────────────────────
     // MANUAL AUDIT + SOFT DELETE HANDLING (Because it doesn't extend BaseModel)
-    // ─────────────────────────────────────────────────────────────
-
     protected static function resolveActorId(): ?int
     {
         if (app()->runningInConsole()) {
@@ -154,9 +151,7 @@ class Designation extends SpatieRole implements HasMedia
         return false;
     }
 
-    // ─────────────────────────────────────────────────────────────
     // MEDIA COLLECTIONS
-    // ─────────────────────────────────────────────────────────────
 
     public function registerMediaCollections(): void
     {
@@ -166,9 +161,7 @@ class Designation extends SpatieRole implements HasMedia
             ->useDisk('public');
     }
 
-    // ─────────────────────────────────────────────────────────────
     // RELATIONS (Code-based)
-    // ─────────────────────────────────────────────────────────────
 
     public function parentDesignation()
     {
@@ -185,9 +178,7 @@ class Designation extends SpatieRole implements HasMedia
         return $this->hasMany(\App\Models\Admin\Employee::class, 'designation_code', 'code');
     }
 
-    // ─────────────────────────────────────────────────────────────
     // ACCESSORS
-    // ─────────────────────────────────────────────────────────────
 
     public function getRankLabelAttribute(): string
     {

@@ -15,6 +15,21 @@
                             class="btn btn-blue btn-sm fw-bold shadow-sm">
                             <i class="la la-plus me-1"></i> Add New Enquiry
                         </a>
+
+                        <select id="enquiryFilter" class="form-select form-select-sm bg-white text-dark border-0 shadow-sm"
+                            style="min-width: 200px; max-width: 260px;" onchange="redirectToEnquiryList(this)">
+    
+                            <option value="{{ backpack_url('enquiries') }}">All Enquiries</option>
+                            <option value="{{ backpack_url('enquiries/reference') }}">Reference Enquiries</option>
+                            <option value="{{ backpack_url('enquiries/virtual-number') }}">Virtual Number Enquiries</option>
+                            <option value="{{ backpack_url('enquiries/whatsapp-campaign') }}">WhatsApp Campaign Enquiries</option>
+                            <option value="{{ backpack_url('enquiries/unassigned-quick') }}">Unassigned Quick Enquiries</option>
+                            <option value="{{ backpack_url('enquiries/assigned-quick') }}">Assigned Quick Enquiries</option>
+                            <option value="{{ backpack_url('enquiries/unassigned-long') }}">Unassigned Long Enquiries</option>
+                            <option value="{{ backpack_url('enquiries/assigned-long') }}">Assigned Long Enquiries</option>
+
+                        </select>
+
                     </div>
                 </div>
 
@@ -91,38 +106,68 @@
         const columnDefs = [
 
             ...ALL_COLUMNS.filter(col => [
-
                 'serial_no',
                 'enquiry_no',
-                'enquiry_date',
-                'lead_no',
+                'enquiry_type',
+                'source_name',
+                'sub_source',
                 'person_code',
-                'source_code',
-                'referral_details',
+                'reference_details',
+                'referred_by',
+                'referee_phone',
+                'referee_name',
+                'planned_campaign_name',
+                'likely_purchase_date',
+                'activity_type',
+                'activity_segment',
+                'activity_model',
+                'activity_start_date',
+                'activity_end_date',
+                'activity_branch',
+                'activity_location',
                 'first_name',
                 'last_name',
+                'full_name',
                 'mobile',
                 'email',
-                'occupation',
-                'source_name',
+                'occupation_type',
+                'occupation_sub_type',
+                'customer_type',
+                'company_name',
+                'gender',
+                'dob',
+                'marital_status',
+                'marriage_date',
+                'age_group',
+                'zipcode',
+                'tehsil',
+                'district',
+                'city',
+                'has_ev',
+                'purchase_type',
+                'exchange_make',
+                'exchange_model',
+                'vehicle_no',
+                'remarks',
                 'segment_name',
                 'model_name',
                 'variant_name',
                 'color_name',
+                'fuel_type',
+                'transmission',
+                'drivetrain',
+                'seating',
+                'usage_area',
+                'km_travelled_daily',
+                'application_type',
+                'application',
                 'place_of_registration',
-                'registration_by',
-                'insurance_by',
-                'has_rsa',
-                'has_extended_warranty',
-                'expected_delivery_date',
-                'dms_enquiry_no',
+                'dealer_branch',
+                'dealer_location',
                 'sales_consultant_id',
-                'status',
-                'lost_reason',
-                'priority',
-                'notes',
-                'conversion_notes'
-
+                'followup_type',
+                'followup_date',
+                'followup_time'
             ].includes(col.field)),
 
             ...ALL_COLUMNS.filter(col => ['action'].includes(col.field)).map(col => {
@@ -162,20 +207,21 @@
                 gridApi = params.api;
 
                 const defaultFields = [
-
                     'serial_no',
                     'enquiry_no',
-                    'enquiry_date',
                     'first_name',
                     'last_name',
                     'mobile',
+                    'source_name',
+                    'planned_campaign_name',
                     'segment_name',
                     'model_name',
                     'variant_name',
                     'color_name',
-                    'status',
+                    'dealer_branch',
+                    'dealer_location',
+                    'followup_date',
                     'action'
-
                 ];
 
                 const allCols = gridApi.getAllGridColumns().map(col => col.getColId());
@@ -267,19 +313,21 @@
 
             document.getElementById('btnDefaultHeaders').addEventListener('click', () => {
                 const defaultFields = [
-
                     'serial_no',
                     'enquiry_no',
-                    'enquiry_date',
-                    'full_name',
+                    'first_name',
+                    'last_name',
                     'mobile',
+                    'source_name',
+                    'planned_campaign_name',
                     'segment_name',
                     'model_name',
                     'variant_name',
                     'color_name',
-                    'status',
+                    'dealer_branch',
+                    'dealer_location',
+                    'followup_date',
                     'action'
-
                 ];
                 const allCols = gridApi.getAllGridColumns().map(c => c.getColId());
 
@@ -340,5 +388,12 @@
                 doc.save(`enquiries-${new Date().toISOString().slice(0, 10)}.pdf`);
             });
         });
+
+        function redirectToEnquiryList(selectElement) {
+                if (selectElement.value) {
+                window.location.href = selectElement.value;
+                }
+            }
+
     </script>
 @endpush

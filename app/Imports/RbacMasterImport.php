@@ -28,17 +28,11 @@ class RbacMasterImport implements WithMultipleSheets
     public function sheets(): array
     {
         return [
-            //'M_Branch'          => new BranchSheet($this),
-           // 'M_Location'        => new LocationSheet($this),
-           //'M_Designation'     => new DesignationSheet($this),
+            
             'M_Department'      => new DepartmentSheet($this),
             'M_Division'        => new DivisionSheet($this),
             'M_DesignationTree' => new DesignationTreeSheet($this),
-            'M_Post'            => new PostSheet($this),
-           // 'M_Vertical'        => new VerticalSheet($this),
-           //'M_Segment'         => new SegmentSheet($this),
-          // 'M_SubSegment'      => new SubSegmentSheet($this),
-          // 'M_Model'           => new ModelSheet($this),
+            'M_Post'            => new PostSheet($this),           
             'Users_Import'      => new UsersImportSheet($this),
         ];
     }

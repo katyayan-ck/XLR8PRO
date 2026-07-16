@@ -185,12 +185,11 @@
             checkbox.type = 'checkbox';
             checkbox.checked = gridApi.getColumn(col.field)?.isVisible() ?? false;
 
-            // Primary fields disable karo
             if (['serial_no', 'code', 'name'].includes(col.field)) {
                 checkbox.disabled = true;
             }
 
-            // Action column disable karo
+            
             if (col.field === 'action') {
                 checkbox.disabled = true;
             }
@@ -211,17 +210,16 @@
         bubble.style.display = 'block';
     }
 
-    // ==================== Event Listeners ====================
     document.addEventListener('DOMContentLoaded', () => {
         const gridDiv = document.querySelector('#myGrid');
         agGrid.createGrid(gridDiv, gridOptions);
 
-        // Quick Filter
+        
         document.getElementById('quickFilter').addEventListener('input', e => {
             gridApi.setGridOption('quickFilterText', e.target.value);
         });
 
-        // Reset All
+        
         document.getElementById('resetAll').addEventListener('click', () => {
             gridApi.setFilterModel(null);
             document.getElementById('quickFilter').value = '';
@@ -229,7 +227,7 @@
             gridApi.setSortModel(null);
         });
 
-        // Customise Headers
+        
         document.getElementById('btnCustomiseHeaders').addEventListener('click', e => {
             e.stopPropagation();
             openColumnBubble();
@@ -246,14 +244,14 @@
             if (bubble?.style.display === 'block') bubble.style.display = 'none';
         });
 
-        // All Headers
+        
         document.getElementById('btnAllHeaders').addEventListener('click', () => {
             const allCols = gridApi.getAllGridColumns().map(c => c.getColId());
             gridApi.setColumnsVisible(allCols, true);
             setTimeout(() => gridApi.autoSizeAllColumns(), 200);
         });
 
-        // Default Headers
+        
         document.getElementById('btnDefaultHeaders').addEventListener('click', () => {
             const defaultFields = ['serial_no', 'code', 'name', 'description', 'is_active', 'action'];
             const allCols = gridApi.getAllGridColumns().map(c => c.getColId());
@@ -263,7 +261,7 @@
             setTimeout(() => gridApi.autoSizeAllColumns(), 200);
         });
 
-        // Excel Export
+        
         document.getElementById('exportCsv').addEventListener('click', () => {
             const visibleColumns = gridApi.getAllDisplayedColumns()
                 .map(col => col.getColDef())
@@ -284,7 +282,7 @@
             XLSX.writeFile(wb, `lead-source-${new Date().toISOString().slice(0,10)}.xlsx`);
         });
 
-        // PDF Export
+        
         document.getElementById('exportPdf').addEventListener('click', () => {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();

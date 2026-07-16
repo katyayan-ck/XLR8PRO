@@ -270,7 +270,7 @@ function openProofPreview(url,type,fileName)
 }
     $(document).ready(function() {
 
-    // Flatpickr
+    
     flatpickr("#date_picker", {
         dateFormat: "d-M-Y",
         maxDate: "today",

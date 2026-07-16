@@ -20,7 +20,6 @@
             }
         });
         
-        // Now add event listeners ONLY to the buttons
         const buttons = tableElement.querySelectorAll('tbody td .details-row-button');
         buttons.forEach(button => {
             // Remove any existing event listeners by cloning and replacing each button

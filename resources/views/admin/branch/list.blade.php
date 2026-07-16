@@ -21,7 +21,7 @@
                 </div>
             </div>
 
-            <!-- BODY -->
+            
             <div class="card-body p-0" style="background:#f8fafc">
                 <div
                     class="d-flex justify-content-between align-items-center flex-wrap gap-3 p-3 border-bottom bg-white">
@@ -83,7 +83,7 @@
         justify-content: center !important;
     }
 
-    /* Extra safety for group headers */
+    
     .ag-theme-quartz .ag-header-group-cell {
         text-align: center !important;
         justify-content: center !important;
@@ -118,10 +118,10 @@
     'name',
     'short_name'
 ]).map(col => {
-    // ✅ LEFT PIN (freeze)
+    
     if (['serial_no', 'code', 'branch_code'].includes(col.field)) {
         col.pinned = 'left';
-        col.lockPinned = true; // optional (user remove na kar sake)
+        col.lockPinned = true; 
     }
 
     // optional width
@@ -181,9 +181,9 @@
             resizable: true,
             headerClass: 'center-header',
             cellStyle: { textAlign: 'center' },
-            minWidth: 130,   // ✅ ADD
-            wrapText: true,  // ✅ ADD
-            autoHeight: true // ✅ ADD
+            minWidth: 130,   
+            wrapText: true,  
+            autoHeight: true
         },
         components: {
             htmlRenderer: params => params.value || ''
@@ -218,7 +218,7 @@
         }
     };
 
-        // Updated openColumnBubble for Flat Columns (No Grouping)
+        
     function openColumnBubble() {
         const bubble = document.getElementById('columnBubble');
         const tbody = document.getElementById('columnBubbleBody');
@@ -226,19 +226,19 @@
 
         tbody.innerHTML = '';
 
-        // Sab columns ko ek saath flat list mein show karo
+        
         const allFlatColumns = [
             ...getCols(['serial_no', 'code', 'name', 'short_name']),
 
-            ...getCols(['description']), // ✅ ADD
+            ...getCols(['description']),  
 
             ...getCols(['phone', 'email']),
 
-            ...getCols(['address']), // ✅ ADD
+            ...getCols(['address']),  
 
             ...getCols(['city', 'state', 'pincode']),
 
-            ...getCols(['country', 'latitude', 'longitude']), // ✅ ADD
+            ...getCols(['country', 'latitude', 'longitude']),  
         ];
 
         allFlatColumns.forEach(col => {
@@ -253,13 +253,11 @@
             const column = gridApi.getColumn(col.field);
             checkbox.checked = column ? column.isVisible() : false;
 
-            // Primary columns ko disable kar sakte ho (optional)
             if (['serial_no', 'code','branch_code', 'name', 'short_name'].includes(col.field)) {
                 checkbox.checked = true;
                 checkbox.disabled = true;
             }
 
-            // Action column ko bhi hide nahi karne dena chahte ho toh
             if (col.field === 'action') {
                 checkbox.checked = true;
                 checkbox.disabled = true;
@@ -286,7 +284,7 @@
         const gridDiv = document.querySelector('#myGrid');
         agGrid.createGrid(gridDiv, gridOptions);
 
-        // Quick Filter
+        
         document.getElementById('quickFilter').addEventListener('input', e => {
             gridApi.setGridOption('quickFilterText', e.target.value);
         });
@@ -356,7 +354,7 @@
             setTimeout(() => gridApi.autoSizeAllColumns(), 200);
         });
 
-        // Excel Export
+        
         document.getElementById('exportCsv').addEventListener('click', () => {
             const visibleColumns = gridApi.getAllDisplayedColumns()
                 .map(col => col.getColDef())

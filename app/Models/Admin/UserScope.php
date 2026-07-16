@@ -30,19 +30,14 @@ class UserScope extends BaseModel
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
     ];
-
-    // ─────────────────────────────────────────────────────────────
     // Relationships
-    // ─────────────────────────────────────────────────────────────
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(\App\Models\User::class);
     }
 
-    // ─────────────────────────────────────────────────────────────
     // Scopes
-    // ─────────────────────────────────────────────────────────────
 
     // public function scopeActive($query)
     // {

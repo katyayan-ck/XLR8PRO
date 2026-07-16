@@ -120,14 +120,14 @@
 <link rel="stylesheet" href="https://unpkg.com/ag-grid-community/styles/ag-theme-quartz.css">
 
 <style>
-    /* Center child column headers */
+   
     .ag-theme-quartz .center-header .ag-header-cell-label,
     .ag-theme-quartz .ag-header-cell-label {
         justify-content: center !important;
         text-align: center !important;
     }
 
-    /* Center GROUP / parent headers */
+    
     .ag-theme-quartz .ag-header-group-cell-label {
         justify-content: center !important;
         text-align: center !important;
@@ -138,13 +138,13 @@
         text-align: center !important;
     }
 
-    /* Pinned columns visual cue */
+
     .ag-pinned-left-cols-container .ag-header-cell,
     .ag-pinned-left-cols-container .ag-header-group-cell,
     .ag-pinned-right-cols-container .ag-header-cell,
     .ag-pinned-right-cols-container .ag-header-group-cell {
         background-color: #d4edda !important;
-        /* light green for RTO success theme */
+
         font-weight: 600;
     }
 </style>
@@ -167,10 +167,7 @@
         if (confirm('Import data from Google Sheet with GID: ' + gid + '?')) {
             window.location.href = url;
         }
-    }
-    // ────────────────────────────────────────────────
-    // ALL_COLUMNS from controller → $gridConfig['columns']
-    // ────────────────────────────────────────────────
+    
     const ALL_COLUMNS = @json($gridConfig['columns'] ?? []);
 
     function getCols(fields) {
@@ -179,36 +176,32 @@
 
     let gridApi;
 
-    // ────────────────────────────────────────────────
-    // Default visible fields → only Y marked ones
-    // ────────────────────────────────────────────────
+    
     const DEFAULT_VISIBLE_FIELDS = [
-        // Primary - Y
+        
         'serial_no',
         'booking_no',
-        'created_at',           // Entry Date
+        'created_at',           
         'booking_date',
-        'inv_no',               // Invoice No.
-        'inv_date',             // Invoice Date
+        'inv_no',               
+        'inv_date',             
 
-        // Customer - Y
-        'name',                 // Customer Name
+        
+        'name',                
         'branch_name',
         'location_name',
 
-        // Vehicle - Y
+        
         'model',
         'variant',
         'color',
-        'chassis_no',            // Allotted Chassis No.
+        'chassis_no',            
 
-        // Action (usually always visible)
+       
         'action'
     ];
 
-    // ────────────────────────────────────────────────
-    // Grouped columns with pinning & centering
-    // ────────────────────────────────────────────────
+    
     const columnGroups = [
         {
             headerName: 'Primary',
@@ -219,8 +212,8 @@
                 'created_at',
                 'booking_date',
                 'days_count',
-                'inv_no',               // Invoice No.
-                'inv_date'              // Invoice Date
+                'inv_no',               
+                'inv_date'              
             ]).map(col => {
                 if (col.field === 'serial_no' || col.field === 'booking_no') {
                     col.pinned = 'left';
@@ -251,7 +244,7 @@
                 'variant',
                 'color',
                 'seating',
-                'chassis_no'             // Allotted Chassis No.
+                'chassis_no'           
             ])
         },
         {
@@ -309,9 +302,7 @@
         }
     };
 
-    // ────────────────────────────────────────────────
-    // Customise Headers – grouped + selection sync
-    // ────────────────────────────────────────────────
+     – grouped + selection sync
     function openColumnBubble() {
         const bubble = document.getElementById('columnBubble');
         const tbody  = document.getElementById('columnBubbleBody');
@@ -406,9 +397,6 @@
         bubble.style.display = 'block';
     }
 
-    // ────────────────────────────────────────────────
-    // Event Listeners
-    // ────────────────────────────────────────────────
     document.getElementById('btnCustomiseHeaders')?.addEventListener('click', e => {
         e.stopPropagation();
         openColumnBubble();
@@ -481,7 +469,7 @@
             window.location = url;
         });
 
-        // Excel Export – visible columns only
+         – visible columns only
         document.getElementById('exportCsv')?.addEventListener('click', () => {
             const visibleColumns = gridApi.getAllDisplayedColumns()
                 .map(col => col.getColDef())
@@ -502,7 +490,7 @@
             XLSX.writeFile(workbook, `pending-rto-${new Date().toISOString().slice(0,10)}.xlsx`);
         });
 
-        // PDF Export – visible columns only
+         – visible columns only
         document.getElementById('exportPdf')?.addEventListener('click', () => {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('l', 'pt', 'a4');

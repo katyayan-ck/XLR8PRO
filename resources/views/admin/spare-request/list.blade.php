@@ -129,7 +129,7 @@
     };
 
     function loadSpareList() {
-        fetch('{{ route("spare-request.data") }}')   // We'll add this route
+        fetch('{{ route("spare-request.data") }}')   
             .then(response => response.json())
             .then(result => {
                 gridApi.setGridOption('rowData', result);

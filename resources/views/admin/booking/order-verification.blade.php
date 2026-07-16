@@ -226,7 +226,7 @@
     document.getElementById('status_filter')?.addEventListener('change', function() {
         const url = new URL(window.location);
         url.searchParams.set('status_filter', this.value);
-        url.searchParams.delete('page'); // optional: reset pagination if needed
+        url.searchParams.delete('page'); 
         window.location.href = url.toString();
     });
 </script>

@@ -83,7 +83,6 @@
         justify-content: center !important;
     }
 
-    /* Extra safety for group headers */
     .ag-theme-quartz .ag-header-group-cell {
         text-align: center !important;
         justify-content: center !important;
@@ -243,9 +242,9 @@ const columnDefs = [
             resizable: true,
             headerClass: 'center-header',
             cellStyle: { textAlign: 'center' },
-            minWidth: 130,   // ✅ ADD
-            wrapText: true,  // ✅ ADD
-            autoHeight: true // ✅ ADD
+            minWidth: 130,    
+            wrapText: true,   
+            autoHeight: true  
         },
         components: {
             htmlRenderer: params => params.value || ''
@@ -284,7 +283,6 @@ const columnDefs = [
         }
     };
 
-        // Updated openColumnBubble for Flat Columns (No Grouping)
     function openColumnBubble() {
         const bubble = document.getElementById('columnBubble');
         const tbody = document.getElementById('columnBubbleBody');
@@ -292,7 +290,6 @@ const columnDefs = [
 
         tbody.innerHTML = '';
 
-        // Sab columns ko ek saath flat list mein show karo
         const allFlatColumns = getCols([
 
     'serial_no',
@@ -371,13 +368,11 @@ const columnDefs = [
             const column = gridApi.getColumn(col.field);
             checkbox.checked = column ? column.isVisible() : false;
 
-            // Primary columns ko disable kar sakte ho (optional)
             if (['serial_no', 'code','branch_code', 'name', 'short_name'].includes(col.field)) {
                 checkbox.checked = true;
                 checkbox.disabled = true;
             }
 
-            // Action column ko bhi hide nahi karne dena chahte ho toh
             if (col.field === 'action') {
                 checkbox.checked = true;
                 checkbox.disabled = true;
@@ -404,7 +399,7 @@ const columnDefs = [
         const gridDiv = document.querySelector('#myGrid');
         agGrid.createGrid(gridDiv, gridOptions);
 
-        // Quick Filter
+        
         document.getElementById('quickFilter').addEventListener('input', e => {
             gridApi.setGridOption('quickFilterText', e.target.value);
         });
@@ -478,7 +473,7 @@ const columnDefs = [
             setTimeout(() => gridApi.autoSizeAllColumns(), 200);
         });
 
-        // Excel Export
+        
         document.getElementById('exportCsv').addEventListener('click', () => {
             const visibleColumns = gridApi.getAllDisplayedColumns()
                 .map(col => col.getColDef())

@@ -44,13 +44,12 @@ Route::group([
     Route::put('vehicle-model/{id}', [VehicleModelCrudController::class, 'update'])->name('vehicle-model.update');
     Route::delete('vehicle-model/{id}', [VehicleModelCrudController::class, 'destroy'])->name('vehicle-model.destroy');
 
-    // AJAX: Get Sub Segments when Segment is selected
     Route::get(
         'vehicle-model/sub-segments/{segmentCode}',
         [VehicleModelCrudController::class, 'getSubSegmentsBySegment']
     );
 
-    // AJAX: Variant Create/Edit Dropdowns
+    
 
     Route::get(
         'variant/subsegments',
@@ -88,15 +87,6 @@ Route::group([
     );
     // Other Routes
 
-    //Route::crud('approval-hierarchy', 'ApprovalHierarchyCrudController');
-    //Route::crud('employee-branch-assignment', 'EmployeeBranchAssignmentCrudController');
-    //Route::crud('employee-department-assignment', 'EmployeeDepartmentAssignmentCrudController');
-    //Route::crud('employee-location-assignment', 'EmployeeLocationAssignmentCrudController');
-    //Route::crud('employee-vertical-assignment', 'EmployeeVerticalAssignmentCrudController');
-    //Route::crud('garage', 'GarageCrudController');
-    //Route::crud('graph-edge', 'GraphEdgeCrudController');
-    //Route::crud('graph-node', 'GraphNodeCrudController');
-    //Route::crud('reporting-hierarchy', 'ReportingHierarchyCrudController');
     Route::crud('modules', 'ModulesCrudController');
     Route::crud('permission', 'PermissionCrudController');
     Route::crud('lead', 'LeadCrudController');
@@ -111,22 +101,7 @@ Route::group([
         [LeadCrudController::class, 'getColors']
     );
     Route::crud('process', 'ProcessCrudController');
-    //Route::crud('post', 'PostCrudController');
-    //Route::crud('post-permission', 'PostPermissionCrudController');
-    //Route::crud('user-type', 'UserTypeCrudController');
-    // HR Routes
-    // Route::prefix('hr')->name('hr.')->group(function () {
-    //     Route::get('transfer', 'HRTransferController@index')->name('transfer.index');
-    //     Route::post('transfer', 'HRTransferController@store')->name('transfer.store');
-    //     Route::get('transfer/posts', 'HRTransferController@getPosts')->name('transfer.posts');
-
-    //     Route::get('relieve', 'HRRelievingController@index')->name('relieve.index');
-    //     Route::post('relieve', 'HRRelievingController@store')->name('relieve.store');
-
-    //     Route::get('journey', 'EmployeeJourneyController@index')->name('journey.index');
-    //     Route::get('journey/{emp_code}', 'EmployeeJourneyController@show')->name('journey.show');
-    // });
-
+    
     Route::crud('vehicle-accessory', VehicleAccessoryCrudController::class);
     Route::crud('system-settings', 'SystemSettingCrudController');
     Route::crud('branch', 'BranchCrudController');
@@ -196,14 +171,14 @@ Route::group([
     );
     // =========== LEAD SOURCE ===================
 
-    // AJAX route FIRST
-Route::get(
-    'lead-source/check-code',
-    [LeadSourceCrudController::class, 'checkCode']
-)->name('lead-source.check-code');
+    
+    Route::get(
+        'lead-source/check-code',
+        [LeadSourceCrudController::class, 'checkCode']
+    )->name('lead-source.check-code');
 
-// CRUD route AFTER
-Route::crud('lead-source', 'LeadSourceCrudController');
+
+    Route::crud('lead-source', 'LeadSourceCrudController');
 
     // =========== ENQUIRY ========================
     Route::crud(
@@ -243,13 +218,24 @@ Route::crud('lead-source', 'LeadSourceCrudController');
 
     Route::get('enquiry/sales-consultants', [App\Http\Controllers\Admin\EnquiryCrudController::class, 'getSalesConsultants']);
 
-    // Route::get('enquiry/sales-consultants', [App\Http\Controllers\Admin\EnquiryCrudController::class, 'getSalesConsultants']);
+    Route::get('enquiries/reference', [App\Http\Controllers\Admin\EnquiryCrudController::class, 'referenceList']);
 
-    // AJAX for cascading dropdowns
+    Route::get('enquiries/virtual-number', [App\Http\Controllers\Admin\EnquiryCrudController::class, 'virtualNumberList']);
+
+    Route::get('enquiries/whatsapp-campaign', [App\Http\Controllers\Admin\EnquiryCrudController::class, 'whatsappCampaignList']);
+
+    Route::get('enquiries/assigned-long', [App\Http\Controllers\Admin\EnquiryCrudController::class, 'assignedLongList']);
+
+    Route::get('enquiries/unassigned-long', [App\Http\Controllers\Admin\EnquiryCrudController::class, 'unassignedLongList']);
+
+    Route::get('enquiries/assigned-quick', [App\Http\Controllers\Admin\EnquiryCrudController::class, 'assignedQuickList']);
+
+    Route::get('enquiries/unassigned-quick', [App\Http\Controllers\Admin\EnquiryCrudController::class, 'unassignedQuickList']);
+
     Route::get('enquiry/variants/{model_code}', [App\Http\Controllers\Admin\EnquiryCrudController::class, 'getVariants']);
     Route::get('enquiry/colors/{variant_code}', [App\Http\Controllers\Admin\EnquiryCrudController::class, 'getColors']);
     Route::get(
         'enquiry/lead/{leadNo}',
         [EnquiryCrudController::class, 'getLead']
     );
-}); // ← This should be the last line
+}); 

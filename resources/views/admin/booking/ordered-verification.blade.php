@@ -304,7 +304,7 @@ document.getElementById('exportExcel')?.addEventListener('click', () => {
         body: rows,
         startY: 50,
         styles: { fontSize: 8 },
-        headStyles: { fillColor: [40, 167, 69] }, // green theme
+        headStyles: { fillColor: [40, 167, 69] }, 
     });
 
     doc.save('ordered-verification.pdf');

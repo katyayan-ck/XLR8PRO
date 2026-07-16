@@ -161,7 +161,7 @@
         'inv_no',
         'inv_date',
 
-        // Customer - Y
+        
         'name',
         'mobile',
         'branch_name',
@@ -509,7 +509,7 @@
                 body: rows,
                 startY: 50,
                 styles: { fontSize: 8 },
-                headStyles: { fillColor: [13, 110, 253] }, // blue theme
+                headStyles: { fillColor: [13, 110, 253] }, 
             });
 
             doc.save('pending-finance-retail.pdf');

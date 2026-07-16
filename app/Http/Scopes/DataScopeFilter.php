@@ -19,12 +19,11 @@ class DataScopeFilter implements Scope
 {
     public function apply(Builder $builder, Model $model): void
     {
-        // Skip during testing without auth, console commands, or queue workers
         if (!Auth::check()) return;
 
         $user = Auth::user();
 
-        // SuperAdmin always bypasses
+       
         if ($user->isSuperAdmin()) return;
 
         /** @var DataScopeService $service */
@@ -32,15 +31,15 @@ class DataScopeFilter implements Scope
 
         $scopeType   = $model->scopeType   ?? 'branch';
         $scopeColumn = $model->scopeColumn ?? 'branch_code';
-        $scopeGroup  = $model->scopeGroup  ?? 'org'; // 'org' or 'vehicle'
+        $scopeGroup  = $model->scopeGroup  ?? 'org'; 
 
         $codes = $scopeGroup === 'vehicle'
             ? $service->getVehicleScope($user, $scopeType)
             : $service->getOrgScope($user, $scopeType);
 
-        if ($codes === null) return;      // wildcard — no filter needed
+        if ($codes === null) return;      
         if (empty($codes)) {
-            // No access — return zero rows
+           
             $builder->whereRaw('1 = 0');
             return;
         }

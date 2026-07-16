@@ -108,10 +108,10 @@ class Department extends BaseModel
         return $this->belongsToMany(
             Employee::class,
             'xlr8_admin_emp_department_pivot',
-            'dept_code',    // FK for this model
-            'employee_code', // FK for related model
-            'code',          // local key on department
-            'code'           // owner key on employee
+            'dept_code',     
+            'employee_code', 
+            'code',          
+            'code'         
         )->withPivot('division_code', 'assignment_type', 'is_current', 'from_date', 'to_date')
             ->withTimestamps();
     }
@@ -126,7 +126,6 @@ class Department extends BaseModel
         return $q->whereNull('parent_department_code');
     }
 
-    // ── Mutators ──────────────────────────────────────────────────────────────
     public function setCodeAttribute(string $v): void
     {
         $this->attributes['code'] = strtoupper(trim($v));
