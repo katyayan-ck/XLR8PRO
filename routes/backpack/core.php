@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\PermissionCrudController;
 use App\Http\Controllers\Admin\LeadCrudController;
 use App\Http\Controllers\Admin\LeadSourceCrudController;
 use App\Http\Controllers\Admin\EnquiryCrudController;
+use App\Http\Controllers\Admin\CampaignCrudController;
 
 
 Route::group([
@@ -238,4 +239,75 @@ Route::group([
         'enquiry/lead/{leadNo}',
         [EnquiryCrudController::class, 'getLead']
     );
-}); 
+
+    /*
+    ! Routes for Enquiry
+     */
+
+    Route::get(
+        'admin/master/{keyword}/{parent}',
+        [EnquiryCrudController::class, 'getKeywordValues']
+    )->name('admin.master.keyword-values');
+
+    Route::get(
+        'enquiry/locations/{branchCode}',
+        [EnquiryCrudController::class, 'getLocations']
+    )->name('enquiry.locations');
+
+    // Campaign crud
+
+    Route::crud(
+        'campaign',
+        'CampaignCrudController'
+    );
+
+    Route::get(
+        'campaign',
+        [CampaignCrudController::class, 'index']
+    )->name('campaign.index');
+
+    Route::get(
+        'campaign/create',
+        [CampaignCrudController::class, 'create']
+    )->name('campaign.create');
+
+    Route::post(
+        'campaign',
+        [CampaignCrudController::class, 'store']
+    )->name('campaign.store');
+
+    Route::get(
+        'campaign/{id}/edit',
+        [CampaignCrudController::class, 'edit']
+    )->name('campaign.edit');
+
+    Route::put(
+        'campaign/{id}',
+        [CampaignCrudController::class, 'update']
+    )->name('campaign.update');
+
+    Route::delete(
+        'campaign/{id}',
+        [CampaignCrudController::class, 'destroy']
+    )->name('campaign.destroy');
+    Route::get(
+        'campaign/models/{segmentCode}',
+        [CampaignCrudController::class, 'getModels']
+    );
+
+    Route::get(
+        'campaign/locations/{branchCode}',
+        [CampaignCrudController::class, 'getLocations']
+    );
+
+    Route::get('enquiry/reference-users', [EnquiryCrudController::class, 'getReferenceUsers'])
+        ->name('enquiry.reference-users');
+
+    Route::get('enquiry/check-duplicate', [EnquiryCrudController::class, 'checkDuplicateEnquiry'])
+        ->name('enquiry.check-duplicate');
+
+    Route::get(
+    'enquiry/location-by-pincode',
+    [EnquiryCrudController::class, 'locationByPincode']
+)->name('enquiry.location-by-pincode');
+}); // ← This should be the last line

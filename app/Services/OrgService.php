@@ -2,12 +2,25 @@
 
 namespace App\Services;
 
+use App\Models\Admin\Branch;
+use App\Models\Admin\Department;
+use App\Models\Admin\Division;
+use App\Models\Admin\Location;
+use App\Models\Admin\Vertical;
 use App\Models\Module\Booking\Bookingamount;
-use App\Models\Admin\{Branch, Location, Department, Division, Vertical};
-use App\Models\Vehicle\{Segment, SubSegment, VehicleModel, Variant, Color};
-use App\Models\Utilities\KeyValue\{Keyvalue, KeywordMaster};
+use App\Models\Module\Booking\XL_DSA_MASTER;
 use App\Models\User;
+use App\Models\Utilities\KeyValue\Keyvalue;
+use App\Models\Utilities\KeyValue\KeywordMaster;
+use App\Models\Vehicle\Color;
+use App\Models\Vehicle\Segment;
+use App\Models\Vehicle\SubSegment;
+use App\Models\Vehicle\Variant;
+use App\Models\Admin\Person;
+use App\Models\Vehicle\VehicleModel;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use App\Models\Admin\PinCodes;
 
 class OrgService
 {
@@ -44,6 +57,7 @@ class OrgService
                 : $u->username,
         ])->toArray();
     }
+
     private const CACHE_TTL = 3600;
 
     // ── Master Entities (code-based) ─────────────────────────────────────
@@ -52,8 +66,7 @@ class OrgService
         return Cache::remember(
             'org.branches',
             self::CACHE_TTL,
-            fn() =>
-            Branch::where('is_active', true)
+            fn() => Branch::where('is_active', true)
                 ->select('code', 'name')
                 ->orderBy('name')
                 ->pluck('name', 'code')
@@ -64,11 +77,11 @@ class OrgService
     public static function locations(?string $branchCode = null): array
     {
         $key = $branchCode ? "org.locations.{$branchCode}" : 'org.locations.all';
+
         return Cache::remember(
             $key,
             self::CACHE_TTL,
-            fn() =>
-            Location::where('is_active', true)
+            fn() => Location::where('is_active', true)
                 ->when($branchCode, fn($q) => $q->where('branch_code', $branchCode))
                 ->select('code', 'name')
                 ->orderBy('name')
@@ -82,8 +95,7 @@ class OrgService
         return Cache::remember(
             'org.departments',
             self::CACHE_TTL,
-            fn() =>
-            Department::where('is_active', true)
+            fn() => Department::where('is_active', true)
                 ->select('code', 'name')
                 ->orderBy('name')
                 ->pluck('name', 'code')
@@ -94,11 +106,11 @@ class OrgService
     public static function divisions(?string $deptCode = null): array
     {
         $key = $deptCode ? "org.divisions.{$deptCode}" : 'org.divisions.all';
+
         return Cache::remember(
             $key,
             self::CACHE_TTL,
-            fn() =>
-            Division::where('is_active', true)
+            fn() => Division::where('is_active', true)
                 ->when($deptCode, fn($q) => $q->where('dept_code', $deptCode))
                 ->select('code', 'name')
                 ->orderBy('name')
@@ -112,8 +124,7 @@ class OrgService
         return Cache::remember(
             'org.verticals',
             self::CACHE_TTL,
-            fn() =>
-            Vertical::where('is_active', true)
+            fn() => Vertical::where('is_active', true)
                 ->select('code', 'name')
                 ->orderBy('name')
                 ->pluck('name', 'code')
@@ -126,8 +137,7 @@ class OrgService
         return Cache::remember(
             'org.segments',
             self::CACHE_TTL,
-            fn() =>
-            Segment::where('is_active', true)
+            fn() => Segment::where('is_active', true)
                 ->select('code', 'name')
                 ->orderBy('name')
                 ->pluck('name', 'code')
@@ -138,11 +148,11 @@ class OrgService
     public static function subSegments(?string $segmentCode = null): array
     {
         $key = $segmentCode ? "org.subsegments.{$segmentCode}" : 'org.subsegments.all';
+
         return Cache::remember(
             $key,
             self::CACHE_TTL,
-            fn() =>
-            SubSegment::where('is_active', true)
+            fn() => SubSegment::where('is_active', true)
                 ->when($segmentCode, fn($q) => $q->where('segment_code', $segmentCode))
                 ->select('code', 'name')
                 ->orderBy('name')
@@ -154,11 +164,11 @@ class OrgService
     public static function models(?string $segmentCode = null): array
     {
         $key = $segmentCode ? "org.models.{$segmentCode}" : 'org.models.all';
+
         return Cache::remember(
             $key,
             self::CACHE_TTL,
-            fn() =>
-            VehicleModel::where('is_active', true)
+            fn() => VehicleModel::where('is_active', true)
                 ->when($segmentCode, fn($q) => $q->where('segment_code', $segmentCode))
                 ->select('code', 'name')
                 ->orderBy('name')
@@ -182,50 +192,95 @@ class OrgService
     //             ->toArray()
     //     );
     // }
+    // public static function variants(?string $modelCode = null): array
+    // {
+    //     $key = $modelCode
+    //         ? "org.variants.{$modelCode}"
+    //         : 'org.variants.all';
+
+    //     return Cache::remember(
+    //         $key,
+    //         self::CACHE_TTL,
+    //         function () use ($modelCode) {
+
+    //             return Variant::where('is_active', true)
+
+    //                 ->when(
+    //                     $modelCode,
+    //                     fn ($q) => $q->where('model_code', $modelCode)
+    //                 )
+
+    //                 ->orderBy('display_name')
+
+    //                 ->get()
+
+    //                 ->mapWithKeys(function ($variant) {
+
+    //                     return [
+
+    //                         $variant->code => $variant->display_name
+    //                             ?: $variant->custom_name
+    //                             ?: $variant->oem_name,
+    //                             ?: $variant->fuel_type_id,
+    //                             ?: $variant->seating_capacity,
+    //                             ?: $variant->transmission,
+    //                             ?: $variant->drivetrain,
+
+    //                     ];
+    //                 })
+
+    //                 ->toArray();
+    //         }
+    //     );
+    // }
+
     public static function variants(?string $modelCode = null): array
     {
         $key = $modelCode
             ? "org.variants.{$modelCode}"
-            : "org.variants.all";
+            : 'org.variants.all';
 
-        return Cache::remember(
-            $key,
-            self::CACHE_TTL,
-            function () use ($modelCode) {
+        return Cache::remember($key, self::CACHE_TTL, function () use ($modelCode) {
 
-                return Variant::where('is_active', true)
+            return Variant::where('is_active', true)
+                ->when($modelCode, fn($q) => $q->where('model_code', $modelCode))
+                ->orderBy('display_name')
+                ->get()
+                ->mapWithKeys(function ($variant) {
 
-                    ->when(
-                        $modelCode,
-                        fn($q) => $q->where('model_code', $modelCode)
-                    )
+                    $transmission = self::getKeyValueById($variant->transmission);
+                    $drivetrain = self::getKeyValueById($variant->drivetrain);
+                    $seating = self::getKeyValueById($variant->seating_capacity);
+                    $fuel = self::getKeyValueById($variant->fuel_type_id);
 
-                    ->orderBy('display_name')
+                    return [
 
-                    ->get()
+                        $variant->code => [
 
-                    ->mapWithKeys(function ($variant) {
-
-                        return [
-
-                            $variant->code =>
-
-                            $variant->display_name
+                            'name' => $variant->display_name
                                 ?: $variant->custom_name
-                                ?: $variant->oem_name
+                                ?: $variant->oem_name,
 
-                        ];
-                    })
+                            'fuel_type_id' => $variant->fuel_type_id,
+                            'fuel_type' => $fuel?->value,
 
-                    ->toArray();
-            }
-        );
+                            'transmission' => $variant->transmission,
+                            'drivetrain' => $variant->drivetrain,
+                            'seating' => $variant->seating_capacity,
+
+                        ]
+
+                    ];
+                })
+                ->toArray();
+        });
     }
+
     public static function colors(?string $variantCode = null): array
     {
         $key = $variantCode
             ? "org.colors.{$variantCode}"
-            : "org.colors.all";
+            : 'org.colors.all';
 
         return Cache::remember(
             $key,
@@ -261,33 +316,37 @@ class OrgService
             ->toArray();
     }
 
-
-
     // ── Single lookups ───────────────────────────────────────────────────
     public static function branchName(string $code): string
     {
         return self::branches()[$code] ?? $code;
     }
+
     public static function locationName(string $code): string
     {
         return self::locations()[$code] ?? $code;
     }
+
     public static function departmentName(string $code): string
     {
         return self::departments()[$code] ?? $code;
     }
+
     public static function divisionName(string $code): string
     {
         return self::divisions()[$code] ?? $code;
     }
+
     public static function verticalName(string $code): string
     {
         return self::verticals()[$code] ?? $code;
     }
+
     public static function segmentName(string $code): string
     {
         return self::segments()[$code] ?? $code;
     }
+
     public static function subSegmentName(string $code): string
     {
         return self::subSegments()[$code] ?? $code;
@@ -299,14 +358,47 @@ class OrgService
      *
      * Filters work on `xlr8_admin_user_scopes` table (not just primary employee columns)
      */
+    public static function keywordValueByParentCode(
+        string $keywordCode,
+        string $parentValueCode,
+        ?string $parentKeywordCode = null
+    ): array {
+        $keywordCode = strtoupper(trim($keywordCode));
+        $parentValueCode = strtoupper(trim($parentValueCode));
+        $parentKeywordCode = $parentKeywordCode ? strtoupper(trim($parentKeywordCode)) : null;
+
+        $cacheKey = $parentKeywordCode
+            ? "org.keyvalue.{$keywordCode}.parent.{$parentKeywordCode}.{$parentValueCode}"
+            : "org.keyvalue.{$keywordCode}.parent.{$parentValueCode}";
+
+        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($keywordCode, $parentValueCode, $parentKeywordCode) {
+            $parentId = Keyvalue::where('code', $parentValueCode)
+                ->when($parentKeywordCode, fn($q) => $q->where('keyword_code', $parentKeywordCode))
+                ->where('is_active', true)
+                ->value('id');
+
+            if (!$parentId) {
+                return [];
+            }
+
+            return Keyvalue::where('keyword_code', $keywordCode)
+                ->whereRaw('FIND_IN_SET(?, parent_id)', [$parentId])   // <-- ye change
+                ->where('is_active', true)
+                ->orderBy('value')
+                ->select('code', 'value')
+                ->get()
+                ->toArray();
+        });
+    }
+
     public static function getUsers(
-        string $branchCode     = 'ALL',
-        string $locCode        = 'ALL',
-        string $deptCode       = 'ALL',
-        string $divCode        = 'ALL',
-        string $desigCode      = 'ALL',
-        string $verticalCode   = 'ALL',
-        string $segmentCode    = 'ALL',
+        string $branchCode = 'ALL',
+        string $locCode = 'ALL',
+        string $deptCode = 'ALL',
+        string $divCode = 'ALL',
+        string $desigCode = 'ALL',
+        string $verticalCode = 'ALL',
+        string $segmentCode = 'ALL',
         string $subSegmentCode = 'ALL'
     ): array {
         $query = User::with(['person', 'scopes', 'employee'])
@@ -322,27 +414,29 @@ class OrgService
 
         // Build scope filters
         $scopeMap = [
-            'branch'      => $branchCode,
-            'location'    => $locCode,
-            'department'  => $deptCode,
-            'division'    => $divCode,
-            'vertical'    => $verticalCode,
-            'segment'     => $segmentCode,
+            'branch' => $branchCode,
+            'location' => $locCode,
+            'department' => $deptCode,
+            'division' => $divCode,
+            'vertical' => $verticalCode,
+            'segment' => $segmentCode,
             'sub_segment' => $subSegmentCode,
         ];
 
         foreach ($scopeMap as $type => $code) {
-            if ($code === 'ALL') continue;
+            if ($code === 'ALL') {
+                continue;
+            }
 
             $query->where(function ($q) use ($type, $code) {
                 // Match in primary employee columns
                 $primaryColumn = match ($type) {
-                    'branch'      => 'primary_branch_code',
-                    'location'    => 'primary_loc_code',
-                    'department'  => 'primary_dept_code',
-                    'division'    => 'primary_div_code',
-                    'vertical'    => 'vertical_code',
-                    'segment'     => 'segment_code',
+                    'branch' => 'primary_branch_code',
+                    'location' => 'primary_loc_code',
+                    'department' => 'primary_dept_code',
+                    'division' => 'primary_div_code',
+                    'vertical' => 'vertical_code',
+                    'segment' => 'segment_code',
                     'sub_segment' => 'sub_segment_code',
                 };
 
@@ -362,34 +456,34 @@ class OrgService
             $emp = $user->employee;
 
             return [
-                'id'                    => $user->id,
-                'employee_code'         => $user->employee_code,
-                'person_code'           => $user->person_code,
-                'display_name'          => $user->display_name,
-                'designation_code'      => $emp?->designation_code ?? $emp?->desig_code,
+                'id' => $user->id,
+                'employee_code' => $user->employee_code,
+                'person_code' => $user->person_code,
+                'display_name' => $user->display_name,
+                'designation_code' => $emp?->designation_code ?? $emp?->desig_code,
                 'reporting_manager_code' => $emp?->reporting_manager_code,
-                'mile_id'               => $emp?->mile_id,
+                'mile_id' => $emp?->mile_id,
 
-                'primary_branch_code'   => $emp?->primary_branch_code,
-                'primary_loc_code'      => $emp?->primary_loc_code,
-                'primary_dept_code'     => $emp?->primary_dept_code,
-                'primary_div_code'      => $emp?->primary_div_code,
-                'vertical_code'         => $emp?->vertical_code,
-                'segment_code'          => $emp?->segment_code,
-                'sub_segment_code'      => $emp?->sub_segment_code,
+                'primary_branch_code' => $emp?->primary_branch_code,
+                'primary_loc_code' => $emp?->primary_loc_code,
+                'primary_dept_code' => $emp?->primary_dept_code,
+                'primary_div_code' => $emp?->primary_div_code,
+                'vertical_code' => $emp?->vertical_code,
+                'segment_code' => $emp?->segment_code,
+                'sub_segment_code' => $emp?->sub_segment_code,
 
                 // All assigned scopes from user_scopes
-                'branches'      => $user->scopes->where('scope_type', 'branch')->pluck('scope_code')->unique()->values()->toArray(),
-                'locations'     => $user->scopes->where('scope_type', 'location')->pluck('scope_code')->unique()->values()->toArray(),
-                'departments'   => $user->scopes->where('scope_type', 'department')->pluck('scope_code')->unique()->values()->toArray(),
-                'divisions'     => $user->scopes->where('scope_type', 'division')->pluck('scope_code')->unique()->values()->toArray(),
-                'verticals'     => $user->scopes->where('scope_type', 'vertical')->pluck('scope_code')->unique()->values()->toArray(),
-                'segments'      => $user->scopes->where('scope_type', 'segment')->pluck('scope_code')->unique()->values()->toArray(),
-                'sub_segments'  => $user->scopes->where('scope_type', 'sub_segment')->pluck('scope_code')->unique()->values()->toArray(),
+                'branches' => $user->scopes->where('scope_type', 'branch')->pluck('scope_code')->unique()->values()->toArray(),
+                'locations' => $user->scopes->where('scope_type', 'location')->pluck('scope_code')->unique()->values()->toArray(),
+                'departments' => $user->scopes->where('scope_type', 'department')->pluck('scope_code')->unique()->values()->toArray(),
+                'divisions' => $user->scopes->where('scope_type', 'division')->pluck('scope_code')->unique()->values()->toArray(),
+                'verticals' => $user->scopes->where('scope_type', 'vertical')->pluck('scope_code')->unique()->values()->toArray(),
+                'segments' => $user->scopes->where('scope_type', 'segment')->pluck('scope_code')->unique()->values()->toArray(),
+                'sub_segments' => $user->scopes->where('scope_type', 'sub_segment')->pluck('scope_code')->unique()->values()->toArray(),
 
                 'primary_mobile' => $user->primary_mobile,
-                'primary_email'  => $user->primary_email,
-                'profile_image'  => $user->avatar ?? $user->person?->getFirstMediaUrl('profile_photos') ?? null,
+                'primary_email' => $user->primary_email,
+                'profile_image' => $user->avatar ?? $user->person?->getFirstMediaUrl('profile_photos') ?? null,
             ];
         })->toArray();
     }
@@ -407,37 +501,36 @@ class OrgService
         $emp = $user->employee;
 
         return [
-            'id'                    => $user->id,
-            'employee_code'         => $user->employee_code,
-            'person_code'           => $user->person_code,
-            'display_name'          => $user->display_name,
-            'designation_code'      => $emp?->designation_code ?? $emp?->desig_code,
+            'id' => $user->id,
+            'employee_code' => $user->employee_code,
+            'person_code' => $user->person_code,
+            'display_name' => $user->display_name,
+            'designation_code' => $emp?->designation_code ?? $emp?->desig_code,
             'reporting_manager_code' => $emp?->reporting_manager_code,
-            'mile_id'               => $emp?->mile_id,
-            'primary_branch_code'   => $emp?->primary_branch_code,
-            'primary_loc_code'      => $emp?->primary_loc_code,
-            'primary_dept_code'     => $emp?->primary_dept_code,
-            'primary_div_code'      => $emp?->primary_div_code,
-            'vertical_code'         => $emp?->vertical_code,
-            'segment_code'          => $emp?->segment_code,
-            'sub_segment_code'      => $emp?->sub_segment_code,
-            'branches'      => $user->scopes->where('scope_type', 'branch')->pluck('scope_code')->unique()->values()->toArray(),
-            'locations'     => $user->scopes->where('scope_type', 'location')->pluck('scope_code')->unique()->values()->toArray(),
-            'departments'   => $user->scopes->where('scope_type', 'department')->pluck('scope_code')->unique()->values()->toArray(),
-            'divisions'     => $user->scopes->where('scope_type', 'division')->pluck('scope_code')->unique()->values()->toArray(),
-            'verticals'     => $user->scopes->where('scope_type', 'vertical')->pluck('scope_code')->unique()->values()->toArray(),
-            'segments'      => $user->scopes->where('scope_type', 'segment')->pluck('scope_code')->unique()->values()->toArray(),
-            'sub_segments'  => $user->scopes->where('scope_type', 'sub_segment')->pluck('scope_code')->unique()->values()->toArray(),
+            'mile_id' => $emp?->mile_id,
+            'primary_branch_code' => $emp?->primary_branch_code,
+            'primary_loc_code' => $emp?->primary_loc_code,
+            'primary_dept_code' => $emp?->primary_dept_code,
+            'primary_div_code' => $emp?->primary_div_code,
+            'vertical_code' => $emp?->vertical_code,
+            'segment_code' => $emp?->segment_code,
+            'sub_segment_code' => $emp?->sub_segment_code,
+            'branches' => $user->scopes->where('scope_type', 'branch')->pluck('scope_code')->unique()->values()->toArray(),
+            'locations' => $user->scopes->where('scope_type', 'location')->pluck('scope_code')->unique()->values()->toArray(),
+            'departments' => $user->scopes->where('scope_type', 'department')->pluck('scope_code')->unique()->values()->toArray(),
+            'divisions' => $user->scopes->where('scope_type', 'division')->pluck('scope_code')->unique()->values()->toArray(),
+            'verticals' => $user->scopes->where('scope_type', 'vertical')->pluck('scope_code')->unique()->values()->toArray(),
+            'segments' => $user->scopes->where('scope_type', 'segment')->pluck('scope_code')->unique()->values()->toArray(),
+            'sub_segments' => $user->scopes->where('scope_type', 'sub_segment')->pluck('scope_code')->unique()->values()->toArray(),
             'primary_mobile' => $user->primary_mobile,
-            'primary_email'  => $user->primary_email,
-            'profile_image'  => $user->avatar
+            'primary_email' => $user->primary_email,
+            'profile_image' => $user->avatar
                 ?? $user->person?->getFirstMediaUrl('profile_photos')
                 ?? null,
         ];
     }
 
-
-    ////////
+    // //////
     public static function usersByDesignation(string $desigCode, string $branchCode = 'ALL'): array
     {
         $users = User::with('person')                    // ← Eager load person (needed for display_name)
@@ -454,11 +547,11 @@ class OrgService
         // Now map and include display_name (accessor will work)
         return $users->map(function ($user) {
             return [
-                'id'            => $user->id,
-                'username'      => $user->username,
+                'id' => $user->id,
+                'username' => $user->username,
                 'employee_code' => $user->employee_code,
-                'person_code'   => $user->person_code,
-                'display_name'  => $user->display_name,     // ← This now works
+                'person_code' => $user->person_code,
+                'display_name' => $user->display_name,     // ← This now works
             ];
         })->toArray();
     }
@@ -467,9 +560,9 @@ class OrgService
     {
         return self::formatUsers(
             self::userQuery([
-                'dept_code'   => $deptCode,
+                'dept_code' => $deptCode,
                 'branch_code' => $branchCode,
-                'div_code'    => $divCode !== 'ALL' ? $divCode : null,
+                'div_code' => $divCode !== 'ALL' ? $divCode : null,
             ])
         );
     }
@@ -478,7 +571,7 @@ class OrgService
     {
         return self::formatUsers(
             self::userQuery([
-                'div_code'    => $divCode,
+                'div_code' => $divCode,
                 'branch_code' => $branchCode,
             ])
         );
@@ -488,8 +581,8 @@ class OrgService
     {
         return self::formatUsers(
             self::userQuery([
-                'desig_code'  => 'CNS',
-                'dept_code'   => 'SLS',
+                'desig_code' => 'CNS',
+                'dept_code' => 'SLS',
                 'branch_code' => $branchCode,
             ])
         );
@@ -499,27 +592,45 @@ class OrgService
     {
         return self::formatUsers(
             self::userQuery([
-                'dept_code'   => 'SLS',
+                'dept_code' => 'SLS',
                 'branch_code' => $branchCode,
             ])
         );
     }
 
-    public static function getKeyValuesByCode(string $keywordCode): ?\Illuminate\Support\Collection
+    public static function getKeyValuesByCode(string $keywordCode): ?Collection
     {
         return KeywordMaster::where('code', strtoupper(trim($keywordCode)))
             ->first()?->keyvalues()->where('is_active', true)->get();
     }
 
-    public static function getKeyValuesByColName(string $colName): ?\Illuminate\Support\Collection
+    public static function getKeyValuesByColName(string $colName): ?Collection
     {
         return KeywordMaster::where('keyword', strtoupper(trim($colName)))
             ->first()?->keyvalues()->where('is_active', true)->get();
     }
 
-    public static function getKeyValueById(int $id): ?KeyValue
+    // public static function getKeyValueById(int $id): ?Keyvalue
+    // {
+    //     return Keyvalue::where('id', $id)
+    //         ->where('is_active', true)
+    //         ->first();
+    // }
+
+    public static function getKeyValueById(int|string|null $id): ?KeyValue
     {
-        return KeyValue::where('id', $id)
+        if (empty($id)) {
+            return null;
+        }
+
+        return KeyValue::where('id', (int) $id)
+            ->where('is_active', true)
+            ->first();
+    }
+
+    public static function getKeyValueByCode(string $code): ?Keyvalue
+    {
+        return Keyvalue::where('code', strtoupper(trim($code)))
             ->where('is_active', true)
             ->first();
     }
@@ -529,7 +640,7 @@ class OrgService
      */
     public static function keywordValueByCode(string $keywordCode): array
     {
-        return KeyValue::where('keyword_code', strtoupper(trim($keywordCode)))
+        return Keyvalue::where('keyword_code', strtoupper(trim($keywordCode)))
             ->where('is_active', true)
             ->orderBy('value')
             ->select('code', 'value')
@@ -541,6 +652,7 @@ class OrgService
     {
         return self::formatUsers(self::userQuery($filters));
     }
+
     public static function getUserNameByCode(?string $code, ?int $colType = null, string $default = 'N/A'): string
     {
         if (blank($code)) {
@@ -548,7 +660,7 @@ class OrgService
         }
 
         if ($colType === 3) {
-            return \App\Models\Module\Booking\XL_DSA_MASTER::find((int) $code)?->name ?? $default;
+            return XL_DSA_MASTER::find((int) $code)?->name ?? $default;
         }
 
         $user = User::with('person')
@@ -558,13 +670,88 @@ class OrgService
 
         return $user?->display_name ?? $default;
     }
-    public static function checkReceiptX($rn)
 
+    public static function checkReceiptX($rn)
     {
         $list = Bookingamount::where('reciept', $rn)->first();
-        if ($list)
+        if ($list) {
             return 1;
-        else
+        } else {
             return 0;
+        }
     }
+
+    public static function getReferenceUsers(string $type, string $mobile): array
+    {
+        switch ($type) {
+
+            case 'Customer':
+
+                return Person::whereHas('contacts', function ($q) use ($mobile) {
+                    $q->where('data_type', 'Mobile')
+                        ->where('contact_detail', $mobile);
+                })
+                    ->orderBy('display_name')
+                    ->pluck('display_name', 'person_code')
+                    ->toArray();
+
+            case 'Team Member':
+
+                return User::whereHas('person.contacts', function ($q) use ($mobile) {
+                    $q->where('data_type', 'Mobile')
+                        ->where('contact_detail', $mobile);
+                })
+                    ->get()
+                    ->mapWithKeys(function ($user) {
+                        return [
+                            $user->person_code => $user->display_name . ' (' . $user->employee_code . ')'
+                        ];
+                    })
+                    ->toArray();
+
+            case 'Promoter':
+
+                return XL_DSA_MASTER::where('mobile', $mobile)
+                    ->orderBy('name')
+                    ->pluck('name', 'id')
+                    ->toArray();
+
+            default:
+
+                return [];
+        }
+    }
+
+    public static function getPostOfficesByPincode($pincode)
+    {
+        return PinCodes::where('level', 'POSTOFFICE')
+            ->where('pincode', $pincode)
+            ->orderBy('name')
+            ->pluck('name', 'id')
+            ->toArray();
+    }
+
+    public static function getLocationByPincode($pincode)
+{
+    $postOffice = PinCodes::with(
+        'parentLocation.parentLocation.parentLocation'
+    )
+    ->where('level', 'POSTOFFICE')
+    ->where('pincode', $pincode)
+    ->first();
+
+    if (!$postOffice) {
+        return [];
+    }
+
+    $tehsil = $postOffice->parentLocation;
+    $district = $tehsil?->parentLocation;
+    $state = $district?->parentLocation;
+
+    return [
+        'tehsil'  => $tehsil?->name,
+        'district'=> $district?->name,
+        'city'    => $state?->name,
+    ];
+}
 }

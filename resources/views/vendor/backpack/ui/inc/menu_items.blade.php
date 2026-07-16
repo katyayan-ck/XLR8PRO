@@ -181,6 +181,12 @@
             :link="backpack_url('enquiries/unassigned-enquiries')" /> -->
         <!-- <x-backpack::menu-dropdown-item title="Quotation" icon="la la-file-alt"
             :link="backpack_url('quotation-form')" /> --> 
+        <x-backpack::menu-dropdown-item title="Unassigned Enquiries" icon="la la-user-times"
+            :link="backpack_url('enquiries/unassigned-enquiries')" />
+        <x-backpack::menu-dropdown-item title="Quotation" icon="la la-file-alt"
+            :link="backpack_url('quotation-form')" />
+        <x-backpack::menu-dropdown-item title="Campaigns" icon="la la-list"
+            :link="backpack_url('campaign')" />
     </x-backpack::menu-dropdown>
 
     {{-- Booking --}}

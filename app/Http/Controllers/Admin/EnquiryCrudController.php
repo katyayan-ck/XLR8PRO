@@ -12,7 +12,8 @@ use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
-// use App\Models\CRM\Campaign;
+use App\Models\CRM\Campaign;
+use App\Models\Admin\PinCodes;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -40,12 +41,12 @@ class EnquiryCrudController extends CrudController
         $this->crud->setListView('admin.enquiry.list');
 
         $enquiries = Enquiry::with([
-            'source',
+            // 'source',
             'segment',
             'model',
             'variant',
             'color',
-            // 'campaign',
+            'campaign',
         ])
             ->orderByDesc('created_at')
             ->get();
@@ -58,7 +59,7 @@ class EnquiryCrudController extends CrudController
 
             $mapped['full_name'] = $enquiry->full_name;
 
-            $mapped['source_name'] = $enquiry->source?->name ?? '—';
+            $mapped['source_name'] = $enquiry->source_code ?? '—';
 
             $mapped['segment_name'] = $enquiry->segment?->name ?? '—';
 
@@ -193,6 +194,7 @@ class EnquiryCrudController extends CrudController
         ]);
     }
 
+
     public function create()
     {
         $this->crud->setCreateView('admin.enquiry.create');
@@ -262,9 +264,9 @@ class EnquiryCrudController extends CrudController
         $data['transmission_types'] = OrgService::keywordValueByCode('TRANSMISSION_TYPE');
         $data['finance_types'] = OrgService::keywordValueByCode('FINANCE_TYPE');
         $data['purchase_reasons'] = OrgService::keywordValueByCode('PURCHASE_REASON');
-        //$data['campaigns'] = Campaign::orderBy('name')
-            //->pluck('name')
-            //->toArray();
+        $data['campaigns'] = Campaign::orderBy('name')
+            ->pluck('name')
+            ->toArray();
 
         // dd($data);
         return view('admin.enquiry.create', $data);
@@ -356,9 +358,9 @@ class EnquiryCrudController extends CrudController
         return view('admin.enquiry.create', [
             'title' => 'Edit Enquiry',
             'enquiry' => $enquiry,
-           // 'sources' => OrgService::leadSources(),
-           // 'subSources' => OrgService::leadSubSources($enquiry->source_code),
-            //'campaigns' => Campaign::orderBy('name')->pluck('name', 'name'),
+            'sources' => OrgService::leadSources(),
+            'subSources' => OrgService::leadSubSources($enquiry->source_code),
+            'campaigns' => Campaign::orderBy('name')->pluck('name', 'name'),
             'segments' => OrgService::segments(),
             'models' => OrgService::models($enquiry->segment_code),
             'variants' => OrgService::variants($enquiry->model_code),
@@ -499,6 +501,9 @@ class EnquiryCrudController extends CrudController
             OrgService::variants($modelCode)
         );
     }
+
+
+
     public function getColors($variantCode)
     {
         return response()->json(
@@ -970,4 +975,23 @@ class EnquiryCrudController extends CrudController
     }
 
 
+}
+    public function checkDuplicateEnquiry(Request $request)
+    {
+        $enquiry = Enquiry::where('mobile', $request->mobile)
+            ->where('segment_code', $request->segment_code)
+            ->first();
+
+        return response()->json([
+            'exists' => $enquiry ? true : false,
+            'enquiry_no' => $enquiry?->enquiry_no
+        ]);
+    }
+
+    public function locationByPincode(Request $request)
+    {
+        return response()->json(
+            OrgService::getLocationByPincode($request->pincode)
+        );
+    }
 }

@@ -203,10 +203,10 @@ class Enquiry extends BaseModel
         return $this->belongsTo(Lead::class, 'lead_no', 'lead_no');
     }
 
-    public function source()
-    {
-        return $this->belongsTo(LeadSource::class, 'source_code', 'code');
-    }
+    // public function source()
+    // {
+    //     return $this->belongsTo(LeadSource::class, 'source_code', 'code');
+    // }
 
     public function person()
     {
@@ -223,17 +223,14 @@ class Enquiry extends BaseModel
         return $this->belongsTo(VehicleModel::class, 'model_code', 'model_code');
     }
 
-
-    
-
-    // public function campaign()
-    // {
-    //     return $this->belongsTo(
-    //         Campaign::class,
-    //         'planned_campaign',
-    //         'name'
-    //     );
-    // }
+    public function campaign()
+    {
+        return $this->belongsTo(
+            Campaign::class,
+            'planned_campaign',
+            'name'
+        );
+    }
 
     public function model()
     {
