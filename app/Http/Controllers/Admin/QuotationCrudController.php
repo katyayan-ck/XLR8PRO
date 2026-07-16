@@ -123,7 +123,7 @@ class QuotationCrudController extends CrudController
 
                 'revision' => $quotation->revision,
 
-               
+
                 'ex_showroom_price' => $data['ex_showroom_price'] ?? '',
                 'policy_type' => $insurance_type_map[$data['policy_type'] ?? ''] ?? '-',
                 'registration_type' => $registration_type_map[$data['registration_type'] ?? ''] ?? '-',
@@ -153,14 +153,14 @@ class QuotationCrudController extends CrudController
                 'charger_swapping_amount' => $data['charger_swapping_amount'] ?? '',
                 'tcs' => $data['tcs'] ?? '',
 
-               
+
                 'onroad_price' => number_format($quotation->onroad_price, 2),
                 'invoice_price' => number_format($quotation->invoice_price, 2),
                 'total_receivable' => $data['total_receivable'] ?? '',
                 'total_discount' => $data['total_discount'] ?? '',
                 'net_receivable' => $data['net_receivable_summary'] ?? '',
 
-                
+
                 'oem_scheme_discount' => $data['oem_scheme_discount'] ?? '',
                 'fame_subsidy' => $data['fame_subsidy'] ?? '',
                 'exchange_bonus' => $data['exchange_bonus'] ?? '',
@@ -285,12 +285,12 @@ class QuotationCrudController extends CrudController
         $insurance_type_map = [
             1 => 'Standard',
             2 => 'Nil Dep',
-            3 => 'Base (Nil Dep + Consumables)',
-            4 => 'Higher (Nil Dep + Consumables + Add Ons)',
+            3 => 'Base',
+            4 => 'Higher',
         ];
 
         $registration_type_map = [
-            0 => 'Exempted (Reg & Hypo Fee Only)',
+            0 => 'Exempted',
             1 => 'TRC Only',
             2 => 'Tax Only',
             3 => 'TRC + Tax',
@@ -315,9 +315,8 @@ class QuotationCrudController extends CrudController
 
     public function store(Request $request)
     {
-
         $request->validate([
-            'enquiry_no'    => 'required',
+            'enquiry_no'   => 'required',
             'segment_code' => 'required',
             'model_code'   => 'required',
             'variant_code' => 'required',
@@ -328,68 +327,91 @@ class QuotationCrudController extends CrudController
 
         try {
 
+            // Store complete quotation JSON
             $quotationData = $request->except('_token');
-            $quotationData['segment_code'] = $request->segment_code;
-            $quotationData['model_code'] = $request->model_code;
-            $quotationData['variant_code'] = $request->variant_code;
-            $quotationData['color_code'] = $request->color_code;
-            if (isset($quotationData['accessories']) && is_array($quotationData['accessories'])) {
+
+            foreach (
+                [
+                    'segment_code',
+                    'model_code',
+                    'variant_code',
+                    'color_code'
+                ] as $field
+            ) {
+                $quotationData[$field] = $request->$field;
+            }
+
+            // Accessories
+            if (!empty($quotationData['accessories']) && is_array($quotationData['accessories'])) {
                 $quotationData['accessories'] = array_values($quotationData['accessories']);
             }
-            $quotationData['accessories_amount'] = $request->accessories_amount;
 
-
-            // First save
+            // Create quotation
             $quotation = new Quotation();
 
-            $quotation->quotation_no   = 0;   // Temporary value
-            $quotation->enquiry_no     = $request->enquiry_no;
+            $quotation->quotation_no = 0;
+            $quotation->enquiry_no   = $request->enquiry_no;
+
             $enquiry = Enquiry::where(
                 'enquiry_no',
                 $request->enquiry_no
             )->firstOrFail();
 
-            $quotation->person_code = $enquiry->person_code;
-            $quotation->model_code     = $request->model_code;
-            $quotation->variant_code   = $request->variant_code;
-            $quotation->color_code     = $request->color_code;
+            $quotation->person_code  = $enquiry->person_code;
+            $quotation->model_code   = $request->model_code;
+            $quotation->variant_code = $request->variant_code;
+            $quotation->color_code   = $request->color_code;
 
-
-            $quotation->revision       = 0;
+            $quotation->revision = 0;
 
             $quotation->standard_data  = $quotationData;
             $quotation->requested_data = $quotationData;
             $quotation->proposed_data  = $quotationData;
 
-            $quotation->onroad_price   = $request->total_receivable ?? 0;
-            $quotation->invoice_price  = $request->net_receivable_summary ?? 0;
+            /*
+        |--------------------------------------------------------------------------
+        | Summary Values
+        |--------------------------------------------------------------------------
+        | Future proof:
+        | invoice_amount field aayega to automatically use hoga.
+        */
+            $quotation->onroad_price = $request->net_receivable_summary
+                ?? $request->total_receivable
+                ?? 0;
 
-            $quotation->status         = 'raised';
-            $quotation->created_by     = backpack_user()->id;
+            $quotation->invoice_price = $request->invoice_amount
+                ?? $request->net_receivable_summary
+                ?? 0;
+
+            $quotation->status     = 'raised';
+            $quotation->created_by = backpack_user()->id;
 
             $quotation->save();
 
-            // Now use auto-generated ID as quotation number
+            // Generate quotation number
             $quotation->quotation_no = $quotation->id;
             $quotation->save();
 
+            // History
             QuoteAction::create([
 
                 'quotation_no' => $quotation->quotation_no,
 
-                'revision'     => 0,
+                'revision' => 0,
 
-                'action'       => 'RAISED',
+                'action' => 'RAISED',
 
-                'requested'    => $quotationData,
+                'requested' => $quotationData,
 
-                'onroad'       => $request->total_receivable ?? 0,
+                'onroad' => $request->net_receivable_summary
+                    ?? $request->total_receivable
+                    ?? 0,
 
-                'status'       => 'raised',
+                'status' => 'raised',
 
-                'remarks'      => 'Quotation Created',
+                'remarks' => 'Quotation Created',
 
-                'action_by'    => backpack_user()->id,
+                'action_by' => backpack_user()->id,
 
             ]);
 
@@ -529,8 +551,13 @@ class QuotationCrudController extends CrudController
                 // Current proposal
                 'proposed_data' => $quotationData,
 
-                'onroad_price' => $request->total_receivable ?? 0,
-                'invoice_price' => $request->net_receivable_summary ?? 0,
+                'onroad_price' => $request->net_receivable_summary
+                    ?? $request->total_receivable
+                    ?? 0,
+
+                'invoice_price' => $request->invoice_amount
+                    ?? $request->net_receivable_summary
+                    ?? 0,
 
                 'status' => 'raised',
 
@@ -548,7 +575,9 @@ class QuotationCrudController extends CrudController
 
                 'requested' => $previousProposal,
 
-                'onroad' => $request->total_receivable ?? 0,
+                'onroad' => $request->net_receivable_summary
+                    ?? $request->total_receivable
+                    ?? 0,
 
                 'status' => 'raised',
 
