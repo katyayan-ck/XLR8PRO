@@ -609,9 +609,9 @@
            
             $('#reciept_no').on('change', function() {
                 const rn = $(this).val().trim();
-                if (rn) { // only when value hai tabhi AJAX
+                if (rn) { 
                     $.ajax({
-                        url: "{{ url('/admin/check-receipt') }}/" + encodeURIComponent(rn), // ← yeh line change karo
+                        url: "{{ url('/admin/check-receipt') }}/" + encodeURIComponent(rn), 
                         method: 'GET',
                         success: function(data) {
                             if (data != 0) {

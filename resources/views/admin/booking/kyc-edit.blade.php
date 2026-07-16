@@ -268,7 +268,7 @@
         $('#kyc-form').validate().element('#gstn');
     }).trigger('change');
 
-    // PAN uppercase
+    
     $('#panno').on('input', function() {
         $(this).val($(this).val().toUpperCase());
     });

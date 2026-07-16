@@ -151,7 +151,7 @@
             body: rows,
             startY: 50,
             styles: { fontSize: 8 },
-            headStyles: { fillColor: [40, 167, 69] }, // success green
+            headStyles: { fillColor: [40, 167, 69] }, 
         });
 
         doc.save('finance-retailed.pdf');

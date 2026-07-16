@@ -31,7 +31,6 @@
 
     let gridApi;
 
-    // ==================== FLAT COLUMN DEFINITION ====================
     const columnDefs = [
         ...getCols(['serial_no', 'person_name', 'account_holder_name']).map(col => {
             if (col.field === 'serial_no') {
@@ -107,7 +106,6 @@
         }
     };
 
-    // ==================== CUSTOMISE HEADERS (Flat Version) ====================
     function openColumnBubble() {
         const bubble = document.getElementById('columnBubble');
         const tbody = document.getElementById('columnBubbleBody');
@@ -135,12 +133,10 @@
             checkbox.type = 'checkbox';
             checkbox.checked = gridApi.getColumn(col.field)?.isVisible() ?? false;
 
-            // Disable Primary columns (always visible)
             if (['serial_no', 'person_name', 'account_holder_name'].includes(col.field)) {
                 checkbox.disabled = true;
             }
 
-            // Disable Action column
             if (col.field === 'action') {
                 checkbox.disabled = true;
             }
@@ -166,12 +162,12 @@
         const gridDiv = document.querySelector('#myGrid');
         agGrid.createGrid(gridDiv, gridOptions);
 
-        // Quick Filter
+        
         document.getElementById('quickFilter').addEventListener('input', e => {
             gridApi.setGridOption('quickFilterText', e.target.value);
         });
 
-        // Reset All
+        
         document.getElementById('resetAll').addEventListener('click', () => {
             gridApi.setFilterModel(null);
             document.getElementById('quickFilter').value = '';
@@ -179,7 +175,7 @@
             gridApi.setSortModel(null);
         });
 
-        // Customise Headers
+        
         document.getElementById('btnCustomiseHeaders').addEventListener('click', e => {
             e.stopPropagation();
             openColumnBubble();
@@ -196,14 +192,14 @@
             if (bubble && bubble.style.display === 'block') bubble.style.display = 'none';
         });
 
-        // All Headers
+        
         document.getElementById('btnAllHeaders').addEventListener('click', () => {
             const allCols = gridApi.getAllGridColumns().map(c => c.getColId());
             gridApi.setColumnsVisible(allCols, true);
             setTimeout(() => gridApi.autoSizeAllColumns(), 200);
         });
 
-        // Default Headers
+        
         document.getElementById('btnDefaultHeaders').addEventListener('click', () => {
             const defaultFields = [
                 'serial_no', 'person_name', 'account_holder_name', 'bank_name',
@@ -216,7 +212,7 @@
             setTimeout(() => gridApi.autoSizeAllColumns(), 200);
         });
 
-        // Excel Export
+        
         document.getElementById('exportCsv').addEventListener('click', () => {
             const visibleColumns = gridApi.getAllDisplayedColumns()
                 .map(col => col.getColDef())
@@ -237,7 +233,7 @@
             XLSX.writeFile(wb, `person-banking-details-${new Date().toISOString().slice(0,10)}.xlsx`);
         });
 
-        // PDF Export
+        
         document.getElementById('exportPdf').addEventListener('click', () => {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();

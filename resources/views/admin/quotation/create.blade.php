@@ -1211,6 +1211,21 @@ $(document).ready(function () {
 });
 
 $(document).ready(function () {
+$('#coating').trigger('change');
+
+$('#shield').on('change', function () {
+
+    if ($(this).val() === '' || $(this).val() === 'No Shield') {
+
+        $('#shield_price')
+            .val('')
+            .prop('disabled', true);
+
+    } else {
+
+        $('#shield_price')
+            .prop('disabled', false)
+            .focus();
 
     updateAccessoriesAmount();
 

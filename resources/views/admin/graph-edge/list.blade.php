@@ -195,7 +195,6 @@
         }
     };
 
-    // ==================== COLUMN CUSTOMIZER ====================
     function openColumnBubble() {
         const bubble = document.getElementById('columnBubble');
         const tbody = document.getElementById('columnBubbleBody');
@@ -273,7 +272,6 @@
         bubble.style.display = 'block';
     }
 
-    // ==================== MAIN SCRIPT ====================
     document.addEventListener('DOMContentLoaded', () => {
         agGrid.createGrid(document.querySelector('#myGrid'), gridOptions);
 
@@ -322,7 +320,7 @@
             setTimeout(() => gridApi.autoSizeColumns(gridApi.getAllDisplayedColumns().map(c => c.getColId()), false), 200);
         });
 
-        // Excel Export
+        
         document.getElementById('exportCsv').addEventListener('click', () => {
             const visibleColumns = gridApi.getAllDisplayedColumns()
                 .map(col => col.getColDef())
@@ -341,7 +339,7 @@
             XLSX.writeFile(wb, `graph-edges-${new Date().toISOString().slice(0,10)}.xlsx`);
         });
 
-        // PDF Export
+        
         document.getElementById('exportPdf').addEventListener('click', () => {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();

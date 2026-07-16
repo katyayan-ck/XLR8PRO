@@ -156,7 +156,6 @@
     onGridReady: params => {
         gridApi = params.api;
 
-        // 🔥 Auto size columns based on content
         setTimeout(() => {
             const allColumnIds = [];
             gridApi.getAllDisplayedColumns().forEach(column => {
@@ -171,12 +170,12 @@
         const gridDiv = document.querySelector('#myGrid');
         gridApi = agGrid.createGrid(gridDiv, gridOptions);
 
-        // Quick Filter
+        
         document.getElementById('quickFilter')?.addEventListener('input', e => {
             gridApi.setGridOption('quickFilterText', e.target.value);
         });
 
-        // Reset
+        
         document.getElementById('resetAll')?.addEventListener('click', () => {
             document.getElementById('quickFilter').value = '';
             gridApi.setGridOption('quickFilterText', '');
@@ -250,7 +249,7 @@
     // 4. Create worksheet
     const worksheet = XLSX.utils.json_to_sheet(orderedRows, { header: headers });
 
-    // Optional: auto-size columns (nice to have)
+    // Optional: auto-size columns 
     const colWidths = headers.map((h, i) => {
         let maxLen = h.length;
         orderedRows.forEach(r => {
@@ -268,7 +267,7 @@
     XLSX.writeFile(workbook, fileName);
 });
 
-        // PDF Export
+        
         document.getElementById('exportPdf')?.addEventListener('click', () => {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });

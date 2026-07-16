@@ -223,12 +223,12 @@
         const gridDiv = document.querySelector('#myGrid');
         gridApi = agGrid.createGrid(gridDiv, gridOptions);
 
-        // Quick Search
+        
         document.getElementById('quickFilter')?.addEventListener('input', e => {
             gridApi.setGridOption('quickFilterText', e.target.value);
         });
 
-        // Reset
+        
         document.getElementById('resetAll')?.addEventListener('click', () => {
             gridApi.setFilterModel(null);
             gridApi.setGridOption('quickFilterText', '');
@@ -354,7 +354,7 @@ for (let col = 0; col < footerRow.length; col++) {
             XLSX.writeFile(wb, `stock-report-${today}.xlsx`);
         });
 
-        // PDF Export with multi-row headers
+         with multi-row headers
         document.getElementById('exportPdf')?.addEventListener('click', () => {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });

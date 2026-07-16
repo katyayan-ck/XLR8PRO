@@ -138,12 +138,55 @@
     <x-backpack::menu-dropdown title="Enquiries" icon="la la-question-circle" nested="true">
         <x-backpack::menu-dropdown-item title="Add Hot Enquiry" icon="la la-plus-circle"
             :link="backpack_url('enquiries/add-hot-enquiry')" />
+
         <x-backpack::menu-dropdown-item title="Hot Enquiry List" icon="la la-list"
             :link="backpack_url('enquiries/hot-enquiry-list')" />
+
+        <!-- <x-backpack::menu-dropdown-item 
+        title="Reference Enquiries" 
+        icon="la la-file-text"
+        :link="backpack_url('enquiries/reference')" />
+
+        <x-backpack::menu-dropdown-item 
+            title="Virtual Number Enquiries" 
+            icon="la la-phone"
+            :link="backpack_url('enquiries/virtual-number')" />
+    
+        <x-backpack::menu-dropdown-item 
+            title="WhatsApp Campaign Enquiries" 
+            icon="la la-whatsapp"
+            :link="backpack_url('enquiries/whatsapp-campaign')" />
+    
+        <x-backpack::menu-dropdown-item 
+            title="Unassigned Quick Enquiries" 
+            icon="la la-user-times"
+            :link="backpack_url('enquiries/unassigned-quick')" />
+    
+        <x-backpack::menu-dropdown-item 
+            title="Assigned Quick Enquiries" 
+            icon="la la-user-check"
+            :link="backpack_url('enquiries/assigned-quick')" />
+    
+        <x-backpack::menu-dropdown-item 
+            title="Unassigned Long Enquiries" 
+            icon="la la-user-times"
+            :link="backpack_url('enquiries/unassigned-long')" />
+    
+        <x-backpack::menu-dropdown-item 
+            title="Assigned Long Enquiries" 
+            icon="la la-user-check"
+            :link="backpack_url('enquiries/assigned-long')" /> -->
+    
+        <!-- <x-backpack::menu-dropdown-item title="Unassigned Enquiries" icon="la la-user-times"
+            :link="backpack_url('enquiries/unassigned-enquiries')" /> -->
+        <!-- <x-backpack::menu-dropdown-item title="Quotation" icon="la la-file-alt"
+            :link="backpack_url('quotation-form')" /> --> 
         <x-backpack::menu-dropdown-item title="Unassigned Enquiries" icon="la la-user-times"
             :link="backpack_url('enquiries/unassigned-enquiries')" />
         <x-backpack::menu-dropdown-item title="Quotation" icon="la la-file-alt"
             :link="backpack_url('quotation-form')" />
+        <x-backpack::menu-dropdown-item title="Campaigns" icon="la la-list"
+            :link="backpack_url('campaign')" />
     </x-backpack::menu-dropdown>
 
     {{-- Booking --}}

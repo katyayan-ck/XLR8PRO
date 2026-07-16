@@ -342,7 +342,7 @@ function importWithGid() {
     };
 
     // ────────────────────────────────────────────────
-    // Customise Headers – grouped + parent/child sync
+     – grouped + parent/child sync
     // ────────────────────────────────────────────────
     function openColumnBubble() {
         const bubble = document.getElementById('columnBubble');
@@ -436,9 +436,6 @@ function importWithGid() {
         bubble.style.display = 'block';
     }
 
-    // ────────────────────────────────────────────────
-    // Event Listeners
-    // ────────────────────────────────────────────────
     document.getElementById('btnCustomiseHeaders')?.addEventListener('click', e => {
         e.stopPropagation();
         openColumnBubble();
@@ -504,7 +501,7 @@ function importWithGid() {
             document.getElementById('quickFilter').value = '';
         });
 
-        // Excel Export
+        
         document.getElementById('exportCsv')?.addEventListener('click', () => {
             const visibleColumns = gridApi.getAllDisplayedColumns()
                 .map(col => col.getColDef())
@@ -525,7 +522,7 @@ function importWithGid() {
             XLSX.writeFile(workbook, `int-in-finance-${new Date().toISOString().slice(0,10)}.xlsx`);
         });
 
-        // PDF Export
+        
         document.getElementById('exportExcel')?.addEventListener('click', () => {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('l', 'pt', 'a4');

@@ -418,7 +418,7 @@
             document.getElementById('quickFilter').value = '';
         });
 
-        // Excel Export – visible columns only
+         – visible columns only
         document.getElementById('exportCsv')?.addEventListener('click', () => {
             const visibleColumns = gridApi.getAllDisplayedColumns()
                 .map(col => col.getColDef())
@@ -439,7 +439,7 @@
             XLSX.writeFile(workbook, `pending-registration-${new Date().toISOString().slice(0,10)}.xlsx`);
         });
 
-        // PDF Export – visible columns only
+         – visible columns only
         document.getElementById('exportExcel')?.addEventListener('click', () => {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('l', 'pt', 'a4');

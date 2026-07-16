@@ -151,7 +151,6 @@
         return ALL_COLUMNS.filter(col => fields.includes(col.field));
     }
 
-    // Default visible fields (agar Completed ke liye alag chahiye to yahan change kar sakte ho)
     const DEFAULT_VISIBLE_FIELDS = [
         'serial_no', 'booking_no',
         'inv_no', 'inv_date', 'name', 'mobile', 'branch_name', 'location_name',
@@ -265,7 +264,7 @@
         }
     };
 
-    // Customise Headers Bubble
+     Bubble
     function openColumnBubble() {
         const bubble = document.getElementById('columnBubble');
         const tbody = document.getElementById('columnBubbleBody');
@@ -340,12 +339,11 @@
         bubble.style.display = 'block';
     }
 
-    // Event Listeners
     document.addEventListener('DOMContentLoaded', () => {
         const gridDiv = document.querySelector('#myGrid');
         gridApi = agGrid.createGrid(gridDiv, gridOptions);
 
-        // Quick Filter
+        
         document.getElementById('quickFilter')?.addEventListener('input', e => {
             gridApi.setGridOption('quickFilterText', e.target.value);
         });
@@ -361,7 +359,6 @@
             window.location.href = this.value;
         });
 
-        // Difference Filter
         document.getElementById('status_filter')?.addEventListener('change', function() {
             const url = new URL(window.location);
             if (this.value === 'all') {
@@ -372,7 +369,7 @@
             window.location = url;
         });
 
-        // Customise Headers
+        
         document.getElementById('btnCustomiseHeaders')?.addEventListener('click', e => {
             e.stopPropagation();
             openColumnBubble();
@@ -403,7 +400,6 @@
             setTimeout(() => gridApi.autoSizeColumns(gridApi.getAllDisplayedColumns().map(c => c.getColId()), false), 200);
         });
 
-        // Export Excel
         document.getElementById('exportExcel')?.addEventListener('click', () => {
             const visibleColumns = gridApi.getAllDisplayedColumns()
                 .map(col => col.getColDef())
@@ -424,7 +420,6 @@
             XLSX.writeFile(workbook, `finance-payout-completed-${new Date().toISOString().slice(0,10)}.xlsx`);
         });
 
-        // Export PDF
         document.getElementById('exportPdf')?.addEventListener('click', () => {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('l', 'pt', 'a4');

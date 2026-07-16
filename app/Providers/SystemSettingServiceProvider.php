@@ -1,9 +1,5 @@
 <?php
-
-// app/Providers/SystemSettingServiceProvider.php
-
 namespace App\Providers;
-
 use App\Services\SystemSettingService;
 use App\Facades\SystemSetting;
 use Illuminate\Support\ServiceProvider;

@@ -509,7 +509,7 @@
                 body: rows,
                 startY: 50,
                 styles: { fontSize: 8 },
-                headStyles: { fillColor: [220, 53, 69] }, // red theme
+                headStyles: { fillColor: [220, 53, 69] }, 
             });
 
             doc.save('refund-rejected.pdf');

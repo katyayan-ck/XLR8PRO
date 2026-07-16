@@ -126,13 +126,11 @@
 
     if(!file) return;
 
-    // Hide current file name
     const currentFileBlock = document.getElementById('currentFileBlock');
     if(currentFileBlock){
         currentFileBlock.style.display = 'none';
     }
 
-    // Show selected file name
     document.getElementById('selectedFileName').innerText =
         'Selected: ' + file.name;
 

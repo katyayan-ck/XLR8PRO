@@ -171,9 +171,8 @@
         animateRows: true,
         defaultColDef: {
         sortable: true,
-        filter: true,        // Column menu filter enabled
+        filter: true,       
         resizable: true,
-        // floatingFilter: true  ← Yeh line hata do ya comment kar do
     },
     };
 
@@ -181,19 +180,19 @@
         const gridDiv = document.querySelector('#myGrid');
         gridApi = agGrid.createGrid(gridDiv, gridOptions);
 
-        // Quick search
+        
         document.getElementById('quickFilter')?.addEventListener('input', e => {
             gridApi.setGridOption('quickFilterText', e.target.value);
         });
 
-        // Reset filters
+        
         document.getElementById('resetAll')?.addEventListener('click', () => {
             gridApi.setFilterModel(null);
             gridApi.setGridOption('quickFilterText', '');
             document.getElementById('quickFilter').value = '';
         });
 
-        // Excel Export (excluding action column)
+         (excluding action column)
         document.getElementById('exportCsv')?.addEventListener('click', () => {
             const rows = [];
             const exportColumns = columnDefs.filter(col => col.field !== 'action');
@@ -210,7 +209,7 @@
             XLSX.writeFile(workbook, 'live-bookings.xlsx');
         });
 
-        // PDF Export
+        
         document.getElementById('exportExcel')?.addEventListener('click', () => {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('l', 'pt', 'a4');
@@ -228,7 +227,7 @@
                 body: rows,
                 startY: 50,
                 styles: { fontSize: 8 },
-                headStyles: { fillColor: [33, 150, 243] }, // primary blue
+                headStyles: { fillColor: [33, 150, 243] }, 
             });
             doc.save('live-bookings.pdf');
         });

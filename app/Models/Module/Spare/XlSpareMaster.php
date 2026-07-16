@@ -14,7 +14,7 @@ class XlSpareMaster extends BaseModel
         'order_price',
         'sale_price',
         'order_qty',
-        // add relevant columns here
+      
     ];
 
     public function category()

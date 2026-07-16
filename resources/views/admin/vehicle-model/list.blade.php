@@ -84,7 +84,6 @@
         }
     };
 
-    // ==================== Customise Headers ====================
     function openColumnBubble() {
         const bubble = document.getElementById('columnBubble');
         const tbody = document.getElementById('columnBubbleBody');
@@ -156,7 +155,6 @@
             document.getElementById('columnBubble').style.display = 'none';
         });
 
-        // Other buttons (export, etc.) remain same
         document.getElementById('btnAllHeaders').addEventListener('click', () => {
             const allCols = gridApi.getAllGridColumns().map(col => col.getColId());
             gridApi.setColumnsVisible(allCols, true);
@@ -171,7 +169,6 @@
             setTimeout(() => gridApi.autoSizeAllColumns(), 200);
         });
 
-        // Export functions remain same...
     });
 </script>
 @endpush

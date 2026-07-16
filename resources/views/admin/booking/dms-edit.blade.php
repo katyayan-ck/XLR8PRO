@@ -193,7 +193,6 @@
 
 <script>
     $(document).ready(function () {
-    // Date picker
     $("#otf_date").flatpickr({
         dateFormat: "d-m-Y",
         maxDate: "today",
@@ -215,7 +214,6 @@
         $(this).val($(this).val().toUpperCase());
     });
 
-    // Validation rules (same as before)
     $.validator.addMethod("dmsFormat", function(value, element) {
     return this.optional(element) || /^B-\d{8}$/.test(value);
 }, "Format: B- followed by 8 digits");

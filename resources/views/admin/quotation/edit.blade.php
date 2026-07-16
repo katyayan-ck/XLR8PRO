@@ -824,6 +824,7 @@ use App\Services\OrgService;
                                     <td class="cell-type">
 
                                         <select id="shield_scheme_type" name="shield_scheme_type">
+$('#coating').trigger('change');
 
                                             <option value="INV" {{ old('shield_scheme_type',
                                                 $quotationData['shield_scheme_type'] ?? '' )=='INV' ? 'selected' : ''

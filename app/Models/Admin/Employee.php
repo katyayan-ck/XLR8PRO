@@ -62,9 +62,7 @@ class Employee extends BaseModel
         'deleted_at'        => 'datetime',
     ];
 
-    // ─────────────────────────────────────────────────────────────
     // RELATIONSHIPS
-    // ─────────────────────────────────────────────────────────────
 
     public function person(): BelongsTo
     {
@@ -121,11 +119,9 @@ class Employee extends BaseModel
             ->whereNull('xlr8_admin_emp_division_pivot.deleted_at');
     }
 
-    // Add more pivots here if needed (vertical, segment, etc.)
+    
 
-    // ─────────────────────────────────────────────────────────────
     // ACCESSORS / HELPERS
-    // ─────────────────────────────────────────────────────────────
 
    public function getDesignationCodeAttribute(): ?string
     {
@@ -157,18 +153,14 @@ class Employee extends BaseModel
         return $this->attributes['primary_div_code'] ?? null;
     }
 
-    // ─────────────────────────────────────────────────────────────
     // SCOPES
-    // ─────────────────────────────────────────────────────────────
 
     // public function scopeActive($query)
     // {
     //     return $query->where('is_active', true);
     // }
 
-    // ─────────────────────────────────────────────────────────────
     // BOOT (Auto-sync desig_code ↔ designation_code during transition)
-    // ─────────────────────────────────────────────────────────────
 
     protected static function boot()
     {
