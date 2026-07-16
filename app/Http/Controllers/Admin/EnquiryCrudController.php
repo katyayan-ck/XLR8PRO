@@ -549,7 +549,7 @@ class EnquiryCrudController extends CrudController
     {
         $this->crud->setListView('admin.enquiry.reference-enquiry');
 
-       $enquiries = Enquiry::where('current_origin', 'REFERENCE')
+        $enquiries = Enquiry::where('current_origin', 'REFERENCE')
             ->where('real_status', 1)
             ->with(['model', 'variant'])
             ->orderByDesc('created_at')
@@ -582,15 +582,15 @@ class EnquiryCrudController extends CrudController
             'title' => 'Reference Enquiries',
             'gridConfig' => [
                 'columns' => [
-                    ['field' => 'serial_no',     'headerName' => 'S.No'],
-                    ['field' => 'enq_date_and_time',    'headerName' => 'Enquiry Date & Time'],
-                    ['field' => 'referred_by',  'headerName' => 'Referred By'],
-                    ['field' => 'referee_phone',     'headerName' => 'Referee Mobile'],
-                    ['field' => 'customer_name',    'headerName' => 'Customer Name'],
-                    ['field' => 'customer_phone',        'headerName' => 'Customer Mobile'],
-                    ['field' => 'model_code',    'headerName' => 'Model'],
-                    ['field' => 'variant_code',  'headerName' => 'Variant'],
-                    ['field' => 'action',        'headerName' => 'Action']
+                    ['field' => 'serial_no', 'headerName' => 'S.No'],
+                    ['field' => 'enq_date_and_time', 'headerName' => 'Enquiry Date & Time'],
+                    ['field' => 'referred_by', 'headerName' => 'Referred By'],
+                    ['field' => 'referee_phone', 'headerName' => 'Referee Mobile'],
+                    ['field' => 'customer_name', 'headerName' => 'Customer Name'],
+                    ['field' => 'customer_phone', 'headerName' => 'Customer Mobile'],
+                    ['field' => 'model_code', 'headerName' => 'Model'],
+                    ['field' => 'variant_code', 'headerName' => 'Variant'],
+                    ['field' => 'action', 'headerName' => 'Action']
                 ],
                 'data' => $gridData
             ]
@@ -632,13 +632,13 @@ class EnquiryCrudController extends CrudController
             'title' => 'Virtual Number Enquiries',
             'gridConfig' => [
                 'columns' => [
-                    ['field' => 'serial_no',     'headerName' => 'S.No'],
-                    ['field' => 'virtual_no',    'headerName' => 'Virtual No'],
-                    ['field' => 'call_date_and_time',  'headerName' => 'Call Date & Time'],
-                    ['field' => 'call_duration',     'headerName' => 'Call Duration'],
-                    ['field' => 'call_status',     'headerName' => 'Status'],
-                    ['field' => 'customer_phone',        'headerName' => 'Customer Mobile'],
-                    ['field' => 'action',        'headerName' => 'Action']
+                    ['field' => 'serial_no', 'headerName' => 'S.No'],
+                    ['field' => 'virtual_no', 'headerName' => 'Virtual No'],
+                    ['field' => 'call_date_and_time', 'headerName' => 'Call Date & Time'],
+                    ['field' => 'call_duration', 'headerName' => 'Call Duration'],
+                    ['field' => 'call_status', 'headerName' => 'Status'],
+                    ['field' => 'customer_phone', 'headerName' => 'Customer Mobile'],
+                    ['field' => 'action', 'headerName' => 'Action']
                 ],
                 'data' => $gridData
             ]
@@ -686,18 +686,18 @@ class EnquiryCrudController extends CrudController
             'title' => 'WhatsApp Campaign Enquiries',
             'gridConfig' => [
                 'columns' => [
-                    ['field' => 'serial_no',     'headerName' => 'S.No'],
-                    ['field' => 'enq_date_and_time',     'headerName' => 'Enquiry Date & Time'],
-                    ['field' => 'campaign_name',    'headerName' => 'Campaign Name'],
-                    ['field' => 'campaign_date',  'headerName' => 'Campaign Date'],
-                    ['field' => 'campaign_segment',     'headerName' => 'Campaign Segment'],
-                    ['field' => 'campaign_model',        'headerName' => 'Campaign Model'],
-                    ['field' => 'customer_name',        'headerName' => 'Customer Name'],
-                    ['field' => 'customer_phone',        'headerName' => 'Customer Mobile'],
-                    ['field' => 'tehsil',        'headerName' => 'Tehsil'],
-                    ['field' => 'model_code',        'headerName' => 'Model'],
-                    ['field' => 'variant_code',        'headerName' => 'Variant'],
-                    ['field' => 'action',        'headerName' => 'Action']
+                    ['field' => 'serial_no', 'headerName' => 'S.No'],
+                    ['field' => 'enq_date_and_time', 'headerName' => 'Enquiry Date & Time'],
+                    ['field' => 'campaign_name', 'headerName' => 'Campaign Name'],
+                    ['field' => 'campaign_date', 'headerName' => 'Campaign Date'],
+                    ['field' => 'campaign_segment', 'headerName' => 'Campaign Segment'],
+                    ['field' => 'campaign_model', 'headerName' => 'Campaign Model'],
+                    ['field' => 'customer_name', 'headerName' => 'Customer Name'],
+                    ['field' => 'customer_phone', 'headerName' => 'Customer Mobile'],
+                    ['field' => 'tehsil', 'headerName' => 'Tehsil'],
+                    ['field' => 'model_code', 'headerName' => 'Model'],
+                    ['field' => 'variant_code', 'headerName' => 'Variant'],
+                    ['field' => 'action', 'headerName' => 'Action']
                 ],
                 'data' => $gridData
             ]
@@ -708,7 +708,7 @@ class EnquiryCrudController extends CrudController
     {
         $this->crud->setListView('admin.enquiry.assigned-long-enquiry');
 
-       $enquiries = Enquiry::where('current_origin', 'LONG')
+        $enquiries = Enquiry::where('current_origin', 'LONG')
             ->where('real_status', 1)
             ->with(['model', 'variant'])
             ->orderByDesc('created_at')
@@ -752,24 +752,24 @@ class EnquiryCrudController extends CrudController
             'title' => 'Assigned Long Enquiries',
             'gridConfig' => [
                 'columns' => [
-                    ['field' => 'serial_no',     'headerName' => 'S.No'],
-                    ['field' => 'long_enq_no',    'headerName' => 'Long Enquiry No'],
-                    ['field' => 'long_enq_date_and_time',  'headerName' => 'Long Enquiry Date & Time'],
-                    ['field' => 'long_assign_date_and_time',  'headerName' => 'Long Assigned Date & Time'],
-                    ['field' => 'customer_first_name',     'headerName' => 'Customer Name'],
-                    ['field' => 'customer_phone',        'headerName' => 'Customer Mobile'],
-                    ['field' => 'enq_type',        'headerName' => 'Enquiry Type'],
-                    ['field' => 'enq_source',        'headerName' => 'Enquiry Source'],
-                    ['field' => 'enq_sub_source',        'headerName' => 'Enquiry Sub Source'],
-                    ['field' => 'likely_purchase_date',        'headerName' => 'Likely Purchase Date'],
-                    ['field' => 'model_code',    'headerName' => 'Model'],
-                    ['field' => 'variant_code',  'headerName' => 'Variant'],
-                    ['field' => 'color_code',    'headerName' => 'Color'],
-                    ['field' => 'sc_name',    'headerName' => 'SC Name'],
-                    ['field' => 'sc_mile_id',    'headerName' => 'SC Mile Id'],
-                    ['field' => 'customer_type',        'headerName' => 'Customer Type'],
-                    ['field' => 'zip_code',        'headerName' => 'Zip Code'],
-                    ['field' => 'action',        'headerName' => 'Action']
+                    ['field' => 'serial_no', 'headerName' => 'S.No'],
+                    ['field' => 'long_enq_no', 'headerName' => 'Long Enquiry No'],
+                    ['field' => 'long_enq_date_and_time', 'headerName' => 'Long Enquiry Date & Time'],
+                    ['field' => 'long_assign_date_and_time', 'headerName' => 'Long Assigned Date & Time'],
+                    ['field' => 'customer_first_name', 'headerName' => 'Customer Name'],
+                    ['field' => 'customer_phone', 'headerName' => 'Customer Mobile'],
+                    ['field' => 'enq_type', 'headerName' => 'Enquiry Type'],
+                    ['field' => 'enq_source', 'headerName' => 'Enquiry Source'],
+                    ['field' => 'enq_sub_source', 'headerName' => 'Enquiry Sub Source'],
+                    ['field' => 'likely_purchase_date', 'headerName' => 'Likely Purchase Date'],
+                    ['field' => 'model_code', 'headerName' => 'Model'],
+                    ['field' => 'variant_code', 'headerName' => 'Variant'],
+                    ['field' => 'color_code', 'headerName' => 'Color'],
+                    ['field' => 'sc_name', 'headerName' => 'SC Name'],
+                    ['field' => 'sc_mile_id', 'headerName' => 'SC Mile Id'],
+                    ['field' => 'customer_type', 'headerName' => 'Customer Type'],
+                    ['field' => 'zip_code', 'headerName' => 'Zip Code'],
+                    ['field' => 'action', 'headerName' => 'Action']
                 ],
                 'data' => $gridData
             ]
@@ -821,21 +821,21 @@ class EnquiryCrudController extends CrudController
             'title' => 'Unassigned Long Enquiries',
             'gridConfig' => [
                 'columns' => [
-                    ['field' => 'serial_no',     'headerName' => 'S.No'],
-                    ['field' => 'long_enq_no',    'headerName' => 'Long Enquiry No'],
-                    ['field' => 'long_enq_date_and_time',  'headerName' => 'Long Enquiry Date & Time'],
-                    ['field' => 'customer_first_name',     'headerName' => 'Customer Name'],
-                    ['field' => 'customer_phone',        'headerName' => 'Customer Mobile'],
-                    ['field' => 'enq_type',        'headerName' => 'Enquiry Type'],
-                    ['field' => 'enq_source',        'headerName' => 'Enquiry Source'],
-                    ['field' => 'enq_sub_source',        'headerName' => 'Enquiry Sub Source'],
-                    ['field' => 'likely_purchase_date',        'headerName' => 'Likely Purchase Date'],
-                    ['field' => 'model_code',    'headerName' => 'Model'],
-                    ['field' => 'variant_code',  'headerName' => 'Variant'],
-                    ['field' => 'color_code',    'headerName' => 'Color'],
-                    ['field' => 'customer_type',        'headerName' => 'Customer Type'],
-                    ['field' => 'zip_code',        'headerName' => 'Zip Code'],
-                    ['field' => 'action',        'headerName' => 'Action']
+                    ['field' => 'serial_no', 'headerName' => 'S.No'],
+                    ['field' => 'long_enq_no', 'headerName' => 'Long Enquiry No'],
+                    ['field' => 'long_enq_date_and_time', 'headerName' => 'Long Enquiry Date & Time'],
+                    ['field' => 'customer_first_name', 'headerName' => 'Customer Name'],
+                    ['field' => 'customer_phone', 'headerName' => 'Customer Mobile'],
+                    ['field' => 'enq_type', 'headerName' => 'Enquiry Type'],
+                    ['field' => 'enq_source', 'headerName' => 'Enquiry Source'],
+                    ['field' => 'enq_sub_source', 'headerName' => 'Enquiry Sub Source'],
+                    ['field' => 'likely_purchase_date', 'headerName' => 'Likely Purchase Date'],
+                    ['field' => 'model_code', 'headerName' => 'Model'],
+                    ['field' => 'variant_code', 'headerName' => 'Variant'],
+                    ['field' => 'color_code', 'headerName' => 'Color'],
+                    ['field' => 'customer_type', 'headerName' => 'Customer Type'],
+                    ['field' => 'zip_code', 'headerName' => 'Zip Code'],
+                    ['field' => 'action', 'headerName' => 'Action']
                 ],
                 'data' => $gridData
             ]
@@ -889,23 +889,23 @@ class EnquiryCrudController extends CrudController
             'title' => 'Assigned Quick Enquiries',
             'gridConfig' => [
                 'columns' => [
-                    ['field' => 'serial_no',     'headerName' => 'S.No'],
-                    ['field' => 'quick_enq_no',    'headerName' => 'Quick Enquiry No'],
-                    ['field' => 'quick_enq_date_and_time',  'headerName' => 'Quick Enquiry Date & Time'],
-                    ['field' => 'quick_assign_date_and_time',  'headerName' => 'Quick Assigned Date & Time'],
-                    ['field' => 'customer_first_name',     'headerName' => 'Customer Name'],
-                    ['field' => 'customer_phone',        'headerName' => 'Customer Mobile'],
-                    ['field' => 'enq_type',        'headerName' => 'Enquiry Type'],
-                    ['field' => 'enq_source',        'headerName' => 'Enquiry Source'],
-                    ['field' => 'enq_sub_source',        'headerName' => 'Enquiry Sub Source'],
-                    ['field' => 'likely_purchase_date',        'headerName' => 'Likely Purchase Date'],
-                    ['field' => 'model_code',    'headerName' => 'Model'],
-                    ['field' => 'variant_code',  'headerName' => 'Variant'],
-                    ['field' => 'color_code',    'headerName' => 'Color'],
-                    ['field' => 'sc_name',    'headerName' => 'SC Name'],
-                    ['field' => 'sc_mile_id',    'headerName' => 'SC Mile Id'],
-                    ['field' => 'enq_stage',        'headerName' => 'Enquiry Stage'],
-                    ['field' => 'action',        'headerName' => 'Action']
+                    ['field' => 'serial_no', 'headerName' => 'S.No'],
+                    ['field' => 'quick_enq_no', 'headerName' => 'Quick Enquiry No'],
+                    ['field' => 'quick_enq_date_and_time', 'headerName' => 'Quick Enquiry Date & Time'],
+                    ['field' => 'quick_assign_date_and_time', 'headerName' => 'Quick Assigned Date & Time'],
+                    ['field' => 'customer_first_name', 'headerName' => 'Customer Name'],
+                    ['field' => 'customer_phone', 'headerName' => 'Customer Mobile'],
+                    ['field' => 'enq_type', 'headerName' => 'Enquiry Type'],
+                    ['field' => 'enq_source', 'headerName' => 'Enquiry Source'],
+                    ['field' => 'enq_sub_source', 'headerName' => 'Enquiry Sub Source'],
+                    ['field' => 'likely_purchase_date', 'headerName' => 'Likely Purchase Date'],
+                    ['field' => 'model_code', 'headerName' => 'Model'],
+                    ['field' => 'variant_code', 'headerName' => 'Variant'],
+                    ['field' => 'color_code', 'headerName' => 'Color'],
+                    ['field' => 'sc_name', 'headerName' => 'SC Name'],
+                    ['field' => 'sc_mile_id', 'headerName' => 'SC Mile Id'],
+                    ['field' => 'enq_stage', 'headerName' => 'Enquiry Stage'],
+                    ['field' => 'action', 'headerName' => 'Action']
                 ],
                 'data' => $gridData
             ]
@@ -954,28 +954,26 @@ class EnquiryCrudController extends CrudController
             'title' => 'Unassigned Quick Enquiries',
             'gridConfig' => [
                 'columns' => [
-                    ['field' => 'serial_no',     'headerName' => 'S.No'],
-                    ['field' => 'quick_enq_no',    'headerName' => 'Quick Enquiry No'],
-                    ['field' => 'quick_enq_date_and_time',  'headerName' => 'Quick Enquiry Date & Time'],
-                    ['field' => 'customer_first_name',     'headerName' => 'Customer Name'],
-                    ['field' => 'customer_phone',        'headerName' => 'Customer Mobile'],
-                    ['field' => 'enq_type',        'headerName' => 'Enquiry Type'],
-                    ['field' => 'enq_source',        'headerName' => 'Enquiry Source'],
-                    ['field' => 'enq_sub_source',        'headerName' => 'Enquiry Sub Source'],
-                    ['field' => 'likely_purchase_date',        'headerName' => 'Likely Purchase Date'],
-                    ['field' => 'model_code',    'headerName' => 'Model'],
-                    ['field' => 'variant_code',  'headerName' => 'Variant'],
-                    ['field' => 'color_code',    'headerName' => 'Color'],
-                    ['field' => 'enq_stage',        'headerName' => 'Enquiry Stage'],
-                    ['field' => 'action',        'headerName' => 'Action']
+                    ['field' => 'serial_no', 'headerName' => 'S.No'],
+                    ['field' => 'quick_enq_no', 'headerName' => 'Quick Enquiry No'],
+                    ['field' => 'quick_enq_date_and_time', 'headerName' => 'Quick Enquiry Date & Time'],
+                    ['field' => 'customer_first_name', 'headerName' => 'Customer Name'],
+                    ['field' => 'customer_phone', 'headerName' => 'Customer Mobile'],
+                    ['field' => 'enq_type', 'headerName' => 'Enquiry Type'],
+                    ['field' => 'enq_source', 'headerName' => 'Enquiry Source'],
+                    ['field' => 'enq_sub_source', 'headerName' => 'Enquiry Sub Source'],
+                    ['field' => 'likely_purchase_date', 'headerName' => 'Likely Purchase Date'],
+                    ['field' => 'model_code', 'headerName' => 'Model'],
+                    ['field' => 'variant_code', 'headerName' => 'Variant'],
+                    ['field' => 'color_code', 'headerName' => 'Color'],
+                    ['field' => 'enq_stage', 'headerName' => 'Enquiry Stage'],
+                    ['field' => 'action', 'headerName' => 'Action']
                 ],
                 'data' => $gridData
             ]
         ]);
     }
 
-
-}
     public function checkDuplicateEnquiry(Request $request)
     {
         $enquiry = Enquiry::where('mobile', $request->mobile)
