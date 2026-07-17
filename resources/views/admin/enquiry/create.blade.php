@@ -270,20 +270,29 @@
 
                                             </div> --}}
 
-                                            <div id="referee_name_dropdown" style="display:none;">
-                                                <label class="form-label">Referee Name</label>
+                                            <input type="hidden" name="referee_name" id="referee_name">
+
+                                            <div class="col-md-4 mb-3" id="referee_name_dropdown" style="display:none;">
+                                                <label class="form-label">
+                                                    Referee Name
+                                                    <span class="text-danger">*</span>
+                                                </label>
+
                                                 <select name="person_code" id="person_code"
                                                     class="form-control form-select">
                                                     <option value="">Select Name</option>
                                                 </select>
                                             </div>
 
-                                            <div id="referee_name_manual" style="display:none;">
-                                                <label class="form-label">Referee Name</label>
-                                                <input type="text" name="referee_name" id="referee_name"
+                                            <div class="col-md-4 mb-3" id="referee_name_manual" style="display:none;">
+                                                <label class="form-label">
+                                                    Referee Name
+                                                    <span class="text-danger">*</span>
+                                                </label>
+
+                                                <input type="text" id="referee_name_manual_input"
                                                     class="form-control">
                                             </div>
-
                                         </div>
 
                                         {{-- Likely Purchase Date --}}
@@ -1046,8 +1055,19 @@
                                                     Make
                                                 </label>
 
-                                                <input type="text" id="exchange_make" name="exchange_make"
-                                                    class="form-control" value="{{ old('exchange_make') }}">
+                                                <select id="exchange_make" name="exchange_make"
+                                                    class="form-control form-select">
+
+                                                    <option value="">Select Make</option>
+
+                                                    @foreach ($existing_car_oems as $item)
+                                                        <option value="{{ $item['code'] }}"
+                                                            {{ old('exchange_make') == $item['code'] ? 'selected' : '' }}>
+                                                            {{ $item['value'] }}
+                                                        </option>
+                                                    @endforeach
+
+                                                </select>
 
                                             </div>
 
@@ -1210,7 +1230,7 @@
             $('#planned_campaign').prop('disabled', true);
 
             $('#bevSection').hide();
-            // $('#commercialSection').hide();
+            $('#commercialSection').hide();
 
             $('#exchangeVehicleSection').hide();
 
@@ -1310,6 +1330,39 @@
             |--------------------------------------------------------------------------
             */
 
+            function toggleExchangeFields() {
+
+                let purchaseType = $('#purchase_type').val();
+
+                if (
+                    purchaseType === 'Exchange Buy' ||
+                    purchaseType === 'Additional Buy' ||
+                    purchaseType === 'Scrappage'
+                ) {
+
+                    $('#exchangeFields')
+                        .removeClass('d-none')
+                        .addClass('d-flex'); // or just removeClass('d-none') if using Bootstrap grid
+
+                    $('#exchange_make').prop('required', true);
+                    $('#exchange_model').prop('required', true);
+                    $('#vehicle_no').prop('required', true);
+
+                } else {
+
+                    $('#exchangeFields')
+                        .removeClass('d-flex')
+                        .addClass('d-none');
+
+                    $('#exchange_make,#exchange_model,#vehicle_no')
+                        .val('')
+                        .prop('required', false);
+                }
+            }
+
+            $('#purchase_type').on('change', toggleExchangeFields);
+            toggleExchangeFields();
+
 
 
             let maxDob = new Date();
@@ -1333,36 +1386,7 @@
                 allowInput: false
             });
 
-            function toggleExchangeFields() {
 
-                let purchaseType = $('#purchase_type').val();
-
-                if (
-                    purchaseType === 'Exchange Buy' ||
-                    purchaseType === 'Additional Buy' ||
-                    purchaseType === 'Scrappage'
-                ) {
-
-                    $('#exchangeFields').show();
-
-                    $('#exchange_make').prop('required', true);
-                    $('#exchange_model').prop('required', true);
-                    $('#vehicle_no').prop('required', true);
-
-                } else {
-
-                    $('#exchangeFields').hide();
-
-                    $('#exchange_make,#exchange_model,#vehicle_no')
-                        .val('')
-                        .prop('required', false);
-
-                }
-            }
-
-            $('#purchase_type').on('change', toggleExchangeFields);
-
-            toggleExchangeFields();
 
 
             /*
@@ -1410,7 +1434,20 @@
                 checkDuplicateEnquiry();
 
                 $('#bevSection').toggle(segmentText === 'BEV');
-                // $('#commercialSection').toggle(segmentText === 'LMM' || segmentText === 'COMMERCIAL');
+
+                if (segmentText === 'LMM' || segmentText === 'COMMERCIAL') {
+
+                    $('#commercialSection').show();
+
+                } else {
+
+                    $('#commercialSection').hide();
+
+                    $('#commercialSection')
+                        .find('select,input')
+                        .val('')
+                        .prop('required', false);
+                }
 
                 // Reset fields
                 $('#model_code')
@@ -1646,16 +1683,50 @@
                     },
                     function(response) {
 
+                        if ($.isEmptyObject(response)) {
+
+                            $('#referee_name_dropdown').hide();
+                            $('#referee_name_manual').show();
+
+                            $('#person_code').html('<option value="">Select Name</option>');
+
+                            return;
+                        }
+
+                        $('#referee_name_manual').hide();
+                        $('#referee_name_dropdown').show();
+
                         let html = '<option value="">Select Name</option>';
 
                         $.each(response, function(code, name) {
+
                             html += '<option value="' + code + '">' + name + '</option>';
+
                         });
 
-                        $('#referee_name').empty().append(html);
+                        $('#person_code').html(html);
+                        $('#person_code').trigger('change');
 
                     }
                 );
+
+            });
+
+            $('#person_code').on('change', function() {
+
+                let selectedName = $('#person_code option:selected').text();
+
+                if ($(this).val() != '') {
+                    $('#referee_name').val(selectedName);
+                } else {
+                    $('#referee_name').val('');
+                }
+
+            });
+
+            $('#referee_name_manual_input').on('keyup', function() {
+
+                $('#referee_name').val($(this).val());
 
             });
 

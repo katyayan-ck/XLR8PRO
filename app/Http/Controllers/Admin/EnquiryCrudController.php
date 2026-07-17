@@ -41,12 +41,12 @@ class EnquiryCrudController extends CrudController
         $this->crud->setListView('admin.enquiry.list');
 
         $enquiries = Enquiry::with([
-            // 'source',
             'segment',
             'model',
             'variant',
             'color',
-            'campaign',
+            'campaign.segment',
+            'campaign.model',
         ])
             ->orderByDesc('created_at')
             ->get();
@@ -76,15 +76,33 @@ class EnquiryCrudController extends CrudController
                 ?? $enquiry->planned_campaign
                 ?? '—';
 
+            $mapped['activity_type'] = $enquiry->campaign?->activity_code ?? '—';
+
+            $mapped['activity_segment'] = $enquiry->campaign?->segment?->name ?? '—';
+
+            $mapped['activity_model'] = $enquiry->campaign?->model?->name ?? '—';
+
+            $mapped['activity_start_date'] = $enquiry->campaign?->start_date
+                ? $enquiry->campaign->start_date->format('d-m-Y')
+                : '—';
+
+            $mapped['activity_end_date'] = $enquiry->campaign?->end_date
+                ? $enquiry->campaign->end_date->format('d-m-Y')
+                : '—';
+
+            $mapped['activity_branch'] = $enquiry->campaign?->branch_code ?? '—';
+
+            $mapped['activity_location'] = $enquiry->campaign?->location_code ?? '—';
+
             $mapped['likely_purchase_date'] = $enquiry->likely_purchase_date;
 
-            $mapped['activity_start_date'] = $enquiry->activity_start_date
-                ? Carbon::parse($enquiry->activity_start_date)->format('d-m-Y')
-                : '—';
+            // $mapped['activity_start_date'] = $enquiry->activity_start_date
+            //     ? Carbon::parse($enquiry->activity_start_date)->format('d-m-Y')
+            //     : '—';
 
-            $mapped['activity_end_date'] = $enquiry->activity_end_date
-                ? Carbon::parse($enquiry->activity_end_date)->format('d-m-Y')
-                : '—';
+            // $mapped['activity_end_date'] = $enquiry->activity_end_date
+            //     ? Carbon::parse($enquiry->activity_end_date)->format('d-m-Y')
+            //     : '—';
 
             $mapped['dob'] = $enquiry->dob
                 ? Carbon::parse($enquiry->dob)->format('d-m-Y')

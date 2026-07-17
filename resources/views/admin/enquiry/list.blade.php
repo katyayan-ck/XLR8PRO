@@ -18,14 +18,17 @@
 
                         <select id="enquiryFilter" class="form-select form-select-sm bg-white text-dark border-0 shadow-sm"
                             style="min-width: 200px; max-width: 260px;" onchange="redirectToEnquiryList(this)">
-    
+
                             <option value="{{ backpack_url('enquiries') }}">All Enquiries</option>
                             <option value="{{ backpack_url('enquiries/reference') }}">Reference Enquiries</option>
                             <option value="{{ backpack_url('enquiries/virtual-number') }}">Virtual Number Enquiries</option>
-                            <option value="{{ backpack_url('enquiries/whatsapp-campaign') }}">WhatsApp Campaign Enquiries</option>
-                            <option value="{{ backpack_url('enquiries/unassigned-quick') }}">Unassigned Quick Enquiries</option>
+                            <option value="{{ backpack_url('enquiries/whatsapp-campaign') }}">WhatsApp Campaign Enquiries
+                            </option>
+                            <option value="{{ backpack_url('enquiries/unassigned-quick') }}">Unassigned Quick Enquiries
+                            </option>
                             <option value="{{ backpack_url('enquiries/assigned-quick') }}">Assigned Quick Enquiries</option>
-                            <option value="{{ backpack_url('enquiries/unassigned-long') }}">Unassigned Long Enquiries</option>
+                            <option value="{{ backpack_url('enquiries/unassigned-long') }}">Unassigned Long Enquiries
+                            </option>
                             <option value="{{ backpack_url('enquiries/assigned-long') }}">Assigned Long Enquiries</option>
 
                         </select>
@@ -198,6 +201,18 @@
                 headerClass: 'center-header',
                 cellStyle: {
                     textAlign: 'center'
+                },
+                valueFormatter: params => {
+
+                    if (
+                        params.value === null ||
+                        params.value === undefined ||
+                        params.value === ''
+                    ) {
+                        return '—';
+                    }
+
+                    return params.value;
                 }
             },
             components: {
@@ -390,10 +405,9 @@
         });
 
         function redirectToEnquiryList(selectElement) {
-                if (selectElement.value) {
+            if (selectElement.value) {
                 window.location.href = selectElement.value;
-                }
             }
-
+        }
     </script>
 @endpush
