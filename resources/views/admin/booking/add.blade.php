@@ -810,13 +810,26 @@ $enquiry = $quotation?->enquiry;
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-sm-9">
+                            <div class="col-sm-6">
                                 <div class="form-group">
                                     <label for="details">Remarks</label>
                                     <textarea name="details" id="details" class="form-control" rows="4"
                                         placeholder="Enter any additional remarks..."></textarea>
                                 </div>
                             </div>
+
+                            @if($quotation)
+                            <div class="col-sm-3 d-flex align-items-center">
+                                <div class="form-group w-100">
+                                    <a href="{{ backpack_url('quotation/'.$quotation->quotation_no.'/preview') }}"
+                                        target="_blank" class="btn btn-info btn-block">
+                                        <i class="ik ik-file-text mr-2"></i> View Quotation PDF
+                                    </a>
+                                </div>
+                            </div>
+                            @endif
+
+
                         </div>
                     </div>
                 </div>

@@ -119,4 +119,14 @@ class Quotation extends BaseModel
     {
         return $this->actions()->first();
     }
+
+    public function registerMediaCollections(): void
+    {
+        parent::registerMediaCollections();
+
+        $this->addMediaCollection('quotation_pdf')
+            ->acceptsMimeTypes(['application/pdf'])
+            ->singleFile()
+            ->useDisk('public');
+    }
 }
