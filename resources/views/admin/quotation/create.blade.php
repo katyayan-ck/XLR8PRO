@@ -568,8 +568,7 @@ use App\Services\OrgService;
                         <tr>
                             <td class="title" width="18%">Segment</td>
                             <td width="32%">
-                                <input type="text" class="form-control border-0 shadow-none"
-                                    value="{{ optional(optional($selectedEnquiry)->segment)->name }}" readonly>
+                                <input type="text" value="{{ $selectedEnquiry->segment }}" readonly>
 
                                 <input type="hidden" name="segment_code"
                                     value="{{ optional($selectedEnquiry)->segment_code }}">
@@ -577,8 +576,7 @@ use App\Services\OrgService;
 
                             <td class="title" width="18%">Model</td>
                             <td width="32%">
-                                <input type="text" class="form-control border-0 shadow-none"
-                                    value="{{ optional(optional($selectedEnquiry)->model)->name }}" readonly>
+                                <input type="text" value="{{ $selectedEnquiry->model }}" readonly>
 
                                 <input type="hidden" name="model_code"
                                     value="{{ optional($selectedEnquiry)->model_code }}">
@@ -588,8 +586,9 @@ use App\Services\OrgService;
                         <tr>
                             <td class="title">Variant</td>
                             <td>
-                                <input type="text" class="form-control border-0 shadow-none"
-                                    value="{{ optional(optional($selectedEnquiry)->variant)->display_name }}" readonly>
+
+                                <input type="text" value="{{ $selectedEnquiry->variant }}" readonly>
+
 
                                 <input type="hidden" name="variant_code"
                                     value="{{ optional($selectedEnquiry)->variant_code }}">
@@ -597,8 +596,7 @@ use App\Services\OrgService;
 
                             <td class="title">Color</td>
                             <td>
-                                <input type="text" class="form-control border-0 shadow-none"
-                                    value="{{ optional(optional($selectedEnquiry)->color)->name }}" readonly>
+                                <input type="text" value="{{ $selectedEnquiry->color }}" readonly>
 
                                 <input type="hidden" name="color_code"
                                     value="{{ optional($selectedEnquiry)->color_code }}">

@@ -282,6 +282,8 @@ class QuotationCrudController extends CrudController
             'color',
         ])->findOrFail($enquiryId);
 
+
+
         $insurance_type_map = [
             1 => 'Standard',
             2 => 'Nil Dep',

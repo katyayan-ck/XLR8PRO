@@ -628,8 +628,7 @@ use App\Services\OrgService;
                         <tr>
                             <td class="title" width="18%">Segment</td>
                             <td width="32%">
-                                <input type="text" class="form-control border-0 shadow-none"
-                                    value="{{ optional(optional($selectedEnquiry)->segment)->name }}" readonly>
+                                <input type="text" value="{{ $selectedEnquiry->segment }}" readonly>
 
                                 <input type="hidden" name="segment_code"
                                     value="{{ optional($selectedEnquiry)->segment_code }}">
@@ -637,9 +636,7 @@ use App\Services\OrgService;
 
                             <td class="title" width="18%">Model</td>
                             <td width="32%">
-                                <input type="text" class="form-control border-0 shadow-none"
-                                    value="{{ optional(optional($selectedEnquiry)->model)->name }}" readonly>
-
+                                <input type="text" value="{{ $selectedEnquiry->model }}" readonly>
                                 <input type="hidden" name="model_code"
                                     value="{{ optional($selectedEnquiry)->model_code }}">
                             </td>
@@ -648,18 +645,14 @@ use App\Services\OrgService;
                         <tr>
                             <td class="title">Variant</td>
                             <td>
-                                <input type="text" class="form-control border-0 shadow-none"
-                                    value="{{ optional(optional($selectedEnquiry)->variant)->display_name }}" readonly>
-
+                                <input type="text" value="{{ $selectedEnquiry->variant }}" readonly>
                                 <input type="hidden" name="variant_code"
                                     value="{{ optional($selectedEnquiry)->variant_code }}">
                             </td>
 
                             <td class="title">Color</td>
                             <td>
-                                <input type="text" class="form-control border-0 shadow-none"
-                                    value="{{ optional(optional($selectedEnquiry)->color)->name }}" readonly>
-
+                                <input type="text" value="{{ $selectedEnquiry->color }}" readonly>
                                 <input type="hidden" name="color_code"
                                     value="{{ optional($selectedEnquiry)->color_code }}">
                             </td>
@@ -2476,8 +2469,30 @@ $(document).ready(function () {
 
 });
 
+/* =====================================================================
+   PREVIEW PAGE — apply the exact same "hide blank rows / fold selected
+   option into label" rules that create/edit use, but PERMANENTLY on
+   screen (not just during window.print()), since this page is always
+   meant to look like the printed sheet.
 
+   prepareOptionLabelsForPrint() / prepareItemVisibilityForPrint() /
+   isEmptyGridValue() are unchanged — copied as-is from create/edit —
+   so any row/field that would be hidden while printing a quotation
+   there is hidden here too, with the same rules.
+   ===================================================================== */
+$(document).ready(function () {
 
+    prepareOptionLabelsForPrint();
+    prepareItemVisibilityForPrint();
+
+});
+
+// Preview page never needs to "restore" — it should stay in print-ready
+// state permanently, so printQuotation() here just triggers the browser
+// print dialog without undoing the hidden rows / folded labels afterwards.
+function printQuotation() {
+    window.print();
+}
 
 </script>
 @endpush
