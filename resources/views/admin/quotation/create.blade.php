@@ -273,6 +273,15 @@ use App\Services\OrgService;
         font-weight: 600;
     }
 
+
+
+    .quotation-grid td.cell-label .group-select {
+        background: #f2f2f2;
+        font-weight: 600;
+    }
+
+
+
     .quotation-grid input,
     .quotation-grid select {
         width: 100%;
@@ -317,7 +326,7 @@ use App\Services\OrgService;
     }
 
     .quotation-summary .onroad-row-cell {
-        background: #6190d7;
+        background: #abb8ca;
         color: #000000;
     }
 
@@ -378,6 +387,12 @@ use App\Services\OrgService;
         border: none;
         background: transparent;
         font-size: 10px;
+    }
+
+
+    .cell-label:has(.group-select) {
+        background: #f2f2f2;
+        font-weight: 600;
     }
 
     /* Accessories note line: hidden on screen, shown only in print above the Note box */
@@ -627,8 +642,6 @@ use App\Services\OrgService;
                                         <select id="group_a_type">
                                             <option>INV</option>
                                             <option>CN</option>
-                                            <option>CN1</option>
-                                            <option>CN2</option>
                                         </select>
                                     </td>
                                     <td class="cell-amount">
@@ -647,7 +660,6 @@ use App\Services\OrgService;
                                     <td class="cell-label">Insurance</td>
                                     <td class="cell-option">
                                         <select name="policy_type" id="policy_type">
-                                            <option value="">Select</option>
                                             @foreach($insurance_type_map as $key=>$value)
                                             <option value="{{ $key }}">{{ $value }}</option>
                                             @endforeach
@@ -675,7 +687,6 @@ use App\Services\OrgService;
                                     <td class="cell-label">Registration</td>
                                     <td class="cell-option">
                                         <select name="registration_type" id="registration_type">
-                                            <option value="">Select</option>
                                             @foreach($registration_type_map as $key=>$value)
                                             <option value="{{ $key }}">{{ $value }}</option>
                                             @endforeach
@@ -791,7 +802,6 @@ use App\Services\OrgService;
                                     <td class="cell-label">Coating</td>
                                     <td class="cell-option">
                                         <select id="coating" name="coating">
-                                            <option value="">Select</option>
                                             <option value="Ceramic">Ceramic</option>
                                             <option value="Graphene">Graphene</option>
                                             <option value="No Coating">No Coating</option>
@@ -820,7 +830,9 @@ use App\Services\OrgService;
                                     <td class="cell-amount">
                                         <input id="ppf" name="ppf" class="numeric-only">
                                     </td>
-                                    <td class="cell-label">Coating Spl Discount</td>
+                                    <td class="cell-label" id="coating_discount_label">
+                                        Coating Spl Discount
+                                    </td>
                                     <td class="cell-type">
                                         <select id="ceramic_discount_type" name="ceramic_discount_type">
                                             <option value="INV">INV</option>
@@ -898,7 +910,6 @@ use App\Services\OrgService;
                                     <td class="cell-label">Shield</td>
                                     <td class="cell-option">
                                         <select id="shield" name="shield">
-                                            <option value="">Select</option>
                                             <option value="4th Year">4th Year</option>
                                             <option value="4th + 5th Year">4th + 5th Year</option>
                                             <option value="No Shield">No Shield</option>
@@ -924,7 +935,6 @@ use App\Services\OrgService;
                                     <td class="cell-label">RSA</td>
                                     <td class="cell-option">
                                         <select id="rsa" name="rsa">
-                                            <option value="">Select</option>
                                             <option>1 Year</option>
                                             <option>2 Year</option>
                                             <option>3 Year</option>
@@ -953,17 +963,7 @@ use App\Services\OrgService;
                                     <td class="cell-amount"></td>
                                 </tr>
 
-                                {{-- Row 15: TRC --}}
-                                <tr class="grid-row">
-                                    <td class="cell-label">TRC</td>
-                                    <td class="cell-option"></td>
-                                    <td class="cell-amount">
-                                        <input id="trc" name="trc" class="numeric-only">
-                                    </td>
-                                    <td class="cell-label"></td>
-                                    <td class="cell-type"></td>
-                                    <td class="cell-amount"></td>
-                                </tr>
+
 
                                 {{-- Row 16: COD Charges --}}
                                 <tr class="grid-row">
@@ -977,24 +977,11 @@ use App\Services\OrgService;
                                     <td class="cell-amount"></td>
                                 </tr>
 
-                                {{-- Row 17: TCS --}}
-                                <tr class="grid-row">
-                                    <td class="cell-label">TCS @1% (Auto Calculated)</td>
-                                    <td class="cell-option"></td>
-                                    <td class="cell-amount">
-                                        <input id="tcs" name="tcs" class="numeric-only" readonly>
-                                    </td>
-                                    <td class="cell-label"></td>
-                                    <td class="cell-type"></td>
-                                    <td class="cell-amount"></td>
-                                </tr>
-
                                 {{-- Row 18: Charger Swapping --}}
                                 <tr class="grid-row">
                                     <td class="cell-label">Charger Swapping</td>
                                     <td class="cell-option">
                                         <select id="charger_swapping" name="charger_swapping">
-                                            <option value="">Select</option>
                                             <option value="N/A">N/A</option>
                                             <option value="NCH to 7.2 kW">NCH to 7.2 kW</option>
                                             <option value="NCH to 11.2 kW">NCH to 11.2 kW</option>
@@ -1007,6 +994,18 @@ use App\Services\OrgService;
                                     <td class="cell-amount">
                                         <input id="charger_swapping_amount" name="charger_swapping_amount"
                                             class="numeric-only">
+                                    </td>
+                                    <td class="cell-label"></td>
+                                    <td class="cell-type"></td>
+                                    <td class="cell-amount"></td>
+                                </tr>
+
+                                {{-- Row 17: TCS --}}
+                                <tr class="grid-row">
+                                    <td class="cell-label">TCS @1%</td>
+                                    <td class="cell-option"></td>
+                                    <td class="cell-amount">
+                                        <input id="tcs" name="tcs" class="numeric-only" readonly>
                                     </td>
                                     <td class="cell-label"></td>
                                     <td class="cell-type"></td>
@@ -1334,7 +1333,6 @@ function calculateQuotation() {
         num('rsa_amount') +
         num('fastag') +
         num('cod_charges') +
-        num('trc') +
         num('charger_swapping_amount');
     
         let tcs = 0;
@@ -1420,7 +1418,6 @@ $(document).on(
     '#rsa_amount,' +
     '#fastag,' +
     '#cod_charges,' +
-    '#trc,' +
     '#charger_swapping_amount,' +
     '#tcs,' +
     '#cash_scheme_oem,' +
@@ -1516,6 +1513,12 @@ function toggleLMMFields() {
         }
 
     });
+
+    $('#charger_swapping_discount_type')
+    .prop('disabled', false)
+    .empty()
+    .append('<option value="CN2">CN2</option>')
+    .val('CN2');
 
     // Fame Subsidy (LMM) is only available as an option in Group A when segment is LMM
     $('#fame_subsidy_option').prop('disabled', !isLMM);
@@ -1694,16 +1697,42 @@ $('#coating').on('change', function () {
     let value = $(this).val();
 
     if (value === '') {
+
         $('#coating_price').val('').prop('disabled', true);
+
+        $('#ceramic_discount')
+            .val('')
+            .prop('disabled', true);
+
+        $('#ceramic_discount_type')
+            .val('')
+            .prop('disabled', true);
     }
     else if (value === 'No Coating') {
+
         $('#coating_price')
             .val('N/A')
             .prop('disabled', true);
+
+        $('#ceramic_discount')
+            .val('N/A')
+            .prop('disabled', true);
+
+        $('#ceramic_discount_type')
+            .val('')
+            .prop('disabled', true);
     }
     else {
+
         $('#coating_price')
             .val('')
+            .prop('disabled', false);
+
+        $('#ceramic_discount')
+            .val('')
+            .prop('disabled', false);
+
+        $('#ceramic_discount_type')
             .prop('disabled', false);
     }
 
@@ -1788,32 +1817,93 @@ $('#charger_swapping').on('change', function () {
     }
     else {
 
-        $('#charger_swapping_amount')
-            .val('')
-            .prop('disabled', false);
+    $('#charger_swapping_amount')
+        .val('')
+        .prop('disabled', false);
 
-        $('#charger_swapping_discount')
-            .val('')
-            .prop('disabled', false);
+    $('#charger_swapping_discount')
+        .val('')
+        .prop('disabled', false);
 
-        $('#charger_swapping_discount_type')
-            .prop('disabled', false);
-
-    }
+    $('#charger_swapping_discount_type')
+        .prop('disabled', false)
+        .empty()
+        .append('<option value="CN2">CN2</option>')
+        .val('CN2');
+}
 
     calculateQuotation();
 
 });
 
+    $(document).ready(function () {
+
+        $('#policy_type').trigger('change');
+        $('#registration_type').trigger('change');
+        $('#coating').trigger('change');
+        $('#shield').trigger('change');
+        $('#rsa').trigger('change');
+        $('#charger_swapping').trigger('change');
+    });
+    $('#group_a_select').on('change', function () {
+
+    let value = $(this).val();
+    let $type = $('#group_a_type');
+
+    $type.empty();
+
+    switch (value) {
+
+        case 'cash_scheme_oem':
+            $type.append('<option value="INV">INV</option>');
+            $type.append('<option value="CN">CN</option>');
+            break;
+
+        case 'csd_discount':
+            $type.append('<option value="INV">INV</option>');
+            break;
+
+        case 'fame_subsidy':
+            $type.append('<option value="INV">INV</option>');
+            break;
+    }
+
+    // Trigger sync so hidden field gets updated
+    $type.trigger('change');
+});
+
+$(document).ready(function () {
+    $('#group_a_select').trigger('change');
+});
+
+function updateCoatingDiscountLabel() {
+
+    let coating = $('#coating').val();
+
+    let label = 'Coating Spl Discount';
+
+    if (coating === 'Ceramic') {
+        label = 'Ceramic Coating Spl Discount';
+    }
+    else if (coating === 'Graphene') {
+        label = 'Graphene Coating Spl Discount';
+    }
+
+    $('#coating_discount_label').text(label);
+}
+$(document).on('change', '#coating', function () {
+
+    updateCoatingDiscountLabel();
+
+});
+
 $(document).ready(function () {
 
-    $('#policy_type').trigger('change');
-$('#registration_type').trigger('change');
-$('#coating').trigger('change');
-$('#shield').trigger('change');
-$('#rsa').trigger('change');
-$('#charger_swapping').trigger('change');
+    updateCoatingDiscountLabel();
+
 });
+
+
 
 
 </script>

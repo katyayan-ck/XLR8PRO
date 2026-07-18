@@ -496,4 +496,15 @@ trait HasColumnTransformations
     {
         return $this->runTransformation($value, $transformation);
     }
+
+    // Test Global Tranformation
+
+    protected function getColumnTransformations(): array
+    {
+        $global = config('column_transformations', []);
+
+        $local = $this->columnTransformations ?? [];
+
+        return array_replace($global, $local);
+    }
 }

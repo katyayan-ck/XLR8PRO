@@ -467,6 +467,31 @@ class QuotationCrudController extends CrudController
             ->get();
 
         $quotationData = $quotation->proposed_data ?? [];
+        $groupASelected = 'cash_scheme_oem';
+
+        if (!empty($quotationData['csd_discount'])) {
+            $groupASelected = 'csd_discount';
+        }
+
+        if (!empty($quotationData['fame_subsidy'])) {
+            $groupASelected = 'fame_subsidy';
+        }
+
+        $groupBSelected = 'corporate_discount';
+
+        if (!empty($quotationData['loyalty_bonus'])) {
+            $groupBSelected = 'loyalty_bonus';
+        }
+
+        $groupCSelected = 'exchange_bonus';
+
+        if (!empty($quotationData['green_bonus'])) {
+            $groupCSelected = 'green_bonus';
+        }
+
+        if (!empty($quotationData['welcome_bonus'])) {
+            $groupCSelected = 'welcome_bonus';
+        }
 
         return view('admin.quotation.edit', [
 
@@ -481,12 +506,16 @@ class QuotationCrudController extends CrudController
             'registration_type_map' => $registration_type_map,
 
             'accessoryList' => $accessoryList,
+            'groupASelected' => $groupASelected,
+            'groupBSelected' => $groupBSelected,
+            'groupCSelected' => $groupCSelected,
 
         ]);
     }
 
     public function update(Request $request, $id)
     {
+
         $request->validate([
             'enquiry_no'   => 'required',
             'segment_code' => 'required',
