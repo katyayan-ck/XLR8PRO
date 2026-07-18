@@ -273,6 +273,15 @@ use App\Services\OrgService;
         font-weight: 600;
     }
 
+
+
+    .quotation-grid td.cell-label .group-select {
+        background: #f2f2f2;
+        font-weight: 600;
+    }
+
+
+
     .quotation-grid input,
     .quotation-grid select {
         width: 100%;
@@ -291,12 +300,13 @@ use App\Services\OrgService;
     .quotation-summary {
         display: flex;
         font-weight: bold;
-        border: 1px solid #000;
+        border: solid 1px #000;
+
     }
 
     .quotation-summary .total-row-cell {
         background: #f2f2f2;
-        border: 1px solid #000;
+        border: solid 1px #000;
     }
 
     .quotation-summary .total-receivable-label {
@@ -316,7 +326,7 @@ use App\Services\OrgService;
     }
 
     .quotation-summary .onroad-row-cell {
-        background: #6190d7;
+        background: #abb8ca;
         color: #000000;
     }
 
@@ -377,6 +387,12 @@ use App\Services\OrgService;
         border: none;
         background: transparent;
         font-size: 10px;
+    }
+
+
+    .cell-label:has(.group-select) {
+        background: #f2f2f2;
+        font-weight: 600;
     }
 
     /* Accessories note line: hidden on screen, shown only in print above the Note box */
@@ -507,11 +523,9 @@ use App\Services\OrgService;
 
         </div>
 
-        <form method="POST" action="{{ route('quotation.update',$quotation->id) }}">
-
+        <form method="POST" action="{{ route('quotation.update', $quotation->id) }}">
             @csrf
             @method('PUT')
-
             <div class="quotation-sheet">
 
                 <div class="form-section">
@@ -623,19 +637,28 @@ use App\Services\OrgService;
 
                                     <td class="cell-label">
                                         <select id="group_a_select" class="group-select">
-                                            <option value="cash_scheme_oem">Cash Scheme OEM</option>
-                                            <option value="csd_discount">CSD Discount</option>
-                                            <option value="fame_subsidy" id="fame_subsidy_option">Fame Subsidy (LMM)
+                                            <option value="cash_scheme_oem" {{ old('group_a_select', $groupASelected
+                                                ?? '' )=='cash_scheme_oem' ? 'selected' : '' }}>
+                                                Cash Scheme OEM
+                                            </option>
+
+                                            <option value="csd_discount" {{ old('group_a_select', $groupASelected ?? ''
+                                                )=='csd_discount' ? 'selected' : '' }}>
+                                                CSD Discount
+                                            </option>
+
+                                            <option value="fame_subsidy" id="fame_subsidy_option" {{
+                                                old('group_a_select', $groupASelected ?? '' )=='fame_subsidy'
+                                                ? 'selected' : '' }}>
+                                                Fame Subsidy (LMM)
                                             </option>
                                         </select>
                                     </td>
 
                                     <td class="cell-type">
                                         <select id="group_a_type">
-                                            <option>INV</option>
-                                            <option>CN</option>
-                                            <option>CN1</option>
-                                            <option>CN2</option>
+                                            <option value="INV">INV</option>
+                                            <option value="CN">CN</option>
                                         </select>
                                     </td>
 
@@ -660,7 +683,6 @@ use App\Services\OrgService;
 
                                         <input type="hidden" id="fame_subsidy_type" name="fame_subsidy_type"
                                             value="{{ old('fame_subsidy_type', $quotationData['fame_subsidy_type'] ?? '') }}">
-
                                     </td>
                                 </tr>
 
@@ -670,9 +692,8 @@ use App\Services\OrgService;
                                     <td class="cell-label">Insurance</td>
 
                                     <td class="cell-option">
-                                        <select name="policy_type" id="policy_type">
 
-                                            <option value="">Select</option>
+                                        <select name="policy_type" id="policy_type">
 
                                             @foreach($insurance_type_map as $key => $value)
 
@@ -684,17 +705,21 @@ use App\Services\OrgService;
                                             @endforeach
 
                                         </select>
+
                                     </td>
 
                                     <td class="cell-amount">
+
                                         <input type="text" id="insurance_amount" name="insurance_amount"
                                             class="numeric-only" placeholder="0.00"
                                             value="{{ old('insurance_amount', $quotationData['insurance_amount'] ?? '') }}">
+
                                     </td>
 
                                     <td class="cell-label">Cash Scheme Dealer</td>
 
                                     <td class="cell-type">
+
                                         <select id="dealer_discount_type" name="dealer_discount_type">
 
                                             <option value="INV" {{ old('dealer_discount_type',
@@ -710,25 +735,25 @@ use App\Services\OrgService;
                                             </option>
 
                                         </select>
+
                                     </td>
 
                                     <td class="cell-amount">
+
                                         <input type="text" name="dealer_discount" id="dealer_discount"
                                             class="numeric-only" placeholder="0.00"
                                             value="{{ old('dealer_discount', $quotationData['dealer_discount'] ?? '') }}">
+
                                     </td>
 
                                 </tr>
 
                                 {{-- Row 3: Registration | Accessories Scheme --}}
                                 <tr class="grid-row">
-
                                     <td class="cell-label">Registration</td>
 
                                     <td class="cell-option">
                                         <select name="registration_type" id="registration_type">
-
-                                            <option value="">Select</option>
 
                                             @foreach($registration_type_map as $key => $value)
 
@@ -751,6 +776,7 @@ use App\Services\OrgService;
                                     <td class="cell-label">Accessories Scheme</td>
 
                                     <td class="cell-type">
+
                                         <select id="accessories_discount_type" name="accessories_discount_type">
 
                                             <option value="INV" {{ old('accessories_discount_type',
@@ -765,25 +791,16 @@ use App\Services\OrgService;
                                                 CN
                                             </option>
 
-                                            <option value="CN1" {{ old('accessories_discount_type',
-                                                $quotationData['accessories_discount_type'] ?? '' )=='CN1' ? 'selected'
-                                                : '' }}>
-                                                CN1
-                                            </option>
-
-                                            <option value="CN2" {{ old('accessories_discount_type',
-                                                $quotationData['accessories_discount_type'] ?? '' )=='CN2' ? 'selected'
-                                                : '' }}>
-                                                CN2
-                                            </option>
-
                                         </select>
+
                                     </td>
 
                                     <td class="cell-amount">
+
                                         <input type="text" name="accessories_discount" id="accessories_discount"
                                             class="numeric-only" placeholder="0.00"
                                             value="{{ old('accessories_discount', $quotationData['accessories_discount'] ?? '') }}">
+
                                     </td>
 
                                 </tr>
@@ -797,11 +814,18 @@ use App\Services\OrgService;
 
                                         <select name="accessories[]" id="accessories" multiple>
 
+                                            @php
+                                            $selectedAccessories = old(
+                                            'accessories',
+                                            $quotationData['accessories'] ?? []
+                                            );
+                                            @endphp
+
                                             @foreach($accessoryList as $accessory)
 
                                             <option value="{{ $accessory->part_no }}" data-price="{{ $accessory->ndp }}"
-                                                {{ in_array($accessory->part_no, old('accessories',
-                                                $quotationData['accessories'] ?? [])) ? 'selected' : '' }}>
+                                                {{ in_array($accessory->part_no, (array)$selectedAccessories) ?
+                                                'selected' : '' }}>
 
                                                 {{ $accessory->item }}
                                                 (₹{{ number_format($accessory->ndp,2) }})
@@ -815,8 +839,10 @@ use App\Services\OrgService;
                                     </td>
 
                                     <td class="cell-amount">
+
                                         <input id="accessories_amount" name="accessories_amount" readonly
                                             value="{{ old('accessories_amount', $quotationData['accessories_amount'] ?? '0.00') }}">
+
                                     </td>
 
                                     <td class="cell-label">Shield Scheme</td>
@@ -836,26 +862,16 @@ use App\Services\OrgService;
                                                 CN
                                             </option>
 
-                                            <option value="CN1" {{ old('shield_scheme_type',
-                                                $quotationData['shield_scheme_type'] ?? '' )=='CN1' ? 'selected' : ''
-                                                }}>
-                                                CN1
-                                            </option>
-
-                                            <option value="CN2" {{ old('shield_scheme_type',
-                                                $quotationData['shield_scheme_type'] ?? '' )=='CN2' ? 'selected' : ''
-                                                }}>
-                                                CN2
-                                            </option>
-
                                         </select>
 
                                     </td>
 
                                     <td class="cell-amount">
+
                                         <input type="text" name="shield_scheme" id="shield_scheme" class="numeric-only"
                                             placeholder="0.00"
                                             value="{{ old('shield_scheme', $quotationData['shield_scheme'] ?? '') }}">
+
                                     </td>
 
                                 </tr>
@@ -873,16 +889,29 @@ use App\Services\OrgService;
                                     </td>
 
                                     <td class="cell-label">
+
                                         <select id="group_b_select" class="group-select">
-                                            <option value="corporate_discount">Corporate Discount</option>
-                                            <option value="loyalty_bonus">Loyalty Bonus</option>
+
+                                            <option value="corporate_discount" {{ old('group_b_select', $groupBSelected
+                                                ?? '' )=='corporate_discount' ? 'selected' : '' }}>
+                                                Corporate Discount
+                                            </option>
+
+                                            <option value="loyalty_bonus" {{ old('group_b_select', $groupBSelected ?? ''
+                                                )=='loyalty_bonus' ? 'selected' : '' }}>
+                                                Loyalty Bonus
+                                            </option>
+
                                         </select>
+
                                     </td>
 
                                     <td class="cell-type">
+
                                         <select id="group_b_type">
-                                            <option>INV</option>
+                                            <option value="INV">INV</option>
                                         </select>
+
                                     </td>
 
                                     <td class="cell-amount">
@@ -913,22 +942,41 @@ use App\Services\OrgService;
                                     <td class="cell-option"></td>
 
                                     <td class="cell-amount">
+
                                         <input id="vltd_device" name="vltd_device" class="numeric-only"
                                             value="{{ old('vltd_device', $quotationData['vltd_device'] ?? '') }}">
+
                                     </td>
 
                                     <td class="cell-label">
+
                                         <select id="group_c_select" class="group-select">
-                                            <option value="exchange_bonus">Exchange Bonus</option>
-                                            <option value="green_bonus">Green Bonus</option>
-                                            <option value="welcome_bonus">Welcome Bonus</option>
+
+                                            <option value="exchange_bonus" {{ old('group_c_select', $groupCSelected
+                                                ?? '' )=='exchange_bonus' ? 'selected' : '' }}>
+                                                Exchange Bonus
+                                            </option>
+
+                                            <option value="green_bonus" {{ old('group_c_select', $groupCSelected ?? ''
+                                                )=='green_bonus' ? 'selected' : '' }}>
+                                                Green Bonus
+                                            </option>
+
+                                            <option value="welcome_bonus" {{ old('group_c_select', $groupCSelected ?? ''
+                                                )=='welcome_bonus' ? 'selected' : '' }}>
+                                                Welcome Bonus
+                                            </option>
+
                                         </select>
+
                                     </td>
 
                                     <td class="cell-type">
+
                                         <select id="group_c_type">
-                                            <option>CN1</option>
+                                            <option value="CN1">CN1</option>
                                         </select>
+
                                     </td>
 
                                     <td class="cell-amount">
@@ -951,7 +999,7 @@ use App\Services\OrgService;
                                             value="{{ old('welcome_bonus', $quotationData['welcome_bonus'] ?? '') }}">
 
                                         <input type="hidden" id="welcome_bonus_type" name="welcome_bonus_type"
-                                            value="{{ old('welcome_bonus_type', $quotationData['welcome_bonus_type'] ?? '') }}">
+                                            value="{{ old('welcome_bonus', $quotationData['welcome_bonus_type'] ?? '') }}">
 
                                     </td>
 
@@ -963,9 +1011,8 @@ use App\Services\OrgService;
                                     <td class="cell-label">Coating</td>
 
                                     <td class="cell-option">
-                                        <select id="coating" name="coating">
 
-                                            <option value="">Select</option>
+                                        <select id="coating" name="coating">
 
                                             <option value="Ceramic" {{ old('coating', $quotationData['coating'] ?? ''
                                                 )=='Ceramic' ? 'selected' : '' }}>
@@ -983,16 +1030,20 @@ use App\Services\OrgService;
                                             </option>
 
                                         </select>
+
                                     </td>
 
                                     <td class="cell-amount">
+
                                         <input id="coating_price" name="coating_price" class="numeric-only"
                                             value="{{ old('coating_price', $quotationData['coating_price'] ?? '') }}">
+
                                     </td>
 
                                     <td class="cell-label">Accessories Spl Disc</td>
 
                                     <td class="cell-type">
+
                                         <select id="accessories_spl_disc_type" name="accessories_spl_disc_type">
 
                                             <option value="INV" {{ old('accessories_spl_disc_type',
@@ -1007,25 +1058,16 @@ use App\Services\OrgService;
                                                 CN
                                             </option>
 
-                                            <option value="CN1" {{ old('accessories_spl_disc_type',
-                                                $quotationData['accessories_spl_disc_type'] ?? '' )=='CN1' ? 'selected'
-                                                : '' }}>
-                                                CN1
-                                            </option>
-
-                                            <option value="CN2" {{ old('accessories_spl_disc_type',
-                                                $quotationData['accessories_spl_disc_type'] ?? '' )=='CN2' ? 'selected'
-                                                : '' }}>
-                                                CN2
-                                            </option>
-
                                         </select>
+
                                     </td>
 
                                     <td class="cell-amount">
+
                                         <input type="text" name="accessories_spl_disc" id="accessories_spl_disc"
                                             class="numeric-only" placeholder="0.00"
                                             value="{{ old('accessories_spl_disc', $quotationData['accessories_spl_disc'] ?? '') }}">
+
                                     </td>
 
                                 </tr>
@@ -1038,13 +1080,18 @@ use App\Services\OrgService;
                                     <td class="cell-option"></td>
 
                                     <td class="cell-amount">
+
                                         <input id="ppf" name="ppf" class="numeric-only"
                                             value="{{ old('ppf', $quotationData['ppf'] ?? '') }}">
+
                                     </td>
 
-                                    <td class="cell-label">Coating Spl Discount</td>
+                                    <td class="cell-label" id="coating_discount_label">
+                                        Coating Spl Discount
+                                    </td>
 
                                     <td class="cell-type">
+
                                         <select id="ceramic_discount_type" name="ceramic_discount_type">
 
                                             <option value="INV" {{ old('ceramic_discount_type',
@@ -1059,25 +1106,16 @@ use App\Services\OrgService;
                                                 CN
                                             </option>
 
-                                            <option value="CN1" {{ old('ceramic_discount_type',
-                                                $quotationData['ceramic_discount_type'] ?? '' )=='CN1' ? 'selected' : ''
-                                                }}>
-                                                CN1
-                                            </option>
-
-                                            <option value="CN2" {{ old('ceramic_discount_type',
-                                                $quotationData['ceramic_discount_type'] ?? '' )=='CN2' ? 'selected' : ''
-                                                }}>
-                                                CN2
-                                            </option>
-
                                         </select>
+
                                     </td>
 
                                     <td class="cell-amount">
+
                                         <input type="text" name="ceramic_discount" id="ceramic_discount"
                                             class="numeric-only" placeholder="0.00"
                                             value="{{ old('ceramic_discount', $quotationData['ceramic_discount'] ?? '') }}">
+
                                     </td>
 
                                 </tr>
@@ -1090,13 +1128,16 @@ use App\Services\OrgService;
                                     <td class="cell-option"></td>
 
                                     <td class="cell-amount">
+
                                         <input id="rto_yellow_tape" name="rto_yellow_tape" class="numeric-only"
                                             value="{{ old('rto_yellow_tape', $quotationData['rto_yellow_tape'] ?? '') }}">
+
                                     </td>
 
                                     <td class="cell-label">PPF Spl Discount</td>
 
                                     <td class="cell-type">
+
                                         <select id="ppf_discount_type" name="ppf_discount_type">
 
                                             <option value="INV" {{ old('ppf_discount_type',
@@ -1109,23 +1150,16 @@ use App\Services\OrgService;
                                                 CN
                                             </option>
 
-                                            <option value="CN1" {{ old('ppf_discount_type',
-                                                $quotationData['ppf_discount_type'] ?? '' )=='CN1' ? 'selected' : '' }}>
-                                                CN1
-                                            </option>
-
-                                            <option value="CN2" {{ old('ppf_discount_type',
-                                                $quotationData['ppf_discount_type'] ?? '' )=='CN2' ? 'selected' : '' }}>
-                                                CN2
-                                            </option>
-
                                         </select>
+
                                     </td>
 
                                     <td class="cell-amount">
+
                                         <input type="text" name="ppf_discount" id="ppf_discount" class="numeric-only"
                                             placeholder="0.00"
                                             value="{{ old('ppf_discount', $quotationData['ppf_discount'] ?? '') }}">
+
                                     </td>
 
                                 </tr>
@@ -1138,8 +1172,10 @@ use App\Services\OrgService;
                                     <td class="cell-option"></td>
 
                                     <td class="cell-amount">
+
                                         <input id="kazam_charging_kit" name="kazam_charging_kit" class="numeric-only"
                                             value="{{ old('kazam_charging_kit', $quotationData['kazam_charging_kit'] ?? '') }}">
+
                                     </td>
 
                                     <td class="cell-label" id="charger_discount_title">
@@ -1147,8 +1183,9 @@ use App\Services\OrgService;
                                     </td>
 
                                     <td class="cell-type">
+
                                         <select id="charger_swapping_discount_type"
-                                            name="charger_swapping_discount_type">
+                                            name="charger_swapping_discount_type" disabled>
 
                                             <option value="CN2" {{ old('charger_swapping_discount_type',
                                                 $quotationData['charger_swapping_discount_type'] ?? '' )=='CN2'
@@ -1157,12 +1194,15 @@ use App\Services\OrgService;
                                             </option>
 
                                         </select>
+
                                     </td>
 
                                     <td class="cell-amount" id="charger_discount_cell">
+
                                         <input type="text" id="charger_swapping_discount"
                                             name="charger_swapping_discount" class="numeric-only" placeholder="0.00"
                                             value="{{ old('charger_swapping_discount', $quotationData['charger_swapping_discount'] ?? '') }}">
+
                                     </td>
 
                                 </tr>
@@ -1175,13 +1215,16 @@ use App\Services\OrgService;
                                     <td class="cell-option"></td>
 
                                     <td class="cell-amount">
+
                                         <input id="incidental_charges" name="incidental_charges" class="numeric-only"
                                             value="{{ old('incidental_charges', $quotationData['incidental_charges'] ?? '') }}">
+
                                     </td>
 
                                     <td class="cell-label">Other Cash Discount</td>
 
                                     <td class="cell-type">
+
                                         <select id="other_cash_discount_type" name="other_cash_discount_type">
 
                                             <option value="INV" {{ old('other_cash_discount_type',
@@ -1196,25 +1239,16 @@ use App\Services\OrgService;
                                                 CN
                                             </option>
 
-                                            <option value="CN1" {{ old('other_cash_discount_type',
-                                                $quotationData['other_cash_discount_type'] ?? '' )=='CN1' ? 'selected'
-                                                : '' }}>
-                                                CN1
-                                            </option>
-
-                                            <option value="CN2" {{ old('other_cash_discount_type',
-                                                $quotationData['other_cash_discount_type'] ?? '' )=='CN2' ? 'selected'
-                                                : '' }}>
-                                                CN2
-                                            </option>
-
                                         </select>
+
                                     </td>
 
                                     <td class="cell-amount">
+
                                         <input type="text" name="other_cash_discount" id="other_cash_discount"
                                             class="numeric-only" placeholder="0.00"
                                             value="{{ old('other_cash_discount', $quotationData['other_cash_discount'] ?? '') }}">
+
                                     </td>
 
                                 </tr>
@@ -1225,9 +1259,8 @@ use App\Services\OrgService;
                                     <td class="cell-label">Shield</td>
 
                                     <td class="cell-option">
-                                        <select id="shield" name="shield">
 
-                                            <option value="">Select</option>
+                                        <select id="shield" name="shield">
 
                                             <option value="4th Year" {{ old('shield', $quotationData['shield'] ?? ''
                                                 )=='4th Year' ? 'selected' : '' }}>
@@ -1245,16 +1278,20 @@ use App\Services\OrgService;
                                             </option>
 
                                         </select>
+
                                     </td>
 
                                     <td class="cell-amount">
+
                                         <input id="shield_price" name="shield_price" class="numeric-only"
                                             value="{{ old('shield_price', $quotationData['shield_price'] ?? '') }}">
+
                                     </td>
 
                                     <td class="cell-label">Special Cash Discount</td>
 
                                     <td class="cell-type">
+
                                         <select id="special_cash_discount_type" name="special_cash_discount_type">
 
                                             <option value="INV" {{ old('special_cash_discount_type',
@@ -1263,31 +1300,16 @@ use App\Services\OrgService;
                                                 INV
                                             </option>
 
-                                            <option value="CN" {{ old('special_cash_discount_type',
-                                                $quotationData['special_cash_discount_type'] ?? '' )=='CN' ? 'selected'
-                                                : '' }}>
-                                                CN
-                                            </option>
-
-                                            <option value="CN1" {{ old('special_cash_discount_type',
-                                                $quotationData['special_cash_discount_type'] ?? '' )=='CN1' ? 'selected'
-                                                : '' }}>
-                                                CN1
-                                            </option>
-
-                                            <option value="CN2" {{ old('special_cash_discount_type',
-                                                $quotationData['special_cash_discount_type'] ?? '' )=='CN2' ? 'selected'
-                                                : '' }}>
-                                                CN2
-                                            </option>
-
                                         </select>
+
                                     </td>
 
                                     <td class="cell-amount">
+
                                         <input type="text" name="special_cash_discount" id="special_cash_discount"
                                             class="numeric-only" placeholder="0.00"
                                             value="{{ old('special_cash_discount', $quotationData['special_cash_discount'] ?? '') }}">
+
                                     </td>
 
                                 </tr>
@@ -1298,9 +1320,8 @@ use App\Services\OrgService;
                                     <td class="cell-label">RSA</td>
 
                                     <td class="cell-option">
-                                        <select id="rsa" name="rsa">
 
-                                            <option value="">Select</option>
+                                        <select id="rsa" name="rsa">
 
                                             <option value="1 Year" {{ old('rsa', $quotationData['rsa'] ?? '' )=='1 Year'
                                                 ? 'selected' : '' }}>
@@ -1333,11 +1354,14 @@ use App\Services\OrgService;
                                             </option>
 
                                         </select>
+
                                     </td>
 
                                     <td class="cell-amount">
+
                                         <input id="rsa_amount" name="rsa_amount" class="numeric-only"
                                             value="{{ old('rsa_amount', $quotationData['rsa_amount'] ?? '') }}">
+
                                     </td>
 
                                     <td class="cell-label"></td>
@@ -1354,8 +1378,10 @@ use App\Services\OrgService;
                                     <td class="cell-option"></td>
 
                                     <td class="cell-amount">
+
                                         <input id="fastag" name="fastag" class="numeric-only"
                                             value="{{ old('fastag', $quotationData['fastag'] ?? '') }}">
+
                                     </td>
 
                                     <td class="cell-label"></td>
@@ -1364,27 +1390,10 @@ use App\Services\OrgService;
 
                                 </tr>
 
-                                {{-- Row 15: TRC --}}
-                                <tr class="grid-row">
 
-                                    <td class="cell-label">TRC</td>
-
-                                    <td class="cell-option"></td>
-
-                                    <td class="cell-amount">
-                                        <input id="trc" name="trc" class="numeric-only"
-                                            value="{{ old('trc', $quotationData['trc'] ?? '') }}">
-                                    </td>
-
-                                    <td class="cell-label"></td>
-                                    <td class="cell-type"></td>
-                                    <td class="cell-amount"></td>
-
-                                </tr>
 
                                 {{-- Row 16: COD Charges --}}
                                 <tr class="grid-row">
-
                                     <td class="cell-label">COD Charges</td>
 
                                     <td class="cell-option"></td>
@@ -1397,25 +1406,6 @@ use App\Services\OrgService;
                                     <td class="cell-label"></td>
                                     <td class="cell-type"></td>
                                     <td class="cell-amount"></td>
-
-                                </tr>
-
-                                {{-- Row 17: TCS --}}
-                                <tr class="grid-row">
-
-                                    <td class="cell-label">TCS @1% (Auto Calculated)</td>
-
-                                    <td class="cell-option"></td>
-
-                                    <td class="cell-amount">
-                                        <input id="tcs" name="tcs" class="numeric-only" readonly
-                                            value="{{ old('tcs', $quotationData['tcs'] ?? '') }}">
-                                    </td>
-
-                                    <td class="cell-label"></td>
-                                    <td class="cell-type"></td>
-                                    <td class="cell-amount"></td>
-
                                 </tr>
 
                                 {{-- Row 18: Charger Swapping --}}
@@ -1426,8 +1416,6 @@ use App\Services\OrgService;
                                     <td class="cell-option">
 
                                         <select id="charger_swapping" name="charger_swapping">
-
-                                            <option value="">Select</option>
 
                                             <option value="N/A" {{ old('charger_swapping',
                                                 $quotationData['charger_swapping'] ?? '' )=='N/A' ? 'selected' : '' }}>
@@ -1475,9 +1463,31 @@ use App\Services\OrgService;
                                     </td>
 
                                     <td class="cell-amount">
+
                                         <input id="charger_swapping_amount" name="charger_swapping_amount"
                                             class="numeric-only"
                                             value="{{ old('charger_swapping_amount', $quotationData['charger_swapping_amount'] ?? '') }}">
+
+                                    </td>
+
+                                    <td class="cell-label"></td>
+                                    <td class="cell-type"></td>
+                                    <td class="cell-amount"></td>
+
+                                </tr>
+
+                                {{-- Row 17: TCS --}}
+                                <tr class="grid-row">
+
+                                    <td class="cell-label">TCS @1%</td>
+
+                                    <td class="cell-option"></td>
+
+                                    <td class="cell-amount">
+
+                                        <input id="tcs" name="tcs" class="numeric-only" readonly
+                                            value="{{ old('tcs', $quotationData['tcs'] ?? '') }}">
+
                                     </td>
 
                                     <td class="cell-label"></td>
@@ -1612,7 +1622,7 @@ use App\Services\OrgService;
 
     </button>
     <button type="submit" class="btn btn-success">
-        <i class="la la-save"></i> Update Quotation
+        <i class="la la-save"></i> Save Quotation
     </button>
 
     <a href="{{ backpack_url('quotation-form') }}" class="btn btn-secondary">
@@ -1733,32 +1743,6 @@ setupGroupDiscount('group_a', ['cash_scheme_oem', 'csd_discount', 'fame_subsidy'
 setupGroupDiscount('group_b', ['corporate_discount', 'loyalty_bonus']);
 setupGroupDiscount('group_c', ['exchange_bonus', 'green_bonus', 'welcome_bonus']);
 
-
-function restoreGroupDiscount(groupPrefix, fields) {
-
-    fields.forEach(function (field) {
-
-        let amount = $('#' + field).val();
-
-        if (amount !== '' &&
-            amount !== '0' &&
-            amount !== '0.00' &&
-            amount !== 'N/A') {
-
-            $('#' + groupPrefix + '_select').val(field);
-
-            $('#' + groupPrefix + '_type').val(
-                $('#' + field + '_type').val()
-            );
-
-            $('#' + groupPrefix + '_amount').val(amount);
-
-        }
-
-    });
-
-}
-
 function num(id) {
 
     let value = $('#' + id).val();
@@ -1814,34 +1798,6 @@ function calculateDiscountBifurcation() {
     return { invoicedDiscount: invoicedDiscount, creditNoteDiscount: creditNoteDiscount };
 }
 
-restoreGroupDiscount(
-    'group_a',
-    [
-        'cash_scheme_oem',
-        'csd_discount',
-        'fame_subsidy'
-    ]
-);
-
-restoreGroupDiscount(
-    'group_b',
-    [
-        'corporate_discount',
-        'loyalty_bonus'
-    ]
-);
-
-restoreGroupDiscount(
-    'group_c',
-    [
-        'exchange_bonus',
-        'green_bonus',
-        'welcome_bonus'
-    ]
-);
-
-calculateQuotation();
-
 function calculateQuotation() {
 
     // Total Receivable
@@ -1861,7 +1817,6 @@ function calculateQuotation() {
         num('rsa_amount') +
         num('fastag') +
         num('cod_charges') +
-        num('trc') +
         num('charger_swapping_amount');
     
         let tcs = 0;
@@ -1909,8 +1864,8 @@ function calculateQuotation() {
 
     let discount = totalDiscount.toFixed(2);
 
-$('#total_discount_amount').val(discount);
-$('#total_discount').val(discount);
+    $('#total_discount_amount').val(discount);
+    $('#total_discount').val(discount);
 
 
     // Net Receivable
@@ -1947,7 +1902,6 @@ $(document).on(
     '#rsa_amount,' +
     '#fastag,' +
     '#cod_charges,' +
-    '#trc,' +
     '#charger_swapping_amount,' +
     '#tcs,' +
     '#cash_scheme_oem,' +
@@ -2032,25 +1986,23 @@ function toggleLMMFields() {
         '#incidental_charges'
     ];
 
-    fields.forEach(function(field){
+    fields.forEach(function (field) {
 
-    $(field).prop('disabled', !isLMM);
+        $(field).prop('disabled', !isLMM);
 
-    if(!isLMM){
+        if (!isLMM) {
+            $(field).val('N/A');
+        } else {
+            $(field);
+        }
 
-        $(field)
-            .val('N/A')
-            .prop('disabled', true);
+    });
 
-    }else{
-
-        $(field).prop('disabled', false);
-
-        // VALUE MAT CLEAR KARO
-
-    }
-
-});
+    $('#charger_swapping_discount_type')
+    .prop('disabled', false)
+    .empty()
+    .append('<option value="CN2">CN2</option>')
+    .val('CN2');
 
     // Fame Subsidy (LMM) is only available as an option in Group A when segment is LMM
     $('#fame_subsidy_option').prop('disabled', !isLMM);
@@ -2168,13 +2120,16 @@ function prepareItemVisibilityForPrint() {
         let discountValue = amountCells.length > 1
             ? amountCells.eq(1).find('input').first().val()
             : '';
-            
+
         $row.find('td.cell-amount input').each(function () {
+
             if ($(this).val() === 'N/A') {
+
                 $(this).closest('tr').addClass('print-hide');
+
             }
 
-        });
+        });    
 
         if (isEmptyGridValue(priceValue) && isEmptyGridValue(discountValue)) {
             $row.addClass('print-hide');
@@ -2202,17 +2157,9 @@ $('#policy_type').on('change', function () {
 
     let hasValue = $(this).val() !== '';
 
-    if (!hasValue) {
-
     $('#insurance_amount')
-        .val('')
-        .prop('disabled', true);
-        } else {
-
-            $('#insurance_amount')
-                .prop('disabled', false);
-
-        }
+        .prop('disabled', !hasValue)
+        .val(hasValue ? $('#insurance_amount').val() : '');
 
     calculateQuotation();
 });
@@ -2221,18 +2168,9 @@ $('#registration_type').on('change', function () {
 
     let hasValue = $(this).val() !== '';
 
-    if (!hasValue) {
-
     $('#registration_amount')
-        .val('')
-        .prop('disabled', true);
-
-} else {
-
-    $('#registration_amount')
-        .prop('disabled', false);
-
-}
+        .prop('disabled', !hasValue)
+        .val(hasValue ? $('#registration_amount').val() : '');
 
     calculateQuotation();
 
@@ -2243,15 +2181,42 @@ $('#coating').on('change', function () {
     let value = $(this).val();
 
     if (value === '') {
+
         $('#coating_price').val('').prop('disabled', true);
+
+        $('#ceramic_discount')
+            .val('')
+            .prop('disabled', true);
+
+        $('#ceramic_discount_type')
+            .val('')
+            .prop('disabled', true);
     }
     else if (value === 'No Coating') {
+
         $('#coating_price')
             .val('N/A')
             .prop('disabled', true);
+
+        $('#ceramic_discount')
+            .val('N/A')
+            .prop('disabled', true);
+
+        $('#ceramic_discount_type')
+            .val('')
+            .prop('disabled', true);
     }
     else {
+
         $('#coating_price')
+            .val('')
+            .prop('disabled', false);
+
+        $('#ceramic_discount')
+            .val('')
+            .prop('disabled', false);
+
+        $('#ceramic_discount_type')
             .prop('disabled', false);
     }
 
@@ -2272,6 +2237,7 @@ $('#shield').on('change', function () {
     }
     else {
         $('#shield_price')
+            .val('')
             .prop('disabled', false);
     }
 
@@ -2291,9 +2257,9 @@ $('#rsa').on('change', function () {
             .prop('disabled', true);
     }
     else {
-        $('#rsa_amount')
-    .prop('disabled', false);
-    }
+    $('#rsa_amount')
+        .prop('disabled', false);
+}
 
     calculateQuotation();
 });
@@ -2334,30 +2300,127 @@ $('#charger_swapping').on('change', function () {
     }
     else {
 
-        $('#charger_swapping_amount')
-            .prop('disabled', false);
+    $('#charger_swapping_amount')
+        .prop('disabled', false);
 
-        $('#charger_swapping_discount')
-            .prop('disabled', false);
+    $('#charger_swapping_discount')
+        .prop('disabled', false);
 
-        $('#charger_swapping_discount_type')
-            .prop('disabled', false);
-
-    }
+    $('#charger_swapping_discount_type')
+        .prop('disabled', false)
+        .empty()
+        .append('<option value="CN2">CN2</option>')
+        .val('CN2');
+}
 
     calculateQuotation();
 
 });
 
+    $(document).ready(function () {
+
+        $('#policy_type').trigger('change');
+        $('#registration_type').trigger('change');
+        $('#rsa').trigger('change');
+        $('#charger_swapping').trigger('change');
+    });
+    $('#group_a_select').on('change', function () {
+
+    let value = $(this).val();
+    let $type = $('#group_a_type');
+
+    $type.empty();
+
+    switch (value) {
+
+        case 'cash_scheme_oem':
+            $type.append('<option value="INV">INV</option>');
+            $type.append('<option value="CN">CN</option>');
+            break;
+
+        case 'csd_discount':
+            $type.append('<option value="INV">INV</option>');
+            break;
+
+        case 'fame_subsidy':
+            $type.append('<option value="INV">INV</option>');
+            break;
+    }
+
+    // Trigger sync so hidden field gets updated
+    $type.trigger('change');
+});
+
 $(document).ready(function () {
 
-    $('#policy_type').trigger('change');
-    $('#registration_type').trigger('change');
-    $('#coating').trigger('change');
-    $('#shield').trigger('change');
-    $('#rsa').trigger('change');
-    $('#charger_swapping').trigger('change');
-    });
+    let selected = $('#group_a_select').val();
+
+    if (selected) {
+
+        $('#group_a_amount').val($('#' + selected).val());
+
+        $('#group_a_type').val($('#' + selected + '_type').val());
+
+    }
+
+});
+$(document).ready(function () {
+
+    let selected = $('#group_b_select').val();
+
+    if (selected) {
+
+        $('#group_b_amount').val($('#' + selected).val());
+
+        $('#group_b_type').val($('#' + selected + '_type').val());
+
+    }
+
+});
+
+$(document).ready(function () {
+
+    let selected = $('#group_c_select').val();
+
+    if (selected) {
+
+        $('#group_c_amount').val($('#' + selected).val());
+
+        $('#group_c_type').val($('#' + selected + '_type').val());
+
+    }
+
+});
+
+function updateCoatingDiscountLabel() {
+
+    let coating = $('#coating').val();
+
+    let label = 'Coating Spl Discount';
+
+    if (coating === 'Ceramic') {
+        label = 'Ceramic Coating Spl Discount';
+    }
+    else if (coating === 'Graphene') {
+        label = 'Graphene Coating Spl Discount';
+    }
+
+    $('#coating_discount_label').text(label);
+}
+
+$(document).on('change', '#coating', function () {
+
+    updateCoatingDiscountLabel();
+
+});
+
+$(document).ready(function () {
+
+    updateCoatingDiscountLabel();
+
+});
+
+
 
 
 </script>
