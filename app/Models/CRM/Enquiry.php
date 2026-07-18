@@ -81,9 +81,16 @@ class Enquiry extends BaseModel
 
         'remarks',
 
+        'segment',
         'segment_code',
+
+        'model',
         'model_code',
+
+        'variant',
         'variant_code',
+
+        'color',
         'color_code',
 
         'fuel_type',
