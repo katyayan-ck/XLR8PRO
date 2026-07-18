@@ -93,6 +93,8 @@ Route::group([
         [QuotationCrudController::class, 'update']
     )->name('quotation.update');
 
+    Route::get('quotation/{quotation_no}/preview', [QuotationCrudController::class, 'preview'])->name('quotation.preview');
+
 
     Route::get(
         'quotation-form/{id}/history',
@@ -319,7 +321,7 @@ Route::group([
         ->name('finance.retailed')
         ->middleware('admin');
 
-    
+
     Route::get('finance/payout', 'BookingCrudController@finPayout')
         ->name('finance.payout')
         ->middleware('admin');
@@ -332,7 +334,7 @@ Route::group([
     Route::get('booking/{id}/pending-edit', 'BookingCrudController@pendingEdit')
         ->name('booking.pending-edit');
     Route::post('booking/{id}/pending-update', 'BookingCrudController@pendingUpdate')
-        ->name('booking.pending-update'); 
+        ->name('booking.pending-update');
     Route::get('reports/consolidated-booking', 'BookingCrudController@consolidatedBookingReport')
         ->name('reports.consolidated-booking')
         ->middleware('admin');
@@ -458,5 +460,5 @@ Route::group([
     Route::get('booking/{id}/check-field-payment', 'BookingCrudController@checkFieldPayment')
         ->name('booking.check-field-payment');
     Route::post('booking/otf/{id}/save', 'BookingCrudController@otfSave')
-    ->name('booking.otf.save');
+        ->name('booking.otf.save');
 });

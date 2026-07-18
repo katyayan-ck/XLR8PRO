@@ -42,12 +42,12 @@ class QuotationCrudController extends CrudController
         $insurance_type_map = [
             1 => 'Standard',
             2 => 'Nil Dep',
-            3 => 'Base (Nil Dep + Consumables)',
-            4 => 'Higher (Nil Dep + Consumables + Add Ons)',
+            3 => 'Base',
+            4 => 'Higher',
         ];
 
         $registration_type_map = [
-            0 => 'Exempted (Reg & Hypo Fee Only)',
+            0 => 'Exempted',
             1 => 'TRC Only',
             2 => 'Tax Only',
             3 => 'TRC + Tax',
@@ -749,6 +749,160 @@ class QuotationCrudController extends CrudController
             'quotation' => $quotation,
 
             'actions' => $actions,
+
+        ]);
+    }
+
+    public function preview($quotation_no)
+
+    {
+
+        $quotation = Quotation::with('enquiry')
+
+            ->where('quotation_no', $quotation_no)
+
+            ->firstOrFail();
+
+
+
+        $selectedEnquiry = Enquiry::with([
+
+            'segment',
+
+            'model',
+
+            'variant',
+
+            'color',
+
+        ])->where(
+
+            'enquiry_no',
+
+            $quotation->enquiry_no
+
+        )->firstOrFail();
+
+
+
+        $insurance_type_map = [
+
+            1 => 'Standard',
+
+            2 => 'Nil Dep',
+
+            3 => 'Base (Nil Dep + Consumables)',
+
+            4 => 'Higher (Nil Dep + Consumables + Add Ons)',
+
+        ];
+
+
+
+        $registration_type_map = [
+
+            0 => 'Exempted (Reg & Hypo Fee Only)',
+
+            1 => 'TRC Only',
+
+            2 => 'Tax Only',
+
+            3 => 'TRC + Tax',
+
+        ];
+
+
+
+        $accessoryList = Accessory::where('status', 1)
+
+            ->orderBy('item')
+
+            ->get();
+
+
+
+        $quotationData = $quotation->proposed_data ?? [];
+
+        $groupASelected = 'cash_scheme_oem';
+
+
+
+        if (!empty($quotationData['csd_discount'])) {
+
+            $groupASelected = 'csd_discount';
+        }
+
+
+
+        if (!empty($quotationData['fame_subsidy'])) {
+
+            $groupASelected = 'fame_subsidy';
+        }
+
+
+
+        $groupBSelected = 'corporate_discount';
+
+
+
+        if (!empty($quotationData['loyalty_bonus'])) {
+
+            $groupBSelected = 'loyalty_bonus';
+        }
+
+
+
+        $groupCSelected = 'exchange_bonus';
+
+
+
+        if (!empty($quotationData['green_bonus'])) {
+
+            $groupCSelected = 'green_bonus';
+        }
+
+
+
+        if (!empty($quotationData['welcome_bonus'])) {
+
+            $groupCSelected = 'welcome_bonus';
+        }
+
+
+
+        return view('admin.quotation.preview', [
+
+
+
+            'quotation' => $quotation,
+
+
+
+            'quotationData' => $quotationData,
+
+
+
+            'selectedEnquiry' => $selectedEnquiry,
+
+
+
+            'insurance_type_map' => $insurance_type_map,
+
+
+
+            'registration_type_map' => $registration_type_map,
+
+
+
+            'accessoryList' => $accessoryList,
+
+            'groupASelected' => $groupASelected,
+
+            'groupBSelected' => $groupBSelected,
+
+            'groupCSelected' => $groupCSelected,
+
+
 
         ]);
     }

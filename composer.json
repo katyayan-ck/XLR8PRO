@@ -12,6 +12,7 @@
         "php": "^8.2",
         "backpack/crud": "^7.0",
         "backpack/theme-tabler": "^2.0",
+        "barryvdh/laravel-dompdf": "^3.1",
         "darkaonline/l5-swagger": "^9.0",
         "google/apiclient": "^2.19",
         "google/cloud-vision": "^2.1",
