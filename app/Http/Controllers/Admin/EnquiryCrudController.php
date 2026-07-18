@@ -61,16 +61,13 @@ class EnquiryCrudController extends CrudController
 
             $mapped['source_name'] = $enquiry->source_code ?? '—';
 
-            $mapped['segment_name'] = $enquiry->segment?->name ?? '—';
+            $mapped['segment_name'] = $enquiry->segment ?? '—';
 
-            $mapped['model_name'] = $enquiry->model?->name ?? '—';
+            $mapped['model_name'] = $enquiry->model ?? '—';
 
-            $mapped['variant_name'] = $enquiry->variant?->display_name
-                ?? $enquiry->variant?->custom_name
-                ?? $enquiry->variant?->oem_name
-                ?? '—';
+            $mapped['variant_name'] = $enquiry->variant ?? '—';
 
-            $mapped['color_name'] = $enquiry->color?->name ?? '—';
+            $mapped['color_name'] = $enquiry->color ?? '—';
 
             $mapped['planned_campaign_name'] = $enquiry->campaign?->name
                 ?? $enquiry->planned_campaign
@@ -213,19 +210,9 @@ class EnquiryCrudController extends CrudController
     }
 
 
-    public function create()
+    private function getEnquiryFormData()
     {
-        $this->crud->setCreateView('admin.enquiry.create');
-
         $data = [];
-
-        /*
-        |--------------------------------------------------------------------------
-        | Masters
-        |--------------------------------------------------------------------------
-        */
-
-        $data['title'] = 'Add New Enquiry';
 
         $data['segments'] = OrgService::segments();
         $data['models'] = [];
@@ -233,12 +220,6 @@ class EnquiryCrudController extends CrudController
         $data['colors'] = [];
 
         $data['saleconsultants'] = OrgService::getUsers(desigCode: 'CNS');
-
-        /*
-        |--------------------------------------------------------------------------
-        | Keyword Masters
-        |--------------------------------------------------------------------------
-        */
 
         $data['enquiry_types'] = OrgService::keywordValueByCode('ENQUIRY_TYPE');
         $data['activity_types'] = OrgService::keywordValueByCode('ACTIVITY_TYPE');
@@ -248,7 +229,6 @@ class EnquiryCrudController extends CrudController
         $data['occupation_types'] = OrgService::keywordValueByCode('OCCUPATION_TYPE');
         $data['occupation_sub_types'] = OrgService::keywordValueByCode('OCCUPATION_SUB_TYPE');
 
-        // Existing Keywords
         $data['customer_types'] = OrgService::keywordValueByCode('CUSTOMER_TYPE');
         $data['genders'] = OrgService::keywordValueByCode('GENDER');
         $data['marital_statuses'] = OrgService::keywordValueByCode('MARITAL_STATUS');
@@ -286,14 +266,39 @@ class EnquiryCrudController extends CrudController
             ->pluck('name')
             ->toArray();
 
-        // dd($data);
+        return $data;
+    }
+
+    public function create()
+    {
+        $data = $this->getEnquiryFormData();
+
+        $data['title'] = 'Add New Enquiry';
+
         return view('admin.enquiry.create', $data);
     }
 
-    // public function store(Request $request)
-    // {
-    //     dd($request->all());
-    // }
+    public function edit($id)
+    {
+        $data = $this->getEnquiryFormData();
+
+        $data['title'] = 'Edit Enquiry';
+
+        $data['enquiry'] = Enquiry::with([
+            'campaign',
+            'segment',
+            'model',
+            'variant',
+            'color',
+        ])->findOrFail($id);
+
+        // dd([
+        //     'dealer_branch'   => $data['enquiry']->dealer_branch,
+        //     'dealer_location' => $data['enquiry']->dealer_location,
+        // ]);
+
+        return view('admin.enquiry.create', $data);
+    }
 
     public function store(Request $request)
     {
@@ -360,6 +365,22 @@ class EnquiryCrudController extends CrudController
             'followup_time' => 'nullable'
         ]);
 
+        // Save Segment Name
+        $segments = OrgService::segments();
+        $validated['segment'] = $segments[$validated['segment_code']] ?? null;
+
+        // Save Model Name
+        $models = OrgService::models($validated['segment_code']);
+        $validated['model'] = $models[$validated['model_code']] ?? null;
+
+        // Save Variant Name
+        $variants = OrgService::variants($validated['model_code']);
+        $validated['variant'] = $variants[$validated['variant_code']]['name'] ?? null;
+
+        // Save Color Name
+        $colors = OrgService::colors($validated['variant_code']);
+        $validated['color'] = $colors[$validated['color_code']] ?? null;
+
         $validated['created_by'] = backpack_user()->id;
 
         Enquiry::create($validated);
@@ -367,29 +388,6 @@ class EnquiryCrudController extends CrudController
         \Alert::success('Enquiry created successfully.')->flash();
 
         return redirect(backpack_url('enquiry'));
-    }
-
-    public function edit($id)
-    {
-        $enquiry = Enquiry::findOrFail($id);
-
-        return view('admin.enquiry.create', [
-            'title' => 'Edit Enquiry',
-            'enquiry' => $enquiry,
-            'sources' => OrgService::leadSources(),
-            'subSources' => OrgService::leadSubSources($enquiry->source_code),
-            'campaigns' => Campaign::orderBy('name')->pluck('name', 'name'),
-            'segments' => OrgService::segments(),
-            'models' => OrgService::models($enquiry->segment_code),
-            'variants' => OrgService::variants($enquiry->model_code),
-            'colors' => OrgService::colors($enquiry->variant_code),
-            'branches' => OrgService::branches(),
-            'locations' => OrgService::locations($enquiry->dealer_branch),
-            'activity_types' => OrgService::keywordValueByCode('ACTIVITY_TYPE'),
-            'activity_models' => OrgService::models($enquiry->activity_segment),
-            'activity_locations' => OrgService::locations($enquiry->activity_branch),
-            'saleconsultants' => OrgService::getUsers(desigCode: 'CNS'),
-        ]);
     }
 
     public function update(Request $request, $id)
@@ -407,7 +405,7 @@ class EnquiryCrudController extends CrudController
             'referee_phone' => 'nullable|max:15',
             'referee_name' => 'nullable|max:100',
             'planned_campaign' => 'nullable|max:150',
-            'likely_purchase_date' => 'nullable|date',
+            'likely_purchase_date' => 'nullable|max:150',
             'activity_type' => 'nullable',
             'activity_segment' => 'nullable',
             'activity_model' => 'nullable',
@@ -458,6 +456,22 @@ class EnquiryCrudController extends CrudController
             'followup_date' => 'nullable|date',
             'followup_time' => 'nullable'
         ]);
+
+        // Save Segment Name
+        $segments = OrgService::segments();
+        $validated['segment'] = $segments[$validated['segment_code']] ?? null;
+
+        // Save Model Name
+        $models = OrgService::models($validated['segment_code']);
+        $validated['model'] = $models[$validated['model_code']] ?? null;
+
+        // Save Variant Name
+        $variants = OrgService::variants($validated['model_code']);
+        $validated['variant'] = $variants[$validated['variant_code']]['name'] ?? null;
+
+        // Save Color Name
+        $colors = OrgService::colors($validated['variant_code']);
+        $validated['color'] = $colors[$validated['color_code']] ?? null;
 
         $validated['updated_by'] = backpack_user()->id;
 

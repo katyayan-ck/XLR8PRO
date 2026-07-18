@@ -732,26 +732,26 @@ class OrgService
     }
 
     public static function getLocationByPincode($pincode)
-{
-    $postOffice = PinCodes::with(
-        'parentLocation.parentLocation.parentLocation'
-    )
-    ->where('level', 'POSTOFFICE')
-    ->where('pincode', $pincode)
-    ->first();
+    {
+        $postOffice = PinCodes::with(
+            'parentLocation.parentLocation.parentLocation'
+        )
+            ->where('level', 'POSTOFFICE')
+            ->where('pincode', $pincode)
+            ->first();
 
-    if (!$postOffice) {
-        return [];
+        if (!$postOffice) {
+            return [];
+        }
+
+        $tehsil = $postOffice->parentLocation;
+        $district = $tehsil?->parentLocation;
+        $state = $district?->parentLocation;
+
+        return [
+            'tehsil' => $tehsil?->name,
+            'district' => $district?->name,
+            'city' => $state?->name,
+        ];
     }
-
-    $tehsil = $postOffice->parentLocation;
-    $district = $tehsil?->parentLocation;
-    $state = $district?->parentLocation;
-
-    return [
-        'tehsil'  => $tehsil?->name,
-        'district'=> $district?->name,
-        'city'    => $state?->name,
-    ];
-}
 }
