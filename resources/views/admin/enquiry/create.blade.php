@@ -6,562 +6,542 @@
 
 
 @push('after_styles')
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <style>
-        .card {
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-        }
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+    .card {
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    }
 
-        .form-control:focus,
-        .form-select:focus {
-            border-color: #80bdff;
-            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25);
-        }
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #80bdff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25);
+    }
 
-        .required-mark {
-            color: red;
-        }
-    </style>
+    .required-mark {
+        color: red;
+    }
+</style>
 @endpush
 
 @section('content')
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header text-black">
-                        <h2 class="mb-0">Add Hot Enquiry</h2>
-                    </div>
-                    <div class="card-body">
-                        <form method="POST" action="{{ backpack_url('enquiry') }}" enctype="multipart/form-data">
-                            @csrf
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header text-black">
+                    <h2 class="mb-0">Add Hot Enquiry</h2>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ backpack_url('enquiry') }}" enctype="multipart/form-data">
+                        @csrf
 
-                            <div class="row"></div>
-                            <div class="card mb-4">
-                                <div class="card-header bg-light">
-                                    <h5 class="mb-0">Customer Information</h5>
+
+
+                        <h3 class="mb-0 ms-3">Customer Information</h3>
+
+
+                        <div class="card-body">
+
+                            <div class="row">
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">
+                                        Enquiry No
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" name="enquiry_no" class="form-control"
+                                        value="{{ old('enquiry_no', isset($enquiry) ? $enquiry->enquiry_no : '') }}"
+                                        required>
                                 </div>
 
-                                <div class="card-body">
+                                {{-- Customer First Name --}}
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">
+                                        Customer First Name
+                                        <span class="text-danger">*</span>
+                                    </label>
 
-                                    <div class="row">
-                                        <div class="col-md-3 mb-3">
-                                            <label class="form-label">
-                                                Enquiry No
-                                                <span class="text-danger">*</span>
-                                            </label>
-                                            <input type="text" name="enquiry_no" class="form-control"
-                                                value="{{ old('enquiry_no', isset($enquiry) ? $enquiry->enquiry_no : '') }}"
-                                                required>
-                                        </div>
-
-                                        {{-- Customer First Name --}}
-                                        <div class="col-md-3 mb-3">
-                                            <label class="form-label">
-                                                Customer First Name
-                                                <span class="text-danger">*</span>
-                                            </label>
-
-                                            <input type="text" name="first_name" class="form-control"
-                                                value="{{ old('first_name') }}" required>
-                                        </div>
-
-                                        {{-- Customer Last Name --}}
-                                        <div class="col-md-3 mb-3">
-                                            <label class="form-label">
-                                                Customer Last Name
-                                                <span class="text-danger">*</span>
-                                            </label>
-
-                                            <input type="text" name="last_name" class="form-control"
-                                                value="{{ old('last_name') }}" required>
-                                        </div>
-
-                                        {{-- Phone Number --}}
-                                        <div class="col-md-3 mb-3">
-                                            <label class="form-label">
-                                                Phone Number
-                                                <span class="text-danger">*</span>
-                                            </label>
-
-                                            <input type="text" id="mobile" name="mobile" maxlength="10"
-                                                class="form-control" value="{{ old('mobile') }}" required>
-                                        </div>
-
-                                        {{-- Email --}}
-                                        <div class="col-md-3 mb-3">
-                                            <label class="form-label">
-
-                                                Email ID
-
-                                                <small class="text-muted">
-                                                    (Optional)
-                                                </small>
-
-                                            </label>
-
-                                            <input type="email" name="email" class="form-control"
-                                                value="{{ old('email') }}">
-                                        </div>
-
-                                    </div>
-
+                                    <input type="text" name="first_name" class="form-control"
+                                        value="{{ old('first_name') }}" required>
                                 </div>
+
+                                {{-- Customer Last Name --}}
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">
+                                        Customer Last Name
+                                        <span class="text-danger">*</span>
+                                    </label>
+
+                                    <input type="text" name="last_name" class="form-control"
+                                        value="{{ old('last_name') }}" required>
+                                </div>
+
+                                {{-- Phone Number --}}
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">
+                                        Phone Number
+                                        <span class="text-danger">*</span>
+                                    </label>
+
+                                    <input type="text" id="mobile" name="mobile" maxlength="10" class="form-control"
+                                        value="{{ old('mobile') }}" required>
+                                </div>
+
+                                {{-- Email --}}
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">
+
+                                        Email ID
+
+                                        <small class="text-muted">
+                                            (Optional)
+                                        </small>
+
+                                    </label>
+
+                                    <input type="email" name="email" class="form-control" value="{{ old('email') }}">
+                                </div>
+
                             </div>
 
-                            {{-- =========================== SHORT ENQUIRY Enquiry Information =========================== --}}
+                        </div>
 
-                            <div class="card mb-4">
 
-                                <div class="card-header bg-light">
+                        {{-- =========================== SHORT ENQUIRY Enquiry Information ===========================
+                        --}}
 
-                                    <h5 class="mb-0">
 
-                                        Enquiry Information
 
-                                    </h5>
+
+
+                        <h3 class="mb-0 ms-3">
+
+                            Enquiry Information
+
+                        </h3>
+
+
+
+                        <div class="card-body">
+
+                            <div class="row">
+
+                                {{-- Enquiry Type --}}
+                                <div class="col-md-3 mb-3">
+
+                                    <label class="form-label">
+                                        Enquiry Type
+                                        <span class="text-danger">*</span>
+                                    </label>
+
+                                    <select name="enquiry_type" id="enquiry_type" class="form-control form-select"
+                                        required>
+
+                                        <option value="">Select Enquiry Type</option>
+
+                                        @foreach ($enquiry_types as $etype)
+                                        <option value="{{ $etype['code'] }}">
+                                            {{ $etype['value'] }}
+                                        </option>
+                                        @endforeach
+
+                                    </select>
 
                                 </div>
 
-                                <div class="card-body">
+                                {{-- Enquiry Source --}}
+                                <div class="col-md-3 mb-3">
 
-                                    <div class="row">
+                                    <label class="form-label">
+                                        Enquiry Source
+                                        <span class="text-danger">*</span>
+                                    </label>
 
-                                        {{-- Enquiry Type --}}
-                                        <div class="col-md-3 mb-3">
+                                    <select name="source_code" id="source_code" class="form-control form-select"
+                                        required>
 
-                                            <label class="form-label">
-                                                Enquiry Type
-                                                <span class="text-danger">*</span>
-                                            </label>
+                                        <option value="">
+                                            Select Enquiry Source
+                                        </option>
 
-                                            <select name="enquiry_type" id="enquiry_type" class="form-control form-select"
-                                                required>
+                                    </select>
 
-                                                <option value="">Select Enquiry Type</option>
+                                </div>
 
-                                                @foreach ($enquiry_types as $etype)
-                                                    <option value="{{ $etype['code'] }}">
-                                                        {{ $etype['value'] }}
-                                                    </option>
-                                                @endforeach
+                                {{-- Enquiry Sub Source --}}
+                                <div class="col-md-3 mb-3">
 
-                                            </select>
+                                    <label class="form-label">
+                                        Enquiry Sub Source
+                                        <span class="text-danger">*</span>
+                                    </label>
 
-                                        </div>
+                                    <select name="sub_source" id="sub_source" class="form-control form-select" disabled>
 
-                                        {{-- Enquiry Source --}}
-                                        <div class="col-md-3 mb-3">
+                                        <option value="">
+                                            Select Enquiry Sub Source
+                                        </option>
 
-                                            <label class="form-label">
-                                                Enquiry Source
-                                                <span class="text-danger">*</span>
-                                            </label>
+                                    </select>
 
-                                            <select name="source_code" id="source_code" class="form-control form-select"
-                                                required>
+                                </div>
 
-                                                <option value="">
-                                                    Select Enquiry Source
-                                                </option>
+                                <div class="col-md-3 mb-3">
 
-                                            </select>
+                                    <label class="form-label">
+                                        Planned Campaign
+                                    </label>
 
-                                        </div>
+                                    <select name="planned_campaign" id="planned_campaign"
+                                        class="form-control form-select">
 
-                                        {{-- Enquiry Sub Source --}}
-                                        <div class="col-md-3 mb-3">
+                                        <option value="">Select Planned Campaign</option>
 
-                                            <label class="form-label">
-                                                Enquiry Sub Source
-                                                <span class="text-danger">*</span>
-                                            </label>
+                                        @foreach ($campaigns as $name)
+                                        <option value="{{ $name }}">
+                                            {{ $name }}
+                                        </option>
+                                        @endforeach
 
-                                            <select name="sub_source" id="sub_source" class="form-control form-select"
-                                                disabled>
+                                    </select>
 
-                                                <option value="">
-                                                    Select Enquiry Sub Source
-                                                </option>
+                                </div>
 
-                                            </select>
+                                <div class="row d-none" id="referenceFields">
 
-                                        </div>
+                                    <div class="col-md-3 mb-3">
 
-                                        <div class="col-md-4 mb-3">
+                                        <label class="form-label">
+                                            Referred By
+                                            <span class="text-danger">*</span>
+                                        </label>
 
-                                            <label class="form-label">
-                                                Planned Campaign
-                                            </label>
+                                        <select name="referred_by" id="referred_by" class="form-control form-select">
 
-                                            <select name="planned_campaign" id="planned_campaign"
-                                                class="form-control form-select">
+                                            <option value="">Select Referred By</option>
 
-                                                <option value="">Select Planned Campaign</option>
+                                            <option value="Customer" {{ old('referred_by')=='Customer' ? 'selected' : ''
+                                                }}>
+                                                Customer
+                                            </option>
 
-                                                @foreach ($campaigns as $name)
-                                                    <option value="{{ $name }}">
-                                                        {{ $name }}
-                                                    </option>
-                                                @endforeach
+                                            <option value="Team Member" {{ old('referred_by')=='Team Member'
+                                                ? 'selected' : '' }}>
+                                                Team Member
+                                            </option>
 
-                                            </select>
+                                            <option value="Promoter" {{ old('referred_by')=='Promoter' ? 'selected' : ''
+                                                }}>
+                                                Promoter
+                                            </option>
 
-                                        </div>
-
-                                        <div class="row d-none" id="referenceFields">
-
-                                            <div class="col-md-4 mb-3">
-
-                                                <label class="form-label">
-                                                    Referred By
-                                                    <span class="text-danger">*</span>
-                                                </label>
-
-                                                <select name="referred_by" id="referred_by"
-                                                    class="form-control form-select">
-
-                                                    <option value="">Select Referred By</option>
-
-                                                    <option value="Customer"
-                                                        {{ old('referred_by') == 'Customer' ? 'selected' : '' }}>
-                                                        Customer
-                                                    </option>
-
-                                                    <option value="Team Member"
-                                                        {{ old('referred_by') == 'Team Member' ? 'selected' : '' }}>
-                                                        Team Member
-                                                    </option>
-
-                                                    <option value="Promoter"
-                                                        {{ old('referred_by') == 'Promoter' ? 'selected' : '' }}>
-                                                        Promoter
-                                                    </option>
-
-                                                </select>
-
-                                            </div>
-
-                                            <div class="col-md-4 mb-3">
-
-                                                <label class="form-label">
-                                                    Referee Phone Number
-                                                    <span class="text-danger">*</span>
-                                                </label>
-
-                                                <input type="text" name="referee_phone" id="referee_phone"
-                                                    class="form-control" maxlength="10"
-                                                    value="{{ old('referee_phone') }}">
-
-                                            </div>
-
-                                            {{-- <div class="col-md-4 mb-3">
-
-                                                <label class="form-label">
-                                                    Referee Name
-                                                    <span class="text-danger">*</span>
-                                                </label>
-
-                                                <select name="referee_name" id="referee_name"
-                                                    class="form-control form-select">
-                                                    <option value="">Select Name</option>
-                                                </select>
-
-                                            </div> --}}
-
-                                            <input type="hidden" name="referee_name" id="referee_name">
-
-                                            <div class="col-md-4 mb-3" id="referee_name_dropdown" style="display:none;">
-                                                <label class="form-label">
-                                                    Referee Name
-                                                    <span class="text-danger">*</span>
-                                                </label>
-
-                                                <select name="person_code" id="person_code"
-                                                    class="form-control form-select">
-                                                    <option value="">Select Name</option>
-                                                </select>
-                                            </div>
-
-                                            <div class="col-md-4 mb-3" id="referee_name_manual" style="display:none;">
-                                                <label class="form-label">
-                                                    Referee Name
-                                                    <span class="text-danger">*</span>
-                                                </label>
-
-                                                <input type="text" id="referee_name_manual_input"
-                                                    class="form-control">
-                                            </div>
-                                        </div>
-
-                                        {{-- Likely Purchase Date --}}
-                                        <div class="col-md-3 mb-3">
-
-                                            <label class="form-label">
-
-                                                Likely Purchase Date
-
-                                                <span class="text-danger">*</span>
-
-                                            </label>
-
-                                            <select name="likely_purchase_date" class="form-control form-select">
-
-                                                <option value="">Select Likely Purchase Date</option>
-
-                                                @foreach ($likely_purchase_dates as $item)
-                                                    <option value="{{ $item['code'] }}">
-                                                        {{ $item['value'] }}
-                                                    </option>
-                                                @endforeach
-
-                                            </select>
-
-                                        </div>
+                                        </select>
 
                                     </div>
+
+                                    <div class="col-md-3 mb-3">
+
+                                        <label class="form-label">
+                                            Referee Phone Number
+                                            <span class="text-danger">*</span>
+                                        </label>
+
+                                        <input type="text" name="referee_phone" id="referee_phone" class="form-control"
+                                            maxlength="10" value="{{ old('referee_phone') }}">
+
+                                    </div>
+
+                                    {{-- <div class="col-md-4 mb-3">
+
+                                        <label class="form-label">
+                                            Referee Name
+                                            <span class="text-danger">*</span>
+                                        </label>
+
+                                        <select name="referee_name" id="referee_name" class="form-control form-select">
+                                            <option value="">Select Name</option>
+                                        </select>
+
+                                    </div> --}}
+
+                                    <input type="hidden" name="referee_name" id="referee_name">
+
+                                    <div class="col-md-4 mb-3" id="referee_name_dropdown" style="display:none;">
+                                        <label class="form-label">
+                                            Referee Name
+                                            <span class="text-danger">*</span>
+                                        </label>
+
+                                        <select name="person_code" id="person_code" class="form-control form-select">
+                                            <option value="">Select Name</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-3 mb-3" id="referee_name_manual" style="display:none;">
+                                        <label class="form-label">
+                                            Referee Name
+                                            <span class="text-danger">*</span>
+                                        </label>
+
+                                        <input type="text" id="referee_name_manual_input" class="form-control">
+                                    </div>
+                                </div>
+
+                                {{-- Likely Purchase Date --}}
+                                <div class="col-md-3 mb-3">
+
+                                    <label class="form-label">
+
+                                        Likely Purchase Date
+
+                                        <span class="text-danger">*</span>
+
+                                    </label>
+
+                                    <select name="likely_purchase_date" class="form-control form-select">
+
+                                        <option value="">Select Likely Purchase Date</option>
+
+                                        @foreach ($likely_purchase_dates as $item)
+                                        <option value="{{ $item['code'] }}">
+                                            {{ $item['value'] }}
+                                        </option>
+                                        @endforeach
+
+                                    </select>
 
                                 </div>
 
                             </div>
-                            {{-- ===========================  SHORT ENQUIRY Vehicle Details =========================== --}}
 
-                            <div class="card mb-4">
+                        </div>
 
-                                <div class="card-header bg-light">
-                                    <h5 class="mb-0">Vehicle Details</h5>
+                        {{-- =========================== SHORT ENQUIRY Vehicle Details =========================== --}}
+
+
+
+                        <h3 class="mb-0 ms-3">Vehicle Details</h3>
+
+                        <div class="card-body">
+
+                            <div class="row">
+
+                                {{-- Segment --}}
+                                <div class="col-md-3 mb-3">
+
+                                    <label class="form-label">
+
+                                        Segment
+
+                                        <span class="text-danger">*</span>
+
+                                    </label>
+
+                                    <select name="segment_code" id="segment_code" class="form-control form-select"
+                                        required>
+
+                                        <option value="">
+                                            Select Segment
+                                        </option>
+
+                                        @foreach ($segments as $code => $name)
+                                        <option value="{{ $code }}" {{ old('segment_code')==$code ? 'selected' : '' }}>
+
+                                            {{ $name }}
+
+                                        </option>
+                                        @endforeach
+
+                                    </select>
+
                                 </div>
 
-                                <div class="card-body">
+                                {{-- Model --}}
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">
+                                        Model
+                                        <span class="text-danger">*</span>
+                                    </label>
 
-                                    <div class="row">
+                                    <select name="model_code" id="model_code" class="form-control form-select" required>
 
-                                        {{-- Segment --}}
-                                        <div class="col-md-3 mb-3">
+                                        <option value="">
+                                            Select Model
+                                        </option>
 
-                                            <label class="form-label">
+                                    </select>
+                                </div>
 
-                                                Segment
+                                {{-- Variant --}}
+                                <div class="col-md-3 mb-3">
 
-                                                <span class="text-danger">*</span>
+                                    <label class="form-label">
+                                        Variant
+                                        <span class="text-danger">*</span>
+                                    </label>
 
-                                            </label>
+                                    <select name="variant_code" id="variant_code" class="form-control form-select"
+                                        required>
 
-                                            <select name="segment_code" id="segment_code"
-                                                class="form-control form-select" required>
+                                        <option value="">
+                                            Select Variant
+                                        </option>
 
-                                                <option value="">
-                                                    Select Segment
-                                                </option>
+                                    </select>
 
-                                                @foreach ($segments as $code => $name)
-                                                    <option value="{{ $code }}"
-                                                        {{ old('segment_code') == $code ? 'selected' : '' }}>
+                                </div>
 
-                                                        {{ $name }}
+                                {{-- Color --}}
+                                <div class="col-md-3 mb-3">
 
-                                                    </option>
-                                                @endforeach
+                                    <label class="form-label">
+                                        Color
+                                        <span class="text-danger">*</span>
+                                    </label>
 
-                                            </select>
+                                    <select name="color_code" id="color_code" class="form-control form-select" required>
 
-                                        </div>
+                                        <option value="">
+                                            Select Color
+                                        </option>
 
-                                        {{-- Model --}}
-                                        <div class="col-md-3 mb-3">
-                                            <label class="form-label">
-                                                Model
-                                                <span class="text-danger">*</span>
-                                            </label>
+                                    </select>
 
-                                            <select name="model_code" id="model_code" class="form-control form-select"
-                                                required>
+                                </div>
 
-                                                <option value="">
-                                                    Select Model
-                                                </option>
+                                {{-- Fuel Type --}}
+                                <div class="col-md-3 mb-3">
 
-                                            </select>
-                                        </div>
+                                    <label class="form-label">
+                                        Fuel Type
+                                        <span class="text-danger">*</span>
+                                    </label>
 
-                                        {{-- Variant --}}
-                                        <div class="col-md-3 mb-3">
+                                    <input type="text" id="fuel_type" class="form-control" readonly>
 
-                                            <label class="form-label">
-                                                Variant
-                                                <span class="text-danger">*</span>
-                                            </label>
+                                    <input type="hidden" id="fuel_type_id" name="fuel_type">
 
-                                            <select name="variant_code" id="variant_code"
-                                                class="form-control form-select" required>
+                                </div>
 
-                                                <option value="">
-                                                    Select Variant
-                                                </option>
+                                {{-- Transmission --}}
+                                <div class="col-md-3 mb-3">
 
-                                            </select>
+                                    <label class="form-label">
+                                        Transmission
+                                        <span class="text-danger">*</span>
+                                    </label>
 
-                                        </div>
+                                    <input type="text" id="transmission" name="transmission" class="form-control"
+                                        readonly>
 
-                                        {{-- Color --}}
-                                        <div class="col-md-3 mb-3">
+                                </div>
 
-                                            <label class="form-label">
-                                                Color
-                                                <span class="text-danger">*</span>
-                                            </label>
+                                {{-- Drivetrain --}}
+                                <div class="col-md-3 mb-3">
 
-                                            <select name="color_code" id="color_code" class="form-control form-select"
-                                                required>
+                                    <label class="form-label">
+                                        Drivetrain
+                                        <span class="text-danger">*</span>
+                                    </label>
 
-                                                <option value="">
-                                                    Select Color
-                                                </option>
+                                    <input type="text" id="drivetrain" name="drivetrain" class="form-control" readonly>
 
-                                            </select>
+                                </div>
 
-                                        </div>
+                                {{-- Seating --}}
+                                <div class="col-md-3 mb-3">
 
-                                        {{-- Fuel Type --}}
-                                        <div class="col-md-3 mb-3">
+                                    <label class="form-label">
+                                        Seating
+                                        <span class="text-danger">*</span>
+                                    </label>
 
-                                            <label class="form-label">
-                                                Fuel Type
-                                                <span class="text-danger">*</span>
-                                            </label>
+                                    <input type="text" id="seating" name="seating" class="form-control" readonly>
 
-                                            <input type="text" id="fuel_type" class="form-control" readonly>
+                                </div>
 
-                                            <input type="hidden" id="fuel_type_id" name="fuel_type">
+                                {{-- Commercial/LMM Only --}}
+                                <div class="row" id="commercialSection">
 
-                                        </div>
+                                    <div class="col-md-3 mb-3">
 
-                                        {{-- Transmission --}}
-                                        <div class="col-md-3 mb-3">
+                                        <label class="form-label">
+                                            Usage Area
+                                        </label>
 
-                                            <label class="form-label">
-                                                Transmission
-                                                <span class="text-danger">*</span>
-                                            </label>
+                                        <select name="usage_area" class="form-control form-select">
 
-                                            <input type="text" id="transmission" name="transmission"
-                                                class="form-control" readonly>
+                                            <option value="">Select Usage Area</option>
 
-                                        </div>
+                                            @foreach ($usage_areas as $item)
+                                            <option value="{{ $item['code'] }}">
+                                                {{ $item['value'] }}
+                                            </option>
+                                            @endforeach
 
-                                        {{-- Drivetrain --}}
-                                        <div class="col-md-3 mb-3">
+                                        </select>
 
-                                            <label class="form-label">
-                                                Drivetrain
-                                                <span class="text-danger">*</span>
-                                            </label>
+                                    </div>
 
-                                            <input type="text" id="drivetrain" name="drivetrain" class="form-control"
-                                                readonly>
+                                    <div class="col-md-3 mb-3">
 
-                                        </div>
+                                        <label class="form-label">
+                                            KM Travelled Daily
+                                        </label>
 
-                                        {{-- Seating --}}
-                                        <div class="col-md-3 mb-3">
+                                        <select name="km_travelled_daily" class="form-control form-select">
 
-                                            <label class="form-label">
-                                                Seating
-                                                <span class="text-danger">*</span>
-                                            </label>
+                                            <option value="">Select KM Travelled Daily</option>
 
-                                            <input type="text" id="seating" name="seating" class="form-control"
-                                                readonly>
+                                            @foreach ($km_travelled_daily as $item)
+                                            <option value="{{ $item['code'] }}">
+                                                {{ $item['value'] }}
+                                            </option>
+                                            @endforeach
 
-                                        </div>
+                                        </select>
 
-                                        {{-- Commercial/LMM Only --}}
-                                        <div class="row" id="commercialSection">
+                                    </div>
 
-                                            <div class="col-md-3 mb-3">
+                                    <div class="col-md-3 mb-3">
 
-                                                <label class="form-label">
-                                                    Usage Area
-                                                </label>
+                                        <label class="form-label">
+                                            Application Type
+                                        </label>
 
-                                                <select name="usage_area" class="form-control form-select">
+                                        <select name="application_type" id="application_type"
+                                            class="form-control form-select">
 
-                                                    <option value="">Select Usage Area</option>
+                                            <option value="">Select Application Type</option>
 
-                                                    @foreach ($usage_areas as $item)
-                                                        <option value="{{ $item['code'] }}">
-                                                            {{ $item['value'] }}
-                                                        </option>
-                                                    @endforeach
+                                            @foreach ($application_types as $item)
+                                            <option value="{{ $item['code'] }}">
+                                                {{ $item['value'] }}
+                                            </option>
+                                            @endforeach
 
-                                                </select>
+                                        </select>
 
-                                            </div>
+                                    </div>
 
-                                            <div class="col-md-3 mb-3">
+                                    <div class="col-md-3 mb-3">
 
-                                                <label class="form-label">
-                                                    KM Travelled Daily
-                                                </label>
+                                        <label class="form-label">
+                                            Application
+                                        </label>
 
-                                                <select name="km_travelled_daily" class="form-control form-select">
+                                        <select name="application" id="application" class="form-control form-select">
 
-                                                    <option value="">Select KM Travelled Daily</option>
+                                            <option value="">Select Application</option>
 
-                                                    @foreach ($km_travelled_daily as $item)
-                                                        <option value="{{ $item['code'] }}">
-                                                            {{ $item['value'] }}
-                                                        </option>
-                                                    @endforeach
+                                            @foreach ($applications as $item)
+                                            <option value="{{ $item['code'] }}">
+                                                {{ $item['value'] }}
+                                            </option>
+                                            @endforeach
 
-                                                </select>
-
-                                            </div>
-
-                                            <div class="col-md-3 mb-3">
-
-                                                <label class="form-label">
-                                                    Application Type
-                                                </label>
-
-                                                <select name="application_type" id="application_type"
-                                                    class="form-control form-select">
-
-                                                    <option value="">Select Application Type</option>
-
-                                                    @foreach ($application_types as $item)
-                                                        <option value="{{ $item['code'] }}">
-                                                            {{ $item['value'] }}
-                                                        </option>
-                                                    @endforeach
-
-                                                </select>
-
-                                            </div>
-
-                                            <div class="col-md-3 mb-3">
-
-                                                <label class="form-label">
-                                                    Application
-                                                </label>
-
-                                                <select name="application" id="application"
-                                                    class="form-control form-select">
-
-                                                    <option value="">Select Application</option>
-
-                                                    @foreach ($applications as $item)
-                                                        <option value="{{ $item['code'] }}">
-                                                            {{ $item['value'] }}
-                                                        </option>
-                                                    @endforeach
-
-                                                </select>
-
-                                            </div>
-
-                                        </div>
+                                        </select>
 
                                     </div>
 
@@ -569,570 +549,424 @@
 
                             </div>
 
-                            {{-- =========================== SHORT ENQUIRY Dealer Details =========================== --}}
+                        </div>
 
-                            <div class="card mb-4">
 
-                                <div class="card-header bg-light">
+                        {{-- =========================== SHORT ENQUIRY Dealer Details =========================== --}}
 
-                                    <h5 class="mb-0">
-                                        Dealer Details
-                                    </h5>
+
+
+
+                        <h3 class="mb-0 ms-3">
+                            Dealer Details
+                        </h3>
+
+
+                        <div class="card-body">
+
+                            <div class="row">
+
+                                {{-- Dealer Branch --}}
+                                <div class="col-md-4 mb-3">
+
+                                    <label class="form-label">
+                                        Select Dealer Branch
+                                        <span class="text-danger">*</span>
+                                    </label>
+
+                                    <select name="dealer_branch" id="dealer_branch" class="form-control form-select"
+                                        required>
+
+                                        <option value="">Select Dealer Branch</option>
+
+                                        @foreach ($branches as $code => $name)
+                                        <option value="{{ $code }}">
+                                            {{ $name }}
+                                        </option>
+                                        @endforeach
+
+                                    </select>
 
                                 </div>
 
-                                <div class="card-body">
+                                {{-- Dealer Location --}}
+                                <div class="col-md-4 mb-3">
 
-                                    <div class="row">
+                                    <label class="form-label">
+                                        Select Dealer Location
+                                        <span class="text-danger">*</span>
+                                    </label>
 
-                                        {{-- Dealer Branch --}}
-                                        <div class="col-md-4 mb-3">
+                                    <select name="dealer_location" id="dealer_location" class="form-control form-select"
+                                        required>
 
-                                            <label class="form-label">
-                                                Select Dealer Branch
-                                                <span class="text-danger">*</span>
-                                            </label>
+                                        <option value="">Select Dealer Location</option>
 
-                                            <select name="dealer_branch" id="dealer_branch"
-                                                class="form-control form-select" required>
+                                    </select>
 
-                                                <option value="">Select Dealer Branch</option>
+                                </div>
 
-                                                @foreach ($branches as $code => $name)
-                                                    <option value="{{ $code }}">
-                                                        {{ $name }}
-                                                    </option>
-                                                @endforeach
+                                {{-- Sales Consultant --}}
+                                <div class="col-md-4 mb-3">
 
-                                            </select>
+                                    <label class="form-label">
+                                        Select SC
+                                        <span class="text-danger">*</span>
+                                    </label>
 
-                                        </div>
+                                    <select name="sales_consultant_id" class="form-control form-select" required>
 
-                                        {{-- Dealer Location --}}
-                                        <div class="col-md-4 mb-3">
+                                        <option value="">
+                                            Select Sales Consultant
+                                        </option>
 
-                                            <label class="form-label">
-                                                Select Dealer Location
-                                                <span class="text-danger">*</span>
-                                            </label>
+                                        @foreach ($saleconsultants as $consultant)
+                                        <option value="{{ $consultant['person_code'] }}">
 
-                                            <select name="dealer_location" id="dealer_location"
-                                                class="form-control form-select" required>
+                                            {{ $consultant['display_name'] }}
+                                            -
+                                            {{ $consultant['employee_code'] }}
 
-                                                <option value="">Select Dealer Location</option>
+                                        </option>
+                                        @endforeach
 
-                                            </select>
-
-                                        </div>
-
-                                        {{-- Sales Consultant --}}
-                                        <div class="col-md-4 mb-3">
-
-                                            <label class="form-label">
-                                                Select SC
-                                                <span class="text-danger">*</span>
-                                            </label>
-
-                                            <select name="sales_consultant_id" class="form-control form-select" required>
-
-                                                <option value="">
-                                                    Select Sales Consultant
-                                                </option>
-
-                                                @foreach ($saleconsultants as $consultant)
-                                                    <option value="{{ $consultant['person_code'] }}">
-
-                                                        {{ $consultant['display_name'] }}
-                                                        -
-                                                        {{ $consultant['employee_code'] }}
-
-                                                    </option>
-                                                @endforeach
-
-                                            </select>
-
-                                        </div>
-
-                                    </div>
+                                    </select>
 
                                 </div>
 
                             </div>
 
-                            {{-- =========================== SHORT ENQUIRY Follow Up =========================== --}}
+                        </div>
 
-                            <div class="card mb-4">
 
-                                <div class="card-header bg-light">
+                        {{-- =========================== SHORT ENQUIRY Follow Up =========================== --}}
 
-                                    <h5 class="mb-0">
-                                        Follow Up
-                                    </h5>
 
-                                </div>
 
-                                <div class="card-body">
 
-                                    <div class="row">
+                        <h3 class="mb-0 ms-3">
+                            Follow Up
+                        </h3>
 
-                                        {{-- Follow Up Type --}}
-                                        <div class="col-md-4 mb-3">
 
-                                            <label class="form-label">
-                                                Follow Up Type
-                                                <span class="text-danger">*</span>
-                                            </label>
+                        <div class="card-body">
 
-                                            <select name="followup_type" class="form-control form-select">
+                            <div class="row">
 
-                                                <option value="">Select Follow Up Type</option>
+                                {{-- Follow Up Type --}}
+                                <div class="col-md-4 mb-3">
 
-                                                @foreach ($follow_up_types as $item)
-                                                    <option value="{{ $item['code'] }}">
-                                                        {{ $item['value'] }}
-                                                    </option>
-                                                @endforeach
+                                    <label class="form-label">
+                                        Follow Up Type
+                                        <span class="text-danger">*</span>
+                                    </label>
 
-                                            </select>
+                                    <select name="followup_type" class="form-control form-select">
 
-                                        </div>
+                                        <option value="">Select Follow Up Type</option>
 
-                                        {{-- Follow Up Date --}}
-                                        <div class="col-md-4 mb-3">
+                                        @foreach ($follow_up_types as $item)
+                                        <option value="{{ $item['code'] }}">
+                                            {{ $item['value'] }}
+                                        </option>
+                                        @endforeach
 
-                                            <label class="form-label">
-                                                Follow Up Date
-                                                <span class="text-danger">*</span>
-                                            </label>
-
-                                            <input type="text" id="followup_date" name="followup_date"
-                                                class="form-control" value="{{ old('followup_date') }}"
-                                                placeholder="Select Follow Up Date">
-
-                                        </div>
-
-                                        {{-- Follow Up Time --}}
-                                        <div class="col-md-4 mb-3">
-
-                                            <label class="form-label">
-                                                Follow Up Time
-                                                <span class="text-danger">*</span>
-                                            </label>
-
-                                            <input type="time" name="followup_time" class="form-control"
-                                                value="{{ old('followup_time') }}" required>
-
-                                        </div>
-
-                                    </div>
+                                    </select>
 
                                 </div>
 
-                            </div>
-                            {{-- =========================== LONG ENQUIRY Customer Details =========================== --}}
+                                {{-- Follow Up Date --}}
+                                <div class="col-md-4 mb-3">
 
-                            <div class="card mb-4">
+                                    <label class="form-label">
+                                        Follow Up Date
+                                        <span class="text-danger">*</span>
+                                    </label>
 
-                                <div class="card-header bg-light">
-                                    <h5 class="mb-0">Long Enquiry - Customer Details</h5>
+                                    <input type="text" id="followup_date" name="followup_date" class="form-control"
+                                        value="{{ old('followup_date') }}" placeholder="Select Follow Up Date">
+
                                 </div>
 
-                                <div class="card-body">
+                                {{-- Follow Up Time --}}
+                                <div class="col-md-4 mb-3">
 
-                                    <div class="row">
+                                    <label class="form-label">
+                                        Follow Up Time
+                                        <span class="text-danger">*</span>
+                                    </label>
 
-                                        {{-- Occupation Type --}}
-                                        <div class="col-md-3 mb-3">
-                                            <label class="form-label">
-                                                Occupation Type
-                                            </label>
-
-                                            <select name="occupation_type" class="form-control form-select">
-
-                                                <option value="">Select Occupation Type</option>
-
-                                                @foreach ($occupation_types as $item)
-                                                    <option value="{{ $item['code'] }}">
-                                                        {{ $item['value'] }}
-                                                    </option>
-                                                @endforeach
-
-                                            </select>
-                                        </div>
-
-                                        {{-- Customer Type --}}
-                                        <div class="col-md-3 mb-3">
-                                            <label class="form-label">
-                                                Customer Type
-                                                <small class="text-muted">(Optional)</small>
-                                            </label>
-
-                                            <select name="customer_type" class="form-control form-select">
-
-                                                <option value="">Select Customer Type</option>
-
-                                                @foreach ($customer_types as $item)
-                                                    <option value="{{ $item['code'] }}">
-                                                        {{ $item['value'] }}
-                                                    </option>
-                                                @endforeach
-
-                                            </select>
-                                        </div>
-
-                                        {{-- Occupation Sub Type --}}
-                                        <div class="col-md-3 mb-3">
-                                            <label class="form-label">
-                                                Occupation Sub Type
-                                                <small class="text-muted">(Optional)</small>
-                                            </label>
-
-                                            <select name="occupation_sub_type" class="form-control form-select">
-
-                                                <option value="">Select Occupation Sub Type</option>
-
-                                                @foreach ($occupation_sub_types as $item)
-                                                    <option value="{{ $item['code'] }}">
-                                                        {{ $item['value'] }}
-                                                    </option>
-                                                @endforeach
-
-                                            </select>
-                                        </div>
-
-                                        {{-- Company Name --}}
-                                        <div class="col-md-3 mb-3">
-                                            <label class="form-label">
-                                                Company Name
-                                                <small class="text-muted">(Optional)</small>
-                                            </label>
-
-                                            <input type="text" name="company_name" class="form-control"
-                                                value="{{ old('company_name') }}">
-                                        </div>
-
-                                        {{-- Gender --}}
-                                        <div class="col-md-3 mb-3">
-                                            <label class="form-label">
-                                                Gender
-                                                <small class="text-muted">(Optional)</small>
-                                            </label>
-
-                                            <select name="gender" class="form-control form-select">
-
-                                                <option value="">Select Gender</option>
-
-                                                @foreach ($genders as $item)
-                                                    <option value="{{ $item['code'] }}">
-                                                        {{ $item['value'] }}
-                                                    </option>
-                                                @endforeach
-
-                                            </select>
-                                        </div>
-
-                                        {{-- Date of Birth --}}
-                                        <div class="col-md-3 mb-3">
-                                            <label class="form-label">
-                                                Date of Birth
-                                                <small class="text-muted">(Optional)</small>
-                                            </label>
-
-                                            <input type="text" id="dob" name="dob" class="form-control"
-                                                value="{{ old('dob') }}" placeholder="Select Date of Birth">
-                                        </div>
-
-                                        {{-- Marital Status --}}
-                                        <div class="col-md-3 mb-3">
-                                            <label class="form-label">
-                                                Marital Status
-                                            </label>
-
-                                            <select name="marital_status" class="form-control form-select">
-
-                                                <option value="">Select Marital Status</option>
-
-                                                @foreach ($marital_statuses as $item)
-                                                    <option value="{{ $item['code'] }}">
-                                                        {{ $item['value'] }}
-                                                    </option>
-                                                @endforeach
-
-                                            </select>
-                                        </div>
-
-                                        {{-- Date of Marriage --}}
-                                        <div class="col-md-3 mb-3">
-                                            <label class="form-label">
-                                                Date of Marriage
-                                                <small class="text-muted">(Optional)</small>
-                                            </label>
-
-                                            <input type="text" id="marriage_date" name="marriage_date"
-                                                class="form-control" value="{{ old('marriage_date') }}"
-                                                placeholder="Select Marriage Date">
-                                        </div>
-
-                                        {{-- Age Group --}}
-                                        <div class="col-md-3 mb-3">
-                                            <label class="form-label">
-                                                Age Group
-                                                <small class="text-muted">(Optional)</small>
-                                            </label>
-
-                                            <select name="age_group" class="form-control form-select">
-
-                                                <option value="">Select Age Group</option>
-
-                                                @foreach ($age_groups as $item)
-                                                    <option value="{{ $item['code'] }}">
-                                                        {{ $item['value'] }}
-                                                    </option>
-                                                @endforeach
-
-                                            </select>
-                                        </div>
-
-                                    </div>
+                                    <input type="time" name="followup_time" class="form-control"
+                                        value="{{ old('followup_time') }}" required>
 
                                 </div>
 
                             </div>
 
-                            {{-- =========================== LONG ENQUIRY Address Details =========================== --}}
+                        </div>
 
-                            <div class="card mb-4">
+                        {{-- =========================== LONG ENQUIRY Customer Details =========================== --}}
 
-                                <div class="card-header bg-light">
-                                    <h5 class="mb-0">Address Details</h5>
+
+
+                        <h3 class="mb-0 ms-3">Long Enquiry - Customer Details</h3>
+
+                        <div class="card-body">
+
+                            <div class="row">
+
+                                {{-- Occupation Type --}}
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">
+                                        Occupation Type
+                                    </label>
+
+                                    <select name="occupation_type" class="form-control form-select">
+
+                                        <option value="">Select Occupation Type</option>
+
+                                        @foreach ($occupation_types as $item)
+                                        <option value="{{ $item['code'] }}">
+                                            {{ $item['value'] }}
+                                        </option>
+                                        @endforeach
+
+                                    </select>
                                 </div>
 
-                                <div class="card-body">
+                                {{-- Customer Type --}}
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">
+                                        Customer Type
+                                        <small class="text-muted">(Optional)</small>
+                                    </label>
 
-                                    <div class="row">
+                                    <select name="customer_type" class="form-control form-select">
 
-                                        {{-- Zip Code --}}
-                                        <div class="col-md-3 mb-3">
-                                            <label class="form-label">
-                                                Zip Code
-                                                <small class="text-muted">(Optional)</small>
-                                            </label>
+                                        <option value="">Select Customer Type</option>
 
-                                            <input type="text" id="zipcode" name="zipcode" maxlength="6"
-                                                class="form-control" value="{{ old('zipcode') }}">
-                                        </div>
+                                        @foreach ($customer_types as $item)
+                                        <option value="{{ $item['code'] }}">
+                                            {{ $item['value'] }}
+                                        </option>
+                                        @endforeach
 
-                                        {{-- Tehsil --}}
-                                        <div class="col-md-3 mb-3">
-                                            <label class="form-label">
-                                                Tehsil
-                                                <small class="text-muted">(Optional)</small>
-                                            </label>
+                                    </select>
+                                </div>
 
-                                            <input type="text" id="tehsil" name="tehsil" class="form-control"
-                                                value="{{ old('tehsil') }}" readonly>
-                                        </div>
+                                {{-- Occupation Sub Type --}}
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">
+                                        Occupation Sub Type
+                                        <small class="text-muted">(Optional)</small>
+                                    </label>
 
-                                        {{-- District --}}
-                                        <div class="col-md-3 mb-3">
-                                            <label class="form-label">
-                                                District
-                                                <small class="text-muted">(Optional)</small>
-                                            </label>
+                                    <select name="occupation_sub_type" class="form-control form-select">
 
-                                            <input type="text" id="district" name="district" class="form-control"
-                                                value="{{ old('district') }}" readonly>
-                                        </div>
+                                        <option value="">Select Occupation Sub Type</option>
 
-                                        {{-- City --}}
-                                        <div class="col-md-3 mb-3">
-                                            <label class="form-label">
-                                                City
-                                                <small class="text-muted">(Optional)</small>
-                                            </label>
+                                        @foreach ($occupation_sub_types as $item)
+                                        <option value="{{ $item['code'] }}">
+                                            {{ $item['value'] }}
+                                        </option>
+                                        @endforeach
 
-                                            <input type="text" id="city" name="city" class="form-control"
-                                                value="{{ old('city') }}" readonly>
-                                        </div>
+                                    </select>
+                                </div>
 
-                                    </div>
+                                {{-- Company Name --}}
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">
+                                        Company Name
+                                        <small class="text-muted">(Optional)</small>
+                                    </label>
 
+                                    <input type="text" name="company_name" class="form-control"
+                                        value="{{ old('company_name') }}">
+                                </div>
+
+                                {{-- Gender --}}
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">
+                                        Gender
+                                        <small class="text-muted">(Optional)</small>
+                                    </label>
+
+                                    <select name="gender" class="form-control form-select">
+
+                                        <option value="">Select Gender</option>
+
+                                        @foreach ($genders as $item)
+                                        <option value="{{ $item['code'] }}">
+                                            {{ $item['value'] }}
+                                        </option>
+                                        @endforeach
+
+                                    </select>
+                                </div>
+
+                                {{-- Date of Birth --}}
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">
+                                        Date of Birth
+                                        <small class="text-muted">(Optional)</small>
+                                    </label>
+
+                                    <input type="text" id="dob" name="dob" class="form-control" value="{{ old('dob') }}"
+                                        placeholder="Select Date of Birth">
+                                </div>
+
+                                {{-- Marital Status --}}
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">
+                                        Marital Status
+                                    </label>
+
+                                    <select name="marital_status" class="form-control form-select">
+
+                                        <option value="">Select Marital Status</option>
+
+                                        @foreach ($marital_statuses as $item)
+                                        <option value="{{ $item['code'] }}">
+                                            {{ $item['value'] }}
+                                        </option>
+                                        @endforeach
+
+                                    </select>
+                                </div>
+
+                                {{-- Date of Marriage --}}
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">
+                                        Date of Marriage
+                                        <small class="text-muted">(Optional)</small>
+                                    </label>
+
+                                    <input type="text" id="marriage_date" name="marriage_date" class="form-control"
+                                        value="{{ old('marriage_date') }}" placeholder="Select Marriage Date">
+                                </div>
+
+                                {{-- Age Group --}}
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">
+                                        Age Group
+                                        <small class="text-muted">(Optional)</small>
+                                    </label>
+
+                                    <select name="age_group" class="form-control form-select">
+
+                                        <option value="">Select Age Group</option>
+
+                                        @foreach ($age_groups as $item)
+                                        <option value="{{ $item['code'] }}">
+                                            {{ $item['value'] }}
+                                        </option>
+                                        @endforeach
+
+                                    </select>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        {{-- =========================== LONG ENQUIRY Address Details =========================== --}}
+
+
+
+                        <h3 class="mb-0 ms-3">Address Details</h3>
+
+                        <div class="card-body">
+
+                            <div class="row">
+
+                                {{-- Zip Code --}}
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">
+                                        Zip Code
+                                        <small class="text-muted">(Optional)</small>
+                                    </label>
+
+                                    <input type="text" id="zipcode" name="zipcode" maxlength="6" class="form-control"
+                                        value="{{ old('zipcode') }}">
+                                </div>
+
+                                {{-- Tehsil --}}
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">
+                                        Tehsil
+                                        <small class="text-muted">(Optional)</small>
+                                    </label>
+
+                                    <input type="text" id="tehsil" name="tehsil" class="form-control"
+                                        value="{{ old('tehsil') }}" readonly>
+                                </div>
+
+                                {{-- District --}}
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">
+                                        District
+                                        <small class="text-muted">(Optional)</small>
+                                    </label>
+
+                                    <input type="text" id="district" name="district" class="form-control"
+                                        value="{{ old('district') }}" readonly>
+                                </div>
+
+                                {{-- City --}}
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">
+                                        City
+                                        <small class="text-muted">(Optional)</small>
+                                    </label>
+
+                                    <input type="text" id="city" name="city" class="form-control"
+                                        value="{{ old('city') }}" readonly>
                                 </div>
 
                             </div>
 
-                            {{-- =========================== LONG ENQUIRY Purchase Details =========================== --}}
+                        </div>
 
-                            <div class="card mb-4">
 
-                                <div class="card-header bg-light">
-                                    <h5 class="mb-0">Purchase Details</h5>
-                                </div>
+                        {{-- =========================== LONG ENQUIRY Purchase Details =========================== --}}
 
-                                <div class="card-body">
 
-                                    <div class="row">
 
-                                        <div class="row d-none" id="bevSection">
+                        <h3 class="mb-0 ms-3">Purchase Details</h3>
 
-                                            <div class="col-md-4 mb-3">
+                        <div class="card-body">
 
-                                                <label>Do you have an EV?</label>
+                            <div class="row">
 
-                                                <div>
+                                <div class="row d-none" id="bevSection">
 
-                                                    <div class="form-check form-check-inline">
+                                    <div class="col-md-4 mb-3">
 
-                                                        <input class="form-check-input" type="radio" name="has_ev"
-                                                            value="Yes">
-
-                                                        <label class="form-check-label">
-                                                            Yes
-                                                        </label>
-
-                                                    </div>
-
-                                                    <div class="form-check form-check-inline">
-
-                                                        <input class="form-check-input" type="radio" name="has_ev"
-                                                            value="No">
-
-                                                        <label class="form-check-label">
-                                                            No
-                                                        </label>
-
-                                                    </div>
-
-                                                </div>
-
-                                            </div>
-
-                                        </div>
-
-                                        {{-- Purchase Type --}}
-                                        <div class="col-md-4 mb-3">
-
-                                            <label class="form-label">
-                                                Purchase Type
-                                                <small class="text-muted">(Optional)</small>
-                                            </label>
-
-                                            <select name="purchase_type" id="purchase_type"
-                                                class="form-control form-select">
-
-                                                <option value="">Select Purchase Type</option>
-
-                                                <option value="First Time Buy"
-                                                    {{ old('purchase_type') == 'First Time Buy' ? 'selected' : '' }}>
-                                                    First Time Buy
-                                                </option>
-
-                                                <option value="Exchange Buy"
-                                                    {{ old('purchase_type') == 'Exchange Buy' ? 'selected' : '' }}>
-                                                    Exchange Buy
-                                                </option>
-
-                                                <option value="Additional Buy"
-                                                    {{ old('purchase_type') == 'Additional Buy' ? 'selected' : '' }}>
-                                                    Additional Buy
-                                                </option>
-
-                                                <option value="Scrappage"
-                                                    {{ old('purchase_type') == 'Scrappage' ? 'selected' : '' }}>
-                                                    Scrappage
-                                                </option>
-
-                                            </select>
-
-                                        </div>
-
-                                        <div class="row d-none" id="exchangeFields">
-
-                                            {{-- Make --}}
-                                            <div class="col-md-4 mb-3">
-
-                                                <label class="form-label">
-                                                    Make
-                                                </label>
-
-                                                <select id="exchange_make" name="exchange_make"
-                                                    class="form-control form-select">
-
-                                                    <option value="">Select Make</option>
-
-                                                    @foreach ($existing_car_oems as $item)
-                                                        <option value="{{ $item['code'] }}"
-                                                            {{ old('exchange_make') == $item['code'] ? 'selected' : '' }}>
-                                                            {{ $item['value'] }}
-                                                        </option>
-                                                    @endforeach
-
-                                                </select>
-
-                                            </div>
-
-                                            {{-- Model --}}
-                                            <div class="col-md-4 mb-3">
-
-                                                <label class="form-label">
-                                                    Model
-                                                </label>
-
-                                                <input type="text" id="exchange_model" name="exchange_model"
-                                                    class="form-control" value="{{ old('exchange_model') }}">
-
-                                            </div>
-
-                                            {{-- Vehicle No --}}
-                                            <div class="col-md-4 mb-3">
-
-                                                <label class="form-label">
-                                                    Vehicle No.
-                                                </label>
-
-                                                <input type="text" id="vehicle_no" name="vehicle_no"
-                                                    class="form-control" value="{{ old('vehicle_no') }}">
-
-                                            </div>
-
-                                        </div>
-
-                                        {{-- Remarks --}}
-                                        <div class="col-md-8 mb-3">
-
-                                            <label class="form-label">
-                                                Remarks
-                                                <small class="text-muted">(Optional)</small>
-                                            </label>
-
-                                            <textarea name="remarks" rows="3" class="form-control">{{ old('remarks') }}</textarea>
-
-                                        </div>
-
-                                    </div>
-
-                                </div>
-
-                            </div>
-                            <div id="duplicateEnquiry" style="display:none;"></div>
-
-                            {{-- =========================== FORM ACTIONS =========================== --}}
-
-                            <div class="card">
-
-                                <div class="card-body">
-
-                                    <div class="d-flex justify-content-between align-items-center flex-wrap">
+                                        <label>Do you have an EV?</label>
 
                                         <div>
 
-                                            <button type="submit" class="btn btn-success btn-lg">
+                                            <div class="form-check form-check-inline">
 
-                                                <i class="la la-save"></i>
+                                                <input class="form-check-input" type="radio" name="has_ev" value="Yes">
 
-                                                Save Enquiry
+                                                <label class="form-check-label">
+                                                    Yes
+                                                </label>
 
-                                            </button>
+                                            </div>
+
+                                            <div class="form-check form-check-inline">
+
+                                                <input class="form-check-input" type="radio" name="has_ev" value="No">
+
+                                                <label class="form-check-label">
+                                                    No
+                                                </label>
+
+                                            </div>
 
                                         </div>
 
@@ -1140,23 +974,153 @@
 
                                 </div>
 
+                                {{-- Purchase Type --}}
+                                <div class="col-md-4 mb-3">
+
+                                    <label class="form-label">
+                                        Purchase Type
+                                        <small class="text-muted">(Optional)</small>
+                                    </label>
+
+                                    <select name="purchase_type" id="purchase_type" class="form-control form-select">
+
+                                        <option value="">Select Purchase Type</option>
+
+                                        <option value="First Time Buy" {{ old('purchase_type')=='First Time Buy'
+                                            ? 'selected' : '' }}>
+                                            First Time Buy
+                                        </option>
+
+                                        <option value="Exchange Buy" {{ old('purchase_type')=='Exchange Buy'
+                                            ? 'selected' : '' }}>
+                                            Exchange Buy
+                                        </option>
+
+                                        <option value="Additional Buy" {{ old('purchase_type')=='Additional Buy'
+                                            ? 'selected' : '' }}>
+                                            Additional Buy
+                                        </option>
+
+                                        <option value="Scrappage" {{ old('purchase_type')=='Scrappage' ? 'selected' : ''
+                                            }}>
+                                            Scrappage
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+                                <div class="row d-none" id="exchangeFields">
+
+                                    {{-- Make --}}
+                                    <div class="col-md-4 mb-3">
+
+                                        <label class="form-label">
+                                            Make
+                                        </label>
+
+                                        <select id="exchange_make" name="exchange_make"
+                                            class="form-control form-select">
+
+                                            <option value="">Select Make</option>
+
+                                            @foreach ($existing_car_oems as $item)
+                                            <option value="{{ $item['code'] }}" {{ old('exchange_make')==$item['code']
+                                                ? 'selected' : '' }}>
+                                                {{ $item['value'] }}
+                                            </option>
+                                            @endforeach
+
+                                        </select>
+
+                                    </div>
+
+                                    {{-- Model --}}
+                                    <div class="col-md-4 mb-3">
+
+                                        <label class="form-label">
+                                            Model
+                                        </label>
+
+                                        <input type="text" id="exchange_model" name="exchange_model"
+                                            class="form-control" value="{{ old('exchange_model') }}">
+
+                                    </div>
+
+                                    {{-- Vehicle No --}}
+                                    <div class="col-md-4 mb-3">
+
+                                        <label class="form-label">
+                                            Vehicle No.
+                                        </label>
+
+                                        <input type="text" id="vehicle_no" name="vehicle_no" class="form-control"
+                                            value="{{ old('vehicle_no') }}">
+
+                                    </div>
+
+                                </div>
+
+                                {{-- Remarks --}}
+                                <div class="col-md-8 mb-3">
+
+                                    <label class="form-label">
+                                        Remarks
+                                        <small class="text-muted">(Optional)</small>
+                                    </label>
+
+                                    <textarea name="remarks" rows="3"
+                                        class="form-control">{{ old('remarks') }}</textarea>
+
+                                </div>
+
                             </div>
 
-                        </form>
+                        </div>
 
-                    </div>
+                        <div id="duplicateEnquiry" style="display:none;"></div>
+
+                        {{-- =========================== FORM ACTIONS =========================== --}}
+
+
+
+
+
+                        <div class="d-flex justify-content-between align-items-center flex-wrap">
+
+                            <div>
+
+                                <button type="submit" class="btn btn-success btn-lg">
+
+                                    <i class="la la-save"></i>
+
+                                    Save Enquiry
+
+                                </button>
+
+                            </div>
+
+                        </div>
+
+
+
                 </div>
+
+                </form>
+
             </div>
         </div>
     </div>
+</div>
+</div>
 
 @endsection
 
 @push('after_scripts')
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script>
-        function loadKeywordDropdown(keyword, parent, target, placeholder = 'Select Option', selected = '') {
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    function loadKeywordDropdown(keyword, parent, target, placeholder = 'Select Option', selected = '') {
 
             if (!parent) {
 
@@ -1811,5 +1775,5 @@
             });
 
         });
-    </script>
+</script>
 @endpush
