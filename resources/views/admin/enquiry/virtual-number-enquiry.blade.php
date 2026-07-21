@@ -10,23 +10,6 @@
                     <h2 class="card-title mb-0 fw-bold text-black text-nowrap">
                         {{ $title ?? 'Virtual Number Enquiries' }}
                     </h2>
-
-                    <div class="d-flex align-items-center gap-3 flex-nowrap">
-                        <select id="enquiryFilter" class="form-select form-select-sm bg-white text-dark border-0 shadow-sm"
-                            style="min-width: 200px; max-width: 260px;" onchange="redirectToEnquiryList(this)">
-
-                            <option value="{{ backpack_url('enquiries-list') }}">Xlr8 Enquiries</option>
-                            <option value="{{ backpack_url('enquiries/assigned-quick') }}">Assigned Quick Enquiries</option>
-                            <option value="{{ backpack_url('enquiries/assigned-long') }}">Assigned Long Enquiries</option>
-
-                            <option value="{{ backpack_url('enquiries/virtual-number') }}" selected>Virtual Number Enquiries
-                            </option>
-                            <option value="{{ backpack_url('enquiries/reference') }}">Reference Enquiries</option>
-                            <option value="{{ backpack_url('enquiries/whatsapp-campaign') }}">WhatsApp Campaign Enquiries
-                            </option>
-
-                        </select>
-                    </div>
                 </div>
 
                 <div class="card-body p-0" style="background:#f8fafc">
@@ -106,9 +89,24 @@
                 'serial_no',
                 'virtual_no',
                 'call_date_and_time',
-                'call_duration',
-                'call_status',
-                'customer_phone'
+                'call_nature',
+                'enquiry_assign_date',
+                'mobile',
+                'remarks',
+                'dms_enquiry_stage',
+                'cre_enquiry_stage',
+                'cre_next_fup_date',
+                'cre_next_fup_time',
+                'cre_next_fup_remarks',
+                'quotation_no',
+                'booking_no',
+                'booking_date',
+                'oem_booking_no',
+                'oem_booking_date',
+                'oem_otf_no',
+                //'call_duration',
+                //'call_status',
+                
 
             ].includes(col.field)),
 
@@ -152,9 +150,10 @@
                     'serial_no',
                     'virtual_no',
                     'call_date_and_time',
-                    'call_duration',
-                    'call_status',
-                    'customer_phone',
+                    'call_nature',
+                    'enquiry_assign_date',
+                    'mobile',
+                    'remarks',
                     'action'
 
                 ];
@@ -250,9 +249,10 @@
                     'serial_no',
                     'virtual_no',
                     'call_date_and_time',
-                    'call_duration',
-                    'call_status',
-                    'customer_phone',
+                    'call_nature',
+                    'enquiry_assign_date',
+                    'mobile',
+                    'remarks',
                     'action'
 
                 ];
