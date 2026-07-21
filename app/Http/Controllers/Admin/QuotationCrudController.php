@@ -267,6 +267,7 @@ class QuotationCrudController extends CrudController
 
     public function create()
     {
+
         $this->crud->setCreateView('admin.quotation.create');
 
         $enquiryId = request('enquiry_id');
@@ -301,6 +302,8 @@ class QuotationCrudController extends CrudController
         $accessoryList = Accessory::where('status', 1)
             ->orderBy('item')
             ->get();
+
+
 
         return view('admin.quotation.create', [
 
