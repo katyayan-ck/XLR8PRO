@@ -32,7 +32,7 @@
                 <div class="card">
                     <div class="card-header text-black">
                         <h2 class="mb-0">
-                            {{ isset($enquiry) ? 'Edit Enquiry' : 'Add Hot Enquiry' }}
+                            {{ isset($enquiry) ? 'Edit Enquiry' : 'Add Enquiry' }}
                         </h2>
                     </div>
                     <div class="card-body">
@@ -62,6 +62,72 @@
                                         <input type="text" name="enquiry_no" class="form-control"
                                             value="{{ old('enquiry_no', isset($enquiry) ? $enquiry->enquiry_no : '') }}"
                                             required>
+                                    </div>
+
+                                    {{-- Segment --}}
+                                    <div class="col-md-3 mb-3">
+
+                                        <label class="form-label">
+
+                                            Segment
+
+                                            <span class="text-danger">*</span>
+
+                                        </label>
+
+                                        <select name="segment_code" id="segment_code" class="form-control form-select"
+                                            required>
+
+                                            <option value="">
+                                                Select Segment
+                                            </option>
+
+                                            @foreach ($segments as $code => $name)
+                                                <option value="{{ $code }}"
+                                                    {{ old('segment_code', $enquiry->segment_code ?? '') == $code ? 'selected' : '' }}>
+
+                                                    {{ $name }}
+
+                                                </option>
+                                            @endforeach
+
+                                        </select>
+
+                                    </div>
+
+                                    {{-- Model --}}
+                                    <div class="col-md-3 mb-3">
+                                        <label class="form-label">
+                                            Model
+                                            <span class="text-danger">*</span>
+                                        </label>
+
+                                        <select name="model_code" id="model_code" class="form-control form-select" required>
+
+                                            <option value="">
+                                                Select Model
+                                            </option>
+
+                                        </select>
+                                    </div>
+
+                                    {{-- Variant --}}
+                                    <div class="col-md-3 mb-3">
+
+                                        <label class="form-label">
+                                            Variant
+                                            <span class="text-danger">*</span>
+                                        </label>
+
+                                        <select name="variant_code" id="variant_code" class="form-control form-select"
+                                            required>
+
+                                            <option value="">
+                                                Select Variant
+                                            </option>
+
+                                        </select>
+
                                     </div>
 
                                     {{-- Customer First Name --}}
@@ -112,6 +178,27 @@
 
                                         <input type="email" name="email" class="form-control"
                                             value="{{ old('email', $enquiry->email ?? '') }}">
+                                    </div>
+
+                                    {{-- Gender --}}
+                                    <div class="col-md-3 mb-3">
+                                        <label class="form-label">
+                                            Gender
+                                            <small class="text-muted">(Optional)</small>
+                                        </label>
+
+                                        <select name="gender" class="form-control form-select">
+
+                                            <option value="">Select Gender</option>
+
+                                            @foreach ($genders as $item)
+                                                <option value="{{ $item['code'] }}"
+                                                    {{ old('gender', $enquiry->gender ?? '') == $item['code'] ? 'selected' : '' }}>
+                                                    {{ $item['value'] }}
+                                                </option>
+                                            @endforeach
+
+                                        </select>
                                     </div>
 
                                 </div>
@@ -189,7 +276,8 @@
                                             <span class="text-danger">*</span>
                                         </label>
 
-                                        <select name="sub_source" id="sub_source" class="form-control form-select" disabled>
+                                        <select name="sub_source" id="sub_source" class="form-control form-select"
+                                            disabled>
 
                                             <option value="">
                                                 Select Enquiry Sub Source
@@ -342,72 +430,7 @@
 
                                 <div class="row">
 
-                                    {{-- Segment --}}
-                                    <div class="col-md-3 mb-3">
 
-                                        <label class="form-label">
-
-                                            Segment
-
-                                            <span class="text-danger">*</span>
-
-                                        </label>
-
-                                        <select name="segment_code" id="segment_code" class="form-control form-select"
-                                            required>
-
-                                            <option value="">
-                                                Select Segment
-                                            </option>
-
-                                            @foreach ($segments as $code => $name)
-                                                <option value="{{ $code }}"
-                                                    {{ old('segment_code', $enquiry->segment_code ?? '') == $code ? 'selected' : '' }}>
-
-                                                    {{ $name }}
-
-                                                </option>
-                                            @endforeach
-
-                                        </select>
-
-                                    </div>
-
-                                    {{-- Model --}}
-                                    <div class="col-md-3 mb-3">
-                                        <label class="form-label">
-                                            Model
-                                            <span class="text-danger">*</span>
-                                        </label>
-
-                                        <select name="model_code" id="model_code" class="form-control form-select"
-                                            required>
-
-                                            <option value="">
-                                                Select Model
-                                            </option>
-
-                                        </select>
-                                    </div>
-
-                                    {{-- Variant --}}
-                                    <div class="col-md-3 mb-3">
-
-                                        <label class="form-label">
-                                            Variant
-                                            <span class="text-danger">*</span>
-                                        </label>
-
-                                        <select name="variant_code" id="variant_code" class="form-control form-select"
-                                            required>
-
-                                            <option value="">
-                                                Select Variant
-                                            </option>
-
-                                        </select>
-
-                                    </div>
 
                                     {{-- Color --}}
                                     <div class="col-md-3 mb-3">
@@ -526,6 +549,8 @@
 
                                         </div>
 
+
+
                                         <div class="col-md-3 mb-3">
 
                                             <label class="form-label">
@@ -569,6 +594,60 @@
 
                                         </div>
 
+                                    </div>
+
+
+                                </div>
+
+                            </div>
+                            <h3 class="mb-0 ms-3">Customer Address Details</h3>
+
+                            <div class="card-body">
+
+                                <div class="row">
+
+                                    {{-- Zip Code --}}
+                                    <div class="col-md-3 mb-3">
+                                        <label class="form-label">
+                                            Zip Code
+                                            <small class="text-muted">(Optional)</small>
+                                        </label>
+
+                                        <input type="text" id="zipcode" name="zipcode" maxlength="6"
+                                            class="form-control" value="{{ old('zipcode', $enquiry->zipcode ?? '') }}">
+                                    </div>
+
+                                    {{-- Tehsil --}}
+                                    <div class="col-md-3 mb-3">
+                                        <label class="form-label">
+                                            Tehsil
+                                            <small class="text-muted">(Optional)</small>
+                                        </label>
+
+                                        <input type="text" id="tehsil" name="tehsil" class="form-control"
+                                            value="{{ old('tehsil', $enquiry->tehsil ?? '') }}" readonly>
+                                    </div>
+
+                                    {{-- District --}}
+                                    <div class="col-md-3 mb-3">
+                                        <label class="form-label">
+                                            District
+                                            <small class="text-muted">(Optional)</small>
+                                        </label>
+
+                                        <input type="text" id="district" name="district" class="form-control"
+                                            value="{{ old('district', $enquiry->district ?? '') }}" readonly>
+                                    </div>
+
+                                    {{-- City --}}
+                                    <div class="col-md-3 mb-3">
+                                        <label class="form-label">
+                                            City
+                                            <small class="text-muted">(Optional)</small>
+                                        </label>
+
+                                        <input type="text" id="city" name="city" class="form-control"
+                                            value="{{ old('city', $enquiry->city ?? '') }}" readonly>
                                     </div>
 
                                 </div>
@@ -817,26 +896,7 @@
                                             value="{{ old('company_name', $enquiry->company_name ?? '') }}">
                                     </div>
 
-                                    {{-- Gender --}}
-                                    <div class="col-md-3 mb-3">
-                                        <label class="form-label">
-                                            Gender
-                                            <small class="text-muted">(Optional)</small>
-                                        </label>
 
-                                        <select name="gender" class="form-control form-select">
-
-                                            <option value="">Select Gender</option>
-
-                                            @foreach ($genders as $item)
-                                                <option value="{{ $item['code'] }}"
-                                                    {{ old('gender', $enquiry->gender ?? '') == $item['code'] ? 'selected' : '' }}>
-                                                    {{ $item['value'] }}
-                                                </option>
-                                            @endforeach
-
-                                        </select>
-                                    </div>
 
                                     {{-- Date of Birth --}}
                                     <div class="col-md-3 mb-3">
@@ -913,59 +973,7 @@
 
 
 
-                            <h3 class="mb-0 ms-3">Address Details</h3>
 
-                            <div class="card-body">
-
-                                <div class="row">
-
-                                    {{-- Zip Code --}}
-                                    <div class="col-md-3 mb-3">
-                                        <label class="form-label">
-                                            Zip Code
-                                            <small class="text-muted">(Optional)</small>
-                                        </label>
-
-                                        <input type="text" id="zipcode" name="zipcode" maxlength="6"
-                                            class="form-control" value="{{ old('zipcode', $enquiry->zipcode ?? '') }}">
-                                    </div>
-
-                                    {{-- Tehsil --}}
-                                    <div class="col-md-3 mb-3">
-                                        <label class="form-label">
-                                            Tehsil
-                                            <small class="text-muted">(Optional)</small>
-                                        </label>
-
-                                        <input type="text" id="tehsil" name="tehsil" class="form-control"
-                                            value="{{ old('tehsil', $enquiry->tehsil ?? '') }}" readonly>
-                                    </div>
-
-                                    {{-- District --}}
-                                    <div class="col-md-3 mb-3">
-                                        <label class="form-label">
-                                            District
-                                            <small class="text-muted">(Optional)</small>
-                                        </label>
-
-                                        <input type="text" id="district" name="district" class="form-control"
-                                            value="{{ old('district', $enquiry->district ?? '') }}" readonly>
-                                    </div>
-
-                                    {{-- City --}}
-                                    <div class="col-md-3 mb-3">
-                                        <label class="form-label">
-                                            City
-                                            <small class="text-muted">(Optional)</small>
-                                        </label>
-
-                                        <input type="text" id="city" name="city" class="form-control"
-                                            value="{{ old('city', $enquiry->city ?? '') }}" readonly>
-                                    </div>
-
-                                </div>
-
-                            </div>
 
 
                             {{-- =========================== LONG ENQUIRY Purchase Details =========================== --}}

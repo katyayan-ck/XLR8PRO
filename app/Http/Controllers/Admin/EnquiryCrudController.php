@@ -133,7 +133,7 @@ class EnquiryCrudController extends CrudController
         $searchText = trim((string) $request->input('searchText', ''));
         $sortModel = (array) $request->input('sortModel', []);
 
-        $query = Enquiry::cne()->with(['segment', 'model', 'variant', 'color', 'campaign']);
+        $query = Enquiry::formComplete()->with(['segment', 'model', 'variant', 'color', 'campaign']);
 
         $this->applyEnquirySearch($query, $searchText);
         $this->applyEnquirySort($query, $sortModel);
@@ -158,7 +158,7 @@ class EnquiryCrudController extends CrudController
     {
         $searchText = trim((string) $request->input('searchText', ''));
 
-        $query = Enquiry::cne()->with(['segment', 'model', 'variant', 'color', 'campaign']);
+        $query = Enquiry::formComplete()->with(['segment', 'model', 'variant', 'color', 'campaign']);
         $this->applyEnquirySearch($query, $searchText);
         $query->orderByDesc('created_at');
 
@@ -953,7 +953,9 @@ class EnquiryCrudController extends CrudController
 
         // ->reference() = currentOrigin('REFERENCE') + active() (status = 1),
         // both already defined on the model.
+        // ->formIncomplete() keeps it out of here once it graduates to the plain Enquiry List.
         $enquiries = Enquiry::reference()
+            ->formIncomplete()
             ->with(['model', 'variant'])
             ->orderByDesc('created_at')
             ->get();
@@ -1004,6 +1006,7 @@ class EnquiryCrudController extends CrudController
         $this->crud->setListView('admin.enquiry.virtual-number-enquiry');
 
         $enquiries = Enquiry::virtual()
+            ->formIncomplete()
             ->with(['model', 'variant'])
             ->orderByDesc('created_at')
             ->get();
@@ -1049,6 +1052,7 @@ class EnquiryCrudController extends CrudController
         $this->crud->setListView('admin.enquiry.whatsapp-campaign-enquiry');
 
         $enquiries = Enquiry::whatsapp()
+            ->formIncomplete()
             ->with(['model', 'variant'])
             ->orderByDesc('created_at')
             ->get();
@@ -1108,6 +1112,7 @@ class EnquiryCrudController extends CrudController
 
         // ->assignedLong() = long() [currentOrigin('LONG') + active()] + assigned()
         $enquiries = Enquiry::assignedLong()
+            ->formIncomplete()
             ->with(['model', 'variant'])
             ->orderByDesc('created_at')
             ->get();
@@ -1178,6 +1183,7 @@ class EnquiryCrudController extends CrudController
         $this->crud->setListView('admin.enquiry.unassigned-long-enquiry');
 
         $enquiries = Enquiry::unassignedLong()
+            ->formIncomplete()
             ->with(['model', 'variant'])
             ->orderByDesc('created_at')
             ->get();
@@ -1242,6 +1248,7 @@ class EnquiryCrudController extends CrudController
         $this->crud->setListView('admin.enquiry.assigned-quick-enquiry');
 
         $enquiries = Enquiry::assignedQuick()
+            ->formIncomplete()
             ->with(['model', 'variant'])
             ->orderByDesc('created_at')
             ->get();
@@ -1310,6 +1317,7 @@ class EnquiryCrudController extends CrudController
         $this->crud->setListView('admin.enquiry.unassigned-quick-enquiry');
 
         $enquiries = Enquiry::unassignedQuick()
+            ->formIncomplete()
             ->with(['model', 'variant'])
             ->orderByDesc('created_at')
             ->get();
