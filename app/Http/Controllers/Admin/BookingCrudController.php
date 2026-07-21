@@ -317,7 +317,7 @@ class BookingCrudController extends CrudController
                 ?: '';
         }
 
-       
+
         $data['bookingHistory'] = $booking->commMaster()
             ->with([
                 'rootThreads' => function ($q) {
@@ -338,7 +338,7 @@ class BookingCrudController extends CrudController
 
         $receiptLogs = $data['receiptLogs'];
 
-       
+
         return view("admin.booking.{$viewName}", $data + get_defined_vars());
     }
 
@@ -545,7 +545,7 @@ class BookingCrudController extends CrudController
         $accessoriesAmount = $booking->apack_amount ?? 0;
 
         $stockCount = Stock::where('vehicle_oem_code', $booking->vehicle_oem_code)
-            ->where('status', 'available')  
+            ->where('status', 'available')
             ->count();
         $insurance_source = match ((int)($booking->insurance_source ?? 0)) {
             1 => 'By Dealer (OEM Portal)',
@@ -1184,7 +1184,7 @@ class BookingCrudController extends CrudController
         })->values();
 
         $columns = $this->getAgGridColumns();
-        
+
         $columns[] = [
             'headerName'    => 'Action',
             'field'         => 'action',
@@ -1200,13 +1200,13 @@ class BookingCrudController extends CrudController
             'columns' => $columns,
             'data'    => $gridData,
         ];
-       
+
 
 
         return view('admin.booking.list', $this->data);
     }
 
-   
+
     private function calculateAgeFromDob($dob)
     {
         if (!$dob) return 'N/A';
@@ -1243,7 +1243,7 @@ class BookingCrudController extends CrudController
 
             $mapped->serial_no = ($paginatedBookings->currentPage() - 1) * $paginatedBookings->perPage() + $index + 1;
 
-           
+
             $showUrl   = backpack_url("booking/{$booking->id}/show");
             $mapped->action = '
         <div class="d-flex justify-content-center gap-2" role="group" aria-label="Actions">
@@ -1291,7 +1291,7 @@ class BookingCrudController extends CrudController
     {
         $this->crud->hasAccessOrFail('list');
 
-        $this->crud->setListView('admin.booking.list'); 
+        $this->crud->setListView('admin.booking.list');
 
         $this->data['crud'] = $this->crud;
         $this->data['title'] = 'Invoiced Bookings';
@@ -1302,7 +1302,7 @@ class BookingCrudController extends CrudController
         $query->orderBy('bookings.id', 'desc');
         $paginatedBookings = $query->paginate(50);
         $gridData = $paginatedBookings->map(function ($booking, $index) use ($paginatedBookings) {
-            $mapped = $this->mapBookingForGrid($booking);  
+            $mapped = $this->mapBookingForGrid($booking);
 
             $mapped->serial_no = ($paginatedBookings->currentPage() - 1) * $paginatedBookings->perPage() + $index + 1;
 
@@ -1356,7 +1356,7 @@ class BookingCrudController extends CrudController
     {
         $this->crud->hasAccessOrFail('list');
 
-        $this->crud->setListView('admin.booking.list'); 
+        $this->crud->setListView('admin.booking.list');
 
         $this->data['crud'] = $this->crud;
         $this->data['title'] = 'Cancelled Bookings';
@@ -1371,13 +1371,13 @@ class BookingCrudController extends CrudController
         $paginatedBookings = $query->paginate(50);
 
         $gridData = $paginatedBookings->map(function ($booking, $index) use ($paginatedBookings) {
-            $mapped = $this->mapBookingForGrid($booking); 
+            $mapped = $this->mapBookingForGrid($booking);
 
             $mapped->serial_no = ($paginatedBookings->currentPage() - 1) * $paginatedBookings->perPage() + $index + 1;
 
-           
+
             $showUrl   = backpack_url("booking/{$booking->id}/show");
-            
+
             $mapped->action = '
         <div class="d-flex justify-content-center gap-2" role="group" aria-label="Actions">
             <a href="' . $showUrl . '"
@@ -1453,7 +1453,7 @@ class BookingCrudController extends CrudController
         $data['allusers'] = OrgService::getUsers(deptCode: 'SLS');
         $data['financiers']     = collect(XlFinancier::select('id', 'name', 'short_name')->get()->toArray())->map(fn($f) => (object) $f);
         $data['salesconsultants'] = OrgService::getUsers(desigCode: 'CNS');
-        
+
 
         $data['segments'] = CommonHelper::getVehicleSegments();
 
@@ -1475,7 +1475,7 @@ class BookingCrudController extends CrudController
         });
         $data['accessories_dropdown'] = Accessory::getAccessories(null, null, null);
         $data['enum_master'] = OrgService::keywordValueByCode('EXISTING_CAR_OEM');
-       
+
         $data['quotation'] = $quotation;
         $this->data['data'] = $data;
     }
@@ -1483,7 +1483,7 @@ class BookingCrudController extends CrudController
 
     public function store(Request $request)
     {
-       
+
         Log::info('🚀 [STORE] Booking store() triggered', [
             'all_inputs' => $request->except(['amountproof']),
             'has_file' => $request->hasFile('amountproof'),
@@ -2083,7 +2083,7 @@ class BookingCrudController extends CrudController
 
         return redirect(backpack_url('booking'))->with('success', 'Booking added successfully!');
     }
-    
+
 
 
 
@@ -3096,7 +3096,7 @@ class BookingCrudController extends CrudController
                     $historyBody  = 'Booking cancelled successfully';
                 }
 
-               
+
                 if (!empty(trim($request->remark ?? ''))) {
                     $historyBody .= ' ,Remarks: ' . trim($request->remark);
                 }
@@ -3208,7 +3208,7 @@ class BookingCrudController extends CrudController
     public function getBranchLocation($bids)
     {
         $data = CommonHelper::getLocations($bids);
-       
+
         return $data;
     }
 
@@ -3437,15 +3437,15 @@ class BookingCrudController extends CrudController
 
         $query->whereIn('bookings.segment_code', ['BEV', 'PERSL'])
             ->where(function ($q) {
-                $q->whereNull('bookings.order')          
-                    ->orWhereIn('bookings.order', [0, 1]);  
+                $q->whereNull('bookings.order')
+                    ->orWhereIn('bookings.order', [0, 1]);
             });
 
 
         $query->orderBy('bookings.id', 'DESC');
 
         $paginatedBookings = $query->paginate(50);
-        
+
         $lookups = $this->getCommonLookups();
         extract($lookups);
 
@@ -3520,7 +3520,7 @@ class BookingCrudController extends CrudController
         $collectorName = $booking->col_by
             ? (User::find($booking->col_by)->name ?? 'N/A')
             : 'N/A';
-        $fromPending = $request->query('from') === 'pending';   
+        $fromPending = $request->query('from') === 'pending';
 
         $isBevOrPersonal = in_array($booking->segment_code ?? 0, [753, 21589]);
         $data = [
@@ -3533,7 +3533,7 @@ class BookingCrudController extends CrudController
             'from_pending'       => $fromPending,
             'so_required'        => $fromPending && $isBevOrPersonal,
         ];
-     
+
 
 
         return view('admin.booking.dms-edit', compact('booking', 'data'));
@@ -3607,7 +3607,7 @@ class BookingCrudController extends CrudController
         $updateData = [
             'dms_no'   => $request->dms_no,
             'dms_otf'  => $request->dms_otf,
-            'otf_date' => $request->hidden_otf_date,  
+            'otf_date' => $request->hidden_otf_date,
         ];
 
         if ($booking->order == 2) {
@@ -3705,7 +3705,7 @@ class BookingCrudController extends CrudController
                 ->with('success', $message);
         }
 
-        return redirect()->route('booking.pending-dms') 
+        return redirect()->route('booking.pending-dms')
             ->with('success', $message);
     }
 
@@ -3853,7 +3853,7 @@ class BookingCrudController extends CrudController
             backpack_user()
         );
         return redirect()
-            ->route('booking.pending-kyc')  
+            ->route('booking.pending-kyc')
             ->with('success', "Booking #{$booking->id} की KYC successfully complete हो गई है!");
     }
 
@@ -4000,7 +4000,7 @@ class BookingCrudController extends CrudController
             $price_gap = ($t->expected_price ?? 0) - ($t->offered_price ?? 0);
             $row->price_gap = number_format($price_gap);
 
-           
+
 
             $location = $t->location_code && $t->location_code > 0
                 ? (Location::find($t->location_code)->name ?? 'N/A')
@@ -4285,7 +4285,7 @@ class BookingCrudController extends CrudController
             })
             ->orderBy('bookings.id', 'DESC');
 
-      
+
 
         $paginatedBookings = $query->paginate(50);
 
@@ -4473,7 +4473,7 @@ class BookingCrudController extends CrudController
         $query = $this->getBaseQuery();
 
         $query->where('bookings.status', 2);
-        $query->where('bookings.retail', 0); 
+        $query->where('bookings.retail', 0);
 
         $query->orderBy('bookings.id', 'DESC');
 
@@ -4499,7 +4499,7 @@ class BookingCrudController extends CrudController
 
             $row->serial_no = ($paginatedBookings->currentPage() - 1) * $paginatedBookings->perPage() + $index + 1;
 
-           
+
             $location = $t->location_code && $t->location_code > 0
                 ? (Location::find($t->location_code)->name ?? 'N/A')
                 : ($t->location_other ?? 'N/A');
@@ -4597,7 +4597,7 @@ class BookingCrudController extends CrudController
 
             $row->serial_no = ($paginatedBookings->currentPage() - 1) * $paginatedBookings->perPage() + $index + 1;
 
-          
+
 
             $location = $t->location_code && $t->location_code > 0
                 ? (Location::find($t->location_code)->name ?? 'N/A')
@@ -4979,7 +4979,7 @@ class BookingCrudController extends CrudController
         return view('admin.booking.pending-payment', $this->data);
     }
 
-   
+
     public function pendingInsurance(Request $request)
     {
         $this->crud->hasAccessOrFail('list');
@@ -5546,7 +5546,7 @@ class BookingCrudController extends CrudController
             ->sum('amount') ?? 0;
 
         $receiptLogs = Bookingamount::where('bid', $booking->id)
-            ->orderBy('date', 'desc') 
+            ->orderBy('date', 'desc')
             ->get();
 
         $data = [
@@ -5618,7 +5618,7 @@ class BookingCrudController extends CrudController
                 $request->filled('dealer_invoice_date')
             ) {
                 $booking->dealer_inv_no   = $request->dealer_invoice_number;
-                $booking->dealer_inv_date = $request->dealer_invoice_date;  
+                $booking->dealer_inv_date = $request->dealer_invoice_date;
                 $booking->dealer_status   = 1;
 
                 Log::info('Dealer invoice details updated', [
@@ -6296,7 +6296,7 @@ class BookingCrudController extends CrudController
         try {
             $booking->inv_no = $request->input('dms_invoice_number');
             $booking->inv_date = $request->input('dms_invoice_date');
-            $booking->dealer_status = 2; 
+            $booking->dealer_status = 2;
 
             if ($request->filled('hidden_dealer_invoice_number')) {
                 $booking->dealer_inv_no = $request->input('hidden_dealer_invoice_number');
@@ -6488,7 +6488,7 @@ class BookingCrudController extends CrudController
             'booking_id' => $request->booking_id ?? 'missing',
             'user_id'    => backpack_auth()->id() ?? 'guest',
             'ip'         => $request->ip(),
-            'all_input'  => $request->except(['policy_copy']), 
+            'all_input'  => $request->except(['policy_copy']),
         ]);
 
         try {
@@ -6532,7 +6532,6 @@ class BookingCrudController extends CrudController
                 Log::info('All required fields filled + file uploaded → status set to 2');
             } else {
                 Log::info('Status remains 1 - missing some required field or file');
-
             }
 
             Log::info('Attempting to update/create insurance record', ['bid' => $request->booking_id]);
@@ -6839,7 +6838,7 @@ class BookingCrudController extends CrudController
                 foreach ($fieldMap as $formField => $ruleKey) {
                     if ($matchingRule[$ruleKey] === 'Yes') {
                         if (in_array($formField, ['trc_copy', 'tax_receipt_copy'])) {
-                         
+
                             if (!$request->hasFile($formField) || !$request->file($formField)->isValid()) {
                                 $allRequiredFilled = false;
                                 break;
@@ -7035,7 +7034,7 @@ class BookingCrudController extends CrudController
             'photos.vehicle_chassis_no_photo'         => 'required|image|mimes:jpeg,png,jpg|max:5120',
             'photos.chassis_no_screenshot_invoice'    => 'required|image|mimes:jpeg,png,jpg|max:5120',
             'photos.chassis_no_screenshot_insurance'  => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
-            'chassis_no_verified'                     => 'nullable|boolean',   
+            'chassis_no_verified'                     => 'nullable|boolean',
         ];
 
         try {
@@ -7125,11 +7124,11 @@ class BookingCrudController extends CrudController
                         'size_kb'       => round($file->getSize() / 1024, 2),
                     ]);
 
-                   
+
                     $delivery->clearMediaCollection($collection);
                     \Log::debug("Cleared old media: {$collection}");
 
-                    
+
                     $media = $delivery->addMedia($file)
                         ->toMediaCollection($collection, 'public');
 
@@ -7693,8 +7692,8 @@ class BookingCrudController extends CrudController
 
 
         if ($isNew && $request->retail == 1) {
-            $finance->verification_status = 2;  
-            $finance->case_status         = 2;  
+            $finance->verification_status = 2;
+            $finance->case_status         = 2;
 
 
             if (trim($request->remark ?? '') === '') {
@@ -7718,7 +7717,7 @@ class BookingCrudController extends CrudController
             ?? $booking->variant_code
             ?? 1;
 
-     
+
 
         $finance->save();
 
@@ -8014,7 +8013,7 @@ class BookingCrudController extends CrudController
 
     public function PayoutUpdate(Request $request, $id)
     {
-        
+
 
 
         $finance = XFinance::where('bid', $id)->firstOrFail();
@@ -8028,7 +8027,7 @@ class BookingCrudController extends CrudController
 
         if ($payout_category == 1) {
             $rules = [
-                'loan_amount'           => 'required|numeric|min:0',                    
+                'loan_amount'           => 'required|numeric|min:0',
                 'do_number'             => 'nullable|string|max:50',
                 'expected_payout_pct'   => 'required|numeric|min:0',
                 'gst_included'          => 'required|in:0,0.5,1',
@@ -8087,7 +8086,7 @@ class BookingCrudController extends CrudController
         $finance->payout_category = $payout_category;
 
         if ($payout_category == 1) {
-            $finance->loan_amount    = $request->loan_amount;      
+            $finance->loan_amount    = $request->loan_amount;
             $finance->instrument_ref_no             = $request->do_number;
             $finance->expected_payout_pct   = $request->expected_payout_pct;
             $finance->gst_included          = $request->gst_included;
@@ -8241,7 +8240,7 @@ class BookingCrudController extends CrudController
 
         $query = $this->getBaseQuery();
 
-        $query->where('bookings.status', 4);  
+        $query->where('bookings.status', 4);
 
         $status_filter = $request->input('status_filter', '');
         if ($status_filter !== '' && $status_filter !== 'all') {
@@ -8599,7 +8598,7 @@ class BookingCrudController extends CrudController
             'mode'                 => 'required|string',
             'transaction_details'  => 'required|string',
             'remark'               => 'required|string',
-            'pay_proof'            => 'required|file|mimes:jpeg,png,jpg,pdf|max:2048', 
+            'pay_proof'            => 'required|file|mimes:jpeg,png,jpg,pdf|max:2048',
         ]);
 
         if ($validator->fails()) {
@@ -8858,7 +8857,7 @@ class BookingCrudController extends CrudController
             ->with('success', 'Refund details updated successfully!');
     }
 
-  
+
 
     public function erroneousBookings(Request $request)
     {
@@ -8871,7 +8870,7 @@ class BookingCrudController extends CrudController
             ->withoutGlobalScopes()
             ->withoutGlobalScope(SoftDeletingScope::class);
 
-        
+
         $query->where('bookings.status', 1);
 
         $query->orderBy('bookings.id', 'DESC');
@@ -8939,7 +8938,7 @@ class BookingCrudController extends CrudController
 
         $query->leftJoin('xlr8_booking_finance as xf', 'bookings.id', '=', 'xf.bid');
 
-   
+
         $query->where('xf.status', 1);
 
         $query->orderBy('bookings.id', 'DESC');
@@ -8979,7 +8978,7 @@ class BookingCrudController extends CrudController
 
             $row->location = $location;
 
-            
+
             $row->action = '
         <div class="d-flex justify-content-center">
             <button class="btn btn-secondary btn-sm" disabled>
@@ -9388,9 +9387,9 @@ class BookingCrudController extends CrudController
                 'vm.custom_variant',
                 'vm.color',
                 'vm.lorder',
-                DB::raw("COALESCE(MAX(loc.abbr), 'Not Allocated') as branch")  
+                DB::raw("COALESCE(MAX(loc.abbr), 'Not Allocated') as branch")
             )
-            ->groupBy('vm.id', 'vm.segment_code', 'vm.custom_model', 'vm.custom_variant', 'vm.color', 'vm.lorder') 
+            ->groupBy('vm.id', 'vm.segment_code', 'vm.custom_model', 'vm.custom_variant', 'vm.color', 'vm.lorder')
             ->get();
 
         $segments = CommonHelper::getVehicleSegments();
@@ -9938,7 +9937,7 @@ class BookingCrudController extends CrudController
             $stock_group = $stocks->get($groupKey, collect());
             $stock_total = $stock_group->values()->sum();
             $stock_bkn = $stock_group->get(1, 0);
-            $stock_churu = $stock_group->get(2, 0); 
+            $stock_churu = $stock_group->get(2, 0);
 
             $gridData[] = [
                 'sno' => $sno++,
@@ -10499,7 +10498,7 @@ class BookingCrudController extends CrudController
             $query->where('branch_code', $branchCode);
         }
 
-       
+
         $type = request('type');
         if ($type && isset($typeMap[$type])) {
             $query->where($typeMap[$type], 1);
@@ -10537,7 +10536,7 @@ class BookingCrudController extends CrudController
 
         $query->whereIn('bookings.status', [1, 8]);
 
-     
+
         $query->where(function ($q) {
             $q->where(function ($sub) {
                 $sub->whereNull('bookings.inv_no')
@@ -10635,26 +10634,31 @@ class BookingCrudController extends CrudController
 
         $quotationData = $quotation?->proposed_data ?? [];
 
-        $selectedExShowroomPrice = $quotation?->proposed_data['ex_showroom_price']
-            ?? null;
+        $finalData = [];
+
+        if (!empty($booking->final_data)) {
+            $finalData = json_decode($booking->final_data, true) ?? [];
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Final OTF Data
+        |--------------------------------------------------------------------------
+        | Quotation data + Saved OTF data
+        | final_data will override quotation values if already saved.
+        */
+        $otfData = array_merge(
+            $quotationData,
+            $finalData
+        );
+
+        $selectedExShowroomPrice = $otfData['ex_showroom_price'] ?? null;
 
         $selectedPolicyType = $insurance?->policy_type
-            ?? $quotation?->proposed_data['policy_type']
-            ?? null;
+            ?? ($otfData['policy_type'] ?? null);
 
         $selectedRegistrationType = $rto?->rgn_type
-            ?? $quotation?->proposed_data['registration_type']
-            ?? null;
-        $selectedPolicyType = $insurance?->policy_type
-            ?? $quotation?->proposed_data['policy_type']
-            ?? null;
-
-        $selectedRegistrationType = $rto?->rgn_type
-            ?? $quotation?->proposed_data['registration_type']
-            ?? null;
-
-        $selectedPolicyType = $insurance?->policy_type
-            ?? ($quotation?->proposed_data['policy_type'] ?? null);
+            ?? ($otfData['registration_type'] ?? null);
 
         $dsa = null;
 
@@ -10724,7 +10728,7 @@ class BookingCrudController extends CrudController
         $accessoryList = DB::table('xlr8_vehicle_accessories')
             ->orderBy('item')
             ->get();
-        
+
         $permit_map = [
             '1'  => 'Private - U/C (4 Wheeler)',
             '2'  => 'Private - BH (4 Wheeler)',
@@ -10793,6 +10797,8 @@ class BookingCrudController extends CrudController
                 'booking',
                 'finance',
                 'quotationData',
+                'finalData',
+                'otfData',
                 'insurance',
                 'rto',
                 'dsa',
@@ -10818,7 +10824,6 @@ class BookingCrudController extends CrudController
                 'selectedPolicyType',
                 'selectedRegistrationType',
                 'selectedExShowroomPrice',
-                'selectedPolicyType',
                 'receiptLogs',
                 'receiptTotal',
             )
@@ -10838,20 +10843,20 @@ class BookingCrudController extends CrudController
     }
     public function otfSave(Request $request, $id)
     {
-        
-       
+
+
         $booking = Booking::findOrFail($id);
-    
+
         if ($request->hasFile('chassis_image')) {
             $booking->addMedia($request->file('chassis_image'))
                 ->toMediaCollection('chassis_image');
         }
-    
+
         $data = $request->except(['_token', '_method', 'chassis_image']);
-    
+
         $booking->final_data = json_encode($data);
         $booking->save();
-    
+
         return redirect()
             ->back()
             ->with('success', 'OTF form saved successfully.');
