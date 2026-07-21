@@ -617,7 +617,7 @@
                                     <span class="text-danger">*</span>
                                 </label>
 
-                                <select name="sales_consultant_id" class="form-control form-select" required>
+                                <select name="sc_code" class="form-control form-select" required>
 
                                     <option value="">
                                         Select Sales Consultant

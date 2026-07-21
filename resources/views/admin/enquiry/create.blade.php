@@ -639,7 +639,7 @@
                                             <span class="text-danger">*</span>
                                         </label>
 
-                                        <select name="sales_consultant_id" class="form-control form-select" required>
+                                        <select name="sc_code" class="form-control form-select" required>
 
                                             <option value="">
                                                 Select Sales Consultant
@@ -647,7 +647,7 @@
 
                                             @foreach ($saleconsultants as $consultant)
                                                 <option value="{{ $consultant['person_code'] }}"
-                                                    {{ old('sales_consultant_id', $enquiry->sales_consultant_id ?? '') == $consultant['person_code'] ? 'selected' : '' }}>
+                                                    {{ old('sc_code', $enquiry->sc_code ?? '') == $consultant['person_code'] ? 'selected' : '' }}>
 
                                                     {{ $consultant['display_name'] }}
                                                     -

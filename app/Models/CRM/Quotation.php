@@ -24,7 +24,7 @@ class Quotation extends BaseModel
         'model_code',
         'variant_code',
         'color_code',
-        'sales_consultant_id',
+        'sc_code',
         'assigned_to',
         'revision',
         'standard_data',
@@ -81,7 +81,7 @@ class Quotation extends BaseModel
 
     public function salesConsultant()
     {
-        return $this->belongsTo(User::class, 'sales_consultant_id');
+        return $this->belongsTo(User::class, 'sc_code');
     }
 
     public function assignedTo()
