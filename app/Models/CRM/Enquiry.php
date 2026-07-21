@@ -193,6 +193,92 @@ class Enquiry extends BaseModel
 
     ];
 
+    // ==================== ENQUIRY LIST vs ORIGIN-BASED LISTING ====================
+    // Segment / Model / Variant each have two columns in the table
+    // (e.g. `segment_code` and `segment`). Either one being filled
+    // counts as that item being "answered".
+    public const LONG_FORM_PAIRED_FIELDS = [
+        'segment_code' => 'segment',   // Segment
+        'model_code'   => 'model',     // Model
+        'variant_code' => 'variant',   // Variant
+    ];
+
+    // Remaining fields that must ALL be non-blank for an enquiry to
+    // count as "fully filled" and therefore show up in the plain
+    // "Enquiry List" dropdown item, regardless of its origin.
+    public const LONG_FORM_SINGLE_FIELDS = [
+        'first_name',            // Customer First Name
+        'last_name',             // Customer Last Name
+        'mobile',                // Phone Number
+        'email',                 // Email ID
+        'gender',                // Gender
+        'enquiry_type',          // Enquiry Type
+        'source_code',           // Enquiry Source
+        'likely_purchase_date',  // Likely Purchase Date
+        'fuel_type',             // Fuel Type
+        'transmission',          // Transmission
+        'drivetrain',            // Drivetrain
+        'seating',               // Seating
+        'color_code',            // Color
+        'tehsil',                // Customer Tehsil
+        'district',              // Customer District
+        'city',                  // Customer City
+        'sc_code',                // Sales Consultant
+        'dealer_branch',          // Dealer Branch
+        'dealer_location',        // Dealer Location
+    ];
+
+    /**
+     * Enquiry List (the plain, origin-agnostic dropdown item):
+     * - Segment/Model/Variant: code OR name column filled.
+     * - Every other LONG_FORM_SINGLE_FIELDS column filled.
+     * - is_active = 1.
+     */
+    public function scopeFormComplete($query)
+    {
+        foreach (self::LONG_FORM_PAIRED_FIELDS as $codeField => $nameField) {
+            $query->where(function ($q) use ($codeField, $nameField) {
+                $q->where(function ($q2) use ($codeField) {
+                    $q2->whereNotNull($codeField)->where($codeField, '!=', '');
+                })->orWhere(function ($q2) use ($nameField) {
+                    $q2->whereNotNull($nameField)->where($nameField, '!=', '');
+                });
+            });
+        }
+
+        foreach (self::LONG_FORM_SINGLE_FIELDS as $field) {
+            $query->whereNotNull($field)->where($field, '!=', '');
+        }
+
+        return $query->where('is_active', 1);
+    }
+
+    /**
+     * Every other (origin-based) dropdown listing: only rows where
+     * at least one of the above is still blank (i.e. for Segment/
+     * Model/Variant, BOTH the code and the name column are blank).
+     * Once a row satisfies formComplete(), it "graduates" out of
+     * these listings and only shows up in the plain Enquiry List.
+     */
+    public function scopeFormIncomplete($query)
+    {
+        return $query->where(function ($q) {
+            foreach (self::LONG_FORM_PAIRED_FIELDS as $codeField => $nameField) {
+                $q->orWhere(function ($q2) use ($codeField, $nameField) {
+                    $q2->where(function ($q3) use ($codeField) {
+                        $q3->whereNull($codeField)->orWhere($codeField, '');
+                    })->where(function ($q3) use ($nameField) {
+                        $q3->whereNull($nameField)->orWhere($nameField, '');
+                    });
+                });
+            }
+
+            foreach (self::LONG_FORM_SINGLE_FIELDS as $field) {
+                $q->orWhereNull($field)->orWhere($field, '');
+            }
+        });
+    }
+
     public const STATUS_NEW = 'new';
     public const STATUS_IN_FOLLOWUP = 'in_followup';
     public const STATUS_QUOTATION_SENT = 'quotation_sent';

@@ -11,7 +11,7 @@
                     </h2>
 
                     <div class="d-flex align-items-center gap-3 flex-nowrap">
-                        <a href="{{ backpack_url('enquiries/add-hot-enquiry') }}"
+                        <a href="{{ backpack_url('enquiries/add') }}"
                             class="btn btn-blue btn-sm fw-bold shadow-sm">
                             <i class="la la-plus me-1"></i> Add New Enquiry
                         </a>
