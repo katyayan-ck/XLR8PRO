@@ -6,6 +6,7 @@ use App\Models\CRM\Enquiry;
 use App\Models\CRM\Lead;
 use App\Models\CRM\LeadSource;
 use App\Services\OrgService;
+use App\Jobs\ImportEnquiriesJob;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
@@ -16,6 +17,12 @@ use App\Models\CRM\Campaign;
 use App\Models\Admin\PinCodes;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Prologue\Alerts\Facades\Alert;
+use Illuminate\Support\Facades\Log;
+use Throwable;
+
 
 class EnquiryCrudController extends CrudController
 {
@@ -40,102 +47,10 @@ class EnquiryCrudController extends CrudController
     {
         $this->crud->setListView('admin.enquiry.list');
 
-        $enquiries = Enquiry::with([
-            'segment',
-            'model',
-            'variant',
-            'color',
-            'campaign.segment',
-            'campaign.model',
-        ])
-            ->orderByDesc('created_at')
-            ->get();
-
-        $gridData = $enquiries->map(function ($enquiry, $index) {
-
-            $mapped = $enquiry->toArray();
-
-            $mapped['serial_no'] = $index + 1;
-
-            $mapped['full_name'] = $enquiry->full_name;
-
-            $mapped['source_name'] = $enquiry->source_code ?? '—';
-
-            $mapped['segment_name'] = $enquiry->segment ?? '—';
-
-            $mapped['model_name'] = $enquiry->model ?? '—';
-
-            $mapped['variant_name'] = $enquiry->variant ?? '—';
-
-            $mapped['color_name'] = $enquiry->color ?? '—';
-
-            $mapped['planned_campaign_name'] = $enquiry->campaign?->name
-                ?? $enquiry->planned_campaign
-                ?? '—';
-
-            $mapped['activity_type'] = $enquiry->campaign?->activity_code ?? '—';
-
-            $mapped['activity_segment'] = $enquiry->campaign?->segment?->name ?? '—';
-
-            $mapped['activity_model'] = $enquiry->campaign?->model?->name ?? '—';
-
-            $mapped['activity_start_date'] = $enquiry->campaign?->start_date
-                ? $enquiry->campaign->start_date->format('d-m-Y')
-                : '—';
-
-            $mapped['activity_end_date'] = $enquiry->campaign?->end_date
-                ? $enquiry->campaign->end_date->format('d-m-Y')
-                : '—';
-
-            $mapped['activity_branch'] = $enquiry->campaign?->branch_code ?? '—';
-
-            $mapped['activity_location'] = $enquiry->campaign?->location_code ?? '—';
-
-            $mapped['likely_purchase_date'] = $enquiry->likely_purchase_date;
-
-            // $mapped['activity_start_date'] = $enquiry->activity_start_date
-            //     ? Carbon::parse($enquiry->activity_start_date)->format('d-m-Y')
-            //     : '—';
-
-            // $mapped['activity_end_date'] = $enquiry->activity_end_date
-            //     ? Carbon::parse($enquiry->activity_end_date)->format('d-m-Y')
-            //     : '—';
-
-            $mapped['dob'] = $enquiry->dob
-                ? Carbon::parse($enquiry->dob)->format('d-m-Y')
-                : '—';
-
-            $mapped['marriage_date'] = $enquiry->marriage_date
-                ? Carbon::parse($enquiry->marriage_date)->format('d-m-Y')
-                : '—';
-
-            $mapped['followup_date'] = $enquiry->followup_date
-                ? Carbon::parse($enquiry->followup_date)->format('d-m-Y')
-                : '—';
-
-            $editUrl = backpack_url("enquiry/{$enquiry->id}/edit");
-
-            $quotationUrl = backpack_url(
-                "quotation-form/create?enquiry_id={$enquiry->id}"
-            );
-
-            $mapped['action'] = '
-        <div class="d-flex justify-content-center gap-2">
-            <a href="' . $editUrl . '" class="btn btn-sm btn-primary">
-                Edit
-            </a>
-            <a href="' . $quotationUrl . '" class="btn btn-success btn-sm">
-                Form
-            </a>
-        </div>';
-
-            return $mapped;
-
-        })->values();
-
         return view('admin.enquiry.list', [
 
-            'title' => 'All Enquiries',
+            'title' => 'Xlr8 Enquiries',
+
 
             'gridConfig' => [
 
@@ -198,15 +113,251 @@ class EnquiryCrudController extends CrudController
                     ['field' => 'place_of_registration', 'headerName' => 'Place Of Registration'],
                     ['field' => 'dealer_branch', 'headerName' => 'Dealer Branch'],
                     ['field' => 'dealer_location', 'headerName' => 'Dealer Location'],
-                    ['field' => 'sales_consultant_id', 'headerName' => 'Sales Consultant'],
+                    ['field' => 'sc_code', 'headerName' => 'Sales Consultant'],
                     ['field' => 'followup_type', 'headerName' => 'Followup Type'],
                     ['field' => 'followup_date', 'headerName' => 'Followup Date'],
                     ['field' => 'followup_time', 'headerName' => 'Followup Time'],
                     ['field' => 'action', 'headerName' => 'Action']
                 ],
-                'data' => $gridData
+                'data' => []
             ]
         ]);
+    }
+
+    public function data(Request $request)
+    {
+        $startRow = max(0, (int) $request->input('startRow', 0));
+        $endRow = max($startRow + 1, (int) $request->input('endRow', $startRow + 100));
+        $limit = $endRow - $startRow;
+
+        $searchText = trim((string) $request->input('searchText', ''));
+        $sortModel = (array) $request->input('sortModel', []);
+
+        $query = Enquiry::cne()->with(['segment', 'model', 'variant', 'color', 'campaign']);
+
+        $this->applyEnquirySearch($query, $searchText);
+        $this->applyEnquirySort($query, $sortModel);
+
+        // Total matching rows, so AG-Grid knows when it has reached the end.
+        $total = (clone $query)->count();
+
+        $enquiries = $query->skip($startRow)->take($limit)->get();
+
+        $gridData = $enquiries->values()
+            ->map(fn($enquiry, $i) => $this->mapEnquiryToGridRow($enquiry, $startRow + $i + 1))
+            ->all();
+
+        return response()->json([
+            'rows' => $gridData,
+            'lastRow' => $total,
+        ]);
+    }
+
+
+    public function export(Request $request)
+    {
+        $searchText = trim((string) $request->input('searchText', ''));
+
+        $query = Enquiry::cne()->with(['segment', 'model', 'variant', 'color', 'campaign']);
+        $this->applyEnquirySearch($query, $searchText);
+        $query->orderByDesc('created_at');
+
+        $filename = 'enquiries-' . now()->format('Y-m-d_His') . '.csv';
+
+        return response()->streamDownload(function () use ($query) {
+            $out = fopen('php://output', 'w');
+
+            fputcsv($out, [
+                'S.No',
+                'Enquiry No',
+                'Enquiry Type',
+                'Source',
+                'Sub Source',
+                'Full Name',
+                'Mobile',
+                'Email',
+                'Segment',
+                'Model',
+                'Variant',
+                'Color',
+                'City',
+                'Dealer Branch',
+                'Dealer Location',
+                'Followup Date',
+            ]);
+
+            $serial = 0;
+
+            $query->chunk(500, function ($chunk) use ($out, &$serial) {
+                foreach ($chunk as $enquiry) {
+                    $serial++;
+
+                    fputcsv($out, [
+                        $serial,
+                        $enquiry->enquiry_no,
+                        $enquiry->enquiry_type,
+                        $enquiry->source_code,
+                        $enquiry->sub_source,
+                        $enquiry->full_name,
+                        $enquiry->mobile,
+                        $enquiry->email,
+                        $enquiry->segment?->name,
+                        $enquiry->model?->name,
+                        $enquiry->variant?->display_name
+                        ?? $enquiry->variant?->custom_name
+                        ?? $enquiry->variant?->oem_name,
+                        $enquiry->color?->name,
+                        $enquiry->city,
+                        $enquiry->dealer_branch,
+                        $enquiry->dealer_location,
+                        $enquiry->followup_date
+                        ? Carbon::parse($enquiry->followup_date)->format('d-m-Y')
+                        : '',
+                    ]);
+                }
+            });
+
+            fclose($out);
+        }, $filename, ['Content-Type' => 'text/csv']);
+    }
+
+
+    private function mapEnquiryToGridRow(Enquiry $enquiry, int $serialNo): array
+    {
+        $mapped = $enquiry->toArray();
+
+        $mapped['serial_no'] = $serialNo;
+
+        $mapped['full_name'] = $enquiry->full_name;
+
+        $mapped['source_name'] = $enquiry->source_code ?? '—';
+
+        $mapped['segment_name'] = $enquiry->segment?->name ?? '—';
+
+        $mapped['model_name'] = $enquiry->model?->name ?? '—';
+
+        $mapped['variant_name'] = $enquiry->variant?->display_name
+            ?? $enquiry->variant?->custom_name
+            ?? $enquiry->variant?->oem_name
+            ?? '—';
+
+        $mapped['color_name'] = $enquiry->color?->name ?? '—';
+
+        $mapped['planned_campaign_name'] = $enquiry->campaign?->name
+            ?? $enquiry->planned_campaign
+            ?? '—';
+
+        $mapped['likely_purchase_date'] = $enquiry->likely_purchase_date;
+
+        $mapped['activity_start_date'] = $enquiry->activity_start_date
+            ? Carbon::parse($enquiry->activity_start_date)->format('d-m-Y')
+            : '—';
+
+        $mapped['activity_end_date'] = $enquiry->activity_end_date
+            ? Carbon::parse($enquiry->activity_end_date)->format('d-m-Y')
+            : '—';
+
+        $mapped['dob'] = $enquiry->dob
+            ? Carbon::parse($enquiry->dob)->format('d-m-Y')
+            : '—';
+
+        $mapped['marriage_date'] = $enquiry->marriage_date
+            ? Carbon::parse($enquiry->marriage_date)->format('d-m-Y')
+            : '—';
+
+        $mapped['followup_date'] = $enquiry->followup_date
+            ? Carbon::parse($enquiry->followup_date)->format('d-m-Y')
+            : '—';
+
+        $editUrl = backpack_url("enquiry/{$enquiry->id}/edit");
+
+        $quotationUrl = backpack_url(
+            "quotation-form/create?enquiry_id={$enquiry->id}"
+        );
+
+        $mapped['action'] = '
+        <div class="d-flex justify-content-center gap-2">
+            <a href="' . $editUrl . '" class="btn btn-sm btn-primary">
+                Edit
+            </a>
+            <a href="' . $quotationUrl . '" class="btn btn-success btn-sm">
+                Form
+            </a>
+        </div>';
+
+        return $mapped;
+    }
+
+
+    private function applyEnquirySearch($query, string $searchText): void
+    {
+        if ($searchText === '') {
+            return;
+        }
+
+        $like = "%{$searchText}%";
+
+        $query->where(function ($q) use ($like) {
+            $q->where('enquiry_no', 'like', $like)
+                ->orWhere('first_name', 'like', $like)
+                ->orWhere('last_name', 'like', $like)
+                ->orWhere('mobile', 'like', $like)
+                ->orWhere('email', 'like', $like)
+                ->orWhere('source_code', 'like', $like)
+                ->orWhere('sub_source', 'like', $like)
+                ->orWhere('company_name', 'like', $like)
+                ->orWhere('vehicle_no', 'like', $like)
+                ->orWhere('city', 'like', $like)
+                ->orWhere('zipcode', 'like', $like)
+                ->orWhereHas('model', fn($q2) => $q2->where('name', 'like', $like))
+                ->orWhereHas('segment', fn($q2) => $q2->where('name', 'like', $like))
+                ->orWhereHas('color', fn($q2) => $q2->where('name', 'like', $like))
+                ->orWhereHas('variant', function ($q2) use ($like) {
+                    $q2->where('display_name', 'like', $like)
+                        ->orWhere('custom_name', 'like', $like)
+                        ->orWhere('oem_name', 'like', $like);
+                });
+        });
+    }
+
+    private function applyEnquirySort($query, array $sortModel): void
+    {
+        $sortableColumns = [
+            'enquiry_no',
+            'enquiry_type',
+            'sub_source',
+            'person_code',
+            'first_name',
+            'last_name',
+            'mobile',
+            'email',
+            'occupation_type',
+            'customer_type',
+            'company_name',
+            'gender',
+            'dob',
+            'marital_status',
+            'city',
+            'district',
+            'purchase_type',
+            'created_at',
+        ];
+
+        $sortApplied = false;
+
+        foreach ($sortModel as $sort) {
+            $colId = $sort['colId'] ?? null;
+            $direction = strtolower($sort['sort'] ?? 'asc') === 'desc' ? 'desc' : 'asc';
+
+            if ($colId && in_array($colId, $sortableColumns, true)) {
+                $query->orderBy($colId, $direction);
+                $sortApplied = true;
+            }
+        }
+
+        if (!$sortApplied) {
+            $query->orderByDesc('created_at');
+        }
     }
 
 
@@ -300,94 +451,313 @@ class EnquiryCrudController extends CrudController
         return view('admin.enquiry.create', $data);
     }
 
+    // public function store(Request $request)
+    // {
+    //     $validated = $request->validate([
+    //         'enquiry_no' => 'required|unique:xlr8_crm_enquiries,enquiry_no',
+    //         'enquiry_type' => 'required',
+    //         'source_code' => 'required',
+    //         'sub_source' => 'nullable',
+    //         'person_code' => 'nullable',
+    //         'reference_details' => 'nullable|max:255',
+    //         'referred_by' => 'nullable|max:100',
+    //         'referee_phone' => 'nullable|max:15',
+    //         'referee_name' => 'nullable|max:100',
+    //         'planned_campaign' => 'nullable|max:150',
+    //         'likely_purchase_date' => 'nullable|max:150',
+    //         'activity_type' => 'nullable',
+    //         'activity_segment' => 'nullable',
+    //         'activity_model' => 'nullable',
+    //         'activity_start_date' => 'nullable|date',
+    //         'activity_end_date' => 'nullable|date',
+    //         'activity_branch' => 'nullable',
+    //         'activity_location' => 'nullable',
+    //         'first_name' => 'required|max:100',
+    //         'last_name' => 'nullable|max:100',
+    //         'mobile' => 'required|max:15',
+    //         'email' => 'nullable|email|max:150',
+    //         'occupation_type' => 'nullable',
+    //         'customer_type' => 'nullable',
+    //         'occupation_sub_type' => 'nullable',
+    //         'company_name' => 'nullable|max:150',
+    //         'gender' => 'nullable',
+    //         'dob' => 'nullable|date',
+    //         'marital_status' => 'nullable',
+    //         'marriage_date' => 'nullable|date',
+    //         'age_group' => 'nullable',
+    //         'zipcode' => 'nullable|max:10',
+    //         'tehsil' => 'nullable|max:100',
+    //         'district' => 'nullable|max:100',
+    //         'city' => 'nullable|max:100',
+    //         'has_ev' => 'nullable',
+    //         'purchase_type' => 'nullable',
+    //         'exchange_make' => 'nullable|max:100',
+    //         'exchange_model' => 'nullable|max:100',
+    //         'vehicle_no' => 'nullable|max:30',
+    //         'remarks' => 'nullable',
+    //         'segment_code' => 'required',
+    //         'model_code' => 'required',
+    //         'variant_code' => 'required',
+    //         'color_code' => 'required',
+    //         'fuel_type' => 'nullable',
+    //         'transmission' => 'nullable',
+    //         'drivetrain' => 'nullable',
+    //         'seating' => 'nullable',
+    //         'usage_area' => 'nullable',
+    //         'km_travelled_daily' => 'nullable',
+    //         'application_type' => 'nullable',
+    //         'application' => 'nullable',
+    //         'place_of_registration' => 'nullable|max:100',
+    //         'dealer_branch' => 'required',
+    //         'dealer_location' => 'required',
+    //         'sc_code' => 'required',
+    //         'followup_type' => 'nullable',
+    //         'followup_date' => 'nullable|date',
+    //         'followup_time' => 'nullable'
+    //     ]);
+
+    //     // Save Segment Name
+    //     $segments = OrgService::segments();
+    //     $validated['segment'] = $segments[$validated['segment_code']] ?? null;
+
+    //     // Save Model Name
+    //     $models = OrgService::models($validated['segment_code']);
+    //     $validated['model'] = $models[$validated['model_code']] ?? null;
+
+    //     // Save Variant Name
+    //     $variants = OrgService::variants($validated['model_code']);
+    //     $validated['variant'] = $variants[$validated['variant_code']]['name'] ?? null;
+
+    //     // Save Color Name
+    //     $colors = OrgService::colors($validated['variant_code']);
+    //     $validated['color'] = $colors[$validated['color_code']] ?? null;
+
+    //     $validated['created_by'] = backpack_user()->id;
+
+    //     Enquiry::create($validated);
+
+    //     \Alert::success('Enquiry created successfully.')->flash();
+
+    //     return redirect(backpack_url('enquiry'));
+    // }
+
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'enquiry_no' => 'required|unique:xlr8_crm_enquiries,enquiry_no',
-            'enquiry_type' => 'required',
-            'source_code' => 'required',
-            'sub_source' => 'nullable',
-            'person_code' => 'nullable',
-            'reference_details' => 'nullable|max:255',
-            'referred_by' => 'nullable|max:100',
-            'referee_phone' => 'nullable|max:15',
-            'referee_name' => 'nullable|max:100',
-            'planned_campaign' => 'nullable|max:150',
-            'likely_purchase_date' => 'nullable|max:150',
-            'activity_type' => 'nullable',
-            'activity_segment' => 'nullable',
-            'activity_model' => 'nullable',
-            'activity_start_date' => 'nullable|date',
-            'activity_end_date' => 'nullable|date',
-            'activity_branch' => 'nullable',
-            'activity_location' => 'nullable',
-            'first_name' => 'required|max:100',
-            'last_name' => 'nullable|max:100',
-            'mobile' => 'required|max:15',
-            'email' => 'nullable|email|max:150',
-            'occupation_type' => 'nullable',
-            'customer_type' => 'nullable',
-            'occupation_sub_type' => 'nullable',
-            'company_name' => 'nullable|max:150',
-            'gender' => 'nullable',
-            'dob' => 'nullable|date',
-            'marital_status' => 'nullable',
-            'marriage_date' => 'nullable|date',
-            'age_group' => 'nullable',
-            'zipcode' => 'nullable|max:10',
-            'tehsil' => 'nullable|max:100',
-            'district' => 'nullable|max:100',
-            'city' => 'nullable|max:100',
-            'has_ev' => 'nullable',
-            'purchase_type' => 'nullable',
-            'exchange_make' => 'nullable|max:100',
-            'exchange_model' => 'nullable|max:100',
-            'vehicle_no' => 'nullable|max:30',
-            'remarks' => 'nullable',
-            'segment_code' => 'required',
-            'model_code' => 'required',
-            'variant_code' => 'required',
-            'color_code' => 'required',
-            'fuel_type' => 'nullable',
-            'transmission' => 'nullable',
-            'drivetrain' => 'nullable',
-            'seating' => 'nullable',
-            'usage_area' => 'nullable',
-            'km_travelled_daily' => 'nullable',
-            'application_type' => 'nullable',
-            'application' => 'nullable',
-            'place_of_registration' => 'nullable|max:100',
-            'dealer_branch' => 'required',
-            'dealer_location' => 'required',
-            'sales_consultant_id' => 'required',
-            'followup_type' => 'nullable',
-            'followup_date' => 'nullable|date',
-            'followup_time' => 'nullable'
-        ]);
+        Log::info('==================== ENQUIRY STORE START ====================');
 
-        // Save Segment Name
-        $segments = OrgService::segments();
-        $validated['segment'] = $segments[$validated['segment_code']] ?? null;
+        Log::info('Incoming Request', $request->all());
 
-        // Save Model Name
-        $models = OrgService::models($validated['segment_code']);
-        $validated['model'] = $models[$validated['model_code']] ?? null;
+        try {
 
-        // Save Variant Name
-        $variants = OrgService::variants($validated['model_code']);
-        $validated['variant'] = $variants[$validated['variant_code']]['name'] ?? null;
+            $validated = $request->validate([
+                'enquiry_no' => 'required|unique:xlr8_crm_enquiries,enquiry_no',
+                'enquiry_type' => 'required',
+                'source_code' => 'required',
+                'sub_source' => 'nullable',
+                'person_code' => 'nullable',
+                'reference_details' => 'nullable|max:255',
+                'referred_by' => 'nullable|max:100',
+                'referee_phone' => 'nullable|max:15',
+                'referee_name' => 'nullable|max:100',
+                'planned_campaign' => 'nullable|max:150',
+                'likely_purchase_date' => 'nullable|max:150',
+                'activity_type' => 'nullable',
+                'activity_segment' => 'nullable',
+                'activity_model' => 'nullable',
+                'activity_start_date' => 'nullable|date',
+                'activity_end_date' => 'nullable|date',
+                'activity_branch' => 'nullable',
+                'activity_location' => 'nullable',
+                'first_name' => 'required|max:100',
+                'last_name' => 'nullable|max:100',
+                'mobile' => 'required|max:15',
+                'email' => 'nullable|email|max:150',
+                'occupation_type' => 'nullable',
+                'customer_type' => 'nullable',
+                'occupation_sub_type' => 'nullable',
+                'company_name' => 'nullable|max:150',
+                'gender' => 'nullable',
+                'dob' => 'nullable|date',
+                'marital_status' => 'nullable',
+                'marriage_date' => 'nullable|date',
+                'age_group' => 'nullable',
+                'zipcode' => 'nullable|max:10',
+                'tehsil' => 'nullable|max:100',
+                'district' => 'nullable|max:100',
+                'city' => 'nullable|max:100',
+                'has_ev' => 'nullable',
+                'purchase_type' => 'nullable',
+                'exchange_make' => 'nullable|max:100',
+                'exchange_model' => 'nullable|max:100',
+                'vehicle_no' => 'nullable|max:30',
+                'remarks' => 'nullable',
+                'segment_code' => 'required',
+                'model_code' => 'required',
+                'variant_code' => 'required',
+                'color_code' => 'required',
+                'fuel_type' => 'nullable',
+                'transmission' => 'nullable',
+                'drivetrain' => 'nullable',
+                'seating' => 'nullable',
+                'usage_area' => 'nullable',
+                'km_travelled_daily' => 'nullable',
+                'application_type' => 'nullable',
+                'application' => 'nullable',
+                'place_of_registration' => 'nullable|max:100',
+                'dealer_branch' => 'required',
+                'dealer_location' => 'required',
+                'sc_code' => 'required',
+                'followup_type' => 'nullable',
+                'followup_date' => 'nullable|date',
+                'followup_time' => 'nullable'
+            ]);
 
-        // Save Color Name
-        $colors = OrgService::colors($validated['variant_code']);
-        $validated['color'] = $colors[$validated['color_code']] ?? null;
+            Log::info('Validation Passed', $validated);
 
-        $validated['created_by'] = backpack_user()->id;
+            /*
+            |--------------------------------------------------------------------------
+            | Segment
+            |--------------------------------------------------------------------------
+            */
 
-        Enquiry::create($validated);
+            $segments = OrgService::segments();
 
-        \Alert::success('Enquiry created successfully.')->flash();
+            Log::info('Segments Master Loaded', [
+                'count' => count($segments),
+                'selected_code' => $validated['segment_code'],
+            ]);
 
-        return redirect(backpack_url('enquiry'));
+            $validated['segment'] = $segments[$validated['segment_code']] ?? null;
+
+            Log::info('Segment Selected', [
+                'code' => $validated['segment_code'],
+                'name' => $validated['segment'],
+            ]);
+
+            /*
+            |--------------------------------------------------------------------------
+            | Model
+            |--------------------------------------------------------------------------
+            */
+
+            $models = OrgService::models($validated['segment_code']);
+
+            Log::info('Models Master Loaded', [
+                'count' => count($models),
+                'selected_code' => $validated['model_code'],
+            ]);
+
+            $validated['model'] = $models[$validated['model_code']] ?? null;
+
+            Log::info('Model Selected', [
+                'code' => $validated['model_code'],
+                'name' => $validated['model'],
+            ]);
+
+            /*
+            |--------------------------------------------------------------------------
+            | Variant
+            |--------------------------------------------------------------------------
+            */
+
+            $variants = OrgService::variants($validated['model_code']);
+
+            Log::info('Variants Master Loaded', [
+                'count' => count($variants),
+                'selected_code' => $validated['variant_code'],
+            ]);
+
+            Log::info('Selected Variant Data', [
+                'variant' => $variants[$validated['variant_code']] ?? null
+            ]);
+
+            $validated['variant'] = $variants[$validated['variant_code']]['name'] ?? null;
+
+            Log::info('Variant Selected', [
+                'code' => $validated['variant_code'],
+                'name' => $validated['variant'],
+            ]);
+
+            /*
+            |--------------------------------------------------------------------------
+            | Color
+            |--------------------------------------------------------------------------
+            */
+
+            $colors = OrgService::colors($validated['variant_code']);
+
+            Log::info('Colors Master Loaded', [
+                'count' => count($colors),
+                'selected_code' => $validated['color_code'],
+            ]);
+
+            $validated['color'] = $colors[$validated['color_code']] ?? null;
+
+            Log::info('Color Selected', [
+                'code' => $validated['color_code'],
+                'name' => $validated['color'],
+            ]);
+
+            /*
+            |--------------------------------------------------------------------------
+            | Final Payload
+            |--------------------------------------------------------------------------
+            */
+
+            $validated['created_by'] = backpack_user()->id;
+
+            $validated['origin'] = 'QUICK';
+            $validated['current_origin'] = 'QUICK';
+            $validated['cne'] = 1;
+
+            Log::info('Final Payload Before Create', $validated);
+
+            /*
+            |--------------------------------------------------------------------------
+            | Save
+            |--------------------------------------------------------------------------
+            */
+
+            $enquiry = Enquiry::create($validated);
+
+            Log::info('Enquiry Saved Successfully', [
+                'id' => $enquiry->id,
+                'enquiry_no' => $enquiry->enquiry_no,
+                'segment' => $enquiry->segment,
+                'segment_code' => $enquiry->segment_code,
+                'model' => $enquiry->model,
+                'model_code' => $enquiry->model_code,
+                'variant' => $enquiry->variant,
+                'variant_code' => $enquiry->variant_code,
+                'color' => $enquiry->color,
+                'color_code' => $enquiry->color_code,
+            ]);
+
+            Log::info('==================== ENQUIRY STORE END ====================');
+
+            \Alert::success('Enquiry created successfully.')->flash();
+
+            return redirect(backpack_url('enquiry'));
+
+        } catch (Throwable $e) {
+
+            Log::error('==================== ENQUIRY STORE FAILED ====================');
+
+            Log::error('Message', [
+                'message' => $e->getMessage(),
+            ]);
+
+            Log::error('File', [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+
+            Log::error('Trace', [
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            throw $e;
+        }
     }
 
     public function update(Request $request, $id)
@@ -451,7 +821,7 @@ class EnquiryCrudController extends CrudController
             'place_of_registration' => 'nullable|max:100',
             'dealer_branch' => 'required',
             'dealer_location' => 'required',
-            'sales_consultant_id' => 'required',
+            'sc_code' => 'required',
             'followup_type' => 'nullable',
             'followup_date' => 'nullable|date',
             'followup_time' => 'nullable'
@@ -581,8 +951,9 @@ class EnquiryCrudController extends CrudController
     {
         $this->crud->setListView('admin.enquiry.reference-enquiry');
 
-        $enquiries = Enquiry::where('current_origin', 'REFERENCE')
-            ->where('real_status', 1)
+        // ->reference() = currentOrigin('REFERENCE') + active() (status = 1),
+        // both already defined on the model.
+        $enquiries = Enquiry::reference()
             ->with(['model', 'variant'])
             ->orderByDesc('created_at')
             ->get();
@@ -607,7 +978,6 @@ class EnquiryCrudController extends CrudController
                         <a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a>
                     </div>',
             ];
-
         })->values();
 
         return view('admin.enquiry.reference-enquiry', [
@@ -633,8 +1003,7 @@ class EnquiryCrudController extends CrudController
     {
         $this->crud->setListView('admin.enquiry.virtual-number-enquiry');
 
-        $enquiries = Enquiry::where('current_origin', 'VIRTUAL')
-            ->where('real_status', 1)
+        $enquiries = Enquiry::virtual()
             ->with(['model', 'variant'])
             ->orderByDesc('created_at')
             ->get();
@@ -657,7 +1026,6 @@ class EnquiryCrudController extends CrudController
                         <a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a>
                     </div>',
             ];
-
         })->values();
 
         return view('admin.enquiry.virtual-number-enquiry', [
@@ -680,8 +1048,7 @@ class EnquiryCrudController extends CrudController
     {
         $this->crud->setListView('admin.enquiry.whatsapp-campaign-enquiry');
 
-        $enquiries = Enquiry::where('current_origin', 'WHATSAPP')
-            ->where('real_status', 1)
+        $enquiries = Enquiry::whatsapp()
             ->with(['model', 'variant'])
             ->orderByDesc('created_at')
             ->get();
@@ -711,7 +1078,6 @@ class EnquiryCrudController extends CrudController
                         <a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a>
                     </div>',
             ];
-
         })->values();
 
         return view('admin.enquiry.whatsapp-campaign-enquiry', [
@@ -740,8 +1106,8 @@ class EnquiryCrudController extends CrudController
     {
         $this->crud->setListView('admin.enquiry.assigned-long-enquiry');
 
-        $enquiries = Enquiry::where('current_origin', 'LONG')
-            ->where('real_status', 1)
+        // ->assignedLong() = long() [currentOrigin('LONG') + active()] + assigned()
+        $enquiries = Enquiry::assignedLong()
             ->with(['model', 'variant'])
             ->orderByDesc('created_at')
             ->get();
@@ -777,7 +1143,6 @@ class EnquiryCrudController extends CrudController
                         <a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a>
                     </div>',
             ];
-
         })->values();
 
         return view('admin.enquiry.assigned-long-enquiry', [
@@ -812,8 +1177,7 @@ class EnquiryCrudController extends CrudController
     {
         $this->crud->setListView('admin.enquiry.unassigned-long-enquiry');
 
-        $enquiries = Enquiry::where('current_origin', 'LONG')
-            ->where('real_status', 1)
+        $enquiries = Enquiry::unassignedLong()
             ->with(['model', 'variant'])
             ->orderByDesc('created_at')
             ->get();
@@ -846,7 +1210,6 @@ class EnquiryCrudController extends CrudController
                         <a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a>
                     </div>',
             ];
-
         })->values();
 
         return view('admin.enquiry.unassigned-long-enquiry', [
@@ -878,8 +1241,7 @@ class EnquiryCrudController extends CrudController
     {
         $this->crud->setListView('admin.enquiry.assigned-quick-enquiry');
 
-        $enquiries = Enquiry::where('current_origin', 'QUICK')
-            ->where('real_status', 1)
+        $enquiries = Enquiry::assignedQuick()
             ->with(['model', 'variant'])
             ->orderByDesc('created_at')
             ->get();
@@ -914,7 +1276,6 @@ class EnquiryCrudController extends CrudController
                         <a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a>
                     </div>',
             ];
-
         })->values();
 
         return view('admin.enquiry.assigned-quick-enquiry', [
@@ -948,8 +1309,7 @@ class EnquiryCrudController extends CrudController
     {
         $this->crud->setListView('admin.enquiry.unassigned-quick-enquiry');
 
-        $enquiries = Enquiry::where('current_origin', 'QUICK')
-            ->where('real_status', 1)
+        $enquiries = Enquiry::unassignedQuick()
             ->with(['model', 'variant'])
             ->orderByDesc('created_at')
             ->get();
@@ -979,7 +1339,6 @@ class EnquiryCrudController extends CrudController
                         <a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a>
                     </div>',
             ];
-
         })->values();
 
         return view('admin.enquiry.unassigned-quick-enquiry', [
@@ -1023,5 +1382,135 @@ class EnquiryCrudController extends CrudController
         return response()->json(
             OrgService::getLocationByPincode($request->pincode)
         );
+    }
+    public function importEnquiries(Request $request)
+    {
+
+        if (!$request->hasFile('excel_file')) {
+
+            Alert::error('No file uploaded!')->flash();
+
+            return redirect()->back();
+        }
+
+
+
+        $file = $request->file('excel_file');
+
+        if (!in_array($file->getClientOriginalExtension(), ['xlsx', 'xls'])) {
+
+            Alert::error('Only Excel files (.xlsx, .xls) allowed')->flash();
+
+            return redirect()->back();
+        }
+
+
+
+        // Move the upload out of the request's tmp path into permanent storage —
+
+        // the queue worker runs in a totally separate process/request lifecycle
+
+        // and the original tmp upload file will be gone by the time it picks
+
+        // this job up.
+
+        $storedPath = $file->store('imports', 'local'); // storage/app/imports/xxxx.xlsx
+
+        $absolutePath = Storage::disk('local')->path($storedPath);
+
+
+
+        $importLogId = DB::table('xlr8_crm_import_logs')->insertGetId([
+
+            'file_name' => $file->getClientOriginalName(),
+
+            'stored_path' => $absolutePath,
+
+            'status' => 'queued',
+
+            'created_by' => backpack_user()->id ?? null,
+
+            'created_at' => now(),
+
+            'updated_at' => now(),
+
+        ]);
+
+        ImportEnquiriesJob::dispatch($importLogId, $absolutePath);
+
+        Alert::success(
+
+            "File uploaded and queued for processing (Import #{$importLogId}). " .
+
+            "Large files can take a few minutes — the status panel below will update automatically."
+
+        )->flash();
+
+
+
+        return redirect()->back();
+    }
+
+
+
+    /**
+
+     * Polled by the blade page every few seconds to show live progress.
+
+     * Route: GET enquiry/import/status/{id}
+
+     */
+
+    public function importStatus($id)
+    {
+
+        $log = DB::table('xlr8_crm_import_logs')->where('id', $id)->first();
+
+
+
+        if (!$log) {
+
+            return response()->json(['error' => 'Not found'], 404);
+        }
+
+
+
+        return response()->json([
+
+            'id' => $log->id,
+
+            'status' => $log->status,
+
+            'total_rows' => $log->total_rows,
+
+            'processed_rows' => $log->processed_rows,
+
+            'percent' => $log->total_rows > 0
+
+                ? round(($log->processed_rows / $log->total_rows) * 100, 1)
+
+                : 0,
+
+            'stats' => $log->stats ? json_decode($log->stats, true) : null,
+
+            'error_message' => $log->error_message,
+
+        ]);
+    }
+
+    public function importHistory()
+    {
+
+        $logs = DB::table('xlr8_crm_import_logs')
+
+            ->orderByDesc('id')
+
+            ->limit(5)
+
+            ->get();
+
+
+
+        return response()->json($logs);
     }
 }

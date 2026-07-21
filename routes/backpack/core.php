@@ -50,7 +50,7 @@ Route::group([
         [VehicleModelCrudController::class, 'getSubSegmentsBySegment']
     );
 
-    
+
 
     Route::get(
         'variant/subsegments',
@@ -102,7 +102,7 @@ Route::group([
         [LeadCrudController::class, 'getColors']
     );
     Route::crud('process', 'ProcessCrudController');
-    
+
     Route::crud('vehicle-accessory', VehicleAccessoryCrudController::class);
     Route::crud('system-settings', 'SystemSettingCrudController');
     Route::crud('branch', 'BranchCrudController');
@@ -172,7 +172,7 @@ Route::group([
     );
     // =========== LEAD SOURCE ===================
 
-    
+
     Route::get(
         'lead-source/check-code',
         [LeadSourceCrudController::class, 'checkCode']
@@ -207,12 +207,12 @@ Route::group([
         [EnquiryCrudController::class, 'getModels']
     );
 
-    Route::get('enquiries/add-hot-enquiry', [App\Http\Controllers\Admin\EnquiryCrudController::class, 'create'])
+    Route::get('enquiries/add', [App\Http\Controllers\Admin\EnquiryCrudController::class, 'create'])
         ->name('enquiry.create');
 
     Route::post('enquiries', [App\Http\Controllers\Admin\EnquiryCrudController::class, 'store']);
 
-    Route::get('enquiries/hot-enquiry-list', [App\Http\Controllers\Admin\EnquiryCrudController::class, 'index'])
+    Route::get('enquiries-list', [App\Http\Controllers\Admin\EnquiryCrudController::class, 'index'])
         ->name('enquiry.index');
 
     Route::get('enquiry/sources', [App\Http\Controllers\Admin\EnquiryCrudController::class, 'getSources']);
@@ -232,6 +232,18 @@ Route::group([
     Route::get('enquiries/assigned-quick', [App\Http\Controllers\Admin\EnquiryCrudController::class, 'assignedQuickList']);
 
     Route::get('enquiries/unassigned-quick', [App\Http\Controllers\Admin\EnquiryCrudController::class, 'unassignedQuickList']);
+    Route::post('enquiries/data', [EnquiryCrudController::class, 'data']);
+    Route::get('enquiries/export', [EnquiryCrudController::class, 'export']);
+    Route::post('enquiry/import', [App\Http\Controllers\Admin\EnquiryCrudController::class, 'importEnquiries'])
+        ->name('enquiry.import');
+    Route::get('enquiry/import/status/{id}', [App\Http\Controllers\Admin\EnquiryCrudController::class, 'importStatus'])
+        ->name('enquiry.import.status');
+
+
+    Route::match(['get', 'post'], 'enquiry/data', [EnquiryCrudController::class, 'gridData'])->name('enquiry.data');
+    Route::get('enquiry/export', [EnquiryCrudController::class, 'exportData'])->name('enquiry.export');
+    Route::get('enquiry/import/history', [App\Http\Controllers\Admin\EnquiryCrudController::class, 'importHistory'])
+        ->name('enquiry.import.history');
 
     Route::get('enquiry/variants/{model_code}', [App\Http\Controllers\Admin\EnquiryCrudController::class, 'getVariants']);
     Route::get('enquiry/colors/{variant_code}', [App\Http\Controllers\Admin\EnquiryCrudController::class, 'getColors']);
@@ -307,7 +319,7 @@ Route::group([
         ->name('enquiry.check-duplicate');
 
     Route::get(
-    'enquiry/location-by-pincode',
-    [EnquiryCrudController::class, 'locationByPincode']
-)->name('enquiry.location-by-pincode');
+        'enquiry/location-by-pincode',
+        [EnquiryCrudController::class, 'locationByPincode']
+    )->name('enquiry.location-by-pincode');
 }); // ← This should be the last line

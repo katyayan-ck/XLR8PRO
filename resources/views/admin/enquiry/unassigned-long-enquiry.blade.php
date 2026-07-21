@@ -2,351 +2,345 @@
 
 
 @section('content')
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div
-                class="card-header bg-gradient-primary d-flex justify-content-between align-items-center flex-nowrap flex-md-nowrap flex-wrap gap-3">
-                <h2 class="card-title mb-0 fw-bold text-black text-nowrap">
-                    {{ $title ?? 'Unassigned Long Enquiries' }}
-                </h2>
-
-                <div class="d-flex align-items-center gap-3 flex-nowrap">
-                    <a href="{{ backpack_url('enquiries/unassigned-long/create') }}"
-                        class="btn btn-blue btn-sm fw-bold shadow-sm">
-                        <i class="la la-plus me-1"></i> Add Unassigned Long Enquiry
-                    </a>
-
-                    <select id="enquiryFilter" class="form-select form-select-sm bg-white text-dark border-0 shadow-sm"
-                            style="min-width: 200px; max-width: 260px;" onchange="redirectToEnquiryList(this)">
-    
-                            <option value="{{ backpack_url('enquiries') }}">All Enquiries</option>
-                            <option value="{{ backpack_url('enquiries/reference') }}">Reference Enquiries</option>
-                            <option value="{{ backpack_url('enquiries/virtual-number') }}">Virtual Number Enquiries</option>
-                            <option value="{{ backpack_url('enquiries/whatsapp-campaign') }}">WhatsApp Campaign Enquiries</option>
-                            <option value="{{ backpack_url('enquiries/unassigned-quick') }}">Unassigned Quick Enquiries</option>
-                            <option value="{{ backpack_url('enquiries/assigned-quick') }}">Assigned Quick Enquiries</option>
-                            <option value="{{ backpack_url('enquiries/unassigned-long') }}">Unassigned Long Enquiries</option>
-                            <option value="{{ backpack_url('enquiries/assigned-long') }}">Assigned Long Enquiries</option>
-
-                    </select>
-                </div>
-            </div>
-
-            <div class="card-body p-0" style="background:#f8fafc">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
                 <div
-                    class="d-flex justify-content-between align-items-center flex-wrap gap-3 p-3 border-bottom bg-white">
-                    <div class="d-flex align-items-center gap-2 flex-nowrap">
-                        <input type="text" id="quickFilter" class="form-control w-100 w-md-auto"
-                            style="width:360px; min-width:260px;" placeholder="Smart Search...">
-                        <button id="resetAll" class="btn btn-outline-danger btn-sm text-nowrap">Reset</button>
-                    </div>
+                    class="card-header bg-gradient-primary d-flex justify-content-between align-items-center flex-nowrap flex-md-nowrap flex-wrap gap-3">
+                    <h2 class="card-title mb-0 fw-bold text-black text-nowrap">
+                        {{ $title ?? 'Unassigned Long Enquiries' }}
+                    </h2>
 
-                    <div class="d-flex gap-2 flex-nowrap justify-content-center">
-                        <button id="btnDefaultHeaders" class="btn btn-secondary btn-sm text-nowrap">Default
-                            Headers</button>
-                        <div class="position-relative d-inline-block">
-                            <button id="btnCustomiseHeaders" class="btn btn-red btn-sm text-nowrap">Customise
+                    <div class="d-flex align-items-center gap-3 flex-nowrap">
+                        <select id="enquiryFilter" class="form-select form-select-sm bg-white text-dark border-0 shadow-sm"
+                            style="min-width: 200px; max-width: 260px;" onchange="redirectToEnquiryList(this)">
+
+                            <option value="{{ backpack_url('enquiries/unassigned-quick') }}">Unassigned Quick Enquiries
+                            </option>
+                            <option value="{{ backpack_url('enquiries/unassigned-long') }}" selected>Unassigned Long
+                                Enquiries</option>
+                            </option>
+
+                        </select>
+                    </div>
+                </div>
+
+                <div class="card-body p-0" style="background:#f8fafc">
+                    <div
+                        class="d-flex justify-content-between align-items-center flex-wrap gap-3 p-3 border-bottom bg-white">
+                        <div class="d-flex align-items-center gap-2 flex-nowrap">
+                            <input type="text" id="quickFilter" class="form-control w-100 w-md-auto"
+                                style="width:360px; min-width:260px;" placeholder="Smart Search...">
+                            <button id="resetAll" class="btn btn-outline-danger btn-sm text-nowrap">Reset</button>
+                        </div>
+
+                        <div class="d-flex gap-2 flex-nowrap justify-content-center">
+                            <button id="btnDefaultHeaders" class="btn btn-secondary btn-sm text-nowrap">Default
                                 Headers</button>
-                            <div id="columnBubble"
-                                style="display:none; position:absolute; top:110%; left:0; width:320px; background:#fff; border:1px solid #ddd; border-radius:6px; box-shadow:0 8px 20px rgba(0,0,0,.15); z-index:9999;">
-                                <div class="d-flex justify-content-between align-items-center px-2 py-1 border-bottom">
-                                    <strong style="font-size:13px;">Customise Headers</strong>
-                                    <button id="closeColumnBubble"
-                                        class="btn btn-sm btn-link text-danger p-0">✕</button>
-                                </div>
-                                <div style="max-height:260px; overflow:auto;">
-                                    <table class="table table-sm mb-0">
-                                        <tbody id="columnBubbleBody"></tbody>
-                                    </table>
+                            <div class="position-relative d-inline-block">
+                                <button id="btnCustomiseHeaders" class="btn btn-red btn-sm text-nowrap">Customise
+                                    Headers</button>
+                                <div id="columnBubble"
+                                    style="display:none; position:absolute; top:110%; left:0; width:320px; background:#fff; border:1px solid #ddd; border-radius:6px; box-shadow:0 8px 20px rgba(0,0,0,.15); z-index:9999;">
+                                    <div class="d-flex justify-content-between align-items-center px-2 py-1 border-bottom">
+                                        <strong style="font-size:13px;">Customise Headers</strong>
+                                        <button id="closeColumnBubble"
+                                            class="btn btn-sm btn-link text-danger p-0">✕</button>
+                                    </div>
+                                    <div style="max-height:260px; overflow:auto;">
+                                        <table class="table table-sm mb-0">
+                                            <tbody id="columnBubbleBody"></tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
+                            <button id="btnAllHeaders" class="btn btn-blue btn-sm text-nowrap">All Headers</button>
                         </div>
-                        <button id="btnAllHeaders" class="btn btn-blue btn-sm text-nowrap">All Headers</button>
+
+                        <div class="d-flex gap-2 flex-nowrap">
+                            <button id="exportCsv" class="btn btn-sm text-nowrap d-flex align-items-center gap-2">
+                                <img src="{{ asset('images/export-excel.png') }}" alt="Excel"
+                                    style="height:30px; width:auto;">
+                            </button>
+                            <button id="exportPdf" class="btn btn-sm text-nowrap d-flex align-items-center gap-2">
+                                <img src="{{ asset('images/export-pdf.png') }}" alt="PDF"
+                                    style="height:30px; width:auto;">
+                            </button>
+                        </div>
                     </div>
 
-                    <div class="d-flex gap-2 flex-nowrap">
-                        <button id="exportCsv" class="btn btn-sm text-nowrap d-flex align-items-center gap-2">
-                            <img src="{{ asset('images/export-excel.png') }}" alt="Excel"
-                                style="height:30px; width:auto;">
-                        </button>
-                        <button id="exportPdf" class="btn btn-sm text-nowrap d-flex align-items-center gap-2">
-                            <img src="{{ asset('images/export-pdf.png') }}" alt="PDF"
-                                style="height:30px; width:auto;">
-                        </button>
-                    </div>
+                    <div id="myGrid" class="ag-theme-quartz" style="height: calc(93vh - 260px); width:100%;"></div>
                 </div>
-
-                <div id="myGrid" class="ag-theme-quartz" style="height: calc(93vh - 260px); width:100%;"></div>
             </div>
         </div>
     </div>
-</div>
 @endsection
 
 @push('after_styles')
-<link rel="stylesheet" href="https://unpkg.com/ag-grid-community/styles/ag-theme-quartz.css">
-<style>
-    .ag-theme-quartz .center-header .ag-header-cell-label {
-        justify-content: center !important;
-    }
-</style>
+    <link rel="stylesheet" href="https://unpkg.com/ag-grid-community/styles/ag-theme-quartz.css">
+    <style>
+        .ag-theme-quartz .center-header .ag-header-cell-label {
+            justify-content: center !important;
+        }
+    </style>
 @endpush
 
 @push('after_scripts')
-<script src="https://unpkg.com/ag-grid-community/dist/ag-grid-community.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://unpkg.com/ag-grid-community/dist/ag-grid-community.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
 
-<script>
-    const ALL_COLUMNS = @json($gridConfig['columns'] ?? []);
-    let gridApi;
+    <script>
+        const ALL_COLUMNS = @json($gridConfig['columns'] ?? []);
+        let gridApi;
 
-    const columnDefs = [
+        const columnDefs = [
 
-        ...ALL_COLUMNS.filter(col => [
+            ...ALL_COLUMNS.filter(col => [
 
-                        'serial_no',
-                        'long_enq_no',
-                        'long_enq_date_and_time',
-                        'customer_first_name',
-                        'customer_phone',
-                        'enq_type',
-                        'enq_source',
-                        'enq_sub_source',
-                        'likely_purchase_date',
-                        'model_code',
-                        'variant_code',
-                        'color_code',
-                        'customer_type',
-                        'zip_code'
+                'serial_no',
+                'long_enq_no',
+                'long_enq_date_and_time',
+                'customer_first_name',
+                'customer_phone',
+                'enq_type',
+                'enq_source',
+                'enq_sub_source',
+                'likely_purchase_date',
+                'model_code',
+                'variant_code',
+                'color_code',
+                'customer_type',
+                'zip_code'
 
-        ].includes(col.field)),
+            ].includes(col.field)),
 
-        ...ALL_COLUMNS.filter(col => ['action'].includes(col.field)).map(col => {
+            ...ALL_COLUMNS.filter(col => ['action'].includes(col.field)).map(col => {
 
-            col.pinned = 'right';
-            col.width = 140;
-            col.sortable = false;
-            col.filter = false;
-            col.cellRenderer = 'htmlRenderer';
+                col.pinned = 'right';
+                col.width = 140;
+                col.sortable = false;
+                col.filter = false;
+                col.cellRenderer = 'htmlRenderer';
 
-            return col;
+                return col;
 
-        })
+            })
 
-    ];
+        ];
 
-    const gridOptions = {
-        columnDefs: columnDefs,
-        rowData: @json($gridConfig['data'] ?? []),
-        pagination: true,
-        paginationPageSize: 50,
-        rowHeight: 28,
-        animateRows: true,
-        defaultColDef: {
-            sortable: true,
-            filter: true,
-            resizable: true,
-            headerClass: 'center-header',
-            cellStyle: {
-                textAlign: 'center'
+        const gridOptions = {
+            columnDefs: columnDefs,
+            rowData: @json($gridConfig['data'] ?? []),
+            pagination: true,
+            paginationPageSize: 50,
+            rowHeight: 28,
+            animateRows: true,
+            defaultColDef: {
+                sortable: true,
+                filter: true,
+                resizable: true,
+                headerClass: 'center-header',
+                cellStyle: {
+                    textAlign: 'center'
+                }
+            },
+            components: {
+                htmlRenderer: params => params.value || ''
+            },
+            onGridReady: params => {
+                gridApi = params.api;
+
+                const defaultFields = [
+
+                    'serial_no',
+                    'long_enq_no',
+                    'long_enq_date_and_time',
+                    'customer_first_name',
+                    'customer_phone',
+                    'enq_type',
+                    'enq_source',
+                    'enq_sub_source',
+                    'likely_purchase_date',
+                    'model_code',
+                    'variant_code',
+                    'color_code',
+                    'customer_type',
+                    'zip_code',
+                    'action'
+
+                ];
+                const allCols = gridApi.getAllGridColumns().map(col => col.getColId());
+                gridApi.setColumnsVisible(allCols, false);
+                gridApi.setColumnsVisible(defaultFields, true);
+                setTimeout(() => gridApi.autoSizeAllColumns(), 300);
             }
-        },
-        components: {
-            htmlRenderer: params => params.value || ''
-        },
-        onGridReady: params => {
-            gridApi = params.api;
+        };
 
-            const defaultFields = [
+        function openColumnBubble() {
+            const bubble = document.getElementById('columnBubble');
+            const tbody = document.getElementById('columnBubbleBody');
+            if (!gridApi || !bubble || !tbody) return;
 
-                        'serial_no',
-                        'long_enq_no',
-                        'long_enq_date_and_time',
-                        'customer_first_name',
-                        'customer_phone',
-                        'enq_type',
-                        'enq_source',
-                        'enq_sub_source',
-                        'likely_purchase_date',
-                        'model_code',
-                        'variant_code',
-                        'color_code',
-                        'customer_type',
-                        'zip_code',
-                        'action'
+            tbody.innerHTML = '';
 
-            ];
-            const allCols = gridApi.getAllGridColumns().map(col => col.getColId());
-            gridApi.setColumnsVisible(allCols, false);
-            gridApi.setColumnsVisible(defaultFields, true);
-            setTimeout(() => gridApi.autoSizeAllColumns(), 300);
-        }
-    };
+            const allFlatColumns = ALL_COLUMNS;
 
-    function openColumnBubble() {
-        const bubble = document.getElementById('columnBubble');
-        const tbody = document.getElementById('columnBubbleBody');
-        if (!gridApi || !bubble || !tbody) return;
+            allFlatColumns.forEach(col => {
+                if (!col.field) return;
 
-        tbody.innerHTML = '';
+                const tr = document.createElement('tr');
+                const tdCheck = document.createElement('td');
+                tdCheck.style.width = '40px';
 
-        const allFlatColumns = ALL_COLUMNS;
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.checked = gridApi.getColumn(col.field)?.isVisible() ?? false;
 
-        allFlatColumns.forEach(col => {
-            if (!col.field) return;
+                if (['serial_no', 'long_enq_no', 'action'].includes(col.field)) {
+                    checkbox.disabled = true;
+                }
 
-            const tr = document.createElement('tr');
-            const tdCheck = document.createElement('td');
-            tdCheck.style.width = '40px';
+                checkbox.addEventListener('change', () => {
+                    gridApi.setColumnsVisible([col.field], checkbox.checked);
+                });
 
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.checked = gridApi.getColumn(col.field)?.isVisible() ?? false;
+                tdCheck.appendChild(checkbox);
 
-            if (['serial_no', 'long_enq_no', 'action'].includes(col.field)) {
-                checkbox.disabled = true;
-            }
+                const tdLabel = document.createElement('td');
+                tdLabel.textContent = col.headerName || col.field;
 
-            checkbox.addEventListener('change', () => {
-                gridApi.setColumnsVisible([col.field], checkbox.checked);
+                tr.append(tdCheck, tdLabel);
+                tbody.appendChild(tr);
             });
 
-            tdCheck.appendChild(checkbox);
+            bubble.style.display = 'block';
+        }
 
-            const tdLabel = document.createElement('td');
-            tdLabel.textContent = col.headerName || col.field;
 
-            tr.append(tdCheck, tdLabel);
-            tbody.appendChild(tr);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const gridDiv = document.querySelector('#myGrid');
+            agGrid.createGrid(gridDiv, gridOptions);
+
+            document.getElementById('quickFilter').addEventListener('input', e => {
+                gridApi.setGridOption('quickFilterText', e.target.value);
+            });
+
+            document.getElementById('resetAll').addEventListener('click', () => {
+                gridApi.setFilterModel(null);
+                document.getElementById('quickFilter').value = '';
+                gridApi.setGridOption('quickFilterText', '');
+                gridApi.setSortModel(null);
+            });
+
+            document.getElementById('btnCustomiseHeaders').addEventListener('click', e => {
+                e.stopPropagation();
+                openColumnBubble();
+            });
+
+            document.getElementById('closeColumnBubble').addEventListener('click', () => {
+                document.getElementById('columnBubble').style.display = 'none';
+            });
+
+            document.getElementById('columnBubble').addEventListener('click', e => e.stopPropagation());
+
+            document.addEventListener('click', () => {
+                const bubble = document.getElementById('columnBubble');
+                if (bubble?.style.display === 'block') bubble.style.display = 'none';
+            });
+
+            document.getElementById('btnAllHeaders').addEventListener('click', () => {
+                const allCols = gridApi.getAllGridColumns().map(c => c.getColId());
+                gridApi.setColumnsVisible(allCols, true);
+                setTimeout(() => gridApi.autoSizeAllColumns(), 200);
+            });
+
+            document.getElementById('btnDefaultHeaders').addEventListener('click', () => {
+                const defaultFields = [
+
+                    'serial_no',
+                    'long_enq_no',
+                    'long_enq_date_and_time',
+                    'customer_first_name',
+                    'customer_phone',
+                    'enq_type',
+                    'enq_source',
+                    'enq_sub_source',
+                    'likely_purchase_date',
+                    'model_code',
+                    'variant_code',
+                    'color_code',
+                    'customer_type',
+                    'zip_code',
+                    'action'
+
+                ];
+                const allCols = gridApi.getAllGridColumns().map(c => c.getColId());
+
+                gridApi.setColumnsVisible(allCols, false);
+                gridApi.setColumnsVisible(defaultFields, true);
+                setTimeout(() => gridApi.autoSizeAllColumns(), 200);
+            });
+
+            document.getElementById('exportCsv').addEventListener('click', () => {
+                const visibleColumns = gridApi.getAllDisplayedColumns()
+                    .map(col => col.getColDef())
+                    .filter(col => col.field && col.field !== 'action');
+
+                const rows = [];
+                gridApi.forEachNodeAfterFilterAndSort(node => {
+                    const row = {};
+                    visibleColumns.forEach(col => {
+                        row[col.headerName] = node.data[col.field] ?? '';
+                    });
+                    rows.push(row);
+                });
+
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.json_to_sheet(rows);
+                XLSX.utils.book_append_sheet(wb, ws, "Unassigned Long Enquiries");
+                XLSX.writeFile(wb,
+                    `unassigned-long-enquiries-${new Date().toISOString().slice(0, 10)}.xlsx`);
+            });
+
+            document.getElementById('exportPdf').addEventListener('click', () => {
+                const {
+                    jsPDF
+                } = window.jspdf;
+                const doc = new jsPDF();
+
+                const visibleColumns = gridApi.getAllDisplayedColumns()
+                    .map(col => col.getColDef())
+                    .filter(col => col.field && col.field !== 'action');
+
+                const headers = visibleColumns.map(col => col.headerName);
+                const rows = [];
+
+                gridApi.forEachNodeAfterFilterAndSort(node => {
+                    rows.push(visibleColumns.map(col => node.data[col.field] ?? ''));
+                });
+
+                doc.autoTable({
+                    head: [headers],
+                    body: rows,
+                    styles: {
+                        fontSize: 8
+                    },
+                    headStyles: {
+                        fillColor: [41, 128, 185]
+                    },
+                });
+
+                doc.save(`unassigned-long-enquiries-${new Date().toISOString().slice(0, 10)}.pdf`);
+            });
         });
 
-        bubble.style.display = 'block';
-    }
-
-
-
-    document.addEventListener('DOMContentLoaded', () => {
-                const gridDiv = document.querySelector('#myGrid');
-                agGrid.createGrid(gridDiv, gridOptions);
-
-                document.getElementById('quickFilter').addEventListener('input', e => {
-                    gridApi.setGridOption('quickFilterText', e.target.value);
-                });
-
-                document.getElementById('resetAll').addEventListener('click', () => {
-                    gridApi.setFilterModel(null);
-                    document.getElementById('quickFilter').value = '';
-                    gridApi.setGridOption('quickFilterText', '');
-                    gridApi.setSortModel(null);
-                });
-
-                document.getElementById('btnCustomiseHeaders').addEventListener('click', e => {
-                    e.stopPropagation();
-                    openColumnBubble();
-                });
-
-                document.getElementById('closeColumnBubble').addEventListener('click', () => {
-                    document.getElementById('columnBubble').style.display = 'none';
-                });
-
-                document.getElementById('columnBubble').addEventListener('click', e => e.stopPropagation());
-
-                document.addEventListener('click', () => {
-                    const bubble = document.getElementById('columnBubble');
-                    if (bubble?.style.display === 'block') bubble.style.display = 'none';
-                });
-
-                document.getElementById('btnAllHeaders').addEventListener('click', () => {
-                    const allCols = gridApi.getAllGridColumns().map(c => c.getColId());
-                    gridApi.setColumnsVisible(allCols, true);
-                    setTimeout(() => gridApi.autoSizeAllColumns(), 200);
-                });
-
-                document.getElementById('btnDefaultHeaders').addEventListener('click', () => {
-                    const defaultFields = [
-
-                        'serial_no',
-                        'long_enq_no',
-                        'long_enq_date_and_time',
-                        'customer_first_name',
-                        'customer_phone',
-                        'enq_type',
-                        'enq_source',
-                        'enq_sub_source',
-                        'likely_purchase_date',
-                        'model_code',
-                        'variant_code',
-                        'color_code',
-                        'customer_type',
-                        'zip_code',
-                        'action'
-
-                    ];
-                    const allCols = gridApi.getAllGridColumns().map(c => c.getColId());
-
-                    gridApi.setColumnsVisible(allCols, false);
-                    gridApi.setColumnsVisible(defaultFields, true);
-                    setTimeout(() => gridApi.autoSizeAllColumns(), 200);
-                });
-
-                document.getElementById('exportCsv').addEventListener('click', () => {
-                    const visibleColumns = gridApi.getAllDisplayedColumns()
-                        .map(col => col.getColDef())
-                        .filter(col => col.field && col.field !== 'action');
-
-                    const rows = [];
-                    gridApi.forEachNodeAfterFilterAndSort(node => {
-                        const row = {};
-                        visibleColumns.forEach(col => {
-                            row[col.headerName] = node.data[col.field] ?? '';
-                        });
-                        rows.push(row);
-                    });
-
-                    const wb = XLSX.utils.book_new();
-                    const ws = XLSX.utils.json_to_sheet(rows);
-                    XLSX.utils.book_append_sheet(wb, ws, "Unassigned Long Enquiries");
-                    XLSX.writeFile(wb, `unassigned-long-enquiries-${new Date().toISOString().slice(0, 10)}.xlsx`);
-                });
-
-                document.getElementById('exportPdf').addEventListener('click', () => {
-                    const {
-                        jsPDF
-                    } = window.jspdf;
-                    const doc = new jsPDF();
-
-                    const visibleColumns = gridApi.getAllDisplayedColumns()
-                        .map(col => col.getColDef())
-                        .filter(col => col.field && col.field !== 'action');
-
-                    const headers = visibleColumns.map(col => col.headerName);
-                    const rows = [];
-
-                    gridApi.forEachNodeAfterFilterAndSort(node => {
-                        rows.push(visibleColumns.map(col => node.data[col.field] ?? ''));
-                    });
-
-                    doc.autoTable({
-                        head: [headers],
-                        body: rows,
-                        styles: {
-                            fontSize: 8
-                        },
-                        headStyles: {
-                            fillColor: [41, 128, 185]
-                        },
-                    });
-
-                    doc.save(`unassigned-long-enquiries-${new Date().toISOString().slice(0, 10)}.pdf`);
-                });
-            });
-            function redirectToEnquiryList(selectElement) {
-                if (selectElement.value) {
+        function redirectToEnquiryList(selectElement) {
+            if (selectElement.value) {
                 window.location.href = selectElement.value;
-                }
             }
-</script>
+        }
+    </script>
 @endpush

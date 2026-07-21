@@ -21,6 +21,10 @@ class Enquiry extends BaseModel
 
     protected $fillable = [
 
+        'origin',
+        'current_origin',
+        'cne',
+
         'enquiry_no',
         'enquiry_type',
         'source_code',
@@ -81,16 +85,9 @@ class Enquiry extends BaseModel
 
         'remarks',
 
-        'segment',
         'segment_code',
-
-        'model',
         'model_code',
-
-        'variant',
         'variant_code',
-
-        'color',
         'color_code',
 
         'fuel_type',
@@ -109,13 +106,13 @@ class Enquiry extends BaseModel
         'dealer_branch',
         'dealer_location',
 
-        'sales_consultant_id',
+        'sc_code',
 
         'followup_type',
         'followup_date',
         'followup_time',
 
-        'real_status',
+
 
         'created_by',
         'updated_by',
@@ -148,6 +145,7 @@ class Enquiry extends BaseModel
             'expected_delivery_date' => 'date',
             'has_rsa' => 'boolean',
             'has_extended_warranty' => 'boolean',
+            'status' => 'integer',
         ]);
     }
 
@@ -210,10 +208,6 @@ class Enquiry extends BaseModel
         return $this->belongsTo(Lead::class, 'lead_no', 'lead_no');
     }
 
-    // public function source()
-    // {
-    //     return $this->belongsTo(LeadSource::class, 'source_code', 'code');
-    // }
 
     public function person()
     {
@@ -222,7 +216,7 @@ class Enquiry extends BaseModel
 
     public function salesConsultant()
     {
-        return $this->belongsTo(User::class, 'sales_consultant_id');
+        return $this->belongsTo(User::class, 'sc_code');
     }
 
     public function vehicleModel()
@@ -275,21 +269,16 @@ class Enquiry extends BaseModel
     // Scopes, accessors, and caching remain the same as previous version
     public function scopeOpen($query)
     {
-        return $query->whereNotIn('status', [self::STATUS_LOST, self::STATUS_CANCELLED, self::STATUS_BOOKING_DONE]);
+        return $query->whereNotIn('quick_status', [self::STATUS_LOST, self::STATUS_CANCELLED, self::STATUS_BOOKING_DONE]);
     }
 
     public function scopeForConsultant($query, int $userId)
     {
-        return $query->where('sales_consultant_id', $userId);
+        return $query->where('sc_code', $userId);
     }
 
-    // ==================== CURRENT-ORIGIN / REAL-STATUS BASE SCOPES ====================
 
-    // real_status = 1 => live/active record (this is the "status 1" flag)
-    // public function scopeActive($query)
-    // {
-    //     return $query->where('real_status', 1);
-    // }
+
 
     public function scopeCurrentOrigin($query, string $origin)
     {
@@ -322,14 +311,14 @@ class Enquiry extends BaseModel
     }
 
     // ==================== ASSIGNED / UNASSIGNED SCOPES ====================
-    // Assigned  = sales_consultant_id OR sc_mile_id has a value
-    // Unassigned = both sales_consultant_id AND sc_mile_id are blank
+    // Assigned  = sc_code OR sc_mile_id has a value
+    // Unassigned = both sc_code AND sc_mile_id are blank
 
     public function scopeAssigned($query)
     {
         return $query->where(function ($q) {
             $q->where(function ($q2) {
-                $q2->whereNotNull('sales_consultant_id')->where('sales_consultant_id', '!=', '');
+                $q2->whereNotNull('sc_code')->where('sc_code', '!=', '');
             })->orWhere(function ($q2) {
                 $q2->whereNotNull('sc_mile_id')->where('sc_mile_id', '!=', '');
             });
@@ -340,7 +329,7 @@ class Enquiry extends BaseModel
     {
         return $query->where(function ($q) {
             $q->where(function ($q2) {
-                $q2->whereNull('sales_consultant_id')->orWhere('sales_consultant_id', '');
+                $q2->whereNull('sc_code')->orWhere('sc_code', '');
             })->where(function ($q2) {
                 $q2->whereNull('sc_mile_id')->orWhere('sc_mile_id', '');
             });
@@ -375,11 +364,7 @@ class Enquiry extends BaseModel
         return trim($this->first_name . ' ' . ($this->last_name ?? ''));
     }
 
-    // public function getStatusLabelAttribute(): string
-    // {
-    //     return app(\App\Services\KeywordValueService::class)->getEnum('ENQUIRY_STATUS', $this->status)
-    //         ?? ucfirst(str_replace('_', ' ', $this->status));
-    // }
+
 
     public static function getOpenCountByConsultant(int $userId): int
     {

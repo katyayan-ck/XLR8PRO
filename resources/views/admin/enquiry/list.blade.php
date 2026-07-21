@@ -7,7 +7,7 @@
                 <div
                     class="card-header bg-gradient-primary d-flex justify-content-between align-items-center flex-nowrap flex-md-nowrap flex-wrap gap-3">
                     <h2 class="card-title mb-0 fw-bold text-black text-nowrap">
-                        {{ $title ?? 'All Enquiries' }}
+                        {{ $title ?? 'Xlr8 Enquiries' }}
                     </h2>
 
                     <div class="d-flex align-items-center gap-3 flex-nowrap">
@@ -18,18 +18,14 @@
 
                         <select id="enquiryFilter" class="form-select form-select-sm bg-white text-dark border-0 shadow-sm"
                             style="min-width: 200px; max-width: 260px;" onchange="redirectToEnquiryList(this)">
+                            <option value="{{ backpack_url('enquiries-list') }}" selected>Xlr8 Enquiries</option>
+                            <option value="{{ backpack_url('enquiries/assigned-quick') }}">Assigned Quick Enquiries</option>
+                            <option value="{{ backpack_url('enquiries/assigned-long') }}">Assigned Long Enquiries</option>
 
-                            <option value="{{ backpack_url('enquiries') }}">All Enquiries</option>
-                            <option value="{{ backpack_url('enquiries/reference') }}">Reference Enquiries</option>
                             <option value="{{ backpack_url('enquiries/virtual-number') }}">Virtual Number Enquiries</option>
+                            <option value="{{ backpack_url('enquiries/reference') }}">Reference Enquiries</option>
                             <option value="{{ backpack_url('enquiries/whatsapp-campaign') }}">WhatsApp Campaign Enquiries
                             </option>
-                            <option value="{{ backpack_url('enquiries/unassigned-quick') }}">Unassigned Quick Enquiries
-                            </option>
-                            <option value="{{ backpack_url('enquiries/assigned-quick') }}">Assigned Quick Enquiries</option>
-                            <option value="{{ backpack_url('enquiries/unassigned-long') }}">Unassigned Long Enquiries
-                            </option>
-                            <option value="{{ backpack_url('enquiries/assigned-long') }}">Assigned Long Enquiries</option>
 
                         </select>
 
@@ -37,6 +33,60 @@
                 </div>
 
                 <div class="card-body p-0" style="background:#f8fafc">
+                    <div class="p-3 border-bottom bg-white">
+                        <div class="row align-items-end">
+                            <div class="col-md-8">
+                                <h5 class="mb-2 text-dark">
+                                    <i class="la la-file-excel-o"></i> Import Enquiries from Excel
+                                </h5>
+                                <small class="text-muted">
+                                    Upload Excel file containing enquiry data. First row should contain headers.
+                                </small>
+                            </div>
+                            <div class="col-md-4">
+                                <form action="{{ route('enquiry.import') }}" method="POST" enctype="multipart/form-data"
+                                    class="d-flex gap-2">
+                                    @csrf
+                                    <input type="file" name="excel_file" class="form-control form-control-sm"
+                                        accept=".xlsx,.xls" required>
+                                    <button type="submit" class="btn btn-success btn-sm px-4 text-nowrap">
+                                        <i class="la la-upload"></i> Import
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-3 border-bottom bg-white" id="importStatusPanel" style="display:none;">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <strong id="importStatusTitle">Import in progress…</strong>
+                            <span class="text-muted small" id="importStatusPercent">0%</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-success" id="importProgressBar" role="progressbar"style="width: 0%">
+                            </div>
+                        </div>
+                        <div class="small text-muted mt-2" id="importStatusDetail"></div>
+                    </div>
+
+                    <div class="p-3 border-bottom bg-white">
+                        <h6 class="text-muted mb-2">Recent Imports</h6>
+                        <table class="table table-sm mb-0" id="importHistoryTable">
+                            <thead>
+                                <tr>
+                                    <th>File</th>
+                                    <th>Status</th>
+                                    <th>Progress</th>
+                                    <th>When</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="4" class="text-muted">Loading…</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
                     <div
                         class="d-flex justify-content-between align-items-center flex-wrap gap-3 p-3 border-bottom bg-white">
                         <div class="d-flex align-items-center gap-2 flex-nowrap">
@@ -102,6 +152,71 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
 
+
+    <script>
+        (function() {
+            const statusUrlBase = "{{ url('/' . config('backpack.base.route_prefix') . '/enquiry/import/status') }}";
+            const historyUrl = "{{ route('enquiry.import.history') }}";
+            let pollTimer = null;
+
+            function renderHistory(rows) {
+                const tbody = document.querySelector('#importHistoryTable tbody');
+                if (!rows.length) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-muted">No imports yet</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = rows.map(r => {
+                    const pct = r.total_rows > 0 ? Math.round((r.processed_rows / r.total_rows) * 100) : 0;
+                    const badge = r.status === 'completed' ? 'success' :
+                        r.status === 'failed' ? 'danger' :
+                        'warning';
+                    return `<tr>
+                <td>${r.file_name}</td>
+                <td><span class="badge bg-${badge}">${r.status}</span></td>
+                <td>${r.status === 'processing' ? pct + '%' : '-'}</td>
+                <td>${r.updated_at}</td>
+            </tr>`;
+                }).join('');
+
+                // if the newest one is still processing/queued, start polling it
+                const newest = rows[0];
+                if (newest && (newest.status === 'processing' || newest.status === 'queued')) {
+                    startPolling(newest.id);
+                }
+            }
+
+            function startPolling(id) {
+                const panel = document.getElementById('importStatusPanel');
+                panel.style.display = 'block';
+                if (pollTimer) clearInterval(pollTimer);
+
+                function tick() {
+                    fetch(`${statusUrlBase}/${id}`).then(r => r.json()).then(data => {
+                        document.getElementById('importProgressBar').style.width = data.percent + '%';
+                        document.getElementById('importStatusPercent').innerText = data.percent + '%';
+                        document.getElementById('importStatusDetail').innerText =
+                            `${data.processed_rows} / ${data.total_rows} rows processed`;
+
+                        if (data.status === 'completed') {
+                            document.getElementById('importStatusTitle').innerText = 'Import completed ✅';
+                            clearInterval(pollTimer);
+                            setTimeout(() => location.reload(), 1500);
+                        } else if (data.status === 'failed') {
+                            document.getElementById('importStatusTitle').innerText = 'Import failed ❌';
+                            document.getElementById('importStatusDetail').innerText = data.error_message ||
+                                'Unknown error';
+                            clearInterval(pollTimer);
+                        }
+                    }).catch(() => {});
+                }
+
+                tick();
+                pollTimer = setInterval(tick, 3000);
+            }
+
+            fetch(historyUrl).then(r => r.json()).then(renderHistory);
+        })();
+    </script>
     <script>
         const ALL_COLUMNS = @json($gridConfig['columns'] ?? []);
         let gridApi;
@@ -167,7 +282,7 @@
                 'place_of_registration',
                 'dealer_branch',
                 'dealer_location',
-                'sales_consultant_id',
+                'sc_code',
                 'followup_type',
                 'followup_date',
                 'followup_time'
@@ -187,32 +302,61 @@
 
         ];
 
+        function debounce(fn, delay) {
+            let timer;
+            return (...args) => {
+                clearTimeout(timer);
+                timer = setTimeout(() => fn(...args), delay);
+            };
+        }
+
+        let currentSearchText = '';
+
+
+        const dataSource = {
+            getRows: function(params) {
+                fetch('{{ backpack_url('enquiries/data') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({
+                            startRow: params.startRow,
+                            endRow: params.endRow,
+                            sortModel: params.sortModel,
+                            searchText: currentSearchText
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        params.successCallback(data.rows || [], data.lastRow ?? -1);
+                    })
+                    .catch(err => {
+                        console.error('Failed to load enquiries page', err);
+                        params.failCallback();
+                    });
+            }
+        };
+
         const gridOptions = {
             columnDefs: columnDefs,
-            rowData: @json($gridConfig['data'] ?? []),
-            pagination: true,
-            paginationPageSize: 50,
+            rowModelType: 'infinite',
+            datasource: dataSource,
+            cacheBlockSize: 100,
+            maxBlocksInCache: 10,
+            infiniteInitialRowCount: 100,
             rowHeight: 28,
             animateRows: true,
             defaultColDef: {
                 sortable: true,
-                filter: true,
+
+                filter: false,
                 resizable: true,
                 headerClass: 'center-header',
                 cellStyle: {
                     textAlign: 'center'
-                },
-                valueFormatter: params => {
-
-                    if (
-                        params.value === null ||
-                        params.value === undefined ||
-                        params.value === ''
-                    ) {
-                        return '—';
-                    }
-
-                    return params.value;
                 }
             },
             components: {
@@ -248,7 +392,6 @@
             }
         };
 
-        // ==================== Customise Headers ====================
         function openColumnBubble() {
             const bubble = document.getElementById('columnBubble');
             const tbody = document.getElementById('columnBubbleBody');
@@ -293,15 +436,21 @@
             const gridDiv = document.querySelector('#myGrid');
             agGrid.createGrid(gridDiv, gridOptions);
 
-            document.getElementById('quickFilter').addEventListener('input', e => {
-                gridApi.setGridOption('quickFilterText', e.target.value);
-            });
+            document.getElementById('quickFilter').addEventListener('input', debounce(e => {
+                currentSearchText = e.target.value.trim();
+
+                gridApi.setGridOption('datasource', dataSource);
+            }, 400));
 
             document.getElementById('resetAll').addEventListener('click', () => {
-                gridApi.setFilterModel(null);
                 document.getElementById('quickFilter').value = '';
-                gridApi.setGridOption('quickFilterText', '');
-                gridApi.setSortModel(null);
+                currentSearchText = '';
+                gridApi.applyColumnState({
+                    defaultState: {
+                        sort: null
+                    }
+                });
+                gridApi.setGridOption('datasource', dataSource);
             });
 
             document.getElementById('btnCustomiseHeaders').addEventListener('click', e => {
@@ -351,26 +500,14 @@
                 setTimeout(() => gridApi.autoSizeAllColumns(), 200);
             });
 
-            // Export functions
+
             document.getElementById('exportCsv').addEventListener('click', () => {
-                const visibleColumns = gridApi.getAllDisplayedColumns()
-                    .map(col => col.getColDef())
-                    .filter(col => col.field && col.field !== 'action');
-
-                const rows = [];
-                gridApi.forEachNodeAfterFilterAndSort(node => {
-                    const row = {};
-                    visibleColumns.forEach(col => {
-                        row[col.headerName] = node.data[col.field] ?? '';
-                    });
-                    rows.push(row);
+                const params = new URLSearchParams({
+                    searchText: currentSearchText
                 });
-
-                const wb = XLSX.utils.book_new();
-                const ws = XLSX.utils.json_to_sheet(rows);
-                XLSX.utils.book_append_sheet(wb, ws, "Enquiries");
-                XLSX.writeFile(wb, `enquiries-${new Date().toISOString().slice(0, 10)}.xlsx`);
+                window.location.href = '{{ backpack_url('enquiries/export') }}?' + params.toString();
             });
+
 
             document.getElementById('exportPdf').addEventListener('click', () => {
                 const {
@@ -386,6 +523,7 @@
                 const rows = [];
 
                 gridApi.forEachNodeAfterFilterAndSort(node => {
+                    if (!node.data) return;
                     rows.push(visibleColumns.map(col => node.data[col.field] ?? ''));
                 });
 
@@ -401,6 +539,12 @@
                 });
 
                 doc.save(`enquiries-${new Date().toISOString().slice(0, 10)}.pdf`);
+
+                if (rows.length < gridApi.getDisplayedRowCount()) {
+                    alert(
+                        'PDF export includes only the rows currently loaded in the grid (scroll to load more, then export again). For the full list, use the CSV export instead.'
+                    );
+                }
             });
         });
 
