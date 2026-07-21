@@ -10,22 +10,6 @@
                     <h2 class="card-title mb-0 fw-bold text-black text-nowrap">
                         {{ $title ?? 'Reference Enquiries' }}
                     </h2>
-
-                    <div class="d-flex align-items-center gap-3 flex-nowrap">
-                        <select id="enquiryFilter" class="form-select form-select-sm bg-white text-dark border-0 shadow-sm"
-                            style="min-width: 200px; max-width: 260px;" onchange="redirectToEnquiryList(this)">
-
-                            <option value="{{ backpack_url('enquiries-list') }}">Xlr8 Enquiries</option>
-                            <option value="{{ backpack_url('enquiries/assigned-quick') }}">Assigned Quick Enquiries</option>
-                            <option value="{{ backpack_url('enquiries/assigned-long') }}">Assigned Long Enquiries</option>
-
-                            <option value="{{ backpack_url('enquiries/virtual-number') }}">Virtual Number Enquiries</option>
-                            <option value="{{ backpack_url('enquiries/reference') }}" selected>Reference Enquiries</option>
-                            <option value="{{ backpack_url('enquiries/whatsapp-campaign') }}">WhatsApp Campaign Enquiries
-                            </option>
-
-                        </select>
-                    </div>
                 </div>
 
                 <div class="card-body p-0" style="background:#f8fafc">
@@ -103,13 +87,25 @@
             ...ALL_COLUMNS.filter(col => [
 
                 'serial_no',
-                'enq_date_and_time',
-                'referred_by',
-                'referree_phone',
-                'customer_name',
-                'customer_phone',
-                'model_code',
-                'variant_code'
+                'referee_name',
+                'referee_phone',
+                'enquiry_assign_date',
+                'first_name',
+                'mobile',
+                'model_name',
+                'variant_name',
+                'dms_enquiry_stage',
+                'cre_enquiry_stage',
+                'cre_next_fup_date',
+                'cre_next_fup_time',
+                'cre_next_fup_remarks',
+                'quotation_no',
+                'booking_no',
+                'booking_date',
+                'oem_booking_no',
+                'oem_booking_date',
+                'oem_otf_no',
+
 
             ].includes(col.field)),
 
@@ -152,15 +148,15 @@
                 const defaultFields = [
 
 
-                    'serial_no',
-                    'enq_date_and_time',
-                    'referred_by',
-                    'referree_phone',
-                    'customer_name',
-                    'customer_phone',
-                    'model_code',
-                    'variant_code',
-                    'action'
+                'serial_no',
+                'referee_name',
+                'referee_phone',
+                'enquiry_assign_date',
+                'first_name',
+                'mobile',
+                'model_name',
+                'variant_name',
+                'action'
 
                 ];
                 const allCols = gridApi.getAllGridColumns().map(col => col.getColId());
@@ -253,15 +249,15 @@
                 const defaultFields = [
 
 
-                    'serial_no',
-                    'enq_date_and_time',
-                    'referred_by',
-                    'referree_phone',
-                    'customer_name',
-                    'customer_phone',
-                    'model_code',
-                    'variant_code',
-                    'action'
+                'serial_no',
+                'referee_name',
+                'referee_phone',
+                'enquiry_assign_date',
+                'first_name',
+                'mobile',
+                'model_name',
+                'variant_name',
+                'action'
 
                 ];
                 const allCols = gridApi.getAllGridColumns().map(c => c.getColId());

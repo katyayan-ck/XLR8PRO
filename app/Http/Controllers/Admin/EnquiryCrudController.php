@@ -55,68 +55,100 @@ class EnquiryCrudController extends CrudController
             'gridConfig' => [
 
                 'columns' => [
-                    ['field' => 'serial_no', 'headerName' => 'S.No'],
-                    ['field' => 'enquiry_no', 'headerName' => 'Enquiry No'],
-                    ['field' => 'enquiry_type', 'headerName' => 'Enquiry Type'],
-                    ['field' => 'source_name', 'headerName' => 'Source'],
-                    ['field' => 'sub_source', 'headerName' => 'Sub Source'],
-                    ['field' => 'person_code', 'headerName' => 'Person Code'],
-                    ['field' => 'reference_details', 'headerName' => 'Reference Details'],
-                    ['field' => 'referred_by', 'headerName' => 'Referred By'],
-                    ['field' => 'referee_phone', 'headerName' => 'Referee Phone'],
-                    ['field' => 'referee_name', 'headerName' => 'Referee Name'],
-                    ['field' => 'planned_campaign_name', 'headerName' => 'Planned Campaign'],
-                    ['field' => 'likely_purchase_date', 'headerName' => 'Likely Purchase Date'],
-                    ['field' => 'activity_type', 'headerName' => 'Activity Type'],
-                    ['field' => 'activity_segment', 'headerName' => 'Activity Segment'],
-                    ['field' => 'activity_model', 'headerName' => 'Activity Model'],
-                    ['field' => 'activity_start_date', 'headerName' => 'Activity Start'],
-                    ['field' => 'activity_end_date', 'headerName' => 'Activity End'],
-                    ['field' => 'activity_branch', 'headerName' => 'Activity Branch'],
-                    ['field' => 'activity_location', 'headerName' => 'Activity Location'],
+                    ['field' => 'serial_no', 'headerName' => 'S.No.'],
+                    ['field' => 'enquiry_no', 'headerName' => 'Enquiry No.'],
+                    ['field' => 'enquiry_date', 'headerName' => 'Enquiry Date'],
+                    ['field' => 'oem_enquiry_no', 'headerName' => 'OEM Enquiry No.'],
+                    ['field' => 'oem_enquiry_date', 'headerName' => 'OEM Enquiry Date.'],
+                    ['field' => 'segment_name', 'headerName' => 'Segment'],
+                    ['field' => 'model_name', 'headerName' => 'Model'],
+                    ['field' => 'variant_name', 'headerName' => 'Variant'],
                     ['field' => 'first_name', 'headerName' => 'First Name'],
                     ['field' => 'last_name', 'headerName' => 'Last Name'],
                     ['field' => 'full_name', 'headerName' => 'Full Name'],
                     ['field' => 'mobile', 'headerName' => 'Mobile'],
                     ['field' => 'email', 'headerName' => 'Email'],
-                    ['field' => 'occupation_type', 'headerName' => 'Occupation Type'],
-                    ['field' => 'occupation_sub_type', 'headerName' => 'Occupation Sub Type'],
-                    ['field' => 'customer_type', 'headerName' => 'Customer Type'],
-                    ['field' => 'company_name', 'headerName' => 'Company Name'],
                     ['field' => 'gender', 'headerName' => 'Gender'],
-                    ['field' => 'dob', 'headerName' => 'DOB'],
-                    ['field' => 'marital_status', 'headerName' => 'Marital Status'],
-                    ['field' => 'marriage_date', 'headerName' => 'Marriage Date'],
-                    ['field' => 'age_group', 'headerName' => 'Age Group'],
-                    ['field' => 'zipcode', 'headerName' => 'Zipcode'],
-                    ['field' => 'tehsil', 'headerName' => 'Tehsil'],
-                    ['field' => 'district', 'headerName' => 'District'],
-                    ['field' => 'city', 'headerName' => 'City'],
-                    ['field' => 'has_ev', 'headerName' => 'Has EV'],
-                    ['field' => 'purchase_type', 'headerName' => 'Purchase Type'],
-                    ['field' => 'exchange_make', 'headerName' => 'Exchange Make'],
-                    ['field' => 'exchange_model', 'headerName' => 'Exchange Model'],
-                    ['field' => 'vehicle_no', 'headerName' => 'Vehicle No'],
-                    ['field' => 'remarks', 'headerName' => 'Remarks'],
-                    ['field' => 'segment_name', 'headerName' => 'Segment'],
-                    ['field' => 'model_name', 'headerName' => 'Model'],
-                    ['field' => 'variant_name', 'headerName' => 'Variant'],
-                    ['field' => 'color_name', 'headerName' => 'Color'],
+                    ['field' => 'enquiry_type', 'headerName' => 'Enquiry Type'],
+                    ['field' => 'source_name', 'headerName' => 'Source'],
+                    ['field' => 'sub_source', 'headerName' => 'Sub Source'],
+                    ['field' => 'likely_purchase_date', 'headerName' => 'Likely Purchase Date'],
                     ['field' => 'fuel_type', 'headerName' => 'Fuel Type'],
                     ['field' => 'transmission', 'headerName' => 'Transmission'],
                     ['field' => 'drivetrain', 'headerName' => 'Drivetrain'],
                     ['field' => 'seating', 'headerName' => 'Seating'],
+                    ['field' => 'color_name', 'headerName' => 'Color'],
+                    ['field' => 'tehsil', 'headerName' => 'Tehsil'],
+                    ['field' => 'district', 'headerName' => 'District'],
+                    ['field' => 'city', 'headerName' => 'City'],
+                    ['field' => 'sc_code', 'headerName' => 'Sales Consultant'],
+                    ['field' => 'dealer_branch', 'headerName' => 'Dealer Branch'],
+                    ['field' => 'dealer_location', 'headerName' => 'Dealer Location'],
+                    ['field' => 'followup_type', 'headerName' => 'Followup Type'],
+                    ['field' => 'followup_date', 'headerName' => 'Followup Date'],
+                    ['field' => 'followup_time', 'headerName' => 'Followup Time'],
+                    ['field' => 'occupation_type', 'headerName' => 'Occupation Type'],    
+                    ['field' => 'customer_type', 'headerName' => 'Customer Type'],
+                    ['field' => 'occupation_sub_type', 'headerName' => 'Occupation Sub Type'],
+                    ['field' => 'company_name', 'headerName' => 'Company Name'],    
+                    ['field' => 'dob', 'headerName' => 'DOB'],
+                    ['field' => 'marital_status', 'headerName' => 'Marital Status'],
+                    ['field' => 'marriage_date', 'headerName' => 'Marriage Date'],
+                    ['field' => 'age_group', 'headerName' => 'Age Group'],
                     ['field' => 'usage_area', 'headerName' => 'Usage Area'],
                     ['field' => 'km_travelled_daily', 'headerName' => 'KM/Day'],
                     ['field' => 'application_type', 'headerName' => 'Application Type'],
                     ['field' => 'application', 'headerName' => 'Application'],
-                    ['field' => 'place_of_registration', 'headerName' => 'Place Of Registration'],
-                    ['field' => 'dealer_branch', 'headerName' => 'Dealer Branch'],
-                    ['field' => 'dealer_location', 'headerName' => 'Dealer Location'],
-                    ['field' => 'sc_code', 'headerName' => 'Sales Consultant'],
-                    ['field' => 'followup_type', 'headerName' => 'Followup Type'],
-                    ['field' => 'followup_date', 'headerName' => 'Followup Date'],
-                    ['field' => 'followup_time', 'headerName' => 'Followup Time'],
+                    ['field' => 'zipcode', 'headerName' => 'Pincode'],
+                    ['field' => 'has_ev', 'headerName' => 'Has EV'],
+                    ['field' => 'purchase_type', 'headerName' => 'Purchase Type'],
+                    ['field' => 'exchange_make', 'headerName' => 'Consideration Brand'],
+                    ['field' => 'exchange_model', 'headerName' => 'Consideration Model'],
+                    ['field' => 'exchange_variant', 'headerName' => 'Consideration Variant'],
+                    ['field' => 'remarks', 'headerName' => 'Remarks'],
+
+                    ['field' => 'dms_enquiry_stage', 'headerName' => 'DMS Enquiry Stage'],
+                    ['field' => 'cre_enquiry_stage', 'headerName' => 'CRE Enquiry Stage'],
+                    ['field' => 'cre_next_fup_date', 'headerName' => 'CRE Next Follow Up Date'],
+                    ['field' => 'cre_next_fup_time', 'headerName' => 'CRE Next Follow Up Time'],
+                    ['field' => 'cre_next_fup_remarks', 'headerName' => 'CRE Next Follow Up Remarks'],
+                    ['field' => 'quotation_no', 'headerName' => 'Quotation No.'],
+                    ['field' => 'booking_no', 'headerName' => 'Booking No.'],
+                    ['field' => 'booking_date', 'headerName' => 'Booking Date'],
+                    ['field' => 'oem_booking_no', 'headerName' => 'OEM Booking No.'],
+                    ['field' => 'oem_booking_date', 'headerName' => 'OEM Booking Date'],
+                    ['field' => 'oem_otf_no', 'headerName' => 'OEM OTF No.'],
+
+                    // ['field' => 'person_code', 'headerName' => 'Person Code'],
+                    // ['field' => 'reference_details', 'headerName' => 'Reference Details'],
+                    // ['field' => 'referred_by', 'headerName' => 'Referred By'],
+                    // ['field' => 'referee_phone', 'headerName' => 'Referee Phone'],
+                    // ['field' => 'referee_name', 'headerName' => 'Referee Name'],
+                    // ['field' => 'planned_campaign_name', 'headerName' => 'Planned Campaign'],
+                    
+                    // ['field' => 'activity_type', 'headerName' => 'Activity Type'],
+                    // ['field' => 'activity_segment', 'headerName' => 'Activity Segment'],
+                    // ['field' => 'activity_model', 'headerName' => 'Activity Model'],
+                    // ['field' => 'activity_start_date', 'headerName' => 'Activity Start'],
+                    // ['field' => 'activity_end_date', 'headerName' => 'Activity End'],
+                    // ['field' => 'activity_branch', 'headerName' => 'Activity Branch'],
+                    // ['field' => 'activity_location', 'headerName' => 'Activity Location'],
+                    
+                    
+                    
+                    
+                    
+                   
+                    
+                    // ['field' => 'vehicle_no', 'headerName' => 'Vehicle No'],
+                    
+                   
+                    
+                    
+                    
+                    // ['field' => 'place_of_registration', 'headerName' => 'Place Of Registration'],
+                    
+                    
                     ['field' => 'action', 'headerName' => 'Action']
                 ],
                 'data' => []
@@ -948,422 +980,974 @@ class EnquiryCrudController extends CrudController
     }
 
     public function referenceList()
-    {
-        $this->crud->setListView('admin.enquiry.reference-enquiry');
+{
+    $this->crud->setListView('admin.enquiry.reference-enquiry');
 
-        // ->reference() = currentOrigin('REFERENCE') + active() (status = 1),
-        // both already defined on the model.
-        $enquiries = Enquiry::reference()
-            ->with(['model', 'variant'])
-            ->orderByDesc('created_at')
-            ->get();
+    $enquiries = Enquiry::reference()
+        ->with(['model', 'variant'])           // Add more relations if needed
+        ->orderByDesc('created_at')
+        ->get();
 
-        $gridData = $enquiries->map(function ($enquiry, $index) {
+    $gridData = $enquiries->map(function ($enquiry, $index) {
+        $editUrl = backpack_url("enquiry/{$enquiry->id}/edit");
 
-            $editUrl = backpack_url("enquiry/{$enquiry->id}/edit");
+        return [
+            'serial_no'             => $index + 1,
+            'referee_name'          => $enquiry->referred_by ?? '—',
+            'referee_phone'         => $enquiry->referee_phone ?? '—',
+            'enquiry_assign_date'   => $enquiry->enquiry_assign_date 
+                                        ? Carbon::parse($enquiry->enquiry_assign_date)->format('d-m-Y') 
+                                        : '—',
+            'first_name'            => $enquiry->first_name ?? $enquiry->full_name ?? '—',
+            'mobile'                => $enquiry->mobile ?? '—',
+            'model_name'            => $enquiry->model?->name ?? $enquiry->model_code ?? '—',
+            'variant_name'          => $enquiry->variant?->display_name ?? $enquiry->variant_code ?? '—',
+            'dms_enquiry_stage'     => $enquiry->dms_enquiry_stage ?? '—',
+            'cre_enquiry_stage'     => $enquiry->cre_enquiry_stage ?? '—',
+            'cre_next_fup_date'     => $enquiry->cre_next_fup_date 
+                                        ? Carbon::parse($enquiry->cre_next_fup_date)->format('d-m-Y') 
+                                        : '—',
+            'cre_next_fup_time'     => $enquiry->cre_next_fup_time ?? '—',
+            'cre_next_fup_remarks'  => $enquiry->cre_next_fup_remarks ?? '—',
+            'quotation_no'          => $enquiry->quotation_no ?? '—',
+            'booking_no'            => $enquiry->booking_no ?? '—',
+            'booking_date'          => $enquiry->booking_date 
+                                        ? Carbon::parse($enquiry->booking_date)->format('d-m-Y') 
+                                        : '—',
+            'oem_booking_no'        => $enquiry->oem_booking_no ?? '—',
+            'oem_booking_date'      => $enquiry->oem_booking_date 
+                                        ? Carbon::parse($enquiry->oem_booking_date)->format('d-m-Y') 
+                                        : '—',
+            'oem_otf_no'            => $enquiry->oem_otf_no ?? '—',
 
-            return [
-                'serial_no' => $index + 1,
-                'enq_date_and_time' => $enquiry->enquiry_date
-                    ? Carbon::parse($enquiry->enquiry_date)->format('d-m-Y H:i')
-                    : '—',
-                'referred_by' => $enquiry->referred_by ?? '—',
-                'referee_phone' => $enquiry->referee_phone ?? '—',
-                'customer_name' => $enquiry->full_name,
-                'customer_phone' => $enquiry->mobile ?? '—',
-                'model_code' => $enquiry->model?->name ?? $enquiry->model_code ?? '—',
-                'variant_code' => $enquiry->variant?->display_name ?? $enquiry->variant_code ?? '—',
-                'action' => '
-                    <div class="d-flex justify-content-center gap-2">
-                        <a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a>
-                    </div>',
-            ];
-        })->values();
+            // Action Column
+            'action' => '
+                <div class="d-flex justify-content-center gap-2">
+                    <a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a>
+                </div>',
+        ];
+    })->values();
 
-        return view('admin.enquiry.reference-enquiry', [
-            'title' => 'Reference Enquiries',
-            'gridConfig' => [
-                'columns' => [
-                    ['field' => 'serial_no', 'headerName' => 'S.No'],
-                    ['field' => 'enq_date_and_time', 'headerName' => 'Enquiry Date & Time'],
-                    ['field' => 'referred_by', 'headerName' => 'Referred By'],
-                    ['field' => 'referee_phone', 'headerName' => 'Referee Mobile'],
-                    ['field' => 'customer_name', 'headerName' => 'Customer Name'],
-                    ['field' => 'customer_phone', 'headerName' => 'Customer Mobile'],
-                    ['field' => 'model_code', 'headerName' => 'Model'],
-                    ['field' => 'variant_code', 'headerName' => 'Variant'],
-                    ['field' => 'action', 'headerName' => 'Action']
-                ],
-                'data' => $gridData
-            ]
-        ]);
-    }
+    return view('admin.enquiry.reference-enquiry', [
+        'title' => 'Reference Enquiries',
+        'gridConfig' => [
+            'columns' => [
+                ['field' => 'serial_no',           'headerName' => 'S.No'],
+                ['field' => 'referee_name',        'headerName' => 'Referee Name'],
+                ['field' => 'referee_phone',       'headerName' => 'Referee Mobile'],
+                ['field' => 'enquiry_assign_date', 'headerName' => 'Assign Date'],
+                ['field' => 'first_name',          'headerName' => 'Customer Name'],
+                ['field' => 'mobile',              'headerName' => 'Customer Mobile'],
+                ['field' => 'model_name',          'headerName' => 'Model'],
+                ['field' => 'variant_name',        'headerName' => 'Variant'],
+                ['field' => 'dms_enquiry_stage',   'headerName' => 'DMS Stage'],
+                ['field' => 'cre_enquiry_stage',   'headerName' => 'CRE Stage'],
+                ['field' => 'cre_next_fup_date',   'headerName' => 'Next FUP Date'],
+                ['field' => 'cre_next_fup_time',   'headerName' => 'Next FUP Time'],
+                ['field' => 'cre_next_fup_remarks','headerName' => 'FUP Remarks'],
+                ['field' => 'quotation_no',        'headerName' => 'Quotation No'],
+                ['field' => 'booking_no',          'headerName' => 'Booking No'],
+                ['field' => 'booking_date',        'headerName' => 'Booking Date'],
+                ['field' => 'oem_booking_no',      'headerName' => 'OEM Booking No'],
+                ['field' => 'oem_booking_date',    'headerName' => 'OEM Booking Date'],
+                ['field' => 'oem_otf_no',          'headerName' => 'OEM OTF No'],
+                ['field' => 'action',              'headerName' => 'Action']
+            ],
+            'data' => $gridData
+        ]
+    ]);
+}
 
     public function virtualNumberList()
-    {
-        $this->crud->setListView('admin.enquiry.virtual-number-enquiry');
+{
+    $this->crud->setListView('admin.enquiry.virtual-number-enquiry');
 
-        $enquiries = Enquiry::virtual()
-            ->with(['model', 'variant'])
-            ->orderByDesc('created_at')
-            ->get();
+    $enquiries = Enquiry::virtual()
+        ->with(['model', 'variant'])
+        ->orderByDesc('created_at')
+        ->get();
 
-        $gridData = $enquiries->map(function ($enquiry, $index) {
+    $gridData = $enquiries->map(function ($enquiry, $index) {
+        $editUrl = backpack_url("enquiry/{$enquiry->id}/edit");
 
-            $editUrl = backpack_url("enquiry/{$enquiry->id}/edit");
+        return [
+            'serial_no'             => $index + 1,
+            'virtual_no'            => $enquiry->virtual_no ?? '—',
+            'call_date_and_time'    => $enquiry->virtual_call_date
+                ? Carbon::parse($enquiry->virtual_call_date)->format('d-m-Y H:i')
+                : '—',
+            'call_nature'           => $enquiry->call_nature ?? '—',
+            'enquiry_assign_date'   => $enquiry->enquiry_assign_date
+                ? Carbon::parse($enquiry->enquiry_assign_date)->format('d-m-Y')
+                : '—',
+            'mobile'                => $enquiry->mobile ?? '—',
+            'remarks'               => $enquiry->remarks ?? '—',
 
-            return [
-                'serial_no' => $index + 1,
-                'virtual_no' => $enquiry->virtual_no ?? '—',
-                'call_date_and_time' => $enquiry->virtual_call_date
-                    ? Carbon::parse($enquiry->virtual_call_date)->format('d-m-Y H:i')
-                    : '—',
-                'call_duration' => $enquiry->call_duration ?? '—',
-                'call_status' => $enquiry->call_status ?? '—',
-                'customer_phone' => $enquiry->mobile ?? '—',
-                'action' => '
-                    <div class="d-flex justify-content-center gap-2">
-                        <a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a>
-                    </div>',
-            ];
-        })->values();
+            // Extra fields now shown by default in Blade
+            'dms_enquiry_stage'     => $enquiry->dms_enquiry_stage ?? '—',
+            'cre_enquiry_stage'     => $enquiry->cre_enquiry_stage ?? '—',
+            'cre_next_fup_date'     => $enquiry->cre_next_fup_date
+                ? Carbon::parse($enquiry->cre_next_fup_date)->format('d-m-Y')
+                : '—',
+            'cre_next_fup_time'     => $enquiry->cre_next_fup_time ?? '—',
+            'cre_next_fup_remarks'  => $enquiry->cre_next_fup_remarks ?? '—',
+            'quotation_no'          => $enquiry->quotation_no ?? '—',
+            'booking_no'            => $enquiry->booking_no ?? '—',
+            'booking_date'          => $enquiry->booking_date
+                ? Carbon::parse($enquiry->booking_date)->format('d-m-Y')
+                : '—',
+            'oem_booking_no'        => $enquiry->oem_booking_no ?? '—',
+            'oem_booking_date'      => $enquiry->oem_booking_date
+                ? Carbon::parse($enquiry->oem_booking_date)->format('d-m-Y')
+                : '—',
+            'oem_otf_no'            => $enquiry->oem_otf_no ?? '—',
 
-        return view('admin.enquiry.virtual-number-enquiry', [
-            'title' => 'Virtual Number Enquiries',
-            'gridConfig' => [
-                'columns' => [
-                    ['field' => 'serial_no', 'headerName' => 'S.No'],
-                    ['field' => 'virtual_no', 'headerName' => 'Virtual No'],
-                    ['field' => 'call_date_and_time', 'headerName' => 'Call Date & Time'],
-                    ['field' => 'call_duration', 'headerName' => 'Call Duration'],
-                    ['field' => 'call_status', 'headerName' => 'Status'],
-                    ['field' => 'customer_phone', 'headerName' => 'Customer Mobile'],
-                    ['field' => 'action', 'headerName' => 'Action']
-                ],
-                'data' => $gridData
-            ]
-        ]);
-    }
+            'action' => '
+                <div class="d-flex justify-content-center gap-2">
+                    <a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a>
+                </div>',
+        ];
+    })->values();
+
+    return view('admin.enquiry.virtual-number-enquiry', [
+        'title' => 'Virtual Number Enquiries',
+        'gridConfig' => [
+            'columns' => [
+                ['field' => 'serial_no',           'headerName' => 'S.No'],
+                ['field' => 'virtual_no',          'headerName' => 'Virtual Number'],
+                ['field' => 'call_date_and_time',  'headerName' => 'Call Date & Time'],
+                ['field' => 'call_nature',         'headerName' => 'Call Nature'],
+                ['field' => 'enquiry_assign_date', 'headerName' => 'Assign Date'],
+                ['field' => 'mobile',              'headerName' => 'Customer Mobile'],
+                ['field' => 'remarks',             'headerName' => 'Remarks'],
+                ['field' => 'dms_enquiry_stage',   'headerName' => 'DMS Stage'],
+                ['field' => 'cre_enquiry_stage',   'headerName' => 'CRE Stage'],
+                ['field' => 'cre_next_fup_date',   'headerName' => 'Next FUP Date'],
+                ['field' => 'cre_next_fup_time',   'headerName' => 'Next FUP Time'],
+                ['field' => 'cre_next_fup_remarks','headerName' => 'FUP Remarks'],
+                ['field' => 'quotation_no',        'headerName' => 'Quotation No'],
+                ['field' => 'booking_no',          'headerName' => 'Booking No'],
+                ['field' => 'booking_date',        'headerName' => 'Booking Date'],
+                ['field' => 'oem_booking_no',      'headerName' => 'OEM Booking No'],
+                ['field' => 'oem_booking_date',    'headerName' => 'OEM Booking Date'],
+                ['field' => 'oem_otf_no',          'headerName' => 'OEM OTF No'],
+                ['field' => 'action',              'headerName' => 'Action']
+            ],
+            'data' => $gridData
+        ]
+    ]);
+}
     public function whatsappCampaignList()
-    {
-        $this->crud->setListView('admin.enquiry.whatsapp-campaign-enquiry');
+{
+    $this->crud->setListView('admin.enquiry.whatsapp-campaign-enquiry');
 
-        $enquiries = Enquiry::whatsapp()
-            ->with(['model', 'variant'])
-            ->orderByDesc('created_at')
-            ->get();
+    $enquiries = Enquiry::whatsapp()
+        ->with(['model', 'variant'])
+        ->orderByDesc('created_at')
+        ->get();
 
-        $gridData = $enquiries->map(function ($enquiry, $index) {
+    $gridData = $enquiries->map(function ($enquiry, $index) {
+        $editUrl = backpack_url("enquiry/{$enquiry->id}/edit");
 
-            $editUrl = backpack_url("enquiry/{$enquiry->id}/edit");
+        return [
+            'serial_no'             => $index + 1,
+            'campaign_name'         => $enquiry->wapp_campaign_name ?? '—',
+            'campaign_date'         => $enquiry->wapp_campaign_date
+                ? Carbon::parse($enquiry->wapp_campaign_date)->format('d-m-Y')
+                : '—',
+            'enquiry_assign_date'   => $enquiry->enquiry_assign_date
+                ? Carbon::parse($enquiry->enquiry_assign_date)->format('d-m-Y')
+                : '—',
+            'mobile'                => $enquiry->mobile ?? '—',
+            'dms_enquiry_stage'     => $enquiry->dms_enquiry_stage ?? '—',
+            'cre_enquiry_stage'     => $enquiry->cre_enquiry_stage ?? '—',
+            'cre_next_fup_date'     => $enquiry->cre_next_fup_date
+                ? Carbon::parse($enquiry->cre_next_fup_date)->format('d-m-Y')
+                : '—',
+            'cre_next_fup_time'     => $enquiry->cre_next_fup_time ?? '—',
+            'cre_next_fup_remarks'  => $enquiry->cre_next_fup_remarks ?? '—',
+            'quotation_no'          => $enquiry->quotation_no ?? '—',
+            'booking_no'            => $enquiry->booking_no ?? '—',
+            'booking_date'          => $enquiry->booking_date
+                ? Carbon::parse($enquiry->booking_date)->format('d-m-Y')
+                : '—',
+            'oem_booking_no'        => $enquiry->oem_booking_no ?? '—',
+            'oem_booking_date'      => $enquiry->oem_booking_date
+                ? Carbon::parse($enquiry->oem_booking_date)->format('d-m-Y')
+                : '—',
+            'oem_otf_no'            => $enquiry->oem_otf_no ?? '—',
 
-            return [
-                'serial_no' => $index + 1,
-                'enq_date_and_time' => $enquiry->enquiry_date
-                    ? Carbon::parse($enquiry->enquiry_date)->format('d-m-Y H:i')
-                    : '—',
-                'campaign_name' => $enquiry->wapp_campaign_name ?? '—',
-                'campaign_date' => $enquiry->wapp_campaign_date
-                    ? Carbon::parse($enquiry->wapp_campaign_date)->format('d-m-Y')
-                    : '—',
-                'campaign_segment' => $enquiry->wapp_campaign_segment ?? '—',
-                'campaign_model' => $enquiry->wapp_campaign_model ?? '—',
-                'customer_name' => $enquiry->full_name,
-                'customer_phone' => $enquiry->mobile ?? '—',
-                'tehsil' => $enquiry->tehsil ?? '—',
-                'model_code' => $enquiry->model?->name ?? $enquiry->model_code ?? '—',
-                'variant_code' => $enquiry->variant?->display_name ?? $enquiry->variant_code ?? '—',
-                'action' => '
-                    <div class="d-flex justify-content-center gap-2">
-                        <a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a>
-                    </div>',
-            ];
-        })->values();
+            // Commented fields in Blade (uncomment if needed later)
+            // 'enq_date_and_time'  => $enquiry->enquiry_date ? Carbon::parse($enquiry->enquiry_date)->format('d-m-Y H:i') : '—',
+            // 'campaign_segment'   => $enquiry->wapp_campaign_segment ?? '—',
+            // 'campaign_model'     => $enquiry->wapp_campaign_model ?? '—',
+            // 'customer_name'      => $enquiry->full_name ?? '—',
+            // 'customer_phone'     => $enquiry->mobile ?? '—',
+            // 'tehsil'             => $enquiry->tehsil ?? '—',
+            // 'model_code'         => $enquiry->model?->name ?? $enquiry->model_code ?? '—',
+            // 'variant_code'       => $enquiry->variant?->display_name ?? $enquiry->variant_code ?? '—',
 
-        return view('admin.enquiry.whatsapp-campaign-enquiry', [
-            'title' => 'WhatsApp Campaign Enquiries',
-            'gridConfig' => [
-                'columns' => [
-                    ['field' => 'serial_no', 'headerName' => 'S.No'],
-                    ['field' => 'enq_date_and_time', 'headerName' => 'Enquiry Date & Time'],
-                    ['field' => 'campaign_name', 'headerName' => 'Campaign Name'],
-                    ['field' => 'campaign_date', 'headerName' => 'Campaign Date'],
-                    ['field' => 'campaign_segment', 'headerName' => 'Campaign Segment'],
-                    ['field' => 'campaign_model', 'headerName' => 'Campaign Model'],
-                    ['field' => 'customer_name', 'headerName' => 'Customer Name'],
-                    ['field' => 'customer_phone', 'headerName' => 'Customer Mobile'],
-                    ['field' => 'tehsil', 'headerName' => 'Tehsil'],
-                    ['field' => 'model_code', 'headerName' => 'Model'],
-                    ['field' => 'variant_code', 'headerName' => 'Variant'],
-                    ['field' => 'action', 'headerName' => 'Action']
-                ],
-                'data' => $gridData
-            ]
-        ]);
-    }
+            'action' => '
+                <div class="d-flex justify-content-center gap-2">
+                    <a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a>
+                </div>',
+        ];
+    })->values();
+
+    return view('admin.enquiry.whatsapp-campaign-enquiry', [
+        'title' => 'WhatsApp Campaign Enquiries',
+        'gridConfig' => [
+            'columns' => [
+                ['field' => 'serial_no',            'headerName' => 'S.No'],
+                ['field' => 'campaign_name',        'headerName' => 'Campaign Name'],
+                ['field' => 'campaign_date',        'headerName' => 'Campaign Date'],
+                ['field' => 'enquiry_assign_date',  'headerName' => 'Assign Date'],
+                ['field' => 'mobile',               'headerName' => 'Customer Mobile'],
+                ['field' => 'dms_enquiry_stage',    'headerName' => 'DMS Stage'],
+                ['field' => 'cre_enquiry_stage',    'headerName' => 'CRE Stage'],
+                ['field' => 'cre_next_fup_date',    'headerName' => 'Next FUP Date'],
+                ['field' => 'cre_next_fup_time',    'headerName' => 'Next FUP Time'],
+                ['field' => 'cre_next_fup_remarks', 'headerName' => 'FUP Remarks'],
+                ['field' => 'quotation_no',         'headerName' => 'Quotation No'],
+                ['field' => 'booking_no',           'headerName' => 'Booking No'],
+                ['field' => 'booking_date',         'headerName' => 'Booking Date'],
+                ['field' => 'oem_booking_no',       'headerName' => 'OEM Booking No'],
+                ['field' => 'oem_booking_date',     'headerName' => 'OEM Booking Date'],
+                ['field' => 'oem_otf_no',           'headerName' => 'OEM OTF No'],
+                ['field' => 'action',               'headerName' => 'Action']
+            ],
+            'data' => $gridData
+        ]
+    ]);
+}
 
     public function assignedLongList()
-    {
-        $this->crud->setListView('admin.enquiry.assigned-long-enquiry');
+{
+    $this->crud->setListView('admin.enquiry.assigned-long-enquiry');
 
-        // ->assignedLong() = long() [currentOrigin('LONG') + active()] + assigned()
-        $enquiries = Enquiry::assignedLong()
-            ->with(['model', 'variant'])
-            ->orderByDesc('created_at')
-            ->get();
+    $enquiries = Enquiry::assignedLong()
+        ->with(['model', 'variant', 'color', 'source', 'salesConsultant'])
+        ->orderByDesc('created_at')
+        ->get();
 
-        $gridData = $enquiries->map(function ($enquiry, $index) {
+    $gridData = $enquiries->map(function ($enquiry, $index) {
+        $editUrl = backpack_url("enquiry/{$enquiry->id}/edit");
 
-            $editUrl = backpack_url("enquiry/{$enquiry->id}/edit");
+        return [
+            'serial_no'                => $index + 1,
+            'enquiry_no'               => $enquiry->enquiry_no ?? '—',
+            'enquiry_date'             => $enquiry->enquiry_date
+                ? Carbon::parse($enquiry->enquiry_date)->format('d-m-Y H:i')
+                : '—',
+            'oem_enquiry_no'           => $enquiry->oem_enquiry_no ?? '—',
+            'oem_enquiry_date'         => $enquiry->oem_enquiry_date
+                ? Carbon::parse($enquiry->oem_enquiry_date)->format('d-m-Y')
+                : '—',
+            'oem_long_enquiry_no'      => $enquiry->oem_long_enquiry_no ?? '—',
+            'oem_long_enquiry_date'    => $enquiry->oem_long_enquiry_date
+                ? Carbon::parse($enquiry->oem_long_enquiry_date)->format('d-m-Y')
+                : '—',
+            'enquiry_assign_date'      => $enquiry->enquiry_assign_date
+                ? Carbon::parse($enquiry->enquiry_assign_date)->format('d-m-Y')
+                : '—',
+            'oem_enquiry_assign_date'  => $enquiry->oem_enquiry_assign_date
+                ? Carbon::parse($enquiry->oem_enquiry_assign_date)->format('d-m-Y')
+                : '—',
+            'segment_name'             => $enquiry->segment_name ?? '—',
+            'model_name'               => $enquiry->model?->name ?? $enquiry->model_code ?? '—',
+            'variant_name'             => $enquiry->variant?->display_name ?? $enquiry->variant_code ?? '—',
+            'first_name'               => $enquiry->first_name ?? '—',
+            'last_name'                => $enquiry->last_name ?? '—',
+            'full_name'                => $enquiry->full_name ?? '—',
+            'mobile'                   => $enquiry->mobile ?? '—',
+            'email'                    => $enquiry->email ?? '—',
+            'gender'                   => $enquiry->gender ?? '—',
+            'enquiry_type'             => $enquiry->enquiry_type ?? '—',
+            'source_name'              => $enquiry->source?->name ?? $enquiry->source_code ?? '—',
+            'sub_source'               => $enquiry->sub_source ?? '—',
+            'likely_purchase_date'     => $enquiry->likely_purchase_date ?? '—',
+            'fuel_type'                => $enquiry->fuel_type ?? '—',
+            'transmission'             => $enquiry->transmission ?? '—',
+            'drivetrain'               => $enquiry->drivetrain ?? '—',
+            'seating'                  => $enquiry->seating ?? '—',
+            'color_name'               => $enquiry->color?->name ?? $enquiry->color_code ?? '—',
+            'tehsil'                   => $enquiry->tehsil ?? '—',
+            'district'                 => $enquiry->district ?? '—',
+            'city'                     => $enquiry->city ?? '—',
+            'sc_code'                  => $enquiry->sc_code ?? '—',
+            'dealer_branch'            => $enquiry->dealer_branch ?? '—',
+            'dealer_location'          => $enquiry->dealer_location ?? '—',
+            'followup_type'            => $enquiry->followup_type ?? '—',
+            'followup_date'            => $enquiry->followup_date
+                ? Carbon::parse($enquiry->followup_date)->format('d-m-Y')
+                : '—',
+            'followup_time'            => $enquiry->followup_time ?? '—',
+            'occupation_type'          => $enquiry->occupation_type ?? '—',
+            'customer_type'            => $enquiry->customer_type ?? '—',
+            'occupation_sub_type'      => $enquiry->occupation_sub_type ?? '—',
+            'company_name'             => $enquiry->company_name ?? '—',
+            'dob'                      => $enquiry->dob
+                ? Carbon::parse($enquiry->dob)->format('d-m-Y')
+                : '—',
+            'marital_status'           => $enquiry->marital_status ?? '—',
+            'marriage_date'            => $enquiry->marriage_date
+                ? Carbon::parse($enquiry->marriage_date)->format('d-m-Y')
+                : '—',
+            'age_group'                => $enquiry->age_group ?? '—',
+            'usage_area'               => $enquiry->usage_area ?? '—',
+            'km_travelled_daily'       => $enquiry->km_travelled_daily ?? '—',
+            'application_type'         => $enquiry->application_type ?? '—',
+            'application'              => $enquiry->application ?? '—',
+            'zipcode'                  => $enquiry->zipcode ?? '—',
+            'has_ev'                   => $enquiry->has_ev ?? '—',
+            'purchase_type'            => $enquiry->purchase_type ?? '—',
+            'remarks'                  => $enquiry->remarks ?? '—',
+            'exchange_make'            => $enquiry->exchange_make ?? '—',
+            'exchange_model'           => $enquiry->exchange_model ?? '—',
+            'exchange_variant'         => $enquiry->exchange_variant ?? '—',
+            'dms_enquiry_stage'        => $enquiry->dms_enquiry_stage ?? '—',
+            'cre_enquiry_stage'        => $enquiry->cre_enquiry_stage ?? '—',
+            'cre_next_fup_date'        => $enquiry->cre_next_fup_date
+                ? Carbon::parse($enquiry->cre_next_fup_date)->format('d-m-Y')
+                : '—',
+            'cre_next_fup_time'        => $enquiry->cre_next_fup_time ?? '—',
+            'cre_next_fup_remarks'     => $enquiry->cre_next_fup_remarks ?? '—',
+            'quotation_no'             => $enquiry->quotation_no ?? '—',
+            'booking_no'               => $enquiry->booking_no ?? '—',
+            'booking_date'             => $enquiry->booking_date
+                ? Carbon::parse($enquiry->booking_date)->format('d-m-Y')
+                : '—',
+            'oem_booking_no'           => $enquiry->oem_booking_no ?? '—',
+            'oem_booking_date'         => $enquiry->oem_booking_date
+                ? Carbon::parse($enquiry->oem_booking_date)->format('d-m-Y')
+                : '—',
+            'oem_otf_no'               => $enquiry->oem_otf_no ?? '—',
 
-            return [
-                'serial_no' => $index + 1,
-                'long_enq_no' => $enquiry->enquiry_no ?? '—',
-                'long_enq_date_and_time' => $enquiry->enquiry_date
-                    ? Carbon::parse($enquiry->enquiry_date)->format('d-m-Y H:i')
-                    : '—',
-                'long_assign_date_and_time' => $enquiry->enq_assign_date
-                    ? Carbon::parse($enquiry->enq_assign_date)->format('d-m-Y H:i')
-                    : '—',
-                'customer_first_name' => $enquiry->full_name,
-                'customer_phone' => $enquiry->mobile ?? '—',
-                'enq_type' => $enquiry->enquiry_type ?? '—',
-                'enq_source' => $enquiry->source?->name ?? $enquiry->source_code ?? '—',
-                'enq_sub_source' => $enquiry->sub_source ?? '—',
-                'likely_purchase_date' => $enquiry->likely_purchase_date ?? '—',
-                'model_code' => $enquiry->model?->name ?? $enquiry->model_code ?? '—',
-                'variant_code' => $enquiry->variant?->display_name ?? $enquiry->variant_code ?? '—',
-                'color_code' => $enquiry->color?->name ?? $enquiry->color_code ?? '—',
-                'sc_name' => $enquiry->salesConsultant?->name ?? '—',
-                'sc_mile_id' => $enquiry->sc_mile_id ?? '—',
-                'customer_type' => $enquiry->customer_type ?? '—',
-                'zip_code' => $enquiry->zipcode ?? '—',
-                'action' => '
-                    <div class="d-flex justify-content-center gap-2">
-                        <a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a>
-                    </div>',
-            ];
-        })->values();
+            'action' => '
+                <div class="d-flex justify-content-center gap-2">
+                    <a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a>
+                </div>',
+        ];
+    })->values();
 
-        return view('admin.enquiry.assigned-long-enquiry', [
-            'title' => 'Assigned Long Enquiries',
-            'gridConfig' => [
-                'columns' => [
-                    ['field' => 'serial_no', 'headerName' => 'S.No'],
-                    ['field' => 'long_enq_no', 'headerName' => 'Long Enquiry No'],
-                    ['field' => 'long_enq_date_and_time', 'headerName' => 'Long Enquiry Date & Time'],
-                    ['field' => 'long_assign_date_and_time', 'headerName' => 'Long Assigned Date & Time'],
-                    ['field' => 'customer_first_name', 'headerName' => 'Customer Name'],
-                    ['field' => 'customer_phone', 'headerName' => 'Customer Mobile'],
-                    ['field' => 'enq_type', 'headerName' => 'Enquiry Type'],
-                    ['field' => 'enq_source', 'headerName' => 'Enquiry Source'],
-                    ['field' => 'enq_sub_source', 'headerName' => 'Enquiry Sub Source'],
-                    ['field' => 'likely_purchase_date', 'headerName' => 'Likely Purchase Date'],
-                    ['field' => 'model_code', 'headerName' => 'Model'],
-                    ['field' => 'variant_code', 'headerName' => 'Variant'],
-                    ['field' => 'color_code', 'headerName' => 'Color'],
-                    ['field' => 'sc_name', 'headerName' => 'SC Name'],
-                    ['field' => 'sc_mile_id', 'headerName' => 'SC Mile Id'],
-                    ['field' => 'customer_type', 'headerName' => 'Customer Type'],
-                    ['field' => 'zip_code', 'headerName' => 'Zip Code'],
-                    ['field' => 'action', 'headerName' => 'Action']
-                ],
-                'data' => $gridData
-            ]
-        ]);
-    }
+    return view('admin.enquiry.assigned-long-enquiry', [
+        'title' => 'Assigned Long Enquiries',
+        'gridConfig' => [
+            'columns' => [
+                ['field' => 'serial_no', 'headerName' => 'S.No'],
+                ['field' => 'enquiry_no', 'headerName' => 'Enquiry No'],
+                ['field' => 'enquiry_date', 'headerName' => 'Enquiry Date'],
+                ['field' => 'oem_enquiry_no', 'headerName' => 'OEM Enquiry No'],
+                ['field' => 'oem_enquiry_date', 'headerName' => 'OEM Enquiry Date'],
+                ['field' => 'oem_long_enquiry_no', 'headerName' => 'OEM Long Enquiry No'],
+                ['field' => 'oem_long_enquiry_date', 'headerName' => 'OEM Long Enquiry Date'],
+                ['field' => 'enquiry_assign_date', 'headerName' => 'Assign Date'],
+                ['field' => 'oem_enquiry_assign_date', 'headerName' => 'OEM Assign Date'],
+                ['field' => 'segment_name', 'headerName' => 'Segment'],
+                ['field' => 'model_name', 'headerName' => 'Model'],
+                ['field' => 'variant_name', 'headerName' => 'Variant'],
+                ['field' => 'first_name', 'headerName' => 'First Name'],
+                ['field' => 'last_name', 'headerName' => 'Last Name'],
+                ['field' => 'full_name', 'headerName' => 'Full Name'],
+                ['field' => 'mobile', 'headerName' => 'Mobile'],
+                ['field' => 'email', 'headerName' => 'Email'],
+                ['field' => 'gender', 'headerName' => 'Gender'],
+                ['field' => 'enquiry_type', 'headerName' => 'Enquiry Type'],
+                ['field' => 'source_name', 'headerName' => 'Source'],
+                ['field' => 'sub_source', 'headerName' => 'Sub Source'],
+                ['field' => 'likely_purchase_date', 'headerName' => 'Likely Purchase Date'],
+                ['field' => 'fuel_type', 'headerName' => 'Fuel Type'],
+                ['field' => 'transmission', 'headerName' => 'Transmission'],
+                ['field' => 'drivetrain', 'headerName' => 'Drivetrain'],
+                ['field' => 'seating', 'headerName' => 'Seating'],
+                ['field' => 'color_name', 'headerName' => 'Color'],
+                ['field' => 'tehsil', 'headerName' => 'Tehsil'],
+                ['field' => 'district', 'headerName' => 'District'],
+                ['field' => 'city', 'headerName' => 'City'],
+                ['field' => 'sc_code', 'headerName' => 'SC Code'],
+                ['field' => 'dealer_branch', 'headerName' => 'Dealer Branch'],
+                ['field' => 'dealer_location', 'headerName' => 'Dealer Location'],
+                ['field' => 'followup_type', 'headerName' => 'Followup Type'],
+                ['field' => 'followup_date', 'headerName' => 'Followup Date'],
+                ['field' => 'followup_time', 'headerName' => 'Followup Time'],
+                ['field' => 'occupation_type', 'headerName' => 'Occupation Type'],
+                ['field' => 'customer_type', 'headerName' => 'Customer Type'],
+                ['field' => 'occupation_sub_type', 'headerName' => 'Occupation Sub Type'],
+                ['field' => 'company_name', 'headerName' => 'Company Name'],
+                ['field' => 'dob', 'headerName' => 'DOB'],
+                ['field' => 'marital_status', 'headerName' => 'Marital Status'],
+                ['field' => 'marriage_date', 'headerName' => 'Marriage Date'],
+                ['field' => 'age_group', 'headerName' => 'Age Group'],
+                ['field' => 'usage_area', 'headerName' => 'Usage Area'],
+                ['field' => 'km_travelled_daily', 'headerName' => 'KM Daily'],
+                ['field' => 'application_type', 'headerName' => 'Application Type'],
+                ['field' => 'application', 'headerName' => 'Application'],
+                ['field' => 'zipcode', 'headerName' => 'Zipcode'],
+                ['field' => 'has_ev', 'headerName' => 'Has EV'],
+                ['field' => 'purchase_type', 'headerName' => 'Purchase Type'],
+                ['field' => 'remarks', 'headerName' => 'Remarks'],
+                ['field' => 'exchange_make', 'headerName' => 'Exchange Make'],
+                ['field' => 'exchange_model', 'headerName' => 'Exchange Model'],
+                ['field' => 'exchange_variant', 'headerName' => 'Exchange Variant'],
+                ['field' => 'dms_enquiry_stage', 'headerName' => 'DMS Stage'],
+                ['field' => 'cre_enquiry_stage', 'headerName' => 'CRE Stage'],
+                ['field' => 'cre_next_fup_date', 'headerName' => 'Next FUP Date'],
+                ['field' => 'cre_next_fup_time', 'headerName' => 'Next FUP Time'],
+                ['field' => 'cre_next_fup_remarks', 'headerName' => 'FUP Remarks'],
+                ['field' => 'quotation_no', 'headerName' => 'Quotation No'],
+                ['field' => 'booking_no', 'headerName' => 'Booking No'],
+                ['field' => 'booking_date', 'headerName' => 'Booking Date'],
+                ['field' => 'oem_booking_no', 'headerName' => 'OEM Booking No'],
+                ['field' => 'oem_booking_date', 'headerName' => 'OEM Booking Date'],
+                ['field' => 'oem_otf_no', 'headerName' => 'OEM OTF No'],
+                ['field' => 'action', 'headerName' => 'Action']
+            ],
+            'data' => $gridData
+        ]
+    ]);
+}
 
     public function unassignedLongList()
-    {
-        $this->crud->setListView('admin.enquiry.unassigned-long-enquiry');
+{
+    $this->crud->setListView('admin.enquiry.unassigned-long-enquiry');
 
-        $enquiries = Enquiry::unassignedLong()
-            ->with(['model', 'variant'])
-            ->orderByDesc('created_at')
-            ->get();
-        $gridData = $enquiries->map(function ($enquiry, $index) {
+    $enquiries = Enquiry::unassignedLong()
+        ->with(['model', 'variant', 'color', 'source'])
+        ->orderByDesc('created_at')
+        ->get();
 
-            $editUrl = backpack_url("enquiry/{$enquiry->id}/edit");
+    $gridData = $enquiries->map(function ($enquiry, $index) {
+        $editUrl = backpack_url("enquiry/{$enquiry->id}/edit");
 
-            return [
-                'serial_no' => $index + 1,
-                'long_enq_no' => $enquiry->enquiry_no ?? '—',
-                'long_enq_date_and_time' => $enquiry->enquiry_date
-                    ? Carbon::parse($enquiry->enquiry_date)->format('d-m-Y H:i')
-                    : '—',
-                'long-assign_date_and_time' => $enquiry->enq_assign_date
-                    ? Carbon::parse($enquiry->enq_assign_date)->format('d-m-Y H:i')
-                    : '—',
-                'customer_first_name' => $enquiry->full_name,
-                'customer_phone' => $enquiry->mobile ?? '—',
-                'enq_type' => $enquiry->enquiry_type ?? '—',
-                'enq_source' => $enquiry->source?->name ?? $enquiry->source_code ?? '—',
-                'enq_sub_source' => $enquiry->sub_source ?? '—',
-                'likely_purchase_date' => $enquiry->likely_purchase_date ?? '—',
-                'model_code' => $enquiry->model?->name ?? $enquiry->model_code ?? '—',
-                'variant_code' => $enquiry->variant?->display_name ?? $enquiry->variant_code ?? '—',
-                'color_code' => $enquiry->color?->name ?? $enquiry->color_code ?? '—',
-                'customer_type' => $enquiry->customer_type ?? '—',
-                'zip_code' => $enquiry->zipcode ?? '—',
-                'action' => '
-                    <div class="d-flex justify-content-center gap-2">
-                        <a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a>
-                    </div>',
-            ];
-        })->values();
+        return [
+            'serial_no'                => $index + 1,
+            'enquiry_no'               => $enquiry->enquiry_no ?? '—',
+            'enquiry_date'             => $enquiry->enquiry_date
+                ? Carbon::parse($enquiry->enquiry_date)->format('d-m-Y H:i')
+                : '—',
+            'oem_enquiry_no'           => $enquiry->oem_enquiry_no ?? '—',
+            'oem_enquiry_date'         => $enquiry->oem_enquiry_date
+                ? Carbon::parse($enquiry->oem_enquiry_date)->format('d-m-Y')
+                : '—',
+            'oem_long_enquiry_no'      => $enquiry->oem_long_enquiry_no ?? '—',
+            'oem_long_enquiry_date'    => $enquiry->oem_long_enquiry_date
+                ? Carbon::parse($enquiry->oem_long_enquiry_date)->format('d-m-Y')
+                : '—',
+            'segment_name'             => $enquiry->segment_name ?? '—',
+            'model_name'               => $enquiry->model?->name ?? $enquiry->model_code ?? '—',
+            'variant_name'             => $enquiry->variant?->display_name ?? $enquiry->variant_code ?? '—',
+            'first_name'               => $enquiry->first_name ?? '—',
+            'last_name'                => $enquiry->last_name ?? '—',
+            'full_name'                => $enquiry->full_name ?? '—',
+            'mobile'                   => $enquiry->mobile ?? '—',
+            'email'                    => $enquiry->email ?? '—',
+            'gender'                   => $enquiry->gender ?? '—',
+            'enquiry_type'             => $enquiry->enquiry_type ?? '—',
+            'source_name'              => $enquiry->source?->name ?? $enquiry->source_code ?? '—',
+            'sub_source'               => $enquiry->sub_source ?? '—',
+            'likely_purchase_date'     => $enquiry->likely_purchase_date ?? '—',
+            'fuel_type'                => $enquiry->fuel_type ?? '—',
+            'transmission'             => $enquiry->transmission ?? '—',
+            'drivetrain'               => $enquiry->drivetrain ?? '—',
+            'seating'                  => $enquiry->seating ?? '—',
+            'color_name'               => $enquiry->color?->name ?? $enquiry->color_code ?? '—',
+            'tehsil'                   => $enquiry->tehsil ?? '—',
+            'district'                 => $enquiry->district ?? '—',
+            'city'                     => $enquiry->city ?? '—',
+            'sc_code'                  => $enquiry->sc_code ?? '—',
+            'dealer_branch'            => $enquiry->dealer_branch ?? '—',
+            'dealer_location'          => $enquiry->dealer_location ?? '—',
+            'followup_type'            => $enquiry->followup_type ?? '—',
+            'followup_date'            => $enquiry->followup_date
+                ? Carbon::parse($enquiry->followup_date)->format('d-m-Y')
+                : '—',
+            'followup_time'            => $enquiry->followup_time ?? '—',
+            'occupation_type'          => $enquiry->occupation_type ?? '—',
+            'customer_type'            => $enquiry->customer_type ?? '—',
+            'occupation_sub_type'      => $enquiry->occupation_sub_type ?? '—',
+            'company_name'             => $enquiry->company_name ?? '—',
+            'dob'                      => $enquiry->dob
+                ? Carbon::parse($enquiry->dob)->format('d-m-Y')
+                : '—',
+            'marital_status'           => $enquiry->marital_status ?? '—',
+            'marriage_date'            => $enquiry->marriage_date
+                ? Carbon::parse($enquiry->marriage_date)->format('d-m-Y')
+                : '—',
+            'age_group'                => $enquiry->age_group ?? '—',
+            'usage_area'               => $enquiry->usage_area ?? '—',
+            'km_travelled_daily'       => $enquiry->km_travelled_daily ?? '—',
+            'application_type'         => $enquiry->application_type ?? '—',
+            'application'              => $enquiry->application ?? '—',
+            'zipcode'                  => $enquiry->zipcode ?? '—',
+            'has_ev'                   => $enquiry->has_ev ?? '—',
+            'purchase_type'            => $enquiry->purchase_type ?? '—',
+            'remarks'                  => $enquiry->remarks ?? '—',
+            'exchange_make'            => $enquiry->exchange_make ?? '—',
+            'exchange_model'           => $enquiry->exchange_model ?? '—',
+            'exchange_variant'         => $enquiry->exchange_variant ?? '—',
+            'dms_enquiry_stage'        => $enquiry->dms_enquiry_stage ?? '—',
+            'cre_enquiry_stage'        => $enquiry->cre_enquiry_stage ?? '—',
+            'cre_next_fup_date'        => $enquiry->cre_next_fup_date
+                ? Carbon::parse($enquiry->cre_next_fup_date)->format('d-m-Y')
+                : '—',
+            'cre_next_fup_time'        => $enquiry->cre_next_fup_time ?? '—',
+            'cre_next_fup_remarks'     => $enquiry->cre_next_fup_remarks ?? '—',
+            'quotation_no'             => $enquiry->quotation_no ?? '—',
+            'booking_no'               => $enquiry->booking_no ?? '—',
+            'booking_date'             => $enquiry->booking_date
+                ? Carbon::parse($enquiry->booking_date)->format('d-m-Y')
+                : '—',
+            'oem_booking_no'           => $enquiry->oem_booking_no ?? '—',
+            'oem_booking_date'         => $enquiry->oem_booking_date
+                ? Carbon::parse($enquiry->oem_booking_date)->format('d-m-Y')
+                : '—',
+            'oem_otf_no'               => $enquiry->oem_otf_no ?? '—',
 
-        return view('admin.enquiry.unassigned-long-enquiry', [
-            'title' => 'Unassigned Long Enquiries',
-            'gridConfig' => [
-                'columns' => [
-                    ['field' => 'serial_no', 'headerName' => 'S.No'],
-                    ['field' => 'long_enq_no', 'headerName' => 'Long Enquiry No'],
-                    ['field' => 'long_enq_date_and_time', 'headerName' => 'Long Enquiry Date & Time'],
-                    ['field' => 'customer_first_name', 'headerName' => 'Customer Name'],
-                    ['field' => 'customer_phone', 'headerName' => 'Customer Mobile'],
-                    ['field' => 'enq_type', 'headerName' => 'Enquiry Type'],
-                    ['field' => 'enq_source', 'headerName' => 'Enquiry Source'],
-                    ['field' => 'enq_sub_source', 'headerName' => 'Enquiry Sub Source'],
-                    ['field' => 'likely_purchase_date', 'headerName' => 'Likely Purchase Date'],
-                    ['field' => 'model_code', 'headerName' => 'Model'],
-                    ['field' => 'variant_code', 'headerName' => 'Variant'],
-                    ['field' => 'color_code', 'headerName' => 'Color'],
-                    ['field' => 'customer_type', 'headerName' => 'Customer Type'],
-                    ['field' => 'zip_code', 'headerName' => 'Zip Code'],
-                    ['field' => 'action', 'headerName' => 'Action']
-                ],
-                'data' => $gridData
-            ]
-        ]);
-    }
+            'action' => '
+                <div class="d-flex justify-content-center gap-2">
+                    <a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a>
+                </div>',
+        ];
+    })->values();
+
+    return view('admin.enquiry.unassigned-long-enquiry', [
+        'title' => 'Unassigned Long Enquiries',
+        'gridConfig' => [
+            'columns' => [
+                ['field' => 'serial_no', 'headerName' => 'S.No'],
+                ['field' => 'enquiry_no', 'headerName' => 'Enquiry No'],
+                ['field' => 'enquiry_date', 'headerName' => 'Enquiry Date'],
+                ['field' => 'oem_enquiry_no', 'headerName' => 'OEM Enquiry No'],
+                ['field' => 'oem_enquiry_date', 'headerName' => 'OEM Enquiry Date'],
+                ['field' => 'oem_long_enquiry_no', 'headerName' => 'OEM Long Enquiry No'],
+                ['field' => 'oem_long_enquiry_date', 'headerName' => 'OEM Long Enquiry Date'],
+                ['field' => 'segment_name', 'headerName' => 'Segment'],
+                ['field' => 'model_name', 'headerName' => 'Model'],
+                ['field' => 'variant_name', 'headerName' => 'Variant'],
+                ['field' => 'first_name', 'headerName' => 'First Name'],
+                ['field' => 'last_name', 'headerName' => 'Last Name'],
+                ['field' => 'full_name', 'headerName' => 'Full Name'],
+                ['field' => 'mobile', 'headerName' => 'Mobile'],
+                ['field' => 'email', 'headerName' => 'Email'],
+                ['field' => 'gender', 'headerName' => 'Gender'],
+                ['field' => 'enquiry_type', 'headerName' => 'Enquiry Type'],
+                ['field' => 'source_name', 'headerName' => 'Source'],
+                ['field' => 'sub_source', 'headerName' => 'Sub Source'],
+                ['field' => 'likely_purchase_date', 'headerName' => 'Likely Purchase Date'],
+                ['field' => 'fuel_type', 'headerName' => 'Fuel Type'],
+                ['field' => 'transmission', 'headerName' => 'Transmission'],
+                ['field' => 'drivetrain', 'headerName' => 'Drivetrain'],
+                ['field' => 'seating', 'headerName' => 'Seating'],
+                ['field' => 'color_name', 'headerName' => 'Color'],
+                ['field' => 'tehsil', 'headerName' => 'Tehsil'],
+                ['field' => 'district', 'headerName' => 'District'],
+                ['field' => 'city', 'headerName' => 'City'],
+                ['field' => 'sc_code', 'headerName' => 'SC Code'],
+                ['field' => 'dealer_branch', 'headerName' => 'Dealer Branch'],
+                ['field' => 'dealer_location', 'headerName' => 'Dealer Location'],
+                ['field' => 'followup_type', 'headerName' => 'Followup Type'],
+                ['field' => 'followup_date', 'headerName' => 'Followup Date'],
+                ['field' => 'followup_time', 'headerName' => 'Followup Time'],
+                ['field' => 'occupation_type', 'headerName' => 'Occupation Type'],
+                ['field' => 'customer_type', 'headerName' => 'Customer Type'],
+                ['field' => 'occupation_sub_type', 'headerName' => 'Occupation Sub Type'],
+                ['field' => 'company_name', 'headerName' => 'Company Name'],
+                ['field' => 'dob', 'headerName' => 'DOB'],
+                ['field' => 'marital_status', 'headerName' => 'Marital Status'],
+                ['field' => 'marriage_date', 'headerName' => 'Marriage Date'],
+                ['field' => 'age_group', 'headerName' => 'Age Group'],
+                ['field' => 'usage_area', 'headerName' => 'Usage Area'],
+                ['field' => 'km_travelled_daily', 'headerName' => 'KM Daily'],
+                ['field' => 'application_type', 'headerName' => 'Application Type'],
+                ['field' => 'application', 'headerName' => 'Application'],
+                ['field' => 'zipcode', 'headerName' => 'Zipcode'],
+                ['field' => 'has_ev', 'headerName' => 'Has EV'],
+                ['field' => 'purchase_type', 'headerName' => 'Purchase Type'],
+                ['field' => 'remarks', 'headerName' => 'Remarks'],
+                ['field' => 'exchange_make', 'headerName' => 'Exchange Make'],
+                ['field' => 'exchange_model', 'headerName' => 'Exchange Model'],
+                ['field' => 'exchange_variant', 'headerName' => 'Exchange Variant'],
+                ['field' => 'dms_enquiry_stage', 'headerName' => 'DMS Stage'],
+                ['field' => 'cre_enquiry_stage', 'headerName' => 'CRE Stage'],
+                ['field' => 'cre_next_fup_date', 'headerName' => 'Next FUP Date'],
+                ['field' => 'cre_next_fup_time', 'headerName' => 'Next FUP Time'],
+                ['field' => 'cre_next_fup_remarks', 'headerName' => 'FUP Remarks'],
+                ['field' => 'quotation_no', 'headerName' => 'Quotation No'],
+                ['field' => 'booking_no', 'headerName' => 'Booking No'],
+                ['field' => 'booking_date', 'headerName' => 'Booking Date'],
+                ['field' => 'oem_booking_no', 'headerName' => 'OEM Booking No'],
+                ['field' => 'oem_booking_date', 'headerName' => 'OEM Booking Date'],
+                ['field' => 'oem_otf_no', 'headerName' => 'OEM OTF No'],
+                ['field' => 'action', 'headerName' => 'Action']
+            ],
+            'data' => $gridData
+        ]
+    ]);
+}
 
     public function assignedQuickList()
-    {
-        $this->crud->setListView('admin.enquiry.assigned-quick-enquiry');
+{
+    $this->crud->setListView('admin.enquiry.assigned-quick-enquiry');
 
-        $enquiries = Enquiry::assignedQuick()
-            ->with(['model', 'variant'])
-            ->orderByDesc('created_at')
-            ->get();
+    $enquiries = Enquiry::assignedQuick()
+        ->with(['model', 'variant', 'color', 'source', 'salesConsultant'])
+        ->orderByDesc('created_at')
+        ->get();
 
-        $gridData = $enquiries->map(function ($enquiry, $index) {
+    $gridData = $enquiries->map(function ($enquiry, $index) {
+        $editUrl = backpack_url("enquiry/{$enquiry->id}/edit");
 
-            $editUrl = backpack_url("enquiry/{$enquiry->id}/edit");
+        return [
+            'serial_no'                => $index + 1,
+            'enquiry_no'               => $enquiry->enquiry_no ?? '—',
+            'enquiry_date'             => $enquiry->enquiry_date
+                ? Carbon::parse($enquiry->enquiry_date)->format('d-m-Y H:i')
+                : '—',
+            'oem_enquiry_no'           => $enquiry->oem_enquiry_no ?? '—',
+            'oem_enquiry_date'         => $enquiry->oem_enquiry_date
+                ? Carbon::parse($enquiry->oem_enquiry_date)->format('d-m-Y')
+                : '—',
+            'oem_quick_enquiry_no'     => $enquiry->oem_quick_enquiry_no ?? '—',
+            'oem_quick_enquiry_date'   => $enquiry->oem_quick_enquiry_date
+                ? Carbon::parse($enquiry->oem_quick_enquiry_date)->format('d-m-Y')
+                : '—',
+            'enquiry_assign_date'      => $enquiry->enquiry_assign_date
+                ? Carbon::parse($enquiry->enquiry_assign_date)->format('d-m-Y')
+                : '—',
+            'oem_enquiry_assign_date'  => $enquiry->oem_enquiry_assign_date
+                ? Carbon::parse($enquiry->oem_enquiry_assign_date)->format('d-m-Y')
+                : '—',
+            'segment_name'             => $enquiry->segment_name ?? '—',
+            'model_name'               => $enquiry->model?->name ?? $enquiry->model_code ?? '—',
+            'variant_name'             => $enquiry->variant?->display_name ?? $enquiry->variant_code ?? '—',
+            'first_name'               => $enquiry->first_name ?? '—',
+            'last_name'                => $enquiry->last_name ?? '—',
+            'full_name'                => $enquiry->full_name ?? '—',
+            'mobile'                   => $enquiry->mobile ?? '—',
+            'email'                    => $enquiry->email ?? '—',
+            'gender'                   => $enquiry->gender ?? '—',
+            'enquiry_type'             => $enquiry->enquiry_type ?? '—',
+            'source_name'              => $enquiry->source?->name ?? $enquiry->source_code ?? '—',
+            'sub_source'               => $enquiry->sub_source ?? '—',
+            'likely_purchase_date'     => $enquiry->likely_purchase_date ?? '—',
+            'fuel_type'                => $enquiry->fuel_type ?? '—',
+            'transmission'             => $enquiry->transmission ?? '—',
+            'drivetrain'               => $enquiry->drivetrain ?? '—',
+            'seating'                  => $enquiry->seating ?? '—',
+            'color_name'               => $enquiry->color?->name ?? $enquiry->color_code ?? '—',
+            'tehsil'                   => $enquiry->tehsil ?? '—',
+            'district'                 => $enquiry->district ?? '—',
+            'city'                     => $enquiry->city ?? '—',
+            'sc_code'                  => $enquiry->sc_code ?? '—',
+            'dealer_branch'            => $enquiry->dealer_branch ?? '—',
+            'dealer_location'          => $enquiry->dealer_location ?? '—',
+            'followup_type'            => $enquiry->followup_type ?? '—',
+            'followup_date'            => $enquiry->followup_date
+                ? Carbon::parse($enquiry->followup_date)->format('d-m-Y')
+                : '—',
+            'followup_time'            => $enquiry->followup_time ?? '—',
+            'occupation_type'          => $enquiry->occupation_type ?? '—',
+            'customer_type'            => $enquiry->customer_type ?? '—',
+            'occupation_sub_type'      => $enquiry->occupation_sub_type ?? '—',
+            'company_name'             => $enquiry->company_name ?? '—',
+            'dob'                      => $enquiry->dob
+                ? Carbon::parse($enquiry->dob)->format('d-m-Y')
+                : '—',
+            'marital_status'           => $enquiry->marital_status ?? '—',
+            'marriage_date'            => $enquiry->marriage_date
+                ? Carbon::parse($enquiry->marriage_date)->format('d-m-Y')
+                : '—',
+            'age_group'                => $enquiry->age_group ?? '—',
+            'usage_area'               => $enquiry->usage_area ?? '—',
+            'km_travelled_daily'       => $enquiry->km_travelled_daily ?? '—',
+            'application_type'         => $enquiry->application_type ?? '—',
+            'application'              => $enquiry->application ?? '—',
+            'zipcode'                  => $enquiry->zipcode ?? '—',
+            'has_ev'                   => $enquiry->has_ev ?? '—',
+            'purchase_type'            => $enquiry->purchase_type ?? '—',
+            'remarks'                  => $enquiry->remarks ?? '—',
+            'exchange_make'            => $enquiry->exchange_make ?? '—',
+            'exchange_model'           => $enquiry->exchange_model ?? '—',
+            'exchange_variant'         => $enquiry->exchange_variant ?? '—',
+            'dms_enquiry_stage'        => $enquiry->dms_enquiry_stage ?? '—',
+            'cre_enquiry_stage'        => $enquiry->cre_enquiry_stage ?? '—',
+            'cre_next_fup_date'        => $enquiry->cre_next_fup_date
+                ? Carbon::parse($enquiry->cre_next_fup_date)->format('d-m-Y')
+                : '—',
+            'cre_next_fup_time'        => $enquiry->cre_next_fup_time ?? '—',
+            'cre_next_fup_remarks'     => $enquiry->cre_next_fup_remarks ?? '—',
+            'quotation_no'             => $enquiry->quotation_no ?? '—',
+            'booking_no'               => $enquiry->booking_no ?? '—',
+            'booking_date'             => $enquiry->booking_date
+                ? Carbon::parse($enquiry->booking_date)->format('d-m-Y')
+                : '—',
+            'oem_booking_no'           => $enquiry->oem_booking_no ?? '—',
+            'oem_booking_date'         => $enquiry->oem_booking_date
+                ? Carbon::parse($enquiry->oem_booking_date)->format('d-m-Y')
+                : '—',
+            'oem_otf_no'               => $enquiry->oem_otf_no ?? '—',
 
-            return [
-                'serial_no' => $index + 1,
-                'quick_enq_no' => $enquiry->enquiry_no ?? '—',
-                'quick_enq_date_and_time' => $enquiry->enquiry_date
-                    ? Carbon::parse($enquiry->enquiry_date)->format('d-m-Y H:i')
-                    : '—',
-                'quick-assign_date_and_time' => $enquiry->enq_assign_date
-                    ? Carbon::parse($enquiry->enq_assign_date)->format('d-m-Y H:i')
-                    : '—',
-                'customer_first_name' => $enquiry->full_name,
-                'customer_phone' => $enquiry->mobile ?? '—',
-                'enq_type' => $enquiry->enquiry_type ?? '—',
-                'enq_source' => $enquiry->source?->name ?? $enquiry->source_code ?? '—',
-                'enq_sub_source' => $enquiry->sub_source ?? '—',
-                'likely_purchase_date' => $enquiry->likely_purchase_date ?? '—',
-                'model_code' => $enquiry->model?->name ?? $enquiry->model_code ?? '—',
-                'variant_code' => $enquiry->variant?->display_name ?? $enquiry->variant_code ?? '—',
-                'color_code' => $enquiry->color?->name ?? $enquiry->color_code ?? '—',
-                'sc_name' => $enquiry->salesConsultant?->name ?? '—',
-                'sc_mile_id' => $enquiry->sc_mile_id ?? '—',
-                'enq_stage' => $enquiry->stage ?? '—',
-                'action' => '
-                    <div class="d-flex justify-content-center gap-2">
-                        <a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a>
-                    </div>',
-            ];
-        })->values();
+            'action' => '
+                <div class="d-flex justify-content-center gap-2">
+                    <a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a>
+                </div>',
+        ];
+    })->values();
 
-        return view('admin.enquiry.assigned-quick-enquiry', [
-            'title' => 'Assigned Quick Enquiries',
-            'gridConfig' => [
-                'columns' => [
-                    ['field' => 'serial_no', 'headerName' => 'S.No'],
-                    ['field' => 'quick_enq_no', 'headerName' => 'Quick Enquiry No'],
-                    ['field' => 'quick_enq_date_and_time', 'headerName' => 'Quick Enquiry Date & Time'],
-                    ['field' => 'quick_assign_date_and_time', 'headerName' => 'Quick Assigned Date & Time'],
-                    ['field' => 'customer_first_name', 'headerName' => 'Customer Name'],
-                    ['field' => 'customer_phone', 'headerName' => 'Customer Mobile'],
-                    ['field' => 'enq_type', 'headerName' => 'Enquiry Type'],
-                    ['field' => 'enq_source', 'headerName' => 'Enquiry Source'],
-                    ['field' => 'enq_sub_source', 'headerName' => 'Enquiry Sub Source'],
-                    ['field' => 'likely_purchase_date', 'headerName' => 'Likely Purchase Date'],
-                    ['field' => 'model_code', 'headerName' => 'Model'],
-                    ['field' => 'variant_code', 'headerName' => 'Variant'],
-                    ['field' => 'color_code', 'headerName' => 'Color'],
-                    ['field' => 'sc_name', 'headerName' => 'SC Name'],
-                    ['field' => 'sc_mile_id', 'headerName' => 'SC Mile Id'],
-                    ['field' => 'enq_stage', 'headerName' => 'Enquiry Stage'],
-                    ['field' => 'action', 'headerName' => 'Action']
-                ],
-                'data' => $gridData
-            ]
-        ]);
-    }
+    return view('admin.enquiry.assigned-quick-enquiry', [
+        'title' => 'Assigned Quick Enquiries',
+        'gridConfig' => [
+            'columns' => [
+                ['field' => 'serial_no', 'headerName' => 'S.No'],
+                ['field' => 'enquiry_no', 'headerName' => 'Enquiry No'],
+                ['field' => 'enquiry_date', 'headerName' => 'Enquiry Date'],
+                ['field' => 'oem_enquiry_no', 'headerName' => 'OEM Enquiry No'],
+                ['field' => 'oem_enquiry_date', 'headerName' => 'OEM Enquiry Date'],
+                ['field' => 'oem_quick_enquiry_no', 'headerName' => 'OEM Quick Enquiry No'],
+                ['field' => 'oem_quick_enquiry_date', 'headerName' => 'OEM Quick Enquiry Date'],
+                ['field' => 'enquiry_assign_date', 'headerName' => 'Assign Date'],
+                ['field' => 'oem_enquiry_assign_date', 'headerName' => 'OEM Assign Date'],
+                ['field' => 'segment_name', 'headerName' => 'Segment'],
+                ['field' => 'model_name', 'headerName' => 'Model'],
+                ['field' => 'variant_name', 'headerName' => 'Variant'],
+                ['field' => 'first_name', 'headerName' => 'First Name'],
+                ['field' => 'last_name', 'headerName' => 'Last Name'],
+                ['field' => 'full_name', 'headerName' => 'Full Name'],
+                ['field' => 'mobile', 'headerName' => 'Mobile'],
+                ['field' => 'email', 'headerName' => 'Email'],
+                ['field' => 'gender', 'headerName' => 'Gender'],
+                ['field' => 'enquiry_type', 'headerName' => 'Enquiry Type'],
+                ['field' => 'source_name', 'headerName' => 'Source'],
+                ['field' => 'sub_source', 'headerName' => 'Sub Source'],
+                ['field' => 'likely_purchase_date', 'headerName' => 'Likely Purchase Date'],
+                ['field' => 'fuel_type', 'headerName' => 'Fuel Type'],
+                ['field' => 'transmission', 'headerName' => 'Transmission'],
+                ['field' => 'drivetrain', 'headerName' => 'Drivetrain'],
+                ['field' => 'seating', 'headerName' => 'Seating'],
+                ['field' => 'color_name', 'headerName' => 'Color'],
+                ['field' => 'tehsil', 'headerName' => 'Tehsil'],
+                ['field' => 'district', 'headerName' => 'District'],
+                ['field' => 'city', 'headerName' => 'City'],
+                ['field' => 'sc_code', 'headerName' => 'SC Code'],
+                ['field' => 'dealer_branch', 'headerName' => 'Dealer Branch'],
+                ['field' => 'dealer_location', 'headerName' => 'Dealer Location'],
+                ['field' => 'followup_type', 'headerName' => 'Followup Type'],
+                ['field' => 'followup_date', 'headerName' => 'Followup Date'],
+                ['field' => 'followup_time', 'headerName' => 'Followup Time'],
+                ['field' => 'occupation_type', 'headerName' => 'Occupation Type'],
+                ['field' => 'customer_type', 'headerName' => 'Customer Type'],
+                ['field' => 'occupation_sub_type', 'headerName' => 'Occupation Sub Type'],
+                ['field' => 'company_name', 'headerName' => 'Company Name'],
+                ['field' => 'dob', 'headerName' => 'DOB'],
+                ['field' => 'marital_status', 'headerName' => 'Marital Status'],
+                ['field' => 'marriage_date', 'headerName' => 'Marriage Date'],
+                ['field' => 'age_group', 'headerName' => 'Age Group'],
+                ['field' => 'usage_area', 'headerName' => 'Usage Area'],
+                ['field' => 'km_travelled_daily', 'headerName' => 'KM Daily'],
+                ['field' => 'application_type', 'headerName' => 'Application Type'],
+                ['field' => 'application', 'headerName' => 'Application'],
+                ['field' => 'zipcode', 'headerName' => 'Zipcode'],
+                ['field' => 'has_ev', 'headerName' => 'Has EV'],
+                ['field' => 'purchase_type', 'headerName' => 'Purchase Type'],
+                ['field' => 'remarks', 'headerName' => 'Remarks'],
+                ['field' => 'exchange_make', 'headerName' => 'Exchange Make'],
+                ['field' => 'exchange_model', 'headerName' => 'Exchange Model'],
+                ['field' => 'exchange_variant', 'headerName' => 'Exchange Variant'],
+                ['field' => 'dms_enquiry_stage', 'headerName' => 'DMS Stage'],
+                ['field' => 'cre_enquiry_stage', 'headerName' => 'CRE Stage'],
+                ['field' => 'cre_next_fup_date', 'headerName' => 'Next FUP Date'],
+                ['field' => 'cre_next_fup_time', 'headerName' => 'Next FUP Time'],
+                ['field' => 'cre_next_fup_remarks', 'headerName' => 'FUP Remarks'],
+                ['field' => 'quotation_no', 'headerName' => 'Quotation No'],
+                ['field' => 'booking_no', 'headerName' => 'Booking No'],
+                ['field' => 'booking_date', 'headerName' => 'Booking Date'],
+                ['field' => 'oem_booking_no', 'headerName' => 'OEM Booking No'],
+                ['field' => 'oem_booking_date', 'headerName' => 'OEM Booking Date'],
+                ['field' => 'oem_otf_no', 'headerName' => 'OEM OTF No'],
+                ['field' => 'action', 'headerName' => 'Action']
+            ],
+            'data' => $gridData
+        ]
+    ]);
+}
 
     public function unassignedQuickList()
-    {
-        $this->crud->setListView('admin.enquiry.unassigned-quick-enquiry');
+{
+    $this->crud->setListView('admin.enquiry.unassigned-quick-enquiry');
 
-        $enquiries = Enquiry::unassignedQuick()
-            ->with(['model', 'variant'])
-            ->orderByDesc('created_at')
-            ->get();
+    $enquiries = Enquiry::unassignedQuick()
+        ->with(['model', 'variant', 'color', 'source'])
+        ->orderByDesc('created_at')
+        ->get();
 
-        $gridData = $enquiries->map(function ($enquiry, $index) {
+    $gridData = $enquiries->map(function ($enquiry, $index) {
+        $editUrl = backpack_url("enquiry/{$enquiry->id}/edit");
 
-            $editUrl = backpack_url("enquiry/{$enquiry->id}/edit");
+        return [
+            'serial_no'                => $index + 1,
+            'enquiry_no'               => $enquiry->enquiry_no ?? '—',
+            'enquiry_date'             => $enquiry->enquiry_date
+                ? Carbon::parse($enquiry->enquiry_date)->format('d-m-Y H:i')
+                : '—',
+            'oem_enquiry_no'           => $enquiry->oem_enquiry_no ?? '—',
+            'oem_enquiry_date'         => $enquiry->oem_enquiry_date
+                ? Carbon::parse($enquiry->oem_enquiry_date)->format('d-m-Y')
+                : '—',
+            'oem_quick_enquiry_no'     => $enquiry->oem_quick_enquiry_no ?? '—',
+            'oem_quick_enquiry_date'   => $enquiry->oem_quick_enquiry_date
+                ? Carbon::parse($enquiry->oem_quick_enquiry_date)->format('d-m-Y')
+                : '—',
+            'segment_name'             => $enquiry->segment_name ?? '—',
+            'model_name'               => $enquiry->model?->name ?? $enquiry->model_code ?? '—',
+            'variant_name'             => $enquiry->variant?->display_name ?? $enquiry->variant_code ?? '—',
+            'first_name'               => $enquiry->first_name ?? '—',
+            'last_name'                => $enquiry->last_name ?? '—',
+            'full_name'                => $enquiry->full_name ?? '—',
+            'mobile'                   => $enquiry->mobile ?? '—',
+            'email'                    => $enquiry->email ?? '—',
+            'gender'                   => $enquiry->gender ?? '—',
+            'enquiry_type'             => $enquiry->enquiry_type ?? '—',
+            'source_name'              => $enquiry->source?->name ?? $enquiry->source_code ?? '—',
+            'sub_source'               => $enquiry->sub_source ?? '—',
+            'likely_purchase_date'     => $enquiry->likely_purchase_date ?? '—',
+            'fuel_type'                => $enquiry->fuel_type ?? '—',
+            'transmission'             => $enquiry->transmission ?? '—',
+            'drivetrain'               => $enquiry->drivetrain ?? '—',
+            'seating'                  => $enquiry->seating ?? '—',
+            'color_name'               => $enquiry->color?->name ?? $enquiry->color_code ?? '—',
+            'tehsil'                   => $enquiry->tehsil ?? '—',
+            'district'                 => $enquiry->district ?? '—',
+            'city'                     => $enquiry->city ?? '—',
+            'sc_code'                  => $enquiry->sc_code ?? '—',
+            'dealer_branch'            => $enquiry->dealer_branch ?? '—',
+            'dealer_location'          => $enquiry->dealer_location ?? '—',
+            'followup_type'            => $enquiry->followup_type ?? '—',
+            'followup_date'            => $enquiry->followup_date
+                ? Carbon::parse($enquiry->followup_date)->format('d-m-Y')
+                : '—',
+            'followup_time'            => $enquiry->followup_time ?? '—',
+            'occupation_type'          => $enquiry->occupation_type ?? '—',
+            'customer_type'            => $enquiry->customer_type ?? '—',
+            'occupation_sub_type'      => $enquiry->occupation_sub_type ?? '—',
+            'company_name'             => $enquiry->company_name ?? '—',
+            'dob'                      => $enquiry->dob
+                ? Carbon::parse($enquiry->dob)->format('d-m-Y')
+                : '—',
+            'marital_status'           => $enquiry->marital_status ?? '—',
+            'marriage_date'            => $enquiry->marriage_date
+                ? Carbon::parse($enquiry->marriage_date)->format('d-m-Y')
+                : '—',
+            'age_group'                => $enquiry->age_group ?? '—',
+            'usage_area'               => $enquiry->usage_area ?? '—',
+            'km_travelled_daily'       => $enquiry->km_travelled_daily ?? '—',
+            'application_type'         => $enquiry->application_type ?? '—',
+            'application'              => $enquiry->application ?? '—',
+            'zipcode'                  => $enquiry->zipcode ?? '—',
+            'has_ev'                   => $enquiry->has_ev ?? '—',
+            'purchase_type'            => $enquiry->purchase_type ?? '—',
+            'remarks'                  => $enquiry->remarks ?? '—',
+            'exchange_make'            => $enquiry->exchange_make ?? '—',
+            'exchange_model'           => $enquiry->exchange_model ?? '—',
+            'exchange_variant'         => $enquiry->exchange_variant ?? '—',
+            'dms_enquiry_stage'        => $enquiry->dms_enquiry_stage ?? '—',
+            'cre_enquiry_stage'        => $enquiry->cre_enquiry_stage ?? '—',
+            'cre_next_fup_date'        => $enquiry->cre_next_fup_date
+                ? Carbon::parse($enquiry->cre_next_fup_date)->format('d-m-Y')
+                : '—',
+            'cre_next_fup_time'        => $enquiry->cre_next_fup_time ?? '—',
+            'cre_next_fup_remarks'     => $enquiry->cre_next_fup_remarks ?? '—',
+            'quotation_no'             => $enquiry->quotation_no ?? '—',
+            'booking_no'               => $enquiry->booking_no ?? '—',
+            'booking_date'             => $enquiry->booking_date
+                ? Carbon::parse($enquiry->booking_date)->format('d-m-Y')
+                : '—',
+            'oem_booking_no'           => $enquiry->oem_booking_no ?? '—',
+            'oem_booking_date'         => $enquiry->oem_booking_date
+                ? Carbon::parse($enquiry->oem_booking_date)->format('d-m-Y')
+                : '—',
+            'oem_otf_no'               => $enquiry->oem_otf_no ?? '—',
 
-            return [
-                'serial_no' => $index + 1,
-                'quick_enq_no' => $enquiry->enquiry_no ?? '—',
-                'quick_enq_date_and_time' => $enquiry->enquiry_date
-                    ? Carbon::parse($enquiry->enquiry_date)->format('d-m-Y H:i')
-                    : '—',
-                'customer_first_name' => $enquiry->full_name,
-                'customer_phone' => $enquiry->mobile ?? '—',
-                'enq_type' => $enquiry->enquiry_type ?? '—',
-                'enq_source' => $enquiry->source?->name ?? $enquiry->source_code ?? '—',
-                'enq_sub_source' => $enquiry->sub_source ?? '—',
-                'likely_purchase_date' => $enquiry->likely_purchase_date ?? '—',
-                'model_code' => $enquiry->model?->name ?? $enquiry->model_code ?? '—',
-                'variant_code' => $enquiry->variant?->display_name ?? $enquiry->variant_code ?? '—',
-                'color_code' => $enquiry->color?->name ?? $enquiry->color_code ?? '—',
-                'enq_stage' => $enquiry->stage ?? '—',
-                'action' => '
-                    <div class="d-flex justify-content-center gap-2">
-                        <a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a>
-                    </div>',
-            ];
-        })->values();
+            'action' => '
+                <div class="d-flex justify-content-center gap-2">
+                    <a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a>
+                </div>',
+        ];
+    })->values();
 
-        return view('admin.enquiry.unassigned-quick-enquiry', [
-            'title' => 'Unassigned Quick Enquiries',
-            'gridConfig' => [
-                'columns' => [
-                    ['field' => 'serial_no', 'headerName' => 'S.No'],
-                    ['field' => 'quick_enq_no', 'headerName' => 'Quick Enquiry No'],
-                    ['field' => 'quick_enq_date_and_time', 'headerName' => 'Quick Enquiry Date & Time'],
-                    ['field' => 'customer_first_name', 'headerName' => 'Customer Name'],
-                    ['field' => 'customer_phone', 'headerName' => 'Customer Mobile'],
-                    ['field' => 'enq_type', 'headerName' => 'Enquiry Type'],
-                    ['field' => 'enq_source', 'headerName' => 'Enquiry Source'],
-                    ['field' => 'enq_sub_source', 'headerName' => 'Enquiry Sub Source'],
-                    ['field' => 'likely_purchase_date', 'headerName' => 'Likely Purchase Date'],
-                    ['field' => 'model_code', 'headerName' => 'Model'],
-                    ['field' => 'variant_code', 'headerName' => 'Variant'],
-                    ['field' => 'color_code', 'headerName' => 'Color'],
-                    ['field' => 'enq_stage', 'headerName' => 'Enquiry Stage'],
-                    ['field' => 'action', 'headerName' => 'Action']
-                ],
-                'data' => $gridData
-            ]
-        ]);
-    }
+    return view('admin.enquiry.unassigned-quick-enquiry', [
+        'title' => 'Unassigned Quick Enquiries',
+        'gridConfig' => [
+            'columns' => [
+                ['field' => 'serial_no', 'headerName' => 'S.No'],
+                ['field' => 'enquiry_no', 'headerName' => 'Enquiry No'],
+                ['field' => 'enquiry_date', 'headerName' => 'Enquiry Date'],
+                ['field' => 'oem_enquiry_no', 'headerName' => 'OEM Enquiry No'],
+                ['field' => 'oem_enquiry_date', 'headerName' => 'OEM Enquiry Date'],
+                ['field' => 'oem_quick_enquiry_no', 'headerName' => 'OEM Quick Enquiry No'],
+                ['field' => 'oem_quick_enquiry_date', 'headerName' => 'OEM Quick Enquiry Date'],
+                ['field' => 'segment_name', 'headerName' => 'Segment'],
+                ['field' => 'model_name', 'headerName' => 'Model'],
+                ['field' => 'variant_name', 'headerName' => 'Variant'],
+                ['field' => 'first_name', 'headerName' => 'First Name'],
+                ['field' => 'last_name', 'headerName' => 'Last Name'],
+                ['field' => 'full_name', 'headerName' => 'Full Name'],
+                ['field' => 'mobile', 'headerName' => 'Mobile'],
+                ['field' => 'email', 'headerName' => 'Email'],
+                ['field' => 'gender', 'headerName' => 'Gender'],
+                ['field' => 'enquiry_type', 'headerName' => 'Enquiry Type'],
+                ['field' => 'source_name', 'headerName' => 'Source'],
+                ['field' => 'sub_source', 'headerName' => 'Sub Source'],
+                ['field' => 'likely_purchase_date', 'headerName' => 'Likely Purchase Date'],
+                ['field' => 'fuel_type', 'headerName' => 'Fuel Type'],
+                ['field' => 'transmission', 'headerName' => 'Transmission'],
+                ['field' => 'drivetrain', 'headerName' => 'Drivetrain'],
+                ['field' => 'seating', 'headerName' => 'Seating'],
+                ['field' => 'color_name', 'headerName' => 'Color'],
+                ['field' => 'tehsil', 'headerName' => 'Tehsil'],
+                ['field' => 'district', 'headerName' => 'District'],
+                ['field' => 'city', 'headerName' => 'City'],
+                ['field' => 'sc_code', 'headerName' => 'SC Code'],
+                ['field' => 'dealer_branch', 'headerName' => 'Dealer Branch'],
+                ['field' => 'dealer_location', 'headerName' => 'Dealer Location'],
+                ['field' => 'followup_type', 'headerName' => 'Followup Type'],
+                ['field' => 'followup_date', 'headerName' => 'Followup Date'],
+                ['field' => 'followup_time', 'headerName' => 'Followup Time'],
+                ['field' => 'occupation_type', 'headerName' => 'Occupation Type'],
+                ['field' => 'customer_type', 'headerName' => 'Customer Type'],
+                ['field' => 'occupation_sub_type', 'headerName' => 'Occupation Sub Type'],
+                ['field' => 'company_name', 'headerName' => 'Company Name'],
+                ['field' => 'dob', 'headerName' => 'DOB'],
+                ['field' => 'marital_status', 'headerName' => 'Marital Status'],
+                ['field' => 'marriage_date', 'headerName' => 'Marriage Date'],
+                ['field' => 'age_group', 'headerName' => 'Age Group'],
+                ['field' => 'usage_area', 'headerName' => 'Usage Area'],
+                ['field' => 'km_travelled_daily', 'headerName' => 'KM Daily'],
+                ['field' => 'application_type', 'headerName' => 'Application Type'],
+                ['field' => 'application', 'headerName' => 'Application'],
+                ['field' => 'zipcode', 'headerName' => 'Zipcode'],
+                ['field' => 'has_ev', 'headerName' => 'Has EV'],
+                ['field' => 'purchase_type', 'headerName' => 'Purchase Type'],
+                ['field' => 'remarks', 'headerName' => 'Remarks'],
+                ['field' => 'exchange_make', 'headerName' => 'Exchange Make'],
+                ['field' => 'exchange_model', 'headerName' => 'Exchange Model'],
+                ['field' => 'exchange_variant', 'headerName' => 'Exchange Variant'],
+                ['field' => 'dms_enquiry_stage', 'headerName' => 'DMS Stage'],
+                ['field' => 'cre_enquiry_stage', 'headerName' => 'CRE Stage'],
+                ['field' => 'cre_next_fup_date', 'headerName' => 'Next FUP Date'],
+                ['field' => 'cre_next_fup_time', 'headerName' => 'Next FUP Time'],
+                ['field' => 'cre_next_fup_remarks', 'headerName' => 'FUP Remarks'],
+                ['field' => 'quotation_no', 'headerName' => 'Quotation No'],
+                ['field' => 'booking_no', 'headerName' => 'Booking No'],
+                ['field' => 'booking_date', 'headerName' => 'Booking Date'],
+                ['field' => 'oem_booking_no', 'headerName' => 'OEM Booking No'],
+                ['field' => 'oem_booking_date', 'headerName' => 'OEM Booking Date'],
+                ['field' => 'oem_otf_no', 'headerName' => 'OEM OTF No'],
+                ['field' => 'action', 'headerName' => 'Action']
+            ],
+            'data' => $gridData
+        ]
+    ]);
+}
 
     public function checkDuplicateEnquiry(Request $request)
     {
