@@ -1226,9 +1226,10 @@ class EnquiryCrudController extends CrudController
     $this->crud->setListView('admin.enquiry.assigned-long-enquiry');
 
     $enquiries = Enquiry::assignedLong()
-        ->with(['model', 'variant', 'color', 'source', 'salesConsultant'])
+        ->with(['model', 'variant', 'color', 'salesConsultant'])
         ->orderByDesc('created_at')
         ->get();
+    dd($enquiries);
 
     $gridData = $enquiries->map(function ($enquiry, $index) {
         $editUrl = backpack_url("enquiry/{$enquiry->id}/edit");
@@ -1329,7 +1330,7 @@ class EnquiryCrudController extends CrudController
                 </div>',
         ];
     })->values();
-
+ dd($enquiries->count(), $gridData->first()); 
     return view('admin.enquiry.assigned-long-enquiry', [
         'title' => 'Assigned Long Enquiries',
         'gridConfig' => [
@@ -1412,7 +1413,7 @@ class EnquiryCrudController extends CrudController
     $this->crud->setListView('admin.enquiry.unassigned-long-enquiry');
 
     $enquiries = Enquiry::unassignedLong()
-        ->with(['model', 'variant', 'color', 'source'])
+        ->with(['model', 'variant', 'color'])
         ->orderByDesc('created_at')
         ->get();
 
@@ -1590,7 +1591,7 @@ class EnquiryCrudController extends CrudController
     $this->crud->setListView('admin.enquiry.assigned-quick-enquiry');
 
     $enquiries = Enquiry::assignedQuick()
-        ->with(['model', 'variant', 'color', 'source', 'salesConsultant'])
+        ->with(['model', 'variant', 'color', 'salesConsultant'])
         ->orderByDesc('created_at')
         ->get();
 
@@ -1776,7 +1777,7 @@ class EnquiryCrudController extends CrudController
     $this->crud->setListView('admin.enquiry.unassigned-quick-enquiry');
 
     $enquiries = Enquiry::unassignedQuick()
-        ->with(['model', 'variant', 'color', 'source'])
+        ->with(['model', 'variant', 'color'])
         ->orderByDesc('created_at')
         ->get();
 
