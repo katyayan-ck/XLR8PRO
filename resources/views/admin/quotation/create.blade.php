@@ -189,6 +189,39 @@ use App\Services\OrgService;
             line-height: 15px;
         }
 
+
+
+    }
+
+    /* Select2 fixed height */
+    .select2-container {
+        width: 100% !important;
+    }
+
+    .select2-container--default .select2-selection--multiple {
+        min-height: 32px !important;
+        height: 32px !important;
+        overflow: hidden !important;
+    }
+
+    .select2-container--default .select2-selection__rendered {
+        display: flex !important;
+        align-items: center;
+        height: 30px;
+        overflow: hidden;
+    }
+
+    /* Hide selected chips */
+    .select2-selection__choice {
+        display: none !important;
+    }
+
+    .select2-search--inline {
+        width: 100% !important;
+    }
+
+    .select2-search__field {
+        width: 100% !important;
     }
 
     .row.align-items-stretch {
@@ -397,10 +430,17 @@ use App\Services\OrgService;
 
     /* Accessories note line: hidden on screen, shown only in print above the Note box */
     .accessories-note-row {
-        display: none;
-        padding: 2px 5px;
-        font-size: 9px;
+        display: block;
+        padding: 4px 5px;
+        font-size: 10px;
         font-weight: bold;
+        margin-bottom: 8px;
+    }
+
+    #accessories_print {
+        font-weight: normal;
+        white-space: normal;
+        word-break: break-word;
     }
 
     @media print {
@@ -459,6 +499,13 @@ use App\Services\OrgService;
         .bill-table {
             width: 100% !important;
         }
+    }
+
+    .quotation-grid input.numeric-only,
+    .quotation-grid input.amount-field,
+    .quotation-summary input,
+    .financer-discount-grid input {
+        text-align: right !important;
     }
 </style>
 
@@ -730,7 +777,8 @@ use App\Services\OrgService;
                                         </select>
                                     </td>
                                     <td class="cell-amount">
-                                        <input id="accessories_amount" name="accessories_amount" readonly value="0.00">
+                                        <input id="accessories_amount" name="accessories_amount" class="numeric-only"
+                                            readonly value="0.00">
                                     </td>
                                     <td class="cell-label">Shield Scheme</td>
                                     <td class="cell-type">
@@ -808,9 +856,10 @@ use App\Services\OrgService;
                                     <td class="cell-label">Coating</td>
                                     <td class="cell-option">
                                         <select id="coating" name="coating">
+                                            <option value="No Coating">No Coating</option>
                                             <option value="Ceramic">Ceramic</option>
                                             <option value="Graphene">Graphene</option>
-                                            <option value="No Coating">No Coating</option>
+
                                         </select>
                                     </td>
                                     <td class="cell-amount">
@@ -992,9 +1041,7 @@ use App\Services\OrgService;
                                             <option value="NCH to 7.2 kW">NCH to 7.2 kW</option>
                                             <option value="NCH to 11.2 kW">NCH to 11.2 kW</option>
                                             <option value="7.2 kW to 11.2 kW">7.2 kW to 11.2 kW</option>
-                                            <option value="7.2 kW to NCH">7.2 kW to NCH</option>
-                                            <option value="11.2 kW to NCH">11.2 kW to NCH</option>
-                                            <option value="11.2 kW to 7.2 kW">11.2 kW to 7.2 kW</option>
+
                                         </select>
                                     </td>
                                     <td class="cell-amount">
@@ -1197,10 +1244,22 @@ function updateAccessoriesPrintText() {
     let list = [];
 
     $('#accessories option:selected').each(function () {
-        list.push($(this).text());
+
+        let name = $(this).text().trim();
+        let price = parseFloat($(this).data('price') || 0);
+
+        list.push(
+            name.replace(/\(.*?\)/,'').trim() +
+            ' (₹' + price.toLocaleString('en-IN') + ')'
+        );
+
     });
 
     $('#accessories_print').text(list.join(', '));
+
+    // Keep Select2 height fixed
+    $('.select2-search__field')
+        .attr('placeholder', list.length + ' Accessories Selected');
 }
 
 $('#accessories').on(
@@ -1341,11 +1400,22 @@ function calculateQuotation() {
         num('cod_charges') +
         num('charger_swapping_amount');
     
-        let tcs = 0;
+        // Financer Invoice / Discount Bifurcation must be computed BEFORE TCS,
+    // because TCS is based on the Finvoice Amount (subtotal - Invoiced Discount),
+    // not on the raw subtotal — matching the Excel formula chain:
+    //   B24 (Total Receivable, Financer box) = subtotal (no TCS)
+    //   B25 (Less INV Discount)              = SUMIF(type,"INV")
+    //   B26 (Finvoice Amount)                = B24 - B25
+    //   D20 (TCS)                            = IF(B26 >= 1000000, B26 * 1%, 0)
+    //   D21 (Total Receivables)              = subtotal + TCS
+    let bifurcation = calculateDiscountBifurcation();
+    let finvoiceAmount = subtotal - bifurcation.invoicedDiscount;
 
-        if (subtotal > 1000000) {
+    let tcs = 0;
 
-            tcs = subtotal * 0.01;
+        if (finvoiceAmount >= 1000000) {
+
+            tcs = finvoiceAmount * 0.01;
 
             $('#tcs')
                 .val(tcs.toFixed(2))
@@ -1395,12 +1465,11 @@ $('#total_discount').val(discount);
 
     $('#net_receivable_summary').val(netReceivable.toFixed(2));
 
-    // Financer Invoice / Discount Bifurcation boxes
-    let bifurcation = calculateDiscountBifurcation();
-
-    $('#fi_total_receivable').val(totalReceivable.toFixed(2));
+    // Financer Invoice box — Total Receivable here is the subtotal WITHOUT TCS
+    // (matches Excel B24 = M12, not D21)
+    $('#fi_total_receivable').val(subtotal.toFixed(2));
     $('#less_inv_discount').val(bifurcation.invoicedDiscount.toFixed(2));
-    $('#finvoice_amount').val((totalReceivable - bifurcation.invoicedDiscount).toFixed(2));
+    $('#finvoice_amount').val(finvoiceAmount.toFixed(2));
 
     $('#invoiced_discount').val(bifurcation.invoicedDiscount.toFixed(2));
     $('#credit_note_discount').val(bifurcation.creditNoteDiscount.toFixed(2));
@@ -1478,14 +1547,16 @@ $(document).ready(function () {
 $(document).ready(function () {
 
     $('#accessories').select2({
+    placeholder: 'Select Accessories',
+    width: '100%',
+    closeOnSelect: false
+}).on('change', function () {
 
-        placeholder: 'Select Accessories',
+    let count = $(this).find('option:selected').length;
 
-        width: '100%',
-
-        closeOnSelect: false
-
-    });
+    $('.select2-search__field')
+        .attr('placeholder', count + ' Accessories Selected');
+});
 
 });
 
@@ -1907,6 +1978,38 @@ $(document).ready(function () {
 
     updateCoatingDiscountLabel();
 
+});
+
+function toggleVltdField() {
+
+    let segment = ($('input[name="segment_code"]').val() || '').trim().toUpperCase();
+
+    if (segment === 'CV') {
+
+        // Commercial Vehicle
+        $('#vltd_device')
+            .val('')
+            .prop('readonly', false)
+            .prop('disabled', false);
+
+        $('#vltd_device').closest('tr').removeClass('print-hide');
+
+    } else {
+
+        // All other segments
+        $('#vltd_device')
+            .val('N/A')
+            .prop('readonly', true)
+            .prop('disabled', true);
+
+        $('#vltd_device').closest('tr').addClass('print-hide');
+    }
+
+    calculateQuotation();
+}
+
+$(document).ready(function () {
+    toggleVltdField();
 });
 
 
