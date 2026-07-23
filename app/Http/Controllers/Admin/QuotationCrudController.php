@@ -286,10 +286,10 @@ class QuotationCrudController extends CrudController
 
 
         $insurance_type_map = [
-            1 => 'Standard',
-            2 => 'Nil Dep',
-            3 => 'Base',
-            4 => 'Higher',
+
+            1 => 'Nil Dep',
+
+            2 => 'Higher',
         ];
 
         $registration_type_map = [
@@ -454,10 +454,8 @@ class QuotationCrudController extends CrudController
         )->firstOrFail();
 
         $insurance_type_map = [
-            1 => 'Standard',
-            2 => 'Nil Dep',
-            3 => 'Base (Nil Dep + Consumables)',
-            4 => 'Higher (Nil Dep + Consumables + Add Ons)',
+            1 => 'Nil Dep',
+            2 => 'Higher',
         ];
 
         $registration_type_map = [

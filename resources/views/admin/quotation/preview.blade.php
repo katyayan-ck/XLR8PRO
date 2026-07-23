@@ -521,6 +521,12 @@ use App\Services\OrgService;
     .quotation-form.preview-mode .accessories-note-row {
         display: block !important;
     }
+
+    .quotation-grid input,
+    .quotation-summary input,
+    .financer-discount-grid input {
+        text-align: right !important;
+    }
 </style>
 
 @endpush
@@ -1755,6 +1761,15 @@ $(document).ready(function () {
 
 });
 
+$(document).ready(function () {
+
+    let segment = ($('input[name="segment_code"]').val() || '').toLowerCase();
+
+    if (!segment.includes('commercial')) {
+        $('#vltd_device').closest('tr').addClass('print-hide');
+    }
+
+});
 
 
 
@@ -1875,11 +1890,22 @@ function calculateQuotation() {
         num('cod_charges') +
         num('charger_swapping_amount');
     
-        let tcs = 0;
+    // Financer Invoice / Discount Bifurcation must be computed BEFORE TCS,
+    // because TCS is based on the Finvoice Amount (subtotal - Invoiced Discount),
+    // not on the raw subtotal — matching the Excel formula chain:
+    //   B24 (Total Receivable, Financer box) = subtotal (no TCS)
+    //   B25 (Less INV Discount)              = SUMIF(type,"INV")
+    //   B26 (Finvoice Amount)                = B24 - B25
+    //   D20 (TCS)                            = IF(B26 >= 1000000, B26 * 1%, 0)
+    //   D21 (Total Receivables)              = subtotal + TCS
+    let bifurcation = calculateDiscountBifurcation();
+    let finvoiceAmount = subtotal - bifurcation.invoicedDiscount;
 
-        if (subtotal > 1000000) {
+    let tcs = 0;
 
-            tcs = subtotal * 0.01;
+        if (finvoiceAmount >= 1000000) {
+
+            tcs = finvoiceAmount * 0.01;
 
             $('#tcs')
                 .val(tcs.toFixed(2))
@@ -1929,12 +1955,11 @@ function calculateQuotation() {
 
     $('#net_receivable_summary').val(netReceivable.toFixed(2));
 
-    // Financer Invoice / Discount Bifurcation boxes
-    let bifurcation = calculateDiscountBifurcation();
-
-    $('#fi_total_receivable').val(totalReceivable.toFixed(2));
+    // Financer Invoice box — Total Receivable here is the subtotal WITHOUT TCS
+    // (matches Excel B24 = M12, not D21)
+    $('#fi_total_receivable').val(subtotal.toFixed(2));
     $('#less_inv_discount').val(bifurcation.invoicedDiscount.toFixed(2));
-    $('#finvoice_amount').val((totalReceivable - bifurcation.invoicedDiscount).toFixed(2));
+    $('#finvoice_amount').val(finvoiceAmount.toFixed(2));
 
     $('#invoiced_discount').val(bifurcation.invoicedDiscount.toFixed(2));
     $('#credit_note_discount').val(bifurcation.creditNoteDiscount.toFixed(2));
@@ -2500,6 +2525,8 @@ $(document).ready(function () {
 function printQuotation() {
     window.print();
 }
+
+
 
 </script>
 @endpush
