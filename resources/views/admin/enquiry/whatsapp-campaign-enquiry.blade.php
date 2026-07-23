@@ -90,7 +90,10 @@
                 //'enq_date_and_time',
                 'campaign_name',
                 'campaign_date',
-                'enquiry_assign_date',
+                'x8_enquiry_assign_date',
+                'segment_name',
+                'model_name',
+                'variant_name',
                 'mobile',
                 'dms_enquiry_stage',
                 'cre_enquiry_stage',
@@ -108,8 +111,7 @@
                 // 'customer_name',
                 // 'customer_phone',
                 // 'tehsil',
-                // 'model_code',
-                // 'variant_code'
+                
 
             ].includes(col.field)),
 
@@ -155,7 +157,10 @@
                 //'enq_date_and_time',
                 'campaign_name',
                 'campaign_date',
-                'enquiry_assign_date',
+                'x8_enquiry_assign_date',
+                'segment_name',
+                'model_name',
+                'variant_name',
                 'mobile',
                 'action'
 
@@ -253,7 +258,10 @@
                 //'enq_date_and_time',
                 'campaign_name',
                 'campaign_date',
-                'enquiry_assign_date',
+                'x8_enquiry_assign_date',
+                'segment_name',
+                'model_name',
+                'variant_name',
                 'mobile',
                 'action'
 
