@@ -1209,6 +1209,7 @@ use App\Services\OrgService;
 {{--
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"> --}}
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 
 <script>
@@ -2012,6 +2013,31 @@ $(document).ready(function () {
     toggleVltdField();
 });
 
+$('form').on('submit', function (e) {
+
+    let cashOemAmount = num('cash_scheme_oem');
+    let cashOemType = $('#cash_scheme_oem_type').val();
+
+    let bifurcation = calculateDiscountBifurcation();
+    let totalCNDiscount = bifurcation.creditNoteDiscount;
+
+    if (
+        cashOemType === 'INV' &&
+        totalCNDiscount < cashOemAmount
+    ) {
+
+        e.preventDefault();
+
+        Swal.fire({
+            icon: 'error',
+            title: 'Cannot Save Quotation',
+            text: 'Total CN Discount should be equal to or greater than Cash OEM Scheme when Cash OEM Scheme Type is INV.'
+        });
+
+        return false;
+    }
+
+});
 
 
 

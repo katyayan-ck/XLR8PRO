@@ -10791,6 +10791,8 @@ class BookingCrudController extends CrudController
         $receiptTotal = $receiptLogs->sum(function ($receipt) {
             return (float) $receipt->amount;
         });
+
+        $chassisImage = $booking->getFirstMediaUrl('chassis_image') ?: '';
         return view(
             'admin.booking.otf-form',
             compact(
@@ -10826,6 +10828,7 @@ class BookingCrudController extends CrudController
                 'selectedExShowroomPrice',
                 'receiptLogs',
                 'receiptTotal',
+                'chassisImage',
             )
         );
     }
