@@ -64,7 +64,7 @@ class RoleCrudController extends CrudController
             'title' => 'All Roles',
             'gridConfig' => [
                 'columns' => [
-                    ['field' => 'serial_no',          'headerName' => 'S.No'],
+                    ['field' => 'serial_no',          'headerName' => 'S.No.'],
                     ['field' => 'name',               'headerName' => 'Role Name'],
                     ['field' => 'guard_name',         'headerName' => 'Guard'],
                     ['field' => 'permissions_count',  'headerName' => 'Permissions'],

@@ -94,7 +94,7 @@ class VariantCrudController extends CrudController
             'gridConfig' => [
                 'columns' => [
 
-                    ['field' => 'serial_no', 'headerName' => 'S.No'],
+                    ['field' => 'serial_no', 'headerName' => 'S.No.'],
 
                     ['field' => 'segment', 'headerName' => 'Segment'],
                     ['field' => 'sub_segment', 'headerName' => 'Sub Segment'],

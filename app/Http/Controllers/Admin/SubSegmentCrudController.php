@@ -60,7 +60,7 @@ class SubSegmentCrudController extends CrudController
             'title' => 'All Sub Segments',
             'gridConfig' => [
                 'columns' => [
-                    ['field' => 'serial_no',   'headerName' => 'S.No'],
+                    ['field' => 'serial_no',   'headerName' => 'S.No.'],
                     ['field' => 'code',        'headerName' => 'Code'],
                     ['field' => 'name',        'headerName' => 'Sub Segment Name'],
                     ['field' => 'segment',     'headerName' => 'Segment'],

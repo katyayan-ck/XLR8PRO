@@ -97,7 +97,7 @@ class CampaignCrudController extends CrudController
 
                     [
                         'field' => 'serial_no',
-                        'headerName' => 'S.No'
+                        'headerName' => 'S.No.'
                     ],
 
                     [

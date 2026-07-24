@@ -18,7 +18,7 @@
                 <table class="table table-bordered table-hover">
                     <thead>
                         <tr>
-                            <th>Booking No</th>
+                            <th>Booking No.</th>
                             <th>Customer</th>
                             <th>Mobile</th>
                             <th>Amount</th>

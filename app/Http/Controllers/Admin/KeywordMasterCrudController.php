@@ -83,7 +83,7 @@ class KeywordMasterCrudController extends CrudController
             'title' => 'Keyword Master',
             'gridConfig' => [
                 'columns' => [
-                    ['field' => 'serial_no', 'headerName' => 'S.No'],
+                    ['field' => 'serial_no', 'headerName' => 'S.No.'],
                     ['field' => 'code', 'headerName' => 'Code'],
                     ['field' => 'keyword', 'headerName' => 'Keyword'],
                     ['field' => 'description', 'headerName' => 'Description'],

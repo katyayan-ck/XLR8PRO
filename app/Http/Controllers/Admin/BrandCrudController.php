@@ -62,7 +62,7 @@ class BrandCrudController extends CrudController
             'title' => 'All Brands',
             'gridConfig' => [
                 'columns' => [
-                    ['field' => 'serial_no',    'headerName' => 'S.No'],
+                    ['field' => 'serial_no',    'headerName' => 'S.No.'],
                     ['field' => 'code',         'headerName' => 'Code'],
                     ['field' => 'name',         'headerName' => 'Brand Name'],
                    

@@ -116,8 +116,8 @@
     let gridApi;
 
     const columnDefs = [
-        { headerName: "S.No", valueGetter: "node.rowIndex + 1", width: 80, pinned: 'left', cellStyle: { textAlign: 'center' } },
-        { headerName: "Booking No", field: "booking_no", width: 140, pinned: 'left' },
+        { headerName: "S.No.", valueGetter: "node.rowIndex + 1", width: 80, pinned: 'left', cellStyle: { textAlign: 'center' } },
+        { headerName: "Booking No.", field: "booking_no", width: 140, pinned: 'left' },
         { headerName: "Date", field: "booking_date", width: 120 },
         { headerName: "Customer", field: "name", width: 220 },
         { headerName: "Mobile", field: "mobile", width: 140 },

@@ -32,7 +32,7 @@
                         <input type="text" name="reciept" id="reciept_no" class="form-control"
                             value="{{ old('reciept', $entry->reciept) }}" required>
                         <div id="reciept_no_warning" class="text-danger mt-1" style="display:none;">
-                            Receipt No already exists
+                            Receipt No. already exists
                         </div>
                         <input type="hidden" name="booking_id" value="{{ $entry->bid }}">
                         <input type="hidden" name="receipt_id" value="{{ $entry->id }}">

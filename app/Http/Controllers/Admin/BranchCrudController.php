@@ -73,7 +73,7 @@ class BranchCrudController extends CrudController
             'title' => 'All Branches',
             'gridConfig' => [
                 'columns' => [
-                    ['field' => 'serial_no', 'headerName' => 'S.No'],
+                    ['field' => 'serial_no', 'headerName' => 'S.No.'],
                     ['field' => 'code', 'headerName' => 'Code'],
                     ['field' => 'name', 'headerName' => 'Branch Name'],
                     ['field' => 'description', 'headerName' => 'Description'],

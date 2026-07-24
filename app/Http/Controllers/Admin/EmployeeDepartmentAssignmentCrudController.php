@@ -73,7 +73,7 @@ class EmployeeDepartmentAssignmentCrudController extends CrudController
             'title' => 'Employee Department Assignments',
             'gridConfig' => [
                 'columns' => [
-                    ['field' => 'serial_no',        'headerName' => 'S.No'],
+                    ['field' => 'serial_no',        'headerName' => 'S.No.'],
                     ['field' => 'employee_name',    'headerName' => 'Employee'],
                     ['field' => 'department_name',  'headerName' => 'Department'],
                     ['field' => 'from_date',        'headerName' => 'From Date'],

@@ -101,7 +101,7 @@ class EnquiryCrudController extends CrudController
                     ['field' => 'customer_type', 'headerName' => 'Customer Type'],
                     ['field' => 'occupation_sub_type', 'headerName' => 'Occupation Sub Type'],
                     ['field' => 'company_name', 'headerName' => 'Company Name'],    
-                    ['field' => 'dob', 'headerName' => 'DOB'],
+                    ['field' => 'dob', 'headerName' => 'D.O.B.'],
                     ['field' => 'marital_status', 'headerName' => 'Marital Status'],
                     ['field' => 'marriage_date', 'headerName' => 'Marriage Date'],
                     ['field' => 'age_group', 'headerName' => 'Age Group'],
@@ -151,7 +151,7 @@ class EnquiryCrudController extends CrudController
                     
                    
                     
-                    // ['field' => 'vehicle_no', 'headerName' => 'Vehicle No'],
+                    // ['field' => 'vehicle_no', 'headerName' => 'Vehicle No.'],
                     
                    
                     
@@ -211,8 +211,8 @@ class EnquiryCrudController extends CrudController
             $out = fopen('php://output', 'w');
 
             fputcsv($out, [
-                'S.No',
-                'Enquiry No',
+                'S.No.',
+                'Enquiry No.',
                 'Enquiry Type',
                 'Source',
                 'Sub Source',
@@ -1044,7 +1044,7 @@ class EnquiryCrudController extends CrudController
         'title' => 'Reference Enquiries',
         'gridConfig' => [
             'columns' => [
-                ['field' => 'serial_no',           'headerName' => 'S.No'],
+                ['field' => 'serial_no',           'headerName' => 'S.No.'],
                 ['field' => 'referee_name',        'headerName' => 'Referee Name'],
                 ['field' => 'referee_phone',       'headerName' => 'Referee Mobile'],
                 ['field' => 'x8_enquiry_assign_date', 'headerName' => 'X8 Enquiry Assign Date'],
@@ -1058,12 +1058,12 @@ class EnquiryCrudController extends CrudController
                 ['field' => 'cre_next_fup_date',   'headerName' => 'Next FUP Date'],
                 ['field' => 'cre_next_fup_time',   'headerName' => 'Next FUP Time'],
                 ['field' => 'cre_next_fup_remarks','headerName' => 'FUP Remarks'],
-                ['field' => 'quotation_no',        'headerName' => 'Quotation No'],
-                ['field' => 'booking_no',          'headerName' => 'Booking No'],
+                ['field' => 'quotation_no',        'headerName' => 'Quotation No.'],
+                ['field' => 'booking_no',          'headerName' => 'Booking No.'],
                 ['field' => 'booking_date',        'headerName' => 'Booking Date'],
-                ['field' => 'oem_booking_no',      'headerName' => 'OEM Booking No'],
+                ['field' => 'oem_booking_no',      'headerName' => 'OEM Booking No.'],
                 ['field' => 'oem_booking_date',    'headerName' => 'OEM Booking Date'],
-                ['field' => 'oem_otf_no',          'headerName' => 'OEM OTF No'],
+                ['field' => 'oem_otf_no',          'headerName' => 'OEM OTF No.'],
                 ['field' => 'action',              'headerName' => 'Action']
             ],
             'data' => $gridData
@@ -1126,7 +1126,7 @@ class EnquiryCrudController extends CrudController
         'title' => 'Virtual Number Enquiries',
         'gridConfig' => [
             'columns' => [
-                ['field' => 'serial_no',           'headerName' => 'S.No'],
+                ['field' => 'serial_no',           'headerName' => 'S.No.'],
                 ['field' => 'virtual_no',          'headerName' => 'Virtual Number'],
                 ['field' => 'call_date_and_time',  'headerName' => 'Call Date & Time'],
                 ['field' => 'call_nature',         'headerName' => 'Call Nature'],
@@ -1138,12 +1138,12 @@ class EnquiryCrudController extends CrudController
                 ['field' => 'cre_next_fup_date',   'headerName' => 'Next FUP Date'],
                 ['field' => 'cre_next_fup_time',   'headerName' => 'Next FUP Time'],
                 ['field' => 'cre_next_fup_remarks','headerName' => 'FUP Remarks'],
-                ['field' => 'quotation_no',        'headerName' => 'Quotation No'],
-                ['field' => 'booking_no',          'headerName' => 'Booking No'],
+                ['field' => 'quotation_no',        'headerName' => 'Quotation No.'],
+                ['field' => 'booking_no',          'headerName' => 'Booking No.'],
                 ['field' => 'booking_date',        'headerName' => 'Booking Date'],
-                ['field' => 'oem_booking_no',      'headerName' => 'OEM Booking No'],
+                ['field' => 'oem_booking_no',      'headerName' => 'OEM Booking No.'],
                 ['field' => 'oem_booking_date',    'headerName' => 'OEM Booking Date'],
-                ['field' => 'oem_otf_no',          'headerName' => 'OEM OTF No'],
+                ['field' => 'oem_otf_no',          'headerName' => 'OEM OTF No.'],
                 ['field' => 'action',              'headerName' => 'Action']
             ],
             'data' => $gridData
@@ -1214,7 +1214,7 @@ class EnquiryCrudController extends CrudController
         'title' => 'WhatsApp Campaign Enquiries',
         'gridConfig' => [
             'columns' => [
-                ['field' => 'serial_no',            'headerName' => 'S.No'],
+                ['field' => 'serial_no',            'headerName' => 'S.No.'],
                 ['field' => 'campaign_name',        'headerName' => 'Campaign Name'],
                 ['field' => 'campaign_date',        'headerName' => 'Campaign Date'],
                 ['field' => 'x8_enquiry_assign_date',  'headerName' => 'X8 EnquiryAssign Date'],
@@ -1227,12 +1227,12 @@ class EnquiryCrudController extends CrudController
                 ['field' => 'cre_next_fup_date',    'headerName' => 'Next FUP Date'],
                 ['field' => 'cre_next_fup_time',    'headerName' => 'Next FUP Time'],
                 ['field' => 'cre_next_fup_remarks', 'headerName' => 'FUP Remarks'],
-                ['field' => 'quotation_no',         'headerName' => 'Quotation No'],
-                ['field' => 'booking_no',           'headerName' => 'Booking No'],
+                ['field' => 'quotation_no',         'headerName' => 'Quotation No.'],
+                ['field' => 'booking_no',           'headerName' => 'Booking No.'],
                 ['field' => 'booking_date',         'headerName' => 'Booking Date'],
-                ['field' => 'oem_booking_no',       'headerName' => 'OEM Booking No'],
+                ['field' => 'oem_booking_no',       'headerName' => 'OEM Booking No.'],
                 ['field' => 'oem_booking_date',     'headerName' => 'OEM Booking Date'],
-                ['field' => 'oem_otf_no',           'headerName' => 'OEM OTF No'],
+                ['field' => 'oem_otf_no',           'headerName' => 'OEM OTF No.'],
                 ['field' => 'action',               'headerName' => 'Action']
             ],
             'data' => $gridData
@@ -1359,14 +1359,14 @@ class EnquiryCrudController extends CrudController
         'title' => 'Assigned Long Enquiries',
         'gridConfig' => [
             'columns' => [
-                ['field' => 'serial_no', 'headerName' => 'S.No'],
-                ['field' => 'x8_enquiry_no', 'headerName' => 'X8 Enquiry No'],
+                ['field' => 'serial_no', 'headerName' => 'S.No.'],
+                ['field' => 'x8_enquiry_no', 'headerName' => 'X8 Enquiry No.'],
                 ['field' => 'x8_enquiry_date', 'headerName' => 'X8 Enquiry Date'],
                 ['field' => 'X8_enquiry_assign_date', 'headerName' => 'X8 Enquiry Assign Date'],
-                // ['field' => 'oem_enquiry_no', 'headerName' => 'OEM Enquiry No'],
+                // ['field' => 'oem_enquiry_no', 'headerName' => 'OEM Enquiry No.'],
                 // ['field' => 'oem_enquiry_date', 'headerName' => 'OEM Enquiry Date'],
                 ['field' => 'oem_enquiry_assign_date', 'headerName' => 'OEM Assign Date'],
-                ['field' => 'oem_long_enquiry_no', 'headerName' => 'OEM Long Enquiry No'],
+                ['field' => 'oem_long_enquiry_no', 'headerName' => 'OEM Long Enquiry No.'],
                 ['field' => 'oem_long_enquiry_date', 'headerName' => 'OEM Long Enquiry Date'],
                 ['field' => 'oem_long_enquiry_assign_date', 'headerName' => 'OEM Long Enquiry Assign Date'],
                 ['field' => 'segment_name', 'headerName' => 'Segment'],
@@ -1400,7 +1400,7 @@ class EnquiryCrudController extends CrudController
                 ['field' => 'customer_type', 'headerName' => 'Customer Type'],
                 ['field' => 'occupation_sub_type', 'headerName' => 'Occupation Sub Type'],
                 ['field' => 'company_name', 'headerName' => 'Company Name'],
-                ['field' => 'dob', 'headerName' => 'DOB'],
+                ['field' => 'dob', 'headerName' => 'D.O.B.'],
                 ['field' => 'marital_status', 'headerName' => 'Marital Status'],
                 ['field' => 'marriage_date', 'headerName' => 'Marriage Date'],
                 ['field' => 'age_group', 'headerName' => 'Age Group'],
@@ -1421,12 +1421,12 @@ class EnquiryCrudController extends CrudController
                 ['field' => 'cre_next_fup_date', 'headerName' => 'Next FUP Date'],
                 ['field' => 'cre_next_fup_time', 'headerName' => 'Next FUP Time'],
                 ['field' => 'cre_next_fup_remarks', 'headerName' => 'FUP Remarks'],
-                ['field' => 'quotation_no', 'headerName' => 'Quotation No'],
-                ['field' => 'booking_no', 'headerName' => 'Booking No'],
+                ['field' => 'quotation_no', 'headerName' => 'Quotation No.'],
+                ['field' => 'booking_no', 'headerName' => 'Booking No.'],
                 ['field' => 'booking_date', 'headerName' => 'Booking Date'],
-                ['field' => 'oem_booking_no', 'headerName' => 'OEM Booking No'],
+                ['field' => 'oem_booking_no', 'headerName' => 'OEM Booking No.'],
                 ['field' => 'oem_booking_date', 'headerName' => 'OEM Booking Date'],
-                ['field' => 'oem_otf_no', 'headerName' => 'OEM OTF No'],
+                ['field' => 'oem_otf_no', 'headerName' => 'OEM OTF No.'],
                 ['field' => 'action', 'headerName' => 'Action']
             ],
             'data' => $gridData
@@ -1542,12 +1542,12 @@ class EnquiryCrudController extends CrudController
         'title' => 'Unassigned Long Enquiries',
         'gridConfig' => [
             'columns' => [
-                ['field' => 'serial_no', 'headerName' => 'S.No'],
-                ['field' => 'x8_enquiry_no', 'headerName' => 'X8 Enquiry No'],
+                ['field' => 'serial_no', 'headerName' => 'S.No.'],
+                ['field' => 'x8_enquiry_no', 'headerName' => 'X8 Enquiry No.'],
                 ['field' => 'x8_enquiry_date', 'headerName' => 'X8 Enquiry Date'],
-                // ['field' => 'oem_enquiry_no', 'headerName' => 'OEM Enquiry No'],
+                // ['field' => 'oem_enquiry_no', 'headerName' => 'OEM Enquiry No.'],
                 // ['field' => 'oem_enquiry_date', 'headerName' => 'OEM Enquiry Date'],
-                ['field' => 'oem_long_enquiry_no', 'headerName' => 'OEM Long Enquiry No'],
+                ['field' => 'oem_long_enquiry_no', 'headerName' => 'OEM Long Enquiry No.'],
                 ['field' => 'oem_long_enquiry_date', 'headerName' => 'OEM Long Enquiry Date'],
                 ['field' => 'segment_name', 'headerName' => 'Segment'],
                 ['field' => 'model_name', 'headerName' => 'Model'],
@@ -1580,7 +1580,7 @@ class EnquiryCrudController extends CrudController
                 ['field' => 'customer_type', 'headerName' => 'Customer Type'],
                 ['field' => 'occupation_sub_type', 'headerName' => 'Occupation Sub Type'],
                 ['field' => 'company_name', 'headerName' => 'Company Name'],
-                ['field' => 'dob', 'headerName' => 'DOB'],
+                ['field' => 'dob', 'headerName' => 'D.O.B.'],
                 ['field' => 'marital_status', 'headerName' => 'Marital Status'],
                 ['field' => 'marriage_date', 'headerName' => 'Marriage Date'],
                 ['field' => 'age_group', 'headerName' => 'Age Group'],
@@ -1601,12 +1601,12 @@ class EnquiryCrudController extends CrudController
                 ['field' => 'cre_next_fup_date', 'headerName' => 'Next FUP Date'],
                 ['field' => 'cre_next_fup_time', 'headerName' => 'Next FUP Time'],
                 ['field' => 'cre_next_fup_remarks', 'headerName' => 'FUP Remarks'],
-                ['field' => 'quotation_no', 'headerName' => 'Quotation No'],
-                ['field' => 'booking_no', 'headerName' => 'Booking No'],
+                ['field' => 'quotation_no', 'headerName' => 'Quotation No.'],
+                ['field' => 'booking_no', 'headerName' => 'Booking No.'],
                 ['field' => 'booking_date', 'headerName' => 'Booking Date'],
-                ['field' => 'oem_booking_no', 'headerName' => 'OEM Booking No'],
+                ['field' => 'oem_booking_no', 'headerName' => 'OEM Booking No.'],
                 ['field' => 'oem_booking_date', 'headerName' => 'OEM Booking Date'],
-                ['field' => 'oem_otf_no', 'headerName' => 'OEM OTF No'],
+                ['field' => 'oem_otf_no', 'headerName' => 'OEM OTF No.'],
                 ['field' => 'action', 'headerName' => 'Action']
             ],
             'data' => $gridData
@@ -1732,15 +1732,15 @@ class EnquiryCrudController extends CrudController
         'title' => 'Assigned Quick Enquiries',
         'gridConfig' => [
             'columns' => [
-                ['field' => 'serial_no', 'headerName' => 'S.No'],
-                ['field' => 'x8_enquiry_no', 'headerName' => 'X8 Enquiry No'],
+                ['field' => 'serial_no', 'headerName' => 'S.No.'],
+                ['field' => 'x8_enquiry_no', 'headerName' => 'X8 Enquiry No.'],
                 ['field' => 'x8_enquiry_date', 'headerName' => 'X8 Enquiry Date'],
                 ['field' => 'x8_enquiry_assign_date', 'headerName' => 'X8 Enquiry Assign Date'],
-                // ['field' => 'oem_enquiry_no', 'headerName' => 'OEM Enquiry No'],
+                // ['field' => 'oem_enquiry_no', 'headerName' => 'OEM Enquiry No.'],
                 // ['field' => 'oem_enquiry_date', 'headerName' => 'OEM Enquiry Date'],
                 ['field' => 'oem_enquiry_assign_date', 'headerName' => 'OEM Enquiry Assign Date'],
 
-                ['field' => 'oem_quick_enquiry_no', 'headerName' => 'OEM Quick Enquiry No'],
+                ['field' => 'oem_quick_enquiry_no', 'headerName' => 'OEM Quick Enquiry No.'],
                 ['field' => 'oem_quick_enquiry_date', 'headerName' => 'OEM Quick Enquiry Date'],
                 ['field' => 'oem_quick_enquiry_assign_date', 'headerName' => 'OEM Quick Enquiry Assign Date'],
                 
@@ -1775,7 +1775,7 @@ class EnquiryCrudController extends CrudController
                 ['field' => 'customer_type', 'headerName' => 'Customer Type'],
                 ['field' => 'occupation_sub_type', 'headerName' => 'Occupation Sub Type'],
                 ['field' => 'company_name', 'headerName' => 'Company Name'],
-                ['field' => 'dob', 'headerName' => 'DOB'],
+                ['field' => 'dob', 'headerName' => 'D.O.B.'],
                 ['field' => 'marital_status', 'headerName' => 'Marital Status'],
                 ['field' => 'marriage_date', 'headerName' => 'Marriage Date'],
                 ['field' => 'age_group', 'headerName' => 'Age Group'],
@@ -1796,12 +1796,12 @@ class EnquiryCrudController extends CrudController
                 ['field' => 'cre_next_fup_date', 'headerName' => 'Next FUP Date'],
                 ['field' => 'cre_next_fup_time', 'headerName' => 'Next FUP Time'],
                 ['field' => 'cre_next_fup_remarks', 'headerName' => 'FUP Remarks'],
-                ['field' => 'quotation_no', 'headerName' => 'Quotation No'],
-                ['field' => 'booking_no', 'headerName' => 'Booking No'],
+                ['field' => 'quotation_no', 'headerName' => 'Quotation No.'],
+                ['field' => 'booking_no', 'headerName' => 'Booking No.'],
                 ['field' => 'booking_date', 'headerName' => 'Booking Date'],
-                ['field' => 'oem_booking_no', 'headerName' => 'OEM Booking No'],
+                ['field' => 'oem_booking_no', 'headerName' => 'OEM Booking No.'],
                 ['field' => 'oem_booking_date', 'headerName' => 'OEM Booking Date'],
-                ['field' => 'oem_otf_no', 'headerName' => 'OEM OTF No'],
+                ['field' => 'oem_otf_no', 'headerName' => 'OEM OTF No.'],
                 ['field' => 'action', 'headerName' => 'Action']
             ],
             'data' => $gridData
@@ -1917,12 +1917,12 @@ class EnquiryCrudController extends CrudController
         'title' => 'Unassigned Quick Enquiries',
         'gridConfig' => [
             'columns' => [
-                ['field' => 'serial_no', 'headerName' => 'S.No'],
-                ['field' => 'x8_enquiry_no', 'headerName' => 'X8 Enquiry No'],
+                ['field' => 'serial_no', 'headerName' => 'S.No.'],
+                ['field' => 'x8_enquiry_no', 'headerName' => 'X8 Enquiry No.'],
                 ['field' => 'x8_enquiry_date', 'headerName' => 'X8 Enquiry Date'],
-                // ['field' => 'oem_enquiry_no', 'headerName' => 'OEM Enquiry No'],
+                // ['field' => 'oem_enquiry_no', 'headerName' => 'OEM Enquiry No.'],
                 // ['field' => 'oem_enquiry_date', 'headerName' => 'OEM Enquiry Date'],
-                ['field' => 'oem_quick_enquiry_no', 'headerName' => 'OEM Quick Enquiry No'],
+                ['field' => 'oem_quick_enquiry_no', 'headerName' => 'OEM Quick Enquiry No.'],
                 ['field' => 'oem_quick_enquiry_date', 'headerName' => 'OEM Quick Enquiry Date'],
                 ['field' => 'segment_name', 'headerName' => 'Segment'],
                 ['field' => 'model_name', 'headerName' => 'Model'],
@@ -1955,7 +1955,7 @@ class EnquiryCrudController extends CrudController
                 ['field' => 'customer_type', 'headerName' => 'Customer Type'],
                 ['field' => 'occupation_sub_type', 'headerName' => 'Occupation Sub Type'],
                 ['field' => 'company_name', 'headerName' => 'Company Name'],
-                ['field' => 'dob', 'headerName' => 'DOB'],
+                ['field' => 'dob', 'headerName' => 'D.O.B.'],
                 ['field' => 'marital_status', 'headerName' => 'Marital Status'],
                 ['field' => 'marriage_date', 'headerName' => 'Marriage Date'],
                 ['field' => 'age_group', 'headerName' => 'Age Group'],
@@ -1976,12 +1976,12 @@ class EnquiryCrudController extends CrudController
                 ['field' => 'cre_next_fup_date', 'headerName' => 'Next FUP Date'],
                 ['field' => 'cre_next_fup_time', 'headerName' => 'Next FUP Time'],
                 ['field' => 'cre_next_fup_remarks', 'headerName' => 'FUP Remarks'],
-                ['field' => 'quotation_no', 'headerName' => 'Quotation No'],
-                ['field' => 'booking_no', 'headerName' => 'Booking No'],
+                ['field' => 'quotation_no', 'headerName' => 'Quotation No.'],
+                ['field' => 'booking_no', 'headerName' => 'Booking No.'],
                 ['field' => 'booking_date', 'headerName' => 'Booking Date'],
-                ['field' => 'oem_booking_no', 'headerName' => 'OEM Booking No'],
+                ['field' => 'oem_booking_no', 'headerName' => 'OEM Booking No.'],
                 ['field' => 'oem_booking_date', 'headerName' => 'OEM Booking Date'],
-                ['field' => 'oem_otf_no', 'headerName' => 'OEM OTF No'],
+                ['field' => 'oem_otf_no', 'headerName' => 'OEM OTF No.'],
                 ['field' => 'action', 'headerName' => 'Action']
             ],
             'data' => $gridData

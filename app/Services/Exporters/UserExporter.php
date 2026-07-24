@@ -170,7 +170,7 @@ class UserExporter
             'Middle Name',
             'Last Name',
             'Gender',
-            'Date of Birth',
+            'D.O.B.',
             'Marital Status',
             'Email',
             'Phone',

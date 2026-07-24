@@ -61,7 +61,7 @@
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">
-                                        Enquiry No
+                                        Enquiry No.
                                         <span class="text-danger">*</span>
                                     </label>
 
@@ -814,10 +814,10 @@
                                 </select>
                             </div>
 
-                            {{-- Date of Birth --}}
+                            {{-- D.O.B. --}}
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">
-                                    Date of Birth
+                                    D.O.B.
                                     <small class="text-muted">(Optional)</small>
                                 </label>
 
@@ -1052,7 +1052,7 @@
 
                                 </div>
 
-                                {{-- Vehicle No --}}
+                                {{-- Vehicle No. --}}
                                 <div class="col-md-4 mb-3">
 
                                     <label class="form-label">

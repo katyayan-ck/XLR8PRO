@@ -66,7 +66,7 @@ class PersonContactCrudController extends CrudController
             'title' => 'All Person Contacts',
             'gridConfig' => [
                 'columns' => [
-                    ['field' => 'serial_no',    'headerName' => 'S.No'],
+                    ['field' => 'serial_no',    'headerName' => 'S.No.'],
                     ['field' => 'person_name',  'headerName' => 'Person'],
                     ['field' => 'person_code',  'headerName' => 'Person Code'],
                     ['field' => 'data_type',         'headerName' => 'Type'],

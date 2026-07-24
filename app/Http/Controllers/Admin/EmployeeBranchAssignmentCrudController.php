@@ -69,7 +69,7 @@ class EmployeeBranchAssignmentCrudController extends CrudController
             'title' => 'Employee Branch Assignments',
             'gridConfig' => [
                 'columns' => [
-                    ['field' => 'serial_no',      'headerName' => 'S.No'],
+                    ['field' => 'serial_no',      'headerName' => 'S.No.'],
                     ['field' => 'employee_code',  'headerName' => 'Employee Code'],
                     ['field' => 'employee_name',  'headerName' => 'Employee Name'],
                     ['field' => 'branch_name',    'headerName' => 'Branch'],

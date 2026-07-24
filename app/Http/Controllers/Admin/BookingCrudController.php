@@ -913,7 +913,7 @@ class BookingCrudController extends CrudController
             ['headerName' => 'PAN Card No.',         'field' => 'pan_no',       'width' => 110],
             ['headerName' => 'Aadhaar No.',     'field' => 'adhar_no',     'width' => 130],
             ['headerName' => 'GSTIN',           'field' => 'gstn',         'width' => 120],
-            ['headerName' => 'Customer D.O.B',       'field' => 'c_dob',          'width' => 120, 'type' => 'date'],
+            ['headerName' => 'Customer D.O.B.',       'field' => 'c_dob',          'width' => 120, 'type' => 'date'],
             ['headerName' => 'Customer Age',      'field' => 'customer_age',  'width' => 110, 'cellClass' => 'text-center'],
 
             ['headerName' => 'Branch',         'field' => 'branch_name',    'width' => 140, 'filter' => true],
@@ -2587,7 +2587,7 @@ class BookingCrudController extends CrudController
         }
 
         if ($booking->receipt_no != $request->input('receipt_no')) {
-            $rem[] = "Receipt No Changed from " . ($booking->receipt_no ?? 'null') . " to " . $request->input('receipt_no');
+            $rem[] = "Receipt No. Changed from " . ($booking->receipt_no ?? 'null') . " to " . $request->input('receipt_no');
             $booking->receipt_no = $request->input('receipt_no');
         }
 
@@ -2657,12 +2657,12 @@ class BookingCrudController extends CrudController
         }
 
         if ($booking->pan_no != $request->input('pan_no')) {
-            $rem[] = "PAN No Changed from " . ($booking->pan_no ?? '0') . " to " . $request->input('pan_no');
+            $rem[] = "PAN No. Changed from " . ($booking->pan_no ?? '0') . " to " . $request->input('pan_no');
             $booking->pan_no = $request->input('pan_no');
         }
 
         if ($booking->adhar_no != $adhar_no_normalized) {
-            $rem[] = "Aadhar No Changed from " . ($booking->adhar_no ?? '0') . " to " . $adhar_no_normalized;
+            $rem[] = "Aadhar No. Changed from " . ($booking->adhar_no ?? '0') . " to " . $adhar_no_normalized;
             $booking->adhar_no = $adhar_no_normalized;
         }
 
@@ -2733,7 +2733,7 @@ class BookingCrudController extends CrudController
         }
 
         if ($booking->chassis_no != $request->input('chassis')) {
-            $rem[] = "Chassis No Changed from " . ($booking->chassis_no ?? 'null') . " to " . ($request->input('chassis') ?? 'null');
+            $rem[] = "Chassis No. Changed from " . ($booking->chassis_no ?? 'null') . " to " . ($request->input('chassis') ?? 'null');
             $booking->chassis_no = $request->input('chassis');
         }
 
@@ -2763,7 +2763,7 @@ class BookingCrudController extends CrudController
         }
 
         if ($booking->registration_no != $request->input('registration_no')) {
-            $rem[] = "Vehicle Registration No Changed";
+            $rem[] = "Vehicle Registration No. Changed";
             $booking->registration_no = $request->input('registration_no');
         }
 
@@ -2798,7 +2798,7 @@ class BookingCrudController extends CrudController
         }
 
         if ($booking->online_bk_ref_no != $request->input('refrence_no')) {
-            $rem[] = "Online Ref No Changed from " . ($booking->online_bk_ref_no ?? 'null') . " to " . $request->input('refrence_no');
+            $rem[] = "Online Ref No. Changed from " . ($booking->online_bk_ref_no ?? 'null') . " to " . $request->input('refrence_no');
             $booking->online_bk_ref_no = $request->input('refrence_no');
         }
 
@@ -3592,7 +3592,7 @@ class BookingCrudController extends CrudController
         $remarks = [];
 
         if ($booking->dms_no !== $request->dms_no) {
-            $remarks[] = "DMS Booking No updated to {$request->dms_no}";
+            $remarks[] = "DMS Booking No. updated to {$request->dms_no}";
         }
         if ($booking->dms_otf !== $request->dms_otf) {
             $remarks[] = "DMS OTF updated to {$request->dms_otf}";
@@ -5599,7 +5599,7 @@ class BookingCrudController extends CrudController
         ], [
             'pan_no.regex'                => 'PAN must be like ABCDE1234F',
             'adhar_no.regex'              => 'Aadhar must be 1234-5678-9012',
-            'dms_no.regex'                => 'DMS No must be B-12345678',
+            'dms_no.regex'                => 'DMS No. must be B-12345678',
             'dms_otf.regex'               => 'OTF must be OTF00A123456',
             'chassis.regex'               => 'Chassis must be S1A12345',
             'dealer_invoice_number.regex' => 'Dealer Invoice must be like ABC12K555555',
@@ -7320,7 +7320,7 @@ class BookingCrudController extends CrudController
         }
         if ($booking->registration_no != $request->registration_no) {
             $tvl = empty($booking->registration_no) ? 'null' : $booking->registration_no;
-            $rem[] = "Vehicle Registration No Changed from " . $tvl . " to " . $request->registration_no;
+            $rem[] = "Vehicle Registration No. Changed from " . $tvl . " to " . $request->registration_no;
             $booking->registration_no = $request->input('registration_no');
         }
         if ($booking->make_year != $request->manufacturing_year) {
@@ -7585,7 +7585,7 @@ class BookingCrudController extends CrudController
             'file_charge'       => 'File Charge',
             'case_lost_reason'  => 'Case Lost Reason',
             'verification_status' => 'Verification Status',
-            'remark'            => 'Remark',
+            'remark'            => 'Remarks',
         ];
 
         $instrumentTypes = [
@@ -8824,7 +8824,7 @@ class BookingCrudController extends CrudController
         }
 
         if ($refund->remark != $request->remark) {
-            $changes[] = "Remark updated";
+            $changes[] = "Remarks updated";
             $refund->remark = $request->remark;
         }
 

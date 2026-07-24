@@ -133,7 +133,7 @@
                             </div>
 
                             <div class="col-md-3 mb-3">
-                                <label>Date of Birth</label>
+                                <label>D.O.B.</label>
                                 <input type="date" name="dob" class="form-control"
                                     value="{{ old('dob', $person->dob?->format('Y-m-d')) }}">
                             </div>
@@ -218,28 +218,28 @@
 
                             {{-- aadhar number --}}
                             <div class="col-md-4 mb-3">
-                                <label>Aadhaar No</label>
+                                <label>Aadhaar No.</label>
                                 <input type="text" name="aadhaar_no" class="form-control"
                                     value="{{ old('aadhaar_no', $person->aadhaar_no) }}">
                             </div>
 
                             {{-- pan number --}}
                             <div class="col-md-4 mb-3">
-                                <label>PAN No</label>
+                                <label>PAN No.</label>
                                 <input type="text" name="pan_no" class="form-control"
                                     value="{{ old('pan_no', $person->pan_no) }}">
                             </div>
 
                             {{-- tan number --}}
                             <div class="col-md-4 mb-3">
-                                <label>TAN No</label>
+                                <label>TAN No.</label>
                                 <input type="text" name="tan_no" class="form-control"
                                     value="{{ old('tan_no', $person->tan_no) }}">
                             </div>
 
                             {{-- gst number --}}
                             <div class="col-md-4 mb-3">
-                                <label>GST No</label>
+                                <label>GST No.</label>
                                 <input type="text" name="gst_no" class="form-control"
                                     value="{{ old('gst_no', $person->gst_no) }}">
                             </div>
