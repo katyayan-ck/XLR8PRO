@@ -379,8 +379,8 @@ use App\Services\OrgService;
         font-weight: bold;
     }
 
-    /* ================= Financer Invoice / Discount Bifurcation — div based ================= */
-    .financer-discount-grid {
+    /* ================= Financier Invoice / Discount Bifurcation — div based ================= */
+    .financier-discount-grid {
         display: grid;
         grid-template-columns: 25% 25% 25% 25%;
         border-left: 1px solid #000;
@@ -388,7 +388,7 @@ use App\Services\OrgService;
         margin-bottom: 15px;
     }
 
-    .financer-discount-grid>div {
+    .financier-discount-grid>div {
         border-right: 1px solid #000;
         border-bottom: 1px solid #000;
         padding: 3px 5px;
@@ -398,7 +398,7 @@ use App\Services\OrgService;
         align-items: center;
     }
 
-    .financer-discount-grid .fd-header {
+    .financier-discount-grid .fd-header {
         background: #d9d9d9;
         font-weight: bold;
         text-align: center;
@@ -406,16 +406,16 @@ use App\Services\OrgService;
         grid-column: span 2;
     }
 
-    .financer-discount-grid .fd-label {
+    .financier-discount-grid .fd-label {
         background: #f2f2f2;
         font-weight: 600;
     }
 
-    .financer-discount-grid .fd-bold input {
+    .financier-discount-grid .fd-bold input {
         font-weight: bold;
     }
 
-    .financer-discount-grid input {
+    .financier-discount-grid input {
         width: 100%;
         border: none;
         background: transparent;
@@ -482,8 +482,8 @@ use App\Services\OrgService;
             display: none !important;
         }
 
-        /* Hide Financer Invoice / Discount Bifurcation box while printing */
-        .financer-discount-grid {
+        /* Hide Financier Invoice / Discount Bifurcation box while printing */
+        .financier-discount-grid {
             display: none !important;
         }
 
@@ -504,7 +504,7 @@ use App\Services\OrgService;
     .quotation-grid input.numeric-only,
     .quotation-grid input.amount-field,
     .quotation-summary input,
-    .financer-discount-grid input {
+    .financier-discount-grid input {
         text-align: right !important;
     }
 </style>
@@ -580,7 +580,7 @@ use App\Services\OrgService;
                     <table class="bill-table mb-3">
 
                         <tr>
-                            <td class="title" width="18%">Enquiry No</td>
+                            <td class="title" width="18%">Enquiry No.</td>
                             <td width="32%">
                                 <input type="text" class="form-control border-0 shadow-none"
                                     value="{{ optional($selectedEnquiry)->enquiry_no }}" readonly>
@@ -1089,9 +1089,9 @@ use App\Services\OrgService;
 
                     </div>
 
-                    {{-- ================= Financer Invoice / Discount Bifurcation (hidden on print) =================
+                    {{-- ================= Financier Invoice / Discount Bifurcation (hidden on print) =================
                     --}}
-                    <div class="financer-discount-grid">
+                    <div class="financier-discount-grid">
 
                         <div class="fd-header">FINANCIER INVOICE</div>
                         <div class="fd-header">DISCOUNT BIFURCATION</div>
@@ -1337,7 +1337,7 @@ function num(id) {
 
 }
 
-// Discount fields paired with their Type select — used for the Financer Invoice /
+// Discount fields paired with their Type select — used for the Financier Invoice /
 // Discount Bifurcation boxes (INV type = Invoiced Discount, CN/CN1/CN2 = Credit Note Discount)
 const DISCOUNT_TYPE_PAIRS = [
     ['cash_scheme_oem', 'cash_scheme_oem_type'],
@@ -1401,10 +1401,10 @@ function calculateQuotation() {
         num('cod_charges') +
         num('charger_swapping_amount');
     
-        // Financer Invoice / Discount Bifurcation must be computed BEFORE TCS,
+        // Financier Invoice / Discount Bifurcation must be computed BEFORE TCS,
     // because TCS is based on the Finvoice Amount (subtotal - Invoiced Discount),
     // not on the raw subtotal — matching the Excel formula chain:
-    //   B24 (Total Receivable, Financer box) = subtotal (no TCS)
+    //   B24 (Total Receivable, Financier box) = subtotal (no TCS)
     //   B25 (Less INV Discount)              = SUMIF(type,"INV")
     //   B26 (Finvoice Amount)                = B24 - B25
     //   D20 (TCS)                            = IF(B26 >= 1000000, B26 * 1%, 0)
@@ -1466,7 +1466,7 @@ $('#total_discount').val(discount);
 
     $('#net_receivable_summary').val(netReceivable.toFixed(2));
 
-    // Financer Invoice box — Total Receivable here is the subtotal WITHOUT TCS
+    // Financier Invoice box — Total Receivable here is the subtotal WITHOUT TCS
     // (matches Excel B24 = M12, not D21)
     $('#fi_total_receivable').val(subtotal.toFixed(2));
     $('#less_inv_discount').val(bifurcation.invoicedDiscount.toFixed(2));

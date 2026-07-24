@@ -205,9 +205,9 @@ class QuotationCrudController extends CrudController
 
                 'columns' => [
 
-                    ['field' => 'serial_no', 'headerName' => 'S.No'],
-                    ['field' => 'quotation_no', 'headerName' => 'Quotation No'],
-                    ['field' => 'enquiry_no', 'headerName' => 'Enquiry No'],
+                    ['field' => 'serial_no', 'headerName' => 'S.No.'],
+                    ['field' => 'quotation_no', 'headerName' => 'Quotation No.'],
+                    ['field' => 'enquiry_no', 'headerName' => 'Enquiry No.'],
                     ['field' => 'customer_name', 'headerName' => 'Customer'],
                     ['field' => 'mobile', 'headerName' => 'Mobile'],
                     ['field' => 'segment', 'headerName' => 'Segment'],
@@ -652,7 +652,7 @@ class QuotationCrudController extends CrudController
 
         $fieldNames = [
 
-            'enquiry_no' => 'Enquiry No',
+            'enquiry_no' => 'Enquiry No.',
             'segment_code' => 'Segment',
             'model_code' => 'Model',
             'variant_code' => 'Variant',

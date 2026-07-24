@@ -109,7 +109,7 @@
                                 <input type="text" name="cust_mobile" id="cust_mobile" class="form-control" required>
                             </div>
 
-                            <!-- Regn No -->
+                            <!-- Regn No. -->
                             <div class="col-sm-3 form-group">
                                 <label for="regn_no">Vehicle / Chassis No <span class="required-mark">*</span></label>
                                 <input type="text" name="regn_no" id="regn_no" class="form-control" required>

@@ -62,7 +62,7 @@ class LeadSourceCrudController extends CrudController
             'title' => 'All Lead Sources',
             'gridConfig' => [
                 'columns' => [
-                    ['field' => 'serial_no',    'headerName' => 'S.No'],
+                    ['field' => 'serial_no',    'headerName' => 'S.No.'],
                     ['field' => 'code',         'headerName' => 'Code'],
                     ['field' => 'name',         'headerName' => 'Source Name'],
                     ['field' => 'description',  'headerName' => 'Description'],

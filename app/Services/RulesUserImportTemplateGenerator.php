@@ -30,7 +30,7 @@ class RulesUserImportTemplateGenerator
 
         // Define headers (17 columns)
         $headers = [
-            'S.No',
+            'S.No.',
             'Name',
             'Email',
             'Mobile',
@@ -75,7 +75,7 @@ class RulesUserImportTemplateGenerator
 
         // Add sample data row
         $sampleData = [
-            1,                              // S.No
+            1,                              // S.No.
             'ADNAN QURESHI',               // Name
             'adnan.qureshi@bmpl.com',      // Email (optional)
             '9876543210',                   // Mobile (optional)
@@ -118,7 +118,7 @@ class RulesUserImportTemplateGenerator
             ['', ''],
             ['FIELD DESCRIPTIONS', ''],
             ['', ''],
-            ['S.No', 'Row number (auto-generated, can be left blank)'],
+            ['S.No.', 'Row number (auto-generated, can be left blank)'],
             ['Name', 'Full name (e.g., "ADNAN QURESHI") - Will be split into First + Last Name'],
             ['Email', 'Email address - OPTIONAL. If blank, auto-generated as firstname.empcode@bmpl.com'],
             ['Mobile', 'Mobile number - OPTIONAL. If blank, auto-generated from sequence (9811122001, 9811122002, etc.)'],
@@ -194,7 +194,7 @@ class RulesUserImportTemplateGenerator
         }
 
         // Set column widths
-        $sheet->getColumnDimensionByColumn(1)->setWidth(8);   // S.No
+        $sheet->getColumnDimensionByColumn(1)->setWidth(8);   // S.No.
         $sheet->getColumnDimensionByColumn(2)->setWidth(20);  // Name
         $sheet->getColumnDimensionByColumn(3)->setWidth(25);  // Email
         $sheet->getColumnDimensionByColumn(4)->setWidth(15);  // Mobile

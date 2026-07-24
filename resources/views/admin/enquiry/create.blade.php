@@ -56,7 +56,7 @@
                                 <div class="row">
                                     <div class="col-md-3 mb-3">
                                         <label class="form-label">
-                                            Enquiry No
+                                            Enquiry No.
                                             <span class="text-danger">*</span>
                                         </label>
                                         <input type="text" name="enquiry_no" class="form-control"
@@ -898,16 +898,16 @@
 
 
 
-                                    {{-- Date of Birth --}}
+                                    {{-- D.O.B. --}}
                                     <div class="col-md-3 mb-3">
                                         <label class="form-label">
-                                            Date of Birth
+                                            D.O.B.
                                             <small class="text-muted">(Optional)</small>
                                         </label>
 
                                         <input type="text" id="dob" name="dob" class="form-control"
                                             value="{{ old('dob', $enquiry->dob ?? '') }}"
-                                            placeholder="Select Date of Birth">
+                                            placeholder="Select D.O.B.">
                                     </div>
 
                                     {{-- Marital Status --}}
@@ -1098,7 +1098,7 @@
 
                                         </div>
 
-                                        {{-- Vehicle No --}}
+                                        {{-- Vehicle No. --}}
                                         <div class="col-md-4 mb-3">
 
                                             <label class="form-label">
@@ -1849,7 +1849,7 @@
                         Swal.fire({
                             icon: 'warning',
                             title: 'Duplicate Enquiry',
-                            html: 'Enquiry No : <b>' + response.enquiry_no + '</b>'
+                            html: 'Enquiry No. : <b>' + response.enquiry_no + '</b>'
                         });
 
                     }

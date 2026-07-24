@@ -721,9 +721,9 @@ use Illuminate\Support\Facades\DB;
                                 </div>
                             </div>
 
-                            {{-- Date of Birth --}}
+                            {{-- D.O.B. --}}
                             <div class="col-md-3 mb-3">
-                                <label>Date of Birth</label>
+                                <label>D.O.B.</label>
 
                                 <input type="date" name="dob" id="dob" class="form-control"
                                     value="{{ old('dob', $booking->c_dob) }}">
@@ -2792,7 +2792,7 @@ function otfBuildPreview() {
     html += otfSection('Customer', [
         ['Name', otfVal('customer_name')],
         ['Mobile', otfVal('customer_mobile')],
-        ['DOB', otfVal('dob'), true],
+        ['D.O.B.', otfVal('dob'), true],
         ['PAN', otfVal('pan_no')],
         ['Aadhaar', otfVal('adhar_no')],
         ['DL No.', otfVal('driving_license_no')],

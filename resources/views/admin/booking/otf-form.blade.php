@@ -370,8 +370,8 @@ use App\Services\OrgService;
         font-weight: bold;
     }
 
-    /* ================= Financer Invoice / Discount Bifurcation — div based ================= */
-    .financer-discount-grid {
+    /* ================= Financier Invoice / Discount Bifurcation — div based ================= */
+    .financier-discount-grid {
         display: grid;
         grid-template-columns: 25% 25% 25% 25%;
         border-left: 1px solid #000;
@@ -379,7 +379,7 @@ use App\Services\OrgService;
         margin-bottom: 15px;
     }
 
-    .financer-discount-grid>div {
+    .financier-discount-grid>div {
         border-right: 1px solid #000;
         border-bottom: 1px solid #000;
         padding: 3px 5px;
@@ -389,7 +389,7 @@ use App\Services\OrgService;
         align-items: center;
     }
 
-    .financer-discount-grid .fd-header {
+    .financier-discount-grid .fd-header {
         background: #d9d9d9;
         font-weight: bold;
         text-align: center;
@@ -397,16 +397,16 @@ use App\Services\OrgService;
         grid-column: span 2;
     }
 
-    .financer-discount-grid .fd-label {
+    .financier-discount-grid .fd-label {
         background: #f2f2f2;
         font-weight: 600;
     }
 
-    .financer-discount-grid .fd-bold input {
+    .financier-discount-grid .fd-bold input {
         font-weight: bold;
     }
 
-    .financer-discount-grid input {
+    .financier-discount-grid input {
         width: 100%;
         border: none;
         background: transparent;
@@ -473,8 +473,8 @@ use App\Services\OrgService;
             display: none !important;
         }
 
-        /* Hide Financer Invoice / Discount Bifurcation box while printing */
-        .financer-discount-grid {
+        /* Hide Financier Invoice / Discount Bifurcation box while printing */
+        .financier-discount-grid {
             display: none !important;
         }
 
@@ -1718,9 +1718,9 @@ use App\Services\OrgService;
 
                     </div>
 
-                    {{-- ================= Financer Invoice / Discount Bifurcation (hidden on print) =================
+                    {{-- ================= Financier Invoice / Discount Bifurcation (hidden on print) =================
                     --}}
-                    <div class="financer-discount-grid">
+                    <div class="financier-discount-grid">
 
                         <div class="fd-header">FINANCIER INVOICE</div>
                         <div class="fd-header">DISCOUNT BIFURCATION</div>
@@ -1965,7 +1965,7 @@ function num(id) {
 
 }
 
-// Discount fields paired with their Type select — used for the Financer Invoice /
+// Discount fields paired with their Type select — used for the Financier Invoice /
 // Discount Bifurcation boxes (INV type = Invoiced Discount, CN/CN1/CN2 = Credit Note Discount)
 const DISCOUNT_TYPE_PAIRS = [
     ['cash_scheme_oem', 'cash_scheme_oem_type'],

@@ -71,7 +71,7 @@ class PersonBankingDetailCrudController extends CrudController
             'title' => 'All Person Banking Details',
             'gridConfig' => [
                 'columns' => [
-                    ['field' => 'serial_no',           'headerName' => 'S.No'],
+                    ['field' => 'serial_no',           'headerName' => 'S.No.'],
                     ['field' => 'person_name',         'headerName' => 'Person'],
                     ['field' => 'bank_name',           'headerName' => 'Bank Name'],
                     ['field' => 'account_holder_name', 'headerName' => 'Account Holder'],

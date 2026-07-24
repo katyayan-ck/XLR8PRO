@@ -60,7 +60,7 @@ class GraphNodeCrudController extends CrudController
             'title' => 'All Graph Nodes',
             'gridConfig' => [
                 'columns' => [
-                    ['field' => 'serial_no',  'headerName' => 'S.No'],
+                    ['field' => 'serial_no',  'headerName' => 'S.No.'],
                     ['field' => 'user_name',  'headerName' => 'User'],
                     ['field' => 'role',       'headerName' => 'Role'],
                     ['field' => 'attributes', 'headerName' => 'Attributes'],

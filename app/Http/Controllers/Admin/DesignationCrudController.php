@@ -94,7 +94,7 @@ class DesignationCrudController extends CrudController
 
                 'columns' => [
 
-                    ['field' => 'serial_no', 'headerName' => 'S.No'],
+                    ['field' => 'serial_no', 'headerName' => 'S.No.'],
 
                     ['field' => 'code', 'headerName' => 'Code'],
 

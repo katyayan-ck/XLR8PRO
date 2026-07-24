@@ -591,7 +591,7 @@
 
                         <div class="col-sm-12 text-center mt-4">
                             <button type="submit" class="btn btn-danger btn-lg px-5">
-                                {{ __('Reject Refund & Save Remark') }}
+                                {{ __('Reject Refund & Save Remarks') }}
                             </button>
                             <button type="button" class="btn btn-secondary ml-3"
                                 onclick="document.getElementById('rejectionCard').style.display='none';">
