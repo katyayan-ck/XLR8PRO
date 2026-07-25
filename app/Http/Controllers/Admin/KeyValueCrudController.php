@@ -92,7 +92,7 @@ class KeyValueCrudController extends CrudController
 
                     'columns' => [
 
-                        ['field' => 'serial_no', 'headerName' => 'S.No'],
+                        ['field' => 'serial_no', 'headerName' => 'S.No.'],
                         ['field' => 'keyword_code', 'headerName' => 'Keyword Code'],
                         ['field' => 'code', 'headerName' => 'Code'],
                         ['field' => 'key', 'headerName' => 'Key'],

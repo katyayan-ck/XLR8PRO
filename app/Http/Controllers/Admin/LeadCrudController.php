@@ -135,12 +135,12 @@ class LeadCrudController extends CrudController
 
                         [
                             'field' => 'serial_no',
-                            'headerName' => 'S.No',
+                            'headerName' => 'S.No.',
                         ],
 
                         [
                             'field' => 'lead_no',
-                            'headerName' => 'Lead No',
+                            'headerName' => 'Lead No.',
                         ],
 
                         [

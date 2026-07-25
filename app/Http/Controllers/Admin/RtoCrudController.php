@@ -108,7 +108,7 @@ class RtoCrudController extends CrudController
           
             'rto_manual' => [
                 'dms_otf'                 => 'OTF No.',
-                'chassis_no'              => 'Chassis No',         
+                'chassis_no'              => 'Chassis No.',         
                 'sale_type'               => 'Sale Type',
                 'permit'                  => 'Permit',
                 'body_type'               => 'Body Type',
@@ -118,10 +118,10 @@ class RtoCrudController extends CrudController
                 'trc_no'                  => 'TRC Number',
                 'trc_amount'              => 'TRC Amount',
                 'trc_trans_date'          => 'TRC Transaction Date',
-                'trc_payment_no'          => 'TRC Payment Reference No',
+                'trc_payment_no'          => 'TRC Payment Reference No.',
                 'tax_amount'              => 'Tax Amount',
                 'tax_trans_date'          => 'Tax Transaction Date',
-                'tax_payment_bank_ref_no' => 'Tax Payment Reference No',
+                'tax_payment_bank_ref_no' => 'Tax Payment Reference No.',
                 'vh_rgn_no'               => 'Registration No.',
             ],
 
@@ -153,8 +153,8 @@ class RtoCrudController extends CrudController
 
            
             'vaahan' => [
-                'app_no'     => 'Application No',
-                'vh_rgn_no'  => 'Registration No',
+                'app_no'     => 'Application No.',
+                'vh_rgn_no'  => 'Registration No.',
                 'purpose'    => 'Purpose',
                 'pending_at' => 'Pending At',    
             ],

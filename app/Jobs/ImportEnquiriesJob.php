@@ -148,7 +148,7 @@ class ImportEnquiriesJob implements ShouldQueue
         $headerMap = $this->getSheetHeaderMap($sheet);
         $rows = array_slice($sheet->toArray(null, true, true, false), 1);
 
-        // Virtual No is gone — Customer Number is the matching key now, but
+        // Virtual No. is gone — Customer Number is the matching key now, but
         // ONLY for the duration of this import (no DB-level uniqueness on
         // mobile). If the same Customer Number appears more than once in
         // this file, keep just the last occurrence — its values are what
@@ -184,7 +184,7 @@ class ImportEnquiriesJob implements ShouldQueue
                         $mobile = $this->cell($row, $headerMap, 'Customer Number');
 
                         $data = $this->stripNulls([
-                            'virtual_no'        => $this->cell($row, $headerMap, 'Virtual No'),
+                            'virtual_no'        => $this->cell($row, $headerMap, 'Virtual No.'),
                             'call_status'       => $this->cell($row, $headerMap, 'Call Status'),
                             'call_duration'     => $this->cell($row, $headerMap, 'Call Duration'),
                             'mobile'            => $mobile,

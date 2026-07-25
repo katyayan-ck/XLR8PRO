@@ -207,7 +207,7 @@ class UserImporter
             'lastname' => $rowData['Last Name'],
             'displayname' => trim($rowData['First Name'] . ' ' . ($rowData['Last Name'] ?? '')),
             'gender' => strtolower($rowData['Gender'] ?? 'other'),
-            'dob' => $this->parseDate($rowData['Date of Birth'] ?? null),
+            'dob' => $this->parseDate($rowData['D.O.B.'] ?? null),
             'maritalstatus' => $rowData['Marital Status'] ?? null,
             'emailprimary' => $email,
             'mobileprimary' => $rowData['Phone'] ?? null,

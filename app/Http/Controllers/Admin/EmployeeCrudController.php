@@ -74,7 +74,7 @@ class EmployeeCrudController extends CrudController
             'title' => 'All Employees',
             'gridConfig' => [
                 'columns' => [
-                    ['field' => 'serial_no',         'headerName' => 'S.No'],
+                    ['field' => 'serial_no',         'headerName' => 'S.No.'],
                     ['field' => 'code',              'headerName' => 'Employee Code'],
                     ['field' => 'person_name',       'headerName' => 'Employee Name'],
                     ['field' => 'designation_name',  'headerName' => 'Designation'],

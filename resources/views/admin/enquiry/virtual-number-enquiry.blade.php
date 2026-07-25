@@ -90,7 +90,7 @@
                 'virtual_no',
                 'call_date_and_time',
                 'call_nature',
-                'enquiry_assign_date',
+                'x8_enquiry_assign_date',
                 'mobile',
                 'remarks',
                 'dms_enquiry_stage',
@@ -151,7 +151,7 @@
                     'virtual_no',
                     'call_date_and_time',
                     'call_nature',
-                    'enquiry_assign_date',
+                    'x8_enquiry_assign_date',
                     'mobile',
                     'remarks',
                     'action'
@@ -250,7 +250,7 @@
                     'virtual_no',
                     'call_date_and_time',
                     'call_nature',
-                    'enquiry_assign_date',
+                    'x8_enquiry_assign_date',
                     'mobile',
                     'remarks',
                     'action'

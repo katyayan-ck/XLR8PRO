@@ -88,7 +88,7 @@ class ColorCrudController extends CrudController
 
                 'columns' => [
 
-                    ['field' => 'serial_no', 'headerName' => 'S.No'],
+                    ['field' => 'serial_no', 'headerName' => 'S.No.'],
 
                     ['field' => 'segment', 'headerName' => 'Segment'],
                     ['field' => 'sub_segment', 'headerName' => 'Sub Segment'],

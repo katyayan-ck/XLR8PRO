@@ -205,9 +205,9 @@ class QuotationCrudController extends CrudController
 
                 'columns' => [
 
-                    ['field' => 'serial_no', 'headerName' => 'S.No'],
-                    ['field' => 'quotation_no', 'headerName' => 'Quotation No'],
-                    ['field' => 'enquiry_no', 'headerName' => 'Enquiry No'],
+                    ['field' => 'serial_no', 'headerName' => 'S.No.'],
+                    ['field' => 'quotation_no', 'headerName' => 'Quotation No.'],
+                    ['field' => 'enquiry_no', 'headerName' => 'Enquiry No.'],
                     ['field' => 'customer_name', 'headerName' => 'Customer'],
                     ['field' => 'mobile', 'headerName' => 'Mobile'],
                     ['field' => 'segment', 'headerName' => 'Segment'],
@@ -286,10 +286,10 @@ class QuotationCrudController extends CrudController
 
 
         $insurance_type_map = [
-            1 => 'Standard',
-            2 => 'Nil Dep',
-            3 => 'Base',
-            4 => 'Higher',
+
+            1 => 'Nil Dep',
+
+            2 => 'Higher',
         ];
 
         $registration_type_map = [
@@ -454,10 +454,8 @@ class QuotationCrudController extends CrudController
         )->firstOrFail();
 
         $insurance_type_map = [
-            1 => 'Standard',
-            2 => 'Nil Dep',
-            3 => 'Base (Nil Dep + Consumables)',
-            4 => 'Higher (Nil Dep + Consumables + Add Ons)',
+            1 => 'Nil Dep',
+            2 => 'Higher',
         ];
 
         $registration_type_map = [
@@ -654,7 +652,7 @@ class QuotationCrudController extends CrudController
 
         $fieldNames = [
 
-            'enquiry_no' => 'Enquiry No',
+            'enquiry_no' => 'Enquiry No.',
             'segment_code' => 'Segment',
             'model_code' => 'Model',
             'variant_code' => 'Variant',

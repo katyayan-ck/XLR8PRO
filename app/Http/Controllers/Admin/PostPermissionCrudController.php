@@ -60,7 +60,7 @@ class PostPermissionCrudController extends CrudController
             'title' => 'All Post Permissions',
             'gridConfig' => [
                 'columns' => [
-                    ['field' => 'serial_no',       'headerName' => 'S.No'],
+                    ['field' => 'serial_no',       'headerName' => 'S.No.'],
                     ['field' => 'post_name',       'headerName' => 'Post'],
                     ['field' => 'permission_name', 'headerName' => 'Permission'],
                     ['field' => 'created_at',      'headerName' => 'Created At'],

@@ -452,7 +452,7 @@ for (let col = 0; col < footerRow.length; col++) {
             });
         });
 
-        // keep S.No blank
+        // keep S.No. blank
         sums['sno'] = null;
 
         gridApi.setGridOption('pinnedBottomRowData', [sums]);

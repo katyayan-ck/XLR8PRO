@@ -56,10 +56,20 @@ class EnquiryCrudController extends CrudController
 
                 'columns' => [
                     ['field' => 'serial_no', 'headerName' => 'S.No.'],
-                    ['field' => 'enquiry_no', 'headerName' => 'Enquiry No.'],
-                    ['field' => 'enquiry_date', 'headerName' => 'Enquiry Date'],
+                    ['field' => 'x8_enquiry_no', 'headerName' => 'X8 Enquiry No.'],
+                    ['field' => 'x8_enquiry_date', 'headerName' => 'X8 Enquiry Date'],
+                    ['field' => 'x8_enquiry_assign_date', 'headerName' => 'X8 Enquiry Assign Date'],
                     ['field' => 'oem_enquiry_no', 'headerName' => 'OEM Enquiry No.'],
-                    ['field' => 'oem_enquiry_date', 'headerName' => 'OEM Enquiry Date.'],
+                    ['field' => 'oem_enquiry_date', 'headerName' => 'OEM Enquiry Date'],
+                    ['field' => 'oem_enquiry_assign_date', 'headerName' => 'OEM Enquiry Assign Date'],
+
+                    ['field' => 'oem_quick_enquiry_no', 'headerName' => 'OEM Quick Enquiry No.'],
+                    ['field' => 'oem_quick_enquiry_date', 'headerName' => 'OEM Quick Enquiry Date'],
+                    ['field' => 'oem_quick_enquiry_assign_date', 'headerName' => 'OEM Quick Enquiry Assign Date'],
+                    ['field' => 'oem_long_enquiry_no', 'headerName' => 'OEM Long Enquiry No.'],
+                    ['field' => 'oem_long_enquiry_date', 'headerName' => 'OEM Long Enquiry Date'],
+                    ['field' => 'oem_long_enquiry_assign_date', 'headerName' => 'OEM Long Enquiry Assign Date'],
+
                     ['field' => 'segment_name', 'headerName' => 'Segment'],
                     ['field' => 'model_name', 'headerName' => 'Model'],
                     ['field' => 'variant_name', 'headerName' => 'Variant'],
@@ -72,7 +82,7 @@ class EnquiryCrudController extends CrudController
                     ['field' => 'enquiry_type', 'headerName' => 'Enquiry Type'],
                     ['field' => 'source_name', 'headerName' => 'Source'],
                     ['field' => 'sub_source', 'headerName' => 'Sub Source'],
-                    ['field' => 'likely_purchase_date', 'headerName' => 'Likely Purchase Date'],
+                    ['field' => 'likely_purchase_in_days', 'headerName' => 'Likely Purchase In Days'],
                     ['field' => 'fuel_type', 'headerName' => 'Fuel Type'],
                     ['field' => 'transmission', 'headerName' => 'Transmission'],
                     ['field' => 'drivetrain', 'headerName' => 'Drivetrain'],
@@ -91,7 +101,7 @@ class EnquiryCrudController extends CrudController
                     ['field' => 'customer_type', 'headerName' => 'Customer Type'],
                     ['field' => 'occupation_sub_type', 'headerName' => 'Occupation Sub Type'],
                     ['field' => 'company_name', 'headerName' => 'Company Name'],    
-                    ['field' => 'dob', 'headerName' => 'DOB'],
+                    ['field' => 'dob', 'headerName' => 'D.O.B.'],
                     ['field' => 'marital_status', 'headerName' => 'Marital Status'],
                     ['field' => 'marriage_date', 'headerName' => 'Marriage Date'],
                     ['field' => 'age_group', 'headerName' => 'Age Group'],
@@ -99,12 +109,13 @@ class EnquiryCrudController extends CrudController
                     ['field' => 'km_travelled_daily', 'headerName' => 'KM/Day'],
                     ['field' => 'application_type', 'headerName' => 'Application Type'],
                     ['field' => 'application', 'headerName' => 'Application'],
-                    ['field' => 'zipcode', 'headerName' => 'Pincode'],
+                    ['field' => 'pincode', 'headerName' => 'Pincode'],
+                    ['field' => 'address', 'headerName' => 'Address'],
                     ['field' => 'has_ev', 'headerName' => 'Has EV'],
                     ['field' => 'purchase_type', 'headerName' => 'Purchase Type'],
-                    ['field' => 'exchange_make', 'headerName' => 'Consideration Brand'],
-                    ['field' => 'exchange_model', 'headerName' => 'Consideration Model'],
-                    ['field' => 'exchange_variant', 'headerName' => 'Consideration Variant'],
+                    ['field' => 'consider_make', 'headerName' => 'Consideration Brand'],
+                    ['field' => 'consider_model', 'headerName' => 'Consideration Model'],
+                    ['field' => 'consider_variant', 'headerName' => 'Consideration Variant'],
                     ['field' => 'remarks', 'headerName' => 'Remarks'],
 
                     ['field' => 'dms_enquiry_stage', 'headerName' => 'DMS Enquiry Stage'],
@@ -140,7 +151,7 @@ class EnquiryCrudController extends CrudController
                     
                    
                     
-                    // ['field' => 'vehicle_no', 'headerName' => 'Vehicle No'],
+                    // ['field' => 'vehicle_no', 'headerName' => 'Vehicle No.'],
                     
                    
                     
@@ -200,8 +211,8 @@ class EnquiryCrudController extends CrudController
             $out = fopen('php://output', 'w');
 
             fputcsv($out, [
-                'S.No',
-                'Enquiry No',
+                'S.No.',
+                'Enquiry No.',
                 'Enquiry Type',
                 'Source',
                 'Sub Source',
@@ -279,7 +290,7 @@ class EnquiryCrudController extends CrudController
             ?? $enquiry->planned_campaign
             ?? '—';
 
-        $mapped['likely_purchase_date'] = $enquiry->likely_purchase_date;
+        $mapped['likely_purchase_in_days'] = $enquiry->likely_purchase_in_days;
 
         $mapped['activity_start_date'] = $enquiry->activity_start_date
             ? Carbon::parse($enquiry->activity_start_date)->format('d-m-Y')
@@ -340,7 +351,7 @@ class EnquiryCrudController extends CrudController
                 ->orWhere('company_name', 'like', $like)
                 ->orWhere('vehicle_no', 'like', $like)
                 ->orWhere('city', 'like', $like)
-                ->orWhere('zipcode', 'like', $like)
+                ->orWhere('pincode', 'like', $like)
                 ->orWhereHas('model', fn($q2) => $q2->where('name', 'like', $like))
                 ->orWhereHas('segment', fn($q2) => $q2->where('name', 'like', $like))
                 ->orWhereHas('color', fn($q2) => $q2->where('name', 'like', $like))
@@ -406,7 +417,7 @@ class EnquiryCrudController extends CrudController
 
         $data['enquiry_types'] = OrgService::keywordValueByCode('ENQUIRY_TYPE');
         $data['activity_types'] = OrgService::keywordValueByCode('ACTIVITY_TYPE');
-        $data['likely_purchase_dates'] = OrgService::keywordValueByCode('LIKELY_PURCHASE_DATE');
+        $data['likely_purchase_in_days'] = OrgService::keywordValueByCode('LIKELY_PURCHASE_IN_DAYS');
         $data['follow_up_types'] = OrgService::keywordValueByCode('FOLLOW_UP_TYPE');
 
         $data['occupation_types'] = OrgService::keywordValueByCode('OCCUPATION_TYPE');
@@ -517,14 +528,14 @@ class EnquiryCrudController extends CrudController
     //         'marital_status' => 'nullable',
     //         'marriage_date' => 'nullable|date',
     //         'age_group' => 'nullable',
-    //         'zipcode' => 'nullable|max:10',
+    //         'pincode' => 'nullable|max:10',
     //         'tehsil' => 'nullable|max:100',
     //         'district' => 'nullable|max:100',
     //         'city' => 'nullable|max:100',
     //         'has_ev' => 'nullable',
     //         'purchase_type' => 'nullable',
-    //         'exchange_make' => 'nullable|max:100',
-    //         'exchange_model' => 'nullable|max:100',
+    //         'consider_make' => 'nullable|max:100',
+    //         'consider_model' => 'nullable|max:100',
     //         'vehicle_no' => 'nullable|max:30',
     //         'remarks' => 'nullable',
     //         'segment_code' => 'required',
@@ -592,7 +603,7 @@ class EnquiryCrudController extends CrudController
                 'referee_phone' => 'nullable|max:15',
                 'referee_name' => 'nullable|max:100',
                 'planned_campaign' => 'nullable|max:150',
-                'likely_purchase_date' => 'nullable|max:150',
+                'likely_purchase_in_days' => 'nullable|max:150',
                 'activity_type' => 'nullable',
                 'activity_segment' => 'nullable',
                 'activity_model' => 'nullable',
@@ -613,14 +624,14 @@ class EnquiryCrudController extends CrudController
                 'marital_status' => 'nullable',
                 'marriage_date' => 'nullable|date',
                 'age_group' => 'nullable',
-                'zipcode' => 'nullable|max:10',
+                'pincode' => 'nullable|max:10',
                 'tehsil' => 'nullable|max:100',
                 'district' => 'nullable|max:100',
                 'city' => 'nullable|max:100',
                 'has_ev' => 'nullable',
                 'purchase_type' => 'nullable',
-                'exchange_make' => 'nullable|max:100',
-                'exchange_model' => 'nullable|max:100',
+                'consider_make' => 'nullable|max:100',
+                'consider_model' => 'nullable|max:100',
                 'vehicle_no' => 'nullable|max:30',
                 'remarks' => 'nullable',
                 'segment_code' => 'required',
@@ -807,7 +818,7 @@ class EnquiryCrudController extends CrudController
             'referee_phone' => 'nullable|max:15',
             'referee_name' => 'nullable|max:100',
             'planned_campaign' => 'nullable|max:150',
-            'likely_purchase_date' => 'nullable|max:150',
+            'likely_purchase_in_days' => 'nullable|max:150',
             'activity_type' => 'nullable',
             'activity_segment' => 'nullable',
             'activity_model' => 'nullable',
@@ -828,14 +839,14 @@ class EnquiryCrudController extends CrudController
             'marital_status' => 'nullable',
             'marriage_date' => 'nullable|date',
             'age_group' => 'nullable',
-            'zipcode' => 'nullable|max:10',
+            'pincode' => 'nullable|max:10',
             'tehsil' => 'nullable|max:100',
             'district' => 'nullable|max:100',
             'city' => 'nullable|max:100',
             'has_ev' => 'nullable',
             'purchase_type' => 'nullable',
-            'exchange_make' => 'nullable|max:100',
-            'exchange_model' => 'nullable|max:100',
+            'consider_make' => 'nullable|max:100',
+            'consider_model' => 'nullable|max:100',
             'vehicle_no' => 'nullable|max:30',
             'remarks' => 'nullable',
             'segment_code' => 'required',
@@ -995,11 +1006,12 @@ class EnquiryCrudController extends CrudController
             'serial_no'             => $index + 1,
             'referee_name'          => $enquiry->referred_by ?? '—',
             'referee_phone'         => $enquiry->referee_phone ?? '—',
-            'enquiry_assign_date'   => $enquiry->enquiry_assign_date 
+            'x8_enquiry_assign_date'   => $enquiry->x8_enquiry_assign_date 
                                         ? Carbon::parse($enquiry->enquiry_assign_date)->format('d-m-Y') 
                                         : '—',
             'first_name'            => $enquiry->first_name ?? $enquiry->full_name ?? '—',
             'mobile'                => $enquiry->mobile ?? '—',
+            'segment_name'            => $enquiry->segment?->name ?? $enquiry->segment_code ?? '—',
             'model_name'            => $enquiry->model?->name ?? $enquiry->model_code ?? '—',
             'variant_name'          => $enquiry->variant?->display_name ?? $enquiry->variant_code ?? '—',
             'dms_enquiry_stage'     => $enquiry->dms_enquiry_stage ?? '—',
@@ -1032,12 +1044,13 @@ class EnquiryCrudController extends CrudController
         'title' => 'Reference Enquiries',
         'gridConfig' => [
             'columns' => [
-                ['field' => 'serial_no',           'headerName' => 'S.No'],
+                ['field' => 'serial_no',           'headerName' => 'S.No.'],
                 ['field' => 'referee_name',        'headerName' => 'Referee Name'],
                 ['field' => 'referee_phone',       'headerName' => 'Referee Mobile'],
-                ['field' => 'enquiry_assign_date', 'headerName' => 'Assign Date'],
+                ['field' => 'x8_enquiry_assign_date', 'headerName' => 'X8 Enquiry Assign Date'],
                 ['field' => 'first_name',          'headerName' => 'Customer Name'],
                 ['field' => 'mobile',              'headerName' => 'Customer Mobile'],
+                ['field' => 'segment_name',        'headerName' => 'Segment'],
                 ['field' => 'model_name',          'headerName' => 'Model'],
                 ['field' => 'variant_name',        'headerName' => 'Variant'],
                 ['field' => 'dms_enquiry_stage',   'headerName' => 'DMS Stage'],
@@ -1045,12 +1058,12 @@ class EnquiryCrudController extends CrudController
                 ['field' => 'cre_next_fup_date',   'headerName' => 'Next FUP Date'],
                 ['field' => 'cre_next_fup_time',   'headerName' => 'Next FUP Time'],
                 ['field' => 'cre_next_fup_remarks','headerName' => 'FUP Remarks'],
-                ['field' => 'quotation_no',        'headerName' => 'Quotation No'],
-                ['field' => 'booking_no',          'headerName' => 'Booking No'],
+                ['field' => 'quotation_no',        'headerName' => 'Quotation No.'],
+                ['field' => 'booking_no',          'headerName' => 'Booking No.'],
                 ['field' => 'booking_date',        'headerName' => 'Booking Date'],
-                ['field' => 'oem_booking_no',      'headerName' => 'OEM Booking No'],
+                ['field' => 'oem_booking_no',      'headerName' => 'OEM Booking No.'],
                 ['field' => 'oem_booking_date',    'headerName' => 'OEM Booking Date'],
-                ['field' => 'oem_otf_no',          'headerName' => 'OEM OTF No'],
+                ['field' => 'oem_otf_no',          'headerName' => 'OEM OTF No.'],
                 ['field' => 'action',              'headerName' => 'Action']
             ],
             'data' => $gridData
@@ -1077,7 +1090,7 @@ class EnquiryCrudController extends CrudController
                 ? Carbon::parse($enquiry->virtual_call_date)->format('d-m-Y H:i')
                 : '—',
             'call_nature'           => $enquiry->call_nature ?? '—',
-            'enquiry_assign_date'   => $enquiry->enquiry_assign_date
+            'x8_enquiry_assign_date'   => $enquiry->x8_enquiry_assign_date
                 ? Carbon::parse($enquiry->enquiry_assign_date)->format('d-m-Y')
                 : '—',
             'mobile'                => $enquiry->mobile ?? '—',
@@ -1113,11 +1126,11 @@ class EnquiryCrudController extends CrudController
         'title' => 'Virtual Number Enquiries',
         'gridConfig' => [
             'columns' => [
-                ['field' => 'serial_no',           'headerName' => 'S.No'],
+                ['field' => 'serial_no',           'headerName' => 'S.No.'],
                 ['field' => 'virtual_no',          'headerName' => 'Virtual Number'],
                 ['field' => 'call_date_and_time',  'headerName' => 'Call Date & Time'],
                 ['field' => 'call_nature',         'headerName' => 'Call Nature'],
-                ['field' => 'enquiry_assign_date', 'headerName' => 'Assign Date'],
+                ['field' => 'x8_enquiry_assign_date', 'headerName' => 'X8 Enquiry Assign Date'],
                 ['field' => 'mobile',              'headerName' => 'Customer Mobile'],
                 ['field' => 'remarks',             'headerName' => 'Remarks'],
                 ['field' => 'dms_enquiry_stage',   'headerName' => 'DMS Stage'],
@@ -1125,12 +1138,12 @@ class EnquiryCrudController extends CrudController
                 ['field' => 'cre_next_fup_date',   'headerName' => 'Next FUP Date'],
                 ['field' => 'cre_next_fup_time',   'headerName' => 'Next FUP Time'],
                 ['field' => 'cre_next_fup_remarks','headerName' => 'FUP Remarks'],
-                ['field' => 'quotation_no',        'headerName' => 'Quotation No'],
-                ['field' => 'booking_no',          'headerName' => 'Booking No'],
+                ['field' => 'quotation_no',        'headerName' => 'Quotation No.'],
+                ['field' => 'booking_no',          'headerName' => 'Booking No.'],
                 ['field' => 'booking_date',        'headerName' => 'Booking Date'],
-                ['field' => 'oem_booking_no',      'headerName' => 'OEM Booking No'],
+                ['field' => 'oem_booking_no',      'headerName' => 'OEM Booking No.'],
                 ['field' => 'oem_booking_date',    'headerName' => 'OEM Booking Date'],
-                ['field' => 'oem_otf_no',          'headerName' => 'OEM OTF No'],
+                ['field' => 'oem_otf_no',          'headerName' => 'OEM OTF No.'],
                 ['field' => 'action',              'headerName' => 'Action']
             ],
             'data' => $gridData
@@ -1155,9 +1168,12 @@ class EnquiryCrudController extends CrudController
             'campaign_date'         => $enquiry->wapp_campaign_date
                 ? Carbon::parse($enquiry->wapp_campaign_date)->format('d-m-Y')
                 : '—',
-            'enquiry_assign_date'   => $enquiry->enquiry_assign_date
+            'x8_enquiry_assign_date'   => $enquiry->x8_enquiry_assign_date
                 ? Carbon::parse($enquiry->enquiry_assign_date)->format('d-m-Y')
                 : '—',
+            'segment_name'            => $enquiry->segment?->name ?? $enquiry->segment_code ?? '—',
+            'model_name'            => $enquiry->model?->name ?? $enquiry->model_code ?? '—',
+            'variant_name'          => $enquiry->variant?->display_name ?? $enquiry->variant_code ?? '—',
             'mobile'                => $enquiry->mobile ?? '—',
             'dms_enquiry_stage'     => $enquiry->dms_enquiry_stage ?? '—',
             'cre_enquiry_stage'     => $enquiry->cre_enquiry_stage ?? '—',
@@ -1198,22 +1214,25 @@ class EnquiryCrudController extends CrudController
         'title' => 'WhatsApp Campaign Enquiries',
         'gridConfig' => [
             'columns' => [
-                ['field' => 'serial_no',            'headerName' => 'S.No'],
+                ['field' => 'serial_no',            'headerName' => 'S.No.'],
                 ['field' => 'campaign_name',        'headerName' => 'Campaign Name'],
                 ['field' => 'campaign_date',        'headerName' => 'Campaign Date'],
-                ['field' => 'enquiry_assign_date',  'headerName' => 'Assign Date'],
+                ['field' => 'x8_enquiry_assign_date',  'headerName' => 'X8 EnquiryAssign Date'],
+                ['field' => 'segment_name',        'headerName' => 'Segment'],
+                ['field' => 'model_name',          'headerName' => 'Model'],
+                ['field' => 'variant_name',        'headerName' => 'Variant'],
                 ['field' => 'mobile',               'headerName' => 'Customer Mobile'],
                 ['field' => 'dms_enquiry_stage',    'headerName' => 'DMS Stage'],
                 ['field' => 'cre_enquiry_stage',    'headerName' => 'CRE Stage'],
                 ['field' => 'cre_next_fup_date',    'headerName' => 'Next FUP Date'],
                 ['field' => 'cre_next_fup_time',    'headerName' => 'Next FUP Time'],
                 ['field' => 'cre_next_fup_remarks', 'headerName' => 'FUP Remarks'],
-                ['field' => 'quotation_no',         'headerName' => 'Quotation No'],
-                ['field' => 'booking_no',           'headerName' => 'Booking No'],
+                ['field' => 'quotation_no',         'headerName' => 'Quotation No.'],
+                ['field' => 'booking_no',           'headerName' => 'Booking No.'],
                 ['field' => 'booking_date',         'headerName' => 'Booking Date'],
-                ['field' => 'oem_booking_no',       'headerName' => 'OEM Booking No'],
+                ['field' => 'oem_booking_no',       'headerName' => 'OEM Booking No.'],
                 ['field' => 'oem_booking_date',     'headerName' => 'OEM Booking Date'],
-                ['field' => 'oem_otf_no',           'headerName' => 'OEM OTF No'],
+                ['field' => 'oem_otf_no',           'headerName' => 'OEM OTF No.'],
                 ['field' => 'action',               'headerName' => 'Action']
             ],
             'data' => $gridData
@@ -1236,23 +1255,27 @@ class EnquiryCrudController extends CrudController
 
         return [
             'serial_no'                => $index + 1,
-            'enquiry_no'               => $enquiry->enquiry_no ?? '—',
-            'enquiry_date'             => $enquiry->enquiry_date
-                ? Carbon::parse($enquiry->enquiry_date)->format('d-m-Y H:i')
+            'x8_enquiry_no'               => $enquiry->x8_enquiry_no ?? '—',
+            'x8_enquiry_date'             => $enquiry->x8_enquiry_date
+                ? Carbon::parse($enquiry->x8_enquiry_date)->format('d-m-Y H:i')
                 : '—',
-            'oem_enquiry_no'           => $enquiry->oem_enquiry_no ?? '—',
-            'oem_enquiry_date'         => $enquiry->oem_enquiry_date
-                ? Carbon::parse($enquiry->oem_enquiry_date)->format('d-m-Y')
+            'x8_enquiry_assign_date'      => $enquiry->x8_enquiry_assign_date
+                ? Carbon::parse($enquiry->x8_enquiry_assign_date)->format('d-m-Y')
                 : '—',
+            'oem_enquiry_assign_date'  => $enquiry->oem_enquiry_assign_date
+                ? Carbon::parse($enquiry->oem_enquiry_assign_date)->format('d-m-Y')
+                : '—',
+            // 'oem_enquiry_no'           => $enquiry->oem_enquiry_no ?? '—',
+            // 'oem_enquiry_date'         => $enquiry->oem_enquiry_date
+            //     ? Carbon::parse($enquiry->oem_enquiry_date)->format('d-m-Y')
+            //     : '—',
             'oem_long_enquiry_no'      => $enquiry->oem_long_enquiry_no ?? '—',
             'oem_long_enquiry_date'    => $enquiry->oem_long_enquiry_date
                 ? Carbon::parse($enquiry->oem_long_enquiry_date)->format('d-m-Y')
                 : '—',
-            'enquiry_assign_date'      => $enquiry->enquiry_assign_date
-                ? Carbon::parse($enquiry->enquiry_assign_date)->format('d-m-Y')
-                : '—',
-            'oem_enquiry_assign_date'  => $enquiry->oem_enquiry_assign_date
-                ? Carbon::parse($enquiry->oem_enquiry_assign_date)->format('d-m-Y')
+            
+            'oem_long_enquiry_assign_date'  => $enquiry->oem_long_enquiry_assign_date
+                ? Carbon::parse($enquiry->oem_long_enquiry_assign_date)->format('d-m-Y')
                 : '—',
             'segment_name'             => $enquiry->segment_name ?? '—',
             'model_name'               => $enquiry->model?->name ?? $enquiry->model_code ?? '—',
@@ -1266,7 +1289,7 @@ class EnquiryCrudController extends CrudController
             'enquiry_type'             => $enquiry->enquiry_type ?? '—',
             'source_name'              => $enquiry->source?->name ?? $enquiry->source_code ?? '—',
             'sub_source'               => $enquiry->sub_source ?? '—',
-            'likely_purchase_date'     => $enquiry->likely_purchase_date ?? '—',
+            'likely_purchase_in_days'     => $enquiry->likely_purchase_in_days ?? '—',
             'fuel_type'                => $enquiry->fuel_type ?? '—',
             'transmission'             => $enquiry->transmission ?? '—',
             'drivetrain'               => $enquiry->drivetrain ?? '—',
@@ -1299,13 +1322,14 @@ class EnquiryCrudController extends CrudController
             'km_travelled_daily'       => $enquiry->km_travelled_daily ?? '—',
             'application_type'         => $enquiry->application_type ?? '—',
             'application'              => $enquiry->application ?? '—',
-            'zipcode'                  => $enquiry->zipcode ?? '—',
+            'pincode'                  => $enquiry->pincode ?? '—',
+            'address'                  => $enquiry->address ?? '—',
             'has_ev'                   => $enquiry->has_ev ?? '—',
             'purchase_type'            => $enquiry->purchase_type ?? '—',
             'remarks'                  => $enquiry->remarks ?? '—',
-            'exchange_make'            => $enquiry->exchange_make ?? '—',
-            'exchange_model'           => $enquiry->exchange_model ?? '—',
-            'exchange_variant'         => $enquiry->exchange_variant ?? '—',
+            'consider_make'            => $enquiry->consider_make ?? '—',
+            'consider_model'           => $enquiry->consider_model ?? '—',
+            'consider_variant'         => $enquiry->consider_variant ?? '—',
             'dms_enquiry_stage'        => $enquiry->dms_enquiry_stage ?? '—',
             'cre_enquiry_stage'        => $enquiry->cre_enquiry_stage ?? '—',
             'cre_next_fup_date'        => $enquiry->cre_next_fup_date
@@ -1335,15 +1359,16 @@ class EnquiryCrudController extends CrudController
         'title' => 'Assigned Long Enquiries',
         'gridConfig' => [
             'columns' => [
-                ['field' => 'serial_no', 'headerName' => 'S.No'],
-                ['field' => 'enquiry_no', 'headerName' => 'Enquiry No'],
-                ['field' => 'enquiry_date', 'headerName' => 'Enquiry Date'],
-                ['field' => 'oem_enquiry_no', 'headerName' => 'OEM Enquiry No'],
-                ['field' => 'oem_enquiry_date', 'headerName' => 'OEM Enquiry Date'],
-                ['field' => 'oem_long_enquiry_no', 'headerName' => 'OEM Long Enquiry No'],
-                ['field' => 'oem_long_enquiry_date', 'headerName' => 'OEM Long Enquiry Date'],
-                ['field' => 'enquiry_assign_date', 'headerName' => 'Assign Date'],
+                ['field' => 'serial_no', 'headerName' => 'S.No.'],
+                ['field' => 'x8_enquiry_no', 'headerName' => 'X8 Enquiry No.'],
+                ['field' => 'x8_enquiry_date', 'headerName' => 'X8 Enquiry Date'],
+                ['field' => 'X8_enquiry_assign_date', 'headerName' => 'X8 Enquiry Assign Date'],
+                // ['field' => 'oem_enquiry_no', 'headerName' => 'OEM Enquiry No.'],
+                // ['field' => 'oem_enquiry_date', 'headerName' => 'OEM Enquiry Date'],
                 ['field' => 'oem_enquiry_assign_date', 'headerName' => 'OEM Assign Date'],
+                ['field' => 'oem_long_enquiry_no', 'headerName' => 'OEM Long Enquiry No.'],
+                ['field' => 'oem_long_enquiry_date', 'headerName' => 'OEM Long Enquiry Date'],
+                ['field' => 'oem_long_enquiry_assign_date', 'headerName' => 'OEM Long Enquiry Assign Date'],
                 ['field' => 'segment_name', 'headerName' => 'Segment'],
                 ['field' => 'model_name', 'headerName' => 'Model'],
                 ['field' => 'variant_name', 'headerName' => 'Variant'],
@@ -1356,7 +1381,7 @@ class EnquiryCrudController extends CrudController
                 ['field' => 'enquiry_type', 'headerName' => 'Enquiry Type'],
                 ['field' => 'source_name', 'headerName' => 'Source'],
                 ['field' => 'sub_source', 'headerName' => 'Sub Source'],
-                ['field' => 'likely_purchase_date', 'headerName' => 'Likely Purchase Date'],
+                ['field' => 'likely_purchase_in_days', 'headerName' => 'Likely Purchase In Days'],
                 ['field' => 'fuel_type', 'headerName' => 'Fuel Type'],
                 ['field' => 'transmission', 'headerName' => 'Transmission'],
                 ['field' => 'drivetrain', 'headerName' => 'Drivetrain'],
@@ -1375,7 +1400,7 @@ class EnquiryCrudController extends CrudController
                 ['field' => 'customer_type', 'headerName' => 'Customer Type'],
                 ['field' => 'occupation_sub_type', 'headerName' => 'Occupation Sub Type'],
                 ['field' => 'company_name', 'headerName' => 'Company Name'],
-                ['field' => 'dob', 'headerName' => 'DOB'],
+                ['field' => 'dob', 'headerName' => 'D.O.B.'],
                 ['field' => 'marital_status', 'headerName' => 'Marital Status'],
                 ['field' => 'marriage_date', 'headerName' => 'Marriage Date'],
                 ['field' => 'age_group', 'headerName' => 'Age Group'],
@@ -1383,24 +1408,25 @@ class EnquiryCrudController extends CrudController
                 ['field' => 'km_travelled_daily', 'headerName' => 'KM Daily'],
                 ['field' => 'application_type', 'headerName' => 'Application Type'],
                 ['field' => 'application', 'headerName' => 'Application'],
-                ['field' => 'zipcode', 'headerName' => 'Zipcode'],
+                ['field' => 'pincode', 'headerName' => 'Pincode'],
+                ['field' => 'address', 'headerName' => 'Address'],
                 ['field' => 'has_ev', 'headerName' => 'Has EV'],
                 ['field' => 'purchase_type', 'headerName' => 'Purchase Type'],
                 ['field' => 'remarks', 'headerName' => 'Remarks'],
-                ['field' => 'exchange_make', 'headerName' => 'Exchange Make'],
-                ['field' => 'exchange_model', 'headerName' => 'Exchange Model'],
-                ['field' => 'exchange_variant', 'headerName' => 'Exchange Variant'],
+                ['field' => 'consider_make', 'headerName' => 'consider Make'],
+                ['field' => 'consider_model', 'headerName' => 'consider Model'],
+                ['field' => 'consider_variant', 'headerName' => 'consider Variant'],
                 ['field' => 'dms_enquiry_stage', 'headerName' => 'DMS Stage'],
                 ['field' => 'cre_enquiry_stage', 'headerName' => 'CRE Stage'],
                 ['field' => 'cre_next_fup_date', 'headerName' => 'Next FUP Date'],
                 ['field' => 'cre_next_fup_time', 'headerName' => 'Next FUP Time'],
                 ['field' => 'cre_next_fup_remarks', 'headerName' => 'FUP Remarks'],
-                ['field' => 'quotation_no', 'headerName' => 'Quotation No'],
-                ['field' => 'booking_no', 'headerName' => 'Booking No'],
+                ['field' => 'quotation_no', 'headerName' => 'Quotation No.'],
+                ['field' => 'booking_no', 'headerName' => 'Booking No.'],
                 ['field' => 'booking_date', 'headerName' => 'Booking Date'],
-                ['field' => 'oem_booking_no', 'headerName' => 'OEM Booking No'],
+                ['field' => 'oem_booking_no', 'headerName' => 'OEM Booking No.'],
                 ['field' => 'oem_booking_date', 'headerName' => 'OEM Booking Date'],
-                ['field' => 'oem_otf_no', 'headerName' => 'OEM OTF No'],
+                ['field' => 'oem_otf_no', 'headerName' => 'OEM OTF No.'],
                 ['field' => 'action', 'headerName' => 'Action']
             ],
             'data' => $gridData
@@ -1422,14 +1448,14 @@ class EnquiryCrudController extends CrudController
 
         return [
             'serial_no'                => $index + 1,
-            'enquiry_no'               => $enquiry->enquiry_no ?? '—',
-            'enquiry_date'             => $enquiry->enquiry_date
-                ? Carbon::parse($enquiry->enquiry_date)->format('d-m-Y H:i')
+            'x8_enquiry_no'               => $enquiry->x8_enquiry_no ?? '—',
+            'x8_enquiry_date'             => $enquiry->x8_enquiry_date
+                ? Carbon::parse($enquiry->x8_enquiry_date)->format('d-m-Y H:i')
                 : '—',
-            'oem_enquiry_no'           => $enquiry->oem_enquiry_no ?? '—',
-            'oem_enquiry_date'         => $enquiry->oem_enquiry_date
-                ? Carbon::parse($enquiry->oem_enquiry_date)->format('d-m-Y')
-                : '—',
+            // 'oem_enquiry_no'           => $enquiry->oem_enquiry_no ?? '—',
+            // 'oem_enquiry_date'         => $enquiry->oem_enquiry_date
+            //     ? Carbon::parse($enquiry->oem_enquiry_date)->format('d-m-Y')
+            //     : '—',
             'oem_long_enquiry_no'      => $enquiry->oem_long_enquiry_no ?? '—',
             'oem_long_enquiry_date'    => $enquiry->oem_long_enquiry_date
                 ? Carbon::parse($enquiry->oem_long_enquiry_date)->format('d-m-Y')
@@ -1446,7 +1472,7 @@ class EnquiryCrudController extends CrudController
             'enquiry_type'             => $enquiry->enquiry_type ?? '—',
             'source_name'              => $enquiry->source?->name ?? $enquiry->source_code ?? '—',
             'sub_source'               => $enquiry->sub_source ?? '—',
-            'likely_purchase_date'     => $enquiry->likely_purchase_date ?? '—',
+            'likely_purchase_in_days'     => $enquiry->likely_purchase_in_days ?? '—',
             'fuel_type'                => $enquiry->fuel_type ?? '—',
             'transmission'             => $enquiry->transmission ?? '—',
             'drivetrain'               => $enquiry->drivetrain ?? '—',
@@ -1479,13 +1505,14 @@ class EnquiryCrudController extends CrudController
             'km_travelled_daily'       => $enquiry->km_travelled_daily ?? '—',
             'application_type'         => $enquiry->application_type ?? '—',
             'application'              => $enquiry->application ?? '—',
-            'zipcode'                  => $enquiry->zipcode ?? '—',
+            'pincode'                  => $enquiry->pincode ?? '—',
+            'address'                  => $enquiry->address ?? '—',
             'has_ev'                   => $enquiry->has_ev ?? '—',
             'purchase_type'            => $enquiry->purchase_type ?? '—',
             'remarks'                  => $enquiry->remarks ?? '—',
-            'exchange_make'            => $enquiry->exchange_make ?? '—',
-            'exchange_model'           => $enquiry->exchange_model ?? '—',
-            'exchange_variant'         => $enquiry->exchange_variant ?? '—',
+            'consider_make'            => $enquiry->consider_make ?? '—',
+            'consider_model'           => $enquiry->consider_model ?? '—',
+            'consider_variant'         => $enquiry->consider_variant ?? '—',
             'dms_enquiry_stage'        => $enquiry->dms_enquiry_stage ?? '—',
             'cre_enquiry_stage'        => $enquiry->cre_enquiry_stage ?? '—',
             'cre_next_fup_date'        => $enquiry->cre_next_fup_date
@@ -1515,12 +1542,12 @@ class EnquiryCrudController extends CrudController
         'title' => 'Unassigned Long Enquiries',
         'gridConfig' => [
             'columns' => [
-                ['field' => 'serial_no', 'headerName' => 'S.No'],
-                ['field' => 'enquiry_no', 'headerName' => 'Enquiry No'],
-                ['field' => 'enquiry_date', 'headerName' => 'Enquiry Date'],
-                ['field' => 'oem_enquiry_no', 'headerName' => 'OEM Enquiry No'],
-                ['field' => 'oem_enquiry_date', 'headerName' => 'OEM Enquiry Date'],
-                ['field' => 'oem_long_enquiry_no', 'headerName' => 'OEM Long Enquiry No'],
+                ['field' => 'serial_no', 'headerName' => 'S.No.'],
+                ['field' => 'x8_enquiry_no', 'headerName' => 'X8 Enquiry No.'],
+                ['field' => 'x8_enquiry_date', 'headerName' => 'X8 Enquiry Date'],
+                // ['field' => 'oem_enquiry_no', 'headerName' => 'OEM Enquiry No.'],
+                // ['field' => 'oem_enquiry_date', 'headerName' => 'OEM Enquiry Date'],
+                ['field' => 'oem_long_enquiry_no', 'headerName' => 'OEM Long Enquiry No.'],
                 ['field' => 'oem_long_enquiry_date', 'headerName' => 'OEM Long Enquiry Date'],
                 ['field' => 'segment_name', 'headerName' => 'Segment'],
                 ['field' => 'model_name', 'headerName' => 'Model'],
@@ -1534,7 +1561,7 @@ class EnquiryCrudController extends CrudController
                 ['field' => 'enquiry_type', 'headerName' => 'Enquiry Type'],
                 ['field' => 'source_name', 'headerName' => 'Source'],
                 ['field' => 'sub_source', 'headerName' => 'Sub Source'],
-                ['field' => 'likely_purchase_date', 'headerName' => 'Likely Purchase Date'],
+                ['field' => 'likely_purchase_in_days', 'headerName' => 'Likely Purchase In Days'],
                 ['field' => 'fuel_type', 'headerName' => 'Fuel Type'],
                 ['field' => 'transmission', 'headerName' => 'Transmission'],
                 ['field' => 'drivetrain', 'headerName' => 'Drivetrain'],
@@ -1553,7 +1580,7 @@ class EnquiryCrudController extends CrudController
                 ['field' => 'customer_type', 'headerName' => 'Customer Type'],
                 ['field' => 'occupation_sub_type', 'headerName' => 'Occupation Sub Type'],
                 ['field' => 'company_name', 'headerName' => 'Company Name'],
-                ['field' => 'dob', 'headerName' => 'DOB'],
+                ['field' => 'dob', 'headerName' => 'D.O.B.'],
                 ['field' => 'marital_status', 'headerName' => 'Marital Status'],
                 ['field' => 'marriage_date', 'headerName' => 'Marriage Date'],
                 ['field' => 'age_group', 'headerName' => 'Age Group'],
@@ -1561,24 +1588,25 @@ class EnquiryCrudController extends CrudController
                 ['field' => 'km_travelled_daily', 'headerName' => 'KM Daily'],
                 ['field' => 'application_type', 'headerName' => 'Application Type'],
                 ['field' => 'application', 'headerName' => 'Application'],
-                ['field' => 'zipcode', 'headerName' => 'Zipcode'],
+                ['field' => 'pincode', 'headerName' => 'Pincode'],
+                ['field' => 'address', 'headerName' => 'Address'],
                 ['field' => 'has_ev', 'headerName' => 'Has EV'],
                 ['field' => 'purchase_type', 'headerName' => 'Purchase Type'],
                 ['field' => 'remarks', 'headerName' => 'Remarks'],
-                ['field' => 'exchange_make', 'headerName' => 'Exchange Make'],
-                ['field' => 'exchange_model', 'headerName' => 'Exchange Model'],
-                ['field' => 'exchange_variant', 'headerName' => 'Exchange Variant'],
+                ['field' => 'consider_make', 'headerName' => 'Consideration Make'],
+                ['field' => 'consider_model', 'headerName' => 'Consideration Model'],
+                ['field' => 'consider_variant', 'headerName' => 'Consideration Variant'],
                 ['field' => 'dms_enquiry_stage', 'headerName' => 'DMS Stage'],
                 ['field' => 'cre_enquiry_stage', 'headerName' => 'CRE Stage'],
                 ['field' => 'cre_next_fup_date', 'headerName' => 'Next FUP Date'],
                 ['field' => 'cre_next_fup_time', 'headerName' => 'Next FUP Time'],
                 ['field' => 'cre_next_fup_remarks', 'headerName' => 'FUP Remarks'],
-                ['field' => 'quotation_no', 'headerName' => 'Quotation No'],
-                ['field' => 'booking_no', 'headerName' => 'Booking No'],
+                ['field' => 'quotation_no', 'headerName' => 'Quotation No.'],
+                ['field' => 'booking_no', 'headerName' => 'Booking No.'],
                 ['field' => 'booking_date', 'headerName' => 'Booking Date'],
-                ['field' => 'oem_booking_no', 'headerName' => 'OEM Booking No'],
+                ['field' => 'oem_booking_no', 'headerName' => 'OEM Booking No.'],
                 ['field' => 'oem_booking_date', 'headerName' => 'OEM Booking Date'],
-                ['field' => 'oem_otf_no', 'headerName' => 'OEM OTF No'],
+                ['field' => 'oem_otf_no', 'headerName' => 'OEM OTF No.'],
                 ['field' => 'action', 'headerName' => 'Action']
             ],
             'data' => $gridData
@@ -1600,24 +1628,28 @@ class EnquiryCrudController extends CrudController
 
         return [
             'serial_no'                => $index + 1,
-            'enquiry_no'               => $enquiry->enquiry_no ?? '—',
-            'enquiry_date'             => $enquiry->enquiry_date
-                ? Carbon::parse($enquiry->enquiry_date)->format('d-m-Y H:i')
+            'x8_enquiry_no'               => $enquiry->x8_enquiry_no ?? '—',
+            'x8_enquiry_date'             => $enquiry->x8_enquiry_date
+                ? Carbon::parse($enquiry->x8_enquiry_date)->format('d-m-Y H:i')
                 : '—',
-            'oem_enquiry_no'           => $enquiry->oem_enquiry_no ?? '—',
-            'oem_enquiry_date'         => $enquiry->oem_enquiry_date
-                ? Carbon::parse($enquiry->oem_enquiry_date)->format('d-m-Y')
-                : '—',
-            'oem_quick_enquiry_no'     => $enquiry->oem_quick_enquiry_no ?? '—',
-            'oem_quick_enquiry_date'   => $enquiry->oem_quick_enquiry_date
-                ? Carbon::parse($enquiry->oem_quick_enquiry_date)->format('d-m-Y')
-                : '—',
-            'enquiry_assign_date'      => $enquiry->enquiry_assign_date
-                ? Carbon::parse($enquiry->enquiry_assign_date)->format('d-m-Y')
+            'x8_enquiry_assign_date'      => $enquiry->x8_enquiry_assign_date
+                ? Carbon::parse($enquiry->x8_enquiry_assign_date)->format('d-m-Y')
                 : '—',
             'oem_enquiry_assign_date'  => $enquiry->oem_enquiry_assign_date
                 ? Carbon::parse($enquiry->oem_enquiry_assign_date)->format('d-m-Y')
                 : '—',
+            // 'oem_enquiry_no'           => $enquiry->oem_enquiry_no ?? '—',
+            // 'oem_enquiry_date'         => $enquiry->oem_enquiry_date
+            //     ? Carbon::parse($enquiry->oem_enquiry_date)->format('d-m-Y')
+            //     : '—',
+            'oem_quick_enquiry_no'     => $enquiry->oem_quick_enquiry_no ?? '—',
+            'oem_quick_enquiry_date'   => $enquiry->oem_quick_enquiry_date
+                ? Carbon::parse($enquiry->oem_quick_enquiry_date)->format('d-m-Y')
+               : '—',
+            'oem_quick_enquiry_assign_date'  => $enquiry->oem_quick_enquiry_assign_date
+                ? Carbon::parse($enquiry->oem_quick_enquiry_assign_date)->format('d-m-Y')
+                : '—',
+            
             'segment_name'             => $enquiry->segment_name ?? '—',
             'model_name'               => $enquiry->model?->name ?? $enquiry->model_code ?? '—',
             'variant_name'             => $enquiry->variant?->display_name ?? $enquiry->variant_code ?? '—',
@@ -1630,7 +1662,7 @@ class EnquiryCrudController extends CrudController
             'enquiry_type'             => $enquiry->enquiry_type ?? '—',
             'source_name'              => $enquiry->source?->name ?? $enquiry->source_code ?? '—',
             'sub_source'               => $enquiry->sub_source ?? '—',
-            'likely_purchase_date'     => $enquiry->likely_purchase_date ?? '—',
+            'likely_purchase_in_days'     => $enquiry->likely_purchase_in_days ?? '—',
             'fuel_type'                => $enquiry->fuel_type ?? '—',
             'transmission'             => $enquiry->transmission ?? '—',
             'drivetrain'               => $enquiry->drivetrain ?? '—',
@@ -1663,13 +1695,14 @@ class EnquiryCrudController extends CrudController
             'km_travelled_daily'       => $enquiry->km_travelled_daily ?? '—',
             'application_type'         => $enquiry->application_type ?? '—',
             'application'              => $enquiry->application ?? '—',
-            'zipcode'                  => $enquiry->zipcode ?? '—',
+            'pincode'                  => $enquiry->pincode ?? '—',
+            'address'                  => $enquiry->address ?? '—',
             'has_ev'                   => $enquiry->has_ev ?? '—',
             'purchase_type'            => $enquiry->purchase_type ?? '—',
             'remarks'                  => $enquiry->remarks ?? '—',
-            'exchange_make'            => $enquiry->exchange_make ?? '—',
-            'exchange_model'           => $enquiry->exchange_model ?? '—',
-            'exchange_variant'         => $enquiry->exchange_variant ?? '—',
+            'consider_make'            => $enquiry->consider_make ?? '—',
+            'consider_model'           => $enquiry->consider_model ?? '—',
+            'consider_variant'         => $enquiry->consider_variant ?? '—',
             'dms_enquiry_stage'        => $enquiry->dms_enquiry_stage ?? '—',
             'cre_enquiry_stage'        => $enquiry->cre_enquiry_stage ?? '—',
             'cre_next_fup_date'        => $enquiry->cre_next_fup_date
@@ -1699,15 +1732,18 @@ class EnquiryCrudController extends CrudController
         'title' => 'Assigned Quick Enquiries',
         'gridConfig' => [
             'columns' => [
-                ['field' => 'serial_no', 'headerName' => 'S.No'],
-                ['field' => 'enquiry_no', 'headerName' => 'Enquiry No'],
-                ['field' => 'enquiry_date', 'headerName' => 'Enquiry Date'],
-                ['field' => 'oem_enquiry_no', 'headerName' => 'OEM Enquiry No'],
-                ['field' => 'oem_enquiry_date', 'headerName' => 'OEM Enquiry Date'],
-                ['field' => 'oem_quick_enquiry_no', 'headerName' => 'OEM Quick Enquiry No'],
+                ['field' => 'serial_no', 'headerName' => 'S.No.'],
+                ['field' => 'x8_enquiry_no', 'headerName' => 'X8 Enquiry No.'],
+                ['field' => 'x8_enquiry_date', 'headerName' => 'X8 Enquiry Date'],
+                ['field' => 'x8_enquiry_assign_date', 'headerName' => 'X8 Enquiry Assign Date'],
+                // ['field' => 'oem_enquiry_no', 'headerName' => 'OEM Enquiry No.'],
+                // ['field' => 'oem_enquiry_date', 'headerName' => 'OEM Enquiry Date'],
+                ['field' => 'oem_enquiry_assign_date', 'headerName' => 'OEM Enquiry Assign Date'],
+
+                ['field' => 'oem_quick_enquiry_no', 'headerName' => 'OEM Quick Enquiry No.'],
                 ['field' => 'oem_quick_enquiry_date', 'headerName' => 'OEM Quick Enquiry Date'],
-                ['field' => 'enquiry_assign_date', 'headerName' => 'Assign Date'],
-                ['field' => 'oem_enquiry_assign_date', 'headerName' => 'OEM Assign Date'],
+                ['field' => 'oem_quick_enquiry_assign_date', 'headerName' => 'OEM Quick Enquiry Assign Date'],
+                
                 ['field' => 'segment_name', 'headerName' => 'Segment'],
                 ['field' => 'model_name', 'headerName' => 'Model'],
                 ['field' => 'variant_name', 'headerName' => 'Variant'],
@@ -1720,7 +1756,7 @@ class EnquiryCrudController extends CrudController
                 ['field' => 'enquiry_type', 'headerName' => 'Enquiry Type'],
                 ['field' => 'source_name', 'headerName' => 'Source'],
                 ['field' => 'sub_source', 'headerName' => 'Sub Source'],
-                ['field' => 'likely_purchase_date', 'headerName' => 'Likely Purchase Date'],
+                ['field' => 'likely_purchase_in_days', 'headerName' => 'Likely Purchase In Days'],
                 ['field' => 'fuel_type', 'headerName' => 'Fuel Type'],
                 ['field' => 'transmission', 'headerName' => 'Transmission'],
                 ['field' => 'drivetrain', 'headerName' => 'Drivetrain'],
@@ -1739,7 +1775,7 @@ class EnquiryCrudController extends CrudController
                 ['field' => 'customer_type', 'headerName' => 'Customer Type'],
                 ['field' => 'occupation_sub_type', 'headerName' => 'Occupation Sub Type'],
                 ['field' => 'company_name', 'headerName' => 'Company Name'],
-                ['field' => 'dob', 'headerName' => 'DOB'],
+                ['field' => 'dob', 'headerName' => 'D.O.B.'],
                 ['field' => 'marital_status', 'headerName' => 'Marital Status'],
                 ['field' => 'marriage_date', 'headerName' => 'Marriage Date'],
                 ['field' => 'age_group', 'headerName' => 'Age Group'],
@@ -1747,24 +1783,25 @@ class EnquiryCrudController extends CrudController
                 ['field' => 'km_travelled_daily', 'headerName' => 'KM Daily'],
                 ['field' => 'application_type', 'headerName' => 'Application Type'],
                 ['field' => 'application', 'headerName' => 'Application'],
-                ['field' => 'zipcode', 'headerName' => 'Zipcode'],
+                ['field' => 'pincode', 'headerName' => 'Pincode'],
+                ['field' => 'address', 'headerName' => 'Address'],
                 ['field' => 'has_ev', 'headerName' => 'Has EV'],
                 ['field' => 'purchase_type', 'headerName' => 'Purchase Type'],
                 ['field' => 'remarks', 'headerName' => 'Remarks'],
-                ['field' => 'exchange_make', 'headerName' => 'Exchange Make'],
-                ['field' => 'exchange_model', 'headerName' => 'Exchange Model'],
-                ['field' => 'exchange_variant', 'headerName' => 'Exchange Variant'],
+                ['field' => 'consider_make', 'headerName' => 'Consideration Make'],
+                ['field' => 'consider_model', 'headerName' => 'Consideration Model'],
+                ['field' => 'consider_variant', 'headerName' => 'Consideration Variant'],
                 ['field' => 'dms_enquiry_stage', 'headerName' => 'DMS Stage'],
                 ['field' => 'cre_enquiry_stage', 'headerName' => 'CRE Stage'],
                 ['field' => 'cre_next_fup_date', 'headerName' => 'Next FUP Date'],
                 ['field' => 'cre_next_fup_time', 'headerName' => 'Next FUP Time'],
                 ['field' => 'cre_next_fup_remarks', 'headerName' => 'FUP Remarks'],
-                ['field' => 'quotation_no', 'headerName' => 'Quotation No'],
-                ['field' => 'booking_no', 'headerName' => 'Booking No'],
+                ['field' => 'quotation_no', 'headerName' => 'Quotation No.'],
+                ['field' => 'booking_no', 'headerName' => 'Booking No.'],
                 ['field' => 'booking_date', 'headerName' => 'Booking Date'],
-                ['field' => 'oem_booking_no', 'headerName' => 'OEM Booking No'],
+                ['field' => 'oem_booking_no', 'headerName' => 'OEM Booking No.'],
                 ['field' => 'oem_booking_date', 'headerName' => 'OEM Booking Date'],
-                ['field' => 'oem_otf_no', 'headerName' => 'OEM OTF No'],
+                ['field' => 'oem_otf_no', 'headerName' => 'OEM OTF No.'],
                 ['field' => 'action', 'headerName' => 'Action']
             ],
             'data' => $gridData
@@ -1786,14 +1823,14 @@ class EnquiryCrudController extends CrudController
 
         return [
             'serial_no'                => $index + 1,
-            'enquiry_no'               => $enquiry->enquiry_no ?? '—',
-            'enquiry_date'             => $enquiry->enquiry_date
-                ? Carbon::parse($enquiry->enquiry_date)->format('d-m-Y H:i')
-                : '—',
-            'oem_enquiry_no'           => $enquiry->oem_enquiry_no ?? '—',
-            'oem_enquiry_date'         => $enquiry->oem_enquiry_date
-                ? Carbon::parse($enquiry->oem_enquiry_date)->format('d-m-Y')
-                : '—',
+            'x8_enquiry_no'               => $enquiry->x8_enquiry_no ?? '—',
+            'x8_enquiry_date'             => $enquiry->x8_enquiry_date
+                ? Carbon::parse($enquiry->x8_enquiry_date)->format('d-m-Y H:i')
+                 : '—',
+            // 'oem_enquiry_no'           => $enquiry->oem_enquiry_no ?? '—',
+            // 'oem_enquiry_date'         => $enquiry->oem_enquiry_date
+            //     ? Carbon::parse($enquiry->oem_enquiry_date)->format('d-m-Y')
+            //     : '—',
             'oem_quick_enquiry_no'     => $enquiry->oem_quick_enquiry_no ?? '—',
             'oem_quick_enquiry_date'   => $enquiry->oem_quick_enquiry_date
                 ? Carbon::parse($enquiry->oem_quick_enquiry_date)->format('d-m-Y')
@@ -1810,7 +1847,7 @@ class EnquiryCrudController extends CrudController
             'enquiry_type'             => $enquiry->enquiry_type ?? '—',
             'source_name'              => $enquiry->source?->name ?? $enquiry->source_code ?? '—',
             'sub_source'               => $enquiry->sub_source ?? '—',
-            'likely_purchase_date'     => $enquiry->likely_purchase_date ?? '—',
+            'likely_purchase_in_days'     => $enquiry->likely_purchase_in_days ?? '—',
             'fuel_type'                => $enquiry->fuel_type ?? '—',
             'transmission'             => $enquiry->transmission ?? '—',
             'drivetrain'               => $enquiry->drivetrain ?? '—',
@@ -1843,13 +1880,14 @@ class EnquiryCrudController extends CrudController
             'km_travelled_daily'       => $enquiry->km_travelled_daily ?? '—',
             'application_type'         => $enquiry->application_type ?? '—',
             'application'              => $enquiry->application ?? '—',
-            'zipcode'                  => $enquiry->zipcode ?? '—',
+            'pincode'                  => $enquiry->pincode ?? '—',
+            'address'                  => $enquiry->address ?? '—',
             'has_ev'                   => $enquiry->has_ev ?? '—',
             'purchase_type'            => $enquiry->purchase_type ?? '—',
             'remarks'                  => $enquiry->remarks ?? '—',
-            'exchange_make'            => $enquiry->exchange_make ?? '—',
-            'exchange_model'           => $enquiry->exchange_model ?? '—',
-            'exchange_variant'         => $enquiry->exchange_variant ?? '—',
+            'consider_make'            => $enquiry->consider_make ?? '—',
+            'consider_model'           => $enquiry->consider_model ?? '—',
+            'consider_variant'         => $enquiry->consider_variant ?? '—',
             'dms_enquiry_stage'        => $enquiry->dms_enquiry_stage ?? '—',
             'cre_enquiry_stage'        => $enquiry->cre_enquiry_stage ?? '—',
             'cre_next_fup_date'        => $enquiry->cre_next_fup_date
@@ -1879,12 +1917,12 @@ class EnquiryCrudController extends CrudController
         'title' => 'Unassigned Quick Enquiries',
         'gridConfig' => [
             'columns' => [
-                ['field' => 'serial_no', 'headerName' => 'S.No'],
-                ['field' => 'enquiry_no', 'headerName' => 'Enquiry No'],
-                ['field' => 'enquiry_date', 'headerName' => 'Enquiry Date'],
-                ['field' => 'oem_enquiry_no', 'headerName' => 'OEM Enquiry No'],
-                ['field' => 'oem_enquiry_date', 'headerName' => 'OEM Enquiry Date'],
-                ['field' => 'oem_quick_enquiry_no', 'headerName' => 'OEM Quick Enquiry No'],
+                ['field' => 'serial_no', 'headerName' => 'S.No.'],
+                ['field' => 'x8_enquiry_no', 'headerName' => 'X8 Enquiry No.'],
+                ['field' => 'x8_enquiry_date', 'headerName' => 'X8 Enquiry Date'],
+                // ['field' => 'oem_enquiry_no', 'headerName' => 'OEM Enquiry No.'],
+                // ['field' => 'oem_enquiry_date', 'headerName' => 'OEM Enquiry Date'],
+                ['field' => 'oem_quick_enquiry_no', 'headerName' => 'OEM Quick Enquiry No.'],
                 ['field' => 'oem_quick_enquiry_date', 'headerName' => 'OEM Quick Enquiry Date'],
                 ['field' => 'segment_name', 'headerName' => 'Segment'],
                 ['field' => 'model_name', 'headerName' => 'Model'],
@@ -1898,7 +1936,7 @@ class EnquiryCrudController extends CrudController
                 ['field' => 'enquiry_type', 'headerName' => 'Enquiry Type'],
                 ['field' => 'source_name', 'headerName' => 'Source'],
                 ['field' => 'sub_source', 'headerName' => 'Sub Source'],
-                ['field' => 'likely_purchase_date', 'headerName' => 'Likely Purchase Date'],
+                ['field' => 'likely_purchase_in_days', 'headerName' => 'Likely Purchase In Days'],
                 ['field' => 'fuel_type', 'headerName' => 'Fuel Type'],
                 ['field' => 'transmission', 'headerName' => 'Transmission'],
                 ['field' => 'drivetrain', 'headerName' => 'Drivetrain'],
@@ -1917,7 +1955,7 @@ class EnquiryCrudController extends CrudController
                 ['field' => 'customer_type', 'headerName' => 'Customer Type'],
                 ['field' => 'occupation_sub_type', 'headerName' => 'Occupation Sub Type'],
                 ['field' => 'company_name', 'headerName' => 'Company Name'],
-                ['field' => 'dob', 'headerName' => 'DOB'],
+                ['field' => 'dob', 'headerName' => 'D.O.B.'],
                 ['field' => 'marital_status', 'headerName' => 'Marital Status'],
                 ['field' => 'marriage_date', 'headerName' => 'Marriage Date'],
                 ['field' => 'age_group', 'headerName' => 'Age Group'],
@@ -1925,24 +1963,25 @@ class EnquiryCrudController extends CrudController
                 ['field' => 'km_travelled_daily', 'headerName' => 'KM Daily'],
                 ['field' => 'application_type', 'headerName' => 'Application Type'],
                 ['field' => 'application', 'headerName' => 'Application'],
-                ['field' => 'zipcode', 'headerName' => 'Zipcode'],
+                ['field' => 'pincode', 'headerName' => 'Pincode'],
+                ['field' => 'address', 'headerName' => 'Address'],
                 ['field' => 'has_ev', 'headerName' => 'Has EV'],
                 ['field' => 'purchase_type', 'headerName' => 'Purchase Type'],
                 ['field' => 'remarks', 'headerName' => 'Remarks'],
-                ['field' => 'exchange_make', 'headerName' => 'Exchange Make'],
-                ['field' => 'exchange_model', 'headerName' => 'Exchange Model'],
-                ['field' => 'exchange_variant', 'headerName' => 'Exchange Variant'],
+                ['field' => 'consider_make', 'headerName' => 'Consideration Make'],
+                ['field' => 'consider_model', 'headerName' => 'Consideration Model'],
+                ['field' => 'consider_variant', 'headerName' => 'Consideration Variant'],
                 ['field' => 'dms_enquiry_stage', 'headerName' => 'DMS Stage'],
                 ['field' => 'cre_enquiry_stage', 'headerName' => 'CRE Stage'],
                 ['field' => 'cre_next_fup_date', 'headerName' => 'Next FUP Date'],
                 ['field' => 'cre_next_fup_time', 'headerName' => 'Next FUP Time'],
                 ['field' => 'cre_next_fup_remarks', 'headerName' => 'FUP Remarks'],
-                ['field' => 'quotation_no', 'headerName' => 'Quotation No'],
-                ['field' => 'booking_no', 'headerName' => 'Booking No'],
+                ['field' => 'quotation_no', 'headerName' => 'Quotation No.'],
+                ['field' => 'booking_no', 'headerName' => 'Booking No.'],
                 ['field' => 'booking_date', 'headerName' => 'Booking Date'],
-                ['field' => 'oem_booking_no', 'headerName' => 'OEM Booking No'],
+                ['field' => 'oem_booking_no', 'headerName' => 'OEM Booking No.'],
                 ['field' => 'oem_booking_date', 'headerName' => 'OEM Booking Date'],
-                ['field' => 'oem_otf_no', 'headerName' => 'OEM OTF No'],
+                ['field' => 'oem_otf_no', 'headerName' => 'OEM OTF No.'],
                 ['field' => 'action', 'headerName' => 'Action']
             ],
             'data' => $gridData

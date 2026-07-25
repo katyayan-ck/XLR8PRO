@@ -74,7 +74,7 @@
     let gridApi;
 
     const columnDefs = [
-        { field: 'booking_no', headerName: 'Booking No', pinned: 'left', width: 150 },
+        { field: 'booking_no', headerName: 'Booking No.', pinned: 'left', width: 150 },
         { field: 'booking_date', headerName: 'Booking Date', width: 130 },
         { field: 'inv_date', headerName: 'Invoice Date', width: 130 },
         { field: 'branch_id', headerName: 'Branch', width: 160 },
@@ -87,7 +87,7 @@
         { field: 'mobile', headerName: 'Mobile', width: 140 },
         { field: 'collector_name', headerName: 'Collector', width: 180 },
         { field: 'financier', headerName: 'Financier', width: 160 },
-        { field: 'chassis_no', headerName: 'Chassis No', width: 150 },
+        { field: 'chassis_no', headerName: 'Chassis No.', width: 150 },
         { field: 'del_date', headerName: 'Delivery Date', width: 130 },
         { field: 'accessories', headerName: 'Accessories', width: 180 },
         {

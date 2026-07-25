@@ -57,7 +57,7 @@ class GraphEdgeCrudController extends CrudController
             'title' => 'All Graph Edges',
             'gridConfig' => [
                 'columns' => [
-                    ['field' => 'serial_no',   'headerName' => 'S.No'],
+                    ['field' => 'serial_no',   'headerName' => 'S.No.'],
                     ['field' => 'from_node',   'headerName' => 'From Node'],
                     ['field' => 'to_node',     'headerName' => 'To Node'],
                     ['field' => 'type',        'headerName' => 'Type'],

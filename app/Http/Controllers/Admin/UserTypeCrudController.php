@@ -61,7 +61,7 @@ class UserTypeCrudController extends CrudController
             'title' => 'All User Types',
             'gridConfig' => [
                 'columns' => [
-                    ['field' => 'serial_no',     'headerName' => 'S.No'],
+                    ['field' => 'serial_no',     'headerName' => 'S.No.'],
                     ['field' => 'code',          'headerName' => 'Code'],
                     ['field' => 'display_name',  'headerName' => 'Name'],
                     ['field' => 'description',   'headerName' => 'Description'],

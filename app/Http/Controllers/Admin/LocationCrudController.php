@@ -86,7 +86,7 @@ class LocationCrudController extends CrudController
             'title' => 'All Locations',
             'gridConfig' => [
                 'columns' => [
-                    ['field' => 'serial_no', 'headerName' => 'S.No'],
+                    ['field' => 'serial_no', 'headerName' => 'S.No.'],
                     ['field' => 'branch',      'headerName' => 'Branch Code'],
                     ['field' => 'code',      'headerName' => 'Code'],
                     ['field' => 'name',      'headerName' => 'Name'],

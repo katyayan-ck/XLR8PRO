@@ -112,7 +112,7 @@ class RulesUserImporter
     private function extractRowData($worksheet, $row)
     {
         return [
-            'S.No' => $worksheet->getCell("A{$row}")->getValue(),
+            'S.No.' => $worksheet->getCell("A{$row}")->getValue(),
             'Name' => $worksheet->getCell("B{$row}")->getValue(),
             'Email' => $worksheet->getCell("C{$row}")->getValue(),
             'Mobile' => $worksheet->getCell("D{$row}")->getValue(),

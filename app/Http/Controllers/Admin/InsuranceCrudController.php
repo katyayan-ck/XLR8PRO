@@ -35,13 +35,13 @@ class InsuranceCrudController extends CrudController
 
           
             '0' => [
-                'pol_no'                => 'Policy No',
+                'pol_no'                => 'Policy No.',
                 'pol_date'              => 'Created Date',
                 'policy_type'           => 'Policy Type',
                 'pol_tenure'            => 'Policy Tenure',
                 'insured_name'          => 'Insured Name',
                 'mob_no'                => 'Customer Phone',
-                'rgn_no'                => 'Vehicle Reg No',
+                'rgn_no'                => 'Vehicle Reg No.',
                 'yom'                   => 'YOM',
                 'ncb'                   => 'NCB%',
                 'vh_class'              => 'Vehicle Class',
@@ -52,7 +52,7 @@ class InsuranceCrudController extends CrudController
                 'vh_body_type'          => 'Vehicle Body Type',
                 'fuel'                  => 'Fuel Type',
                 'vin'                   => 'VIN',
-                'engine_no'             => 'Engine No',
+                'engine_no'             => 'Engine No.',
                 'created_date'          => 'Created Date',
                 'payment_generation'    => 'Payment Generated',
                 'payment_no'            => 'Payment No.',
@@ -63,7 +63,7 @@ class InsuranceCrudController extends CrudController
                 'net_prem'              => 'Net Premium',
                 'imt23'                 => 'IMT 23',
                 'gross_prem'            => 'Gross Premium',
-                'prev_pol_no'           => 'Previous Policy No',
+                'prev_pol_no'           => 'Previous Policy No.',
                 'prev_insurance_company'=> 'Previous Insurance Company',
                 'own_dmg_cover_start'   => 'Period of Own Damage Cover start',
                 'own_dmg_cover_end'     => 'Period of Own Damage Cover end',

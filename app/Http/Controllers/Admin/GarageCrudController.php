@@ -69,7 +69,7 @@ class GarageCrudController extends CrudController
             'title' => 'All Garages',
             'gridConfig' => [
                 'columns' => [
-                    ['field' => 'serial_no',    'headerName' => 'S.No'],
+                    ['field' => 'serial_no',    'headerName' => 'S.No.'],
                     ['field' => 'name',         'headerName' => 'Garage Name'],
                     ['field' => 'person_name',  'headerName' => 'Associated Person'],
                     ['field' => 'type',         'headerName' => 'Type'],           

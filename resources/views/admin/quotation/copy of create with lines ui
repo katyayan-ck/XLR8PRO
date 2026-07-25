@@ -228,7 +228,7 @@ use App\Services\OrgService;
                     <table class="bill-table mb-3">
 
                         <tr>
-                            <td class="title" width="18%">Enquiry No</td>
+                            <td class="title" width="18%">Enquiry No.</td>
                             <td width="32%">
                                 <input type="text" class="form-control border-0 shadow-none"
                                     value="{{ optional($selectedEnquiry)->enquiry_no }}" readonly>

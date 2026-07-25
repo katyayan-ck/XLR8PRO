@@ -76,7 +76,7 @@
     let gridApi;
 
     const columnDefs = [
-        { field: 'serial_no',           headerName: 'S.No',           width: 80, pinned: 'left' },
+        { field: 'serial_no',           headerName: 'S.No.',           width: 80, pinned: 'left' },
         { field: 'part_number',         headerName: 'Part Number',    pinned: 'left', filter: true, width: 140 },
         { field: 'part_description',    headerName: 'Description',    minWidth: 280, filter: true },
         { field: 'mrp',                 headerName: 'MRP',            width: 110 },

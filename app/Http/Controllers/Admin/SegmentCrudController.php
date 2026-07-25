@@ -59,7 +59,7 @@ class SegmentCrudController extends CrudController
             'title' => 'All Segments',
             'gridConfig' => [
                 'columns' => [
-                    ['field' => 'serial_no', 'headerName' => 'S.No'],
+                    ['field' => 'serial_no', 'headerName' => 'S.No.'],
                     ['field' => 'code', 'headerName' => 'Code'],
                     ['field' => 'name', 'headerName' => 'Segment Name'],
                     ['field' => 'is_active', 'headerName' => 'Active'],

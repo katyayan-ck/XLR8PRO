@@ -189,6 +189,39 @@ use App\Services\OrgService;
             line-height: 15px;
         }
 
+
+
+    }
+
+    /* Select2 fixed height */
+    .select2-container {
+        width: 100% !important;
+    }
+
+    .select2-container--default .select2-selection--multiple {
+        min-height: 32px !important;
+        height: 32px !important;
+        overflow: hidden !important;
+    }
+
+    .select2-container--default .select2-selection__rendered {
+        display: flex !important;
+        align-items: center;
+        height: 30px;
+        overflow: hidden;
+    }
+
+    /* Hide selected chips */
+    .select2-selection__choice {
+        display: none !important;
+    }
+
+    .select2-search--inline {
+        width: 100% !important;
+    }
+
+    .select2-search__field {
+        width: 100% !important;
     }
 
     .row.align-items-stretch {
@@ -346,8 +379,8 @@ use App\Services\OrgService;
         font-weight: bold;
     }
 
-    /* ================= Financer Invoice / Discount Bifurcation — div based ================= */
-    .financer-discount-grid {
+    /* ================= Financier Invoice / Discount Bifurcation — div based ================= */
+    .financier-discount-grid {
         display: grid;
         grid-template-columns: 25% 25% 25% 25%;
         border-left: 1px solid #000;
@@ -355,7 +388,7 @@ use App\Services\OrgService;
         margin-bottom: 15px;
     }
 
-    .financer-discount-grid>div {
+    .financier-discount-grid>div {
         border-right: 1px solid #000;
         border-bottom: 1px solid #000;
         padding: 3px 5px;
@@ -365,7 +398,7 @@ use App\Services\OrgService;
         align-items: center;
     }
 
-    .financer-discount-grid .fd-header {
+    .financier-discount-grid .fd-header {
         background: #d9d9d9;
         font-weight: bold;
         text-align: center;
@@ -373,16 +406,16 @@ use App\Services\OrgService;
         grid-column: span 2;
     }
 
-    .financer-discount-grid .fd-label {
+    .financier-discount-grid .fd-label {
         background: #f2f2f2;
         font-weight: 600;
     }
 
-    .financer-discount-grid .fd-bold input {
+    .financier-discount-grid .fd-bold input {
         font-weight: bold;
     }
 
-    .financer-discount-grid input {
+    .financier-discount-grid input {
         width: 100%;
         border: none;
         background: transparent;
@@ -397,10 +430,17 @@ use App\Services\OrgService;
 
     /* Accessories note line: hidden on screen, shown only in print above the Note box */
     .accessories-note-row {
-        display: none;
-        padding: 2px 5px;
-        font-size: 9px;
+        display: block;
+        padding: 4px 5px;
+        font-size: 10px;
         font-weight: bold;
+        margin-bottom: 8px;
+    }
+
+    #accessories_print {
+        font-weight: normal;
+        white-space: normal;
+        word-break: break-word;
     }
 
     @media print {
@@ -442,8 +482,8 @@ use App\Services\OrgService;
             display: none !important;
         }
 
-        /* Hide Financer Invoice / Discount Bifurcation box while printing */
-        .financer-discount-grid {
+        /* Hide Financier Invoice / Discount Bifurcation box while printing */
+        .financier-discount-grid {
             display: none !important;
         }
 
@@ -459,6 +499,13 @@ use App\Services\OrgService;
         .bill-table {
             width: 100% !important;
         }
+    }
+
+    .quotation-grid input.numeric-only,
+    .quotation-grid input.amount-field,
+    .quotation-summary input,
+    .financier-discount-grid input {
+        text-align: right !important;
     }
 </style>
 
@@ -533,7 +580,7 @@ use App\Services\OrgService;
                     <table class="bill-table mb-3">
 
                         <tr>
-                            <td class="title" width="18%">Enquiry No</td>
+                            <td class="title" width="18%">Enquiry No.</td>
                             <td width="32%">
                                 <input type="text" class="form-control border-0 shadow-none"
                                     value="{{ optional($selectedEnquiry)->enquiry_no }}" readonly>
@@ -730,7 +777,8 @@ use App\Services\OrgService;
                                         </select>
                                     </td>
                                     <td class="cell-amount">
-                                        <input id="accessories_amount" name="accessories_amount" readonly value="0.00">
+                                        <input id="accessories_amount" name="accessories_amount" class="numeric-only"
+                                            readonly value="0.00">
                                     </td>
                                     <td class="cell-label">Shield Scheme</td>
                                     <td class="cell-type">
@@ -808,9 +856,10 @@ use App\Services\OrgService;
                                     <td class="cell-label">Coating</td>
                                     <td class="cell-option">
                                         <select id="coating" name="coating">
+                                            <option value="No Coating">No Coating</option>
                                             <option value="Ceramic">Ceramic</option>
                                             <option value="Graphene">Graphene</option>
-                                            <option value="No Coating">No Coating</option>
+
                                         </select>
                                     </td>
                                     <td class="cell-amount">
@@ -992,9 +1041,7 @@ use App\Services\OrgService;
                                             <option value="NCH to 7.2 kW">NCH to 7.2 kW</option>
                                             <option value="NCH to 11.2 kW">NCH to 11.2 kW</option>
                                             <option value="7.2 kW to 11.2 kW">7.2 kW to 11.2 kW</option>
-                                            <option value="7.2 kW to NCH">7.2 kW to NCH</option>
-                                            <option value="11.2 kW to NCH">11.2 kW to NCH</option>
-                                            <option value="11.2 kW to 7.2 kW">11.2 kW to 7.2 kW</option>
+
                                         </select>
                                     </td>
                                     <td class="cell-amount">
@@ -1042,9 +1089,9 @@ use App\Services\OrgService;
 
                     </div>
 
-                    {{-- ================= Financer Invoice / Discount Bifurcation (hidden on print) =================
+                    {{-- ================= Financier Invoice / Discount Bifurcation (hidden on print) =================
                     --}}
-                    <div class="financer-discount-grid">
+                    <div class="financier-discount-grid">
 
                         <div class="fd-header">FINANCIER INVOICE</div>
                         <div class="fd-header">DISCOUNT BIFURCATION</div>
@@ -1162,6 +1209,7 @@ use App\Services\OrgService;
 {{--
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"> --}}
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 
 <script>
@@ -1197,10 +1245,22 @@ function updateAccessoriesPrintText() {
     let list = [];
 
     $('#accessories option:selected').each(function () {
-        list.push($(this).text());
+
+        let name = $(this).text().trim();
+        let price = parseFloat($(this).data('price') || 0);
+
+        list.push(
+            name.replace(/\(.*?\)/,'').trim() +
+            ' (₹' + price.toLocaleString('en-IN') + ')'
+        );
+
     });
 
     $('#accessories_print').text(list.join(', '));
+
+    // Keep Select2 height fixed
+    $('.select2-search__field')
+        .attr('placeholder', list.length + ' Accessories Selected');
 }
 
 $('#accessories').on(
@@ -1277,7 +1337,7 @@ function num(id) {
 
 }
 
-// Discount fields paired with their Type select — used for the Financer Invoice /
+// Discount fields paired with their Type select — used for the Financier Invoice /
 // Discount Bifurcation boxes (INV type = Invoiced Discount, CN/CN1/CN2 = Credit Note Discount)
 const DISCOUNT_TYPE_PAIRS = [
     ['cash_scheme_oem', 'cash_scheme_oem_type'],
@@ -1341,11 +1401,22 @@ function calculateQuotation() {
         num('cod_charges') +
         num('charger_swapping_amount');
     
-        let tcs = 0;
+        // Financier Invoice / Discount Bifurcation must be computed BEFORE TCS,
+    // because TCS is based on the Finvoice Amount (subtotal - Invoiced Discount),
+    // not on the raw subtotal — matching the Excel formula chain:
+    //   B24 (Total Receivable, Financier box) = subtotal (no TCS)
+    //   B25 (Less INV Discount)              = SUMIF(type,"INV")
+    //   B26 (Finvoice Amount)                = B24 - B25
+    //   D20 (TCS)                            = IF(B26 >= 1000000, B26 * 1%, 0)
+    //   D21 (Total Receivables)              = subtotal + TCS
+    let bifurcation = calculateDiscountBifurcation();
+    let finvoiceAmount = subtotal - bifurcation.invoicedDiscount;
 
-        if (subtotal > 1000000) {
+    let tcs = 0;
 
-            tcs = subtotal * 0.01;
+        if (finvoiceAmount >= 1000000) {
+
+            tcs = finvoiceAmount * 0.01;
 
             $('#tcs')
                 .val(tcs.toFixed(2))
@@ -1395,12 +1466,11 @@ $('#total_discount').val(discount);
 
     $('#net_receivable_summary').val(netReceivable.toFixed(2));
 
-    // Financer Invoice / Discount Bifurcation boxes
-    let bifurcation = calculateDiscountBifurcation();
-
-    $('#fi_total_receivable').val(totalReceivable.toFixed(2));
+    // Financier Invoice box — Total Receivable here is the subtotal WITHOUT TCS
+    // (matches Excel B24 = M12, not D21)
+    $('#fi_total_receivable').val(subtotal.toFixed(2));
     $('#less_inv_discount').val(bifurcation.invoicedDiscount.toFixed(2));
-    $('#finvoice_amount').val((totalReceivable - bifurcation.invoicedDiscount).toFixed(2));
+    $('#finvoice_amount').val(finvoiceAmount.toFixed(2));
 
     $('#invoiced_discount').val(bifurcation.invoicedDiscount.toFixed(2));
     $('#credit_note_discount').val(bifurcation.creditNoteDiscount.toFixed(2));
@@ -1478,14 +1548,16 @@ $(document).ready(function () {
 $(document).ready(function () {
 
     $('#accessories').select2({
+    placeholder: 'Select Accessories',
+    width: '100%',
+    closeOnSelect: false
+}).on('change', function () {
 
-        placeholder: 'Select Accessories',
+    let count = $(this).find('option:selected').length;
 
-        width: '100%',
-
-        closeOnSelect: false
-
-    });
+    $('.select2-search__field')
+        .attr('placeholder', count + ' Accessories Selected');
+});
 
 });
 
@@ -1909,6 +1981,63 @@ $(document).ready(function () {
 
 });
 
+function toggleVltdField() {
+
+    let segment = ($('input[name="segment_code"]').val() || '').trim().toUpperCase();
+
+    if (segment === 'CV') {
+
+        // Commercial Vehicle
+        $('#vltd_device')
+            .val('')
+            .prop('readonly', false)
+            .prop('disabled', false);
+
+        $('#vltd_device').closest('tr').removeClass('print-hide');
+
+    } else {
+
+        // All other segments
+        $('#vltd_device')
+            .val('N/A')
+            .prop('readonly', true)
+            .prop('disabled', true);
+
+        $('#vltd_device').closest('tr').addClass('print-hide');
+    }
+
+    calculateQuotation();
+}
+
+$(document).ready(function () {
+    toggleVltdField();
+});
+
+$('form').on('submit', function (e) {
+
+    let cashOemAmount = num('cash_scheme_oem');
+    let cashOemType = $('#cash_scheme_oem_type').val();
+
+    let bifurcation = calculateDiscountBifurcation();
+    let totalCNDiscount = bifurcation.creditNoteDiscount;
+
+    if (
+        cashOemType === 'INV' &&
+        totalCNDiscount < cashOemAmount
+    ) {
+
+        e.preventDefault();
+
+        Swal.fire({
+            icon: 'error',
+            title: 'Cannot Save Quotation',
+            text: 'Total CN Discount should be equal to or greater than Cash OEM Scheme when Cash OEM Scheme Type is INV.'
+        });
+
+        return false;
+    }
+
+});
 
 
 

@@ -191,6 +191,37 @@ use App\Services\OrgService;
 
     }
 
+    /* Select2 fixed height */
+    .select2-container {
+        width: 100% !important;
+    }
+
+    .select2-container--default .select2-selection--multiple {
+        min-height: 32px !important;
+        height: 32px !important;
+        overflow: hidden !important;
+    }
+
+    .select2-container--default .select2-selection__rendered {
+        display: flex !important;
+        align-items: center;
+        height: 30px;
+        overflow: hidden;
+    }
+
+    /* Hide selected chips */
+    .select2-selection__choice {
+        display: none !important;
+    }
+
+    .select2-search--inline {
+        width: 100% !important;
+    }
+
+    .select2-search__field {
+        width: 100% !important;
+    }
+
     .row.align-items-stretch {
         align-items: stretch;
     }
@@ -346,8 +377,8 @@ use App\Services\OrgService;
         font-weight: bold;
     }
 
-    /* ================= Financer Invoice / Discount Bifurcation — div based ================= */
-    .financer-discount-grid {
+    /* ================= Financier Invoice / Discount Bifurcation — div based ================= */
+    .financier-discount-grid {
         display: grid;
         grid-template-columns: 25% 25% 25% 25%;
         border-left: 1px solid #000;
@@ -355,7 +386,7 @@ use App\Services\OrgService;
         margin-bottom: 15px;
     }
 
-    .financer-discount-grid>div {
+    .financier-discount-grid>div {
         border-right: 1px solid #000;
         border-bottom: 1px solid #000;
         padding: 3px 5px;
@@ -365,7 +396,7 @@ use App\Services\OrgService;
         align-items: center;
     }
 
-    .financer-discount-grid .fd-header {
+    .financier-discount-grid .fd-header {
         background: #d9d9d9;
         font-weight: bold;
         text-align: center;
@@ -373,16 +404,16 @@ use App\Services\OrgService;
         grid-column: span 2;
     }
 
-    .financer-discount-grid .fd-label {
+    .financier-discount-grid .fd-label {
         background: #f2f2f2;
         font-weight: 600;
     }
 
-    .financer-discount-grid .fd-bold input {
+    .financier-discount-grid .fd-bold input {
         font-weight: bold;
     }
 
-    .financer-discount-grid input {
+    .financier-discount-grid input {
         width: 100%;
         border: none;
         background: transparent;
@@ -397,10 +428,17 @@ use App\Services\OrgService;
 
     /* Accessories note line: hidden on screen, shown only in print above the Note box */
     .accessories-note-row {
-        display: none;
-        padding: 2px 5px;
-        font-size: 9px;
+        display: block;
+        padding: 4px 5px;
+        font-size: 10px;
         font-weight: bold;
+        margin-bottom: 8px;
+    }
+
+    #accessories_print {
+        font-weight: normal;
+        white-space: normal;
+        word-break: break-word;
     }
 
     @media print {
@@ -442,8 +480,8 @@ use App\Services\OrgService;
             display: none !important;
         }
 
-        /* Hide Financer Invoice / Discount Bifurcation box while printing */
-        .financer-discount-grid {
+        /* Hide Financier Invoice / Discount Bifurcation box while printing */
+        .financier-discount-grid {
             display: none !important;
         }
 
@@ -459,6 +497,13 @@ use App\Services\OrgService;
         .bill-table {
             width: 100% !important;
         }
+    }
+
+    .quotation-grid input.numeric-only,
+    .quotation-grid input.amount-field,
+    .quotation-summary input,
+    .financier-discount-grid input {
+        text-align: right !important;
     }
 </style>
 
@@ -534,7 +579,7 @@ use App\Services\OrgService;
                     <table class="bill-table mb-3">
 
                         <tr>
-                            <td class="title" width="18%">Enquiry No</td>
+                            <td class="title" width="18%">Enquiry No.</td>
                             <td width="32%">
                                 <input type="text" class="form-control border-0 shadow-none"
                                     value="{{ optional($selectedEnquiry)->enquiry_no }}" readonly>
@@ -570,8 +615,8 @@ use App\Services\OrgService;
                             <td class="title" width="18%">Segment</td>
                             <td width="32%">
                                 <input type="text"
-    value="{{ optional($selectedEnquiry->segment)->name ?? $selectedEnquiry->segment_code }}"
-    readonly>
+                                    value="{{ optional($selectedEnquiry->segment)->name ?? $selectedEnquiry->segment_code }}"
+                                    readonly>
 
                                 <input type="hidden" name="segment_code"
                                     value="{{ optional($selectedEnquiry)->segment_code }}">
@@ -580,8 +625,8 @@ use App\Services\OrgService;
                             <td class="title" width="18%">Model</td>
                             <td width="32%">
                                 <input type="text"
-    value="{{ optional($selectedEnquiry->model)->name ?? $selectedEnquiry->model_code }}"
-    readonly>
+                                    value="{{ optional($selectedEnquiry->model)->name ?? $selectedEnquiry->model_code }}"
+                                    readonly>
 
                                 <input type="hidden" name="model_code"
                                     value="{{ optional($selectedEnquiry)->model_code }}">
@@ -591,11 +636,9 @@ use App\Services\OrgService;
                         <tr>
                             <td class="title">Variant</td>
                             <td>
-                                <input type="text"
-    value="{{ optional($selectedEnquiry->variant)->display_name
+                                <input type="text" value="{{ optional($selectedEnquiry->variant)->display_name
         ?? optional($selectedEnquiry->variant)->custom_name
-        ?? $selectedEnquiry->variant_code }}"
-    readonly>
+        ?? $selectedEnquiry->variant_code }}" readonly>
 
                                 <input type="hidden" name="variant_code"
                                     value="{{ optional($selectedEnquiry)->variant_code }}">
@@ -604,8 +647,8 @@ use App\Services\OrgService;
                             <td class="title">Color</td>
                             <td>
                                 <input type="text"
-    value="{{ optional($selectedEnquiry->color)->name ?? $selectedEnquiry->color_code }}"
-    readonly>
+                                    value="{{ optional($selectedEnquiry->color)->name ?? $selectedEnquiry->color_code }}"
+                                    readonly>
 
                                 <input type="hidden" name="color_code"
                                     value="{{ optional($selectedEnquiry)->color_code }}">
@@ -846,7 +889,8 @@ use App\Services\OrgService;
 
                                     <td class="cell-amount">
 
-                                        <input id="accessories_amount" name="accessories_amount" readonly
+                                        <input id="accessories_amount" name="accessories_amount" class="numeric-only"
+                                            readonly
                                             value="{{ old('accessories_amount', $quotationData['accessories_amount'] ?? '0.00') }}">
 
                                     </td>
@@ -1020,6 +1064,11 @@ use App\Services\OrgService;
 
                                         <select id="coating" name="coating">
 
+                                            <option value="No Coating" {{ old('coating', $quotationData['coating'] ?? ''
+                                                )=='No Coating' ? 'selected' : '' }}>
+                                                No Coating
+                                            </option>
+
                                             <option value="Ceramic" {{ old('coating', $quotationData['coating'] ?? ''
                                                 )=='Ceramic' ? 'selected' : '' }}>
                                                 Ceramic
@@ -1030,10 +1079,7 @@ use App\Services\OrgService;
                                                 Graphene
                                             </option>
 
-                                            <option value="No Coating" {{ old('coating', $quotationData['coating'] ?? ''
-                                                )=='No Coating' ? 'selected' : '' }}>
-                                                No Coating
-                                            </option>
+
 
                                         </select>
 
@@ -1446,23 +1492,7 @@ use App\Services\OrgService;
                                                 7.2 kW to 11.2 kW
                                             </option>
 
-                                            <option value="7.2 kW to NCH" {{ old('charger_swapping',
-                                                $quotationData['charger_swapping'] ?? '' )=='7.2 kW to NCH' ? 'selected'
-                                                : '' }}>
-                                                7.2 kW to NCH
-                                            </option>
 
-                                            <option value="11.2 kW to NCH" {{ old('charger_swapping',
-                                                $quotationData['charger_swapping'] ?? '' )=='11.2 kW to NCH'
-                                                ? 'selected' : '' }}>
-                                                11.2 kW to NCH
-                                            </option>
-
-                                            <option value="11.2 kW to 7.2 kW" {{ old('charger_swapping',
-                                                $quotationData['charger_swapping'] ?? '' )=='11.2 kW to 7.2 kW'
-                                                ? 'selected' : '' }}>
-                                                11.2 kW to 7.2 kW
-                                            </option>
 
                                         </select>
 
@@ -1526,9 +1556,9 @@ use App\Services\OrgService;
 
                     </div>
 
-                    {{-- ================= Financer Invoice / Discount Bifurcation (hidden on print) =================
+                    {{-- ================= Financier Invoice / Discount Bifurcation (hidden on print) =================
                     --}}
-                    <div class="financer-discount-grid">
+                    <div class="financier-discount-grid">
 
                         <div class="fd-header">FINANCIER INVOICE</div>
                         <div class="fd-header">DISCOUNT BIFURCATION</div>
@@ -1563,9 +1593,7 @@ use App\Services\OrgService;
                     </div>
 
                     {{-- ================= Accessories (shown only while printing) ================= --}}
-                    <div class="accessories-note-row">
-                        Accessories:
-                        <span id="accessories_print"
+                    <div class="accessories-note-row"> Accessories: <span id="accessories_print"
                             style="font-weight:normal; display:inline-block; min-width:70%; border-bottom:1px solid #000;">&nbsp;</span>
                     </div>
 
@@ -1681,11 +1709,27 @@ function updateAccessoriesPrintText() {
     let list = [];
 
     $('#accessories option:selected').each(function () {
-        list.push($(this).text());
+
+        let name = $(this).text().replace(/\(.*?\)/, '').trim();
+        let price = parseFloat($(this).data('price')) || 0;
+
+        list.push(name + ' (₹' + price.toLocaleString('en-IN') + ')');
     });
 
     $('#accessories_print').text(list.join(', '));
+
+    $('.select2-search__field')
+        .attr('placeholder', list.length + ' Accessories Selected');
 }
+
+$('#accessories').on('change', function () {
+    updateAccessoriesAmount();
+    updateAccessoriesPrintText();
+});
+
+$(document).ready(function () {
+    updateAccessoriesPrintText();
+});
 
 $('#accessories').on(
     'change',
@@ -1761,7 +1805,7 @@ function num(id) {
 
 }
 
-// Discount fields paired with their Type select — used for the Financer Invoice /
+// Discount fields paired with their Type select — used for the Financier Invoice /
 // Discount Bifurcation boxes (INV type = Invoiced Discount, CN/CN1/CN2 = Credit Note Discount)
 const DISCOUNT_TYPE_PAIRS = [
     ['cash_scheme_oem', 'cash_scheme_oem_type'],
@@ -1825,11 +1869,22 @@ function calculateQuotation() {
         num('cod_charges') +
         num('charger_swapping_amount');
     
-        let tcs = 0;
+    // Financier Invoice / Discount Bifurcation must be computed BEFORE TCS,
+    // because TCS is based on the Finvoice Amount (subtotal - Invoiced Discount),
+    // not on the raw subtotal — matching the Excel formula chain:
+    //   B24 (Total Receivable, Financier box) = subtotal (no TCS)
+    //   B25 (Less INV Discount)              = SUMIF(type,"INV")
+    //   B26 (Finvoice Amount)                = B24 - B25
+    //   D20 (TCS)                            = IF(B26 >= 1000000, B26 * 1%, 0)
+    //   D21 (Total Receivables)              = subtotal + TCS
+    let bifurcation = calculateDiscountBifurcation();
+    let finvoiceAmount = subtotal - bifurcation.invoicedDiscount;
 
-        if (subtotal > 1000000) {
+    let tcs = 0;
 
-            tcs = subtotal * 0.01;
+        if (finvoiceAmount >= 1000000) {
+
+            tcs = finvoiceAmount * 0.01;
 
             $('#tcs')
                 .val(tcs.toFixed(2))
@@ -1879,12 +1934,11 @@ function calculateQuotation() {
 
     $('#net_receivable_summary').val(netReceivable.toFixed(2));
 
-    // Financer Invoice / Discount Bifurcation boxes
-    let bifurcation = calculateDiscountBifurcation();
-
-    $('#fi_total_receivable').val(totalReceivable.toFixed(2));
+    // Financier Invoice box — Total Receivable here is the subtotal WITHOUT TCS
+    // (matches Excel B24 = M12, not D21)
+    $('#fi_total_receivable').val(subtotal.toFixed(2));
     $('#less_inv_discount').val(bifurcation.invoicedDiscount.toFixed(2));
-    $('#finvoice_amount').val((totalReceivable - bifurcation.invoicedDiscount).toFixed(2));
+    $('#finvoice_amount').val(finvoiceAmount.toFixed(2));
 
     $('#invoiced_discount').val(bifurcation.invoicedDiscount.toFixed(2));
     $('#credit_note_discount').val(bifurcation.creditNoteDiscount.toFixed(2));
@@ -1962,14 +2016,16 @@ $(document).ready(function () {
 $(document).ready(function () {
 
     $('#accessories').select2({
+    placeholder: 'Select Accessories',
+    width: '100%',
+    closeOnSelect: false
+}).on('change', function () {
 
-        placeholder: 'Select Accessories',
+    let count = $(this).find('option:selected').length;
 
-        width: '100%',
-
-        closeOnSelect: false
-
-    });
+    $('.select2-search__field')
+        .attr('placeholder', count + ' Accessories Selected');
+});
 
 });
 
@@ -2426,6 +2482,38 @@ $(document).ready(function () {
 
 });
 
+$(document).ready(function () {
+
+    $('#accessories').trigger('change');
+
+});
+
+function toggleVltdField() {
+
+    let segment = ($('input[name="segment_code"]').val() || '').trim().toUpperCase();
+
+    if (segment === 'CV') {
+
+        $('#vltd_device')
+            .prop('readonly', false)
+            .prop('disabled', false);
+
+        if ($('#vltd_device').val() === 'N/A') {
+            $('#vltd_device').val('');
+        }
+
+    } else {
+
+        $('#vltd_device')
+            .val('N/A')
+            .prop('readonly', true)
+            .prop('disabled', false);   // readonly enough hai
+    }
+}
+
+$(document).ready(function () {
+    toggleVltdField();
+});
 
 
 

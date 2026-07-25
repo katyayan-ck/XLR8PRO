@@ -68,7 +68,7 @@ class DivisionCrudController extends CrudController
             'title' => 'All Divisions',
             'gridConfig' => [
                 'columns' => [
-                    ['field' => 'serial_no',     'headerName' => 'S.No'],
+                    ['field' => 'serial_no',     'headerName' => 'S.No.'],
                     ['field' => 'dept_code',    'headerName' => 'Department'],
                     ['field' => 'code',          'headerName' => 'Code'],
                     ['field' => 'name',          'headerName' => 'Division Name'],

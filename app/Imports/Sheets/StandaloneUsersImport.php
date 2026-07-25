@@ -50,8 +50,8 @@ class StandaloneUsersImport implements ToCollection, WithHeadingRow
 
     private function derivePersonCode(array $row): string
     {
-        $pan = $this->n($this->getValue($row, ['pan_no', 'PAN No']));
-        $aadhaar = $this->n($this->getValue($row, ['aadhaar_no', 'Aadhaar No']));
+        $pan = $this->n($this->getValue($row, ['pan_no', 'PAN No.']));
+        $aadhaar = $this->n($this->getValue($row, ['aadhaar_no', 'Aadhaar No.']));
         if ($pan) return strtoupper($pan);
         if ($aadhaar) return strtoupper($aadhaar);
 
@@ -77,10 +77,10 @@ class StandaloneUsersImport implements ToCollection, WithHeadingRow
             'middle_name'  => $middleName,
             'last_name'    => $lastName,
             'gender'       => $this->s($this->getValue($row, ['gender', 'Gender'])),
-            'dob'          => $this->parseDate($this->getValue($row, ['date_of_birth', 'Date of Birth'])),
+            'dob'          => $this->parseDate($this->getValue($row, ['date_of_birth', 'D.O.B.'])),
             'marital_status'=> $this->s($this->getValue($row, ['marital_status', 'Marital Status'])),
-            'pan_no'       => $this->n($this->getValue($row, ['pan_no', 'PAN No'])),
-            'aadhaar_no'   => $this->n($this->getValue($row, ['aadhaar_no', 'Aadhaar No'])),
+            'pan_no'       => $this->n($this->getValue($row, ['pan_no', 'PAN No.'])),
+            'aadhaar_no'   => $this->n($this->getValue($row, ['aadhaar_no', 'Aadhaar No.'])),
             'created_at'   => $now,
             'updated_at'   => $now,
         ];

@@ -95,7 +95,7 @@
         else if (col.headerName === 'Bookings') headerClass = 'group-booking';
         else if (col.headerName === 'PENDING ACTIONS') headerClass = 'group-pending';
 
-        const isSnoColumn = col.field === 'sno' || col.headerName?.toLowerCase().includes('s.no');
+        const isSnoColumn = col.field === 'sno' || col.headerName?.toLowerCase().includes('S.No.');
 
         const columnDef = {
             headerName: col.headerName,
