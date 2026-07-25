@@ -9,6 +9,24 @@ use App\Services\OrgService;
 @push('after_styles')
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
 <style>
+    .header-logo-left img {
+        height: 75px;
+    }
+
+    .header-logo-right img {
+        max-height: 85px;
+        max-width: 170px;
+    }
+
+    .header-title h3 {
+        margin-bottom: 4px;
+    }
+
+    .header-title h4 {
+        margin-top: 8px;
+        font-weight: bold;
+    }
+
     @media print {
         select {
             appearance: none !important;
@@ -517,57 +535,59 @@ use App\Services\OrgService;
     <div class="container-fluid">
 
         <div class="card shadow-sm mb-3">
+            <div class="card-body py-2 px-3">
 
-            <div class="card-body p-3">
+                @php
+                $segment = strtoupper(optional($selectedEnquiry)->segment_code);
+
+                if ($segment == 'LMM') {
+                $mahindraLogo = asset('images/mahindra-lmm-logo.png');
+                } elseif ($segment == 'BEV') {
+                $mahindraLogo = asset('images/mahindra-ev-logo.png');
+                } else {
+                // Commercial / Personal Vehicle
+                $mahindraLogo = asset('images/mahindra-pv-cv-logo.png');
+                }
+                @endphp
 
                 <div class="row align-items-center">
 
-                    <div class="col-md-2 text-center">
+                    <!-- Left Logo -->
+                    <div class="col-2 text-center">
+                        <img src="{{ asset('images/bikaner_logo.png') }}" style="height:75px;">
+                    </div>
 
-                        <img src="{{ asset('images/bikaner_logo.jpg') }}" style="height:75px;">
+                    <!-- Center Text -->
+                    <div class="col-8 text-center">
+
+                        <h3 class="fw-bold mb-1">
+                            BIKANER MOTORS PRIVATE LIMITED
+                        </h3>
+
+                        <div style="font-size:13px;">
+                            Regd. Office : Sunderi Chhabil Mansion, NH-11,
+                            Jaipur Road, P.O. Udasar, Bikaner-334022
+                        </div>
+
+                        <div style="font-size:13px;">
+                            Branch Office : 6th KM Stone,
+                            Ratangarh Road, Churu (Raj.)
+                        </div>
+
+                        <h4 class="mt-2 mb-0 fw-bold text-uppercase">
+                            Vehicle Quotation
+                        </h4>
 
                     </div>
 
-                    <div class="col-md-10 text-center">
-
-                        <h2 class="mb-1 fw-bold">
-                            BIKANER MOTORS PRIVATE LIMITED
-                        </h2>
-
-                        <div style="font-size:14px">
-
-                            <strong>Regd. Office :</strong>
-
-                            Sunderi Chhabil Mansion,
-                            NH-11,
-                            Jaipur Road,
-                            P.O. Udasar,
-                            Bikaner-334022
-
-                        </div>
-
-                        <div style="font-size:14px">
-
-                            <strong>Branch Office :</strong>
-
-                            6th KM Stone,
-                            Ratangarh Road,
-                            Churu (Raj.)
-
-                        </div>
-
-                        <h4 class="mt-2 text-uppercase">
-
-                            Vehicle Quotation
-
-                        </h4>
-
+                    <!-- Right Logo -->
+                    <div class="col-2 text-center">
+                        <img src="{{ $mahindraLogo }}" style="max-width:110px; max-height:60px;">
                     </div>
 
                 </div>
 
             </div>
-
         </div>
 
         <form method="POST" action="{{ route('quotation.store') }}" enctype="multipart/form-data">
@@ -582,8 +602,7 @@ use App\Services\OrgService;
                         <tr>
                             <td class="title" width="18%">Enquiry No.</td>
                             <td width="32%">
-                                <input type="text" class="form-control border-0 shadow-none"
-                                    value="{{ optional($selectedEnquiry)->enquiry_no }}" readonly>
+                                <input type="text" value=" {{ optional($selectedEnquiry)->enquiry_no }}" readonly>
 
                                 <input type="hidden" name="enquiry_no"
                                     value="{{ optional($selectedEnquiry)->enquiry_no }}">
@@ -591,7 +610,7 @@ use App\Services\OrgService;
 
                             <td class="title" width="18%">Customer Name</td>
                             <td width="32%">
-                                <input type="text" id="customer_name" class="form-control border-0 shadow-none"
+                                <input type="text" id="customer_name"
                                     value="{{ optional($selectedEnquiry)->full_name }}" readonly>
                             </td>
                         </tr>
@@ -599,11 +618,26 @@ use App\Services\OrgService;
                         <tr>
                             <td class="title">Mobile Number</td>
                             <td>
-                                <input type="text" id="mobile" class="form-control border-0 shadow-none"
-                                    value="{{ optional($selectedEnquiry)->mobile }}" readonly>
+                                <input type="text" value="{{ optional($selectedEnquiry)->mobile }}" readonly>
                             </td>
 
 
+
+                            <td class="title">Care Of Name</td>
+                            <td>
+                                <div class="input-group">
+                                    <select name="careof" id="careof" class="form-select2" style="max-width: 80px;">
+                                        <option value="">Select</option>
+                                        <option value="1">Son of</option>
+                                        <option value="2">Daughter of</option>
+                                        <option value="3">Married to</option>
+                                        <option value="4">Guardian Name</option>
+                                    </select>
+
+                                    <input type="text" name="careofname" id="careofname" placeholder="Enter Name"
+                                        value="{{ old('careofname') }}">
+                                </div>
+                            </td>
                         </tr>
 
                     </table>

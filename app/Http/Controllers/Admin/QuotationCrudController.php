@@ -46,6 +46,7 @@ class QuotationCrudController extends CrudController
             4 => 'Higher',
         ];
 
+
         $registration_type_map = [
             0 => 'Exempted',
             1 => 'TRC Only',
@@ -112,6 +113,15 @@ class QuotationCrudController extends CrudController
                     : '-',
 
                 'mobile' => $enquiry->mobile ?? '-',
+
+                'care_of_type' => [
+                    1 => 'Son of',
+                    2 => 'Daughter of',
+                    3 => 'Married to',
+                    4 => 'Guardian Name',
+                ][$data['careof'] ?? ''] ?? '',
+
+                'care_of_name' => $data['careofname'] ?? '',
 
                 'segment' => $segment->name ?? $segmentCode,
 
@@ -210,6 +220,8 @@ class QuotationCrudController extends CrudController
                     ['field' => 'enquiry_no', 'headerName' => 'Enquiry No.'],
                     ['field' => 'customer_name', 'headerName' => 'Customer'],
                     ['field' => 'mobile', 'headerName' => 'Mobile'],
+                    ['field' => 'care_of_type', 'headerName' => 'Care Of'],
+                    ['field' => 'care_of_name', 'headerName' => 'Care Of Name'],
                     ['field' => 'segment', 'headerName' => 'Segment'],
                     ['field' => 'model', 'headerName' => 'Model'],
                     ['field' => 'variant', 'headerName' => 'Variant'],
@@ -459,7 +471,7 @@ class QuotationCrudController extends CrudController
         ];
 
         $registration_type_map = [
-            0 => 'Exempted (Reg & Hypo Fee Only)',
+            0 => 'Exempted',
             1 => 'TRC Only',
             2 => 'Tax Only',
             3 => 'TRC + Tax',
@@ -790,13 +802,11 @@ class QuotationCrudController extends CrudController
 
         $insurance_type_map = [
 
-            1 => 'Standard',
 
-            2 => 'Nil Dep',
+            1 => 'Nil Dep',
 
-            3 => 'Base (Nil Dep + Consumables)',
 
-            4 => 'Higher (Nil Dep + Consumables + Add Ons)',
+            2 => 'Higher',
 
         ];
 
@@ -804,7 +814,7 @@ class QuotationCrudController extends CrudController
 
         $registration_type_map = [
 
-            0 => 'Exempted (Reg & Hypo Fee Only)',
+            0 => 'Exempted',
 
             1 => 'TRC Only',
 

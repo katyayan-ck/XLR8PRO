@@ -199,7 +199,7 @@ $enquiry = $quotation?->enquiry;
                                     <label id="careofnamelabel">Care Of Name <span
                                             class="required-mark">*</span></label>
                                     <input type="text" name="careofname" id="careofname" class="form-control uppercase"
-                                        required>
+                                        value="{{ old('careofname', $q['careofname'] ?? '') }}" required>
                                 </div>
                             </div>
 
@@ -1584,10 +1584,10 @@ $('#financier').on('change', function() {
     } else {
         $('#careof').html(`
             <option value="">Please Select...</option>
-            <option value="1">Son of</option>
-            <option value="2">Daughter of</option>
-            <option value="3">Married to</option>
-            <option value="4">Guardian Name</option>
+            <option value="1" {{ ($q['careof'] ?? '') == 1 ? 'selected' : '' }}>Son of</option>
+            <option value="2" {{ ($q['careof'] ?? '') == 2 ? 'selected' : '' }}>Daughter of</option>
+            <option value="3" {{ ($q['careof'] ?? '') == 3 ? 'selected' : '' }}>Married to</option>
+            <option value="4" {{ ($q['careof'] ?? '') == 4 ? 'selected' : '' }}>Guardian Name</option>
         `);
         $('#careofname').prop('disabled', false).prop('required', true);
         toggleRequiredMark($('#careofname'), true);
