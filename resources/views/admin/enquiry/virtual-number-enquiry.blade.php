@@ -88,7 +88,7 @@
 
                 'serial_no',
                 'virtual_no',
-                'call_date_and_time',
+                'call_date',
                 'call_nature',
                 'x8_enquiry_assign_date',
                 'mobile',
@@ -98,12 +98,13 @@
                 'cre_next_fup_date',
                 'cre_next_fup_time',
                 'cre_next_fup_remarks',
-                'quotation_no',
-                'booking_no',
-                'booking_date',
+                'x8_quotation_no',
+                'x8_booking_no',
+                'x8_booking_date',
                 'oem_booking_no',
                 'oem_booking_date',
                 'oem_otf_no',
+                'oem_test_drive_no'
                 //'call_duration',
                 //'call_status',
                 
@@ -149,7 +150,7 @@
                 const defaultFields = [
                     'serial_no',
                     'virtual_no',
-                    'call_date_and_time',
+                    'call_date',
                     'call_nature',
                     'x8_enquiry_assign_date',
                     'mobile',

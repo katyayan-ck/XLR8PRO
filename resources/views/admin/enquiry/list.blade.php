@@ -221,15 +221,13 @@
                 'oem_quick_enquiry_no',
                 'oem_quick_enquiry_date',
                 'oem_quick_enquiry_assign_date',
-                'oem_long_enquiry_no',
-                'oem_long_enquiry_date',
-                'oem_long_enquiry_assign_date',
                 'segment_name',
                 'model_name',
                 'variant_name',
+                'color_name',
                 'first_name',
                 'last_name',
-                'full_name',
+                //'full_name',
                 'mobile',
                 'email',
                 'gender',
@@ -240,8 +238,7 @@
                 'fuel_type',
                 'transmission',
                 'drivetrain',
-                'seating',
-                'color_name',
+                'seating',                
                 'tehsil',
                 'district',
                 'city',
@@ -250,7 +247,7 @@
                 'dealer_location',                
                 'followup_type',
                 'followup_date',
-                'followup_time',
+                //'followup_time',
                 // 'person_code',
                 // 'reference_details',
                 // 'referred_by',
@@ -281,28 +278,24 @@
                 'pincode',
                 'address',    
                 'has_ev',
-                'purchase_type',
-                'remarks',
-                //'vehicle_no',
-                
+                'purchase_type',                
+                //'vehicle_no',    
                 'consider_make',
                 'consider_model',
                 'consider_variant',
+                'remarks',
                 'dms_enquiry_stage',
                 'cre_enquiry_stage',
                 'cre_next_fup_date',
                 'cre_next_fup_time',
                 'cre_next_fup_remarks',
-                'quotation_no',
-                'booking_no',
-                'booking_date',
+                'x8_quotation_no',
+                'x8_booking_no',
+                'x8_booking_date',
                 'oem_booking_no',
                 'oem_booking_date',
                 'oem_otf_no',
-                
-                
-                
-                //'place_of_registration',
+                'oem_test_drive_no'
                 
             ].includes(col.field)),
 
@@ -419,7 +412,8 @@
                 'followup_date',
                 //'followup_time',
                 'customer_type',
-                'occupation_type',    
+                'purchase_type',
+                // 'occupation_type',    
                 // 'occupation_sub_type',                
                 // 'company_name',                
                 // 'dob',
@@ -433,7 +427,7 @@
                 // 'pincode',    
                 // 'has_ev',
                 // 'address',
-                // 'purchase_type',
+                
                 // 'remarks',
                 'action'
                 ];
@@ -532,7 +526,7 @@
 
             document.getElementById('btnDefaultHeaders').addEventListener('click', () => {
                 const defaultFields = [
-                'serial_no',
+                 'serial_no',
                 'x8_enquiry_no',
                 'x8_enquiry_date',
                 'oem_enquiry_no',
@@ -547,7 +541,7 @@
                 'mobile',
                // 'email',
                // 'gender',
-               
+              
                 'enquiry_type',
                 'source_name',
                 'sub_source',
@@ -567,23 +561,7 @@
                 'followup_date',
                 //'followup_time',
                 'customer_type',
-                'occupation_type',
-
-                // 'occupation_sub_type',                
-                // 'company_name',                
-                // 'dob',
-                // 'marital_status',
-                // 'marriage_date',
-                // 'age_group',
-                // 'usage_area',
-                // 'km_travelled_daily',
-                // 'application_type',
-                // 'application',
-                // 'pincode',  
-                // 'address',  
-                // 'has_ev',
-                // 'purchase_type',
-                // 'remarks',
+                'purchase_type',
                 'action'
                 ];
                 const allCols = gridApi.getAllGridColumns().map(c => c.getColId());
