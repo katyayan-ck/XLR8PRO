@@ -322,4 +322,10 @@ Route::group([
         'enquiry/location-by-pincode',
         [EnquiryCrudController::class, 'locationByPincode']
     )->name('enquiry.location-by-pincode');
+
+    // Route to show the form
+    Route::get('enquiries/reference/add', 'EnquiryCrudController@createReference')->name('enquiry.reference.create');
+
+    // The route you added in the previous step to save the data
+    Route::post('enquiries/reference/store', 'EnquiryCrudController@storeReference')->name('enquiry.reference.store');
 }); // ← This should be the last line

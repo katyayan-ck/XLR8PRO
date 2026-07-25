@@ -9,6 +9,7 @@ use App\Models\Vehicle\Color;
 use App\Models\Vehicle\Segment;
 use App\Models\Vehicle\Variant;
 use App\Models\Vehicle\VehicleModel;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use App\Traits\HasCommunications;
 use App\Traits\HasColumnTransformations;
 use Illuminate\Support\Facades\Cache;
@@ -108,6 +109,10 @@ class Enquiry extends BaseModel
 
         'sc_code',
 
+        'consider_make',
+        'consider_model',
+        'consider_variant',
+
         'followup_type',
         'followup_date',
         'followup_time',
@@ -119,6 +124,51 @@ class Enquiry extends BaseModel
         'deleted_by',
 
     ];
+
+    // Redirect exchange_make to brand_make
+    protected function exchangeMake(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->brand_make,
+            set: fn ($value) => ['brand_make' => $value],
+        );
+    }
+
+    // Redirect exchange_model to brand_model
+    protected function exchangeModel(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->brand_model,
+            set: fn ($value) => ['brand_model' => $value],
+        );
+    }
+
+    // Redirect consider_make to consid_brand
+    protected function considerMake(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->consid_brand,
+            set: fn ($value) => ['consid_brand' => $value],
+        );
+    }
+
+    // Redirect consider_model to consid_model
+    protected function considerModel(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->consid_model,
+            set: fn ($value) => ['consid_model' => $value],
+        );
+    }
+
+    // Redirect consider_variant to consid_variant
+    protected function considerVariant(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->consid_variant,
+            set: fn ($value) => ['consid_variant' => $value],
+        );
+    }
 
     protected $casts = [
 
