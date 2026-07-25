@@ -84,7 +84,8 @@
 
         const columnDefs = [
 
-            ...ALL_COLUMNS.filter(col => [
+            ...ALL_COLUMNS
+            .filter(col => [
 
                 'serial_no',
                 'enquiry_no',
@@ -105,7 +106,7 @@
                 'enquiry_type',
                 'source_name',
                 'sub_source',
-                'likely_purchase_date',                
+                'likely_purchase_date',
                 'fuel_type',
                 'transmission',
                 'drivetrain',
@@ -116,29 +117,14 @@
                 'city',
                 'sc_code',
                 'dealer_branch',
-                'dealer_location',                
+                'dealer_location',
                 'followup_type',
                 'followup_date',
                 'followup_time',
-                // 'person_code',
-                // 'reference_details',
-                // 'referred_by',
-                // 'referee_phone',
-                // 'referee_name',
-                // 'planned_campaign_name',
-                
-                // 'activity_type',
-                // 'activity_segment',
-                // 'activity_model',
-                // 'activity_start_date',
-                // 'activity_end_date',
-                // 'activity_branch',
-                // 'activity_location',
-                
                 'occupation_type',
                 'customer_type',
-                'occupation_sub_type',                
-                'company_name',                
+                'occupation_sub_type',
+                'company_name',
                 'dob',
                 'marital_status',
                 'marriage_date',
@@ -147,12 +133,10 @@
                 'km_travelled_daily',
                 'application_type',
                 'application',
-                'zipcode',    
+                'zipcode',
                 'has_ev',
                 'purchase_type',
                 'remarks',
-                //'vehicle_no',
-                
                 'exchange_make',
                 'exchange_model',
                 'exchange_variant',
@@ -166,16 +150,57 @@
                 'booking_date',
                 'oem_booking_no',
                 'oem_booking_date',
-                'oem_otf_no',
+                'oem_otf_no'
 
-            ].includes(col.field)),
+            ].includes(col.field))
 
-            ...ALL_COLUMNS.filter(col => ['action'].includes(col.field)).map(col => {
+            .map(col => {
+
+                switch (col.field) {
+
+                    // Date columns
+                    case 'enquiry_date':
+                    case 'likely_purchase_date':
+                    case 'followup_date':
+                    case 'dob':
+                    case 'marriage_date':
+                    case 'booking_date':
+                    case 'oem_booking_date':
+                    case 'cre_next_fup_date':
+                    case 'oem_enquiry_date':
+                    case 'oem_long_enquiry_date':
+
+                        col.filter = 'agDateColumnFilter';
+                        break;
+
+                        // Number columns
+                    case 'mobile':
+                    case 'zipcode':
+
+                        col.filter = 'agNumberColumnFilter';
+                        break;
+
+                        // Everything else
+                    default:
+
+                        col.filter = 'agTextColumnFilter';
+                }
+
+                col.floatingFilter = true;
+
+                return col;
+
+            }),
+
+            ...ALL_COLUMNS
+            .filter(col => col.field === 'action')
+            .map(col => {
 
                 col.pinned = 'right';
                 col.width = 140;
                 col.sortable = false;
                 col.filter = false;
+                col.floatingFilter = false;
                 col.cellRenderer = 'htmlRenderer';
 
                 return col;
@@ -194,6 +219,7 @@
             defaultColDef: {
                 sortable: true,
                 filter: true,
+                floatingFilter: true,
                 resizable: true,
                 headerClass: 'center-header',
                 cellStyle: {
@@ -208,55 +234,55 @@
 
                 const defaultFields = [
 
-                'serial_no',
-                'enquiry_no',
-                'enquiry_date',
-                'oem_long_enquiry_no',
-                'oem_long_enquiry_date',
-                'segment_name',
-                'model_name',
-                'variant_name',
-                'first_name',
-                'last_name',
-                'full_name',
-                'mobile',
-                'email',
-                'gender',
-                'enquiry_type',
-                'source_name',
-                'sub_source',
-                'likely_purchase_date',                
-                'fuel_type',
-                'transmission',
-                'drivetrain',
-                'seating',
-                'color_name',
-                'tehsil',
-                'district',
-                'city',
-                'sc_code',
-                'dealer_branch',
-                'dealer_location',                
-                'followup_type',
-                'followup_date',
-                'followup_time',
-                'occupation_type',
-                'customer_type',
-                'occupation_sub_type',                
-                'company_name',                
-                'dob',
-                'marital_status',
-                'marriage_date',
-                'age_group',
-                'usage_area',
-                'km_travelled_daily',
-                'application_type',
-                'application',
-                'zipcode',    
-                'has_ev',
-                'purchase_type',
-                'remarks',
-                'action'
+                    'serial_no',
+                    'enquiry_no',
+                    'enquiry_date',
+                    'oem_long_enquiry_no',
+                    'oem_long_enquiry_date',
+                    'segment_name',
+                    'model_name',
+                    'variant_name',
+                    'first_name',
+                    'last_name',
+                    'full_name',
+                    'mobile',
+                    'email',
+                    'gender',
+                    'enquiry_type',
+                    'source_name',
+                    'sub_source',
+                    'likely_purchase_date',
+                    'fuel_type',
+                    'transmission',
+                    'drivetrain',
+                    'seating',
+                    'color_name',
+                    'tehsil',
+                    'district',
+                    'city',
+                    'sc_code',
+                    'dealer_branch',
+                    'dealer_location',
+                    'followup_type',
+                    'followup_date',
+                    'followup_time',
+                    'occupation_type',
+                    'customer_type',
+                    'occupation_sub_type',
+                    'company_name',
+                    'dob',
+                    'marital_status',
+                    'marriage_date',
+                    'age_group',
+                    'usage_area',
+                    'km_travelled_daily',
+                    'application_type',
+                    'application',
+                    'zipcode',
+                    'has_ev',
+                    'purchase_type',
+                    'remarks',
+                    'action'
 
                 ];
                 const allCols = gridApi.getAllGridColumns().map(col => col.getColId());
@@ -348,55 +374,55 @@
             document.getElementById('btnDefaultHeaders').addEventListener('click', () => {
                 const defaultFields = [
 
-                'serial_no',
-                'enquiry_no',
-                'enquiry_date',
-                'oem_long_enquiry_no',
-                'oem_long_enquiry_date',
-                'segment_name',
-                'model_name',
-                'variant_name',
-                'first_name',
-                'last_name',
-                'full_name',
-                'mobile',
-                'email',
-                'gender',
-                'enquiry_type',
-                'source_name',
-                'sub_source',
-                'likely_purchase_date',                
-                'fuel_type',
-                'transmission',
-                'drivetrain',
-                'seating',
-                'color_name',
-                'tehsil',
-                'district',
-                'city',
-                'sc_code',
-                'dealer_branch',
-                'dealer_location',                
-                'followup_type',
-                'followup_date',
-                'followup_time',
-                'occupation_type',
-                'customer_type',
-                'occupation_sub_type',                
-                'company_name',                
-                'dob',
-                'marital_status',
-                'marriage_date',
-                'age_group',
-                'usage_area',
-                'km_travelled_daily',
-                'application_type',
-                'application',
-                'zipcode',    
-                'has_ev',
-                'purchase_type',
-                'remarks',
-                'action'
+                    'serial_no',
+                    'enquiry_no',
+                    'enquiry_date',
+                    'oem_long_enquiry_no',
+                    'oem_long_enquiry_date',
+                    'segment_name',
+                    'model_name',
+                    'variant_name',
+                    'first_name',
+                    'last_name',
+                    'full_name',
+                    'mobile',
+                    'email',
+                    'gender',
+                    'enquiry_type',
+                    'source_name',
+                    'sub_source',
+                    'likely_purchase_date',
+                    'fuel_type',
+                    'transmission',
+                    'drivetrain',
+                    'seating',
+                    'color_name',
+                    'tehsil',
+                    'district',
+                    'city',
+                    'sc_code',
+                    'dealer_branch',
+                    'dealer_location',
+                    'followup_type',
+                    'followup_date',
+                    'followup_time',
+                    'occupation_type',
+                    'customer_type',
+                    'occupation_sub_type',
+                    'company_name',
+                    'dob',
+                    'marital_status',
+                    'marriage_date',
+                    'age_group',
+                    'usage_area',
+                    'km_travelled_daily',
+                    'application_type',
+                    'application',
+                    'zipcode',
+                    'has_ev',
+                    'purchase_type',
+                    'remarks',
+                    'action'
 
                 ];
                 const allCols = gridApi.getAllGridColumns().map(c => c.getColId());

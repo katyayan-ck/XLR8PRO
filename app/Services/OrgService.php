@@ -2,25 +2,18 @@
 
 namespace App\Services;
 
-use App\Models\Admin\Branch;
-use App\Models\Admin\Department;
-use App\Models\Admin\Division;
-use App\Models\Admin\Location;
-use App\Models\Admin\Vertical;
+
 use App\Models\Module\Booking\Bookingamount;
 use App\Models\Module\Booking\XL_DSA_MASTER;
 use App\Models\User;
-use App\Models\Utilities\KeyValue\Keyvalue;
-use App\Models\Utilities\KeyValue\KeywordMaster;
-use App\Models\Vehicle\Color;
-use App\Models\Vehicle\Segment;
-use App\Models\Vehicle\SubSegment;
-use App\Models\Vehicle\Variant;
+use App\Models\Admin\{Branch, Location, Department, Division, Vertical};
+use App\Models\Vehicle\{Segment, SubSegment, VehicleModel, Variant, Color};
+use App\Models\Utilities\KeyValue\{Keyvalue, KeywordMaster};
 use App\Models\Admin\Person;
-use App\Models\Vehicle\VehicleModel;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use App\Models\Admin\PinCodes;
+use Illuminate\Support\Facades\Log;
 
 class OrgService
 {
@@ -391,6 +384,129 @@ class OrgService
         });
     }
 
+    // public static function getUsers(
+    //     string $branchCode = 'ALL',
+    //     string $locCode = 'ALL',
+    //     string $deptCode = 'ALL',
+    //     string $divCode = 'ALL',
+    //     string $desigCode = 'ALL',
+    //     string $verticalCode = 'ALL',
+    //     string $segmentCode = 'ALL',
+    //     string $subSegmentCode = 'ALL'
+    // ): array {
+    //     $query = User::with(['person', 'scopes', 'employee'])
+    //         ->whereHas('employee');
+
+    //     // Designation (from employee table)
+    //     if ($desigCode !== 'ALL') {
+    //         $query->whereHas('employee', function ($e) use ($desigCode) {
+    //             $e->where('designation_code', $desigCode)
+    //                 ->orWhere('desig_code', $desigCode);
+    //         });
+    //     }
+
+    //     // Build scope filters
+    //     $scopeMap = [
+    //         'branch' => $branchCode,
+    //         'location' => $locCode,
+    //         'department' => $deptCode,
+    //         'division' => $divCode,
+    //         'vertical' => $verticalCode,
+    //         'segment' => $segmentCode,
+    //         'sub_segment' => $subSegmentCode,
+    //     ];
+
+    //     foreach ($scopeMap as $type => $code) {
+    //         if ($code === 'ALL') {
+    //             continue;
+    //         }
+
+    //         $query->where(function ($q) use ($type, $code) {
+    //             // Match in primary employee columns
+    //             $primaryColumn = match ($type) {
+    //                 'branch' => 'primary_branch_code',
+    //                 'location' => 'primary_loc_code',
+    //                 'department' => 'primary_dept_code',
+    //                 'division' => 'primary_div_code',
+    //                 'vertical' => 'vertical_code',
+    //                 'segment' => 'segment_code',
+    //                 'sub_segment' => 'sub_segment_code',
+    //             };
+
+    //             $q->whereHas('employee', fn($e) => $e->where($primaryColumn, $code))
+    //                 // OR match in flexible user_scopes
+    //                 ->orWhereHas('scopes', function ($s) use ($type, $code) {
+    //                     $s->where('scope_type', $type)
+    //                         ->where('scope_code', $code)
+    //                         ->where('is_active', true);
+    //                 });
+    //         });
+    //     }
+
+    //     $users = $query->get();
+
+    //     return $users->map(function ($user) {
+    //         $emp = $user->employee;
+
+    //         return [
+    //             'id' => $user->id,
+    //             'employee_code' => $user->employee_code,
+    //             'person_code' => $user->person_code,
+    //             'display_name' => $user->display_name,
+    //             'designation_code' => $emp?->designation_code ?? $emp?->desig_code,
+    //             'reporting_manager_code' => $emp?->reporting_manager_code,
+    //             'mile_id' => $emp?->mile_id,
+
+    //             'primary_branch_code' => $emp?->primary_branch_code,
+    //             'primary_loc_code' => $emp?->primary_loc_code,
+    //             'primary_dept_code' => $emp?->primary_dept_code,
+    //             'primary_div_code' => $emp?->primary_div_code,
+    //             'vertical_code' => $emp?->vertical_code,
+    //             'segment_code' => $emp?->segment_code,
+    //             'sub_segment_code' => $emp?->sub_segment_code,
+
+    //             // All assigned scopes from user_scopes
+    //             'branches' => $user->scopes->where('scope_type', 'branch')->pluck('scope_code')->unique()->values()->toArray(),
+    //             'locations' => $user->scopes->where('scope_type', 'location')->pluck('scope_code')->unique()->values()->toArray(),
+    //             'departments' => $user->scopes->where('scope_type', 'department')->pluck('scope_code')->unique()->values()->toArray(),
+    //             'divisions' => $user->scopes->where('scope_type', 'division')->pluck('scope_code')->unique()->values()->toArray(),
+    //             'verticals' => $user->scopes->where('scope_type', 'vertical')->pluck('scope_code')->unique()->values()->toArray(),
+    //             'segments' => $user->scopes->where('scope_type', 'segment')->pluck('scope_code')->unique()->values()->toArray(),
+    //             'sub_segments' => $user->scopes->where('scope_type', 'sub_segment')->pluck('scope_code')->unique()->values()->toArray(),
+
+    //             'primary_mobile' => $user->primary_mobile,
+    //             'primary_email' => $user->primary_email,
+    //             'profile_image' => $user->avatar ?? $user->person?->getFirstMediaUrl('profile_photos') ?? null,
+    //         ];
+    //     })->toArray();
+    // }
+
+    /**
+     * Master User Filter Function (Uses flexible User Scopes)
+     *
+     * Filters work on `xlr8_admin_user_scopes` table AND primary employee columns.
+     *
+     * Supports:
+     *  - Designation, Branch, Location, Department, Division, Vertical,
+     *    Segment, SubSegment, Model, Variant filters.
+     *  - Primary-only flag (if true, only primary columns are used; addon scopes ignored).
+     *  - User type filter (optional).
+     *
+     * Returns a normalized array of user+employee+scope data (codes).
+     */
+    /**
+     * Master User Filter Function (Uses flexible User Scopes)
+     *
+     * Filters work on `xlr8_admin_user_scopes` table AND primary employee columns.
+     *
+     * Supports:
+     *  - Designation, Branch, Location, Department, Division, Vertical,
+     *    Segment, SubSegment, Model, Variant filters.
+     *  - Primary-only flag (if true, only primary columns are used; addon scopes ignored).
+     *  - User type filter (optional).
+     *
+     * Returns a normalized array of user+employee+scope data (codes).
+     */
     public static function getUsers(
         string $branchCode = 'ALL',
         string $locCode = 'ALL',
@@ -399,12 +515,17 @@ class OrgService
         string $desigCode = 'ALL',
         string $verticalCode = 'ALL',
         string $segmentCode = 'ALL',
-        string $subSegmentCode = 'ALL'
+        string $subSegmentCode = 'ALL',
+        string $modelCode = 'ALL',
+        string $variantCode = 'ALL',
+        ?string $userType = null,
+        bool $primaryOnly = false
     ): array {
+        // Base query with relations
         $query = User::with(['person', 'scopes', 'employee'])
             ->whereHas('employee');
 
-        // Designation (from employee table)
+        // Designation filter (employee table)
         if ($desigCode !== 'ALL') {
             $query->whereHas('employee', function ($e) use ($desigCode) {
                 $e->where('designation_code', $desigCode)
@@ -412,7 +533,12 @@ class OrgService
             });
         }
 
-        // Build scope filters
+        // User type filter (optional)
+        if ($userType !== null) {
+            $query->where('user_type', $userType);
+        }
+
+        // Scope filters (org + vehicle + model + variant)
         $scopeMap = [
             'branch' => $branchCode,
             'location' => $locCode,
@@ -421,6 +547,8 @@ class OrgService
             'vertical' => $verticalCode,
             'segment' => $segmentCode,
             'sub_segment' => $subSegmentCode,
+            'model' => $modelCode,
+            'variant' => $variantCode,
         ];
 
         foreach ($scopeMap as $type => $code) {
@@ -428,8 +556,8 @@ class OrgService
                 continue;
             }
 
-            $query->where(function ($q) use ($type, $code) {
-                // Match in primary employee columns
+            $query->where(function ($q) use ($type, $code, $primaryOnly) {
+                // Map type → employee primary column
                 $primaryColumn = match ($type) {
                     'branch' => 'primary_branch_code',
                     'location' => 'primary_loc_code',
@@ -438,15 +566,35 @@ class OrgService
                     'vertical' => 'vertical_code',
                     'segment' => 'segment_code',
                     'sub_segment' => 'sub_segment_code',
+                    'model' => null, // no primary model on employee
+                    'variant' => null, // no primary variant on employee
+                    default => null,
                 };
 
-                $q->whereHas('employee', fn($e) => $e->where($primaryColumn, $code))
-                    // OR match in flexible user_scopes
-                    ->orWhereHas('scopes', function ($s) use ($type, $code) {
+                // Always apply primary column filter when available
+                if ($primaryColumn) {
+                    $q->whereHas('employee', function ($e) use ($primaryColumn, $code) {
+                        $e->where($primaryColumn, $code);
+                    });
+                }
+
+                // If NOT primary-only, also match flexible user_scopes
+                if (!$primaryOnly) {
+                    $q->orWhereHas('scopes', function ($s) use ($type, $code) {
                         $s->where('scope_type', $type)
                             ->where('scope_code', $code)
                             ->where('is_active', true);
                     });
+                }
+
+                // For model & variant filters in primaryOnly mode, rely purely on scopes
+                if ($primaryOnly && in_array($type, ['model', 'variant'], true)) {
+                    $q->whereHas('scopes', function ($s) use ($type, $code) {
+                        $s->where('scope_type', $type)
+                            ->where('scope_code', $code)
+                            ->where('is_active', true);
+                    });
+                }
             });
         }
 
@@ -454,16 +602,37 @@ class OrgService
 
         return $users->map(function ($user) {
             $emp = $user->employee;
+            $person = $user->person;
+
+            // Normalize avatar and person photo: treat empty string as null
+            $avatarRaw = $user->avatar ?? null;
+            $avatar = $avatarRaw !== '' ? $avatarRaw : null;
+
+            $avatarInitials = $user->avatar_initials ?? 'U';
+
+            $personPhotoRaw = $person?->getFirstMediaUrl('profile_photos') ?: null;
+            $personPhotoUrl = $personPhotoRaw !== '' ? $personPhotoRaw : null;
+
+            // Final profile_image: prefer avatar, else person photo, else null
+            $profileImage = $avatar ?: $personPhotoUrl ?: null;
 
             return [
+                // Identity
                 'id' => $user->id,
+                'username' => $user->username,
+                'user_type' => $user->user_type ?? null,
                 'employee_code' => $user->employee_code,
                 'person_code' => $user->person_code,
                 'display_name' => $user->display_name,
+
+                // Designation + reporting manager
                 'designation_code' => $emp?->designation_code ?? $emp?->desig_code,
                 'reporting_manager_code' => $emp?->reporting_manager_code,
+
+                // Employee misc
                 'mile_id' => $emp?->mile_id,
 
+                // Primary org & vehicle hierarchy
                 'primary_branch_code' => $emp?->primary_branch_code,
                 'primary_loc_code' => $emp?->primary_loc_code,
                 'primary_dept_code' => $emp?->primary_dept_code,
@@ -472,7 +641,7 @@ class OrgService
                 'segment_code' => $emp?->segment_code,
                 'sub_segment_code' => $emp?->sub_segment_code,
 
-                // All assigned scopes from user_scopes
+                // All scopes (your existing arrays)
                 'branches' => $user->scopes->where('scope_type', 'branch')->pluck('scope_code')->unique()->values()->toArray(),
                 'locations' => $user->scopes->where('scope_type', 'location')->pluck('scope_code')->unique()->values()->toArray(),
                 'departments' => $user->scopes->where('scope_type', 'department')->pluck('scope_code')->unique()->values()->toArray(),
@@ -480,13 +649,19 @@ class OrgService
                 'verticals' => $user->scopes->where('scope_type', 'vertical')->pluck('scope_code')->unique()->values()->toArray(),
                 'segments' => $user->scopes->where('scope_type', 'segment')->pluck('scope_code')->unique()->values()->toArray(),
                 'sub_segments' => $user->scopes->where('scope_type', 'sub_segment')->pluck('scope_code')->unique()->values()->toArray(),
+                'models' => $user->scopes->where('scope_type', 'model')->pluck('scope_code')->unique()->values()->toArray(),
+                'variants' => $user->scopes->where('scope_type', 'variant')->pluck('scope_code')->unique()->values()->toArray(),
 
+                // Contact + avatar
                 'primary_mobile' => $user->primary_mobile,
                 'primary_email' => $user->primary_email,
-                'profile_image' => $user->avatar ?? $user->person?->getFirstMediaUrl('profile_photos') ?? null,
+                'avatar' => $avatar,
+                'avatar_initials' => $avatarInitials,
+                'profile_image' => $profileImage,
             ];
         })->toArray();
     }
+
 
     public static function getCurrentUser(): ?array
     {
@@ -754,4 +929,481 @@ class OrgService
             'city' => $state?->name,
         ];
     }
+
+    // ── HIERARCHY: UPLINE / DOWNLINE (with status & bypass controls) ─────
+
+    /**
+     * @param string $username
+     * @param int    $maxDepth
+     * @param string $status  'active' | 'inactive' | 'all' — filters employees by is_active/separation status
+     * @param bool   $excludeBypassUsers  if true, skips users flagged bypass_data_scoping=1
+     */
+    public static function getUpline(
+        string $username,
+        int $maxDepth = 50,
+        string $status = 'active',
+        bool $excludeBypassUsers = false
+    ): array {
+        $current = self::findUserByCode($username, $status);
+
+        if (!$current) {
+            Log::warning('OrgService::getUpline — root user not found', ['username' => $username, 'status' => $status]);
+            return [];
+        }
+
+        $upline = [];
+        $visited = [strtoupper($current->employee_code ?? '')];
+        $depth = 0;
+
+        while ($current?->employee?->reporting_manager_code && $depth < $maxDepth) {
+            $managerCode = strtoupper(trim($current->employee->reporting_manager_code));
+
+            if (in_array($managerCode, $visited)) {
+                Log::warning('OrgService::getUpline — cycle detected', [
+                    'root_username' => $username,
+                    'cycle_at' => $managerCode,
+                    'chain' => $visited,
+                ]);
+                break;
+            }
+
+            $manager = self::findUserByCode($managerCode, $status);
+
+            if (!$manager) {
+                Log::warning('OrgService::getUpline — broken chain or manager filtered out by status', [
+                    'root_username' => $username,
+                    'broken_at_employee' => $current->employee_code,
+                    'missing_manager_code' => $managerCode,
+                    'status_filter' => $status,
+                ]);
+                break;
+            }
+
+            if ($excludeBypassUsers && $manager->bypass_data_scoping) {
+                Log::info('OrgService::getUpline — skipped bypass_data_scoping user', ['employee_code' => $managerCode]);
+                $current = $manager; // keep walking past them, just don't add to result
+                $visited[] = $managerCode;
+                $depth++;
+                continue;
+            }
+
+            $upline[] = self::formatHierarchyNode($manager, ++$depth);
+            $visited[] = $managerCode;
+            $current = $manager;
+        }
+
+        if ($depth >= $maxDepth) {
+            Log::warning('OrgService::getUpline — maxDepth reached', ['root_username' => $username]);
+        }
+
+        return $upline;
+    }
+
+    /**
+     * @param string $status  'active' | 'inactive' | 'all'
+     * @param bool   $excludeBypassUsers
+     */
+    public static function getDownline(
+        string $username,
+        bool $flat = false,
+        string $status = 'active',
+        bool $excludeBypassUsers = false
+    ): array {
+        $root = self::findUserByCode($username, 'all'); // root itself always resolved regardless of status
+        if (!$root) {
+            Log::warning('OrgService::getDownline — root user not found', ['username' => $username]);
+            return [];
+        }
+
+        $rootCode = strtoupper($root->employee_code ?? '');
+        $flatList = [];
+        $tree = self::buildDownlineTree($rootCode, $flatList, 1, [$rootCode], $status, $excludeBypassUsers);
+
+        return $flat ? $flatList : $tree;
+    }
+
+    public static function getDownlineCount(
+        string $username,
+        string $status = 'active',
+        bool $excludeBypassUsers = false
+    ): int {
+        return count(self::getDownline($username, true, $status, $excludeBypassUsers));
+    }
+
+    public static function getDirectReports(
+        string $username,
+        string $status = 'active',
+        bool $excludeBypassUsers = false
+    ): array {
+        $root = self::findUserByCode($username, 'all');
+        if (!$root)
+            return [];
+
+        $rootCode = strtoupper($root->employee_code ?? '');
+
+        return self::applyStatusFilter(
+            User::with(['employee', 'person'])
+                ->whereHas('employee', fn($e) => $e->whereRaw('UPPER(reporting_manager_code) = ?', [$rootCode])),
+            $status
+        )
+            ->when($excludeBypassUsers, fn($q) => $q->where('bypass_data_scoping', false))
+            ->get()
+            ->map(fn($u) => self::formatHierarchyNode($u, 1))
+            ->values()
+            ->toArray();
+    }
+
+    // ── Private hierarchy helpers ─────────────────────────────────────────
+
+    private static function findUserByCode(string $code, string $status = 'active'): ?User
+    {
+        $normalized = strtolower(trim($code));
+        $query = User::with(['employee', 'person'])
+            ->whereRaw('LOWER(username) = ?', [$normalized]);
+
+        return self::applyStatusFilter($query, $status)->first();
+    }
+
+    /**
+     * Applies active/inactive/all filter to a query builder.
+     * 'active'   → users.is_active = 1 AND employee not separated
+     * 'inactive' → users.is_active = 0 OR employee separated
+     * 'all'      → no filter
+     */
+    private static function applyStatusFilter($query, string $status)
+    {
+        $status = strtolower($status);
+
+        return match ($status) {
+            'active' => $query->where('is_active', true)
+                ->whereHas('employee', fn($e) => $e->whereNull('separation_date')),
+            'inactive' => $query->where(function ($q) {
+                    $q->where('is_active', false)
+                    ->orWhereHas('employee', fn($e) => $e->whereNotNull('separation_date'));
+                }),
+            default => $query, // 'all'
+        };
+    }
+
+    private static function formatHierarchyNode(User $user, int $depth = 0): array
+    {
+        $emp = $user->employee;
+        return [
+            'username' => $user->username,
+            'employee_code' => $user->employee_code,
+            'display_name' => $user->display_name,
+            'designation_code' => $emp?->designation_code ?? $emp?->desig_code,
+            'reporting_manager_code' => $emp?->reporting_manager_code,
+            'primary_branch_code' => $emp?->primary_branch_code,
+            'primary_loc_code' => $emp?->primary_loc_code,
+            'primary_dept_code' => $emp?->primary_dept_code,
+            'primary_div_code' => $emp?->primary_div_code,
+            'is_active' => (bool) $user->is_active,
+            'bypass_data_scoping' => (bool) $user->bypass_data_scoping,
+            'separation_date' => $emp?->separation_date,
+            'depth' => $depth,
+        ];
+    }
+
+    private static function buildDownlineTree(
+        string $managerCode,
+        array &$flatList,
+        int $depth,
+        array $visited,
+        string $status,
+        bool $excludeBypassUsers
+    ): array {
+        $query = User::with(['employee', 'person'])
+            ->whereHas('employee', fn($e) => $e->whereRaw('UPPER(reporting_manager_code) = ?', [$managerCode]));
+
+        $reports = self::applyStatusFilter($query, $status)
+            ->when($excludeBypassUsers, fn($q) => $q->where('bypass_data_scoping', false))
+            ->get();
+
+        $nodes = [];
+
+        foreach ($reports as $user) {
+            $empCode = strtoupper($user->employee_code ?? '');
+
+            if (in_array($empCode, $visited)) {
+                Log::warning('OrgService::buildDownlineTree — cycle detected', [
+                    'manager_code' => $managerCode,
+                    'repeated_code' => $empCode,
+                    'chain' => $visited,
+                ]);
+                continue;
+            }
+
+            $node = self::formatHierarchyNode($user, $depth);
+            $flatList[] = $node;
+
+            // Note: children traversal continues WITHOUT status filter re-applied to $managerCode itself,
+            // but each recursive level re-applies $status/$excludeBypassUsers to its own children query.
+            $children = self::buildDownlineTree($empCode, $flatList, $depth + 1, [...$visited, $empCode], $status, $excludeBypassUsers);
+            $node['children'] = $children;
+            $nodes[] = $node;
+        }
+
+        return $nodes;
+    }
+
+    /**
+     * Format a single code using a name resolver and a format option.
+     *
+     * $format: 'code' | 'name' | 'code_name'
+     */
+    public static function formatCodeWithName(
+        ?string $code,
+        callable $nameResolver,
+        string $format = 'code'
+    ): ?string {
+        if (!$code) {
+            return null;
+        }
+
+        $code = strtoupper(trim($code));
+        $name = $nameResolver($code);
+
+        return match ($format) {
+            'name' => $name ?? $code,
+            'code_name' => $name ? sprintf('[%s] %s', $code, $name) : $code,
+            default => $code,
+        };
+    }
+
+    /**
+     * Format list of codes into a comma-separated string.
+     */
+    public static function formatCodeList(
+        array $codes,
+        callable $nameResolver,
+        string $format = 'code'
+    ): string {
+        $codes = array_values(array_unique(array_filter($codes)));
+
+        $parts = collect($codes)->map(function ($code) use ($nameResolver, $format) {
+            return self::formatCodeWithName($code, $nameResolver, $format);
+        })->filter()->values();
+
+        return $parts->implode(', ');
+    }
+
+    /**
+     * Vehicle helpers (using existing maps).
+     */
+    public static function modelName(string $code): string
+    {
+        $code = strtoupper(trim($code));
+        $models = self::models(); // [code => name]
+
+        return $models[$code] ?? $code;
+    }
+
+    public static function variantName(string $code): string
+    {
+        $code = strtoupper(trim($code));
+        $variants = self::variants(null); // [code => display_name]
+
+        return $variants[$code] ?? $code;
+    }
+
+    /**
+     * Reporting manager: code/name/"[code] Name" using getUserNameByCode()
+     */
+    public static function formatReportingManager(
+        ?string $code,
+        string $format = 'code'
+    ): ?string {
+        return self::formatCodeWithName(
+            $code,
+            fn($c) => self::getUserNameByCode($c, null, 'N/A'),
+            $format
+        );
+    }
+
+    /**
+     * Convenience wrapper for listing/grid:
+     * - Calls getUsers(...) for codes
+     * - Applies display format for all entities
+     *
+     * $orgFormat:     'code' | 'name' | 'code_name'  (Branch/Location/Dept/Division/Vertical)
+     * $vehFormat:     'code' | 'name' | 'code_name'  (Segment/SubSegment/Model/Variant)
+     * $managerFormat: 'code' | 'name' | 'code_name'  (Reporting manager)
+     */
+    public static function getUsersForListing(
+        string $branchCode = 'ALL',
+        string $locCode = 'ALL',
+        string $deptCode = 'ALL',
+        string $divCode = 'ALL',
+        string $desigCode = 'ALL',
+        string $verticalCode = 'ALL',
+        string $segmentCode = 'ALL',
+        string $subSegmentCode = 'ALL',
+        string $modelCode = 'ALL',
+        string $variantCode = 'ALL',
+        ?string $userType = null,
+        bool $primaryOnly = false,
+        string $orgFormat = 'code',
+        string $vehFormat = 'code',
+        string $managerFormat = 'code'
+    ): array {
+        $rows = self::getUsers(
+            $branchCode,
+            $locCode,
+            $deptCode,
+            $divCode,
+            $desigCode,
+            $verticalCode,
+            $segmentCode,
+            $subSegmentCode,
+            $modelCode,
+            $variantCode,
+            $userType,
+            $primaryOnly
+        );
+
+        return collect($rows)->map(function ($row) use ($orgFormat, $vehFormat, $managerFormat) {
+            // Primary org
+            $primaryBranch = self::formatCodeWithName(
+                $row['primary_branch_code'],
+                fn($c) => self::branchName($c),
+                $orgFormat
+            );
+
+            $primaryLocation = self::formatCodeWithName(
+                $row['primary_loc_code'],
+                fn($c) => self::locationName($c),
+                $orgFormat
+            );
+
+            $primaryDept = self::formatCodeWithName(
+                $row['primary_dept_code'],
+                fn($c) => self::departmentName($c),
+                $orgFormat
+            );
+
+            $primaryDiv = self::formatCodeWithName(
+                $row['primary_div_code'],
+                fn($c) => self::divisionName($c),
+                $orgFormat
+            );
+
+            $primaryVertical = self::formatCodeWithName(
+                $row['vertical_code'],
+                fn($c) => self::verticalName($c),
+                $orgFormat
+            );
+
+            $primarySegment = self::formatCodeWithName(
+                $row['segment_code'],
+                fn($c) => self::segmentName($c),
+                $vehFormat
+            );
+
+            $primarySubSegment = self::formatCodeWithName(
+                $row['sub_segment_code'],
+                fn($c) => self::subSegmentName($c),
+                $vehFormat
+            );
+
+            // Addon org scopes
+            $addonBranches = self::formatCodeList(
+                $row['branches'],
+                fn($c) => self::branchName($c),
+                $orgFormat
+            );
+
+            $addonLocations = self::formatCodeList(
+                $row['locations'],
+                fn($c) => self::locationName($c),
+                $orgFormat
+            );
+
+            $addonDepts = self::formatCodeList(
+                $row['departments'],
+                fn($c) => self::departmentName($c),
+                $orgFormat
+            );
+
+            $addonDivs = self::formatCodeList(
+                $row['divisions'],
+                fn($c) => self::divisionName($c),
+                $orgFormat
+            );
+
+            $addonVerticals = self::formatCodeList(
+                $row['verticals'],
+                fn($c) => self::verticalName($c),
+                $orgFormat
+            );
+
+            $addonSegments = self::formatCodeList(
+                $row['segments'],
+                fn($c) => self::segmentName($c),
+                $vehFormat
+            );
+
+            $addonSubSegments = self::formatCodeList(
+                $row['sub_segments'],
+                fn($c) => self::subSegmentName($c),
+                $vehFormat
+            );
+
+            // Models and variants in scope
+            $modelsFormatted = self::formatCodeList(
+                $row['models'],
+                fn($c) => self::modelName($c),
+                $vehFormat
+            );
+
+            $variantsFormatted = self::formatCodeList(
+                $row['variants'],
+                fn($c) => self::variantName($c),
+                $vehFormat
+            );
+
+            // Reporting manager
+            $managerFormatted = self::formatReportingManager(
+                $row['reporting_manager_code'],
+                $managerFormat
+            );
+
+            // Merge with original basic fields
+            return [
+                'id' => $row['id'],
+                'username' => $row['username'],
+                'user_type' => $row['user_type'],
+                'employee_code' => $row['employee_code'],
+                'person_code' => $row['person_code'],
+                'display_name' => $row['display_name'],
+                'designation_code' => $row['designation_code'],
+
+                'reporting_manager' => $managerFormatted,
+
+                'primary_branch' => $primaryBranch,
+                'primary_location' => $primaryLocation,
+                'primary_department' => $primaryDept,
+                'primary_division' => $primaryDiv,
+                'primary_vertical' => $primaryVertical,
+                'primary_segment' => $primarySegment,
+                'primary_sub_segment' => $primarySubSegment,
+
+                'addon_branches' => $addonBranches,
+                'addon_locations' => $addonLocations,
+                'addon_departments' => $addonDepts,
+                'addon_divisions' => $addonDivs,
+                'addon_verticals' => $addonVerticals,
+                'addon_segments' => $addonSegments,
+                'addon_sub_segments' => $addonSubSegments,
+
+                'models' => $modelsFormatted,
+                'variants' => $variantsFormatted,
+
+                'primary_mobile' => $row['primary_mobile'],
+                'primary_email' => $row['primary_email'],
+                'profile_image' => $row['profile_image'],
+            ];
+        })->toArray();
+    }
+
 }
