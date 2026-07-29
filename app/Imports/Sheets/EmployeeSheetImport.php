@@ -86,7 +86,7 @@ class EmployeeSheetImport implements
             // ── Skip guard: looks like a header repeated mid-sheet
             if (strtolower($name) === 'employee name'
                 || strtolower($name) === 'name'
-                || strtolower($name) === 's.no'
+                || strtolower($name) === 'S.No.'
                 || is_numeric($name)) {
                 $this->skipped++;
                 continue;

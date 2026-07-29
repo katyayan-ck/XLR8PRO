@@ -9,6 +9,24 @@ use App\Services\OrgService;
 @push('after_styles')
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
 <style>
+    .header-logo-left img {
+        height: 75px;
+    }
+
+    .header-logo-right img {
+        max-height: 85px;
+        max-width: 170px;
+    }
+
+    .header-title h3 {
+        margin-bottom: 4px;
+    }
+
+    .header-title h4 {
+        margin-top: 8px;
+        font-weight: bold;
+    }
+
     @media print {
         select {
             appearance: none !important;
@@ -379,8 +397,8 @@ use App\Services\OrgService;
         font-weight: bold;
     }
 
-    /* ================= Financer Invoice / Discount Bifurcation — div based ================= */
-    .financer-discount-grid {
+    /* ================= Financier Invoice / Discount Bifurcation — div based ================= */
+    .financier-discount-grid {
         display: grid;
         grid-template-columns: 25% 25% 25% 25%;
         border-left: 1px solid #000;
@@ -388,7 +406,7 @@ use App\Services\OrgService;
         margin-bottom: 15px;
     }
 
-    .financer-discount-grid>div {
+    .financier-discount-grid>div {
         border-right: 1px solid #000;
         border-bottom: 1px solid #000;
         padding: 3px 5px;
@@ -398,7 +416,7 @@ use App\Services\OrgService;
         align-items: center;
     }
 
-    .financer-discount-grid .fd-header {
+    .financier-discount-grid .fd-header {
         background: #d9d9d9;
         font-weight: bold;
         text-align: center;
@@ -406,16 +424,16 @@ use App\Services\OrgService;
         grid-column: span 2;
     }
 
-    .financer-discount-grid .fd-label {
+    .financier-discount-grid .fd-label {
         background: #f2f2f2;
         font-weight: 600;
     }
 
-    .financer-discount-grid .fd-bold input {
+    .financier-discount-grid .fd-bold input {
         font-weight: bold;
     }
 
-    .financer-discount-grid input {
+    .financier-discount-grid input {
         width: 100%;
         border: none;
         background: transparent;
@@ -482,8 +500,8 @@ use App\Services\OrgService;
             display: none !important;
         }
 
-        /* Hide Financer Invoice / Discount Bifurcation box while printing */
-        .financer-discount-grid {
+        /* Hide Financier Invoice / Discount Bifurcation box while printing */
+        .financier-discount-grid {
             display: none !important;
         }
 
@@ -504,7 +522,7 @@ use App\Services\OrgService;
     .quotation-grid input.numeric-only,
     .quotation-grid input.amount-field,
     .quotation-summary input,
-    .financer-discount-grid input {
+    .financier-discount-grid input {
         text-align: right !important;
     }
 </style>
@@ -517,57 +535,59 @@ use App\Services\OrgService;
     <div class="container-fluid">
 
         <div class="card shadow-sm mb-3">
+            <div class="card-body py-2 px-3">
 
-            <div class="card-body p-3">
+                @php
+                $segment = strtoupper(optional($selectedEnquiry)->segment_code);
+
+                if ($segment == 'LMM') {
+                $mahindraLogo = asset('images/mahindra-lmm-logo.png');
+                } elseif ($segment == 'BEV') {
+                $mahindraLogo = asset('images/mahindra-ev-logo.png');
+                } else {
+                // Commercial / Personal Vehicle
+                $mahindraLogo = asset('images/mahindra-pv-cv-logo.png');
+                }
+                @endphp
 
                 <div class="row align-items-center">
 
-                    <div class="col-md-2 text-center">
+                    <!-- Left Logo -->
+                    <div class="col-2 text-center">
+                        <img src="{{ asset('images/bikaner_logo.png') }}" style="height:75px;">
+                    </div>
 
-                        <img src="{{ asset('images/bikaner_logo.jpg') }}" style="height:75px;">
+                    <!-- Center Text -->
+                    <div class="col-8 text-center">
+
+                        <h3 class="fw-bold mb-1">
+                            BIKANER MOTORS PRIVATE LIMITED
+                        </h3>
+
+                        <div style="font-size:13px;">
+                            Regd. Office : Sunderi Chhabil Mansion, NH-11,
+                            Jaipur Road, P.O. Udasar, Bikaner-334022
+                        </div>
+
+                        <div style="font-size:13px;">
+                            Branch Office : 6th KM Stone,
+                            Ratangarh Road, Churu (Raj.)
+                        </div>
+
+                        <h4 class="mt-2 mb-0 fw-bold text-uppercase">
+                            Vehicle Quotation
+                        </h4>
 
                     </div>
 
-                    <div class="col-md-10 text-center">
-
-                        <h2 class="mb-1 fw-bold">
-                            BIKANER MOTORS PRIVATE LIMITED
-                        </h2>
-
-                        <div style="font-size:14px">
-
-                            <strong>Regd. Office :</strong>
-
-                            Sunderi Chhabil Mansion,
-                            NH-11,
-                            Jaipur Road,
-                            P.O. Udasar,
-                            Bikaner-334022
-
-                        </div>
-
-                        <div style="font-size:14px">
-
-                            <strong>Branch Office :</strong>
-
-                            6th KM Stone,
-                            Ratangarh Road,
-                            Churu (Raj.)
-
-                        </div>
-
-                        <h4 class="mt-2 text-uppercase">
-
-                            Vehicle Quotation
-
-                        </h4>
-
+                    <!-- Right Logo -->
+                    <div class="col-2 text-center">
+                        <img src="{{ $mahindraLogo }}" style="max-width:110px; max-height:60px;">
                     </div>
 
                 </div>
 
             </div>
-
         </div>
 
         <form method="POST" action="{{ route('quotation.store') }}" enctype="multipart/form-data">
@@ -580,10 +600,9 @@ use App\Services\OrgService;
                     <table class="bill-table mb-3">
 
                         <tr>
-                            <td class="title" width="18%">Enquiry No</td>
+                            <td class="title" width="18%">Enquiry No.</td>
                             <td width="32%">
-                                <input type="text" class="form-control border-0 shadow-none"
-                                    value="{{ optional($selectedEnquiry)->enquiry_no }}" readonly>
+                                <input type="text" value=" {{ optional($selectedEnquiry)->enquiry_no }}" readonly>
 
                                 <input type="hidden" name="enquiry_no"
                                     value="{{ optional($selectedEnquiry)->enquiry_no }}">
@@ -591,7 +610,7 @@ use App\Services\OrgService;
 
                             <td class="title" width="18%">Customer Name</td>
                             <td width="32%">
-                                <input type="text" id="customer_name" class="form-control border-0 shadow-none"
+                                <input type="text" id="customer_name"
                                     value="{{ optional($selectedEnquiry)->full_name }}" readonly>
                             </td>
                         </tr>
@@ -599,11 +618,26 @@ use App\Services\OrgService;
                         <tr>
                             <td class="title">Mobile Number</td>
                             <td>
-                                <input type="text" id="mobile" class="form-control border-0 shadow-none"
-                                    value="{{ optional($selectedEnquiry)->mobile }}" readonly>
+                                <input type="text" value="{{ optional($selectedEnquiry)->mobile }}" readonly>
                             </td>
 
 
+
+                            <td class="title">Care Of Name</td>
+                            <td>
+                                <div class="input-group">
+                                    <select name="careof" id="careof" class="form-select2" style="max-width: 80px;">
+                                        <option value="">Select</option>
+                                        <option value="1">Son of</option>
+                                        <option value="2">Daughter of</option>
+                                        <option value="3">Married to</option>
+                                        <option value="4">Guardian Name</option>
+                                    </select>
+
+                                    <input type="text" name="careofname" id="careofname" placeholder="Enter Name"
+                                        value="{{ old('careofname') }}">
+                                </div>
+                            </td>
                         </tr>
 
                     </table>
@@ -1089,9 +1123,9 @@ use App\Services\OrgService;
 
                     </div>
 
-                    {{-- ================= Financer Invoice / Discount Bifurcation (hidden on print) =================
+                    {{-- ================= Financier Invoice / Discount Bifurcation (hidden on print) =================
                     --}}
-                    <div class="financer-discount-grid">
+                    <div class="financier-discount-grid">
 
                         <div class="fd-header">FINANCIER INVOICE</div>
                         <div class="fd-header">DISCOUNT BIFURCATION</div>
@@ -1209,6 +1243,7 @@ use App\Services\OrgService;
 {{--
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"> --}}
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 
 <script>
@@ -1336,7 +1371,7 @@ function num(id) {
 
 }
 
-// Discount fields paired with their Type select — used for the Financer Invoice /
+// Discount fields paired with their Type select — used for the Financier Invoice /
 // Discount Bifurcation boxes (INV type = Invoiced Discount, CN/CN1/CN2 = Credit Note Discount)
 const DISCOUNT_TYPE_PAIRS = [
     ['cash_scheme_oem', 'cash_scheme_oem_type'],
@@ -1400,10 +1435,10 @@ function calculateQuotation() {
         num('cod_charges') +
         num('charger_swapping_amount');
     
-        // Financer Invoice / Discount Bifurcation must be computed BEFORE TCS,
+        // Financier Invoice / Discount Bifurcation must be computed BEFORE TCS,
     // because TCS is based on the Finvoice Amount (subtotal - Invoiced Discount),
     // not on the raw subtotal — matching the Excel formula chain:
-    //   B24 (Total Receivable, Financer box) = subtotal (no TCS)
+    //   B24 (Total Receivable, Financier box) = subtotal (no TCS)
     //   B25 (Less INV Discount)              = SUMIF(type,"INV")
     //   B26 (Finvoice Amount)                = B24 - B25
     //   D20 (TCS)                            = IF(B26 >= 1000000, B26 * 1%, 0)
@@ -1465,7 +1500,7 @@ $('#total_discount').val(discount);
 
     $('#net_receivable_summary').val(netReceivable.toFixed(2));
 
-    // Financer Invoice box — Total Receivable here is the subtotal WITHOUT TCS
+    // Financier Invoice box — Total Receivable here is the subtotal WITHOUT TCS
     // (matches Excel B24 = M12, not D21)
     $('#fi_total_receivable').val(subtotal.toFixed(2));
     $('#less_inv_discount').val(bifurcation.invoicedDiscount.toFixed(2));
@@ -2012,6 +2047,31 @@ $(document).ready(function () {
     toggleVltdField();
 });
 
+$('form').on('submit', function (e) {
+
+    let cashOemAmount = num('cash_scheme_oem');
+    let cashOemType = $('#cash_scheme_oem_type').val();
+
+    let bifurcation = calculateDiscountBifurcation();
+    let totalCNDiscount = bifurcation.creditNoteDiscount;
+
+    if (
+        cashOemType === 'INV' &&
+        totalCNDiscount < cashOemAmount
+    ) {
+
+        e.preventDefault();
+
+        Swal.fire({
+            icon: 'error',
+            title: 'Cannot Save Quotation',
+            text: 'Total CN Discount should be equal to or greater than Cash OEM Scheme when Cash OEM Scheme Type is INV.'
+        });
+
+        return false;
+    }
+
+});
 
 
 

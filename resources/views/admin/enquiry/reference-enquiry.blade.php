@@ -10,6 +10,13 @@
                     <h2 class="card-title mb-0 fw-bold text-black text-nowrap">
                         {{ $title ?? 'Reference Enquiries' }}
                     </h2>
+
+                    <!-- Add New Reference Button -->
+                    <div class="d-flex align-items-center gap-3 flex-nowrap">
+                        <a href="{{ backpack_url('enquiries/reference/add') }}" class="btn btn-blue btn-sm fw-bold shadow-sm">
+                            <i class="la la-plus me-1"></i> Add New Reference
+                        </a>
+                    </div>
                 </div>
 
                 <div class="card-body p-0" style="background:#f8fafc">
@@ -150,16 +157,16 @@
                 const defaultFields = [
 
 
-                'serial_no',
-                'referee_name',
-                'referee_phone',
-                'x8_enquiry_assign_date',
-                'first_name',
-                'mobile',
-                'segment_name',
-                'model_name',
-                'variant_name',
-                'action'
+                    'serial_no',
+                    'referee_name',
+                    'referee_phone',
+                    'x8_enquiry_assign_date',
+                    'first_name',
+                    'mobile',
+                    'segment_name',
+                    'model_name',
+                    'variant_name',
+                    'action'
 
                 ];
                 const allCols = gridApi.getAllGridColumns().map(col => col.getColId());
@@ -252,16 +259,16 @@
                 const defaultFields = [
 
 
-                'serial_no',
-                'referee_name',
-                'referee_phone',
-                'x8_enquiry_assign_date',
-                'first_name',
-                'mobile',
-                'segment_name',
-                'model_name',
-                'variant_name',
-                'action'
+                    'serial_no',
+                    'referee_name',
+                    'referee_phone',
+                    'x8_enquiry_assign_date',
+                    'first_name',
+                    'mobile',
+                    'segment_name',
+                    'model_name',
+                    'variant_name',
+                    'action'
 
                 ];
                 const allCols = gridApi.getAllGridColumns().map(c => c.getColId());

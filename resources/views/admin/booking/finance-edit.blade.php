@@ -166,7 +166,7 @@
                                 </select>
                             </div>
 
-                            <!-- Ref No -->
+                            <!-- Ref No. -->
                             <div class="col-sm-3 finance-field" id="instrument_ref_no_wrapper" style="display:none;">
                                 <label class="form-label" id="instrument_ref_label">Reference No. <span
                                         class="text-danger">*</span></label>
@@ -223,7 +223,7 @@
                                 <input type="text" id="payment_amount" class="form-control" readonly>
                             </div>
 
-                            <!-- Remark -->
+                            <!-- Remarks -->
                             <div class="col-sm-12">
                                 <label class="form-label">Remarks <span class="text-danger">*</span></label>
                                 <textarea name="remark" class="form-control" rows="4"

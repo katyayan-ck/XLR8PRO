@@ -106,7 +106,7 @@ class RulesUserImporter
     private function extractRowData($worksheet, $row)
     {
         return [
-            'S.No' => $worksheet->getCell("A{$row}")->getValue(),
+            'S.No.' => $worksheet->getCell("A{$row}")->getValue(),
             'Name' => $worksheet->getCell("B{$row}")->getValue(),
             'Email' => $worksheet->getCell("C{$row}")->getValue(),
             'Mobile' => $worksheet->getCell("D{$row}")->getValue(),
@@ -126,10 +126,7 @@ class RulesUserImporter
         ];
     }
 
-    /**
-     * Process a complete user row
-     * ✅ FIXED: Now correctly detects existing users by User.code instead of Emp Code
-     */
+    
     private function processUserRow($data, $row)
     {
         // Parse name
@@ -183,7 +180,7 @@ class RulesUserImporter
             'email' => $email,
             'password' => $password,
             'name' => "{$firstName} {$lastName}",
-            'mobile' => $mobile,  // ✅ FIXED: Now passing mobile to method
+            'mobile' => $mobile,  
         ]);
 
         // Track imported user
@@ -448,11 +445,7 @@ class RulesUserImporter
         );
     }
 
-    /**
-     * Get or create User
-     * ✅ FIXED: Only sets password on creation, never overwrites existing password on update
-     * ✅ FIXED: Now includes mobile field in updateData
-     */
+   
     private function getOrCreateUser($data)
     {
         // Prepare update data - conditionally include password

@@ -65,7 +65,7 @@ class DepartmentCrudController extends CrudController
             'title' => 'All Departments',
             'gridConfig' => [
                 'columns' => [
-                    ['field' => 'serial_no',    'headerName' => 'S.No'],
+                    ['field' => 'serial_no',    'headerName' => 'S.No.'],
                     ['field' => 'code',         'headerName' => 'Code'],
                     ['field' => 'name',         'headerName' => 'Department Name'],
                     ['field' => 'description',  'headerName' => 'Description'],

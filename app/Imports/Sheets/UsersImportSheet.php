@@ -32,8 +32,8 @@ class UsersImportSheet extends BaseSheetImport
 
     private function derivePersonCode(array $row): string
     {
-        $pan = $this->n($row['PAN No'] ?? null);
-        $aadhaar = $this->n($row['Aadhaar No'] ?? null);
+        $pan = $this->n($row['PAN No.'] ?? null);
+        $aadhaar = $this->n($row['Aadhaar No.'] ?? null);
         if ($pan) return strtoupper($pan);
         if ($aadhaar) return strtoupper($aadhaar);
 
@@ -47,11 +47,11 @@ class UsersImportSheet extends BaseSheetImport
             'person_code'  => $personCode,
             'display_name' => $this->s($row['Employee Name*'] ?? ''),
             'gender'       => $this->s($row['Gender'] ?? null),
-            'date_of_birth'=> $this->parseDate($row['Date of Birth'] ?? null),
+            'date_of_birth'=> $this->parseDate($row['D.O.B.'] ?? null),
             'marital_status'=> $this->s($row['Marital Status'] ?? null),
             'father_name'  => $this->s($row['Father Name'] ?? null),
-            'pan_no'       => $this->n($row['PAN No'] ?? null),
-            'aadhaar_no'   => $this->n($row['Aadhaar No'] ?? null),
+            'pan_no'       => $this->n($row['PAN No.'] ?? null),
+            'aadhaar_no'   => $this->n($row['Aadhaar No.'] ?? null),
             'created_at'   => $now,
             'updated_at'   => $now,
         ], ['person_code' => $personCode]);

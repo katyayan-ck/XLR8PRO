@@ -54,15 +54,15 @@
                             <div class="card-body">
 
                                 <div class="row">
-                                    <div class="col-md-3 mb-3">
+                                    {{-- <div class="col-md-3 mb-3">
                                         <label class="form-label">
-                                            Enquiry No
+                                            Enquiry No.
                                             <span class="text-danger">*</span>
                                         </label>
                                         <input type="text" name="enquiry_no" class="form-control"
                                             value="{{ old('enquiry_no', isset($enquiry) ? $enquiry->enquiry_no : '') }}"
                                             required>
-                                    </div>
+                                    </div> --}}
 
                                     {{-- Segment --}}
                                     <div class="col-md-3 mb-3">
@@ -390,20 +390,15 @@
                                         </div>
                                     </div>
 
-                                    {{-- Likely Purchase Date --}}
+                                    {{-- Likely Purchase In Days --}}
                                     <div class="col-md-3 mb-3">
-
                                         <label class="form-label">
-
-                                            Likely Purchase Date
-
+                                            Likely Purchase In Days
                                             <span class="text-danger">*</span>
-
                                         </label>
 
                                         <select name="likely_purchase_date" class="form-control form-select">
-
-                                            <option value="">Select Likely Purchase Date</option>
+                                            <option value="">Select Likely Purchase In Days</option>
 
                                             @foreach ($likely_purchase_dates as $item)
                                                 <option value="{{ $item['code'] }}"
@@ -411,9 +406,7 @@
                                                     {{ $item['value'] }}
                                                 </option>
                                             @endforeach
-
                                         </select>
-
                                     </div>
 
                                 </div>
@@ -898,16 +891,15 @@
 
 
 
-                                    {{-- Date of Birth --}}
+                                    {{-- D.O.B. --}}
                                     <div class="col-md-3 mb-3">
                                         <label class="form-label">
-                                            Date of Birth
+                                            D.O.B.
                                             <small class="text-muted">(Optional)</small>
                                         </label>
 
                                         <input type="text" id="dob" name="dob" class="form-control"
-                                            value="{{ old('dob', $enquiry->dob ?? '') }}"
-                                            placeholder="Select Date of Birth">
+                                            value="{{ old('dob', $enquiry->dob ?? '') }}" placeholder="Select D.O.B.">
                                     </div>
 
                                     {{-- Marital Status --}}
@@ -1098,7 +1090,7 @@
 
                                         </div>
 
-                                        {{-- Vehicle No --}}
+                                        {{-- Vehicle No. --}}
                                         <div class="col-md-4 mb-3">
 
                                             <label class="form-label">
@@ -1112,19 +1104,68 @@
 
                                     </div>
 
-                                    {{-- Remarks --}}
-                                    <div class="col-md-8 mb-3">
+                                </div>
 
+                            </div>
+                            {{-- =========================== CONSIDERATION SET =========================== --}}
+                            <h3 class="mb-0 ms-3">Consideration Set</h3>
+                            <div class="card-body">
+                                <div class="row">
+
+                                    {{-- Consideration Brand --}}
+                                    <div class="col-md-4 mb-3">
                                         <label class="form-label">
-                                            Remarks
-                                            <small class="text-muted">(Optional)</small>
+                                            Consideration Set - Brand
                                         </label>
+                                        <select id="consider_make" name="consider_make" class="form-control form-select">
+                                            <!-- Default option set to No Consideration -->
+                                            <option value="No Consideration"
+                                                {{ old('consider_make', $enquiry->consider_make ?? 'No Consideration') == 'No Consideration' ? 'selected' : '' }}>
+                                                No Consideration
+                                            </option>
 
-                                        <textarea name="remarks" rows="3" class="form-control">{{ old('remarks', $enquiry->remarks ?? '') }}</textarea>
+                                            @foreach ($existing_car_oems as $item)
+                                                <option value="{{ $item['code'] }}"
+                                                    {{ old('consider_make', $enquiry->consider_make ?? '') == $item['code'] ? 'selected' : '' }}>
+                                                    {{ $item['value'] }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
 
+                                    {{-- Consideration Model --}}
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">
+                                            Consideration Set - Model
+                                        </label>
+                                        <input type="text" id="consider_model" name="consider_model"
+                                            class="form-control"
+                                            value="{{ old('consider_model', $enquiry->consider_model ?? '') }}" disabled>
+                                    </div>
+
+                                    {{-- Consideration Variant --}}
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">
+                                            Consideration Set - Variant
+                                        </label>
+                                        <input type="text" id="consider_variant" name="consider_variant"
+                                            class="form-control"
+                                            value="{{ old('consider_variant', $enquiry->consider_variant ?? '') }}"
+                                            disabled>
                                     </div>
 
                                 </div>
+                            </div>
+
+                            {{-- Remarks --}}
+                            <div class="col-md-8 mb-3">
+
+                                <label class="form-label">
+                                    Remarks
+                                    <small class="text-muted">(Optional)</small>
+                                </label>
+
+                                <textarea name="remarks" rows="3" class="form-control">{{ old('remarks', $enquiry->remarks ?? '') }}</textarea>
 
                             </div>
 
@@ -1253,6 +1294,8 @@
 
         $(function() {
 
+
+
             /*
             |--------------------------------------------------------------------------
             | Initial State
@@ -1272,6 +1315,32 @@
             $('#source_code').prop('disabled', true);
             $('#sub_source').prop('disabled', true);
             $('#application').prop('disabled', true);
+
+            /*
+            |--------------------------------------------------------------------------
+            | Consideration Set Logic
+            |--------------------------------------------------------------------------
+            */
+            function toggleConsiderationFields() {
+                let brand = $('#consider_make').val();
+
+                if (brand === 'No Consideration' || brand === '') {
+                    // Gray out and clear the fields
+                    $('#consider_model, #consider_variant')
+                        .val('')
+                        .prop('disabled', true);
+                } else {
+                    // Enable the fields
+                    $('#consider_model, #consider_variant')
+                        .prop('disabled', false);
+                }
+            }
+
+            // Trigger when the user changes the dropdown
+            $('#consider_make').on('change', toggleConsiderationFields);
+
+            // Trigger on page load (important for the Edit screen or validation failures)
+            toggleConsiderationFields();
 
 
             /*
@@ -1849,7 +1918,7 @@
                         Swal.fire({
                             icon: 'warning',
                             title: 'Duplicate Enquiry',
-                            html: 'Enquiry No : <b>' + response.enquiry_no + '</b>'
+                            html: 'Enquiry No. : <b>' + response.enquiry_no + '</b>'
                         });
 
                     }

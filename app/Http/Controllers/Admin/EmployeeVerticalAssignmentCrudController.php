@@ -68,7 +68,7 @@ class EmployeeVerticalAssignmentCrudController extends CrudController
             'title' => 'Employee Vertical Assignments',
             'gridConfig' => [
                 'columns' => [
-                    ['field' => 'serial_no',       'headerName' => 'S.No'],
+                    ['field' => 'serial_no',       'headerName' => 'S.No.'],
                     ['field' => 'employee_code',   'headerName' => 'Employee Code'],
                     ['field' => 'employee_name',   'headerName' => 'Employee Name'],
                     ['field' => 'vertical_name',   'headerName' => 'Vertical'],

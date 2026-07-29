@@ -63,7 +63,7 @@ class VerticalCrudController extends CrudController
             'title' => 'All Verticals',
             'gridConfig' => [
                 'columns' => [
-                    ['field' => 'serial_no',    'headerName' => 'S.No'],
+                    ['field' => 'serial_no',    'headerName' => 'S.No.'],
                     ['field' => 'code',         'headerName' => 'Code'],
                     ['field' => 'vert_code',    'headerName' => 'Vertical Code'],
                     ['field' => 'name',         'headerName' => 'Vertical Name'],
