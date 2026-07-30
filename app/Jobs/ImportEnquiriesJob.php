@@ -331,10 +331,10 @@ class ImportEnquiriesJob implements ShouldQueue
                     $excelRow = $i + 2;
                     try {
                         // Blank Enquiry Number no longer skips the row — it's
-                        // imported with long_enquiry_no left null. Matched/stored
-                        // via the sheet-specific `long_enquiry_no` column — NOT
-                        // the shared `enquiry_no` column (reserved for manually
-                        // created enquiries via the CRUD form).
+                        // imported with enquiry_no left null. Matched/stored
+                        // via the shared `enquiry_no` column (Long sheet uses
+                        // this shared column, unlike Quick which has its own
+                        // sheet-specific quick_enquiry_no column).
                         $enquiryNo = $this->cell($row, $headerMap, 'Enquiry Number');
 
                         [$firstName, $lastName] = $this->splitCustomerName($this->cell($row, $headerMap, 'Customer Name'));
@@ -362,8 +362,7 @@ class ImportEnquiriesJob implements ShouldQueue
                             'source_code'                => $this->cell($row, $headerMap, 'Enquiry Source'),
                             'sub_source'                 => $this->cell($row, $headerMap, 'Enquiry Sub Source'),
                             'stage'                      => $this->cell($row, $headerMap, 'Stage'),
-                            'long_enquiry_date'          => $this->excelDate($this->cell($row, $headerMap, 'Enquiry Date')),
-                            'enq_assign_date'            => $this->excelDate($this->cell($row, $headerMap, 'Enq Assign Date'), true),
+                            'enquiry_date'               => $this->excelDate($this->cell($row, $headerMap, 'Enquiry Date')),
                             'customer_address'           => $this->cell($row, $headerMap, 'Customer Address'),
                             'tehsil'                     => $this->cell($row, $headerMap, 'Tehsil'),
                             'district'                   => $this->cell($row, $headerMap, 'District'),
@@ -379,7 +378,7 @@ class ImportEnquiriesJob implements ShouldQueue
                         $data['updated_at'] = $now;
 
                         if (empty($enquiryNo)) {
-                            $data['long_enquiry_no'] = null;
+                            $data['enquiry_no'] = null;
                             DB::table('xlr8_crm_enquiries')->insert(array_merge(
                                 $data,
                                 ['created_at' => $now, 'origin' => 'LONG', 'current_origin' => 'LONG']
@@ -388,11 +387,11 @@ class ImportEnquiriesJob implements ShouldQueue
                         } else {
                             $existed = $this->upsertRowWithAssignment(
                                 'xlr8_crm_enquiries',
-                                ['long_enquiry_no' => $enquiryNo],
+                                ['enquiry_no' => $enquiryNo],
                                 $data,
                                 ['created_at' => $now, 'origin' => 'LONG', 'current_origin' => 'LONG'],
                                 $scMileId,
-                                'long_enq_assign_date',
+                                'enq_assign_date',
                                 $now
                             );
 
@@ -547,10 +546,10 @@ class ImportEnquiriesJob implements ShouldQueue
     /**
      * Same upsert as upsertRow(), plus the SC-assignment-date business rule
      * used by the Quick and Long sheets: $assignDateColumn (quick_enq_assign_date
-     * or long_enq_assign_date) is only ever stamped with $now when ALL of this
+     * for Quick, enq_assign_date for Long) is only ever stamped with $now when ALL of this
      * is true —
-     *   - the row already existed (matched by the sheet's own enquiry-number
-     *     column, e.g. quick_enquiry_no / long_enquiry_no), AND
+     *   - the row already existed (matched by the sheet's enquiry-number
+     *     column, e.g. quick_enquiry_no for Quick / enquiry_no for Long), AND
      *   - its sc_mile_id was empty before this import, AND
      *   - this import row is setting a non-empty sc_mile_id for the first time.
      * Fresh inserts and re-imports of an already-assigned SC never touch the
