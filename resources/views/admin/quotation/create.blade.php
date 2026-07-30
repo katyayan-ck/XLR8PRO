@@ -362,23 +362,28 @@ use App\Services\OrgService;
 
     .quotation-summary .total-receivable-label {
         flex: 0 0 36%;
+        padding: 5px;
     }
 
     .quotation-summary .total-receivable-amount {
         flex: 0 0 14%;
+        padding: 5px;
     }
 
     .quotation-summary .total-discount-label {
         flex: 0 0 33%;
+        padding: 5px;
     }
 
     .quotation-summary .total-discount-amount {
         flex: 1 1 17%;
+        padding: 5px;
     }
 
     .quotation-summary .onroad-row-cell {
         background: #abb8ca;
         color: #000000;
+        padding: 5px;
     }
 
     .quotation-summary .onroad-label {
@@ -525,6 +530,31 @@ use App\Services\OrgService;
     .financier-discount-grid input {
         text-align: right !important;
     }
+
+    @media print {
+
+        .quotation-summary {
+            display: flex !important;
+            align-items: stretch !important;
+        }
+
+        .quotation-summary .total-row-cell,
+        .quotation-summary .onroad-row-cell {
+            display: flex !important;
+            align-items: center !important;
+            box-sizing: border-box;
+            margin: 0 !important;
+            border-top: 1px solid #000 !important;
+            border-bottom: 1px solid #000 !important;
+            border-right: 1px solid #000 !important;
+        }
+
+        .quotation-summary .total-row-cell:first-child,
+        .quotation-summary .onroad-row-cell:first-child {
+            border-left: 1px solid #000 !important;
+        }
+
+    }
 </style>
 
 @endpush
@@ -600,12 +630,11 @@ use App\Services\OrgService;
                     <table class="bill-table mb-3">
 
                         <tr>
-                            <td class="title" width="18%">Enquiry No.</td>
+                            <td class="title" width="18%">Enquiry ID</td>
                             <td width="32%">
-                                <input type="text" value=" {{ optional($selectedEnquiry)->enquiry_no }}" readonly>
+                                <input type="text" value="{{ optional($selectedEnquiry)->id }}" readonly>
 
-                                <input type="hidden" name="enquiry_no"
-                                    value="{{ optional($selectedEnquiry)->enquiry_no }}">
+                                <input type="hidden" name="enquiry_no" value="{{ optional($selectedEnquiry)->id }}">
                             </td>
 
                             <td class="title" width="18%">Customer Name</td>

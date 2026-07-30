@@ -106,7 +106,7 @@ class QuotationCrudController extends CrudController
 
                 'quotation_no' => $quotation->quotation_no,
 
-                'enquiry_no' => $quotation->enquiry_no,
+                'enquiry_no' => $enquiry?->id,
 
                 'customer_name' => $enquiry
                     ? trim($enquiry->first_name . ' ' . $enquiry->last_name)
@@ -280,9 +280,10 @@ class QuotationCrudController extends CrudController
     public function create()
     {
 
+
         $this->crud->setCreateView('admin.quotation.create');
 
-        $enquiryId = request('enquiry_id');
+        $enquiryId = request('id');
 
         if (!$enquiryId) {
             abort(404, 'Enquiry not found.');
@@ -294,6 +295,8 @@ class QuotationCrudController extends CrudController
             'variant',
             'color',
         ])->findOrFail($enquiryId);
+
+
 
 
 
@@ -367,12 +370,9 @@ class QuotationCrudController extends CrudController
             $quotation = new Quotation();
 
             $quotation->quotation_no = 0;
-            $quotation->enquiry_no   = $request->enquiry_no;
+            $quotation->enquiry_no = $request->enquiry_no;   // isme ab ID store hogi
 
-            $enquiry = Enquiry::where(
-                'enquiry_no',
-                $request->enquiry_no
-            )->firstOrFail();
+            $enquiry = Enquiry::findOrFail($request->enquiry_no);
 
             $quotation->person_code  = $enquiry->person_code;
             $quotation->model_code   = $request->model_code;
@@ -460,10 +460,7 @@ class QuotationCrudController extends CrudController
             'model',
             'variant',
             'color',
-        ])->where(
-            'enquiry_no',
-            $quotation->enquiry_no
-        )->firstOrFail();
+        ])->findOrFail($quotation->enquiry_no);
 
         $insurance_type_map = [
             1 => 'Nil Dep',
@@ -545,10 +542,7 @@ class QuotationCrudController extends CrudController
 
             $quotation = Quotation::findOrFail($id);
 
-            $enquiry = Enquiry::where(
-                'enquiry_no',
-                $request->enquiry_no
-            )->firstOrFail();
+            $enquiry = Enquiry::findOrFail($request->enquiry_no);
 
             // Previous quotation snapshot
             $previousProposal = $quotation->proposed_data ?? [];
@@ -778,25 +772,12 @@ class QuotationCrudController extends CrudController
 
             ->firstOrFail();
 
-
-
         $selectedEnquiry = Enquiry::with([
-
             'segment',
-
             'model',
-
             'variant',
-
             'color',
-
-        ])->where(
-
-            'enquiry_no',
-
-            $quotation->enquiry_no
-
-        )->firstOrFail();
+        ])->findOrFail($quotation->enquiry_no);
 
 
 

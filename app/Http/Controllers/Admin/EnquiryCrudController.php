@@ -123,7 +123,7 @@ class EnquiryCrudController extends CrudController
     {
         $c = fn($d, $f) => $d ? Carbon::parse($d)->format($f) : '—';
         $editUrl = backpack_url("enquiry/{$e->id}/edit");
-        $quotUrl = backpack_url("quotation-form/create?enquiry_id={$e->id}");
+        $quotUrl = backpack_url("quotation-form/create?id={$e->id}");
         
         $actionBtns = '<a href="'.$editUrl.'" class="btn btn-sm btn-primary">Edit</a>';
         if ($type === 'all') $actionBtns .= '<a href="'.$quotUrl.'" class="btn btn-success btn-sm">Form</a>';

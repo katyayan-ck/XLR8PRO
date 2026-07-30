@@ -613,16 +613,14 @@ use App\Services\OrgService;
                         <tr>
                             <td class="title" width="18%">Enquiry No.</td>
                             <td width="32%">
-                                <input type="text" class="form-control border-0 shadow-none"
-                                    value="{{ optional($selectedEnquiry)->enquiry_no }}" readonly>
+                                <input type="text" value="{{ optional($selectedEnquiry)->id }}" readonly>
 
-                                <input type="hidden" name="enquiry_no"
-                                    value="{{ optional($selectedEnquiry)->enquiry_no }}">
+                                <input type="hidden" name="enquiry_no" value="{{ optional($selectedEnquiry)->id }}">
                             </td>
 
                             <td class="title" width="18%">Customer Name</td>
                             <td width="32%">
-                                <input type="text" id="customer_name" class="form-control border-0 shadow-none"
+                                <input type="text" id="customer_name"
                                     value="{{ optional($selectedEnquiry)->full_name }}" readonly>
                             </td>
                         </tr>
@@ -1482,8 +1480,6 @@ use App\Services\OrgService;
                                     <td class="cell-amount"></td>
 
                                 </tr>
-
-
 
                                 {{-- Row 16: COD Charges --}}
                                 <tr class="grid-row">
