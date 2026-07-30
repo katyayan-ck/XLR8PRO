@@ -1406,5 +1406,93 @@ class OrgService
         })->toArray();
     }
 
+    /**
+     * Applies the UI Highlight Filters to the given Enquiry query.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param string|null $filter
+     * @return void
+     */
+    public static function applyHighlightFilter($query, ?string $filter): void
+    {
+        if (empty($filter)) {
+            return;
+        }
+
+        $today = now()->format('Y-m-d');
+        $todayMonth = now()->format('m');
+        $todayDay = now()->format('d');
+
+        switch ($filter) {
+            case 'missed_fup':
+                // Followup date is in the past
+                $query->whereNotNull('followup_date')
+                      ->whereDate('followup_date', '<', $today);
+                break;
+
+            case 'today_fup':
+                // Followup date is exactly today
+                $query->whereNotNull('followup_date')
+                      ->whereDate('followup_date', '=', $today);
+                break;
+
+            case 'birthday':
+                // Month and Day of DOB match today
+                $query->whereNotNull('dob')
+                      ->whereMonth('dob', $todayMonth)
+                      ->whereDay('dob', $todayDay);
+                break;
+
+            case 'anniversary':
+                // Month and Day of marriage_date match today
+                $query->whereNotNull('marriage_date')
+                      ->whereMonth('marriage_date', $todayMonth)
+                      ->whereDay('marriage_date', $todayDay);
+                break;
+
+            case 'exchange':
+                // Purchase type implies exchange, or they provided an exchange car brand
+                $query->where(function ($q) {
+                    $q->where('purchase_type', 'like', '%Exchange%')
+                      ->orWhereNotNull('brand_make');
+                });
+                break;
+
+            case 'pending_eval':
+                // Demo Logic: Has an exchange car but evaluation isn't complete.
+                // Assuming 'brand_make' is filled but a status isn't. Adjust to your specific column.
+                $query->whereNotNull('brand_make');
+                break;
+
+            case 'delayed':
+                // Demo Logic: Enquiry is older than 7 days but still active (not won/lost)
+                $query->where('created_at', '<', now()->subDays(7))
+                      ->whereNotIn('dms_enquiry_stage', ['Lost', 'Won', 'Retail']);
+                break;
+
+            case 'wrong_assign':
+                // Demo Logic: No Sales Consultant assigned
+                $query->whereNull('sc_code');
+                break;
+
+            case 'finance':
+                // Demo Logic: Purchase type implies finance
+                $query->where('purchase_type', 'like', '%Finance%');
+                break;
+
+            case 'stage_mismatch':
+                // DMS stage and CRE stage do not match
+                $query->whereNotNull('dms_enquiry_stage')
+                      ->whereNotNull('cre_enquiry_stage')
+                      ->whereColumn('dms_enquiry_stage', '!=', 'cre_enquiry_stage');
+                break;
+
+            case 'lost_verif':
+                // Demo Logic: Stage is Lost, but maybe CRE hasn't verified it yet
+                $query->where('dms_enquiry_stage', 'Lost');
+                break;
+        }
+    }
+
 }
 // changing the demo document
