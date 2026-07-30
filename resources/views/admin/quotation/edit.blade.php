@@ -592,12 +592,11 @@ use App\Services\OrgService;
                     <table class="bill-table mb-3">
 
                         <tr>
-                            <td class="title" width="18%">Enquiry No.</td>
+                            <td class="title" width="18%">Enquiry ID</td>
                             <td width="32%">
-                                <input type="text" value="{{ optional($selectedEnquiry)->enquiry_no }}" readonly>
+                                <input type="text" value="{{ optional($selectedEnquiry)->id }}" readonly>
 
-                                <input type="hidden" name="enquiry_no"
-                                    value="{{ optional($selectedEnquiry)->enquiry_no }}">
+                                <input type="hidden" name="enquiry_no" value="{{ optional($selectedEnquiry)->id }}">
                             </td>
 
                             <td class="title" width="18%">Customer Name</td>

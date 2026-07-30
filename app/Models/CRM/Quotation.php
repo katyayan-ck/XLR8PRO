@@ -71,7 +71,7 @@ class Quotation extends BaseModel
     // ==================== CODE-BASED RELATIONSHIPS ====================
     public function enquiry()
     {
-        return $this->belongsTo(Enquiry::class, 'enquiry_no', 'enquiry_no');
+        return $this->belongsTo(Enquiry::class, 'enquiry_no', 'id');
     }
 
     public function person()
