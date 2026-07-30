@@ -55,12 +55,18 @@ class EnquiryCrudController extends CrudController
     {
         $startRow = max(0, (int) $request->input('startRow', 0));
         $limit = max(1, (int) $request->input('endRow', $startRow + 100)) - $startRow;
+        
         $searchText = trim((string) $request->input('searchText', ''));
+        $highlightFilter = trim((string) $request->input('highlightFilter', ''));
 
         $query = Enquiry::formComplete()->with(['segment', 'model', 'variant', 'color', 'campaign']);
 
+        // Apply Search & Sort
         $this->applyEnquirySearch($query, $searchText);
         $this->applyEnquirySort($query, (array) $request->input('sortModel', []));
+
+        // Apply the Highlight Filter
+        OrgService::applyHighlightFilter($query, $highlightFilter);
 
         $total = (clone $query)->count();
         $gridData = $query->skip($startRow)->take($limit)->get()
@@ -71,8 +77,14 @@ class EnquiryCrudController extends CrudController
 
     public function export(Request $request)
     {
+        $searchText = trim((string) $request->input('searchText', ''));
+        $highlightFilter = trim((string) $request->input('highlightFilter', ''));
+
         $query = Enquiry::formComplete()->with(['segment', 'model', 'variant', 'color', 'campaign']);
-        $this->applyEnquirySearch($query, trim((string) $request->input('searchText', '')));
+        
+        $this->applyEnquirySearch($query, $searchText);
+        OrgService::applyHighlightFilter($query, $highlightFilter); // Make sure exports match the active filter
+
         $query->orderByDesc('created_at');
 
         return response()->streamDownload(function () use ($query) {
@@ -184,7 +196,6 @@ class EnquiryCrudController extends CrudController
                 'enquiry_type' => $e->enquiry_type ?? '—',
                 'source_name' => $e->source?->name ?? $e->source_code ?? '—',
                 'sub_source' => $e->sub_source ?? '—',
-                // Inside mapData() method, update this line:
                 'likely_purchase_in_days' => $e->likely_purchase_date ?? '—',
                 'fuel_type' => $e->fuel_type ?? '—',
                 'transmission' => $e->transmission ?? '—',
