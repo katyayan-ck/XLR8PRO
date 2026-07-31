@@ -32,16 +32,12 @@ use App\Services\OrgService;
             appearance: none !important;
             -webkit-appearance: none !important;
             -moz-appearance: none !important;
-
             background: transparent !important;
             background-image: none !important;
-
             border: none !important;
             outline: none !important;
-
             padding-right: 0 !important;
         }
-
 
         .no-print {
             display: none !important;
@@ -53,21 +49,125 @@ use App\Services\OrgService;
         }
 
         .quotation-sheet {
-
             width: 100%;
-
             margin: 0;
-
             padding: 2mm;
-
             box-shadow: none;
-
             border: 1px solid #000;
-
             display: flex;
             flex-direction: column;
         }
 
+        /* Hide column 2 (OPTION in the price table, TYPE in the discount table) */
+        .quotation-grid th:nth-child(2),
+        .quotation-grid td:nth-child(2) {
+            display: none !important;
+        }
+
+        /* Reassign widths for the 2 remaining columns per table - each totals 100% */
+        .price-grid th:nth-child(1) {
+            width: 53% !important;
+        }
+
+        .price-grid th:nth-child(3) {
+            width: 47% !important;
+        }
+
+        .discount-grid th:nth-child(1) {
+            width: 49% !important;
+        }
+
+        .discount-grid th:nth-child(3) {
+            width: 51% !important;
+        }
+
+        .quotation-grid {
+            width: 100% !important;
+            table-layout: fixed !important;
+        }
+
+        .quotation-grid-split {
+            gap: 6px !important;
+        }
+
+        .quotation-grid tr.print-hide {
+            display: none !important;
+        }
+
+        .financier-discount-grid {
+            display: none !important;
+        }
+
+        .accessories-note-row {
+            display: block !important;
+        }
+
+        .quotation-sheet,
+        .quotation-grid,
+        .quotation-summary,
+        .bill-table {
+            width: 100% !important;
+        }
+
+        /* Fix summary alignment to match 4 columns */
+        .quotation-summary {
+            display: flex !important;
+            align-items: stretch !important;
+            width: 100% !important;
+            border: 1px solid #000 !important;
+        }
+
+        .quotation-summary .total-row-cell,
+        .quotation-summary .onroad-row-cell {
+            display: flex !important;
+            align-items: center !important;
+            box-sizing: border-box !important;
+            margin: 0 !important;
+            border-right: none !important;
+            padding: 5px 8px !important;
+            min-height: 30px !important;
+        }
+
+        .quotation-summary .total-row-cell:last-child,
+        .quotation-summary .onroad-row-cell:last-child {
+            border-right: 1px solid #000 !important;
+        }
+
+        .quotation-summary input {
+            width: 100% !important;
+            text-align: right !important;
+            border: none !important;
+            background: transparent !important;
+            padding: 2px 5px !important;
+        }
+
+        /* Match the 4-column proportions */
+        .quotation-summary .total-receivable-label {
+            flex: 0 0 32% !important;
+        }
+
+        .quotation-summary .total-receivable-amount {
+            flex: 0 0 18% !important;
+            justify-content: flex-end !important;
+        }
+
+        .quotation-summary .total-discount-label {
+            flex: 0 0 32% !important;
+        }
+
+        .quotation-summary .total-discount-amount {
+            flex: 0 0 18% !important;
+            justify-content: flex-end !important;
+        }
+
+        .quotation-summary .onroad-label {
+            flex: 0 0 82% !important;
+        }
+
+        .quotation-summary .onroad-amount {
+            flex: 0 0 18% !important;
+            justify-content: flex-end !important;
+        }
     }
 
     .quotation-sheet {
@@ -191,26 +291,6 @@ use App\Services\OrgService;
         margin-top: 0 !important;
     }
 
-    @media print {
-
-        /* Form me select hide */
-        #accessories+.select2-container {
-            display: none !important;
-        }
-
-        /* Sirf text dikhao */
-        #accessories_print {
-            display: block !important;
-            white-space: normal;
-            word-break: break-word;
-            font-size: 11px;
-            line-height: 15px;
-        }
-
-
-
-    }
-
     /* Select2 fixed height */
     .select2-container {
         width: 100% !important;
@@ -258,14 +338,27 @@ use App\Services\OrgService;
         margin-top: 12px;
     }
 
-    /* ================= Quotation Grid (Price / Discount) — real table so rows always
-       stay aligned across both sides. Each <tr> pairs one price item with one
-       discount item (when a discount item exists for that row); if a side has no
-       value we simply leave that cell blank instead of collapsing independently,
-       so the borders/rows never go out of sync between the two halves. ================= */
+    /* ================= Quotation Grid (Price / Discount) — now TWO independent
+       tables/boxes placed side by side. Because each side is its own table with
+       its own <tbody>, every row (price item or discount item) can be shown or
+       hidden completely independently. When a field is blank / 0 / N/A, its row
+       is simply removed from the flow (display:none) while printing, and the
+       remaining rows in that box naturally move up to close the gap — the two
+       boxes no longer need to stay row-for-row aligned with each other. ================= */
 
     .quotation-box {
         margin-bottom: 15px;
+    }
+
+    .quotation-grid-split {
+        display: flex;
+        gap: 0.5px;
+        align-items: flex-start;
+    }
+
+    .quotation-grid-split>.quotation-grid-col {
+        flex: 1 1 50%;
+        min-width: 0;
     }
 
     .quotation-grid {
@@ -295,28 +388,28 @@ use App\Services\OrgService;
        column's width for the whole table — this is the spec-defined, most
        reliably-supported way across browsers/print engines, unlike overriding
        <col> widths which some print renderers ignore. */
-    .quotation-grid th:nth-child(1) {
-        width: 16%;
+    .price-grid th:nth-child(1) {
+        width: 32%;
     }
 
-    .quotation-grid th:nth-child(2) {
-        width: 20%;
+    .price-grid th:nth-child(2) {
+        width: 40%;
     }
 
-    .quotation-grid th:nth-child(3) {
-        width: 14%;
+    .price-grid th:nth-child(3) {
+        width: 28%;
     }
 
-    .quotation-grid th:nth-child(4) {
-        width: 16.5%;
+    .discount-grid th:nth-child(1) {
+        width: 33%;
     }
 
-    .quotation-grid th:nth-child(5) {
-        width: 16.5%;
+    .discount-grid th:nth-child(2) {
+        width: 33%;
     }
 
-    .quotation-grid th:nth-child(6) {
-        width: 17%;
+    .discount-grid th:nth-child(3) {
+        width: 34%;
     }
 
     .quotation-grid td.cell-label {
@@ -348,50 +441,56 @@ use App\Services\OrgService;
     }
 
     /* ================= Quotation Summary (Total Receivable / Total Discount / On Road Price) ================= */
+    /* ================= Quotation Summary (Total Receivable / Total Discount / On Road Price) ================= */
     .quotation-summary {
         display: flex;
         font-weight: bold;
-        border: solid 1px #000;
-
+        border: 1px solid #000;
+        width: 100%;
     }
 
     .quotation-summary .total-row-cell {
         background: #f2f2f2;
-        border: solid 1px #000;
+        display: flex;
+        align-items: center;
+        padding: 5px 8px;
+        min-height: 30px;
     }
 
     .quotation-summary .total-receivable-label {
-        flex: 0 0 36%;
-        padding: 5px;
+        flex: 0 0 32%;
     }
 
     .quotation-summary .total-receivable-amount {
-        flex: 0 0 14%;
-        padding: 5px;
+        flex: 0 0 18%;
+        justify-content: flex-end;
     }
 
     .quotation-summary .total-discount-label {
-        flex: 0 0 33%;
-        padding: 5px;
+        flex: 0 0 32%;
     }
 
     .quotation-summary .total-discount-amount {
-        flex: 1 1 17%;
-        padding: 5px;
+        flex: 1 1 18%;
+        justify-content: flex-end;
     }
 
     .quotation-summary .onroad-row-cell {
         background: #abb8ca;
         color: #000000;
-        padding: 5px;
+        padding: 5px 8px;
+        display: flex;
+        align-items: center;
+        min-height: 30px;
     }
 
     .quotation-summary .onroad-label {
-        flex: 0 0 83%;
+        flex: 0 0 82%;
     }
 
     .quotation-summary .onroad-amount {
-        flex: 1 1 17%;
+        flex: 1 1 18%;
+        justify-content: flex-end;
     }
 
     .quotation-summary input {
@@ -400,6 +499,8 @@ use App\Services\OrgService;
         background: transparent;
         font-size: 10px;
         font-weight: bold;
+        text-align: right;
+        padding: 2px 5px;
     }
 
     /* ================= Financier Invoice / Discount Bifurcation — div based ================= */
@@ -468,41 +569,45 @@ use App\Services\OrgService;
 
     @media print {
 
-        /* OPTION and TYPE columns are always folded into the label / omitted for print */
+        /* OPTION and TYPE columns are always folded into the label / omitted for print.
+           Each table now only has 3 columns of its own, so this is simply column 2. */
         .quotation-grid th:nth-child(2),
-        .quotation-grid td:nth-child(2),
-        .quotation-grid th:nth-child(5),
-        .quotation-grid td:nth-child(5) {
+        .quotation-grid td:nth-child(2) {
             display: none !important;
         }
 
-        /* Hiding 2 of the 6 fixed-width columns above would otherwise leave the
-           table only using ~63% of the page width (blank space on the right),
-           so the grid box would look "shrunk" compared to the full-width Total /
-           On Road Price bars below it. Re-assign the widths of the 4 remaining
-           columns (on the <th> cells, since that's what actually drives
+        /* Hiding column 2 above would otherwise leave each table using less than
+           its full width (blank space on the right), so the box would look
+           "shrunk". Re-assign the widths of the 2 remaining columns per table
+           (on the <th> cells, since that's what actually drives
            table-layout:fixed column sizing) so they always add up to 100%
-           while printing. */
-        .quotation-grid th:nth-child(1) {
-            width: 25% !important;
+           while printing. Price and discount keep their own ratio. */
+        .price-grid th:nth-child(1) {
+            width: 53% !important;
         }
 
-        .quotation-grid th:nth-child(3) {
-            width: 22% !important;
+        .price-grid th:nth-child(3) {
+            width: 47% !important;
         }
 
-        .quotation-grid th:nth-child(4) {
-            width: 26% !important;
+        .discount-grid th:nth-child(1) {
+            width: 49% !important;
         }
 
-        .quotation-grid th:nth-child(6) {
-            width: 27% !important;
+        .discount-grid th:nth-child(3) {
+            width: 51% !important;
         }
 
-        /* A row collapses completely (no gap left behind) only when BOTH its price
-           side and discount side have no value */
+        /* Every price/discount item is its own independent row now. A row is
+           hidden purely on its own value being blank / 0 / N/A — the other box
+           is completely unaffected, and its own remaining rows just move up to
+           close the gap since it's normal table flow. */
         .quotation-grid tr.print-hide {
             display: none !important;
+        }
+
+        .quotation-grid-split {
+            gap: 0.5px !important;
         }
 
         /* Hide Financier Invoice / Discount Bifurcation box while printing */
@@ -522,6 +627,19 @@ use App\Services\OrgService;
         .bill-table {
             width: 100% !important;
         }
+
+        #accessories+.select2-container {
+            display: none !important;
+        }
+
+        /* Sirf text dikhao */
+        #accessories_print {
+            display: block !important;
+            white-space: normal;
+            word-break: break-word;
+            font-size: 11px;
+            line-height: 15px;
+        }
     }
 
     .quotation-grid input.numeric-only,
@@ -529,31 +647,6 @@ use App\Services\OrgService;
     .quotation-summary input,
     .financier-discount-grid input {
         text-align: right !important;
-    }
-
-    @media print {
-
-        .quotation-summary {
-            display: flex !important;
-            align-items: stretch !important;
-        }
-
-        .quotation-summary .total-row-cell,
-        .quotation-summary .onroad-row-cell {
-            display: flex !important;
-            align-items: center !important;
-            box-sizing: border-box;
-            margin: 0 !important;
-            border-top: 1px solid #000 !important;
-            border-bottom: 1px solid #000 !important;
-            border-right: 1px solid #000 !important;
-        }
-
-        .quotation-summary .total-row-cell:first-child,
-        .quotation-summary .onroad-row-cell:first-child {
-            border-left: 1px solid #000 !important;
-        }
-
     }
 </style>
 
@@ -725,411 +818,444 @@ use App\Services\OrgService;
 
                     <div class="quotation-box">
 
-                        <table class="quotation-grid">
-                            <thead>
-                                <tr>
-                                    <th>PRICE DETAILS</th>
-                                    <th>OPTION</th>
-                                    <th>AMOUNT</th>
-                                    <th>DISCOUNT DETAILS</th>
-                                    <th>TYPE</th>
-                                    <th>AMOUNT</th>
-                                </tr>
-                            </thead>
+                        <div class="quotation-grid-split">
 
-                            <tbody>
+                            {{-- ================= PRICE DETAILS BOX ================= --}}
+                            <div class="quotation-grid-col">
+                                <table class="quotation-grid price-grid">
+                                    <thead>
+                                        <tr>
+                                            <th>PRICE DETAILS</th>
+                                            <th>OPTION</th>
+                                            <th>AMOUNT</th>
+                                        </tr>
+                                    </thead>
 
-                                {{-- Row 1: Ex-Showroom Price | Group A discount --}}
-                                <tr class="grid-row">
-                                    <td class="cell-label">Ex-Showroom Price</td>
-                                    <td class="cell-option"></td>
-                                    <td class="cell-amount">
-                                        <input name="ex_showroom_price" id="ex_showroom_price" class="numeric-only">
-                                    </td>
-                                    <td class="cell-label">
-                                        <select id="group_a_select" class="group-select">
-                                            <option value="cash_scheme_oem">Cash Scheme OEM</option>
-                                            <option value="csd_discount">CSD Discount</option>
-                                            <option value="fame_subsidy" id="fame_subsidy_option">Fame Subsidy (LMM)
-                                            </option>
-                                        </select>
-                                    </td>
-                                    <td class="cell-type">
-                                        <select id="group_a_type">
-                                            <option>INV</option>
-                                            <option>CN</option>
-                                        </select>
-                                    </td>
-                                    <td class="cell-amount">
-                                        <input type="text" id="group_a_amount" class="numeric-only" placeholder="0.00">
-                                        <input type="hidden" id="cash_scheme_oem" name="cash_scheme_oem">
-                                        <input type="hidden" id="cash_scheme_oem_type" name="cash_scheme_oem_type">
-                                        <input type="hidden" id="csd_discount" name="csd_discount">
-                                        <input type="hidden" id="csd_discount_type" name="csd_discount_type">
-                                        <input type="hidden" id="fame_subsidy" name="fame_subsidy">
-                                        <input type="hidden" id="fame_subsidy_type" name="fame_subsidy_type">
-                                    </td>
-                                </tr>
+                                    <tbody>
 
-                                {{-- Row 2: Insurance | Cash Scheme Dealer --}}
-                                <tr class="grid-row">
-                                    <td class="cell-label">Insurance</td>
-                                    <td class="cell-option">
-                                        <select name="policy_type" id="policy_type">
-                                            @foreach($insurance_type_map as $key=>$value)
-                                            <option value="{{ $key }}">{{ $value }}</option>
-                                            @endforeach
-                                        </select>
-                                    </td>
-                                    <td class="cell-amount">
-                                        <input type="text" id="insurance_amount" name="insurance_amount"
-                                            class="numeric-only" placeholder="0.00">
-                                    </td>
-                                    <td class="cell-label">Cash Scheme Dealer</td>
-                                    <td class="cell-type">
-                                        <select id="dealer_discount_type" name="dealer_discount_type">
-                                            <option value="INV">INV</option>
-                                            <option value="CN">CN</option>
-                                        </select>
-                                    </td>
-                                    <td class="cell-amount">
-                                        <input type="text" name="dealer_discount" id="dealer_discount"
-                                            class="numeric-only" placeholder="0.00">
-                                    </td>
-                                </tr>
+                                        <tr class="grid-row">
+                                            <td class="cell-label">Ex-Showroom Price</td>
+                                            <td class="cell-option"></td>
+                                            <td class="cell-amount">
+                                                <input name="ex_showroom_price" id="ex_showroom_price"
+                                                    class="numeric-only">
+                                            </td>
+                                        </tr>
 
-                                {{-- Row 3: Registration | Accessories Scheme --}}
-                                <tr class="grid-row">
-                                    <td class="cell-label">Registration</td>
-                                    <td class="cell-option">
-                                        <select name="registration_type" id="registration_type">
-                                            @foreach($registration_type_map as $key=>$value)
-                                            <option value="{{ $key }}">{{ $value }}</option>
-                                            @endforeach
-                                        </select>
-                                    </td>
-                                    <td class="cell-amount">
-                                        <input type="text" id="registration_amount" name="registration_amount"
-                                            class="numeric-only" placeholder="0.00">
-                                    </td>
-                                    <td class="cell-label">Accessories Scheme</td>
-                                    <td class="cell-type">
-                                        <select id="accessories_discount_type" name="accessories_discount_type">
-                                            <option value="INV">INV</option>
-                                            <option value="CN">CN</option>
-                                        </select>
-                                    </td>
-                                    <td class="cell-amount">
-                                        <input type="text" name="accessories_discount" id="accessories_discount"
-                                            class="numeric-only" placeholder="0.00">
-                                    </td>
-                                </tr>
+                                        <tr class="grid-row">
+                                            <td class="cell-label">Insurance</td>
+                                            <td class="cell-option">
+                                                <select name="policy_type" id="policy_type">
+                                                    @foreach($insurance_type_map as $key=>$value)
+                                                    <option value="{{ $key }}">{{ $value }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </td>
+                                            <td class="cell-amount">
+                                                <input type="text" id="insurance_amount" name="insurance_amount"
+                                                    class="numeric-only" placeholder="0.00">
+                                            </td>
+                                        </tr>
 
-                                {{-- Row 4: Accessories | Shield Scheme --}}
-                                <tr class="grid-row">
-                                    <td class="cell-label">Accessories</td>
-                                    <td class="cell-option">
-                                        <select name="accessories[]" id="accessories" multiple>
-                                            @foreach($accessoryList as $accessory)
-                                            <option value="{{ $accessory->part_no }}"
-                                                data-price="{{ $accessory->ndp }}">
-                                                {{ $accessory->item }}
-                                                (₹{{ number_format($accessory->ndp,2) }})
-                                            </option>
-                                            @endforeach
-                                        </select>
-                                    </td>
-                                    <td class="cell-amount">
-                                        <input id="accessories_amount" name="accessories_amount" class="numeric-only"
-                                            readonly value="0.00">
-                                    </td>
-                                    <td class="cell-label">Shield Scheme</td>
-                                    <td class="cell-type">
-                                        <select id="shield_scheme_type" name="shield_scheme_type">
-                                            <option value="INV">INV</option>
-                                            <option value="CN">CN</option>
-                                        </select>
-                                    </td>
-                                    <td class="cell-amount">
-                                        <input type="text" name="shield_scheme" id="shield_scheme" class="numeric-only"
-                                            placeholder="0.00">
-                                    </td>
-                                </tr>
+                                        <tr class="grid-row">
+                                            <td class="cell-label">Registration</td>
+                                            <td class="cell-option">
+                                                <select name="registration_type" id="registration_type">
+                                                    @foreach($registration_type_map as $key=>$value)
+                                                    <option value="{{ $key }}">{{ $value }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </td>
+                                            <td class="cell-amount">
+                                                <input type="text" id="registration_amount" name="registration_amount"
+                                                    class="numeric-only" placeholder="0.00">
+                                            </td>
+                                        </tr>
 
-                                {{-- Row 5: Maxicare | Group B discount --}}
-                                <tr class="grid-row">
-                                    <td class="cell-label">Maxicare</td>
-                                    <td class="cell-option"></td>
-                                    <td class="cell-amount">
-                                        <input id="maxicare" name="maxicare" class="numeric-only">
-                                    </td>
-                                    <td class="cell-label">
-                                        <select id="group_b_select" class="group-select">
-                                            <option value="corporate_discount">Corporate Discount</option>
-                                            <option value="loyalty_bonus">Loyalty Bonus</option>
-                                        </select>
-                                    </td>
-                                    <td class="cell-type">
-                                        <select id="group_b_type">
-                                            <option>INV</option>
-                                        </select>
-                                    </td>
-                                    <td class="cell-amount">
-                                        <input type="text" id="group_b_amount" class="numeric-only" placeholder="0.00">
-                                        <input type="hidden" id="corporate_discount" name="corporate_discount">
-                                        <input type="hidden" id="corporate_discount_type"
-                                            name="corporate_discount_type">
-                                        <input type="hidden" id="loyalty_bonus" name="loyalty_bonus">
-                                        <input type="hidden" id="loyalty_bonus_type" name="loyalty_bonus_type">
-                                    </td>
-                                </tr>
+                                        <tr class="grid-row">
+                                            <td class="cell-label">Accessories</td>
+                                            <td class="cell-option">
+                                                <select name="accessories[]" id="accessories" multiple>
+                                                    @foreach($accessoryList as $accessory)
+                                                    <option value="{{ $accessory->part_no }}"
+                                                        data-price="{{ $accessory->ndp }}">
+                                                        {{ $accessory->item }}
+                                                        (₹{{ number_format($accessory->ndp,2) }})
+                                                    </option>
+                                                    @endforeach
+                                                </select>
+                                            </td>
+                                            <td class="cell-amount">
+                                                <input id="accessories_amount" name="accessories_amount"
+                                                    class="numeric-only" readonly value="0.00">
+                                            </td>
+                                        </tr>
 
-                                {{-- Row 6: VLTD Device (GPS) | Group C discount --}}
-                                <tr class="grid-row">
-                                    <td class="cell-label">VLTD Device (GPS)</td>
-                                    <td class="cell-option"></td>
-                                    <td class="cell-amount">
-                                        <input id="vltd_device" name="vltd_device" class="numeric-only">
-                                    </td>
-                                    <td class="cell-label">
-                                        <select id="group_c_select" class="group-select">
-                                            <option value="exchange_bonus">Exchange Bonus</option>
-                                            <option value="green_bonus">Green Bonus</option>
-                                            <option value="welcome_bonus">Welcome Bonus</option>
-                                        </select>
-                                    </td>
-                                    <td class="cell-type">
-                                        <select id="group_c_type">
-                                            <option>CN1</option>
-                                        </select>
-                                    </td>
-                                    <td class="cell-amount">
-                                        <input type="text" id="group_c_amount" class="numeric-only" placeholder="0.00">
-                                        <input type="hidden" id="exchange_bonus" name="exchange_bonus">
-                                        <input type="hidden" id="exchange_bonus_type" name="exchange_bonus_type">
-                                        <input type="hidden" id="green_bonus" name="green_bonus">
-                                        <input type="hidden" id="green_bonus_type" name="green_bonus_type">
-                                        <input type="hidden" id="welcome_bonus" name="welcome_bonus">
-                                        <input type="hidden" id="welcome_bonus_type" name="welcome_bonus_type">
-                                    </td>
-                                </tr>
+                                        <tr class="grid-row">
+                                            <td class="cell-label">Maxicare</td>
+                                            <td class="cell-option"></td>
+                                            <td class="cell-amount">
+                                                <input id="maxicare" name="maxicare" class="numeric-only">
+                                            </td>
+                                        </tr>
 
-                                {{-- Row 7: Coating | Accessories Spl Disc --}}
-                                <tr class="grid-row">
-                                    <td class="cell-label">Coating</td>
-                                    <td class="cell-option">
-                                        <select id="coating" name="coating">
-                                            <option value="No Coating">No Coating</option>
-                                            <option value="Ceramic">Ceramic</option>
-                                            <option value="Graphene">Graphene</option>
+                                        <tr class="grid-row">
+                                            <td class="cell-label">VLTD Device (GPS)</td>
+                                            <td class="cell-option"></td>
+                                            <td class="cell-amount">
+                                                <input id="vltd_device" name="vltd_device" class="numeric-only">
+                                            </td>
+                                        </tr>
 
-                                        </select>
-                                    </td>
-                                    <td class="cell-amount">
-                                        <input id="coating_price" name="coating_price" class="numeric-only">
-                                    </td>
-                                    <td class="cell-label">Accessories Spl Disc</td>
-                                    <td class="cell-type">
-                                        <select id="accessories_spl_disc_type" name="accessories_spl_disc_type">
-                                            <option value="INV">INV</option>
-                                            <option value="CN">CN</option>
-                                        </select>
-                                    </td>
-                                    <td class="cell-amount">
-                                        <input type="text" name="accessories_spl_disc" id="accessories_spl_disc"
-                                            class="numeric-only" placeholder="0.00">
-                                    </td>
-                                </tr>
+                                        <tr class="grid-row">
+                                            <td class="cell-label">Coating</td>
+                                            <td class="cell-option">
+                                                <select id="coating" name="coating">
+                                                    <option value="No Coating">No Coating</option>
+                                                    <option value="Ceramic">Ceramic</option>
+                                                    <option value="Graphene">Graphene</option>
+                                                </select>
+                                            </td>
+                                            <td class="cell-amount">
+                                                <input id="coating_price" name="coating_price" class="numeric-only">
+                                            </td>
+                                        </tr>
 
-                                {{-- Row 8: PPF | Coating Spl Discount --}}
-                                <tr class="grid-row">
-                                    <td class="cell-label">PPF</td>
-                                    <td class="cell-option"></td>
-                                    <td class="cell-amount">
-                                        <input id="ppf" name="ppf" class="numeric-only">
-                                    </td>
-                                    <td class="cell-label" id="coating_discount_label">
-                                        Coating Spl Discount
-                                    </td>
-                                    <td class="cell-type">
-                                        <select id="ceramic_discount_type" name="ceramic_discount_type">
-                                            <option value="INV">INV</option>
-                                            <option value="CN">CN</option>
-                                        </select>
-                                    </td>
-                                    <td class="cell-amount">
-                                        <input type="text" name="ceramic_discount" id="ceramic_discount"
-                                            class="numeric-only" placeholder="0.00">
-                                    </td>
-                                </tr>
+                                        <tr class="grid-row">
+                                            <td class="cell-label">PPF</td>
+                                            <td class="cell-option"></td>
+                                            <td class="cell-amount">
+                                                <input id="ppf" name="ppf" class="numeric-only">
+                                            </td>
+                                        </tr>
 
-                                {{-- Row 9: RTO Yellow Tape | PPF Spl Discount --}}
-                                <tr class="grid-row">
-                                    <td class="cell-label">RTO Yellow Tape</td>
-                                    <td class="cell-option"></td>
-                                    <td class="cell-amount">
-                                        <input id="rto_yellow_tape" name="rto_yellow_tape" class="numeric-only">
-                                    </td>
-                                    <td class="cell-label">PPF Spl Discount</td>
-                                    <td class="cell-type">
-                                        <select id="ppf_discount_type" name="ppf_discount_type">
-                                            <option value="INV">INV</option>
-                                            <option value="CN">CN</option>
-                                        </select>
-                                    </td>
-                                    <td class="cell-amount">
-                                        <input type="text" name="ppf_discount" id="ppf_discount" class="numeric-only"
-                                            placeholder="0.00">
-                                    </td>
-                                </tr>
+                                        <tr class="grid-row">
+                                            <td class="cell-label">RTO Yellow Tape</td>
+                                            <td class="cell-option"></td>
+                                            <td class="cell-amount">
+                                                <input id="rto_yellow_tape" name="rto_yellow_tape" class="numeric-only">
+                                            </td>
+                                        </tr>
 
-                                {{-- Row 10: Kazam Charging Kit | Charger Swapping Discount --}}
-                                <tr class="grid-row">
-                                    <td class="cell-label">Kazam Charging Kit</td>
-                                    <td class="cell-option"></td>
-                                    <td class="cell-amount">
-                                        <input id="kazam_charging_kit" name="kazam_charging_kit" class="numeric-only">
-                                    </td>
-                                    <td class="cell-label" id="charger_discount_title">Charger Swapping Discount</td>
-                                    <td class="cell-type">
-                                        <select id="charger_swapping_discount_type"
-                                            name="charger_swapping_discount_type" disabled>
-                                            <option value="CN2">CN2</option>
-                                        </select>
-                                    </td>
-                                    <td class="cell-amount" id="charger_discount_cell">
-                                        <input type="text" id="charger_swapping_discount"
-                                            name="charger_swapping_discount" class="numeric-only" placeholder="0.00">
-                                    </td>
-                                </tr>
+                                        <tr class="grid-row">
+                                            <td class="cell-label">Kazam Charging Kit</td>
+                                            <td class="cell-option"></td>
+                                            <td class="cell-amount">
+                                                <input id="kazam_charging_kit" name="kazam_charging_kit"
+                                                    class="numeric-only">
+                                            </td>
+                                        </tr>
 
-                                {{-- Row 11: Incidental Charges | Other Cash Discount --}}
-                                <tr class="grid-row">
-                                    <td class="cell-label">Incidental Charges</td>
-                                    <td class="cell-option"></td>
-                                    <td class="cell-amount">
-                                        <input id="incidental_charges" name="incidental_charges" class="numeric-only">
-                                    </td>
-                                    <td class="cell-label">Other Cash Discount</td>
-                                    <td class="cell-type">
-                                        <select id="other_cash_discount_type" name="other_cash_discount_type">
-                                            <option value="INV">INV</option>
-                                            <option value="CN">CN</option>
-                                        </select>
-                                    </td>
-                                    <td class="cell-amount">
-                                        <input type="text" name="other_cash_discount" id="other_cash_discount"
-                                            class="numeric-only" placeholder="0.00">
-                                    </td>
-                                </tr>
+                                        <tr class="grid-row">
+                                            <td class="cell-label">Incidental Charges</td>
+                                            <td class="cell-option"></td>
+                                            <td class="cell-amount">
+                                                <input id="incidental_charges" name="incidental_charges"
+                                                    class="numeric-only">
+                                            </td>
+                                        </tr>
 
-                                {{-- Row 12: Shield | Special Cash Discount --}}
-                                <tr class="grid-row">
-                                    <td class="cell-label">Shield</td>
-                                    <td class="cell-option">
-                                        <select id="shield" name="shield">
-                                            <option value="4th Year">4th Year</option>
-                                            <option value="4th + 5th Year">4th + 5th Year</option>
-                                            <option value="No Shield">No Shield</option>
-                                        </select>
-                                    </td>
-                                    <td class="cell-amount">
-                                        <input id="shield_price" name="shield_price" class="numeric-only">
-                                    </td>
-                                    <td class="cell-label">Special Cash Discount</td>
-                                    <td class="cell-type">
-                                        <select id="special_cash_discount_type" name="special_cash_discount_type">
-                                            <option value="INV">INV</option>
-                                        </select>
-                                    </td>
-                                    <td class="cell-amount">
-                                        <input type="text" name="special_cash_discount" id="special_cash_discount"
-                                            class="numeric-only" placeholder="0.00">
-                                    </td>
-                                </tr>
+                                        <tr class="grid-row">
+                                            <td class="cell-label">Shield</td>
+                                            <td class="cell-option">
+                                                <select id="shield" name="shield">
+                                                    <option value="4th Year">4th Year</option>
+                                                    <option value="4th + 5th Year">4th + 5th Year</option>
+                                                    <option value="No Shield">No Shield</option>
+                                                </select>
+                                            </td>
+                                            <td class="cell-amount">
+                                                <input id="shield_price" name="shield_price" class="numeric-only">
+                                            </td>
+                                        </tr>
 
-                                {{-- Row 13: RSA | (no discount item — left blank, still aligned) --}}
-                                <tr class="grid-row">
-                                    <td class="cell-label">RSA</td>
-                                    <td class="cell-option">
-                                        <select id="rsa" name="rsa">
-                                            <option>1 Year</option>
-                                            <option>2 Year</option>
-                                            <option>3 Year</option>
-                                            <option>4 Year</option>
-                                            <option>5 Year</option>
-                                            <option>No RSA</option>
-                                        </select>
-                                    </td>
-                                    <td class="cell-amount">
-                                        <input id="rsa_amount" name="rsa_amount" class="numeric-only">
-                                    </td>
-                                    <td class="cell-label"></td>
-                                    <td class="cell-type"></td>
-                                    <td class="cell-amount"></td>
-                                </tr>
+                                        <tr class="grid-row">
+                                            <td class="cell-label">RSA</td>
+                                            <td class="cell-option">
+                                                <select id="rsa" name="rsa">
+                                                    <option>1 Year</option>
+                                                    <option>2 Year</option>
+                                                    <option>3 Year</option>
+                                                    <option>4 Year</option>
+                                                    <option>5 Year</option>
+                                                    <option>No RSA</option>
+                                                </select>
+                                            </td>
+                                            <td class="cell-amount">
+                                                <input id="rsa_amount" name="rsa_amount" class="numeric-only">
+                                            </td>
+                                        </tr>
 
-                                {{-- Row 14: Fastag --}}
-                                <tr class="grid-row">
-                                    <td class="cell-label">Fastag</td>
-                                    <td class="cell-option"></td>
-                                    <td class="cell-amount">
-                                        <input id="fastag" name="fastag" class="numeric-only">
-                                    </td>
-                                    <td class="cell-label"></td>
-                                    <td class="cell-type"></td>
-                                    <td class="cell-amount"></td>
-                                </tr>
+                                        <tr class="grid-row">
+                                            <td class="cell-label">Fastag</td>
+                                            <td class="cell-option"></td>
+                                            <td class="cell-amount">
+                                                <input id="fastag" name="fastag" class="numeric-only">
+                                            </td>
+                                        </tr>
 
+                                        <tr class="grid-row">
+                                            <td class="cell-label">COD Charges</td>
+                                            <td class="cell-option"></td>
+                                            <td class="cell-amount">
+                                                <input id="cod_charges" name="cod_charges" class="numeric-only">
+                                            </td>
+                                        </tr>
 
+                                        <tr class="grid-row">
+                                            <td class="cell-label">Charger Swapping</td>
+                                            <td class="cell-option">
+                                                <select id="charger_swapping" name="charger_swapping">
+                                                    <option value="N/A">N/A</option>
+                                                    <option value="NCH to 7.2 kW">NCH to 7.2 kW</option>
+                                                    <option value="NCH to 11.2 kW">NCH to 11.2 kW</option>
+                                                    <option value="7.2 kW to 11.2 kW">7.2 kW to 11.2 kW</option>
+                                                </select>
+                                            </td>
+                                            <td class="cell-amount">
+                                                <input id="charger_swapping_amount" name="charger_swapping_amount"
+                                                    class="numeric-only">
+                                            </td>
+                                        </tr>
 
-                                {{-- Row 16: COD Charges --}}
-                                <tr class="grid-row">
-                                    <td class="cell-label">COD Charges</td>
-                                    <td class="cell-option"></td>
-                                    <td class="cell-amount">
-                                        <input id="cod_charges" name="cod_charges" class="numeric-only">
-                                    </td>
-                                    <td class="cell-label"></td>
-                                    <td class="cell-type"></td>
-                                    <td class="cell-amount"></td>
-                                </tr>
+                                        <tr class="grid-row">
+                                            <td class="cell-label">TCS @1%</td>
+                                            <td class="cell-option"></td>
+                                            <td class="cell-amount">
+                                                <input id="tcs" name="tcs" class="numeric-only" readonly>
+                                            </td>
+                                        </tr>
 
-                                {{-- Row 18: Charger Swapping --}}
-                                <tr class="grid-row">
-                                    <td class="cell-label">Charger Swapping</td>
-                                    <td class="cell-option">
-                                        <select id="charger_swapping" name="charger_swapping">
-                                            <option value="N/A">N/A</option>
-                                            <option value="NCH to 7.2 kW">NCH to 7.2 kW</option>
-                                            <option value="NCH to 11.2 kW">NCH to 11.2 kW</option>
-                                            <option value="7.2 kW to 11.2 kW">7.2 kW to 11.2 kW</option>
+                                    </tbody>
+                                </table>
+                            </div>
 
-                                        </select>
-                                    </td>
-                                    <td class="cell-amount">
-                                        <input id="charger_swapping_amount" name="charger_swapping_amount"
-                                            class="numeric-only">
-                                    </td>
-                                    <td class="cell-label"></td>
-                                    <td class="cell-type"></td>
-                                    <td class="cell-amount"></td>
-                                </tr>
+                            {{-- ================= DISCOUNT DETAILS BOX ================= --}}
+                            <div class="quotation-grid-col">
+                                <table class="quotation-grid discount-grid">
+                                    <thead>
+                                        <tr>
+                                            <th>DISCOUNT DETAILS</th>
+                                            <th>TYPE</th>
+                                            <th>AMOUNT</th>
+                                        </tr>
+                                    </thead>
 
-                                {{-- Row 17: TCS --}}
-                                <tr class="grid-row">
-                                    <td class="cell-label">TCS @1%</td>
-                                    <td class="cell-option"></td>
-                                    <td class="cell-amount">
-                                        <input id="tcs" name="tcs" class="numeric-only" readonly>
-                                    </td>
-                                    <td class="cell-label"></td>
-                                    <td class="cell-type"></td>
-                                    <td class="cell-amount"></td>
-                                </tr>
+                                    <tbody>
 
-                            </tbody>
-                        </table>
+                                        <tr class="grid-row">
+                                            <td class="cell-label">
+                                                <select id="group_a_select" class="group-select">
+                                                    <option value="cash_scheme_oem">Cash Scheme OEM</option>
+                                                    <option value="csd_discount">CSD Discount</option>
+                                                    <option value="fame_subsidy" id="fame_subsidy_option">Fame Subsidy
+                                                        (LMM)
+                                                    </option>
+                                                </select>
+                                            </td>
+                                            <td class="cell-type">
+                                                <select id="group_a_type">
+                                                    <option>INV</option>
+                                                    <option>CN</option>
+                                                </select>
+                                            </td>
+                                            <td class="cell-amount">
+                                                <input type="text" id="group_a_amount" class="numeric-only"
+                                                    placeholder="0.00">
+                                                <input type="hidden" id="cash_scheme_oem" name="cash_scheme_oem">
+                                                <input type="hidden" id="cash_scheme_oem_type"
+                                                    name="cash_scheme_oem_type">
+                                                <input type="hidden" id="csd_discount" name="csd_discount">
+                                                <input type="hidden" id="csd_discount_type" name="csd_discount_type">
+                                                <input type="hidden" id="fame_subsidy" name="fame_subsidy">
+                                                <input type="hidden" id="fame_subsidy_type" name="fame_subsidy_type">
+                                            </td>
+                                        </tr>
+
+                                        <tr class="grid-row">
+                                            <td class="cell-label">Cash Scheme Dealer</td>
+                                            <td class="cell-type">
+                                                <select id="dealer_discount_type" name="dealer_discount_type">
+                                                    <option value="INV">INV</option>
+                                                    <option value="CN">CN</option>
+                                                </select>
+                                            </td>
+                                            <td class="cell-amount">
+                                                <input type="text" name="dealer_discount" id="dealer_discount"
+                                                    class="numeric-only" placeholder="0.00">
+                                            </td>
+                                        </tr>
+
+                                        <tr class="grid-row">
+                                            <td class="cell-label">Accessories Scheme</td>
+                                            <td class="cell-type">
+                                                <select id="accessories_discount_type" name="accessories_discount_type">
+                                                    <option value="INV">INV</option>
+                                                    <option value="CN">CN</option>
+                                                </select>
+                                            </td>
+                                            <td class="cell-amount">
+                                                <input type="text" name="accessories_discount" id="accessories_discount"
+                                                    class="numeric-only" placeholder="0.00">
+                                            </td>
+                                        </tr>
+
+                                        <tr class="grid-row">
+                                            <td class="cell-label">Shield Scheme</td>
+                                            <td class="cell-type">
+                                                <select id="shield_scheme_type" name="shield_scheme_type">
+                                                    <option value="INV">INV</option>
+                                                    <option value="CN">CN</option>
+                                                </select>
+                                            </td>
+                                            <td class="cell-amount">
+                                                <input type="text" name="shield_scheme" id="shield_scheme"
+                                                    class="numeric-only" placeholder="0.00">
+                                            </td>
+                                        </tr>
+
+                                        <tr class="grid-row">
+                                            <td class="cell-label">
+                                                <select id="group_b_select" class="group-select">
+                                                    <option value="corporate_discount">Corporate Discount</option>
+                                                    <option value="loyalty_bonus">Loyalty Bonus</option>
+                                                </select>
+                                            </td>
+                                            <td class="cell-type">
+                                                <select id="group_b_type">
+                                                    <option>INV</option>
+                                                </select>
+                                            </td>
+                                            <td class="cell-amount">
+                                                <input type="text" id="group_b_amount" class="numeric-only"
+                                                    placeholder="0.00">
+                                                <input type="hidden" id="corporate_discount" name="corporate_discount">
+                                                <input type="hidden" id="corporate_discount_type"
+                                                    name="corporate_discount_type">
+                                                <input type="hidden" id="loyalty_bonus" name="loyalty_bonus">
+                                                <input type="hidden" id="loyalty_bonus_type" name="loyalty_bonus_type">
+                                            </td>
+                                        </tr>
+
+                                        <tr class="grid-row">
+                                            <td class="cell-label">
+                                                <select id="group_c_select" class="group-select">
+                                                    <option value="exchange_bonus">Exchange Bonus</option>
+                                                    <option value="green_bonus">Green Bonus</option>
+                                                    <option value="welcome_bonus">Welcome Bonus</option>
+                                                </select>
+                                            </td>
+                                            <td class="cell-type">
+                                                <select id="group_c_type">
+                                                    <option>CN1</option>
+                                                </select>
+                                            </td>
+                                            <td class="cell-amount">
+                                                <input type="text" id="group_c_amount" class="numeric-only"
+                                                    placeholder="0.00">
+                                                <input type="hidden" id="exchange_bonus" name="exchange_bonus">
+                                                <input type="hidden" id="exchange_bonus_type"
+                                                    name="exchange_bonus_type">
+                                                <input type="hidden" id="green_bonus" name="green_bonus">
+                                                <input type="hidden" id="green_bonus_type" name="green_bonus_type">
+                                                <input type="hidden" id="welcome_bonus" name="welcome_bonus">
+                                                <input type="hidden" id="welcome_bonus_type" name="welcome_bonus_type">
+                                            </td>
+                                        </tr>
+
+                                        <tr class="grid-row">
+                                            <td class="cell-label">Accessories Spl Disc</td>
+                                            <td class="cell-type">
+                                                <select id="accessories_spl_disc_type" name="accessories_spl_disc_type">
+                                                    <option value="INV">INV</option>
+                                                    <option value="CN">CN</option>
+                                                </select>
+                                            </td>
+                                            <td class="cell-amount">
+                                                <input type="text" name="accessories_spl_disc" id="accessories_spl_disc"
+                                                    class="numeric-only" placeholder="0.00">
+                                            </td>
+                                        </tr>
+
+                                        <tr class="grid-row">
+                                            <td class="cell-label" id="coating_discount_label">
+                                                Coating Spl Discount
+                                            </td>
+                                            <td class="cell-type">
+                                                <select id="ceramic_discount_type" name="ceramic_discount_type">
+                                                    <option value="INV">INV</option>
+                                                    <option value="CN">CN</option>
+                                                </select>
+                                            </td>
+                                            <td class="cell-amount">
+                                                <input type="text" name="ceramic_discount" id="ceramic_discount"
+                                                    class="numeric-only" placeholder="0.00">
+                                            </td>
+                                        </tr>
+
+                                        <tr class="grid-row">
+                                            <td class="cell-label">PPF Spl Discount</td>
+                                            <td class="cell-type">
+                                                <select id="ppf_discount_type" name="ppf_discount_type">
+                                                    <option value="INV">INV</option>
+                                                    <option value="CN">CN</option>
+                                                </select>
+                                            </td>
+                                            <td class="cell-amount">
+                                                <input type="text" name="ppf_discount" id="ppf_discount"
+                                                    class="numeric-only" placeholder="0.00">
+                                            </td>
+                                        </tr>
+
+                                        <tr class="grid-row">
+                                            <td class="cell-label" id="charger_discount_title">Charger Swapping Discount
+                                            </td>
+                                            <td class="cell-type">
+                                                <select id="charger_swapping_discount_type"
+                                                    name="charger_swapping_discount_type" disabled>
+                                                    <option value="CN2">CN2</option>
+                                                </select>
+                                            </td>
+                                            <td class="cell-amount" id="charger_discount_cell">
+                                                <input type="text" id="charger_swapping_discount"
+                                                    name="charger_swapping_discount" class="numeric-only"
+                                                    placeholder="0.00">
+                                            </td>
+                                        </tr>
+
+                                        <tr class="grid-row">
+                                            <td class="cell-label">Other Cash Discount</td>
+                                            <td class="cell-type">
+                                                <select id="other_cash_discount_type" name="other_cash_discount_type">
+                                                    <option value="INV">INV</option>
+                                                    <option value="CN">CN</option>
+                                                </select>
+                                            </td>
+                                            <td class="cell-amount">
+                                                <input type="text" name="other_cash_discount" id="other_cash_discount"
+                                                    class="numeric-only" placeholder="0.00">
+                                            </td>
+                                        </tr>
+
+                                        <tr class="grid-row">
+                                            <td class="cell-label">Special Cash Discount</td>
+                                            <td class="cell-type">
+                                                <select id="special_cash_discount_type"
+                                                    name="special_cash_discount_type">
+                                                    <option value="INV">INV</option>
+                                                </select>
+                                            </td>
+                                            <td class="cell-amount">
+                                                <input type="text" name="special_cash_discount"
+                                                    id="special_cash_discount" class="numeric-only" placeholder="0.00">
+                                            </td>
+                                        </tr>
+
+                                    </tbody>
+                                </table>
+                            </div>
+
+                        </div>
 
                         <div class="quotation-summary">
                             <div class="total-row-cell total-receivable-label">TOTAL RECEIVABLE</div>
@@ -1214,17 +1340,18 @@ use App\Services\OrgService;
                                 margin:0;
                                 ">
 
-                                    <b>1.</b> Vehicle shall be delivered only against payment.
-                                    <b>2.</b> Interest shall be charged @ 24% P.A. in case of payments delayed over
-                                    three
-                                    days.
-                                    <b>3.</b> No Interest shall be payable on Booking Amount.
-                                    <b>4.</b> Price & Scheme of the vehicle is applicable as on the date of delivery.
-                                    Price
-                                    & Scheme are subjected to change without any prior notice.
-                                    <b>5.</b> Self attested coloured copy of original documents is required for any
-                                    claim.
-                                    Claims will be rejected in absence of original documents.
+                                    <b>1.</b> Price quoted is current and subject to change without notice.
+                                    <b>2.</b> The Price ruling at the time of delivery only will be applicable
+                                    irrespective of when payment was made.
+                                    <b>3.</b> All specifications, colors and features are subject to change without
+                                    prior notice.
+                                    <b>4.</b> TCS @ 1 % Will be collected on full invoice value, if value is equal to or
+                                    exceeds INR 10 Lakhs.
+                                    <b>5.</b> Delivery will be against full payment only.
+                                    <b>6.</b> This is not a firm order and no claim for priority can be made on the
+                                    basis of proforma invoice.
+                                    <b>7.</b> All disputes shall be subject to Bikaner jurisdiction only.
+                                    <b>8.</b> Booking need to be done with minimum INR 21,000.
 
                                 </p>
 
@@ -1764,32 +1891,22 @@ function isEmptyGridValue(value) {
 
 function prepareItemVisibilityForPrint() {
 
-    // Each row has 2 "cell-amount" cells: [0] = price amount, [1] = discount amount
-    // (discount amount may not exist for rows that have no paired discount item).
-    // The row is hidden only when BOTH sides are empty — this way price and
-    // discount stay perfectly row-aligned; we never hide just one half of a row.
+    // The price box and discount box are now two completely independent
+    // tables/tbodies. Every row (one price item OR one discount item) is
+    // judged purely on its own amount value — if it's blank / 0 / N/A the
+    // row is hidden. Because the two sides no longer share a <tr>, hiding a
+    // row never leaves a gap: the remaining rows in that box simply move up
+    // to fill the space (normal table flow), and the other box is untouched.
     $('.quotation-grid tbody tr').each(function () {
 
         let $row = $(this);
-        let amountCells = $row.find('td.cell-amount');
+        let $amountInput = $row.find('td.cell-amount input').first();
+        let value = $amountInput.length ? $amountInput.val() : '';
 
-        let priceValue = amountCells.eq(0).find('input').val();
-        let discountValue = amountCells.length > 1
-            ? amountCells.eq(1).find('input').first().val()
-            : '';
-
-        $row.find('td.cell-amount input').each(function () {
-
-            if ($(this).val() === 'N/A') {
-
-                $(this).closest('tr').addClass('print-hide');
-
-            }
-
-        });    
-
-        if (isEmptyGridValue(priceValue) && isEmptyGridValue(discountValue)) {
+        if (isEmptyGridValue(value)) {
             $row.addClass('print-hide');
+        } else {
+            $row.removeClass('print-hide');
         }
 
     });
