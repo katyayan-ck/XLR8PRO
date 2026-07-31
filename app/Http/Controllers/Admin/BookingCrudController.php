@@ -1681,6 +1681,16 @@ class BookingCrudController extends CrudController
                 $request->quotation_no
             )->first();
         }
+
+        // ===== ADD THIS CODE RIGHT HERE =====
+        // Store the enquiry ID and quotation number on the booking
+        if ($quotation) {
+            $booking->enq_no = $quotation->enquiry_no;
+            $booking->quotation_id = $quotation->id;
+        } elseif ($request->filled('enquiry_no')) {
+            $booking->enq_no = $request->enquiry_no;
+        }
+
         $booking->b_type           = $customerType;
         $booking->b_cat            = $request->input('customercat');
         $booking->b_mode           = $request->input('bookingmode');
@@ -10611,6 +10621,25 @@ class BookingCrudController extends CrudController
     {
         $booking = Booking::findOrFail($id);
 
+        $quotation = null;
+
+        if (!empty($booking->enquiry_id)) {
+            $quotation = Quotation::where('enquiry_no', $booking->enquiry_id)->latest()->first();
+        }
+
+        // If not found and we have quotation_no, try that too
+        if (!empty($booking->quotation_id)) {
+            $quotation = Quotation::find($booking->quotation_id);
+        }
+
+        // Debug log
+        \Log::info('OTF Quotation fetch', [
+            'booking_id'    => $booking->id,
+            'quotation_id'  => $booking->quotation_id,
+            'enq_no'        => $booking->enq_no,
+            'found'         => $quotation?->id,
+        ]);
+
         $salesconsultants = OrgService::getUsers(
             'ALL',
             'ALL',
@@ -10625,12 +10654,6 @@ class BookingCrudController extends CrudController
 
         $rto = XlRto::where('bid', $id)->first();
 
-        $quotation = \App\Models\CRM\Quotation::where(
-            'enquiry_no',
-            $booking->enquiry_no
-        )->latest()->first();
-
-
 
         $quotationData = $quotation?->proposed_data ?? [];
 
@@ -10639,6 +10662,20 @@ class BookingCrudController extends CrudController
         if (!empty($booking->final_data)) {
             $finalData = json_decode($booking->final_data, true) ?? [];
         }
+
+        \Log::info('OTF Quotation', [
+            'booking_id'      => $booking->id,
+            'booking_quoteid' => $booking->quotation_id,
+            'quotation_found' => $quotation?->id,
+            'quotation_no'    => $quotation?->quotation_no,
+
+            'coating'         => $quotationData['coating'] ?? null,
+            'coating_price'   => $quotationData['coating_price'] ?? null,
+            'ceramic_discount' => $quotationData['ceramic_discount'] ?? null,
+
+            'final_coating_price'    => $finalData['coating_price'] ?? null,
+            'final_ceramic_discount' => $finalData['ceramic_discount'] ?? null,
+        ]);
 
         /*
         |--------------------------------------------------------------------------
@@ -10651,6 +10688,35 @@ class BookingCrudController extends CrudController
             $quotationData,
             $finalData
         );
+
+        // ================= GROUP A SELECTED =================
+        $groupASelected = 'cash_scheme_oem';
+
+        if (!empty($otfData['csd_discount'])) {
+            $groupASelected = 'csd_discount';
+        }
+
+        if (!empty($otfData['fame_subsidy'])) {
+            $groupASelected = 'fame_subsidy';
+        }
+
+        // ================= GROUP B SELECTED =================
+        $groupBSelected = 'corporate_discount';
+
+        if (!empty($otfData['loyalty_bonus'])) {
+            $groupBSelected = 'loyalty_bonus';
+        }
+
+        // ================= GROUP C SELECTED =================
+        $groupCSelected = 'exchange_bonus';
+
+        if (!empty($otfData['green_bonus'])) {
+            $groupCSelected = 'green_bonus';
+        }
+
+        if (!empty($otfData['welcome_bonus'])) {
+            $groupCSelected = 'welcome_bonus';
+        }
 
         $selectedExShowroomPrice = $otfData['ex_showroom_price'] ?? null;
 
@@ -10793,6 +10859,7 @@ class BookingCrudController extends CrudController
         });
 
         $chassisImage = $booking->getFirstMediaUrl('chassis_image') ?: '';
+
         return view(
             'admin.booking.otf-form',
             compact(
@@ -10829,6 +10896,9 @@ class BookingCrudController extends CrudController
                 'receiptLogs',
                 'receiptTotal',
                 'chassisImage',
+                'groupASelected',
+                'groupBSelected',
+                'groupCSelected'
             )
         );
     }
@@ -10846,8 +10916,6 @@ class BookingCrudController extends CrudController
     }
     public function otfSave(Request $request, $id)
     {
-
-
         $booking = Booking::findOrFail($id);
 
         if ($request->hasFile('chassis_image')) {
@@ -10855,8 +10923,10 @@ class BookingCrudController extends CrudController
                 ->toMediaCollection('chassis_image');
         }
 
+        // Get all data except files and tokens
         $data = $request->except(['_token', '_method', 'chassis_image']);
 
+        // Save ALL fields including price and discount data
         $booking->final_data = json_encode($data);
         $booking->save();
 

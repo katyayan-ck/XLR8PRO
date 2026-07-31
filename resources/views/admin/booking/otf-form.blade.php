@@ -427,6 +427,46 @@ use App\Services\OrgService;
     .receipt-table td {
         border: 2px solid #000 !important;
     }
+
+    /* Make bill-table columns 50-50 with text wrapping */
+    .bill-table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+        margin-bottom: 6px !important;
+    }
+
+    .bill-table td {
+        border: 1px solid #000;
+        padding: 2px 5px;
+        height: 26px;
+        font-size: 10px;
+        vertical-align: middle;
+        word-wrap: break-word;
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
+
+    /* Target first column (title) */
+    .bill-table td.title,
+    .bill-table td:first-child {
+        width: 50%;
+        max-width: 50%;
+    }
+
+    /* Target second column (input/select) */
+    .bill-table td:last-child {
+        width: 50%;
+        max-width: 50%;
+    }
+
+    /* Ensure inputs and selects respect their container */
+    .bill-table td input,
+    .bill-table td select {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
 </style>
 @endpush
 
@@ -1046,8 +1086,7 @@ use App\Services\OrgService;
                                                     @foreach($registration_type_map as $key=>$value)
                                                     <option value="{{ $key }}" {{ old('registration_type',
                                                         $otfData['registration_type'] ?? '' )==$key ? 'selected' : ''
-                                                        }}>{{
-                                                        $value }}</option>
+                                                        }}>{{ $value }}</option>
                                                     @endforeach
                                                 </select>
                                             </td>
@@ -1175,8 +1214,7 @@ use App\Services\OrgService;
                                                     style="display:none;">
                                                     <option value="N/A" {{ old('charger_swapping',
                                                         $otfData['charger_swapping'] ?? '' )=='N/A' ? 'selected' : ''
-                                                        }}>N/A
-                                                    </option>
+                                                        }}>N/A</option>
                                                     <option value="NCH to 7.2 kW" {{ old('charger_swapping',
                                                         $otfData['charger_swapping'] ?? '' )=='NCH to 7.2 kW'
                                                         ? 'selected' : '' }}>NCH to 7.2 kW</option>
@@ -1196,6 +1234,7 @@ use App\Services\OrgService;
                                         </tr>
                                     </tbody>
                                 </table>
+
                                 <table class="quotation-stacked-table">
                                     <thead>
                                         <tr>
@@ -1210,8 +1249,7 @@ use App\Services\OrgService;
                                                 <select id="group_a_select" class="group-select">
                                                     <option value="cash_scheme_oem" {{ old('group_a_select',
                                                         $groupASelected ?? '' )=='cash_scheme_oem' ? 'selected' : '' }}>
-                                                        Cash Scheme OEM
-                                                    </option>
+                                                        Cash Scheme OEM</option>
                                                     <option value="csd_discount" {{ old('group_a_select',
                                                         $groupASelected ?? '' )=='csd_discount' ? 'selected' : '' }}>CSD
                                                         Discount</option>
@@ -1223,7 +1261,7 @@ use App\Services\OrgService;
                                             <td class="ql-amount">
                                                 <input type="text" id="group_a_amount" class="numeric-only"
                                                     placeholder="0.00"
-                                                    value="{{ old('group_a_amount', $otfData['group_a_amount'] ?? '') }}">
+                                                    value="{{ old('group_a_amount', $otfData['cash_scheme_oem'] ?? $otfData['csd_discount'] ?? $otfData['fame_subsidy'] ?? '') }}">
                                                 <select id="group_a_type" style="display:none;">
                                                     <option value="INV">INV</option>
                                                     <option value="CN">CN</option>
@@ -1253,12 +1291,10 @@ use App\Services\OrgService;
                                                     style="display:none;">
                                                     <option value="INV" {{ old('dealer_discount_type',
                                                         $otfData['dealer_discount_type'] ?? '' )=='INV' ? 'selected'
-                                                        : '' }}>INV
-                                                    </option>
+                                                        : '' }}>INV</option>
                                                     <option value="CN" {{ old('dealer_discount_type',
                                                         $otfData['dealer_discount_type'] ?? '' )=='CN' ? 'selected' : ''
-                                                        }}>
-                                                        CN</option>
+                                                        }}>CN</option>
                                                 </select>
                                             </td>
                                         </tr>
@@ -1289,12 +1325,10 @@ use App\Services\OrgService;
                                                     style="display:none;">
                                                     <option value="INV" {{ old('shield_scheme_type',
                                                         $otfData['shield_scheme_type'] ?? '' )=='INV' ? 'selected' : ''
-                                                        }}>
-                                                        INV</option>
+                                                        }}>INV</option>
                                                     <option value="CN" {{ old('shield_scheme_type',
                                                         $otfData['shield_scheme_type'] ?? '' )=='CN' ? 'selected' : ''
-                                                        }}>CN
-                                                    </option>
+                                                        }}>CN</option>
                                                 </select>
                                             </td>
                                         </tr>
@@ -1303,8 +1337,7 @@ use App\Services\OrgService;
                                                 <select id="group_b_select" class="group-select">
                                                     <option value="corporate_discount" {{ old('group_b_select',
                                                         $groupBSelected ?? '' )=='corporate_discount' ? 'selected' : ''
-                                                        }}>
-                                                        Corporate Discount</option>
+                                                        }}>Corporate Discount</option>
                                                     <option value="loyalty_bonus" {{ old('group_b_select',
                                                         $groupBSelected ?? '' )=='loyalty_bonus' ? 'selected' : '' }}>
                                                         Loyalty Bonus</option>
@@ -1313,7 +1346,7 @@ use App\Services\OrgService;
                                             <td class="ql-amount">
                                                 <input type="text" id="group_b_amount" class="numeric-only"
                                                     placeholder="0.00"
-                                                    value="{{ old('group_b_amount', $otfData['group_b_amount'] ?? '') }}">
+                                                    value="{{ old('group_b_amount', $otfData['corporate_discount'] ?? $otfData['loyalty_bonus'] ?? '') }}">
                                                 <select id="group_b_type" style="display:none;">
                                                     <option value="INV">INV</option>
                                                 </select>
@@ -1333,8 +1366,7 @@ use App\Services\OrgService;
                                                 <select id="group_c_select" class="group-select">
                                                     <option value="exchange_bonus" {{ old('group_c_select',
                                                         $groupCSelected ?? '' )=='exchange_bonus' ? 'selected' : '' }}>
-                                                        Exchange Bonus
-                                                    </option>
+                                                        Exchange Bonus</option>
                                                     <option value="green_bonus" {{ old('group_c_select', $groupCSelected
                                                         ?? '' )=='green_bonus' ? 'selected' : '' }}>Green Bonus</option>
                                                     <option value="welcome_bonus" {{ old('group_c_select',
@@ -1345,7 +1377,7 @@ use App\Services\OrgService;
                                             <td class="ql-amount">
                                                 <input type="text" id="group_c_amount" class="numeric-only"
                                                     placeholder="0.00"
-                                                    value="{{ old('group_c_amount', $otfData['group_c_amount'] ?? '') }}">
+                                                    value="{{ old('group_c_amount', $otfData['exchange_bonus'] ?? $otfData['green_bonus'] ?? $otfData['welcome_bonus'] ?? '') }}">
                                                 <select id="group_c_type" style="display:none;">
                                                     <option value="CN1">CN1</option>
                                                 </select>
@@ -1390,12 +1422,10 @@ use App\Services\OrgService;
                                                     style="display:none;">
                                                     <option value="INV" {{ old('ceramic_discount_type',
                                                         $otfData['ceramic_discount_type'] ?? '' )=='INV' ? 'selected'
-                                                        : '' }}>
-                                                        INV</option>
+                                                        : '' }}>INV</option>
                                                     <option value="CN" {{ old('ceramic_discount_type',
                                                         $otfData['ceramic_discount_type'] ?? '' )=='CN' ? 'selected'
-                                                        : '' }}>CN
-                                                    </option>
+                                                        : '' }}>CN</option>
                                                 </select>
                                             </td>
                                         </tr>
@@ -1409,12 +1439,10 @@ use App\Services\OrgService;
                                                     style="display:none;">
                                                     <option value="INV" {{ old('ppf_discount_type',
                                                         $otfData['ppf_discount_type'] ?? '' )=='INV' ? 'selected' : ''
-                                                        }}>
-                                                        INV</option>
+                                                        }}>INV</option>
                                                     <option value="CN" {{ old('ppf_discount_type',
                                                         $otfData['ppf_discount_type'] ?? '' )=='CN' ? 'selected' : ''
-                                                        }}>CN
-                                                    </option>
+                                                        }}>CN</option>
                                                 </select>
                                             </td>
                                         </tr>
@@ -1448,8 +1476,7 @@ use App\Services\OrgService;
                                                         : '' }}>INV</option>
                                                     <option value="CN" {{ old('other_cash_discount_type',
                                                         $otfData['other_cash_discount_type'] ?? '' )=='CN' ? 'selected'
-                                                        : '' }}>
-                                                        CN</option>
+                                                        : '' }}>CN</option>
                                                 </select>
                                             </td>
                                         </tr>
@@ -1467,9 +1494,9 @@ use App\Services\OrgService;
                                                 </select>
                                             </td>
                                         </tr>
-
                                     </tbody>
                                 </table>
+
                                 {{-- TOTAL DISCOUNT & TOTAL RECEIVABLE --}}
                                 <table class="bill-table" style="margin-top:-1px; border-top:1px solid #000;">
                                     <tr>
@@ -1506,7 +1533,7 @@ use App\Services\OrgService;
                                 <tr>
                                     <td class="title">Financier Name</td>
                                     <td>
-                                        <input type="text" id="financier_name_display" class="form-control"
+                                        <input type="text" id="financier_name_display"
                                             value="{{ $financierName ?? '' }}" readonly>
                                     </td>
                                 </tr>
@@ -1638,8 +1665,8 @@ use App\Services\OrgService;
                             {{-- Financier Verified, Delivery, DO Details --}}
                             <table class="bill-table mt-2">
                                 <tr>
-                                    <td class="title" style="width:33%; white-space:nowrap;">Financier Verified</td>
-                                    <td style="width:67%;">
+                                    <td class="title" ; white-space:nowrap;">Financier Verified</td>
+                                    <td>
                                         <select name="financier_verified" id="financier_verified" style="width:100%;">
                                             <option value="Please Select">Please Select</option>
                                             <option value="Yes">Yes</option>
@@ -1692,8 +1719,8 @@ use App\Services\OrgService;
                             {{-- Brokerage & Other Discount Receivable --}}
                             <table class="bill-table mt-2">
                                 <tr>
-                                    <td class="title" style="width:33%; white-space:nowrap;">Brokerage Amount</td>
-                                    <td style="width:67%;">
+                                    <td class="title" ; white-space:nowrap;">Brokerage Amount</td>
+                                    <td>
                                         <input type="number" id="brokerage_amount" name="brokerage_amount"
                                             class="form-control" style="width:100%;" min="0" step="0.01"
                                             value="{{ old('brokerage_amount') }}">
@@ -1730,9 +1757,9 @@ use App\Services\OrgService;
                             {{-- Registration Service Charge --}}
                             <table class="bill-table mt-2">
                                 <tr>
-                                    <td class="title" style="width:33%; white-space:nowrap;">Registration Service Charge
+                                    <td class="title" ; white-space:nowrap;>Registration Service Charge
                                         - Receivable</td>
-                                    <td style="width:67%;">
+                                    <td>
                                         <input type="number" id="registration_service_charge_receivable"
                                             name="registration_service_charge_receivable" class="form-control"
                                             style="width:100%;" min="0" step="0.01"
@@ -1781,7 +1808,6 @@ use App\Services\OrgService;
                     </table>
                 </div>
 
-                <div class="page-break"></div>
 
 
 
@@ -1887,6 +1913,63 @@ function setupGroupDiscount(groupPrefix, fieldNames) {
 setupGroupDiscount('group_a', ['cash_scheme_oem', 'csd_discount', 'fame_subsidy']);
 setupGroupDiscount('group_b', ['corporate_discount', 'loyalty_bonus']);
 setupGroupDiscount('group_c', ['exchange_bonus', 'green_bonus', 'welcome_bonus']);
+
+// ================= PRE-POPULATE GROUP DISCOUNTS ON PAGE LOAD =================
+$(document).ready(function() {
+    // Group A - set selected option based on which field has value
+    var groupAFields = {
+        'cash_scheme_oem': $('#cash_scheme_oem').val(),
+        'csd_discount': $('#csd_discount').val(),
+        'fame_subsidy': $('#fame_subsidy').val()
+    };
+    
+    for (var key in groupAFields) {
+        if (groupAFields[key] && groupAFields[key] !== '') {
+            $('#group_a_select').val(key);
+            $('#group_a_type').val($('#' + key + '_type').val() || 'INV');
+            break;
+        }
+    }
+    
+    // Group B
+    var groupBFields = {
+        'corporate_discount': $('#corporate_discount').val(),
+        'loyalty_bonus': $('#loyalty_bonus').val()
+    };
+    
+    for (var key in groupBFields) {
+        if (groupBFields[key] && groupBFields[key] !== '') {
+            $('#group_b_select').val(key);
+            $('#group_b_type').val($('#' + key + '_type').val() || 'INV');
+            break;
+        }
+    }
+    
+    // Group C
+    var groupCFields = {
+        'exchange_bonus': $('#exchange_bonus').val(),
+        'green_bonus': $('#green_bonus').val(),
+        'welcome_bonus': $('#welcome_bonus').val()
+    };
+    
+    for (var key in groupCFields) {
+        if (groupCFields[key] && groupCFields[key] !== '') {
+            $('#group_c_select').val(key);
+            $('#group_c_type').val($('#' + key + '_type').val() || 'CN1');
+            break;
+        }
+    }
+    
+    // Trigger sync for all groups to populate hidden fields
+    $('#group_a_select, #group_a_type, #group_a_amount').trigger('change');
+    $('#group_b_select, #group_b_type, #group_b_amount').trigger('change');
+    $('#group_c_select, #group_c_type, #group_c_amount').trigger('change');
+    
+    // Recalculate after pre-fill
+    setTimeout(function() {
+        calculateQuotation();
+    }, 100);
+});
 
 // Page-load sync for Group B & C
 $(document).ready(function () {
@@ -2033,16 +2116,28 @@ $(document).ready(function () {
 function toggleLMMFields() {
     let isLMM = "{{ $booking->segment_code ?? '' }}" === "LMM";
     const fields = ['#kazam_charging_kit', '#incidental_charges'];
+
     fields.forEach(function (field) {
         $(field).prop('disabled', !isLMM);
-        if (!isLMM) $(field).val('N/A');
-        else $(field).val('');
+
+        if (!isLMM) {
+            $(field).val('N/A');
+        }
+        // LMM hone par existing value ko mat chhedo
     });
-    $('#charger_swapping_discount_type').prop('disabled', false).empty().append('<option value="CN2">CN2</option>').val('CN2');
+
+    $('#charger_swapping_discount_type')
+        .prop('disabled', false)
+        .empty()
+        .append('<option value="CN2">CN2</option>')
+        .val('CN2');
+
     $('#fame_subsidy_option').prop('disabled', !isLMM);
+
     if (!isLMM && $('#group_a_select').val() === 'fame_subsidy') {
         $('#group_a_select').val('').trigger('change');
     }
+
     if (!isLMM) {
         $('#charger_swapping').val('N/A').prop('disabled', true);
         $('#charger_swapping_amount').val('N/A').prop('disabled', true);
@@ -2053,9 +2148,12 @@ function toggleLMMFields() {
         $('#charger_swapping_amount').prop('disabled', false);
         $('#charger_swapping_discount').prop('disabled', false);
         $('#charger_swapping_discount_type').prop('disabled', false);
+        // Existing values ko mat clear karo
     }
+
     calculateQuotation();
 }
+
 $(document).ready(function () {
     toggleLMMFields();
 });
@@ -2227,10 +2325,10 @@ $(document).ready(function () {
             $('#ceramic_discount').val('N/A').prop('disabled', true);
             $('#ceramic_discount_type').val('').prop('disabled', true);
         } else {
-            $('#coating_price').val('').prop('disabled', false);
-            $('#ceramic_discount').val('').prop('disabled', false);
-            $('#ceramic_discount_type').prop('disabled', false);
-        }
+    $('#coating_price').prop('disabled', false);
+    $('#ceramic_discount').prop('disabled', false);
+    $('#ceramic_discount_type').prop('disabled', false);
+}
         calculateQuotation();
     });
     $('#shield').on('change', function () {
@@ -2240,8 +2338,8 @@ $(document).ready(function () {
         } else if (value === 'No Shield') {
             $('#shield_price').val('N/A').prop('disabled', true);
         } else {
-            $('#shield_price').val('').prop('disabled', false);
-        }
+    $('#shield_price').prop('disabled', false);
+}
         calculateQuotation();
     });
     $('#rsa').on('change', function () {
@@ -2251,8 +2349,8 @@ $(document).ready(function () {
         } else if (value === 'No RSA') {
             $('#rsa_amount').val('N/A').prop('disabled', true);
         } else {
-            $('#rsa_amount').val('').prop('disabled', false);
-        }
+    $('#rsa_amount').prop('disabled', false);
+}
         calculateQuotation();
     });
     $('#charger_swapping').on('change', function () {
@@ -2266,10 +2364,15 @@ $(document).ready(function () {
             $('#charger_swapping_discount').val('N/A').prop('disabled', true);
             $('#charger_swapping_discount_type').val('').prop('disabled', true);
         } else {
-            $('#charger_swapping_amount').val('').prop('disabled', false);
-            $('#charger_swapping_discount').val('').prop('disabled', false);
-            $('#charger_swapping_discount_type').prop('disabled', false).empty().append('<option value="CN2">CN2</option>').val('CN2');
-        }
+    $('#charger_swapping_amount').prop('disabled', false);
+    $('#charger_swapping_discount').prop('disabled', false);
+
+    $('#charger_swapping_discount_type')
+        .prop('disabled', false)
+        .empty()
+        .append('<option value="CN2">CN2</option>')
+        .val('CN2');
+}
         calculateQuotation();
     });
 
@@ -2342,6 +2445,138 @@ $('#do_number_ta').on('blur', function () {
             $('#do_voucher_date').val(res.date);
         }
     });
+});
+// ================= PRE-POPULATE GROUP DISCOUNTS FROM SAVED DATA =================
+$(document).ready(function () {
+    
+    // ---- GROUP A ----
+    // Check which group A discount has a value
+    var cashOemVal = $('#cash_scheme_oem').val();
+    var csdVal = $('#csd_discount').val();
+    var fameVal = $('#fame_subsidy').val();
+    
+    if (cashOemVal && cashOemVal !== '') {
+        $('#group_a_select').val('cash_scheme_oem');
+        $('#group_a_amount').val(cashOemVal);
+        $('#group_a_type').val($('#cash_scheme_oem_type').val() || 'INV');
+    } else if (csdVal && csdVal !== '') {
+        $('#group_a_select').val('csd_discount');
+        $('#group_a_amount').val(csdVal);
+        $('#group_a_type').val($('#csd_discount_type').val() || 'INV');
+    } else if (fameVal && fameVal !== '') {
+        $('#group_a_select').val('fame_subsidy');
+        $('#group_a_amount').val(fameVal);
+        $('#group_a_type').val($('#fame_subsidy_type').val() || 'INV');
+    }
+    
+    // ---- GROUP B ----
+    var corpVal = $('#corporate_discount').val();
+    var loyaltyVal = $('#loyalty_bonus').val();
+    
+    if (corpVal && corpVal !== '') {
+        $('#group_b_select').val('corporate_discount');
+        $('#group_b_amount').val(corpVal);
+        $('#group_b_type').val($('#corporate_discount_type').val() || 'INV');
+    } else if (loyaltyVal && loyaltyVal !== '') {
+        $('#group_b_select').val('loyalty_bonus');
+        $('#group_b_amount').val(loyaltyVal);
+        $('#group_b_type').val($('#loyalty_bonus_type').val() || 'INV');
+    }
+    
+    // ---- GROUP C ----
+    var exchangeVal = $('#exchange_bonus').val();
+    var greenVal = $('#green_bonus').val();
+    var welcomeVal = $('#welcome_bonus').val();
+    
+    if (exchangeVal && exchangeVal !== '') {
+        $('#group_c_select').val('exchange_bonus');
+        $('#group_c_amount').val(exchangeVal);
+        $('#group_c_type').val($('#exchange_bonus_type').val() || 'CN1');
+    } else if (greenVal && greenVal !== '') {
+        $('#group_c_select').val('green_bonus');
+        $('#group_c_amount').val(greenVal);
+        $('#group_c_type').val($('#green_bonus_type').val() || 'CN1');
+    } else if (welcomeVal && welcomeVal !== '') {
+        $('#group_c_select').val('welcome_bonus');
+        $('#group_c_amount').val(welcomeVal);
+        $('#group_c_type').val($('#welcome_bonus_type').val() || 'CN1');
+    }
+    
+    // ---- TRIGGER SYNC FOR ALL GROUPS ----
+    $('#group_a_select, #group_a_type, #group_a_amount').trigger('change');
+    $('#group_b_select, #group_b_type, #group_b_amount').trigger('change');
+    $('#group_c_select, #group_c_type, #group_c_amount').trigger('change');
+    
+    // ---- PRE-FILL ACCESSORIES SELECTION ----
+    var selectedAccessories = @json($selectedAccessories ?? []);
+    if (selectedAccessories && selectedAccessories.length > 0) {
+        $('#accessories').val(selectedAccessories).trigger('change');
+    }
+    
+    // ---- PRE-FILL OTHER OPTION FIELDS ----
+    // Policy Type label
+    var policyVal = $('#policy_type').val();
+    if (policyVal) {
+        var policyText = $('#policy_type option:selected').text();
+        $('#insurance_option_label').text('(' + policyText + ')');
+    }
+    
+    // Registration Type label
+    var regVal = $('#registration_type').val();
+    if (regVal) {
+        var regText = $('#registration_type option:selected').text();
+        $('#registration_option_label').text('(' + regText + ')');
+    }
+    
+    // Coating label
+    var coatingVal = $('#coating').val();
+    if (coatingVal && coatingVal !== '') {
+        var coatingText = $('#coating option:selected').text();
+        $('#coating_option_label').text('(' + coatingText + ')');
+    }
+    
+    // Shield label
+    var shieldVal = $('#shield').val();
+    if (shieldVal && shieldVal !== '') {
+        var shieldText = $('#shield option:selected').text();
+        $('#shield_option_label').text('(' + shieldText + ')');
+    }
+    
+    // RSA label
+    var rsaVal = $('#rsa').val();
+    if (rsaVal && rsaVal !== '') {
+        var rsaText = $('#rsa option:selected').text();
+        $('#rsa_option_label').text('(' + rsaText + ')');
+    }
+    
+    // Charger Swapping label
+    var chargerVal = $('#charger_swapping').val();
+    if (chargerVal && chargerVal !== '' && chargerVal !== 'N/A') {
+        var chargerText = $('#charger_swapping option:selected').text();
+        $('#charger_swapping_option_label').text('(' + chargerText + ')');
+    }
+    
+    // ---- CALCULATE QUOTATION AFTER PRE-FILL ----
+    setTimeout(function() {
+        calculateQuotation();
+    }, 100);
+});
+// ================= OPTION LABELS (like preview) =================
+function syncOptionLabel(selectId, labelId) {
+    var val = $(selectId).val();
+    if (val && val !== '') {
+        var text = $(selectId + ' option:selected').text();
+        $('#' + labelId).text('(' + text + ')');
+    }
+}
+
+$(document).ready(function() {
+    syncOptionLabel('#policy_type', 'insurance_option_label');
+    syncOptionLabel('#registration_type', 'registration_option_label');
+    syncOptionLabel('#coating', 'coating_option_label');
+    syncOptionLabel('#shield', 'shield_option_label');
+    syncOptionLabel('#rsa', 'rsa_option_label');
+    syncOptionLabel('#charger_swapping', 'charger_swapping_option_label');
 });
 </script>
 @endpush
