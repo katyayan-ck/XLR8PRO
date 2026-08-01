@@ -4,7 +4,8 @@
     <div class="row">
         <div class="col-12">
             <div class="card">
-                <div class="card-header bg-gradient-primary d-flex justify-content-between align-items-center flex-nowrap flex-md-nowrap flex-wrap gap-3">
+                <div
+                    class="card-header bg-gradient-primary d-flex justify-content-between align-items-center flex-nowrap flex-md-nowrap flex-wrap gap-3">
                     <h2 class="card-title mb-0 fw-bold text-black text-nowrap">
                         {{ $title ?? 'Xlr8 Enquiries' }}
                     </h2>
@@ -17,8 +18,8 @@
                 </div>
 
                 <div class="card-body p-0" style="background:#f8fafc">
-                    
-                    <!-- Import Section -->
+
+                    {{-- <!-- Import Section -->
                     <div class="p-3 border-bottom bg-white">
                         <div class="row align-items-end">
                             <div class="col-md-8">
@@ -30,9 +31,11 @@
                                 </small>
                             </div>
                             <div class="col-md-4">
-                                <form action="{{ route('enquiry.import') }}" method="POST" enctype="multipart/form-data" class="d-flex gap-2">
+                                <form action="{{ route('enquiry.import') }}" method="POST" enctype="multipart/form-data"
+                                    class="d-flex gap-2">
                                     @csrf
-                                    <input type="file" name="excel_file" class="form-control form-control-sm" accept=".xlsx,.xls" required>
+                                    <input type="file" name="excel_file" class="form-control form-control-sm"
+                                        accept=".xlsx,.xls" required>
                                     <button type="submit" class="btn btn-success btn-sm px-4 text-nowrap">
                                         <i class="la la-upload"></i> Import
                                     </button>
@@ -40,7 +43,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Import Status Panel -->
                     <div class="p-3 border-bottom bg-white" id="importStatusPanel" style="display:none;">
                         <div class="d-flex justify-content-between align-items-center mb-2">
@@ -48,7 +51,8 @@
                             <span class="text-muted small" id="importStatusPercent">0%</span>
                         </div>
                         <div class="progress" style="height: 8px;">
-                            <div class="progress-bar bg-success" id="importProgressBar" role="progressbar" style="width: 0%"></div>
+                            <div class="progress-bar bg-success" id="importProgressBar" role="progressbar"
+                                style="width: 0%"></div>
                         </div>
                         <div class="small text-muted mt-2" id="importStatusDetail"></div>
                     </div>
@@ -71,23 +75,29 @@
                                 </tr>
                             </tbody>
                         </table>
-                    </div>
+                    </div> --}}
 
                     <!-- Grid Controls -->
-                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 p-3 border-bottom bg-white">
+                    <div
+                        class="d-flex justify-content-between align-items-center flex-wrap gap-3 p-3 border-bottom bg-white">
                         <div class="d-flex align-items-center gap-2 flex-nowrap">
-                            <input type="text" id="quickFilter" class="form-control w-100 w-md-auto" style="width:360px; min-width:260px;" placeholder="Smart Search...">
+                            <input type="text" id="quickFilter" class="form-control w-100 w-md-auto"
+                                style="width:360px; min-width:260px;" placeholder="Smart Search...">
                             <button id="resetAll" class="btn btn-outline-danger btn-sm text-nowrap">Reset</button>
                         </div>
 
                         <div class="d-flex gap-2 flex-nowrap justify-content-center">
-                            <button id="btnDefaultHeaders" class="btn btn-secondary btn-sm text-nowrap">Default Headers</button>
+                            <button id="btnDefaultHeaders" class="btn btn-secondary btn-sm text-nowrap">Default
+                                Headers</button>
                             <div class="position-relative d-inline-block">
-                                <button id="btnCustomiseHeaders" class="btn btn-red btn-sm text-nowrap">Customise Headers</button>
-                                <div id="columnBubble" style="display:none; position:absolute; top:110%; left:0; width:320px; background:#fff; border:1px solid #ddd; border-radius:6px; box-shadow:0 8px 20px rgba(0,0,0,.15); z-index:9999;">
+                                <button id="btnCustomiseHeaders" class="btn btn-red btn-sm text-nowrap">Customise
+                                    Headers</button>
+                                <div id="columnBubble"
+                                    style="display:none; position:absolute; top:110%; left:0; width:320px; background:#fff; border:1px solid #ddd; border-radius:6px; box-shadow:0 8px 20px rgba(0,0,0,.15); z-index:9999;">
                                     <div class="d-flex justify-content-between align-items-center px-2 py-1 border-bottom">
                                         <strong style="font-size:13px;">Customise Headers</strong>
-                                        <button id="closeColumnBubble" class="btn btn-sm btn-link text-danger p-0">✕</button>
+                                        <button id="closeColumnBubble"
+                                            class="btn btn-sm btn-link text-danger p-0">✕</button>
                                     </div>
                                     <div style="max-height:260px; overflow:auto;">
                                         <table class="table table-sm mb-0">
@@ -101,10 +111,12 @@
 
                         <div class="d-flex gap-2 flex-nowrap">
                             <button id="exportCsv" class="btn btn-sm text-nowrap d-flex align-items-center gap-2">
-                                <img src="{{ asset('images/export-excel.png') }}" alt="Excel" style="height:30px; width:auto;">
+                                <img src="{{ asset('images/export-excel.png') }}" alt="Excel"
+                                    style="height:30px; width:auto;">
                             </button>
                             <button id="exportPdf" class="btn btn-sm text-nowrap d-flex align-items-center gap-2">
-                                <img src="{{ asset('images/export-pdf.png') }}" alt="PDF" style="height:30px; width:auto;">
+                                <img src="{{ asset('images/export-pdf.png') }}" alt="PDF"
+                                    style="height:30px; width:auto;">
                             </button>
                         </div>
                     </div>
@@ -112,17 +124,28 @@
                     {{-- =========================== HIGHLIGHT FILTERS =========================== --}}
                     <div class="px-3 py-2 border-bottom bg-white d-flex gap-2 flex-wrap align-items-center">
                         <span class="fw-bold text-muted small me-1">Highlights:</span>
-                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter" data-filter="missed_fup">Missed Follow-up</button>
-                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter" data-filter="today_fup">Today's Follow-up</button>
-                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter" data-filter="birthday">Birthday</button>
-                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter" data-filter="anniversary">Anniversary</button>
-                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter" data-filter="exchange">Exchange</button>
-                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter" data-filter="pending_eval">Pending Evaluation</button>
-                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter" data-filter="delayed">Delayed</button>
-                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter" data-filter="wrong_assign">Wrong Assignment</button>
-                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter" data-filter="finance">Finance</button>
-                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter" data-filter="stage_mismatch">Stage Mismatch</button>
-                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter" data-filter="lost_verif">Lost Verifications</button>
+                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
+                            data-filter="missed_fup">Missed Follow-up</button>
+                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
+                            data-filter="today_fup">Today's Follow-up</button>
+                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
+                            data-filter="birthday">Birthday</button>
+                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
+                            data-filter="anniversary">Anniversary</button>
+                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
+                            data-filter="exchange">Exchange</button>
+                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
+                            data-filter="pending_eval">Pending Evaluation</button>
+                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
+                            data-filter="delayed">Delayed</button>
+                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
+                            data-filter="wrong_assign">Wrong Assignment</button>
+                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
+                            data-filter="finance">Finance</button>
+                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
+                            data-filter="stage_mismatch">Stage Mismatch</button>
+                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
+                            data-filter="lost_verif">Lost Verifications</button>
                     </div>
 
                     <!-- ag-Grid -->
@@ -139,6 +162,7 @@
         .ag-theme-quartz .center-header .ag-header-cell-label {
             justify-content: center !important;
         }
+
         /* Style for active highlight pill */
         .highlight-filter.active {
             background-color: #0d6efd;
@@ -284,6 +308,10 @@
             cacheBlockSize: 100,
             maxBlocksInCache: 10,
             infiniteInitialRowCount: 100,
+            // Built-in ag-Grid pagination controls (Next/Prev + page numbers).
+            // For the Infinite Row Model, page size always equals cacheBlockSize (100).
+            pagination: true,
+            paginationAutoPageSize: false,
             rowHeight: 28,
             animateRows: true,
             defaultColDef: {
@@ -291,7 +319,9 @@
                 filter: false,
                 resizable: true,
                 headerClass: 'center-header',
-                cellStyle: { textAlign: 'center' }
+                cellStyle: {
+                    textAlign: 'center'
+                }
             },
             components: {
                 htmlRenderer: params => params.value || ''
@@ -367,16 +397,17 @@
             document.querySelectorAll('.highlight-filter').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const filterValue = this.getAttribute('data-filter');
-                    
+
                     if (currentHighlightFilter === filterValue) {
                         currentHighlightFilter = '';
                         this.classList.remove('active');
                     } else {
                         currentHighlightFilter = filterValue;
-                        document.querySelectorAll('.highlight-filter').forEach(b => b.classList.remove('active'));
+                        document.querySelectorAll('.highlight-filter').forEach(b => b.classList
+                            .remove('active'));
                         this.classList.add('active');
                     }
-                    
+
                     // Reload Grid
                     gridApi.setGridOption('datasource', dataSource);
                 });
@@ -390,7 +421,11 @@
                 
                 document.querySelectorAll('.highlight-filter').forEach(b => b.classList.remove('active'));
 
-                gridApi.applyColumnState({ defaultState: { sort: null } });
+                gridApi.applyColumnState({
+                    defaultState: {
+                        sort: null
+                    }
+                });
                 gridApi.setGridOption('datasource', dataSource);
             });
 
@@ -419,7 +454,8 @@
 
             document.getElementById('btnDefaultHeaders').addEventListener('click', () => {
                 const defaultFields = [
-                    'serial_no', 'x8_enquiry_no', 'x8_enquiry_date', 'oem_enquiry_no', 'oem_enquiry_date',
+                    'serial_no', 'x8_enquiry_no', 'x8_enquiry_date', 'oem_enquiry_no',
+                    'oem_enquiry_date',
                     'oem_quick_enquiry_no', 'segment_name', 'model_name', 'variant_name', 'first_name',
                     'mobile', 'enquiry_type', 'source_name', 'sub_source', 'tehsil', 'district', 'city',
                     'sc_code', 'dealer_branch', 'dealer_location', 'followup_type', 'followup_date',
@@ -441,7 +477,9 @@
             });
 
             document.getElementById('exportPdf').addEventListener('click', () => {
-                const { jsPDF } = window.jspdf;
+                const {
+                    jsPDF
+                } = window.jspdf;
                 const doc = new jsPDF();
 
                 const visibleColumns = gridApi.getAllDisplayedColumns()
@@ -459,14 +497,20 @@
                 doc.autoTable({
                     head: [headers],
                     body: rows,
-                    styles: { fontSize: 8 },
-                    headStyles: { fillColor: [41, 128, 185] },
+                    styles: {
+                        fontSize: 8
+                    },
+                    headStyles: {
+                        fillColor: [41, 128, 185]
+                    },
                 });
 
                 doc.save(`enquiries-${new Date().toISOString().slice(0, 10)}.pdf`);
 
                 if (rows.length < gridApi.getDisplayedRowCount()) {
-                    alert('PDF export includes only the rows currently loaded in the grid (scroll to load more, then export again). For the full list, use the CSV export instead.');
+                    alert(
+                        'PDF export includes only the rows currently loaded in the grid (scroll to load more, then export again). For the full list, use the CSV export instead.'
+                    );
                 }
             });
         });
