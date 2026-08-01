@@ -20,110 +20,122 @@ class Enquiry extends BaseModel
 
     protected $table = 'xlr8_crm_enquiries';
 
-    protected $fillable = [
+    // This tells Laravel: "Do not guard any columns, let me mass-assign everything."
+    protected $guarded = [];
 
-        'origin',
-        'current_origin',
-        'cne',
+    // protected $fillable = [
 
-        'enquiry_no',
-        'enquiry_type',
-        'source_code',
-        'sub_source',
+    //     'origin',
+    //     'current_origin',
+    //     'cne',
 
-        'person_code',
+    //     'enquiry_no',
+    //     'enquiry_type',
+    //     'source_code',
+    //     'sub_source',
 
-        'reference_details',
-        'referred_by',
-        'referee_phone',
-        'referee_name',
+    //     'person_code',
 
-        'planned_campaign',
+    //     'reference_details',
+    //     'referred_by',
+    //     'referee_phone',
+    //     'referee_name',
 
-        'likely_purchase_date',
+    //     'planned_campaign',
 
-        'activity_type',
-        'activity_segment',
-        'activity_model',
-        'activity_start_date',
-        'activity_end_date',
-        'activity_branch',
-        'activity_location',
+    //     'likely_purchase_date',
 
-        'first_name',
-        'last_name',
-        'mobile',
-        'email',
+    //     'activity_type',
+    //     'activity_segment',
+    //     'activity_model',
+    //     'activity_start_date',
+    //     'activity_end_date',
+    //     'activity_branch',
+    //     'activity_location',
 
-        'occupation_type',
-        'occupation_sub_type',
+    //     'first_name',
+    //     'last_name',
+    //     'mobile',
+    //     'email',
 
-        'customer_type',
+    //     'occupation_type',
+    //     'occupation_sub_type',
 
-        'company_name',
+    //     'customer_type',
 
-        'gender',
+    //     'company_name',
 
-        'dob',
+    //     'gender',
 
-        'marital_status',
-        'marriage_date',
+    //     'dob',
 
-        'age_group',
+    //     'marital_status',
+    //     'marriage_date',
 
-        'zipcode',
-        'tehsil',
-        'district',
-        'city',
+    //     'age_group',
 
-        'has_ev',
+    //     'zipcode',
+    //     'tehsil',
+    //     'district',
+    //     'city',
 
-        'purchase_type',
+    //     'has_ev',
 
-        'exchange_make',
-        'exchange_model',
-        'vehicle_no',
+    //     'purchase_type',
 
-        'remarks',
+    //     'exchange_make',
+    //     'exchange_model',
+    //     'vehicle_no',
 
-        'segment_code',
-        'model_code',
-        'variant_code',
-        'color_code',
+    //     'remarks',
 
-        'fuel_type',
-        'transmission',
-        'drivetrain',
-        'seating',
+    //     'segment_code',
+    //     'model_code',
+    //     'variant_code',
+    //     'color_code',
 
-        'usage_area',
-        'km_travelled_daily',
+    //     'fuel_type',
+    //     'transmission',
+    //     'drivetrain',
+    //     'seating',
 
-        'application_type',
-        'application',
+    //     'usage_area',
+    //     'km_travelled_daily',
 
-        'place_of_registration',
+    //     'application_type',
+    //     'application',
 
-        'dealer_branch',
-        'dealer_location',
+    //     'place_of_registration',
 
-        'sc_code',
+    //     'dealer_branch',
+    //     'dealer_location',
 
-        'consider_make',
-        'consider_model',
-        'consider_variant',
+    //     'sc_code',
 
-        'followup_type',
-        'followup_date',
-        'followup_time',
+    //     'consider_make',
+    //     'consider_model',
+    //     'consider_variant',
+
+    //     'followup_type',
+    //     'followup_date',
+    //     'followup_time',
+
+    //     'manufacturing_year',
+    //     'odometer_reading',
+    //     'expected_price',
+    //     'offered_price',
+    //     'exchange_bonus',
+    //     'difference',
+    //     'finance_mode',
+    //     'financier',
 
 
 
-        'created_by',
-        'updated_by',
-        'deleted_by',
+    //     'created_by',
+    //     'updated_by',
+    //     'deleted_by',
 
-    ];
+    // ];
 
     // Redirect exchange_make to brand_make
     protected function exchangeMake(): Attribute
@@ -249,7 +261,7 @@ class Enquiry extends BaseModel
     // counts as that item being "answered".
     public const LONG_FORM_PAIRED_FIELDS = [
         'segment_code' => 'segment',   // Segment
-        'model_code'   => 'model',     // Model
+        'model_code' => 'model',     // Model
         'variant_code' => 'variant',   // Variant
     ];
 

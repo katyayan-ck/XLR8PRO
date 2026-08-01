@@ -49,16 +49,16 @@ class Booking extends BaseModel  implements HasMedia
 
 
 
-public function location()
-{
-    return $this->belongsTo(\App\Models\Admin\Location::class, 'location_code', 'code');
-    // or 'code' depending on your foreign key logic
-}
-public function branch()
-{
-    return $this->belongsTo(\App\Models\Admin\Branch::class, 'branch_code', 'code');
-    // or 'code' depending on your foreign key logic
-}
+    public function location()
+    {
+        return $this->belongsTo(\App\Models\Admin\Location::class, 'location_code', 'code');
+        // or 'code' depending on your foreign key logic
+    }
+    public function branch()
+    {
+        return $this->belongsTo(\App\Models\Admin\Branch::class, 'branch_code', 'code');
+        // or 'code' depending on your foreign key logic
+    }
 
     public function finances()
     {
