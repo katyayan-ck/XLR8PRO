@@ -109,7 +109,7 @@
                         </div>
                     </div>
 
-                    {{-- =========================== NEW HIGHLIGHT FILTERS =========================== --}}
+                    {{-- =========================== HIGHLIGHT FILTERS =========================== --}}
                     <div class="px-3 py-2 border-bottom bg-white d-flex gap-2 flex-wrap align-items-center">
                         <span class="fw-bold text-muted small me-1">Highlights:</span>
                         <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter" data-filter="missed_fup">Missed Follow-up</button>
@@ -221,27 +221,14 @@
 
     <!-- Grid Script -->
     <script>
+        // DYNAMICALLY FETCH ALL COLUMNS FROM CONTROLLER
         const ALL_COLUMNS = @json($gridConfig['columns'] ?? []);
         let gridApi;
 
+        // Auto-map every backend column, pinning the Action column to the right
         const columnDefs = [
-            ...ALL_COLUMNS.filter(col => [
-                'serial_no', 'x8_enquiry_no', 'x8_enquiry_date', 'x8_enquiry_assign_date',
-                'oem_enquiry_no', 'oem_enquiry_date', 'oem_enquiry_assign_date', 'oem_quick_enquiry_no',
-                'oem_quick_enquiry_date', 'oem_quick_enquiry_assign_date', 'segment_name', 'model_name',
-                'variant_name', 'color_name', 'first_name', 'last_name', 'mobile', 'email', 'gender',
-                'enquiry_type', 'source_name', 'sub_source', 'likely_purchase_in_days', 'fuel_type',
-                'transmission', 'drivetrain', 'seating', 'tehsil', 'district', 'city', 'sc_code',
-                'dealer_branch', 'dealer_location', 'followup_type', 'followup_date', 'occupation_type',
-                'customer_type', 'occupation_sub_type', 'company_name', 'dob', 'marital_status',
-                'marriage_date', 'age_group', 'usage_area', 'km_travelled_daily', 'application_type',
-                'application', 'pincode', 'address', 'has_ev', 'purchase_type', 'consider_make',
-                'consider_model', 'consider_variant', 'remarks', 'dms_enquiry_stage', 'cre_enquiry_stage',
-                'cre_next_fup_date', 'cre_next_fup_time', 'cre_next_fup_remarks', 'x8_quotation_no',
-                'x8_booking_no', 'x8_booking_date', 'oem_booking_no', 'oem_booking_date', 'oem_otf_no',
-                'oem_test_drive_no'
-            ].includes(col.field)),
-            ...ALL_COLUMNS.filter(col => ['action'].includes(col.field)).map(col => {
+            ...ALL_COLUMNS.filter(col => col.field !== 'action'),
+            ...ALL_COLUMNS.filter(col => col.field === 'action').map(col => {
                 col.pinned = 'right';
                 col.width = 140;
                 col.sortable = false;
@@ -260,7 +247,7 @@
         }
 
         let currentSearchText = '';
-        let currentHighlightFilter = ''; // NEW: Tracks active pill filter
+        let currentHighlightFilter = ''; // Tracks active pill filter
 
         const dataSource = {
             getRows: function(params) {
@@ -276,7 +263,7 @@
                             endRow: params.endRow,
                             sortModel: params.sortModel,
                             searchText: currentSearchText,
-                            highlightFilter: currentHighlightFilter // NEW: Sending filter to backend
+                            highlightFilter: currentHighlightFilter
                         })
                     })
                     .then(res => res.json())
@@ -311,6 +298,8 @@
             },
             onGridReady: params => {
                 gridApi = params.api;
+                
+                // These are the fields visible by default on page load
                 const defaultFields = [
                     'serial_no', 'x8_enquiry_no', 'x8_enquiry_date', 'oem_enquiry_no', 'oem_enquiry_date',
                     'oem_quick_enquiry_no', 'segment_name', 'model_name', 'variant_name', 'first_name',
@@ -318,6 +307,7 @@
                     'sc_code', 'dealer_branch', 'dealer_location', 'followup_type', 'followup_date',
                     'customer_type', 'purchase_type', 'action'
                 ];
+                
                 const allCols = gridApi.getAllGridColumns().map(col => col.getColId());
                 gridApi.setColumnsVisible(allCols, false);
                 gridApi.setColumnsVisible(defaultFields, true);
@@ -331,9 +321,8 @@
             if (!gridApi || !bubble || !tbody) return;
 
             tbody.innerHTML = '';
-            const allFlatColumns = ALL_COLUMNS;
-
-            allFlatColumns.forEach(col => {
+            
+            ALL_COLUMNS.forEach(col => {
                 if (!col.field) return;
 
                 const tr = document.createElement('tr');
@@ -344,7 +333,8 @@
                 checkbox.type = 'checkbox';
                 checkbox.checked = gridApi.getColumn(col.field)?.isVisible() ?? false;
 
-                if (['serial_no', 'enquiry_no', 'full_name', 'action'].includes(col.field)) {
+                // Disable unchecking mandatory columns
+                if (['serial_no', 'action'].includes(col.field)) {
                     checkbox.disabled = true;
                 }
 
@@ -373,17 +363,15 @@
                 gridApi.setGridOption('datasource', dataSource);
             }, 400));
 
-            // NEW: Highlight Filters Event
+            // Highlight Filters Event
             document.querySelectorAll('.highlight-filter').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const filterValue = this.getAttribute('data-filter');
                     
                     if (currentHighlightFilter === filterValue) {
-                        // Deactivate if clicked again
                         currentHighlightFilter = '';
                         this.classList.remove('active');
                     } else {
-                        // Activate new filter and clear others
                         currentHighlightFilter = filterValue;
                         document.querySelectorAll('.highlight-filter').forEach(b => b.classList.remove('active'));
                         this.classList.add('active');
@@ -398,9 +386,8 @@
             document.getElementById('resetAll').addEventListener('click', () => {
                 document.getElementById('quickFilter').value = '';
                 currentSearchText = '';
-                currentHighlightFilter = ''; // Reset highlight
+                currentHighlightFilter = ''; 
                 
-                // Clear highlight pill UI
                 document.querySelectorAll('.highlight-filter').forEach(b => b.classList.remove('active'));
 
                 gridApi.applyColumnState({ defaultState: { sort: null } });
@@ -448,7 +435,7 @@
             document.getElementById('exportCsv').addEventListener('click', () => {
                 const params = new URLSearchParams({
                     searchText: currentSearchText,
-                    highlightFilter: currentHighlightFilter // Include in export
+                    highlightFilter: currentHighlightFilter
                 });
                 window.location.href = '{{ backpack_url('enquiries/export') }}?' + params.toString();
             });
@@ -483,11 +470,5 @@
                 }
             });
         });
-
-        function redirectToEnquiryList(selectElement) {
-            if (selectElement.value) {
-                window.location.href = selectElement.value;
-            }
-        }
     </script>
 @endpush
