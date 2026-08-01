@@ -286,6 +286,7 @@
                             startRow: params.startRow,
                             endRow: params.endRow,
                             sortModel: params.sortModel,
+                            filterModel: params.filterModel,
                             searchText: currentSearchText,
                             highlightFilter: currentHighlightFilter
                         })
@@ -316,7 +317,7 @@
             animateRows: true,
             defaultColDef: {
                 sortable: true,
-                filter: false,
+                filter: true,
                 resizable: true,
                 headerClass: 'center-header',
                 cellStyle: {
@@ -328,7 +329,7 @@
             },
             onGridReady: params => {
                 gridApi = params.api;
-                
+
                 // These are the fields visible by default on page load
                 const defaultFields = [
                     'serial_no', 'x8_enquiry_no', 'x8_enquiry_date', 'oem_enquiry_no', 'oem_enquiry_date',
@@ -337,7 +338,7 @@
                     'sc_code', 'dealer_branch', 'dealer_location', 'followup_type', 'followup_date',
                     'customer_type', 'purchase_type', 'action'
                 ];
-                
+
                 const allCols = gridApi.getAllGridColumns().map(col => col.getColId());
                 gridApi.setColumnsVisible(allCols, false);
                 gridApi.setColumnsVisible(defaultFields, true);
@@ -351,7 +352,7 @@
             if (!gridApi || !bubble || !tbody) return;
 
             tbody.innerHTML = '';
-            
+
             ALL_COLUMNS.forEach(col => {
                 if (!col.field) return;
 
@@ -417,8 +418,8 @@
             document.getElementById('resetAll').addEventListener('click', () => {
                 document.getElementById('quickFilter').value = '';
                 currentSearchText = '';
-                currentHighlightFilter = ''; 
-                
+                currentHighlightFilter = '';
+
                 document.querySelectorAll('.highlight-filter').forEach(b => b.classList.remove('active'));
 
                 gridApi.applyColumnState({
@@ -471,7 +472,8 @@
             document.getElementById('exportCsv').addEventListener('click', () => {
                 const params = new URLSearchParams({
                     searchText: currentSearchText,
-                    highlightFilter: currentHighlightFilter
+                    highlightFilter: currentHighlightFilter,
+                    filterModel: JSON.stringify(gridApi.getFilterModel())
                 });
                 window.location.href = '{{ backpack_url('enquiries/export') }}?' + params.toString();
             });

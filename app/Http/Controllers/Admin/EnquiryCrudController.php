@@ -59,10 +59,10 @@ class EnquiryCrudController extends CrudController
 
         $searchText = trim((string) $request->input('searchText', ''));
         $highlightFilter = trim((string) $request->input('highlightFilter', ''));
-
-        // NEW: Detect which page is asking for data
+        $filterModel = (array) $request->input('filterModel', []);
         $listType = trim((string) $request->input('list_type', 'all'));
 
+        // NEW: Detect which page is asking for data
         // Query the correct scope based on the page
         $query = match ($listType) {
             'reference' => Enquiry::reference(),
@@ -72,7 +72,8 @@ class EnquiryCrudController extends CrudController
             'unassigned_long' => Enquiry::unassignedLong(),
             'assigned_quick' => Enquiry::assignedQuick(),
             'unassigned_quick' => Enquiry::unassignedQuick(),
-            default => Enquiry::formComplete(),
+            //default => Enquiry::formComplete()
+            default => Enquiry::query(),
         };
 
         $query->with(['segment', 'model', 'variant', 'color', 'campaign']);
@@ -80,14 +81,13 @@ class EnquiryCrudController extends CrudController
         // Apply Search & Sort
         $this->applyEnquirySearch($query, $searchText);
         $this->applyEnquirySort($query, (array) $request->input('sortModel', []));
+        $this->applyEnquiryFilter($query, $filterModel);
         OrgService::applyHighlightFilter($query, $highlightFilter);
 
         $total = (clone $query)->count();
 
         // Determine the mapping format type
-        $mapType = in_array($listType, ['assigned_long', 'unassigned_long']) ? 'long' :
-            (in_array($listType, ['assigned_quick', 'unassigned_quick']) ? 'quick' :
-                (in_array($listType, ['reference', 'virtual', 'whatsapp']) ? $listType : 'all'));
+        $mapType = in_array($listType, ['assigned_long', 'unassigned_long']) ? 'long' : (in_array($listType, ['assigned_quick', 'unassigned_quick']) ? 'quick' : (in_array($listType, ['reference', 'virtual', 'whatsapp']) ? $listType : 'all'));
 
         $gridData = $query->skip($startRow)->take($limit)->get()
             ->map(fn($e, $i) => $this->mapData($e, $startRow + $i, $mapType))->all();
@@ -99,6 +99,7 @@ class EnquiryCrudController extends CrudController
     {
         $searchText = trim((string) $request->input('searchText', ''));
         $highlightFilter = trim((string) $request->input('highlightFilter', ''));
+        $filterModel = json_decode((string) $request->input('filterModel', '{}'), true) ?: [];
         $listType = trim((string) $request->input('list_type', 'all'));
 
         $query = match ($listType) {
@@ -109,29 +110,46 @@ class EnquiryCrudController extends CrudController
             'unassigned_long' => Enquiry::unassignedLong(),
             'assigned_quick' => Enquiry::assignedQuick(),
             'unassigned_quick' => Enquiry::unassignedQuick(),
-            default => Enquiry::formComplete(),
+            //default => Enquiry::formComplete()
+            default => Enquiry::query(),
         };
 
         $query->with(['segment', 'model', 'variant', 'color', 'campaign']);
 
         $this->applyEnquirySearch($query, $searchText);
+        $this->applyEnquiryFilter($query, $filterModel);
         OrgService::applyHighlightFilter($query, $highlightFilter);
 
         $query->orderByDesc('created_at');
 
-        return response()->streamDownload(function () use ($query) {
+        // Same mapping used for the on-screen grid, so the CSV always has
+        // the exact same columns as whatever listing is currently shown
+        // (tehsil, district, and everything else) instead of a fixed
+        // minimal set that can drift out of sync with the grid.
+        $mapType = in_array($listType, ['assigned_long', 'unassigned_long']) ? 'long' : (in_array($listType, ['assigned_quick', 'unassigned_quick']) ? 'quick' : (in_array($listType, ['reference', 'virtual', 'whatsapp']) ? $listType : 'all'));
+
+        $columns = array_values(array_filter(
+            $this->getColumns($mapType),
+            fn($col) => ($col['field'] ?? null) !== 'action'
+        ));
+
+        return response()->streamDownload(function () use ($query, $columns, $mapType) {
             $out = fopen('php://output', 'w');
-            fputcsv($out, ['S.No.', 'Enquiry No.', 'Enquiry Type', 'Source', 'Sub Source', 'Full Name', 'Mobile', 'Email', 'Segment', 'Model', 'Variant', 'Color', 'City', 'Dealer Branch', 'Dealer Location', 'Followup Date']);
+
+            fputcsv($out, array_merge(['S.No.'], array_map(fn($c) => $c['headerName'], $columns)));
 
             $serial = 0;
-            $query->chunk(500, function ($chunk) use ($out, &$serial) {
+            $query->chunk(500, function ($chunk) use ($out, &$serial, $columns, $mapType) {
                 foreach ($chunk as $e) {
+                    $rowData = $this->mapData($e, $serial, $mapType);
                     $serial++;
-                    $variant = $e->variant?->display_name ?? $e->variant?->custom_name ?? $e->variant?->oem_name;
-                    $fDate = $e->followup_date ? Carbon::parse($e->followup_date)->format('d-m-Y') : '';
-                    fputcsv($out, [$serial, $e->enquiry_no, $e->enquiry_type, $e->source_code, $e->sub_source, $e->full_name, $e->mobile, $e->email, $e->segment?->name, $e->model?->name, $variant, $e->color?->name, $e->city, $e->dealer_branch, $e->dealer_location, $fDate]);
+                    fputcsv($out, array_merge(
+                        [$serial],
+                        array_map(fn($c) => $rowData[$c['field']] ?? '', $columns)
+                    ));
                 }
             });
+
             fclose($out);
         }, 'enquiries-' . now()->format('Y-m-d_His') . '.csv', ['Content-Type' => 'text/csv']);
     }
@@ -216,10 +234,22 @@ class EnquiryCrudController extends CrudController
             'x8_enquiry_date' => $c($e->x8_enquiry_date ?? $e->enquiry_date, 'd-m-Y H:i'),
             'x8_enquiry_assign_date' => $c($e->x8_enquiry_assign_date ?? $e->enq_assign_date, 'd-m-Y'),
             'oem_enquiry_assign_date' => $c($e->oem_enquiry_assign_date ?? $e->enq_assign_date, 'd-m-Y'),
-            'segment_name' => $e->segment?->name ?? $e->segment_code ?? '—',
-            'model_name' => $e->model?->name ?? $e->model_code ?? '—',
-            'variant_name' => $e->variant?->display_name ?? $e->variant_code ?? '—',
-            'color_name' => $e->color?->name ?? $e->color_code ?? '—',
+            'segment_name' => $e->segment_code
+                ? ($e->getRelation('segment')?->name ?? $e->segment ?? $e->segment_code)
+                : ($e->segment ?? '—'),
+            'model_name' => $e->model_code
+                ? ($e->getRelation('model')?->name ?? $e->model ?? $e->model_code)
+                : ($e->model ?? '—'),
+            'variant_name' => $e->variant_code
+                ? ($e->getRelation('variant')?->display_name
+                    ?? $e->getRelation('variant')?->custom_name
+                    ?? $e->getRelation('variant')?->oem_name
+                    ?? $e->variant
+                    ?? $e->variant_code)
+                : ($e->variant ?? '—'),
+            'color_name' => $e->color_code
+                ? ($e->getRelation('color')?->name ?? $e->color ?? $e->color_code)
+                : ($e->color ?? '—'),
             'mobile' => $e->mobile ?? '—',
             'dms_enquiry_stage' => $e->dms_enquiry_stage ?? $e->stage ?? '—',
             'cre_enquiry_stage' => $e->cre_enquiry_stage ?? '—',
@@ -480,6 +510,149 @@ class EnquiryCrudController extends CrudController
         }
         if (!$sortApplied)
             $query->orderByDesc('created_at');
+    }
+
+    // =========================================================
+    // COLUMN FILTER LOGIC (ag-Grid default column filters)
+    // =========================================================
+
+    /**
+     * Maps ag-Grid field names that don't match a real DB column
+     * directly to the actual column (accessor-redirected fields,
+     * relation "name" columns, etc). null = not filterable (computed field).
+     */
+    private const FILTER_FIELD_MAP = [
+        'full_name' => null, // computed accessor, not a column
+        'action' => null,
+        'source_name' => 'source_code',
+        'segment_name' => null, // handled via relation below
+        'model_name' => null,   // handled via relation below
+        'variant_name' => null, // handled via relation below
+        'color_name' => null,   // handled via relation below
+        'exchange_make' => 'brand_make',
+        'exchange_model' => 'brand_model',
+        'consider_make' => 'consid_brand',
+        'consider_model' => 'consid_model',
+        'consider_variant' => 'consid_variant',
+        'likely_purchase_in_days' => 'likely_purchase_date',
+    ];
+
+    /**
+     * ag-Grid field => matches the same code-first, raw-column-fallback
+     * priority used for display: if the *_code column is filled, filter
+     * against the related table's name column(s); otherwise filter
+     * against the raw text column (segment/model/variant/color).
+     */
+    private const FILTER_CODE_COLUMN_MAP = [
+        'segment_name' => ['code' => 'segment_code', 'relation' => 'segment', 'relCols' => ['name'], 'rawCol' => 'segment'],
+        'model_name' => ['code' => 'model_code', 'relation' => 'model', 'relCols' => ['name'], 'rawCol' => 'model'],
+        'variant_name' => ['code' => 'variant_code', 'relation' => 'variant', 'relCols' => ['display_name', 'custom_name', 'oem_name'], 'rawCol' => 'variant'],
+        'color_name' => ['code' => 'color_code', 'relation' => 'color', 'relCols' => ['name'], 'rawCol' => 'color'],
+    ];
+
+    private function applyEnquiryFilter($query, array $filterModel): void
+    {
+        if (empty($filterModel)) return;
+
+        foreach ($filterModel as $field => $condition) {
+            if (!is_array($condition)) continue;
+
+            // Code-priority columns (e.g. model_name -> model.name if model_code filled, else raw `model` column)
+            if (isset(self::FILTER_CODE_COLUMN_MAP[$field])) {
+                $map = self::FILTER_CODE_COLUMN_MAP[$field];
+                $query->where(function ($q) use ($map, $condition) {
+                    // Code filled -> match via related table
+                    $q->where(function ($q2) use ($map, $condition) {
+                        $q2->whereNotNull($map['code'])->where($map['code'], '!=', '')
+                            ->whereHas($map['relation'], function ($q3) use ($map, $condition) {
+                                $this->applyFilterConditionAnyColumn($q3, $map['relCols'], $condition);
+                            });
+                    })
+                        // Code blank -> match raw text column instead
+                        ->orWhere(function ($q2) use ($map, $condition) {
+                            $q2->where(function ($q3) use ($map) {
+                                $q3->whereNull($map['code'])->orWhere($map['code'], '');
+                            });
+                            $this->applyFilterCondition($q2, $map['rawCol'], $condition);
+                        });
+                });
+                continue;
+            }
+
+            // Redirected / renamed columns, or explicitly non-filterable
+            $column = array_key_exists($field, self::FILTER_FIELD_MAP)
+                ? self::FILTER_FIELD_MAP[$field]
+                : $field;
+
+            if ($column === null) continue; // not filterable
+
+            $this->applyFilterCondition($query, $column, $condition);
+        }
+    }
+
+    /** Applies the same filter condition across multiple columns, OR'd together. */
+    private function applyFilterConditionAnyColumn($query, array $columns, array $condition): void
+    {
+        $query->where(function ($q) use ($columns, $condition) {
+            foreach ($columns as $col) {
+                $q->orWhere(function ($q2) use ($col, $condition) {
+                    $this->applyFilterCondition($q2, $col, $condition);
+                });
+            }
+        });
+    }
+
+    /**
+     * Applies a single ag-Grid text-filter condition to a query.
+     * Supports the standard agTextColumnFilter operator set.
+     */
+    private function applyFilterCondition($query, string $column, array $condition): void
+    {
+        // ag-Grid sometimes sends a multi-condition filter instead of a flat one:
+        // { operator: 'AND'|'OR', conditions: [ {type, filter}, {type, filter} ] }
+        if (isset($condition['conditions']) && is_array($condition['conditions'])) {
+            $operator = strtoupper($condition['operator'] ?? 'AND') === 'OR' ? 'orWhere' : 'where';
+            $query->where(function ($q) use ($column, $condition, $operator) {
+                foreach ($condition['conditions'] as $sub) {
+                    $q->{$operator}(function ($q2) use ($column, $sub) {
+                        $this->applyFilterCondition($q2, $column, $sub);
+                    });
+                }
+            });
+            return;
+        }
+
+        $type = $condition['type'] ?? 'contains';
+        $value = $condition['filter'] ?? null;
+
+        switch ($type) {
+            case 'equals':
+                $query->where($column, $value);
+                break;
+            case 'notEqual':
+                $query->where($column, '!=', $value);
+                break;
+            case 'startsWith':
+                $query->where($column, 'like', "{$value}%");
+                break;
+            case 'endsWith':
+                $query->where($column, 'like', "%{$value}");
+                break;
+            case 'blank':
+                $query->where(function ($q) use ($column) {
+                    $q->whereNull($column)->orWhere($column, '');
+                });
+                break;
+            case 'notBlank':
+                $query->whereNotNull($column)->where($column, '!=', '');
+                break;
+            case 'contains':
+            default:
+                if ($value !== null && $value !== '') {
+                    $query->where($column, 'like', "%{$value}%");
+                }
+                break;
+        }
     }
 
     // =========================================================
