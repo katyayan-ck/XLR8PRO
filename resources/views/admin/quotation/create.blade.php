@@ -553,6 +553,7 @@ use App\Services\OrgService;
     }
 
     /* Accessories note line: hidden on screen, shown only in print above the Note box */
+    .insurance-note-row,
     .accessories-note-row {
         display: block;
         padding: 4px 5px;
@@ -561,10 +562,12 @@ use App\Services\OrgService;
         margin-bottom: 8px;
     }
 
+    #insurance_print,
     #accessories_print {
         font-weight: normal;
         white-space: normal;
         word-break: break-word;
+        display: inline;
     }
 
     @media print {
@@ -720,16 +723,37 @@ use App\Services\OrgService;
                 <div class="form-section">
 
                     {{-- ================= Customer Details ================= --}}
-                    <table class="bill-table mb-3">
+                    {{-- ================= Customer Details ================= --}}
+                    {{-- MOCK ENQUIRY TEST INPUT (NO-PRINT) --}}
+                    <div class="no-print mb-3">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <span class="input-group-text">🔍 Mock Enquiry</span>
+                                    <input type="text" id="mock_enquiry_no" class="form-control"
+                                        placeholder="Enter 001-005" value="001">
+                                    <button type="button" id="btnFetchMock" class="btn btn-primary">
+                                        <i class="la la-refresh"></i> Fetch
+                                    </button>
+                                    <button type="button" id="btnResetMock" class="btn btn-secondary">
+                                        <i class="la la-undo"></i> Reset
+                                    </button>
+                                </div>
+                                <small class="text-muted">Enter enquiry number (001-005) and click Fetch to load mock
+                                    data</small>
+                            </div>
+                        </div>
+                    </div>
 
+                    <table class="bill-table mb-3">
                         <tr>
                             <td class="title" width="18%">Enquiry ID</td>
                             <td width="32%">
-                                <input type="text" value="{{ optional($selectedEnquiry)->id }}" readonly>
-
-                                <input type="hidden" name="enquiry_no" value="{{ optional($selectedEnquiry)->id }}">
+                                <input type="text" id="enquiry_id" value="{{ optional($selectedEnquiry)->id }}"
+                                    readonly>
+                                <input type="hidden" name="enquiry_no" id="enquiry_no_hidden"
+                                    value="{{ optional($selectedEnquiry)->id }}">
                             </td>
-
                             <td class="title" width="18%">Customer Name</td>
                             <td width="32%">
                                 <input type="text" id="customer_name"
@@ -771,48 +795,55 @@ use App\Services\OrgService;
                         <tr>
                             <td class="title" width="18%">Segment</td>
                             <td width="32%">
-                                <input type="text"
+                                <input type="text" id="segment"
                                     value="{{ optional($selectedEnquiry->segment)->name ?? $selectedEnquiry->segment_code }}"
                                     readonly>
-
-                                <input type="hidden" name="segment_code"
+                                <input type="hidden" name="segment_code" id="segment_code"
                                     value="{{ optional($selectedEnquiry)->segment_code }}">
                             </td>
-
                             <td class="title" width="18%">Model</td>
                             <td width="32%">
-                                <input type="text"
+                                <input type="text" id="model"
                                     value="{{ optional($selectedEnquiry->model)->name ?? $selectedEnquiry->model_code }}"
                                     readonly>
-
-                                <input type="hidden" name="model_code"
+                                <input type="hidden" name="model_code" id="model_code"
                                     value="{{ optional($selectedEnquiry)->model_code }}">
                             </td>
                         </tr>
-
                         <tr>
                             <td class="title">Variant</td>
                             <td>
-
-                                <input type="text" value="{{ optional($selectedEnquiry->variant)->display_name
-                ?? optional($selectedEnquiry->variant)->custom_name
-                ?? $selectedEnquiry->variant_code }}" readonly>
-
-
-                                <input type="hidden" name="variant_code"
+                                <input type="text" id="variant" value="{{ optional($selectedEnquiry->variant)->display_name
+                                ?? optional($selectedEnquiry->variant)->custom_name
+                                ?? $selectedEnquiry->variant_code }}" readonly>
+                                <input type="hidden" name="variant_code" id="variant_code"
                                     value="{{ optional($selectedEnquiry)->variant_code }}">
                             </td>
-
                             <td class="title">Color</td>
                             <td>
-                                <input type="text"
+                                <input type="text" id="color"
                                     value="{{ optional($selectedEnquiry->color)->name ?? $selectedEnquiry->color_code }}"
                                     readonly>
-
-                                <input type="hidden" name="color_code"
+                                <input type="hidden" name="color_code" id="color_code"
                                     value="{{ optional($selectedEnquiry)->color_code }}">
                             </td>
                         </tr>
+                        <tr>
+                            <td class="title">Permit</td>
+                            <td>
+                                <select id="permit">
+                                    <option value="">Select Permit</option>
+                                </select>
+                            </td>
+                            <td class="title">OEM Code</td>
+                            <td>
+                                <input type="text" id="oem_code" value="{{ optional($selectedEnquiry)->oem_code }}"
+                                    readonly>
+                                <input type="hidden" name="oem_code" id="oem_code_hidden"
+                                    value="{{ optional($selectedEnquiry)->oem_code }}">
+                            </td>
+                        </tr>
+
 
                     </table>
 
@@ -845,15 +876,19 @@ use App\Services\OrgService;
                                         <tr class="grid-row">
                                             <td class="cell-label">Insurance</td>
                                             <td class="cell-option">
-                                                <select name="policy_type" id="policy_type">
-                                                    @foreach($insurance_type_map as $key=>$value)
-                                                    <option value="{{ $key }}">{{ $value }}</option>
-                                                    @endforeach
+                                                {{-- Insurance Company --}}
+                                                <select id="insurance_company" class="form-control mb-1"
+                                                    style="margin-bottom:2px !important;">
+                                                    <option value="">Select Company</option>
+                                                </select>
+                                                {{-- Insurance Covers --}}
+                                                <select id="insurance_covers" class="form-control" multiple
+                                                    style="height:auto; min-height:30px;">
                                                 </select>
                                             </td>
                                             <td class="cell-amount">
                                                 <input type="text" id="insurance_amount" name="insurance_amount"
-                                                    class="numeric-only" placeholder="0.00">
+                                                    class="numeric-only" placeholder="0.00" readonly>
                                             </td>
                                         </tr>
 
@@ -1315,6 +1350,14 @@ use App\Services\OrgService;
                     </div>
 
                     {{-- ================= Accessories (shown only while printing) ================= --}}
+                    {{-- ================= Insurance (shown only while printing) ================= --}}
+                    <div class="insurance-note-row">
+                        Insurance:
+                        <span id="insurance_print"
+                            style="font-weight:normal; display:inline-block; min-width:70%; border-bottom:1px solid #000;">&nbsp;</span>
+                    </div>
+
+                    {{-- ================= Accessories (shown only while printing) ================= --}}
                     <div class="accessories-note-row">
                         Accessories:
                         <span id="accessories_print"
@@ -1396,737 +1439,1210 @@ use App\Services\OrgService;
 @endsection
 
 @push('after_scripts')
-{{--
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"> --}}
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-
 <script>
-    $(document).on('input', '.numeric-only', function () {
+    // ============================================================
+// 1. MOCK DATA DEFINITION
+// ============================================================
 
-    let value = $(this).val();
+const ENQUIRIES = {
+    "001": {
+        enquiry_no: "ENQ0001",
+        customer: { name: "Rajesh Kumar", mobile: "9876543210" },
+        vehicle: {
+            segment_code: "UV",
+            segment_name: "UV",
+            model_code: "XUV700",
+            model_name: "XUV700",
+            variant_code: "AX7L",
+            variant_name: "AX7 L Diesel AT",
+            color_code: "MB",
+            color_name: "Midnight Black",
+            oem_code: "XUV700-AX7L-DIE-AT-MB"
+        },
+        pricingKey: "xuv700"
+    },
+    "002": {
+        enquiry_no: "ENQ0002",
+        customer: { name: "Priya Sharma", mobile: "9123456780" },
+        vehicle: {
+            segment_code: "EV",
+            segment_name: "Electric",
+            model_code: "BEVX9",
+            model_name: "BEV X9",
+            variant_code: "X9",
+            variant_name: "X9 Long Range",
+            color_code: "WH",
+            color_name: "Pearl White",
+            oem_code: "BEV-X9-LR-WH"
+        },
+        pricingKey: "bevx9"
+    },
+    "003": {
+        enquiry_no: "ENQ0003",
+        customer: { name: "Suresh Yadav", mobile: "9988776655" },
+        vehicle: {
+            segment_code: "CV",
+            segment_name: "Commercial",
+            model_code: "BOLERO",
+            model_name: "Bolero Camper",
+            variant_code: "CAMPER",
+            variant_name: "Camper 4WD",
+            color_code: "GR",
+            color_name: "Dune Beige",
+            oem_code: "BOLERO-CAMPER-4WD-GR"
+        },
+        pricingKey: "bolero"
+    },
+    "004": {
+        enquiry_no: "ENQ0004",
+        customer: { name: "Amit Singh", mobile: "9811223344" },
+        vehicle: {
+            segment_code: "CV",
+            segment_name: "Commercial",
+            model_code: "VEERO",
+            model_name: "Veero",
+            variant_code: "VEERO",
+            variant_name: "Veero Pickup",
+            color_code: "WH",
+            color_name: "Arctic White",
+            oem_code: "VEERO-PICKUP-WH"
+        },
+        pricingKey: "veero"
+    },
+    "005": {
+        enquiry_no: "ENQ0005",
+        customer: { name: "Vikram Mehta", mobile: "9765432109" },
+        vehicle: {
+            segment_code: "LMM",
+            segment_name: "LMM",
+            model_code: "TREO",
+            model_name: "Treo",
+            variant_code: "TREO",
+            variant_name: "Treo Yaari",
+            color_code: "BL",
+            color_name: "Ocean Blue",
+            oem_code: "TREO-YAARI-BL"
+        },
+        pricingKey: "treo"
+    }
+};
 
-    // Allow only digits and one decimal
-    value = value.replace(/[^\d.]/g, '');
-    value = value.replace(/(\..*)\./g, '$1');
+const PRICING = {
+    xuv700: {
+        permit: [
+            { type: "Private", default: true },
+            { type: "Passenger", default: false }
+        ],
+        receivables: {
+            exShowroom: 2199000,
+            insurance: [
+                {
+                    permit: "Private",
+                    default: true,
+                    companies: [
+                        {
+                            insCo: "ICICI",
+                            default: false,
+                            price: [
+                                { head: "Basic OD + TP", price: 48500, Nature: "M" },
+                                { head: "Nil Depreciation", price: 9200, Nature: "M" },
+                                { head: "Consumables", price: 1850, Nature: "M" },
+                                { head: "RTI", price: 7800, Nature: "O" },
+                                { head: "Engine Protect", price: 6200, Nature: "O" },
+                                { head: "Key Protect", price: 1100, Nature: "O" }
+                            ]
+                        },
+                        {
+                            insCo: "USGI",
+                            default: true,
+                            price: [
+                                { head: "Basic OD + TP", price: 51200, Nature: "M" },
+                                { head: "Nil Depreciation", price: 9800, Nature: "M" },
+                                { head: "Consumables", price: 2100, Nature: "M" },
+                                { head: "RTI", price: 8500, Nature: "O" },
+                                { head: "Engine Protect", price: 7100, Nature: "O" },
+                                { head: "Tyre Protect", price: 2650, Nature: "O" },
+                                { head: "NCB Protect", price: 3200, Nature: "O" }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    permit: "Passenger",
+                    default: false,
+                    companies: [
+                        {
+                            insCo: "ICICI",
+                            default: true,
+                            price: [
+                                { head: "Basic OD + TP", price: 56800, Nature: "M" },
+                                { head: "Nil Depreciation", price: 11200, Nature: "M" },
+                                { head: "Consumables", price: 2450, Nature: "M" },
+                                { head: "RTI", price: 9600, Nature: "O" },
+                                { head: "RSA", price: 1350, Nature: "O" }
+                            ]
+                        },
+                        {
+                            insCo: "USGI",
+                            default: false,
+                            price: [
+                                { head: "Basic OD + TP", price: 59500, Nature: "M" },
+                                { head: "Nil Depreciation", price: 12100, Nature: "M" },
+                                { head: "Consumables", price: 2700, Nature: "M" },
+                                { head: "Engine Protect", price: 8500, Nature: "O" },
+                                { head: "RTI", price: 10200, Nature: "O" }
+                            ]
+                        }
+                    ]
+                }
+            ],
+            RTO: {
+                TRC: 1500,
+                TAX: [
+                    { permit: "Private", default: true, amount: 198000 },
+                    { permit: "Passenger", default: false, amount: 245000 }
+                ]
+            },
+            accessories: [
+                { item: "Dash Cam", mrp: 4079, discount: 500, code: "DC1" },
+                { item: "Maxicare 5Yr", mrp: 24999, discount: 2500, code: "MX1" },
+                { item: "Ceramic Coating", mrp: 16729, discount: 2000, code: "CER" },
+                { item: "PPF Ultra", mrp: 78119, discount: 8000, code: "PPF" },
+                { item: "Seat Cover 7Str", mrp: 7190, discount: 800, code: "SC1" },
+                { item: "Floor Mat", mrp: 3452, discount: 400, code: "FM1" },
+                { item: "Chrome Set", mrp: 10218, discount: 1200, code: "CS1" }
+            ],
+            maxicare: 24999,
+            coating: [
+                { title: "No Coating", price: 0, default: true },
+                { title: "Ceramic", price: 16729, default: false },
+                { title: "Graphene", price: 24500, default: false }
+            ],
+            ppf: [
+                { title: "No PPF", price: 0, default: false },
+                { title: "Ultra", price: 78119, default: true }
+            ],
+            shield: [
+                { title: "4th Year", price: 24990, default: true },
+                { title: "4th + 5th Year", price: 38990, default: false },
+                { title: "No Shield", price: 0, default: false }
+            ],
+            rsa: [
+                { title: "1 Year", price: 1499, default: true },
+                { title: "2 Year", price: 2799, default: false },
+                { title: "No RSA", price: 0, default: false }
+            ],
+            vltd: null,
+            kazam: 5000,
+            incidental: 3500,
+            "rto-tape": 1499,
+            fastag: 600,
+            COD: 1500,
+            "charger-swapping": [
+                { title: "No Swapping @ ₹0", amount: 0, default: false },
+                { title: "NCH to 7.2 kW @ ₹18,500", amount: 18500, default: true }
+            ],
+            tcs: { limit: 1000000, rate: 1.0 }
+        },
+        deductibles: {
+            "oem-schemes": [
+                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 45000, type: "INV" },
+                { key: "csd_discount", label: "CSD Discount", amount: 20000, type: "INV" },
+                { key: "fame_subsidy", label: "Fame Subsidy", amount: 10000, type: "INV" }
+            ],
+            "dealer-scheme": { amount: 15000, type: "CN" },
+            "accessory-scheme": { amount: 5000, type: "INV" },
+            "shield-scheme": { amount: 2500, type: "CN" },
+            "corp-scheme": [
+                { name: "Corporate Discount", amount: 50000, type: "INV" },
+                { name: "Loyalty Bonus", amount: 25000, type: "INV" }
+            ],
+            "exchange-scheme": [
+                { name: "Exchange Bonus", amount: 30000, type: "CN1" },
+                { name: "Green Bonus", amount: 15000, type: "CN1" },
+                { name: "Welcome Bonus", amount: 10000, type: "CN1" }
+            ],
+            "accessories-spl-discount": { amount: 2500, type: "INV" },
+            "coating-spl-discount": { amount: 2000, type: "INV" },
+            "ppf-spl-discount": { amount: 5000, type: "CN" },
+            "charger-swapping-discount": { amount: 3500, type: "CN2" },
+            "other-cash-discount": { amount: 1000, type: "CN" },
+            "special-cash-discount": { amount: 12000, type: "INV" }
+        }
+    },
+    bevx9: {
+        permit: [{ type: "Private", default: true }],
+        receivables: {
+            exShowroom: 1899000,
+            insurance: [{
+                permit: "Private",
+                default: true,
+                companies: [{
+                    insCo: "ICICI",
+                    default: true,
+                    price: [
+                        { head: "Basic OD + TP", price: 28500, Nature: "M" },
+                        { head: "Nil Depreciation", price: 6200, Nature: "M" },
+                        { head: "Consumables", price: 1400, Nature: "M" },
+                        { head: "Battery Protect", price: 8500, Nature: "O" },
+                        { head: "RTI", price: 5200, Nature: "O" }
+                    ]
+                }]
+            }],
+            RTO: { TRC: 1000, TAX: [{ permit: "Private", default: true, amount: 0 }] },
+            accessories: [
+                { item: "Home Charger 7.2kW", mrp: 45000, discount: 5000, code: "HC1" },
+                { item: "Dash Cam", mrp: 4079, discount: 0, code: "DC1" },
+                { item: "Floor Mat EV", mrp: 2800, discount: 300, code: "FM2" }
+            ],
+            shield: [
+                { title: "4th Year", price: 18990, default: true },
+                { title: "No Shield", price: 0, default: false }
+            ],
+            rsa: [
+                { title: "1 Year", price: 1999, default: true },
+                { title: "No RSA", price: 0, default: false }
+            ],
+            vltd: null,
+            kazam: 0,
+            incidental: 2000,
+            "rto-tape": 0,
+            fastag: 600,
+            COD: 0,
+            "charger-swapping": [
+                { title: "No Swapping @ ₹0", amount: 0, default: true },
+                { title: "NCH to 7.2 kW @ ₹18,500", amount: 18500, default: false },
+                { title: "NCH to 11.2 kW @ ₹28,500", amount: 28500, default: false }
+            ],
+            tcs: { limit: 1000000, rate: 1.0 }
+        },
+        deductibles: {
+            "oem-schemes": [
+                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 75000, type: "INV" }
+            ],
+            "dealer-scheme": { amount: 10000, type: "CN" },
+            "accessory-scheme": { amount: 3000, type: "INV" },
+            "shield-scheme": { amount: 1500, type: "CN" },
+            "corp-scheme": [
+                { name: "Corporate Discount", amount: 40000, type: "INV" },
+                { name: "Loyalty Bonus", amount: 20000, type: "INV" }
+            ],
+            "exchange-scheme": [
+                { name: "Exchange Bonus", amount: 25000, type: "CN1" },
+                { name: "Green Bonus", amount: 35000, type: "CN1" }
+            ],
+            "fame-subsidy": { amount: 100000, type: "INV" },
+            "other-cash-discount": { amount: 0, type: "CN", editable: true },
+            "special-cash-discount": { enabled: true, lower: 100000, upper: 1050000, max: 50000, amount: 0, type: "INV" }
+        }
+    },
+    bolero: {
+        permit: [{ type: "Goods", default: true }],
+        receivables: {
+            exShowroom: 1125000,
+            insurance: [{
+                permit: "Goods",
+                default: true,
+                companies: [{
+                    insCo: "USGI",
+                    default: true,
+                    price: [
+                        { head: "Basic OD + TP", price: 22400, Nature: "M" },
+                        { head: "Nil Depreciation", price: 4800, Nature: "M" },
+                        { head: "Consumables", price: 950, Nature: "M" },
+                        { head: "RTI", price: 3200, Nature: "O" }
+                    ]
+                }]
+            }],
+            RTO: {
+                TRC: 2500,
+                TAX: [{ permit: "Goods", default: true, amount: 85000 }]
+            },
+            accessories: [
+                { item: "Canopy", mrp: 28500, discount: 3000, code: "CAN" },
+                { item: "Seat Cover", mrp: 4500, discount: 500, code: "SC2" },
+                { item: "Mud Flaps", mrp: 890, discount: 0, code: "MF1" }
+            ],
+            shield: [
+                { title: "4th Year", price: 14990, default: true },
+                { title: "No Shield", price: 0, default: false }
+            ],
+            rsa: [
+                { title: "1 Year", price: 1299, default: true },
+                { title: "No RSA", price: 0, default: false }
+            ],
+            vltd: { permit: "Goods", price: 4250 },
+            kazam: 0,
+            incidental: 2500,
+            "rto-tape": 1499,
+            fastag: 600,
+            COD: 0,
+            "charger-swapping": [],
+            tcs: { limit: 1000000, rate: 1.0 }
+        },
+        deductibles: {
+            "oem-schemes": [
+                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 25000, type: "INV" }
+            ],
+            "dealer-scheme": { amount: 8000, type: "CN" },
+            "accessory-scheme": { amount: 2000, type: "INV" },
+            "shield-scheme": { amount: 1000, type: "CN" },
+            "corp-scheme": [
+                { name: "Corporate Discount", amount: 20000, type: "INV" },
+                { name: "Loyalty Bonus", amount: 10000, type: "INV" }
+            ],
+            "exchange-scheme": [
+                { name: "Exchange Bonus", amount: 15000, type: "CN1" },
+                { name: "Welcome Bonus", amount: 8000, type: "CN1" }
+            ],
+            "other-cash-discount": { amount: 0, type: "CN", editable: true },
+            "special-cash-discount": { enabled: true, lower: 100000, upper: 1050000, max: 50000, amount: 0, type: "INV" }
+        }
+    },
+    veero: {
+        permit: [{ type: "Goods", default: true }],
+        receivables: {
+            exShowroom: 875000,
+            insurance: [{
+                permit: "Goods",
+                default: true,
+                companies: [{
+                    insCo: "ICICI",
+                    default: true,
+                    price: [
+                        { head: "Basic OD + TP", price: 16800, Nature: "M" },
+                        { head: "Nil Depreciation", price: 3500, Nature: "M" },
+                        { head: "Consumables", price: 750, Nature: "M" },
+                        { head: "RTI", price: 2400, Nature: "O" }
+                    ]
+                }]
+            }],
+            RTO: {
+                TRC: 2000,
+                TAX: [{ permit: "Goods", default: true, amount: 62000 }]
+            },
+            accessories: [
+                { item: "Load Body Cover", mrp: 6500, discount: 800, code: "LBC" },
+                { item: "Seat Cover", mrp: 3200, discount: 300, code: "SC3" }
+            ],
+            shield: [
+                { title: "4th Year", price: 9990, default: true },
+                { title: "No Shield", price: 0, default: false }
+            ],
+            rsa: [
+                { title: "1 Year", price: 999, default: true },
+                { title: "No RSA", price: 0, default: false }
+            ],
+            vltd: { permit: "Goods", price: 3800 },
+            kazam: 0,
+            incidental: 1500,
+            "rto-tape": 999,
+            fastag: 600,
+            COD: 0,
+            "charger-swapping": [],
+            tcs: { limit: 1000000, rate: 1.0 }
+        },
+        deductibles: {
+            "oem-schemes": [
+                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 18000, type: "INV" }
+            ],
+            "dealer-scheme": { amount: 5000, type: "CN" },
+            "accessory-scheme": { amount: 1000, type: "INV" },
+            "shield-scheme": { amount: 800, type: "CN" },
+            "corp-scheme": [
+                { name: "Corporate Discount", amount: 15000, type: "INV" },
+                { name: "Loyalty Bonus", amount: 8000, type: "INV" }
+            ],
+            "exchange-scheme": [
+                { name: "Exchange Bonus", amount: 12000, type: "CN1" }
+            ],
+            "other-cash-discount": { amount: 0, type: "CN", editable: true },
+            "special-cash-discount": { enabled: true, lower: 100000, upper: 1050000, max: 50000, amount: 0, type: "INV" }
+        }
+    },
+    treo: {
+        permit: [{ type: "LMM", default: true }],
+        receivables: {
+            exShowroom: 312000,
+            insurance: [{
+                permit: "LMM",
+                default: true,
+                companies: [{
+                    insCo: "USGI",
+                    default: true,
+                    price: [
+                        { head: "Basic OD + TP", price: 8500, Nature: "M" },
+                        { head: "Nil Depreciation", price: 1800, Nature: "M" },
+                        { head: "Consumables", price: 450, Nature: "M" },
+                        { head: "RTI", price: 1200, Nature: "O" }
+                    ]
+                }]
+            }],
+            RTO: {
+                TRC: 800,
+                TAX: [{ permit: "LMM", default: true, amount: 18500 }]
+            },
+            accessories: [
+                { item: "Welcome Kit", mrp: 589, discount: 0, code: "WK1" },
+                { item: "Seat Cover", mrp: 2100, discount: 200, code: "SC4" },
+                { item: "Floor Mat", mrp: 890, discount: 0, code: "FM3" }
+            ],
+            shield: [
+                { title: "4th Year", price: 4990, default: true },
+                { title: "No Shield", price: 0, default: false }
+            ],
+            rsa: [
+                { title: "1 Year", price: 699, default: true },
+                { title: "No RSA", price: 0, default: false }
+            ],
+            vltd: null,
+            kazam: 6798,
+            incidental: 1200,
+            "rto-tape": 0,
+            fastag: 0,
+            COD: 2500,
+            "charger-swapping": [
+                { title: "No Swapping @ ₹0", amount: 0, default: true },
+                { title: "NCH to 7.2 kW @ ₹12,500", amount: 12500, default: false }
+            ],
+            tcs: { limit: 1000000, rate: 1.0 }
+        },
+        deductibles: {
+            "oem-schemes": [
+                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 12000, type: "INV" }
+            ],
+            "dealer-scheme": { amount: 3000, type: "CN" },
+            "accessory-scheme": { amount: 500, type: "INV" },
+            "shield-scheme": { amount: 500, type: "CN" },
+            "corp-scheme": [
+                { name: "Corporate Discount", amount: 8000, type: "INV" },
+                { name: "Loyalty Bonus", amount: 5000, type: "INV" }
+            ],
+            "exchange-scheme": [
+                { name: "Exchange Bonus", amount: 7000, type: "CN1" },
+                { name: "Welcome Bonus", amount: 3000, type: "CN1" }
+            ],
+            "fame-subsidy": { amount: 0, type: "INV" },
+            "other-cash-discount": { amount: 0, type: "CN", editable: true },
+            "special-cash-discount": { enabled: true, lower: 100000, upper: 1050000, max: 50000, amount: 0, type: "INV" }
+        }
+    }
+};
 
-    $(this).val(value);
+// ============================================================
+// 2. HELPER FUNCTIONS
+// ============================================================
 
-});
-    function updateAccessoriesAmount() {
+let currentInsurance = null;
+let currentPricing = null;
 
+function loadInsurance(company) {
     let total = 0;
+    $("#insurance_covers").empty();
 
-    $('#accessories option:selected').each(function () {
-
-        total += parseFloat($(this).data('price')) || 0;
-
+    company.price.forEach(function (item) {
+        let option = new Option(
+            item.head + " (₹" + item.price + ")",
+            item.head,
+            item.Nature == "M",
+            item.Nature == "M"
+        );
+        $(option).attr("data-price", item.price);
+        if (item.Nature == "M") {
+            $(option).prop("disabled", true);
+            total += item.price;
+        }
+        $("#insurance_covers").append(option);
     });
 
-    $('#accessories_amount').val(total.toFixed(2));
+    $("#insurance_covers").trigger("change");
+    $("#insurance_amount").val(total);
+    updateInsurancePrintText();
+}
 
-    calculateQuotation();
+function loadInsuranceByPermit() {
+    let permit = $("#permit").val();
+    let enquiry = ENQUIRIES[$("#mock_enquiry_no").val()];
+    if (!enquiry) return;
+    let pricing = PRICING[enquiry.pricingKey];
 
+    currentInsurance = pricing.receivables.insurance.find(
+        x => x.permit === permit
+    );
+
+    if (!currentInsurance) {
+        currentInsurance = pricing.receivables.insurance[0];
+    }
+
+    $("#insurance_company").empty();
+    currentInsurance.companies.forEach(function (company) {
+        $("#insurance_company").append(
+            `<option value="${company.insCo}">${company.insCo}</option>`
+        );
+    });
+
+    let defaultCompany = currentInsurance.companies.find(x => x.default) || currentInsurance.companies[0];
+    $("#insurance_company").val(defaultCompany.insCo);
+    loadInsurance(defaultCompany);
+}
+
+function updateRegistrationAmount() {
+    let permit = $("#permit").val();
+    let enquiry = ENQUIRIES[$("#mock_enquiry_no").val()];
+    if (!enquiry) return;
+    let pricing = PRICING[enquiry.pricingKey];
+    let tax = pricing.receivables.RTO.TAX.find(x => x.permit === permit) || pricing.receivables.RTO.TAX[0];
+    $('#registration_amount').val((tax.amount + pricing.receivables.RTO.TRC).toFixed(2));
+}
+
+function updateInsurancePrintText() {
+    let list = [];
+    $('#insurance_covers option:selected').each(function () {
+        let price = Number($(this).data('price') || 0);
+        list.push($(this).val() + ' (₹' + price.toLocaleString('en-IN') + ')');
+    });
+    $('#insurance_print').text(list.join(', '));
 }
 
 function updateAccessoriesPrintText() {
-
     let list = [];
-
     $('#accessories option:selected').each(function () {
-
         let name = $(this).text().trim();
         let price = parseFloat($(this).data('price') || 0);
-
-        list.push(
-            name.replace(/\(.*?\)/,'').trim() +
-            ' (₹' + price.toLocaleString('en-IN') + ')'
-        );
-
+        list.push(name.replace(/\(.*?\)/, '').trim() + ' (₹' + price.toLocaleString('en-IN') + ')');
     });
-
     $('#accessories_print').text(list.join(', '));
-
-    // Keep Select2 height fixed
-    $('.select2-search__field')
-        .attr('placeholder', list.length + ' Accessories Selected');
+    $('.select2-search__field').attr('placeholder', list.length + ' Accessories Selected');
 }
 
-$('#accessories').on(
-    'change',
-    function () {
-        updateAccessoriesAmount();
-        updateAccessoriesPrintText();
+function updateAccessoriesAmount() {
+    let total = 0;
+    $('#accessories option:selected').each(function () {
+        total += parseFloat($(this).data('price')) || 0;
+    });
+    $('#accessories_amount').val(total.toFixed(2));
+    calculateQuotation();
+}
+
+// ============================================================
+// 3. HIDE/SHOW ROWS BASED ON VALUE
+// ============================================================
+
+function toggleRowVisibility() {
+    // Price grid rows - hide if value is N/A, empty, 0, or 0.00
+    $('.price-grid tbody tr').each(function() {
+        let $row = $(this);
+        let $input = $row.find('td.cell-amount input').first();
+        let value = $input.length ? $input.val() : '';
+        
+        // Check if value is N/A or empty or 0
+        if (value === 'N/A' || value === '' || value === null || value === '0' || value === '0.00') {
+            $row.hide();
+        } else {
+            $row.show();
+        }
+    });
+    
+    // Discount grid rows
+    $('.discount-grid tbody tr').each(function() {
+        let $row = $(this);
+        let $input = $row.find('td.cell-amount input').first();
+        let value = $input.length ? $input.val() : '';
+        
+        if (value === 'N/A' || value === '' || value === null || value === '0' || value === '0.00') {
+            $row.hide();
+        } else {
+            $row.show();
+        }
+    });
+}
+
+// ============================================================
+// 4. DYNAMIC GROUP A DISCOUNTS RENDERER
+// ============================================================
+
+function renderGroupADiscounts(pricing) {
+    let container = $('#group_a_dynamic_container');
+    
+    if (!container.length) {
+        let schemes = pricing.deductibles["oem-schemes"] || [];
+        let activeSchemes = schemes.filter(s => s.amount > 0);
+        
+        // Clear all hidden fields first
+        $('#cash_scheme_oem').val('');
+        $('#cash_scheme_oem_type').val('');
+        $('#csd_discount').val('');
+        $('#csd_discount_type').val('');
+        $('#fame_subsidy').val('');
+        $('#fame_subsidy_type').val('');
+        
+        if (activeSchemes.length > 0) {
+            let firstScheme = activeSchemes[0];
+            $('#group_a_select').val(firstScheme.key).trigger('change');
+            $('#group_a_type').val(firstScheme.type);
+            $('#group_a_amount').val(firstScheme.amount);
+            
+            // ★★★ CRITICAL: Populate the hidden field ★★★
+            $('#' + firstScheme.key).val(firstScheme.amount);
+            $('#' + firstScheme.key + '_type').val(firstScheme.type);
+            
+            if (activeSchemes.length > 1) {
+                let additional = activeSchemes.slice(1).map(s => s.label + ' (' + s.type + ')').join(', ');
+                let $label = $('#group_a_select').closest('td.cell-label');
+                $label.html(firstScheme.label + 
+                    `<div style="font-size:8px; color:#666; font-weight:normal;">+ ${additional}</div>`
+                );
+                
+                // Populate additional schemes too
+                activeSchemes.slice(1).forEach(function(scheme) {
+                    $('#' + scheme.key).val(scheme.amount);
+                    $('#' + scheme.key + '_type').val(scheme.type);
+                });
+            } else {
+                $('#group_a_select').closest('td.cell-label').html(firstScheme.label);
+            }
+        }
+        return;
     }
-);
+}
 
-$(document).ready(function () {
-    updateAccessoriesPrintText();
+// ============================================================
+// 5. POPULATE ACCESSORIES - MAP MOCK CODES TO ACTUAL VALUES
+// ============================================================
+
+function populateAccessories(accessoryCodes) {
+    if (!accessoryCodes || accessoryCodes.length === 0) {
+        $('#accessories').val([]).trigger('change');
+        return;
+    }
+    
+    // Deselect all first
+    $('#accessories option').prop('selected', false);
+    
+    // Select matching options - match by code (part_no) or by item name
+    $('#accessories option').each(function() {
+        let optionValue = $(this).val();
+        let optionText = $(this).text().trim();
+        
+        // Check if the option value matches any of the codes
+        if (accessoryCodes.includes(optionValue)) {
+            $(this).prop('selected', true);
+            return;
+        }
+        
+        // Also try to match by partial text match (for safety)
+        for (let i = 0; i < accessoryCodes.length; i++) {
+            if (optionText.includes(accessoryCodes[i]) || accessoryCodes[i].includes(optionText)) {
+                $(this).prop('selected', true);
+                break;
+            }
+        }
+    });
+    
+    // Trigger change to update UI
+    $('#accessories').trigger('change');
+}
+
+// ============================================================
+// 6. FETCH MOCK DATA
+// ============================================================
+
+$('#btnFetchMock').click(function () {
+    let no = $('#mock_enquiry_no').val().trim();
+
+    if (!ENQUIRIES[no]) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Invalid Enquiry',
+            text: 'Please enter a valid enquiry number (001-005)'
+        });
+        return;
+    }
+
+    let enquiry = ENQUIRIES[no];
+    let pricing = PRICING[enquiry.pricingKey];
+    currentPricing = pricing;
+
+    // ---- Populate Permit ----
+    $("#permit").empty();
+    pricing.permit.forEach(function (item) {
+        let selected = item.default ? 'selected' : '';
+        $("#permit").append(`<option value="${item.type}" ${selected}>${item.type}</option>`);
+    });
+
+    // ---- Populate Insurance ----
+    loadInsuranceByPermit();
+
+    // ---- Populate Customer Details ----
+    $('#customer_name').val(enquiry.customer.name);
+    $('#mobile').val(enquiry.customer.mobile);
+    $('#enquiry_id').val(enquiry.enquiry_no);
+    $('#enquiry_no_hidden').val(enquiry.enquiry_no);
+
+    // ---- Populate Vehicle Details ----
+    $('#segment').val(enquiry.vehicle.segment_name);
+    $('#model').val(enquiry.vehicle.model_name);
+    $('#variant').val(enquiry.vehicle.variant_name);
+    $('#color').val(enquiry.vehicle.color_name);
+    $('#segment_code').val(enquiry.vehicle.segment_code);
+    $('#model_code').val(enquiry.vehicle.model_code);
+    $('#variant_code').val(enquiry.vehicle.variant_code);
+    $('#color_code').val(enquiry.vehicle.color_code);
+
+    $('#oem_code').val(enquiry.vehicle.oem_code);
+    $('#oem_code_hidden').val(enquiry.vehicle.oem_code);
+    // ---- Populate Receivables ----
+    $('#ex_showroom_price').val(pricing.receivables.exShowroom);
+    updateRegistrationAmount();
+
+    // Maxicare
+    if (pricing.receivables.maxicare !== undefined && pricing.receivables.maxicare > 0) {
+        $('#maxicare').val(pricing.receivables.maxicare).prop('disabled', false);
+    } else {
+        $('#maxicare').val('N/A').prop('disabled', true);
+    }
+
+    // VLTD Device
+    if (pricing.receivables.vltd && pricing.receivables.vltd.price > 0) {
+        $('#vltd_device').val(pricing.receivables.vltd.price).prop('disabled', false);
+    } else {
+        $('#vltd_device').val('N/A').prop('disabled', true);
+    }
+
+    // Coating
+    if (pricing.receivables.coating) {
+        let coating = pricing.receivables.coating.find(x => x.default) || pricing.receivables.coating[0];
+        $("#coating").val(coating.title);
+        $("#coating_price").val(coating.price > 0 ? coating.price : 'N/A');
+        $("#coating_price").prop('disabled', coating.price === 0);
+    }
+
+    // PPF
+    if (pricing.receivables.ppf) {
+        let ppf = pricing.receivables.ppf.find(x => x.default) || pricing.receivables.ppf[0];
+        $("#ppf").val(ppf.price > 0 ? ppf.price : 'N/A');
+        $("#ppf").prop('disabled', ppf.price === 0);
+    }
+
+    // RTO Yellow Tape
+    if (pricing.receivables["rto-tape"] > 0) {
+        $('#rto_yellow_tape').val(pricing.receivables["rto-tape"]).prop('disabled', false);
+    } else {
+        $('#rto_yellow_tape').val('N/A').prop('disabled', true);
+    }
+
+    // Kazam Charging Kit
+    if (pricing.receivables.kazam > 0) {
+        $('#kazam_charging_kit').val(pricing.receivables.kazam).prop('disabled', false);
+    } else {
+        $('#kazam_charging_kit').val('N/A').prop('disabled', true);
+    }
+
+    // Incidental Charges
+    if (pricing.receivables.incidental > 0) {
+        $('#incidental_charges').val(pricing.receivables.incidental).prop('disabled', false);
+    } else {
+        $('#incidental_charges').val('N/A').prop('disabled', true);
+    }
+
+    // Shield
+    if (pricing.receivables.shield) {
+        let shield = pricing.receivables.shield.find(x => x.default) || pricing.receivables.shield[0];
+        $('#shield').val(shield.title);
+        $('#shield_price').val(shield.price > 0 ? shield.price : 'N/A');
+        $('#shield_price').prop('disabled', shield.price === 0);
+    }
+
+    // RSA
+    if (pricing.receivables.rsa) {
+        let rsa = pricing.receivables.rsa.find(x => x.default) || pricing.receivables.rsa[0];
+        $('#rsa').val(rsa.title);
+        $('#rsa_amount').val(rsa.price > 0 ? rsa.price : 'N/A');
+        $('#rsa_amount').prop('disabled', rsa.price === 0);
+    }
+
+    // Fastag
+    if (pricing.receivables.fastag > 0) {
+        $('#fastag').val(pricing.receivables.fastag).prop('disabled', false);
+    } else {
+        $('#fastag').val('N/A').prop('disabled', true);
+    }
+
+    // COD Charges
+    if (pricing.receivables.COD > 0) {
+        $('#cod_charges').val(pricing.receivables.COD).prop('disabled', false);
+    } else {
+        $('#cod_charges').val('N/A').prop('disabled', true);
+    }
+
+    // Charger Swapping
+    if (pricing.receivables["charger-swapping"] && pricing.receivables["charger-swapping"].length > 0) {
+        $('#charger_swapping').empty().prop('disabled', false);
+        pricing.receivables["charger-swapping"].forEach(function (item) {
+            let selected = item.default ? 'selected' : '';
+            $('#charger_swapping').append(
+                `<option value="${item.title}" data-amount="${item.amount}" ${selected}>${item.title}</option>`
+            );
+            if (item.default) {
+                $('#charger_swapping_amount').val(item.amount > 0 ? item.amount : 'N/A');
+                $('#charger_swapping_amount').prop('disabled', item.amount === 0);
+            }
+        });
+        $('#charger_swapping_discount').prop('disabled', false);
+        $('#charger_swapping_discount_type').prop('disabled', false);
+    } else {
+        $('#charger_swapping').val('N/A').prop('disabled', true);
+        $('#charger_swapping_amount').val('N/A').prop('disabled', true);
+        $('#charger_swapping_discount').val('N/A').prop('disabled', true);
+        $('#charger_swapping_discount_type').val('').prop('disabled', true);
+    }
+
+    // TCS
+    $('#tcs').val('N/A').prop('disabled', true);
+
+    // ---- Populate Accessories ----
+    if (pricing.receivables.accessories && pricing.receivables.accessories.length > 0) {
+        let accessoryCodes = pricing.receivables.accessories.map(acc => acc.code);
+        populateAccessories(accessoryCodes);
+    } else {
+        $('#accessories').val([]).trigger('change');
+    }
+
+    // ---- Populate Dynamic Group A Discounts ----
+    renderGroupADiscounts(pricing);
+
+    const groupASelected = $('#group_a_select').val();
+const groupAAmount = $('#group_a_amount').val();
+const groupAType = $('#group_a_type').val();
+if (groupASelected && groupAAmount) {
+    $('#' + groupASelected).val(groupAAmount);
+    $('#' + groupASelected + '_type').val(groupAType);
+}
+
+    // ---- Populate Static Discounts ----
+    if (pricing.deductibles["dealer-scheme"]) {
+        let val = pricing.deductibles["dealer-scheme"].amount;
+        $('#dealer_discount').val(val > 0 ? val : 'N/A');
+        $('#dealer_discount_type').val(pricing.deductibles["dealer-scheme"].type);
+    }
+    if (pricing.deductibles["accessory-scheme"]) {
+        let val = pricing.deductibles["accessory-scheme"].amount;
+        $('#accessories_discount').val(val > 0 ? val : 'N/A');
+        $('#accessories_discount_type').val(pricing.deductibles["accessory-scheme"].type);
+    }
+    if (pricing.deductibles["shield-scheme"]) {
+        let val = pricing.deductibles["shield-scheme"].amount;
+        $('#shield_scheme').val(val > 0 ? val : 'N/A');
+        $('#shield_scheme_type').val(pricing.deductibles["shield-scheme"].type);
+    }
+    if (pricing.deductibles["corp-scheme"] && pricing.deductibles["corp-scheme"].length > 0) {
+        let corp = pricing.deductibles["corp-scheme"][0];
+        $('#group_b_select').val('corporate_discount').trigger('change');
+        $('#group_b_type').val(corp.type);
+        $('#group_b_amount').val(corp.amount).trigger('keyup');
+    }
+    if (pricing.deductibles["exchange-scheme"] && pricing.deductibles["exchange-scheme"].length > 0) {
+        let exch = pricing.deductibles["exchange-scheme"][0];
+        $('#group_c_select').val('exchange_bonus').trigger('change');
+        $('#group_c_type').val(exch.type);
+        $('#group_c_amount').val(exch.amount).trigger('keyup');
+    }
+    if (pricing.deductibles["accessories-spl-discount"]) {
+        let val = pricing.deductibles["accessories-spl-discount"].amount;
+        $('#accessories_spl_disc').val(val > 0 ? val : 'N/A');
+        $('#accessories_spl_disc_type').val(pricing.deductibles["accessories-spl-discount"].type);
+    }
+    if (pricing.deductibles["coating-spl-discount"]) {
+        let val = pricing.deductibles["coating-spl-discount"].amount;
+        $('#ceramic_discount').val(val > 0 ? val : 'N/A');
+        $('#ceramic_discount_type').val(pricing.deductibles["coating-spl-discount"].type);
+    }
+    if (pricing.deductibles["ppf-spl-discount"]) {
+        let val = pricing.deductibles["ppf-spl-discount"].amount;
+        $('#ppf_discount').val(val > 0 ? val : 'N/A');
+        $('#ppf_discount_type').val(pricing.deductibles["ppf-spl-discount"].type);
+    }
+    if (pricing.deductibles["charger-swapping-discount"]) {
+        let val = pricing.deductibles["charger-swapping-discount"].amount;
+        $('#charger_swapping_discount').val(val > 0 ? val : 'N/A');
+        $('#charger_swapping_discount_type').val(pricing.deductibles["charger-swapping-discount"].type);
+    }
+    if (pricing.deductibles["other-cash-discount"]) {
+        let val = pricing.deductibles["other-cash-discount"].amount;
+        $('#other_cash_discount').val(val > 0 ? val : 'N/A');
+        $('#other_cash_discount_type').val(pricing.deductibles["other-cash-discount"].type);
+    }
+    if (pricing.deductibles["special-cash-discount"]) {
+        let val = pricing.deductibles["special-cash-discount"].amount;
+        $('#special_cash_discount').val(val > 0 ? val : 'N/A');
+        $('#special_cash_discount_type').val(pricing.deductibles["special-cash-discount"].type);
+    }
+
+    // ---- Hide rows with N/A or 0 values ----
+    toggleRowVisibility();
+
+    // ---- Final Calculation ----
+    calculateQuotation();
+
+    Swal.fire({
+        icon: 'success',
+        title: 'Enquiry Loaded',
+        text: `Enquiry ${no}: ${enquiry.customer.name} - ${enquiry.vehicle.model_name}`
+    });
 });
 
-$(document).ready(function () {
+// ---- Reset Mock Data ----
+$('#btnResetMock').click(function () {
+    $('#mock_enquiry_no').val('');
+    $('#customer_name').val('');
+    $('#mobile').val('');
+    $('#segment').val('');
+    $('#model').val('');
+    $('#variant').val('');
+    $('#color').val('');
+    $('#oem_code').val('');
+    $('#oem_code_hidden').val('');
+    $('#ex_showroom_price').val('');
+    $('#insurance_amount').val('');
+    $('#registration_amount').val('');
+    $('#accessories_amount').val('0.00');
+    $('#maxicare').val('');
+    $('#vltd_device').val('');
+    $('#coating_price').val('');
+    $('#ppf').val('');
+    $('#rto_yellow_tape').val('');
+    $('#kazam_charging_kit').val('');
+    $('#incidental_charges').val('');
+    $('#shield_price').val('');
+    $('#rsa_amount').val('');
+    $('#fastag').val('');
+    $('#cod_charges').val('');
+    $('#charger_swapping_amount').val('');
+    $('#tcs').val('');
+    $('#total_receivable').val('');
+    $('#total_discount_amount').val('');
+    $('#net_receivable_summary').val('');
+    $('#fi_total_receivable').val('');
+    $('#less_inv_discount').val('');
+    $('#finvoice_amount').val('');
+    $('#invoiced_discount').val('');
+    $('#credit_note_discount').val('');
+    $('#total_discount_summary').val('');
+    $('#dealer_discount').val('');
+    $('#accessories_discount').val('');
+    $('#shield_scheme').val('');
+    $('#group_b_amount').val('');
+    $('#group_c_amount').val('');
+    $('#accessories_spl_disc').val('');
+    $('#ceramic_discount').val('');
+    $('#ppf_discount').val('');
+    $('#charger_swapping_discount').val('');
+    $('#other_cash_discount').val('');
+    $('#special_cash_discount').val('');
+    $('#insurance_covers').empty();
+    $('#insurance_print').text('');
+    $('#accessories_print').text('');
+    $('#accessories').val([]).trigger('change');
+    $('#permit').empty().append('<option value="">Select Permit</option>');
+    $('#insurance_company').empty().append('<option value="">Select Company</option>');
+    $('#group_a_dynamic_container').empty();
+    
+    // Show all rows again
+    $('.price-grid tbody tr, .discount-grid tbody tr').show();
+    
+    calculateQuotation();
+});
 
+// ============================================================
+// 7. EVENT HANDLERS
+// ============================================================
+
+// ---- Permit change ----
+$("#permit").on("change", function () {
+    loadInsuranceByPermit();
+    updateRegistrationAmount();
+    calculateQuotation();
+    toggleRowVisibility();
+});
+
+// ---- Registration Type change ----
+$('#registration_type').on('change', function () {
+    let hasValue = $(this).val() !== '';
+    $('#registration_amount')
+        .prop('disabled', !hasValue)
+        .val(hasValue ? $('#registration_amount').val() : '');
+    calculateQuotation();
+    toggleRowVisibility();
+});
+
+// ---- Insurance Company change ----
+$("#insurance_company").on("change", function () {
+    let companyName = $(this).val();
+    if (!companyName || !currentInsurance) return;
+    let company = currentInsurance.companies.find(x => x.insCo === companyName);
+    if (company) {
+        loadInsurance(company);
+    }
+    calculateQuotation();
+    toggleRowVisibility();
+});
+
+// ---- Insurance Covers change ----
+$("#insurance_covers").on("change", function () {
+    let total = 0;
+    $('#insurance_covers option:selected').each(function () {
+        total += Number($(this).data('price') || 0);
+    });
+    $('#insurance_amount').val(total);
+    updateInsurancePrintText();
+    calculateQuotation();
+});
+
+// ---- Accessories change ----
+$('#accessories').on('change', function () {
     updateAccessoriesAmount();
-
+    updateAccessoriesPrintText();
+    toggleRowVisibility();
 });
 
+// ---- Numeric-only filter ----
+$(document).on('input', '.numeric-only', function () {
+    let value = $(this).val();
+    value = value.replace(/[^\d.]/g, '');
+    value = value.replace(/(\..*)\./g, '$1');
+    $(this).val(value);
+});
 
+// ---- Coating change ----
+$('#coating').on('change', function () {
+    let value = $(this).val();
+    if (value === '' || value === 'No Coating') {
+        $('#coating_price').val('N/A').prop('disabled', true);
+        $('#ceramic_discount').val('N/A').prop('disabled', true);
+        $('#ceramic_discount_type').val('').prop('disabled', true);
+    } else {
+        $('#coating_price').val('').prop('disabled', false);
+        $('#ceramic_discount').val('').prop('disabled', false);
+        $('#ceramic_discount_type').prop('disabled', false);
+    }
+    calculateQuotation();
+    toggleRowVisibility();
+});
 
+// ---- Shield change ----
+$('#shield').on('change', function () {
+    let value = $(this).val();
+    if (value === '' || value === 'No Shield') {
+        $('#shield_price').val('N/A').prop('disabled', true);
+    } else {
+        $('#shield_price').val('').prop('disabled', false);
+    }
+    calculateQuotation();
+    toggleRowVisibility();
+});
 
+// ---- RSA change ----
+$('#rsa').on('change', function () {
+    let value = $(this).val();
+    if (value === '' || value === 'No RSA') {
+        $('#rsa_amount').val('N/A').prop('disabled', true);
+    } else {
+        $('#rsa_amount').val('').prop('disabled', false);
+    }
+    calculateQuotation();
+    toggleRowVisibility();
+});
 
-// Registration amount stays locked until a Registration option is selected
+// ---- Charger Swapping change ----
+$('#charger_swapping').on('change', function () {
+    let selectedOption = $(this).find('option:selected');
+    let amount = selectedOption.data('amount');
+    if (amount !== undefined && amount > 0) {
+        $('#charger_swapping_amount').val(amount).prop('disabled', false);
+        $('#charger_swapping_discount').prop('disabled', false);
+        $('#charger_swapping_discount_type').prop('disabled', false);
+    } else {
+        $('#charger_swapping_amount').val('N/A').prop('disabled', true);
+        $('#charger_swapping_discount').val('N/A').prop('disabled', true);
+        $('#charger_swapping_discount_type').val('').prop('disabled', true);
+    }
+    calculateQuotation();
+    toggleRowVisibility();
+});
 
+// ---- Update Coating Discount Label ----
+function updateCoatingDiscountLabel() {
+    let coating = $('#coating').val();
+    let label = 'Coating Spl Discount';
+    if (coating === 'Ceramic') {
+        label = 'Ceramic Coating Spl Discount';
+    } else if (coating === 'Graphene') {
+        label = 'Graphene Coating Spl Discount';
+    }
+    $('#coating_discount_label').text(label);
+}
+$(document).on('change', '#coating', updateCoatingDiscountLabel);
 
+// ============================================================
+// 8. GROUP DISCOUNT SETUP
+// ============================================================
 
+// ============================================================
+// 8. GROUP DISCOUNT SETUP - FIXED
+// ============================================================
 
-// ================= Unified "pick one of N" discount groups =================
-// Each group has a visible select (which discount), a visible type select (INV/CN/CN1/CN2)
-// and a visible amount input. These sync into the real hidden fields that
-// calculateQuotation() / the backend already understand, so nothing else has to change.
 function setupGroupDiscount(groupPrefix, fieldNames) {
-
     function sync() {
-
         let selected = $('#' + groupPrefix + '_select').val();
         let type = $('#' + groupPrefix + '_type').val();
         let amount = $('#' + groupPrefix + '_amount').val();
-
+        
+        console.log('Sync called for:', groupPrefix, 'Selected:', selected, 'Type:', type, 'Amount:', amount);
+        
         fieldNames.forEach(function (name) {
-
             if (name === selected) {
                 $('#' + name).val(amount);
                 $('#' + name + '_type').val(type);
+                console.log('Set hidden field:', name, '=', amount, 'type:', type);
             } else {
                 $('#' + name).val('');
                 $('#' + name + '_type').val('');
             }
-
         });
-
         calculateQuotation();
+        toggleRowVisibility();
     }
-
-    $(document).on('change', '#' + groupPrefix + '_select, #' + groupPrefix + '_type', sync);
+    
+    $(document).on('change', '#' + groupPrefix + '_select', sync);
+    $(document).on('change', '#' + groupPrefix + '_type', sync);
     $(document).on('keyup change', '#' + groupPrefix + '_amount', sync);
 }
 
+// Setup all groups
 setupGroupDiscount('group_a', ['cash_scheme_oem', 'csd_discount', 'fame_subsidy']);
 setupGroupDiscount('group_b', ['corporate_discount', 'loyalty_bonus']);
 setupGroupDiscount('group_c', ['exchange_bonus', 'green_bonus', 'welcome_bonus']);
 
-function num(id) {
-
-    let value = $('#' + id).val();
-
-    if (value === 'N/A' || value === '' || value == null) {
-        return 0;
-    }
-
-    return parseFloat(value) || 0;
-
-}
-
-// Discount fields paired with their Type select — used for the Financier Invoice /
-// Discount Bifurcation boxes (INV type = Invoiced Discount, CN/CN1/CN2 = Credit Note Discount)
-const DISCOUNT_TYPE_PAIRS = [
-    ['cash_scheme_oem', 'cash_scheme_oem_type'],
-    ['csd_discount', 'csd_discount_type'],
-    ['fame_subsidy', 'fame_subsidy_type'],
-    ['ppf_discount', 'ppf_discount_type'],
-    ['dealer_discount', 'dealer_discount_type'],
-    ['corporate_discount', 'corporate_discount_type'],
-    ['loyalty_bonus', 'loyalty_bonus_type'],
-    ['accessories_discount', 'accessories_discount_type'],
-    ['ceramic_discount', 'ceramic_discount_type'],
-    ['exchange_bonus', 'exchange_bonus_type'],
-    ['green_bonus', 'green_bonus_type'],
-    ['welcome_bonus', 'welcome_bonus_type'],
-    ['charger_swapping_discount', 'charger_swapping_discount_type'],
-    ['shield_scheme', 'shield_scheme_type'],
-    ['accessories_spl_disc', 'accessories_spl_disc_type'],
-    ['other_cash_discount', 'other_cash_discount_type'],
-    ['special_cash_discount', 'special_cash_discount_type']
-];
-
-function calculateDiscountBifurcation() {
-
-    let invoicedDiscount = 0;
-    let creditNoteDiscount = 0;
-
-    DISCOUNT_TYPE_PAIRS.forEach(function (pair) {
-
-        let amount = num(pair[0]);
-        let type = $('#' + pair[1]).val();
-
-        if (type === 'INV') {
-            invoicedDiscount += amount;
-        } else if (type === 'CN' || type === 'CN1' || type === 'CN2') {
-            creditNoteDiscount += amount;
-        }
-
-    });
-
-    return { invoicedDiscount: invoicedDiscount, creditNoteDiscount: creditNoteDiscount };
-}
-
-function calculateQuotation() {
-
-    // Total Receivable
-    let subtotal =
-        num('ex_showroom_price') +
-        num('insurance_amount') +
-        num('registration_amount') +
-        num('accessories_amount') +
-        num('maxicare') +
-        num('vltd_device') +
-        num('coating_price') +
-        num('ppf') +
-        num('rto_yellow_tape') +
-        num('kazam_charging_kit') +
-        num('incidental_charges') +
-        num('shield_price') +
-        num('rsa_amount') +
-        num('fastag') +
-        num('cod_charges') +
-        num('charger_swapping_amount');
-    
-        // Financier Invoice / Discount Bifurcation must be computed BEFORE TCS,
-    // because TCS is based on the Finvoice Amount (subtotal - Invoiced Discount),
-    // not on the raw subtotal — matching the Excel formula chain:
-    //   B24 (Total Receivable, Financier box) = subtotal (no TCS)
-    //   B25 (Less INV Discount)              = SUMIF(type,"INV")
-    //   B26 (Finvoice Amount)                = B24 - B25
-    //   D20 (TCS)                            = IF(B26 >= 1000000, B26 * 1%, 0)
-    //   D21 (Total Receivables)              = subtotal + TCS
-    let bifurcation = calculateDiscountBifurcation();
-    let finvoiceAmount = subtotal - bifurcation.invoicedDiscount;
-
-    let tcs = 0;
-
-        if (finvoiceAmount >= 1000000) {
-
-            tcs = finvoiceAmount * 0.01;
-
-            $('#tcs')
-                .val(tcs.toFixed(2))
-                .prop('readonly', true)
-                .prop('disabled', false);
-
-        } else {
-
-            $('#tcs')
-                .val('N/A')
-                .prop('readonly', true)
-                .prop('disabled', true);
-        }
-    let totalReceivable = subtotal + tcs;
-
-
-    $('#total_receivable').val(totalReceivable.toFixed(2));
-
-    // Total Discount
-    let totalDiscount =
-        num('cash_scheme_oem') +
-        num('fame_subsidy') +
-        num('exchange_bonus') +
-        num('corporate_discount') +
-        num('accessories_discount') +
-        num('ceramic_discount') +
-        num('ppf_discount') +
-        num('dealer_discount') +
-        num('charger_swapping_discount') +
-        num('csd_discount') +
-        num('shield_scheme') +
-        num('loyalty_bonus') +
-        num('green_bonus') +
-        num('welcome_bonus') +
-        num('accessories_spl_disc') +
-        num('other_cash_discount') +
-        num('special_cash_discount');
-
-    let discount = totalDiscount.toFixed(2);
-
-$('#total_discount_amount').val(discount);
-$('#total_discount').val(discount);
-
-
-    // Net Receivable
-    let netReceivable = totalReceivable - totalDiscount;
-
-    $('#net_receivable_summary').val(netReceivable.toFixed(2));
-
-    // Financier Invoice box — Total Receivable here is the subtotal WITHOUT TCS
-    // (matches Excel B24 = M12, not D21)
-    $('#fi_total_receivable').val(subtotal.toFixed(2));
-    $('#less_inv_discount').val(bifurcation.invoicedDiscount.toFixed(2));
-    $('#finvoice_amount').val(finvoiceAmount.toFixed(2));
-
-    $('#invoiced_discount').val(bifurcation.invoicedDiscount.toFixed(2));
-    $('#credit_note_discount').val(bifurcation.creditNoteDiscount.toFixed(2));
-    $('#total_discount_summary').val((bifurcation.invoicedDiscount + bifurcation.creditNoteDiscount).toFixed(2));
-
-}
-
-// Recalculate whenever any input changes
-$(document).on(
-    'keyup change',
-    '#ex_showroom_price,' +
-    '#accessories_amount,' +
-    '#maxicare,' +
-    '#vltd_device,' +
-    '#coating_price,' +
-    '#ppf,' +
-    '#rto_yellow_tape,' +
-    '#kazam_charging_kit,' +
-    '#incidental_charges,' +
-    '#shield_price,' +
-    '#rsa_amount,' +
-    '#fastag,' +
-    '#cod_charges,' +
-    '#charger_swapping_amount,' +
-    '#tcs,' +
-    '#cash_scheme_oem,' +
-    '#cash_scheme_oem_type,' +
-    '#fame_subsidy,' +
-    '#fame_subsidy_type,' +
-    '#exchange_bonus,' +
-    '#exchange_bonus_type,' +
-    '#corporate_discount,' +
-    '#corporate_discount_type,' +
-    '#accessories_discount,' +
-    '#accessories_discount_type,' +
-    '#ceramic_discount,' +
-    '#ceramic_discount_type,' +
-    '#ppf_discount,' +
-    '#ppf_discount_type,' +
-    '#dealer_discount,' +
-    '#dealer_discount_type,' +
-    '#charger_swapping_discount,' +
-    '#charger_swapping_discount_type,' +
-    '#csd_discount,' +
-    '#csd_discount_type,' +
-    '#shield_scheme,' +
-    '#shield_scheme_type,' +
-    '#loyalty_bonus,' +
-    '#loyalty_bonus_type,' +
-    '#green_bonus,' +
-    '#green_bonus_type,' +
-    '#welcome_bonus,' +
-    '#welcome_bonus_type,' +
-    '#accessories_spl_disc,' +
-    '#accessories_spl_disc_type,' +
-    '#other_cash_discount,' +
-    '#other_cash_discount_type,' +
-    '#special_cash_discount,' +
-    '#special_cash_discount_type,' +
-    '#registration_amount,' +
-    '#insurance_amount',
-    calculateQuotation
-);
-
-// Accessories selection change
-$('#accessories').on('change', function () {
-    updateAccessoriesAmount();
-    calculateQuotation();
-});
-
-// Initial calculation
-$(document).ready(function () {
-    calculateQuotation();
-});
-$(document).ready(function () {
-
-    $('#accessories').select2({
-    placeholder: 'Select Accessories',
-    width: '100%',
-    closeOnSelect: false
-}).on('change', function () {
-
-    let count = $(this).find('option:selected').length;
-
-    $('.select2-search__field')
-        .attr('placeholder', count + ' Accessories Selected');
-});
-
-});
-
-// Segment -> Model
-
-
-
-// Model -> Variant
-
-
-
-
-
-function toggleLMMFields() {
-
-    let isLMM = "{{ optional($selectedEnquiry)->segment_code }}" === "LMM";
-
-    const fields = [
-        '#kazam_charging_kit',
-        '#incidental_charges'
-    ];
-
-    fields.forEach(function (field) {
-
-        $(field).prop('disabled', !isLMM);
-
-        if (!isLMM) {
-            $(field).val('N/A');
-        } else {
-            $(field).val('');
-        }
-
-    });
-
-    $('#charger_swapping_discount_type')
-    .prop('disabled', false)
-    .empty()
-    .append('<option value="CN2">CN2</option>')
-    .val('CN2');
-
-    // Fame Subsidy (LMM) is only available as an option in Group A when segment is LMM
-    $('#fame_subsidy_option').prop('disabled', !isLMM);
-
-    if (!isLMM && $('#group_a_select').val() === 'fame_subsidy') {
-        $('#group_a_select').val('').trigger('change');
-    }
-
-    // Charger Swapping Amount
-    if (!isLMM) {
-
-        $('#charger_swapping')
-            .val('N/A')
-            .prop('disabled', true);
-
-        $('#charger_swapping_amount')
-            .val('N/A')
-            .prop('disabled', true);
-
-        $('#charger_swapping_discount')
-            .val('N/A')
-            .prop('disabled', true);
-
-        $('#charger_swapping_discount_type')
-            .val('')
-            .prop('disabled', true);
-
-    } else {
-
-        $('#charger_swapping')
-            .prop('disabled', false);
-
-        $('#charger_swapping_amount')
-            .prop('disabled', false);
-
-        $('#charger_swapping_discount')
-            .prop('disabled', false);
-
-        $('#charger_swapping_discount_type')
-            .prop('disabled', false);
-
-    }
-
-    calculateQuotation();
-}
-$(document).ready(function () {
-
-    toggleLMMFields();
-
-});
-// Keep track of PRICE DETAILS / DISCOUNT DETAILS labels we temporarily change,
-// so we can restore them after print
-let printLabelRestoreList = [];
-
-function prepareOptionLabelsForPrint() {
-
-    printLabelRestoreList = [];
-
-    // Merge the selected OPTION value into the PRICE DETAILS label,
-    // e.g. "Insurance" + "Standard" => "Insurance(Standard)"
-    // Accessories is a multi-select and is shown separately above the Note box, so skip it here.
-    $('.quotation-grid td.cell-option select').not('#accessories').each(function () {
-
-        let $select = $(this);
-        let selectedText = $select.find('option:selected').first().text().trim();
-
-        if (!selectedText || selectedText.toLowerCase() === 'select') {
-            return;
-        }
-
-        let $label = $select.closest('tr').find('td.cell-label').first();
-
-        printLabelRestoreList.push({
-            el: $label,
-            html: $label.html()
-        });
-
-        $label.append('(' + selectedText + ')');
-    });
-}
-
-function restoreOptionLabelsAfterPrint() {
-
-    printLabelRestoreList.forEach(function (item) {
-        item.el.html(item.html);
-    });
-
-    printLabelRestoreList = [];
-}
-
-function isEmptyGridValue(value) {
-
-    value = (value || '').toString().trim();
-
-    return (
-        value === '' ||
-        value === '0' ||
-        value === '0.00' ||
-        value === 'N/A'
-    );
-}
-
-function prepareItemVisibilityForPrint() {
-
-    // The price box and discount box are now two completely independent
-    // tables/tbodies. Every row (one price item OR one discount item) is
-    // judged purely on its own amount value — if it's blank / 0 / N/A the
-    // row is hidden. Because the two sides no longer share a <tr>, hiding a
-    // row never leaves a gap: the remaining rows in that box simply move up
-    // to fill the space (normal table flow), and the other box is untouched.
-    $('.quotation-grid tbody tr').each(function () {
-
-        let $row = $(this);
-        let $amountInput = $row.find('td.cell-amount input').first();
-        let value = $amountInput.length ? $amountInput.val() : '';
-
-        if (isEmptyGridValue(value)) {
-            $row.addClass('print-hide');
-        } else {
-            $row.removeClass('print-hide');
-        }
-
-    });
-
-}
-
-function restoreItemVisibilityAfterPrint() {
-    $('.quotation-grid tbody tr').removeClass('print-hide');
-}
-
-function printQuotation() {
-
-    prepareOptionLabelsForPrint();
-    prepareItemVisibilityForPrint();
-
-    window.print();
-
-    restoreOptionLabelsAfterPrint();
-    restoreItemVisibilityAfterPrint();
-}
-$('#policy_type').on('change', function () {
-
-    let hasValue = $(this).val() !== '';
-
-    $('#insurance_amount')
-        .prop('disabled', !hasValue)
-        .val(hasValue ? $('#insurance_amount').val() : '');
-
-    calculateQuotation();
-});
-
-$('#registration_type').on('change', function () {
-
-    let hasValue = $(this).val() !== '';
-
-    $('#registration_amount')
-        .prop('disabled', !hasValue)
-        .val(hasValue ? $('#registration_amount').val() : '');
-
-    calculateQuotation();
-
-});
-
-$('#coating').on('change', function () {
-
-    let value = $(this).val();
-
-    if (value === '') {
-
-        $('#coating_price').val('').prop('disabled', true);
-
-        $('#ceramic_discount')
-            .val('')
-            .prop('disabled', true);
-
-        $('#ceramic_discount_type')
-            .val('')
-            .prop('disabled', true);
-    }
-    else if (value === 'No Coating') {
-
-        $('#coating_price')
-            .val('N/A')
-            .prop('disabled', true);
-
-        $('#ceramic_discount')
-            .val('N/A')
-            .prop('disabled', true);
-
-        $('#ceramic_discount_type')
-            .val('')
-            .prop('disabled', true);
-    }
-    else {
-
-        $('#coating_price')
-            .val('')
-            .prop('disabled', false);
-
-        $('#ceramic_discount')
-            .val('')
-            .prop('disabled', false);
-
-        $('#ceramic_discount_type')
-            .prop('disabled', false);
-    }
-
-    calculateQuotation();
-});
-
-$('#shield').on('change', function () {
-
-    let value = $(this).val();
-
-    if (value === '') {
-        $('#shield_price').val('').prop('disabled', true);
-    }
-    else if (value === 'No Shield') {
-        $('#shield_price')
-            .val('N/A')
-            .prop('disabled', true);
-    }
-    else {
-        $('#shield_price')
-            .val('')
-            .prop('disabled', false);
-    }
-
-    calculateQuotation();
-});
-
-$('#rsa').on('change', function () {
-
-    let value = $(this).val();
-
-    if (value === '') {
-        $('#rsa_amount').val('').prop('disabled', true);
-    }
-    else if (value === 'No RSA') {
-        $('#rsa_amount')
-            .val('N/A')
-            .prop('disabled', true);
-    }
-    else {
-        $('#rsa_amount')
-            .val('')
-            .prop('disabled', false);
-    }
-
-    calculateQuotation();
-});
-
-$('#charger_swapping').on('change', function () {
-
-    let value = $(this).val();
-
-    if (value === '') {
-
-        $('#charger_swapping_amount')
-            .val('')
-            .prop('disabled', true);
-
-        $('#charger_swapping_discount')
-            .val('')
-            .prop('disabled', true);
-
-        $('#charger_swapping_discount_type')
-            .val('')
-            .prop('disabled', true);
-
-    }
-    else if (value === 'N/A') {
-
-        $('#charger_swapping_amount')
-            .val('N/A')
-            .prop('disabled', true);
-
-        $('#charger_swapping_discount')
-            .val('N/A')
-            .prop('disabled', true);
-
-        $('#charger_swapping_discount_type')
-            .val('')
-            .prop('disabled', true);
-
-    }
-    else {
-
-    $('#charger_swapping_amount')
-        .val('')
-        .prop('disabled', false);
-
-    $('#charger_swapping_discount')
-        .val('')
-        .prop('disabled', false);
-
-    $('#charger_swapping_discount_type')
-        .prop('disabled', false)
-        .empty()
-        .append('<option value="CN2">CN2</option>')
-        .val('CN2');
-}
-
-    calculateQuotation();
-
-});
-
-    $(document).ready(function () {
-
-        $('#policy_type').trigger('change');
-        $('#registration_type').trigger('change');
-        $('#coating').trigger('change');
-        $('#shield').trigger('change');
-        $('#rsa').trigger('change');
-        $('#charger_swapping').trigger('change');
-    });
-    $('#group_a_select').on('change', function () {
-
+// ---- Group A Select change (static fallback) ----
+$('#group_a_select').on('change', function () {
     let value = $(this).val();
     let $type = $('#group_a_type');
-
     $type.empty();
-
     switch (value) {
-
         case 'cash_scheme_oem':
             $type.append('<option value="INV">INV</option>');
             $type.append('<option value="CN">CN</option>');
             break;
-
         case 'csd_discount':
             $type.append('<option value="INV">INV</option>');
             break;
-
         case 'fame_subsidy':
             $type.append('<option value="INV">INV</option>');
             break;
     }
-
-    // Trigger sync so hidden field gets updated
     $type.trigger('change');
 });
 
@@ -2134,92 +2650,312 @@ $(document).ready(function () {
     $('#group_a_select').trigger('change');
 });
 
-function updateCoatingDiscountLabel() {
+// ============================================================
+// ============================================================
+// 9. CALCULATION FUNCTIONS - MATCHING EXCEL EXACTLY
+// ============================================================
 
-    let coating = $('#coating').val();
-
-    let label = 'Coating Spl Discount';
-
-    if (coating === 'Ceramic') {
-        label = 'Ceramic Coating Spl Discount';
+function num(id) {
+    let value = $('#' + id).val();
+    if (value === 'N/A' || value === '' || value == null) {
+        return 0;
     }
-    else if (coating === 'Graphene') {
-        label = 'Graphene Coating Spl Discount';
-    }
-
-    $('#coating_discount_label').text(label);
-}
-$(document).on('change', '#coating', function () {
-
-    updateCoatingDiscountLabel();
-
-});
-
-$(document).ready(function () {
-
-    updateCoatingDiscountLabel();
-
-});
-
-function toggleVltdField() {
-
-    let segment = ($('input[name="segment_code"]').val() || '').trim().toUpperCase();
-
-    if (segment === 'CV') {
-
-        // Commercial Vehicle
-        $('#vltd_device')
-            .val('')
-            .prop('readonly', false)
-            .prop('disabled', false);
-
-        $('#vltd_device').closest('tr').removeClass('print-hide');
-
-    } else {
-
-        // All other segments
-        $('#vltd_device')
-            .val('N/A')
-            .prop('readonly', true)
-            .prop('disabled', true);
-
-        $('#vltd_device').closest('tr').addClass('print-hide');
-    }
-
-    calculateQuotation();
+    return parseFloat(value) || 0;
 }
 
-$(document).ready(function () {
-    toggleVltdField();
-});
+// All discount fields with their type fields - matches Excel D25:D41
+const DISCOUNT_TYPE_PAIRS = [
+    ['cash_scheme_oem', 'cash_scheme_oem_type'],
+    ['csd_discount', 'csd_discount_type'],
+    ['fame_subsidy', 'fame_subsidy_type'],
+    ['dealer_discount', 'dealer_discount_type'],
+    ['accessories_discount', 'accessories_discount_type'],
+    ['shield_scheme', 'shield_scheme_type'],
+    ['corporate_discount', 'corporate_discount_type'],
+    ['loyalty_bonus', 'loyalty_bonus_type'],
+    ['exchange_bonus', 'exchange_bonus_type'],
+    ['green_bonus', 'green_bonus_type'],
+    ['welcome_bonus', 'welcome_bonus_type'],
+    ['accessories_spl_disc', 'accessories_spl_disc_type'],
+    ['ceramic_discount', 'ceramic_discount_type'],
+    ['ppf_discount', 'ppf_discount_type'],
+    ['charger_swapping_discount', 'charger_swapping_discount_type'],
+    ['other_cash_discount', 'other_cash_discount_type'],
+    ['special_cash_discount', 'special_cash_discount_type']
+];
 
-$('form').on('submit', function (e) {
+function calculateDiscountBifurcation() {
+    let invoicedDiscount = 0;
+    let creditNoteDiscount = 0;
 
-    let cashOemAmount = num('cash_scheme_oem');
-    let cashOemType = $('#cash_scheme_oem_type').val();
+    // Excel: SUMIF(C25:C41,"INV",D25:D41) and SUMIF(C25:C41,"<>INV",D25:D41)
+    DISCOUNT_TYPE_PAIRS.forEach(function (pair) {
+        let amount = num(pair[0]);
+        let type = $('#' + pair[1]).val();
+        
+        if (type === 'INV') {
+            invoicedDiscount += amount;
+        } else if (type && (type === 'CN' || type === 'CN1' || type === 'CN2')) {
+            creditNoteDiscount += amount;
+        }
+    });
 
+    return { invoicedDiscount: invoicedDiscount, creditNoteDiscount: creditNoteDiscount };
+}
+
+function calculateQuotation() {
+    // 1. Subtotal = SUM of all Additions (Excel D3:D19)
+    let subtotal = 
+        num('ex_showroom_price') +
+        num('insurance_amount') +
+        num('registration_amount') +  // This is TRC + RTO Tax
+        num('accessories_amount') +
+        num('maxicare') +
+        num('vltd_device') +
+        num('coating_price') +
+        num('ppf') +
+        num('rto_yellow_tape') +      // RTO Tape
+        num('kazam_charging_kit') +
+        num('incidental_charges') +
+        num('shield_price') +
+        num('rsa_amount') +
+        num('fastag') +
+        num('cod_charges') +
+        num('charger_swapping_amount');
+
+    // Store subtotal in a hidden field for reference (like Excel E19)
+    $('#subtotal_value').val(subtotal.toFixed(2));
+
+    // 2. Calculate Discount Bifurcation (Excel B45, B46)
     let bifurcation = calculateDiscountBifurcation();
-    let totalCNDiscount = bifurcation.creditNoteDiscount;
+    let totalInvoicedDiscount = bifurcation.invoicedDiscount;
+    let totalCreditNoteDiscount = bifurcation.creditNoteDiscount;
 
-    if (
-        cashOemType === 'INV' &&
-        totalCNDiscount < cashOemAmount
-    ) {
+    // 3. Finvoice Amount (Excel B52 = B50 - B51)
+    // B50 = Total Receivable (subtotal), B51 = INV Discount
+    let finvoiceAmount = subtotal - totalInvoicedDiscount;
 
-        e.preventDefault();
-
-        Swal.fire({
-            icon: 'error',
-            title: 'Cannot Save Quotation',
-            text: 'Total CN Discount should be equal to or greater than Cash OEM Scheme when Cash OEM Scheme Type is INV.'
-        });
-
-        return false;
+    // 4. TCS = IF(B52>=1000000, B52*1%, 0) (Excel D20)
+    let tcs = 0;
+    if (finvoiceAmount >= 1000000) {
+        tcs = finvoiceAmount * 0.01;
+        $('#tcs').val(tcs.toFixed(2)).prop('readonly', true).prop('disabled', false);
+    } else {
+        $('#tcs').val('N/A').prop('readonly', true).prop('disabled', true);
     }
 
+    // 5. Total Receivables = Subtotal + TCS (Excel D21)
+    let totalReceivable = subtotal + tcs;
+    $('#total_receivable').val(totalReceivable.toFixed(2));
+
+    // 6. Total Discount = SUM of ALL discounts (Excel D43)
+    let totalDiscount = 
+        num('cash_scheme_oem') +
+        num('csd_discount') +
+        num('fame_subsidy') +
+        num('dealer_discount') +
+        num('accessories_discount') +
+        num('shield_scheme') +
+        num('corporate_discount') +
+        num('loyalty_bonus') +
+        num('exchange_bonus') +
+        num('green_bonus') +
+        num('welcome_bonus') +
+        num('accessories_spl_disc') +
+        num('ceramic_discount') +
+        num('ppf_discount') +
+        num('charger_swapping_discount') +
+        num('other_cash_discount') +
+        num('special_cash_discount');
+
+    $('#total_discount_amount').val(totalDiscount.toFixed(2));
+    $('#total_discount').val(totalDiscount.toFixed(2));
+
+    // 7. On Road Price = Total Receivables - Total Discount
+    let netReceivable = totalReceivable - totalDiscount;
+    $('#net_receivable_summary').val(netReceivable.toFixed(2));
+
+    // 8. Financier Invoice Box (Excel B50:B52)
+    // B50: Total Receivable (subtotal, not including TCS)
+    $('#fi_total_receivable').val(subtotal.toFixed(2));
+    // B51: Less INV Discount
+    $('#less_inv_discount').val(totalInvoicedDiscount.toFixed(2));
+    // B52: Finvoice Amount
+    $('#finvoice_amount').val(finvoiceAmount.toFixed(2));
+
+    // 9. Discount Bifurcation Box (Excel B45:B47)
+    $('#invoiced_discount').val(totalInvoicedDiscount.toFixed(2));
+    $('#credit_note_discount').val(totalCreditNoteDiscount.toFixed(2));
+    $('#total_discount_summary').val((totalInvoicedDiscount + totalCreditNoteDiscount).toFixed(2));
+    
+    // 10. Toggle row visibility
+    toggleRowVisibility();
+    
+    // Debug - console mein check karo
+    console.log('=== QUOTATION CALCULATION ===');
+    console.log('Subtotal (Excel D3:D19):', subtotal);
+    console.log('INV Discount (Excel B45):', totalInvoicedDiscount);
+    console.log('CN Discount (Excel B46):', totalCreditNoteDiscount);
+    console.log('Finvoice Amount (Excel B52):', finvoiceAmount);
+    console.log('TCS (Excel D20):', tcs);
+    console.log('Total Receivable (Excel D21):', totalReceivable);
+    console.log('Total Discount (Excel D43):', totalDiscount);
+    console.log('On Road Price:', netReceivable);
+}
+
+// ---- Event Listeners for recalculation ----
+$(document).on('keyup change',
+    '#ex_showroom_price, #insurance_amount, #registration_amount, #accessories_amount, ' +
+    '#maxicare, #vltd_device, #coating_price, #ppf, #rto_yellow_tape, #kazam_charging_kit, ' +
+    '#incidental_charges, #shield_price, #rsa_amount, #fastag, #cod_charges, #charger_swapping_amount, ' +
+    '#dealer_discount, #accessories_discount, #ceramic_discount, #ppf_discount, ' +
+    '#charger_swapping_discount, #shield_scheme, #accessories_spl_disc, #other_cash_discount, ' +
+    '#special_cash_discount',
+    function() {
+        calculateQuotation();
+    }
+);
+
+// ---- Also trigger on TYPE dropdown changes ----
+$(document).on('change',
+    '#dealer_discount_type, #accessories_discount_type, #shield_scheme_type, ' +
+    '#accessories_spl_disc_type, #ceramic_discount_type, #ppf_discount_type, ' +
+    '#charger_swapping_discount_type, #other_cash_discount_type, #special_cash_discount_type',
+    function() {
+        calculateQuotation();
+    }
+);
+
+
+const STATIC_DISCOUNT_FIELDS = [
+    { amount: 'dealer_discount', type: 'dealer_discount_type' },
+    { amount: 'accessories_discount', type: 'accessories_discount_type' },
+    { amount: 'shield_scheme', type: 'shield_scheme_type' },
+    { amount: 'accessories_spl_disc', type: 'accessories_spl_disc_type' },
+    { amount: 'ceramic_discount', type: 'ceramic_discount_type' },
+    { amount: 'ppf_discount', type: 'ppf_discount_type' },
+    { amount: 'charger_swapping_discount', type: 'charger_swapping_discount_type' },
+    { amount: 'other_cash_discount', type: 'other_cash_discount_type' },
+    { amount: 'special_cash_discount', type: 'special_cash_discount_type' }
+];
+
+// Add event listeners for static discount fields
+STATIC_DISCOUNT_FIELDS.forEach(function(field) {
+    $(document).on('keyup change', '#' + field.amount, function() {
+        calculateQuotation();
+        toggleRowVisibility();
+    });
+    $(document).on('change', '#' + field.type, function() {
+        calculateQuotation();
+        toggleRowVisibility();
+    });
 });
 
+// ============================================================
+// 10. PRINT FUNCTIONS
+// ============================================================
 
+let printLabelRestoreList = [];
 
+function prepareOptionLabelsForPrint() {
+    printLabelRestoreList = [];
+    $('.quotation-grid td.cell-option select').not('#accessories').each(function () {
+        let $select = $(this);
+        if ($select.attr('id') === 'insurance_covers') {
+            return;
+        }
+        let selectedText = $select.find('option:selected').first().text().trim();
+        if (!selectedText || selectedText.toLowerCase() === 'select') {
+            return;
+        }
+        let $label = $select.closest('tr').find('td.cell-label').first();
+        printLabelRestoreList.push({
+            el: $label,
+            html: $label.html()
+        });
+        if ($select.attr('id') === 'insurance_company') {
+            $label.html('Insurance');
+            $label.append('(' + $select.val() + ')');
+            return;
+        }
+        $label.append('(' + selectedText + ')');
+    });
+}
+
+function restoreOptionLabelsAfterPrint() {
+    printLabelRestoreList.forEach(function (item) {
+        item.el.html(item.html);
+    });
+    printLabelRestoreList = [];
+}
+
+function isEmptyGridValue(value) {
+    value = (value || '').toString().trim();
+    return (value === '' || value === '0' || value === '0.00' || value === 'N/A');
+}
+
+function prepareItemVisibilityForPrint() {
+    $('.quotation-grid tbody tr').each(function () {
+        let $row = $(this);
+        let amountCells = $row.find('td.cell-amount');
+        let priceValue = amountCells.eq(0).find('input').val();
+        let discountValue = amountCells.length > 1 ? amountCells.eq(1).find('input').first().val() : '';
+
+        if (isEmptyGridValue(priceValue) && isEmptyGridValue(discountValue)) {
+            $row.addClass('print-hide');
+        } else {
+            $row.removeClass('print-hide');
+        }
+    });
+}
+
+function restoreItemVisibilityAfterPrint() {
+    $('.quotation-grid tbody tr').removeClass('print-hide');
+}
+
+function printQuotation() {
+    prepareOptionLabelsForPrint();
+    prepareItemVisibilityForPrint();
+    window.print();
+    restoreOptionLabelsAfterPrint();
+    restoreItemVisibilityAfterPrint();
+}
+
+// ============================================================
+// 11. DOCUMENT READY
+// ============================================================
+
+$(document).ready(function () {
+    // Initialize Select2 for Accessories
+    $('#accessories').select2({
+        placeholder: 'Select Accessories',
+        width: '100%',
+        closeOnSelect: false
+    }).on('change', function () {
+        let count = $(this).find('option:selected').length;
+        $('.select2-search__field').attr('placeholder', count + ' Accessories Selected');
+        updateAccessoriesAmount();
+        updateAccessoriesPrintText();
+        toggleRowVisibility();
+    });
+
+    // Initialize Select2 for Insurance Covers
+    $('#insurance_covers').select2({
+        width: '100%',
+        placeholder: 'Insurance Covers',
+        closeOnSelect: false,
+        dropdownParent: $('body')
+    });
+
+    // Initial calculations
+    calculateQuotation();
+    updateCoatingDiscountLabel();
+    updateAccessoriesPrintText();
+    updateInsurancePrintText();
+
+    // Auto-load first enquiry for demo
+    $('#mock_enquiry_no').val('005');
+    $('#btnFetchMock').click();
+});
 </script>
 @endpush
