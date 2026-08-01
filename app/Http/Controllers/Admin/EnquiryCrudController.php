@@ -207,8 +207,18 @@ class EnquiryCrudController extends CrudController
         $quotUrl = backpack_url("quotation-form/create?id={$e->id}");
 
         $actionBtns = '<a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a>';
-        if ($type === 'all')
+        
+        // Only show "Form" and "Process" buttons on the main list
+        if ($type === 'all') {
             $actionBtns .= '<a href="' . $quotUrl . '" class="btn btn-success btn-sm">Form</a>';
+            
+            $bookUrl = backpack_url("booking/create?enquiry_id={$e->id}");
+            $actionBtns .= '<a href="' . $bookUrl . '" class="btn btn-warning btn-sm" title="Convert to Booking">Process</a>';
+        }
+
+        // NEW: Add the Process button linking to Booking Creation
+        $bookUrl = backpack_url("booking/create?enquiry_id={$e->id}");
+        $actionBtns .= '<a href="' . $bookUrl . '" class="btn btn-warning btn-sm" title="Convert to Booking">Process</a>';
 
         $row = [
             'serial_no' => $i + 1,
