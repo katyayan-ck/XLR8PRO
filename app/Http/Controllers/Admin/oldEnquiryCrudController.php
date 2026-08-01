@@ -21,7 +21,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Prologue\Alerts\Facades\Alert;
 use Illuminate\Support\Facades\Log;
-use App\Models\Module\Booking\XlFinancier;
 use Throwable;
 
 class EnquiryCrudController extends CrudController
@@ -59,38 +58,19 @@ class EnquiryCrudController extends CrudController
 
         $searchText = trim((string) $request->input('searchText', ''));
         $highlightFilter = trim((string) $request->input('highlightFilter', ''));
-        $filterModel = (array) $request->input('filterModel', []);
-        $listType = trim((string) $request->input('list_type', 'all'));
 
-        // NEW: Detect which page is asking for data
-        // Query the correct scope based on the page
-        $query = match ($listType) {
-            'reference' => Enquiry::reference(),
-            'virtual' => Enquiry::virtual(),
-            'whatsapp' => Enquiry::whatsapp(),
-            'assigned_long' => Enquiry::assignedLong(),
-            'unassigned_long' => Enquiry::unassignedLong(),
-            'assigned_quick' => Enquiry::assignedQuick(),
-            'unassigned_quick' => Enquiry::unassignedQuick(),
-            //default => Enquiry::formComplete()
-            default => Enquiry::query(),
-        };
-
-        $query->with(['segment', 'model', 'variant', 'color', 'campaign']);
+        $query = Enquiry::formComplete()->with(['segment', 'model', 'variant', 'color', 'campaign']);
 
         // Apply Search & Sort
         $this->applyEnquirySearch($query, $searchText);
         $this->applyEnquirySort($query, (array) $request->input('sortModel', []));
-        $this->applyEnquiryFilter($query, $filterModel);
+
+        // Apply the Highlight Filter
         OrgService::applyHighlightFilter($query, $highlightFilter);
 
         $total = (clone $query)->count();
-
-        // Determine the mapping format type
-        $mapType = in_array($listType, ['assigned_long', 'unassigned_long']) ? 'long' : (in_array($listType, ['assigned_quick', 'unassigned_quick']) ? 'quick' : (in_array($listType, ['reference', 'virtual', 'whatsapp']) ? $listType : 'all'));
-
         $gridData = $query->skip($startRow)->take($limit)->get()
-            ->map(fn($e, $i) => $this->mapData($e, $startRow + $i, $mapType))->all();
+            ->map(fn($e, $i) => $this->mapData($e, $startRow + $i, 'all'))->all();
 
         return response()->json(['rows' => $gridData, 'lastRow' => $total]);
     }
@@ -99,57 +79,27 @@ class EnquiryCrudController extends CrudController
     {
         $searchText = trim((string) $request->input('searchText', ''));
         $highlightFilter = trim((string) $request->input('highlightFilter', ''));
-        $filterModel = json_decode((string) $request->input('filterModel', '{}'), true) ?: [];
-        $listType = trim((string) $request->input('list_type', 'all'));
 
-        $query = match ($listType) {
-            'reference' => Enquiry::reference(),
-            'virtual' => Enquiry::virtual(),
-            'whatsapp' => Enquiry::whatsapp(),
-            'assigned_long' => Enquiry::assignedLong(),
-            'unassigned_long' => Enquiry::unassignedLong(),
-            'assigned_quick' => Enquiry::assignedQuick(),
-            'unassigned_quick' => Enquiry::unassignedQuick(),
-            //default => Enquiry::formComplete()
-            default => Enquiry::query(),
-        };
-
-        $query->with(['segment', 'model', 'variant', 'color', 'campaign']);
+        $query = Enquiry::formComplete()->with(['segment', 'model', 'variant', 'color', 'campaign']);
 
         $this->applyEnquirySearch($query, $searchText);
-        $this->applyEnquiryFilter($query, $filterModel);
-        OrgService::applyHighlightFilter($query, $highlightFilter);
+        OrgService::applyHighlightFilter($query, $highlightFilter); // Make sure exports match the active filter
 
         $query->orderByDesc('created_at');
 
-        // Same mapping used for the on-screen grid, so the CSV always has
-        // the exact same columns as whatever listing is currently shown
-        // (tehsil, district, and everything else) instead of a fixed
-        // minimal set that can drift out of sync with the grid.
-        $mapType = in_array($listType, ['assigned_long', 'unassigned_long']) ? 'long' : (in_array($listType, ['assigned_quick', 'unassigned_quick']) ? 'quick' : (in_array($listType, ['reference', 'virtual', 'whatsapp']) ? $listType : 'all'));
-
-        $columns = array_values(array_filter(
-            $this->getColumns($mapType),
-            fn($col) => ($col['field'] ?? null) !== 'action'
-        ));
-
-        return response()->streamDownload(function () use ($query, $columns, $mapType) {
+        return response()->streamDownload(function () use ($query) {
             $out = fopen('php://output', 'w');
-
-            fputcsv($out, array_merge(['S.No.'], array_map(fn($c) => $c['headerName'], $columns)));
+            fputcsv($out, ['S.No.', 'Enquiry No.', 'Enquiry Type', 'Source', 'Sub Source', 'Full Name', 'Mobile', 'Email', 'Segment', 'Model', 'Variant', 'Color', 'City', 'Dealer Branch', 'Dealer Location', 'Followup Date']);
 
             $serial = 0;
-            $query->chunk(500, function ($chunk) use ($out, &$serial, $columns, $mapType) {
+            $query->chunk(500, function ($chunk) use ($out, &$serial) {
                 foreach ($chunk as $e) {
-                    $rowData = $this->mapData($e, $serial, $mapType);
                     $serial++;
-                    fputcsv($out, array_merge(
-                        [$serial],
-                        array_map(fn($c) => $rowData[$c['field']] ?? '', $columns)
-                    ));
+                    $variant = $e->variant?->display_name ?? $e->variant?->custom_name ?? $e->variant?->oem_name;
+                    $fDate = $e->followup_date ? Carbon::parse($e->followup_date)->format('d-m-Y') : '';
+                    fputcsv($out, [$serial, $e->enquiry_no, $e->enquiry_type, $e->source_code, $e->sub_source, $e->full_name, $e->mobile, $e->email, $e->segment?->name, $e->model?->name, $variant, $e->color?->name, $e->city, $e->dealer_branch, $e->dealer_location, $fDate]);
                 }
             });
-
             fclose($out);
         }, 'enquiries-' . now()->format('Y-m-d_His') . '.csv', ['Content-Type' => 'text/csv']);
     }
@@ -190,13 +140,7 @@ class EnquiryCrudController extends CrudController
     private function buildGrid($query, $view, $title, $type)
     {
         $this->crud->setListView($view);
-
-        // Safely limit the data to 500 rows. 
-        // This prevents the "500 Internal Server Error" (Out of Memory) on older pages.
-        $enquiries = $query->with(['model', 'variant', 'color'])
-            ->orderByDesc('created_at')
-            ->limit(500)
-            ->get();
+        $enquiries = $query->with(['model', 'variant', 'color'])->orderByDesc('created_at')->get();
 
         return view($view, [
             'title' => $title,
@@ -210,69 +154,34 @@ class EnquiryCrudController extends CrudController
 
     private function mapData($e, $i, $type)
     {
-        // BULLETPROOF DATE PARSER: Catches invalid/empty dates without crashing
-        $c = function ($d, $f) {
-            try {
-                return (!empty(trim((string) $d)) && !str_starts_with((string) $d, '0000'))
-                    ? Carbon::parse($d)->format($f)
-                    : '—';
-            } catch (\Throwable $th) {
-                return '—'; // Fallback if the date is corrupted
-            }
-        };
-
+        $c = fn($d, $f) => $d ? Carbon::parse($d)->format($f) : '—';
         $editUrl = backpack_url("enquiry/{$e->id}/edit");
         $quotUrl = backpack_url("quotation-form/create?id={$e->id}");
 
         $actionBtns = '<a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a>';
-        
-        // Only show "Form" and "Process" buttons on the main list
-        if ($type === 'all') {
-            $actionBtns .= '<a href="' . $quotUrl . '" class="btn btn-success btn-sm">Form</a>';
-            
-            $bookUrl = backpack_url("booking/create?enquiry_id={$e->id}");
-            $actionBtns .= '<a href="' . $bookUrl . '" class="btn btn-warning btn-sm" title="Convert to Booking">Process</a>';
-        }
-
-        // NEW: Add the Process button linking to Booking Creation
-        $bookUrl = backpack_url("booking/create?enquiry_id={$e->id}");
-        $actionBtns .= '<a href="' . $bookUrl . '" class="btn btn-warning btn-sm" title="Convert to Booking">Process</a>';
+        if ($type === 'all') $actionBtns .= '<a href="' . $quotUrl . '" class="btn btn-success btn-sm">Form</a>';
 
         $row = [
             'serial_no' => $i + 1,
-            'x8_enquiry_no' => $e->x8_enquiry_no ?? $e->enquiry_no ?? '—',
-            'x8_enquiry_date' => $c($e->x8_enquiry_date ?? $e->enquiry_date, 'd-m-Y H:i'),
-            'x8_enquiry_assign_date' => $c($e->x8_enquiry_assign_date ?? $e->enq_assign_date, 'd-m-Y'),
-            'oem_enquiry_assign_date' => $c($e->oem_enquiry_assign_date ?? $e->enq_assign_date, 'd-m-Y'),
-            'segment_name' => $e->segment_code
-                ? ($e->getRelation('segment')?->name ?? $e->segment ?? $e->segment_code)
-                : ($e->segment ?? '—'),
-            'model_name' => $e->model_code
-                ? ($e->getRelation('model')?->name ?? $e->model ?? $e->model_code)
-                : ($e->model ?? '—'),
-            'variant_name' => $e->variant_code
-                ? ($e->getRelation('variant')?->display_name
-                    ?? $e->getRelation('variant')?->custom_name
-                    ?? $e->getRelation('variant')?->oem_name
-                    ?? $e->variant
-                    ?? $e->variant_code)
-                : ($e->variant ?? '—'),
-            'color_name' => $e->color_code
-                ? ($e->getRelation('color')?->name ?? $e->color ?? $e->color_code)
-                : ($e->color ?? '—'),
+            'x8_enquiry_no' => $e->x8_enquiry_no ?? '—',
+            'x8_enquiry_date' => $c($e->x8_enquiry_date, 'd-m-Y H:i'),
+            'x8_enquiry_assign_date' => $c($e->x8_enquiry_assign_date, 'd-m-Y'),
+            'oem_enquiry_assign_date' => $c($e->oem_enquiry_assign_date, 'd-m-Y'),
+            'segment_name' => $e->segment?->name ?? $e->segment_code ?? '—',
+            'model_name' => $e->model?->name ?? $e->model_code ?? '—',
+            'variant_name' => $e->variant?->display_name ?? $e->variant_code ?? '—',
             'mobile' => $e->mobile ?? '—',
-            'dms_enquiry_stage' => $e->dms_enquiry_stage ?? $e->stage ?? '—',
+            'dms_enquiry_stage' => $e->dms_enquiry_stage ?? '—',
             'cre_enquiry_stage' => $e->cre_enquiry_stage ?? '—',
             'cre_next_fup_date' => $c($e->cre_next_fup_date, 'd-m-Y'),
             'cre_next_fup_time' => $e->cre_next_fup_time ?? '—',
             'cre_next_fup_remarks' => $e->cre_next_fup_remarks ?? '—',
-            'x8_quotation_no' => $e->x8_quotation_no ?? $e->quotation_no ?? '—',
-            'x8_booking_no' => $e->x8_booking_no ?? $e->booking_no ?? '—',
-            'x8_booking_date' => $c($e->x8_booking_date ?? $e->booking_date, 'd-m-Y'),
+            'quotation_no' => $e->quotation_no ?? '—',
+            'booking_no' => $e->booking_no ?? '—',
+            'booking_date' => $c($e->booking_date, 'd-m-Y'),
             'oem_booking_no' => $e->oem_booking_no ?? '—',
             'oem_booking_date' => $c($e->oem_booking_date, 'd-m-Y'),
             'oem_otf_no' => $e->oem_otf_no ?? '—',
-            'oem_test_drive_no' => $e->oem_test_drive_no ?? $e->test_drive_no ?? '—',
             'action' => '<div class="d-flex justify-content-center gap-2">' . $actionBtns . '</div>',
         ];
 
@@ -290,7 +199,6 @@ class EnquiryCrudController extends CrudController
             $row['campaign_date'] = $c($e->wapp_campaign_date, 'd-m-Y');
         }
 
-        // Apply data for lists (quick, long, all)
         if (in_array($type, ['long', 'quick', 'all'])) {
             $row += [
                 'oem_enquiry_no' => $e->oem_enquiry_no ?? '—',
@@ -298,32 +206,29 @@ class EnquiryCrudController extends CrudController
                 'oem_long_enquiry_no' => $e->oem_long_enquiry_no ?? '—',
                 'oem_long_enquiry_date' => $c($e->oem_long_enquiry_date, 'd-m-Y'),
                 'oem_long_enquiry_assign_date' => $c($e->oem_long_enquiry_assign_date, 'd-m-Y'),
-                'oem_quick_enquiry_no' => $e->oem_quick_enquiry_no ?? $e->quick_enquiry_no ?? '—',
-                'oem_quick_enquiry_date' => $c($e->oem_quick_enquiry_date ?? $e->quick_enquiry_date, 'd-m-Y'),
-                'oem_quick_enquiry_status' => $e->oem_quick_enquiry_status ?? $e->quick_status ?? '—',
-                'oem_quick_enquiry_assign_date' => $c($e->oem_quick_enquiry_assign_date ?? $e->quick_enq_assign_date, 'd-m-Y'),
-
+                'oem_quick_enquiry_no' => $e->oem_quick_enquiry_no ?? '—',
+                'oem_quick_enquiry_date' => $c($e->oem_quick_enquiry_date, 'd-m-Y'),
+                'oem_quick_enquiry_assign_date' => $c($e->oem_quick_enquiry_assign_date, 'd-m-Y'),
                 'first_name' => $e->first_name ?? '—',
                 'last_name' => $e->last_name ?? '—',
-                'full_name' => $e->full_name ?? trim(($e->first_name ?? '') . ' ' . ($e->last_name ?? '')),
+                'full_name' => $e->full_name ?? '—',
                 'email' => $e->email ?? '—',
                 'gender' => $e->gender ?? '—',
                 'enquiry_type' => $e->enquiry_type ?? '—',
                 'source_name' => $e->source?->name ?? $e->source_code ?? '—',
                 'sub_source' => $e->sub_source ?? '—',
                 'likely_purchase_in_days' => $e->likely_purchase_date ?? '—',
-
                 'fuel_type' => $e->fuel_type ?? '—',
                 'transmission' => $e->transmission ?? '—',
                 'drivetrain' => $e->drivetrain ?? '—',
                 'seating' => $e->seating ?? '—',
+                'color_name' => $e->color?->name ?? $e->color_code ?? '—',
                 'tehsil' => $e->tehsil ?? '—',
                 'district' => $e->district ?? '—',
                 'city' => $e->city ?? '—',
                 'sc_code' => $e->sc_code ?? '—',
                 'dealer_branch' => $e->dealer_branch ?? '—',
                 'dealer_location' => $e->dealer_location ?? '—',
-
                 'followup_type' => $e->followup_type ?? '—',
                 'followup_date' => $c($e->followup_date, 'd-m-Y'),
                 'followup_time' => $e->followup_time ?? '—',
@@ -331,7 +236,6 @@ class EnquiryCrudController extends CrudController
                 'customer_type' => $e->customer_type ?? '—',
                 'occupation_sub_type' => $e->occupation_sub_type ?? '—',
                 'company_name' => $e->company_name ?? '—',
-
                 'dob' => $c($e->dob, 'd-m-Y'),
                 'marital_status' => $e->marital_status ?? '—',
                 'marriage_date' => $c($e->marriage_date, 'd-m-Y'),
@@ -340,16 +244,14 @@ class EnquiryCrudController extends CrudController
                 'km_travelled_daily' => $e->km_travelled_daily ?? '—',
                 'application_type' => $e->application_type ?? '—',
                 'application' => $e->application ?? '—',
-
-                'pincode' => $e->pincode ?? $e->zipcode ?? '—',
-                'address' => $e->address ?? $e->customer_address ?? '—',
+                'pincode' => $e->pincode ?? '—',
+                'address' => $e->address ?? '—',
                 'has_ev' => $e->has_ev ?? '—',
                 'purchase_type' => $e->purchase_type ?? '—',
                 'remarks' => $e->remarks ?? '—',
-
-                'consider_make' => $e->consid_brand ?? $e->consider_make ?? '—',
-                'consider_model' => $e->consid_model ?? $e->consider_model ?? '—',
-                'consider_variant' => $e->consid_variant ?? $e->consider_variant ?? '—',
+                'consider_make' => $e->consider_make ?? '—',
+                'consider_model' => $e->consider_model ?? '—',
+                'consider_variant' => $e->consider_variant ?? '—',
             ];
         }
 
@@ -358,84 +260,74 @@ class EnquiryCrudController extends CrudController
 
     private function getColumns($type)
     {
-        // Headers common to the end of most grids
         $commonEnd = [
             ['field' => 'dms_enquiry_stage', 'headerName' => 'DMS Stage'],
             ['field' => 'cre_enquiry_stage', 'headerName' => 'CRE Stage'],
             ['field' => 'cre_next_fup_date', 'headerName' => 'Next FUP Date'],
             ['field' => 'cre_next_fup_time', 'headerName' => 'Next FUP Time'],
             ['field' => 'cre_next_fup_remarks', 'headerName' => 'FUP Remarks'],
-            ['field' => 'x8_quotation_no', 'headerName' => 'X8 Quotation No.'],
-            ['field' => 'x8_booking_no', 'headerName' => 'X8 Booking No.'],
-            ['field' => 'x8_booking_date', 'headerName' => 'X8 Booking Date'],
+            ['field' => 'quotation_no', 'headerName' => 'Quotation No.'],
+            ['field' => 'booking_no', 'headerName' => 'Booking No.'],
+            ['field' => 'booking_date', 'headerName' => 'Booking Date'],
             ['field' => 'oem_booking_no', 'headerName' => 'OEM Booking No.'],
             ['field' => 'oem_booking_date', 'headerName' => 'OEM Booking Date'],
             ['field' => 'oem_otf_no', 'headerName' => 'OEM OTF No.'],
-            ['field' => 'oem_test_drive_no', 'headerName' => 'OEM Test Drive No.'],
             ['field' => 'action', 'headerName' => 'Action']
         ];
 
-        // Specific grid override structures
-        if ($type === 'reference')
-            return array_merge([
-                ['field' => 'serial_no', 'headerName' => 'S.No.'],
-                ['field' => 'referee_name', 'headerName' => 'Referee Name'],
-                ['field' => 'referee_phone', 'headerName' => 'Referee Mobile'],
-                ['field' => 'x8_enquiry_assign_date', 'headerName' => 'X8 Enquiry Assign Date'],
-                ['field' => 'first_name', 'headerName' => 'Customer Name'],
-                ['field' => 'mobile', 'headerName' => 'Customer Mobile'],
-                ['field' => 'segment_name', 'headerName' => 'Segment'],
-                ['field' => 'model_name', 'headerName' => 'Model'],
-                ['field' => 'variant_name', 'headerName' => 'Variant']
-            ], $commonEnd);
+        if ($type === 'reference') return array_merge([
+            ['field' => 'serial_no', 'headerName' => 'S.No.'],
+            ['field' => 'referee_name', 'headerName' => 'Referee Name'],
+            ['field' => 'referee_phone', 'headerName' => 'Referee Mobile'],
+            ['field' => 'x8_enquiry_assign_date', 'headerName' => 'X8 Enquiry Assign Date'],
+            ['field' => 'first_name', 'headerName' => 'Customer Name'],
+            ['field' => 'mobile', 'headerName' => 'Customer Mobile'],
+            ['field' => 'segment_name', 'headerName' => 'Segment'],
+            ['field' => 'model_name', 'headerName' => 'Model'],
+            ['field' => 'variant_name', 'headerName' => 'Variant']
+        ], $commonEnd);
 
-        if ($type === 'virtual')
-            return array_merge([
-                ['field' => 'serial_no', 'headerName' => 'S.No.'],
-                ['field' => 'virtual_no', 'headerName' => 'Virtual Number'],
-                ['field' => 'call_date_and_time', 'headerName' => 'Call Date & Time'],
-                ['field' => 'call_nature', 'headerName' => 'Call Nature'],
-                ['field' => 'x8_enquiry_assign_date', 'headerName' => 'X8 Enquiry Assign Date'],
-                ['field' => 'mobile', 'headerName' => 'Customer Mobile'],
-                ['field' => 'remarks', 'headerName' => 'Remarks'],
-            ], $commonEnd);
+        if ($type === 'virtual') return array_merge([
+            ['field' => 'serial_no', 'headerName' => 'S.No.'],
+            ['field' => 'virtual_no', 'headerName' => 'Virtual Number'],
+            ['field' => 'call_date_and_time', 'headerName' => 'Call Date & Time'],
+            ['field' => 'call_nature', 'headerName' => 'Call Nature'],
+            ['field' => 'x8_enquiry_assign_date', 'headerName' => 'X8 Enquiry Assign Date'],
+            ['field' => 'mobile', 'headerName' => 'Customer Mobile'],
+            ['field' => 'remarks', 'headerName' => 'Remarks'],
+        ], $commonEnd);
 
-        if ($type === 'whatsapp')
-            return array_merge([
-                ['field' => 'serial_no', 'headerName' => 'S.No.'],
-                ['field' => 'campaign_name', 'headerName' => 'Campaign Name'],
-                ['field' => 'campaign_date', 'headerName' => 'Campaign Date'],
-                ['field' => 'x8_enquiry_assign_date', 'headerName' => 'X8 Enquiry Assign Date'],
-                ['field' => 'segment_name', 'headerName' => 'Segment'],
-                ['field' => 'model_name', 'headerName' => 'Model'],
-                ['field' => 'variant_name', 'headerName' => 'Variant'],
-                ['field' => 'mobile', 'headerName' => 'Customer Mobile'],
-            ], $commonEnd);
+        if ($type === 'whatsapp') return array_merge([
+            ['field' => 'serial_no', 'headerName' => 'S.No.'],
+            ['field' => 'campaign_name', 'headerName' => 'Campaign Name'],
+            ['field' => 'campaign_date', 'headerName' => 'Campaign Date'],
+            ['field' => 'x8_enquiry_assign_date', 'headerName' => 'X8 Enquiry Assign Date'],
+            ['field' => 'segment_name', 'headerName' => 'Segment'],
+            ['field' => 'model_name', 'headerName' => 'Model'],
+            ['field' => 'variant_name', 'headerName' => 'Variant'],
+            ['field' => 'mobile', 'headerName' => 'Customer Mobile'],
+        ], $commonEnd);
 
-        // Master Grid array applied for 'all', 'long', and 'quick' filters.
-        // Blade files will filter out what they do not need using .includes()
         $cols = [
             ['field' => 'serial_no', 'headerName' => 'S.No.'],
             ['field' => 'x8_enquiry_no', 'headerName' => 'X8 Enquiry No.'],
             ['field' => 'x8_enquiry_date', 'headerName' => 'X8 Enquiry Date'],
             ['field' => 'x8_enquiry_assign_date', 'headerName' => 'X8 Enquiry Assign Date'],
-            ['field' => 'oem_enquiry_no', 'headerName' => 'OEM Enquiry No.'],
-            ['field' => 'oem_enquiry_date', 'headerName' => 'OEM Enquiry Date'],
-            ['field' => 'oem_enquiry_assign_date', 'headerName' => 'OEM Assign Date'],
-            ['field' => 'oem_quick_enquiry_no', 'headerName' => 'OEM Quick Enquiry No.'],
-            ['field' => 'oem_quick_enquiry_date', 'headerName' => 'OEM Quick Enquiry Date'],
-            ['field' => 'oem_quick_enquiry_status', 'headerName' => 'OEM Quick Enquiry Status'],
-            ['field' => 'oem_quick_enquiry_assign_date', 'headerName' => 'OEM Quick Enquiry Assign Date'],
-            ['field' => 'oem_long_enquiry_no', 'headerName' => 'OEM Long Enquiry No.'],
-            ['field' => 'oem_long_enquiry_date', 'headerName' => 'OEM Long Enquiry Date'],
-            ['field' => 'oem_long_enquiry_assign_date', 'headerName' => 'OEM Long Enquiry Assign Date'],
+            ['field' => 'oem_enquiry_assign_date', 'headerName' => 'OEM Assign Date']
         ];
+
+        if ($type === 'long') {
+            array_push($cols, ['field' => 'oem_long_enquiry_no', 'headerName' => 'OEM Long Enquiry No.'], ['field' => 'oem_long_enquiry_date', 'headerName' => 'OEM Long Enquiry Date'], ['field' => 'oem_long_enquiry_assign_date', 'headerName' => 'OEM Long Enquiry Assign Date']);
+        } elseif ($type === 'quick') {
+            array_push($cols, ['field' => 'oem_quick_enquiry_no', 'headerName' => 'OEM Quick Enquiry No.'], ['field' => 'oem_quick_enquiry_date', 'headerName' => 'OEM Quick Enquiry Date'], ['field' => 'oem_quick_enquiry_assign_date', 'headerName' => 'OEM Quick Enquiry Assign Date']);
+        } else {
+            array_push($cols, ['field' => 'oem_enquiry_no', 'headerName' => 'OEM Enquiry No.'], ['field' => 'oem_enquiry_date', 'headerName' => 'OEM Enquiry Date'], ['field' => 'oem_quick_enquiry_no', 'headerName' => 'OEM Quick Enquiry No.'], ['field' => 'oem_quick_enquiry_date', 'headerName' => 'OEM Quick Enquiry Date'], ['field' => 'oem_quick_enquiry_assign_date', 'headerName' => 'OEM Quick Enquiry Assign Date'], ['field' => 'oem_long_enquiry_no', 'headerName' => 'OEM Long Enquiry No.'], ['field' => 'oem_long_enquiry_date', 'headerName' => 'OEM Long Enquiry Date'], ['field' => 'oem_long_enquiry_assign_date', 'headerName' => 'OEM Long Enquiry Assign Date']);
+        }
 
         $midCols = [
             ['field' => 'segment_name', 'headerName' => 'Segment'],
             ['field' => 'model_name', 'headerName' => 'Model'],
             ['field' => 'variant_name', 'headerName' => 'Variant'],
-            ['field' => 'color_name', 'headerName' => 'Color'],
             ['field' => 'first_name', 'headerName' => 'First Name'],
             ['field' => 'last_name', 'headerName' => 'Last Name'],
             ['field' => 'full_name', 'headerName' => 'Full Name'],
@@ -450,6 +342,7 @@ class EnquiryCrudController extends CrudController
             ['field' => 'transmission', 'headerName' => 'Transmission'],
             ['field' => 'drivetrain', 'headerName' => 'Drivetrain'],
             ['field' => 'seating', 'headerName' => 'Seating'],
+            ['field' => 'color_name', 'headerName' => 'Color'],
             ['field' => 'tehsil', 'headerName' => 'Tehsil'],
             ['field' => 'district', 'headerName' => 'District'],
             ['field' => 'city', 'headerName' => 'City'],
@@ -490,8 +383,7 @@ class EnquiryCrudController extends CrudController
 
     private function applyEnquirySearch($query, string $searchText): void
     {
-        if ($searchText === '')
-            return;
+        if ($searchText === '') return;
         $like = "%{$searchText}%";
 
         $query->where(function ($q) use ($like) {
@@ -518,151 +410,7 @@ class EnquiryCrudController extends CrudController
                 $sortApplied = true;
             }
         }
-        if (!$sortApplied)
-            $query->orderByDesc('created_at');
-    }
-
-    // =========================================================
-    // COLUMN FILTER LOGIC (ag-Grid default column filters)
-    // =========================================================
-
-    /**
-     * Maps ag-Grid field names that don't match a real DB column
-     * directly to the actual column (accessor-redirected fields,
-     * relation "name" columns, etc). null = not filterable (computed field).
-     */
-    private const FILTER_FIELD_MAP = [
-        'full_name' => null, // computed accessor, not a column
-        'action' => null,
-        'source_name' => 'source_code',
-        'segment_name' => null, // handled via relation below
-        'model_name' => null,   // handled via relation below
-        'variant_name' => null, // handled via relation below
-        'color_name' => null,   // handled via relation below
-        'exchange_make' => 'brand_make',
-        'exchange_model' => 'brand_model',
-        'consider_make' => 'consid_brand',
-        'consider_model' => 'consid_model',
-        'consider_variant' => 'consid_variant',
-        'likely_purchase_in_days' => 'likely_purchase_date',
-    ];
-
-    /**
-     * ag-Grid field => matches the same code-first, raw-column-fallback
-     * priority used for display: if the *_code column is filled, filter
-     * against the related table's name column(s); otherwise filter
-     * against the raw text column (segment/model/variant/color).
-     */
-    private const FILTER_CODE_COLUMN_MAP = [
-        'segment_name' => ['code' => 'segment_code', 'relation' => 'segment', 'relCols' => ['name'], 'rawCol' => 'segment'],
-        'model_name' => ['code' => 'model_code', 'relation' => 'model', 'relCols' => ['name'], 'rawCol' => 'model'],
-        'variant_name' => ['code' => 'variant_code', 'relation' => 'variant', 'relCols' => ['display_name', 'custom_name', 'oem_name'], 'rawCol' => 'variant'],
-        'color_name' => ['code' => 'color_code', 'relation' => 'color', 'relCols' => ['name'], 'rawCol' => 'color'],
-    ];
-
-    private function applyEnquiryFilter($query, array $filterModel): void
-    {
-        if (empty($filterModel)) return;
-
-        foreach ($filterModel as $field => $condition) {
-            if (!is_array($condition)) continue;
-
-            // Code-priority columns (e.g. model_name -> model.name if model_code filled, else raw `model` column)
-            if (isset(self::FILTER_CODE_COLUMN_MAP[$field])) {
-                $map = self::FILTER_CODE_COLUMN_MAP[$field];
-                $query->where(function ($q) use ($map, $condition) {
-                    // Code filled -> match via related table
-                    $q->where(function ($q2) use ($map, $condition) {
-                        $q2->whereNotNull($map['code'])->where($map['code'], '!=', '')
-                            ->whereHas($map['relation'], function ($q3) use ($map, $condition) {
-                                $this->applyFilterConditionAnyColumn($q3, $map['relCols'], $condition);
-                            });
-                    })
-                        // Code blank -> match raw text column instead
-                        ->orWhere(function ($q2) use ($map, $condition) {
-                            $q2->where(function ($q3) use ($map) {
-                                $q3->whereNull($map['code'])->orWhere($map['code'], '');
-                            });
-                            $this->applyFilterCondition($q2, $map['rawCol'], $condition);
-                        });
-                });
-                continue;
-            }
-
-            // Redirected / renamed columns, or explicitly non-filterable
-            $column = array_key_exists($field, self::FILTER_FIELD_MAP)
-                ? self::FILTER_FIELD_MAP[$field]
-                : $field;
-
-            if ($column === null) continue; // not filterable
-
-            $this->applyFilterCondition($query, $column, $condition);
-        }
-    }
-
-    /** Applies the same filter condition across multiple columns, OR'd together. */
-    private function applyFilterConditionAnyColumn($query, array $columns, array $condition): void
-    {
-        $query->where(function ($q) use ($columns, $condition) {
-            foreach ($columns as $col) {
-                $q->orWhere(function ($q2) use ($col, $condition) {
-                    $this->applyFilterCondition($q2, $col, $condition);
-                });
-            }
-        });
-    }
-
-    /**
-     * Applies a single ag-Grid text-filter condition to a query.
-     * Supports the standard agTextColumnFilter operator set.
-     */
-    private function applyFilterCondition($query, string $column, array $condition): void
-    {
-        // ag-Grid sometimes sends a multi-condition filter instead of a flat one:
-        // { operator: 'AND'|'OR', conditions: [ {type, filter}, {type, filter} ] }
-        if (isset($condition['conditions']) && is_array($condition['conditions'])) {
-            $operator = strtoupper($condition['operator'] ?? 'AND') === 'OR' ? 'orWhere' : 'where';
-            $query->where(function ($q) use ($column, $condition, $operator) {
-                foreach ($condition['conditions'] as $sub) {
-                    $q->{$operator}(function ($q2) use ($column, $sub) {
-                        $this->applyFilterCondition($q2, $column, $sub);
-                    });
-                }
-            });
-            return;
-        }
-
-        $type = $condition['type'] ?? 'contains';
-        $value = $condition['filter'] ?? null;
-
-        switch ($type) {
-            case 'equals':
-                $query->where($column, $value);
-                break;
-            case 'notEqual':
-                $query->where($column, '!=', $value);
-                break;
-            case 'startsWith':
-                $query->where($column, 'like', "{$value}%");
-                break;
-            case 'endsWith':
-                $query->where($column, 'like', "%{$value}");
-                break;
-            case 'blank':
-                $query->where(function ($q) use ($column) {
-                    $q->whereNull($column)->orWhere($column, '');
-                });
-                break;
-            case 'notBlank':
-                $query->whereNotNull($column)->where($column, '!=', '');
-                break;
-            case 'contains':
-            default:
-                if ($value !== null && $value !== '') {
-                    $query->where($column, 'like', "%{$value}%");
-                }
-                break;
-        }
+        if (!$sortApplied) $query->orderByDesc('created_at');
     }
 
     // =========================================================
@@ -753,15 +501,14 @@ class EnquiryCrudController extends CrudController
     {
         $validated['segment'] = OrgService::segments()[$validated['segment_code']] ?? null;
         $validated['model'] = OrgService::models($validated['segment_code'])[$validated['model_code']] ?? null;
-        if (!empty($validated['variant_code']))
-            $validated['variant'] = OrgService::variants($validated['model_code'])[$validated['variant_code']]['name'] ?? null;
-        if (!empty($validated['color_code']))
-            $validated['color'] = OrgService::colors($validated['variant_code'])[$validated['color_code']] ?? null;
+        if (!empty($validated['variant_code'])) $validated['variant'] = OrgService::variants($validated['model_code'])[$validated['variant_code']]['name'] ?? null;
+        if (!empty($validated['color_code'])) $validated['color'] = OrgService::colors($validated['variant_code'])[$validated['color_code']] ?? null;
     }
 
     private function getValidationRules($id = null)
     {
         return [
+            // 'enquiry_no' => 'required|unique:xlr8_crm_enquiries,enquiry_no' . ($id ? ",$id" : ''),
             'enquiry_type' => 'required',
             'source_code' => 'required',
             'sub_source' => 'nullable',
@@ -821,16 +568,7 @@ class EnquiryCrudController extends CrudController
             'sc_code' => 'required',
             'followup_type' => 'nullable',
             'followup_date' => 'nullable|date',
-            'followup_time' => 'nullable',
-            'make_year' => 'nullable|integer',
-            'odo_reading' => 'nullable|numeric',
-            'expected_price' => 'nullable|numeric',
-            'offered_price' => 'nullable|numeric',
-            'exchange_bonus' => 'nullable|numeric',
-            'fin_mode' => 'nullable|string|max:50',
-            'financier' => 'nullable|integer',
-            'brand_make' => 'nullable|string|max:100',
-            'brand_model' => 'nullable|string|max:100',
+            'followup_time' => 'nullable'
         ];
     }
 
@@ -847,6 +585,7 @@ class EnquiryCrudController extends CrudController
             'branches' => OrgService::branches(),
             'campaigns' => Campaign::orderBy('name')->pluck('name')->toArray(),
 
+            // FIX: Added 'likely_purchase_dates' so create.blade.php can find it
             'likely_purchase_dates' => $kw('LIKELY_PURCHASE_DATE'),
 
             'enquiry_types' => $kw('ENQUIRY_TYPE'),
@@ -873,8 +612,7 @@ class EnquiryCrudController extends CrudController
             'fuel_types' => $kw('FUEL_TYPE'),
             'transmission_types' => $kw('TRANSMISSION_TYPE'),
             'finance_types' => $kw('FINANCE_TYPE'),
-            'purchase_reasons' => $kw('PURCHASE_REASON'),
-            'financiers' => collect(XlFinancier::select('id', 'name', 'short_name')->get()->toArray())->map(fn($f) => (object) $f),
+            'purchase_reasons' => $kw('PURCHASE_REASON')
         ];
     }
 
@@ -924,7 +662,7 @@ class EnquiryCrudController extends CrudController
     public function checkDuplicateEnquiry(Request $request)
     {
         $enquiry = Enquiry::where('mobile', $request->mobile)->where('segment_code', $request->segment_code)->first();
-        return response()->json(['exists' => (bool) $enquiry, 'enquiry_no' => $enquiry?->enquiry_no]);
+        return response()->json(['exists' => (bool)$enquiry, 'enquiry_no' => $enquiry?->enquiry_no]);
     }
 
     // =========================================================
@@ -955,8 +693,7 @@ class EnquiryCrudController extends CrudController
 
     public function importStatus($id)
     {
-        if (!$log = DB::table('xlr8_crm_import_logs')->where('id', $id)->first())
-            return response()->json(['error' => 'Not found'], 404);
+        if (!$log = DB::table('xlr8_crm_import_logs')->where('id', $id)->first()) return response()->json(['error' => 'Not found'], 404);
         return response()->json([
             'id' => $log->id,
             'status' => $log->status,

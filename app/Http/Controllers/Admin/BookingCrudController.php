@@ -1442,6 +1442,12 @@ class BookingCrudController extends CrudController
             ])->findOrFail($quotationId);
         }
 
+        // Fetch Enquiry directly if Process button was clicked
+        $enquiry = null;
+        if ($enquiryId = request('enquiry_id')) {
+            $enquiry = \App\Models\CRM\Enquiry::find($enquiryId);
+        }
+
         CRUD::setValidation(BookingRequest::class);
         $this->crud->setCreateView('admin.booking.add');
 
@@ -1477,6 +1483,7 @@ class BookingCrudController extends CrudController
         $data['enum_master'] = OrgService::keywordValueByCode('EXISTING_CAR_OEM');
 
         $data['quotation'] = $quotation;
+        $data['enquiry']   = $enquiry;
         $this->data['data'] = $data;
     }
 
