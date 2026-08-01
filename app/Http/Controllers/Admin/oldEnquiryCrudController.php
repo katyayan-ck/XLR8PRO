@@ -59,10 +59,7 @@ class EnquiryCrudController extends CrudController
         $searchText = trim((string) $request->input('searchText', ''));
         $highlightFilter = trim((string) $request->input('highlightFilter', ''));
 
-        // TEMP: formComplete() filter disabled so all entries show in the listing.
-        // To revert, uncomment the line below and delete the one after it.
-        // $query = Enquiry::formComplete()->with(['segment', 'model', 'variant', 'color', 'campaign']);
-        $query = Enquiry::query()->with(['segment', 'model', 'variant', 'color', 'campaign']);
+        $query = Enquiry::formComplete()->with(['segment', 'model', 'variant', 'color', 'campaign']);
 
         // Apply Search & Sort
         $this->applyEnquirySearch($query, $searchText);
@@ -83,10 +80,7 @@ class EnquiryCrudController extends CrudController
         $searchText = trim((string) $request->input('searchText', ''));
         $highlightFilter = trim((string) $request->input('highlightFilter', ''));
 
-        // TEMP: formComplete() filter disabled to match the unfiltered listing.
-        // To revert, uncomment the line below and delete the one after it.
-        // $query = Enquiry::formComplete()->with(['segment', 'model', 'variant', 'color', 'campaign']);
-        $query = Enquiry::query()->with(['segment', 'model', 'variant', 'color', 'campaign']);
+        $query = Enquiry::formComplete()->with(['segment', 'model', 'variant', 'color', 'campaign']);
 
         $this->applyEnquirySearch($query, $searchText);
         OrgService::applyHighlightFilter($query, $highlightFilter); // Make sure exports match the active filter

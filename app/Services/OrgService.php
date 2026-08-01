@@ -1078,9 +1078,9 @@ class OrgService
             'active' => $query->where('is_active', true)
                 ->whereHas('employee', fn($e) => $e->whereNull('separation_date')),
             'inactive' => $query->where(function ($q) {
-                    $q->where('is_active', false)
+                $q->where('is_active', false)
                     ->orWhereHas('employee', fn($e) => $e->whereNotNull('separation_date'));
-                }),
+            }),
             default => $query, // 'all'
         };
     }
@@ -1419,80 +1419,89 @@ class OrgService
             return;
         }
 
-        $today = now()->format('Y-m-d');
-        $todayMonth = now()->format('m');
-        $todayDay = now()->format('d');
+        $today = now()->toDateString();
 
         switch ($filter) {
+
             case 'missed_fup':
-                // Followup date is in the past
-                $query->whereNotNull('followup_date')
-                      ->whereDate('followup_date', '<', $today);
+                // first_planned_followup_date is filled AND
+                // first_actual_followup_date is blank OR came before the planned date.
+                $query->whereNotNull('first_planned_followup_date')
+                    ->where('first_planned_followup_date', '!=', '')
+                    ->where(function ($q) {
+                        $q->whereNull('first_actual_followup_date')
+                            ->orWhere('first_actual_followup_date', '')
+                            ->orWhereColumn('first_actual_followup_date', '<', 'first_planned_followup_date');
+                    });
                 break;
 
             case 'today_fup':
-                // Followup date is exactly today
-                $query->whereNotNull('followup_date')
-                      ->whereDate('followup_date', '=', $today);
+                // first_planned_followup_date is today AND
+                // first_actual_followup_date is not today (blank, earlier, or otherwise different).
+                $query->whereDate('first_planned_followup_date', $today)
+                    ->where(function ($q) use ($today) {
+                        $q->whereNull('first_actual_followup_date')
+                            ->orWhere('first_actual_followup_date', '')
+                            ->orWhereDate('first_actual_followup_date', '!=', $today);
+                    });
                 break;
 
             case 'birthday':
-                // Month and Day of DOB match today
+                // dob's month & day match today's month & day
                 $query->whereNotNull('dob')
-                      ->whereMonth('dob', $todayMonth)
-                      ->whereDay('dob', $todayDay);
+                    ->whereMonth('dob', now()->month)
+                    ->whereDay('dob', now()->day);
                 break;
 
             case 'anniversary':
-                // Month and Day of marriage_date match today
+                // marriage_date's month & day match today's month & day
                 $query->whereNotNull('marriage_date')
-                      ->whereMonth('marriage_date', $todayMonth)
-                      ->whereDay('marriage_date', $todayDay);
+                    ->whereMonth('marriage_date', now()->month)
+                    ->whereDay('marriage_date', now()->day);
                 break;
 
             case 'exchange':
-                // Purchase type implies exchange, or they provided an exchange car brand
-                $query->where(function ($q) {
-                    $q->where('purchase_type', 'like', '%Exchange%')
-                      ->orWhereNotNull('brand_make');
-                });
+                // purchase_type is Exchange Buy
+                $query->where('purchase_type', 'Exchange Buy');
                 break;
 
             case 'pending_eval':
-                // Demo Logic: Has an exchange car but evaluation isn't complete.
-                // Assuming 'brand_make' is filled but a status isn't. Adjust to your specific column.
-                $query->whereNotNull('brand_make');
+                // Exchange Buy entries whose exchange_bonus hasn't been evaluated yet (blank).
+                $query->where('purchase_type', 'Exchange Buy')
+                    ->where(function ($q) {
+                        $q->whereNull('exchange_bonus')
+                            ->orWhere('exchange_bonus', '');
+                    });
                 break;
 
             case 'delayed':
-                // Demo Logic: Enquiry is older than 7 days but still active (not won/lost)
-                $query->where('created_at', '<', now()->subDays(7))
-                      ->whereNotIn('dms_enquiry_stage', ['Lost', 'Won', 'Retail']);
+                // Any entry with a non-zero delayed count
+                $query->where('delayed', '>', 0);
                 break;
 
             case 'wrong_assign':
-                // Demo Logic: No Sales Consultant assigned
-                $query->whereNull('sc_code');
+                // wrong_assign count is exactly 1
+                $query->where('wrong_assign', 1);
                 break;
 
             case 'finance':
-                // Demo Logic: Purchase type implies finance
-                $query->where('purchase_type', 'like', '%Finance%');
+                // fin_mode is In-house
+                $query->where('fin_mode', 'In-house');
                 break;
 
             case 'stage_mismatch':
                 // DMS stage and CRE stage do not match
                 $query->whereNotNull('dms_enquiry_stage')
-                      ->whereNotNull('cre_enquiry_stage')
-                      ->whereColumn('dms_enquiry_stage', '!=', 'cre_enquiry_stage');
+                    ->whereNotNull('cre_enquiry_stage')
+                    ->whereColumn('dms_enquiry_stage', '!=', 'cre_enquiry_stage');
                 break;
 
             case 'lost_verif':
-                // Demo Logic: Stage is Lost, but maybe CRE hasn't verified it yet
-                $query->where('dms_enquiry_stage', 'Lost');
+                // stage is Lost but the entry is still marked active
+                $query->where('stage', 'Lost')
+                    ->where('is_active', 1);
                 break;
         }
     }
-
 }
 // changing the demo document

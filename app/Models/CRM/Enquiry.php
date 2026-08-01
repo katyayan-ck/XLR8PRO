@@ -129,8 +129,8 @@ class Enquiry extends BaseModel
     protected function exchangeMake(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->brand_make,
-            set: fn ($value) => ['brand_make' => $value],
+            get: fn() => $this->brand_make,
+            set: fn($value) => ['brand_make' => $value],
         );
     }
 
@@ -138,8 +138,8 @@ class Enquiry extends BaseModel
     protected function exchangeModel(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->brand_model,
-            set: fn ($value) => ['brand_model' => $value],
+            get: fn() => $this->brand_model,
+            set: fn($value) => ['brand_model' => $value],
         );
     }
 
@@ -147,8 +147,8 @@ class Enquiry extends BaseModel
     protected function considerMake(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->consid_brand,
-            set: fn ($value) => ['consid_brand' => $value],
+            get: fn() => $this->consid_brand,
+            set: fn($value) => ['consid_brand' => $value],
         );
     }
 
@@ -156,8 +156,8 @@ class Enquiry extends BaseModel
     protected function considerModel(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->consid_model,
-            set: fn ($value) => ['consid_model' => $value],
+            get: fn() => $this->consid_model,
+            set: fn($value) => ['consid_model' => $value],
         );
     }
 
@@ -165,8 +165,8 @@ class Enquiry extends BaseModel
     protected function considerVariant(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->consid_variant,
-            set: fn ($value) => ['consid_variant' => $value],
+            get: fn() => $this->consid_variant,
+            set: fn($value) => ['consid_variant' => $value],
         );
     }
 
