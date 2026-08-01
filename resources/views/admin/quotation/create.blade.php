@@ -731,7 +731,7 @@ use App\Services\OrgService;
                                 <div class="input-group">
                                     <span class="input-group-text">🔍 Mock Enquiry</span>
                                     <input type="text" id="mock_enquiry_no" class="form-control"
-                                        placeholder="Enter 001-005" value="001">
+                                        placeholder="Enter 001-013" value="001">
                                     <button type="button" id="btnFetchMock" class="btn btn-primary">
                                         <i class="la la-refresh"></i> Fetch
                                     </button>
@@ -739,7 +739,7 @@ use App\Services\OrgService;
                                         <i class="la la-undo"></i> Reset
                                     </button>
                                 </div>
-                                <small class="text-muted">Enter enquiry number (001-005) and click Fetch to load mock
+                                <small class="text-muted">Enter enquiry number (001-013) and click Fetch to load mock
                                     data</small>
                             </div>
                         </div>
@@ -1450,7 +1450,7 @@ use App\Services\OrgService;
 const ENQUIRIES = {
     "001": {
         enquiry_no: "ENQ0001",
-        customer: { name: "Rajesh Kumar", mobile: "9876543210" },
+        customer: { name: "Rajesh Kumar", mobile: "9876543210", careOf: "1", careOfName: "Ramesh Kumar" },
         vehicle: {
             segment_code: "UV",
             segment_name: "UV",
@@ -1466,7 +1466,7 @@ const ENQUIRIES = {
     },
     "002": {
         enquiry_no: "ENQ0002",
-        customer: { name: "Priya Sharma", mobile: "9123456780" },
+        customer: { name: "Priya Sharma", mobile: "9123456780", careOf: "2", careOfName: "Mahesh Sharma" },
         vehicle: {
             segment_code: "EV",
             segment_name: "Electric",
@@ -1482,7 +1482,7 @@ const ENQUIRIES = {
     },
     "003": {
         enquiry_no: "ENQ0003",
-        customer: { name: "Suresh Yadav", mobile: "9988776655" },
+        customer: { name: "Suresh Yadav", mobile: "9988776655", careOf: "", careOfName: "" },  // edge case: Care Of left blank
         vehicle: {
             segment_code: "CV",
             segment_name: "Commercial",
@@ -1498,7 +1498,7 @@ const ENQUIRIES = {
     },
     "004": {
         enquiry_no: "ENQ0004",
-        customer: { name: "Amit Singh", mobile: "9811223344" },
+        customer: { name: "Amit Singh", mobile: "9811223344", careOf: "1", careOfName: "Balwant Singh" },
         vehicle: {
             segment_code: "CV",
             segment_name: "Commercial",
@@ -1514,7 +1514,7 @@ const ENQUIRIES = {
     },
     "005": {
         enquiry_no: "ENQ0005",
-        customer: { name: "Vikram Mehta", mobile: "9765432109" },
+        customer: { name: "Vikram Mehta", mobile: "9765432109", careOf: "1", careOfName: "Ashok Mehta" },
         vehicle: {
             segment_code: "LMM",
             segment_name: "LMM",
@@ -1527,6 +1527,134 @@ const ENQUIRIES = {
             oem_code: "TREO-YAARI-BL"
         },
         pricingKey: "treo"
+    },
+    "006": {
+        enquiry_no: "ENQ0006",
+        customer: { name: "Rohan Verma", mobile: "9876500006", careOf: "1", careOfName: "Suresh Verma" },
+        vehicle: {
+            segment_code: "PV",
+            segment_name: "Personal Vehicle",
+            model_code: "PVX1",
+            model_name: "PV X1",
+            variant_code: "X1-AT",
+            variant_name: "X1 Automatic",
+            color_code: "RD",
+            color_name: "Radiant Red",
+            oem_code: "PV-ABOVE-TCS-RED"
+        },
+        pricingKey: "pvAboveTcs"
+    },
+    "007": {
+        enquiry_no: "ENQ0007",
+        customer: { name: "Sneha Gupta", mobile: "9876500007", careOf: "3", careOfName: "Rajesh Gupta" },
+        vehicle: {
+            segment_code: "PV",
+            segment_name: "Personal Vehicle",
+            model_code: "PVX2",
+            model_name: "PV X2",
+            variant_code: "X2-MT",
+            variant_name: "X2 Manual",
+            color_code: "BL",
+            color_name: "Deep Blue",
+            oem_code: "PV-BELOW-TCS-BLUE"
+        },
+        pricingKey: "pvBelowTcs"
+    },
+    "008": {
+        enquiry_no: "ENQ0008",
+        customer: { name: "Vikas Shah", mobile: "9876500008", careOf: "1", careOfName: "Prakash Shah" },
+        vehicle: {
+            segment_code: "PV",
+            segment_name: "Personal Vehicle",
+            model_code: "PVX3",
+            model_name: "PV X3",
+            variant_code: "X3-AT",
+            variant_name: "X3 Automatic",
+            color_code: "GR",
+            color_name: "Graphite Grey",
+            oem_code: "PV-NEAR-TCS-ADJUST"
+        },
+        pricingKey: "pvNearTcs"
+    },
+    "009": {
+        enquiry_no: "ENQ0009",
+        customer: { name: "Priya Mehra", mobile: "9876500009", careOf: "2", careOfName: "Ashok Mehra" },
+        vehicle: {
+            segment_code: "EV",
+            segment_name: "Battery EV",
+            model_code: "BEVX9",
+            model_name: "BEV X9",
+            variant_code: "X9-LR",
+            variant_name: "X9 Long Range",
+            color_code: "WH",
+            color_name: "Pearl White",
+            oem_code: "BEV-FAME-OEM"
+        },
+        pricingKey: "bevFameOem"
+    },
+    "010": {
+        enquiry_no: "ENQ0010",
+        customer: { name: "Karan Joshi", mobile: "9876500010", careOf: "1", careOfName: "Deepak Joshi" },
+        vehicle: {
+            segment_code: "EV",
+            segment_name: "Battery EV",
+            model_code: "BEVX7",
+            model_name: "BEV X7",
+            variant_code: "X7-SR",
+            variant_name: "X7 Standard Range",
+            color_code: "GN",
+            color_name: "Emerald Green",
+            oem_code: "BEV-FAME-ONLY"
+        },
+        pricingKey: "bevFameOnly"
+    },
+    "011": {
+        enquiry_no: "ENQ0011",
+        customer: { name: "Manoj Yadav", mobile: "9876500011", careOf: "4", careOfName: "Ram Yadav" },  // edge case: Guardian Name
+        vehicle: {
+            segment_code: "PV",
+            segment_name: "Passenger Vehicle",
+            model_code: "PVX4",
+            model_name: "PV X4",
+            variant_code: "X4-MPV",
+            variant_name: "X4 MPV",
+            color_code: "WH",
+            color_name: "Arctic White",
+            oem_code: "PV-PASSENGER-RTO-TAPE"
+        },
+        pricingKey: "pvPassengerTape"
+    },
+    "012": {
+        enquiry_no: "ENQ0012",
+        customer: { name: "Deepak Singh", mobile: "9876500012", careOf: "1", careOfName: "Mahendra Singh" },
+        vehicle: {
+            segment_code: "PV",
+            segment_name: "Passenger Vehicle",
+            model_code: "PVX5",
+            model_name: "PV X5",
+            variant_code: "X5-TAXI",
+            variant_name: "X5 Taxi",
+            color_code: "YL",
+            color_name: "Sun Yellow",
+            oem_code: "PV-PERMIT-INS-RTO"
+        },
+        pricingKey: "pvPermitInsRto"
+    },
+    "013": {
+        enquiry_no: "ENQ0013",
+        customer: { name: "Vikram Mehta", mobile: "9876500013", careOf: "3", careOfName: "Sunita Mehta" },
+        vehicle: {
+            segment_code: "LMM",
+            segment_name: "LMM",
+            model_code: "TREO",
+            model_name: "Treo",
+            variant_code: "TREO-Y",
+            variant_name: "Treo Yaari LMM",
+            color_code: "BL",
+            color_name: "Ocean Blue",
+            oem_code: "LMM-KAZAM-CHARGING"
+        },
+        pricingKey: "lmmKazam"
     }
 };
 
@@ -1929,6 +2057,639 @@ const PRICING = {
             "other-cash-discount": { amount: 0, type: "CN", editable: true },
             "special-cash-discount": { enabled: true, lower: 100000, upper: 1050000, max: 50000, amount: 0, type: "INV" }
         }
+    },
+
+    // 006 — PV above TCS threshold: high ex-showroom, multi-insurer, rich accessories (Maxicare/PPF/Ceramic)
+    pvAboveTcs: {
+        permit: [{ type: "Private", default: true }],
+        receivables: {
+            exShowroom: 1850000,
+            insurance: [{
+                permit: "Private",
+                default: true,
+                companies: [
+                    {
+                        insCo: "ICICI Lombard",
+                        default: true,
+                        price: [
+                            { head: "Basic OD TP", price: 32500, Nature: "M" },
+                            { head: "Nil Depreciation", price: 7200, Nature: "M" },
+                            { head: "Consumables", price: 1600, Nature: "M" },
+                            { head: "Engine Protect", price: 5800, Nature: "O" },
+                            { head: "RTI", price: 6500, Nature: "O" },
+                            { head: "RSA", price: 950, Nature: "O" }
+                        ]
+                    },
+                    {
+                        insCo: "United India (USGI)",
+                        default: false,
+                        price: [
+                            { head: "Basic OD TP", price: 34800, Nature: "M" },
+                            { head: "Nil Depreciation", price: 7800, Nature: "M" },
+                            { head: "Consumables", price: 1850, Nature: "M" },
+                            { head: "Engine Protect", price: 6200, Nature: "O" },
+                            { head: "RTI", price: 7200, Nature: "O" },
+                            { head: "Key Protect", price: 1200, Nature: "O" }
+                        ]
+                    }
+                ]
+            }],
+            RTO: { TRC: 1500, TAX: [{ permit: "Private", default: true, amount: 210000 }] },
+            accessories: [
+                { item: "Welcome Kit", mrp: 989, discount: 0, code: "WK-PV1" },
+                { item: "Dash Cam", mrp: 4079, discount: 500, code: "DC-PV1" },
+                { item: "Reverse Parking Camera", mrp: 2089, discount: 0, code: "RPC-PV1" },
+                { item: "Seat Cover Premium", mrp: 7190, discount: 800, code: "SC-PV1" },
+                { item: "Floor Mat Set", mrp: 3452, discount: 400, code: "FM-PV1" }
+            ],
+            maxicare: 24999,
+            coating: [
+                { title: "No Coating", price: 0, default: false },
+                { title: "Ceramic", price: 16729, default: true }
+            ],
+            ppf: [
+                { title: "No PPF", price: 0, default: false },
+                { title: "Ultra", price: 78119, default: true }
+            ],
+            shield: [
+                { title: "4th Year", price: 19990, default: true },
+                { title: "4th & 5th Year", price: 32990, default: false },
+                { title: "No Shield", price: 0, default: false }
+            ],
+            rsa: [
+                { title: "1 Year", price: 1499, default: true },
+                { title: "2 Year", price: 2799, default: false },
+                { title: "No RSA", price: 0, default: false }
+            ],
+            vltd: null,
+            kazam: 0,
+            incidental: 2500,
+            "rto-tape": 1499,
+            fastag: 600,
+            COD: 0,
+            "charger-swapping": [
+                { title: "No Swapping @ ₹0", amount: 0, default: true },
+                { title: "NCH to 7.2 kW @ ₹18,500", amount: 18500, default: false },
+                { title: "NCH to 11.2 kW @ ₹28,500", amount: 28500, default: false }
+            ],
+            tcs: { limit: 1000000, rate: 1.0 }
+        },
+        deductibles: {
+            "oem-schemes": [
+                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 45000, type: "INV" },
+                { key: "csd_discount", label: "CSD Discount", amount: 15000, type: "INV" }
+            ],
+            "dealer-scheme": { amount: 15000, type: "CN" },
+            "accessory-scheme": { amount: 5000, type: "INV" },
+            "shield-scheme": { amount: 2500, type: "CN" },
+            "corp-scheme": [
+                { name: "Corporate Discount", amount: 40000, type: "INV" },
+                { name: "Loyalty Bonus", amount: 25000, type: "INV" }
+            ],
+            "exchange-scheme": [
+                { name: "Exchange Bonus", amount: 30000, type: "CN1" },
+                { name: "Green Bonus", amount: 20000, type: "CN1" }
+            ],
+            "accessories-spl-discount": { amount: 2500, type: "INV" },
+            "coating-spl-discount": { amount: 2000, type: "INV" },
+            "ppf-spl-discount": { amount: 8000, type: "CN" },
+            "charger-swapping-discount": { amount: 5000, type: "CN2" },
+            "other-cash-discount": { amount: 0, type: "CN", editable: true },
+            "special-cash-discount": { enabled: true, lower: 1600000, upper: 2000000, max: 60000, amount: 0, type: "INV" }
+        }
+    },
+
+    // 007 — PV below TCS threshold: mid-range ex-showroom, multi-insurer with different addon sets
+    pvBelowTcs: {
+        permit: [{ type: "Private", default: true }],
+        receivables: {
+            exShowroom: 825000,
+            insurance: [{
+                permit: "Private",
+                default: true,
+                companies: [
+                    {
+                        insCo: "ICICI Lombard",
+                        default: true,
+                        price: [
+                            { head: "Basic OD TP", price: 18500, Nature: "M" },
+                            { head: "Nil Depreciation", price: 3500, Nature: "M" },
+                            { head: "Consumables", price: 750, Nature: "M" },
+                            { head: "RTI", price: 3200, Nature: "O" }
+                        ]
+                    },
+                    {
+                        insCo: "USGI",
+                        default: false,
+                        price: [
+                            { head: "Basic OD TP", price: 17800, Nature: "M" },
+                            { head: "Nil Depreciation", price: 3300, Nature: "M" },
+                            { head: "Consumables", price: 700, Nature: "M" },
+                            { head: "NCB Protect", price: 2800, Nature: "O" },
+                            { head: "RSA", price: 950, Nature: "O" }
+                        ]
+                    }
+                ]
+            }],
+            RTO: { TRC: 1000, TAX: [{ permit: "Private", default: true, amount: 82000 }] },
+            accessories: [
+                { item: "Welcome Kit", mrp: 589, discount: 0, code: "WK-PV2" },
+                { item: "Seat Cover", mrp: 4100, discount: 400, code: "SC-PV2" },
+                { item: "Floor Mat", mrp: 2100, discount: 200, code: "FM-PV2" },
+                { item: "Alloy Wheels", mrp: 32000, discount: 4500, code: "AL-PV2" }
+            ],
+            shield: [
+                { title: "4th Year", price: 12990, default: true },
+                { title: "No Shield", price: 0, default: false }
+            ],
+            rsa: [
+                { title: "1 Year", price: 999, default: true },
+                { title: "No RSA", price: 0, default: false }
+            ],
+            vltd: null,
+            kazam: 0,
+            incidental: 2000,
+            "rto-tape": 0,
+            fastag: 600,
+            COD: 0,
+            "charger-swapping": [],
+            tcs: { limit: 1000000, rate: 1.0 }
+        },
+        deductibles: {
+            "oem-schemes": [
+                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 25000, type: "INV" }
+            ],
+            "dealer-scheme": { amount: 8000, type: "CN" },
+            "accessory-scheme": { amount: 2000, type: "INV" },
+            "shield-scheme": { amount: 1000, type: "CN" },
+            "corp-scheme": [
+                { name: "Corporate Discount", amount: 15000, type: "INV" }
+            ],
+            "exchange-scheme": [
+                { name: "Exchange Bonus", amount: 10000, type: "CN1" }
+            ],
+            "accessories-spl-discount": { amount: 4500, type: "INV" },
+            "other-cash-discount": { amount: 0, type: "CN", editable: true },
+            "special-cash-discount": { enabled: false, lower: 0, upper: 0, max: 0, amount: 0, type: "INV" }
+        }
+    },
+
+    // 008 — PV near TCS threshold: special-cash-discount enabled to nudge Finvoice above/below the boundary
+    pvNearTcs: {
+        permit: [{ type: "Private", default: true }],
+        receivables: {
+            exShowroom: 995000,
+            insurance: [{
+                permit: "Private",
+                default: true,
+                companies: [
+                    {
+                        insCo: "ICICI Lombard",
+                        default: true,
+                        price: [
+                            { head: "Basic OD TP", price: 26500, Nature: "M" },
+                            { head: "Nil Depreciation", price: 5200, Nature: "M" },
+                            { head: "Consumables", price: 1200, Nature: "M" },
+                            { head: "RTI", price: 5400, Nature: "O" }
+                        ]
+                    },
+                    {
+                        insCo: "USGI",
+                        default: false,
+                        price: [
+                            { head: "Basic OD TP", price: 25800, Nature: "M" },
+                            { head: "Nil Depreciation", price: 5100, Nature: "M" },
+                            { head: "Consumables", price: 1100, Nature: "M" },
+                            { head: "Engine Protect", price: 5800, Nature: "O" }
+                        ]
+                    }
+                ]
+            }],
+            RTO: { TRC: 1200, TAX: [{ permit: "Private", default: true, amount: 96000 }] },
+            accessories: [
+                { item: "Seat Cover Deluxe", mrp: 6100, discount: 500, code: "SC-PV3" },
+                { item: "Floor Mat", mrp: 2400, discount: 200, code: "FM-PV3" },
+                { item: "Chrome Set", mrp: 9218, discount: 1200, code: "CS-PV3" }
+            ],
+            shield: [
+                { title: "4th Year", price: 15990, default: true },
+                { title: "No Shield", price: 0, default: false }
+            ],
+            rsa: [
+                { title: "1 Year", price: 1299, default: true },
+                { title: "2 Year", price: 2199, default: false },
+                { title: "No RSA", price: 0, default: false }
+            ],
+            vltd: null,
+            kazam: 0,
+            incidental: 2500,
+            "rto-tape": 1499,
+            fastag: 600,
+            COD: 0,
+            "charger-swapping": [],
+            tcs: { limit: 1000000, rate: 1.0 }
+        },
+        deductibles: {
+            "oem-schemes": [
+                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 35000, type: "INV" }
+            ],
+            "dealer-scheme": { amount: 10000, type: "CN" },
+            "accessory-scheme": { amount: 3000, type: "INV" },
+            "shield-scheme": { amount: 1500, type: "CN" },
+            "corp-scheme": [
+                { name: "Corporate Discount", amount: 25000, type: "INV" }
+            ],
+            "exchange-scheme": [
+                { name: "Exchange Bonus", amount: 20000, type: "CN1" },
+                { name: "Welcome Bonus", amount: 8000, type: "CN1" }
+            ],
+            "accessories-spl-discount": { amount: 1200, type: "INV" },
+            "other-cash-discount": { amount: 0, type: "CN", editable: true },
+            "special-cash-discount": { enabled: true, lower: 900000, upper: 1020000, max: 30000, amount: 0, type: "INV" }
+        }
+    },
+
+    // 009 — BEV with FAME + OEM scheme, multi-insurer EV covers, charger-swapping on receivable & discount sides
+    bevFameOem: {
+        permit: [{ type: "Private", default: true }],
+        receivables: {
+            exShowroom: 1899000,
+            insurance: [{
+                permit: "Private",
+                default: true,
+                companies: [
+                    {
+                        insCo: "ICICI Lombard",
+                        default: true,
+                        price: [
+                            { head: "Basic OD TP", price: 28500, Nature: "M" },
+                            { head: "Nil Depreciation", price: 6200, Nature: "M" },
+                            { head: "Consumables", price: 1400, Nature: "M" },
+                            { head: "Battery Protect", price: 8500, Nature: "O" },
+                            { head: "RTI", price: 5200, Nature: "O" }
+                        ]
+                    },
+                    {
+                        insCo: "USGI",
+                        default: false,
+                        price: [
+                            { head: "Basic OD TP", price: 27800, Nature: "M" },
+                            { head: "Nil Depreciation", price: 6100, Nature: "M" },
+                            { head: "Consumables", price: 1350, Nature: "M" },
+                            { head: "Battery Protect", price: 7800, Nature: "O" },
+                            { head: "NCB Protect", price: 3200, Nature: "O" }
+                        ]
+                    }
+                ]
+            }],
+            RTO: { TRC: 1000, TAX: [{ permit: "Private", default: true, amount: 0 }] },
+            accessories: [
+                { item: "Home Charger 7.2kW", mrp: 45000, discount: 5000, code: "HC-BEV1" },
+                { item: "Dash Cam EV", mrp: 4079, discount: 0, code: "DC-BEV1" },
+                { item: "Floor Mat EV", mrp: 2800, discount: 300, code: "FM-BEV1" }
+            ],
+            shield: [
+                { title: "4th Year", price: 18990, default: true },
+                { title: "No Shield", price: 0, default: false }
+            ],
+            rsa: [
+                { title: "1 Year", price: 1999, default: true },
+                { title: "No RSA", price: 0, default: false }
+            ],
+            vltd: null,
+            kazam: 0,
+            incidental: 2000,
+            "rto-tape": 0,
+            fastag: 600,
+            COD: 0,
+            "charger-swapping": [
+                { title: "No Swapping @ ₹0", amount: 0, default: true },
+                { title: "NCH to 7.2 kW @ ₹18,500", amount: 18500, default: false },
+                { title: "NCH to 11.2 kW @ ₹28,500", amount: 28500, default: false }
+            ],
+            tcs: { limit: 1000000, rate: 1.0 }
+        },
+        deductibles: {
+            "oem-schemes": [
+                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 75000, type: "INV" },
+                { key: "fame_subsidy", label: "Fame Subsidy", amount: 100000, type: "INV" }
+            ],
+            "dealer-scheme": { amount: 10000, type: "CN" },
+            "accessory-scheme": { amount: 3000, type: "INV" },
+            "shield-scheme": { amount: 1500, type: "CN" },
+            "corp-scheme": [
+                { name: "Corporate Discount", amount: 40000, type: "INV" },
+                { name: "Loyalty Bonus", amount: 20000, type: "INV" }
+            ],
+            "exchange-scheme": [
+                { name: "Exchange Bonus", amount: 25000, type: "CN1" }
+            ],
+            "fame-subsidy": { amount: 100000, type: "INV" },
+            "charger-swapping-discount": { amount: 5000, type: "CN2" },
+            "other-cash-discount": { amount: 0, type: "CN", editable: true },
+            "special-cash-discount": { enabled: true, lower: 1500000, upper: 2100000, max: 80000, amount: 0, type: "INV" }
+        }
+    },
+
+    // 010 — BEV with FAME only (no OEM scheme): isolates FAME-only behaviour, simpler accessories/discounts
+    bevFameOnly: {
+        permit: [{ type: "Private", default: true }],
+        receivables: {
+            exShowroom: 1350000,
+            insurance: [{
+                permit: "Private",
+                default: true,
+                companies: [
+                    {
+                        insCo: "ICICI Lombard",
+                        default: true,
+                        price: [
+                            { head: "Basic OD TP", price: 24500, Nature: "M" },
+                            { head: "Nil Depreciation", price: 5200, Nature: "M" },
+                            { head: "Battery Protect", price: 7800, Nature: "O" }
+                        ]
+                    },
+                    {
+                        insCo: "USGI",
+                        default: false,
+                        price: [
+                            { head: "Basic OD TP", price: 23800, Nature: "M" },
+                            { head: "Nil Depreciation", price: 5100, Nature: "M" },
+                            { head: "Battery Protect", price: 7200, Nature: "O" }
+                        ]
+                    }
+                ]
+            }],
+            RTO: { TRC: 1000, TAX: [{ permit: "Private", default: true, amount: 0 }] },
+            accessories: [
+                { item: "Home Charger 3.3kW", mrp: 28000, discount: 3000, code: "HC-BEV2" },
+                { item: "Floor Mat EV", mrp: 2600, discount: 200, code: "FM-BEV2" }
+            ],
+            shield: [
+                { title: "4th Year", price: 14990, default: true },
+                { title: "No Shield", price: 0, default: false }
+            ],
+            rsa: [
+                { title: "1 Year", price: 1799, default: true },
+                { title: "No RSA", price: 0, default: false }
+            ],
+            vltd: null,
+            kazam: 0,
+            incidental: 2000,
+            "rto-tape": 0,
+            fastag: 600,
+            COD: 0,
+            "charger-swapping": [
+                { title: "No Swapping @ ₹0", amount: 0, default: true }
+            ],
+            tcs: { limit: 1000000, rate: 1.0 }
+        },
+        deductibles: {
+            "oem-schemes": [
+                { key: "fame_subsidy", label: "Fame Subsidy", amount: 80000, type: "INV" }
+            ],
+            "dealer-scheme": { amount: 8000, type: "CN" },
+            "accessory-scheme": { amount: 2000, type: "INV" },
+            "shield-scheme": { amount: 1200, type: "CN" },
+            "corp-scheme": [
+                { name: "Corporate Discount", amount: 25000, type: "INV" }
+            ],
+            "exchange-scheme": [
+                { name: "Exchange Bonus", amount: 15000, type: "CN1" }
+            ],
+            "fame-subsidy": { amount: 80000, type: "INV" },
+            "other-cash-discount": { amount: 0, type: "CN", editable: true },
+            "special-cash-discount": { enabled: true, lower: 1100000, upper: 1500000, max: 40000, amount: 0, type: "INV" }
+        }
+    },
+
+    // 011 — PV multi-permit (Private + Passenger, default Passenger), VLTD only for Passenger, RTO Yellow Tape auto-added
+    pvPassengerTape: {
+        permit: [
+            { type: "Private", default: false },
+            { type: "Passenger", default: true }
+        ],
+        receivables: {
+            exShowroom: 1520000,
+            insurance: [{
+                permit: "Passenger",
+                default: true,
+                companies: [
+                    {
+                        insCo: "ICICI Lombard",
+                        default: true,
+                        price: [
+                            { head: "Basic OD TP", price: 32500, Nature: "M" },
+                            { head: "Nil Depreciation", price: 7200, Nature: "M" },
+                            { head: "Consumables", price: 1650, Nature: "M" },
+                            { head: "Passenger Cover", price: 4800, Nature: "O" }
+                        ]
+                    },
+                    {
+                        insCo: "USGI",
+                        default: false,
+                        price: [
+                            { head: "Basic OD TP", price: 33800, Nature: "M" },
+                            { head: "Nil Depreciation", price: 7400, Nature: "M" },
+                            { head: "Passenger Cover", price: 5200, Nature: "O" }
+                        ]
+                    }
+                ]
+            }],
+            RTO: {
+                TRC: 1500,
+                TAX: [
+                    { permit: "Private", default: false, amount: 140000 },
+                    { permit: "Passenger", default: true, amount: 165000 }
+                ]
+            },
+            accessories: [
+                { item: "Seat Cover MPV", mrp: 8100, discount: 800, code: "SC-PV4" },
+                { item: "Floor Mat MPV", mrp: 3400, discount: 400, code: "FM-PV4" }
+            ],
+            shield: [
+                { title: "4th Year", price: 17990, default: true },
+                { title: "No Shield", price: 0, default: false }
+            ],
+            rsa: [
+                { title: "2 Year", price: 2799, default: true },
+                { title: "No RSA", price: 0, default: false }
+            ],
+            vltd: { permit: "Passenger", price: 3400 },
+            kazam: 0,
+            incidental: 2500,
+            "rto-tape": 1499,
+            fastag: 600,
+            COD: 0,
+            "charger-swapping": [],
+            tcs: { limit: 1000000, rate: 1.0 }
+        },
+        deductibles: {
+            "oem-schemes": [
+                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 30000, type: "INV" }
+            ],
+            "dealer-scheme": { amount: 12000, type: "CN" },
+            "accessory-scheme": { amount: 4000, type: "INV" },
+            "shield-scheme": { amount: 1500, type: "CN" },
+            "corp-scheme": [
+                { name: "Corporate Discount", amount: 26000, type: "INV" }
+            ],
+            "exchange-scheme": [
+                { name: "Exchange Bonus", amount: 18000, type: "CN1" },
+                { name: "Green Bonus", amount: 12000, type: "CN1" }
+            ],
+            "other-cash-discount": { amount: 0, type: "CN", editable: true },
+            "special-cash-discount": { enabled: true, lower: 1300000, upper: 1700000, max: 40000, amount: 0, type: "INV" }
+        }
+    },
+
+    // 012 — PV with permit-driven Insurance AND RTO (Passenger/Taxi), VLTD, TRC/TAX combos, standard CN/OEM validation
+    pvPermitInsRto: {
+        permit: [
+            { type: "Private", default: false },
+            { type: "Passenger", default: true }
+        ],
+        receivables: {
+            exShowroom: 1120000,
+            insurance: [{
+                permit: "Passenger",
+                default: true,
+                companies: [
+                    {
+                        insCo: "ICICI Lombard",
+                        default: true,
+                        price: [
+                            { head: "Basic OD TP", price: 29500, Nature: "M" },
+                            { head: "Nil Depreciation", price: 5800, Nature: "M" },
+                            { head: "Passenger Cover", price: 5200, Nature: "O" }
+                        ]
+                    },
+                    {
+                        insCo: "USGI",
+                        default: false,
+                        price: [
+                            { head: "Basic OD TP", price: 30500, Nature: "M" },
+                            { head: "Nil Depreciation", price: 6000, Nature: "M" },
+                            { head: "Passenger Cover", price: 5400, Nature: "O" }
+                        ]
+                    }
+                ]
+            }],
+            RTO: { TRC: 2000, TAX: [{ permit: "Passenger", default: true, amount: 145000 }] },
+            accessories: [
+                { item: "Taxi Roof Light", mrp: 2100, discount: 200, code: "TX-RL" },
+                { item: "Seat Cover Taxi", mrp: 5100, discount: 500, code: "SC-PV5" }
+            ],
+            shield: [
+                { title: "4th Year", price: 14990, default: true },
+                { title: "No Shield", price: 0, default: false }
+            ],
+            rsa: [
+                { title: "1 Year", price: 1999, default: true },
+                { title: "No RSA", price: 0, default: false }
+            ],
+            vltd: { permit: "Passenger", price: 4250 },
+            kazam: 0,
+            incidental: 2500,
+            "rto-tape": 1499,
+            fastag: 600,
+            COD: 0,
+            "charger-swapping": [],
+            tcs: { limit: 1000000, rate: 1.0 }
+        },
+        deductibles: {
+            "oem-schemes": [
+                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 25000, type: "INV" }
+            ],
+            "dealer-scheme": { amount: 8000, type: "CN" },
+            "accessory-scheme": { amount: 2000, type: "INV" },
+            "shield-scheme": { amount: 1000, type: "CN" },
+            "corp-scheme": [
+                { name: "Corporate Discount", amount: 15000, type: "INV" }
+            ],
+            "exchange-scheme": [
+                { name: "Exchange Bonus", amount: 15000, type: "CN1" }
+            ],
+            "other-cash-discount": { amount: 0, type: "CN", editable: true },
+            "special-cash-discount": { enabled: true, lower: 1000000, upper: 1300000, max: 25000, amount: 0, type: "INV" }
+        }
+    },
+
+    // 013 — LMM with Kazam charging kit, charger-swapping add-on with corresponding C2 discount, small TCS config
+    lmmKazam: {
+        permit: [{ type: "LMM", default: true }],
+        receivables: {
+            exShowroom: 312000,
+            insurance: [{
+                permit: "LMM",
+                default: true,
+                companies: [
+                    {
+                        insCo: "USGI",
+                        default: true,
+                        price: [
+                            { head: "Basic OD TP", price: 8500, Nature: "M" },
+                            { head: "Nil Depreciation", price: 1800, Nature: "M" },
+                            { head: "Consumables", price: 450, Nature: "M" },
+                            { head: "RTI", price: 1200, Nature: "O" }
+                        ]
+                    },
+                    {
+                        insCo: "ICICI Lombard",
+                        default: false,
+                        price: [
+                            { head: "Basic OD TP", price: 8200, Nature: "M" },
+                            { head: "Nil Depreciation", price: 1750, Nature: "M" },
+                            { head: "RTI", price: 1100, Nature: "O" }
+                        ]
+                    }
+                ]
+            }],
+            RTO: { TRC: 800, TAX: [{ permit: "LMM", default: true, amount: 18500 }] },
+            accessories: [
+                { item: "Welcome Kit", mrp: 589, discount: 0, code: "WK-LMM2" },
+                { item: "Seat Cover", mrp: 2100, discount: 200, code: "SC-LMM2" },
+                { item: "Floor Mat", mrp: 890, discount: 0, code: "FM-LMM2" }
+            ],
+            shield: [
+                { title: "4th Year", price: 4990, default: true },
+                { title: "No Shield", price: 0, default: false }
+            ],
+            rsa: [
+                { title: "1 Year", price: 699, default: true },
+                { title: "No RSA", price: 0, default: false }
+            ],
+            vltd: null,
+            kazam: 6798,
+            incidental: 1200,
+            "rto-tape": 0,
+            fastag: 0,
+            COD: 2500,
+            "charger-swapping": [
+                { title: "No Swapping @ ₹0", amount: 0, default: true },
+                { title: "NCH to 7.2 kW @ ₹12,500", amount: 12500, default: false }
+            ],
+            tcs: { limit: 1000000, rate: 1.0 }
+        },
+        deductibles: {
+            "oem-schemes": [
+                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 12000, type: "INV" }
+            ],
+            "dealer-scheme": { amount: 3000, type: "CN" },
+            "accessory-scheme": { amount: 500, type: "INV" },
+            "shield-scheme": { amount: 500, type: "CN" },
+            "corp-scheme": [
+                { name: "Corporate Discount", amount: 8000, type: "INV" },
+                { name: "Loyalty Bonus", amount: 5000, type: "INV" }
+            ],
+            "exchange-scheme": [
+                { name: "Exchange Bonus", amount: 7000, type: "CN1" }
+            ],
+            "fame-subsidy": { amount: 0, type: "INV" },
+            "charger-swapping-discount": { amount: 4000, type: "CN2" },
+            "other-cash-discount": { amount: 0, type: "CN", editable: true },
+            "special-cash-discount": { enabled: true, lower: 250000, upper: 400000, max: 15000, amount: 0, type: "INV" }
+        }
     }
 };
 
@@ -2065,48 +2826,38 @@ function toggleRowVisibility() {
 // ============================================================
 
 function renderGroupADiscounts(pricing) {
-    let container = $('#group_a_dynamic_container');
-    
-    if (!container.length) {
-        let schemes = pricing.deductibles["oem-schemes"] || [];
-        let activeSchemes = schemes.filter(s => s.amount > 0);
-        
-        // Clear all hidden fields first
-        $('#cash_scheme_oem').val('');
-        $('#cash_scheme_oem_type').val('');
-        $('#csd_discount').val('');
-        $('#csd_discount_type').val('');
-        $('#fame_subsidy').val('');
-        $('#fame_subsidy_type').val('');
-        
-        if (activeSchemes.length > 0) {
-            let firstScheme = activeSchemes[0];
-            $('#group_a_select').val(firstScheme.key).trigger('change');
-            $('#group_a_type').val(firstScheme.type);
-            $('#group_a_amount').val(firstScheme.amount);
-            
-            // ★★★ CRITICAL: Populate the hidden field ★★★
-            $('#' + firstScheme.key).val(firstScheme.amount);
-            $('#' + firstScheme.key + '_type').val(firstScheme.type);
-            
-            if (activeSchemes.length > 1) {
-                let additional = activeSchemes.slice(1).map(s => s.label + ' (' + s.type + ')').join(', ');
-                let $label = $('#group_a_select').closest('td.cell-label');
-                $label.html(firstScheme.label + 
-                    `<div style="font-size:8px; color:#666; font-weight:normal;">+ ${additional}</div>`
-                );
-                
-                // Populate additional schemes too
-                activeSchemes.slice(1).forEach(function(scheme) {
-                    $('#' + scheme.key).val(scheme.amount);
-                    $('#' + scheme.key + '_type').val(scheme.type);
-                });
-            } else {
-                $('#group_a_select').closest('td.cell-label').html(firstScheme.label);
-            }
-        }
-        return;
-    }
+
+    // User agar manually edit kar raha hai to overwrite mat karo
+    if ($('#group_a_amount').is(':focus')) return;
+
+    let schemes = pricing.deductibles["oem-schemes"] || [];
+    let activeSchemes = schemes.filter(s => Number(s.amount) > 0);
+
+    // Clear hidden fields
+    $('#cash_scheme_oem, #csd_discount, #fame_subsidy').val('');
+    $('#cash_scheme_oem_type, #csd_discount_type, #fame_subsidy_type').val('');
+
+    if (!activeSchemes.length) return;
+
+    let firstScheme = activeSchemes[0];
+
+    // Set visible values
+    $('#group_a_select').val(firstScheme.key);
+    $('#group_a_type').val(firstScheme.type);
+    $('#group_a_amount').val(firstScheme.amount);
+
+    // Hidden values
+    $('#' + firstScheme.key).val(firstScheme.amount);
+    $('#' + firstScheme.key + '_type').val(firstScheme.type);
+
+    // Additional schemes
+    activeSchemes.slice(1).forEach(function (scheme) {
+        $('#' + scheme.key).val(scheme.amount);
+        $('#' + scheme.key + '_type').val(scheme.type);
+    });
+
+    // Trigger after everything is set
+    $('#group_a_amount').trigger('change');
 }
 
 // ============================================================
@@ -2157,7 +2908,7 @@ $('#btnFetchMock').click(function () {
         Swal.fire({
             icon: 'error',
             title: 'Invalid Enquiry',
-            text: 'Please enter a valid enquiry number (001-005)'
+            text: 'Please enter a valid enquiry number (001-013)'
         });
         return;
     }
@@ -2179,6 +2930,8 @@ $('#btnFetchMock').click(function () {
     // ---- Populate Customer Details ----
     $('#customer_name').val(enquiry.customer.name);
     $('#mobile').val(enquiry.customer.mobile);
+    $('#careof').val(enquiry.customer.careOf || '').trigger('change');
+    $('#careofname').val(enquiry.customer.careOfName || '');
     $('#enquiry_id').val(enquiry.enquiry_no);
     $('#enquiry_no_hidden').val(enquiry.enquiry_no);
 
@@ -2399,6 +3152,8 @@ $('#btnResetMock').click(function () {
     $('#mock_enquiry_no').val('');
     $('#customer_name').val('');
     $('#mobile').val('');
+    $('#careof').val('').trigger('change');
+    $('#careofname').val('');
     $('#segment').val('');
     $('#model').val('');
     $('#variant').val('');
@@ -2628,26 +3383,31 @@ setupGroupDiscount('group_c', ['exchange_bonus', 'green_bonus', 'welcome_bonus']
 
 // ---- Group A Select change (static fallback) ----
 $('#group_a_select').on('change', function () {
-    let value = $(this).val();
-    let $type = $('#group_a_type');
+
+    const value = $(this).val();
+    const $type = $('#group_a_type');
+
     $type.empty();
+
     switch (value) {
+
         case 'cash_scheme_oem':
             $type.append('<option value="INV">INV</option>');
             $type.append('<option value="CN">CN</option>');
             break;
+
         case 'csd_discount':
             $type.append('<option value="INV">INV</option>');
             break;
+
         case 'fame_subsidy':
             $type.append('<option value="INV">INV</option>');
             break;
     }
-    $type.trigger('change');
-});
 
-$(document).ready(function () {
-    $('#group_a_select').trigger('change');
+    // setupGroupDiscount ko dobara sync karne ke liye
+    $type.trigger('change');
+    $('#group_a_amount').trigger('change');
 });
 
 // ============================================================
