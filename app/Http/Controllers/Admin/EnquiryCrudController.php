@@ -28,6 +28,13 @@ class EnquiryCrudController extends CrudController
 {
     use CreateOperation, DeleteOperation, ListOperation, UpdateOperation;
 
+    /**
+     * Bulk-loaded cache of sc_code => display_name (from xlr8_admin_person),
+     * populated once per page/chunk before mapData() runs, so we don't fire
+     * one query per row.
+     */
+    private array $personNameCache = [];
+
     public function setup()
     {
         CRUD::setModel(Enquiry::class);
@@ -87,7 +94,10 @@ class EnquiryCrudController extends CrudController
         // Determine the mapping format type
         $mapType = in_array($listType, ['assigned_long', 'unassigned_long']) ? 'long' : (in_array($listType, ['assigned_quick', 'unassigned_quick']) ? 'quick' : (in_array($listType, ['reference', 'virtual', 'whatsapp']) ? $listType : 'all'));
 
-        $gridData = $query->skip($startRow)->take($limit)->get()
+        $enquiries = $query->skip($startRow)->take($limit)->get();
+        $this->personNameCache = $this->personDisplayNames($enquiries->pluck('sc_code')->all());
+
+        $gridData = $enquiries
             ->map(fn($e, $i) => $this->mapData($e, $startRow + $i, $mapType))->all();
 
         return response()->json(['rows' => $gridData, 'lastRow' => $total]);
@@ -121,10 +131,24 @@ class EnquiryCrudController extends CrudController
 
         $mapType = in_array($listType, ['assigned_long', 'unassigned_long']) ? 'long' : (in_array($listType, ['assigned_quick', 'unassigned_quick']) ? 'quick' : (in_array($listType, ['reference', 'virtual', 'whatsapp']) ? $listType : 'all'));
 
-        $columns = array_values(array_filter(
+        // All possible columns for this list type (minus the Action column, which never gets exported)
+        $allColumns = array_values(array_filter(
             $this->getColumns($mapType),
             fn($col) => ($col['field'] ?? null) !== 'action'
         ));
+
+        // Columns actually visible on the page right now, sent from the grid (in display order).
+        // If none are sent (e.g. old link / direct hit), fall back to all columns like before.
+        $visibleFields = json_decode((string) $request->input('columns', '[]'), true) ?: [];
+
+        if (!empty($visibleFields)) {
+            $columnsByField = collect($allColumns)->keyBy('field');
+            $columns = array_values(array_filter(
+                array_map(fn($field) => $columnsByField->get($field), $visibleFields)
+            ));
+        } else {
+            $columns = $allColumns;
+        }
 
         return response()->streamDownload(function () use ($query, $columns, $mapType) {
             $out = fopen('php://output', 'w');
@@ -133,6 +157,8 @@ class EnquiryCrudController extends CrudController
 
             $serial = 0;
             $query->chunk(500, function ($chunk) use ($out, &$serial, $columns, $mapType) {
+                $this->personNameCache = $this->personDisplayNames($chunk->pluck('sc_code')->all());
+
                 foreach ($chunk as $e) {
                     $rowData = $this->mapData($e, $serial, $mapType);
                     $serial++;
@@ -190,6 +216,8 @@ class EnquiryCrudController extends CrudController
             ->limit(500)
             ->get();
 
+        $this->personNameCache = $this->personDisplayNames($enquiries->pluck('sc_code')->all());
+
         return view($view, [
             'title' => $title,
             'segments' => OrgService::segments(),
@@ -198,6 +226,27 @@ class EnquiryCrudController extends CrudController
                 'data' => $enquiries->map(fn($e, $i) => $this->mapData($e, $i, $type))->values()
             ]
         ]);
+    }
+
+    /**
+     * Fetch display_name from xlr8_admin_person for the given sc_codes in ONE query,
+     * returned as [sc_code => display_name].
+     *
+     * NOTE: Assumes the matching column on xlr8_admin_person is `person_code`.
+     * If sc_code actually matches a different column (e.g. `code`), change
+     * 'person_code' below to that column name.
+     */
+    private function personDisplayNames(array $codes): array
+    {
+        $codes = array_values(array_unique(array_filter($codes, fn($c) => !empty($c))));
+        if (empty($codes)) {
+            return [];
+        }
+
+        return DB::table('xlr8_admin_person')
+            ->whereIn('person_code', $codes)
+            ->pluck('display_name', 'person_code')
+            ->toArray();
     }
 
     private function mapData($e, $i, $type)
@@ -308,7 +357,7 @@ class EnquiryCrudController extends CrudController
                 'tehsil' => $e->tehsil ?? '—',
                 'district' => $e->district ?? '—',
                 'city' => $e->city ?? '—',
-                'sc_code' => $e->sc_code ?? '—',
+                'sc_code' => $this->personNameCache[$e->sc_code] ?? $e->sc_code ?? '—',
                 'dealer_branch' => $e->dealer_branch ?? '—',
                 'dealer_location' => $e->dealer_location ?? '—',
 
@@ -418,7 +467,7 @@ class EnquiryCrudController extends CrudController
             ['field' => 'x8_enquiry_assign_date', 'headerName' => 'X8 Enquiry Assign Date'],
             ['field' => 'oem_enquiry_no', 'headerName' => 'OEM Enquiry No.'],
             ['field' => 'oem_enquiry_date', 'headerName' => 'OEM Enquiry Date'],
-            ['field' => 'oem_enquiry_assign_date', 'headerName' => 'OEM Enquiry Assign Date'], 
+            ['field' => 'oem_enquiry_assign_date', 'headerName' => 'OEM Enquiry Assign Date'],
         ];
 
         // Dynamically add only the relevant columns to clear out "Unnecessary Fields"
@@ -429,14 +478,14 @@ class EnquiryCrudController extends CrudController
                 ['field' => 'oem_quick_enquiry_assign_date', 'headerName' => 'OEM Quick Enquiry Assign Date'],
             ]);
             // Excluded OEM Long columns & Quick Enquiry Status
-            
+
         } elseif ($type === 'quick') {
             $baseCols = array_merge($baseCols, [
                 ['field' => 'oem_quick_enquiry_no', 'headerName' => 'OEM Quick Enquiry No.'],
                 ['field' => 'oem_quick_enquiry_date', 'headerName' => 'OEM Quick Enquiry Date'],
             ]);
             // Excluded OEM Quick Assign Date, Quick Status, and all Long columns
-            
+
         } elseif ($type === 'long') {
             $baseCols = array_merge($baseCols, [
                 ['field' => 'oem_long_enquiry_no', 'headerName' => 'OEM Long Enquiry No.'],

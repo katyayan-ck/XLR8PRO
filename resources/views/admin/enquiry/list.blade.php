@@ -470,10 +470,17 @@
 
             // Exports
             document.getElementById('exportCsv').addEventListener('click', () => {
+                // Same columns, same order as what's currently displayed on the page
+                const visibleFields = gridApi.getAllDisplayedColumns()
+                    .map(col => col.getColDef())
+                    .filter(col => col.field && col.field !== 'action')
+                    .map(col => col.field);
+
                 const params = new URLSearchParams({
                     searchText: currentSearchText,
                     highlightFilter: currentHighlightFilter,
-                    filterModel: JSON.stringify(gridApi.getFilterModel())
+                    filterModel: JSON.stringify(gridApi.getFilterModel()),
+                    columns: JSON.stringify(visibleFields)
                 });
                 window.location.href = '{{ backpack_url('enquiries/export') }}?' + params.toString();
             });
