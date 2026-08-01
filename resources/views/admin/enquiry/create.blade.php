@@ -29,6 +29,7 @@
             -webkit-appearance: none;
             margin: 0;
         }
+
         /* Firefox */
         input[type=number] {
             -moz-appearance: textfield;
@@ -402,7 +403,7 @@
                                     {{-- Zip Code --}}
                                     <div class="col-md-3 mb-3">
                                         <label class="form-label">
-                                            Zip Code <small class="text-muted">(Optional)</small>
+                                            Pin Code <small class="text-muted">(Optional)</small>
                                         </label>
                                         <input type="text" id="zipcode" name="zipcode" maxlength="6"
                                             class="form-control" value="{{ old('zipcode', $enquiry->zipcode ?? '') }}">
@@ -411,19 +412,19 @@
                                     {{-- Tehsil --}}
                                     <div class="col-md-3 mb-3">
                                         <label class="form-label">
-                                            Tehsil <small class="text-muted">(Optional)</small>
+                                            Tehsil<span class="text-danger">*</span>
                                         </label>
                                         <input type="text" id="tehsil" name="tehsil" class="form-control"
-                                            value="{{ old('tehsil', $enquiry->tehsil ?? '') }}" readonly>
+                                            value="{{ old('tehsil', $enquiry->tehsil ?? '') }}" readonly required>
                                     </div>
 
                                     {{-- District --}}
                                     <div class="col-md-3 mb-3">
                                         <label class="form-label">
-                                            District <small class="text-muted">(Optional)</small>
+                                            District<span class="text-danger">*</span>
                                         </label>
                                         <input type="text" id="district" name="district" class="form-control"
-                                            value="{{ old('district', $enquiry->district ?? '') }}" readonly>
+                                            value="{{ old('district', $enquiry->district ?? '') }}" readonly required>
                                     </div>
 
                                     {{-- City --}}
@@ -525,10 +526,10 @@
                                     {{-- Follow Up Time --}}
                                     <div class="col-md-4 mb-3">
                                         <label class="form-label">
-                                            Follow Up Time <span class="text-danger">*</span>
+                                            Follow Up Time 
                                         </label>
                                         <input type="time" name="followup_time" class="form-control"
-                                            value="{{ old('followup_time', $enquiry->followup_time ?? '') }}" required>
+                                            value="{{ old('followup_time', $enquiry->followup_time ?? '') }}" >
                                     </div>
                                 </div>
                             </div>
@@ -964,7 +965,7 @@
             $modelCode.add($variantCode).add($colorCode).add($plannedCampaign).add($sourceCode).add($subSource).add(
                 '#application').prop('disabled', true);
             $('#bevSection, #commercialSection, #exchangeFields')
-        .hide(); // exchangeVehicleSection renamed to match ID
+                .hide(); // exchangeVehicleSection renamed to match ID
 
             /* Date Pickers */
             let maxDob = new Date();
@@ -1047,12 +1048,24 @@
             }).trigger('change');
 
             // Purchase Type & Exchange Logic
-            $purchaseType.on('change', function() {
+            $purchaseType.on('change', function(e) {
                 const isExchange = ['Exchange Buy', 'Additional Buy', 'Scrappage'].includes($(this).val());
+
                 $('#exchangeFields').toggleClass('d-none', !isExchange).toggleClass('d-flex', isExchange);
-                $('#exchange_make, #exchange_model, #vehicle_no, #manufacturing_year, #odometer_reading, #expected_price, #offered_price, #exchange_bonus')
-                    .prop('required', isExchange).val(isExchange ? undefined : '');
-                if (!isExchange) $('#difference').val('');
+
+                // FIXED: Using the correct snake_case IDs from your database/HTML
+                const $exchangeInputs = $(
+                    '#brand_make, #brand_model, #vehicle_no, #make_year, #odo_reading, #expected_price, #offered_price, #exchange_bonus'
+                    );
+
+                $exchangeInputs.prop('required', isExchange);
+
+                // Only clear the values if the user manually changes the dropdown away from Exchange.
+                // e.originalEvent detects if a human clicked it, preventing it from wiping data on page load.
+                if (!isExchange && e.originalEvent) {
+                    $exchangeInputs.val('');
+                    $('#difference').val('');
+                }
             }).trigger('change');
 
             // Application Type
