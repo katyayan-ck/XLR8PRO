@@ -24,6 +24,7 @@ use App\Models\Module\Finance\XFinance;
 use App\Models\Module\Insurance\XlInsurance;
 use App\Models\Module\Insurance\XlInsurer;
 use App\Models\PinCodes;
+use App\Models\CRM\Enquiry;
 use App\Models\User;
 use App\Models\Vehicle\Accessory;
 use App\Models\Vehicle\Color;
@@ -10742,6 +10743,7 @@ class BookingCrudController extends CrudController
             $booking->segment_code
         )->first();
 
+
         $model = VehicleModel::where(
             'code',
             $booking->model_code
@@ -10865,11 +10867,18 @@ class BookingCrudController extends CrudController
 
         $chassisImage = $booking->getFirstMediaUrl('chassis_image') ?: '';
 
+        $enquiry = null;
+
+        if (!empty($booking->enq_no)) {
+            $enquiry = Enquiry::find($booking->enq_no);
+        }
+
         return view(
             'admin.booking.otf-form',
             compact(
                 'booking',
                 'finance',
+                'enquiry',
                 'quotationData',
                 'finalData',
                 'otfData',
@@ -10931,9 +10940,13 @@ class BookingCrudController extends CrudController
         // Get all data except files and tokens
         $data = $request->except(['_token', '_method', 'chassis_image']);
 
+        $data['dsa_location'] = $request->dsa_location;
+
         // Save ALL fields including price and discount data
         $booking->final_data = json_encode($data);
         $booking->gstn = strtoupper(trim($request->gstn));
+        $booking->pan_no = strtoupper(trim($request->pan_no));
+        $booking->adhar_no = preg_replace('/\D/', '', $request->adhar_no);
         XlRto::updateOrCreate(
             ['bid' => $booking->id],
             [
@@ -10945,6 +10958,27 @@ class BookingCrudController extends CrudController
         $booking->consultant = $request->consultant;
         $booking->dms_no = $request->dms_no;
         $booking->dms_otf = $request->dms_otf;
+        $booking->b_cat = $request->b_cat;
+        $booking->dsa_id = $request->dsa_id;
+        $booking->buyer_type = $request->exchange;
+        // ================= Update Enquiry =================
+        $enquiry = null;
+
+        if (!empty($booking->enquiry_id)) {
+            $enquiry = \App\Models\CRM\Enquiry::find($booking->enquiry_id);
+        }
+
+        if (!$enquiry && !empty($booking->enquiry_no)) {
+            $enquiry = \App\Models\CRM\Enquiry::where('enquiry_no', $booking->enquiry_no)->first();
+        }
+
+        if ($enquiry) {
+            $enquiry->update([
+                'zipcode'  => $request->pincode,
+                'tehsil'   => $request->customer_tehsil,
+                'district' => $request->customer_district,
+            ]);
+        }
         $booking->save();
 
         return redirect()

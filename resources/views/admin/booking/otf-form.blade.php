@@ -9,6 +9,7 @@ use App\Services\OrgService;
 @push('after_styles')
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.5/css/lightbox.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <style>
     @media print {
         select {
@@ -126,6 +127,10 @@ use App\Services\OrgService;
     @media print {
         #accessories+.select2-container {
             display: none !important;
+        }
+
+        #accessories_count_print {
+            display: inline !important;
         }
 
         #accessories_print {
@@ -364,7 +369,7 @@ use App\Services\OrgService;
                         <div style="font-size:13px;">
                             Branch Office : 6th KM Stone, Ratangarh Road, Churu (Raj.)
                         </div>
-                        <h4 class="mt-2 mb-0 fw-bold text-uppercase">Vehicle Quotation</h4>
+                        <h4 class="mt-2 mb-0 fw-bold text-uppercase">Transaction Sheet</h4>
                     </div>
                     <div class="col-2 text-center">
                         <img src="{{ $mahindraLogo }}" style="max-width:110px; max-height:60px;">
@@ -497,17 +502,22 @@ use App\Services\OrgService;
                                 </tr>
                                 <tr>
                                     <td class="title">PAN No.</td>
-                                    <td><input type="text" name="pan_no" id="pan_no"
-                                            value="{{ old('pan_no', $otfData['pan_no'] ?? $booking->pan_no ?? '') }}"
+                                    <td>
+                                        <input type="text" name="pan_no" id="pan_no"
+                                            value="{{ old('pan_no', $booking->pan_no ?? ($otfData['pan_no'] ?? '')) }}"
                                             maxlength="10" style="text-transform:uppercase"
-                                            oninput="this.value=this.value.toUpperCase();"></td>
+                                            oninput="this.value=this.value.toUpperCase();">
+                                    </td>
                                 </tr>
+
                                 <tr>
                                     <td class="title">Aadhaar No.</td>
-                                    <td><input type="text" name="adhar_no" id="adhar_no"
-                                            value="{{ old('adhar_no', $otfData['adhar_no'] ?? $booking->adhar_no ?? '') }}"
+                                    <td>
+                                        <input type="text" name="adhar_no" id="adhar_no"
+                                            value="{{ old('adhar_no', $booking->adhar_no ?? ($otfData['adhar_no'] ?? '')) }}"
                                             maxlength="12" inputmode="numeric"
-                                            oninput="this.value=this.value.replace(/\D/g,'').slice(0,12);"></td>
+                                            oninput="this.value=this.value.replace(/\D/g,'').slice(0,12);">
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td class="title">Driving License No.</td>
@@ -558,8 +568,11 @@ use App\Services\OrgService;
                                 </tr>
                                 <tr>
                                     <td class="title">Age of Nominee</td>
-                                    <td><input type="number" name="nominee_age" id="nominee_age" min="0" max="120"
-                                            value="{{ old('nominee_age', $otfData['nominee_age'] ?? '') }}"></td>
+                                    <td>
+                                        <input type="text" name="nominee_age" id="nominee_age" class="numeric-only"
+                                            min="0" max="120" maxlength="3"
+                                            value="{{ old('nominee_age', $otfData['nominee_age'] ?? '') }}">
+                                    </td>
                                 </tr>
                             </table>
 
@@ -596,20 +609,27 @@ use App\Services\OrgService;
                                 </tr>
                                 <tr>
                                     <td class="title">DSA Location</td>
-                                    <td><input type="text" id="dsa_location" readonly disabled></td>
+                                    <td><input type="text" id="dsa_location" name="dsa_location" readonly
+                                            value="{{ old('dsa_location', $otfData['dsa_location'] ?? '') }}">
                                 </tr>
                                 <tr>
                                     <td class="title">Exchange</td>
                                     <td>
                                         <select name="exchange" id="exchange">
-                                            <option value="NA" {{ old('exchange', $otfData['exchange'] ?? $booking->
-                                                buyer_type ?? '') == 'NA' ? 'selected' : '' }}>NA</option>
-                                            <option value="In-House" {{ old('exchange', $otfData['exchange'] ??
-                                                $booking->buyer_type ?? '') == 'In-House' ? 'selected' : '' }}>In-House
+                                            <option value="NA" {{ old('exchange', $booking->buyer_type ??
+                                                ($otfData['exchange'] ?? '')) == 'NA' ? 'selected' : '' }}>
+                                                NA
                                             </option>
-                                            <option value="Third Party" {{ old('exchange', $otfData['exchange'] ??
-                                                $booking->buyer_type ?? '') == 'Third Party' ? 'selected' : '' }}>Third
-                                                Party</option>
+
+                                            <option value="In-House" {{ old('exchange', $booking->buyer_type ??
+                                                ($otfData['exchange'] ?? '')) == 'In-House' ? 'selected' : '' }}>
+                                                In-House
+                                            </option>
+
+                                            <option value="Third Party" {{ old('exchange', $booking->buyer_type ??
+                                                ($otfData['exchange'] ?? '')) == 'Third Party' ? 'selected' : '' }}>
+                                                Third Party
+                                            </option>
                                         </select>
                                     </td>
                                 </tr>
@@ -625,8 +645,7 @@ use App\Services\OrgService;
                                 <tr>
                                     <td class="title">Accessories Items List</td>
                                     <td>
-                                        <div id="accessories_print"></div>
-                                        <select name="accessories[]" id="accessories" multiple style="display:none;">
+                                        <select name="accessories[]" id="accessories" multiple>
                                             @foreach($accessoryList as $accessory)
                                             <option value="{{ $accessory->part_no }}" data-price="{{ $accessory->ndp }}"
                                                 {{ in_array($accessory->part_no, $selectedAccessories ?? []) ?
@@ -635,6 +654,7 @@ use App\Services\OrgService;
                                             </option>
                                             @endforeach
                                         </select>
+                                        <span id="accessories_count_print" style="display:none;"></span>
                                         <input type="hidden" id="accessories_amount" name="accessories_amount"
                                             value="{{ old('accessories_amount', $otfData['accessories_amount'] ?? '0.00') }}">
                                     </td>
@@ -676,22 +696,26 @@ use App\Services\OrgService;
                                 </tr>
                                 <tr>
                                     <td class="title">Customer Tehsil</td>
-                                    <td><input type="text" name="customer_tehsil" id="customer_tehsil"
-                                            value="{{ old('customer_tehsil', $otfData['customer_tehsil'] ?? '') }}">
+                                    <td>
+                                        <input type="text" name="customer_tehsil"
+                                            value="{{ old('customer_tehsil', $otfData['customer_tehsil'] ?? $enquiry?->tehsil ?? '') }}">
                                     </td>
                                 </tr>
+
                                 <tr>
                                     <td class="title">Customer District</td>
-                                    <td><input type="text" name="customer_district" id="customer_district"
-                                            value="{{ old('customer_district', $otfData['customer_district'] ?? '') }}">
+                                    <td>
+                                        <input type="text" name="customer_district"
+                                            value="{{ old('customer_district', $otfData['customer_district'] ?? $enquiry?->district ?? '') }}">
                                     </td>
                                 </tr>
+
                                 <tr>
                                     <td class="title">Pincode</td>
-                                    <td><input type="text" name="pincode" id="pincode"
-                                            value="{{ old('pincode', $otfData['pincode'] ?? $booking->pincode ?? '') }}"
-                                            maxlength="6" pattern="[0-9]{6}" inputmode="numeric"
-                                            oninput="this.value=this.value.replace(/\D/g,'').slice(0,6);"></td>
+                                    <td>
+                                        <input type="text" name="pincode" class="numeric-only" maxlength="6"
+                                            value="{{ old('pincode', $otfData['pincode'] ?? $enquiry?->zipcode ?? '') }}">
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td class="title">Customer Contact Number</td>
@@ -703,11 +727,19 @@ use App\Services\OrgService;
                                     <td>
                                         <select name="b_cat" id="b_cat">
                                             <option value="Individual" {{ old('b_cat', $otfData['b_cat'] ?? $booking->
-                                                b_cat ?? '') == 'Individual' ? 'selected' : '' }}>Individual</option>
+                                                b_cat ?? '') == 'Individual' ? 'selected' : '' }}>
+                                                Individual
+                                            </option>
+
                                             <option value="CSD-CPC" {{ old('b_cat', $otfData['b_cat'] ?? $booking->b_cat
-                                                ?? '') == 'CSD-CPC' ? 'selected' : '' }}>CSD-CPC</option>
+                                                ?? '') == 'CSD-CPC' ? 'selected' : '' }}>
+                                                CSD-CPC
+                                            </option>
+
                                             <option value="Corporate" {{ old('b_cat', $otfData['b_cat'] ?? $booking->
-                                                b_cat ?? '') == 'Corporate' ? 'selected' : '' }}>Corporate</option>
+                                                b_cat ?? '') == 'Corporate' ? 'selected' : '' }}>
+                                                Corporate
+                                            </option>
                                         </select>
                                     </td>
                                 </tr>
@@ -738,7 +770,7 @@ use App\Services\OrgService;
                                 </tr>
                                 <tr>
                                     <td class="title">Date of Birth</td>
-                                    <td><input type="date" name="dob" id="dob"
+                                    <td><input type="text" name="dob" id="dob" class="date-picker"
                                             value="{{ old('dob', $otfData['dob'] ?? $booking->c_dob ?? '') }}"></td>
                                 </tr>
                                 <tr>
@@ -755,9 +787,10 @@ use App\Services\OrgService;
                                         </select>
                                     </td>
                                 </tr>
-                                <tr>
+                                <tr id="anniversary_row">
                                     <td class="title">Date of Anniversary</td>
-                                    <td><input type="date" name="anniversary_date" id="anniversary_date"
+                                    <td><input type="text" name="anniversary_date" id="anniversary_date"
+                                            class="date-picker"
                                             value="{{ old('anniversary_date', $otfData['anniversary_date'] ?? $booking->anniversary_date ?? '') }}">
                                     </td>
                                 </tr>
@@ -774,15 +807,19 @@ use App\Services\OrgService;
                                         <select name="retail_category" id="retail_category">
                                             <option value="">Select Retail Category</option>
                                             <option value="Normal" {{ old('retail_category', $otfData['retail_category']
-                                                ?? '' )=='Normal' ? 'selected' : '' }}>Normal</option>
+                                                ?? '' )=='Normal' ? 'selected' : '' }}>
+                                                Normal
+                                            </option>
                                             <option value="ZACO" {{ old('retail_category', $otfData['retail_category']
-                                                ?? '' )=='ZACO' ? 'selected' : '' }}>ZACO</option>
+                                                ?? '' )=='ZACO' ? 'selected' : '' }}>
+                                                ZACO
+                                            </option>
                                         </select>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="title">Segment</td>
-                                    <td><input type="text" id="segment_name" value="{{ $segment?->name ?? '' }}"
+                                    <td><input type="text" id="segment_code" value="{{ $segment?->name ?? '' }}"
                                             readonly></td>
                                 </tr>
                                 <tr>
@@ -1926,9 +1963,8 @@ use App\Services\OrgService;
                         <span id="accessories_print"
                             style="font-weight:normal; display:inline-block; min-width:70%; border-bottom:1px solid #000;">&nbsp;</span>
                     </div>
-
                     {{-- ================= NOTE ================= --}}
-                    <table class="bill-table note-box flex-grow-1">
+                    <table class="bill-table note-box flex-grow-1 mt-3">
                         <tr>
                             <td>
                                 <div style="font-weight:bold; font-size:8px; margin-bottom:3px;">NOTE:</div>
@@ -1972,6 +2008,7 @@ use App\Services\OrgService;
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.5/js/lightbox.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
 <script>
     const consultants = @json($salesconsultants);
@@ -2019,26 +2056,48 @@ function updateAccessoriesAmount() {
     $('#accessories_amount').val(total.toFixed(2));
     calculateQuotation();
 }
+function updateAccessoriesCount() {
+    const count = $('#accessories option:selected').length;
 
-function updateAccessoriesPrintText() {
-    let list = [];
-    $('#accessories option:selected').each(function () {
-        let name = $(this).text().trim();
-        let price = parseFloat($(this).data('price') || 0);
-        list.push(name.replace(/\(.*?\)/,'').trim() + ' (₹' + price.toLocaleString('en-IN') + ')');
-    });
-    $('#accessories_print').text(list.join(', '));
-    $('.select2-search__field').attr('placeholder', list.length + ' Accessories Selected');
+    $('#accessories_count_print').text(
+        count === 1 ? '1 Accessory' : `${count} Accessories`
+    );
 }
 
 $('#accessories').on('change', function () {
-    updateAccessoriesAmount();
+    updateAccessoriesCount();
     updateAccessoriesPrintText();
 });
 
 $(document).ready(function () {
+    updateAccessoriesCount();
+});
+
+function updateAccessoriesPrintText() {
+
+    let list = [];
+
+    $('#accessories option:selected').each(function () {
+        list.push($(this).text());
+    });
+
+    $('#accessories_print').html(
+        list.length ? list.join(', ') : '&nbsp;'
+    );
+}
+
+$('#accessories').on('change', function () {
     updateAccessoriesPrintText();
-    updateAccessoriesAmount();
+});
+
+$(document).ready(function () {
+
+    $('#accessories').select2({
+        placeholder: 'Select Accessories',
+        closeOnSelect: false
+    });
+
+    updateAccessoriesPrintText();
 });
 
 // ================= GROUP DISCOUNT SYNC =================
@@ -2600,5 +2659,41 @@ $('#do_number_ta').on('blur', function () {
         }
     });
 });
+function updateDsaLocation() {
+    let location = $('#dsa_id option:selected').data('location') || '';
+    $('#dsa_location').val(location);
+}
+
+$('#dsa_id').on('change', updateDsaLocation);
+
+$(document).ready(function () {
+    updateDsaLocation();
+});
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    flatpickr(".date-picker", {
+        dateFormat: "Y-m-d",
+        allowInput: false,
+        clickOpens: true
+    });
+
+});
+function toggleAnniversaryRow() {
+    const maritalStatus = document.getElementById('marital_status');
+    const anniversaryRow = document.getElementById('anniversary_row');
+
+    if (!maritalStatus || !anniversaryRow) return;
+
+    if (maritalStatus.value === 'Single' || maritalStatus.value === '') {
+        anniversaryRow.style.display = 'none';
+        document.getElementById('anniversary_date').value = '';
+    } else {
+        anniversaryRow.style.display = '';
+    }
+}
+
+document.getElementById('marital_status').addEventListener('change', toggleAnniversaryRow);
+toggleAnniversaryRow();
 </script>
 @endpush
