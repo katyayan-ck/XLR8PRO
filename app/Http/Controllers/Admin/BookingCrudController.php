@@ -10648,9 +10648,7 @@ class BookingCrudController extends CrudController
         ]);
 
         $salesconsultants = OrgService::getUsers(
-            'ALL',
-            'ALL',
-            'SLS'
+            desigCode: 'SLS_CONS'
         );
 
         $dsaList = XL_DSA_MASTER::orderBy('name')
@@ -10935,6 +10933,18 @@ class BookingCrudController extends CrudController
 
         // Save ALL fields including price and discount data
         $booking->final_data = json_encode($data);
+        $booking->gstn = strtoupper(trim($request->gstn));
+        XlRto::updateOrCreate(
+            ['bid' => $booking->id],
+            [
+                'rgn_no_type' => $request->registration_no_type,
+                'permit'      => $request->permit,
+            ]
+        );
+
+        $booking->consultant = $request->consultant;
+        $booking->dms_no = $request->dms_no;
+        $booking->dms_otf = $request->dms_otf;
         $booking->save();
 
         return redirect()

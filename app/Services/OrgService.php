@@ -520,7 +520,7 @@ class OrgService
         string $variantCode = 'ALL',
         ?string $userType = null,
         bool $primaryOnly = false
-    ): array {
+        ): array {
         // Base query with relations
         $query = User::with(['person', 'scopes', 'employee'])
             ->whereHas('employee');
