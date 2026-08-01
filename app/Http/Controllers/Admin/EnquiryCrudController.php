@@ -62,7 +62,6 @@ class EnquiryCrudController extends CrudController
         $filterModel = (array) $request->input('filterModel', []);
         $listType = trim((string) $request->input('list_type', 'all'));
 
-        // NEW: Detect which page is asking for data
         // Query the correct scope based on the page
         $query = match ($listType) {
             'reference' => Enquiry::reference(),
@@ -72,7 +71,6 @@ class EnquiryCrudController extends CrudController
             'unassigned_long' => Enquiry::unassignedLong(),
             'assigned_quick' => Enquiry::assignedQuick(),
             'unassigned_quick' => Enquiry::unassignedQuick(),
-            //default => Enquiry::formComplete()
             default => Enquiry::query(),
         };
 
@@ -110,7 +108,6 @@ class EnquiryCrudController extends CrudController
             'unassigned_long' => Enquiry::unassignedLong(),
             'assigned_quick' => Enquiry::assignedQuick(),
             'unassigned_quick' => Enquiry::unassignedQuick(),
-            //default => Enquiry::formComplete()
             default => Enquiry::query(),
         };
 
@@ -122,10 +119,6 @@ class EnquiryCrudController extends CrudController
 
         $query->orderByDesc('created_at');
 
-        // Same mapping used for the on-screen grid, so the CSV always has
-        // the exact same columns as whatever listing is currently shown
-        // (tehsil, district, and everything else) instead of a fixed
-        // minimal set that can drift out of sync with the grid.
         $mapType = in_array($listType, ['assigned_long', 'unassigned_long']) ? 'long' : (in_array($listType, ['assigned_quick', 'unassigned_quick']) ? 'quick' : (in_array($listType, ['reference', 'virtual', 'whatsapp']) ? $listType : 'all'));
 
         $columns = array_values(array_filter(
@@ -192,8 +185,7 @@ class EnquiryCrudController extends CrudController
         $this->crud->setListView($view);
 
         // Safely limit the data to 500 rows. 
-        // This prevents the "500 Internal Server Error" (Out of Memory) on older pages.
-        $enquiries = $query->with(['model', 'variant', 'color'])
+        $enquiries = $query->with(['segment', 'model', 'variant', 'color', 'campaign'])
             ->orderByDesc('created_at')
             ->limit(500)
             ->get();
@@ -225,18 +217,13 @@ class EnquiryCrudController extends CrudController
         $quotUrl = backpack_url("quotation-form/create?id={$e->id}");
 
         $actionBtns = '<a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a>';
-        
-        // Only show "Form" and "Process" buttons on the main list
+
         if ($type === 'all') {
             $actionBtns .= '<a href="' . $quotUrl . '" class="btn btn-success btn-sm">Form</a>';
-            
+
             $bookUrl = backpack_url("booking/create?enquiry_id={$e->id}");
             $actionBtns .= '<a href="' . $bookUrl . '" class="btn btn-warning btn-sm" title="Convert to Booking">Process</a>';
         }
-
-        // NEW: Add the Process button linking to Booking Creation
-        $bookUrl = backpack_url("booking/create?enquiry_id={$e->id}");
-        $actionBtns .= '<a href="' . $bookUrl . '" class="btn btn-warning btn-sm" title="Convert to Booking">Process</a>';
 
         $row = [
             'serial_no' => $i + 1,
@@ -283,6 +270,7 @@ class EnquiryCrudController extends CrudController
         } elseif ($type === 'virtual') {
             $row['virtual_no'] = $e->virtual_no ?? '—';
             $row['call_date_and_time'] = $c($e->virtual_call_date, 'd-m-Y H:i');
+            $row['call_date'] = $c($e->virtual_call_date, 'd-m-Y'); // ADDED Call Date Field
             $row['call_nature'] = $e->call_nature ?? '—';
             $row['remarks'] = $e->remarks ?? '—';
         } elseif ($type === 'whatsapp') {
@@ -372,7 +360,16 @@ class EnquiryCrudController extends CrudController
             ['field' => 'oem_booking_date', 'headerName' => 'OEM Booking Date'],
             ['field' => 'oem_otf_no', 'headerName' => 'OEM OTF No.'],
             ['field' => 'oem_test_drive_no', 'headerName' => 'OEM Test Drive No.'],
-            ['field' => 'action', 'headerName' => 'Action']
+            [
+                'field'         => 'action',
+                'headerName'    => 'Action',
+                'width'         => 220,
+                'minWidth'      => 220,
+                'pinned'        => 'right',
+                'sortable'      => false,
+                'filter'        => false,
+                'cellClass'     => 'text-center p-0'
+            ]
         ];
 
         // Specific grid override structures
@@ -394,6 +391,7 @@ class EnquiryCrudController extends CrudController
                 ['field' => 'serial_no', 'headerName' => 'S.No.'],
                 ['field' => 'virtual_no', 'headerName' => 'Virtual Number'],
                 ['field' => 'call_date_and_time', 'headerName' => 'Call Date & Time'],
+                ['field' => 'call_date', 'headerName' => 'Call Date'], // ADDED for virtual page
                 ['field' => 'call_nature', 'headerName' => 'Call Nature'],
                 ['field' => 'x8_enquiry_assign_date', 'headerName' => 'X8 Enquiry Assign Date'],
                 ['field' => 'mobile', 'headerName' => 'Customer Mobile'],
@@ -412,24 +410,41 @@ class EnquiryCrudController extends CrudController
                 ['field' => 'mobile', 'headerName' => 'Customer Mobile'],
             ], $commonEnd);
 
-        // Master Grid array applied for 'all', 'long', and 'quick' filters.
-        // Blade files will filter out what they do not need using .includes()
-        $cols = [
+        // Core base columns for All, Long, Quick (RENAMED to OEM Enquiry Assign Date)
+        $baseCols = [
             ['field' => 'serial_no', 'headerName' => 'S.No.'],
             ['field' => 'x8_enquiry_no', 'headerName' => 'X8 Enquiry No.'],
             ['field' => 'x8_enquiry_date', 'headerName' => 'X8 Enquiry Date'],
             ['field' => 'x8_enquiry_assign_date', 'headerName' => 'X8 Enquiry Assign Date'],
             ['field' => 'oem_enquiry_no', 'headerName' => 'OEM Enquiry No.'],
             ['field' => 'oem_enquiry_date', 'headerName' => 'OEM Enquiry Date'],
-            ['field' => 'oem_enquiry_assign_date', 'headerName' => 'OEM Assign Date'],
-            ['field' => 'oem_quick_enquiry_no', 'headerName' => 'OEM Quick Enquiry No.'],
-            ['field' => 'oem_quick_enquiry_date', 'headerName' => 'OEM Quick Enquiry Date'],
-            ['field' => 'oem_quick_enquiry_status', 'headerName' => 'OEM Quick Enquiry Status'],
-            ['field' => 'oem_quick_enquiry_assign_date', 'headerName' => 'OEM Quick Enquiry Assign Date'],
-            ['field' => 'oem_long_enquiry_no', 'headerName' => 'OEM Long Enquiry No.'],
-            ['field' => 'oem_long_enquiry_date', 'headerName' => 'OEM Long Enquiry Date'],
-            ['field' => 'oem_long_enquiry_assign_date', 'headerName' => 'OEM Long Enquiry Assign Date'],
+            ['field' => 'oem_enquiry_assign_date', 'headerName' => 'OEM Enquiry Assign Date'], 
         ];
+
+        // Dynamically add only the relevant columns to clear out "Unnecessary Fields"
+        if ($type === 'all') {
+            $baseCols = array_merge($baseCols, [
+                ['field' => 'oem_quick_enquiry_no', 'headerName' => 'OEM Quick Enquiry No.'],
+                ['field' => 'oem_quick_enquiry_date', 'headerName' => 'OEM Quick Enquiry Date'],
+                ['field' => 'oem_quick_enquiry_assign_date', 'headerName' => 'OEM Quick Enquiry Assign Date'],
+            ]);
+            // Excluded OEM Long columns & Quick Enquiry Status
+            
+        } elseif ($type === 'quick') {
+            $baseCols = array_merge($baseCols, [
+                ['field' => 'oem_quick_enquiry_no', 'headerName' => 'OEM Quick Enquiry No.'],
+                ['field' => 'oem_quick_enquiry_date', 'headerName' => 'OEM Quick Enquiry Date'],
+            ]);
+            // Excluded OEM Quick Assign Date, Quick Status, and all Long columns
+            
+        } elseif ($type === 'long') {
+            $baseCols = array_merge($baseCols, [
+                ['field' => 'oem_long_enquiry_no', 'headerName' => 'OEM Long Enquiry No.'],
+                ['field' => 'oem_long_enquiry_date', 'headerName' => 'OEM Long Enquiry Date'],
+                ['field' => 'oem_long_enquiry_assign_date', 'headerName' => 'OEM Enquiry Assign Date'], // RENAMED
+            ]);
+            // Excluded all Quick columns
+        }
 
         $midCols = [
             ['field' => 'segment_name', 'headerName' => 'Segment'],
@@ -453,7 +468,7 @@ class EnquiryCrudController extends CrudController
             ['field' => 'tehsil', 'headerName' => 'Tehsil'],
             ['field' => 'district', 'headerName' => 'District'],
             ['field' => 'city', 'headerName' => 'City'],
-            ['field' => 'sc_code', 'headerName' => 'SC Code'],
+            ['field' => 'sc_code', 'headerName' => 'Sales Consultant'], // RENAMED
             ['field' => 'dealer_branch', 'headerName' => 'Dealer Branch'],
             ['field' => 'dealer_location', 'headerName' => 'Dealer Location'],
             ['field' => 'followup_type', 'headerName' => 'Followup Type'],
@@ -468,7 +483,7 @@ class EnquiryCrudController extends CrudController
             ['field' => 'marriage_date', 'headerName' => 'Marriage Date'],
             ['field' => 'age_group', 'headerName' => 'Age Group'],
             ['field' => 'usage_area', 'headerName' => 'Usage Area'],
-            ['field' => 'km_travelled_daily', 'headerName' => 'KM Daily'],
+            ['field' => 'km_travelled_daily', 'headerName' => 'KM Travelled Daily'], // RENAMED
             ['field' => 'application_type', 'headerName' => 'Application Type'],
             ['field' => 'application', 'headerName' => 'Application'],
             ['field' => 'pincode', 'headerName' => 'Pincode'],
@@ -481,7 +496,16 @@ class EnquiryCrudController extends CrudController
             ['field' => 'consider_variant', 'headerName' => 'Consideration Variant']
         ];
 
-        return array_merge($cols, $midCols, $commonEnd);
+        // Clean up "unnecessary fields" based on type to declutter customise headers menu
+        if ($type === 'quick') {
+            $remove = ['drivetrain', 'seating', 'tehsil', 'district', 'occupation_sub_type', 'company_name', 'dob', 'marital_status', 'marriage_date', 'age_group', 'usage_area', 'km_travelled_daily', 'application_type', 'application', 'pincode', 'address', 'has_ev', 'consider_make', 'consider_model', 'consider_variant', 'full_name'];
+            $midCols = array_values(array_filter($midCols, fn($c) => !in_array($c['field'], $remove)));
+        } elseif ($type === 'long') {
+            $remove = ['drivetrain', 'seating', 'usage_area', 'application_type', 'application', 'has_ev', 'full_name'];
+            $midCols = array_values(array_filter($midCols, fn($c) => !in_array($c['field'], $remove)));
+        }
+
+        return array_merge($baseCols, $midCols, $commonEnd);
     }
 
     // =========================================================
@@ -562,10 +586,12 @@ class EnquiryCrudController extends CrudController
 
     private function applyEnquiryFilter($query, array $filterModel): void
     {
-        if (empty($filterModel)) return;
+        if (empty($filterModel))
+            return;
 
         foreach ($filterModel as $field => $condition) {
-            if (!is_array($condition)) continue;
+            if (!is_array($condition))
+                continue;
 
             // Code-priority columns (e.g. model_name -> model.name if model_code filled, else raw `model` column)
             if (isset(self::FILTER_CODE_COLUMN_MAP[$field])) {
@@ -594,7 +620,8 @@ class EnquiryCrudController extends CrudController
                 ? self::FILTER_FIELD_MAP[$field]
                 : $field;
 
-            if ($column === null) continue; // not filterable
+            if ($column === null)
+                continue; // not filterable
 
             $this->applyFilterCondition($query, $column, $condition);
         }
