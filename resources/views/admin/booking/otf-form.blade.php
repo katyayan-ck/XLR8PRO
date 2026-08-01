@@ -8,6 +8,7 @@ use App\Services\OrgService;
 
 @push('after_styles')
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.5/css/lightbox.min.css">
 <style>
     @media print {
         select {
@@ -56,6 +57,7 @@ use App\Services\OrgService;
         height: 26px;
         font-size: 10px;
         vertical-align: middle;
+        width: 40%
     }
 
     .bill-table .title {
@@ -69,6 +71,7 @@ use App\Services\OrgService;
         box-shadow: none !important;
         background: transparent !important;
         padding: 2px;
+        width: 100%;
     }
 
     /* Hide Backpack UI */
@@ -327,6 +330,7 @@ use App\Services\OrgService;
         .bill-table {
             width: 100% !important;
         }
+
     }
 </style>
 @endpush
@@ -387,18 +391,17 @@ use App\Services\OrgService;
                                 </tr>
                                 <tr>
                                     <td class="title">GST Number</td>
-                                    <td><input type="text" name="gstn"
-                                            value="{{ old('gstn', $otfData['gstn'] ?? $booking->gstn ?? '') }}"></td>
+                                    <td><input type="text" name="gstn" value="{{ old('gstn', $booking->gstn) }}"></td>
                                 </tr>
                                 <tr>
                                     <td class="title">Registration Type</td>
                                     <td>
                                         <select name="registration_no_type" id="registration_no_type">
                                             <option value="">Select Registration Type</option>
+
                                             @foreach($reg_no_type_map as $key => $value)
-                                            <option value="{{ $key }}" {{ old('registration_no_type',
-                                                $otfData['registration_no_type'] ?? $rto?->rgn_no_type ?? '') == $key ?
-                                                'selected' : '' }}>
+                                            <option value="{{ $key }}" {{ old('registration_no_type', $rto?->rgn_no_type
+                                                ?? '') == $key ? 'selected' : '' }}>
                                                 {{ $value }}
                                             </option>
                                             @endforeach
@@ -424,9 +427,10 @@ use App\Services\OrgService;
                                     <td>
                                         <select name="permit" id="permit">
                                             <option value="">Select Permit</option>
+
                                             @foreach($permit_map as $key => $value)
-                                            <option value="{{ $key }}" {{ old('permit', $otfData['permit'] ?? $rto?->
-                                                permit ?? '') == $key ? 'selected' : '' }}>
+                                            <option value="{{ $key }}" {{ old('permit', $rto?->permit ?? '') == $key ?
+                                                'selected' : '' }}>
                                                 {{ $value }}
                                             </option>
                                             @endforeach
@@ -443,12 +447,13 @@ use App\Services\OrgService;
                                 <tr>
                                     <td class="title">SC Name</td>
                                     <td>
-                                        <select name="sale_consultant" id="saleconsultant">
+                                        <select name="consultant" id="saleconsultant">
                                             <option value="">Select Sales Consultant</option>
+
                                             @foreach($salesconsultants as $consultant)
-                                            <option value="{{ $consultant['person_code'] }}" {{
-                                                ($otfData['sale_consultant'] ?? $booking->sale_consultant ?? '') ==
-                                                $consultant['person_code'] ? 'selected' : '' }}>
+                                            <option value="{{ $consultant['person_code'] }}" {{ old('consultant',
+                                                $booking->consultant ?? '') == $consultant['person_code'] ? 'selected' :
+                                                '' }}>
                                                 {{ $consultant['display_name'] }} - {{ $consultant['employee_code'] }}
                                             </option>
                                             @endforeach
@@ -470,13 +475,13 @@ use App\Services\OrgService;
                                 <tr>
                                     <td class="title">DMS Enquiry Number</td>
                                     <td><input type="text" name="dms_no" id="dms_no"
-                                            value="{{ old('dms_no', $otfData['dms_no'] ?? $booking->dms_no ?? '') }}">
+                                            value="{{ old('dms_no', $booking->dms_no ?? ($otfData['dms_no'] ?? '')) }}">
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="title">DMS OTF Number</td>
                                     <td><input type="text" name="dms_otf" id="dms_otf"
-                                            value="{{ old('dms_otf', $otfData['dms_otf'] ?? $booking->dms_otf ?? '') }}">
+                                            value="{{ old('dms_otf', $booking->dms_otf ?? ($otfData['dms_otf'] ?? '')) }}">
                                     </td>
                                 </tr>
                                 <tr>
@@ -1969,6 +1974,29 @@ use App\Services\OrgService;
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.5/js/lightbox.min.js"></script>
 
 <script>
+    const consultants = @json($salesconsultants);
+
+    document.getElementById('saleconsultant').addEventListener('change', function () {
+
+    const personCode = this.value;
+
+    const consultant = consultants.find(c => c.person_code === personCode);
+
+    if (!consultant) {
+        document.getElementById('sc_mile_id').value = '';
+        document.getElementById('sc_branch').value = '';
+        document.getElementById('sc_location').value = '';
+        return;
+    }
+
+    document.getElementById('sc_mile_id').value = consultant.mile_id ?? '';
+    document.getElementById('sc_branch').value = consultant.primary_branch_code ?? '';
+    document.getElementById('sc_location').value = consultant.primary_loc_code ?? '';
+});
+window.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('saleconsultant').dispatchEvent(new Event('change'));
+});
+
     lightbox.option({
     resizeDuration: 200,
     wrapAround: true,

@@ -520,7 +520,7 @@ class OrgService
         string $variantCode = 'ALL',
         ?string $userType = null,
         bool $primaryOnly = false
-    ): array {
+        ): array {
         // Base query with relations
         $query = User::with(['person', 'scopes', 'employee'])
             ->whereHas('employee');
@@ -1078,9 +1078,9 @@ class OrgService
             'active' => $query->where('is_active', true)
                 ->whereHas('employee', fn($e) => $e->whereNull('separation_date')),
             'inactive' => $query->where(function ($q) {
-                    $q->where('is_active', false)
+                $q->where('is_active', false)
                     ->orWhereHas('employee', fn($e) => $e->whereNotNull('separation_date'));
-                }),
+            }),
             default => $query, // 'all'
         };
     }
@@ -1427,34 +1427,34 @@ class OrgService
             case 'missed_fup':
                 // Followup date is in the past
                 $query->whereNotNull('followup_date')
-                      ->whereDate('followup_date', '<', $today);
+                    ->whereDate('followup_date', '<', $today);
                 break;
 
             case 'today_fup':
                 // Followup date is exactly today
                 $query->whereNotNull('followup_date')
-                      ->whereDate('followup_date', '=', $today);
+                    ->whereDate('followup_date', '=', $today);
                 break;
 
             case 'birthday':
                 // Month and Day of DOB match today
                 $query->whereNotNull('dob')
-                      ->whereMonth('dob', $todayMonth)
-                      ->whereDay('dob', $todayDay);
+                    ->whereMonth('dob', $todayMonth)
+                    ->whereDay('dob', $todayDay);
                 break;
 
             case 'anniversary':
                 // Month and Day of marriage_date match today
                 $query->whereNotNull('marriage_date')
-                      ->whereMonth('marriage_date', $todayMonth)
-                      ->whereDay('marriage_date', $todayDay);
+                    ->whereMonth('marriage_date', $todayMonth)
+                    ->whereDay('marriage_date', $todayDay);
                 break;
 
             case 'exchange':
                 // Purchase type implies exchange, or they provided an exchange car brand
                 $query->where(function ($q) {
                     $q->where('purchase_type', 'like', '%Exchange%')
-                      ->orWhereNotNull('brand_make');
+                        ->orWhereNotNull('brand_make');
                 });
                 break;
 
@@ -1467,7 +1467,7 @@ class OrgService
             case 'delayed':
                 // Demo Logic: Enquiry is older than 7 days but still active (not won/lost)
                 $query->where('created_at', '<', now()->subDays(7))
-                      ->whereNotIn('dms_enquiry_stage', ['Lost', 'Won', 'Retail']);
+                    ->whereNotIn('dms_enquiry_stage', ['Lost', 'Won', 'Retail']);
                 break;
 
             case 'wrong_assign':
@@ -1483,8 +1483,8 @@ class OrgService
             case 'stage_mismatch':
                 // DMS stage and CRE stage do not match
                 $query->whereNotNull('dms_enquiry_stage')
-                      ->whereNotNull('cre_enquiry_stage')
-                      ->whereColumn('dms_enquiry_stage', '!=', 'cre_enquiry_stage');
+                    ->whereNotNull('cre_enquiry_stage')
+                    ->whereColumn('dms_enquiry_stage', '!=', 'cre_enquiry_stage');
                 break;
 
             case 'lost_verif':
@@ -1493,6 +1493,5 @@ class OrgService
                 break;
         }
     }
-
 }
 // changing the demo document
