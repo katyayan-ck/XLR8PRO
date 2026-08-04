@@ -47,18 +47,48 @@ class EnquiryCrudController extends CrudController
         $this->crud->setListView('admin.enquiry.list');
     }
 
+    // public function index()
+    // {
+    //     $this->crud->setListView('admin.enquiry.list');
+    //     return view('admin.enquiry.list', [
+    //         'title' => 'Xlr8 Enquiries',
+    //         'gridConfig' => [
+    //             'columns' => $this->getColumns('all'),
+    //             'data' => []
+    //         ]
+    //     ]);
+    // }
+
     public function index()
     {
         $this->crud->setListView('admin.enquiry.list');
+
+        // 1. Define all highlight filter keys
+        $filters = [
+            'missed_fup', 'today_fup', 'birthday', 'anniversary', 'exchange',
+            'pending_eval', 'delayed', 'wrong_assign', 'finance', 'stage_mismatch', 'lost_verif'
+        ];
+
+        // 2. Calculate the count for each filter
+        $highlightCounts = [];
+        foreach ($filters as $filter) {
+            $query = \App\Models\CRM\Enquiry::query(); // Base query for All Enquiries
+            \App\Services\OrgService::applyHighlightFilter($query, $filter);
+            $highlightCounts[$filter] = $query->count();
+        }
+
+        // 3. Pass the counts to the view
         return view('admin.enquiry.list', [
             'title' => 'Xceler8 Enquiries',
             'gridConfig' => [
                 'columns' => $this->getColumns('all'),
                 'data' => []
-            ]
+            ],
+            'highlightCounts' => $highlightCounts
         ]);
     }
 
+    
     public function data(Request $request)
     {
         $startRow = max(0, (int) $request->input('startRow', 0));
@@ -837,9 +867,14 @@ class EnquiryCrudController extends CrudController
 
     private function getValidationRules($id = null)
     {
+        // If the request has segment_code, it means the full form is active and submitted.
+        // If call_nature is submitted but not segment_code, it means the full form is hidden.
+        $fullFormActive = request()->has('segment_code') || !request()->has('call_nature');
+        $req = $fullFormActive ? 'required' : 'nullable';
+
         return [
-            'enquiry_type' => 'required',
-            'source_code' => 'required',
+            'enquiry_type' => $req,
+            'source_code' => $req,
             'sub_source' => 'nullable',
             'person_code' => 'nullable',
             'reference_details' => 'nullable|max:255',
@@ -855,9 +890,9 @@ class EnquiryCrudController extends CrudController
             'activity_end_date' => 'nullable|date',
             'activity_branch' => 'nullable',
             'activity_location' => 'nullable',
-            'first_name' => 'required|max:100',
+            'first_name' => $req . '|max:100',
             'last_name' => 'nullable|max:100',
-            'mobile' => 'required|max:15',
+            'mobile' => 'required|max:15', // Kept required because it always submits via hidden input
             'email' => 'nullable|email|max:150',
             'occupation_type' => 'nullable',
             'customer_type' => 'nullable',
@@ -879,10 +914,10 @@ class EnquiryCrudController extends CrudController
             'consider_variant' => 'nullable|max:100',
             'vehicle_no' => 'nullable|max:30',
             'remarks' => 'nullable',
-            'segment_code' => 'required',
-            'model_code' => 'required',
-            'variant_code' => 'required',
-            'color_code' => 'required',
+            'segment_code' => $req,
+            'model_code' => $req,
+            'variant_code' => $req,
+            'color_code' => $req,
             'fuel_type' => 'nullable',
             'transmission' => 'nullable',
             'drivetrain' => 'nullable',
@@ -892,9 +927,9 @@ class EnquiryCrudController extends CrudController
             'application_type' => 'nullable',
             'application' => 'nullable',
             'place_of_registration' => 'nullable|max:100',
-            'dealer_branch' => 'required',
-            'dealer_location' => 'required',
-            'sc_code' => 'required',
+            'dealer_branch' => $req,
+            'dealer_location' => $req,
+            'sc_code' => $req,
             'followup_type' => 'nullable',
             'followup_date' => 'nullable|date',
             'followup_time' => 'nullable',
@@ -907,6 +942,7 @@ class EnquiryCrudController extends CrudController
             'financier' => 'nullable|integer',
             'brand_make' => 'nullable|string|max:100',
             'brand_model' => 'nullable|string|max:100',
+            'call_nature' => 'nullable|string', // Support for Virtual Enquiries
         ];
     }
 

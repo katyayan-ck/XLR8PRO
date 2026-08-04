@@ -1489,11 +1489,18 @@ class OrgService
                 $query->where('fin_mode', 'In-house');
                 break;
 
+            // case 'stage_mismatch':
+            //     // DMS stage and CRE stage do not match
+            //     $query->whereNotNull('dms_enquiry_stage')
+            //         ->whereNotNull('cre_enquiry_stage')
+            //         ->whereColumn('dms_enquiry_stage', '!=', 'cre_enquiry_stage');
+            //     break;
+
             case 'stage_mismatch':
                 // DMS stage and CRE stage do not match
-                $query->whereNotNull('dms_enquiry_stage')
-                    ->whereNotNull('cre_enquiry_stage')
-                    ->whereColumn('dms_enquiry_stage', '!=', 'cre_enquiry_stage');
+                // $query->whereNotNull('stage')
+                //     ->whereNotNull('cre_enquiry_stage')
+                //     ->whereColumn('stage', '!=', 'cre_enquiry_stage');
                 break;
 
             case 'lost_verif':
