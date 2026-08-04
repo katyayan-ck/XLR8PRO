@@ -43,7 +43,7 @@ class EnquiryCrudController extends CrudController
     {
         $this->crud->setListView('admin.enquiry.list');
         return view('admin.enquiry.list', [
-            'title' => 'Xlr8 Enquiries',
+            'title' => 'Xceler8 Enquiries',
             'gridConfig' => [
                 'columns' => $this->getColumns('all'),
                 'data' => []

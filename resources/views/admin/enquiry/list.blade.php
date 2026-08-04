@@ -7,7 +7,7 @@
                 <div
                     class="card-header bg-gradient-primary d-flex justify-content-between align-items-center flex-nowrap flex-md-nowrap flex-wrap gap-3">
                     <h2 class="card-title mb-0 fw-bold text-black text-nowrap">
-                        {{ $title ?? 'Xlr8 Enquiries' }}
+                        {{ $title ?? 'Xceler8 Enquiries' }}
                     </h2>
 
                     <div class="d-flex align-items-center gap-3 flex-nowrap">
@@ -19,7 +19,7 @@
 
                 <div class="card-body p-0" style="background:#f8fafc">
 
-                    {{-- <!-- Import Section -->
+                    <!-- Import Section -->
                     <div class="p-3 border-bottom bg-white">
                         <div class="row align-items-end">
                             <div class="col-md-8">
@@ -75,7 +75,7 @@
                                 </tr>
                             </tbody>
                         </table>
-                    </div> --}}
+                    </div>
 
                     <!-- Grid Controls -->
                     <div
@@ -125,9 +125,9 @@
                     <div class="px-3 py-2 border-bottom bg-white d-flex gap-2 flex-wrap align-items-center">
                         <span class="fw-bold text-muted small me-1">Highlights:</span>
                         <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
-                            data-filter="missed_fup">Missed Follow-up</button>
+                            data-filter="missed_fup">Missed Fup</button>
                         <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
-                            data-filter="today_fup">Today's Follow-up</button>
+                            data-filter="today_fup">Today's Fup</button>
                         <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
                             data-filter="birthday">Birthday</button>
                         <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
@@ -136,8 +136,7 @@
                             data-filter="exchange">Exchange</button>
                         <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
                             data-filter="pending_eval">Pending Evaluation</button>
-                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
-                            data-filter="delayed">Delayed</button>
+
                         <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
                             data-filter="wrong_assign">Wrong Assignment</button>
                         <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
@@ -146,6 +145,8 @@
                             data-filter="stage_mismatch">Stage Mismatch</button>
                         <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
                             data-filter="lost_verif">Lost Verifications</button>
+                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
+                            data-filter="delayed">Delayed Fup</button>
                     </div>
 
                     <!-- ag-Grid -->
@@ -470,17 +471,10 @@
 
             // Exports
             document.getElementById('exportCsv').addEventListener('click', () => {
-                // Same columns, same order as what's currently displayed on the page
-                const visibleFields = gridApi.getAllDisplayedColumns()
-                    .map(col => col.getColDef())
-                    .filter(col => col.field && col.field !== 'action')
-                    .map(col => col.field);
-
                 const params = new URLSearchParams({
                     searchText: currentSearchText,
                     highlightFilter: currentHighlightFilter,
-                    filterModel: JSON.stringify(gridApi.getFilterModel()),
-                    columns: JSON.stringify(visibleFields)
+                    filterModel: JSON.stringify(gridApi.getFilterModel())
                 });
                 window.location.href = '{{ backpack_url('enquiries/export') }}?' + params.toString();
             });
