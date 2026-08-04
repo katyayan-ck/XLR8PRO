@@ -1,6 +1,5 @@
 @extends(backpack_view('blank'))
 
-
 @section('content')
     <div class="row">
         <div class="col-12">
@@ -84,8 +83,7 @@
 
         const columnDefs = [
 
-            ...ALL_COLUMNS
-            .filter(col => [
+            ...ALL_COLUMNS.filter(col => [
 
                 'serial_no',
                 'x8_enquiry_no',
@@ -123,55 +121,14 @@
                 'oem_otf_no',
                 'oem_test_drive_no'
 
-            ].includes(col.field))
+            ].includes(col.field)),
 
-            .map(col => {
-
-                switch (col.field) {
-
-                    // Date columns
-                    case 'enquiry_date':
-                    case 'likely_purchase_date':
-                    case 'followup_date':
-                    case 'dob':
-                    case 'marriage_date':
-                    case 'booking_date':
-                    case 'oem_booking_date':
-                    case 'cre_next_fup_date':
-                    case 'oem_enquiry_date':
-                    case 'oem_long_enquiry_date':
-
-                        col.filter = 'agDateColumnFilter';
-                        break;
-
-                        // Number columns
-                    case 'mobile':
-                    case 'zipcode':
-
-                        col.filter = 'agNumberColumnFilter';
-                        break;
-
-                        // Everything else
-                    default:
-
-                        col.filter = 'agTextColumnFilter';
-                }
-
-                col.floatingFilter = true;
-
-                return col;
-
-            }),
-
-            ...ALL_COLUMNS
-            .filter(col => col.field === 'action')
-            .map(col => {
+            ...ALL_COLUMNS.filter(col => ['action'].includes(col.field)).map(col => {
 
                 col.pinned = 'right';
                 col.width = 140;
                 col.sortable = false;
                 col.filter = false;
-                col.floatingFilter = false;
                 col.cellRenderer = 'htmlRenderer';
 
                 return col;
@@ -190,7 +147,6 @@
             defaultColDef: {
                 sortable: true,
                 filter: true,
-                floatingFilter: true,
                 resizable: true,
                 headerClass: 'center-header',
                 cellStyle: {
@@ -212,7 +168,7 @@
                 'oem_enquiry_date',
                 // 'oem_long_enquiry_no',
                 // 'oem_long_enquiry_date',
-                // 'oem_long_enquiry_status',-              
+                // 'oem_long_enquiry_status',              
                 'segment_name',
                 'model_name',
                 'variant_name',
@@ -277,8 +233,6 @@
 
             bubble.style.display = 'block';
         }
-
-
 
         document.addEventListener('DOMContentLoaded', () => {
             const gridDiv = document.querySelector('#myGrid');
