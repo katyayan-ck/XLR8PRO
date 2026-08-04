@@ -1,9 +1,5 @@
 @extends(backpack_view('blank'))
 
-@php
-    // Fetch Call Nature directly from the Keyword Master
-    $call_nature_virtual = \App\Services\OrgService::keywordValueByCode('CALL_NATURE_VIRTUAL');
-@endphp
 
 @section('content')
     <div class="row">
@@ -22,18 +18,7 @@
                         <div class="d-flex align-items-center gap-2 flex-nowrap">
                             <input type="text" id="quickFilter" class="form-control w-100 w-md-auto"
                                 style="width:360px; min-width:260px;" placeholder="Smart Search...">
-                            
-                            {{-- CALL NATURE DROPDOWN DIRECTLY FROM KEYWORD MASTER --}}
-                            <select id="callNatureFilter" class="form-control form-select w-auto" style="min-width: 180px; cursor: pointer;">
-                                <option value="">All Call Natures</option>
-                                @if(is_array($call_nature_virtual) || is_object($call_nature_virtual))
-                                    @foreach ($call_nature_virtual as $item)
-                                        <option value="{{ $item['code'] }}">{{ $item['value'] }}</option>
-                                    @endforeach
-                                @endif
-                            </select>
-
-                            {{-- <button id="resetAll" class="btn btn-outline-danger btn-sm text-nowrap">Reset</button> --}}
+                            <button id="resetAll" class="btn btn-outline-danger btn-sm text-nowrap">Reset</button>
                         </div>
 
                         <div class="d-flex gap-2 flex-nowrap justify-content-center">
@@ -100,6 +85,7 @@
         const columnDefs = [
 
             ...ALL_COLUMNS.filter(col => [
+
                 'serial_no',
                 'virtual_no',
                 'call_date',
@@ -119,16 +105,24 @@
                 'oem_booking_date',
                 'oem_otf_no',
                 'oem_test_drive_no'
+                //'call_duration',
+                //'call_status',
+                
+
             ].includes(col.field)),
 
             ...ALL_COLUMNS.filter(col => ['action'].includes(col.field)).map(col => {
+
                 col.pinned = 'right';
                 col.width = 140;
                 col.sortable = false;
                 col.filter = false;
                 col.cellRenderer = 'htmlRenderer';
+
                 return col;
+
             })
+
         ];
 
         const gridOptions = {
@@ -143,19 +137,12 @@
                 filter: true,
                 resizable: true,
                 headerClass: 'center-header',
-                cellStyle: { textAlign: 'center' }
+                cellStyle: {
+                    textAlign: 'center'
+                }
             },
             components: {
                 htmlRenderer: params => params.value || ''
-            },
-            // External Filter Logic
-            isExternalFilterPresent: () => {
-                const callNatureVal = document.getElementById('callNatureFilter').value;
-                return callNatureVal !== '';
-            },
-            doesExternalFilterPass: (node) => {
-                const callNatureVal = document.getElementById('callNatureFilter').value;
-                return node.data.call_nature === callNatureVal;
             },
             onGridReady: params => {
                 gridApi = params.api;
@@ -169,8 +156,8 @@
                     'mobile',
                     'remarks',
                     'action'
+
                 ];
-                
                 const allCols = gridApi.getAllGridColumns().map(col => col.getColId());
                 gridApi.setColumnsVisible(allCols, false);
                 gridApi.setColumnsVisible(defaultFields, true);
@@ -218,32 +205,22 @@
             bubble.style.display = 'block';
         }
 
+
+
         document.addEventListener('DOMContentLoaded', () => {
             const gridDiv = document.querySelector('#myGrid');
             agGrid.createGrid(gridDiv, gridOptions);
-
-            // Trigger grid filter when Dropdown changes
-            document.getElementById('callNatureFilter').addEventListener('change', () => {
-                gridApi.onFilterChanged();
-            });
 
             document.getElementById('quickFilter').addEventListener('input', e => {
                 gridApi.setGridOption('quickFilterText', e.target.value);
             });
 
-            // document.getElementById('resetAll').addEventListener('click', () => {
-            //     gridApi.setFilterModel(null);
-                
-            //     // Clear inputs
-            //     document.getElementById('quickFilter').value = '';
-            //     document.getElementById('callNatureFilter').value = '';
-                
-            //     gridApi.setGridOption('quickFilterText', '');
-            //     gridApi.setSortModel(null);
-                
-            //     // Re-run external filter to show all rows
-            //     gridApi.onFilterChanged();
-            // });
+            document.getElementById('resetAll').addEventListener('click', () => {
+                gridApi.setFilterModel(null);
+                document.getElementById('quickFilter').value = '';
+                gridApi.setGridOption('quickFilterText', '');
+                gridApi.setSortModel(null);
+            });
 
             document.getElementById('btnCustomiseHeaders').addEventListener('click', e => {
                 e.stopPropagation();
@@ -269,14 +246,16 @@
 
             document.getElementById('btnDefaultHeaders').addEventListener('click', () => {
                 const defaultFields = [
+
                     'serial_no',
                     'virtual_no',
-                    'call_date',
+                    'call_date_and_time',
                     'call_nature',
                     'x8_enquiry_assign_date',
                     'mobile',
                     'remarks',
                     'action'
+
                 ];
                 const allCols = gridApi.getAllGridColumns().map(c => c.getColId());
 
@@ -302,11 +281,14 @@
                 const wb = XLSX.utils.book_new();
                 const ws = XLSX.utils.json_to_sheet(rows);
                 XLSX.utils.book_append_sheet(wb, ws, "Virtual Number Enquiries");
-                XLSX.writeFile(wb, `virtual-number-enquiries-${new Date().toISOString().slice(0, 10)}.xlsx`);
+                XLSX.writeFile(wb,
+                    `virtual-number-enquiries-${new Date().toISOString().slice(0, 10)}.xlsx`);
             });
 
             document.getElementById('exportPdf').addEventListener('click', () => {
-                const { jsPDF } = window.jspdf;
+                const {
+                    jsPDF
+                } = window.jspdf;
                 const doc = new jsPDF();
 
                 const visibleColumns = gridApi.getAllDisplayedColumns()
@@ -323,12 +305,22 @@
                 doc.autoTable({
                     head: [headers],
                     body: rows,
-                    styles: { fontSize: 8 },
-                    headStyles: { fillColor: [41, 128, 185] },
+                    styles: {
+                        fontSize: 8
+                    },
+                    headStyles: {
+                        fillColor: [41, 128, 185]
+                    },
                 });
 
                 doc.save(`virtual-number-enquiries-${new Date().toISOString().slice(0, 10)}.pdf`);
             });
         });
+
+        function redirectToEnquiryList(selectElement) {
+            if (selectElement.value) {
+                window.location.href = selectElement.value;
+            }
+        }
     </script>
 @endpush

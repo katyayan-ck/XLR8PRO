@@ -23,6 +23,8 @@
         <x-backpack::menu-dropdown-item title="Vertical" icon="la la-bars" :link="backpack_url('vertical')" />
 
         {{-- IAM: Post & Org Structure --}}
+        {{--
+        <x-backpack::menu-separator title="Posts & Org Structure" /> --}}
         <x-backpack::menu-dropdown-item title="Posts" icon="la la-briefcase" :link="backpack_url('post')" />
         <x-backpack::menu-dropdown-item title="Designation Dept Tree" icon="la la-sitemap" :link="backpack_url('desig-dept-tree')" />
         <x-backpack::menu-dropdown-item title="Post Reporting Lines" icon="la la-project-diagram" :link="backpack_url('post-reporting')" />
@@ -64,7 +66,7 @@
     {{-- Separator --}}
     <x-backpack::menu-separator title="HR Journey" />
 
-    {{-- HR Section --}}
+    {{-- HR Section — NEW Sprint 3 --}}
     <x-backpack::menu-dropdown title="HR Operations" icon="la la-user-clock" nested="true">
         <x-backpack::menu-dropdown-item title="Post Assignments" icon="la la-briefcase" :link="backpack_url('emp-post-assignment')" />
         <x-backpack::menu-dropdown-item title="Transfer Employee" icon="la la-exchange-alt" :link="backpack_url('hr/transfer')" />
@@ -75,7 +77,7 @@
     {{-- Separator --}}
     <x-backpack::menu-separator title="Access Control" />
 
-    {{-- RBAC Section --}}
+    {{-- RBAC Section — Graph/Reporting Hierarchy items REMOVED --}}
     <x-backpack::menu-dropdown title="RBAC" icon="la la-lock" nested="true">
         <x-backpack::menu-dropdown-item title="Modules" icon="la la-cube" :link="backpack_url('modules')" />
         <x-backpack::menu-dropdown-item title="Process" icon="la la-cogs" :link="backpack_url('process')" />
@@ -90,25 +92,6 @@
 {{-- USERS --}}
 <x-backpack::menu-item title="Users" icon="la la-users" :link="backpack_url('user')" />
 
-
-{{-- ========================================================================= --}}
-{{-- FETCH ENQUIRY COUNTS (Cached for 60 seconds to prevent slow page loads) --}}
-{{-- ========================================================================= --}}
-@php
-    $enqCounts = \Illuminate\Support\Facades\Cache::remember('menu_enquiry_counts', 60, function () {
-        return [
-            'all' => \App\Models\CRM\Enquiry::count(),
-            'reference' => \App\Models\CRM\Enquiry::reference()->count(),
-            'virtual' => \App\Models\CRM\Enquiry::virtual()->count(),
-            'whatsapp' => \App\Models\CRM\Enquiry::whatsapp()->count(),
-            'unassigned_quick' => \App\Models\CRM\Enquiry::unassignedQuick()->count(),
-            'assigned_quick' => \App\Models\CRM\Enquiry::assignedQuick()->count(),
-            'unassigned_long' => \App\Models\CRM\Enquiry::unassignedLong()->count(),
-            'assigned_long' => \App\Models\CRM\Enquiry::assignedLong()->count(),
-        ];
-    });
-@endphp
-
 {{-- SALES MAIN DROPDOWN --}}
 <x-backpack::menu-dropdown title="Sales" icon="la la-chart-line">
 
@@ -116,30 +99,62 @@
     <x-backpack::menu-separator title="Sales Configuration" />
 
     {{-- Price List --}}
-    @if (auth()->check() && (auth()->user()->hasPermissionTo('can_view_documents') || auth()->user()->hasRole('super admin')))
+    @if (auth()->check() &&
+            (auth()->user()->hasPermissionTo('can_view_documents') ||
+                auth()->user()->hasRole('super
+                                                                                                    admin')))
         <x-backpack::menu-dropdown-item title="Price List" icon="la la-tag" :link="backpack_url('pricing')" />
     @endif
+
+
 
     {{-- Enquiries --}}
     <x-backpack::menu-dropdown title="Enquiries" icon="la la-question-circle" nested="true">
     
-        <x-backpack::menu-dropdown-item title="Add New Enquiry" icon="la la-plus-circle" :link="backpack_url('enquiries/add')" />
+        <x-backpack::menu-dropdown-item title="Add New Enquiry" 
+        icon="la la-plus-circle" 
+        :link="backpack_url('enquiries/add')" />
 
-        {{-- Direct Count Injection to ensure it renders on all Backpack versions --}}
-        <x-backpack::menu-dropdown-item title="Enquiry List ({{ $enqCounts['all'] }})" icon="la la-list" :link="backpack_url('enquiries-list')" />
-        <x-backpack::menu-dropdown-item title="Reference Enquiries ({{ $enqCounts['reference'] }})" icon="la la-user-times" :link="backpack_url('enquiries/reference')" />
-        <x-backpack::menu-dropdown-item title="Virtual Number Enquiries ({{ $enqCounts['virtual'] }})" icon="la la-user-times" :link="backpack_url('enquiries/virtual-number')" />
-        <x-backpack::menu-dropdown-item title="WhatsApp Campaign Enquiries ({{ $enqCounts['whatsapp'] }})" icon="la la-user-times" :link="backpack_url('enquiries/whatsapp-campaign')" />
-        <x-backpack::menu-dropdown-item title="Unassigned Quick Enquiries ({{ $enqCounts['unassigned_quick'] }})" icon="la la-user-times" :link="backpack_url('enquiries/unassigned-quick')" />
-        <x-backpack::menu-dropdown-item title="Assigned Quick Enquiries ({{ $enqCounts['assigned_quick'] }})" icon="la la-user-times" :link="backpack_url('enquiries/assigned-quick')" />
-        <x-backpack::menu-dropdown-item title="Unassigned Long Enquiries ({{ $enqCounts['unassigned_long'] }})" icon="la la-user-times" :link="backpack_url('enquiries/unassigned-long')" />
-        <x-backpack::menu-dropdown-item title="Assigned Long Enquiries ({{ $enqCounts['assigned_long'] }})" icon="la la-user-times" :link="backpack_url('enquiries/assigned-long')" />
-        
-        <x-backpack::menu-dropdown-item title="Campaigns" icon="la la-list" :link="backpack_url('campaign')" />
+        <x-backpack::menu-dropdown-item title="Enquiry List" 
+        icon="la la-list" 
+        :link="backpack_url('enquiries-list')" />
+
+        <x-backpack::menu-dropdown-item title="Reference Enquiries" 
+        icon="la la-user-times" 
+        :link="backpack_url('enquiries/reference')" />
+
+        <x-backpack::menu-dropdown-item title="Virtual Number Enquiries" 
+        icon="la la-user-times" 
+        :link="backpack_url('enquiries/virtual-number')" />
+
+        <x-backpack::menu-dropdown-item title="WhatsApp Campaign Enquiries" 
+        icon="la la-user-times" 
+        :link="backpack_url('enquiries/whatsapp-campaign')" />
+
+        <x-backpack::menu-dropdown-item title="Unassigned Quick Enquiries" 
+        icon="la la-user-times" 
+        :link="backpack_url('enquiries/unassigned-quick')" />
+
+        <x-backpack::menu-dropdown-item title="Assigned Quick Enquiries" 
+        icon="la la-user-times" 
+        :link="backpack_url('enquiries/assigned-quick')" />
+
+        <x-backpack::menu-dropdown-item title="Unassigned Long Enquiries" 
+        icon="la la-user-times" 
+        :link="backpack_url('enquiries/unassigned-long')" />
+
+        <x-backpack::menu-dropdown-item title="Assigned Long Enquiries" 
+        icon="la la-user-times" 
+        :link="backpack_url('enquiries/assigned-long')" />
+
+        <x-backpack::menu-dropdown-item title="Campaigns" 
+        icon="la la-list" 
+        :link="backpack_url('campaign')" />
 
     </x-backpack::menu-dropdown>
 
     {{-- Quotation --}}
+
     <x-backpack::menu-dropdown-item title="Quotation" icon="la la-file-alt" :link="backpack_url('quotation-form')" />
 
     {{-- Booking --}}
@@ -159,12 +174,16 @@
         <x-backpack::menu-dropdown-item title="Pending Reg. No." icon="la la-hashtag" :link="backpack_url('booking/pending-registration')" />
         <x-backpack::menu-dropdown-item title="Pending DO" icon="la la-file-signature" :link="backpack_url('booking/pending-do')" />
         <x-backpack::menu-dropdown-item title="Dummy Bookings" icon="la la-flask" :link="backpack_url('booking/dummy')" />
-        
         <x-backpack::menu-dropdown title="Erroneous Entries" icon="la la-exclamation-circle" nested="true">
+
             <x-backpack::menu-dropdown-item title="Booking" icon="la la-book" :link="backpack_url('booking/erroneous-bookings')" />
+
             <x-backpack::menu-dropdown-item title="Finance" icon="la la-money-bill" :link="backpack_url('finance/erroneous')" />
+
             <x-backpack::menu-dropdown-item title="Insurance" icon="la la-shield" :link="backpack_url('insurance/erroneous')" />
+
             <x-backpack::menu-dropdown-item title="RTO" icon="la la-id-card" :link="backpack_url('rto/erroneous')" />
+
         </x-backpack::menu-dropdown>
     </x-backpack::menu-dropdown>
 
@@ -213,6 +232,8 @@
     </x-backpack::menu-dropdown>
 
     {{-- OTF Form --}}
+
+
     <x-backpack::menu-dropdown-item title="OTF Form" icon="la la-file-alt" :link="backpack_url('booking/otf-form')" />
 
     {{-- Co Dealer Transactions --}}
