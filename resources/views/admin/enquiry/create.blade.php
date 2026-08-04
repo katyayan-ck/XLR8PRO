@@ -57,7 +57,33 @@
                             @if (isset($enquiry))
                                 @method('PUT')
                             @endif
-
+                            <div class="card mb-4">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0">Vehicle Snapshot (Locked)</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">Segment</label>
+                                            <input type="text" class="form-control"
+                                                value="{{ $enquiry->segment ?? ($enquiry->segment_code ?? '—') }}" readonly
+                                                disabled>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">Model</label>
+                                            <input type="text" class="form-control"
+                                                value="{{ $enquiry->model ?? ($enquiry->model_code ?? '—') }}" readonly
+                                                disabled>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">Variant</label>
+                                            <input type="text" class="form-control"
+                                                value="{{ $enquiry->variant ?? ($enquiry->variant_code ?? '—') }}" readonly
+                                                disabled>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                             <h3 class="mb-0 ms-3">Customer Information</h3>
 
                             <div class="card-body">
@@ -200,7 +226,8 @@
                                         <label class="form-label">
                                             Enquiry Sub Source <span class="text-danger">*</span>
                                         </label>
-                                        <select name="sub_source" id="sub_source" class="form-control form-select" disabled>
+                                        <select name="sub_source" id="sub_source" class="form-control form-select"
+                                            disabled>
                                             <option value="">Select Enquiry Sub Source</option>
                                         </select>
                                     </div>
@@ -526,10 +553,10 @@
                                     {{-- Follow Up Time --}}
                                     <div class="col-md-4 mb-3">
                                         <label class="form-label">
-                                            Follow Up Time 
+                                            Follow Up Time
                                         </label>
                                         <input type="time" name="followup_time" class="form-control"
-                                            value="{{ old('followup_time', $enquiry->followup_time ?? '') }}" >
+                                            value="{{ old('followup_time', $enquiry->followup_time ?? '') }}">
                                     </div>
                                 </div>
                             </div>
@@ -1056,7 +1083,7 @@
                 // FIXED: Using the correct snake_case IDs from your database/HTML
                 const $exchangeInputs = $(
                     '#brand_make, #brand_model, #vehicle_no, #make_year, #odo_reading, #expected_price, #offered_price, #exchange_bonus'
-                    );
+                );
 
                 $exchangeInputs.prop('required', isExchange);
 

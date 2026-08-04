@@ -31,6 +31,47 @@ class ImportEnquiriesJob implements ShouldQueue
     /** Rows per DB transaction chunk — batches commits instead of autocommit-per-row */
     private const CHUNK_SIZE = 300;
 
+    /**
+     * The list of keyword_code groups (from xlr8_utils_keyvalue) that Quick /
+     * Long sheet imports normalize free-text input against. Only codes with
+     * an actual source column on those two sheets are included here —
+     * SC_FUP_REMARKS_TYPE, SC_FUP_REMARKS, CALL_NATURE_VIRTUAL, ACTIVITY_TYPE,
+     * APPLICATION, APPLICATION_TYPE, KM_TRAVELLED_DAILY, USAGE_AREA,
+     * AGE_GROUP, OCCUPATION_SUB_TYPE, OCCUPATION_TYPE are intentionally left
+     * out — no source column currently feeds them. (Note: FOLLOW_UP_REMARKS_TYPE
+     * is a distinct, newer keyword_code — added alongside the followup_remarks_type
+     * / first_followup_type / first_followup_remarks_type columns — and is NOT
+     * the same as the still-excluded SC_FUP_REMARKS_TYPE.)
+     */
+    private const KEYVALUE_CODES = [
+        'ENQUIRY_TYPE',
+        'ENQUIRY_SUB_SOURCE',
+        'LIKELY_PURCHASE_DATE',
+        'FOLLOW_UP_TYPE',
+        'FOLLOW_UP_REMARKS_TYPE',
+    ];
+
+    /**
+     * In-memory cache of xlr8_utils_keyvalue, keyed as:
+     *   [keyword_code][normalized_lowercase_value] => code
+     * Loaded once per job run so ~85k rows don't each hit the DB for a
+     * lookup that's the same handful of distinct values repeated over and
+     * over. New values discovered during the run are added here as well as
+     * inserted to the DB, so a value repeated 500 times in one file only
+     * ever triggers a single INSERT.
+     */
+    private array $keyvalueCache = [];
+    private bool $keyvalueCacheLoaded = false;
+
+    /**
+     * In-memory cache of xlr8_vehicle_model, keyed as:
+     *   [normalized_lowercase_name] => ['code' => ..., 'segment_code' => ...]
+     * Vehicle models are NOT auto-created on miss (unlike keyvalue) — a
+     * miss just means model_code/segment_code stay null.
+     */
+    private array $vehicleModelCache = [];
+    private bool $vehicleModelCacheLoaded = false;
+
     public function __construct(int $importLogId, string $storedPath)
     {
         $this->importLogId = $importLogId;
@@ -73,6 +114,13 @@ class ImportEnquiriesJob implements ShouldQueue
             }
             $log->update(['total_rows' => $totalRows]);
             $this->processedSoFar = 0;
+
+            // Load lookup caches once, up front — every sheet handler that
+            // normalizes a value against xlr8_utils_keyvalue or resolves a
+            // model against xlr8_vehicle_model reads from these instead of
+            // querying per row.
+            $this->loadKeyvalueCache();
+            $this->loadVehicleModelCache();
 
             foreach ($sheetHandlers as $sheetName => $handlerMethod) {
                 $sheet = $spreadsheet->getSheetByName($sheetName);
@@ -258,20 +306,27 @@ class ImportEnquiriesJob implements ShouldQueue
                             continue;
                         }
 
+                        $modelName = $this->cell($row, $headerMap, 'Product Family');
+                        $modelMatch = $this->resolveVehicleModel($modelName);
+
                         $data = $this->stripNulls([
                             'first_name'                        => $firstName,
                             'last_name'                          => $lastName,
                             'mobile'                              => $mobile,
                             'sc_mile_id'                          => $scMileId,
-                            'segment'                             => $this->cell($row, $headerMap, 'Product Family'),
+                            'model'                               => $modelName,
+                            'model_code'                          => $modelMatch['model_code'],
+                            'segment_code'                        => $modelMatch['segment_code'],
                             'variant'                             => $this->cell($row, $headerMap, 'Variant Description'),
                             'color'                               => $this->cell($row, $headerMap, 'Color'),
                             'fuel_type'                           => $this->cell($row, $headerMap, 'Fuel Type'),
                             'seating'                             => $this->cell($row, $headerMap, 'Seating Capacity'),
-                            'enquiry_type'                        => $this->cell($row, $headerMap, 'Enquiry Type'),
+                            'enquiry_type'                        => $this->resolveKeyValue('ENQUIRY_TYPE', $this->cell($row, $headerMap, 'Enquiry Type')),
                             'source_code'                         => $this->cell($row, $headerMap, 'Enquiry Source'),
-                            'sub_source'                          => $this->cell($row, $headerMap, 'Enquiry Sub Source'),
-                            'likely_purchase_date'                => $this->cell($row, $headerMap, 'Likely Purchase In Days'),
+                            'sub_source'                          => $this->resolveKeyValue('ENQUIRY_SUB_SOURCE', $this->cell($row, $headerMap, 'Enquiry Sub Source')),
+                            'likely_purchase_date'                => $this->resolveKeyValue('LIKELY_PURCHASE_DATE', $this->cell($row, $headerMap, 'Likely Purchase In Days')),
+                            'followup_type'                       => $this->resolveKeyValue('FOLLOW_UP_TYPE', $this->cell($row, $headerMap, 'Followup Type')),
+                            'followup_remarks_type'               => $this->resolveKeyValue('FOLLOW_UP_REMARKS_TYPE', $this->cell($row, $headerMap, 'Follow-up Remarks Type')),
                             'quick_status'                        => $this->cell($row, $headerMap, 'Status'),
                             'quick_enquiry_date'                  => $this->excelDate($this->cell($row, $headerMap, 'Quick Enquiry Date')),
                             'test_drive_no'                       => $this->cell($row, $headerMap, 'Test Drive Number'),
@@ -349,18 +404,23 @@ class ImportEnquiriesJob implements ShouldQueue
                             continue;
                         }
 
+                        $modelName = $this->cell($row, $headerMap, 'Product Family');
+                        $modelMatch = $this->resolveVehicleModel($modelName);
+
                         $data = $this->stripNulls([
                             'first_name'                => $firstName,
                             'last_name'                  => $lastName,
                             'mobile'                     => $mobile,
                             'sc_mile_id'                 => $scMileId,
-                            'segment'                    => $this->cell($row, $headerMap, 'Product Family'),
+                            'model'                      => $modelName,
+                            'model_code'                 => $modelMatch['model_code'],
+                            'segment_code'               => $modelMatch['segment_code'],
                             'variant'                    => $this->cell($row, $headerMap, 'Variant Description'),
                             'color'                      => $this->cell($row, $headerMap, 'Color'),
                             'purchase_type'              => $this->cell($row, $headerMap, 'Purchase Type'),
-                            'enquiry_type'               => $this->cell($row, $headerMap, 'Enquiry Type'),
+                            'enquiry_type'               => $this->resolveKeyValue('ENQUIRY_TYPE', $this->cell($row, $headerMap, 'Enquiry Type')),
                             'source_code'                => $this->cell($row, $headerMap, 'Enquiry Source'),
-                            'sub_source'                 => $this->cell($row, $headerMap, 'Enquiry Sub Source'),
+                            'sub_source'                 => $this->resolveKeyValue('ENQUIRY_SUB_SOURCE', $this->cell($row, $headerMap, 'Enquiry Sub Source')),
                             'stage'                      => $this->cell($row, $headerMap, 'Stage'),
                             'enquiry_date'               => $this->excelDate($this->cell($row, $headerMap, 'Enquiry Date')),
                             'customer_address'           => $this->cell($row, $headerMap, 'Customer Address'),
@@ -369,7 +429,9 @@ class ImportEnquiriesJob implements ShouldQueue
                             'zipcode'                    => $this->cell($row, $headerMap, 'Postal Code'),
                             'fuel_type'                  => $this->cell($row, $headerMap, 'Fuel Type'),
                             'seating'                    => $this->cell($row, $headerMap, 'Seating Capacity'),
-                            'likely_purchase_date'       => $this->cell($row, $headerMap, 'Likely Purchase In Days'),
+                            'likely_purchase_date'       => $this->resolveKeyValue('LIKELY_PURCHASE_DATE', $this->cell($row, $headerMap, 'Likely Purchase In Days')),
+                            'first_followup_type'        => $this->resolveKeyValue('FOLLOW_UP_TYPE', $this->cell($row, $headerMap, 'First Followup Type')),
+                            'first_followup_remarks_type' => $this->resolveKeyValue('FOLLOW_UP_REMARKS_TYPE', $this->cell($row, $headerMap, 'First Followup Remarks Type')),
                             'customer_type'              => $this->cell($row, $headerMap, 'Customer Type'),
                             'interested_in_exchange'     => $this->cell($row, $headerMap, 'Intrested In Exchange'),
                             'completed_followup_count'   => $this->cell($row, $headerMap, 'Completed Followup Count'),
@@ -578,6 +640,163 @@ class ImportEnquiriesJob implements ShouldQueue
         }
 
         return $existed;
+    }
+
+    /**
+     * Loads xlr8_utils_keyvalue into $this->keyvalueCache, scoped to just the
+     * keyword_code groups this import cares about (self::KEYVALUE_CODES) —
+     * no point holding the whole lookup table (activity types, remarks,
+     * etc.) in memory when only 4 groups are ever consulted here.
+     */
+    private function loadKeyvalueCache(): void
+    {
+        if ($this->keyvalueCacheLoaded) {
+            return;
+        }
+
+        $rows = DB::table('xlr8_utils_keyvalue')
+            ->whereIn('keyword_code', self::KEYVALUE_CODES)
+            ->where('is_active', 1)
+            ->get(['keyword_code', 'code', 'value']);
+
+        foreach ($rows as $row) {
+            $normalized = $this->normalizeForMatch($row->value);
+            if ($normalized === '') {
+                continue;
+            }
+            $this->keyvalueCache[$row->keyword_code][$normalized] = $row->code;
+        }
+
+        $this->keyvalueCacheLoaded = true;
+    }
+
+    /**
+     * Loads xlr8_vehicle_model into $this->vehicleModelCache, keyed by
+     * normalized `name`, holding both `code` and `segment_code` for each.
+     */
+    private function loadVehicleModelCache(): void
+    {
+        if ($this->vehicleModelCacheLoaded) {
+            return;
+        }
+
+        $rows = DB::table('xlr8_vehicle_model')
+            ->where('is_active', 1)
+            ->get(['name', 'code', 'segment_code']);
+
+        foreach ($rows as $row) {
+            $normalized = $this->normalizeForMatch($row->name);
+            if ($normalized === '') {
+                continue;
+            }
+            $this->vehicleModelCache[$normalized] = [
+                'model_code'   => $row->code,
+                'segment_code' => $row->segment_code,
+            ];
+        }
+
+        $this->vehicleModelCacheLoaded = true;
+    }
+
+    /**
+     * Resolves a raw imported value against xlr8_utils_keyvalue for the
+     * given keyword_code group, matching case-insensitively (and with
+     * whitespace collapsed/trimmed) against the `value` column. Returns the
+     * matching `code`. If nothing matches, a new xlr8_utils_keyvalue row is
+     * created on the fly (code derived from the raw text) and its code is
+     * returned — the cache is updated too, so the same new value appearing
+     * again later in this same import reuses it instead of creating a
+     * duplicate.
+     */
+    private function resolveKeyValue(string $keywordCode, $rawValue): ?string
+    {
+        if ($rawValue === null) {
+            return null;
+        }
+
+        $rawValue = (string) $rawValue;
+        $normalized = $this->normalizeForMatch($rawValue);
+
+        if ($normalized === '') {
+            return null;
+        }
+
+        if (isset($this->keyvalueCache[$keywordCode][$normalized])) {
+            return $this->keyvalueCache[$keywordCode][$normalized];
+        }
+
+        // Not seen before under this keyword_code — create it.
+        $trimmedValue = trim(preg_replace('/\s+/', ' ', $rawValue));
+        $newCode = $this->generateKeyvalueCode($trimmedValue);
+
+        DB::table('xlr8_utils_keyvalue')->insert([
+            'keyword_code' => $keywordCode,
+            'key'          => null,
+            'code'         => $newCode,
+            'value'        => $trimmedValue,
+            'details'      => null,
+            'parent_id'    => null,
+            'level'        => 0,
+            'path'         => null,
+            'extra_data'   => null,
+            'status'       => 1,
+            'is_active'    => 1,
+            'created_by'   => null,
+            'updated_by'   => null,
+            'deleted_by'   => null,
+            'created_at'   => now(),
+            'updated_at'   => now(),
+            'deleted_at'   => null,
+        ]);
+
+        $this->keyvalueCache[$keywordCode][$normalized] = $newCode;
+
+        Log::info("New xlr8_utils_keyvalue entry created", [
+            'keyword_code' => $keywordCode,
+            'value'        => $trimmedValue,
+            'code'         => $newCode,
+        ]);
+
+        return $newCode;
+    }
+
+    /**
+     * Resolves a raw model name against xlr8_vehicle_model.name, matching
+     * case-insensitively with whitespace collapsed/trimmed. Unlike
+     * resolveKeyValue(), a miss does NOT create a new vehicle_model row —
+     * it just returns nulls for both codes, so only the raw `model` text
+     * (and variant, handled by the caller) gets saved.
+     */
+    private function resolveVehicleModel($rawModelName): array
+    {
+        $normalized = $rawModelName !== null ? $this->normalizeForMatch((string) $rawModelName) : '';
+
+        if ($normalized === '' || !isset($this->vehicleModelCache[$normalized])) {
+            return ['model_code' => null, 'segment_code' => null];
+        }
+
+        return $this->vehicleModelCache[$normalized];
+    }
+
+    /** Lowercase + trim + collapse internal whitespace, for case/whitespace-insensitive matching. */
+    private function normalizeForMatch(string $value): string
+    {
+        return mb_strtolower(trim(preg_replace('/\s+/', ' ', $value)));
+    }
+
+    /**
+     * Derives a new xlr8_utils_keyvalue `code` from raw free-text input,
+     * matching the style of the existing seed data (e.g. "Test Drive" ->
+     * "TEST_DRIVE"): uppercase, non-alphanumeric runs collapsed to a single
+     * underscore, leading/trailing underscores trimmed.
+     */
+    private function generateKeyvalueCode(string $rawValue): string
+    {
+        $code = mb_strtoupper($rawValue);
+        $code = preg_replace('/[^A-Z0-9]+/', '_', $code);
+        $code = trim($code, '_');
+
+        return $code !== '' ? $code : 'UNKNOWN';
     }
 
     private function getSheetHeaderMap(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet): array
