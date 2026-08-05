@@ -50,6 +50,31 @@ class EnquiryCrudController extends CrudController
     public function index()
     {
         $this->crud->setListView('admin.enquiry.list');
+
+        // 1. Define all highlight filter keys
+        $filters = [
+            'missed_fup',
+            'today_fup',
+            'birthday',
+            'anniversary',
+            'exchange',
+            'pending_eval',
+            'delayed',
+            'wrong_assign',
+            'finance',
+            'stage_mismatch',
+            'lost_verif'
+        ];
+
+        // 2. Calculate the count for each filter
+        $highlightCounts = [];
+        foreach ($filters as $filter) {
+            $query = \App\Models\CRM\Enquiry::query(); // Base query for All Enquiries
+            \App\Services\OrgService::applyHighlightFilter($query, $filter);
+            $highlightCounts[$filter] = $query->count();
+        }
+
+        // 3. Pass the counts to the view
         return view('admin.enquiry.list', [
             'title' => 'Xceler8 Enquiries',
             'gridConfig' => [
@@ -58,6 +83,7 @@ class EnquiryCrudController extends CrudController
             ]
         ]);
     }
+
 
     public function data(Request $request)
     {
@@ -784,13 +810,45 @@ class EnquiryCrudController extends CrudController
     public function update(Request $request, $id)
     {
         $enquiry = Enquiry::findOrFail($id);
-        $validated = $request->validate($this->getValidationRules($id));
-        $this->processEntityRelations($validated);
+
+        $isVirtual         = $enquiry->origin === 'VIRTUAL';
+        $isSalesConversion = $isVirtual && $request->input('call_nature') === 'SALES';
+
+        $rules = ($isVirtual && !$isSalesConversion)
+            ? $this->getVirtualValidationRules()
+            : $this->getValidationRules($id);
+
+        $validated = $request->validate($rules);
+
+        if (!($isVirtual && !$isSalesConversion)) {
+            $this->processEntityRelations($validated);
+        }
+
+        unset($validated['virtual_no']); // never overwritten from this form
+
         $validated['updated_by'] = backpack_user()->id;
 
         $enquiry->update($validated);
         Alert::success('Enquiry updated successfully.')->flash();
+
+        // Send the user back to the list they came from, not always the main one
+        if ($isVirtual && !$isSalesConversion) {
+            return redirect(backpack_url('enquiries/virtual-number'));
+        }
+
         return redirect(backpack_url('enquiry'));
+    }
+
+    private function getVirtualValidationRules()
+    {
+        return [
+            'call_nature'           => 'required|string',
+            'remarks'               => 'nullable',
+            'cre_enquiry_stage'     => 'nullable',
+            'cre_next_fup_date'     => 'nullable|date',
+            'cre_next_fup_time'     => 'nullable',
+            'cre_next_fup_remarks'  => 'nullable',
+        ];
     }
 
     public function storeReference(Request $request)

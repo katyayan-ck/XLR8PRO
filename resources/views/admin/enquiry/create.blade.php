@@ -57,34 +57,45 @@
                             @if (isset($enquiry))
                                 @method('PUT')
                             @endif
-                            <div class="card mb-4">
-                                <div class="card-header bg-light">
-                                    <h5 class="mb-0">Vehicle Snapshot (Locked)</h5>
-                                </div>
+
+                            {{-- =========================== VIRTUAL CALL DETAILS =========================== --}}
+                            @if($isVirtual)
+                                <h3 class="mb-0 ms-3 mt-3">Virtual Number Call Details</h3>
                                 <div class="card-body">
                                     <div class="row">
-                                        <div class="col-md-4 mb-3">
-                                            <label class="form-label">Segment</label>
-                                            <input type="text" class="form-control"
-                                                value="{{ $enquiry->segment ?? ($enquiry->segment_code ?? '—') }}" readonly
-                                                disabled>
+                                        <div class="col-md-2 mb-3">
+                                            <label class="form-label">Virtual Number</label>
+                                            <input type="text" name="virtual_no" class="form-control" value="{{ $enquiry->virtual_no ?? '' }}" readonly>
                                         </div>
-                                        <div class="col-md-4 mb-3">
-                                            <label class="form-label">Model</label>
-                                            <input type="text" class="form-control"
-                                                value="{{ $enquiry->model ?? ($enquiry->model_code ?? '—') }}" readonly
-                                                disabled>
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">Call Date</label>
+                                            <input type="text" name="virtual_call_date" class="form-control" value="{{ !empty($enquiry->virtual_call_date) ? \Carbon\Carbon::parse($enquiry->virtual_call_date)->format('d-m-Y H:i') : '' }}" readonly>
                                         </div>
-                                        <div class="col-md-4 mb-3">
-                                            <label class="form-label">Variant</label>
-                                            <input type="text" class="form-control"
-                                                value="{{ $enquiry->variant ?? ($enquiry->variant_code ?? '—') }}" readonly
-                                                disabled>
+                                        <div class="col-md-2 mb-3">
+                                            <label class="form-label">Call Duration</label>
+                                            <input type="text" name="call_duration" class="form-control" value="{{ $enquiry->call_duration ?? '' }}" readonly>
+                                        </div>
+                                        
+                                        {{-- Mobile Field for Virtual Block --}}
+                                        <div class="col-md-2 mb-3">
+                                            <label class="form-label">Customer Mobile <span class="text-danger">*</span></label>
+                                            <input type="text" id="mobile" name="mobile" maxlength="10" class="form-control" value="{{ old('mobile', $enquiry->mobile ?? '') }}" required>
+                                        </div>
+                                        
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">Call Nature <span class="text-danger">*</span></label>
+                                            <select name="call_nature" id="call_nature" class="form-control form-select" required>
+                                                <option value="">Select Option</option>
+                                                @foreach ($call_nature_virtual as $item)
+                                                    <option value="{{ $item['code'] }}" {{ old('call_nature', $enquiry->call_nature ?? '') == $item['code'] ? 'selected' : '' }}>
+                                                        {{ $item['value'] }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                            <h3 class="mb-0 ms-3">Customer Information</h3>
+                            @endif
 
                             <div class="card-body">
 
@@ -221,16 +232,19 @@
                                         </select>
                                     </div>
 
-                                    {{-- Enquiry Sub Source --}}
-                                    <div class="col-md-3 mb-3">
-                                        <label class="form-label">
-                                            Enquiry Sub Source <span class="text-danger">*</span>
-                                        </label>
-                                        <select name="sub_source" id="sub_source" class="form-control form-select"
-                                            disabled>
-                                            <option value="">Select Enquiry Sub Source</option>
-                                        </select>
-                                    </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">Planned Campaign</label>
+                                            <select name="planned_campaign" id="planned_campaign"
+                                                class="form-control form-select">
+                                                <option value="">Select Planned Campaign</option>
+                                                @foreach ($campaigns as $name)
+                                                    <option value="{{ $name }}"
+                                                        {{ old('planned_campaign', $enquiry->planned_campaign ?? '') == $name ? 'selected' : '' }}>
+                                                        {{ $name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
 
                                     <div class="col-md-3 mb-3">
                                         <label class="form-label">Planned Campaign</label>
@@ -550,13 +564,21 @@
                                             placeholder="Select Follow Up Date">
                                     </div>
 
-                                    {{-- Follow Up Time --}}
-                                    <div class="col-md-4 mb-3">
-                                        <label class="form-label">
-                                            Follow Up Time
-                                        </label>
-                                        <input type="time" name="followup_time" class="form-control"
-                                            value="{{ old('followup_time', $enquiry->followup_time ?? '') }}">
+                                        {{-- Age Group --}}
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">
+                                                Age Group <small class="text-muted">(Optional)</small>
+                                            </label>
+                                            <select name="age_group" class="form-control form-select">
+                                                <option value="">Select Age Group</option>
+                                                @foreach ($age_groups as $item)
+                                                    <option value="{{ $item['code'] }}"
+                                                        {{ old('age_group', $enquiry->age_group ?? '') == $item['code'] ? 'selected' : '' }}>
+                                                        {{ $item['value'] }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1083,7 +1105,7 @@
                 // FIXED: Using the correct snake_case IDs from your database/HTML
                 const $exchangeInputs = $(
                     '#brand_make, #brand_model, #vehicle_no, #make_year, #odo_reading, #expected_price, #offered_price, #exchange_bonus'
-                );
+                    );
 
                 $exchangeInputs.prop('required', isExchange);
 
