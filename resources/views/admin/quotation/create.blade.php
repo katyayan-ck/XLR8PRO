@@ -161,14 +161,23 @@ use App\Services\OrgService;
         }
 
         .quotation-summary .onroad-label {
-            flex: 0 0 82% !important;
+            flex: 0 0 17% !important;
         }
 
         .quotation-summary .onroad-amount {
-            flex: 0 0 18% !important;
+            flex: 0 0 13% !important;
+            justify-content: flex-center !important;
+            align-items: center !important;
+        }
+
+        .quotation-summary .onroad-words {
+            flex: 1 1 70% !important;
             justify-content: flex-end !important;
         }
+
     }
+
+
 
     .quotation-sheet {
 
@@ -352,7 +361,7 @@ use App\Services\OrgService;
 
     .quotation-grid-split {
         display: flex;
-        gap: 0.5px;
+        gap: 3px;
         align-items: flex-start;
     }
 
@@ -485,12 +494,12 @@ use App\Services\OrgService;
     }
 
     .quotation-summary .onroad-label {
-        flex: 0 0 82%;
+        flex: 0 0 25%;
     }
 
     .quotation-summary .onroad-amount {
         flex: 1 1 18%;
-        justify-content: flex-end;
+        justify-content: center;
     }
 
     .quotation-summary input {
@@ -559,7 +568,7 @@ use App\Services\OrgService;
         padding: 4px 5px;
         font-size: 10px;
         font-weight: bold;
-        margin-bottom: 8px;
+        margin-bottom: 6px;
     }
 
     #insurance_print,
@@ -610,7 +619,7 @@ use App\Services\OrgService;
         }
 
         .quotation-grid-split {
-            gap: 0.5px !important;
+            gap: 3px !important;
         }
 
         /* Hide Financier Invoice / Discount Bifurcation box while printing */
@@ -650,6 +659,94 @@ use App\Services\OrgService;
     .quotation-summary input,
     .financier-discount-grid input {
         text-align: right !important;
+    }
+
+    /* ================= Custom Multi-Select with Checkboxes ================= */
+    .select2-container--default .select2-results__option {
+        padding: 6px 12px;
+        user-select: none;
+    }
+
+    .select2-container--default .select2-results__option .select2-checkbox {
+        margin-right: 8px;
+        width: 15px;
+        height: 15px;
+        accent-color: #0d6efd;
+        cursor: pointer;
+    }
+
+    .select2-checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+    }
+
+    /* Disabled/Freezed options */
+    .select2-container--default .select2-results__option--disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+    }
+
+    .select2-container--default .select2-results__option--disabled .select2-checkbox {
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+
+    /* ================= HIDE CHIPS - ONLY SHOW COUNT ================= */
+    /* Hide chips completely for both selects */
+    .select2-selection--multiple .select2-selection__choice {
+        display: none !important;
+    }
+
+    /* Show only the placeholder/count text */
+    .select2-selection--multiple .select2-selection__rendered {
+        display: flex !important;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 8px;
+    }
+
+    .select2-selection--multiple .select2-selection__rendered .select2-selection__placeholder {
+        color: #6c757d;
+    }
+
+    /* Selected count text style - override any other styles */
+    .select2-selection--multiple .select2-selection__rendered .select2-selection__choice {
+        display: none !important;
+    }
+
+    /* Fix for selection display */
+    .select2-selection--multiple .select2-selection__rendered li {
+        list-style: none;
+    }
+
+    .select2-selection--multiple .select2-selection__rendered .select2-selection__choice__remove {
+        display: none !important;
+    }
+
+    /* ================= Discount Bifurcation Box ================= */
+    .discount-bifurcation-box {
+        margin-top: 10px;
+    }
+
+    .bifurcation-grid input {
+        width: 100%;
+        border: none;
+        background: transparent;
+        font-size: 10px;
+        padding: 2px;
+    }
+
+    .bifurcation-grid input:focus {
+        outline: none;
+    }
+
+    @media print {
+        .discount-bifurcation-box {
+            display: none !important;
+        }
     }
 </style>
 
@@ -894,12 +991,68 @@ use App\Services\OrgService;
 
                                         <tr class="grid-row">
                                             <td class="cell-label">Registration</td>
-                                            <td class="cell-option">
-                                                <select name="registration_type" id="registration_type">
-                                                    @foreach($registration_type_map as $key=>$value)
-                                                    <option value="{{ $key }}">{{ $value }}</option>
-                                                    @endforeach
-                                                </select>
+                                            <td class="cell-option" style="padding: 2px 4px !important;">
+                                                <div
+                                                    style="display: flex; gap: 4px; align-items: center; justify-content: space-between; width: 100%;">
+
+                                                    <!-- 1. Registration Type Dropdown -->
+                                                    <div style="flex: 1 1 38%;">
+                                                        <select name="registration_no_type" id="registration_no_type"
+                                                            class="form-select form-select-sm"
+                                                            style="font-size: 9px; padding: 1px 3px; height: 22px; border: 1px solid #ccc; border-radius: 3px; width: 100%; background: #fff;">
+                                                            <option value="">Select Type</option>
+
+                                                            @foreach($reg_no_type_map ?? ['1'=>'Regular', '2'=>'BH',
+                                                            '3'=>'Special'] as $key => $value)
+                                                            <option value="{{ $key }}" {{ old('registration_no_type',
+                                                                $rto?->rgn_no_type ?? '') == $key ? 'selected' : '' }}>
+                                                                {{ $value }}
+                                                            </option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+
+                                                    <!-- 2. Registration Category Dropdown -->
+                                                    <div style="flex: 1 1 38%;">
+                                                        <select name="registration_category" id="registration_category"
+                                                            class="form-select form-select-sm"
+                                                            style="font-size: 9px; padding: 1px 3px; height: 22px; border: 1px solid #ccc; border-radius: 3px; width: 100%; background: #fff;">
+                                                            <option value="">Select Category</option>
+                                                            <option value="Exempted" {{ old('registration_category',
+                                                                $otfData['registration_category'] ?? $rto?->
+                                                                registration_category ?? '') == 'Exempted' ? 'selected'
+                                                                : '' }}>Exempted</option>
+                                                            <option value="Standard" {{ old('registration_category',
+                                                                $otfData['registration_category'] ?? $rto?->
+                                                                registration_category ?? '') == 'Standard' ? 'selected'
+                                                                : '' }}>Standard</option>
+                                                        </select>
+                                                    </div>
+
+                                                    <!-- 3. In House RTO (Compact Toggle Radio Buttons) -->
+                                                    <div
+                                                        style="flex: 0 0 auto; display: flex; align-items: center; border: 1px solid #ccc; border-radius: 3px; padding: 1px; background: #fff; height: 22px;">
+                                                        <span
+                                                            style="font-size: 8px; font-weight: bold; margin-right: 3px; margin-left: 2px; color: #555; white-space: nowrap;">In-House:</span>
+
+                                                        <label
+                                                            style="font-size: 8px; font-weight: bold; margin: 0 2px; cursor: pointer; display: flex; align-items: center; gap: 1px;">
+                                                            <input type="radio" name="in_house_rto" value="1" {{
+                                                                old('in_house_rto', ($rto ?? null) ? '1' : '0' )=='1'
+                                                                ? 'checked' : '' }}
+                                                                style="width: auto !important; margin: 0;"> Yes
+                                                        </label>
+
+                                                        <label
+                                                            style="font-size: 8px; font-weight: bold; margin: 0 2px; cursor: pointer; display: flex; align-items: center; gap: 1px;">
+                                                            <input type="radio" name="in_house_rto" value="0" {{
+                                                                old('in_house_rto', ($rto ?? null) ? '1' : '0' )=='0'
+                                                                ? 'checked' : '' }}
+                                                                style="width: auto !important; margin: 0;"> No
+                                                        </label>
+                                                    </div>
+
+                                                </div>
                                             </td>
                                             <td class="cell-amount">
                                                 <input type="text" id="registration_amount" name="registration_amount"
@@ -1061,6 +1214,18 @@ use App\Services\OrgService;
                                             </td>
                                         </tr>
 
+                                        <tr class="grid-row total-row" style="background: #f2f2f2; font-weight: bold;">
+                                            <td class="cell-label"
+                                                style="text-align: center; font-weight: bold; font-size: 11px;">TOTAL
+                                                RECEIVABLE
+                                            </td>
+                                            <td class="cell-option"></td>
+                                            <td class="cell-amount">
+                                                <input id="total_receivable" name="total_receivable" readonly
+                                                    style="font-weight: bold; font-size: 11px; text-align: right;">
+                                            </td>
+                                        </tr>
+
                                     </tbody>
                                 </table>
                             </div>
@@ -1157,9 +1322,7 @@ use App\Services\OrgService;
                                                 </select>
                                             </td>
                                             <td class="cell-type">
-                                                <select id="group_b_type">
-                                                    <option>INV</option>
-                                                </select>
+                                                <input type="text" id="group_b_type" value="INV" readonly>
                                             </td>
                                             <td class="cell-amount">
                                                 <input type="text" id="group_b_amount" class="numeric-only"
@@ -1181,9 +1344,7 @@ use App\Services\OrgService;
                                                 </select>
                                             </td>
                                             <td class="cell-type">
-                                                <select id="group_c_type">
-                                                    <option>CN1</option>
-                                                </select>
+                                                <input type="text" id="group_c_type" value="CN1" readonly>
                                             </td>
                                             <td class="cell-amount">
                                                 <input type="text" id="group_c_amount" class="numeric-only"
@@ -1246,10 +1407,8 @@ use App\Services\OrgService;
                                             <td class="cell-label" id="charger_discount_title">Charger Swapping Discount
                                             </td>
                                             <td class="cell-type">
-                                                <select id="charger_swapping_discount_type"
-                                                    name="charger_swapping_discount_type" disabled>
-                                                    <option value="CN2">CN2</option>
-                                                </select>
+                                                <input type="text" id="charger_swapping_discount_type"
+                                                    name="charger_swapping_discount_type" value="CN2" readonly disabled>
                                             </td>
                                             <td class="cell-amount" id="charger_discount_cell">
                                                 <input type="text" id="charger_swapping_discount"
@@ -1275,79 +1434,134 @@ use App\Services\OrgService;
                                         <tr class="grid-row">
                                             <td class="cell-label">Special Cash Discount</td>
                                             <td class="cell-type">
-                                                <select id="special_cash_discount_type"
-                                                    name="special_cash_discount_type">
-                                                    <option value="INV">INV</option>
-                                                </select>
+                                                <input type="text" id="special_cash_discount_type"
+                                                    name="special_cash_discount_type" value="INV" readonly>
                                             </td>
                                             <td class="cell-amount">
                                                 <input type="text" name="special_cash_discount"
                                                     id="special_cash_discount" class="numeric-only" placeholder="0.00">
                                             </td>
                                         </tr>
+                                        <tr class="grid-row total-row" style="background: #f2f2f2; font-weight: bold;">
+                                            <td class="cell-label"
+                                                style="text-align: center; font-weight: bold; font-size: 11px;">TOTAL
+                                                DISCOUNT
+                                            </td>
+                                            <td class="cell-type"></td>
+                                            <td class="cell-amount">
+                                                <input id="total_discount_amount" readonly
+                                                    style="font-weight: bold; font-size: 11px; text-align: right;">
+                                                <input type="hidden" id="total_discount" name="total_discount">
+                                            </td>
+                                        </tr>
 
                                     </tbody>
                                 </table>
+                                {{-- ================= DISCOUNT BIFURCATION BOX ================= --}}
+                                <div class="discount-bifurcation-box"
+                                    style="margin-top: 3px; border: 1px solid #000; width: 100%;">
+                                    <table class="quotation-grid bifurcation-grid"
+                                        style="width:100%; border-collapse: collapse; table-layout: fixed;">
+                                        <thead>
+                                            <tr>
+                                                <th
+                                                    style="width:20%; background: #d9d9d9; border:1px solid #000; padding:3px 5px; font-size:10px; font-weight:bold; text-align:center;">
+                                                    DISCOUNT BIFURCATION
+                                                </th>
+                                                <th
+                                                    style="width:16%; background: #d9d9d9; border:1px solid #000; padding:3px 5px; font-size:10px; font-weight:bold; text-align:center;">
+                                                    INV
+                                                </th>
+                                                <th
+                                                    style="width:16%; background: #d9d9d9; border:1px solid #000; padding:3px 5px; font-size:10px; font-weight:bold; text-align:center;">
+                                                    CN
+                                                </th>
+                                                <th
+                                                    style="width:16%; background: #d9d9d9; border:1px solid #000; padding:3px 5px; font-size:10px; font-weight:bold; text-align:center;">
+                                                    CN1
+                                                </th>
+                                                <th
+                                                    style="width:16%; background: #d9d9d9; border:1px solid #000; padding:3px 5px; font-size:10px; font-weight:bold; text-align:center;">
+                                                    CN2
+                                                </th>
+                                                <th
+                                                    style="width:16%; background: #d9d9d9; border:1px solid #000; padding:3px 5px; font-size:10px; font-weight:bold; text-align:center;">
+                                                    TOTAL
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td
+                                                    style="background:#f2f2f2; border:1px solid #000; padding:3px 5px; font-size:10px; font-weight:bold; text-align:center;">
+                                                    AMOUNT
+                                                </td>
+                                                <td style="border:1px solid #000; padding:3px 5px; text-align:right;">
+                                                    <input id="inv_discount_display" readonly
+                                                        style="font-weight:bold; font-size:11px; text-align:center; width:100%; border:none; background:transparent;">
+                                                </td>
+                                                <td style="border:1px solid #000; padding:3px 5px; text-align:right;">
+                                                    <input id="cn_discount_display" readonly
+                                                        style="font-weight:bold; font-size:11px; text-align:center; width:100%; border:none; background:transparent;">
+                                                </td>
+                                                <td style="border:1px solid #000; padding:3px 5px; text-align:right;">
+                                                    <input id="cn1_discount_display" readonly
+                                                        style="font-weight:bold; font-size:11px; text-align:center; width:100%; border:none; background:transparent;">
+                                                </td>
+                                                <td style="border:1px solid #000; padding:3px 5px; text-align:right;">
+                                                    <input id="cn2_discount_display" readonly
+                                                        style="font-weight:bold; font-size:11px; text-align:center; width:100%; border:none; background:transparent;">
+                                                </td>
+                                                <td
+                                                    style="background:#abb8ca; border:1px solid #000; padding:3px 5px; text-align:right;">
+                                                    <input id="total_discount_bifurcation_display" readonly
+                                                        style="font-weight:bold; font-size:11px; text-align:center; width:100%; border:none; background:transparent;">
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {{-- Hidden inputs for form submission --}}
+                                <input type="hidden" id="invoiced_discount_summary" name="invoiced_discount_summary">
+                                <input type="hidden" id="credit_note_discount_summary"
+                                    name="credit_note_discount_summary">
+                                <input type="hidden" id="cn1_discount_summary" name="cn1_discount_summary">
+                                <input type="hidden" id="cn2_discount_summary" name="cn2_discount_summary">
                             </div>
 
                         </div>
 
-                        <div class="quotation-summary">
-                            <div class="total-row-cell total-receivable-label">TOTAL RECEIVABLE</div>
-                            <div class="total-row-cell total-receivable-amount">
-                                <input id="total_receivable" name="total_receivable" readonly>
-                            </div>
-                            <div class="total-row-cell total-discount-label">TOTAL DISCOUNT</div>
-                            <div class="total-row-cell total-discount-amount">
-                                <input id="total_discount_amount" readonly>
-                                <input type="hidden" id="total_discount" name="total_discount">
-                            </div>
-                        </div>
 
-                        <div class="quotation-summary">
-                            <div class="onroad-row-cell onroad-label">ON ROAD PRICE</div>
-                            <div class="onroad-row-cell onroad-amount">
-                                <input id="net_receivable_summary" name="net_receivable_summary" readonly>
+                        <!-- ON ROAD PRICE - Separate summary -->
+                        <!-- ON ROAD PRICE / NET RECEIVABLE - 3 Columns Layout -->
+                        <div class="quotation-summary mt-1"
+                            style="border: 2px solid #000; margin-top: 10px; display: flex;">
+
+                            <!-- 1. NET RECEIVABLE Label -->
+                            <div class="onroad-row-cell onroad-label"
+                                style="background: #abb8ca; color: #000; font-size:13px; font-weight: bold; padding: 5px 8px; flex: 0 0 16%; border-right: 1px solid #000;">
+                                NET RECEIVABLE
                             </div>
+
+                            <!-- 2. NET RECEIVABLE Amount (Number) -->
+                            <div class="onroad-row-cell onroad-amount"
+                                style="background: #abb8ca; color: #000; font-weight: bold; padding: 5px 8px; flex: 0 0 20%; justify-content: flex-end; border-right: 1px solid #000;">
+                                <input id="net_receivable_summary" name="net_receivable_summary" readonly
+                                    style="font-weight: bold; font-size: 12px; text-align: center; background: transparent; border: none; width: 100%;">
+                            </div>
+
+                            <!-- 3. NET RECEIVABLE Words (Dynamic Text) -->
+                            <div class="onroad-row-cell onroad-words"
+                                style="background: #abb8ca; color: #000; font-size: 11px; font-weight: bold; padding: 5px 8px; flex: 1 1 64%; display: flex; align-items: center; justify-content: flex-end; border-right: 1px solid #000;">
+                                <span id="net_receivable_words">Zero Rupees Only</span>
+                            </div>
+
                         </div>
 
                     </div>
 
-                    {{-- ================= Financier Invoice / Discount Bifurcation (hidden on print) =================
-                    --}}
-                    <div class="financier-discount-grid">
 
-                        <div class="fd-header">FINANCIER INVOICE</div>
-                        <div class="fd-header">DISCOUNT BIFURCATION</div>
-
-                        <div class="fd-label">Total Receivable</div>
-                        <div>
-                            <input id="fi_total_receivable" name="fi_total_receivable" readonly>
-                        </div>
-                        <div class="fd-label">Invoiced Discount</div>
-                        <div>
-                            <input id="invoiced_discount" name="invoiced_discount" readonly>
-                        </div>
-
-                        <div class="fd-label">Less INV Discount</div>
-                        <div>
-                            <input id="less_inv_discount" name="less_inv_discount" readonly>
-                        </div>
-                        <div class="fd-label">Credit Note Discount</div>
-                        <div>
-                            <input id="credit_note_discount" name="credit_note_discount" readonly>
-                        </div>
-
-                        <div class="fd-label fd-bold">Finvoice Amount</div>
-                        <div class="fd-bold">
-                            <input id="finvoice_amount" name="finvoice_amount" readonly>
-                        </div>
-                        <div class="fd-label fd-bold">Total Discount</div>
-                        <div class="fd-bold">
-                            <input id="total_discount_summary" name="total_discount_summary" readonly>
-                        </div>
-
-                    </div>
 
                     {{-- ================= Accessories (shown only while printing) ================= --}}
                     {{-- ================= Insurance (shown only while printing) ================= --}}
@@ -1364,46 +1578,38 @@ use App\Services\OrgService;
                             style="font-weight:normal; display:inline-block; min-width:70%; border-bottom:1px solid #000;">&nbsp;</span>
                     </div>
 
+
                     <table class="bill-table note-box flex-grow-1">
-
-
                         <tr>
-
                             <td>
-
                                 <div style="font-weight:bold; font-size:8px; margin-bottom:3px;">
                                     NOTE:
                                 </div>
 
-                                <p style="
-                                font-size:7px;
-                                font-weight:bold;
-                                line-height:1.3;
-                                text-align:justify;
-                                margin:0;
-                                ">
-
-                                    <b>1.</b> Price quoted is current and subject to change without notice.
-                                    <b>2.</b> The Price ruling at the time of delivery only will be applicable
-                                    irrespective of when payment was made.
-                                    <b>3.</b> All specifications, colors and features are subject to change without
-                                    prior notice.
-                                    <b>4.</b> TCS @ 1 % Will be collected on full invoice value, if value is equal to or
-                                    exceeds INR 10 Lakhs.
-                                    <b>5.</b> Delivery will be against full payment only.
-                                    <b>6.</b> This is not a firm order and no claim for priority can be made on the
-                                    basis of proforma invoice.
-                                    <b>7.</b> All disputes shall be subject to Bikaner jurisdiction only.
-                                    <b>8.</b> Booking need to be done with minimum INR 21,000.
-
-                                </p>
-
-
-
+                                <!-- Added id="quotation_notes_list" -->
+                                <ol id="quotation_notes_list" style="
+                font-size:8px;
+                font-weight:bold;
+                line-height:1.4;
+                text-align:justify;
+                margin:0;
+                padding-left:12px;
+            ">
+                                    <li>Price quoted is current and subject to change without notice.</li>
+                                    <li>The Price ruling at the time of delivery only will be applicable irrespective of
+                                        when payment was made.</li>
+                                    <li>All specifications, colors and features are subject to change without prior
+                                        notice.</li>
+                                    <li>TCS @ 1 % Will be collected on full invoice value, if value is equal to or
+                                        exceeds INR 10 Lakhs.</li>
+                                    <li>Delivery will be against full payment only.</li>
+                                    <li>This is not a firm order and no claim for priority can be made on the basis of
+                                        proforma invoice.</li>
+                                    <li>All disputes shall be subject to Bikaner jurisdiction only.</li>
+                                    <li>Booking need to be done with minimum INR 21,000.</li>
+                                </ol>
                             </td>
-
                         </tr>
-
                     </table>
 
                 </div>
@@ -2697,6 +2903,44 @@ const PRICING = {
 // 2. HELPER FUNCTIONS
 // ============================================================
 
+function numberToIndianWords(num) {
+    num = parseFloat(num) || 0;
+    if (num === 0) return 'Zero Rupees Only';
+
+    const a = [
+        '', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten',
+        'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'
+    ];
+    const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+
+    function inWords(n) {
+        if (n < 20) return a[n];
+        if (n < 100) return b[Math.floor(n / 10)] + (n % 10 !== 0 ? ' ' + a[n % 10] : '');
+        if (n < 1000) return a[Math.floor(n / 100)] + ' Hundred' + (n % 100 !== 0 ? ' ' + inWords(n % 100) : '');
+        if (n < 100000) return inWords(Math.floor(n / 1000)) + ' Thousand' + (n % 1000 !== 0 ? ' ' + inWords(n % 1000) : '');
+        if (n < 10000000) return inWords(Math.floor(n / 100000)) + ' Lakh' + (n % 100000 !== 0 ? ' ' + inWords(n % 100000) : '');
+        return inWords(Math.floor(n / 10000000)) + ' Crore' + (n % 10000000 !== 0 ? ' ' + inWords(n % 10000000) : '');
+    }
+
+    // Split Integer and Decimal (Paise) parts
+    let parts = num.toFixed(2).split('.');
+    let rupees = parseInt(parts[0], 10);
+    let paise = parseInt(parts[1], 10);
+
+    let result = '';
+
+    if (rupees > 0) {
+        result += inWords(rupees) + ' Rupees';
+    }
+
+    if (paise > 0) {
+        if (rupees > 0) result += ' ';
+        result += inWords(paise) + ' Paise';
+    }
+
+    return result ? result + ' Only' : 'Zero Rupees Only';
+}
+
 let currentInsurance = null;
 let currentPricing = null;
 
@@ -2760,10 +3004,12 @@ function updateRegistrationAmount() {
 }
 
 function updateInsurancePrintText() {
-    let list = [];
+    var list = [];
     $('#insurance_covers option:selected').each(function () {
-        let price = Number($(this).data('price') || 0);
-        list.push($(this).val() + ' (₹' + price.toLocaleString('en-IN') + ')');
+        var price = Number($(this).data('price') || 0);
+        // Add (M) for mandatory items
+        var mandatory = $(this).prop('disabled') ? '' : '';
+        list.push($(this).val() + mandatory + ' (₹' + price.toLocaleString('en-IN') + ')');
     });
     $('#insurance_print').text(list.join(', '));
 }
@@ -2776,7 +3022,6 @@ function updateAccessoriesPrintText() {
         list.push(name.replace(/\(.*?\)/, '').trim() + ' (₹' + price.toLocaleString('en-IN') + ')');
     });
     $('#accessories_print').text(list.join(', '));
-    $('.select2-search__field').attr('placeholder', list.length + ' Accessories Selected');
 }
 
 function updateAccessoriesAmount() {
@@ -2825,6 +3070,26 @@ function toggleRowVisibility() {
 // 4. DYNAMIC GROUP A DISCOUNTS RENDERER
 // ============================================================
 
+// Group A "Type" cell: only "Cash Scheme OEM" genuinely has 2 valid types
+// (INV / CN), so it stays a dropdown. "CSD Discount" and "Fame Subsidy"
+// only ever have INV, so for those a dropdown is pointless — render a
+// plain readonly field instead. Keeps the same #group_a_type id either way.
+function renderGroupAType(key, presetType) {
+    const $old = $('#group_a_type');
+    let $new;
+
+    if (key === 'cash_scheme_oem') {
+        $new = $('<select id="group_a_type"><option value="INV">INV</option><option value="CN">CN</option></select>');
+        $new.val(presetType || 'INV');
+    } else {
+        $new = $('<input type="text" id="group_a_type" readonly>');
+        $new.val(presetType || (key ? 'INV' : ''));
+    }
+
+    $old.replaceWith($new);
+    return $new;
+}
+
 function renderGroupADiscounts(pricing) {
 
     // User agar manually edit kar raha hai to overwrite mat karo
@@ -2843,7 +3108,7 @@ function renderGroupADiscounts(pricing) {
 
     // Set visible values
     $('#group_a_select').val(firstScheme.key);
-    $('#group_a_type').val(firstScheme.type);
+    renderGroupAType(firstScheme.key, firstScheme.type);
     $('#group_a_amount').val(firstScheme.amount);
 
     // Hidden values
@@ -2933,7 +3198,8 @@ $('#btnFetchMock').click(function () {
     $('#careof').val(enquiry.customer.careOf || '').trigger('change');
     $('#careofname').val(enquiry.customer.careOfName || '');
     $('#enquiry_id').val(enquiry.enquiry_no);
-    $('#enquiry_no_hidden').val(enquiry.enquiry_no);
+    // $('#enquiry_no_hidden').val(enquiry.enquiry_no);
+    $('#enquiry_no_hidden').val(no);
 
     // ---- Populate Vehicle Details ----
     $('#segment').val(enquiry.vehicle.segment_name);
@@ -3385,25 +3651,10 @@ setupGroupDiscount('group_c', ['exchange_bonus', 'green_bonus', 'welcome_bonus']
 $('#group_a_select').on('change', function () {
 
     const value = $(this).val();
-    const $type = $('#group_a_type');
 
-    $type.empty();
-
-    switch (value) {
-
-        case 'cash_scheme_oem':
-            $type.append('<option value="INV">INV</option>');
-            $type.append('<option value="CN">CN</option>');
-            break;
-
-        case 'csd_discount':
-            $type.append('<option value="INV">INV</option>');
-            break;
-
-        case 'fame_subsidy':
-            $type.append('<option value="INV">INV</option>');
-            break;
-    }
+    // Rebuilds #group_a_type as a dropdown (cash_scheme_oem) or a plain
+    // readonly field (csd_discount / fame_subsidy — single type only).
+    const $type = renderGroupAType(value, null);
 
     // setupGroupDiscount ko dobara sync karne ke liye
     $type.trigger('change');
@@ -3448,13 +3699,12 @@ function calculateDiscountBifurcation() {
     let invoicedDiscount = 0;
     let creditNoteDiscount = 0;
 
-    // Excel: SUMIF(C25:C41,"INV",D25:D41) and SUMIF(C25:C41,"<>INV",D25:D41)
     DISCOUNT_TYPE_PAIRS.forEach(function (pair) {
         let amount = num(pair[0]);
         let type = $('#' + pair[1]).val();
         
         if (type === 'INV') {
-            invoicedDiscount += amount;
+            invoicedDiscount += amount;  // ✅ Sirf INV wale count ho rahe hain
         } else if (type && (type === 'CN' || type === 'CN1' || type === 'CN2')) {
             creditNoteDiscount += amount;
         }
@@ -3468,13 +3718,13 @@ function calculateQuotation() {
     let subtotal = 
         num('ex_showroom_price') +
         num('insurance_amount') +
-        num('registration_amount') +  // This is TRC + RTO Tax
+        num('registration_amount') +
         num('accessories_amount') +
         num('maxicare') +
         num('vltd_device') +
         num('coating_price') +
         num('ppf') +
-        num('rto_yellow_tape') +      // RTO Tape
+        num('rto_yellow_tape') +
         num('kazam_charging_kit') +
         num('incidental_charges') +
         num('shield_price') +
@@ -3483,28 +3733,28 @@ function calculateQuotation() {
         num('cod_charges') +
         num('charger_swapping_amount');
 
-    // Store subtotal in a hidden field for reference (like Excel E19)
     $('#subtotal_value').val(subtotal.toFixed(2));
 
-    // 2. Calculate Discount Bifurcation (Excel B45, B46)
+    // 2. Calculate Discount Bifurcation
     let bifurcation = calculateDiscountBifurcation();
     let totalInvoicedDiscount = bifurcation.invoicedDiscount;
     let totalCreditNoteDiscount = bifurcation.creditNoteDiscount;
 
-    // 3. Finvoice Amount (Excel B52 = B50 - B51)
-    // B50 = Total Receivable (subtotal), B51 = INV Discount
+    // 3. Finvoice Amount (for display only - not used for TCS)
     let finvoiceAmount = subtotal - totalInvoicedDiscount;
 
-    // 4. TCS = IF(B52>=1000000, B52*1%, 0) (Excel D20)
+    // 4. TCS = IF((Ex-Showroom - INV Discount) >= 1000000, (Ex-Showroom - INV Discount) * 1%, 0)
+    let exShowroom = num('ex_showroom_price');
+    let tcsBaseAmount = exShowroom - totalInvoicedDiscount;
     let tcs = 0;
-    if (finvoiceAmount >= 1000000) {
-        tcs = finvoiceAmount * 0.01;
+    if (tcsBaseAmount >= 1000000) {
+        tcs = tcsBaseAmount * 0.01;
         $('#tcs').val(tcs.toFixed(2)).prop('readonly', true).prop('disabled', false);
     } else {
         $('#tcs').val('N/A').prop('readonly', true).prop('disabled', true);
     }
 
-    // 5. Total Receivables = Subtotal + TCS (Excel D21)
+    // 5. Total Receivables = Subtotal + TCS
     let totalReceivable = subtotal + tcs;
     $('#total_receivable').val(totalReceivable.toFixed(2));
 
@@ -3535,32 +3785,48 @@ function calculateQuotation() {
     let netReceivable = totalReceivable - totalDiscount;
     $('#net_receivable_summary').val(netReceivable.toFixed(2));
 
-    // 8. Financier Invoice Box (Excel B50:B52)
-    // B50: Total Receivable (subtotal, not including TCS)
-    $('#fi_total_receivable').val(subtotal.toFixed(2));
-    // B51: Less INV Discount
-    $('#less_inv_discount').val(totalInvoicedDiscount.toFixed(2));
-    // B52: Finvoice Amount
-    $('#finvoice_amount').val(finvoiceAmount.toFixed(2));
+    $('#net_receivable_words').text(numberToIndianWords(netReceivable));
+    
 
-    // 9. Discount Bifurcation Box (Excel B45:B47)
-    $('#invoiced_discount').val(totalInvoicedDiscount.toFixed(2));
-    $('#credit_note_discount').val(totalCreditNoteDiscount.toFixed(2));
-    $('#total_discount_summary').val((totalInvoicedDiscount + totalCreditNoteDiscount).toFixed(2));
+    // ============================================================
+    // 8. FINANCIER INVOICE BOX - ✅ FIXED
+    // ============================================================
+    // 8. Discount Bifurcation by Type - Display in new box
+let bifurcationByType = calculateDiscountBifurcationByType();
+let invTotal = bifurcationByType.invTotal;
+let cnTotal = bifurcationByType.cnTotal;
+let cn1Total = bifurcationByType.cn1Total;
+let cn2Total = bifurcationByType.cn2Total;
+
+// Hidden fields
+$('#invoiced_discount_summary').val(invTotal.toFixed(2));
+$('#credit_note_discount_summary').val(cnTotal.toFixed(2));
+$('#cn1_discount_summary').val(cn1Total.toFixed(2));
+$('#cn2_discount_summary').val(cn2Total.toFixed(2));
+
+// Display in bifurcation box
+$('#inv_discount_display').val(invTotal.toFixed(2));
+$('#cn_discount_display').val(cnTotal.toFixed(2));
+$('#cn1_discount_display').val(cn1Total.toFixed(2));
+$('#cn2_discount_display').val(cn2Total.toFixed(2));
+
+// Display total in bifurcation box
+let totalBifurcation = invTotal + cnTotal + cn1Total + cn2Total;
+$('#total_discount_bifurcation_display').val(totalBifurcation.toFixed(2));
     
     // 10. Toggle row visibility
     toggleRowVisibility();
     
     // Debug - console mein check karo
     console.log('=== QUOTATION CALCULATION ===');
-    console.log('Subtotal (Excel D3:D19):', subtotal);
-    console.log('INV Discount (Excel B45):', totalInvoicedDiscount);
-    console.log('CN Discount (Excel B46):', totalCreditNoteDiscount);
-    console.log('Finvoice Amount (Excel B52):', finvoiceAmount);
-    console.log('TCS (Excel D20):', tcs);
-    console.log('Total Receivable (Excel D21):', totalReceivable);
-    console.log('Total Discount (Excel D43):', totalDiscount);
-    console.log('On Road Price:', netReceivable);
+    console.log('Subtotal:', subtotal);
+    console.log('TCS:', tcs);
+    console.log('Total Receivable (with TCS):', totalReceivable);
+    console.log('INV Discount:', totalInvoicedDiscount);
+    console.log('CN Discount:', totalCreditNoteDiscount);
+    console.log('Finvoice Amount:', finvoiceAmount);
+    console.log('Total Discount:', totalDiscount);
+    console.log('Net Receivable:', netReceivable);
 }
 
 // ---- Event Listeners for recalculation ----
@@ -3687,25 +3953,119 @@ function printQuotation() {
 
 $(document).ready(function () {
     // Initialize Select2 for Accessories
-    $('#accessories').select2({
-        placeholder: 'Select Accessories',
-        width: '100%',
-        closeOnSelect: false
-    }).on('change', function () {
-        let count = $(this).find('option:selected').length;
-        $('.select2-search__field').attr('placeholder', count + ' Accessories Selected');
+    // Initialize Select2 for Accessories with checkbox
+// Initialize Select2 for Accessories with checkbox - NO CHIPS
+// Initialize Select2 for Accessories with checkbox - SELECTED ITEMS ON TOP
+$('#accessories').select2({
+    placeholder: 'Search & select accessories...',
+    width: '100%',
+    closeOnSelect: false,
+    allowClear: false,
+    sorter: function(data) {
+        // Selected items ko upar lao
+        var selected = [];
+        var notSelected = [];
+        
+        data.forEach(function(item) {
+            if (item.selected) {
+                selected.push(item);
+            } else {
+                notSelected.push(item);
+            }
+        });
+        
+        // Selected items pehle, phir baki
+        return selected.concat(notSelected);
+    },
+    templateResult: function (data) {
+        if (data.loading) return data.text;
+        
+        var $container = $('<span class="select2-checkbox-label"></span>');
+        var $checkbox = $('<input type="checkbox" class="select2-checkbox">');
+        
+        if (data.element && data.element.selected) {
+            $checkbox.prop('checked', true);
+        }
+        
+        $container.append($checkbox);
+        $container.append($(document.createTextNode(' ' + data.text)));
+        
+        return $container;
+    },
+    templateSelection: function (data) {
+        return data.text || 'Search & select accessories...';
+    }
+}).on('select2:select select2:unselect', function (e) {
+    setTimeout(function() {
+        $('#accessories').trigger('change');
         updateAccessoriesAmount();
         updateAccessoriesPrintText();
         toggleRowVisibility();
-    });
+    }, 50);
+});
 
-    // Initialize Select2 for Insurance Covers
-    $('#insurance_covers').select2({
-        width: '100%',
-        placeholder: 'Insurance Covers',
-        closeOnSelect: false,
-        dropdownParent: $('body')
-    });
+
+// Initialize Select2 for Insurance Covers - SELECTED ITEMS ON TOP
+$('#insurance_covers').select2({
+    placeholder: 'Search insurance covers...',
+    width: '100%',
+    closeOnSelect: false,
+    allowClear: false,
+    sorter: function(data) {
+        // Selected items ko upar lao
+        var selected = [];
+        var notSelected = [];
+        
+        data.forEach(function(item) {
+            if (item.selected) {
+                selected.push(item);
+            } else {
+                notSelected.push(item);
+            }
+        });
+        
+        // Mandatory items ko selected mein force karo
+        // Selected items pehle, phir baki
+        return selected.concat(notSelected);
+    },
+    templateResult: function (data) {
+        if (data.loading) return data.text;
+        
+        var $container = $('<span class="select2-checkbox-label"></span>');
+        var $checkbox = $('<input type="checkbox" class="select2-checkbox">');
+        
+        if (data.element && data.element.selected) {
+            $checkbox.prop('checked', true);
+        }
+        
+        if (data.element && data.element.disabled) {
+            $checkbox.prop('disabled', true);
+            $container.css('opacity', '0.7');
+        }
+        
+        $container.append($checkbox);
+        $container.append($(document.createTextNode(' ' + data.text)));
+        
+        return $container;
+    },
+    templateSelection: function (data) {
+        return data.text || 'Search insurance covers...';
+    }
+}).on('select2:select select2:unselect', function (e) {
+    if (e.params && e.params.data && e.params.data.disabled) {
+        var val = $('#insurance_covers').val() || [];
+        if (!val.includes(e.params.data.id)) {
+            val.push(e.params.data.id);
+            $('#insurance_covers').val(val).trigger('change');
+        }
+        return;
+    }
+    setTimeout(function() {
+        $('#insurance_covers').trigger('change');
+        calculateQuotation();
+        toggleRowVisibility();
+    }, 50);
+});
 
     // Initial calculations
     calculateQuotation();
@@ -3716,6 +4076,113 @@ $(document).ready(function () {
     // Auto-load first enquiry for demo
     $('#mock_enquiry_no').val('005');
     $('#btnFetchMock').click();
+});
+
+function calculateDiscountBifurcationByType() {
+    let invTotal = 0;
+    let cnTotal = 0;
+    let cn1Total = 0;
+    let cn2Total = 0;
+
+    DISCOUNT_TYPE_PAIRS.forEach(function (pair) {
+        let amount = num(pair[0]);
+        let type = $('#' + pair[1]).val();
+        
+        if (type === 'INV') {
+            invTotal += amount;
+        } else if (type === 'CN') {
+            cnTotal += amount;
+        } else if (type === 'CN1') {
+            cn1Total += amount;
+        } else if (type === 'CN2') {
+            cn2Total += amount;
+        }
+    });
+
+    return { invTotal, cnTotal, cn1Total, cn2Total };
+}
+
+// ======================================
+// Validation before saving quotation
+// Rule:
+// Total CN Discount >= Cash OEM Scheme
+// when Cash OEM Scheme Type = INV
+// ======================================
+
+$('form').on('submit', function (e) {
+
+    let cashOemAmount = 0;
+    let cashOemType = '';
+
+    if ($('#group_a_select').val() === 'cash_scheme_oem') {
+        cashOemAmount = parseFloat($('#group_a_amount').val()) || 0;
+        cashOemType = $('#group_a_type').val();
+    } else {
+        cashOemAmount = num('cash_scheme_oem');
+        cashOemType = $('#cash_scheme_oem_type').val();
+    }
+
+    let bifurcation = calculateDiscountBifurcation();
+    let totalCNDiscount = bifurcation.creditNoteDiscount;
+
+    if (
+        cashOemType === 'INV' &&
+        totalCNDiscount < cashOemAmount
+    ) {
+
+        e.preventDefault();
+
+        Swal.fire({
+            icon: 'error',
+            title: 'Cannot Save Quotation',
+            html: `
+                Total <b>CN Discount</b> should be
+                <b>equal to or greater than</b>
+                <b>Cash OEM Scheme</b> when
+                <b>Cash OEM Scheme Type</b> is <b>INV</b>.
+
+                <br><br>
+
+                <b>Cash OEM Scheme :</b>
+                ₹${cashOemAmount.toFixed(2)}
+
+                <br>
+
+                <b>Total CN Discount :</b>
+                ₹${totalCNDiscount.toFixed(2)}
+            `,
+            confirmButtonText: 'Understood'
+        });
+
+        return false;
+    }
+
+});
+// Function to toggle RTO Charges text visibility based on In-House Radio selection
+// Function to dynamically append/remove 9th note point based on In-House RTO selection
+function toggleRtoChargesNote() {
+    let inHouseValue = $('input[name="in_house_rto"]:checked').val();
+    let $rtoNoteItem = $('#rto_charges_note_item');
+
+    if (inHouseValue === "1") {
+        // Agar 9th point pehle se exist nahi karta toh append karein
+        if ($rtoNoteItem.length === 0) {
+            $('#quotation_notes_list').append('<li id="rto_charges_note_item">RTO Charges will be applicable.</li>');
+        }
+    } else {
+        // Radio No (0) hone par 9th point remove karein
+        $rtoNoteItem.remove();
+    }
+}
+
+// Event listener for In-House RTO Radio Buttons
+$(document).on('change', 'input[name="in_house_rto"]', function () {
+    toggleRtoChargesNote();
+});
+
+// Document Ready par Initial State Check Karne Ke Liye Call Karein
+$(document).ready(function () {
+    toggleRtoChargesNote();
 });
 </script>
 @endpush

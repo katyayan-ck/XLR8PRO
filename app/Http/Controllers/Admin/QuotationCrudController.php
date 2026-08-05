@@ -333,6 +333,121 @@ class QuotationCrudController extends CrudController
         ]);
     }
 
+    // public function store(Request $request)
+    // {
+    //     $request->validate([
+    //         'enquiry_no'   => 'required',
+    //         'segment_code' => 'required',
+    //         'model_code'   => 'required',
+    //         'variant_code' => 'required',
+    //         'color_code'   => 'required',
+    //     ]);
+
+    //     DB::beginTransaction();
+
+    //     try {
+
+    //         // Store complete quotation JSON
+    //         $quotationData = $request->except('_token');
+
+    //         foreach (
+    //             [
+    //                 'segment_code',
+    //                 'model_code',
+    //                 'variant_code',
+    //                 'color_code'
+    //             ] as $field
+    //         ) {
+    //             $quotationData[$field] = $request->$field;
+    //         }
+
+    //         // Accessories
+    //         if (!empty($quotationData['accessories']) && is_array($quotationData['accessories'])) {
+    //             $quotationData['accessories'] = array_values($quotationData['accessories']);
+    //         }
+
+    //         // Create quotation
+    //         $quotation = new Quotation();
+
+    //         $quotation->quotation_no = 0;
+    //         $quotation->enquiry_no = $request->enquiry_no;   // isme ab ID store hogi
+
+    //         $enquiry = Enquiry::findOrFail($request->enquiry_no);
+
+    //         $quotation->person_code  = $enquiry->person_code;
+    //         $quotation->model_code   = $request->model_code;
+    //         $quotation->variant_code = $request->variant_code;
+    //         $quotation->color_code   = $request->color_code;
+
+    //         $quotation->revision = 0;
+
+    //         $quotation->standard_data  = $quotationData;
+    //         $quotation->requested_data = $quotationData;
+    //         $quotation->proposed_data  = $quotationData;
+
+    //         /*
+    //     |--------------------------------------------------------------------------
+    //     | Summary Values
+    //     |--------------------------------------------------------------------------
+    //     | Future proof:
+    //     | invoice_amount field aayega to automatically use hoga.
+    //     */
+    //         $quotation->onroad_price = $request->net_receivable_summary
+    //             ?? $request->total_receivable
+    //             ?? 0;
+
+    //         $quotation->invoice_price = $request->invoice_amount
+    //             ?? $request->net_receivable_summary
+    //             ?? 0;
+
+    //         $quotation->status     = 'raised';
+    //         $quotation->created_by = backpack_user()->id;
+
+    //         $quotation->save();
+
+    //         // Generate quotation number
+    //         $quotation->quotation_no = $quotation->id;
+    //         $quotation->save();
+
+    //         // History
+    //         QuoteAction::create([
+
+    //             'quotation_no' => $quotation->quotation_no,
+
+    //             'revision' => 0,
+
+    //             'action' => 'RAISED',
+
+    //             'requested' => $quotationData,
+
+    //             'onroad' => $request->net_receivable_summary
+    //                 ?? $request->total_receivable
+    //                 ?? 0,
+
+    //             'status' => 'raised',
+
+    //             'remarks' => 'Quotation Created',
+
+    //             'action_by' => backpack_user()->id,
+
+    //         ]);
+
+    //         DB::commit();
+
+    //         \Alert::success('Quotation created successfully.')->flash();
+
+    //         return redirect(backpack_url('quotation-form'));
+    //     } catch (\Exception $e) {
+
+    //         DB::rollBack();
+
+    //         \Log::error($e);
+
+    //         \Alert::error($e->getMessage())->flash();
+
+    //         return back()->withInput();
+    //     }
+    // }
     public function store(Request $request)
     {
         $request->validate([
@@ -346,61 +461,41 @@ class QuotationCrudController extends CrudController
         DB::beginTransaction();
 
         try {
-
             // Store complete quotation JSON
             $quotationData = $request->except('_token');
 
-            foreach (
-                [
-                    'segment_code',
-                    'model_code',
-                    'variant_code',
-                    'color_code'
-                ] as $field
-            ) {
-                $quotationData[$field] = $request->$field;
-            }
+            // Ensure all required fields are captured
+            $quotationData['segment_code'] = $request->segment_code;
+            $quotationData['model_code'] = $request->model_code;
+            $quotationData['variant_code'] = $request->variant_code;
+            $quotationData['color_code'] = $request->color_code;
 
-            // Accessories
+            // Accessories - handle array properly
             if (!empty($quotationData['accessories']) && is_array($quotationData['accessories'])) {
                 $quotationData['accessories'] = array_values($quotationData['accessories']);
             }
 
             // Create quotation
             $quotation = new Quotation();
-
             $quotation->quotation_no = 0;
-            $quotation->enquiry_no = $request->enquiry_no;   // isme ab ID store hogi
+            $quotation->enquiry_no = $request->enquiry_no;
 
             $enquiry = Enquiry::findOrFail($request->enquiry_no);
-
-            $quotation->person_code  = $enquiry->person_code;
-            $quotation->model_code   = $request->model_code;
+            $quotation->person_code = $enquiry->person_code;
+            $quotation->model_code = $request->model_code;
             $quotation->variant_code = $request->variant_code;
-            $quotation->color_code   = $request->color_code;
-
+            $quotation->color_code = $request->color_code;
             $quotation->revision = 0;
 
-            $quotation->standard_data  = $quotationData;
+            // Store all data
+            $quotation->standard_data = $quotationData;
             $quotation->requested_data = $quotationData;
-            $quotation->proposed_data  = $quotationData;
+            $quotation->proposed_data = $quotationData;
 
-            /*
-        |--------------------------------------------------------------------------
-        | Summary Values
-        |--------------------------------------------------------------------------
-        | Future proof:
-        | invoice_amount field aayega to automatically use hoga.
-        */
-            $quotation->onroad_price = $request->net_receivable_summary
-                ?? $request->total_receivable
-                ?? 0;
-
-            $quotation->invoice_price = $request->invoice_amount
-                ?? $request->net_receivable_summary
-                ?? 0;
-
-            $quotation->status     = 'raised';
+            // Summary Values
+            $quotation->onroad_price = $request->net_receivable_summary ?? 0;
+            $quotation->invoice_price = $request->net_receivable_summary ?? 0;
+            $quotation->status = 'raised';
             $quotation->created_by = backpack_user()->id;
 
             $quotation->save();
@@ -409,45 +504,68 @@ class QuotationCrudController extends CrudController
             $quotation->quotation_no = $quotation->id;
             $quotation->save();
 
+            // Save all discount fields to database for easier querying
+            $this->saveDiscountFields($quotation, $quotationData);
+
             // History
             QuoteAction::create([
-
                 'quotation_no' => $quotation->quotation_no,
-
                 'revision' => 0,
-
                 'action' => 'RAISED',
-
                 'requested' => $quotationData,
-
-                'onroad' => $request->net_receivable_summary
-                    ?? $request->total_receivable
-                    ?? 0,
-
+                'onroad' => $request->net_receivable_summary ?? 0,
                 'status' => 'raised',
-
                 'remarks' => 'Quotation Created',
-
                 'action_by' => backpack_user()->id,
-
             ]);
 
             DB::commit();
 
             \Alert::success('Quotation created successfully.')->flash();
-
             return redirect(backpack_url('quotation-form'));
         } catch (\Exception $e) {
-
             DB::rollBack();
-
-            \Log::error($e);
-
-            \Alert::error($e->getMessage())->flash();
-
+            \Log::error('Quotation Store Error: ' . $e->getMessage());
+            \Log::error($e->getTraceAsString());
+            \Alert::error('Error saving quotation: ' . $e->getMessage())->flash();
             return back()->withInput();
         }
     }
+
+    private function saveDiscountFields($quotation, $data)
+    {
+        // Map form fields to database columns
+        $discountFields = [
+            'cash_scheme_oem' => 'oem_scheme_discount',
+            'fame_subsidy' => 'fame_subsidy',
+            'exchange_bonus' => 'exchange_bonus',
+            'corporate_discount' => 'corporate_discount',
+            'accessories_discount' => 'accessories_discount',
+            'ceramic_discount' => 'ceramic_discount',
+            'ppf_discount' => 'ppf_discount',
+            'dealer_discount' => 'dealer_discount',
+            'charger_swapping_discount' => 'charger_swapping_discount',
+            'csd_discount' => 'csd_discount',
+            'loyalty_bonus' => 'loyalty_bonus',
+            'green_bonus' => 'green_bonus',
+            'welcome_bonus' => 'welcome_bonus',
+            'accessories_spl_disc' => 'accessories_spl_disc',
+            'other_cash_discount' => 'other_cash_discount',
+            'special_cash_discount' => 'special_cash_discount',
+        ];
+
+        $updateData = [];
+        foreach ($discountFields as $formField => $dbField) {
+            if (isset($data[$formField]) && $data[$formField] !== 'N/A') {
+                $updateData[$dbField] = $data[$formField];
+            }
+        }
+
+        if (!empty($updateData)) {
+            $quotation->update($updateData);
+        }
+    }
+
 
     public function edit($id)
     {
@@ -525,9 +643,124 @@ class QuotationCrudController extends CrudController
         ]);
     }
 
+    // public function update(Request $request, $id)
+    // {
+
+    //     $request->validate([
+    //         'enquiry_no'   => 'required',
+    //         'segment_code' => 'required',
+    //         'model_code'   => 'required',
+    //         'variant_code' => 'required',
+    //         'color_code'   => 'required',
+    //     ]);
+
+    //     DB::beginTransaction();
+
+    //     try {
+
+    //         $quotation = Quotation::findOrFail($id);
+
+    //         $enquiry = Enquiry::findOrFail($request->enquiry_no);
+
+    //         // Previous quotation snapshot
+    //         $previousProposal = $quotation->proposed_data ?? [];
+
+    //         // Current edited quotation
+    //         $quotationData = $request->except([
+    //             '_token',
+    //             '_method'
+    //         ]);
+
+    //         // Preserve frozen fields
+    //         $quotationData['segment_code'] = $request->segment_code;
+    //         $quotationData['model_code']   = $request->model_code;
+    //         $quotationData['variant_code'] = $request->variant_code;
+    //         $quotationData['color_code']   = $request->color_code;
+
+    //         if (isset($quotationData['accessories']) && is_array($quotationData['accessories'])) {
+    //             $quotationData['accessories'] = array_values($quotationData['accessories']);
+    //         }
+
+    //         $quotationData['accessories_amount'] = $request->accessories_amount;
+
+    //         $newRevision = $quotation->revision + 1;
+
+    //         $quotation->update([
+
+    //             // Fixed fields
+    //             'enquiry_no'   => $request->enquiry_no,
+    //             'person_code'  => $enquiry->person_code,
+
+    //             // These columns exist in quotation table
+    //             'model_code'   => $request->model_code,
+    //             'variant_code' => $request->variant_code,
+    //             'color_code'   => $request->color_code,
+
+    //             'revision' => $newRevision,
+
+    //             // Keep original quotation untouched
+    //             // standard_data remains same
+
+    //             // Previous proposal becomes requested
+    //             'requested_data' => $previousProposal,
+
+    //             // Current proposal
+    //             'proposed_data' => $quotationData,
+
+    //             'onroad_price' => $request->net_receivable_summary
+    //                 ?? $request->total_receivable
+    //                 ?? 0,
+
+    //             'invoice_price' => $request->invoice_amount
+    //                 ?? $request->net_receivable_summary
+    //                 ?? 0,
+
+    //             'status' => 'raised',
+
+    //             'updated_by' => backpack_user()->id,
+
+    //         ]);
+
+    //         QuoteAction::create([
+
+    //             'quotation_no' => $quotation->quotation_no,
+
+    //             'revision' => $newRevision,
+
+    //             'action' => 'REVISED',
+
+    //             'requested' => $previousProposal,
+
+    //             'onroad' => $request->net_receivable_summary
+    //                 ?? $request->total_receivable
+    //                 ?? 0,
+
+    //             'status' => 'raised',
+
+    //             'remarks' => 'Quotation Revised',
+
+    //             'action_by' => backpack_user()->id,
+
+    //         ]);
+
+    //         DB::commit();
+
+    //         \Alert::success('Quotation updated successfully.')->flash();
+
+    //         return redirect(backpack_url('quotation-form'));
+    //     } catch (\Exception $e) {
+
+    //         DB::rollBack();
+
+    //         \Log::error($e);
+
+    //         \Alert::error($e->getMessage())->flash();
+
+    //         return back()->withInput();
+    //     }
+    // }
     public function update(Request $request, $id)
     {
-
         $request->validate([
             'enquiry_no'   => 'required',
             'segment_code' => 'required',
@@ -539,105 +772,64 @@ class QuotationCrudController extends CrudController
         DB::beginTransaction();
 
         try {
-
             $quotation = Quotation::findOrFail($id);
-
             $enquiry = Enquiry::findOrFail($request->enquiry_no);
 
             // Previous quotation snapshot
             $previousProposal = $quotation->proposed_data ?? [];
 
             // Current edited quotation
-            $quotationData = $request->except([
-                '_token',
-                '_method'
-            ]);
+            $quotationData = $request->except(['_token', '_method']);
 
             // Preserve frozen fields
             $quotationData['segment_code'] = $request->segment_code;
-            $quotationData['model_code']   = $request->model_code;
+            $quotationData['model_code'] = $request->model_code;
             $quotationData['variant_code'] = $request->variant_code;
-            $quotationData['color_code']   = $request->color_code;
+            $quotationData['color_code'] = $request->color_code;
 
             if (isset($quotationData['accessories']) && is_array($quotationData['accessories'])) {
                 $quotationData['accessories'] = array_values($quotationData['accessories']);
             }
 
-            $quotationData['accessories_amount'] = $request->accessories_amount;
-
             $newRevision = $quotation->revision + 1;
 
             $quotation->update([
-
-                // Fixed fields
-                'enquiry_no'   => $request->enquiry_no,
-                'person_code'  => $enquiry->person_code,
-
-                // These columns exist in quotation table
-                'model_code'   => $request->model_code,
+                'enquiry_no' => $request->enquiry_no,
+                'person_code' => $enquiry->person_code,
+                'model_code' => $request->model_code,
                 'variant_code' => $request->variant_code,
-                'color_code'   => $request->color_code,
-
+                'color_code' => $request->color_code,
                 'revision' => $newRevision,
-
-                // Keep original quotation untouched
-                // standard_data remains same
-
-                // Previous proposal becomes requested
                 'requested_data' => $previousProposal,
-
-                // Current proposal
                 'proposed_data' => $quotationData,
-
-                'onroad_price' => $request->net_receivable_summary
-                    ?? $request->total_receivable
-                    ?? 0,
-
-                'invoice_price' => $request->invoice_amount
-                    ?? $request->net_receivable_summary
-                    ?? 0,
-
+                'onroad_price' => $request->net_receivable_summary ?? 0,
+                'invoice_price' => $request->net_receivable_summary ?? 0,
                 'status' => 'raised',
-
                 'updated_by' => backpack_user()->id,
-
             ]);
 
+            // Update discount fields
+            $this->saveDiscountFields($quotation, $quotationData);
+
             QuoteAction::create([
-
                 'quotation_no' => $quotation->quotation_no,
-
                 'revision' => $newRevision,
-
                 'action' => 'REVISED',
-
                 'requested' => $previousProposal,
-
-                'onroad' => $request->net_receivable_summary
-                    ?? $request->total_receivable
-                    ?? 0,
-
+                'onroad' => $request->net_receivable_summary ?? 0,
                 'status' => 'raised',
-
                 'remarks' => 'Quotation Revised',
-
                 'action_by' => backpack_user()->id,
-
             ]);
 
             DB::commit();
 
             \Alert::success('Quotation updated successfully.')->flash();
-
             return redirect(backpack_url('quotation-form'));
         } catch (\Exception $e) {
-
             DB::rollBack();
-
-            \Log::error($e);
-
-            \Alert::error($e->getMessage())->flash();
-
+            \Log::error('Quotation Update Error: ' . $e->getMessage());
+            \Alert::error('Error updating quotation: ' . $e->getMessage())->flash();
             return back()->withInput();
         }
     }
