@@ -1430,11 +1430,9 @@ class BookingCrudController extends CrudController
 
     protected function setupCreateOperation()
     {
-
         $quotation = null;
 
         if ($quotationId = request('quotation_id')) {
-
             $quotation = \App\Models\CRM\Quotation::with([
                 'enquiry',
                 'vehicleModel',
@@ -1443,10 +1441,12 @@ class BookingCrudController extends CrudController
             ])->findOrFail($quotationId);
         }
 
-        // Fetch Enquiry directly if Process button was clicked
+        // Fetch Enquiry directly if Process button was clicked or enquiry_id is passed
         $enquiry = null;
         if ($enquiryId = request('enquiry_id')) {
             $enquiry = \App\Models\CRM\Enquiry::find($enquiryId);
+        } elseif ($quotation && $quotation->enquiry) {
+            $enquiry = $quotation->enquiry;
         }
 
         CRUD::setValidation(BookingRequest::class);
@@ -1455,21 +1455,17 @@ class BookingCrudController extends CrudController
         $data = [];
 
         $data['branches']       = collect(CommonHelper::getBranches())->map(fn($b) => (object) $b);
-
         $data['location']       = collect(CommonHelper::getLocations())->map(fn($l) => (object)$l);
-        $data['allusers'] = OrgService::getUsers(deptCode: 'SLS');
+        $data['allusers']       = OrgService::getUsers(deptCode: 'SLS');
         $data['financiers']     = collect(XlFinancier::select('id', 'name', 'short_name')->get()->toArray())->map(fn($f) => (object) $f);
         $data['salesconsultants'] = OrgService::getUsers(desigCode: 'CNS');
 
-
-        $data['segments'] = CommonHelper::getVehicleSegments();
-
-        $data['models']     = [];
-        $data['variants']   = [];
-        $data['colors']     = [];
-
-        $data['locations']      = [];
-        $data['person_id']      = backpack_auth()->id();
+        $data['segments']  = CommonHelper::getVehicleSegments();
+        $data['models']    = [];
+        $data['variants']  = [];
+        $data['colors']    = [];
+        $data['locations'] = [];
+        $data['person_id'] = backpack_auth()->id();
 
         $data['dsa_details'] = \App\Models\Module\Booking\XL_DSA_MASTER::all()->map(function ($dsa) {
             return (object) [
@@ -1480,12 +1476,15 @@ class BookingCrudController extends CrudController
                 'location' => $dsa->dlocation,
             ];
         });
+
         $data['accessories_dropdown'] = Accessory::getAccessories(null, null, null);
-        $data['enum_master'] = OrgService::keywordValueByCode('EXISTING_CAR_OEM');
+        $data['enum_master']          = OrgService::keywordValueByCode('EXISTING_CAR_OEM');
 
         $data['quotation'] = $quotation;
-        $data['enquiry']   = $enquiry;
-        $this->data['data'] = $data;
+        $data['enquiry']   = $enquiry; // Pass enquiry object to view
+
+        $this->data['data']    = $data;
+        $this->data['enquiry'] = $enquiry; // Explicitly set for standalone variable access in view
     }
 
 
@@ -10849,7 +10848,7 @@ class BookingCrudController extends CrudController
             '4' => 'Higher (Nil Dep + Consumables + Add Ons)',
         ];
         $registration_type_map = [
-            '0' => 'Exempted (Reg & Hypo Fee Only)',
+            '0' => 'Exempted',
             '1' => 'TRC Only',
             '2' => 'Tax Only',
             '3' => 'TRC + Tax',
@@ -10873,11 +10872,24 @@ class BookingCrudController extends CrudController
             $enquiry = Enquiry::find($booking->enq_no);
         }
 
+        $taStatement = null;
+
+        if (
+            $finance &&
+            $finance->instrument_type == 2 &&
+            !empty($finance->instrument_ref_no)
+        ) {
+            $taStatement = DB::table('xlr8_financer_statement')
+                ->where('do_no', trim($finance->instrument_ref_no))
+                ->first();
+        }
+
         return view(
             'admin.booking.otf-form',
             compact(
                 'booking',
                 'finance',
+                'taStatement',
                 'enquiry',
                 'quotationData',
                 'finalData',
@@ -10924,8 +10936,25 @@ class BookingCrudController extends CrudController
             ->first();
 
         return response()->json([
-            'amount' => $record->credit_amount ?? '',
-            'date'   => $record->trans_date ?? '',
+            'amount'       => $record->credit_amount ?? '',
+            'voucher_date' => $record->trans_date ?? '',
+            'do_number'    => $record->do_no ?? '',
+        ]);
+    }
+
+    public function getTAStatement(Request $request)
+    {
+        $statement = DB::table('xlr8_financer_statement')
+            ->where('do_no', trim($request->do_no))
+            ->whereNull('deleted_at')
+            ->first();
+
+        return response()->json([
+            'do_no'         => $statement->do_no ?? '',
+            'credit_amount' => $statement->credit_amount ?? '',
+            'trans_date'    => !empty($statement->trans_date)
+                ? \Carbon\Carbon::parse($statement->trans_date)->format('Y-m-d')
+                : '',
         ]);
     }
     public function otfSave(Request $request, $id)
@@ -10952,6 +10981,8 @@ class BookingCrudController extends CrudController
             [
                 'rgn_no_type' => $request->registration_no_type,
                 'permit'      => $request->permit,
+                'body_type'   => $request->body_type,
+                'sale_type'   => $request->sale_type,
             ]
         );
 
@@ -10979,6 +11010,22 @@ class BookingCrudController extends CrudController
                 'district' => $request->customer_district,
             ]);
         }
+        $booking->chassis_no = $request->chassis;
+        $booking->inv_no = $request->inv_no;
+        $booking->inv_date = $request->inv_date;
+        $finance->branch = $request->financier_branch;
+        $finance->loan_amount = $request->loan_amount;
+        $finance->file_charge = $request->deduction;
+        $finance->margin = $request->margin_money;
+        $finance->do_amount = $request->do_amount;
+
+        $finance = XFinance::firstOrNew([
+            'bid' => $booking->id
+        ]);
+
+        $finance->instrument_type = $request->vehicle_delivery_on;
+
+        $finance->save();
         $booking->save();
 
         return redirect()

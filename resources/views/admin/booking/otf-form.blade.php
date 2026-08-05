@@ -392,11 +392,101 @@ use App\Services\OrgService;
                             {{-- Customer Details --}}
                             <table class="bill-table">
                                 <tr>
-                                    <td colspan="2" class="section-title">Customer Details</td>
+                                    <td colspan="2" class="section-title">Vehicle Details</td>
                                 </tr>
                                 <tr>
                                     <td class="title">GST Number</td>
                                     <td><input type="text" name="gstn" value="{{ old('gstn', $booking->gstn) }}"></td>
+                                </tr>
+                                <tr>
+                                    <td class="title">Customer Category</td>
+                                    <td>
+                                        <select name="b_cat" id="b_cat">
+                                            <option value="Individual" {{ old('b_cat', $otfData['b_cat'] ?? $booking->
+                                                b_cat ?? '') == 'Individual' ? 'selected' : '' }}>
+                                                Individual
+                                            </option>
+
+                                            <option value="CSD-CPC" {{ old('b_cat', $otfData['b_cat'] ?? $booking->b_cat
+                                                ?? '') == 'CSD-CPC' ? 'selected' : '' }}>
+                                                CSD-CPC
+                                            </option>
+
+                                            <option value="Corporate" {{ old('b_cat', $otfData['b_cat'] ?? $booking->
+                                                b_cat ?? '') == 'Corporate' ? 'selected' : '' }}>
+                                                Corporate
+                                            </option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="title">Retail Category</td>
+                                    <td>
+                                        <select name="retail_category" id="retail_category">
+                                            <option value="">Select Retail Category</option>
+                                            <option value="Normal" {{ old('retail_category', $otfData['retail_category']
+                                                ?? '' )=='Normal' ? 'selected' : '' }}>
+                                                Normal
+                                            </option>
+                                            <option value="ZACO" {{ old('retail_category', $otfData['retail_category']
+                                                ?? '' )=='ZACO' ? 'selected' : '' }}>
+                                                ZACO
+                                            </option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="title">Segment</td>
+                                    <td><input type="text" id="segment_code"
+                                            value="{{ $segment->name ?? $booking->segment_code }}" readonly></td>
+                                </tr>
+                                <tr>
+                                    <td class="title">Model</td>
+                                    <td><input type="text" id="model_name" value="{{ $model?->name ?? '' }}" readonly>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="title">Variant</td>
+                                    <td><input type="text" id="variant_name"
+                                            value="{{ $variant?->display_name ?? $variant?->custom_name ?? $variant?->oem_name ?? '' }}"
+                                            readonly></td>
+                                </tr>
+                                <tr>
+                                    <td class="title">Color</td>
+                                    <td><input type="text" id="color_name" value="{{ $color?->name ?? '' }}" readonly>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="title">Body Type</td>
+                                    <td>
+                                        <select name="body_type" id="body_type">
+                                            <option value="">Select Body Type</option>
+
+                                            @foreach($body_type_map as $key => $value)
+                                            <option value="{{ $key }}" {{ old( 'body_type' , $otfData['body_type'] ??
+                                                $rto?->body_type ?? ''
+                                                ) == $key ? 'selected' : '' }}>
+                                                {{ $value }}
+                                            </option>
+                                            @endforeach
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="title">Sale Type</td>
+                                    <td>
+                                        <select name="sale_type" id="sale_type">
+                                            <option value="">Select Sale Type</option>
+
+                                            @foreach($sale_type_map as $key => $value)
+                                            <option value="{{ $key }}" {{ old( 'sale_type' , $otfData['sale_type'] ??
+                                                $rto?->sale_type ?? ''
+                                                ) == $key ? 'selected' : '' }}>
+                                                {{ $value }}
+                                            </option>
+                                            @endforeach
+                                        </select>
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td class="title">Registration Type</td>
@@ -479,8 +569,9 @@ use App\Services\OrgService;
                                 </tr>
                                 <tr>
                                     <td class="title">DMS Enquiry Number</td>
-                                    <td><input type="text" name="dms_no" id="dms_no"
-                                            value="{{ old('dms_no', $booking->dms_no ?? ($otfData['dms_no'] ?? '')) }}">
+                                    <td>
+                                        <input type="text" name="dms_no" id="dms_no"
+                                            value="{{ old('dms_no', $enquiry->oem_enquiry_no ?? '') }} " readonly>
                                     </td>
                                 </tr>
                                 <tr>
@@ -495,86 +586,8 @@ use App\Services\OrgService;
                                 </tr>
                             </table>
 
-                            {{-- KYC & Nominee --}}
-                            <table class="bill-table">
-                                <tr>
-                                    <td colspan="2" class="section-title">KYC & Nominee Details</td>
-                                </tr>
-                                <tr>
-                                    <td class="title">PAN No.</td>
-                                    <td>
-                                        <input type="text" name="pan_no" id="pan_no"
-                                            value="{{ old('pan_no', $booking->pan_no ?? ($otfData['pan_no'] ?? '')) }}"
-                                            maxlength="10" style="text-transform:uppercase"
-                                            oninput="this.value=this.value.toUpperCase();">
-                                    </td>
-                                </tr>
 
-                                <tr>
-                                    <td class="title">Aadhaar No.</td>
-                                    <td>
-                                        <input type="text" name="adhar_no" id="adhar_no"
-                                            value="{{ old('adhar_no', $booking->adhar_no ?? ($otfData['adhar_no'] ?? '')) }}"
-                                            maxlength="12" inputmode="numeric"
-                                            oninput="this.value=this.value.replace(/\D/g,'').slice(0,12);">
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="title">Driving License No.</td>
-                                    <td><input type="text" name="driving_license_no" id="driving_license_no"
-                                            value="{{ old('driving_license_no', $otfData['driving_license_no'] ?? '') }}"
-                                            style="text-transform:uppercase"
-                                            oninput="this.value=this.value.toUpperCase();"></td>
-                                </tr>
-                                <tr>
-                                    <td class="title">Voter ID No.</td>
-                                    <td><input type="text" name="voter_id_no" id="voter_id_no"
-                                            value="{{ old('voter_id_no', $otfData['voter_id_no'] ?? '') }}"
-                                            style="text-transform:uppercase"
-                                            oninput="this.value=this.value.toUpperCase();"></td>
-                                </tr>
-                                <tr>
-                                    <td class="title">Nominee Name (For Insurance)</td>
-                                    <td><input type="text" name="nominee_name" id="nominee_name"
-                                            value="{{ old('nominee_name', $otfData['nominee_name'] ?? '') }}"></td>
-                                </tr>
-                                <tr>
-                                    <td class="title">Relation with Nominee</td>
-                                    <td>
-                                        <select name="nominee_relation" id="nominee_relation">
-                                            <option value="">Select Relation</option>
-                                            <option value="Spouse" {{ old('nominee_relation',
-                                                $otfData['nominee_relation'] ?? '' )=='Spouse' ? 'selected' : '' }}>
-                                                Spouse</option>
-                                            <option value="Brother" {{ old('nominee_relation',
-                                                $otfData['nominee_relation'] ?? '' )=='Brother' ? 'selected' : '' }}>
-                                                Brother</option>
-                                            <option value="Mother" {{ old('nominee_relation',
-                                                $otfData['nominee_relation'] ?? '' )=='Mother' ? 'selected' : '' }}>
-                                                Mother</option>
-                                            <option value="Father" {{ old('nominee_relation',
-                                                $otfData['nominee_relation'] ?? '' )=='Father' ? 'selected' : '' }}>
-                                                Father</option>
-                                            <option value="Sister" {{ old('nominee_relation',
-                                                $otfData['nominee_relation'] ?? '' )=='Sister' ? 'selected' : '' }}>
-                                                Sister</option>
-                                            <option value="Son" {{ old('nominee_relation', $otfData['nominee_relation']
-                                                ?? '' )=='Son' ? 'selected' : '' }}>Son</option>
-                                            <option value="Daughter" {{ old('nominee_relation',
-                                                $otfData['nominee_relation'] ?? '' )=='Daughter' ? 'selected' : '' }}>
-                                                Daughter</option>
-                                        </select>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="title">Age of Nominee</td>
-                                    <td>
-                                        <input type="text" name="nominee_age" id="nominee_age" class="numeric-only"
-                                            min="0" max="120" maxlength="3"
-                                            value="{{ old('nominee_age', $otfData['nominee_age'] ?? '') }}">
-                                    </td>
-                                </tr>
-                            </table>
+
 
                             {{-- Additional Sales Details --}}
                             <table class="bill-table">
@@ -722,27 +735,7 @@ use App\Services\OrgService;
                                     <td><input type="text" name="customer_mobile" id="customer_mobile"
                                             value="{{ $booking->mobile ?? '' }}" readonly></td>
                                 </tr>
-                                <tr>
-                                    <td class="title">Customer Category</td>
-                                    <td>
-                                        <select name="b_cat" id="b_cat">
-                                            <option value="Individual" {{ old('b_cat', $otfData['b_cat'] ?? $booking->
-                                                b_cat ?? '') == 'Individual' ? 'selected' : '' }}>
-                                                Individual
-                                            </option>
 
-                                            <option value="CSD-CPC" {{ old('b_cat', $otfData['b_cat'] ?? $booking->b_cat
-                                                ?? '') == 'CSD-CPC' ? 'selected' : '' }}>
-                                                CSD-CPC
-                                            </option>
-
-                                            <option value="Corporate" {{ old('b_cat', $otfData['b_cat'] ?? $booking->
-                                                b_cat ?? '') == 'Corporate' ? 'selected' : '' }}>
-                                                Corporate
-                                            </option>
-                                        </select>
-                                    </td>
-                                </tr>
                             </table>
 
                             {{-- Contact & Personal Details --}}
@@ -796,77 +789,88 @@ use App\Services\OrgService;
                                 </tr>
                             </table>
 
-                            {{-- Vehicle Details --}}
+                            {{-- KYC & Nominee --}}
                             <table class="bill-table">
                                 <tr>
-                                    <td colspan="2" class="section-title">Vehicle Details</td>
+                                    <td colspan="2" class="section-title">KYC & Nominee Details</td>
                                 </tr>
                                 <tr>
-                                    <td class="title">Retail Category</td>
+                                    <td class="title">PAN No.</td>
                                     <td>
-                                        <select name="retail_category" id="retail_category">
-                                            <option value="">Select Retail Category</option>
-                                            <option value="Normal" {{ old('retail_category', $otfData['retail_category']
-                                                ?? '' )=='Normal' ? 'selected' : '' }}>
-                                                Normal
-                                            </option>
-                                            <option value="ZACO" {{ old('retail_category', $otfData['retail_category']
-                                                ?? '' )=='ZACO' ? 'selected' : '' }}>
-                                                ZACO
-                                            </option>
+                                        <input type="text" name="pan_no" id="pan_no"
+                                            value="{{ old('pan_no', $booking->pan_no ?? ($otfData['pan_no'] ?? '')) }}"
+                                            maxlength="10" style="text-transform:uppercase"
+                                            oninput="this.value=this.value.toUpperCase();">
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td class="title">Aadhaar No.</td>
+                                    <td>
+                                        <input type="text" name="adhar_no" id="adhar_no"
+                                            value="{{ old('adhar_no', $booking->adhar_no ?? ($otfData['adhar_no'] ?? '')) }}"
+                                            maxlength="12" inputmode="numeric"
+                                            oninput="this.value=this.value.replace(/\D/g,'').slice(0,12);">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="title">Driving License No.</td>
+                                    <td><input type="text" name="driving_license_no" id="driving_license_no"
+                                            value="{{ old('driving_license_no', $otfData['driving_license_no'] ?? '') }}"
+                                            style="text-transform:uppercase"
+                                            oninput="this.value=this.value.toUpperCase();"></td>
+                                </tr>
+                                <tr>
+                                    <td class="title">Voter ID No.</td>
+                                    <td><input type="text" name="voter_id_no" id="voter_id_no"
+                                            value="{{ old('voter_id_no', $otfData['voter_id_no'] ?? '') }}"
+                                            style="text-transform:uppercase"
+                                            oninput="this.value=this.value.toUpperCase();"></td>
+                                </tr>
+                                <tr>
+                                    <td class="title">Nominee Name (For Insurance)</td>
+                                    <td><input type="text" name="nominee_name" id="nominee_name"
+                                            value="{{ old('nominee_name', $otfData['nominee_name'] ?? '') }}"></td>
+                                </tr>
+                                <tr>
+                                    <td class="title">Relation with Nominee</td>
+                                    <td>
+                                        <select name="nominee_relation" id="nominee_relation">
+                                            <option value="">Select Relation</option>
+                                            <option value="Spouse" {{ old('nominee_relation',
+                                                $otfData['nominee_relation'] ?? '' )=='Spouse' ? 'selected' : '' }}>
+                                                Spouse</option>
+                                            <option value="Brother" {{ old('nominee_relation',
+                                                $otfData['nominee_relation'] ?? '' )=='Brother' ? 'selected' : '' }}>
+                                                Brother</option>
+                                            <option value="Mother" {{ old('nominee_relation',
+                                                $otfData['nominee_relation'] ?? '' )=='Mother' ? 'selected' : '' }}>
+                                                Mother</option>
+                                            <option value="Father" {{ old('nominee_relation',
+                                                $otfData['nominee_relation'] ?? '' )=='Father' ? 'selected' : '' }}>
+                                                Father</option>
+                                            <option value="Sister" {{ old('nominee_relation',
+                                                $otfData['nominee_relation'] ?? '' )=='Sister' ? 'selected' : '' }}>
+                                                Sister</option>
+                                            <option value="Son" {{ old('nominee_relation', $otfData['nominee_relation']
+                                                ?? '' )=='Son' ? 'selected' : '' }}>Son</option>
+                                            <option value="Daughter" {{ old('nominee_relation',
+                                                $otfData['nominee_relation'] ?? '' )=='Daughter' ? 'selected' : '' }}>
+                                                Daughter</option>
                                         </select>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td class="title">Segment</td>
-                                    <td><input type="text" id="segment_code" value="{{ $segment?->name ?? '' }}"
-                                            readonly></td>
-                                </tr>
-                                <tr>
-                                    <td class="title">Model</td>
-                                    <td><input type="text" id="model_name" value="{{ $model?->name ?? '' }}" readonly>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="title">Variant</td>
-                                    <td><input type="text" id="variant_name"
-                                            value="{{ $variant?->display_name ?? $variant?->custom_name ?? $variant?->oem_name ?? '' }}"
-                                            readonly></td>
-                                </tr>
-                                <tr>
-                                    <td class="title">Color</td>
-                                    <td><input type="text" id="color_name" value="{{ $color?->name ?? '' }}" readonly>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="title">Body Type</td>
+                                    <td class="title">Age of Nominee</td>
                                     <td>
-                                        <select name="body_type" id="body_type">
-                                            <option value="">Select Body Type</option>
-                                            @foreach($body_type_map as $key => $value)
-                                            <option value="{{ $key }}" {{ old('body_type', $otfData['body_type'] ??
-                                                $rto?->body_type ?? '') == $key ? 'selected' : '' }}>
-                                                {{ $value }}
-                                            </option>
-                                            @endforeach
-                                        </select>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="title">Sale Type</td>
-                                    <td>
-                                        <select name="sale_type" id="sale_type">
-                                            <option value="">Select Sale Type</option>
-                                            @foreach($sale_type_map as $key => $value)
-                                            <option value="{{ $key }}" {{ old('sale_type', $otfData['sale_type'] ??
-                                                $rto?->sale_type ?? '') == $key ? 'selected' : '' }}>
-                                                {{ $value }}
-                                            </option>
-                                            @endforeach
-                                        </select>
+                                        <input type="text" name="nominee_age" id="nominee_age" class="numeric-only"
+                                            min="0" max="120" maxlength="3"
+                                            value="{{ old('nominee_age', $otfData['nominee_age'] ?? '') }}">
                                     </td>
                                 </tr>
                             </table>
+
+
 
                             {{-- Vehicle Delivery / Invoice Details --}}
                             <table class="bill-table">
@@ -875,14 +879,15 @@ use App\Services\OrgService;
                                 </tr>
                                 <tr>
                                     <td class="title">Chassis Number</td>
-                                    <td><input type="text" id="chassis_no_display"
-                                            value="{{ $booking->chassis_no ?? '' }}"></td>
+                                    <td>
+                                        <input type="text" name="chassis" id="chassis_no_display"
+                                            value="{{ old('chassis', $booking->chassis_no ?? '') }}">
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td class="title">Engine Number</td>
                                     <td><input type="text" name="engine_no" id="engine_no"
-                                            value="{{ old('engine_no', $otfData['engine_no'] ?? $insurance?->engine_no ?? '') }}"
-                                            readonly></td>
+                                            value="{{ old('engine_no', $otfData['engine_no'] ?? '') }}"></td>
                                 </tr>
                                 <tr>
                                     <td class="title">Chassis Image</td>
@@ -891,26 +896,32 @@ use App\Services\OrgService;
                                 <tr>
                                     <td class="title">OEM Model Code</td>
                                     <td><input type="text" name="oem_model_code" id="oem_model_code"
-                                            value="{{ old('oem_model_code', $otfData['oem_model_code'] ?? $variant?->oem_name ?? '') }}"
+                                            value="{{ old('oem_model_code', $quotation->oem_model_code ?? $variant?->oem_name ?? '') }}"
                                             readonly></td>
                                 </tr>
                                 <tr>
                                     <td class="title">GST Slab</td>
-                                    <td><input type="text" name="gst_slab" id="gst_slab"
+                                    <td>
+                                        <input type="text" name="gst_slab" id="gst_slab"
                                             value="{{ old('gst_slab', $otfData['gst_slab'] ?? $variant?->gst_slab ?? '') }}"
-                                            readonly></td>
+                                            readonly>
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td class="title">Invoice No.</td>
                                     <td><input type="text" name="inv_no" id="inv_no"
-                                            value="{{ old('inv_no', $otfData['inv_no'] ?? $booking->inv_no ?? '') }}"
-                                            readonly></td>
+                                            value="{{ old('inv_no', $booking->inv_no ?? '') }}"></td>
                                 </tr>
                                 <tr>
                                     <td class="title">Invoice Date</td>
-                                    <td><input type="date" name="inv_date" id="inv_date"
-                                            value="{{ old('inv_date', $otfData['inv_date'] ?? ($booking->inv_date ? \Carbon\Carbon::parse($booking->inv_date)->format('Y-m-d') : '')) }}"
-                                            readonly></td>
+                                    <td>
+                                        <input type="text" name="invoice_date_display" id="invoice_date"
+                                            class="flatpickr" placeholder="dd-MMM-yyyy" value="{{ old('invoice_date_display',
+                    $booking->inv_date ? \Carbon\Carbon::parse($booking->inv_date)->format('d-M-Y') : '') }}">
+
+                                        <input type="hidden" name="inv_date" id="hidden_invoice_date"
+                                            value="{{ old('inv_date', $booking->inv_date) }}">
+                                    </td>
                                 </tr>
                             </table>
 
@@ -1712,54 +1723,53 @@ use App\Services\OrgService;
                                     <td class="title">Financier Name</td>
                                     <td>
                                         <input type="text" id="financier_name_display"
-                                            value="{{ $financierName ?? '' }}" readonly>
+                                            value="{{ $finance?->financier ? \App\Models\Module\Booking\XlFinancier::find($finance->financier)?->name : $financierName }}"
+                                            readonly>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="title">Financier Branch</td>
                                     <td>
                                         <input type="text" id="financier_branch" name="financier_branch"
-                                            class="form-control"
-                                            value="{{ old('financier_branch', $finance?->branch ?? '') }}">
+                                            value="{{ old('financier_branch', $otfData['financier_branch'] ?? $finance?->branch ?? '') }}">
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="title">Loan Amount</td>
                                     <td>
-                                        <input type="number" id="loan_amount" name="loan_amount" class="form-control"
-                                            value="{{ old('loan_amount', $finance?->loan_amount ?? '') }}">
+                                        <input id="loan_amount" name="loan_amount"
+                                            value="{{ old('loan_amount', $finance->loan_amount ?? 0) }}">
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td class="title">Deduction</td>
+                                    <td class="title">File Charge / Processing</td>
                                     <td>
-                                        <input type="number" id="deduction" name="deduction" class="form-control"
-                                            value="{{ old('deduction') }}">
+                                        <input id="file_charge" name="file_charge"
+                                            value="{{ old('file_charge', $finance->file_charge ?? 0) }}">
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td class="title">Margin Money Deposited By Financier</td>
+                                    <td class="title">Payment Made to Financier by Customer (If Any)</td>
                                     <td>
-                                        <input type="number" id="margin_money" name="margin_money" class="form-control"
-                                            value="{{ old('margin_money', $finance?->margin ?? '') }}">
+                                        <input id="margin_money" name="margin_money"
+                                            value="{{ old('margin_money', $finance->margin ?? 0) }}">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="title">Financier Subvention Amount (If Any)</td>
+                                    <td>
+                                        <input id="financier_subvention" name="financier_subvention"
+                                            class="form-control"
+                                            value="{{ old('financier_subvention', $finance?->subvention_amount ?? '') }}">
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="title">DO Amount</td>
                                     <td>
-                                        <input type="number" id="do_amount" name="do_amount"
-                                            class="form-control bg-light"
-                                            value="{{ old('do_amount', $finance?->loan_amount ?? '') }}" readonly>
+                                        <input type="text" id="net_settlement_amount" readonly>
                                     </td>
                                 </tr>
-                                <tr>
-                                    <td class="title">Financier Subvention Amount</td>
-                                    <td>
-                                        <input type="number" id="financier_subvention" name="financier_subvention"
-                                            class="form-control"
-                                            value="{{ old('financier_subvention', $finance?->subvention_amount ?? '') }}">
-                                    </td>
-                                </tr>
+
                             </table>
                             {{-- Receipt Table --}}
                             <div class="col-12">
@@ -1818,22 +1828,21 @@ use App\Services\OrgService;
                                 <tr>
                                     <td class="title" width="33%">DO Settlement Difference</td>
                                     <td width="67%">
-                                        <input type="number" id="do_settlement_difference"
-                                            name="do_settlement_difference" class="form-control"
-                                            value="{{ old('do_settlement_difference') }}">
+                                        <input id="do_settlement_difference" name="do_settlement_difference"
+                                            class="form-control" value="{{ old('do_settlement_difference') }}">
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="title">Expected Balance</td>
                                     <td>
-                                        <input type="number" id="expected_balance" name="expected_balance" readonly
-                                            class="form-control bg-light" value="{{ old('expected_balance') }}">
+                                        <input id="expected_balance" name="expected_balance" readonly
+                                            value="{{ old('expected_balance') }}">
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="title">Final Balance</td>
                                     <td>
-                                        <input type="number" id="final_balance" name="final_balance" readonly
+                                        <input id="final_balance" name="final_balance" readonly
                                             class="form-control bg-light" value="{{ old('final_balance') }}">
                                     </td>
                                 </tr>
@@ -1854,20 +1863,48 @@ use App\Services\OrgService;
                                 <tr>
                                     <td class="title" style="white-space:nowrap;">Vehicle To Be Delivered On</td>
                                     <td>
-                                        <select id="vehicle_delivery_on" name="vehicle_delivery_on" style="width:100%;">
+                                        <select id="vehicle_delivery_on" name="vehicle_delivery_on">
                                             <option value="">Select</option>
-                                            <option value="DO">DO</option>
-                                            <option value="Payment">Payment</option>
-                                            <option value="Mail">Mail</option>
-                                            <option value="Whatsapp">Whatsapp</option>
+                                            <option value="1" {{ old('vehicle_delivery_on',
+                                                $otfData['vehicle_delivery_on'] ?? $finance?->instrument_type ?? '') ==
+                                                1 ? 'selected' : '' }}>
+                                                Payment
+                                            </option>
+
+                                            <option value="2" {{ old('vehicle_delivery_on',
+                                                $otfData['vehicle_delivery_on'] ?? $finance?->instrument_type ?? '') ==
+                                                2 ? 'selected' : '' }}>
+                                                DO
+                                            </option>
+
+                                            <option value="4" {{ old('vehicle_delivery_on',
+                                                $otfData['vehicle_delivery_on'] ?? $finance?->instrument_type ?? '') ==
+                                                4 ? 'selected' : '' }}>
+                                                Mail
+                                            </option>
+
+                                            <option value="5" {{ old('vehicle_delivery_on',
+                                                $otfData['vehicle_delivery_on'] ?? $finance?->instrument_type ?? '') ==
+                                                5 ? 'selected' : '' }}>
+                                                Whatsapp
+                                            </option>
+
+                                            <option value="3" {{ old('vehicle_delivery_on',
+                                                $otfData['vehicle_delivery_on'] ?? $finance?->instrument_type ?? '') ==
+                                                3 ? 'selected' : '' }}>
+                                                Sanction Letter
+                                            </option>
                                         </select>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="title">DO Number (Delivery Time)</td>
                                     <td>
-                                        <input type="text" id="do_number" name="do_number" class="form-control"
-                                            style="width:100%;" disabled>
+                                        <input type="text" id="do_number" name="do_number" value="{{ old('do_number',
+        $otfData['do_number']
+        ?? $finance?->instrument_ref_no
+        ?? ''
+    ) }}">
                                     </td>
                                 </tr>
                                 <tr>
@@ -2673,7 +2710,7 @@ $(document).ready(function () {
 document.addEventListener("DOMContentLoaded", function () {
 
     flatpickr(".date-picker", {
-        dateFormat: "Y-m-d",
+        dateFormat: "d-m-Y",
         allowInput: false,
         clickOpens: true
     });
@@ -2695,5 +2732,52 @@ function toggleAnniversaryRow() {
 
 document.getElementById('marital_status').addEventListener('change', toggleAnniversaryRow);
 toggleAnniversaryRow();
+
+function calculateNetSettlement() {
+    const loanAmount   = parseFloat($('#loan_amount').val()) || 0;
+    const marginMoney  = parseFloat($('#margin_money').val()) || 0;
+    const fileCharge   = parseFloat($('#file_charge').val()) || 0;
+
+    const netSettlement = loanAmount + marginMoney - fileCharge;
+
+    $('#do_amount').val(netSettlement.toFixed(2));
+    $('#net_settlement_amount').val(netSettlement.toFixed(2));
+}
+
+$('#loan_amount, #margin_money, #file_charge').on('input change', function () {
+    calculateNetSettlement();
+});
+
+calculateNetSettlement();
+
+function calculateExpectedBalance() {
+    const netReceivable = parseFloat($('#net_receivable').val()) || 0;
+    const doAmount      = parseFloat($('#do_amount').val()) || 0;
+
+    // Receipt Amounts ka total (agar multiple receipt fields hain)
+    let receiptTotal = 0;
+    $('.receipt_amount').each(function () {
+        receiptTotal += parseFloat($(this).val()) || 0;
+    });
+
+    const expectedBalance = netReceivable - (doAmount + receiptTotal);
+
+    $('#expected_balance').val(expectedBalance.toFixed(2));
+}
+
+function calculateExpectedBalance() {
+    const netReceivable = parseFloat($('#net_receivable').val()) || 0;
+    const doAmount      = parseFloat($('#do_amount').val()) || 0;
+    const receiptAmount = parseFloat($('#receipt_amount').val()) || 0;
+
+    const expectedBalance = netReceivable - doAmount - receiptAmount;
+
+    $('#expected_balance').val(expectedBalance.toFixed(2));
+}
+
+$('#net_receivable, #do_amount, #receipt_amount').on('input', calculateExpectedBalance);
+$('.receipt_amount').on('input', calculateExpectedBalance); // agar multiple receipts hain
+
+calculateExpectedBalance();
 </script>
 @endpush

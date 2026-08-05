@@ -59,6 +59,11 @@ Route::group([
         [BookingCrudController::class, 'getDOAmount']
     )->name('booking.get-do-amount');
 
+    Route::get(
+        'booking/get-ta-statement',
+        [BookingCrudController::class, 'getTAStatement']
+    )->name('booking.get-ta-statement');
+
     // Route::get(
     //     'quotation-form',
     //     [BookingCrudController::class, 'quotationForm']

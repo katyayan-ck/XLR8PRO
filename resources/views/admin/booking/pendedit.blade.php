@@ -380,7 +380,7 @@
                     <div class="col-md-4">
                         <label>Chassis No. <span class="required-mark">*</span></label>
                         <input type="text" name="chassis" id="chassis" class="form-control"
-                            value="{{ old('chassis', $booking->chassis_no) }}">
+                            value="{{ old('chassis', $booking->chassis_no ?? '') }}">
                     </div>
                     @endif
 
