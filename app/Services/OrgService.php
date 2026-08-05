@@ -1491,9 +1491,9 @@ class OrgService
 
             case 'stage_mismatch':
                 // DMS stage and CRE stage do not match
-                $query->whereNotNull('dms_enquiry_stage')
-                    ->whereNotNull('cre_enquiry_stage')
-                    ->whereColumn('dms_enquiry_stage', '!=', 'cre_enquiry_stage');
+                // $query->whereNotNull('dms_enquiry_stage')
+                //     ->whereNotNull('cre_enquiry_stage')
+                //     ->whereColumn('dms_enquiry_stage', '!=', 'cre_enquiry_stage');
                 break;
 
             case 'lost_verif':
