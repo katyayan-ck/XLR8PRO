@@ -52,6 +52,21 @@ class ImportEnquiriesJob implements ShouldQueue
     ];
 
     /**
+     * Purchase Type is a fixed, closed list (Long sheet only) — NOT resolved
+     * against xlr8_utils_keyvalue like the KEYVALUE_CODES above. Matching is
+     * case-insensitive / whitespace-collapsed against the keys below; the
+     * mapped value on the right is what's always saved verbatim. Anything
+     * that doesn't match one of these four stays NULL — it is intentionally
+     * never auto-created.
+     */
+    private const PURCHASE_TYPE_MAP = [
+        'first time buy' => 'First Time Buy',
+        'exchange buy'   => 'Exchange Buy',
+        'additional buy' => 'Additional Buy',
+        'scrappage'      => 'Scrappage',
+    ];
+
+    /**
      * In-memory cache of xlr8_utils_keyvalue, keyed as:
      *   [keyword_code][normalized_lowercase_value] => code
      * Loaded once per job run so ~85k rows don't each hit the DB for a
@@ -71,6 +86,17 @@ class ImportEnquiriesJob implements ShouldQueue
      */
     private array $vehicleModelCache = [];
     private bool $vehicleModelCacheLoaded = false;
+
+    /**
+     * In-memory cache of xlr8_vehicle_variant's distinct colors, keyed as:
+     *   [normalized_lowercase_color_name] => ['color' => ..., 'color_code' => ...]
+     * Built from the variant table's own `color` / `color_code` columns (not
+     * the separate xlr8_vehicle_color table). Like the model cache, a miss
+     * does NOT auto-create anything — the raw sheet text is kept as-is and
+     * color_code just stays null.
+     */
+    private array $vehicleColorCache = [];
+    private bool $vehicleColorCacheLoaded = false;
 
     public function __construct(int $importLogId, string $storedPath)
     {
@@ -121,6 +147,7 @@ class ImportEnquiriesJob implements ShouldQueue
             // querying per row.
             $this->loadKeyvalueCache();
             $this->loadVehicleModelCache();
+            $this->loadVehicleColorCache();
 
             foreach ($sheetHandlers as $sheetName => $handlerMethod) {
                 $sheet = $spreadsheet->getSheetByName($sheetName);
@@ -234,7 +261,7 @@ class ImportEnquiriesJob implements ShouldQueue
                         $data = $this->stripNulls([
                             'virtual_no'        => $this->cell($row, $headerMap, 'Virtual No'),
                             'call_status'       => $this->cell($row, $headerMap, 'Call Status'),
-                            'call_duration'     => $this->cell($row, $headerMap, 'Call Duration'),
+                            'call_duration'     => $this->formatCallDuration($this->cell($row, $headerMap, 'Call Duration')),
                             'mobile'            => $mobile,
                             'virtual_call_date' => $this->excelDate($this->cell($row, $headerMap, 'Starting Date'), true),
                         ]);
@@ -308,6 +335,7 @@ class ImportEnquiriesJob implements ShouldQueue
 
                         $modelName = $this->cell($row, $headerMap, 'Product Family');
                         $modelMatch = $this->resolveVehicleModel($modelName);
+                        $colorMatch = $this->resolveVehicleColor($this->cell($row, $headerMap, 'Color'));
 
                         $data = $this->stripNulls([
                             'first_name'                        => $firstName,
@@ -318,7 +346,8 @@ class ImportEnquiriesJob implements ShouldQueue
                             'model_code'                          => $modelMatch['model_code'],
                             'segment_code'                        => $modelMatch['segment_code'],
                             'variant'                             => $this->cell($row, $headerMap, 'Variant Description'),
-                            'color'                               => $this->cell($row, $headerMap, 'Color'),
+                            'color'                               => $colorMatch['color'],
+                            'color_code'                          => $colorMatch['color_code'],
                             'fuel_type'                           => $this->cell($row, $headerMap, 'Fuel Type'),
                             'seating'                             => $this->cell($row, $headerMap, 'Seating Capacity'),
                             'enquiry_type'                        => $this->resolveKeyValue('ENQUIRY_TYPE', $this->cell($row, $headerMap, 'Enquiry Type')),
@@ -406,6 +435,7 @@ class ImportEnquiriesJob implements ShouldQueue
 
                         $modelName = $this->cell($row, $headerMap, 'Product Family');
                         $modelMatch = $this->resolveVehicleModel($modelName);
+                        $colorMatch = $this->resolveVehicleColor($this->cell($row, $headerMap, 'Color'));
 
                         $data = $this->stripNulls([
                             'first_name'                => $firstName,
@@ -416,8 +446,9 @@ class ImportEnquiriesJob implements ShouldQueue
                             'model_code'                 => $modelMatch['model_code'],
                             'segment_code'               => $modelMatch['segment_code'],
                             'variant'                    => $this->cell($row, $headerMap, 'Variant Description'),
-                            'color'                      => $this->cell($row, $headerMap, 'Color'),
-                            'purchase_type'              => $this->cell($row, $headerMap, 'Purchase Type'),
+                            'color'                      => $colorMatch['color'],
+                            'color_code'                 => $colorMatch['color_code'],
+                            'purchase_type'              => $this->resolvePurchaseType($this->cell($row, $headerMap, 'Purchase Type')),
                             'enquiry_type'               => $this->resolveKeyValue('ENQUIRY_TYPE', $this->cell($row, $headerMap, 'Enquiry Type')),
                             'source_code'                => $this->cell($row, $headerMap, 'Enquiry Source'),
                             'sub_source'                 => $this->resolveKeyValue('ENQUIRY_SUB_SOURCE', $this->cell($row, $headerMap, 'Enquiry Sub Source')),
@@ -699,6 +730,131 @@ class ImportEnquiriesJob implements ShouldQueue
     }
 
     /**
+     * Loads distinct colors from xlr8_vehicle_variant (its own `color` /
+     * `color_code` columns — NOT the separate xlr8_vehicle_color table)
+     * into $this->vehicleColorCache, keyed by normalized `color` name.
+     *
+     * If the same normalized color name maps to more than one distinct
+     * color_code across the table (e.g. two genuinely different codes both
+     * labelled "Red" on different models), the match is ambiguous — we keep
+     * the first one seen and log a warning so it can be reviewed, rather
+     * than silently guessing.
+     */
+    /**
+     * Loads distinct colors from xlr8_vehicle_variant (its own `color` /
+     * `color_code` columns — NOT the separate xlr8_vehicle_color table)
+     * into $this->vehicleColorCache, keyed by normalized `color` name.
+     *
+     * If the same normalized color name maps to more than one distinct
+     * color_code across the table, we store all variants and use the most
+     * common one as default.
+     */
+    private function loadVehicleColorCache(): void
+    {
+        if ($this->vehicleColorCacheLoaded) {
+            return;
+        }
+
+        $rows = DB::table('xlr8_vehicle_variant')
+            ->where('is_active', 1)
+            ->whereNotNull('color')
+            ->whereNotNull('color_code')
+            ->where('color', '!=', '')
+            ->where('color_code', '!=', '')
+            ->get(['color', 'color_code']);
+
+        $tempCache = [];
+
+        foreach ($rows as $row) {
+            $normalized = $this->normalizeForMatch($row->color);
+            if ($normalized === '') {
+                continue;
+            }
+
+            if (!isset($tempCache[$normalized])) {
+                $tempCache[$normalized] = [];
+            }
+
+            $tempCache[$normalized][$row->color_code] = [
+                'color'      => $row->color,
+                'color_code' => $row->color_code,
+                'count'      => ($tempCache[$normalized][$row->color_code]['count'] ?? 0) + 1,
+            ];
+        }
+
+        // For each normalized color, pick the most common color_code
+        foreach ($tempCache as $normalized => $codes) {
+            if (count($codes) > 1) {
+                Log::warning('Ambiguous color name across xlr8_vehicle_variant — multiple color_codes share this name; using the most common one.', [
+                    'color'    => $codes[array_key_first($codes)]['color'],
+                    'variants' => array_map(function ($v) {
+                        return ['code' => $v['color_code'], 'count' => $v['count']];
+                    }, $codes),
+                ]);
+            }
+
+            // Sort by count descending and pick the first one
+            uasort($codes, function ($a, $b) {
+                return $b['count'] - $a['count'];
+            });
+
+            $selected = reset($codes);
+            $this->vehicleColorCache[$normalized] = [
+                'color'      => $selected['color'],
+                'color_code' => $selected['color_code'],
+            ];
+        }
+
+        $this->vehicleColorCacheLoaded = true;
+    }
+
+    /**
+     * Resolves a raw imported color name against the xlr8_vehicle_variant
+     * color cache, matching case-insensitively with whitespace collapsed/
+     * trimmed. On a match, returns the canonical stored `color` name and its
+     * `color_code`. On a miss, returns the raw text as-is for `color` and
+     * null for `color_code` — nothing is auto-created.
+     */
+    private function resolveVehicleColor($rawColorName): array
+    {
+        $raw = $rawColorName !== null ? trim((string) $rawColorName) : null;
+        $normalized = $raw !== null && $raw !== '' ? $this->normalizeForMatch($raw) : '';
+
+        if ($normalized === '' || !isset($this->vehicleColorCache[$normalized])) {
+            return ['color' => $raw, 'color_code' => null];
+        }
+
+        return $this->vehicleColorCache[$normalized];
+    }
+
+    /**
+     * Maps a raw "Purchase Type" value (Long sheet only) against the fixed
+     * PURCHASE_TYPE_MAP, case-insensitive / whitespace-collapsed. Returns
+     * the canonical mapped string, or null if it doesn't match one of the
+     * four known values (never auto-created, never guessed).
+     */
+    private function resolvePurchaseType($rawValue): ?string
+    {
+        if ($rawValue === null) {
+            return null;
+        }
+
+        $normalized = $this->normalizeForMatch((string) $rawValue);
+        if ($normalized === '') {
+            return null;
+        }
+
+        if (isset(self::PURCHASE_TYPE_MAP[$normalized])) {
+            return self::PURCHASE_TYPE_MAP[$normalized];
+        }
+
+        Log::warning('Unrecognized Purchase Type value — left NULL', ['value' => $rawValue]);
+
+        return null;
+    }
+
+
+    /**
      * Resolves a raw imported value against xlr8_utils_keyvalue for the
      * given keyword_code group, matching case-insensitively (and with
      * whitespace collapsed/trimmed) against the `value` column. Returns the
@@ -729,54 +885,110 @@ class ImportEnquiriesJob implements ShouldQueue
         $trimmedValue = trim(preg_replace('/\s+/', ' ', $rawValue));
         $newCode = $this->generateKeyvalueCode($trimmedValue);
 
-        DB::table('xlr8_utils_keyvalue')->insert([
-            'keyword_code' => $keywordCode,
-            'key'          => null,
-            'code'         => $newCode,
-            'value'        => $trimmedValue,
-            'details'      => null,
-            'parent_id'    => null,
-            'level'        => 0,
-            'path'         => null,
-            'extra_data'   => null,
-            'status'       => 1,
-            'is_active'    => 1,
-            'created_by'   => null,
-            'updated_by'   => null,
-            'deleted_by'   => null,
-            'created_at'   => now(),
-            'updated_at'   => now(),
-            'deleted_at'   => null,
-        ]);
+        // Check if this code already exists in DB (might have been created
+        // outside the cache, e.g., by another import or manual entry)
+        $existing = DB::table('xlr8_utils_keyvalue')
+            ->where('keyword_code', $keywordCode)
+            ->where('code', $newCode)
+            ->first();
 
-        $this->keyvalueCache[$keywordCode][$normalized] = $newCode;
+        if ($existing) {
+            // Code already exists — use it and update cache
+            $this->keyvalueCache[$keywordCode][$normalized] = $existing->code;
 
-        Log::info("New xlr8_utils_keyvalue entry created", [
-            'keyword_code' => $keywordCode,
-            'value'        => $trimmedValue,
-            'code'         => $newCode,
-        ]);
+            // Also cache by the existing value's normalized form to avoid future misses
+            $existingNormalized = $this->normalizeForMatch($existing->value);
+            if ($existingNormalized !== $normalized) {
+                $this->keyvalueCache[$keywordCode][$existingNormalized] = $existing->code;
+            }
 
-        return $newCode;
-    }
+            Log::info("Existing xlr8_utils_keyvalue entry found for new value", [
+                'keyword_code' => $keywordCode,
+                'new_value'    => $trimmedValue,
+                'existing_code' => $existing->code,
+                'existing_value' => $existing->value,
+            ]);
 
-    /**
-     * Resolves a raw model name against xlr8_vehicle_model.name, matching
-     * case-insensitively with whitespace collapsed/trimmed. Unlike
-     * resolveKeyValue(), a miss does NOT create a new vehicle_model row —
-     * it just returns nulls for both codes, so only the raw `model` text
-     * (and variant, handled by the caller) gets saved.
-     */
-    private function resolveVehicleModel($rawModelName): array
-    {
-        $normalized = $rawModelName !== null ? $this->normalizeForMatch((string) $rawModelName) : '';
-
-        if ($normalized === '' || !isset($this->vehicleModelCache[$normalized])) {
-            return ['model_code' => null, 'segment_code' => null];
+            return $existing->code;
         }
 
-        return $this->vehicleModelCache[$normalized];
+        // Check if the same value exists with a different code
+        $existingByValue = DB::table('xlr8_utils_keyvalue')
+            ->where('keyword_code', $keywordCode)
+            ->where('value', $trimmedValue)
+            ->first();
+
+        if ($existingByValue) {
+            // Same value, different code — use the existing code
+            $this->keyvalueCache[$keywordCode][$normalized] = $existingByValue->code;
+
+            Log::info("Value already exists with different code in xlr8_utils_keyvalue", [
+                'keyword_code' => $keywordCode,
+                'value'        => $trimmedValue,
+                'existing_code' => $existingByValue->code,
+                'attempted_code' => $newCode,
+            ]);
+
+            return $existingByValue->code;
+        }
+
+        // Truly new entry — insert it
+        try {
+            DB::table('xlr8_utils_keyvalue')->insert([
+                'keyword_code' => $keywordCode,
+                'key'          => null,
+                'code'         => $newCode,
+                'value'        => $trimmedValue,
+                'details'      => null,
+                'parent_id'    => null,
+                'level'        => 0,
+                'path'         => null,
+                'extra_data'   => null,
+                'status'       => 1,
+                'is_active'    => 1,
+                'created_by'   => null,
+                'updated_by'   => null,
+                'deleted_by'   => null,
+                'created_at'   => now(),
+                'updated_at'   => now(),
+                'deleted_at'   => null,
+            ]);
+
+            $this->keyvalueCache[$keywordCode][$normalized] = $newCode;
+
+            Log::info("New xlr8_utils_keyvalue entry created", [
+                'keyword_code' => $keywordCode,
+                'value'        => $trimmedValue,
+                'code'         => $newCode,
+            ]);
+
+            return $newCode;
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Handle race condition: if another process inserted the same code
+            // between our check and insert
+            if ($e->getCode() == 23000) { // Integrity constraint violation
+                $existing = DB::table('xlr8_utils_keyvalue')
+                    ->where('keyword_code', $keywordCode)
+                    ->where('code', $newCode)
+                    ->first();
+
+                if ($existing) {
+                    $this->keyvalueCache[$keywordCode][$normalized] = $existing->code;
+
+                    Log::warning("Race condition: xlr8_utils_keyvalue entry created by another process", [
+                        'keyword_code' => $keywordCode,
+                        'code'         => $newCode,
+                    ]);
+
+                    return $existing->code;
+                }
+            }
+
+            // If it's not a duplicate key error, rethrow it
+            throw $e;
+        }
     }
+
 
     /** Lowercase + trim + collapse internal whitespace, for case/whitespace-insensitive matching. */
     private function normalizeForMatch(string $value): string
@@ -845,6 +1057,64 @@ class ImportEnquiriesJob implements ShouldQueue
     private function stripNulls(array $data): array
     {
         return array_filter($data, fn($value) => $value !== null);
+    }
+
+    /**
+     * Normalizes a raw "Call Duration" cell into MySQL TIME format
+     * (H:i:s, e.g. "05:23:00") for the now-nullable `call_duration` TIME
+     * column. Handles the shapes this kind of column commonly shows up in:
+     *
+     *   - Excel time-of-day serial (fraction of a day, e.g. 0.0037...)
+     *     -> converted via PhpSpreadsheet's date engine
+     *   - Plain number >= 1 -> treated as total duration in SECONDS
+     *     (a fraction-of-a-day serial for a phone call would virtually
+     *     always be well under 1, so anything >= 1 is unambiguous)
+     *   - String already in "H:i:s" or "i:s" form (e.g. "5:23", "05:23:00")
+     *     -> parsed and re-padded
+     *
+     * Anything that doesn't cleanly fit one of these is logged and stored
+     * as NULL rather than guessed at.
+     */
+    private function formatCallDuration($value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        try {
+            if (is_numeric($value)) {
+                $num = (float) $value;
+
+                if ($num < 1) {
+                    // Excel time-of-day fraction (e.g. 0.00385 == 5m 32s)
+                    $dt = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($num);
+                    return $dt->format('H:i:s');
+                }
+
+                // Treat as total seconds
+                $totalSeconds = (int) round($num);
+                $h = intdiv($totalSeconds, 3600);
+                $m = intdiv($totalSeconds % 3600, 60);
+                $s = $totalSeconds % 60;
+                return sprintf('%02d:%02d:%02d', $h, $m, $s);
+            }
+
+            $str = trim((string) $value);
+
+            // "H:i:s" or "i:s" style text
+            if (preg_match('/^(\d{1,3}):([0-5]?\d)(?::([0-5]?\d))?$/', $str, $m)) {
+                $h = (int) $m[1];
+                $mi = (int) $m[2];
+                $s = isset($m[3]) ? (int) $m[3] : 0;
+                return sprintf('%02d:%02d:%02d', $h, $mi, $s);
+            }
+
+            Log::warning('Unparseable Call Duration value — stored as NULL', ['value' => $value]);
+            return null;
+        } catch (\Throwable $e) {
+            Log::warning('Unparseable Call Duration value — stored as NULL', ['value' => $value, 'error' => $e->getMessage()]);
+            return null;
+        }
     }
 
     private function excelDate($value, bool $withTime = false): ?string

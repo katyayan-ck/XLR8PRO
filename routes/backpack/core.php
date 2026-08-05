@@ -32,8 +32,8 @@ Route::group([
         ->name('insurance.import');
     Route::get('rto/import', [App\Http\Controllers\Admin\RtoCrudController::class, 'import'])
         ->name('rto.import');
-    Route::post('brand/import', [App\Http\Controllers\Admin\BrandCrudController::class, 'import'])
-        ->name('brand.import');
+    Route::post('segment/import', [App\Http\Controllers\Admin\SegmentCrudController::class, 'import'])
+        ->name('segment.import');
     Route::get('home', [DashboardController::class, 'index'])->name('backpack.dashboard.home');
     Route::get('dashboard', [DashboardController::class, 'index'])->name('backpack.dashboard');
 

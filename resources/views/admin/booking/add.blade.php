@@ -442,8 +442,8 @@
                                                 {{ !isset($enquiry->purchase_type) ? 'selected' : '' }}>-- Select Purchase
                                                 Type --</option>
                                             @php $ptype = old('buyertype', $enquiry->purchase_type ?? ''); @endphp
-                                            <option value="First time Buyer"
-                                                {{ in_array($ptype, ['First time Buyer', 'First Time Buy']) ? 'selected' : '' }}>
+                                            <option value="First Time Buy"
+                                                {{ in_array($ptype, ['First Time Buy', 'First Time Buy']) ? 'selected' : '' }}>
                                                 First Time Buyer</option>
                                             <option value="Additional Buy"
                                                 {{ $ptype == 'Additional Buy' ? 'selected' : '' }}>Additional Buy</option>
@@ -1435,7 +1435,7 @@
 
                 $.validator.addMethod('gstnFormat', function(value, element) {
                     return this.optional(element) || /^\d{2}[A-Z]{5}\d{4}[A-Z]{1}\d{1}Z[A-Z0-9]{1}$/.test(
-                    value);
+                        value);
                 }, 'Please enter a valid GSTIN e.g., 08CDBPB0580N2ZK');
 
                 const bookingForm = $('#bookingForm');
@@ -1841,7 +1841,8 @@
 
                     toggleRequiredMark(
                         $(
-                            '#refcustomername, #refmobileno, #refexistingmodel, #refvariant, #refchassisregno'),
+                            '#refcustomername, #refmobileno, #refexistingmodel, #refvariant, #refchassisregno'
+                            ),
                         isChecked
                     );
 
@@ -1911,7 +1912,7 @@
                     const modelId = this.value;
                     $.ajax({
                         url: '{{ url('admin/get-variants') }}/' + encodeURIComponent(
-                        modelId), // ← this
+                            modelId), // ← this
                         method: 'GET',
                         success: function(data) {
                             populateSelect($('#variant'), data, 'name', 'code', null, function(
@@ -2358,7 +2359,7 @@
 
                 disableAll([...fields.base, ...fields.extraMake, ...fields.exchange]);
 
-                if (type === 'First time Buyer' || type === 'First Time Buy') {} else if (type === 'Additional Buy') {
+                if (type === 'First Time Buy' || type === 'First Time Buy') {} else if (type === 'Additional Buy') {
                     makeRequired(fields.base);
                     makeOptional(fields.extraMake);
                     // exchange → disabled (already)

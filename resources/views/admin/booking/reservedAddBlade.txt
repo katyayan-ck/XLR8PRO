@@ -399,7 +399,7 @@ $enquiry = $quotation?->enquiry;
                                     <label for="buyertype">Purchase Type <span class="required-mark">*</span></label>
                                     <select name="buyertype" id="buyertype" class="form-control form-select" required>
                                         <option value="" disabled>-- Select Purchase Type --</option>
-                                        <option value="First time Buyer" selected>First Time Buyer</option>
+                                        <option value="First Time Buy" selected>First Time Buyer</option>
                                         <option value="Additional Buy">Additional Buy</option>
                                         <option value="Exchange Buy">Exchange Buy</option>
                                         <option value="Scrappage">Scrappage</option>
@@ -2135,7 +2135,7 @@ function toggleFinanceFields(mode) {
 
     disableAll([...fields.base, ...fields.extraMake, ...fields.exchange]);
 
-    if (type === 'First time Buyer') {
+    if (type === 'First Time Buy') {
     }
     else if (type === 'Additional Buy') {
         makeRequired(fields.base);
