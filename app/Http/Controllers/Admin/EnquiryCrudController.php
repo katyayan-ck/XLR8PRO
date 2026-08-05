@@ -247,7 +247,7 @@ class EnquiryCrudController extends CrudController
         $actionBtns = '<a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a>';
 
         if ($type === 'all') {
-            $actionBtns .= '<a href="' . $quotUrl . '" class="btn btn-success btn-sm">Form</a>';
+            $actionBtns .= '<a href="' . $quotUrl . '" class="btn btn-success btn-sm">Quote</a>';
 
             $bookUrl = backpack_url("booking/create?enquiry_id={$e->id}");
             $actionBtns .= '<a href="' . $bookUrl . '" class="btn btn-warning btn-sm" title="Convert to Booking">Process</a>';
@@ -345,11 +345,16 @@ class EnquiryCrudController extends CrudController
                 'tehsil' => $e->tehsil ?? '—',
                 'district' => $e->district ?? '—',
                 'city' => $e->city ?? '—',
-                'sc_code' => $e->sc_code ?? '—',
+
+                // Mapped Sales Consultant Name
+                'sc_code' => $e->sc_code ? (OrgService::getUserNameByCode($e->sc_code, null, $e->sc_code)) : '—',
+
                 'dealer_branch' => $e->dealer_branch ?? '—',
                 'dealer_location' => $e->dealer_location ?? '—',
 
-                'followup_type' => $e->followup_type ?? '—',
+                // Mapped Follow-up Type via KeyValue
+                'followup_type' => $e->followup_type ? (OrgService::getKeyValueByCode($e->followup_type)?->value ?? $e->followup_type) : '—',
+                
                 'followup_date' => $c($e->followup_date, 'd-m-Y'),
                 'followup_time' => $e->followup_time ?? '—',
                 'occupation_type' => $e->occupation_type ?? '—',
