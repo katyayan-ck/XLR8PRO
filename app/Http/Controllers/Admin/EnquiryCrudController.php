@@ -53,17 +53,8 @@ class EnquiryCrudController extends CrudController
 
         // 1. Define all highlight filter keys
         $filters = [
-            'missed_fup',
-            'today_fup',
-            'birthday',
-            'anniversary',
-            'exchange',
-            'pending_eval',
-            'delayed',
-            'wrong_assign',
-            'finance',
-            'stage_mismatch',
-            'lost_verif'
+            'missed_fup', 'today_fup', 'birthday', 'anniversary', 'exchange',
+            'pending_eval', 'delayed', 'wrong_assign', 'finance', 'stage_mismatch', 'lost_verif'
         ];
 
         // 2. Calculate the count for each filter
@@ -76,11 +67,12 @@ class EnquiryCrudController extends CrudController
 
         // 3. Pass the counts to the view
         return view('admin.enquiry.list', [
-            'title' => 'Xceler8 Enquiries',
+            'title' => 'Xlr8 Enquiries',
             'gridConfig' => [
                 'columns' => $this->getColumns('all'),
                 'data' => []
-            ]
+            ],
+            'highlightCounts' => $highlightCounts
         ]);
     }
 
