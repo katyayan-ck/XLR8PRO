@@ -28,13 +28,6 @@ class EnquiryCrudController extends CrudController
 {
     use CreateOperation, DeleteOperation, ListOperation, UpdateOperation;
 
-    /**
-     * Bulk-loaded cache of sc_code => display_name (from xlr8_admin_person),
-     * populated once per page/chunk before mapData() runs, so we don't fire
-     * one query per row.
-     */
-    private array $personNameCache = [];
-
     public function setup()
     {
         CRUD::setModel(Enquiry::class);
@@ -60,12 +53,11 @@ class EnquiryCrudController extends CrudController
         // 2. Calculate the count for each filter
         $highlightCounts = [];
         foreach ($filters as $filter) {
-            $query = \App\Models\CRM\Enquiry::query(); // Base query for All Enquiries
+            $query = \App\Models\CRM\Enquiry::query(); 
             \App\Services\OrgService::applyHighlightFilter($query, $filter);
             $highlightCounts[$filter] = $query->count();
         }
 
-        // 3. Pass the counts to the view
         return view('admin.enquiry.list', [
             'title' => 'Xlr8 Enquiries',
             'gridConfig' => [
@@ -75,7 +67,6 @@ class EnquiryCrudController extends CrudController
             'highlightCounts' => $highlightCounts
         ]);
     }
-
 
     public function data(Request $request)
     {
@@ -112,11 +103,12 @@ class EnquiryCrudController extends CrudController
         // Determine the mapping format type
         $mapType = in_array($listType, ['assigned_long', 'unassigned_long']) ? 'long' : (in_array($listType, ['assigned_quick', 'unassigned_quick']) ? 'quick' : (in_array($listType, ['reference', 'virtual', 'whatsapp']) ? $listType : 'all'));
 
-        $enquiries = $query->skip($startRow)->take($limit)->get();
-        $this->personNameCache = $this->personDisplayNames($enquiries->pluck('sc_code')->all());
+        // Pre-fetch Mappings to prevent N+1 Queries
+        $lpMap = collect(OrgService::keywordValueByCode('LIKELY_PURCHASE_DATE'))->pluck('value', 'code')->toArray();
+        $fuelMap = collect(OrgService::getKeyValuesByCode('FUEL_TYPE'))->pluck('value', 'id')->toArray();
 
-        $gridData = $enquiries
-            ->map(fn($e, $i) => $this->mapData($e, $startRow + $i, $mapType))->all();
+        $gridData = $query->skip($startRow)->take($limit)->get()
+            ->map(fn($e, $i) => $this->mapData($e, $startRow + $i, $mapType, $lpMap, $fuelMap))->all();
 
         return response()->json(['rows' => $gridData, 'lastRow' => $total]);
     }
@@ -149,36 +141,24 @@ class EnquiryCrudController extends CrudController
 
         $mapType = in_array($listType, ['assigned_long', 'unassigned_long']) ? 'long' : (in_array($listType, ['assigned_quick', 'unassigned_quick']) ? 'quick' : (in_array($listType, ['reference', 'virtual', 'whatsapp']) ? $listType : 'all'));
 
-        // All possible columns for this list type (minus the Action column, which never gets exported)
-        $allColumns = array_values(array_filter(
+        $columns = array_values(array_filter(
             $this->getColumns($mapType),
             fn($col) => ($col['field'] ?? null) !== 'action'
         ));
 
-        // Columns actually visible on the page right now, sent from the grid (in display order).
-        // If none are sent (e.g. old link / direct hit), fall back to all columns like before.
-        $visibleFields = json_decode((string) $request->input('columns', '[]'), true) ?: [];
+        // Pre-fetch Mappings
+        $lpMap = collect(OrgService::keywordValueByCode('LIKELY_PURCHASE_DATE'))->pluck('value', 'code')->toArray();
+        $fuelMap = collect(OrgService::getKeyValuesByCode('FUEL_TYPE'))->pluck('value', 'id')->toArray();
 
-        if (!empty($visibleFields)) {
-            $columnsByField = collect($allColumns)->keyBy('field');
-            $columns = array_values(array_filter(
-                array_map(fn($field) => $columnsByField->get($field), $visibleFields)
-            ));
-        } else {
-            $columns = $allColumns;
-        }
-
-        return response()->streamDownload(function () use ($query, $columns, $mapType) {
+        return response()->streamDownload(function () use ($query, $columns, $mapType, $lpMap, $fuelMap) {
             $out = fopen('php://output', 'w');
 
             fputcsv($out, array_merge(['S.No.'], array_map(fn($c) => $c['headerName'], $columns)));
 
             $serial = 0;
-            $query->chunk(500, function ($chunk) use ($out, &$serial, $columns, $mapType) {
-                $this->personNameCache = $this->personDisplayNames($chunk->pluck('sc_code')->all());
-
+            $query->chunk(500, function ($chunk) use ($out, &$serial, $columns, $mapType, $lpMap, $fuelMap) {
                 foreach ($chunk as $e) {
-                    $rowData = $this->mapData($e, $serial, $mapType);
+                    $rowData = $this->mapData($e, $serial, $mapType, $lpMap, $fuelMap);
                     $serial++;
                     fputcsv($out, array_merge(
                         [$serial],
@@ -228,46 +208,27 @@ class EnquiryCrudController extends CrudController
     {
         $this->crud->setListView($view);
 
+        // Pre-fetch Mappings
+        $lpMap = collect(OrgService::keywordValueByCode('LIKELY_PURCHASE_DATE'))->pluck('value', 'code')->toArray();
+        $fuelMap = collect(OrgService::getKeyValuesByCode('FUEL_TYPE'))->pluck('value', 'id')->toArray();
+
         // Safely limit the data to 500 rows. 
         $enquiries = $query->with(['segment', 'model', 'variant', 'color', 'campaign'])
             ->orderByDesc('created_at')
             ->limit(500)
             ->get();
 
-        $this->personNameCache = $this->personDisplayNames($enquiries->pluck('sc_code')->all());
-
         return view($view, [
             'title' => $title,
             'segments' => OrgService::segments(),
             'gridConfig' => [
                 'columns' => $this->getColumns($type),
-                'data' => $enquiries->map(fn($e, $i) => $this->mapData($e, $i, $type))->values()
+                'data' => $enquiries->map(fn($e, $i) => $this->mapData($e, $i, $type, $lpMap, $fuelMap))->values()
             ]
         ]);
     }
 
-    /**
-     * Fetch display_name from xlr8_admin_person for the given sc_codes in ONE query,
-     * returned as [sc_code => display_name].
-     *
-     * NOTE: Assumes the matching column on xlr8_admin_person is `person_code`.
-     * If sc_code actually matches a different column (e.g. `code`), change
-     * 'person_code' below to that column name.
-     */
-    private function personDisplayNames(array $codes): array
-    {
-        $codes = array_values(array_unique(array_filter($codes, fn($c) => !empty($c))));
-        if (empty($codes)) {
-            return [];
-        }
-
-        return DB::table('xlr8_admin_person')
-            ->whereIn('person_code', $codes)
-            ->pluck('display_name', 'person_code')
-            ->toArray();
-    }
-
-    private function mapData($e, $i, $type)
+    private function mapData($e, $i, $type, $lpMap = [], $fuelMap = [])
     {
         // BULLETPROOF DATE PARSER: Catches invalid/empty dates without crashing
         $c = function ($d, $f) {
@@ -294,10 +255,17 @@ class EnquiryCrudController extends CrudController
 
         $row = [
             'serial_no' => $i + 1,
-            'x8_enquiry_no' => $e->x8_enquiry_no ?? $e->enquiry_no ?? '—',
-            'x8_enquiry_date' => $c($e->x8_enquiry_date ?? $e->enquiry_date, 'd-m-Y H:i'),
+            
+            // Render XENQ-id and created_at into the x8 columns
+            'x8_enquiry_no' => 'XENQ-' . $e->id, 
+            'x8_enquiry_date' => $c($e->created_at, 'd-m-Y H:i'), 
             'x8_enquiry_assign_date' => $c($e->x8_enquiry_assign_date ?? $e->enq_assign_date, 'd-m-Y'),
+            
+            // Move original data from DB x8_ fields into OEM columns
+            'oem_enquiry_no' => $e->x8_enquiry_no ?? $e->enquiry_no ?? $e->oem_enquiry_no ?? '—',
+            'oem_enquiry_date' => $c($e->x8_enquiry_date ?? $e->enquiry_date ?? $e->oem_enquiry_date, 'd-m-Y'),
             'oem_enquiry_assign_date' => $c($e->oem_enquiry_assign_date ?? $e->enq_assign_date, 'd-m-Y'),
+
             'segment_name' => $e->segment_code
                 ? ($e->getRelation('segment')?->name ?? $e->segment ?? $e->segment_code)
                 : ($e->segment ?? '—'),
@@ -337,7 +305,7 @@ class EnquiryCrudController extends CrudController
         } elseif ($type === 'virtual') {
             $row['virtual_no'] = $e->virtual_no ?? '—';
             $row['call_date_and_time'] = $c($e->virtual_call_date, 'd-m-Y H:i');
-            $row['call_date'] = $c($e->virtual_call_date, 'd-m-Y'); // ADDED Call Date Field
+            $row['call_date'] = $c($e->virtual_call_date, 'd-m-Y'); 
             $row['call_nature'] = $e->call_nature ?? '—';
             $row['remarks'] = $e->remarks ?? '—';
         } elseif ($type === 'whatsapp') {
@@ -348,8 +316,6 @@ class EnquiryCrudController extends CrudController
         // Apply data for lists (quick, long, all)
         if (in_array($type, ['long', 'quick', 'all'])) {
             $row += [
-                'oem_enquiry_no' => $e->oem_enquiry_no ?? '—',
-                'oem_enquiry_date' => $c($e->oem_enquiry_date, 'd-m-Y'),
                 'oem_long_enquiry_no' => $e->oem_long_enquiry_no ?? '—',
                 'oem_long_enquiry_date' => $c($e->oem_long_enquiry_date, 'd-m-Y'),
                 'oem_long_enquiry_assign_date' => $c($e->oem_long_enquiry_assign_date, 'd-m-Y'),
@@ -366,16 +332,20 @@ class EnquiryCrudController extends CrudController
                 'enquiry_type' => $e->enquiry_type ?? '—',
                 'source_name' => $e->source?->name ?? $e->source_code ?? '—',
                 'sub_source' => $e->sub_source ?? '—',
-                'likely_purchase_in_days' => $e->likely_purchase_date ?? '—',
+                
+                // Mapped Likely Purchase Date value
+                'likely_purchase_in_days' => $lpMap[$e->likely_purchase_date] ?? $e->likely_purchase_date ?? '—',
 
-                'fuel_type' => $e->fuel_type ?? '—',
+                // Mapped Fuel Type Value
+                'fuel_type' => $fuelMap[$e->fuel_type] ?? $e->fuel_type ?? '—',
+                
                 'transmission' => $e->transmission ?? '—',
                 'drivetrain' => $e->drivetrain ?? '—',
                 'seating' => $e->seating ?? '—',
                 'tehsil' => $e->tehsil ?? '—',
                 'district' => $e->district ?? '—',
                 'city' => $e->city ?? '—',
-                'sc_code' => $this->personNameCache[$e->sc_code] ?? $e->sc_code ?? '—',
+                'sc_code' => $e->sc_code ?? '—',
                 'dealer_branch' => $e->dealer_branch ?? '—',
                 'dealer_location' => $e->dealer_location ?? '—',
 
@@ -443,9 +413,13 @@ class EnquiryCrudController extends CrudController
         if ($type === 'reference')
             return array_merge([
                 ['field' => 'serial_no', 'headerName' => 'S.No.'],
+                ['field' => 'x8_enquiry_no', 'headerName' => 'X8 Enquiry No.'],
+                ['field' => 'x8_enquiry_date', 'headerName' => 'X8 Enquiry Date'],
+                ['field' => 'x8_enquiry_assign_date', 'headerName' => 'X8 Enquiry Assign Date'],
+                ['field' => 'oem_enquiry_no', 'headerName' => 'OEM Enquiry No.'],
+                ['field' => 'oem_enquiry_date', 'headerName' => 'OEM Enquiry Date'],
                 ['field' => 'referee_name', 'headerName' => 'Referee Name'],
                 ['field' => 'referee_phone', 'headerName' => 'Referee Mobile'],
-                ['field' => 'x8_enquiry_assign_date', 'headerName' => 'X8 Enquiry Assign Date'],
                 ['field' => 'first_name', 'headerName' => 'Customer Name'],
                 ['field' => 'mobile', 'headerName' => 'Customer Mobile'],
                 ['field' => 'segment_name', 'headerName' => 'Segment'],
@@ -456,11 +430,15 @@ class EnquiryCrudController extends CrudController
         if ($type === 'virtual')
             return array_merge([
                 ['field' => 'serial_no', 'headerName' => 'S.No.'],
+                ['field' => 'x8_enquiry_no', 'headerName' => 'X8 Enquiry No.'],
+                ['field' => 'x8_enquiry_date', 'headerName' => 'X8 Enquiry Date'],
+                ['field' => 'x8_enquiry_assign_date', 'headerName' => 'X8 Enquiry Assign Date'],
+                ['field' => 'oem_enquiry_no', 'headerName' => 'OEM Enquiry No.'],
+                ['field' => 'oem_enquiry_date', 'headerName' => 'OEM Enquiry Date'],
                 ['field' => 'virtual_no', 'headerName' => 'Virtual Number'],
                 ['field' => 'call_date_and_time', 'headerName' => 'Call Date & Time'],
-                ['field' => 'call_date', 'headerName' => 'Call Date'], // ADDED for virtual page
+                ['field' => 'call_date', 'headerName' => 'Call Date'],
                 ['field' => 'call_nature', 'headerName' => 'Call Nature'],
-                ['field' => 'x8_enquiry_assign_date', 'headerName' => 'X8 Enquiry Assign Date'],
                 ['field' => 'mobile', 'headerName' => 'Customer Mobile'],
                 ['field' => 'remarks', 'headerName' => 'Remarks'],
             ], $commonEnd);
@@ -468,16 +446,20 @@ class EnquiryCrudController extends CrudController
         if ($type === 'whatsapp')
             return array_merge([
                 ['field' => 'serial_no', 'headerName' => 'S.No.'],
+                ['field' => 'x8_enquiry_no', 'headerName' => 'X8 Enquiry No.'],
+                ['field' => 'x8_enquiry_date', 'headerName' => 'X8 Enquiry Date'],
+                ['field' => 'x8_enquiry_assign_date', 'headerName' => 'X8 Enquiry Assign Date'],
+                ['field' => 'oem_enquiry_no', 'headerName' => 'OEM Enquiry No.'],
+                ['field' => 'oem_enquiry_date', 'headerName' => 'OEM Enquiry Date'],
                 ['field' => 'campaign_name', 'headerName' => 'Campaign Name'],
                 ['field' => 'campaign_date', 'headerName' => 'Campaign Date'],
-                ['field' => 'x8_enquiry_assign_date', 'headerName' => 'X8 Enquiry Assign Date'],
                 ['field' => 'segment_name', 'headerName' => 'Segment'],
                 ['field' => 'model_name', 'headerName' => 'Model'],
                 ['field' => 'variant_name', 'headerName' => 'Variant'],
                 ['field' => 'mobile', 'headerName' => 'Customer Mobile'],
             ], $commonEnd);
 
-        // Core base columns for All, Long, Quick (RENAMED to OEM Enquiry Assign Date)
+        // Core base columns for All, Long, Quick
         $baseCols = [
             ['field' => 'serial_no', 'headerName' => 'S.No.'],
             ['field' => 'x8_enquiry_no', 'headerName' => 'X8 Enquiry No.'],
@@ -485,7 +467,7 @@ class EnquiryCrudController extends CrudController
             ['field' => 'x8_enquiry_assign_date', 'headerName' => 'X8 Enquiry Assign Date'],
             ['field' => 'oem_enquiry_no', 'headerName' => 'OEM Enquiry No.'],
             ['field' => 'oem_enquiry_date', 'headerName' => 'OEM Enquiry Date'],
-            ['field' => 'oem_enquiry_assign_date', 'headerName' => 'OEM Enquiry Assign Date'],
+            ['field' => 'oem_enquiry_assign_date', 'headerName' => 'OEM Enquiry Assign Date'], 
         ];
 
         // Dynamically add only the relevant columns to clear out "Unnecessary Fields"
@@ -496,14 +478,14 @@ class EnquiryCrudController extends CrudController
                 ['field' => 'oem_quick_enquiry_assign_date', 'headerName' => 'OEM Quick Enquiry Assign Date'],
             ]);
             // Excluded OEM Long columns & Quick Enquiry Status
-
+            
         } elseif ($type === 'quick') {
             $baseCols = array_merge($baseCols, [
                 ['field' => 'oem_quick_enquiry_no', 'headerName' => 'OEM Quick Enquiry No.'],
                 ['field' => 'oem_quick_enquiry_date', 'headerName' => 'OEM Quick Enquiry Date'],
             ]);
             // Excluded OEM Quick Assign Date, Quick Status, and all Long columns
-
+            
         } elseif ($type === 'long') {
             $baseCols = array_merge($baseCols, [
                 ['field' => 'oem_long_enquiry_no', 'headerName' => 'OEM Long Enquiry No.'],
@@ -581,19 +563,37 @@ class EnquiryCrudController extends CrudController
 
     private function applyEnquirySearch($query, string $searchText): void
     {
-        if ($searchText === '')
-            return;
-        $like = "%{$searchText}%";
+        if ($searchText === '') return;
 
-        $query->where(function ($q) use ($like) {
-            $q->where('enquiry_no', 'like', $like)->orWhere('first_name', 'like', $like)->orWhere('last_name', 'like', $like)
-                ->orWhere('mobile', 'like', $like)->orWhere('email', 'like', $like)->orWhere('source_code', 'like', $like)
-                ->orWhere('sub_source', 'like', $like)->orWhere('company_name', 'like', $like)->orWhere('vehicle_no', 'like', $like)
-                ->orWhere('city', 'like', $like)->orWhere('pincode', 'like', $like)
-                ->orWhereHas('model', fn($q2) => $q2->where('name', 'like', $like))
-                ->orWhereHas('segment', fn($q2) => $q2->where('name', 'like', $like))
-                ->orWhereHas('color', fn($q2) => $q2->where('name', 'like', $like))
-                ->orWhereHas('variant', fn($q2) => $q2->where('display_name', 'like', $like)->orWhere('custom_name', 'like', $like)->orWhere('oem_name', 'like', $like));
+        $like = "%{$searchText}%";
+        $isXenq = str_starts_with(strtoupper($searchText), 'XENQ-');
+        $xenqId = $isXenq ? (int) substr(strtoupper($searchText), 5) : null;
+
+        $query->where(function ($q) use ($like, $xenqId, $isXenq, $searchText) {
+            if ($isXenq && $xenqId) {
+                // If user types exactly XENQ-123 in search box
+                $q->where('id', $xenqId);
+            } else {
+                // Regular multi-column search
+                $q->where('id', (int) $searchText) // Fallback for raw IDs
+                    ->orWhere('enquiry_no', 'like', $like)
+                    ->orWhere('oem_enquiry_no', 'like', $like)
+                    ->orWhere('x8_enquiry_no', 'like', $like)
+                    ->orWhere('first_name', 'like', $like)
+                    ->orWhere('last_name', 'like', $like)
+                    ->orWhere('mobile', 'like', $like)
+                    ->orWhere('email', 'like', $like)
+                    ->orWhere('source_code', 'like', $like)
+                    ->orWhere('sub_source', 'like', $like)
+                    ->orWhere('company_name', 'like', $like)
+                    ->orWhere('vehicle_no', 'like', $like)
+                    ->orWhere('city', 'like', $like)
+                    ->orWhere('pincode', 'like', $like)
+                    ->orWhereHas('model', fn($q2) => $q2->where('name', 'like', $like))
+                    ->orWhereHas('segment', fn($q2) => $q2->where('name', 'like', $like))
+                    ->orWhereHas('color', fn($q2) => $q2->where('name', 'like', $like))
+                    ->orWhereHas('variant', fn($q2) => $q2->where('display_name', 'like', $like)->orWhere('custom_name', 'like', $like)->orWhere('oem_name', 'like', $like));
+            }
         });
     }
 
@@ -802,45 +802,13 @@ class EnquiryCrudController extends CrudController
     public function update(Request $request, $id)
     {
         $enquiry = Enquiry::findOrFail($id);
-
-        $isVirtual         = $enquiry->origin === 'VIRTUAL';
-        $isSalesConversion = $isVirtual && $request->input('call_nature') === 'SALES';
-
-        $rules = ($isVirtual && !$isSalesConversion)
-            ? $this->getVirtualValidationRules()
-            : $this->getValidationRules($id);
-
-        $validated = $request->validate($rules);
-
-        if (!($isVirtual && !$isSalesConversion)) {
-            $this->processEntityRelations($validated);
-        }
-
-        unset($validated['virtual_no']); // never overwritten from this form
-
+        $validated = $request->validate($this->getValidationRules($id));
+        $this->processEntityRelations($validated);
         $validated['updated_by'] = backpack_user()->id;
 
         $enquiry->update($validated);
         Alert::success('Enquiry updated successfully.')->flash();
-
-        // Send the user back to the list they came from, not always the main one
-        if ($isVirtual && !$isSalesConversion) {
-            return redirect(backpack_url('enquiries/virtual-number'));
-        }
-
         return redirect(backpack_url('enquiry'));
-    }
-
-    private function getVirtualValidationRules()
-    {
-        return [
-            'call_nature'           => 'required|string',
-            'remarks'               => 'nullable',
-            'cre_enquiry_stage'     => 'nullable',
-            'cre_next_fup_date'     => 'nullable|date',
-            'cre_next_fup_time'     => 'nullable',
-            'cre_next_fup_remarks'  => 'nullable',
-        ];
     }
 
     public function storeReference(Request $request)
@@ -887,9 +855,14 @@ class EnquiryCrudController extends CrudController
 
     private function getValidationRules($id = null)
     {
+        // If the request has segment_code, it means the full form is active and submitted.
+        // If call_nature is submitted but not segment_code, it means the full form is hidden.
+        $fullFormActive = request()->has('segment_code') || !request()->has('call_nature');
+        $req = $fullFormActive ? 'required' : 'nullable';
+
         return [
-            'enquiry_type' => 'required',
-            'source_code' => 'required',
+            'enquiry_type' => $req,
+            'source_code' => $req,
             'sub_source' => 'nullable',
             'person_code' => 'nullable',
             'reference_details' => 'nullable|max:255',
@@ -905,9 +878,9 @@ class EnquiryCrudController extends CrudController
             'activity_end_date' => 'nullable|date',
             'activity_branch' => 'nullable',
             'activity_location' => 'nullable',
-            'first_name' => 'required|max:100',
+            'first_name' => $req . '|max:100',
             'last_name' => 'nullable|max:100',
-            'mobile' => 'required|max:15',
+            'mobile' => 'required|max:15', // Kept required because it always submits via hidden input
             'email' => 'nullable|email|max:150',
             'occupation_type' => 'nullable',
             'customer_type' => 'nullable',
@@ -919,6 +892,7 @@ class EnquiryCrudController extends CrudController
             'marriage_date' => 'nullable|date',
             'age_group' => 'nullable',
             'pincode' => 'nullable|max:10',
+            'bpo' => 'nullable|max:150', // Added Support for BPO
             'tehsil' => 'nullable|max:100',
             'district' => 'nullable|max:100',
             'city' => 'nullable|max:100',
@@ -929,10 +903,10 @@ class EnquiryCrudController extends CrudController
             'consider_variant' => 'nullable|max:100',
             'vehicle_no' => 'nullable|max:30',
             'remarks' => 'nullable',
-            'segment_code' => 'required',
-            'model_code' => 'required',
-            'variant_code' => 'required',
-            'color_code' => 'required',
+            'segment_code' => $req,
+            'model_code' => $req,
+            'variant_code' => $req,
+            'color_code' => $req,
             'fuel_type' => 'nullable',
             'transmission' => 'nullable',
             'drivetrain' => 'nullable',
@@ -942,9 +916,9 @@ class EnquiryCrudController extends CrudController
             'application_type' => 'nullable',
             'application' => 'nullable',
             'place_of_registration' => 'nullable|max:100',
-            'dealer_branch' => 'required',
-            'dealer_location' => 'required',
-            'sc_code' => 'required',
+            'dealer_branch' => $req,
+            'dealer_location' => $req,
+            'sc_code' => $req,
             'followup_type' => 'nullable',
             'followup_date' => 'nullable|date',
             'followup_time' => 'nullable',
@@ -957,6 +931,7 @@ class EnquiryCrudController extends CrudController
             'financier' => 'nullable|integer',
             'brand_make' => 'nullable|string|max:100',
             'brand_model' => 'nullable|string|max:100',
+            'call_nature' => 'nullable|string', // Support for Virtual Enquiries
         ];
     }
 
