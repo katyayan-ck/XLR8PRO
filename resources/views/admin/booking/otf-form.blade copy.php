@@ -974,7 +974,7 @@ use Illuminate\Support\Facades\DB;
 
                                 <select name="exchange" id="exchange" class="form-control form-select">
 
-                                    <option value="NA" {{ old('exchange', $booking->buyer_type == 'First time Buyer' ?
+                                    <option value="NA" {{ old('exchange', $booking->buyer_type == 'First Time Buy' ?
                                         'NA' :
                                         ($booking->buyer_type == 'Exchange Buy' ? 'In-House' : 'Third Party')
                                         ) == 'NA' ? 'selected' : '' }}>
@@ -1939,17 +1939,17 @@ use Illuminate\Support\Facades\DB;
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.5/js/lightbox.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
-    $(document).on('input', '.numeric-only', function () {
+    $(document).on('input', '.numeric-only', function() {
 
-    let value = $(this).val();
+        let value = $(this).val();
 
-    // Allow only digits and one decimal
-    value = value.replace(/[^\d.]/g, '');
-    value = value.replace(/(\..*)\./g, '$1');
+        // Allow only digits and one decimal
+        value = value.replace(/[^\d.]/g, '');
+        value = value.replace(/(\..*)\./g, '$1');
 
-    $(this).val(value);
+        $(this).val(value);
 
-});
+    });
     lightbox.option({
         resizeDuration: 200,
         wrapAround: true,
@@ -1958,37 +1958,38 @@ use Illuminate\Support\Facades\DB;
     });
 
     $('#accessories').select2({
-    placeholder: 'Select Accessories',
-    width: '100%',
-    closeOnSelect: false
-});
+        placeholder: 'Select Accessories',
+        width: '100%',
+        closeOnSelect: false
+    });
 
-function updateAccessoriesAmount() {
+    function updateAccessoriesAmount() {
 
-    let total = 0;
+        let total = 0;
 
-    $('#accessories option:selected').each(function () {
+        $('#accessories option:selected').each(function() {
 
-        total += parseFloat($(this).data('price')) || 0;
+            total += parseFloat($(this).data('price')) || 0;
+
+        });
+
+        $('#accessories_amount').val(total.toFixed(2));
+
+        if (typeof calculateQuotation === 'function') {
+            calculateQuotation();
+        }
+    }
+
+    $('#accessories').on('change select2:select select2:unselect', function() {
+        updateAccessoriesAmount();
+    });
+
+    $(document).ready(function() {
+
+        updateAccessoriesAmount();
 
     });
 
-    $('#accessories_amount').val(total.toFixed(2));
-
-    if (typeof calculateQuotation === 'function') {
-        calculateQuotation();
-    }
-}
-
-$('#accessories').on('change select2:select select2:unselect', function () {
-    updateAccessoriesAmount();
-});
-
-$(document).ready(function () {
-
-    updateAccessoriesAmount();
-
-});
     function num(id) {
         return parseFloat(
             $('#' + id).val()
@@ -2111,7 +2112,7 @@ $(document).ready(function () {
 
             calculateFinance();
 
-            
+
         }
     );
 
@@ -2144,7 +2145,7 @@ $(document).ready(function () {
     let flipX = 1;
     let flipY = 1;
 
-    $('#chassis_image').on('change', function () {
+    $('#chassis_image').on('change', function() {
 
         const file = this.files[0];
 
@@ -2152,10 +2153,10 @@ $(document).ready(function () {
 
         const reader = new FileReader();
 
-        reader.onload = function(e){
+        reader.onload = function(e) {
 
             $('#chassis_preview')
-                .attr('src',e.target.result)
+                .attr('src', e.target.result)
                 .show();
 
             $('#editImageBtn').show();
@@ -2166,718 +2167,739 @@ $(document).ready(function () {
 
     });
 
-    $('#editImageBtn').click(function(){
+    $('#editImageBtn').click(function() {
 
-    if (cropper) {
-        cropper.destroy();
-        cropper = null;
-    }
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
 
-    $('#cropperImage').attr(
-        'src',
-        $('#chassis_preview').attr('src')
-    );
+        $('#cropperImage').attr(
+            'src',
+            $('#chassis_preview').attr('src')
+        );
 
-    $('#imageEditorPopup').css({
-        display: 'flex'
-    }).hide().fadeIn(200);
+        $('#imageEditorPopup').css({
+            display: 'flex'
+        }).hide().fadeIn(200);
 
-    cropper = new Cropper(document.getElementById('cropperImage'), {
-        viewMode: 1,
-        autoCropArea: 1,
-        movable: true,
-        zoomable: true,
-        scalable: true,
-        rotatable: true
+        cropper = new Cropper(document.getElementById('cropperImage'), {
+            viewMode: 1,
+            autoCropArea: 1,
+            movable: true,
+            zoomable: true,
+            scalable: true,
+            rotatable: true
+        });
+
     });
 
-});
+    $('#closeEditor').click(function() {
 
-    $('#closeEditor').click(function(){
+        if (cropper) {
 
-    if(cropper){
+            cropper.destroy();
 
-        cropper.destroy();
+            cropper = null;
 
-        cropper=null;
+        }
 
-    }
+        $('#imageEditorPopup').fadeOut(200);
 
-    $('#imageEditorPopup').fadeOut(200);
-
-});
-
-    
-
-    $('#zoomIn').click(()=>{
-    cropper.zoom(0.1);
     });
 
-    $('#zoomOut').click(()=>{
+
+
+    $('#zoomIn').click(() => {
+        cropper.zoom(0.1);
+    });
+
+    $('#zoomOut').click(() => {
         cropper.zoom(-0.1);
     });
 
-    $('#rotateLeft').click(()=>{
+    $('#rotateLeft').click(() => {
         cropper.rotate(-90);
     });
 
-    $('#rotateRight').click(()=>{
+    $('#rotateRight').click(() => {
         cropper.rotate(90);
     });
 
-    $('#flipX').click(()=>{
+    $('#flipX').click(() => {
         flipX = -flipX;
         cropper.scaleX(flipX);
     });
 
-    $('#flipY').click(()=>{
+    $('#flipY').click(() => {
         flipY = -flipY;
         cropper.scaleY(flipY);
     });
 
-    $('#resetCrop').click(()=>{
+    $('#resetCrop').click(() => {
         cropper.reset();
     });
 
-    $('#saveCrop').click(function(){
+    $('#saveCrop').click(function() {
 
-    const canvas = cropper.getCroppedCanvas();
+        const canvas = cropper.getCroppedCanvas();
 
-    canvas.toBlob(function(blob){
+        canvas.toBlob(function(blob) {
 
-        const file = new File(
-            [blob],
-            "chassis.jpg",
-            {
-                type:"image/jpeg"
-            }
-        );
+            const file = new File(
+                [blob],
+                "chassis.jpg", {
+                    type: "image/jpeg"
+                }
+            );
 
-        const dt = new DataTransfer();
+            const dt = new DataTransfer();
 
-        dt.items.add(file);
+            dt.items.add(file);
 
-        $('#chassis_image')[0].files = dt.files;
+            $('#chassis_image')[0].files = dt.files;
 
-        $('#chassis_preview').attr(
-            'src',
-            URL.createObjectURL(blob)
-        );
+            $('#chassis_preview').attr(
+                'src',
+                URL.createObjectURL(blob)
+            );
 
-        cropper.destroy();
-        cropper = null;
+            cropper.destroy();
+            cropper = null;
 
-        $('#imageEditorPopup').fadeOut(200);
+            $('#imageEditorPopup').fadeOut(200);
 
-    },'image/jpeg');
+        }, 'image/jpeg');
 
-});
-
+    });
 
 
 
 
-    
-    
-    $('#charger_swapping').on('change', function () {
 
-    if ($(this).val() === '' || $(this).val() === 'Not Applicable') {
 
-        $('#charger_swapping_amount')
-            .val('')
-            .prop('disabled', true);
 
-        $('#charger_swapping_discount')
-            .val('')
-            .prop('disabled', true);
+    $('#charger_swapping').on('change', function() {
 
-    } else {
+        if ($(this).val() === '' || $(this).val() === 'Not Applicable') {
 
-        $('#charger_swapping_amount').prop('disabled', false);
+            $('#charger_swapping_amount')
+                .val('')
+                .prop('disabled', true);
 
-        $('#charger_swapping_discount').prop('disabled', false);
-    }
+            $('#charger_swapping_discount')
+                .val('')
+                .prop('disabled', true);
 
-}).trigger('change');
+        } else {
 
-    $('#coating').on('change', function () {
+            $('#charger_swapping_amount').prop('disabled', false);
 
-    if ($(this).val() === '' || $(this).val() === 'No Coating') {
+            $('#charger_swapping_discount').prop('disabled', false);
+        }
 
-        $('#coating_price')
-            .val('')
-            .prop('disabled', true);
+    }).trigger('change');
 
-    }
-});
+    $('#coating').on('change', function() {
 
-    $('#shield').on('change', function () {
+        if ($(this).val() === '' || $(this).val() === 'No Coating') {
 
-    if ($(this).val() === '' || $(this).val() === 'No Shield') {
+            $('#coating_price')
+                .val('')
+                .prop('disabled', true);
 
-        $('#shield_price')
-            .val('')
-            .prop('disabled', true);
+        }
+    });
 
-    }
-});
+    $('#shield').on('change', function() {
+
+        if ($(this).val() === '' || $(this).val() === 'No Shield') {
+
+            $('#shield_price')
+                .val('')
+                .prop('disabled', true);
+
+        }
+    });
 
 
     function loadSalesConsultant() {
 
-    if (typeof salesUsers === 'undefined') {
-        return;
-    }
+        if (typeof salesUsers === 'undefined') {
+            return;
+        }
 
-    const personCode = $('#saleconsultant').val();
+        const personCode = $('#saleconsultant').val();
 
-    const consultant = salesUsers.find(x => x.person_code == personCode);
+        const consultant = salesUsers.find(x => x.person_code == personCode);
 
-    if (!consultant) {
+        if (!consultant) {
 
-        $('#sc_mile_id').val('');
-        $('#sc_branch').val('');
-        $('#sc_location').val('');
-        return;
+            $('#sc_mile_id').val('');
+            $('#sc_branch').val('');
+            $('#sc_location').val('');
+            return;
 
-    }
+        }
 
-    $('#sc_mile_id').val(consultant.mile_id ?? '');
-    $('#sc_branch').val(consultant.primary_branch_code ?? '');
-    $('#sc_location').val(consultant.primary_loc_code ?? '');
-
-}
-
-$('#saleconsultant').on('change', loadSalesConsultant);
-
-// Page Load
-loadSalesConsultant();
-function toggleAnniversary() {
-
-    if ($('#marital_status').val() === 'Married') {
-
-        $('#anniversary_date')
-            .prop('disabled', false);
-
-    } else {
-
-        $('#anniversary_date')
-            .val('')
-            .prop('disabled', true);
+        $('#sc_mile_id').val(consultant.mile_id ?? '');
+        $('#sc_branch').val(consultant.primary_branch_code ?? '');
+        $('#sc_location').val(consultant.primary_loc_code ?? '');
 
     }
-}
 
-    $(document).ready(function () {
+    $('#saleconsultant').on('change', loadSalesConsultant);
+
+    // Page Load
+    loadSalesConsultant();
+
+    function toggleAnniversary() {
+
+        if ($('#marital_status').val() === 'Married') {
+
+            $('#anniversary_date')
+                .prop('disabled', false);
+
+        } else {
+
+            $('#anniversary_date')
+                .val('')
+                .prop('disabled', true);
+
+        }
+    }
+
+    $(document).ready(function() {
 
         toggleAnniversary();
 
-        $('#marital_status').on('change', function () {
+        $('#marital_status').on('change', function() {
             toggleAnniversary();
         });
 
     });
 
-    
 
-    
 
-function toggleDSAFields() {
 
-    let yes = $('#dsa_retail').val() === 'Yes';
 
-    $('#dsa_id').prop('disabled', !yes);
+    function toggleDSAFields() {
 
-    $('#dsa_location').prop('disabled', !yes);
+        let yes = $('#dsa_retail').val() === 'Yes';
 
-    if (!yes) {
+        $('#dsa_id').prop('disabled', !yes);
 
-        $('#dsa_id').val('');
+        $('#dsa_location').prop('disabled', !yes);
 
-        $('#dsa_location').val('');
+        if (!yes) {
 
-    } else {
+            $('#dsa_id').val('');
+
+            $('#dsa_location').val('');
+
+        } else {
+
+            loadDSALocation();
+
+        }
+    }
+
+    function loadDSALocation() {
+
+        let location = $('#dsa_id option:selected').data('location') || '';
+
+        $('#dsa_location').val(location);
+
+    }
+
+    $('#dsa_retail').on('change', toggleDSAFields);
+
+    $('#dsa_id').on('change', loadDSALocation);
+
+    $(function() {
+
+        toggleDSAFields();
+
+    });
+
+    $(document).ready(function() {
+
+        toggleDSAFields();
 
         loadDSALocation();
 
-    }
-}
-
-function loadDSALocation() {
-
-    let location = $('#dsa_id option:selected').data('location') || '';
-
-    $('#dsa_location').val(location);
-
-}
-
-$('#dsa_retail').on('change', toggleDSAFields);
-
-$('#dsa_id').on('change', loadDSALocation);
-
-$(function () {
-
-    toggleDSAFields();
-
-});
-
-$(document).ready(function () {
-
-    toggleDSAFields();
-
-    loadDSALocation();
-
-});
+    });
 
     toggleDSAFields();
 
     $('#dsa_id').trigger('change');
 
-    $('#rsa').on('change', function () {
+    $('#rsa').on('change', function() {
 
-    if ($(this).val() === '' || $(this).val() === 'No RSA') {
+        if ($(this).val() === '' || $(this).val() === 'No RSA') {
 
-        $('#rsa_amount')
-            .val('')
-            .prop('disabled', true);
+            $('#rsa_amount')
+                .val('')
+                .prop('disabled', true);
 
-    }
-});
+        }
+    });
 
-    $('#email').on('blur', function () {
+    $('#email').on('blur', function() {
 
-    let email = $(this).val().trim();
+        let email = $(this).val().trim();
 
-    if (email === '') {
-        $(this).removeClass('is-invalid');
-        return;
-    }
+        if (email === '') {
+            $(this).removeClass('is-invalid');
+            return;
+        }
 
-    let emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        let emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    if (!emailRegex.test(email)) {
+        if (!emailRegex.test(email)) {
 
-        $(this).addClass('is-invalid');
-
-    } else {
-
-        $(this).removeClass('is-invalid');
-
-    }
-
-});
-$(document).ready(function () {
-
-    function toggleDONumber() {
-
-        var delivery = $('#vehicle_delivery_on').val();
-
-        if (delivery === 'DO') {
-
-            $('#do_number').prop('disabled', false);
+            $(this).addClass('is-invalid');
 
         } else {
 
-            $('#do_number')
-                .val('')
-                .prop('disabled', true);
+            $(this).removeClass('is-invalid');
+
         }
-    }
 
-    // Initial page load
-    toggleDONumber();
+    });
+    $(document).ready(function() {
 
-    // On dropdown change
-    $('#vehicle_delivery_on').on('change', function () {
+        function toggleDONumber() {
+
+            var delivery = $('#vehicle_delivery_on').val();
+
+            if (delivery === 'DO') {
+
+                $('#do_number').prop('disabled', false);
+
+            } else {
+
+                $('#do_number')
+                    .val('')
+                    .prop('disabled', true);
+            }
+        }
+
+        // Initial page load
         toggleDONumber();
+
+        // On dropdown change
+        $('#vehicle_delivery_on').on('change', function() {
+            toggleDONumber();
+        });
+
     });
 
-});
+    $(window).on('load', function() {
 
-$(window).on('load', function () {
+        function toggleDONumber() {
 
-    function toggleDONumber() {
+            let isDO = $('#vehicle_delivery_on').val() === 'DO';
 
-        let isDO = $('#vehicle_delivery_on').val() === 'DO';
+            $('#do_number').prop('disabled', !isDO);
 
-        $('#do_number').prop('disabled', !isDO);
-
-        if (!isDO) {
-            $('#do_number').val('');
+            if (!isDO) {
+                $('#do_number').val('');
+            }
         }
-    }
 
-    toggleDONumber();
+        toggleDONumber();
 
-    $('#vehicle_delivery_on').on('change', toggleDONumber);
+        $('#vehicle_delivery_on').on('change', toggleDONumber);
 
-});
+    });
 
-$('#do_number_ta').on('blur', function () {
+    $('#do_number_ta').on('blur', function() {
 
-    let doNo = $(this).val().trim();
+        let doNo = $(this).val().trim();
 
-    if (doNo == '') {
-        $('#do_amount_ta').val('');
-        $('#do_voucher_date').val('');
-        return;
-    }
+        if (doNo == '') {
+            $('#do_amount_ta').val('');
+            $('#do_voucher_date').val('');
+            return;
+        }
 
-    $.ajax({
-        url: "{{ url('admin/get-do-amount') }}",
-        type: "GET",
-        data: {
-            do_no: doNo
+        $.ajax({
+            url: "{{ url('admin/get-do-amount') }}",
+            type: "GET",
+            data: {
+                do_no: doNo
+            },
+            success: function(res) {
+
+                $('#do_amount_ta').val(res.amount);
+                $('#do_voucher_date').val(res.date);
+
+            }
+        });
+
+    });
+
+
+
+
+    /* =========================================================
+       OTF SINGLE-PAGE PRINT PREVIEW
+       ========================================================= */
+
+    // Server-side lookups not present as simple DOM fields
+    const otfServerData = {
+        bookingId: {
+            {
+                $booking - > id
+            }
         },
-        success: function (res) {
+        dsaLocation: @json($dsa ? - > dlocation ?? ''),
+        accessoriesSummary: @json($accessories),
+    };
 
-            $('#do_amount_ta').val(res.amount);
-            $('#do_voucher_date').val(res.date);
-
-        }
-    });
-
-});
-
-
-
-
-/* =========================================================
-   OTF SINGLE-PAGE PRINT PREVIEW
-   ========================================================= */
-
-// Server-side lookups not present as simple DOM fields
-const otfServerData = {
-    bookingId: {{ $booking->id }},
-    dsaLocation: @json($dsa?->dlocation ?? ''),
-    accessoriesSummary: @json($accessories),
-};
-
-function otfVal(id) {
-    const el = document.getElementById(id);
-    if (!el) return '';
-    return (el.value || '').toString().trim();
-}
-
-function otfSelectText(id) {
-    const el = document.getElementById(id);
-    if (!el) return '';
-    if (el.tagName === 'SELECT') {
-        const opt = el.options[el.selectedIndex];
-        return opt ? opt.text.trim() : '';
+    function otfVal(id) {
+        const el = document.getElementById(id);
+        if (!el) return '';
+        return (el.value || '').toString().trim();
     }
-    return otfVal(id);
-}
 
-function otfEsc(str) {
-    return $('<div>').text(str == null ? '' : str).html();
-}
+    function otfSelectText(id) {
+        const el = document.getElementById(id);
+        if (!el) return '';
+        if (el.tagName === 'SELECT') {
+            const opt = el.options[el.selectedIndex];
+            return opt ? opt.text.trim() : '';
+        }
+        return otfVal(id);
+    }
 
-function otfMoney(n) {
-    n = parseFloat(n);
-    if (isNaN(n)) return '';
-    return '₹' + n.toLocaleString('en-IN', { maximumFractionDigits: 2 });
-}
+    function otfEsc(str) {
+        return $('<div>').text(str == null ? '' : str).html();
+    }
 
-function otfFormatDate(d) {
-    if (!d) return '';
-    const parts = d.split('-');
-    if (parts.length === 3) return parts[2] + '/' + parts[1] + '/' + parts[0];
-    return d;
-}
-
-// Build a section box with key-value rows; only non-empty rows are shown.
-// fields: array of [label, rawValue, isDate]
-function otfSection(title, fields) {
-    let rows = '';
-    fields.forEach(function (f) {
-        let label = f[0], value = f[1], isDate = f[2] || false;
-        if (isDate) value = otfFormatDate(value);
-        if (value === '' || value === null || value === undefined) return;
-        rows += '<div class="otf-kv"><div class="otf-k">' + otfEsc(label) +
-            '</div><div class="otf-v">' + otfEsc(value) + '</div></div>';
-    });
-    if (!rows) rows = '<div class="otf-empty">No data entered</div>';
-    return '<div class="otf-section"><h3>' + otfEsc(title) + '</h3>' + rows + '</div>';
-}
-
-function otfBuildChips() {
-    // Only show a chip when the field has a meaningful, non-default value
-    const candidates = [
-        ['dsa_retail', 'DSA Retail'],
-        ['exchange', 'Exchange'],
-        ['in_house_rto', 'In House RTO'],
-        ['policy_type', ''],
-        ['registration_type', ''],
-        ['shield', ''],
-        ['rsa', ''],
-        ['coating', ''],
-        ['charger_swapping', ''],
-        ['financier_verified', 'Financier Verified'],
-        ['retail_category', ''],
-        ['sale_type', ''],
-    ];
-    const skipValues = ['', 'No', 'NO', 'Not Applicable', 'No Shield', 'No RSA', 'No Coating'];
-    let chips = '';
-    candidates.forEach(function (c) {
-        const id = c[0], prefix = c[1];
-        const text = otfSelectText(id);
-        if (!text || skipValues.includes(text)) return;
-        const label = prefix ? (prefix + ': ' + text) : text;
-        chips += '<span class="otf-chip">' + otfEsc(label) + '</span>';
-    });
-    if (!chips) return '<div class="otf-empty">No selections</div>';
-    return '<div class="otf-chips">' + chips + '</div>';
-}
-
-function otfBuildAccessoriesTable() {
-    const sel = document.getElementById('accessories');
-    let rows = '', total = 0, i = 0;
-    if (sel) {
-        Array.from(sel.selectedOptions).forEach(function (opt) {
-            i++;
-            const price = parseFloat($(opt).data('price')) || 0;
-            total += price;
-            const name = opt.text.replace(/\s*\(₹[\d,.]+\)\s*$/, '').trim();
-            rows += '<tr><td>' + i + '</td><td>' + otfEsc(name) +
-                '</td><td class="otf-amt">' + price.toLocaleString('en-IN', { maximumFractionDigits: 2 }) + '</td></tr>';
+    function otfMoney(n) {
+        n = parseFloat(n);
+        if (isNaN(n)) return '';
+        return '₹' + n.toLocaleString('en-IN', {
+            maximumFractionDigits: 2
         });
     }
-    if (!rows) return '';
-    return '<div class="otf-section"><h3>Accessories</h3><table class="otf-table">' +
-        '<thead><tr><th>#</th><th>Item</th><th class="otf-amt">Amount</th></tr></thead>' +
-        '<tbody>' + rows +
-        '<tr><td></td><td><strong>Total</strong></td><td class="otf-amt"><strong>' +
-        total.toLocaleString('en-IN', { maximumFractionDigits: 2 }) + '</strong></td></tr>' +
-        '</tbody></table></div>';
-}
 
-function otfBuildReceiptsTable() {
-    let rows = '', total = 0, count = 0;
-    $('.receipt-table tbody tr').each(function () {
-        const inputs = $(this).find('input');
-        if (inputs.length < 3) return;
-        const no = (inputs.eq(0).val() || '').trim();
-        const date = inputs.eq(1).val() || '';
-        const amt = parseFloat(inputs.eq(2).val()) || 0;
-        if (!no && !date && !amt) return;
-        count++;
-        total += amt;
-        rows += '<tr><td>' + otfEsc(no) + '</td><td>' + otfEsc(otfFormatDate(date)) +
-            '</td><td class="otf-amt">' + amt.toLocaleString('en-IN', { maximumFractionDigits: 2 }) + '</td></tr>';
-    });
-    if (!count) return '';
-    return '<div class="otf-section"><h3>Receipts</h3><table class="otf-table">' +
-        '<thead><tr><th>Receipt</th><th>Date</th><th class="otf-amt">Amount</th></tr></thead>' +
-        '<tbody>' + rows +
-        '<tr><td colspan="2"><strong>Total Received</strong></td><td class="otf-amt"><strong>' +
-        total.toLocaleString('en-IN', { maximumFractionDigits: 2 }) + '</strong></td></tr>' +
-        '</tbody></table></div>';
-}
-
-function otfBuildReceivable() {
-    // [id, label] - numeric receivable / discount fields.
-    // Amounts are shown as positive receivables, discount fields as negative.
-    const receivables = [
-        ['ex_showroom_price', 'Ex-Showroom Price'],
-        ['maxicare', 'Maxicare'],
-        ['vltd_device', 'VLTD Device'],
-        ['coating_price', 'Coating'],
-        ['ppf', 'PPF'],
-        ['rto_yellow_tape', 'RTO Yellow Tape'],
-        ['kazam_charging_kit', 'Kazam Charging Kit'],
-        ['incidental_charges', 'Incidental Charges'],
-        ['shield_price', 'Shield'],
-        ['rsa_amount', 'RSA'],
-        ['fastag', 'Fastag'],
-        ['cod_charges', 'COD Charges'],
-        ['charger_swapping_amount', 'Charger Swapping'],
-        ['tcs', 'TCS @ 1%'],
-        ['accessories_amount', 'Accessories'],
-        ['brokerage_amount', 'Brokerage Amount'],
-        ['other_discount_receivable', 'Other Discount Receivable'],
-        ['mm_support_receivable', 'M&M Support Receivable'],
-        ['liquidation_scheme_receivable', 'Liquidation Scheme Receivable'],
-        ['registration_service_charge_receivable', 'Reg. Service Charge Receivable'],
-    ];
-    const discounts = [
-        ['oem_scheme_discount', 'OEM Scheme / CSD Discount'],
-        ['fame_subsidy', 'Fame Subsidy'],
-        ['exchange_bonus', 'Exchange / Green / Loyalty Bonus'],
-        ['corporate_discount', 'Corporate Discount'],
-        ['accessories_discount', 'Accessories Discount'],
-        ['ceramic_discount', 'Ceramic Discount'],
-        ['ppf_discount', 'PPF Discount'],
-        ['dealer_discount', 'Other Discount - Dealer'],
-        ['charger_swapping_discount', 'Charger Swapping Discount'],
-    ];
-
-    let rows = '', total = 0;
-    receivables.forEach(function (f) {
-        const v = parseFloat(otfVal(f[0]));
-        if (!v) return;
-        total += v;
-        rows += '<div class="otf-trow"><span>' + otfEsc(f[1]) + '</span><strong>' + otfMoney(v) + '</strong></div>';
-    });
-    discounts.forEach(function (f) {
-        const v = parseFloat(otfVal(f[0]));
-        if (!v) return;
-        total -= v;
-        rows += '<div class="otf-trow"><span>' + otfEsc(f[1]) + '</span><strong>-' + otfMoney(v) + '</strong></div>';
-    });
-
-    const summary = parseFloat(otfVal('net_receivable_summary'));
-    const grand = !isNaN(summary) && summary !== 0 ? summary : total;
-
-    if (!rows) rows = '<div class="otf-empty">No receivable items entered</div>';
-
-    return '<div class="otf-section"><h3>Receivable</h3><div class="otf-totals">' + rows +
-        '<div class="otf-trow otf-grand"><span>Net Receivable</span><span>' + otfMoney(grand) + '</span></div>' +
-        '</div></div>';
-}
-
-function otfBuildFinance() {
-    const rows = [];
-    const fin = [
-        ['loan_amount', 'Loan Amount'],
-        ['deduction', 'Deduction'],
-        ['margin_money', 'Margin Money'],
-        ['do_amount', 'DO Amount'],
-        ['do_amount_ta', 'DO Amount (TA)'],
-        ['do_number', 'DO Number'],
-        ['do_number_ta', 'DO Number (TA)'],
-        ['do_voucher_date', 'DO Voucher Date', true],
-        ['financier_subvention', 'Financier Subvention'],
-        ['expected_balance', 'Expected Balance'],
-        ['final_balance', 'Final Balance'],
-    ];
-    fin.forEach(function (f) {
-        rows.push(f);
-    });
-    return rows;
-}
-
-function otfBuildPreview() {
-
-    const consultant = otfSelectText('saleconsultant');
-    const dsaText = otfSelectText('dsa_id');
-    const registrationTypeLabel = otfSelectText('registration_no_type');
-    const permitLabel = otfSelectText('permit');
-
-    const modelName = otfVal('model_name');
-    const custName = otfVal('customer_name');
-    const votf = otfVal('votf_no');
-
-    let html = '';
-
-    // Top: brand + meta
-    html += '<div class="otf-top">';
-    html += '<div class="otf-box otf-brand">';
-    html += '<h1>Bikaner Motors Pvt. Ltd. - Vehicle Order Taking Form</h1>';
-    html += '<p>Customer: ' + otfEsc(custName || '-') + ' | Model: ' + otfEsc(modelName || '-') +
-        ' | Date: ' + otfEsc(otfFormatDate(otfVal('inv_date')) || new Date().toLocaleDateString('en-GB')) + '</p>';
-    html += '</div>';
-    html += '<div class="otf-box otf-meta">';
-    html += '<div class="otf-tag">Ref</div>';
-    if (votf) html += '<div class="otf-row">VOTF: <strong>' + otfEsc(votf) + '</strong></div>';
-    if (otfVal('dms_no')) html += '<div class="otf-row">DMS Enq: <strong>' + otfEsc(otfVal('dms_no')) + '</strong></div>';
-    if (otfVal('dms_otf')) html += '<div class="otf-row">DMS OTF: <strong>' + otfEsc(otfVal('dms_otf')) + '</strong></div>';
-    if (registrationTypeLabel) html += '<div class="otf-row">Regn: <strong>' + otfEsc(registrationTypeLabel) + '</strong></div>';
-    if (permitLabel) html += '<div class="otf-row">Permit: <strong>' + otfEsc(permitLabel) + '</strong></div>';
-    html += '</div>';
-    html += '</div>';
-
-    // Customer / Address-Nominee / Selected chips
-    html += '<div class="otf-grid3">';
-    html += otfSection('Customer', [
-        ['Name', otfVal('customer_name')],
-        ['Mobile', otfVal('customer_mobile')],
-        ['D.O.B.', otfVal('dob'), true],
-        ['PAN', otfVal('pan_no')],
-        ['Aadhaar', otfVal('adhar_no')],
-        ['DL No.', otfVal('driving_license_no')],
-        ['Voter ID', otfVal('voter_id_no')],
-        ['Email', otfVal('email')],
-        ['Marital Status', otfSelectText('marital_status')],
-        ['Contact Person', otfVal('contact_person')],
-    ]);
-    html += otfSection('Address / Nominee', [
-        ['Address', otfVal('registration_address')],
-        ['Tehsil', otfVal('customer_tehsil')],
-        ['District', otfVal('customer_district')],
-        ['PIN', otfVal('pincode')],
-        ['GST No.', otfVal('gstn')],
-        ['Category', otfSelectText('b_cat')],
-        ['Nominee', otfVal('nominee_name')],
-        ['Relation', otfSelectText('nominee_relation') + (otfVal('nominee_age') ? (', ' + otfVal('nominee_age')) : '')],
-    ]);
-    html += '<div class="otf-section"><h3>Selected</h3>' + otfBuildChips() + '</div>';
-    html += '</div>';
-
-    // Vehicle/Finance + Receivable
-    html += '<div class="otf-grid2">';
-    html += otfSection('Vehicle / Finance', [
-        ['Model', otfVal('model_name')],
-        ['Variant', otfVal('variant_name')],
-        ['Colour', otfVal('color_name')],
-        ['Consultant', consultant],
-        ['DSA', dsaText && dsaText !== 'Select DSA' ? dsaText : ''],
-        ['Chassis', otfVal('chassis_no_display')],
-        ['Engine No.', otfVal('engine_no')],
-        ['Ex. SR Price', otfVal('ex_showroom_price') ? otfMoney(otfVal('ex_showroom_price')) : ''],
-        ['Hypo By', otfVal('financier_name_display')],
-        ['Invoice No.', otfVal('inv_no')],
-        ['Delivery On', otfSelectText('vehicle_delivery_on')],
-    ]);
-    html += otfBuildReceivable();
-    html += '</div>';
-
-    // Accessories + Receipts
-    const accTable = otfBuildAccessoriesTable();
-    const recTable = otfBuildReceiptsTable();
-    if (accTable || recTable) {
-        html += '<div class="otf-grid2">';
-        html += accTable || '<div class="otf-section"><h3>Accessories</h3><div class="otf-empty">None selected</div></div>';
-        html += recTable || '<div class="otf-section"><h3>Receipts</h3><div class="otf-empty">No receipts recorded</div></div>';
-        html += '</div>';
+    function otfFormatDate(d) {
+        if (!d) return '';
+        const parts = d.split('-');
+        if (parts.length === 3) return parts[2] + '/' + parts[1] + '/' + parts[0];
+        return d;
     }
 
-    // Notes + signatures
-    html += '<div class="otf-section">';
-    html += '<ol class="otf-note">';
-    html += '<li>Vehicle shall be delivered only against payment.</li>';
-    html += '<li>Interest shall be charged @ 24% P.A. in case of payments delayed over three days.</li>';
-    html += '<li>No interest shall be payable on Booking Amount.</li>';
-    html += '<li>Price &amp; Scheme of the vehicle is applicable as on the date of delivery. Price &amp; Scheme are subject to change without any prior notice.</li>';
-    html += '<li>Self attested coloured copy of original documents is required for any Claim. Claims will be rejected in absence of required documents.</li>';
-    html += '</ol>';
-    html += '<div class="otf-signs">';
-    html += '<div class="otf-sign">Customer Signature</div>';
-    html += '<div class="otf-sign">Sales Consultant</div>';
-    html += '<div class="otf-sign">Accounts / Manager</div>';
-    html += '</div>';
-    html += '</div>';
+    // Build a section box with key-value rows; only non-empty rows are shown.
+    // fields: array of [label, rawValue, isDate]
+    function otfSection(title, fields) {
+        let rows = '';
+        fields.forEach(function(f) {
+            let label = f[0],
+                value = f[1],
+                isDate = f[2] || false;
+            if (isDate) value = otfFormatDate(value);
+            if (value === '' || value === null || value === undefined) return;
+            rows += '<div class="otf-kv"><div class="otf-k">' + otfEsc(label) +
+                '</div><div class="otf-v">' + otfEsc(value) + '</div></div>';
+        });
+        if (!rows) rows = '<div class="otf-empty">No data entered</div>';
+        return '<div class="otf-section"><h3>' + otfEsc(title) + '</h3>' + rows + '</div>';
+    }
 
-    $('#previewContent').html(html);
-}
+    function otfBuildChips() {
+        // Only show a chip when the field has a meaningful, non-default value
+        const candidates = [
+            ['dsa_retail', 'DSA Retail'],
+            ['exchange', 'Exchange'],
+            ['in_house_rto', 'In House RTO'],
+            ['policy_type', ''],
+            ['registration_type', ''],
+            ['shield', ''],
+            ['rsa', ''],
+            ['coating', ''],
+            ['charger_swapping', ''],
+            ['financier_verified', 'Financier Verified'],
+            ['retail_category', ''],
+            ['sale_type', ''],
+        ];
+        const skipValues = ['', 'No', 'NO', 'Not Applicable', 'No Shield', 'No RSA', 'No Coating'];
+        let chips = '';
+        candidates.forEach(function(c) {
+            const id = c[0],
+                prefix = c[1];
+            const text = otfSelectText(id);
+            if (!text || skipValues.includes(text)) return;
+            const label = prefix ? (prefix + ': ' + text) : text;
+            chips += '<span class="otf-chip">' + otfEsc(label) + '</span>';
+        });
+        if (!chips) return '<div class="otf-empty">No selections</div>';
+        return '<div class="otf-chips">' + chips + '</div>';
+    }
 
-$('#previewBtn').on('click', function () {
-    otfBuildPreview();
-    $('#otfFormSection').hide();
-    $('.page-header').hide();
-    $('#otfPreviewPage').css('display', 'block');
-    window.scrollTo(0, 0);
-});
+    function otfBuildAccessoriesTable() {
+        const sel = document.getElementById('accessories');
+        let rows = '',
+            total = 0,
+            i = 0;
+        if (sel) {
+            Array.from(sel.selectedOptions).forEach(function(opt) {
+                i++;
+                const price = parseFloat($(opt).data('price')) || 0;
+                total += price;
+                const name = opt.text.replace(/\s*\(₹[\d,.]+\)\s*$/, '').trim();
+                rows += '<tr><td>' + i + '</td><td>' + otfEsc(name) +
+                    '</td><td class="otf-amt">' + price.toLocaleString('en-IN', {
+                        maximumFractionDigits: 2
+                    }) + '</td></tr>';
+            });
+        }
+        if (!rows) return '';
+        return '<div class="otf-section"><h3>Accessories</h3><table class="otf-table">' +
+            '<thead><tr><th>#</th><th>Item</th><th class="otf-amt">Amount</th></tr></thead>' +
+            '<tbody>' + rows +
+            '<tr><td></td><td><strong>Total</strong></td><td class="otf-amt"><strong>' +
+            total.toLocaleString('en-IN', {
+                maximumFractionDigits: 2
+            }) + '</strong></td></tr>' +
+            '</tbody></table></div>';
+    }
 
-$('#backToForm, #backToForm2').on('click', function () {
-    $('#otfPreviewPage').hide();
-    $('#otfFormSection').show();
-    $('.page-header').show();
-});
+    function otfBuildReceiptsTable() {
+        let rows = '',
+            total = 0,
+            count = 0;
+        $('.receipt-table tbody tr').each(function() {
+            const inputs = $(this).find('input');
+            if (inputs.length < 3) return;
+            const no = (inputs.eq(0).val() || '').trim();
+            const date = inputs.eq(1).val() || '';
+            const amt = parseFloat(inputs.eq(2).val()) || 0;
+            if (!no && !date && !amt) return;
+            count++;
+            total += amt;
+            rows += '<tr><td>' + otfEsc(no) + '</td><td>' + otfEsc(otfFormatDate(date)) +
+                '</td><td class="otf-amt">' + amt.toLocaleString('en-IN', {
+                    maximumFractionDigits: 2
+                }) + '</td></tr>';
+        });
+        if (!count) return '';
+        return '<div class="otf-section"><h3>Receipts</h3><table class="otf-table">' +
+            '<thead><tr><th>Receipt</th><th>Date</th><th class="otf-amt">Amount</th></tr></thead>' +
+            '<tbody>' + rows +
+            '<tr><td colspan="2"><strong>Total Received</strong></td><td class="otf-amt"><strong>' +
+            total.toLocaleString('en-IN', {
+                maximumFractionDigits: 2
+            }) + '</strong></td></tr>' +
+            '</tbody></table></div>';
+    }
 
-$('#printFormBtn, #printFormBtn2').on('click', function () {
-    window.print();
-});
+    function otfBuildReceivable() {
+        // [id, label] - numeric receivable / discount fields.
+        // Amounts are shown as positive receivables, discount fields as negative.
+        const receivables = [
+            ['ex_showroom_price', 'Ex-Showroom Price'],
+            ['maxicare', 'Maxicare'],
+            ['vltd_device', 'VLTD Device'],
+            ['coating_price', 'Coating'],
+            ['ppf', 'PPF'],
+            ['rto_yellow_tape', 'RTO Yellow Tape'],
+            ['kazam_charging_kit', 'Kazam Charging Kit'],
+            ['incidental_charges', 'Incidental Charges'],
+            ['shield_price', 'Shield'],
+            ['rsa_amount', 'RSA'],
+            ['fastag', 'Fastag'],
+            ['cod_charges', 'COD Charges'],
+            ['charger_swapping_amount', 'Charger Swapping'],
+            ['tcs', 'TCS @ 1%'],
+            ['accessories_amount', 'Accessories'],
+            ['brokerage_amount', 'Brokerage Amount'],
+            ['other_discount_receivable', 'Other Discount Receivable'],
+            ['mm_support_receivable', 'M&M Support Receivable'],
+            ['liquidation_scheme_receivable', 'Liquidation Scheme Receivable'],
+            ['registration_service_charge_receivable', 'Reg. Service Charge Receivable'],
+        ];
+        const discounts = [
+            ['oem_scheme_discount', 'OEM Scheme / CSD Discount'],
+            ['fame_subsidy', 'Fame Subsidy'],
+            ['exchange_bonus', 'Exchange / Green / Loyalty Bonus'],
+            ['corporate_discount', 'Corporate Discount'],
+            ['accessories_discount', 'Accessories Discount'],
+            ['ceramic_discount', 'Ceramic Discount'],
+            ['ppf_discount', 'PPF Discount'],
+            ['dealer_discount', 'Other Discount - Dealer'],
+            ['charger_swapping_discount', 'Charger Swapping Discount'],
+        ];
 
+        let rows = '',
+            total = 0;
+        receivables.forEach(function(f) {
+            const v = parseFloat(otfVal(f[0]));
+            if (!v) return;
+            total += v;
+            rows += '<div class="otf-trow"><span>' + otfEsc(f[1]) + '</span><strong>' + otfMoney(v) + '</strong></div>';
+        });
+        discounts.forEach(function(f) {
+            const v = parseFloat(otfVal(f[0]));
+            if (!v) return;
+            total -= v;
+            rows += '<div class="otf-trow"><span>' + otfEsc(f[1]) + '</span><strong>-' + otfMoney(v) + '</strong></div>';
+        });
+
+        const summary = parseFloat(otfVal('net_receivable_summary'));
+        const grand = !isNaN(summary) && summary !== 0 ? summary : total;
+
+        if (!rows) rows = '<div class="otf-empty">No receivable items entered</div>';
+
+        return '<div class="otf-section"><h3>Receivable</h3><div class="otf-totals">' + rows +
+            '<div class="otf-trow otf-grand"><span>Net Receivable</span><span>' + otfMoney(grand) + '</span></div>' +
+            '</div></div>';
+    }
+
+    function otfBuildFinance() {
+        const rows = [];
+        const fin = [
+            ['loan_amount', 'Loan Amount'],
+            ['deduction', 'Deduction'],
+            ['margin_money', 'Margin Money'],
+            ['do_amount', 'DO Amount'],
+            ['do_amount_ta', 'DO Amount (TA)'],
+            ['do_number', 'DO Number'],
+            ['do_number_ta', 'DO Number (TA)'],
+            ['do_voucher_date', 'DO Voucher Date', true],
+            ['financier_subvention', 'Financier Subvention'],
+            ['expected_balance', 'Expected Balance'],
+            ['final_balance', 'Final Balance'],
+        ];
+        fin.forEach(function(f) {
+            rows.push(f);
+        });
+        return rows;
+    }
+
+    function otfBuildPreview() {
+
+        const consultant = otfSelectText('saleconsultant');
+        const dsaText = otfSelectText('dsa_id');
+        const registrationTypeLabel = otfSelectText('registration_no_type');
+        const permitLabel = otfSelectText('permit');
+
+        const modelName = otfVal('model_name');
+        const custName = otfVal('customer_name');
+        const votf = otfVal('votf_no');
+
+        let html = '';
+
+        // Top: brand + meta
+        html += '<div class="otf-top">';
+        html += '<div class="otf-box otf-brand">';
+        html += '<h1>Bikaner Motors Pvt. Ltd. - Vehicle Order Taking Form</h1>';
+        html += '<p>Customer: ' + otfEsc(custName || '-') + ' | Model: ' + otfEsc(modelName || '-') +
+            ' | Date: ' + otfEsc(otfFormatDate(otfVal('inv_date')) || new Date().toLocaleDateString('en-GB')) + '</p>';
+        html += '</div>';
+        html += '<div class="otf-box otf-meta">';
+        html += '<div class="otf-tag">Ref</div>';
+        if (votf) html += '<div class="otf-row">VOTF: <strong>' + otfEsc(votf) + '</strong></div>';
+        if (otfVal('dms_no')) html += '<div class="otf-row">DMS Enq: <strong>' + otfEsc(otfVal('dms_no')) + '</strong></div>';
+        if (otfVal('dms_otf')) html += '<div class="otf-row">DMS OTF: <strong>' + otfEsc(otfVal('dms_otf')) + '</strong></div>';
+        if (registrationTypeLabel) html += '<div class="otf-row">Regn: <strong>' + otfEsc(registrationTypeLabel) + '</strong></div>';
+        if (permitLabel) html += '<div class="otf-row">Permit: <strong>' + otfEsc(permitLabel) + '</strong></div>';
+        html += '</div>';
+        html += '</div>';
+
+        // Customer / Address-Nominee / Selected chips
+        html += '<div class="otf-grid3">';
+        html += otfSection('Customer', [
+            ['Name', otfVal('customer_name')],
+            ['Mobile', otfVal('customer_mobile')],
+            ['D.O.B.', otfVal('dob'), true],
+            ['PAN', otfVal('pan_no')],
+            ['Aadhaar', otfVal('adhar_no')],
+            ['DL No.', otfVal('driving_license_no')],
+            ['Voter ID', otfVal('voter_id_no')],
+            ['Email', otfVal('email')],
+            ['Marital Status', otfSelectText('marital_status')],
+            ['Contact Person', otfVal('contact_person')],
+        ]);
+        html += otfSection('Address / Nominee', [
+            ['Address', otfVal('registration_address')],
+            ['Tehsil', otfVal('customer_tehsil')],
+            ['District', otfVal('customer_district')],
+            ['PIN', otfVal('pincode')],
+            ['GST No.', otfVal('gstn')],
+            ['Category', otfSelectText('b_cat')],
+            ['Nominee', otfVal('nominee_name')],
+            ['Relation', otfSelectText('nominee_relation') + (otfVal('nominee_age') ? (', ' + otfVal('nominee_age')) : '')],
+        ]);
+        html += '<div class="otf-section"><h3>Selected</h3>' + otfBuildChips() + '</div>';
+        html += '</div>';
+
+        // Vehicle/Finance + Receivable
+        html += '<div class="otf-grid2">';
+        html += otfSection('Vehicle / Finance', [
+            ['Model', otfVal('model_name')],
+            ['Variant', otfVal('variant_name')],
+            ['Colour', otfVal('color_name')],
+            ['Consultant', consultant],
+            ['DSA', dsaText && dsaText !== 'Select DSA' ? dsaText : ''],
+            ['Chassis', otfVal('chassis_no_display')],
+            ['Engine No.', otfVal('engine_no')],
+            ['Ex. SR Price', otfVal('ex_showroom_price') ? otfMoney(otfVal('ex_showroom_price')) : ''],
+            ['Hypo By', otfVal('financier_name_display')],
+            ['Invoice No.', otfVal('inv_no')],
+            ['Delivery On', otfSelectText('vehicle_delivery_on')],
+        ]);
+        html += otfBuildReceivable();
+        html += '</div>';
+
+        // Accessories + Receipts
+        const accTable = otfBuildAccessoriesTable();
+        const recTable = otfBuildReceiptsTable();
+        if (accTable || recTable) {
+            html += '<div class="otf-grid2">';
+            html += accTable || '<div class="otf-section"><h3>Accessories</h3><div class="otf-empty">None selected</div></div>';
+            html += recTable || '<div class="otf-section"><h3>Receipts</h3><div class="otf-empty">No receipts recorded</div></div>';
+            html += '</div>';
+        }
+
+        // Notes + signatures
+        html += '<div class="otf-section">';
+        html += '<ol class="otf-note">';
+        html += '<li>Vehicle shall be delivered only against payment.</li>';
+        html += '<li>Interest shall be charged @ 24% P.A. in case of payments delayed over three days.</li>';
+        html += '<li>No interest shall be payable on Booking Amount.</li>';
+        html += '<li>Price &amp; Scheme of the vehicle is applicable as on the date of delivery. Price &amp; Scheme are subject to change without any prior notice.</li>';
+        html += '<li>Self attested coloured copy of original documents is required for any Claim. Claims will be rejected in absence of required documents.</li>';
+        html += '</ol>';
+        html += '<div class="otf-signs">';
+        html += '<div class="otf-sign">Customer Signature</div>';
+        html += '<div class="otf-sign">Sales Consultant</div>';
+        html += '<div class="otf-sign">Accounts / Manager</div>';
+        html += '</div>';
+        html += '</div>';
+
+        $('#previewContent').html(html);
+    }
+
+    $('#previewBtn').on('click', function() {
+        otfBuildPreview();
+        $('#otfFormSection').hide();
+        $('.page-header').hide();
+        $('#otfPreviewPage').css('display', 'block');
+        window.scrollTo(0, 0);
+    });
+
+    $('#backToForm, #backToForm2').on('click', function() {
+        $('#otfPreviewPage').hide();
+        $('#otfFormSection').show();
+        $('.page-header').show();
+    });
+
+    $('#printFormBtn, #printFormBtn2').on('click', function() {
+        window.print();
+    });
 </script>
 @endpush

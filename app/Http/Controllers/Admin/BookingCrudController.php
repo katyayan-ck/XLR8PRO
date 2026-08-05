@@ -4189,7 +4189,7 @@ class BookingCrudController extends CrudController
 
         $query = $this->getBaseQuery();
 
-        $query->whereIn('bookings.buyer_type', ['First time Buyer', 'Additional Buy']);
+        $query->whereIn('bookings.buyer_type', ['First Time Buy', 'Additional Buy']);
 
         $query->orderBy('bookings.id', 'DESC');
 
@@ -7277,7 +7277,7 @@ class BookingCrudController extends CrudController
     {
         $booking = Booking::findOrFail($id);
         $validator = Validator::make($request->all(), [
-            'buyer_type' => 'required|string|in:First time Buyer,Additional Buy,Exchange Buy,Scrappage',
+            'buyer_type' => 'required|string|in:First Time Buy,Additional Buy,Exchange Buy,Scrappage',
             'enum_master1' => 'nullable|integer',
             'vehicle_details' => 'nullable|string|max:255',
             'enum_master2' => 'nullable|integer',

@@ -19,7 +19,7 @@
 
                 <div class="card-body p-0" style="background:#f8fafc">
 
-                    {{-- <!-- Import Section -->
+                    <!-- Import Section -->
                     <div class="p-3 border-bottom bg-white">
                         <div class="row align-items-end">
                             <div class="col-md-8">
@@ -75,7 +75,7 @@
                                 </tr>
                             </tbody>
                         </table>
-                    </div> --}}
+                    </div>
 
                     <!-- Grid Controls -->
                     <div
@@ -124,39 +124,54 @@
                     {{-- =========================== HIGHLIGHT FILTERS =========================== --}}
                     <div class="px-3 py-2 border-bottom bg-white d-flex gap-2 flex-wrap align-items-center">
                         <span class="fw-bold text-muted small me-1">Highlights:</span>
-                        
-                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter" data-filter="missed_fup">
-                            Missed Follow-up <span class="badge ms-1 count-badge">{{ $highlightCounts['missed_fup'] ?? 0 }}</span>
+
+                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
+                            data-filter="missed_fup">
+                            Missed Follow-up <span
+                                class="badge ms-1 count-badge">{{ $highlightCounts['missed_fup'] ?? 0 }}</span>
                         </button>
-                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter" data-filter="today_fup">
-                            Today's Follow-up <span class="badge ms-1 count-badge">{{ $highlightCounts['today_fup'] ?? 0 }}</span>
+                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
+                            data-filter="today_fup">
+                            Today's Follow-up <span
+                                class="badge ms-1 count-badge">{{ $highlightCounts['today_fup'] ?? 0 }}</span>
                         </button>
                         <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter" data-filter="birthday">
                             Birthday <span class="badge ms-1 count-badge">{{ $highlightCounts['birthday'] ?? 0 }}</span>
                         </button>
-                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter" data-filter="anniversary">
-                            Anniversary <span class="badge ms-1 count-badge">{{ $highlightCounts['anniversary'] ?? 0 }}</span>
+                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
+                            data-filter="anniversary">
+                            Anniversary <span
+                                class="badge ms-1 count-badge">{{ $highlightCounts['anniversary'] ?? 0 }}</span>
                         </button>
-                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter" data-filter="exchange">
+                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
+                            data-filter="exchange">
                             Exchange <span class="badge ms-1 count-badge">{{ $highlightCounts['exchange'] ?? 0 }}</span>
                         </button>
-                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter" data-filter="pending_eval">
-                            Pending Evaluation <span class="badge ms-1 count-badge">{{ $highlightCounts['pending_eval'] ?? 0 }}</span>
+                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
+                            data-filter="pending_eval">
+                            Pending Evaluation <span
+                                class="badge ms-1 count-badge">{{ $highlightCounts['pending_eval'] ?? 0 }}</span>
                         </button>
-                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter" data-filter="delayed">
+                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
+                            data-filter="delayed">
                             Delayed <span class="badge ms-1 count-badge">{{ $highlightCounts['delayed'] ?? 0 }}</span>
                         </button>
-                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter" data-filter="wrong_assign">
-                            Wrong Assignment <span class="badge ms-1 count-badge">{{ $highlightCounts['wrong_assign'] ?? 0 }}</span>
+                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
+                            data-filter="wrong_assign">
+                            Wrong Assignment <span
+                                class="badge ms-1 count-badge">{{ $highlightCounts['wrong_assign'] ?? 0 }}</span>
                         </button>
-                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter" data-filter="finance">
+                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
+                            data-filter="finance">
                             Finance <span class="badge ms-1 count-badge">{{ $highlightCounts['finance'] ?? 0 }}</span>
                         </button>
                         {{-- <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter" data-filter="stage_mismatch">
                             Stage Mismatch <span class="badge ms-1 count-badge">{{ $highlightCounts['stage_mismatch'] ?? 0 }}</span>
                         </button> --}}
-                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter" data-filter="lost_verif">
-                            Lost Verifications <span class="badge ms-1 count-badge">{{ $highlightCounts['lost_verif'] ?? 0 }}</span>
+                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
+                            data-filter="lost_verif">
+                            Lost Verifications <span
+                                class="badge ms-1 count-badge">{{ $highlightCounts['lost_verif'] ?? 0 }}</span>
                         </button>
                     </div>
 

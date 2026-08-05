@@ -226,6 +226,7 @@ class SegmentCrudController extends CrudController
                 'subsegment' => 0,
                 'model'      => 0,
                 'variant'    => 0,
+                'color'      => 0,
                 'skipped'    => 0,
             ];
 
@@ -233,6 +234,7 @@ class SegmentCrudController extends CrudController
             $seenSubsegments = [];
             $seenModels      = [];
             $seenVariants    = [];
+            $seenColors      = [];
 
             \Log::info('=== Vehicle Import Started (Google Sheet, Color merged into Variant) ===', [
                 'spreadsheet_id' => $spreadsheetId,
@@ -385,11 +387,60 @@ class SegmentCrudController extends CrudController
 
                     $seenVariants[$variantKey] = true;
                 }
+
+                // --- Color table upsert (independent of variant dedup) ---
+                // Keyed on model_code + variant_code + code (color code), per xlr8_vehicle_color unique key.
+                // Name is stored exactly as given from the sheet — if colourName is blank,
+                // it stays blank/null forever. We never auto-generate a fallback name here.
+                $colorKey = "{$modelCode}|{$variantCode}|{$colorCode}";
+
+                if (isset($seenColors[$colorKey])) {
+                    \Log::info("Row {$excelRow} — Color SKIPPED, duplicate within this import: {$variantCode} | {$colorCode}");
+                } else {
+                    $existingColor = \DB::table('xlr8_vehicle_color')
+                        ->where('model_code', $modelCode)
+                        ->where('variant_code', $variantCode)
+                        ->where('code', $colorCode)
+                        ->first();
+
+                    if (!$existingColor) {
+                        \DB::table('xlr8_vehicle_color')->insert([
+                            'segment_code'     => $segmentCode,
+                            'sub_segment_code' => $subSegmentCode,
+                            'model_code'       => $modelCode,
+                            'variant_code'     => $variantCode,
+                            'code'             => $colorCode,
+                            'name'             => $colourName ?: null,
+                            'hex_code'         => null,
+                            'image'            => null,
+                            'is_active'        => 1,
+                            'created_at'       => $now,
+                            'updated_at'       => $now,
+                        ]);
+                        $stats['color']++;
+                        \Log::info("Row {$excelRow} — Color inserted: {$variantCode} | {$colorCode} ({$colourName})");
+                    } elseif ($colourName && empty($existingColor->name)) {
+                        // Only fill the name in if the sheet now has one AND the stored
+                        // record was blank — never overwrite a name that's already set,
+                        // and never invent one when the sheet also leaves it blank.
+                        \DB::table('xlr8_vehicle_color')
+                            ->where('id', $existingColor->id)
+                            ->update([
+                                'name'       => $colourName,
+                                'updated_at' => $now,
+                            ]);
+                        \Log::info("Row {$excelRow} — Color name backfilled: {$variantCode} | {$colorCode} ({$colourName})");
+                    } else {
+                        \Log::info("Row {$excelRow} — Color SKIPPED, already exists in DB: {$variantCode} | {$colorCode}");
+                    }
+
+                    $seenColors[$colorKey] = true;
+                }
             }
 
             \Log::info('=== Vehicle Import Completed (Google Sheet) ===', $stats);
 
-            $summary = "Segments: {$stats['segment']} | Subsegments: {$stats['subsegment']} | Models: {$stats['model']} | Variants: {$stats['variant']} | Skipped: {$stats['skipped']}";
+            $summary = "Segments: {$stats['segment']} | Subsegments: {$stats['subsegment']} | Models: {$stats['model']} | Variants: {$stats['variant']} | Colors: {$stats['color']} | Skipped: {$stats['skipped']}";
 
             \Alert::success("Import Completed → {$summary}")->flash();
         } catch (\Exception $e) {
