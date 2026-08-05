@@ -181,19 +181,6 @@
             color: #fff;
             border-color: #0d6efd;
         }
-
-        /* Badge default styling */
-        .highlight-filter .count-badge {
-            background-color: rgba(13, 110, 253, 0.1);
-            color: #0d6efd;
-            border-radius: 50rem;
-        }
-
-        /* Badge styling when the button is active */
-        .highlight-filter.active .count-badge {
-            background-color: #fff;
-            color: #0d6efd;
-        }
     </style>
 @endpush
 
