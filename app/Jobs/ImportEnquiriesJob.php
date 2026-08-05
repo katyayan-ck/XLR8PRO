@@ -232,7 +232,7 @@ class ImportEnquiriesJob implements ShouldQueue
                         $mobile = $this->cell($row, $headerMap, 'Customer Number');
 
                         $data = $this->stripNulls([
-                            'virtual_no'        => $this->cell($row, $headerMap, 'Virtual No.'),
+                            'virtual_no'        => $this->cell($row, $headerMap, 'Virtual No'),
                             'call_status'       => $this->cell($row, $headerMap, 'Call Status'),
                             'call_duration'     => $this->cell($row, $headerMap, 'Call Duration'),
                             'mobile'            => $mobile,
