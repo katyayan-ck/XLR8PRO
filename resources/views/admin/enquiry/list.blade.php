@@ -124,28 +124,40 @@
                     {{-- =========================== HIGHLIGHT FILTERS =========================== --}}
                     <div class="px-3 py-2 border-bottom bg-white d-flex gap-2 flex-wrap align-items-center">
                         <span class="fw-bold text-muted small me-1">Highlights:</span>
-                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
-                            data-filter="missed_fup">Missed Follow-up</button>
-                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
-                            data-filter="today_fup">Today's Follow-up</button>
-                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
-                            data-filter="birthday">Birthday</button>
-                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
-                            data-filter="anniversary">Anniversary</button>
-                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
-                            data-filter="exchange">Exchange</button>
-                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
-                            data-filter="pending_eval">Pending Evaluation</button>
-                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
-                            data-filter="delayed">Delayed</button>
-                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
-                            data-filter="wrong_assign">Wrong Assignment</button>
-                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
-                            data-filter="finance">Finance</button>
-                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
-                            data-filter="stage_mismatch">Stage Mismatch</button>
-                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
-                            data-filter="lost_verif">Lost Verifications</button>
+                        
+                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter" data-filter="missed_fup">
+                            Missed Follow-up <span class="badge ms-1 count-badge">{{ $highlightCounts['missed_fup'] ?? 0 }}</span>
+                        </button>
+                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter" data-filter="today_fup">
+                            Today's Follow-up <span class="badge ms-1 count-badge">{{ $highlightCounts['today_fup'] ?? 0 }}</span>
+                        </button>
+                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter" data-filter="birthday">
+                            Birthday <span class="badge ms-1 count-badge">{{ $highlightCounts['birthday'] ?? 0 }}</span>
+                        </button>
+                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter" data-filter="anniversary">
+                            Anniversary <span class="badge ms-1 count-badge">{{ $highlightCounts['anniversary'] ?? 0 }}</span>
+                        </button>
+                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter" data-filter="exchange">
+                            Exchange <span class="badge ms-1 count-badge">{{ $highlightCounts['exchange'] ?? 0 }}</span>
+                        </button>
+                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter" data-filter="pending_eval">
+                            Pending Evaluation <span class="badge ms-1 count-badge">{{ $highlightCounts['pending_eval'] ?? 0 }}</span>
+                        </button>
+                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter" data-filter="delayed">
+                            Delayed <span class="badge ms-1 count-badge">{{ $highlightCounts['delayed'] ?? 0 }}</span>
+                        </button>
+                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter" data-filter="wrong_assign">
+                            Wrong Assignment <span class="badge ms-1 count-badge">{{ $highlightCounts['wrong_assign'] ?? 0 }}</span>
+                        </button>
+                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter" data-filter="finance">
+                            Finance <span class="badge ms-1 count-badge">{{ $highlightCounts['finance'] ?? 0 }}</span>
+                        </button>
+                        {{-- <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter" data-filter="stage_mismatch">
+                            Stage Mismatch <span class="badge ms-1 count-badge">{{ $highlightCounts['stage_mismatch'] ?? 0 }}</span>
+                        </button> --}}
+                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter" data-filter="lost_verif">
+                            Lost Verifications <span class="badge ms-1 count-badge">{{ $highlightCounts['lost_verif'] ?? 0 }}</span>
+                        </button>
                     </div>
 
                     <!-- ag-Grid -->
@@ -168,6 +180,19 @@
             background-color: #0d6efd;
             color: #fff;
             border-color: #0d6efd;
+        }
+
+        /* Badge default styling */
+        .highlight-filter .count-badge {
+            background-color: rgba(13, 110, 253, 0.1);
+            color: #0d6efd;
+            border-radius: 50rem;
+        }
+
+        /* Badge styling when the button is active */
+        .highlight-filter.active .count-badge {
+            background-color: #fff;
+            color: #0d6efd;
         }
     </style>
 @endpush
@@ -470,17 +495,10 @@
 
             // Exports
             document.getElementById('exportCsv').addEventListener('click', () => {
-                // Same columns, same order as what's currently displayed on the page
-                const visibleFields = gridApi.getAllDisplayedColumns()
-                    .map(col => col.getColDef())
-                    .filter(col => col.field && col.field !== 'action')
-                    .map(col => col.field);
-
                 const params = new URLSearchParams({
                     searchText: currentSearchText,
                     highlightFilter: currentHighlightFilter,
-                    filterModel: JSON.stringify(gridApi.getFilterModel()),
-                    columns: JSON.stringify(visibleFields)
+                    filterModel: JSON.stringify(gridApi.getFilterModel())
                 });
                 window.location.href = '{{ backpack_url('enquiries/export') }}?' + params.toString();
             });
