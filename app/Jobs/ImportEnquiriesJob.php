@@ -808,6 +808,27 @@ class ImportEnquiriesJob implements ShouldQueue
         $this->vehicleColorCacheLoaded = true;
     }
 
+   
+    // Add these methods to your ImportEnquiriesJob class after the existing helper methods
+
+    /**
+     * Resolves a raw model name against xlr8_vehicle_model.name, matching
+     * case-insensitively with whitespace collapsed/trimmed. Unlike
+     * resolveKeyValue(), a miss does NOT create a new vehicle_model row —
+     * it just returns nulls for both codes, so only the raw `model` text
+     * (and variant, handled by the caller) gets saved.
+     */
+    private function resolveVehicleModel($rawModelName): array
+    {
+        $normalized = $rawModelName !== null ? $this->normalizeForMatch((string) $rawModelName) : '';
+
+        if ($normalized === '' || !isset($this->vehicleModelCache[$normalized])) {
+            return ['model_code' => null, 'segment_code' => null];
+        }
+
+        return $this->vehicleModelCache[$normalized];
+    }
+
     /**
      * Resolves a raw imported color name against the xlr8_vehicle_variant
      * color cache, matching case-insensitively with whitespace collapsed/
@@ -826,6 +847,9 @@ class ImportEnquiriesJob implements ShouldQueue
 
         return $this->vehicleColorCache[$normalized];
     }
+
+
+
 
     /**
      * Maps a raw "Purchase Type" value (Long sheet only) against the fixed
