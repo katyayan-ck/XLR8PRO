@@ -1483,6 +1483,24 @@ class BookingCrudController extends CrudController
         $data['quotation'] = $quotation;
         $data['enquiry']   = $enquiry; // Pass enquiry object to view
 
+        // ========== ADD THIS SECTION ==========
+        // Extract quotation data for the $q variable used in view
+        $data['q'] = [];
+        if ($quotation) {
+            $data['q'] = $quotation->proposed_data ?? [];
+
+            // Also set individual fields for the view
+            $data['segment_code'] = $quotation->segment_code ??
+                ($enquiry ? $enquiry->segment_code : null);
+            $data['model_code'] = $quotation->model_code ??
+                ($enquiry ? $enquiry->model_code : null);
+            $data['variant_code'] = $quotation->variant_code ??
+                ($enquiry ? $enquiry->variant_code : null);
+            $data['color_code'] = $quotation->color_code ??
+                ($enquiry ? $enquiry->color_code : null);
+        }
+        // ======================================
+
         $this->data['data']    = $data;
         $this->data['enquiry'] = $enquiry; // Explicitly set for standalone variable access in view
     }
@@ -10651,6 +10669,13 @@ class BookingCrudController extends CrudController
             desigCode: 'SLS_CONS'
         );
 
+        $salesconsultants = array_map(function ($consultant) {
+            $consultant['branch_name'] = OrgService::branchName($consultant['primary_branch_code'] ?? '');
+            $consultant['location_name'] = OrgService::locationName($consultant['primary_loc_code'] ?? '');
+            return $consultant;
+        }, $salesconsultants);
+
+
         $dsaList = XL_DSA_MASTER::orderBy('name')
             ->get(['id', 'name', 'dlocation']);
         $finance = XFinance::where('bid', $id)->first();
@@ -10848,10 +10873,12 @@ class BookingCrudController extends CrudController
             '4' => 'Higher (Nil Dep + Consumables + Add Ons)',
         ];
         $registration_type_map = [
-            '0' => 'Exempted',
-            '1' => 'TRC Only',
-            '2' => 'Tax Only',
-            '3' => 'TRC + Tax',
+            '0' => 'Tax Only',
+            '1' => 'TRC + Tax',
+            '2' => 'TRC Only',
+            '3' => 'Exempted',
+
+
         ];
 
         $financierName = XlFinancier::find($booking->financier)?->name ?? 'N/A';
@@ -10889,6 +10916,7 @@ class BookingCrudController extends CrudController
             compact(
                 'booking',
                 'finance',
+                'salesconsultants',
                 'taStatement',
                 'enquiry',
                 'quotationData',

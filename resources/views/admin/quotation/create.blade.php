@@ -43,6 +43,10 @@ use App\Services\OrgService;
             display: none !important;
         }
 
+        .print-only-inline {
+            display: inline-block !important;
+        }
+
         body {
             margin: 0;
             padding: 0;
@@ -175,6 +179,10 @@ use App\Services\OrgService;
             justify-content: flex-end !important;
         }
 
+    }
+
+    .print-only-inline {
+        display: none;
     }
 
 
@@ -595,19 +603,19 @@ use App\Services\OrgService;
            table-layout:fixed column sizing) so they always add up to 100%
            while printing. Price and discount keep their own ratio. */
         .price-grid th:nth-child(1) {
-            width: 53% !important;
+            width: 70% !important;
         }
 
         .price-grid th:nth-child(3) {
-            width: 47% !important;
+            width: 30% !important;
         }
 
         .discount-grid th:nth-child(1) {
-            width: 49% !important;
+            width: 70% !important;
         }
 
         .discount-grid th:nth-child(3) {
-            width: 51% !important;
+            width: 30% !important;
         }
 
         /* Every price/discount item is its own independent row now. A row is
@@ -971,7 +979,7 @@ use App\Services\OrgService;
                                         </tr>
 
                                         <tr class="grid-row">
-                                            <td class="cell-label">Insurance</td>
+                                            <td class="cell-label">Insurance </td>
                                             <td class="cell-option">
                                                 {{-- Insurance Company --}}
                                                 <select id="insurance_company" class="form-control mb-1"
@@ -990,7 +998,12 @@ use App\Services\OrgService;
                                         </tr>
 
                                         <tr class="grid-row">
-                                            <td class="cell-label">Registration</td>
+                                            <td class="cell-label">
+                                                Registration
+                                                <!-- Printed text span for Registration details -->
+                                                <span id="registration_details_print"
+                                                    class="print-only-inline fw-bold ms-1"></span>
+                                            </td>
                                             <td class="cell-option" style="padding: 2px 4px !important;">
                                                 <div
                                                     style="display: flex; gap: 4px; align-items: center; justify-content: space-between; width: 100%;">
@@ -1001,9 +1014,8 @@ use App\Services\OrgService;
                                                             class="form-select form-select-sm"
                                                             style="font-size: 9px; padding: 1px 3px; height: 22px; border: 1px solid #ccc; border-radius: 3px; width: 100%; background: #fff;">
                                                             <option value="">Select Type</option>
-
-                                                            @foreach($reg_no_type_map ?? ['1'=>'Regular', '2'=>'BH',
-                                                            '3'=>'Special'] as $key => $value)
+                                                            @foreach($reg_no_type_map ?? ['1'=>'Regular', '2'=>'BH
+                                                            Series', '3'=>'Special Number'] as $key => $value)
                                                             <option value="{{ $key }}" {{ old('registration_no_type',
                                                                 $rto?->rgn_no_type ?? '') == $key ? 'selected' : '' }}>
                                                                 {{ $value }}
@@ -1018,19 +1030,19 @@ use App\Services\OrgService;
                                                             class="form-select form-select-sm"
                                                             style="font-size: 9px; padding: 1px 3px; height: 22px; border: 1px solid #ccc; border-radius: 3px; width: 100%; background: #fff;">
                                                             <option value="">Select Category</option>
-                                                            <option value="Exempted" {{ old('registration_category',
+                                                            @foreach($registration_type_map as $key => $value)
+                                                            <option value="{{ $key }}" {{ old('registration_category',
                                                                 $otfData['registration_category'] ?? $rto?->
-                                                                registration_category ?? '') == 'Exempted' ? 'selected'
-                                                                : '' }}>Exempted</option>
-                                                            <option value="Standard" {{ old('registration_category',
-                                                                $otfData['registration_category'] ?? $rto?->
-                                                                registration_category ?? '') == 'Standard' ? 'selected'
-                                                                : '' }}>Standard</option>
+                                                                registration_category ?? '') == $key ? 'selected' : ''
+                                                                }}>
+                                                                {{ $value }}
+                                                            </option>
+                                                            @endforeach
                                                         </select>
                                                     </div>
 
-                                                    <!-- 3. In House RTO (Compact Toggle Radio Buttons) -->
-                                                    <div
+                                                    <!-- 3. In House RTO (Radio Buttons - Screen View Only) -->
+                                                    <div class="no-print"
                                                         style="flex: 0 0 auto; display: flex; align-items: center; border: 1px solid #ccc; border-radius: 3px; padding: 1px; background: #fff; height: 22px;">
                                                         <span
                                                             style="font-size: 8px; font-weight: bold; margin-right: 3px; margin-left: 2px; color: #555; white-space: nowrap;">In-House:</span>
@@ -1315,12 +1327,7 @@ use App\Services\OrgService;
                                         </tr>
 
                                         <tr class="grid-row">
-                                            <td class="cell-label">
-                                                <select id="group_b_select" class="group-select">
-                                                    <option value="corporate_discount">Corporate Discount</option>
-                                                    <option value="loyalty_bonus">Loyalty Bonus</option>
-                                                </select>
-                                            </td>
+                                            <td class="cell-label">Corporate Discount</td>
                                             <td class="cell-type">
                                                 <input type="text" id="group_b_type" value="INV" readonly>
                                             </td>
@@ -1330,8 +1337,6 @@ use App\Services\OrgService;
                                                 <input type="hidden" id="corporate_discount" name="corporate_discount">
                                                 <input type="hidden" id="corporate_discount_type"
                                                     name="corporate_discount_type">
-                                                <input type="hidden" id="loyalty_bonus" name="loyalty_bonus">
-                                                <input type="hidden" id="loyalty_bonus_type" name="loyalty_bonus_type">
                                             </td>
                                         </tr>
 
@@ -1341,6 +1346,7 @@ use App\Services\OrgService;
                                                     <option value="exchange_bonus">Exchange Bonus</option>
                                                     <option value="green_bonus">Green Bonus</option>
                                                     <option value="welcome_bonus">Welcome Bonus</option>
+                                                    <option value="loyalty_bonus">Loyalty Bonus</option>
                                                 </select>
                                             </td>
                                             <td class="cell-type">
@@ -1356,11 +1362,13 @@ use App\Services\OrgService;
                                                 <input type="hidden" id="green_bonus_type" name="green_bonus_type">
                                                 <input type="hidden" id="welcome_bonus" name="welcome_bonus">
                                                 <input type="hidden" id="welcome_bonus_type" name="welcome_bonus_type">
+                                                <input type="hidden" id="loyalty_bonus" name="loyalty_bonus">
+                                                <input type="hidden" id="loyalty_bonus_type" name="loyalty_bonus_type">
                                             </td>
                                         </tr>
 
                                         <tr class="grid-row">
-                                            <td class="cell-label">Accessories Spl Disc</td>
+                                            <td class="cell-label">Accessories Special Discount</td>
                                             <td class="cell-type">
                                                 <select id="accessories_spl_disc_type" name="accessories_spl_disc_type">
                                                     <option value="INV">INV</option>
@@ -1375,7 +1383,7 @@ use App\Services\OrgService;
 
                                         <tr class="grid-row">
                                             <td class="cell-label" id="coating_discount_label">
-                                                Coating Spl Discount
+                                                Coating Special Discount
                                             </td>
                                             <td class="cell-type">
                                                 <select id="ceramic_discount_type" name="ceramic_discount_type">
@@ -1390,7 +1398,7 @@ use App\Services\OrgService;
                                         </tr>
 
                                         <tr class="grid-row">
-                                            <td class="cell-label">PPF Spl Discount</td>
+                                            <td class="cell-label">PPF Special Discount</td>
                                             <td class="cell-type">
                                                 <select id="ppf_discount_type" name="ppf_discount_type">
                                                     <option value="INV">INV</option>
@@ -1553,7 +1561,7 @@ use App\Services\OrgService;
 
                             <!-- 3. NET RECEIVABLE Words (Dynamic Text) -->
                             <div class="onroad-row-cell onroad-words"
-                                style="background: #abb8ca; color: #000; font-size: 11px; font-weight: bold; padding: 5px 8px; flex: 1 1 64%; display: flex; align-items: center; justify-content: flex-end; border-right: 1px solid #000;">
+                                style="background: #abb8ca; color: #000; font-size: 13px; font-weight: bold; padding: 5px 8px; flex: 1 1 64%; display: flex; align-items: center; justify-content: flex-end; border-right: 1px solid #000;">
                                 <span id="net_receivable_words">Zero Rupees Only</span>
                             </div>
 
@@ -3358,15 +3366,25 @@ if (groupASelected && groupAAmount) {
         $('#shield_scheme_type').val(pricing.deductibles["shield-scheme"].type);
     }
     if (pricing.deductibles["corp-scheme"] && pricing.deductibles["corp-scheme"].length > 0) {
-        let corp = pricing.deductibles["corp-scheme"][0];
+    let corp = pricing.deductibles["corp-scheme"].find(x => x.name === "Corporate Discount") || pricing.deductibles["corp-scheme"][0];
+    if (corp && corp.name === "Corporate Discount") {
         $('#group_b_select').val('corporate_discount').trigger('change');
-        $('#group_b_type').val(corp.type);
+        $('#group_b_type').val(corp.type || 'INV');
         $('#group_b_amount').val(corp.amount).trigger('keyup');
     }
+
+    // Agar corp-scheme mein Loyalty Bonus milta hai, to usse Group C mein set karein
+    let loyalty = pricing.deductibles["corp-scheme"].find(x => x.name === "Loyalty Bonus");
+    if (loyalty) {
+        $('#group_c_select').val('loyalty_bonus').trigger('change');
+        $('#group_c_type').val(loyalty.type || 'CN1');
+        $('#group_c_amount').val(loyalty.amount).trigger('keyup');
+    }
+}
     if (pricing.deductibles["exchange-scheme"] && pricing.deductibles["exchange-scheme"].length > 0) {
         let exch = pricing.deductibles["exchange-scheme"][0];
-        $('#group_c_select').val('exchange_bonus').trigger('change');
-        $('#group_c_type').val(exch.type);
+        $('#group_c_select').val(exch.name ? exch.name.toLowerCase().replace(' ', '_') : 'exchange_bonus').trigger('change');
+        $('#group_c_type').val(exch.type || 'CN1');
         $('#group_c_amount').val(exch.amount).trigger('keyup');
     }
     if (pricing.deductibles["accessories-spl-discount"]) {
@@ -3597,11 +3615,11 @@ $('#charger_swapping').on('change', function () {
 // ---- Update Coating Discount Label ----
 function updateCoatingDiscountLabel() {
     let coating = $('#coating').val();
-    let label = 'Coating Spl Discount';
+    let label = 'Coating Special Discount';
     if (coating === 'Ceramic') {
-        label = 'Ceramic Coating Spl Discount';
+        label = 'Ceramic Coating Special Discount';
     } else if (coating === 'Graphene') {
-        label = 'Graphene Coating Spl Discount';
+        label = 'Graphene Coating Special Discount';
     }
     $('#coating_discount_label').text(label);
 }
@@ -3644,8 +3662,15 @@ function setupGroupDiscount(groupPrefix, fieldNames) {
 
 // Setup all groups
 setupGroupDiscount('group_a', ['cash_scheme_oem', 'csd_discount', 'fame_subsidy']);
-setupGroupDiscount('group_b', ['corporate_discount', 'loyalty_bonus']);
-setupGroupDiscount('group_c', ['exchange_bonus', 'green_bonus', 'welcome_bonus']);
+// Group B - Corporate Discount (static label)
+$(document).on('keyup change', '#group_b_amount', function() {
+    let amount = $(this).val();
+    $('#corporate_discount').val(amount);
+    $('#corporate_discount_type').val($('#group_b_type').val());
+    calculateQuotation();
+    toggleRowVisibility();
+});
+setupGroupDiscount('group_c', ['exchange_bonus', 'green_bonus', 'welcome_bonus', 'loyalty_bonus']);
 
 // ---- Group A Select change (static fallback) ----
 $('#group_a_select').on('change', function () {
@@ -3887,23 +3912,30 @@ function prepareOptionLabelsForPrint() {
     printLabelRestoreList = [];
     $('.quotation-grid td.cell-option select').not('#accessories').each(function () {
         let $select = $(this);
-        if ($select.attr('id') === 'insurance_covers') {
+        let selectId = $select.attr('id');
+
+        // Registration Dropdowns aur Insurance Covers ko generic loop se exclude karein
+        if (selectId === 'insurance_covers' || selectId === 'registration_no_type' || selectId === 'registration_category') {
             return;
         }
+
         let selectedText = $select.find('option:selected').first().text().trim();
         if (!selectedText || selectedText.toLowerCase() === 'select') {
             return;
         }
+
         let $label = $select.closest('tr').find('td.cell-label').first();
         printLabelRestoreList.push({
             el: $label,
             html: $label.html()
         });
-        if ($select.attr('id') === 'insurance_company') {
+
+        if (selectId === 'insurance_company') {
             $label.html('Insurance');
             $label.append('(' + $select.val() + ')');
             return;
         }
+
         $label.append('(' + selectedText + ')');
     });
 }
@@ -4165,9 +4197,8 @@ function toggleRtoChargesNote() {
     let $rtoNoteItem = $('#rto_charges_note_item');
 
     if (inHouseValue === "1") {
-        // Agar 9th point pehle se exist nahi karta toh append karein
         if ($rtoNoteItem.length === 0) {
-            $('#quotation_notes_list').append('<li id="rto_charges_note_item">RTO Charges will be applicable.</li>');
+            $('#quotation_notes_list').append('<li id="rto_charges_note_item">RTO Charges are subject to the vehicle\'s registration category.</li>');
         }
     } else {
         // Radio No (0) hone par 9th point remove karein
@@ -4183,6 +4214,34 @@ $(document).on('change', 'input[name="in_house_rto"]', function () {
 // Document Ready par Initial State Check Karne Ke Liye Call Karein
 $(document).ready(function () {
     toggleRtoChargesNote();
+});
+
+function updateRegistrationPrintText() {
+    let typeText = $('#registration_no_type option:selected').text().trim();
+    let categoryText = $('#registration_category option:selected').text().trim();
+    let inHouseVal = $('input[name="in_house_rto"]:checked').val();
+    let inHouseText = (inHouseVal === "1") ? "Yes" : "No";
+
+    let parts = [];
+
+    if (typeText && typeText.toLowerCase() !== 'select type') {
+        parts.push('(' + typeText + ')');
+    }
+    if (categoryText && categoryText.toLowerCase() !== 'select category') {
+        parts.push('(' + categoryText + ')');
+    }
+    parts.push('(In-House: ' + inHouseText + ')');
+
+    $('#registration_details_print').text(parts.join(' '));
+}
+
+// Event Listeners
+$(document).on('change', '#registration_no_type, #registration_category, input[name="in_house_rto"]', function () {
+    updateRegistrationPrintText();
+});
+
+$(document).ready(function () {
+    updateRegistrationPrintText();
 });
 </script>
 @endpush
