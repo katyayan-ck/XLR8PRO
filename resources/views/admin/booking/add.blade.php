@@ -421,28 +421,30 @@ $enquiry = $quotation?->enquiry ?? ($data['enquiry'] ?? null);
                     </div>
                 </div>
 
-                <div class="card p-3 mt-3">
-                    <div class="card-body">
-                        <h2 class="mb-3">Purchase Type Details</h2>
-                        <div class="row">
-                            <div class="col-sm-2">
-                                <div class="form-group">
-                                    <label for="buyertype">Purchase Type <span class="required-mark">*</span></label>
-                                    <select name="buyertype" id="buyertype" class="form-control form-select" required>
-                                        <option value="" disabled {{ !isset($enquiry->purchase_type) ? 'selected' : ''
-                                            }}>-- Select Purchase
-                                            Type --</option>
-                                        @php $ptype = old('buyertype', $enquiry->purchase_type ?? ''); @endphp
-                                        <option value="First Time Buy" {{ in_array($ptype, ['First Time
-                                            Buy', 'First Time Buy' ]) ? 'selected' : '' }}>
-                                            First Time Buyer</option>
-                                        <option value="Additional Buy" {{ $ptype=='Additional Buy' ? 'selected' : '' }}>
-                                            Additional Buy</option>
-                                        <option value="Exchange Buy" {{ $ptype=='Exchange Buy' ? 'selected' : '' }}>
-                                            Exchange Buy</option>
-                                        <option value="Scrappage" {{ $ptype=='Scrappage' ? 'selected' : '' }}>
-                                            Scrappage</option>
-                                    </select>
+                    <div class="card p-3 mt-3">
+                        <div class="card-body">
+                            <h2 class="mb-3">Purchase Type Details</h2>
+                            <div class="row">
+                                <div class="col-sm-2">
+                                    <div class="form-group">
+                                        <label for="buyertype">Purchase Type <span class="required-mark">*</span></label>
+                                        <select name="buyertype" id="buyertype" class="form-control form-select"
+                                            required>
+                                            <option value="" disabled
+                                                {{ !isset($enquiry->purchase_type) ? 'selected' : '' }}>-- Select Purchase
+                                                Type --</option>
+                                            @php $ptype = old('buyertype', $enquiry->purchase_type ?? ''); @endphp
+                                            <option value="First Time Buy"
+                                                {{ in_array($ptype, ['First Time Buy', 'First Time Buy']) ? 'selected' : '' }}>
+                                                First Time Buyer</option>
+                                            <option value="Additional Buy"
+                                                {{ $ptype == 'Additional Buy' ? 'selected' : '' }}>Additional Buy</option>
+                                            <option value="Exchange Buy" {{ $ptype == 'Exchange Buy' ? 'selected' : '' }}>
+                                                Exchange Buy</option>
+                                            <option value="Scrappage" {{ $ptype == 'Scrappage' ? 'selected' : '' }}>
+                                                Scrappage</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
 
