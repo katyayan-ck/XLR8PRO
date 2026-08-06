@@ -48,10 +48,12 @@ class QuotationCrudController extends CrudController
 
 
         $registration_type_map = [
-            0 => 'Exempted',
-            1 => 'TRC Only',
-            2 => 'Tax Only',
-            3 => 'TRC + Tax',
+            '0' => 'Tax Only',
+            '1' => 'TRC + Tax',
+            '2' => 'TRC Only',
+            '3' => 'Exempted',
+
+
         ];
         $this->crud->setListView('admin.quotation.list');
 
@@ -308,10 +310,12 @@ class QuotationCrudController extends CrudController
         ];
 
         $registration_type_map = [
-            0 => 'Exempted',
-            1 => 'TRC Only',
-            2 => 'Tax Only',
-            3 => 'TRC + Tax',
+            '0' => 'Tax Only',
+            '1' => 'TRC + Tax',
+            '2' => 'TRC Only',
+            '3' => 'Exempted',
+
+
         ];
 
         $accessoryList = Accessory::where('status', 1)
@@ -586,10 +590,12 @@ class QuotationCrudController extends CrudController
         ];
 
         $registration_type_map = [
-            0 => 'Exempted',
-            1 => 'TRC Only',
-            2 => 'Tax Only',
-            3 => 'TRC + Tax',
+            '0' => 'Tax Only',
+            '1' => 'TRC + Tax',
+            '2' => 'TRC Only',
+            '3' => 'Exempted',
+
+
         ];
 
         $accessoryList = Accessory::where('status', 1)

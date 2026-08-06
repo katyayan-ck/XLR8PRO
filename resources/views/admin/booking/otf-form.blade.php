@@ -308,6 +308,58 @@ use App\Services\OrgService;
         display: block;
     }
 
+    /* Receipt Table Styling */
+    .receipt-table {
+        border-collapse: separate;
+        border-spacing: 0;
+        border-radius: 6px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    .receipt-table thead th {
+        background: #f8f9fa !important;
+        border-bottom: 2px solid #dee2e6 !important;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        color: #495057;
+        padding: 8px 10px;
+    }
+
+    .receipt-table tbody tr {
+        transition: background 0.15s ease;
+    }
+
+    .receipt-table tbody tr:hover {
+        background: #f8f9fa !important;
+    }
+
+    .receipt-table tbody td {
+        padding: 6px 10px;
+        vertical-align: middle;
+        font-size: 10px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .receipt-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .receipt-table tfoot td {
+        padding: 8px 10px;
+        font-weight: 700;
+        background: #f8f9fa;
+        border-top: 2px solid #dee2e6;
+    }
+
+    .receipt-header {
+        padding: 6px 4px 8px 4px;
+        border-bottom: 1px dashed #dee2e6;
+    }
+
+
     @media print {
         .chassis-box {
             min-height: 160px !important;
@@ -336,6 +388,24 @@ use App\Services\OrgService;
             width: 100% !important;
         }
 
+    }
+
+    @media (max-width: 576px) {
+
+        .receipt-table thead th,
+        .receipt-table tbody td {
+            font-size: 9px;
+            padding: 4px 6px;
+        }
+
+        .receipt-table .badge {
+            font-size: 8px !important;
+            padding: 2px 6px !important;
+        }
+
+        .receipt-header h5 {
+            font-size: 10px !important;
+        }
     }
 </style>
 @endpush
@@ -507,13 +577,14 @@ use App\Services\OrgService;
                                     <td class="title">Registration Category</td>
                                     <td>
                                         <select name="registration_category" id="registration_category">
-                                            <option value="">Select Registration Category</option>
-                                            <option value="Exempted" {{ old('registration_category',
+                                            <option value="">Select Category</option>
+                                            @foreach($registration_type_map as $key => $value)
+                                            <option value="{{ $key }}" {{ old('registration_category',
                                                 $otfData['registration_category'] ?? $rto?->registration_category ?? '')
-                                                == 'Exempted' ? 'selected' : '' }}>Exempted</option>
-                                            <option value="Standard" {{ old('registration_category',
-                                                $otfData['registration_category'] ?? $rto?->registration_category ?? '')
-                                                == 'Standard' ? 'selected' : '' }}>Standard</option>
+                                                == $key ? 'selected' : '' }}>
+                                                {{ $value }}
+                                            </option>
+                                            @endforeach
                                         </select>
                                     </td>
                                 </tr>
@@ -1759,7 +1830,6 @@ use App\Services\OrgService;
                                     <td class="title">Financier Subvention Amount (If Any)</td>
                                     <td>
                                         <input id="financier_subvention" name="financier_subvention"
-                                            class="form-control"
                                             value="{{ old('financier_subvention', $finance?->subvention_amount ?? '') }}">
                                     </td>
                                 </tr>
@@ -1772,64 +1842,129 @@ use App\Services\OrgService;
 
                             </table>
                             {{-- Receipt Table --}}
-                            <div class="col-12">
+                            {{-- Receipt Table --}}
+                            <div class="col-12 mt-1">
                                 <div class="form-section">
                                     <div class="table-responsive">
                                         <table class="table table-bordered table-sm mb-0 receipt-table">
-                                            <thead class="table-light">
+                                            <thead style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
                                                 <tr>
-                                                    <th>Receipt No.</th>
-                                                    <th>Receipt Date</th>
-                                                    <th>Amount</th>
-                                                    <th width="70">View</th>
+                                                    <th
+                                                        style="font-size: 10px; font-weight: 700; color: #495057; text-transform: uppercase; padding: 6px 8px; width: 30%;">
+                                                        <i class="la la-hashtag me-1"></i> Receipt No.
+                                                    </th>
+                                                    <th
+                                                        style="font-size: 10px; font-weight: 700; color: #495057; text-transform: uppercase; padding: 6px 8px; width: 25%;">
+                                                        <i class="la la-calendar me-1"></i> Date
+                                                    </th>
+                                                    <th
+                                                        style="font-size: 10px; font-weight: 700; color: #495057; text-transform: uppercase; padding: 6px 8px; width: 25%;">
+                                                        <i class="la la-money me-1"></i> Amount
+                                                    </th>
+                                                    <th
+                                                        style="font-size: 10px; font-weight: 700; color: #495057; text-transform: uppercase; padding: 6px 8px; width: 20%; text-align: center;">
+                                                        <i class="la la-eye me-1"></i> View
+                                                    </th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 @forelse($receiptLogs ?? [] as $receipt)
-                                                <tr>
-                                                    <td>
-                                                        <input type="text" class="form-control form-control-sm"
-                                                            value="{{ $receipt->reciept }}" readonly>
+                                                <tr style="transition: background 0.2s ease;">
+                                                    <td style="padding: 5px 8px; vertical-align: middle;">
+                                                        <span class="badge bg-light text-dark"
+                                                            style="font-size: 10px; font-weight: 600; padding: 4px 10px; border: 1px solid #dee2e6;">
+                                                            {{ $receipt->reciept }}
+                                                        </span>
                                                     </td>
-                                                    <td>
-                                                        <input type="date" class="form-control form-control-sm"
-                                                            value="{{ $receipt->date }}" readonly>
+                                                    <td
+                                                        style="padding: 5px 8px; vertical-align: middle; font-size: 10px; color: #495057;">
+                                                        {{ \Carbon\Carbon::parse($receipt->date)->format('d M Y') }}
                                                     </td>
-                                                    <td>
-                                                        <input type="text" class="form-control form-control-sm"
-                                                            value="{{ $receipt->amount }}" readonly>
+                                                    <td
+                                                        style="padding: 5px 8px; vertical-align: middle; font-size: 10px; font-weight: 600; color: #28a745;">
+                                                        ₹ {{ number_format($receipt->amount, 2) }}
                                                     </td>
-                                                    <td class="text-center">
+                                                    <td
+                                                        style="padding: 5px 8px; vertical-align: middle; text-align: center;">
                                                         @php
                                                         $receiptImage = $receipt->getFirstMediaUrl('amount-proof');
                                                         @endphp
                                                         @if($receiptImage)
                                                         <a href="{{ $receiptImage }}" data-lightbox="receipt-images"
-                                                            data-title="Receipt {{ $receipt->reciept }}">
-                                                            <i class="la la-eye text-primary"
-                                                                style="font-size:20px;"></i>
+                                                            data-title="Receipt {{ $receipt->reciept }}"
+                                                            class="btn btn-sm btn-outline-primary"
+                                                            style="padding: 2px 8px; font-size: 9px; border-radius: 4px;">
+                                                            <i class="la la-eye" style="font-size: 14px;"></i>
                                                         </a>
                                                         @else
-                                                        <i class="la la-eye-slash text-muted"></i>
+                                                        <span class="text-muted" style="font-size: 9px;">
+                                                            <i class="la la-eye-slash"></i> No File
+                                                        </span>
                                                         @endif
                                                     </td>
                                                 </tr>
                                                 @empty
                                                 <tr>
-                                                    <td colspan="4" class="text-center">No Receipt Found</td>
+                                                    <td colspan="4" class="text-center py-3"
+                                                        style="font-size: 11px; color: #6c757d;">
+                                                        <i class="la la-inbox"
+                                                            style="font-size: 24px; display: block; margin-bottom: 5px;"></i>
+                                                        No Receipts Found
+                                                    </td>
                                                 </tr>
                                                 @endforelse
                                             </tbody>
+                                            @if($receiptLogs->count() > 0)
+                                            <tfoot style="background: #f8f9fa; border-top: 2px solid #dee2e6;">
+                                                <tr>
+                                                    <td colspan="2"
+                                                        style="padding: 5px 8px; font-size: 10px; font-weight: 700; color: #495057; text-align: right;">
+                                                        TOTAL:
+                                                    </td>
+                                                    <td
+                                                        style="padding: 5px 8px; font-size: 10px; font-weight: 700; color: #28a745;">
+                                                        ₹ {{ number_format($receiptLogs->sum('amount') ?? 0, 2) }}
+                                                    </td>
+                                                    <td style="padding: 5px 8px;"></td>
+                                                </tr>
+                                            </tfoot>
+                                            @endif
                                         </table>
                                     </div>
+
+                                    {{-- Receipt Count Badge --}}
+                                    @if($receiptLogs->count() > 0)
+                                    <div class="mt-1 text-end">
+                                        <small class="text-muted" style="font-size: 9px;">
+                                            <i class="la la-file-text-o me-1"></i>
+                                            {{ $receiptLogs->count() }} {{ Str::plural('receipt', $receiptLogs->count())
+                                            }} found
+                                        </small>
+                                    </div>
+                                    @endif
+
+                                    {{-- HIDDEN FIELD FOR RECEIPT TOTAL --}}
+                                    <input type="hidden" id="receipt_total" name="receipt_total"
+                                        value="{{ number_format($receiptLogs->sum('amount') ?? 0, 2) }}">
                                 </div>
                             </div>
+
+                            {{-- DO Settlement Difference Table --}}
+
+
                             <table class="bill-table mt-2">
                                 <tr>
                                     <td class="title" width="33%">DO Settlement Difference</td>
                                     <td width="67%">
                                         <input id="do_settlement_difference" name="do_settlement_difference"
-                                            class="form-control" value="{{ old('do_settlement_difference') }}">
+                                            value="{{ old('do_settlement_difference') }}">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="title" width="33%">Discount through JV</td>
+                                    <td width="67%">
+                                        <input id="discount_through_jv" name="discount_through_jv" class="numeric-only"
+                                            value="{{ old('discount_through_jv', $otfData['discount_through_jv'] ?? '') }}">
                                     </td>
                                 </tr>
                                 <tr>
@@ -1843,7 +1978,7 @@ use App\Services\OrgService;
                                     <td class="title">Final Balance</td>
                                     <td>
                                         <input id="final_balance" name="final_balance" readonly
-                                            class="form-control bg-light" value="{{ old('final_balance') }}">
+                                            value="{{ old('final_balance') }}">
                                     </td>
                                 </tr>
                             </table>
@@ -2051,25 +2186,24 @@ use App\Services\OrgService;
     const consultants = @json($salesconsultants);
 
     document.getElementById('saleconsultant').addEventListener('change', function () {
+        const personCode = this.value;
+        const consultant = consultants.find(c => c.person_code === personCode);
 
-    const personCode = this.value;
+        if (!consultant) {
+            document.getElementById('sc_mile_id').value = '';
+            document.getElementById('sc_branch').value = '';
+            document.getElementById('sc_location').value = '';
+            return;
+        }
 
-    const consultant = consultants.find(c => c.person_code === personCode);
-
-    if (!consultant) {
-        document.getElementById('sc_mile_id').value = '';
-        document.getElementById('sc_branch').value = '';
-        document.getElementById('sc_location').value = '';
-        return;
-    }
-
-    document.getElementById('sc_mile_id').value = consultant.mile_id ?? '';
-    document.getElementById('sc_branch').value = consultant.primary_branch_code ?? '';
-    document.getElementById('sc_location').value = consultant.primary_loc_code ?? '';
-});
-window.addEventListener('DOMContentLoaded', function () {
-    document.getElementById('saleconsultant').dispatchEvent(new Event('change'));
-});
+        document.getElementById('sc_mile_id').value = consultant.mile_id ?? '';
+        document.getElementById('sc_branch').value = consultant.branch_name ?? consultant.primary_branch_code ?? '';
+        document.getElementById('sc_location').value = consultant.location_name ?? consultant.primary_loc_code ?? '';
+    });
+    
+    window.addEventListener('DOMContentLoaded', function () {
+        document.getElementById('saleconsultant').dispatchEvent(new Event('change'));
+    });
 
     lightbox.option({
     resizeDuration: 200,
@@ -2733,51 +2867,79 @@ function toggleAnniversaryRow() {
 document.getElementById('marital_status').addEventListener('change', toggleAnniversaryRow);
 toggleAnniversaryRow();
 
+// ================= NET SETTLEMENT CALCULATION =================
 function calculateNetSettlement() {
     const loanAmount   = parseFloat($('#loan_amount').val()) || 0;
     const marginMoney  = parseFloat($('#margin_money').val()) || 0;
     const fileCharge   = parseFloat($('#file_charge').val()) || 0;
+    const financierSubvention = parseFloat($('#financier_subvention').val()) || 0;
 
-    const netSettlement = loanAmount + marginMoney - fileCharge;
+    // Formula: Loan Amount - File Charge + Margin Money - Financier Subvention
+    const netSettlement = loanAmount - fileCharge + marginMoney - financierSubvention;
 
-    $('#do_amount').val(netSettlement.toFixed(2));
     $('#net_settlement_amount').val(netSettlement.toFixed(2));
 }
 
-$('#loan_amount, #margin_money, #file_charge').on('input change', function () {
+// Auto-calculate on any change
+$('#loan_amount, #margin_money, #file_charge, #financier_subvention').on('input change', function () {
     calculateNetSettlement();
 });
 
+// Initialize on page load
 calculateNetSettlement();
 
 function calculateExpectedBalance() {
     const netReceivable = parseFloat($('#net_receivable').val()) || 0;
     const doAmount      = parseFloat($('#do_amount').val()) || 0;
+    const receiptTotal  = parseFloat($('#receipt_total').val()) || 0;
+    const settlementDiff = parseFloat($('#do_settlement_difference').val()) || 0;
 
-    // Receipt Amounts ka total (agar multiple receipt fields hain)
-    let receiptTotal = 0;
-    $('.receipt_amount').each(function () {
-        receiptTotal += parseFloat($(this).val()) || 0;
+    // Expected Balance = Net Receivable - DO Amount - Receipts + DO Settlement Difference
+    const expectedBalance = netReceivable - doAmount - receiptTotal + settlementDiff;
+
+    $('#expected_balance').val(expectedBalance.toFixed(2));
+}
+
+function calculateFinalBalance() {
+    const expectedBalance = parseFloat($('#expected_balance').val()) || 0;
+    const discountJV      = parseFloat($('#discount_through_jv').val()) || 0;
+
+    // Final Balance = Expected Balance - Discount through JV
+    const finalBalance = expectedBalance - discountJV;
+
+    $('#final_balance').val(finalBalance.toFixed(2));
+}
+
+// Recalculate Receipt Total from receipt table
+function calculateReceiptTotal() {
+    let total = 0;
+    $('.receipt-table tbody tr').each(function() {
+        const amountText = $(this).find('td:eq(2)').text().trim();
+        const amount = parseFloat(amountText.replace(/[^0-9.]/g, '')) || 0;
+        total += amount;
     });
-
-    const expectedBalance = netReceivable - (doAmount + receiptTotal);
-
-    $('#expected_balance').val(expectedBalance.toFixed(2));
+    $('#receipt_total').val(total.toFixed(2));
+    return total;
 }
 
-function calculateExpectedBalance() {
-    const netReceivable = parseFloat($('#net_receivable').val()) || 0;
-    const doAmount      = parseFloat($('#do_amount').val()) || 0;
-    const receiptAmount = parseFloat($('#receipt_amount').val()) || 0;
+// Trigger on all relevant fields
+$('#net_receivable, #do_amount, #do_settlement_difference, #discount_through_jv').on('input', function () {
+    calculateExpectedBalance();
+    calculateFinalBalance();
+});
 
-    const expectedBalance = netReceivable - doAmount - receiptAmount;
+// Recalculate when receipt total changes
+$('.receipt_amount').on('input', function () {
+    calculateReceiptTotal();
+    calculateExpectedBalance();
+    calculateFinalBalance();
+});
 
-    $('#expected_balance').val(expectedBalance.toFixed(2));
-}
-
-$('#net_receivable, #do_amount, #receipt_amount').on('input', calculateExpectedBalance);
-$('.receipt_amount').on('input', calculateExpectedBalance); // agar multiple receipts hain
-
-calculateExpectedBalance();
+// Initialize on page load
+$(document).ready(function() {
+    calculateReceiptTotal();
+    calculateExpectedBalance();
+    calculateFinalBalance();
+});
 </script>
 @endpush
