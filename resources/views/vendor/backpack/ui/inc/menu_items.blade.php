@@ -142,6 +142,9 @@
     {{-- Quotation --}}
     <x-backpack::menu-dropdown-item title="Quotation" icon="la la-file-alt" :link="backpack_url('quotation-form')" />
 
+    {{-- Test Drive --}}
+    <x-backpack::menu-dropdown-item title="Test Drive" icon="la la-car-side" :link="backpack_url('testdrive')" />
+
     {{-- Booking --}}
     <x-backpack::menu-dropdown title="Booking" icon="la la-book-open" nested="true">
         <x-backpack::menu-dropdown-item title="Add New Booking" icon="la la-plus-circle" :link="backpack_url('booking/create')" />
