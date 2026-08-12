@@ -407,6 +407,30 @@ use App\Services\OrgService;
             font-size: 10px !important;
         }
     }
+
+    /* ================= Quotation Grid (Preview Style) ================= */
+    .quotation-stacked-table td.ql-label .group-select {
+        background: transparent;
+        border: none;
+        font-weight: 600;
+        width: 100%;
+        font-size: 10px;
+        padding: 2px;
+        cursor: pointer;
+    }
+
+    .quotation-stacked-table td.ql-label .group-select:focus {
+        outline: none;
+    }
+
+    /* ================= Print & Preview Mode Styles ================= */
+    @media print {
+
+        .quotation-stacked-table td.ql-option,
+        .quotation-stacked-table td.ql-type {
+            display: none !important;
+        }
+    }
 </style>
 @endpush
 
@@ -451,6 +475,12 @@ use App\Services\OrgService;
         <form method="POST" action="{{ route('quotation.store') }}" enctype="multipart/form-data">
             @csrf
             <div class="quotation-sheet">
+                <div class="quotation-sheet">
+                    <input type="hidden" id="insurance_print_data" value='{{ json_encode($insurancePrintData ?? []) }}'>
+                    <input type="hidden" id="accessories_print_data"
+                        value='{{ json_encode($accessoriesPrintData ?? []) }}'>
+                    <!-- rest of the form -->
+                </div>
 
                 <div class="form-section">
 
@@ -1002,6 +1032,7 @@ use App\Services\OrgService;
 
                     <div class="row g-2">
                         <div class="col-md-6">
+                            {{-- ================ PRICE DETAILS ================ --}}
                             <div class="quotation-half mt-5">
                                 <table class="quotation-stacked-table">
                                     <thead>
@@ -1014,12 +1045,7 @@ use App\Services\OrgService;
                                     </thead>
                                     <tbody id="price-details-body">
                                         {{-- Ex-Showroom Price --}}
-                                        @php
-                                        $exShowroom = $otfData['ex_showroom_price'] ?? '';
-                                        $hasExShowroom = !empty($exShowroom) && $exShowroom !== 'N/A' && $exShowroom !==
-                                        '0' && $exShowroom !== '0.00';
-                                        @endphp
-                                        @if($hasExShowroom || $exShowroom === '0' || $exShowroom === '0.00')
+                                        @php $exShowroom = $otfData['ex_showroom_price'] ?? ''; @endphp
                                         <tr class="grid-row">
                                             <td class="ql-label">Ex-Showroom Price</td>
                                             <td class="ql-amount">
@@ -1028,21 +1054,21 @@ use App\Services\OrgService;
                                                     value="{{ old('ex_showroom_price', $exShowroom) }}">
                                             </td>
                                         </tr>
-                                        @endif
 
                                         {{-- Insurance --}}
                                         @php
                                         $insuranceAmount = $otfData['insurance_amount'] ?? '';
                                         $policyType = $otfData['policy_type'] ?? '';
-                                        // Only show if amount has value (not 0, 0.00, N/A, or empty)
-                                        $hasInsurance = !empty($insuranceAmount) &&
-                                        $insuranceAmount !== 'N/A' &&
-                                        $insuranceAmount !== '0' &&
-                                        $insuranceAmount !== '0.00';
+                                        $insuranceCompany = $otfData['insurance_company'] ?? '';
                                         @endphp
-                                        @if($hasInsurance)
                                         <tr class="grid-row">
-                                            <td class="ql-label">Insurance <span id="insurance_option_label"></span>
+                                            <td class="ql-label">
+                                                Insurance
+                                                <span id="insurance_option_label" class="fw-bold ms-1">
+                                                    @if($insuranceCompany)
+                                                    ({{ $insuranceCompany }})
+                                                    @endif
+                                                </span>
                                             </td>
                                             <td class="ql-amount">
                                                 <input type="text" id="insurance_amount" name="insurance_amount"
@@ -1051,25 +1077,39 @@ use App\Services\OrgService;
                                                 <select name="policy_type" id="policy_type" style="display:none;">
                                                     @foreach($insurance_type_map as $key=>$value)
                                                     <option value="{{ $key }}" {{ old('policy_type', $policyType)==$key
-                                                        ? 'selected' : '' }}>{{ $value }}</option>
+                                                        ? 'selected' : '' }}>
+                                                        {{ $value }}
+                                                    </option>
                                                     @endforeach
+                                                </select>
+                                                <select name="insurance_company" id="insurance_company"
+                                                    style="display:none;">
+                                                    <option value="">Select</option>
                                                 </select>
                                             </td>
                                         </tr>
-                                        @endif
 
                                         {{-- Registration --}}
                                         @php
                                         $registrationAmount = $otfData['registration_amount'] ?? '';
                                         $registrationType = $otfData['registration_type'] ?? '';
-                                        $hasRegistration = (!empty($registrationAmount) && $registrationAmount !== 'N/A'
-                                        && $registrationAmount !== '0' && $registrationAmount !== '0.00') ||
-                                        !empty($registrationType);
+                                        $regNoType = $otfData['registration_no_type'] ?? '';
+                                        $regCategory = $otfData['registration_category'] ?? '';
+                                        $inHouseRto = $otfData['in_house_rto'] ?? '';
                                         @endphp
-                                        @if($hasRegistration)
                                         <tr class="grid-row">
-                                            <td class="ql-label">Registration <span
-                                                    id="registration_option_label"></span></td>
+                                            <td class="ql-label">
+                                                Registration
+                                                <span id="registration_option_label" class="fw-bold ms-1">
+                                                    @if($regNoType || $regCategory || $inHouseRto !== '')
+                                                    ({{ $regNoType ? $reg_no_type_map[$regNoType] ?? '' : '' }}
+                                                    {{ $regCategory ? $registration_category_map[$regCategory] ?? '' :
+                                                    '' }}
+                                                    {{ $inHouseRto !== '' ? 'In-House: ' . ($inHouseRto == '1' ? 'Yes' :
+                                                    'No') : '' }})
+                                                    @endif
+                                                </span>
+                                            </td>
                                             <td class="ql-amount">
                                                 <input type="text" id="registration_amount" name="registration_amount"
                                                     class="numeric-only" placeholder="0.00"
@@ -1078,77 +1118,104 @@ use App\Services\OrgService;
                                                     style="display:none;">
                                                     @foreach($registration_type_map as $key=>$value)
                                                     <option value="{{ $key }}" {{ old('registration_type',
-                                                        $registrationType)==$key ? 'selected' : '' }}>{{ $value }}
+                                                        $registrationType)==$key ? 'selected' : '' }}>
+                                                        {{ $value }}
                                                     </option>
                                                     @endforeach
                                                 </select>
+                                                <select name="registration_no_type" id="registration_no_type"
+                                                    style="display:none;">
+                                                    @foreach($reg_no_type_map as $key=>$value)
+                                                    <option value="{{ $key }}" {{ old('registration_no_type',
+                                                        $regNoType)==$key ? 'selected' : '' }}>
+                                                        {{ $value }}
+                                                    </option>
+                                                    @endforeach
+                                                </select>
+                                                <select name="registration_category" id="registration_category"
+                                                    style="display:none;">
+                                                    @foreach($registration_category_map as $key=>$value)
+                                                    <option value="{{ $key }}" {{ old('registration_category',
+                                                        $regCategory)==$key ? 'selected' : '' }}>
+                                                        {{ $value }}
+                                                    </option>
+                                                    @endforeach
+                                                </select>
+                                                <input type="hidden" name="in_house_rto" id="in_house_rto"
+                                                    value="{{ $inHouseRto }}">
                                             </td>
                                         </tr>
-                                        @endif
 
                                         {{-- Accessories --}}
                                         @php
                                         $accessoriesAmount = $otfData['accessories_amount'] ?? '0.00';
                                         $selectedAccessories = $selectedAccessories ?? [];
-                                        $hasAccessories = !empty($selectedAccessories) || (!empty($accessoriesAmount) &&
-                                        $accessoriesAmount !== 'N/A' && $accessoriesAmount !== '0' && $accessoriesAmount
-                                        !== '0.00');
+                                        $accessoryNames = [];
+                                        foreach($selectedAccessories as $accCode) {
+                                        $acc = $accessoryList->firstWhere('part_no', $accCode);
+                                        if($acc) $accessoryNames[] = $acc->item;
+                                        }
                                         @endphp
-                                        @if($hasAccessories)
                                         <tr class="grid-row">
-                                            <td class="ql-label">Accessories <span id="accessories_price_label"></span>
+                                            <td class="ql-label">
+                                                Accessories
+                                                <span id="accessories_price_label" class="fw-bold ms-1">
+                                                    @if(count($accessoryNames) > 0)
+                                                    ({{ count($accessoryNames) }} items)
+                                                    @endif
+                                                </span>
                                             </td>
                                             <td class="ql-amount">
                                                 <input id="accessories_amount" name="accessories_amount"
                                                     class="numeric-only" readonly
                                                     value="{{ old('accessories_amount', $accessoriesAmount) }}">
+                                                <select name="accessories[]" id="accessories" multiple
+                                                    style="display:none;">
+                                                    @foreach($accessoryList as $accessory)
+                                                    <option value="{{ $accessory->part_no }}"
+                                                        data-price="{{ $accessory->ndp }}" {{ in_array($accessory->
+                                                        part_no, $selectedAccessories) ? 'selected' : '' }}>
+                                                        {{ $accessory->item }} (₹{{ number_format($accessory->ndp,2) }})
+                                                    </option>
+                                                    @endforeach
+                                                </select>
                                             </td>
                                         </tr>
-                                        @endif
 
                                         {{-- Maxicare --}}
-                                        @php
-                                        $maxicare = $otfData['maxicare'] ?? '';
-                                        $hasMaxicare = !empty($maxicare) && $maxicare !== 'N/A' && $maxicare !== '0' &&
-                                        $maxicare !== '0.00';
-                                        @endphp
-                                        @if($hasMaxicare)
+                                        @php $maxicare = $otfData['maxicare'] ?? ''; @endphp
                                         <tr class="grid-row">
                                             <td class="ql-label">Maxicare</td>
-                                            <td class="ql-amount"><input id="maxicare" name="maxicare"
-                                                    class="numeric-only" value="{{ old('maxicare', $maxicare) }}"></td>
-                                        </tr>
-                                        @endif
-
-                                        {{-- VLTD Device --}}
-                                        @php
-                                        $vltdDevice = $otfData['vltd_device'] ?? '';
-                                        $hasVltd = !empty($vltdDevice) && $vltdDevice !== 'N/A' && $vltdDevice !== '0'
-                                        && $vltdDevice !== '0.00';
-                                        @endphp
-                                        @if($hasVltd)
-                                        <tr class="grid-row">
-                                            <td class="ql-label">VLTD Device (GPS)</td>
-                                            <td class="ql-amount"><input id="vltd_device" name="vltd_device"
-                                                    class="numeric-only" value="{{ old('vltd_device', $vltdDevice) }}">
+                                            <td class="ql-amount">
+                                                <input id="maxicare" name="maxicare" class="numeric-only"
+                                                    value="{{ old('maxicare', $maxicare) }}">
                                             </td>
                                         </tr>
-                                        @endif
+
+                                        {{-- VLTD Device --}}
+                                        @php $vltdDevice = $otfData['vltd_device'] ?? ''; @endphp
+                                        <tr class="grid-row">
+                                            <td class="ql-label">VLTD Device (GPS)</td>
+                                            <td class="ql-amount">
+                                                <input id="vltd_device" name="vltd_device" class="numeric-only"
+                                                    value="{{ old('vltd_device', $vltdDevice) }}">
+                                            </td>
+                                        </tr>
 
                                         {{-- Coating --}}
                                         @php
                                         $coatingPrice = $otfData['coating_price'] ?? '';
                                         $coating = $otfData['coating'] ?? '';
-                                        // Only show if price has actual value and coating is not "No Coating"
-                                        $hasCoating = !empty($coatingPrice) &&
-                                        $coatingPrice !== 'N/A' &&
-                                        $coatingPrice !== '0' &&
-                                        $coatingPrice !== '0.00' &&
-                                        $coating !== 'No Coating';
                                         @endphp
-                                        @if($hasCoating)
                                         <tr class="grid-row">
-                                            <td class="ql-label">Coating <span id="coating_option_label"></span></td>
+                                            <td class="ql-label">
+                                                Coating
+                                                <span id="coating_option_label" class="fw-bold ms-1">
+                                                    @if($coating && $coating != 'No Coating')
+                                                    ({{ $coating }})
+                                                    @endif
+                                                </span>
+                                            </td>
                                             <td class="ql-amount">
                                                 <input id="coating_price" name="coating_price" class="numeric-only"
                                                     value="{{ old('coating_price', $coatingPrice) }}">
@@ -1162,82 +1229,63 @@ use App\Services\OrgService;
                                                 </select>
                                             </td>
                                         </tr>
-                                        @endif
-
 
                                         {{-- PPF --}}
-                                        @php
-                                        $ppf = $otfData['ppf'] ?? '';
-                                        $hasPpf = !empty($ppf) && $ppf !== 'N/A' && $ppf !== '0' && $ppf !== '0.00';
-                                        @endphp
-                                        @if($hasPpf)
+                                        @php $ppf = $otfData['ppf'] ?? ''; @endphp
                                         <tr class="grid-row">
                                             <td class="ql-label">PPF</td>
-                                            <td class="ql-amount"><input id="ppf" name="ppf" class="numeric-only"
-                                                    value="{{ old('ppf', $ppf) }}"></td>
+                                            <td class="ql-amount">
+                                                <input id="ppf" name="ppf" class="numeric-only"
+                                                    value="{{ old('ppf', $ppf) }}">
+                                            </td>
                                         </tr>
-                                        @endif
 
                                         {{-- RTO Yellow Tape --}}
-                                        @php
-                                        $rtoYellowTape = $otfData['rto_yellow_tape'] ?? '';
-                                        $hasRtoYellowTape = !empty($rtoYellowTape) && $rtoYellowTape !== 'N/A' &&
-                                        $rtoYellowTape !== '0' && $rtoYellowTape !== '0.00';
-                                        @endphp
-                                        @if($hasRtoYellowTape)
+                                        @php $rtoYellowTape = $otfData['rto_yellow_tape'] ?? ''; @endphp
                                         <tr class="grid-row">
                                             <td class="ql-label">RTO Yellow Tape</td>
-                                            <td class="ql-amount"><input id="rto_yellow_tape" name="rto_yellow_tape"
-                                                    class="numeric-only"
-                                                    value="{{ old('rto_yellow_tape', $rtoYellowTape) }}"></td>
+                                            <td class="ql-amount">
+                                                <input id="rto_yellow_tape" name="rto_yellow_tape" class="numeric-only"
+                                                    value="{{ old('rto_yellow_tape', $rtoYellowTape) }}">
+                                            </td>
                                         </tr>
-                                        @endif
 
                                         {{-- Kazam Charging Kit --}}
-                                        @php
-                                        $kazamChargingKit = $otfData['kazam_charging_kit'] ?? '';
-                                        $hasKazam = !empty($kazamChargingKit) && $kazamChargingKit !== 'N/A' &&
-                                        $kazamChargingKit !== '0' && $kazamChargingKit !== '0.00';
-                                        @endphp
-                                        @if($hasKazam)
+                                        @php $kazamChargingKit = $otfData['kazam_charging_kit'] ?? ''; @endphp
                                         <tr class="grid-row">
                                             <td class="ql-label">Kazam Charging Kit</td>
-                                            <td class="ql-amount"><input id="kazam_charging_kit"
-                                                    name="kazam_charging_kit" class="numeric-only"
-                                                    value="{{ old('kazam_charging_kit', $kazamChargingKit) }}"></td>
+                                            <td class="ql-amount">
+                                                <input id="kazam_charging_kit" name="kazam_charging_kit"
+                                                    class="numeric-only"
+                                                    value="{{ old('kazam_charging_kit', $kazamChargingKit) }}">
+                                            </td>
                                         </tr>
-                                        @endif
 
                                         {{-- Incidental Charges --}}
-                                        @php
-                                        $incidentalCharges = $otfData['incidental_charges'] ?? '';
-                                        $hasIncidental = !empty($incidentalCharges) && $incidentalCharges !== 'N/A' &&
-                                        $incidentalCharges !== '0' && $incidentalCharges !== '0.00';
-                                        @endphp
-                                        @if($hasIncidental)
+                                        @php $incidentalCharges = $otfData['incidental_charges'] ?? ''; @endphp
                                         <tr class="grid-row">
                                             <td class="ql-label">Incidental Charges</td>
-                                            <td class="ql-amount"><input id="incidental_charges"
-                                                    name="incidental_charges" class="numeric-only"
-                                                    value="{{ old('incidental_charges', $incidentalCharges) }}"></td>
+                                            <td class="ql-amount">
+                                                <input id="incidental_charges" name="incidental_charges"
+                                                    class="numeric-only"
+                                                    value="{{ old('incidental_charges', $incidentalCharges) }}">
+                                            </td>
                                         </tr>
-                                        @endif
-
 
                                         {{-- Shield --}}
                                         @php
                                         $shieldPrice = $otfData['shield_price'] ?? '';
                                         $shield = $otfData['shield'] ?? '';
-                                        // Only show if price has actual value and shield is not "No Shield"
-                                        $hasShield = !empty($shieldPrice) &&
-                                        $shieldPrice !== 'N/A' &&
-                                        $shieldPrice !== '0' &&
-                                        $shieldPrice !== '0.00' &&
-                                        $shield !== 'No Shield';
                                         @endphp
-                                        @if($hasShield)
                                         <tr class="grid-row">
-                                            <td class="ql-label">Shield <span id="shield_option_label"></span></td>
+                                            <td class="ql-label">
+                                                Shield
+                                                <span id="shield_option_label" class="fw-bold ms-1">
+                                                    @if($shield && $shield != 'No Shield')
+                                                    ({{ $shield }})
+                                                    @endif
+                                                </span>
+                                            </td>
                                             <td class="ql-amount">
                                                 <input id="shield_price" name="shield_price" class="numeric-only"
                                                     value="{{ old('shield_price', $shieldPrice) }}">
@@ -1252,22 +1300,21 @@ use App\Services\OrgService;
                                                 </select>
                                             </td>
                                         </tr>
-                                        @endif
 
                                         {{-- RSA --}}
                                         @php
                                         $rsaAmount = $otfData['rsa_amount'] ?? '';
                                         $rsa = $otfData['rsa'] ?? '';
-                                        // Only show if amount has actual value and RSA is not "No RSA"
-                                        $hasRsa = !empty($rsaAmount) &&
-                                        $rsaAmount !== 'N/A' &&
-                                        $rsaAmount !== '0' &&
-                                        $rsaAmount !== '0.00' &&
-                                        $rsa !== 'No RSA';
                                         @endphp
-                                        @if($hasRsa)
                                         <tr class="grid-row">
-                                            <td class="ql-label">RSA <span id="rsa_option_label"></span></td>
+                                            <td class="ql-label">
+                                                RSA
+                                                <span id="rsa_option_label" class="fw-bold ms-1">
+                                                    @if($rsa && $rsa != 'No RSA')
+                                                    ({{ $rsa }})
+                                                    @endif
+                                                </span>
+                                            </td>
                                             <td class="ql-amount">
                                                 <input id="rsa_amount" name="rsa_amount" class="numeric-only"
                                                     value="{{ old('rsa_amount', $rsaAmount) }}">
@@ -1287,49 +1334,41 @@ use App\Services\OrgService;
                                                 </select>
                                             </td>
                                         </tr>
-                                        @endif
 
                                         {{-- Fastag --}}
-                                        @php
-                                        $fastag = $otfData['fastag'] ?? '';
-                                        $hasFastag = !empty($fastag) && $fastag !== 'N/A' && $fastag !== '0' && $fastag
-                                        !== '0.00';
-                                        @endphp
-                                        @if($hasFastag)
+                                        @php $fastag = $otfData['fastag'] ?? ''; @endphp
                                         <tr class="grid-row">
                                             <td class="ql-label">Fastag</td>
-                                            <td class="ql-amount"><input id="fastag" name="fastag" class="numeric-only"
-                                                    value="{{ old('fastag', $fastag) }}"></td>
-                                        </tr>
-                                        @endif
-
-                                        {{-- COD Charges --}}
-                                        @php
-                                        $codCharges = $otfData['cod_charges'] ?? '';
-                                        $hasCod = !empty($codCharges) && $codCharges !== 'N/A' && $codCharges !== '0' &&
-                                        $codCharges !== '0.00';
-                                        @endphp
-                                        @if($hasCod)
-                                        <tr class="grid-row">
-                                            <td class="ql-label">COD Charges</td>
-                                            <td class="ql-amount"><input id="cod_charges" name="cod_charges"
-                                                    class="numeric-only" value="{{ old('cod_charges', $codCharges) }}">
+                                            <td class="ql-amount">
+                                                <input id="fastag" name="fastag" class="numeric-only"
+                                                    value="{{ old('fastag', $fastag) }}">
                                             </td>
                                         </tr>
-                                        @endif
+
+                                        {{-- COD Charges --}}
+                                        @php $codCharges = $otfData['cod_charges'] ?? ''; @endphp
+                                        <tr class="grid-row">
+                                            <td class="ql-label">COD Charges</td>
+                                            <td class="ql-amount">
+                                                <input id="cod_charges" name="cod_charges" class="numeric-only"
+                                                    value="{{ old('cod_charges', $codCharges) }}">
+                                            </td>
+                                        </tr>
 
                                         {{-- Charger Swapping --}}
                                         @php
                                         $chargerSwappingAmount = $otfData['charger_swapping_amount'] ?? '';
                                         $chargerSwapping = $otfData['charger_swapping'] ?? '';
-                                        $hasChargerSwapping = (!empty($chargerSwappingAmount) && $chargerSwappingAmount
-                                        !== 'N/A' && $chargerSwappingAmount !== '0' && $chargerSwappingAmount !==
-                                        '0.00') || (!empty($chargerSwapping) && $chargerSwapping !== 'N/A');
                                         @endphp
-                                        @if($hasChargerSwapping)
                                         <tr class="grid-row">
-                                            <td class="ql-label">Charger Swapping <span
-                                                    id="charger_swapping_option_label"></span></td>
+                                            <td class="ql-label">
+                                                Charger Swapping
+                                                <span id="charger_swapping_option_label" class="fw-bold ms-1">
+                                                    @if($chargerSwapping && $chargerSwapping != 'N/A')
+                                                    ({{ $chargerSwapping }})
+                                                    @endif
+                                                </span>
+                                            </td>
                                             <td class="ql-amount">
                                                 <input id="charger_swapping_amount" name="charger_swapping_amount"
                                                     class="numeric-only"
@@ -1350,23 +1389,21 @@ use App\Services\OrgService;
                                                 </select>
                                             </td>
                                         </tr>
-                                        @endif
 
                                         {{-- TCS --}}
-                                        @php
-                                        $tcs = $otfData['tcs'] ?? '';
-                                        $hasTcs = !empty($tcs) && $tcs !== 'N/A' && $tcs !== '0' && $tcs !== '0.00';
-                                        @endphp
-                                        @if($hasTcs)
+                                        @php $tcs = $otfData['tcs'] ?? ''; @endphp
                                         <tr class="grid-row">
                                             <td class="ql-label">TCS @1%</td>
-                                            <td class="ql-amount"><input id="tcs" name="tcs" class="numeric-only"
-                                                    readonly value="{{ old('tcs', $tcs) }}"></td>
+                                            <td class="ql-amount">
+                                                <input id="tcs" name="tcs" class="numeric-only" readonly
+                                                    value="{{ old('tcs', $tcs) }}">
+                                            </td>
                                         </tr>
-                                        @endif
                                     </tbody>
                                 </table>
 
+                                {{-- ================ DISCOUNT DETAILS ================ --}}
+                                {{-- ================ DISCOUNT DETAILS ================ --}}
                                 <table class="quotation-stacked-table">
                                     <thead>
                                         <tr>
@@ -1383,35 +1420,39 @@ use App\Services\OrgService;
                                         $cashSchemeOem = $otfData['cash_scheme_oem'] ?? '';
                                         $csdDiscount = $otfData['csd_discount'] ?? '';
                                         $fameSubsidy = $otfData['fame_subsidy'] ?? '';
-                                        $hasGroupA = (!empty($cashSchemeOem) && $cashSchemeOem !== 'N/A' &&
-                                        $cashSchemeOem !== '0' && $cashSchemeOem !== '0.00') ||
-                                        (!empty($csdDiscount) && $csdDiscount !== 'N/A' && $csdDiscount !== '0' &&
-                                        $csdDiscount !== '0.00') ||
-                                        (!empty($fameSubsidy) && $fameSubsidy !== 'N/A' && $fameSubsidy !== '0' &&
-                                        $fameSubsidy !== '0.00');
+                                        $groupASelected = $groupASelected ?? 'cash_scheme_oem';
+                                        $groupAType = $otfData['cash_scheme_oem_type'] ?? ($otfData['csd_discount_type']
+                                        ?? ($otfData['fame_subsidy_type'] ?? 'INV'));
                                         @endphp
-                                        @if($hasGroupA)
                                         <tr class="grid-row">
                                             <td class="ql-label">
-                                                <select id="group_a_select" class="group-select">
+                                                <select id="group_a_select" class="group-select"
+                                                    style="background:transparent; border:none; font-weight:600; width:100%;">
                                                     <option value="cash_scheme_oem" {{ old('group_a_select',
-                                                        $groupASelected ?? '' )=='cash_scheme_oem' ? 'selected' : '' }}>
-                                                        Cash Scheme OEM</option>
+                                                        $groupASelected)=='cash_scheme_oem' ? 'selected' : '' }}>
+                                                        Cash Scheme OEM
+                                                    </option>
                                                     <option value="csd_discount" {{ old('group_a_select',
-                                                        $groupASelected ?? '' )=='csd_discount' ? 'selected' : '' }}>CSD
-                                                        Discount</option>
+                                                        $groupASelected)=='csd_discount' ? 'selected' : '' }}>
+                                                        CSD Discount
+                                                    </option>
                                                     <option value="fame_subsidy" id="fame_subsidy_option" {{
-                                                        old('group_a_select', $groupASelected ?? '' )=='fame_subsidy'
-                                                        ? 'selected' : '' }}>Fame Subsidy (LMM)</option>
+                                                        old('group_a_select', $groupASelected)=='fame_subsidy'
+                                                        ? 'selected' : '' }}>
+                                                        Fame Subsidy (LMM)
+                                                    </option>
                                                 </select>
+                                                {{-- REMOVED: Type label --}}
                                             </td>
                                             <td class="ql-amount">
                                                 <input type="text" id="group_a_amount" class="numeric-only"
                                                     placeholder="0.00"
                                                     value="{{ old('group_a_amount', $cashSchemeOem ?: $csdDiscount ?: $fameSubsidy ?: '') }}">
                                                 <select id="group_a_type" style="display:none;">
-                                                    <option value="INV">INV</option>
-                                                    <option value="CN">CN</option>
+                                                    <option value="INV" {{ $groupAType=='INV' ? 'selected' : '' }}>INV
+                                                    </option>
+                                                    <option value="CN" {{ $groupAType=='CN' ? 'selected' : '' }}>CN
+                                                    </option>
                                                 </select>
                                                 <input type="hidden" id="cash_scheme_oem" name="cash_scheme_oem"
                                                     value="{{ old('cash_scheme_oem', $cashSchemeOem) }}">
@@ -1428,17 +1469,14 @@ use App\Services\OrgService;
                                                     value="{{ old('fame_subsidy_type', $otfData['fame_subsidy_type'] ?? '') }}">
                                             </td>
                                         </tr>
-                                        @endif
 
                                         {{-- Cash Scheme Dealer --}}
-                                        @php
-                                        $dealerDiscount = $otfData['dealer_discount'] ?? '';
-                                        $hasDealerDiscount = !empty($dealerDiscount) && $dealerDiscount !== 'N/A' &&
-                                        $dealerDiscount !== '0' && $dealerDiscount !== '0.00';
-                                        @endphp
-                                        @if($hasDealerDiscount)
+                                        @php $dealerDiscount = $otfData['dealer_discount'] ?? ''; @endphp
                                         <tr class="grid-row">
-                                            <td class="ql-label">Cash Scheme Dealer</td>
+                                            <td class="ql-label">
+                                                Cash Scheme Dealer
+                                                {{-- REMOVED: Type label --}}
+                                            </td>
                                             <td class="ql-amount">
                                                 <input type="text" name="dealer_discount" id="dealer_discount"
                                                     class="numeric-only" placeholder="0.00"
@@ -1454,17 +1492,14 @@ use App\Services\OrgService;
                                                 </select>
                                             </td>
                                         </tr>
-                                        @endif
 
                                         {{-- Accessories Scheme --}}
-                                        @php
-                                        $accessoriesDiscount = $otfData['accessories_discount'] ?? '';
-                                        $hasAccessoriesDiscount = !empty($accessoriesDiscount) && $accessoriesDiscount
-                                        !== 'N/A' && $accessoriesDiscount !== '0' && $accessoriesDiscount !== '0.00';
-                                        @endphp
-                                        @if($hasAccessoriesDiscount)
+                                        @php $accessoriesDiscount = $otfData['accessories_discount'] ?? ''; @endphp
                                         <tr class="grid-row">
-                                            <td class="ql-label">Accessories Scheme</td>
+                                            <td class="ql-label">
+                                                Accessories Scheme
+                                                {{-- REMOVED: Type label --}}
+                                            </td>
                                             <td class="ql-amount">
                                                 <input type="text" name="accessories_discount" id="accessories_discount"
                                                     class="numeric-only" placeholder="0.00"
@@ -1480,17 +1515,14 @@ use App\Services\OrgService;
                                                 </select>
                                             </td>
                                         </tr>
-                                        @endif
 
                                         {{-- Shield Scheme --}}
-                                        @php
-                                        $shieldScheme = $otfData['shield_scheme'] ?? '';
-                                        $hasShieldScheme = !empty($shieldScheme) && $shieldScheme !== 'N/A' &&
-                                        $shieldScheme !== '0' && $shieldScheme !== '0.00';
-                                        @endphp
-                                        @if($hasShieldScheme)
+                                        @php $shieldScheme = $otfData['shield_scheme'] ?? ''; @endphp
                                         <tr class="grid-row">
-                                            <td class="ql-label">Shield Scheme</td>
+                                            <td class="ql-label">
+                                                Shield Scheme
+                                                {{-- REMOVED: Type label --}}
+                                            </td>
                                             <td class="ql-amount">
                                                 <input type="text" name="shield_scheme" id="shield_scheme"
                                                     class="numeric-only" placeholder="0.00"
@@ -1506,28 +1538,29 @@ use App\Services\OrgService;
                                                 </select>
                                             </td>
                                         </tr>
-                                        @endif
 
                                         {{-- Group B --}}
                                         @php
                                         $corporateDiscount = $otfData['corporate_discount'] ?? '';
                                         $loyaltyBonus = $otfData['loyalty_bonus'] ?? '';
-                                        $hasGroupB = (!empty($corporateDiscount) && $corporateDiscount !== 'N/A' &&
-                                        $corporateDiscount !== '0' && $corporateDiscount !== '0.00') ||
-                                        (!empty($loyaltyBonus) && $loyaltyBonus !== 'N/A' && $loyaltyBonus !== '0' &&
-                                        $loyaltyBonus !== '0.00');
+                                        $groupBSelected = $groupBSelected ?? 'corporate_discount';
+                                        $groupBType = $otfData['corporate_discount_type'] ??
+                                        ($otfData['loyalty_bonus_type'] ?? 'INV');
                                         @endphp
-                                        @if($hasGroupB)
                                         <tr class="grid-row">
                                             <td class="ql-label">
-                                                <select id="group_b_select" class="group-select">
+                                                <select id="group_b_select" class="group-select"
+                                                    style="background:transparent; border:none; font-weight:600; width:100%;">
                                                     <option value="corporate_discount" {{ old('group_b_select',
-                                                        $groupBSelected ?? '' )=='corporate_discount' ? 'selected' : ''
-                                                        }}>Corporate Discount</option>
+                                                        $groupBSelected)=='corporate_discount' ? 'selected' : '' }}>
+                                                        Corporate Discount
+                                                    </option>
                                                     <option value="loyalty_bonus" {{ old('group_b_select',
-                                                        $groupBSelected ?? '' )=='loyalty_bonus' ? 'selected' : '' }}>
-                                                        Loyalty Bonus</option>
+                                                        $groupBSelected)=='loyalty_bonus' ? 'selected' : '' }}>
+                                                        Loyalty Bonus
+                                                    </option>
                                                 </select>
+                                                {{-- REMOVED: Type label --}}
                                             </td>
                                             <td class="ql-amount">
                                                 <input type="text" id="group_b_amount" class="numeric-only"
@@ -1547,33 +1580,34 @@ use App\Services\OrgService;
                                                     value="{{ old('loyalty_bonus_type', $otfData['loyalty_bonus_type'] ?? '') }}">
                                             </td>
                                         </tr>
-                                        @endif
 
                                         {{-- Group C --}}
                                         @php
                                         $exchangeBonus = $otfData['exchange_bonus'] ?? '';
                                         $greenBonus = $otfData['green_bonus'] ?? '';
                                         $welcomeBonus = $otfData['welcome_bonus'] ?? '';
-                                        $hasGroupC = (!empty($exchangeBonus) && $exchangeBonus !== 'N/A' &&
-                                        $exchangeBonus !== '0' && $exchangeBonus !== '0.00') ||
-                                        (!empty($greenBonus) && $greenBonus !== 'N/A' && $greenBonus !== '0' &&
-                                        $greenBonus !== '0.00') ||
-                                        (!empty($welcomeBonus) && $welcomeBonus !== 'N/A' && $welcomeBonus !== '0' &&
-                                        $welcomeBonus !== '0.00');
+                                        $groupCSelected = $groupCSelected ?? 'exchange_bonus';
+                                        $groupCType = $otfData['exchange_bonus_type'] ?? ($otfData['green_bonus_type']
+                                        ?? ($otfData['welcome_bonus_type'] ?? 'CN1'));
                                         @endphp
-                                        @if($hasGroupC)
                                         <tr class="grid-row">
                                             <td class="ql-label">
-                                                <select id="group_c_select" class="group-select">
+                                                <select id="group_c_select" class="group-select"
+                                                    style="background:transparent; border:none; font-weight:600; width:100%;">
                                                     <option value="exchange_bonus" {{ old('group_c_select',
-                                                        $groupCSelected ?? '' )=='exchange_bonus' ? 'selected' : '' }}>
-                                                        Exchange Bonus</option>
-                                                    <option value="green_bonus" {{ old('group_c_select', $groupCSelected
-                                                        ?? '' )=='green_bonus' ? 'selected' : '' }}>Green Bonus</option>
+                                                        $groupCSelected)=='exchange_bonus' ? 'selected' : '' }}>
+                                                        Exchange Bonus
+                                                    </option>
+                                                    <option value="green_bonus" {{ old('group_c_select',
+                                                        $groupCSelected)=='green_bonus' ? 'selected' : '' }}>
+                                                        Green Bonus
+                                                    </option>
                                                     <option value="welcome_bonus" {{ old('group_c_select',
-                                                        $groupCSelected ?? '' )=='welcome_bonus' ? 'selected' : '' }}>
-                                                        Welcome Bonus</option>
+                                                        $groupCSelected)=='welcome_bonus' ? 'selected' : '' }}>
+                                                        Welcome Bonus
+                                                    </option>
                                                 </select>
+                                                {{-- REMOVED: Type label --}}
                                             </td>
                                             <td class="ql-amount">
                                                 <input type="text" id="group_c_amount" class="numeric-only"
@@ -1596,17 +1630,14 @@ use App\Services\OrgService;
                                                     value="{{ old('welcome_bonus_type', $otfData['welcome_bonus_type'] ?? '') }}">
                                             </td>
                                         </tr>
-                                        @endif
 
                                         {{-- Accessories Spl Disc --}}
-                                        @php
-                                        $accessoriesSplDisc = $otfData['accessories_spl_disc'] ?? '';
-                                        $hasAccessoriesSplDisc = !empty($accessoriesSplDisc) && $accessoriesSplDisc !==
-                                        'N/A' && $accessoriesSplDisc !== '0' && $accessoriesSplDisc !== '0.00';
-                                        @endphp
-                                        @if($hasAccessoriesSplDisc)
+                                        @php $accessoriesSplDisc = $otfData['accessories_spl_disc'] ?? ''; @endphp
                                         <tr class="grid-row">
-                                            <td class="ql-label">Accessories Spl Disc</td>
+                                            <td class="ql-label">
+                                                Accessories Spl Disc
+                                                {{-- REMOVED: Type label --}}
+                                            </td>
                                             <td class="ql-amount">
                                                 <input type="text" name="accessories_spl_disc" id="accessories_spl_disc"
                                                     class="numeric-only" placeholder="0.00"
@@ -1622,17 +1653,15 @@ use App\Services\OrgService;
                                                 </select>
                                             </td>
                                         </tr>
-                                        @endif
 
                                         {{-- Coating Spl Discount --}}
-                                        @php
-                                        $ceramicDiscount = $otfData['ceramic_discount'] ?? '';
-                                        $hasCeramicDiscount = !empty($ceramicDiscount) && $ceramicDiscount !== 'N/A' &&
-                                        $ceramicDiscount !== '0' && $ceramicDiscount !== '0.00';
-                                        @endphp
-                                        @if($hasCeramicDiscount)
+                                        @php $ceramicDiscount = $otfData['ceramic_discount'] ?? ''; @endphp
                                         <tr class="grid-row">
-                                            <td class="ql-label" id="coating_discount_label">Coating Spl Discount</td>
+                                            <td class="ql-label" id="coating_discount_label">
+                                                {{ $coating && $coating != 'No Coating' ? $coating . ' ' : '' }}Coating
+                                                Spl Discount
+                                                {{-- REMOVED: Type label --}}
+                                            </td>
                                             <td class="ql-amount">
                                                 <input type="text" name="ceramic_discount" id="ceramic_discount"
                                                     class="numeric-only" placeholder="0.00"
@@ -1648,17 +1677,14 @@ use App\Services\OrgService;
                                                 </select>
                                             </td>
                                         </tr>
-                                        @endif
 
                                         {{-- PPF Spl Discount --}}
-                                        @php
-                                        $ppfDiscount = $otfData['ppf_discount'] ?? '';
-                                        $hasPpfDiscount = !empty($ppfDiscount) && $ppfDiscount !== 'N/A' && $ppfDiscount
-                                        !== '0' && $ppfDiscount !== '0.00';
-                                        @endphp
-                                        @if($hasPpfDiscount)
+                                        @php $ppfDiscount = $otfData['ppf_discount'] ?? ''; @endphp
                                         <tr class="grid-row">
-                                            <td class="ql-label">PPF Spl Discount</td>
+                                            <td class="ql-label">
+                                                PPF Spl Discount
+                                                {{-- REMOVED: Type label --}}
+                                            </td>
                                             <td class="ql-amount">
                                                 <input type="text" name="ppf_discount" id="ppf_discount"
                                                     class="numeric-only" placeholder="0.00"
@@ -1674,18 +1700,14 @@ use App\Services\OrgService;
                                                 </select>
                                             </td>
                                         </tr>
-                                        @endif
 
                                         {{-- Charger Swapping Discount --}}
-                                        @php
-                                        $chargerSwappingDiscount = $otfData['charger_swapping_discount'] ?? '';
-                                        $hasChargerSwappingDiscount = !empty($chargerSwappingDiscount) &&
-                                        $chargerSwappingDiscount !== 'N/A' && $chargerSwappingDiscount !== '0' &&
-                                        $chargerSwappingDiscount !== '0.00';
+                                        @php $chargerSwappingDiscount = $otfData['charger_swapping_discount'] ?? '';
                                         @endphp
-                                        @if($hasChargerSwappingDiscount)
                                         <tr class="grid-row">
-                                            <td class="ql-label" id="charger_discount_title">Charger Swapping Discount
+                                            <td class="ql-label" id="charger_discount_title">
+                                                Charger Swapping Discount
+                                                {{-- REMOVED: Type label --}}
                                             </td>
                                             <td class="ql-amount" id="charger_discount_cell">
                                                 <input type="text" id="charger_swapping_discount"
@@ -1701,17 +1723,14 @@ use App\Services\OrgService;
                                                 </select>
                                             </td>
                                         </tr>
-                                        @endif
 
                                         {{-- Other Cash Discount --}}
-                                        @php
-                                        $otherCashDiscount = $otfData['other_cash_discount'] ?? '';
-                                        $hasOtherCashDiscount = !empty($otherCashDiscount) && $otherCashDiscount !==
-                                        'N/A' && $otherCashDiscount !== '0' && $otherCashDiscount !== '0.00';
-                                        @endphp
-                                        @if($hasOtherCashDiscount)
+                                        @php $otherCashDiscount = $otfData['other_cash_discount'] ?? ''; @endphp
                                         <tr class="grid-row">
-                                            <td class="ql-label">Other Cash Discount</td>
+                                            <td class="ql-label">
+                                                Other Cash Discount
+                                                {{-- REMOVED: Type label --}}
+                                            </td>
                                             <td class="ql-amount">
                                                 <input type="text" name="other_cash_discount" id="other_cash_discount"
                                                     class="numeric-only" placeholder="0.00"
@@ -1727,17 +1746,14 @@ use App\Services\OrgService;
                                                 </select>
                                             </td>
                                         </tr>
-                                        @endif
 
                                         {{-- Special Cash Discount --}}
-                                        @php
-                                        $specialCashDiscount = $otfData['special_cash_discount'] ?? '';
-                                        $hasSpecialCashDiscount = !empty($specialCashDiscount) && $specialCashDiscount
-                                        !== 'N/A' && $specialCashDiscount !== '0' && $specialCashDiscount !== '0.00';
-                                        @endphp
-                                        @if($hasSpecialCashDiscount)
+                                        @php $specialCashDiscount = $otfData['special_cash_discount'] ?? ''; @endphp
                                         <tr class="grid-row">
-                                            <td class="ql-label">Special Cash Discount</td>
+                                            <td class="ql-label">
+                                                Special Cash Discount
+                                                {{-- REMOVED: Type label --}}
+                                            </td>
                                             <td class="ql-amount">
                                                 <input type="text" name="special_cash_discount"
                                                     id="special_cash_discount" class="numeric-only" placeholder="0.00"
@@ -1750,12 +1766,11 @@ use App\Services\OrgService;
                                                 </select>
                                             </td>
                                         </tr>
-                                        @endif
 
                                     </tbody>
                                 </table>
 
-                                {{-- TOTAL DISCOUNT & TOTAL RECEIVABLE --}}
+                                {{-- TOTAL DISCOUNT & TOTAL RECEIVABLE & NET RECEIVABLE --}}
                                 <table class="bill-table" style="margin-top:-1px; border-top:1px solid #000;">
                                     <tr>
                                         <td class="title"
@@ -1782,7 +1797,21 @@ use App\Services\OrgService;
                                         </td>
                                     </tr>
                                 </table>
+                                <table class="bill-table" style="margin-top:-1px; border-top:1px solid #000;">
+                                    <tr>
+                                        <td class="title"
+                                            style="width:50%; background:#abb8ca; font-weight:bold; font-size:10px; border-right:1px solid #000; color:#000;">
+                                            NET RECEIVABLE
+                                        </td>
+                                        <td style="width:50%; padding:3px 5px; background:#abb8ca; color:#000;">
+                                            <input id="net_receivable_summary" name="net_receivable_summary" readonly
+                                                style="width:100%; border:none; background:transparent; font-size:10px; font-weight:bold; text-align:right;"
+                                                value="{{ old('net_receivable_summary', $otfData['net_receivable_summary'] ?? '') }}">
+                                        </td>
+                                    </tr>
+                                </table>
                             </div>
+
                         </div>
                         <div class="col-md-6">
                             {{-- Financier Details --}}
@@ -1985,82 +2014,46 @@ use App\Services\OrgService;
 
                             {{-- Financier Verified, Delivery, DO Details --}}
                             <table class="bill-table mt-2">
-                                <tr>
-                                    <td class="title" style="white-space:nowrap;">Financier Verified</td>
-                                    <td>
-                                        <select name="financier_verified" id="financier_verified" style="width:100%;">
-                                            <option value="Please Select">Please Select</option>
-                                            <option value="Yes">Yes</option>
-                                            <option value="No">No</option>
-                                        </select>
-                                    </td>
-                                </tr>
+
                                 <tr>
                                     <td class="title" style="white-space:nowrap;">Vehicle To Be Delivered On</td>
                                     <td>
-                                        <select id="vehicle_delivery_on" name="vehicle_delivery_on">
-                                            <option value="">Select</option>
-                                            <option value="1" {{ old('vehicle_delivery_on',
-                                                $otfData['vehicle_delivery_on'] ?? $finance?->instrument_type ?? '') ==
-                                                1 ? 'selected' : '' }}>
-                                                Payment
-                                            </option>
-
-                                            <option value="2" {{ old('vehicle_delivery_on',
-                                                $otfData['vehicle_delivery_on'] ?? $finance?->instrument_type ?? '') ==
-                                                2 ? 'selected' : '' }}>
-                                                DO
-                                            </option>
-
-                                            <option value="4" {{ old('vehicle_delivery_on',
-                                                $otfData['vehicle_delivery_on'] ?? $finance?->instrument_type ?? '') ==
-                                                4 ? 'selected' : '' }}>
-                                                Mail
-                                            </option>
-
-                                            <option value="5" {{ old('vehicle_delivery_on',
-                                                $otfData['vehicle_delivery_on'] ?? $finance?->instrument_type ?? '') ==
-                                                5 ? 'selected' : '' }}>
-                                                Whatsapp
-                                            </option>
-
-                                            <option value="3" {{ old('vehicle_delivery_on',
-                                                $otfData['vehicle_delivery_on'] ?? $finance?->instrument_type ?? '') ==
-                                                3 ? 'selected' : '' }}>
-                                                Sanction Letter
-                                            </option>
-                                        </select>
+                                        <input type="text" id="vehicle_delivery_on_display"
+                                            name="vehicle_delivery_on_display"
+                                            value="{{ $deliveryOptions[$otfData['vehicle_delivery_on'] ?? $finance?->instrument_type ?? ''] ?? '' }}"
+                                            readonly style="background:transparent; border:none; width:100%;">
+                                        <input type="hidden" name="vehicle_delivery_on"
+                                            value="{{ old('vehicle_delivery_on', $otfData['vehicle_delivery_on'] ?? $finance?->instrument_type ?? '') }}">
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="title">DO Number (Delivery Time)</td>
                                     <td>
                                         <input type="text" id="do_number" name="do_number" value="{{ old('do_number',
-        $otfData['do_number']
-        ?? $finance?->instrument_ref_no
-        ?? ''
-    ) }}">
+                                    $otfData['do_number']
+                                    ?? $finance?->instrument_ref_no
+                                    ?? ''
+                                ) }}">
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="title">DO Number (TA Statement)</td>
                                     <td>
-                                        <input type="text" id="do_number_ta" name="do_number_ta" class="form-control"
-                                            style="width:100%;">
+                                        <input type="text" id="do_number_ta" name="do_number_ta" style="width:100%;"
+                                            placeholder="Enter DO Number to fetch details">
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="title">DO Amount (TA Statement)</td>
                                     <td>
-                                        <input type="number" id="do_amount_ta" name="do_amount_ta"
-                                            class="form-control bg-light" style="width:100%;" readonly>
+                                        <input id="do_amount_ta" name="do_amount_ta" style="width:100%;" readonly>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="title">DO Voucher Date</td>
                                     <td>
                                         <input type="date" id="do_voucher_date" name="do_voucher_date"
-                                            class="form-control" style="width:100%;" readonly>
+                                            style="width:100%;" readonly>
                                     </td>
                                 </tr>
                             </table>
@@ -2070,25 +2063,25 @@ use App\Services\OrgService;
                                 <tr>
                                     <td class="title" style="white-space:nowrap;">Brokerage Amount</td>
                                     <td>
-                                        <input type="number" id="brokerage_amount" name="brokerage_amount"
-                                            class="form-control" style="width:100%;" min="0" step="0.01"
+                                        <input id="brokerage_amount" name="brokerage_amount" class="numeric-only"
+                                            style="width:100%;" min="0" step="0.01"
                                             value="{{ old('brokerage_amount') }}">
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="title" style="white-space:nowrap;">Other Discount Receivable</td>
                                     <td>
-                                        <input type="number" id="other_discount_receivable"
-                                            name="other_discount_receivable" class="form-control" style="width:100%;"
-                                            min="0" step="0.01" value="{{ old('other_discount_receivable') }}">
+                                        <input id="other_discount_receivable" name="other_discount_receivable"
+                                            class="numeric-only" style="width:100%;" min="0" step="0.01"
+                                            value="{{ old('other_discount_receivable') }}">
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="title" style="white-space:nowrap;">Other Discount Receivable - M&amp;M
                                         Support</td>
                                     <td>
-                                        <input type="number" id="mm_support_receivable" name="mm_support_receivable"
-                                            class="form-control" style="width:100%;" min="0" step="0.01"
+                                        <input id="mm_support_receivable" name="mm_support_receivable"
+                                            class="numeric-only" style="width:100%;" min="0" step="0.01"
                                             value="{{ old('mm_support_receivable') }}">
                                     </td>
                                 </tr>
@@ -2096,9 +2089,8 @@ use App\Services\OrgService;
                                     <td class="title" style="white-space:nowrap;">Other Discount Receivable -
                                         Liquidation Scheme</td>
                                     <td>
-                                        <input type="number" id="liquidation_scheme_receivable"
-                                            name="liquidation_scheme_receivable" class="form-control"
-                                            style="width:100%;" min="0" step="0.01"
+                                        <input id="liquidation_scheme_receivable" name="liquidation_scheme_receivable"
+                                            class="numeric-only" style="width:100%;" min="0" step="0.01"
                                             value="{{ old('liquidation_scheme_receivable') }}">
                                     </td>
                                 </tr>
@@ -2109,20 +2101,18 @@ use App\Services\OrgService;
                                     <td class="title" style="white-space:nowrap;">Registration Service Charge -
                                         Receivable</td>
                                     <td>
-                                        <input type="number" id="registration_service_charge_receivable"
-                                            name="registration_service_charge_receivable" class="form-control"
-                                            style="width:100%;" min="0" step="0.01"
-                                            value="{{ old('registration_service_charge_receivable') }}">
+                                        <input id="registration_service_charge_receivable" class="numeric-only"
+                                            name="registration_service_charge_receivable" style="width:100%;" min="0"
+                                            step="0.01" value="{{ old('registration_service_charge_receivable') }}">
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="title" style="white-space:nowrap;">Registration Service Charge - Received
                                     </td>
                                     <td>
-                                        <input type="number" id="registration_service_charge_received"
-                                            name="registration_service_charge_received" class="form-control"
-                                            style="width:100%;" min="0" step="0.01"
-                                            value="{{ old('registration_service_charge_received') }}">
+                                        <input id="registration_service_charge_received" class="numeric-only"
+                                            name="registration_service_charge_received" style="width:100%;" min="0"
+                                            step="0.01" value="{{ old('registration_service_charge_received') }}">
                                     </td>
                                 </tr>
                             </table>
@@ -2130,10 +2120,38 @@ use App\Services\OrgService;
                         </div>
                     </div>
 
+                    @php
+                    $insuranceNoteText = '';
+                    $insuranceCovers = $otfData['insurance_covers'] ?? [];
+                    if (!empty($insuranceCovers) && is_array($insuranceCovers)) {
+                    $insuranceNoteText = collect($insuranceCovers)->map(function ($cover) {
+                    $name = $cover['name'] ?? '';
+                    $price = (float) ($cover['price'] ?? 0);
+                    return $price > 0
+                    ? $name . ' (₹' . number_format($price, 2) . ')'
+                    : $name;
+                    })->filter()->implode(', ');
+                    }
+                    if (empty($insuranceNoteText) && !empty($otfData['insurance_amount'] ?? '') &&
+                    ($otfData['insurance_amount'] ?? '0') != '0' && ($otfData['insurance_amount'] ?? '0.00') != '0.00')
+                    {
+                    $insurancePolicyLabel = $insurance_type_map[$otfData['policy_type'] ?? ''] ?? '';
+                    $insuranceNoteText = trim($insurancePolicyLabel . ' (₹' . number_format((float)
+                    ($otfData['insurance_amount'] ?? 0), 2) . ')');
+                    }
+                    @endphp
+                    <div class="insurance-note-row">
+                        Insurance:
+                        <span id="insurance_print"
+                            style="font-weight:normal; display:inline-block; min-width:70%; border-bottom:1px solid #000;">{{
+                            $insuranceNoteText ?: '' }}&nbsp;</span>
+                    </div>
+
                     <div class="accessories-note-row">
                         Accessories:
                         <span id="accessories_print"
-                            style="font-weight:normal; display:inline-block; min-width:70%; border-bottom:1px solid #000;">&nbsp;</span>
+                            style="font-weight:normal; display:inline-block; min-width:70%; border-bottom:1px solid #000;">{{
+                            $accessories !== 'N/A' ? $accessories : '' }}&nbsp;</span>
                     </div>
                     {{-- ================= NOTE ================= --}}
                     <table class="bill-table note-box flex-grow-1 mt-3">
@@ -2219,14 +2237,6 @@ $(document).on('input', '.numeric-only', function () {
     $(this).val(value);
 });
 
-function updateAccessoriesAmount() {
-    let total = 0;
-    $('#accessories option:selected').each(function () {
-        total += parseFloat($(this).data('price')) || 0;
-    });
-    $('#accessories_amount').val(total.toFixed(2));
-    calculateQuotation();
-}
 function updateAccessoriesCount() {
     const count = $('#accessories option:selected').length;
 
@@ -2271,222 +2281,10 @@ $(document).ready(function () {
     updateAccessoriesPrintText();
 });
 
-// ================= GROUP DISCOUNT SYNC =================
-function setupGroupDiscount(groupPrefix, fieldNames) {
-    function sync() {
-        let selected = $('#' + groupPrefix + '_select').val();
-        let type = $('#' + groupPrefix + '_type').val();
-        let amount = $('#' + groupPrefix + '_amount').val();
-        fieldNames.forEach(function (name) {
-            if (name === selected) {
-                $('#' + name).val(amount);
-                $('#' + name + '_type').val(type);
-            } else {
-                $('#' + name).val('');
-                $('#' + name + '_type').val('');
-            }
-        });
-        calculateQuotation();
-    }
-    $(document).on('change', '#' + groupPrefix + '_select, #' + groupPrefix + '_type', sync);
-    $(document).on('keyup change', '#' + groupPrefix + '_amount', sync);
-}
-
-setupGroupDiscount('group_a', ['cash_scheme_oem', 'csd_discount', 'fame_subsidy']);
-setupGroupDiscount('group_b', ['corporate_discount', 'loyalty_bonus']);
-setupGroupDiscount('group_c', ['exchange_bonus', 'green_bonus', 'welcome_bonus']);
-
-// ================= PRE-POPULATE GROUP DISCOUNTS ON PAGE LOAD =================
-$(document).ready(function() {
-    // Group A - set selected option based on which field has value
-    var groupAFields = {
-        'cash_scheme_oem': $('#cash_scheme_oem').val(),
-        'csd_discount': $('#csd_discount').val(),
-        'fame_subsidy': $('#fame_subsidy').val()
-    };
-    
-    for (var key in groupAFields) {
-        if (groupAFields[key] && groupAFields[key] !== '') {
-            $('#group_a_select').val(key);
-            $('#group_a_type').val($('#' + key + '_type').val() || 'INV');
-            break;
-        }
-    }
-    
-    // Group B
-    var groupBFields = {
-        'corporate_discount': $('#corporate_discount').val(),
-        'loyalty_bonus': $('#loyalty_bonus').val()
-    };
-    
-    for (var key in groupBFields) {
-        if (groupBFields[key] && groupBFields[key] !== '') {
-            $('#group_b_select').val(key);
-            $('#group_b_type').val($('#' + key + '_type').val() || 'INV');
-            break;
-        }
-    }
-    
-    // Group C
-    var groupCFields = {
-        'exchange_bonus': $('#exchange_bonus').val(),
-        'green_bonus': $('#green_bonus').val(),
-        'welcome_bonus': $('#welcome_bonus').val()
-    };
-    
-    for (var key in groupCFields) {
-        if (groupCFields[key] && groupCFields[key] !== '') {
-            $('#group_c_select').val(key);
-            $('#group_c_type').val($('#' + key + '_type').val() || 'CN1');
-            break;
-        }
-    }
-    
-    // Trigger sync for all groups to populate hidden fields
-    $('#group_a_select, #group_a_type, #group_a_amount').trigger('change');
-    $('#group_b_select, #group_b_type, #group_b_amount').trigger('change');
-    $('#group_c_select, #group_c_type, #group_c_amount').trigger('change');
-    
-    // Recalculate after pre-fill
-    setTimeout(function() {
-        calculateQuotation();
-    }, 100);
-});
-
-function num(id) {
-    let value = $('#' + id).val();
-    if (value === 'N/A' || value === '' || value == null) return 0;
-    return parseFloat(value) || 0;
-}
-
-// Discount type pairs for bifurcation — kept for JS calc, but UI hidden
-const DISCOUNT_TYPE_PAIRS = [
-    ['cash_scheme_oem', 'cash_scheme_oem_type'],
-    ['csd_discount', 'csd_discount_type'],
-    ['fame_subsidy', 'fame_subsidy_type'],
-    ['ppf_discount', 'ppf_discount_type'],
-    ['dealer_discount', 'dealer_discount_type'],
-    ['corporate_discount', 'corporate_discount_type'],
-    ['loyalty_bonus', 'loyalty_bonus_type'],
-    ['accessories_discount', 'accessories_discount_type'],
-    ['ceramic_discount', 'ceramic_discount_type'],
-    ['exchange_bonus', 'exchange_bonus_type'],
-    ['green_bonus', 'green_bonus_type'],
-    ['welcome_bonus', 'welcome_bonus_type'],
-    ['charger_swapping_discount', 'charger_swapping_discount_type'],
-    ['shield_scheme', 'shield_scheme_type'],
-    ['accessories_spl_disc', 'accessories_spl_disc_type'],
-    ['other_cash_discount', 'other_cash_discount_type'],
-    ['special_cash_discount', 'special_cash_discount_type']
-];
-
-function calculateDiscountBifurcation() {
-    let invoicedDiscount = 0;
-    let creditNoteDiscount = 0;
-    DISCOUNT_TYPE_PAIRS.forEach(function (pair) {
-        let amount = num(pair[0]);
-        let type = $('#' + pair[1]).val();
-        if (type === 'INV') invoicedDiscount += amount;
-        else if (type === 'CN' || type === 'CN1' || type === 'CN2') creditNoteDiscount += amount;
-    });
-    return { invoicedDiscount: invoicedDiscount, creditNoteDiscount: creditNoteDiscount };
-}
-
-function calculateQuotation() {
-    let subtotal = 0;
-    let fields = [
-        'ex_showroom_price',
-        'insurance_amount',
-        'registration_amount',
-        'accessories_amount',
-        'maxicare',
-        'vltd_device',
-        'coating_price',
-        'ppf',
-        'rto_yellow_tape',
-        'kazam_charging_kit',
-        'incidental_charges',
-        'shield_price',
-        'rsa_amount',
-        'fastag',
-        'cod_charges',
-        'charger_swapping_amount'
-    ];
-    
-    fields.forEach(function(field) {
-        subtotal += num(field);
-    });
-
-    let bifurcation = calculateDiscountBifurcation();
-    let finvoiceAmount = subtotal - bifurcation.invoicedDiscount;
-
-    let tcs = 0;
-    if (finvoiceAmount >= 1000000) {
-        tcs = finvoiceAmount * 0.01;
-        $('#tcs').val(tcs.toFixed(2)).prop('readonly', true).prop('disabled', false);
-    } else {
-        $('#tcs').val('N/A').prop('readonly', true).prop('disabled', true);
-    }
-    let totalReceivable = subtotal + tcs;
-    $('#total_receivable').val(totalReceivable.toFixed(2));
-
-    let totalDiscount = 0;
-    let discountFields = [
-        'cash_scheme_oem',
-        'fame_subsidy',
-        'exchange_bonus',
-        'corporate_discount',
-        'accessories_discount',
-        'ceramic_discount',
-        'ppf_discount',
-        'dealer_discount',
-        'charger_swapping_discount',
-        'csd_discount',
-        'shield_scheme',
-        'loyalty_bonus',
-        'green_bonus',
-        'welcome_bonus',
-        'accessories_spl_disc',
-        'other_cash_discount',
-        'special_cash_discount'
-    ];
-    
-    discountFields.forEach(function(field) {
-        totalDiscount += num(field);
-    });
-
-    let discount = totalDiscount.toFixed(2);
-    $('#total_discount_amount').val(discount);
-    $('#total_discount').val(discount);
-
-    let netReceivable = totalReceivable - totalDiscount;
-    $('#net_receivable_summary').val(netReceivable.toFixed(2));
-
-    // Bifurcation values still calculated but hidden from UI
-    // No longer displaying Financier Invoice / Discount Bifurcation box
-}
-
-// Recalculate on changes - only for visible fields
-$(document).on('keyup change', 
-    '#ex_showroom_price, #insurance_amount, #registration_amount, #accessories_amount, ' +
-    '#maxicare, #vltd_device, #coating_price, #ppf, #rto_yellow_tape, #kazam_charging_kit, ' +
-    '#incidental_charges, #shield_price, #rsa_amount, #fastag, #cod_charges, #charger_swapping_amount, ' +
-    '#tcs, #cash_scheme_oem, #csd_discount, #fame_subsidy, ' +
-    '#dealer_discount, #corporate_discount, #loyalty_bonus, ' +
-    '#accessories_discount, #shield_scheme, #exchange_bonus, #green_bonus, #welcome_bonus, ' +
-    '#accessories_spl_disc, #ceramic_discount, #ppf_discount, #charger_swapping_discount, ' +
-    '#other_cash_discount, #special_cash_discount',
-    calculateQuotation
-);
-
-$('#accessories').on('change', function () {
-    updateAccessoriesAmount();
-    calculateQuotation();
-});
-
-$(document).ready(function () {
-    calculateQuotation();
-});
+// ================= PRICE / DISCOUNT VALUES =================
+// NOTE: Price Details, Discount Details and Net Receivable now come directly
+// from the quotation's data ($otfData) rendered server-side via Blade.
+// No client-side recalculation is performed here anymore.
 
 $(document).ready(function () {
     $('#accessories').select2({
@@ -2534,8 +2332,6 @@ function toggleLMMFields() {
         $('#charger_swapping_discount').prop('disabled', false);
         $('#charger_swapping_discount_type').prop('disabled', false);
     }
-
-    calculateQuotation();
 }
 
 $(document).ready(function () {
@@ -2547,31 +2343,89 @@ let printLabelRestoreList = [];
 
 function prepareOptionLabelsForPrint() {
     printLabelRestoreList = [];
+    
+    // Define which select IDs should NOT show their type/label
+    const discountSelectIds = ['group_a_select', 'group_b_select', 'group_c_select'];
+    
     $('.quotation-stacked-table td.ql-label select').not('#accessories').each(function () {
         let $select = $(this);
+        let selectId = $select.attr('id');
         let selectedText = $select.find('option:selected').first().text().trim();
         if (!selectedText || selectedText.toLowerCase() === 'select') return;
         let $label = $select.closest('tr').find('td.ql-label').first();
         printLabelRestoreList.push({ el: $label, html: $label.html() });
-        if ($select.hasClass('group-select')) {
+        
+        // ✅ For discount group selects, ONLY show the selected text (no type)
+        if (discountSelectIds.includes(selectId)) {
             $label.text(selectedText);
         } else {
+            // For other selects (coating, shield, etc.), show option in parentheses
             let baseLabel = $label.text().replace(/\(.*\)/, '').trim();
             $label.html(baseLabel + ' (' + selectedText + ')');
         }
     });
-    $('.quotation-stacked-table td.ql-amount select').each(function () {
-        let $select = $(this);
-        let selectedText = $select.find('option:selected').first().text().trim();
-        if (!selectedText || selectedText.toLowerCase() === 'select' || selectedText === 'N/A') return;
-        let $label = $select.closest('tr').find('td.ql-label').first();
-        if (!$label.text().includes('(')) {
-            let baseLabel = $label.text().replace(/\(.*\)/, '').trim();
-            printLabelRestoreList.push({ el: $label, html: $label.html() });
-            $label.html(baseLabel + ' (' + selectedText + ')');
-        }
-    });
+    
 }
+
+// ================= CALCULATE TOTAL DISCOUNT =================
+function calculateTotalDiscount() {
+    // Get all discount amount fields
+    var discountFields = [
+        '#cash_scheme_oem', '#csd_discount', '#fame_subsidy',
+        '#dealer_discount', '#accessories_discount', '#shield_scheme',
+        '#corporate_discount', '#loyalty_bonus', '#exchange_bonus',
+        '#green_bonus', '#welcome_bonus', '#accessories_spl_disc',
+        '#ceramic_discount', '#ppf_discount', '#charger_swapping_discount',
+        '#other_cash_discount', '#special_cash_discount'
+    ];
+    
+    var total = 0;
+    discountFields.forEach(function(field) {
+        var val = $(field).val();
+        if (val && val !== '' && val !== 'N/A' && val !== '0' && val !== '0.00') {
+            total += parseFloat(val) || 0;
+        }
+    });
+    
+    // Update the total discount display
+    $('#total_discount_amount').val(total.toFixed(2));
+    $('#total_discount').val(total.toFixed(2));
+    
+    return total;
+}
+
+function calculateNetReceivable() {
+    var totalReceivable = parseFloat($('#total_receivable').val()) || 0;
+    var totalDiscount = parseFloat($('#total_discount_amount').val()) || 0;
+    var netReceivable = totalReceivable - totalDiscount;
+    $('#net_receivable_summary').val(netReceivable.toFixed(2));
+}
+
+// Auto-calculate when any discount field changes
+$(document).on('keyup change', 
+    '#dealer_discount, #accessories_discount, #shield_scheme, ' +
+    '#accessories_spl_disc, #ceramic_discount, #ppf_discount, ' +
+    '#charger_swapping_discount, #other_cash_discount, #special_cash_discount, ' +
+    '#group_a_amount, #group_b_amount, #group_c_amount',
+    function() {
+        calculateTotalDiscount();
+    }
+);
+
+$(document).on('change', '#group_a_select, #group_b_select, #group_c_select', function() {
+    setTimeout(function() {
+        calculateTotalDiscount();
+    }, 100);
+});
+
+// Also recalculate when total receivable changes
+$(document).on('keyup change', '#total_receivable', function() {
+    calculateNetReceivable();
+});
+
+$(document).ready(function() {
+    calculateTotalDiscount();
+});
 
 function restoreOptionLabelsAfterPrint() {
     printLabelRestoreList.forEach(function (item) {
@@ -2639,23 +2493,17 @@ $(document).ready(function () {
 
     // ================= OPTION FIELD SYNC (show selected in label) =================
     function syncOptionLabel(selectId, labelSuffixId) {
-        $(document).on('change', selectId, function () {
-            let selectedText = $(this).find('option:selected').first().text().trim();
-            if (selectedText && selectedText.toLowerCase() !== 'select' && selectedText !== 'N/A') {
-                $('#' + labelSuffixId).text('(' + selectedText + ')');
-            } else {
-                $('#' + labelSuffixId).text('');
-            }
-        });
-        $(selectId).trigger('change');
-    }
-    syncOptionLabel('#policy_type', 'insurance_option_label');
-    syncOptionLabel('#registration_type', 'registration_option_label');
-    syncOptionLabel('#coating', 'coating_option_label');
-    syncOptionLabel('#shield', 'shield_option_label');
-    syncOptionLabel('#rsa', 'rsa_option_label');
-    syncOptionLabel('#charger_swapping', 'charger_swapping_option_label');
-
+    $(document).on('change', selectId, function () {
+        let selectedText = $(this).find('option:selected').first().text().trim();
+        if (selectedText && selectedText.toLowerCase() !== 'select' && selectedText !== 'N/A') {
+            $('#' + labelSuffixId).text('(' + selectedText + ')');
+        } else {
+            $('#' + labelSuffixId).text('');
+        }
+    });
+    $(selectId).trigger('change');
+}
+    
     $('#accessories').on('change', function () {
         let count = $(this).find('option:selected').length;
         $('#accessories_price_label').text(count > 0 ? '(' + count + ' items)' : '');
@@ -2683,7 +2531,6 @@ $(document).ready(function () {
             $('#vltd_device').val('N/A').prop('readonly', true).prop('disabled', true);
             $('#vltd_device').closest('tr').addClass('print-hide');
         }
-        calculateQuotation();
     }
     toggleVltdField();
 
@@ -2691,12 +2538,10 @@ $(document).ready(function () {
     $('#policy_type').on('change', function () {
         let hasValue = $(this).val() !== '';
         $('#insurance_amount').prop('disabled', !hasValue).val(hasValue ? $('#insurance_amount').val() : '');
-        calculateQuotation();
     });
     $('#registration_type').on('change', function () {
         let hasValue = $(this).val() !== '';
         $('#registration_amount').prop('disabled', !hasValue).val(hasValue ? $('#registration_amount').val() : '');
-        calculateQuotation();
     });
     $('#coating').on('change', function () {
         let value = $(this).val();
@@ -2713,7 +2558,6 @@ $(document).ready(function () {
             $('#ceramic_discount').prop('disabled', false);
             $('#ceramic_discount_type').prop('disabled', false);
         }
-        calculateQuotation();
     });
     $('#shield').on('change', function () {
         let value = $(this).val();
@@ -2724,7 +2568,6 @@ $(document).ready(function () {
         } else {
             $('#shield_price').prop('disabled', false);
         }
-        calculateQuotation();
     });
     $('#rsa').on('change', function () {
         let value = $(this).val();
@@ -2735,7 +2578,6 @@ $(document).ready(function () {
         } else {
             $('#rsa_amount').prop('disabled', false);
         }
-        calculateQuotation();
     });
     $('#charger_swapping').on('change', function () {
         let value = $(this).val();
@@ -2756,7 +2598,6 @@ $(document).ready(function () {
                 .append('<option value="CN2">CN2</option>')
                 .val('CN2');
         }
-        calculateQuotation();
     });
 
     // Trigger all on load
@@ -2779,57 +2620,92 @@ $(document).ready(function () {
     });
 });
 
-// Form submit validation (Cash OEM INV + CN check)
-$('form').on('submit', function (e) {
-    let cashOemAmount = num('cash_scheme_oem');
-    let cashOemType = $('#cash_scheme_oem_type').val();
-    let bifurcation = calculateDiscountBifurcation();
-    let totalCNDiscount = bifurcation.creditNoteDiscount;
-    if (cashOemType === 'INV' && totalCNDiscount < cashOemAmount) {
-        e.preventDefault();
-        Swal.fire({
-            icon: 'error',
-            title: 'Cannot Save Quotation',
-            text: 'Total CN Discount should be equal to or greater than Cash OEM Scheme when Cash OEM Scheme Type is INV.'
-        });
-        return false;
-    }
-});
-
 $(document).ready(function () {
     function toggleDONumber() {
-        var delivery = $('#vehicle_delivery_on').val();
-        if (delivery === 'DO') {
-            $('#do_number').prop('disabled', false);
-        } else {
-            $('#do_number').val('').prop('disabled', true);
+    var deliveryValue = $('#vehicle_delivery_on_display').val();
+    var isDO = (deliveryValue === 'DO');
+    
+    if (isDO) {
+        // ✅ Auto-fill DO Number (Delivery Time) ONLY from finance data
+        var doNumber = "{{ old('do_number', $otfData['do_number'] ?? $finance?->instrument_ref_no ?? '') }}";
+        if (doNumber) {
+            $('#do_number').val(doNumber);
+            // ❌ REMOVE: Do NOT auto-fill TA Statement field
+            // $('#do_number_ta').val(doNumber);
+            // $('#do_number_ta').trigger('blur');
         }
-    }
-
-    toggleDONumber();
-    $('#vehicle_delivery_on').on('change', function () {
-        toggleDONumber();
-    });
-});
-
-// DO Number (TA Statement) — fetch DO Amount & Date
-$('#do_number_ta').on('blur', function () {
-    let doNo = $(this).val().trim();
-    if (doNo == '') {
+        $('#do_number').prop('disabled', false);
+        $('#do_number_ta').prop('disabled', false);
+    } else {
+        $('#do_number').val('').prop('disabled', true);
+        $('#do_number_ta').val('').prop('disabled', true);
         $('#do_amount_ta').val('');
         $('#do_voucher_date').val('');
-        return;
     }
-    $.ajax({
-        url: "{{ url('admin/get-do-amount') }}",
-        type: "GET",
-        data: { do_no: doNo },
-        success: function (res) {
-            $('#do_amount_ta').val(res.amount);
-            $('#do_voucher_date').val(res.date);
+}
+
+    toggleDONumber();
+
+    // DO Number (TA Statement) — fetch DO Amount & Date from financier statement
+    $('#do_number_ta').on('blur', function () {
+        let doNo = $(this).val().trim();
+        if (doNo == '') {
+            $('#do_amount_ta').val('');
+            $('#do_voucher_date').val('');
+            return;
+        }
+        $.ajax({
+            url: "{{ url('admin/get-do-amount') }}",
+            type: "GET",
+            data: { do_no: doNo },
+            success: function (res) {
+                // ✅ If match found, populate amount and date
+                if (res.amount && parseFloat(res.amount) > 0) {
+                    $('#do_amount_ta').val(res.amount);
+                    $('#do_voucher_date').val(res.date);
+                } else {
+                    // No match found - keep empty
+                    $('#do_amount_ta').val('');
+                    $('#do_voucher_date').val('');
+                }
+                
+                // Also update DO Number (Delivery Time) if empty
+                var deliveryValue = $('#vehicle_delivery_on_display').val();
+                if (deliveryValue === 'DO' && !$('#do_number').val() && doNo) {
+                    $('#do_number').val(doNo);
+                }
+            },
+            error: function(xhr) {
+                console.log('Error fetching DO details:', xhr);
+                $('#do_amount_ta').val('');
+                $('#do_voucher_date').val('');
+            }
+        });
+    });
+
+    // Sync: TA Statement changes → update Delivery Time if empty
+    $('#do_number_ta').on('input', function() {
+        var doNo = $(this).val().trim();
+        var deliveryValue = $('#vehicle_delivery_on_display').val();
+        
+        if (deliveryValue === 'DO' && doNo && !$('#do_number').val()) {
+            $('#do_number').val(doNo);
+        }
+    });
+
+    // Sync: Delivery Time changes → update TA Statement if empty
+    $('#do_number').on('change input', function() {
+        var doNo = $(this).val().trim();
+        var deliveryValue = $('#vehicle_delivery_on_display').val();
+        
+        if (deliveryValue === 'DO' && doNo && !$('#do_number_ta').val()) {
+            $('#do_number_ta').val(doNo);
+            $('#do_number_ta').trigger('blur');
         }
     });
 });
+
+
 function updateDsaLocation() {
     let location = $('#dsa_id option:selected').data('location') || '';
     $('#dsa_location').val(location);
@@ -2842,13 +2718,47 @@ $(document).ready(function () {
 });
 
 document.addEventListener("DOMContentLoaded", function () {
-
-    flatpickr(".date-picker", {
-        dateFormat: "d-m-Y",
+    // Configure Flatpickr with d-M-Y format (12-Aug-2026)
+    const dateConfig = {
+        dateFormat: "d-M-Y",
         allowInput: false,
-        clickOpens: true
-    });
+        clickOpens: true,
+        altInput: true,
+        altFormat: "d-M-Y"
+    };
 
+    // Apply to all date picker inputs
+    flatpickr(".date-picker", dateConfig);
+    flatpickr(".flatpickr", dateConfig);
+    flatpickr("#dob", dateConfig);
+    flatpickr("#anniversary_date", dateConfig);
+    flatpickr("#invoice_date", dateConfig);
+
+    // Handle invoice date with hidden field
+    const invoicePicker = flatpickr("#invoice_date", {
+        dateFormat: "d-M-Y",
+        allowInput: false,
+        clickOpens: true,
+        altInput: true,
+        altFormat: "d-M-Y",
+        onChange: function(selectedDates, dateStr, instance) {
+            if (selectedDates.length > 0) {
+                const yyyyMMdd = selectedDates[0].toISOString().split('T')[0];
+                document.getElementById('hidden_invoice_date').value = yyyyMMdd;
+            } else {
+                document.getElementById('hidden_invoice_date').value = '';
+            }
+        }
+    });
+    
+    // Handle DO Voucher Date
+    flatpickr("#do_voucher_date", {
+        dateFormat: "d-M-Y",
+        allowInput: false,
+        clickOpens: true,
+        altInput: true,
+        altFormat: "d-M-Y"
+    });
 });
 function toggleAnniversaryRow() {
     const maritalStatus = document.getElementById('marital_status');
@@ -2940,6 +2850,43 @@ $(document).ready(function() {
     calculateReceiptTotal();
     calculateExpectedBalance();
     calculateFinalBalance();
+        
+    var insuranceText = buildInsuranceTextFromData();
+    if (insuranceText) {
+        $('#insurance_print').text(insuranceText);
+    }
+    
+    var accessoriesText = buildAccessoriesTextFromData();
+    if (accessoriesText) {
+        $('#accessories_print').text(accessoriesText);
+    }
 });
+function buildInsuranceTextFromData() {
+    var insuranceData = $('#insurance_print_data').val();
+    
+    if (insuranceData && insuranceData !== '[]' && insuranceData !== '""') {
+        try {
+            var parsed = JSON.parse(insuranceData);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+                var list = parsed.map(function(item) {
+                    var name = item.name || '';
+                    var price = Number(item.price || 0);
+                    return name + (price > 0 ? ' (₹' + price.toLocaleString('en-IN') + ')' : '');
+                });
+                return list.join(', ');
+            }
+        } catch(e) {
+            console.log('Error parsing insurance data:', e);
+        }
+    }
+    
+    // ✅ FALLBACK: Check if insurance_amount exists in otfData
+    var insuranceAmount = $('#insurance_amount').val();
+    if (insuranceAmount && parseFloat(insuranceAmount) > 0) {
+        return 'Insurance Amount (₹' + parseFloat(insuranceAmount).toLocaleString('en-IN') + ')';
+    }
+    
+    return '';
+}
 </script>
 @endpush

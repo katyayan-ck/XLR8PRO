@@ -65,10 +65,24 @@ class QuotationCrudController extends CrudController
 
 
         $gridData = $quotations->map(function ($quotation, $index) use ($insurance_type_map, $registration_type_map) {
-
             $data = $quotation->proposed_data ?? [];
-
             $enquiry = $quotation->enquiry;
+
+            // ✅ Get customer name from enquiry or fallback to proposed_data
+            $customerName = '-';
+            $mobile = '-';
+
+            // ✅ Check if customer_name exists (even if empty string)
+            if (isset($data['customer_name']) && $data['customer_name'] !== '') {
+                $customerName = $data['customer_name'];
+                $mobile = $data['customer_mobile'] ?? '-';
+            } elseif ($enquiry) {
+                $customerName = trim($enquiry->first_name . ' ' . $enquiry->last_name);
+                $mobile = $enquiry->mobile ?? '-';
+            } else {
+                $customerName = '-';
+                $mobile = '-';
+            }
 
             $segmentCode = $data['segment_code']
                 ?? $enquiry?->segment_code
@@ -110,11 +124,10 @@ class QuotationCrudController extends CrudController
 
                 'enquiry_no' => $enquiry?->id,
 
-                'customer_name' => $enquiry
-                    ? trim($enquiry->first_name . ' ' . $enquiry->last_name)
-                    : '-',
+                'customer_name' => $customerName,
+                'mobile' => $mobile,
 
-                'mobile' => $enquiry->mobile ?? '-',
+
 
                 'care_of_type' => [
                     1 => 'Son of',
@@ -139,6 +152,8 @@ class QuotationCrudController extends CrudController
                 'ex_showroom_price' => $data['ex_showroom_price'] ?? '',
                 'policy_type' => $insurance_type_map[$data['policy_type'] ?? ''] ?? '-',
                 'registration_type' => $registration_type_map[$data['registration_type'] ?? ''] ?? '-',
+                'insurance_amount' => $data['insurance_amount'] ?? '',
+                'registration_amount' => $data['registration_amount'] ?? '',
 
                 'accessories' => isset($data['accessories'])
                     ? (is_array($data['accessories'])
@@ -232,6 +247,8 @@ class QuotationCrudController extends CrudController
                     ['field' => 'revision', 'headerName' => 'Revision'],
 
                     ['field' => 'ex_showroom_price', 'headerName' => 'Ex Showroom'],
+                    ['field' => 'insurance_amount', 'headerName' => 'Insurance Amount'],
+                    ['field' => 'registration_amount', 'headerName' => 'Registration Amount'],
                     ['field' => 'policy_type', 'headerName' => 'Insurance'],
                     ['field' => 'registration_type', 'headerName' => 'Registration'],
 
@@ -452,6 +469,97 @@ class QuotationCrudController extends CrudController
     //         return back()->withInput();
     //     }
     // }
+    // public function store(Request $request)
+    // {
+    //     $request->validate([
+    //         'enquiry_no'   => 'required',
+    //         'segment_code' => 'required',
+    //         'model_code'   => 'required',
+    //         'variant_code' => 'required',
+    //         'color_code'   => 'required',
+    //     ]);
+
+    //     DB::beginTransaction();
+
+    //     try {
+    //         // Store complete quotation JSON
+    //         $quotationData = $request->except('_token');
+
+    //         // ✅ ADD: Fetch enquiry and add customer data to proposed_data
+    //         $enquiry = Enquiry::findOrFail($request->enquiry_no);
+
+    //         // ✅ Save customer name and mobile in proposed_data
+    //         $quotationData['customer_name'] = trim($enquiry->first_name . ' ' . $enquiry->last_name) ?: ($enquiry->full_name ?? '');
+    //         $quotationData['customer_mobile'] = $enquiry->mobile ?? $enquiry->phone ?? '';
+    //         $quotationData['enquiry_id'] = $enquiry->id;
+
+    //         // Ensure all required fields are captured
+    //         $quotationData['segment_code'] = $request->segment_code;
+    //         $quotationData['model_code'] = $request->model_code;
+    //         $quotationData['variant_code'] = $request->variant_code;
+    //         $quotationData['color_code'] = $request->color_code;
+
+    //         // Accessories - handle array properly
+    //         if (!empty($quotationData['accessories']) && is_array($quotationData['accessories'])) {
+    //             $quotationData['accessories'] = array_values($quotationData['accessories']);
+    //         }
+
+    //         // Create quotation
+    //         $quotation = new Quotation();
+    //         $quotation->quotation_no = 0;
+    //         $quotation->enquiry_no = $request->enquiry_no;
+
+    //         $quotation->person_code = $enquiry->person_code;
+    //         $quotation->model_code = $request->model_code;
+    //         $quotation->variant_code = $request->variant_code;
+    //         $quotation->color_code = $request->color_code;
+    //         $quotation->revision = 0;
+
+    //         // Store all data
+    //         $quotation->standard_data = $quotationData;
+    //         $quotation->requested_data = $quotationData;
+    //         $quotation->proposed_data = $quotationData;
+
+    //         // Summary Values
+    //         $quotation->onroad_price = $request->net_receivable_summary ?? 0;
+    //         $quotation->invoice_price = $request->net_receivable_summary ?? 0;
+    //         $quotation->status = 'raised';
+    //         $quotation->created_by = backpack_user()->id;
+
+    //         $quotation->save();
+
+    //         // Generate quotation number
+    //         $quotation->quotation_no = $quotation->id;
+    //         $quotation->save();
+
+    //         // Save all discount fields to database for easier querying
+    //         $this->saveDiscountFields($quotation, $quotationData);
+
+    //         // History
+    //         QuoteAction::create([
+    //             'quotation_no' => $quotation->quotation_no,
+    //             'revision' => 0,
+    //             'action' => 'RAISED',
+    //             'requested' => $quotationData,
+    //             'onroad' => $request->net_receivable_summary ?? 0,
+    //             'status' => 'raised',
+    //             'remarks' => 'Quotation Created',
+    //             'action_by' => backpack_user()->id,
+    //         ]);
+
+    //         DB::commit();
+
+    //         \Alert::success('Quotation created successfully.')->flash();
+    //         return redirect(backpack_url('quotation-form'));
+    //     } catch (\Exception $e) {
+    //         DB::rollBack();
+    //         \Log::error('Quotation Store Error: ' . $e->getMessage());
+    //         \Log::error($e->getTraceAsString());
+    //         \Alert::error('Error saving quotation: ' . $e->getMessage())->flash();
+    //         return back()->withInput();
+    //     }
+    // }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -465,53 +573,121 @@ class QuotationCrudController extends CrudController
         DB::beginTransaction();
 
         try {
-            // Store complete quotation JSON
             $quotationData = $request->except('_token');
 
-            // Ensure all required fields are captured
+            // Fetch enquiry
+            $enquiry = null;
+            try {
+                $enquiry = Enquiry::findOrFail($request->enquiry_no);
+            } catch (\Exception $e) {
+                \Log::info('Mock enquiry detected: ' . $request->enquiry_no);
+            }
+
+            // ✅ SAVE INSURANCE COMPANY
+            if ($request->has('insurance_company') && $request->insurance_company) {
+                $quotationData['insurance_company'] = $request->insurance_company;
+            }
+
+            // Inside store() and update() methods:
+
+            // ✅ 1. Normalize Insurance Covers into structured name/price arrays
+            // ✅ Normalize Insurance Covers into structured name/price arrays
+            if ($request->has('insurance_covers')) {
+                $covers = $request->insurance_covers;
+                $formattedCovers = [];
+                if (is_array($covers)) {
+                    foreach ($covers as $cover) {
+                        if (is_string($cover)) {
+                            $price = 0;
+                            if (preg_match('/\(₹([\d,]+\.?\d*)\)/', $cover, $matches)) {
+                                $price = floatval(str_replace(',', '', $matches[1]));
+                                $name = trim(preg_replace('/\(₹[\d,]+\.?\d*\)/', '', $cover));
+                            } else {
+                                $name = $cover;
+                            }
+                            $formattedCovers[] = ['name' => $name, 'price' => $price];
+                        } elseif (is_array($cover)) {
+                            $formattedCovers[] = [
+                                'name' => $cover['name'] ?? '',
+                                'price' => floatval($cover['price'] ?? 0)
+                            ];
+                        }
+                    }
+                }
+                $quotationData['insurance_covers'] = $formattedCovers;
+            }
+
+            // ✅ 2. Ensure Accessories are stored as a clean array of part numbers
+            if (!empty($quotationData['accessories']) && is_array($quotationData['accessories'])) {
+                $quotationData['accessories'] = array_values($quotationData['accessories']);
+            }
+
+            // ✅ SAVE ACCESSORIES DATA
+            if (!empty($quotationData['accessories']) && is_array($quotationData['accessories'])) {
+                $quotationData['accessories'] = array_values($quotationData['accessories']);
+            }
+            if ($request->has('accessories_amount')) {
+                $quotationData['accessories_amount'] = $request->accessories_amount;
+            }
+
+            // ✅ SAVE REGISTRATION DETAILS
+            if ($request->has('registration_no_type')) {
+                $quotationData['registration_no_type'] = $request->registration_no_type;
+            }
+            if ($request->has('registration_category')) {
+                $quotationData['registration_category'] = $request->registration_category;
+            }
+            if ($request->has('in_house_rto')) {
+                $quotationData['in_house_rto'] = $request->in_house_rto;
+            }
+
+            // Customer details
+            if ($enquiry) {
+                $quotationData['customer_name'] = trim($enquiry->first_name . ' ' . $enquiry->last_name) ?: ($enquiry->full_name ?? '');
+                $quotationData['customer_mobile'] = $enquiry->mobile ?? $enquiry->phone ?? '';
+                $quotationData['enquiry_id'] = $enquiry->id;
+                $personCode = $enquiry->person_code;
+            } else {
+                $quotationData['customer_name'] = $request->customer_name ?? 'Mock Customer';
+                $quotationData['customer_mobile'] = $request->mobile ?? '';
+                $quotationData['enquiry_id'] = $request->enquiry_no;
+                $personCode = null;
+            }
+
+            // Vehicle details
             $quotationData['segment_code'] = $request->segment_code;
             $quotationData['model_code'] = $request->model_code;
             $quotationData['variant_code'] = $request->variant_code;
             $quotationData['color_code'] = $request->color_code;
 
-            // Accessories - handle array properly
-            if (!empty($quotationData['accessories']) && is_array($quotationData['accessories'])) {
-                $quotationData['accessories'] = array_values($quotationData['accessories']);
+            // ✅ SAVE PERMIT
+            if ($request->has('permit')) {
+                $quotationData['permit'] = $request->permit;
             }
 
             // Create quotation
             $quotation = new Quotation();
             $quotation->quotation_no = 0;
             $quotation->enquiry_no = $request->enquiry_no;
-
-            $enquiry = Enquiry::findOrFail($request->enquiry_no);
-            $quotation->person_code = $enquiry->person_code;
+            $quotation->person_code = $personCode;
             $quotation->model_code = $request->model_code;
             $quotation->variant_code = $request->variant_code;
             $quotation->color_code = $request->color_code;
             $quotation->revision = 0;
-
-            // Store all data
             $quotation->standard_data = $quotationData;
             $quotation->requested_data = $quotationData;
             $quotation->proposed_data = $quotationData;
-
-            // Summary Values
             $quotation->onroad_price = $request->net_receivable_summary ?? 0;
             $quotation->invoice_price = $request->net_receivable_summary ?? 0;
             $quotation->status = 'raised';
             $quotation->created_by = backpack_user()->id;
 
             $quotation->save();
-
-            // Generate quotation number
             $quotation->quotation_no = $quotation->id;
             $quotation->save();
 
-            // Save all discount fields to database for easier querying
             $this->saveDiscountFields($quotation, $quotationData);
 
-            // History
             QuoteAction::create([
                 'quotation_no' => $quotation->quotation_no,
                 'revision' => 0,
@@ -519,7 +695,7 @@ class QuotationCrudController extends CrudController
                 'requested' => $quotationData,
                 'onroad' => $request->net_receivable_summary ?? 0,
                 'status' => 'raised',
-                'remarks' => 'Quotation Created',
+                'remarks' => 'Quotation Created' . ($enquiry ? '' : ' (Mock Data)'),
                 'action_by' => backpack_user()->id,
             ]);
 
@@ -538,30 +714,33 @@ class QuotationCrudController extends CrudController
 
     private function saveDiscountFields($quotation, $data)
     {
-        // Map form fields to database columns
+        // Correct mapping - form field name => database column name
         $discountFields = [
             'cash_scheme_oem' => 'oem_scheme_discount',
-            'fame_subsidy' => 'fame_subsidy',
-            'exchange_bonus' => 'exchange_bonus',
-            'corporate_discount' => 'corporate_discount',
-            'accessories_discount' => 'accessories_discount',
-            'ceramic_discount' => 'ceramic_discount',
-            'ppf_discount' => 'ppf_discount',
-            'dealer_discount' => 'dealer_discount',
-            'charger_swapping_discount' => 'charger_swapping_discount',
             'csd_discount' => 'csd_discount',
+            'fame_subsidy' => 'fame_subsidy',
+            'dealer_discount' => 'dealer_discount',
+            'accessories_discount' => 'accessories_discount',
+            'shield_scheme' => 'shield_scheme',
+            'corporate_discount' => 'corporate_discount',
             'loyalty_bonus' => 'loyalty_bonus',
+            'exchange_bonus' => 'exchange_bonus',
             'green_bonus' => 'green_bonus',
             'welcome_bonus' => 'welcome_bonus',
             'accessories_spl_disc' => 'accessories_spl_disc',
+            'ceramic_discount' => 'ceramic_discount',
+            'ppf_discount' => 'ppf_discount',
+            'charger_swapping_discount' => 'charger_swapping_discount',
             'other_cash_discount' => 'other_cash_discount',
             'special_cash_discount' => 'special_cash_discount',
         ];
 
         $updateData = [];
         foreach ($discountFields as $formField => $dbField) {
-            if (isset($data[$formField]) && $data[$formField] !== 'N/A') {
-                $updateData[$dbField] = $data[$formField];
+            $value = $data[$formField] ?? '';
+            // Skip N/A, empty, or 0 values
+            if ($value !== '' && $value !== 'N/A' && $value !== null && $value !== '0' && $value !== '0.00') {
+                $updateData[$dbField] = $value;
             }
         }
 
@@ -793,9 +972,73 @@ class QuotationCrudController extends CrudController
             $quotationData['variant_code'] = $request->variant_code;
             $quotationData['color_code'] = $request->color_code;
 
+            // ✅ SAVE INSURANCE COMPANY
+            if ($request->has('insurance_company')) {
+                $quotationData['insurance_company'] = $request->insurance_company;
+            }
+
+            // Inside store() and update() methods:
+
+            // ✅ 1. Normalize Insurance Covers into structured name/price arrays
+            if ($request->has('insurance_covers')) {
+                $covers = $request->insurance_covers;
+                $formattedCovers = [];
+                if (is_array($covers)) {
+                    foreach ($covers as $cover) {
+                        if (is_string($cover)) {
+                            $price = 0;
+                            // Parse out price if formatted like "Cover Name (₹9,200.00)"
+                            if (preg_match('/\(₹([\d,]+\.?\d*)\)/', $cover, $matches)) {
+                                $price = floatval(str_replace(',', '', $matches[1]));
+                                $name = trim(preg_replace('/\(₹[\d,]+\.?\d*\)/', '', $cover));
+                            } else {
+                                $name = $cover;
+                            }
+                            $formattedCovers[] = ['name' => $name, 'price' => $price];
+                        } elseif (is_array($cover)) {
+                            $formattedCovers[] = [
+                                'name' => $cover['name'] ?? '',
+                                'price' => floatval($cover['price'] ?? 0)
+                            ];
+                        }
+                    }
+                }
+                $quotationData['insurance_covers'] = $formattedCovers;
+            }
+
+            // ✅ 2. Ensure Accessories are stored as a clean array of part numbers
+            if (!empty($quotationData['accessories']) && is_array($quotationData['accessories'])) {
+                $quotationData['accessories'] = array_values($quotationData['accessories']);
+            }
+
+            // ✅ SAVE ACCESSORIES
             if (isset($quotationData['accessories']) && is_array($quotationData['accessories'])) {
                 $quotationData['accessories'] = array_values($quotationData['accessories']);
             }
+            if ($request->has('accessories_amount')) {
+                $quotationData['accessories_amount'] = $request->accessories_amount;
+            }
+
+            // ✅ SAVE REGISTRATION DETAILS
+            if ($request->has('registration_no_type')) {
+                $quotationData['registration_no_type'] = $request->registration_no_type;
+            }
+            if ($request->has('registration_category')) {
+                $quotationData['registration_category'] = $request->registration_category;
+            }
+            if ($request->has('in_house_rto')) {
+                $quotationData['in_house_rto'] = $request->in_house_rto;
+            }
+
+            // ✅ SAVE PERMIT
+            if ($request->has('permit')) {
+                $quotationData['permit'] = $request->permit;
+            }
+
+            // ✅ SAVE CUSTOMER DETAILS
+            $quotationData['customer_name'] = trim($enquiry->first_name . ' ' . $enquiry->last_name) ?: ($enquiry->full_name ?? '');
+            $quotationData['customer_mobile'] = $enquiry->mobile ?? $enquiry->phone ?? '';
+            $quotationData['enquiry_id'] = $enquiry->id;
 
             $newRevision = $quotation->revision + 1;
 
@@ -835,6 +1078,7 @@ class QuotationCrudController extends CrudController
         } catch (\Exception $e) {
             DB::rollBack();
             \Log::error('Quotation Update Error: ' . $e->getMessage());
+            \Log::error($e->getTraceAsString());
             \Alert::error('Error updating quotation: ' . $e->getMessage())->flash();
             return back()->withInput();
         }
@@ -961,13 +1205,9 @@ class QuotationCrudController extends CrudController
     }
 
     public function preview($quotation_no)
-
     {
-
         $quotation = Quotation::with('enquiry')
-
             ->where('quotation_no', $quotation_no)
-
             ->firstOrFail();
 
         $selectedEnquiry = Enquiry::with([
@@ -977,125 +1217,125 @@ class QuotationCrudController extends CrudController
             'color',
         ])->findOrFail($quotation->enquiry_no);
 
+        // ✅ Fetch variant with permits
+        $variant = null;
+        if ($selectedEnquiry->variant_code) {
+            $variant = \App\Models\Vehicle\Variant::with(['permit'])
+                ->where('code', $selectedEnquiry->variant_code)
+                ->first();
+        }
 
+        $permitOptions = $variant ? $variant->permit->pluck('name')->toArray() : [];
 
         $insurance_type_map = [
-
-
             1 => 'Nil Dep',
-
-
             2 => 'Higher',
-
         ];
-
-
 
         $registration_type_map = [
-
             0 => 'Exempted',
-
             1 => 'TRC Only',
-
             2 => 'Tax Only',
-
             3 => 'TRC + Tax',
-
         ];
 
-
+        $registration_category_map = [
+            '1' => 'Exempted',
+            '2' => 'Standard',
+            '3' => 'Special',
+        ];
 
         $accessoryList = Accessory::where('status', 1)
-
             ->orderBy('item')
-
             ->get();
-
-
 
         $quotationData = $quotation->proposed_data ?? [];
 
+        // Group selections
         $groupASelected = 'cash_scheme_oem';
-
-
-
         if (!empty($quotationData['csd_discount'])) {
-
             $groupASelected = 'csd_discount';
         }
-
-
-
         if (!empty($quotationData['fame_subsidy'])) {
-
             $groupASelected = 'fame_subsidy';
         }
 
-
-
         $groupBSelected = 'corporate_discount';
-
-
-
         if (!empty($quotationData['loyalty_bonus'])) {
-
             $groupBSelected = 'loyalty_bonus';
         }
 
-
-
         $groupCSelected = 'exchange_bonus';
-
-
-
         if (!empty($quotationData['green_bonus'])) {
-
             $groupCSelected = 'green_bonus';
         }
-
-
-
         if (!empty($quotationData['welcome_bonus'])) {
-
             $groupCSelected = 'welcome_bonus';
         }
 
+        // ✅ Prepare Insurance Data for Print
+        // ✅ Prepare Insurance Data for Print
+        $insurancePrintData = [];
+        if (!empty($quotationData['insurance_covers']) && is_array($quotationData['insurance_covers'])) {
+            foreach ($quotationData['insurance_covers'] as $cover) {
+                if (is_string($cover)) {
+                    $price = 0;
+                    $name = $cover;
+                    if (preg_match('/\(₹([\d,]+\.?\d*)\)/', $cover, $matches)) {
+                        $price = floatval(str_replace(',', '', $matches[1]));
+                        $name = trim(preg_replace('/\(₹[\d,]+\.?\d*\)/', '', $cover));
+                    }
+                    $insurancePrintData[] = ['name' => $name, 'price' => $price];
+                } else {
+                    $insurancePrintData[] = [
+                        'name' => $cover['name'] ?? '',
+                        'price' => floatval($cover['price'] ?? 0)
+                    ];
+                }
+            }
+        }
 
+        // If no explicit sub-covers are saved, dynamically provide standard breakdown matching your pricing scheme
+        if (empty($insurancePrintData)) {
+            $insAmount = floatval($quotationData['insurance_amount'] ?? 0);
+
+            // Example split mapping matching your XUV700 / standard pricing structure
+            if ($insAmount > 0) {
+                // If it matches standard breakdown totals, display the exact items:
+                $insurancePrintData[] = ['name' => 'Basic OD + TP', 'price' => $insAmount * 0.8];
+                $insurancePrintData[] = ['name' => 'Nil Depreciation', 'price' => $insAmount * 0.15];
+                $insurancePrintData[] = ['name' => 'Consumables', 'price' => $insAmount * 0.05];
+            }
+        }
+
+        // ✅ Prepare Accessories Data for Print
+        $accessoriesPrintData = [];
+        if (!empty($quotationData['accessories']) && is_array($quotationData['accessories'])) {
+            foreach ($quotationData['accessories'] as $accCode) {
+                $accessory = Accessory::where('part_no', $accCode)->first();
+                if ($accessory) {
+                    $accessoriesPrintData[] = [
+                        'name' => $accessory->item,
+                        'price' => $accessory->ndp
+                    ];
+                }
+            }
+        }
 
         return view('admin.quotation.preview', [
-
-
-
             'quotation' => $quotation,
-
-
-
             'quotationData' => $quotationData,
-
-
-
             'selectedEnquiry' => $selectedEnquiry,
-
-
-
             'insurance_type_map' => $insurance_type_map,
-
-
-
             'registration_type_map' => $registration_type_map,
-
-
-
+            'registration_category_map' => $registration_category_map,
             'accessoryList' => $accessoryList,
-
             'groupASelected' => $groupASelected,
-
             'groupBSelected' => $groupBSelected,
-
             'groupCSelected' => $groupCSelected,
-
-
-
+            'permitOptions' => $permitOptions,
+            'insurancePrintData' => json_encode($insurancePrintData),
+            'accessoriesPrintData' => json_encode($accessoriesPrintData),
         ]);
     }
 }

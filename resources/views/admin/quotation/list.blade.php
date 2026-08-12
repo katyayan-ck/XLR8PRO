@@ -167,8 +167,9 @@ const columnDefs = [
         'revision',
 
         'ex_showroom_price',
-        'policy_type',
-        'registration_type',
+            'insurance_amount',        // ✅ ADD THIS
+    'registration_amount',
+        
 
         'accessories',
         'accessories_amount',
@@ -253,6 +254,16 @@ const columnDefs = [
         },
         onGridReady: params => {
             gridApi = params.api;
+            // ✅ ADD THIS DEBUG CODE
+    const rowData = @json($gridConfig['data'] ?? []);
+    console.log('=== FULL ROW DATA ===');
+    console.log(rowData);
+    console.log('Row Data Length:', rowData.length);
+    if (rowData.length > 0) {
+        console.log('First Row:', rowData[0]);
+        console.log('Customer Name:', rowData[0].customer_name);
+        console.log('Mobile:', rowData[0].mobile);
+    }
             const defaultFields = [
 
     'serial_no',
@@ -462,6 +473,8 @@ const columnDefs = [
     'color',
 
     'ex_showroom_price',
+        'insurance_amount',     // ✅ ADD THIS
+    'registration_amount',
 
     'onroad_price',
 
