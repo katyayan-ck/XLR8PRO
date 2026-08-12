@@ -87,6 +87,9 @@ class EnquiryCrudController extends CrudController
             'unassigned_long' => Enquiry::unassignedLong(),
             'assigned_quick' => Enquiry::assignedQuick(),
             'unassigned_quick' => Enquiry::unassignedQuick(),
+            'exchange' => Enquiry::where('purchase_type', 'Exchange Buy'),
+            'scrappage' => Enquiry::where('purchase_type', 'Scrappage'),
+            'exchange_not_interested' => Enquiry::whereIn('purchase_type', ['First Time Buy', 'Additional Buy', 'No Consideration']),
             default => Enquiry::query(),
         };
 
@@ -101,7 +104,7 @@ class EnquiryCrudController extends CrudController
         $total = (clone $query)->count();
 
         // Determine the mapping format type
-        $mapType = in_array($listType, ['assigned_long', 'unassigned_long']) ? 'long' : (in_array($listType, ['assigned_quick', 'unassigned_quick']) ? 'quick' : (in_array($listType, ['reference', 'virtual', 'whatsapp']) ? $listType : 'all'));
+        $mapType = in_array($listType, ['assigned_long', 'unassigned_long']) ? 'long' : (in_array($listType, ['assigned_quick', 'unassigned_quick']) ? 'quick' : (in_array($listType, ['reference', 'virtual', 'whatsapp', 'exchange', 'scrappage', 'exchange_not_interested']) ? $listType : 'all'));
 
         // Pre-fetch Mappings to prevent N+1 Queries
         $lpMap = collect(OrgService::keywordValueByCode('LIKELY_PURCHASE_DATE'))->pluck('value', 'code')->toArray();
@@ -128,6 +131,9 @@ class EnquiryCrudController extends CrudController
             'unassigned_long' => Enquiry::unassignedLong(),
             'assigned_quick' => Enquiry::assignedQuick(),
             'unassigned_quick' => Enquiry::unassignedQuick(),
+            'exchange' => Enquiry::where('purchase_type', 'Exchange Buy'),
+            'scrappage' => Enquiry::where('purchase_type', 'Scrappage'),
+            'exchange_not_interested' => Enquiry::whereIn('purchase_type', ['First Time Buy', 'Additional Buy', 'No Consideration']),
             default => Enquiry::query(),
         };
 
@@ -139,7 +145,7 @@ class EnquiryCrudController extends CrudController
 
         $query->orderByDesc('created_at');
 
-        $mapType = in_array($listType, ['assigned_long', 'unassigned_long']) ? 'long' : (in_array($listType, ['assigned_quick', 'unassigned_quick']) ? 'quick' : (in_array($listType, ['reference', 'virtual', 'whatsapp']) ? $listType : 'all'));
+        $mapType = in_array($listType, ['assigned_long', 'unassigned_long']) ? 'long' : (in_array($listType, ['assigned_quick', 'unassigned_quick']) ? 'quick' : (in_array($listType, ['reference', 'virtual', 'whatsapp', 'exchange', 'scrappage', 'exchange_not_interested']) ? $listType : 'all'));
 
         $columns = array_values(array_filter(
             $this->getColumns($mapType),
@@ -204,6 +210,20 @@ class EnquiryCrudController extends CrudController
         return $this->buildGrid(Enquiry::unassignedQuick(), 'admin.enquiry.unassigned-quick-enquiry', 'Unassigned Quick Enquiries', 'quick');
     }
 
+    // Exchange Enquiry Stage Lists - Modified to use the new exchange blade
+    public function exchangeEnquiryList()
+    {
+        return $this->buildGrid(Enquiry::where('purchase_type', 'Exchange Buy'), 'admin.enquiry.exchange', 'Int in Exchange Dashboard', 'exchange');
+    }
+    public function scrappageEnquiryList()
+    {
+        return $this->buildGrid(Enquiry::where('purchase_type', 'Scrappage'), 'admin.enquiry.exchange', 'Int in Scrappage Dashboard', 'scrappage');
+    }
+    public function exchangeNotInterestedList()
+    {
+        return $this->buildGrid(Enquiry::whereIn('purchase_type', ['First Time Buy', 'Additional Buy', 'No Consideration']), 'admin.enquiry.exchange', 'Not Interested in Exchange Dashboard', 'exchange_not_interested');
+    }
+
     private function buildGrid($query, $view, $title, $type)
     {
         $this->crud->setListView($view);
@@ -253,6 +273,12 @@ class EnquiryCrudController extends CrudController
             $actionBtns .= '<a href="' . $bookUrl . '" class="btn btn-warning btn-sm" title="Convert to Booking">Process</a>';
         }
 
+        // Send Exchange team to dedicated Custom Blade
+        if (in_array($type, ['exchange', 'scrappage', 'exchange_not_interested'])) {
+            $exchUrl = backpack_url("exchange/enquiry/{$e->id}/edit");
+            $actionBtns = '<a href="' . $exchUrl . '" class="btn btn-sm btn-primary">Process</a>';
+        }
+
         $row = [
             'serial_no' => $i + 1,
             
@@ -295,6 +321,14 @@ class EnquiryCrudController extends CrudController
             'oem_booking_date' => $c($e->oem_booking_date, 'd-m-Y'),
             'oem_otf_no' => $e->oem_otf_no ?? '—',
             'oem_test_drive_no' => $e->oem_test_drive_no ?? $e->test_drive_no ?? '—',
+            
+            // Requirements Mappings
+            'territory' => $e->territory ?? '—',
+            'fup_count' => $e->fup_count ?? '—',
+            'td_date' => $c($e->td_date, 'd-m-Y'),
+            'lost_reason' => $e->lost_reason ?? '—',
+            'followup_status' => $e->followup_status ?? $e->fup_status ?? '—', 
+            
             'action' => '<div class="d-flex justify-content-center gap-2">' . $actionBtns . '</div>',
         ];
 
@@ -313,8 +347,8 @@ class EnquiryCrudController extends CrudController
             $row['campaign_date'] = $c($e->wapp_campaign_date, 'd-m-Y');
         }
 
-        // Apply data for lists (quick, long, all)
-        if (in_array($type, ['long', 'quick', 'all'])) {
+        // Apply data for lists (quick, long, all, exchange, scrappage)
+        if (in_array($type, ['long', 'quick', 'all', 'exchange', 'scrappage', 'exchange_not_interested'])) {
             $row += [
                 'oem_long_enquiry_no' => $e->oem_long_enquiry_no ?? '—',
                 'oem_long_enquiry_date' => $c($e->oem_long_enquiry_date, 'd-m-Y'),
@@ -380,6 +414,11 @@ class EnquiryCrudController extends CrudController
                 'consider_make' => $e->consid_brand ?? $e->consider_make ?? '—',
                 'consider_model' => $e->consid_model ?? $e->consider_model ?? '—',
                 'consider_variant' => $e->consid_variant ?? $e->consider_variant ?? '—',
+                
+                'expected_price' => $e->expected_price ?? '—',
+                'offered_price' => $e->offered_price ?? '—',
+                'exchange_bonus' => $e->exchange_bonus ?? '—',
+                'price_gap' => ($e->expected_price ?? 0) - ($e->offered_price ?? 0) - ($e->exchange_bonus ?? 0)
             ];
         }
 
@@ -392,6 +431,7 @@ class EnquiryCrudController extends CrudController
         $commonEnd = [
             ['field' => 'dms_enquiry_stage', 'headerName' => 'DMS Stage'],
             ['field' => 'cre_enquiry_stage', 'headerName' => 'CRE Stage'],
+            ['field' => 'followup_status', 'headerName' => 'FOLLOW UP STATUS'], // Req 3
             ['field' => 'cre_next_fup_date', 'headerName' => 'Next FUP Date'],
             ['field' => 'cre_next_fup_time', 'headerName' => 'Next FUP Time'],
             ['field' => 'cre_next_fup_remarks', 'headerName' => 'FUP Remarks'],
@@ -464,7 +504,7 @@ class EnquiryCrudController extends CrudController
                 ['field' => 'mobile', 'headerName' => 'Customer Mobile'],
             ], $commonEnd);
 
-        // Core base columns for All, Long, Quick
+        // Core base columns for All, Long, Quick, Exchange, Scrappage
         $baseCols = [
             ['field' => 'serial_no', 'headerName' => 'S.No.'],
             ['field' => 'x8_enquiry_no', 'headerName' => 'X8 Enquiry No.'],
@@ -476,28 +516,23 @@ class EnquiryCrudController extends CrudController
         ];
 
         // Dynamically add only the relevant columns to clear out "Unnecessary Fields"
-        if ($type === 'all') {
+        if ($type === 'all' || in_array($type, ['exchange', 'scrappage', 'exchange_not_interested'])) {
             $baseCols = array_merge($baseCols, [
                 ['field' => 'oem_quick_enquiry_no', 'headerName' => 'OEM Quick Enquiry No.'],
                 ['field' => 'oem_quick_enquiry_date', 'headerName' => 'OEM Quick Enquiry Date'],
                 ['field' => 'oem_quick_enquiry_assign_date', 'headerName' => 'OEM Quick Enquiry Assign Date'],
             ]);
-            // Excluded OEM Long columns & Quick Enquiry Status
-            
         } elseif ($type === 'quick') {
             $baseCols = array_merge($baseCols, [
                 ['field' => 'oem_quick_enquiry_no', 'headerName' => 'OEM Quick Enquiry No.'],
                 ['field' => 'oem_quick_enquiry_date', 'headerName' => 'OEM Quick Enquiry Date'],
             ]);
-            // Excluded OEM Quick Assign Date, Quick Status, and all Long columns
-            
         } elseif ($type === 'long') {
             $baseCols = array_merge($baseCols, [
                 ['field' => 'oem_long_enquiry_no', 'headerName' => 'OEM Long Enquiry No.'],
                 ['field' => 'oem_long_enquiry_date', 'headerName' => 'OEM Long Enquiry Date'],
                 ['field' => 'oem_long_enquiry_assign_date', 'headerName' => 'OEM Enquiry Assign Date'], // RENAMED
             ]);
-            // Excluded all Quick columns
         }
 
         $midCols = [
@@ -519,10 +554,11 @@ class EnquiryCrudController extends CrudController
             ['field' => 'transmission', 'headerName' => 'Transmission'],
             ['field' => 'drivetrain', 'headerName' => 'Drivetrain'],
             ['field' => 'seating', 'headerName' => 'Seating'],
+            ['field' => 'territory', 'headerName' => 'Territory'], // Req 1
             ['field' => 'tehsil', 'headerName' => 'Tehsil'],
             ['field' => 'district', 'headerName' => 'District'],
-            ['field' => 'city', 'headerName' => 'City'],
-            ['field' => 'sc_code', 'headerName' => 'Sales Consultant'], // RENAMED
+            ['field' => 'city', 'headerName' => 'State'], // Req 3: City renamed to State internally for columns
+            ['field' => 'sc_code', 'headerName' => 'Sales Consultant'], 
             ['field' => 'dealer_branch', 'headerName' => 'Dealer Branch'],
             ['field' => 'dealer_location', 'headerName' => 'Dealer Location'],
             ['field' => 'followup_type', 'headerName' => 'Followup Type'],
@@ -537,7 +573,7 @@ class EnquiryCrudController extends CrudController
             ['field' => 'marriage_date', 'headerName' => 'Marriage Date'],
             ['field' => 'age_group', 'headerName' => 'Age Group'],
             ['field' => 'usage_area', 'headerName' => 'Usage Area'],
-            ['field' => 'km_travelled_daily', 'headerName' => 'KM Travelled Daily'], // RENAMED
+            ['field' => 'km_travelled_daily', 'headerName' => 'KM Travelled Daily'], 
             ['field' => 'application_type', 'headerName' => 'Application Type'],
             ['field' => 'application', 'headerName' => 'Application'],
             ['field' => 'pincode', 'headerName' => 'Pincode'],
@@ -547,7 +583,11 @@ class EnquiryCrudController extends CrudController
             ['field' => 'remarks', 'headerName' => 'Remarks'],
             ['field' => 'consider_make', 'headerName' => 'Consideration Make'],
             ['field' => 'consider_model', 'headerName' => 'Consideration Model'],
-            ['field' => 'consider_variant', 'headerName' => 'Consideration Variant']
+            ['field' => 'consider_variant', 'headerName' => 'Consideration Variant'],
+            ['field' => 'expected_price', 'headerName' => 'Expected Price'],
+            ['field' => 'offered_price', 'headerName' => 'Offered Price'],
+            ['field' => 'exchange_bonus', 'headerName' => 'Exchange Bonus'],
+            ['field' => 'price_gap', 'headerName' => 'Price Gap']
         ];
 
         // Clean up "unnecessary fields" based on type to declutter customise headers menu
@@ -717,8 +757,6 @@ class EnquiryCrudController extends CrudController
      */
     private function applyFilterCondition($query, string $column, array $condition): void
     {
-        // ag-Grid sometimes sends a multi-condition filter instead of a flat one:
-        // { operator: 'AND'|'OR', conditions: [ {type, filter}, {type, filter} ] }
         if (isset($condition['conditions']) && is_array($condition['conditions'])) {
             $operator = strtoupper($condition['operator'] ?? 'AND') === 'OR' ? 'orWhere' : 'where';
             $query->where(function ($q) use ($column, $condition, $operator) {
@@ -816,6 +854,30 @@ class EnquiryCrudController extends CrudController
         return redirect(backpack_url('enquiry'));
     }
 
+    // --- Exchange Edit / Update specific methods ---
+    public function exchangeEnquiryEdit($id)
+    {
+        $enquiry = Enquiry::with(['segment', 'model', 'variant'])->findOrFail($id);
+        $existing_car_oems = OrgService::keywordValueByCode('EXISTING_CAR_OEM');
+        return view('admin.enquiry.exchange_edit', compact('enquiry', 'existing_car_oems'));
+    }
+
+    public function exchangeEnquiryUpdate(Request $request, $id)
+    {
+        $enquiry = Enquiry::findOrFail($id);
+        $enquiry->update($request->only([
+            'brand_make', 'brand_model', 'vehicle_no', 'lost_reason',
+            'make_year', 'odo_reading', 'expected_price', 'offered_price', 'exchange_bonus'
+        ]));
+        Alert::success('Exchange Details Updated successfully.')->flash();
+        
+        // Return to whichever list they came from
+        if($enquiry->purchase_type === 'Scrappage') {
+            return redirect(backpack_url('exchange/enquiry/int-in-scrappage'));
+        }
+        return redirect(backpack_url('exchange/enquiry/int-in-exchange'));
+    }
+
     public function storeReference(Request $request)
     {
         try {
@@ -860,8 +922,6 @@ class EnquiryCrudController extends CrudController
 
     private function getValidationRules($id = null)
     {
-        // If the request has segment_code, it means the full form is active and submitted.
-        // If call_nature is submitted but not segment_code, it means the full form is hidden.
         $fullFormActive = request()->has('segment_code') || !request()->has('call_nature');
         $req = $fullFormActive ? 'required' : 'nullable';
 
@@ -897,12 +957,14 @@ class EnquiryCrudController extends CrudController
             'marriage_date' => 'nullable|date',
             'age_group' => 'nullable',
             'pincode' => 'nullable|max:10',
-            'bpo' => 'nullable|max:150', // Added Support for BPO
+            'bpo' => 'nullable|max:150', // VPO mapped functionally
             'tehsil' => 'nullable|max:100',
             'district' => 'nullable|max:100',
-            'city' => 'nullable|max:100',
+            'city' => 'nullable|max:100', // State mapped functionally
+            'territory' => 'nullable|string|max:100', // Req 1
             'has_ev' => 'nullable',
             'purchase_type' => 'nullable',
+            'purchase_type_crm' => 'nullable|string|max:100', // Req 4
             'consider_make' => 'nullable|max:100',
             'consider_model' => 'nullable|max:100',
             'consider_variant' => 'nullable|max:100',
@@ -924,19 +986,45 @@ class EnquiryCrudController extends CrudController
             'dealer_branch' => $req,
             'dealer_location' => $req,
             'sc_code' => $req,
+            
+            // Follow Up Rules (Req 7, 9, 11, 13)
             'followup_type' => 'nullable',
             'followup_date' => 'nullable|date',
             'followup_time' => 'nullable',
+            'actual_fup_date' => 'nullable|date',
+            'actual_fup_duration' => 'nullable|string|max:100',
+            'followup_status' => 'nullable|string|max:100',
+            'latest_fup_status' => 'nullable|string|max:100',
+            'fup_count' => 'nullable|integer',
+            'recent_actual_followup_date' => 'nullable|date',
+            'recent_fup_remarks' => 'nullable|string|max:255',
+            'recent_fup_remarks_type' => 'nullable|string|max:255',
+            'recent_fup_comments' => 'nullable|string|max:255',
+            'test_drive_count' => 'nullable|integer',
+            'test_drive_no' => 'nullable|string|max:100',
+            'td_date' => 'nullable|date', 
+            'lost_reason' => 'nullable|string|max:100', 
+            'lost_sub_reason' => 'nullable|string|max:100',
+            'lost_detail_reason' => 'nullable|string|max:100',
+            'lost_remarks' => 'nullable|string|max:100',
+            
+            // CRE Follow up
+            'cre_enquiry_stage' => 'nullable|string|max:100',
+            'cre_next_fup_date' => 'nullable|date',
+            'cre_next_fup_time' => 'nullable',
+            'cre_next_fup_remarks' => 'nullable|string|max:255',
+
+            // Financial & Exchange Rules
             'make_year' => 'nullable|integer',
             'odo_reading' => 'nullable|numeric',
             'expected_price' => 'nullable|numeric',
             'offered_price' => 'nullable|numeric',
             'exchange_bonus' => 'nullable|numeric',
             'fin_mode' => 'nullable|string|max:50',
-            'financier' => 'nullable|integer',
+            'financier' => 'nullable|integer', // Req 5: Nullable/Optional
             'brand_make' => 'nullable|string|max:100',
             'brand_model' => 'nullable|string|max:100',
-            'call_nature' => 'nullable|string', // Support for Virtual Enquiries
+            'call_nature' => 'nullable|string', 
         ];
     }
 
