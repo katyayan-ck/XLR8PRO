@@ -173,32 +173,38 @@ $enquiry = $quotation?->enquiry ?? ($data['enquiry'] ?? null);
                     <div class="card-body">
                         <h2 class="mb-3">Customer Details</h2>
                         <div class="row">
+                            <!-- Customer Name -->
                             <div class="col-sm-3">
                                 <div class="form-group">
                                     <label id="customernamelabel" for="name">Customer Name <span
                                             class="required-mark">*</span></label>
-                                    <input type="text" name="name" id="name" class="form-control" required value="{{ old(
-                                                'name',
-                                                optional($enquiry)->display_name ?? trim(optional($enquiry)->first_name . ' ' . optional($enquiry)->last_name),
-                                            ) }}" @if ($quotation) readonly @endif>
+                                    <input type="text" name="name" id="name" class="form-control" required value="{{ old('name', 
+                                        $enquiry ? trim($enquiry->first_name . ' ' . $enquiry->last_name) : 
+                                        ($q['customer_name'] ?? '')
+                                    ) }}">
                                 </div>
                             </div>
 
+                            <!-- Care Of -->
                             <div class="col-sm-3">
                                 <div class="form-group">
                                     <label for="careof">Care Of <span class="required-mark">*</span></label>
                                     <select name="careof" id="careof" class="form-control form-select" required>
                                         <option value="">Please Select...</option>
-                                        <option value="1">Son of</option>
-                                        <option value="2">Daughter of</option>
-                                        <option value="3">Married to</option>
-                                        <option value="4">Guardian Name</option>
-                                        <option value="5" id="ownedByOption" style="display: none;">Owned By
-                                        </option>
+                                        <option value="1" {{ (old('careof', $q['careof'] ?? '' )==1) ? 'selected' : ''
+                                            }}>Son of</option>
+                                        <option value="2" {{ (old('careof', $q['careof'] ?? '' )==2) ? 'selected' : ''
+                                            }}>Daughter of</option>
+                                        <option value="3" {{ (old('careof', $q['careof'] ?? '' )==3) ? 'selected' : ''
+                                            }}>Married to</option>
+                                        <option value="4" {{ (old('careof', $q['careof'] ?? '' )==4) ? 'selected' : ''
+                                            }}>Guardian Name</option>
+                                        <option value="5" id="ownedByOption" style="display: none;">Owned By</option>
                                     </select>
                                 </div>
                             </div>
 
+                            <!-- Care Of Name -->
                             <div class="col-sm-3">
                                 <div class="form-group">
                                     <label id="careofnamelabel">Care Of Name <span
@@ -208,16 +214,15 @@ $enquiry = $quotation?->enquiry ?? ($data['enquiry'] ?? null);
                                 </div>
                             </div>
 
+                            <!-- Mobile -->
                             <div class="col-sm-3">
                                 <div class="form-group">
-                                    <label for="mobile">
-                                        Contact No.
-                                        <span class="required-mark">*</span>
-                                    </label>
-
+                                    <label for="mobile">Contact No. <span class="required-mark">*</span></label>
                                     <input type="text" name="mobile" id="mobile" class="form-control" required
-                                        maxlength="10" value="{{ old('mobile', $enquiry->mobile ?? '') }}" @if
-                                        ($quotation) readonly @endif>
+                                        maxlength="10" value="{{ old('mobile', 
+                                        $enquiry->mobile ?? 
+                                        ($q['customer_mobile'] ?? '')
+                                    ) }}">
                                 </div>
                             </div>
 
@@ -421,30 +426,28 @@ $enquiry = $quotation?->enquiry ?? ($data['enquiry'] ?? null);
                     </div>
                 </div>
 
-                    <div class="card p-3 mt-3">
-                        <div class="card-body">
-                            <h2 class="mb-3">Purchase Type Details</h2>
-                            <div class="row">
-                                <div class="col-sm-2">
-                                    <div class="form-group">
-                                        <label for="buyertype">Purchase Type <span class="required-mark">*</span></label>
-                                        <select name="buyertype" id="buyertype" class="form-control form-select"
-                                            required>
-                                            <option value="" disabled
-                                                {{ !isset($enquiry->purchase_type) ? 'selected' : '' }}>-- Select Purchase
-                                                Type --</option>
-                                            @php $ptype = old('buyertype', $enquiry->purchase_type ?? ''); @endphp
-                                            <option value="First Time Buy"
-                                                {{ in_array($ptype, ['First Time Buy', 'First Time Buy']) ? 'selected' : '' }}>
-                                                First Time Buyer</option>
-                                            <option value="Additional Buy"
-                                                {{ $ptype == 'Additional Buy' ? 'selected' : '' }}>Additional Buy</option>
-                                            <option value="Exchange Buy" {{ $ptype == 'Exchange Buy' ? 'selected' : '' }}>
-                                                Exchange Buy</option>
-                                            <option value="Scrappage" {{ $ptype == 'Scrappage' ? 'selected' : '' }}>
-                                                Scrappage</option>
-                                        </select>
-                                    </div>
+                <div class="card p-3 mt-3">
+                    <div class="card-body">
+                        <h2 class="mb-3">Purchase Type Details</h2>
+                        <div class="row">
+                            <div class="col-sm-2">
+                                <div class="form-group">
+                                    <label for="buyertype">Purchase Type <span class="required-mark">*</span></label>
+                                    <select name="buyertype" id="buyertype" class="form-control form-select" required>
+                                        <option value="" disabled {{ !isset($enquiry->purchase_type) ? 'selected' : ''
+                                            }}>-- Select Purchase
+                                            Type --</option>
+                                        @php $ptype = old('buyertype', $enquiry->purchase_type ?? ''); @endphp
+                                        <option value="First Time Buy" {{ in_array($ptype, ['First Time
+                                            Buy', 'First Time Buy' ]) ? 'selected' : '' }}>
+                                            First Time Buyer</option>
+                                        <option value="Additional Buy" {{ $ptype=='Additional Buy' ? 'selected' : '' }}>
+                                            Additional Buy</option>
+                                        <option value="Exchange Buy" {{ $ptype=='Exchange Buy' ? 'selected' : '' }}>
+                                            Exchange Buy</option>
+                                        <option value="Scrappage" {{ $ptype=='Scrappage' ? 'selected' : '' }}>
+                                            Scrappage</option>
+                                    </select>
                                 </div>
                             </div>
 
@@ -564,342 +567,318 @@ $enquiry = $quotation?->enquiry ?? ($data['enquiry'] ?? null);
                             </div>
                         </div>
                     </div>
+
                 </div>
-
-                <div class="card p-3 mt-3">
-                    <div class="card-body">
-                        <h2 class="mb-3">Vehicle Details</h2>
-                        <div class="row">
-                            <div class="col-sm-3">
-                                <div class="form-group">
-                                    <label for="segment">
-                                        Segment <span class="required-mark">*</span>
-                                    </label>
-
-                                    <select name="segment" id="segment" class="form-control form-select" required @if
-                                        ($quotation) disabled @endif>
-
-                                        <option value="">Please Select Segment...</option>
-
-                                        @foreach ($data['segments'] ?? [] as $segment)
-                                        <option value="{{ $segment->code }}" {{ old('segment', $q['segment_code'] ??
-                                            ($enquiry->segment_code ?? '')) == $segment->code ? 'selected' : '' }}>
-                                            {{ $segment->name }}
-                                        </option>
-                                        @endforeach
-
-                                    </select>
-
-                                    @if ($quotation)
-                                    <input type="hidden" name="segment" value="{{ $q['segment_code'] }}">
-                                    @endif
-                                </div>
-                            </div>
-
-                            <div class="col-sm-3">
-                                <div class="form-group">
-                                    <label for="model">
-                                        Model <span class="required-mark">*</span>
-                                    </label>
-
-                                    <input type="text" class="form-control"
-                                        value="{{ $quotation?->vehicleModel?->name }}" @if (!$quotation) hidden @endif
-                                        readonly>
-
-                                    @if ($quotation)
-                                    <input type="hidden" name="model" value="{{ $q['model_code'] }}">
-                                    @else
-                                    <select name="model" id="model" class="form-control form-select" required disabled>
-                                        <option value="">Please Select...</option>
-                                    </select>
-                                    @endif
-                                </div>
-                            </div>
-
-                            <div class="col-sm-3">
-                                <div class="form-group">
-                                    <label for="variant">
-                                        Variant <span class="required-mark">*</span>
-                                    </label>
-
-                                    <input type="text" class="form-control"
-                                        value="{{ $quotation?->variant?->display_name }}" @if (!$quotation) hidden
-                                        @endif readonly>
-
-                                    @if ($quotation)
-                                    <input type="hidden" name="variant" value="{{ $q['variant_code'] }}">
-                                    @else
-                                    <select name="variant" id="variant" class="form-control form-select" required
-                                        disabled>
-                                        <option value="">Please Select...</option>
-                                    </select>
-                                    @endif
-                                </div>
-                            </div>
-
-                            <div class="col-sm-3">
-                                <div class="form-group">
-                                    <label for="color">
-                                        Color <span class="required-mark">*</span>
-                                    </label>
-
-                                    <input type="text" class="form-control" value="{{ $quotation?->color?->name }}" @if
-                                        (!$quotation) hidden @endif readonly>
-
-                                    @if ($quotation)
-                                    <input type="hidden" name="color" value="{{ $q['color_code'] }}">
-                                    @else
-                                    <select name="color" id="color" class="form-control form-select" required disabled>
-                                        <option value="">Please Select...</option>
-                                    </select>
-                                    @endif
-
-                                    <input type="hidden" id="vhid" name="vhid">
-                                </div>
-                            </div>
-
-                            <div class="col-sm-2">
-                                <div class="form-group">
-                                    <label for="seating">
-                                        Seating
-                                    </label>
-
-                                    <input type="text" name="seating" id="seating" class="form-control"
-                                        value="{{ old('seating', $quotation?->variant?->seating_capacity ?? ($enquiry->seating ?? 0)) }}"
-                                        readonly>
-                                </div>
-                            </div>
-
-
-
-                            <div class="col-sm-6">
-                                <div class="form-group">
-
-                                    <label>Select Accessories</label>
-
-                                    @if ($quotation)
-                                    <textarea class="form-control" rows="3"
-                                        readonly>{{ collect($q['accessories'] ?? [])->implode(', ') }}</textarea>
-
-                                    @foreach ($q['accessories'] ?? [] as $acc)
-                                    <input type="hidden" name="accessories[]" value="{{ $acc }}">
-                                    @endforeach
-                                    @else
-                                    <select name="accessories[]" id="accessories" class="form-select" multiple disabled>
-                                    </select>
-                                    @endif
-
-                                </div>
-                            </div>
-
-                            <div class="col-sm-2">
-                                <div class="form-group">
-
-                                    <label>Accessories Amount</label>
-
-                                    <input type="text" name="apackamount" id="apackamount" class="form-control"
-                                        value="{{ old('apackamount', $q['accessories_amount'] ?? 0) }}" readonly>
-
-                                </div>
-                            </div>
-
-                            <div class="col-sm-2">
-                                <div class="form-group">
-                                    <label for="chassis">Allotted Chassis No.</label>
-                                    <select name="chassis" id="chassis" class="form-control select2" disabled>
-                                        <option value="0">Please Select...</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card p-3 mt-3">
-                    <div class="card-body">
-                        <h2 class="mb-3">Booking Type & Source</h2>
-                        <div class="row">
-                            <div class="col-sm-3">
-                                <div class="form-group">
-                                    <label for="bookingmode">Booking Mode <span class="required-mark">*</span></label>
-                                    <select name="bookingmode" id="bookingmode" class="form-control form-select"
-                                        required>
-                                        <option value="Dealer" selected>Dealer</option>
-                                        <option value="Online">Online</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="col-sm-2">
-                                <div class="form-group">
-                                    <label for="refrenceno">Online Book Ref No. <span class="required-mark"
-                                            style="display: none;">*</span></label>
-                                    <input type="text" name="refrenceno" id="refrenceno" class="form-control" disabled>
-                                </div>
-                            </div>
-
-                            <div class="col-sm-2">
-                                <div class="form-group">
-                                    <label for="bookingsource">Booking Source <span
-                                            class="required-mark">*</span></label>
-                                    <select name="bookingsource" id="bookingsource" class="form-control form-select"
-                                        required>
-                                        <option value="Dealer" selected>Dealer Sourcing</option>
-                                        <option value="DSA">DSA</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="col-sm-3">
-                                <div class="form-group">
-                                    <label for="dsadetails">Select DSA <span class="required-mark"
-                                            style="display: none;">*</span></label>
-                                    <select name="dsadetails" id="dsadetails" class="form-control form-select" disabled>
-                                        <option value="" disabled selected>-- Select DSA --</option>
-                                        @foreach ($data['dsa_details'] ?? [] as $dsa)
-                                        <option value="{{ $dsa->id }}">{{ $dsa->name }} -
-                                            {{ $dsa->mobile }}
-                                        </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="col-sm-2">
-                                <div class="form-group">
-                                    <label for="saleconsultant">Sales Consultant <span
-                                            class="required-mark">*</span></label>
-                                    <select name="saleconsultant" id="saleconsultant" class="form-control form-select"
-                                        required>
-                                        <option value="">Please Select...</option>
-                                        @foreach ($data['salesconsultants'] ?? [] as $consultant)
-                                        <option value="{{ $consultant['person_code'] }}" {{ old('saleconsultant',
-                                            $enquiry->sc_code ?? '') == $consultant['person_code'] ? 'selected' : '' }}>
-                                            {{ $consultant['display_name'] }} - {{ $consultant['employee_code'] }}
-                                        </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="col-sm-2">
-                                <div class="form-group">
-                                    <label>Delivery Date Type <span class="required-mark">*</span></label>
-                                    <div>
-                                        <label><input type="radio" name="deliverytype" value="Expected" checked>
-                                            Expected</label>&nbsp;&nbsp;&nbsp;
-                                        <label><input type="radio" name="deliverytype" value="Confirmed">
-                                            Confirmed</label>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="col-sm-2">
-                                <div class="form-group">
-                                    <label for="expecteddeldate">Delivery Date <span
-                                            class="required-mark">*</span></label>
-                                    <input type="text" name="expecteddeldate" id="expecteddeldate" class="form-control"
-                                        placeholder="dd-mmm-yyyy" required>
-                                    <input type="hidden" name="hiddenexpecteddeldate" id="hiddenexpecteddeldate">
-                                </div>
-                            </div>
-
-                            <div class="col-sm-2">
-                                <div class="form-group">
-                                    <label for="finmode">Finance Mode <span class="required-mark">*</span></label>
-                                    <select name="finmode" id="finmode" class="form-control form-select" required>
-                                        <option value="" disabled {{ !isset($enquiry->fin_mode) ? 'selected' : '' }}>--
-                                            Select Finance Mode
-                                            --</option>
-                                        <option value="In-house" {{ old('finmode', $enquiry->fin_mode ?? '') ==
-                                            'In-house' ? 'selected' : '' }}>
-                                            In-house</option>
-                                        <option value="Customer Self" {{ old('finmode', $enquiry->fin_mode ?? '') ==
-                                            'Customer Self' ? 'selected' : '' }}>
-                                            Customer Self</option>
-                                        <option value="Cash" {{ old('finmode', $enquiry->fin_mode ?? '') == 'Cash' ?
-                                            'selected' : '' }}>
-                                            Cash</option>
-                                        <option value="Yet To Decide" {{ old('finmode', $enquiry->fin_mode ?? '') ==
-                                            'Yet To Decide' ? 'selected' : '' }}>
-                                            Yet To Decide</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="col-sm-3">
-                                <div class="form-group" id="financierbox" style="display: none;">
-                                    <label for="financier">Financier <span class="required-mark"
-                                            style="display: none;">*</span></label>
-                                    <select name="financier" id="financier" class="form-control form-select">
-                                        <option value="">Select Financier</option>
-                                        @foreach ($data['financiers'] ?? [] as $financier)
-                                        <option value="{{ $financier->id }}"
-                                            data-shortname="{{ $financier->short_name ?? '' }}" {{ old('financier',
-                                            $enquiry->financier ?? '') == $financier->id ? 'selected' : '' }}>
-                                            {{ $financier->name }}
-                                        </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="col-sm-3">
-                                <div class="form-group">
-                                    <label for="financiershortname">Financier Short Name</label>
-                                    <input type="text" name="financiershortname" id="financiershortname"
-                                        class="form-control" readonly>
-                                </div>
-                            </div>
-
-                            <div class="col-sm-3">
-                                <div class="form-group" id="loanstatusbox">
-                                    <label for="loanstatus">Loan File Status <span class="required-mark"
-                                            style="display: none;">*</span></label>
-                                    <select name="loanstatus" id="loanstatus" class="form-control form-select" disabled
-                                        required>
-                                        <option value="" disabled selected>-- Select Loan File Status --</option>
-                                        <option value="Pending">Pending</option>
-                                        <option value="Complete">Complete</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-sm-6">
-                                <div class="form-group">
-                                    <label for="details">Remarks</label>
-                                    <textarea name="details" id="details" class="form-control" rows="4"
-                                        placeholder="Enter any additional remarks...">{{ old('details', $enquiry->remarks ?? '') }}</textarea>
-                                </div>
-                            </div>
-
-                            @if ($quotation)
-                            <div class="col-sm-3 d-flex align-items-center">
-                                <div class="form-group w-100">
-                                    <a href="{{ backpack_url('quotation/' . $quotation->quotation_no . '/preview') }}"
-                                        target="_blank" class="btn btn-info btn-block">
-                                        <i class="ik ik-file-text mr-2"></i> View Quotation PDF
-                                    </a>
-                                </div>
-                            </div>
-                            @endif
-
-
-                        </div>
-                    </div>
-                </div>
-
-
         </div>
 
-        <div class="row mt-4">
-            <div class="col-12 text-center">
-                <button type="submit" id="submitBtn"
-                    class="btn btn-success btn-lg px-5 py-3 shadow-lg fw-bold text-uppercase">
-                    <i class="ik ik-plus mr-2"></i> Add Booking
-                </button>
+        <div class="card p-3 mt-3">
+            <div class="card-body">
+                <h2 class="mb-3">Vehicle Details</h2>
+                <div class="row">
+                    <!-- Segment -->
+                    <div class="col-sm-3">
+                        <div class="form-group">
+                            <label for="segment">Segment <span class="required-mark">*</span></label>
+                            <select name="segment" id="segment" class="form-control form-select" required>
+                                <option value="">Please Select Segment...</option>
+                                @foreach ($data['segments'] ?? [] as $segment)
+                                <option value="{{ $segment->code }}" {{ old('segment', $q['segment_code'] ?? ($enquiry->
+                                    segment_code ?? '')) == $segment->code ? 'selected' : '' }}>
+                                    {{ $segment->name }}
+                                </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Model -->
+                    <div class="col-sm-3">
+                        <div class="form-group">
+                            <label for="model">Model <span class="required-mark">*</span></label>
+                            <select name="model" id="model" class="form-control form-select" required>
+                                <option value="">Please Select Model...</option>
+                                @foreach ($data['models'] ?? [] as $model)
+                                <option value="{{ $model->code }}" {{ old('model', $q['model_code'] ?? ($enquiry->
+                                    model_code ?? '')) == $model->code ? 'selected' : '' }}>
+                                    {{ $model->name }}
+                                </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Variant -->
+                    <div class="col-sm-3">
+                        <div class="form-group">
+                            <label for="variant">Variant <span class="required-mark">*</span></label>
+                            <select name="variant" id="variant" class="form-control form-select" required>
+                                <option value="">Please Select Variant...</option>
+                                @foreach ($data['variants'] ?? [] as $variant)
+                                <option value="{{ $variant->code }}" {{ old('variant', $q['variant_code'] ?? ($enquiry->
+                                    variant_code ?? '')) == $variant->code ? 'selected' : '' }}
+                                    data-seating="{{ $variant->seating_capacity ?? 0 }}">
+                                    {{ $variant->display_name ?? $variant->name ?? $variant->code }}
+                                </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Color -->
+                    <div class="col-sm-3">
+                        <div class="form-group">
+                            <label for="color">Color <span class="required-mark">*</span></label>
+                            <select name="color" id="color" class="form-control form-select" required>
+                                <option value="">Please Select Color...</option>
+                                @foreach ($data['colors'] ?? [] as $color)
+                                <option value="{{ $color->code }}" {{ old('color', $q['color_code'] ?? ($enquiry->
+                                    color_code ?? '')) == $color->code ? 'selected' : '' }}>
+                                    {{ $color->name ?? $color->code }}
+                                </option>
+                                @endforeach
+                            </select>
+                            <input type="hidden" id="vhid" name="vhid">
+                        </div>
+                    </div>
+
+                    <!-- Seating -->
+                    <div class="col-sm-2">
+                        <div class="form-group">
+                            <label for="seating">Seating</label>
+                            <input type="text" name="seating" id="seating" class="form-control" value="{{ old('seating', 
+                                $q['seating'] ?? 
+                                $quotation?->variant?->seating_capacity ?? 
+                                ($enquiry->seating ?? 0)
+                            ) }}">
+                        </div>
+                    </div>
+
+
+
+                    <!-- Accessories -->
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label>Select Accessories</label>
+                            <select name="accessories[]" id="accessories" class="form-select" multiple>
+                                @php
+                                $selectedAccessories = $q['accessories'] ?? [];
+                                if (!is_array($selectedAccessories)) {
+                                $selectedAccessories = explode(',', $selectedAccessories);
+                                }
+                                @endphp
+                                @foreach ($data['accessories_dropdown'] ?? [] as $accessory)
+                                <option value="{{ $accessory['part_no'] ?? $accessory->part_no ?? '' }}"
+                                    data-price="{{ $accessory['ndp'] ?? $accessory->ndp ?? 0 }}" {{
+                                    in_array($accessory['part_no'] ?? $accessory->part_no ?? '', $selectedAccessories) ?
+                                    'selected' : '' }}>
+                                    {{ $accessory['item'] ?? $accessory->item ?? '' }}
+                                    (₹{{ number_format($accessory['ndp'] ?? $accessory->ndp ?? 0, 2) }})
+                                </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Accessories Amount -->
+                    <div class="col-sm-2">
+                        <div class="form-group">
+                            <label>Accessories Amount</label>
+                            <input type="text" name="apackamount" id="apackamount" class="form-control"
+                                value="{{ old('apackamount', $q['accessories_amount'] ?? 0) }}" readonly>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-2">
+                        <div class="form-group">
+                            <label for="chassis">Allotted Chassis No.</label>
+                            <select name="chassis" id="chassis" class="form-control select2" disabled>
+                                <option value="0">Please Select...</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
+
+        <div class="card p-3 mt-3">
+            <div class="card-body">
+                <h2 class="mb-3">Booking Type & Source</h2>
+                <div class="row">
+                    <div class="col-sm-3">
+                        <div class="form-group">
+                            <label for="bookingmode">Booking Mode <span class="required-mark">*</span></label>
+                            <select name="bookingmode" id="bookingmode" class="form-control form-select" required>
+                                <option value="Dealer" selected>Dealer</option>
+                                <option value="Online">Online</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-2">
+                        <div class="form-group">
+                            <label for="refrenceno">Online Book Ref No. <span class="required-mark"
+                                    style="display: none;">*</span></label>
+                            <input type="text" name="refrenceno" id="refrenceno" class="form-control" disabled>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-2">
+                        <div class="form-group">
+                            <label for="bookingsource">Booking Source <span class="required-mark">*</span></label>
+                            <select name="bookingsource" id="bookingsource" class="form-control form-select" required>
+                                <option value="Dealer" selected>Dealer Sourcing</option>
+                                <option value="DSA">DSA</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-3">
+                        <div class="form-group">
+                            <label for="dsadetails">Select DSA <span class="required-mark"
+                                    style="display: none;">*</span></label>
+                            <select name="dsadetails" id="dsadetails" class="form-control form-select" disabled>
+                                <option value="" disabled selected>-- Select DSA --</option>
+                                @foreach ($data['dsa_details'] ?? [] as $dsa)
+                                <option value="{{ $dsa->id }}">{{ $dsa->name }} -
+                                    {{ $dsa->mobile }}
+                                </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-2">
+                        <div class="form-group">
+                            <label for="saleconsultant">Sales Consultant <span class="required-mark">*</span></label>
+                            <select name="saleconsultant" id="saleconsultant" class="form-control form-select" required>
+                                <option value="">Please Select...</option>
+                                @foreach ($data['salesconsultants'] ?? [] as $consultant)
+                                <option value="{{ $consultant['person_code'] }}" {{ old('saleconsultant', $enquiry->
+                                    sc_code ?? '') == $consultant['person_code'] ? 'selected' : '' }}>
+                                    {{ $consultant['display_name'] }} - {{ $consultant['employee_code'] }}
+                                </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-2">
+                        <div class="form-group">
+                            <label>Delivery Date Type <span class="required-mark">*</span></label>
+                            <div>
+                                <label><input type="radio" name="deliverytype" value="Expected" checked>
+                                    Expected</label>&nbsp;&nbsp;&nbsp;
+                                <label><input type="radio" name="deliverytype" value="Confirmed">
+                                    Confirmed</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-2">
+                        <div class="form-group">
+                            <label for="expecteddeldate">Delivery Date <span class="required-mark">*</span></label>
+                            <input type="text" name="expecteddeldate" id="expecteddeldate" class="form-control"
+                                placeholder="dd-mmm-yyyy" required>
+                            <input type="hidden" name="hiddenexpecteddeldate" id="hiddenexpecteddeldate">
+                        </div>
+                    </div>
+
+                    <div class="col-sm-2">
+                        <div class="form-group">
+                            <label for="finmode">Finance Mode <span class="required-mark">*</span></label>
+                            <select name="finmode" id="finmode" class="form-control form-select" required>
+                                <option value="" disabled {{ !isset($enquiry->fin_mode) ? 'selected' : '' }}>--
+                                    Select Finance Mode
+                                    --</option>
+                                <option value="In-house" {{ old('finmode', $enquiry->fin_mode ?? '') ==
+                                    'In-house' ? 'selected' : '' }}>
+                                    In-house</option>
+                                <option value="Customer Self" {{ old('finmode', $enquiry->fin_mode ?? '') ==
+                                    'Customer Self' ? 'selected' : '' }}>
+                                    Customer Self</option>
+                                <option value="Cash" {{ old('finmode', $enquiry->fin_mode ?? '') == 'Cash' ?
+                                    'selected' : '' }}>
+                                    Cash</option>
+                                <option value="Yet To Decide" {{ old('finmode', $enquiry->fin_mode ?? '') ==
+                                    'Yet To Decide' ? 'selected' : '' }}>
+                                    Yet To Decide</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-3">
+                        <div class="form-group" id="financierbox" style="display: none;">
+                            <label for="financier">Financier <span class="required-mark"
+                                    style="display: none;">*</span></label>
+                            <select name="financier" id="financier" class="form-control form-select">
+                                <option value="">Select Financier</option>
+                                @foreach ($data['financiers'] ?? [] as $financier)
+                                <option value="{{ $financier->id }}" data-shortname="{{ $financier->short_name ?? '' }}"
+                                    {{ old('financier', $enquiry->financier ?? '') == $financier->id ? 'selected' : ''
+                                    }}>
+                                    {{ $financier->name }}
+                                </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-3">
+                        <div class="form-group">
+                            <label for="financiershortname">Financier Short Name</label>
+                            <input type="text" name="financiershortname" id="financiershortname" class="form-control"
+                                readonly>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-3">
+                        <div class="form-group" id="loanstatusbox">
+                            <label for="loanstatus">Loan File Status <span class="required-mark"
+                                    style="display: none;">*</span></label>
+                            <select name="loanstatus" id="loanstatus" class="form-control form-select" disabled
+                                required>
+                                <option value="" disabled selected>-- Select Loan File Status --</option>
+                                <option value="Pending">Pending</option>
+                                <option value="Complete">Complete</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label for="details">Remarks</label>
+                            <textarea name="details" id="details" class="form-control" rows="4"
+                                placeholder="Enter any additional remarks...">{{ old('details', $enquiry->remarks ?? '') }}</textarea>
+                        </div>
+                    </div>
+
+                    @if ($quotation)
+                    <div class="col-sm-3 d-flex align-items-center">
+                        <div class="form-group w-100">
+                            <a href="{{ backpack_url('quotation/' . $quotation->quotation_no . '/preview') }}"
+                                target="_blank" class="btn btn-info btn-block">
+                                <i class="ik ik-file-text mr-2"></i> View Quotation PDF
+                            </a>
+                        </div>
+                    </div>
+                    @endif
+
+
+                </div>
+            </div>
+        </div>
+
+
     </div>
+
+    <div class="row mt-4">
+        <div class="col-12 text-center">
+            <button type="submit" id="submitBtn"
+                class="btn btn-success btn-lg px-5 py-3 shadow-lg fw-bold text-uppercase">
+                <i class="ik ik-plus mr-2"></i> Add Booking
+            </button>
+        </div>
+    </div>
+</div>
 </div>
 </div>
 

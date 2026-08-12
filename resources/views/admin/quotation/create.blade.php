@@ -863,6 +863,8 @@ use App\Services\OrgService;
                             <td width="32%">
                                 <input type="text" id="customer_name"
                                     value="{{ optional($selectedEnquiry)->full_name }}" readonly>
+                                <input type="hidden" name="customer_name" id="customer_name_hidden"
+                                    value="{{ optional($selectedEnquiry)->full_name }}">
                             </td>
                         </tr>
 
@@ -870,6 +872,8 @@ use App\Services\OrgService;
                             <td class="title">Mobile Number</td>
                             <td>
                                 <input type="text" value="{{ optional($selectedEnquiry)->mobile }}" readonly>
+                                <input type="hidden" name="mobile" id="mobile_hidden"
+                                    value="{{ optional($selectedEnquiry)->mobile }}">
                             </td>
 
 
@@ -987,9 +991,9 @@ use App\Services\OrgService;
                                                     <option value="">Select Company</option>
                                                 </select>
                                                 {{-- Insurance Covers --}}
-                                                <select id="insurance_covers" class="form-control" multiple
-                                                    style="height:auto; min-height:30px;">
-                                                </select>
+                                                {{-- ================= PRICE DETAILS BOX ================= --}}
+                                                <select id="insurance_covers" name="insurance_covers[]"
+                                                    class="form-control" multiple style="height:auto; min-height:30px;">
                                             </td>
                                             <td class="cell-amount">
                                                 <input type="text" id="insurance_amount" name="insurance_amount"
@@ -1869,6 +1873,86 @@ const ENQUIRIES = {
             oem_code: "LMM-KAZAM-CHARGING"
         },
         pricingKey: "lmmKazam"
+    },
+        "014": {
+        enquiry_no: "ENQ0014",
+        customer: { name: "Ananya Sharma", mobile: "9876500014", careOf: "2", careOfName: "Rajesh Sharma" },
+        vehicle: {
+            segment_code: "PV",
+            segment_name: "Personal Vehicle",
+            model_code: "XUV700",
+            model_name: "XUV700",
+            variant_code: "AX7L",
+            variant_name: "AX7 L Diesel AT",
+            color_code: "BA",
+            color_name: "Electric Blue",
+            oem_code: "XUV700-AX7L-DIE-AT-BA"
+        },
+        pricingKey: "xuv700" // Uses the existing comprehensive XUV700 pricing
+    },
+    "015": {
+        enquiry_no: "ENQ0015",
+        customer: { name: "Vivek Patel", mobile: "9876500015", careOf: "1", careOfName: "Mahendra Patel" },
+        vehicle: {
+            segment_code: "BEV",
+            segment_name: "Electric Vehicle",
+            model_code: "BE6",
+            model_name: "BE6",
+            variant_code: "BM12AH515MB01D00",
+            variant_name: "BE6 One Above B59 R19 C11",
+            color_code: "QK",
+            color_name: "Galaxy Grey",
+            oem_code: "BE6-ONE-ABOVE-GALAXY-GREY"
+        },
+        pricingKey: "bevx9" // Uses the existing BEV X9 pricing
+    },
+    "016": {
+        enquiry_no: "ENQ0016",
+        customer: { name: "Kavya Nair", mobile: "9876500016", careOf: "3", careOfName: "Deepak Nair" },
+        vehicle: {
+            segment_code: "CV",
+            segment_name: "Commercial Vehicle",
+            model_code: "MAXX HD",
+            model_name: "MAXX HD",
+            variant_code: "PFN2EADMBS6PPFD3",
+            variant_name: "MAXX HD 1.7 VXi AC BS6.2",
+            color_code: "WD",
+            color_name: "Diamond White",
+            oem_code: "MAXX-HD-1.7-VXI-AC-WD"
+        },
+        pricingKey: "maxxhd" // New pricing for MAXX HD
+    },
+    "017": {
+        enquiry_no: "ENQ0017",
+        customer: { name: "Arjun Mehta", mobile: "9876500017", careOf: "1", careOfName: "Ravi Mehta" },
+        vehicle: {
+            segment_code: "LMM",
+            segment_name: "Last Mile Mobility",
+            model_code: "TREO YAARI",
+            model_name: "Treo Yaari",
+            variant_code: "0000AMJ0002",
+            variant_name: "Treo Yaari Soft Top",
+            color_code: "0N",
+            color_name: "Blue White",
+            oem_code: "TREO-YAARI-SOFT-TOP-BW"
+        },
+        pricingKey: "treoYaari" // New pricing for Treo Yaari
+    },
+    "018": {
+        enquiry_no: "ENQ0018",
+        customer: { name: "Priya Singh", mobile: "9876500018", careOf: "2", careOfName: "Vikram Singh" },
+        vehicle: {
+            segment_code: "PV",
+            segment_name: "Personal Vehicle",
+            model_code: "SCORPIO-N",
+            model_name: "Scorpio-N",
+            variant_code: "AZ1116YGTTA4GA01",
+            variant_name: "Z4 D AT 2WD 7 STR BS6.2",
+            color_code: "JD",
+            color_name: "Deep Forest",
+            oem_code: "SCORPIO-N-Z4-D-AT-JD"
+        },
+        pricingKey: "scorpioN" // New pricing for Scorpio-N
     }
 };
 
@@ -2904,6 +2988,187 @@ const PRICING = {
             "other-cash-discount": { amount: 0, type: "CN", editable: true },
             "special-cash-discount": { enabled: true, lower: 250000, upper: 400000, max: 15000, amount: 0, type: "INV" }
         }
+    },
+        maxxhd: {
+        permit: [{ type: "Goods", default: true }],
+        receivables: {
+            exShowroom: 895000,
+            insurance: [{
+                permit: "Goods",
+                default: true,
+                companies: [{
+                    insCo: "ICICI Lombard",
+                    default: true,
+                    price: [
+                        { head: "Basic OD TP", price: 17800, Nature: "M" },
+                        { head: "Nil Depreciation", price: 3500, Nature: "M" },
+                        { head: "Consumables", price: 750, Nature: "M" },
+                        { head: "Engine Protect", price: 4200, Nature: "O" },
+                        { head: "RTI", price: 3800, Nature: "O" }
+                    ]
+                }]
+            }],
+            RTO: { TRC: 2000, TAX: [{ permit: "Goods", default: true, amount: 72000 }] },
+            accessories: [
+                { item: "Loading Body Cover", mrp: 8500, discount: 1000, code: "LBC-MH" },
+                { item: "Seat Cover Heavy Duty", mrp: 6200, discount: 800, code: "SC-HD" },
+                { item: "Mud Flaps Set", mrp: 1200, discount: 0, code: "MF-MH" }
+            ],
+            shield: [
+                { title: "4th Year", price: 12990, default: true },
+                { title: "No Shield", price: 0, default: false }
+            ],
+            rsa: [
+                { title: "1 Year", price: 1099, default: true },
+                { title: "No RSA", price: 0, default: false }
+            ],
+            vltd: { permit: "Goods", price: 3800 },
+            kazam: 0,
+            incidental: 1800,
+            "rto-tape": 1299,
+            fastag: 600,
+            COD: 0,
+            "charger-swapping": [],
+            tcs: { limit: 1000000, rate: 1.0 }
+        },
+        deductibles: {
+            "oem-schemes": [
+                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 20000, type: "INV" }
+            ],
+            "dealer-scheme": { amount: 7000, type: "CN" },
+            "accessory-scheme": { amount: 1500, type: "INV" },
+            "shield-scheme": { amount: 1000, type: "CN" },
+            "corp-scheme": [
+                { name: "Corporate Discount", amount: 15000, type: "INV" },
+                { name: "Loyalty Bonus", amount: 8000, type: "INV" }
+            ],
+            "exchange-scheme": [
+                { name: "Exchange Bonus", amount: 12000, type: "CN1" }
+            ],
+            "other-cash-discount": { amount: 0, type: "CN", editable: true },
+            "special-cash-discount": { enabled: true, lower: 700000, upper: 900000, max: 25000, amount: 0, type: "INV" }
+        }
+    },
+    treoYaari: {
+        permit: [{ type: "LMM", default: true }],
+        receivables: {
+            exShowroom: 325000,
+            insurance: [{
+                permit: "LMM",
+                default: true,
+                companies: [{
+                    insCo: "USGI",
+                    default: true,
+                    price: [
+                        { head: "Basic OD TP", price: 8900, Nature: "M" },
+                        { head: "Nil Depreciation", price: 1900, Nature: "M" },
+                        { head: "Consumables", price: 500, Nature: "M" },
+                        { head: "RTI", price: 1300, Nature: "O" }
+                    ]
+                }]
+            }],
+            RTO: { TRC: 800, TAX: [{ permit: "LMM", default: true, amount: 19500 }] },
+            accessories: [
+                { item: "Welcome Kit", mrp: 589, discount: 0, code: "WK-TY" },
+                { item: "Seat Cover", mrp: 2300, discount: 250, code: "SC-TY" },
+                { item: "Floor Mat", mrp: 950, discount: 0, code: "FM-TY" }
+            ],
+            shield: [
+                { title: "4th Year", price: 4990, default: true },
+                { title: "No Shield", price: 0, default: false }
+            ],
+            rsa: [
+                { title: "1 Year", price: 699, default: true },
+                { title: "No RSA", price: 0, default: false }
+            ],
+            vltd: null,
+            kazam: 0,
+            incidental: 1200,
+            "rto-tape": 0,
+            fastag: 0,
+            COD: 2500,
+            "charger-swapping": [],
+            tcs: { limit: 1000000, rate: 1.0 }
+        },
+        deductibles: {
+            "oem-schemes": [
+                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 10000, type: "INV" }
+            ],
+            "dealer-scheme": { amount: 3000, type: "CN" },
+            "accessory-scheme": { amount: 500, type: "INV" },
+            "shield-scheme": { amount: 500, type: "CN" },
+            "corp-scheme": [
+                { name: "Corporate Discount", amount: 8000, type: "INV" },
+                { name: "Loyalty Bonus", amount: 4000, type: "INV" }
+            ],
+            "exchange-scheme": [
+                { name: "Exchange Bonus", amount: 6000, type: "CN1" }
+            ],
+            "other-cash-discount": { amount: 0, type: "CN", editable: true },
+            "special-cash-discount": { enabled: true, lower: 250000, upper: 400000, max: 15000, amount: 0, type: "INV" }
+        }
+    },
+    scorpioN: {
+        permit: [{ type: "Private", default: true }],
+        receivables: {
+            exShowroom: 1425000,
+            insurance: [{
+                permit: "Private",
+                default: true,
+                companies: [{
+                    insCo: "ICICI Lombard",
+                    default: true,
+                    price: [
+                        { head: "Basic OD TP", price: 26500, Nature: "M" },
+                        { head: "Nil Depreciation", price: 5500, Nature: "M" },
+                        { head: "Consumables", price: 1250, Nature: "M" },
+                        { head: "Engine Protect", price: 4800, Nature: "O" },
+                        { head: "RTI", price: 4200, Nature: "O" }
+                    ]
+                }]
+            }],
+            RTO: { TRC: 1200, TAX: [{ permit: "Private", default: true, amount: 125000 }] },
+            accessories: [
+                { item: "Dash Cam", mrp: 4079, discount: 500, code: "DC-SN" },
+                { item: "Seat Cover 7Str", mrp: 7190, discount: 800, code: "SC-SN" },
+                { item: "Floor Mat Set", mrp: 3452, discount: 400, code: "FM-SN" }
+            ],
+            shield: [
+                { title: "4th Year", price: 19990, default: true },
+                { title: "No Shield", price: 0, default: false }
+            ],
+            rsa: [
+                { title: "1 Year", price: 1499, default: true },
+                { title: "2 Year", price: 2699, default: false },
+                { title: "No RSA", price: 0, default: false }
+            ],
+            vltd: null,
+            kazam: 0,
+            incidental: 2500,
+            "rto-tape": 1499,
+            fastag: 600,
+            COD: 0,
+            "charger-swapping": [],
+            tcs: { limit: 1000000, rate: 1.0 }
+        },
+        deductibles: {
+            "oem-schemes": [
+                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 35000, type: "INV" }
+            ],
+            "dealer-scheme": { amount: 10000, type: "CN" },
+            "accessory-scheme": { amount: 2500, type: "INV" },
+            "shield-scheme": { amount: 1500, type: "CN" },
+            "corp-scheme": [
+                { name: "Corporate Discount", amount: 25000, type: "INV" },
+                { name: "Loyalty Bonus", amount: 12000, type: "INV" }
+            ],
+            "exchange-scheme": [
+                { name: "Exchange Bonus", amount: 18000, type: "CN1" },
+                { name: "Welcome Bonus", amount: 8000, type: "CN1" }
+            ],
+            "other-cash-discount": { amount: 0, type: "CN", editable: true },
+            "special-cash-discount": { enabled: true, lower: 1200000, upper: 1600000, max: 40000, amount: 0, type: "INV" }
+        }
     }
 };
 
@@ -3203,6 +3468,8 @@ $('#btnFetchMock').click(function () {
     // ---- Populate Customer Details ----
     $('#customer_name').val(enquiry.customer.name);
     $('#mobile').val(enquiry.customer.mobile);
+    $('#customer_name_hidden').val(enquiry.customer.name);
+$('#mobile_hidden').val(enquiry.customer.mobile);
     $('#careof').val(enquiry.customer.careOf || '').trigger('change');
     $('#careofname').val(enquiry.customer.careOfName || '');
     $('#enquiry_id').val(enquiry.enquiry_no);
