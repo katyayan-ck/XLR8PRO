@@ -62,35 +62,44 @@
                             @endif
 
                             {{-- =========================== VIRTUAL CALL DETAILS =========================== --}}
-                            @if($isVirtual)
+                            @if ($isVirtual)
                                 <h3 class="mb-0 ms-3 mt-3">Virtual Call Details</h3>
                                 <div class="card-body">
                                     <div class="row">
                                         <div class="col-md-2 mb-3">
                                             <label class="form-label">Virtual Number</label>
-                                            <input type="text" name="virtual_no" class="form-control" value="{{ $enquiry->virtual_no ?? '' }}" readonly>
+                                            <input type="text" name="virtual_no" class="form-control"
+                                                value="{{ $enquiry->virtual_no ?? '' }}" readonly>
                                         </div>
                                         <div class="col-md-3 mb-3">
                                             <label class="form-label">Call Date</label>
-                                            <input type="text" name="virtual_call_date" class="form-control" value="{{ !empty($enquiry->virtual_call_date) ? \Carbon\Carbon::parse($enquiry->virtual_call_date)->format('d-m-Y H:i') : '' }}" readonly>
+                                            <input type="text" name="virtual_call_date" class="form-control"
+                                                value="{{ !empty($enquiry->virtual_call_date) ? \Carbon\Carbon::parse($enquiry->virtual_call_date)->format('d-m-Y H:i') : '' }}"
+                                                readonly>
                                         </div>
                                         <div class="col-md-2 mb-3">
                                             <label class="form-label">Call Duration</label>
-                                            <input type="text" name="call_duration" class="form-control" value="{{ $enquiry->call_duration ?? '' }}" readonly>
+                                            <input type="text" name="call_duration" class="form-control"
+                                                value="{{ $enquiry->call_duration ?? '' }}" readonly>
                                         </div>
-                                        
+
                                         {{-- Mobile Field for Virtual Block --}}
                                         <div class="col-md-2 mb-3">
-                                            <label class="form-label">Customer Mobile <span class="text-danger">*</span></label>
-                                            <input type="text" id="mobile" name="mobile" maxlength="10" class="form-control" value="{{ old('mobile', $enquiry->mobile ?? '') }}" required>
+                                            <label class="form-label">Customer Mobile <span
+                                                    class="text-danger">*</span></label>
+                                            <input type="text" id="mobile" name="mobile" maxlength="10"
+                                                class="form-control" value="{{ old('mobile', $enquiry->mobile ?? '') }}"
+                                                required>
                                         </div>
-                                        
+
                                         <div class="col-md-3 mb-3">
                                             <label class="form-label">Call Nature <span class="text-danger">*</span></label>
-                                            <select name="call_nature" id="call_nature" class="form-control form-select" required>
+                                            <select name="call_nature" id="call_nature" class="form-control form-select"
+                                                required>
                                                 <option value="">Select Option</option>
                                                 @foreach ($call_nature_virtual as $item)
-                                                    <option value="{{ $item['code'] }}" {{ old('call_nature', $enquiry->call_nature ?? '') == $item['code'] ? 'selected' : '' }}>
+                                                    <option value="{{ $item['code'] }}"
+                                                        {{ old('call_nature', $enquiry->call_nature ?? '') == $item['code'] ? 'selected' : '' }}>
                                                         {{ $item['value'] }}
                                                     </option>
                                                 @endforeach
@@ -99,7 +108,8 @@
                                     </div>
                                     <div class="row">
                                         <div class="col-md-12 mb-3">
-                                            <label class="form-label">Remarks <small class="text-muted">(Optional)</small></label>
+                                            <label class="form-label">Remarks <small
+                                                    class="text-muted">(Optional)</small></label>
                                             <textarea name="remarks" class="form-control" rows="2">{{ old('remarks', $enquiry->remarks ?? '') }}</textarea>
                                         </div>
                                     </div>
@@ -137,7 +147,8 @@
                                             <label class="form-label">
                                                 Model <span class="text-danger">*</span>
                                             </label>
-                                            <select name="model_code" id="model_code" class="form-control form-select" required>
+                                            <select name="model_code" id="model_code" class="form-control form-select"
+                                                required>
                                                 <option value="">Select Model</option>
                                             </select>
                                         </div>
@@ -172,15 +183,15 @@
                                         </div>
 
                                         {{-- Phone Number for Standard Enquiries --}}
-                                        @if(!$isVirtual)
-                                        <div class="col-md-3 mb-3">
-                                            <label class="form-label">
-                                                Phone Number <span class="text-danger">*</span>
-                                            </label>
-                                            <input type="text" id="mobile" name="mobile" maxlength="10"
-                                                class="form-control" value="{{ old('mobile', $enquiry->mobile ?? '') }}"
-                                                required>
-                                        </div>
+                                        @if (!$isVirtual)
+                                            <div class="col-md-3 mb-3">
+                                                <label class="form-label">
+                                                    Phone Number <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="text" id="mobile" name="mobile" maxlength="10"
+                                                    class="form-control"
+                                                    value="{{ old('mobile', $enquiry->mobile ?? '') }}" required>
+                                            </div>
                                         @endif
 
                                         {{-- Email --}}
@@ -207,6 +218,16 @@
                                                 @endforeach
                                             </select>
                                         </div>
+                                        {{-- Purchase Type --}}
+                                        <div class="col-md-12 mb-3">
+                                            <label class="form-label">
+                                                Purchase Type (DMS)
+                                            </label>
+
+                                        </div>
+
+
+
 
                                     </div>
 
@@ -225,8 +246,8 @@
                                             <label class="form-label">
                                                 Enquiry Type <span class="text-danger">*</span>
                                             </label>
-                                            <select name="enquiry_type" id="enquiry_type" class="form-control form-select"
-                                                required>
+                                            <select name="enquiry_type" id="enquiry_type"
+                                                class="form-control form-select" required>
                                                 <option value="">Select Enquiry Type</option>
                                                 @foreach ($enquiry_types as $etype)
                                                     <option value="{{ $etype['code'] }}"
@@ -253,7 +274,8 @@
                                             <label class="form-label">
                                                 Enquiry Sub Source <span class="text-danger">*</span>
                                             </label>
-                                            <select name="sub_source" id="sub_source" class="form-control form-select" disabled>
+                                            <select name="sub_source" id="sub_source" class="form-control form-select"
+                                                disabled>
                                                 <option value="">Select Enquiry Sub Source</option>
                                             </select>
                                         </div>
@@ -277,7 +299,8 @@
                                                 <label class="form-label">
                                                     Referred By <span class="text-danger">*</span>
                                                 </label>
-                                                <select name="referred_by" id="referred_by" class="form-control form-select">
+                                                <select name="referred_by" id="referred_by"
+                                                    class="form-control form-select">
                                                     <option value="">Select Referred By</option>
                                                     <option value="Customer"
                                                         {{ old('referred_by', $enquiry->referred_by ?? '') == 'Customer' ? 'selected' : '' }}>
@@ -306,7 +329,8 @@
                                                 <label class="form-label">
                                                     Referee Name <span class="text-danger">*</span>
                                                 </label>
-                                                <select name="person_code" id="person_code" class="form-control form-select">
+                                                <select name="person_code" id="person_code"
+                                                    class="form-control form-select">
                                                     <option value="">Select Name</option>
                                                 </select>
                                             </div>
@@ -315,7 +339,8 @@
                                                 <label class="form-label">
                                                     Referee Name <span class="text-danger">*</span>
                                                 </label>
-                                                <input type="text" id="referee_name_manual_input" class="form-control">
+                                                <input type="text" id="referee_name_manual_input"
+                                                    class="form-control">
                                             </div>
                                         </div>
 
@@ -369,8 +394,8 @@
                                             <label class="form-label">
                                                 Transmission <span class="text-danger">*</span>
                                             </label>
-                                            <input type="text" id="transmission" name="transmission" class="form-control"
-                                                readonly>
+                                            <input type="text" id="transmission" name="transmission"
+                                                class="form-control" readonly>
                                         </div>
 
                                         {{-- Drivetrain --}}
@@ -435,7 +460,8 @@
 
                                             <div class="col-md-3 mb-3">
                                                 <label class="form-label">Application</label>
-                                                <select name="application" id="application" class="form-control form-select">
+                                                <select name="application" id="application"
+                                                    class="form-control form-select">
                                                     <option value="">Select Application</option>
                                                     @foreach ($applications as $item)
                                                         <option value="{{ $item['code'] }}"
@@ -459,18 +485,20 @@
                                                 Pin Code <small class="text-muted">(Optional)</small>
                                             </label>
                                             <input type="text" id="zipcode" name="zipcode" maxlength="6"
-                                                class="form-control" value="{{ old('zipcode', $enquiry->zipcode ?? '') }}">
+                                                class="form-control"
+                                                value="{{ old('zipcode', $enquiry->zipcode ?? '') }}">
                                         </div>
 
-                                        {{-- BPO --}}
-                                        <div class="col-md-3 mb-3">
+                                        {{-- VPO --}}
+                                        <div class="col-md-2 mb-2">
                                             <label class="form-label">
-                                                BPO <small class="text-muted">(Optional)</small>
+                                                VPO <small class="text-muted">(Optional)</small>
                                             </label>
-                                            <select id="bpo" name="bpo" class="form-control form-select">
-                                                <option value="">Select BPO</option>
-                                                @if(isset($enquiry) && $enquiry->bpo)
-                                                    <option value="{{ $enquiry->bpo }}" selected>{{ $enquiry->bpo }}</option>
+                                            <select id="vpo" name="vpo" class="form-control form-select">
+                                                <option value="">Select VPO</option>
+                                                @if (isset($enquiry) && $enquiry->vpo)
+                                                    <option value="{{ $enquiry->vpo }}" selected>{{ $enquiry->vpo }}
+                                                    </option>
                                                 @endif
                                             </select>
                                         </div>
@@ -480,23 +508,27 @@
                                             <label class="form-label">
                                                 Tehsil<span class="text-danger">*</span>
                                             </label>
-                                            <select id="tehsil" name="tehsil" class="form-control form-select" required>
+                                            <select id="tehsil" name="tehsil" class="form-control form-select"
+                                                required>
                                                 <option value="">Select Tehsil</option>
-                                                @if(isset($enquiry) && $enquiry->tehsil)
-                                                    <option value="{{ $enquiry->tehsil }}" selected>{{ $enquiry->tehsil }}</option>
+                                                @if (isset($enquiry) && $enquiry->tehsil)
+                                                    <option value="{{ $enquiry->tehsil }}" selected>
+                                                        {{ $enquiry->tehsil }}</option>
                                                 @endif
                                             </select>
                                         </div>
 
                                         {{-- District (Dropdown) --}}
-                                        <div class="col-md-3 mb-3">
+                                        <div class="col-md-2 mb-2">
                                             <label class="form-label">
                                                 District<span class="text-danger">*</span>
                                             </label>
-                                            <select id="district" name="district" class="form-control form-select" required>
+                                            <select id="district" name="district" class="form-control form-select"
+                                                required>
                                                 <option value="">Select District</option>
-                                                @if(isset($enquiry) && $enquiry->district)
-                                                    <option value="{{ $enquiry->district }}" selected>{{ $enquiry->district }}</option>
+                                                @if (isset($enquiry) && $enquiry->district)
+                                                    <option value="{{ $enquiry->district }}" selected>
+                                                        {{ $enquiry->district }}</option>
                                                 @endif
                                             </select>
                                         </div>
@@ -508,10 +540,18 @@
                                             </label>
                                             <select id="city" name="city" class="form-control form-select">
                                                 <option value="">Select City</option>
-                                                @if(isset($enquiry) && $enquiry->city)
-                                                    <option value="{{ $enquiry->city }}" selected>{{ $enquiry->city }}</option>
+                                                @if (isset($enquiry) && $enquiry->city)
+                                                    <option value="{{ $enquiry->city }}" selected>{{ $enquiry->city }}
+                                                    </option>
                                                 @endif
                                             </select>
+                                        </div>
+                                        <div class="col-md-2 mb-2">
+                                            <label class="form-label">
+                                                Territory<span class="text-danger">*</span>
+                                            </label>
+                                            <input type="text" name="territory" class="form-control"
+                                                value="{{ old('territory', $enquiry->territory ?? '') }}" readonly>
                                         </div>
                                     </div>
                                 </div>
@@ -527,8 +567,8 @@
                                             <label class="form-label">
                                                 Select Dealer Branch <span class="text-danger">*</span>
                                             </label>
-                                            <select name="dealer_branch" id="dealer_branch" class="form-control form-select"
-                                                required>
+                                            <select name="dealer_branch" id="dealer_branch"
+                                                class="form-control form-select" required>
                                                 <option value="">Select Dealer Branch</option>
                                                 @foreach ($branches as $code => $name)
                                                     <option value="{{ $code }}"
@@ -560,7 +600,8 @@
                                                 @foreach ($saleconsultants as $consultant)
                                                     <option value="{{ $consultant['person_code'] }}"
                                                         {{ old('sc_code', $enquiry->sc_code ?? '') == $consultant['person_code'] ? 'selected' : '' }}>
-                                                        {{ $consultant['display_name'] }} - {{ $consultant['employee_code'] }}
+                                                        {{ $consultant['display_name'] }} -
+                                                        {{ $consultant['employee_code'] }}
                                                     </option>
                                                 @endforeach
                                             </select>
@@ -568,49 +609,9 @@
                                     </div>
                                 </div>
 
-                                {{-- =========================== SHORT ENQUIRY Follow Up =========================== --}}
+                                {{-- =========================== SHORT ENQUIRY Sales Consultant Follow up =========================== --}}
 
-                                <h3 class="mb-0 ms-3">Follow Up</h3>
 
-                                <div class="card-body">
-                                    <div class="row">
-                                        {{-- Follow Up Type --}}
-                                        <div class="col-md-4 mb-3">
-                                            <label class="form-label">
-                                                Follow Up Type <span class="text-danger">*</span>
-                                            </label>
-                                            <select name="followup_type" class="form-control form-select">
-                                                <option value="">Select Follow Up Type</option>
-                                                @foreach ($follow_up_types as $item)
-                                                    <option value="{{ $item['code'] }}"
-                                                        {{ old('followup_type', $enquiry->followup_type ?? '') == $item['code'] ? 'selected' : '' }}>
-                                                        {{ $item['value'] }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-
-                                        {{-- Follow Up Date --}}
-                                        <div class="col-md-4 mb-3">
-                                            <label class="form-label">
-                                                Follow Up Date <span class="text-danger">*</span>
-                                            </label>
-                                            <input type="text" id="followup_date" name="followup_date"
-                                                class="form-control"
-                                                value="{{ old('followup_date', $enquiry->followup_date ?? '') }}"
-                                                placeholder="Select Follow Up Date">
-                                        </div>
-
-                                        {{-- Follow Up Time --}}
-                                        <div class="col-md-4 mb-3">
-                                            <label class="form-label">
-                                                Follow Up Time 
-                                            </label>
-                                            <input type="time" name="followup_time" class="form-control"
-                                                value="{{ old('followup_time', $enquiry->followup_time ?? '') }}" >
-                                        </div>
-                                    </div>
-                                </div>
 
                                 {{-- =========================== LONG ENQUIRY Customer Details =========================== --}}
 
@@ -679,7 +680,8 @@
                                                 D.O.B. <small class="text-muted">(Optional)</small>
                                             </label>
                                             <input type="text" id="dob" name="dob" class="form-control"
-                                                value="{{ old('dob', $enquiry->dob ?? '') }}" placeholder="Select D.O.B.">
+                                                value="{{ old('dob', $enquiry->dob ?? '') }}"
+                                                placeholder="Select D.O.B.">
                                         </div>
 
                                         {{-- Marital Status --}}
@@ -754,9 +756,10 @@
                                         {{-- Purchase Type --}}
                                         <div class="col-md-12 mb-3">
                                             <label class="form-label">
-                                                Purchase Type <small class="text-muted">(Optional)</small>
+                                                Purchase Type(CRM) <small class="text-muted"></small>
                                             </label>
-                                            <select name="purchase_type" id="purchase_type" class="form-control form-select"
+                                            <select name="purchase_type" id="purchase_type"
+                                                class="form-control form-select"
                                                 style="width: auto; display: inline-block;">
                                                 <option value="">Select Purchase Type</option>
                                                 <option value="First Time Buy"
@@ -778,7 +781,8 @@
                                             {{-- Make --}}
                                             <div class="col-md-4 mb-3">
                                                 <label class="form-label">Make</label>
-                                                <select id="brand_make" name="brand_make" class="form-control form-select">
+                                                <select id="brand_make" name="brand_make"
+                                                    class="form-control form-select">
                                                     <option value="">Select Make</option>
                                                     @foreach ($existing_car_oems as $item)
                                                         <option value="{{ $item['code'] }}"
@@ -800,14 +804,16 @@
                                             {{-- Vehicle Registration No. --}}
                                             <div class="col-md-4 mb-3">
                                                 <label class="form-label">Vehicle Registration No.</label>
-                                                <input type="text" id="vehicle_no" name="vehicle_no" class="form-control"
+                                                <input type="text" id="vehicle_no" name="vehicle_no"
+                                                    class="form-control"
                                                     value="{{ old('vehicle_no', $enquiry->vehicle_no ?? '') }}">
                                             </div>
 
                                             {{-- Added Exchange Fields --}}
                                             <div class="col-md-4 mb-3">
                                                 <label class="form-label">Vehicle Manufacturing Year</label>
-                                                <input type="number" name="make_year" id="make_year" class="form-control"
+                                                <input type="number" name="make_year" id="make_year"
+                                                    class="form-control"
                                                     value="{{ old('make_year', $enquiry->make_year ?? '') }}">
                                             </div>
                                             <div class="col-md-4 mb-3">
@@ -849,7 +855,8 @@
                                 <div class="card-body">
                                     <div class="row">
                                         <div class="col-md-4 mb-3">
-                                            <label class="form-label">Finance Mode <span class="text-danger">*</span></label>
+                                            <label class="form-label">Finance Mode <span
+                                                    class="text-danger">*</span></label>
                                             <select name="fin_mode" id="fin_mode" class="form-control form-select">
                                                 <option value="" disabled selected>-- Select Finance Mode --</option>
                                                 <option value="In-house"
@@ -888,7 +895,8 @@
                                         {{-- Consideration Brand --}}
                                         <div class="col-md-4 mb-3">
                                             <label class="form-label">Consideration Set - Brand</label>
-                                            <select id="consider_make" name="consider_make" class="form-control form-select">
+                                            <select id="consider_make" name="consider_make"
+                                                class="form-control form-select">
                                                 <option value="No Consideration"
                                                     {{ old('consider_make', $enquiry->consider_make ?? 'No Consideration') == 'No Consideration' ? 'selected' : '' }}>
                                                     No Consideration
@@ -907,7 +915,8 @@
                                             <label class="form-label">Consideration Set - Model</label>
                                             <input type="text" id="consider_model" name="consider_model"
                                                 class="form-control"
-                                                value="{{ old('consider_model', $enquiry->consider_model ?? '') }}" disabled>
+                                                value="{{ old('consider_model', $enquiry->consider_model ?? '') }}"
+                                                disabled>
                                         </div>
 
                                         {{-- Consideration Variant --}}
@@ -920,19 +929,59 @@
                                         </div>
                                     </div>
                                 </div>
-                                
-                                @if(!$isVirtual)
-                                {{-- Remarks for Non-Virtual --}}
-                                <div class="col-md-8 mb-3">
-                                    <label class="form-label">
-                                        Remarks <small class="text-muted">(Optional)</small>
-                                    </label>
-                                    <textarea name="remarks" rows="3" class="form-control">{{ old('remarks', $enquiry->remarks ?? '') }}</textarea>
+                                <h3 class="mb-0 ms-3">Sales Consultant Follow up</h3>
+
+                                <div class="card-body">
+                                    <div class="row">
+                                        {{-- Sales Consultant Follow up Type --}}
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">
+                                                Sales Consultant Follow up Type <span class="text-danger">*</span>
+                                            </label>
+                                            <select name="followup_type" class="form-control form-select">
+                                                <option value="">Select Sales Consultant Follow up Type</option>
+                                                @foreach ($follow_up_types as $item)
+                                                    <option value="{{ $item['code'] }}"
+                                                        {{ old('followup_type', $enquiry->followup_type ?? '') == $item['code'] ? 'selected' : '' }}>
+                                                        {{ $item['value'] }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+
+                                        {{-- Sales Consultant Follow up Date --}}
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">
+                                                Sales Consultant Follow up Date <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="text" id="followup_date" name="followup_date"
+                                                class="form-control"
+                                                value="{{ old('followup_date', $enquiry->followup_date ?? '') }}"
+                                                placeholder="Select Sales Consultant Follow up Date">
+                                        </div>
+
+                                        {{-- Sales Consultant Follow up Time --}}
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">
+                                                Sales Consultant Follow up Time
+                                            </label>
+                                            <input type="time" name="followup_time" class="form-control"
+                                                value="{{ old('followup_time', $enquiry->followup_time ?? '') }}">
+                                        </div>
+                                    </div>
                                 </div>
+                                @if (!$isVirtual)
+                                    {{-- Remarks for Non-Virtual --}}
+                                    <div class="col-md-8 mb-3">
+                                        <label class="form-label">
+                                            Remarks <small class="text-muted">(Optional)</small>
+                                        </label>
+                                        <textarea name="remarks" rows="3" class="form-control">{{ old('remarks', $enquiry->remarks ?? '') }}</textarea>
+                                    </div>
                                 @endif
 
                                 <div id="duplicateEnquiry" style="display:none;"></div>
-                                
+
                             </div> {{-- End Full Enquiry Form wrapper --}}
 
                             {{-- =========================== FORM ACTIONS =========================== --}}
@@ -1025,25 +1074,25 @@
             applicationType: @json(old('application_type', $enquiry->application_type ?? '')),
             application: @json(old('application', $enquiry->application ?? '')),
             personCode: @json(old('person_code', $enquiry->person_code ?? '')),
-            bpo: @json(old('bpo', $enquiry->bpo ?? '')),
+            vpo: @json(old('vpo', $enquiry->vpo ?? '')),
             tehsil: @json(old('tehsil', $enquiry->tehsil ?? '')),
             district: @json(old('district', $enquiry->district ?? '')),
             city: @json(old('city', $enquiry->city ?? ''))
         };
 
         $(function() {
-            
+
             // --- VIRTUAL ENQUIRY TOGGLE LOGIC ---
             const isVirtual = @json($isVirtual);
             if (isVirtual && $('#call_nature').length > 0) {
                 const $fullForm = $('#full_enquiry_form');
-                
+
                 function toggleVirtualForm() {
                     const text = $('#call_nature').find('option:selected').text().trim().toUpperCase();
                     if (text.includes('SALES')) {
                         $fullForm.show();
                         $fullForm.find('input, select, textarea').prop('disabled', false);
-                        
+
                         setTimeout(() => {
                             $('#segment_code').trigger('change');
                             $('#source_code').trigger('change');
@@ -1055,11 +1104,11 @@
                         $fullForm.find('input, select, textarea').prop('disabled', true);
                     }
                 }
-                
+
                 $('#call_nature').on('change', toggleVirtualForm);
-                toggleVirtualForm(); 
+                toggleVirtualForm();
             }
-            
+
             // --- DOM CACHE ---
             const $segmentCode = $('#segment_code');
             const $modelCode = $('#model_code');
@@ -1164,7 +1213,7 @@
 
                 const $exchangeInputs = $(
                     '#brand_make, #brand_model, #vehicle_no, #make_year, #odo_reading, #expected_price, #offered_price, #exchange_bonus'
-                    );
+                );
 
                 $exchangeInputs.prop('required', isExchange);
 
@@ -1315,17 +1364,17 @@
             });
 
             $('#mobile').on('input', checkDuplicateEnquiry);
-            
+
             // Zipcode Lookup (Debounced) using OPEN API for Dropdowns
             $('#zipcode').on('input blur', debounce(function() {
                 const pincode = $('#zipcode').val().trim();
-                const $bpoSelect = $('#bpo');
+                const $bpoSelect = $('#vpo');
                 const $tehsilSelect = $('#tehsil');
                 const $districtSelect = $('#district');
                 const $citySelect = $('#city');
 
                 if (pincode.length !== 6) {
-                    $bpoSelect.html('<option value="">Select BPO</option>');
+                    $bpoSelect.html('<option value="">Select VPO</option>');
                     $tehsilSelect.html('<option value="">Select Tehsil</option>');
                     $districtSelect.html('<option value="">Select District</option>');
                     $citySelect.html('<option value="">Select City</option>');
@@ -1343,21 +1392,24 @@
                     .then(data => {
                         if (data && data[0] && data[0].Status === 'Success') {
                             const postOffices = data[0].PostOffice;
-                            
-                            let bpos = [];
+
+                            let vpos = [];
                             let tehsils = [];
                             let districts = [];
                             let cities = [];
 
                             postOffices.forEach(po => {
-                                if (po.Name && !bpos.includes(po.Name)) bpos.push(po.Name);
-                                
+                                if (po.Name && !vpos.includes(po.Name)) vpos.push(po.Name);
+
                                 // Sometimes Block is "NA", fallback to District
-                                let block = (po.Block && po.Block !== "NA") ? po.Block : po.District;
+                                let block = (po.Block && po.Block !== "NA") ? po.Block : po
+                                    .District;
                                 if (block && !tehsils.includes(block)) tehsils.push(block);
-                                
-                                if (po.District && !districts.includes(po.District)) districts.push(po.District);
-                                if (po.State && !cities.includes(po.State)) cities.push(po.State); 
+
+                                if (po.District && !districts.includes(po.District))
+                                    districts.push(po.District);
+                                if (po.State && !cities.includes(po.State)) cities.push(po
+                                    .State);
                             });
 
                             const buildOptions = (arr, placeholder) => {
@@ -1368,18 +1420,19 @@
                                 return html;
                             };
 
-                            $bpoSelect.html(buildOptions(bpos, 'Select BPO'));
+                            $bpoSelect.html(buildOptions(vpos, 'Select VPO'));
                             $tehsilSelect.html(buildOptions(tehsils, 'Select Tehsil'));
                             $districtSelect.html(buildOptions(districts, 'Select District'));
                             $citySelect.html(buildOptions(cities, 'Select City'));
 
                             // Select previously saved values if editing
-                            if (currentEnquiry.bpo) $bpoSelect.val(currentEnquiry.bpo);
+                            if (currentEnquiry.vpo) $bpoSelect.val(currentEnquiry.vpo);
                             if (currentEnquiry.tehsil) $tehsilSelect.val(currentEnquiry.tehsil);
-                            if (currentEnquiry.district) $districtSelect.val(currentEnquiry.district);
+                            if (currentEnquiry.district) $districtSelect.val(currentEnquiry
+                                .district);
                             if (currentEnquiry.city) $citySelect.val(currentEnquiry.city);
                         } else {
-                            $bpoSelect.html('<option value="">No BPO Found</option>');
+                            $bpoSelect.html('<option value="">No VPO Found</option>');
                             $tehsilSelect.html('<option value="">No Tehsil Found</option>');
                             $districtSelect.html('<option value="">No District Found</option>');
                             $citySelect.html('<option value="">No City Found</option>');
@@ -1387,7 +1440,7 @@
                     })
                     .catch(error => {
                         console.error("Pincode API Error:", error);
-                        $bpoSelect.html('<option value="">Select BPO</option>');
+                        $bpoSelect.html('<option value="">Select VPO</option>');
                         $tehsilSelect.html('<option value="">Select Tehsil</option>');
                         $districtSelect.html('<option value="">Select District</option>');
                         $citySelect.html('<option value="">Select City</option>');

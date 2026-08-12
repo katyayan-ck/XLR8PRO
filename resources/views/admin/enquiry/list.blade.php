@@ -7,7 +7,7 @@
                 <div
                     class="card-header bg-gradient-primary d-flex justify-content-between align-items-center flex-nowrap flex-md-nowrap flex-wrap gap-3">
                     <h2 class="card-title mb-0 fw-bold text-black text-nowrap">
-                        {{ $title ?? 'Xlr8 Enquiries' }}
+                        {{ $title ?? 'Xceler8 Enquiries' }}
                     </h2>
 
                     <div class="d-flex align-items-center gap-3 flex-nowrap">

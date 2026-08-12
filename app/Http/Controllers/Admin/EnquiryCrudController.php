@@ -46,20 +46,29 @@ class EnquiryCrudController extends CrudController
 
         // 1. Define all highlight filter keys
         $filters = [
-            'missed_fup', 'today_fup', 'birthday', 'anniversary', 'exchange',
-            'pending_eval', 'delayed', 'wrong_assign', 'finance', 'stage_mismatch', 'lost_verif'
+            'missed_fup',
+            'today_fup',
+            'birthday',
+            'anniversary',
+            'exchange',
+            'pending_eval',
+            'delayed',
+            'wrong_assign',
+            'finance',
+            'stage_mismatch',
+            'lost_verif'
         ];
 
         // 2. Calculate the count for each filter
         $highlightCounts = [];
         foreach ($filters as $filter) {
-            $query = \App\Models\CRM\Enquiry::query(); 
+            $query = \App\Models\CRM\Enquiry::query();
             \App\Services\OrgService::applyHighlightFilter($query, $filter);
             $highlightCounts[$filter] = $query->count();
         }
 
         return view('admin.enquiry.list', [
-            'title' => 'Xlr8 Enquiries',
+            'title' => 'Xceler8 Enquiries',
             'gridConfig' => [
                 'columns' => $this->getColumns('all'),
                 'data' => []
@@ -255,12 +264,12 @@ class EnquiryCrudController extends CrudController
 
         $row = [
             'serial_no' => $i + 1,
-            
+
             // Render XENQ-id and created_at into the x8 columns
-            'x8_enquiry_no' => 'XENQ-' . $e->id, 
-            'x8_enquiry_date' => $c($e->created_at, 'd-m-Y H:i'), 
+            'x8_enquiry_no' => 'XENQ-' . $e->id,
+            'x8_enquiry_date' => $c($e->created_at, 'd-m-Y H:i'),
             'x8_enquiry_assign_date' => $c($e->x8_enquiry_assign_date ?? $e->enq_assign_date, 'd-m-Y'),
-            
+
             // Move original data from DB x8_ fields into OEM columns
             'oem_enquiry_no' => $e->x8_enquiry_no ?? $e->enquiry_no ?? $e->oem_enquiry_no ?? '—',
             'oem_enquiry_date' => $c($e->x8_enquiry_date ?? $e->enquiry_date ?? $e->oem_enquiry_date, 'd-m-Y'),
@@ -305,7 +314,7 @@ class EnquiryCrudController extends CrudController
         } elseif ($type === 'virtual') {
             $row['virtual_no'] = $e->virtual_no ?? '—';
             $row['call_date_and_time'] = $c($e->virtual_call_date, 'd-m-Y H:i');
-            $row['call_date'] = $c($e->virtual_call_date, 'd-m-Y'); 
+            $row['call_date'] = $c($e->virtual_call_date, 'd-m-Y');
             $row['call_nature'] = $e->call_nature ?? '—';
             $row['remarks'] = $e->remarks ?? '—';
         } elseif ($type === 'whatsapp') {
@@ -332,13 +341,13 @@ class EnquiryCrudController extends CrudController
                 'enquiry_type' => $e->enquiry_type ?? '—',
                 'source_name' => $e->source?->name ?? $e->source_code ?? '—',
                 'sub_source' => $e->sub_source ?? '—',
-                
+
                 // Mapped Likely Purchase Date value
                 'likely_purchase_in_days' => $lpMap[$e->likely_purchase_date] ?? $e->likely_purchase_date ?? '—',
 
                 // Mapped Fuel Type Value
                 'fuel_type' => $fuelMap[$e->fuel_type] ?? $e->fuel_type ?? '—',
-                
+
                 'transmission' => $e->transmission ?? '—',
                 'drivetrain' => $e->drivetrain ?? '—',
                 'seating' => $e->seating ?? '—',
@@ -354,7 +363,7 @@ class EnquiryCrudController extends CrudController
 
                 // Mapped Follow-up Type via KeyValue
                 'followup_type' => $e->followup_type ? (OrgService::getKeyValueByCode($e->followup_type)?->value ?? $e->followup_type) : '—',
-                
+
                 'followup_date' => $c($e->followup_date, 'd-m-Y'),
                 'followup_time' => $e->followup_time ?? '—',
                 'occupation_type' => $e->occupation_type ?? '—',
@@ -472,7 +481,7 @@ class EnquiryCrudController extends CrudController
             ['field' => 'x8_enquiry_assign_date', 'headerName' => 'X8 Enquiry Assign Date'],
             ['field' => 'oem_enquiry_no', 'headerName' => 'OEM Enquiry No.'],
             ['field' => 'oem_enquiry_date', 'headerName' => 'OEM Enquiry Date'],
-            ['field' => 'oem_enquiry_assign_date', 'headerName' => 'OEM Enquiry Assign Date'], 
+            ['field' => 'oem_enquiry_assign_date', 'headerName' => 'OEM Enquiry Assign Date'],
         ];
 
         // Dynamically add only the relevant columns to clear out "Unnecessary Fields"
@@ -483,14 +492,14 @@ class EnquiryCrudController extends CrudController
                 ['field' => 'oem_quick_enquiry_assign_date', 'headerName' => 'OEM Quick Enquiry Assign Date'],
             ]);
             // Excluded OEM Long columns & Quick Enquiry Status
-            
+
         } elseif ($type === 'quick') {
             $baseCols = array_merge($baseCols, [
                 ['field' => 'oem_quick_enquiry_no', 'headerName' => 'OEM Quick Enquiry No.'],
                 ['field' => 'oem_quick_enquiry_date', 'headerName' => 'OEM Quick Enquiry Date'],
             ]);
             // Excluded OEM Quick Assign Date, Quick Status, and all Long columns
-            
+
         } elseif ($type === 'long') {
             $baseCols = array_merge($baseCols, [
                 ['field' => 'oem_long_enquiry_no', 'headerName' => 'OEM Long Enquiry No.'],
@@ -897,7 +906,7 @@ class EnquiryCrudController extends CrudController
             'marriage_date' => 'nullable|date',
             'age_group' => 'nullable',
             'pincode' => 'nullable|max:10',
-            'bpo' => 'nullable|max:150', // Added Support for BPO
+            'vpo' => 'nullable|max:150', // Added Support for VPO
             'tehsil' => 'nullable|max:100',
             'district' => 'nullable|max:100',
             'city' => 'nullable|max:100',
