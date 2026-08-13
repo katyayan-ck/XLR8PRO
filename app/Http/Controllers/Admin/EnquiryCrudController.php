@@ -14,7 +14,6 @@ use Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
 use App\Models\CRM\Campaign;
-use App\Models\Admin\PinCodes;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -44,31 +43,20 @@ class EnquiryCrudController extends CrudController
     {
         $this->crud->setListView('admin.enquiry.list');
 
-        // 1. Define all highlight filter keys
         $filters = [
-            'missed_fup',
-            'today_fup',
-            'birthday',
-            'anniversary',
-            'exchange',
-            'pending_eval',
-            'delayed',
-            'wrong_assign',
-            'finance',
-            'stage_mismatch',
-            'lost_verif'
+            'missed_fup', 'today_fup', 'birthday', 'anniversary', 'exchange',
+            'pending_eval', 'delayed', 'wrong_assign', 'finance', 'stage_mismatch', 'lost_verif'
         ];
 
-        // 2. Calculate the count for each filter
         $highlightCounts = [];
         foreach ($filters as $filter) {
-            $query = \App\Models\CRM\Enquiry::query();
+            $query = \App\Models\CRM\Enquiry::query(); 
             \App\Services\OrgService::applyHighlightFilter($query, $filter);
             $highlightCounts[$filter] = $query->count();
         }
 
         return view('admin.enquiry.list', [
-            'title' => 'Xceler8 Enquiries',
+            'title' => 'Xlr8 Enquiries',
             'gridConfig' => [
                 'columns' => $this->getColumns('all'),
                 'data' => []
@@ -87,7 +75,6 @@ class EnquiryCrudController extends CrudController
         $filterModel = (array) $request->input('filterModel', []);
         $listType = trim((string) $request->input('list_type', 'all'));
 
-        // Query the correct scope based on the page
         $query = match ($listType) {
             'reference' => Enquiry::reference(),
             'virtual' => Enquiry::virtual(),
@@ -99,12 +86,13 @@ class EnquiryCrudController extends CrudController
             'exchange' => Enquiry::where('purchase_type', 'Exchange Buy'),
             'scrappage' => Enquiry::where('purchase_type', 'Scrappage'),
             'exchange_not_interested' => Enquiry::whereIn('purchase_type', ['First Time Buy', 'Additional Buy', 'No Consideration']),
+            'finance' => Enquiry::where('fin_mode', 'In-house'),
+            'finance_not_interested' => Enquiry::whereIn('fin_mode', ['Cash', 'Customer Self', 'Yet To Decide', 'Purchase Plan Cancelled']),
             default => Enquiry::query(),
         };
 
         $query->with(['segment', 'model', 'variant', 'color', 'campaign']);
 
-        // Apply Search & Sort
         $this->applyEnquirySearch($query, $searchText);
         $this->applyEnquirySort($query, (array) $request->input('sortModel', []));
         $this->applyEnquiryFilter($query, $filterModel);
@@ -112,15 +100,14 @@ class EnquiryCrudController extends CrudController
 
         $total = (clone $query)->count();
 
-        // Determine the mapping format type
-        $mapType = in_array($listType, ['assigned_long', 'unassigned_long']) ? 'long' : (in_array($listType, ['assigned_quick', 'unassigned_quick']) ? 'quick' : (in_array($listType, ['reference', 'virtual', 'whatsapp', 'exchange', 'scrappage', 'exchange_not_interested']) ? $listType : 'all'));
+        $mapType = in_array($listType, ['assigned_long', 'unassigned_long']) ? 'long' : (in_array($listType, ['assigned_quick', 'unassigned_quick']) ? 'quick' : (in_array($listType, ['reference', 'virtual', 'whatsapp', 'exchange', 'scrappage', 'exchange_not_interested', 'finance', 'finance_not_interested']) ? $listType : 'all'));
 
-        // Pre-fetch Mappings to prevent N+1 Queries
         $lpMap = collect(OrgService::keywordValueByCode('LIKELY_PURCHASE_DATE'))->pluck('value', 'code')->toArray();
         $fuelMap = collect(OrgService::getKeyValuesByCode('FUEL_TYPE'))->pluck('value', 'id')->toArray();
+        $finMap = collect(\App\Models\Module\Booking\XlFinancier::select('id', 'name')->get())->pluck('name', 'id')->toArray();
 
         $gridData = $query->skip($startRow)->take($limit)->get()
-            ->map(fn($e, $i) => $this->mapData($e, $startRow + $i, $mapType, $lpMap, $fuelMap))->all();
+            ->map(fn($e, $i) => $this->mapData($e, $startRow + $i, $mapType, $lpMap, $fuelMap, $finMap))->all();
 
         return response()->json(['rows' => $gridData, 'lastRow' => $total]);
     }
@@ -143,6 +130,8 @@ class EnquiryCrudController extends CrudController
             'exchange' => Enquiry::where('purchase_type', 'Exchange Buy'),
             'scrappage' => Enquiry::where('purchase_type', 'Scrappage'),
             'exchange_not_interested' => Enquiry::whereIn('purchase_type', ['First Time Buy', 'Additional Buy', 'No Consideration']),
+            'finance' => Enquiry::where('fin_mode', 'In-house'),
+            'finance_not_interested' => Enquiry::whereIn('fin_mode', ['Cash', 'Customer Self', 'Yet To Decide', 'Purchase Plan Cancelled']),
             default => Enquiry::query(),
         };
 
@@ -154,26 +143,26 @@ class EnquiryCrudController extends CrudController
 
         $query->orderByDesc('created_at');
 
-        $mapType = in_array($listType, ['assigned_long', 'unassigned_long']) ? 'long' : (in_array($listType, ['assigned_quick', 'unassigned_quick']) ? 'quick' : (in_array($listType, ['reference', 'virtual', 'whatsapp', 'exchange', 'scrappage', 'exchange_not_interested']) ? $listType : 'all'));
+        $mapType = in_array($listType, ['assigned_long', 'unassigned_long']) ? 'long' : (in_array($listType, ['assigned_quick', 'unassigned_quick']) ? 'quick' : (in_array($listType, ['reference', 'virtual', 'whatsapp', 'exchange', 'scrappage', 'exchange_not_interested', 'finance', 'finance_not_interested']) ? $listType : 'all'));
 
         $columns = array_values(array_filter(
             $this->getColumns($mapType),
             fn($col) => ($col['field'] ?? null) !== 'action'
         ));
 
-        // Pre-fetch Mappings
         $lpMap = collect(OrgService::keywordValueByCode('LIKELY_PURCHASE_DATE'))->pluck('value', 'code')->toArray();
         $fuelMap = collect(OrgService::getKeyValuesByCode('FUEL_TYPE'))->pluck('value', 'id')->toArray();
+        $finMap = collect(\App\Models\Module\Booking\XlFinancier::select('id', 'name')->get())->pluck('name', 'id')->toArray();
 
-        return response()->streamDownload(function () use ($query, $columns, $mapType, $lpMap, $fuelMap) {
+        return response()->streamDownload(function () use ($query, $columns, $mapType, $lpMap, $fuelMap, $finMap) {
             $out = fopen('php://output', 'w');
 
             fputcsv($out, array_merge(['S.No.'], array_map(fn($c) => $c['headerName'], $columns)));
 
             $serial = 0;
-            $query->chunk(500, function ($chunk) use ($out, &$serial, $columns, $mapType, $lpMap, $fuelMap) {
+            $query->chunk(500, function ($chunk) use ($out, &$serial, $columns, $mapType, $lpMap, $fuelMap, $finMap) {
                 foreach ($chunk as $e) {
-                    $rowData = $this->mapData($e, $serial, $mapType, $lpMap, $fuelMap);
+                    $rowData = $this->mapData($e, $serial, $mapType, $lpMap, $fuelMap, $finMap);
                     $serial++;
                     fputcsv($out, array_merge(
                         [$serial],
@@ -185,10 +174,6 @@ class EnquiryCrudController extends CrudController
             fclose($out);
         }, 'enquiries-' . now()->format('Y-m-d_His') . '.csv', ['Content-Type' => 'text/csv']);
     }
-
-    // =========================================================
-    // UNIFIED LIST RENDERERS
-    // =========================================================
 
     public function referenceList()
     {
@@ -219,7 +204,6 @@ class EnquiryCrudController extends CrudController
         return $this->buildGrid(Enquiry::unassignedQuick(), 'admin.enquiry.unassigned-quick-enquiry', 'Unassigned Quick Enquiries', 'quick');
     }
 
-    // Exchange Enquiry Stage Lists - Modified to use the new exchange blade
     public function exchangeEnquiryList()
     {
         return $this->buildGrid(Enquiry::where('purchase_type', 'Exchange Buy'), 'admin.enquiry.exchange', 'Int in Exchange Dashboard', 'exchange');
@@ -233,15 +217,23 @@ class EnquiryCrudController extends CrudController
         return $this->buildGrid(Enquiry::whereIn('purchase_type', ['First Time Buy', 'Additional Buy', 'No Consideration']), 'admin.enquiry.exchange', 'Not Interested in Exchange Dashboard', 'exchange_not_interested');
     }
 
+    public function financeEnquiryList()
+    {
+        return $this->buildGrid(Enquiry::where('fin_mode', 'In-house'), 'admin.enquiry.finance-list', 'Enquiries - Int in Finance', 'finance');
+    }
+    public function financeNotInterestedList()
+    {
+        return $this->buildGrid(Enquiry::whereIn('fin_mode', ['Cash', 'Customer Self', 'Yet To Decide', 'Purchase Plan Cancelled']), 'admin.enquiry.finance-list', 'Enquiries - Finance Not Interested', 'finance_not_interested');
+    }
+
     private function buildGrid($query, $view, $title, $type)
     {
         $this->crud->setListView($view);
 
-        // Pre-fetch Mappings
         $lpMap = collect(OrgService::keywordValueByCode('LIKELY_PURCHASE_DATE'))->pluck('value', 'code')->toArray();
         $fuelMap = collect(OrgService::getKeyValuesByCode('FUEL_TYPE'))->pluck('value', 'id')->toArray();
+        $finMap = collect(\App\Models\Module\Booking\XlFinancier::select('id', 'name')->get())->pluck('name', 'id')->toArray();
 
-        // Safely limit the data to 500 rows. 
         $enquiries = $query->with(['segment', 'model', 'variant', 'color', 'campaign'])
             ->orderByDesc('created_at')
             ->limit(500)
@@ -252,21 +244,20 @@ class EnquiryCrudController extends CrudController
             'segments' => OrgService::segments(),
             'gridConfig' => [
                 'columns' => $this->getColumns($type),
-                'data' => $enquiries->map(fn($e, $i) => $this->mapData($e, $i, $type, $lpMap, $fuelMap))->values()
+                'data' => $enquiries->map(fn($e, $i) => $this->mapData($e, $i, $type, $lpMap, $fuelMap, $finMap))->values()
             ]
         ]);
     }
 
-    private function mapData($e, $i, $type, $lpMap = [], $fuelMap = [])
+    private function mapData($e, $i, $type, $lpMap = [], $fuelMap = [], $finMap = [])
     {
-        // BULLETPROOF DATE PARSER: Updated to dd-mmm-yyyy format ('d-M-Y')
         $c = function ($d, $f) {
             try {
                 return (!empty(trim((string) $d)) && !str_starts_with((string) $d, '0000'))
                     ? Carbon::parse($d)->format($f)
                     : '—';
             } catch (\Throwable $th) {
-                return '—'; // Fallback if the date is corrupted
+                return '—';
             }
         };
 
@@ -277,52 +268,38 @@ class EnquiryCrudController extends CrudController
 
         if ($type === 'all') {
             $actionBtns .= '<a href="' . $quotUrl . '" class="btn btn-success btn-sm">Quote</a>';
-
             $bookUrl = backpack_url("booking/create?enquiry_id={$e->id}");
             $actionBtns .= '<a href="' . $bookUrl . '" class="btn btn-warning btn-sm" title="Convert to Booking">Process</a>';
         }
 
-        // Send Exchange team to dedicated Custom Blade
         if (in_array($type, ['exchange', 'scrappage', 'exchange_not_interested'])) {
             $exchUrl = backpack_url("exchange/enquiry/{$e->id}/edit");
             $actionBtns = '<a href="' . $exchUrl . '" class="btn btn-sm btn-primary">Process</a>';
         }
+        
+        if (in_array($type, ['finance', 'finance_not_interested'])) {
+            $finUrl = backpack_url("finance/enquiry/{$e->id}/edit");
+            $actionBtns = '<a href="' . $finUrl . '" class="btn btn-sm btn-primary">Process</a>';
+        }
 
         $row = [
             'serial_no' => $i + 1,
-
-            // Render XENQ-id and created_at into the x8 columns
             'x8_enquiry_no' => 'XENQ-' . $e->id, 
             'x8_enquiry_date' => $c($e->created_at, 'd-M-Y H:i'), 
             'x8_enquiry_assign_date' => $c($e->x8_enquiry_assign_date ?? $e->enq_assign_date, 'd-M-Y'),
-            
-            // Move original data from DB x8_ fields into OEM columns
             'oem_enquiry_no' => $e->x8_enquiry_no ?? $e->enquiry_no ?? $e->oem_enquiry_no ?? '—',
             'oem_enquiry_date' => $c($e->x8_enquiry_date ?? $e->enquiry_date ?? $e->oem_enquiry_date, 'd-M-Y'),
             'oem_enquiry_assign_date' => $c($e->oem_enquiry_assign_date ?? $e->enq_assign_date, 'd-M-Y'),
-
-            'segment_name' => $e->segment_code
-                ? ($e->getRelation('segment')?->name ?? $e->segment ?? $e->segment_code)
-                : ($e->segment ?? '—'),
-            'model_name' => $e->model_code
-                ? ($e->getRelation('model')?->name ?? $e->model ?? $e->model_code)
-                : ($e->model ?? '—'),
-            'variant_name' => $e->variant_code
-                ? ($e->getRelation('variant')?->display_name
-                    ?? $e->getRelation('variant')?->custom_name
-                    ?? $e->getRelation('variant')?->oem_name
-                    ?? $e->variant
-                    ?? $e->variant_code)
-                : ($e->variant ?? '—'),
-            'color_name' => $e->color_code
-                ? ($e->getRelation('color')?->name ?? $e->color ?? $e->color_code)
-                : ($e->color ?? '—'),
+            'segment_name' => $e->segment_code ? ($e->getRelation('segment')?->name ?? $e->segment ?? $e->segment_code) : ($e->segment ?? '—'),
+            'model_name' => $e->model_code ? ($e->getRelation('model')?->name ?? $e->model ?? $e->model_code) : ($e->model ?? '—'),
+            'variant_name' => $e->variant_code ? ($e->getRelation('variant')?->display_name ?? $e->getRelation('variant')?->custom_name ?? $e->getRelation('variant')?->oem_name ?? $e->variant ?? $e->variant_code) : ($e->variant ?? '—'),
+            'color_name' => $e->color_code ? ($e->getRelation('color')?->name ?? $e->color ?? $e->color_code) : ($e->color ?? '—'),
             'mobile' => $e->mobile ?? '—',
-            'dms_enquiry_stage' => $e->dms_enquiry_stage ?? $e->stage ?? '—',
-            'cre_enquiry_stage' => $e->cre_enquiry_stage ?? '—',
-            'cre_next_fup_date' => $c($e->cre_next_fup_date, 'd-M-Y'),
-            'cre_next_fup_time' => $e->cre_next_fup_time ?? '—',
-            'cre_next_fup_remarks' => $e->cre_next_fup_remarks ?? '—',
+            'dms_enquiry_stage' => $e->stage ?? '—',
+            'cre_enquiry_stage' => '—',
+            'cre_next_fup_date' => '—', 
+            'cre_next_fup_time' => '—', 
+            'cre_next_fup_remarks' => '—', 
             'x8_quotation_no' => $e->x8_quotation_no ?? $e->quotation_no ?? '—',
             'x8_booking_no' => $e->x8_booking_no ?? $e->booking_no ?? '—',
             'x8_booking_date' => $c($e->x8_booking_date ?? $e->booking_date, 'd-M-Y'),
@@ -330,14 +307,11 @@ class EnquiryCrudController extends CrudController
             'oem_booking_date' => $c($e->oem_booking_date, 'd-M-Y'),
             'oem_otf_no' => $e->oem_otf_no ?? '—',
             'oem_test_drive_no' => $e->oem_test_drive_no ?? $e->test_drive_no ?? '—',
-            
-            // Requirements Mappings
             'territory' => $e->territory ?? '—',
             'fup_count' => $e->fup_count ?? '—',
             'td_date' => $c($e->td_date, 'd-M-Y'),
             'lost_reason' => $e->lost_reason ?? '—',
-            'followup_status' => $e->followup_status ?? $e->fup_status ?? '—', 
-            
+            'followup_status' => $e->fup_status ?? '—', 
             'action' => '<div class="d-flex justify-content-center gap-2">' . $actionBtns . '</div>',
         ];
 
@@ -356,8 +330,7 @@ class EnquiryCrudController extends CrudController
             $row['campaign_date'] = $c($e->wapp_campaign_date, 'd-M-Y');
         }
 
-        // Apply data for lists (quick, long, all, exchange, scrappage)
-        if (in_array($type, ['long', 'quick', 'all', 'exchange', 'scrappage', 'exchange_not_interested'])) {
+        if (in_array($type, ['long', 'quick', 'all', 'exchange', 'scrappage', 'exchange_not_interested', 'finance', 'finance_not_interested'])) {
             $row += [
                 'oem_long_enquiry_no' => $e->oem_long_enquiry_no ?? '—',
                 'oem_long_enquiry_date' => $c($e->oem_long_enquiry_date, 'd-M-Y'),
@@ -366,7 +339,6 @@ class EnquiryCrudController extends CrudController
                 'oem_quick_enquiry_date' => $c($e->oem_quick_enquiry_date ?? $e->quick_enquiry_date, 'd-M-Y'),
                 'oem_quick_enquiry_status' => $e->oem_quick_enquiry_status ?? $e->quick_status ?? '—',
                 'oem_quick_enquiry_assign_date' => $c($e->oem_quick_enquiry_assign_date ?? $e->quick_enq_assign_date, 'd-M-Y'),
-
                 'first_name' => $e->first_name ?? '—',
                 'last_name' => $e->last_name ?? '—',
                 'full_name' => $e->full_name ?? trim(($e->first_name ?? '') . ' ' . ($e->last_name ?? '')),
@@ -375,36 +347,24 @@ class EnquiryCrudController extends CrudController
                 'enquiry_type' => $e->enquiry_type ?? '—',
                 'source_name' => $e->source?->name ?? $e->source_code ?? '—',
                 'sub_source' => $e->sub_source ?? '—',
-
-                // Mapped Likely Purchase Date value
                 'likely_purchase_in_days' => $lpMap[$e->likely_purchase_date] ?? $e->likely_purchase_date ?? '—',
-
-                // Mapped Fuel Type Value
                 'fuel_type' => $fuelMap[$e->fuel_type] ?? $e->fuel_type ?? '—',
-
                 'transmission' => $e->transmission ?? '—',
                 'drivetrain' => $e->drivetrain ?? '—',
                 'seating' => $e->seating ?? '—',
                 'tehsil' => $e->tehsil ?? '—',
                 'district' => $e->district ?? '—',
                 'city' => $e->city ?? '—',
-
-                // Mapped Sales Consultant Name
                 'sc_code' => $e->sc_code ? (OrgService::getUserNameByCode($e->sc_code, null, $e->sc_code)) : '—',
-
                 'dealer_branch' => $e->dealer_branch ?? '—',
                 'dealer_location' => $e->dealer_location ?? '—',
-
-                // Mapped Follow-up Type via KeyValue
                 'followup_type' => $e->followup_type ? (OrgService::getKeyValueByCode($e->followup_type)?->value ?? $e->followup_type) : '—',
-                
                 'followup_date' => $c($e->followup_date, 'd-M-Y'),
                 'followup_time' => $e->followup_time ?? '—',
                 'occupation_type' => $e->occupation_type ?? '—',
                 'customer_type' => $e->customer_type ?? '—',
                 'occupation_sub_type' => $e->occupation_sub_type ?? '—',
                 'company_name' => $e->company_name ?? '—',
-
                 'dob' => $c($e->dob, 'd-M-Y'),
                 'marital_status' => $e->marital_status ?? '—',
                 'marriage_date' => $c($e->marriage_date, 'd-M-Y'),
@@ -413,21 +373,21 @@ class EnquiryCrudController extends CrudController
                 'km_travelled_daily' => $e->km_travelled_daily ?? '—',
                 'application_type' => $e->application_type ?? '—',
                 'application' => $e->application ?? '—',
-
                 'pincode' => $e->pincode ?? $e->zipcode ?? '—',
                 'address' => $e->address ?? $e->customer_address ?? '—',
                 'has_ev' => $e->has_ev ?? '—',
                 'purchase_type' => $e->purchase_type ?? '—',
                 'remarks' => $e->remarks ?? '—',
-
                 'consider_make' => $e->consid_brand ?? $e->consider_make ?? '—',
                 'consider_model' => $e->consid_model ?? $e->consider_model ?? '—',
                 'consider_variant' => $e->consid_variant ?? $e->consider_variant ?? '—',
-                
                 'expected_price' => $e->expected_price ?? '—',
                 'offered_price' => $e->offered_price ?? '—',
                 'exchange_bonus' => $e->exchange_bonus ?? '—',
-                'price_gap' => ($e->expected_price ?? 0) - ($e->offered_price ?? 0) - ($e->exchange_bonus ?? 0)
+                'price_gap' => ($e->expected_price ?? 0) - ($e->offered_price ?? 0) - ($e->exchange_bonus ?? 0),
+                'fin_mode' => $e->fin_mode ?? '—',
+                'financier_name' => $finMap[$e->financier] ?? $e->financier ?? '—',
+                'loan_status' => $e->loan_status ?? '—', 
             ];
         }
 
@@ -436,11 +396,10 @@ class EnquiryCrudController extends CrudController
 
     private function getColumns($type)
     {
-        // Headers common to the end of most grids
         $commonEnd = [
             ['field' => 'dms_enquiry_stage', 'headerName' => 'DMS Stage'],
             ['field' => 'cre_enquiry_stage', 'headerName' => 'CRE Stage'],
-            ['field' => 'followup_status', 'headerName' => 'FOLLOW UP STATUS'], // Req 3
+            ['field' => 'followup_status', 'headerName' => 'FOLLOW UP STATUS'],
             ['field' => 'cre_next_fup_date', 'headerName' => 'Next FUP Date'],
             ['field' => 'cre_next_fup_time', 'headerName' => 'Next FUP Time'],
             ['field' => 'cre_next_fup_remarks', 'headerName' => 'FUP Remarks'],
@@ -463,7 +422,6 @@ class EnquiryCrudController extends CrudController
             ]
         ];
 
-        // Specific grid override structures
         if ($type === 'reference')
             return array_merge([
                 ['field' => 'serial_no', 'headerName' => 'S.No.'],
@@ -513,7 +471,6 @@ class EnquiryCrudController extends CrudController
                 ['field' => 'mobile', 'headerName' => 'Customer Mobile'],
             ], $commonEnd);
 
-        // Core base columns for All, Long, Quick, Exchange, Scrappage
         $baseCols = [
             ['field' => 'serial_no', 'headerName' => 'S.No.'],
             ['field' => 'x8_enquiry_no', 'headerName' => 'X8 Enquiry No.'],
@@ -521,11 +478,10 @@ class EnquiryCrudController extends CrudController
             ['field' => 'x8_enquiry_assign_date', 'headerName' => 'X8 Enquiry Assign Date'],
             ['field' => 'oem_enquiry_no', 'headerName' => 'OEM Enquiry No.'],
             ['field' => 'oem_enquiry_date', 'headerName' => 'OEM Enquiry Date'],
-            ['field' => 'oem_enquiry_assign_date', 'headerName' => 'OEM Enquiry Assign Date'],
+            ['field' => 'oem_enquiry_assign_date', 'headerName' => 'OEM Enquiry Assign Date'], 
         ];
 
-        // Dynamically add only the relevant columns to clear out "Unnecessary Fields"
-        if ($type === 'all' || in_array($type, ['exchange', 'scrappage', 'exchange_not_interested'])) {
+        if ($type === 'all' || in_array($type, ['exchange', 'scrappage', 'exchange_not_interested', 'finance', 'finance_not_interested'])) {
             $baseCols = array_merge($baseCols, [
                 ['field' => 'oem_quick_enquiry_no', 'headerName' => 'OEM Quick Enquiry No.'],
                 ['field' => 'oem_quick_enquiry_date', 'headerName' => 'OEM Quick Enquiry Date'],
@@ -540,7 +496,7 @@ class EnquiryCrudController extends CrudController
             $baseCols = array_merge($baseCols, [
                 ['field' => 'oem_long_enquiry_no', 'headerName' => 'OEM Long Enquiry No.'],
                 ['field' => 'oem_long_enquiry_date', 'headerName' => 'OEM Long Enquiry Date'],
-                ['field' => 'oem_long_enquiry_assign_date', 'headerName' => 'OEM Enquiry Assign Date'], // RENAMED
+                ['field' => 'oem_long_enquiry_assign_date', 'headerName' => 'OEM Enquiry Assign Date'],
             ]);
         }
 
@@ -563,10 +519,10 @@ class EnquiryCrudController extends CrudController
             ['field' => 'transmission', 'headerName' => 'Transmission'],
             ['field' => 'drivetrain', 'headerName' => 'Drivetrain'],
             ['field' => 'seating', 'headerName' => 'Seating'],
-            ['field' => 'territory', 'headerName' => 'Territory'], // Req 1
+            ['field' => 'territory', 'headerName' => 'Territory'],
             ['field' => 'tehsil', 'headerName' => 'Tehsil'],
             ['field' => 'district', 'headerName' => 'District'],
-            ['field' => 'city', 'headerName' => 'State'], // Req 3: City renamed to State internally for columns
+            ['field' => 'city', 'headerName' => 'State'],
             ['field' => 'sc_code', 'headerName' => 'Sales Consultant'], 
             ['field' => 'dealer_branch', 'headerName' => 'Dealer Branch'],
             ['field' => 'dealer_location', 'headerName' => 'Dealer Location'],
@@ -596,10 +552,12 @@ class EnquiryCrudController extends CrudController
             ['field' => 'expected_price', 'headerName' => 'Expected Price'],
             ['field' => 'offered_price', 'headerName' => 'Offered Price'],
             ['field' => 'exchange_bonus', 'headerName' => 'Exchange Bonus'],
-            ['field' => 'price_gap', 'headerName' => 'Price Gap']
+            ['field' => 'price_gap', 'headerName' => 'Price Gap'],
+            ['field' => 'fin_mode', 'headerName' => 'Finance Mode'],
+            ['field' => 'financier_name', 'headerName' => 'Financier'],
+            ['field' => 'loan_status', 'headerName' => 'Loan Status']
         ];
 
-        // Clean up "unnecessary fields" based on type to declutter customise headers menu
         if ($type === 'quick') {
             $remove = ['drivetrain', 'seating', 'tehsil', 'district', 'occupation_sub_type', 'company_name', 'dob', 'marital_status', 'marriage_date', 'age_group', 'usage_area', 'km_travelled_daily', 'application_type', 'application', 'pincode', 'address', 'has_ev', 'consider_make', 'consider_model', 'consider_variant', 'full_name'];
             $midCols = array_values(array_filter($midCols, fn($c) => !in_array($c['field'], $remove)));
@@ -611,10 +569,6 @@ class EnquiryCrudController extends CrudController
         return array_merge($baseCols, $midCols, $commonEnd);
     }
 
-    // =========================================================
-    // SEARCH & SORT LOGIC
-    // =========================================================
-
     private function applyEnquirySearch($query, string $searchText): void
     {
         if ($searchText === '') return;
@@ -625,11 +579,9 @@ class EnquiryCrudController extends CrudController
 
         $query->where(function ($q) use ($like, $xenqId, $isXenq, $searchText) {
             if ($isXenq && $xenqId) {
-                // If user types exactly XENQ-123 in search box
                 $q->where('id', $xenqId);
             } else {
-                // Regular multi-column search
-                $q->where('id', (int) $searchText) // Fallback for raw IDs
+                $q->where('id', (int) $searchText)
                     ->orWhere('enquiry_no', 'like', $like)
                     ->orWhere('oem_enquiry_no', 'like', $like)
                     ->orWhere('x8_enquiry_no', 'like', $like)
@@ -667,23 +619,14 @@ class EnquiryCrudController extends CrudController
             $query->orderByDesc('created_at');
     }
 
-    // =========================================================
-    // COLUMN FILTER LOGIC (ag-Grid default column filters)
-    // =========================================================
-
-    /**
-     * Maps ag-Grid field names that don't match a real DB column
-     * directly to the actual column (accessor-redirected fields,
-     * relation "name" columns, etc). null = not filterable (computed field).
-     */
     private const FILTER_FIELD_MAP = [
-        'full_name' => null, // computed accessor, not a column
+        'full_name' => null, 
         'action' => null,
         'source_name' => 'source_code',
-        'segment_name' => null, // handled via relation below
-        'model_name' => null,   // handled via relation below
-        'variant_name' => null, // handled via relation below
-        'color_name' => null,   // handled via relation below
+        'segment_name' => null, 
+        'model_name' => null,   
+        'variant_name' => null, 
+        'color_name' => null,   
         'exchange_make' => 'brand_make',
         'exchange_model' => 'brand_model',
         'consider_make' => 'consid_brand',
@@ -692,11 +635,6 @@ class EnquiryCrudController extends CrudController
         'likely_purchase_in_days' => 'likely_purchase_date',
     ];
 
-    /**
-     * ag-Grid field => matches the same code-first, raw-column-fallback
-     * priority used for display: if the *_code column is filled, filter
-     * against the raw text column (segment/model/variant/color).
-     */
     private const FILTER_CODE_COLUMN_MAP = [
         'segment_name' => ['code' => 'segment_code', 'relation' => 'segment', 'relCols' => ['name'], 'rawCol' => 'segment'],
         'model_name' => ['code' => 'model_code', 'relation' => 'model', 'relCols' => ['name'], 'rawCol' => 'model'],
@@ -706,48 +644,35 @@ class EnquiryCrudController extends CrudController
 
     private function applyEnquiryFilter($query, array $filterModel): void
     {
-        if (empty($filterModel))
-            return;
+        if (empty($filterModel)) return;
 
         foreach ($filterModel as $field => $condition) {
-            if (!is_array($condition))
-                continue;
+            if (!is_array($condition)) continue;
 
-            // Code-priority columns (e.g. model_name -> model.name if model_code filled, else raw `model` column)
             if (isset(self::FILTER_CODE_COLUMN_MAP[$field])) {
                 $map = self::FILTER_CODE_COLUMN_MAP[$field];
                 $query->where(function ($q) use ($map, $condition) {
-                    // Code filled -> match via related table
                     $q->where(function ($q2) use ($map, $condition) {
                         $q2->whereNotNull($map['code'])->where($map['code'], '!=', '')
                             ->whereHas($map['relation'], function ($q3) use ($map, $condition) {
                                 $this->applyFilterConditionAnyColumn($q3, $map['relCols'], $condition);
                             });
-                    })
-                        // Code blank -> match raw text column instead
-                        ->orWhere(function ($q2) use ($map, $condition) {
-                            $q2->where(function ($q3) use ($map) {
-                                $q3->whereNull($map['code'])->orWhere($map['code'], '');
-                            });
-                            $this->applyFilterCondition($q2, $map['rawCol'], $condition);
+                    })->orWhere(function ($q2) use ($map, $condition) {
+                        $q2->where(function ($q3) use ($map) {
+                            $q3->whereNull($map['code'])->orWhere($map['code'], '');
                         });
+                        $this->applyFilterCondition($q2, $map['rawCol'], $condition);
+                    });
                 });
                 continue;
             }
 
-            // Redirected / renamed columns, or explicitly non-filterable
-            $column = array_key_exists($field, self::FILTER_FIELD_MAP)
-                ? self::FILTER_FIELD_MAP[$field]
-                : $field;
-
-            if ($column === null)
-                continue; // not filterable
-
+            $column = array_key_exists($field, self::FILTER_FIELD_MAP) ? self::FILTER_FIELD_MAP[$field] : $field;
+            if ($column === null) continue; 
             $this->applyFilterCondition($query, $column, $condition);
         }
     }
 
-    /** Applies the same filter condition across multiple columns, OR'd together. */
     private function applyFilterConditionAnyColumn($query, array $columns, array $condition): void
     {
         $query->where(function ($q) use ($columns, $condition) {
@@ -759,10 +684,6 @@ class EnquiryCrudController extends CrudController
         });
     }
 
-    /**
-     * Applies a single ag-Grid text-filter condition to a query.
-     * Supports the standard agTextColumnFilter operator set.
-     */
     private function applyFilterCondition($query, string $column, array $condition): void
     {
         if (isset($condition['conditions']) && is_array($condition['conditions'])) {
@@ -781,26 +702,12 @@ class EnquiryCrudController extends CrudController
         $value = $condition['filter'] ?? null;
 
         switch ($type) {
-            case 'equals':
-                $query->where($column, $value);
-                break;
-            case 'notEqual':
-                $query->where($column, '!=', $value);
-                break;
-            case 'startsWith':
-                $query->where($column, 'like', "{$value}%");
-                break;
-            case 'endsWith':
-                $query->where($column, 'like', "%{$value}");
-                break;
-            case 'blank':
-                $query->where(function ($q) use ($column) {
-                    $q->whereNull($column)->orWhere($column, '');
-                });
-                break;
-            case 'notBlank':
-                $query->whereNotNull($column)->where($column, '!=', '');
-                break;
+            case 'equals': $query->where($column, $value); break;
+            case 'notEqual': $query->where($column, '!=', $value); break;
+            case 'startsWith': $query->where($column, 'like', "{$value}%"); break;
+            case 'endsWith': $query->where($column, 'like', "%{$value}"); break;
+            case 'blank': $query->where(function ($q) use ($column) { $q->whereNull($column)->orWhere($column, ''); }); break;
+            case 'notBlank': $query->whereNotNull($column)->where($column, '!=', ''); break;
             case 'contains':
             default:
                 if ($value !== null && $value !== '') {
@@ -810,17 +717,22 @@ class EnquiryCrudController extends CrudController
         }
     }
 
-    // =========================================================
-    // CREATE / EDIT / STORE / UPDATE
-    // =========================================================
-
     public function create()
     {
-        return view('admin.enquiry.create', ['title' => 'Add New Enquiry'] + $this->getEnquiryFormData());
+        return view('admin.enquiry.create', [
+            'title' => 'Add New Enquiry', 
+            'enquiry' => null, 
+            'fups' => []       
+        ] + $this->getEnquiryFormData());
     }
+
     public function createReference()
     {
-        return view('admin.enquiry.reference-create', ['title' => 'Add Reference Enquiry'] + $this->getEnquiryFormData());
+        return view('admin.enquiry.reference-create', [
+            'title' => 'Add Reference Enquiry', 
+            'enquiry' => null, 
+            'fups' => []
+        ] + $this->getEnquiryFormData());
     }
 
     public function edit($id)
@@ -874,12 +786,11 @@ class EnquiryCrudController extends CrudController
         return redirect(backpack_url('enquiry'));
     }
 
-    // --- Exchange Edit / Update specific methods ---
     public function exchangeEnquiryEdit($id)
     {
         $enquiry = Enquiry::with(['segment', 'model', 'variant'])->findOrFail($id);
         $existing_car_oems = OrgService::keywordValueByCode('EXISTING_CAR_OEM');
-        return view('admin.enquiry.exchange_edit', compact('enquiry', 'existing_car_oems'));
+        return view('admin.enquiry.exchange-edit', compact('enquiry', 'existing_car_oems'));
     }
 
     public function exchangeEnquiryUpdate(Request $request, $id)
@@ -891,11 +802,70 @@ class EnquiryCrudController extends CrudController
         ]));
         Alert::success('Exchange Details Updated successfully.')->flash();
         
-        // Return to whichever list they came from
         if($enquiry->purchase_type === 'Scrappage') {
             return redirect(backpack_url('exchange/enquiry/int-in-scrappage'));
         }
         return redirect(backpack_url('exchange/enquiry/int-in-exchange'));
+    }
+
+    public function financeEnquiryEdit($id)
+    {
+        $enquiry = Enquiry::with(['segment', 'model', 'variant'])->findOrFail($id);
+        $finance = \App\Models\Module\Finance\XFinance::where('enq_no', $enquiry->enquiry_no)->first();
+        $financiers = \App\Models\Module\Booking\XlFinancier::select('id', 'name', 'short_name')->get()->toArray();
+        
+        return view('admin.enquiry.finance-edit', compact('enquiry', 'finance', 'financiers'));
+    }
+
+    public function financeEnquiryUpdate(Request $request, $id)
+    {
+        $enquiry = Enquiry::findOrFail($id);
+        
+        $enquiry->update([
+            'fin_mode' => $request->fin_mode,
+            'financier' => $request->financier,
+            'loan_status' => $request->loan_status,
+        ]);
+
+        $finance = \App\Models\Module\Finance\XFinance::firstOrNew(['enq_no' => $enquiry->enquiry_no]);
+        
+        $finance->bid = $enquiry->id; 
+        $finance->fin_mode = $request->fin_mode;
+        $finance->financier = $request->financier;
+        $finance->loan_status = $request->loan_status;
+        $finance->case_status = $request->case_status ?? 1;
+        $finance->verification_status = $request->verification_status ?? 1;
+        $finance->case_lost_reason = $request->case_lost_reason;
+        
+        if (!in_array($request->fin_mode, ['Cash', 'Customer Self', 'Yet To Decide', 'Purchase Plan Cancelled'])) {
+            $finance->instrument_type = $request->instrument_type;
+            $finance->instrument_ref_no = $request->instrument_ref_no;
+            $finance->loan_amount = $request->loan_amount;
+            $finance->margin = $request->margin_money;
+            $finance->file_charge = $request->file_charge;
+        } else {
+            $finance->instrument_type = null;
+            $finance->instrument_ref_no = null;
+            $finance->loan_amount = null;
+            $finance->margin = null;
+            $finance->file_charge = null;
+        }
+
+        $finance->updated_by = backpack_auth()->id();
+        $finance->status = ($finance->fin_mode === 'In-house' && $finance->case_status == 2) ? 2 : 1;
+        $finance->save();
+
+        if ($request->hasFile('instrument_proof')) {
+            $finance->clearMediaCollection('instrument_proof');
+            $finance->addMediaFromRequest('instrument_proof')->toMediaCollection('instrument_proof');
+        }
+
+        Alert::success('Finance Details Updated successfully.')->flash();
+        
+        if (in_array($enquiry->fin_mode, ['Cash', 'Customer Self', 'Yet To Decide', 'Purchase Plan Cancelled'])) {
+            return redirect(backpack_url('finance/enquiry/not-interested'));
+        }
+        return redirect(backpack_url('finance/enquiry/int-in-finance'));
     }
 
     public function storeReference(Request $request)
@@ -965,7 +935,7 @@ class EnquiryCrudController extends CrudController
             'activity_location' => 'nullable',
             'first_name' => $req . '|max:100',
             'last_name' => 'nullable|max:100',
-            'mobile' => 'required|max:15', // Kept required because it always submits via hidden input
+            'mobile' => 'required|max:15', 
             'email' => 'nullable|email|max:150',
             'occupation_type' => 'nullable',
             'customer_type' => 'nullable',
@@ -977,14 +947,14 @@ class EnquiryCrudController extends CrudController
             'marriage_date' => 'nullable|date',
             'age_group' => 'nullable',
             'pincode' => 'nullable|max:10',
-            'bpo' => 'nullable|max:150', // VPO mapped functionally
+            'vpo' => 'nullable|max:150', // FIXED: Validating 'vpo' instead of 'bpo'
             'tehsil' => 'nullable|max:100',
             'district' => 'nullable|max:100',
-            'city' => 'nullable|max:100', // State mapped functionally
-            'territory' => 'nullable|string|max:100', // Req 1
+            'city' => 'nullable|max:100', 
+            'territory' => 'nullable|string|max:100', 
             'has_ev' => 'nullable',
             'purchase_type' => 'nullable',
-            'purchase_type_crm' => 'nullable|string|max:100', // Req 4
+            'purchase_type_crm' => 'nullable|string|max:100', 
             'consider_make' => 'nullable|max:100',
             'consider_model' => 'nullable|max:100',
             'consider_variant' => 'nullable|max:100',
@@ -1006,8 +976,6 @@ class EnquiryCrudController extends CrudController
             'dealer_branch' => $req,
             'dealer_location' => $req,
             'sc_code' => $req,
-            
-            // Follow Up Rules (Req 7, 9, 11, 13)
             'followup_type' => 'nullable',
             'followup_date' => 'nullable|date',
             'followup_time' => 'nullable',
@@ -1027,21 +995,13 @@ class EnquiryCrudController extends CrudController
             'lost_sub_reason' => 'nullable|string|max:100',
             'lost_detail_reason' => 'nullable|string|max:100',
             'lost_remarks' => 'nullable|string|max:100',
-            
-            // CRE Follow up
-            'cre_enquiry_stage' => 'nullable|string|max:100',
-            'cre_next_fup_date' => 'nullable|date',
-            'cre_next_fup_time' => 'nullable',
-            'cre_next_fup_remarks' => 'nullable|string|max:255',
-
-            // Financial & Exchange Rules
             'make_year' => 'nullable|integer',
             'odo_reading' => 'nullable|numeric',
             'expected_price' => 'nullable|numeric',
             'offered_price' => 'nullable|numeric',
             'exchange_bonus' => 'nullable|numeric',
             'fin_mode' => 'nullable|string|max:50',
-            'financier' => 'nullable|integer', // Req 5: Nullable/Optional
+            'financier' => 'nullable|integer', 
             'brand_make' => 'nullable|string|max:100',
             'brand_model' => 'nullable|string|max:100',
             'call_nature' => 'nullable|string', 
@@ -1060,9 +1020,7 @@ class EnquiryCrudController extends CrudController
             'saleconsultants' => OrgService::getUsers(desigCode: 'CNS'),
             'branches' => OrgService::branches(),
             'campaigns' => Campaign::orderBy('name')->pluck('name')->toArray(),
-
             'likely_purchase_dates' => $kw('LIKELY_PURCHASE_DATE'),
-
             'enquiry_types' => $kw('ENQUIRY_TYPE'),
             'activity_types' => $kw('ACTIVITY_TYPE'),
             'follow_up_types' => $kw('FOLLOW_UP_TYPE'),
@@ -1091,10 +1049,6 @@ class EnquiryCrudController extends CrudController
             'financiers' => collect(XlFinancier::select('id', 'name', 'short_name')->get()->toArray())->map(fn($f) => (object) $f),
         ];
     }
-
-    // =========================================================
-    // AJAX & HELPERS
-    // =========================================================
 
     public function getSources()
     {
@@ -1140,10 +1094,6 @@ class EnquiryCrudController extends CrudController
         $enquiry = Enquiry::where('mobile', $request->mobile)->where('segment_code', $request->segment_code)->first();
         return response()->json(['exists' => (bool) $enquiry, 'enquiry_no' => $enquiry?->enquiry_no]);
     }
-
-    // =========================================================
-    // EXCEL IMPORT 
-    // =========================================================
 
     public function importEnquiries(Request $request)
     {

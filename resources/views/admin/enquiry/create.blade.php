@@ -62,14 +62,13 @@
                             @endif
 
                             {{-- =========================== VIRTUAL CALL DETAILS =========================== --}}
-                            @if ($isVirtual)
+                            @if($isVirtual)
                                 <h3 class="mb-0 ms-3 mt-3">Virtual Call Details</h3>
                                 <div class="card-body">
                                     <div class="row">
                                         <div class="col-md-2 mb-3">
                                             <label class="form-label">Virtual Number</label>
-                                            <input type="text" name="virtual_no" class="form-control"
-                                                value="{{ $enquiry->virtual_no ?? '' }}" readonly>
+                                            <input type="text" name="virtual_no" class="form-control" value="{{ $enquiry->virtual_no ?? '' }}" readonly>
                                         </div>
                                         <div class="col-md-3 mb-3">
                                             <label class="form-label">Call Date</label>
@@ -77,27 +76,21 @@
                                         </div>
                                         <div class="col-md-2 mb-3">
                                             <label class="form-label">Call Duration</label>
-                                            <input type="text" name="call_duration" class="form-control"
-                                                value="{{ $enquiry->call_duration ?? '' }}" readonly>
+                                            <input type="text" name="call_duration" class="form-control" value="{{ $enquiry->call_duration ?? '' }}" readonly>
                                         </div>
-
+                                        
                                         {{-- Mobile Field for Virtual Block --}}
                                         <div class="col-md-2 mb-3">
-                                            <label class="form-label">Customer Mobile <span
-                                                    class="text-danger">*</span></label>
-                                            <input type="text" id="mobile" name="mobile" maxlength="10"
-                                                class="form-control" value="{{ old('mobile', $enquiry->mobile ?? '') }}"
-                                                required>
+                                            <label class="form-label">Customer Mobile <span class="text-danger">*</span></label>
+                                            <input type="text" id="mobile" name="mobile" maxlength="10" class="form-control" value="{{ old('mobile', $enquiry->mobile ?? '') }}" required>
                                         </div>
-
+                                        
                                         <div class="col-md-3 mb-3">
                                             <label class="form-label">Call Nature <span class="text-danger">*</span></label>
-                                            <select name="call_nature" id="call_nature" class="form-control form-select"
-                                                required>
+                                            <select name="call_nature" id="call_nature" class="form-control form-select" required>
                                                 <option value="">Select Option</option>
                                                 @foreach ($call_nature_virtual as $item)
-                                                    <option value="{{ $item['code'] }}"
-                                                        {{ old('call_nature', $enquiry->call_nature ?? '') == $item['code'] ? 'selected' : '' }}>
+                                                    <option value="{{ $item['code'] }}" {{ old('call_nature', $enquiry->call_nature ?? '') == $item['code'] ? 'selected' : '' }}>
                                                         {{ $item['value'] }}
                                                     </option>
                                                 @endforeach
@@ -106,8 +99,7 @@
                                     </div>
                                     <div class="row">
                                         <div class="col-md-12 mb-3">
-                                            <label class="form-label">Remarks <small
-                                                    class="text-muted">(Optional)</small></label>
+                                            <label class="form-label">Remarks <small class="text-muted">(Optional)</small></label>
                                             <textarea name="remarks" class="form-control" rows="2">{{ old('remarks', $enquiry->remarks ?? '') }}</textarea>
                                         </div>
                                     </div>
@@ -145,8 +137,7 @@
                                             <label class="form-label">
                                                 Model <span class="text-danger">*</span>
                                             </label>
-                                            <select name="model_code" id="model_code" class="form-control form-select"
-                                                required>
+                                            <select name="model_code" id="model_code" class="form-control form-select" required>
                                                 <option value="">Select Model</option>
                                             </select>
                                         </div>
@@ -181,15 +172,15 @@
                                         </div>
 
                                         {{-- Phone Number for Standard Enquiries --}}
-                                        @if (!$isVirtual)
-                                            <div class="col-md-3 mb-3">
-                                                <label class="form-label">
-                                                    Phone Number <span class="text-danger">*</span>
-                                                </label>
-                                                <input type="text" id="mobile" name="mobile" maxlength="10"
-                                                    class="form-control"
-                                                    value="{{ old('mobile', $enquiry->mobile ?? '') }}" required>
-                                            </div>
+                                        @if(!$isVirtual)
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">
+                                                Phone Number <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="text" id="mobile" name="mobile" maxlength="10"
+                                                class="form-control" value="{{ old('mobile', $enquiry->mobile ?? '') }}"
+                                                required>
+                                        </div>
                                         @endif
 
                                         {{-- Email --}}
@@ -216,16 +207,6 @@
                                                 @endforeach
                                             </select>
                                         </div>
-                                        {{-- Purchase Type --}}
-                                        <div class="col-md-12 mb-3">
-                                            <label class="form-label">
-                                                Purchase Type (DMS)
-                                            </label>
-
-                                        </div>
-
-
-
 
                                     </div>
 
@@ -244,8 +225,8 @@
                                             <label class="form-label">
                                                 Enquiry Type <span class="text-danger">*</span>
                                             </label>
-                                            <select name="enquiry_type" id="enquiry_type"
-                                                class="form-control form-select" required>
+                                            <select name="enquiry_type" id="enquiry_type" class="form-control form-select"
+                                                required>
                                                 <option value="">Select Enquiry Type</option>
                                                 @foreach ($enquiry_types as $etype)
                                                     <option value="{{ $etype['code'] }}"
@@ -272,8 +253,7 @@
                                             <label class="form-label">
                                                 Enquiry Sub Source <span class="text-danger">*</span>
                                             </label>
-                                            <select name="sub_source" id="sub_source" class="form-control form-select"
-                                                disabled>
+                                            <select name="sub_source" id="sub_source" class="form-control form-select" disabled>
                                                 <option value="">Select Enquiry Sub Source</option>
                                             </select>
                                         </div>
@@ -297,8 +277,7 @@
                                                 <label class="form-label">
                                                     Referred By <span class="text-danger">*</span>
                                                 </label>
-                                                <select name="referred_by" id="referred_by"
-                                                    class="form-control form-select">
+                                                <select name="referred_by" id="referred_by" class="form-control form-select">
                                                     <option value="">Select Referred By</option>
                                                     <option value="Customer"
                                                         {{ old('referred_by', $enquiry->referred_by ?? '') == 'Customer' ? 'selected' : '' }}>
@@ -327,8 +306,7 @@
                                                 <label class="form-label">
                                                     Referee Name <span class="text-danger">*</span>
                                                 </label>
-                                                <select name="person_code" id="person_code"
-                                                    class="form-control form-select">
+                                                <select name="person_code" id="person_code" class="form-control form-select">
                                                     <option value="">Select Name</option>
                                                 </select>
                                             </div>
@@ -337,8 +315,7 @@
                                                 <label class="form-label">
                                                     Referee Name <span class="text-danger">*</span>
                                                 </label>
-                                                <input type="text" id="referee_name_manual_input"
-                                                    class="form-control">
+                                                <input type="text" id="referee_name_manual_input" class="form-control">
                                             </div>
                                         </div>
 
@@ -392,8 +369,8 @@
                                             <label class="form-label">
                                                 Transmission <span class="text-danger">*</span>
                                             </label>
-                                            <input type="text" id="transmission" name="transmission"
-                                                class="form-control" readonly>
+                                            <input type="text" id="transmission" name="transmission" class="form-control"
+                                                readonly>
                                         </div>
 
                                         {{-- Drivetrain --}}
@@ -458,8 +435,7 @@
 
                                             <div class="col-md-3 mb-3">
                                                 <label class="form-label">Application</label>
-                                                <select name="application" id="application"
-                                                    class="form-control form-select">
+                                                <select name="application" id="application" class="form-control form-select">
                                                     <option value="">Select Application</option>
                                                     @foreach ($applications as $item)
                                                         <option value="{{ $item['code'] }}"
@@ -483,11 +459,10 @@
                                                 Pin Code <small class="text-muted">(Optional)</small>
                                             </label>
                                             <input type="text" id="zipcode" name="zipcode" maxlength="6"
-                                                class="form-control"
-                                                value="{{ old('zipcode', $enquiry->zipcode ?? '') }}">
+                                                class="form-control" value="{{ old('zipcode', $enquiry->zipcode ?? '') }}">
                                         </div>
 
-                                        {{-- VPO (Req 3) --}}
+                                        {{-- VPO --}}
                                         <div class="col-md-2 mb-3">
                                             <label class="form-label">
                                                 VPO <small class="text-muted">(Optional)</small>
@@ -495,7 +470,7 @@
                                             <select id="vpo_select" class="form-control form-select">
                                                 <option value="">Select VPO</option>
                                             </select>
-                                            <input type="text" id="vpo_input" class="form-control mt-2 d-none" placeholder="Enter VPO Manually" value="{{ $enquiry->bpo ?? '' }}">
+                                            <input type="text" id="vpo_input" class="form-control mt-2 d-none" placeholder="Enter VPO Manually" value="{{ $enquiry->vpo ?? '' }}">
                                         </div>
 
                                         {{-- Tehsil --}}
@@ -520,7 +495,7 @@
                                             <input type="text" id="district_input" class="form-control mt-2 d-none" placeholder="Enter District Manually" value="{{ $enquiry->district ?? '' }}">
                                         </div>
 
-                                        {{-- State (Req 3 renamed from City) --}}
+                                        {{-- State --}}
                                         <div class="col-md-2 mb-3">
                                             <label class="form-label">
                                                 State <small class="text-muted">(Optional)</small>
@@ -531,7 +506,7 @@
                                             <input type="text" id="state_input" class="form-control mt-2 d-none" placeholder="Enter State Manually" value="{{ $enquiry->city ?? '' }}">
                                         </div>
 
-                                        {{-- Territory (Req 1) --}}
+                                        {{-- Territory --}}
                                         <div class="col-md-2 mb-3">
                                             <label class="form-label">
                                                 Territory <small class="text-muted">(Optional)</small>
@@ -541,13 +516,6 @@
                                                 <option value="OWN TERRITORY" {{ old('territory', $enquiry->territory ?? '') == 'OWN TERRITORY' ? 'selected' : '' }}>OWN TERRITORY</option>
                                                 <option value="OTHER TERRITORY" {{ old('territory', $enquiry->territory ?? '') == 'OTHER TERRITORY' ? 'selected' : '' }}>OTHER TERRITORY</option>
                                             </select>
-                                        </div>
-                                        <div class="col-md-2 mb-2">
-                                            <label class="form-label">
-                                                Territory<span class="text-danger">*</span>
-                                            </label>
-                                            <input type="text" name="territory" class="form-control"
-                                                value="{{ old('territory', $enquiry->territory ?? '') }}" readonly>
                                         </div>
                                     </div>
                                 </div>
@@ -563,8 +531,8 @@
                                             <label class="form-label">
                                                 Select Dealer Branch <span class="text-danger">*</span>
                                             </label>
-                                            <select name="dealer_branch" id="dealer_branch"
-                                                class="form-control form-select" required>
+                                            <select name="dealer_branch" id="dealer_branch" class="form-control form-select"
+                                                required>
                                                 <option value="">Select Dealer Branch</option>
                                                 @foreach ($branches as $code => $name)
                                                     <option value="{{ $code }}"
@@ -596,8 +564,7 @@
                                                 @foreach ($saleconsultants as $consultant)
                                                     <option value="{{ $consultant['person_code'] }}"
                                                         {{ old('sc_code', $enquiry->sc_code ?? '') == $consultant['person_code'] ? 'selected' : '' }}>
-                                                        {{ $consultant['display_name'] }} -
-                                                        {{ $consultant['employee_code'] }}
+                                                        {{ $consultant['display_name'] }} - {{ $consultant['employee_code'] }}
                                                     </option>
                                                 @endforeach
                                             </select>
@@ -672,8 +639,7 @@
                                                 D.O.B. <small class="text-muted">(Optional)</small>
                                             </label>
                                             <input type="text" id="dob" name="dob" class="form-control"
-                                                value="{{ old('dob', $enquiry->dob ?? '') }}"
-                                                placeholder="Select D.O.B.">
+                                                value="{{ old('dob', $enquiry->dob ?? '') }}" placeholder="Select D.O.B.">
                                         </div>
 
                                         {{-- Marital Status --}}
@@ -747,7 +713,7 @@
                                         {{-- Purchase Type Selection Only --}}
                                         <div class="col-md-4 mb-3">
                                             <label class="form-label">
-                                                Purchase Type(CRM) <small class="text-muted"></small>
+                                                Purchase Type <small class="text-muted">(Optional)</small>
                                             </label>
                                             <select name="purchase_type" id="purchase_type" class="form-control form-select">
                                                 <option value="">Select Purchase Type</option>
@@ -799,8 +765,7 @@
                                 <div class="card-body">
                                     <div class="row">
                                         <div class="col-md-4 mb-3">
-                                            <label class="form-label">Finance Mode <span
-                                                    class="text-danger">*</span></label>
+                                            <label class="form-label">Finance Mode <span class="text-danger">*</span></label>
                                             <select name="fin_mode" id="fin_mode" class="form-control form-select">
                                                 <option value="" disabled selected>-- Select Finance Mode --</option>
                                                 <option value="In-house"
@@ -815,6 +780,9 @@
                                                 <option value="Yet To Decide"
                                                     {{ old('fin_mode', $enquiry->fin_mode ?? '') == 'Yet To Decide' ? 'selected' : '' }}>
                                                     Yet To Decide</option>
+                                                <option value="Purchase Plan Cancelled"
+                                                    {{ old('fin_mode', $enquiry->fin_mode ?? '') == 'Purchase Plan Cancelled' ? 'selected' : '' }}>
+                                                    Purchase Plan Cancelled</option>
                                             </select>
                                         </div>
                                         
@@ -840,8 +808,7 @@
                                     <div class="row">
                                         <div class="col-md-4 mb-3">
                                             <label class="form-label">Consideration Set - Brand</label>
-                                            <select id="consider_make" name="consider_make"
-                                                class="form-control form-select">
+                                            <select id="consider_make" name="consider_make" class="form-control form-select">
                                                 <option value="No Consideration"
                                                     {{ old('consider_make', $enquiry->consider_make ?? 'No Consideration') == 'No Consideration' ? 'selected' : '' }}>
                                                     No Consideration
@@ -859,8 +826,7 @@
                                             <label class="form-label">Consideration Set - Model</label>
                                             <input type="text" id="consider_model" name="consider_model"
                                                 class="form-control"
-                                                value="{{ old('consider_model', $enquiry->consider_model ?? '') }}"
-                                                disabled>
+                                                value="{{ old('consider_model', $enquiry->consider_model ?? '') }}" disabled>
                                         </div>
 
                                         <div class="col-md-4 mb-3">
@@ -898,13 +864,13 @@
                                                         @foreach($fups as $index => $fup)
                                                         <tr>
                                                             <td><div class="form-control bg-light h-auto border-0">{{ ['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth'][$index] ?? ($index+1).'th' }} Fup</div></td>
-                                                            <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $fup->planned_followup_date ? \Carbon\Carbon::parse($fup->planned_followup_date)->format('d-M-Y') : '—' }}</div></td>
-                                                            <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $fup->actual_followup_date ? \Carbon\Carbon::parse($fup->actual_followup_date)->format('d-M-Y') : '—' }}</div></td>
-                                                            <td><div class="form-control bg-light h-auto border-0">{{ $fup->enquiry_status ?: '—' }}</div></td>
-                                                            <td><div class="form-control bg-light h-auto border-0">{{ $fup->deviation_stage ?: '—' }}</div></td>
-                                                            <td><div class="form-control bg-light h-auto border-0 text-wrap text-start" style="min-width: 150px;">{{ $fup->remarks ?: '—' }}</div></td>
-                                                            <td><div class="form-control bg-light h-auto border-0 text-wrap text-start" style="min-width: 120px;">{{ $fup->remark_type ?: '—' }}</div></td>
-                                                            <td><div class="form-control bg-light h-auto border-0 text-wrap text-start" style="min-width: 150px;">{{ $fup->comments ?: '—' }}</div></td>
+                                                            <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $fup?->planned_followup_date ? \Carbon\Carbon::parse($fup->planned_followup_date)->format('d-M-Y') : '—' }}</div></td>
+                                                            <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $fup?->actual_followup_date ? \Carbon\Carbon::parse($fup->actual_followup_date)->format('d-M-Y') : '—' }}</div></td>
+                                                            <td><div class="form-control bg-light h-auto border-0">{{ $fup?->enquiry_status ?: '—' }}</div></td>
+                                                            <td><div class="form-control bg-light h-auto border-0">{{ $fup?->deviation_stage ?: '—' }}</div></td>
+                                                            <td><div class="form-control bg-light h-auto border-0 text-wrap text-start" style="min-width: 150px;">{{ $fup?->remarks ?: '—' }}</div></td>
+                                                            <td><div class="form-control bg-light h-auto border-0 text-wrap text-start" style="min-width: 120px;">{{ $fup?->remark_type ?: '—' }}</div></td>
+                                                            <td><div class="form-control bg-light h-auto border-0 text-wrap text-start" style="min-width: 150px;">{{ $fup?->comments ?: '—' }}</div></td>
                                                         </tr>
                                                         @endforeach
                                                     @else
@@ -930,21 +896,21 @@
                                                 <tbody>
                                                     <tr>
                                                         <td class="fw-bold align-middle bg-white">First Fup</td>
-                                                        <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $enquiry->first_planned_followup_date ? \Carbon\Carbon::parse($enquiry->first_planned_followup_date)->format('d-M-Y') : '—' }}</div></td>
-                                                        <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $enquiry->first_actual_followup_date ? \Carbon\Carbon::parse($enquiry->first_actual_followup_date)->format('d-M-Y') : '—' }}</div></td>
-                                                        <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $enquiry->next_planned_followup_date ? \Carbon\Carbon::parse($enquiry->next_planned_followup_date)->format('d-M-Y') : '—' }}</div></td>
-                                                        <td><div class="form-control bg-light h-auto border-0">{{ $enquiry->stage ?: '—' }}</div></td>
-                                                        <td><div class="form-control bg-light h-auto border-0">{{ $enquiry->followup_type ?: '—' }}</div></td>
-                                                        <td><div class="form-control bg-light h-auto border-0 text-wrap text-start" style="min-width: 200px;">{{ $enquiry->remarks ?: '—' }}</div></td>
+                                                        <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $enquiry?->first_planned_followup_date ? \Carbon\Carbon::parse($enquiry->first_planned_followup_date)->format('d-M-Y') : '—' }}</div></td>
+                                                        <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $enquiry?->first_actual_followup_date ? \Carbon\Carbon::parse($enquiry->first_actual_followup_date)->format('d-M-Y') : '—' }}</div></td>
+                                                        <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $enquiry?->next_planned_followup_date ? \Carbon\Carbon::parse($enquiry->next_planned_followup_date)->format('d-M-Y') : '—' }}</div></td>
+                                                        <td><div class="form-control bg-light h-auto border-0">{{ $enquiry?->stage ?: '—' }}</div></td>
+                                                        <td><div class="form-control bg-light h-auto border-0">{{ $enquiry?->followup_type ?: '—' }}</div></td>
+                                                        <td><div class="form-control bg-light h-auto border-0 text-wrap text-start" style="min-width: 200px;">{{ $enquiry?->remarks ?: '—' }}</div></td>
                                                     </tr>
                                                     <tr>
                                                         <td class="fw-bold align-middle bg-white">Recent Fup</td>
-                                                        <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $enquiry->recent_planned_followup_date ? \Carbon\Carbon::parse($enquiry->recent_planned_followup_date)->format('d-M-Y') : '—' }}</div></td>
-                                                        <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $enquiry->recent_actual_followup_date ? \Carbon\Carbon::parse($enquiry->recent_actual_followup_date)->format('d-M-Y') : '—' }}</div></td>
+                                                        <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $enquiry?->recent_planned_followup_date ? \Carbon\Carbon::parse($enquiry->recent_planned_followup_date)->format('d-M-Y') : '—' }}</div></td>
+                                                        <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $enquiry?->recent_actual_followup_date ? \Carbon\Carbon::parse($enquiry->recent_actual_followup_date)->format('d-M-Y') : '—' }}</div></td>
                                                         <td><div class="form-control bg-light h-auto border-0 text-nowrap">—</div></td>
-                                                        <td><div class="form-control bg-light h-auto border-0">{{ $enquiry->quick_status ?? $enquiry->stage ?? '—' }}</div></td>
+                                                        <td><div class="form-control bg-light h-auto border-0">{{ $enquiry?->quick_status ?? $enquiry?->stage ?? '—' }}</div></td>
                                                         <td><div class="form-control bg-light h-auto border-0">—</div></td>
-                                                        <td><div class="form-control bg-light h-auto border-0 text-wrap text-start" style="min-width: 200px;">{{ $enquiry->recent_fup_comments ?? $enquiry->remarks ?? '—' }}</div></td>
+                                                        <td><div class="form-control bg-light h-auto border-0 text-wrap text-start" style="min-width: 200px;">{{ $enquiry?->recent_fup_comments ?? $enquiry?->remarks ?? '—' }}</div></td>
                                                     </tr>
                                                 </tbody>
                                             </table>
@@ -955,15 +921,15 @@
                                     <div class="row" style="opacity: 0.8; pointer-events:none;">
                                         <div class="col-md-3 mb-3">
                                             <label class="form-label">Enquiry Stage</label>
-                                            <input type="text" class="form-control" value="{{ $enquiry->dms_enquiry_stage ?? $enquiry->stage ?? '—' }}" readonly>
+                                            <input type="text" class="form-control" value="{{ $enquiry?->dms_enquiry_stage ?? $enquiry?->stage ?? '—' }}" readonly>
                                         </div>
                                         <div class="col-md-3 mb-3">
                                             <label class="form-label">Test Drive Count</label>
-                                            <input type="text" class="form-control" value="{{ $enquiry->td_count ?? '0' }}" readonly>
+                                            <input type="text" class="form-control" value="{{ $enquiry?->td_count ?? '0' }}" readonly>
                                         </div>
                                         <div class="col-md-3 mb-3">
                                             <label class="form-label">Test Drive No.</label>
-                                            <input type="text" class="form-control" value="{{ $enquiry->test_drive_no ?? '—' }}" readonly>
+                                            <input type="text" class="form-control" value="{{ $enquiry?->test_drive_no ?? '—' }}" readonly>
                                         </div>
                                         <div class="col-md-3 mb-3">
                                             <label class="form-label">Test Drive Date</label>
@@ -975,11 +941,11 @@
                                         </div>
                                         <div class="col-md-3 mb-3">
                                             <label class="form-label">Booking No.</label>
-                                            <input type="text" class="form-control" value="{{ $enquiry->x8_booking_no ?? $enquiry->booking_no ?? '—' }}" readonly>
+                                            <input type="text" class="form-control" value="{{ $enquiry?->x8_booking_no ?? $enquiry?->booking_no ?? '—' }}" readonly>
                                         </div>
                                         <div class="col-md-3 mb-3">
                                             <label class="form-label">OTF No.</label>
-                                            <input type="text" class="form-control" value="{{ $enquiry->oem_otf_no ?? '—' }}" readonly>
+                                            <input type="text" class="form-control" value="{{ $enquiry?->oem_otf_no ?? '—' }}" readonly>
                                         </div>
                                     </div>
 
@@ -987,48 +953,25 @@
                                     <div class="row" style="opacity: 0.8; pointer-events:none;">
                                         <div class="col-md-3 mb-3">
                                             <label class="form-label">Lost Reason</label>
-                                            <input type="text" class="form-control" value="{{ $enquiry->lost_reason ?? '—' }}" readonly>
+                                            <input type="text" class="form-control" value="{{ $enquiry?->lost_reason ?? '—' }}" readonly>
                                         </div>
                                         <div class="col-md-3 mb-3">
                                             <label class="form-label">Lost Sub Reason</label>
-                                            <input type="text" class="form-control" value="{{ $enquiry->lost_sub_reason ?? '—' }}" readonly>
+                                            <input type="text" class="form-control" value="{{ $enquiry?->lost_sub_reason ?? '—' }}" readonly>
                                         </div>
                                         <div class="col-md-3 mb-3">
                                             <label class="form-label">Lost Detail Reason</label>
-                                            <input type="text" class="form-control" value="{{ $enquiry->lost_detail_reason ?? '—' }}" readonly>
+                                            <input type="text" class="form-control" value="{{ $enquiry?->lost_detail_reason ?? '—' }}" readonly>
                                         </div>
                                         <div class="col-md-3 mb-3">
                                             <label class="form-label">Lost Remarks</label>
-                                            <input type="text" class="form-control" value="{{ $enquiry->lost_remarks ?? '—' }}" readonly>
+                                            <input type="text" class="form-control" value="{{ $enquiry?->lost_remarks ?? '—' }}" readonly>
                                         </div>
                                     </div>
                                 </div>
 
-                                {{-- =========================== CRE FOLLOW UP (Req 6) =========================== --}}
-                                <h3 class="mb-0 ms-3 mt-4">CRE Follow Up</h3>
-                                <div class="card-body">
-                                    <div class="row">
-                                        <div class="col-md-3 mb-3">
-                                            <label class="form-label">CRE Enquiry Stage</label>
-                                            <input type="text" name="cre_enquiry_stage" class="form-control" value="{{ old('cre_enquiry_stage', $enquiry->cre_enquiry_stage ?? '') }}">
-                                        </div>
-                                        <div class="col-md-3 mb-3">
-                                            <label class="form-label">Next CRE FUP Date</label>
-                                            <input type="text" id="cre_next_fup_date" name="cre_next_fup_date" class="form-control" value="{{ old('cre_next_fup_date', $enquiry->cre_next_fup_date ?? '') }}" placeholder="YYYY-MM-DD">
-                                        </div>
-                                        <div class="col-md-3 mb-3">
-                                            <label class="form-label">Next CRE FUP Time</label>
-                                            <input type="time" name="cre_next_fup_time" class="form-control" value="{{ old('cre_next_fup_time', $enquiry->cre_next_fup_time ?? '') }}">
-                                        </div>
-                                        <div class="col-md-12 mb-3">
-                                            <label class="form-label">CRE Follow Up Remarks</label>
-                                            <textarea name="cre_next_fup_remarks" class="form-control" rows="2">{{ old('cre_next_fup_remarks', $enquiry->cre_next_fup_remarks ?? '') }}</textarea>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                @if(!$isVirtual)
                                 {{-- =========================== REMARKS =========================== --}}
+                                @if(!$isVirtual)
                                 <h3 class="mb-0 ms-3 mt-4">Remarks</h3>
                                 <div class="card-body">
                                     <div class="row">
@@ -1036,18 +979,10 @@
                                             <label class="form-label">
                                                 Additional Remarks <small class="text-muted">(Optional)</small>
                                             </label>
-                                            <textarea name="remarks" rows="3" class="form-control">{{ old('remarks', $enquiry->remarks ?? '') }}</textarea>
+                                            <textarea name="remarks" rows="3" class="form-control">{{ old('remarks', $enquiry?->remarks ?? '') }}</textarea>
                                         </div>
                                     </div>
                                 </div>
-                                @if (!$isVirtual)
-                                    {{-- Remarks for Non-Virtual --}}
-                                    <div class="col-md-8 mb-3">
-                                        <label class="form-label">
-                                            Remarks <small class="text-muted">(Optional)</small>
-                                        </label>
-                                        <textarea name="remarks" rows="3" class="form-control">{{ old('remarks', $enquiry->remarks ?? '') }}</textarea>
-                                    </div>
                                 @endif
                                 
                             </div> 
@@ -1146,7 +1081,7 @@
                     }
                 }
                 $('#call_nature').on('change', toggleVirtualForm);
-                toggleVirtualForm();
+                toggleVirtualForm(); 
             }
             
             const $segmentCode = $('#segment_code');
@@ -1294,7 +1229,7 @@
                 });
             }
 
-            setupDynamicLocation('vpo_select', 'vpo_input', 'bpo', currentEnquiry.bpo);
+            setupDynamicLocation('vpo_select', 'vpo_input', 'vpo', currentEnquiry.vpo);
             setupDynamicLocation('tehsil_select', 'tehsil_input', 'tehsil', currentEnquiry.tehsil);
             setupDynamicLocation('district_select', 'district_input', 'district', currentEnquiry.district);
             setupDynamicLocation('state_select', 'state_input', 'city', currentEnquiry.city);
@@ -1360,7 +1295,7 @@
                                 }
                             };
 
-                            handleRender('vpo_select', 'vpo_input', 'bpo', bpos, 'Select VPO', currentEnquiry.bpo);
+                            handleRender('vpo_select', 'vpo_input', 'vpo', bpos, 'Select VPO', currentEnquiry.vpo);
                             handleRender('tehsil_select', 'tehsil_input', 'tehsil', tehsils, 'Select Tehsil', currentEnquiry.tehsil);
                             handleRender('district_select', 'district_input', 'district', districts, 'Select District', currentEnquiry.district);
                             handleRender('state_select', 'state_input', 'city', cities, 'Select State', currentEnquiry.city);
