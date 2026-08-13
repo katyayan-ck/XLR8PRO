@@ -472,7 +472,7 @@ use App\Services\OrgService;
             </div>
         </div>
 
-        <form method="POST" action="{{ route('quotation.store') }}" enctype="multipart/form-data">
+        <form method="POST" action="{{ route('booking.otf.save', $booking->id) }}" enctype="multipart/form-data">
             @csrf
             <div class="quotation-sheet">
                 <div class="quotation-sheet">
@@ -1831,7 +1831,7 @@ use App\Services\OrgService;
                                     <td class="title">Financier Branch</td>
                                     <td>
                                         <input type="text" id="financier_branch" name="financier_branch"
-                                            value="{{ old('financier_branch', $otfData['financier_branch'] ?? $finance?->branch ?? '') }}">
+                                            value="{{ old('financier_branch', $otfData['financier_branch'] ?? '') }}">
                                     </td>
                                 </tr>
                                 <tr>
@@ -2162,8 +2162,9 @@ use App\Services\OrgService;
                     <div class="insurance-note-row">
                         Insurance:
                         <span id="insurance_print"
-                            style="font-weight:normal; display:inline-block; min-width:70%; border-bottom:1px solid #000;">{{
-                            $insuranceNoteText ?: '' }}&nbsp;</span>
+                            style="font-weight:normal; display:inline-block; min-width:70%; border-bottom:1px solid #000;">
+                            &nbsp;
+                        </span>
                     </div>
 
                     <div class="accessories-note-row">
@@ -2214,7 +2215,7 @@ use App\Services\OrgService;
         <i class="la la-print"></i> Print / Save PDF
     </button>
     <button type="submit" class="btn btn-success">
-        <i class="la la-save"></i> Save Quotation
+        <i class="la la-save"></i> Save Transaction Form
     </button>
     <a href="{{ backpack_url('quotation-form') }}" class="btn btn-secondary">Cancel</a>
 </div>
@@ -2301,6 +2302,38 @@ $('#accessories').on('change', function () {
     updateAccessoriesPrintText();
 });
 
+function updateInsurancePrintText() {
+    let list = [];
+
+    $('#policy_type option:selected').each(function () {
+        let text = $(this).text().trim();
+
+        if (text) {
+            let amount = parseFloat($('#insurance_amount').val()) || 0;
+
+            if (amount > 0) {
+                text += ' (₹' + amount.toLocaleString('en-IN', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }) + ')';
+            }
+
+            list.push(text);
+        }
+    });
+
+    $('#insurance_print').text(
+        list.length ? list.join(', ') : ''
+    );
+}
+
+$('#policy_type, #insurance_amount, #insurance_company').on('change input', function () {
+    updateInsurancePrintText();
+});
+
+$(document).ready(function () {
+    updateInsurancePrintText();
+});
 $(document).ready(function () {
 
     $('#accessories').select2({

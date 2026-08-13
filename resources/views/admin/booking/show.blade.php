@@ -130,10 +130,18 @@
 
                 <h2 class="mb-0 fw-bold">Actions</h2>
 
+                @if($otf_processed)
+                <a href="{{ backpack_url('booking/otf-form/' . $booking->id) }}" class="btn btn-primary">
+                    <i class="la la-file-text"></i>
+                    Booking Process (Resume)
+                </a>
+                @else
                 <a href="{{ backpack_url('booking/otf-form/' . $booking->id) }}" class="btn btn-success">
                     <i class="la la-file-text"></i>
                     Booking Process
                 </a>
+                @endif
+
             </div>
             <div class="card-body">
 
