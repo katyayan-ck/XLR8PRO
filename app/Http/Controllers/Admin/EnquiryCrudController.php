@@ -250,7 +250,7 @@ class EnquiryCrudController extends CrudController
 
     private function mapData($e, $i, $type, $lpMap = [], $fuelMap = [])
     {
-        // BULLETPROOF DATE PARSER: Catches invalid/empty dates without crashing
+        // BULLETPROOF DATE PARSER: Updated to dd-mmm-yyyy format ('d-M-Y')
         $c = function ($d, $f) {
             try {
                 return (!empty(trim((string) $d)) && !str_starts_with((string) $d, '0000'))
@@ -284,13 +284,13 @@ class EnquiryCrudController extends CrudController
             
             // Render XENQ-id and created_at into the x8 columns
             'x8_enquiry_no' => 'XENQ-' . $e->id, 
-            'x8_enquiry_date' => $c($e->created_at, 'd-m-Y H:i'), 
-            'x8_enquiry_assign_date' => $c($e->x8_enquiry_assign_date ?? $e->enq_assign_date, 'd-m-Y'),
+            'x8_enquiry_date' => $c($e->created_at, 'd-M-Y H:i'), 
+            'x8_enquiry_assign_date' => $c($e->x8_enquiry_assign_date ?? $e->enq_assign_date, 'd-M-Y'),
             
             // Move original data from DB x8_ fields into OEM columns
             'oem_enquiry_no' => $e->x8_enquiry_no ?? $e->enquiry_no ?? $e->oem_enquiry_no ?? '—',
-            'oem_enquiry_date' => $c($e->x8_enquiry_date ?? $e->enquiry_date ?? $e->oem_enquiry_date, 'd-m-Y'),
-            'oem_enquiry_assign_date' => $c($e->oem_enquiry_assign_date ?? $e->enq_assign_date, 'd-m-Y'),
+            'oem_enquiry_date' => $c($e->x8_enquiry_date ?? $e->enquiry_date ?? $e->oem_enquiry_date, 'd-M-Y'),
+            'oem_enquiry_assign_date' => $c($e->oem_enquiry_assign_date ?? $e->enq_assign_date, 'd-M-Y'),
 
             'segment_name' => $e->segment_code
                 ? ($e->getRelation('segment')?->name ?? $e->segment ?? $e->segment_code)
@@ -311,21 +311,21 @@ class EnquiryCrudController extends CrudController
             'mobile' => $e->mobile ?? '—',
             'dms_enquiry_stage' => $e->dms_enquiry_stage ?? $e->stage ?? '—',
             'cre_enquiry_stage' => $e->cre_enquiry_stage ?? '—',
-            'cre_next_fup_date' => $c($e->cre_next_fup_date, 'd-m-Y'),
+            'cre_next_fup_date' => $c($e->cre_next_fup_date, 'd-M-Y'),
             'cre_next_fup_time' => $e->cre_next_fup_time ?? '—',
             'cre_next_fup_remarks' => $e->cre_next_fup_remarks ?? '—',
             'x8_quotation_no' => $e->x8_quotation_no ?? $e->quotation_no ?? '—',
             'x8_booking_no' => $e->x8_booking_no ?? $e->booking_no ?? '—',
-            'x8_booking_date' => $c($e->x8_booking_date ?? $e->booking_date, 'd-m-Y'),
+            'x8_booking_date' => $c($e->x8_booking_date ?? $e->booking_date, 'd-M-Y'),
             'oem_booking_no' => $e->oem_booking_no ?? '—',
-            'oem_booking_date' => $c($e->oem_booking_date, 'd-m-Y'),
+            'oem_booking_date' => $c($e->oem_booking_date, 'd-M-Y'),
             'oem_otf_no' => $e->oem_otf_no ?? '—',
             'oem_test_drive_no' => $e->oem_test_drive_no ?? $e->test_drive_no ?? '—',
             
             // Requirements Mappings
             'territory' => $e->territory ?? '—',
             'fup_count' => $e->fup_count ?? '—',
-            'td_date' => $c($e->td_date, 'd-m-Y'),
+            'td_date' => $c($e->td_date, 'd-M-Y'),
             'lost_reason' => $e->lost_reason ?? '—',
             'followup_status' => $e->followup_status ?? $e->fup_status ?? '—', 
             
@@ -338,25 +338,25 @@ class EnquiryCrudController extends CrudController
             $row['first_name'] = trim(($e->first_name ?? '') . ' ' . ($e->last_name ?? '')) ?: '—';
         } elseif ($type === 'virtual') {
             $row['virtual_no'] = $e->virtual_no ?? '—';
-            $row['call_date_and_time'] = $c($e->virtual_call_date, 'd-m-Y H:i');
-            $row['call_date'] = $c($e->virtual_call_date, 'd-m-Y'); 
+            $row['call_date_and_time'] = $c($e->virtual_call_date, 'd-M-Y H:i');
+            $row['call_date'] = $c($e->virtual_call_date, 'd-M-Y'); 
             $row['call_nature'] = $e->call_nature ?? '—';
             $row['remarks'] = $e->remarks ?? '—';
         } elseif ($type === 'whatsapp') {
             $row['campaign_name'] = $e->wapp_campaign_name ?? '—';
-            $row['campaign_date'] = $c($e->wapp_campaign_date, 'd-m-Y');
+            $row['campaign_date'] = $c($e->wapp_campaign_date, 'd-M-Y');
         }
 
         // Apply data for lists (quick, long, all, exchange, scrappage)
         if (in_array($type, ['long', 'quick', 'all', 'exchange', 'scrappage', 'exchange_not_interested'])) {
             $row += [
                 'oem_long_enquiry_no' => $e->oem_long_enquiry_no ?? '—',
-                'oem_long_enquiry_date' => $c($e->oem_long_enquiry_date, 'd-m-Y'),
-                'oem_long_enquiry_assign_date' => $c($e->oem_long_enquiry_assign_date, 'd-m-Y'),
+                'oem_long_enquiry_date' => $c($e->oem_long_enquiry_date, 'd-M-Y'),
+                'oem_long_enquiry_assign_date' => $c($e->oem_long_enquiry_assign_date, 'd-M-Y'),
                 'oem_quick_enquiry_no' => $e->oem_quick_enquiry_no ?? $e->quick_enquiry_no ?? '—',
-                'oem_quick_enquiry_date' => $c($e->oem_quick_enquiry_date ?? $e->quick_enquiry_date, 'd-m-Y'),
+                'oem_quick_enquiry_date' => $c($e->oem_quick_enquiry_date ?? $e->quick_enquiry_date, 'd-M-Y'),
                 'oem_quick_enquiry_status' => $e->oem_quick_enquiry_status ?? $e->quick_status ?? '—',
-                'oem_quick_enquiry_assign_date' => $c($e->oem_quick_enquiry_assign_date ?? $e->quick_enq_assign_date, 'd-m-Y'),
+                'oem_quick_enquiry_assign_date' => $c($e->oem_quick_enquiry_assign_date ?? $e->quick_enq_assign_date, 'd-M-Y'),
 
                 'first_name' => $e->first_name ?? '—',
                 'last_name' => $e->last_name ?? '—',
@@ -389,16 +389,16 @@ class EnquiryCrudController extends CrudController
                 // Mapped Follow-up Type via KeyValue
                 'followup_type' => $e->followup_type ? (OrgService::getKeyValueByCode($e->followup_type)?->value ?? $e->followup_type) : '—',
                 
-                'followup_date' => $c($e->followup_date, 'd-m-Y'),
+                'followup_date' => $c($e->followup_date, 'd-M-Y'),
                 'followup_time' => $e->followup_time ?? '—',
                 'occupation_type' => $e->occupation_type ?? '—',
                 'customer_type' => $e->customer_type ?? '—',
                 'occupation_sub_type' => $e->occupation_sub_type ?? '—',
                 'company_name' => $e->company_name ?? '—',
 
-                'dob' => $c($e->dob, 'd-m-Y'),
+                'dob' => $c($e->dob, 'd-M-Y'),
                 'marital_status' => $e->marital_status ?? '—',
-                'marriage_date' => $c($e->marriage_date, 'd-m-Y'),
+                'marriage_date' => $c($e->marriage_date, 'd-M-Y'),
                 'age_group' => $e->age_group ?? '—',
                 'usage_area' => $e->usage_area ?? '—',
                 'km_travelled_daily' => $e->km_travelled_daily ?? '—',
@@ -686,7 +686,6 @@ class EnquiryCrudController extends CrudController
     /**
      * ag-Grid field => matches the same code-first, raw-column-fallback
      * priority used for display: if the *_code column is filled, filter
-     * against the related table's name column(s); otherwise filter
      * against the raw text column (segment/model/variant/color).
      */
     private const FILTER_CODE_COLUMN_MAP = [
@@ -819,7 +818,19 @@ class EnquiryCrudController extends CrudController
     {
         $data = $this->getEnquiryFormData();
         $data['title'] = 'Edit Enquiry';
-        $data['enquiry'] = Enquiry::with(['campaign', 'segment', 'model', 'variant', 'color'])->findOrFail($id);
+        $enquiry = Enquiry::with(['campaign', 'segment', 'model', 'variant', 'color'])->findOrFail($id);
+        
+        $fups = [];
+        if (strtoupper($enquiry->current_origin ?? '') === 'LONG') {
+            $fups = DB::table('xlr8_crm_enquiries_fup')
+                        ->where('enquiry_no', $enquiry->enquiry_no)
+                        ->orderBy('id', 'asc')
+                        ->get();
+        }
+
+        $data['enquiry'] = $enquiry;
+        $data['fups'] = $fups;
+        
         return view('admin.enquiry.create', $data);
     }
 

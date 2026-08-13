@@ -23,7 +23,6 @@ class TestDriveCrudController extends CrudController
         CRUD::setEntityNameStrings('test drive', 'test drives');
     }
 
-    // --- CUSTOM LIST VIEW ---
     public function index()
     {
         $this->crud->hasAccessOrFail('list');
@@ -62,7 +61,7 @@ class TestDriveCrudController extends CrudController
             ['field' => 'sc_code', 'headerName' => 'SC Code', 'width' => 140],
             ['field' => 'scheduled_td_start_time', 'headerName' => 'Scheduled Start', 'width' => 160],
             ['field' => 'actual_td_start_time', 'headerName' => 'Actual Start', 'width' => 160],
-            ['field' => 'action', 'headerName' => 'Action', 'pinned' => 'right', 'width' => 130, 'cellRenderer' => 'htmlRenderer', 'sortable' => false, 'filter' => false]
+            ['field' => 'action', 'headerName' => 'Action', 'pinned' => 'right', 'width' => 140, 'cellRenderer' => 'htmlRenderer', 'sortable' => false, 'filter' => false]
         ];
 
         return view('admin.testdrive.list', [
@@ -74,7 +73,6 @@ class TestDriveCrudController extends CrudController
         ]);
     }
 
-    // --- CUSTOM CREATE / EDIT VIEWS ---
     public function create()
     {
         $this->crud->hasAccessOrFail('create');
@@ -91,7 +89,6 @@ class TestDriveCrudController extends CrudController
         ]);
     }
 
-    // --- STORE / UPDATE LOGIC ---
     public function store(Request $request)
     {
         $validated = $request->validate($this->getValidationRules());
@@ -122,9 +119,12 @@ class TestDriveCrudController extends CrudController
             'customer_name' => 'required|max:200',
             'customer_phone' => 'required|max:15',
             'model' => 'nullable|max:150',
+            'model_code' => 'nullable|max:50',
             'variant' => 'nullable|max:150',
+            'variant_code' => 'nullable|max:50',
             'stage' => 'required|max:100',
             'sc_code' => 'nullable|max:200',
+            'sc_mile_id' => 'nullable|max:100',
             'scheduled_td_start_time' => 'nullable|date',
             'scheduled_td_end_time' => 'nullable|date',
             'actual_td_start_time' => 'nullable|date',

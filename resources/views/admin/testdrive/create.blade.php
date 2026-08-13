@@ -45,7 +45,7 @@
 
                             <div class="col-md-4 mb-3">
                                 <label class="form-label">Customer Phone <span class="text-danger">*</span></label>
-                                <input type="text" name="customer_phone" class="form-control" value="{{ old('customer_phone', $entry->customer_phone ?? '') }}" required maxlength="10">
+                                <input type="text" name="customer_phone" class="form-control" value="{{ old('customer_phone', $entry->customer_phone ?? '') }}" required maxlength="15">
                             </div>
 
                             <div class="col-md-4 mb-3">

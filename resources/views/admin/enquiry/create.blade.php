@@ -72,7 +72,7 @@
                                         </div>
                                         <div class="col-md-3 mb-3">
                                             <label class="form-label">Call Date</label>
-                                            <input type="text" name="virtual_call_date" class="form-control" value="{{ !empty($enquiry->virtual_call_date) ? \Carbon\Carbon::parse($enquiry->virtual_call_date)->format('d-m-Y H:i') : '' }}" readonly>
+                                            <input type="text" name="virtual_call_date" class="form-control" value="{{ !empty($enquiry->virtual_call_date) ? \Carbon\Carbon::parse($enquiry->virtual_call_date)->format('d-M-Y H:i') : '' }}" readonly>
                                         </div>
                                         <div class="col-md-2 mb-3">
                                             <label class="form-label">Call Duration</label>
@@ -95,6 +95,12 @@
                                                     </option>
                                                 @endforeach
                                             </select>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-12 mb-3">
+                                            <label class="form-label">Remarks <small class="text-muted">(Optional)</small></label>
+                                            <textarea name="remarks" class="form-control" rows="2">{{ old('remarks', $enquiry->remarks ?? '') }}</textarea>
                                         </div>
                                     </div>
                                 </div>
@@ -777,7 +783,7 @@
                                             </select>
                                         </div>
                                         
-                                        {{-- Req 5: Financier is now optional visually and functionally --}}
+                                        {{-- Financier Optional --}}
                                         <div class="col-md-4 mb-3" id="financierbox" style="display:none;">
                                             <label class="form-label">Financier <small class="text-muted">(Optional)</small></label>
                                             <select name="financier" id="financier" class="form-control form-select">
@@ -797,7 +803,6 @@
                                 <h3 class="mb-0 ms-3 mt-4">Consideration Set</h3>
                                 <div class="card-body">
                                     <div class="row">
-                                        {{-- Consideration Brand --}}
                                         <div class="col-md-4 mb-3">
                                             <label class="form-label">Consideration Set - Brand</label>
                                             <select id="consider_make" name="consider_make" class="form-control form-select">
@@ -814,7 +819,6 @@
                                             </select>
                                         </div>
 
-                                        {{-- Consideration Model --}}
                                         <div class="col-md-4 mb-3">
                                             <label class="form-label">Consideration Set - Model</label>
                                             <input type="text" id="consider_model" name="consider_model"
@@ -822,7 +826,6 @@
                                                 value="{{ old('consider_model', $enquiry->consider_model ?? '') }}" disabled>
                                         </div>
 
-                                        {{-- Consideration Variant --}}
                                         <div class="col-md-4 mb-3">
                                             <label class="form-label">Consideration Set - Variant</label>
                                             <input type="text" id="consider_variant" name="consider_variant"
@@ -833,79 +836,101 @@
                                     </div>
                                 </div>
                                 
-                                {{-- =========================== SC FOLLOW UP (Req 7, 8, 9, 10, 11) =========================== --}}
+                                {{-- =========================== SC FOLLOW UP DATA (READ-ONLY) =========================== --}}
                                 <h3 class="mb-0 ms-3 mt-4">SC Follow Up</h3>
                                 <div class="card-body">
                                     <h4 class="mb-3">Basic Follow-Up</h4>
-                                    <div class="row">
-                                        <div class="col-md-3 mb-3">
-                                            <label class="form-label">Follow Up Type</label>
-                                            <select name="followup_type" class="form-control form-select">
-                                                <option value="">Select</option>
-                                                @foreach ($follow_up_types as $item)
-                                                    <option value="{{ $item['code'] }}" {{ old('followup_type', $enquiry->followup_type ?? '') == $item['code'] ? 'selected' : '' }}>{{ $item['value'] }}</option>
-                                                @endforeach
-                                            </select>
+                                    
+                                    @if(isset($enquiry) && strtoupper($enquiry->current_origin ?? '') === 'LONG')
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered text-center align-middle" style="background-color: #e9ecef;">
+                                                <thead class="table-secondary">
+                                                    <tr>
+                                                        <th>Fup Count</th>
+                                                        <th>Planned Date</th>
+                                                        <th>Actual Date</th>
+                                                        <th>Fup Status</th>
+                                                        <th>Deviation Stage</th>
+                                                        <th>Remarks</th>
+                                                        <th>Remarks Type</th>
+                                                        <th>Comments</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @if(isset($fups) && count($fups) > 0)
+                                                        @foreach($fups as $index => $fup)
+                                                        <tr>
+                                                            <td><div class="form-control bg-light h-auto border-0">{{ ['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth'][$index] ?? ($index+1).'th' }} Fup</div></td>
+                                                            <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $fup->planned_followup_date ? \Carbon\Carbon::parse($fup->planned_followup_date)->format('d-M-Y') : '—' }}</div></td>
+                                                            <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $fup->actual_followup_date ? \Carbon\Carbon::parse($fup->actual_followup_date)->format('d-M-Y') : '—' }}</div></td>
+                                                            <td><div class="form-control bg-light h-auto border-0">{{ $fup->enquiry_status ?: '—' }}</div></td>
+                                                            <td><div class="form-control bg-light h-auto border-0">{{ $fup->deviation_stage ?: '—' }}</div></td>
+                                                            <td><div class="form-control bg-light h-auto border-0 text-wrap text-start" style="min-width: 150px;">{{ $fup->remarks ?: '—' }}</div></td>
+                                                            <td><div class="form-control bg-light h-auto border-0 text-wrap text-start" style="min-width: 120px;">{{ $fup->remark_type ?: '—' }}</div></td>
+                                                            <td><div class="form-control bg-light h-auto border-0 text-wrap text-start" style="min-width: 150px;">{{ $fup->comments ?: '—' }}</div></td>
+                                                        </tr>
+                                                        @endforeach
+                                                    @else
+                                                        <tr><td colspan="8" class="text-muted py-3 bg-white">No Follow-up Data Found</td></tr>
+                                                    @endif
+                                                </tbody>
+                                            </table>
                                         </div>
-                                        <div class="col-md-3 mb-3">
-                                            <label class="form-label">Planned FUP Date</label>
-                                            <input type="text" id="followup_date" name="followup_date" class="form-control" value="{{ old('followup_date', $enquiry->followup_date ?? '') }}" placeholder="YYYY-MM-DD">
+                                    @else
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered text-center align-middle" style="background-color: #e9ecef;">
+                                                <thead class="table-secondary">
+                                                    <tr>
+                                                        <th></th>
+                                                        <th>Planned Date</th>
+                                                        <th>Actual Date</th>
+                                                        <th>Next Fup Date</th>
+                                                        <th>Status</th>
+                                                        <th>Follow Up Type</th>
+                                                        <th>Remarks</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td class="fw-bold align-middle bg-white">First Fup</td>
+                                                        <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $enquiry->first_planned_followup_date ? \Carbon\Carbon::parse($enquiry->first_planned_followup_date)->format('d-M-Y') : '—' }}</div></td>
+                                                        <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $enquiry->first_actual_followup_date ? \Carbon\Carbon::parse($enquiry->first_actual_followup_date)->format('d-M-Y') : '—' }}</div></td>
+                                                        <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $enquiry->next_planned_followup_date ? \Carbon\Carbon::parse($enquiry->next_planned_followup_date)->format('d-M-Y') : '—' }}</div></td>
+                                                        <td><div class="form-control bg-light h-auto border-0">{{ $enquiry->stage ?: '—' }}</div></td>
+                                                        <td><div class="form-control bg-light h-auto border-0">{{ $enquiry->followup_type ?: '—' }}</div></td>
+                                                        <td><div class="form-control bg-light h-auto border-0 text-wrap text-start" style="min-width: 200px;">{{ $enquiry->remarks ?: '—' }}</div></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td class="fw-bold align-middle bg-white">Recent Fup</td>
+                                                        <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $enquiry->recent_planned_followup_date ? \Carbon\Carbon::parse($enquiry->recent_planned_followup_date)->format('d-M-Y') : '—' }}</div></td>
+                                                        <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $enquiry->recent_actual_followup_date ? \Carbon\Carbon::parse($enquiry->recent_actual_followup_date)->format('d-M-Y') : '—' }}</div></td>
+                                                        <td><div class="form-control bg-light h-auto border-0 text-nowrap">—</div></td>
+                                                        <td><div class="form-control bg-light h-auto border-0">{{ $enquiry->quick_status ?? $enquiry->stage ?? '—' }}</div></td>
+                                                        <td><div class="form-control bg-light h-auto border-0">—</div></td>
+                                                        <td><div class="form-control bg-light h-auto border-0 text-wrap text-start" style="min-width: 200px;">{{ $enquiry->recent_fup_comments ?? $enquiry->remarks ?? '—' }}</div></td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
                                         </div>
-                                        <div class="col-md-3 mb-3">
-                                            <label class="form-label">Actual FUP Date</label>
-                                            <input type="text" id="actual_fup_date" name="actual_fup_date" class="form-control" value="{{ old('actual_fup_date', $enquiry->actual_fup_date ?? '') }}" placeholder="YYYY-MM-DD">
-                                        </div>
-                                        <div class="col-md-3 mb-3">
-                                            <label class="form-label">Actual Call Duration</label>
-                                            <input type="text" name="actual_fup_duration" class="form-control" value="{{ old('actual_fup_duration', $enquiry->actual_fup_duration ?? '') }}">
-                                        </div>
-                                        <div class="col-md-3 mb-3">
-                                            <label class="form-label">Follow-Up Status</label>
-                                            <input type="text" name="followup_status" class="form-control" value="{{ old('followup_status', $enquiry->followup_status ?? $enquiry->fup_status ?? '') }}">
-                                        </div>
-                                        <div class="col-md-3 mb-3">
-                                            <label class="form-label">Latest FUP Status</label>
-                                            <input type="text" name="latest_fup_status" class="form-control" value="{{ old('latest_fup_status', $enquiry->latest_fup_status ?? '') }}">
-                                        </div>
-                                        <div class="col-md-3 mb-3">
-                                            <label class="form-label">FUP Count</label>
-                                            <input type="number" name="fup_count" class="form-control" value="{{ old('fup_count', $enquiry->fup_count ?? '') }}">
-                                        </div>
-                                        <div class="col-md-3 mb-3">
-                                            <label class="form-label">Recent Follow-Up</label>
-                                            <input type="text" id="recent_actual_followup_date" name="recent_actual_followup_date" class="form-control" value="{{ old('recent_actual_followup_date', $enquiry->recent_actual_followup_date ?? '') }}" placeholder="YYYY-MM-DD">
-                                        </div>
-                                        <div class="col-md-3 mb-3">
-                                            <label class="form-label">Recent FUP Remarks Type</label>
-                                            <input type="text" name="recent_fup_remarks_type" class="form-control" value="{{ old('recent_fup_remarks_type', $enquiry->recent_fup_remarks_type ?? '') }}">
-                                        </div>
-                                        <div class="col-md-6 mb-3">
-                                            <label class="form-label">Recent FUP Remarks</label>
-                                            <input type="text" name="recent_fup_remarks" class="form-control" value="{{ old('recent_fup_remarks', $enquiry->recent_fup_remarks ?? '') }}">
-                                        </div>
-                                        <div class="col-md-6 mb-3">
-                                            <label class="form-label">Recent FUP Comments</label>
-                                            <input type="text" name="recent_fup_comments" class="form-control" value="{{ old('recent_fup_comments', $enquiry->recent_fup_comments ?? '') }}">
-                                        </div>
-                                    </div>
+                                    @endif
 
                                     <h4 class="mt-4 mb-3">Enquiry / Sales Progress</h4>
-                                    <div class="row">
+                                    <div class="row" style="opacity: 0.8; pointer-events:none;">
                                         <div class="col-md-3 mb-3">
                                             <label class="form-label">Enquiry Stage</label>
                                             <input type="text" class="form-control" value="{{ $enquiry->dms_enquiry_stage ?? $enquiry->stage ?? '—' }}" readonly>
                                         </div>
                                         <div class="col-md-3 mb-3">
                                             <label class="form-label">Test Drive Count</label>
-                                            <input type="number" name="test_drive_count" class="form-control" value="{{ old('test_drive_count', $enquiry->test_drive_count ?? '') }}">
+                                            <input type="text" class="form-control" value="{{ $enquiry->td_count ?? '0' }}" readonly>
                                         </div>
                                         <div class="col-md-3 mb-3">
                                             <label class="form-label">Test Drive No.</label>
-                                            <input type="text" name="test_drive_no" class="form-control" value="{{ old('test_drive_no', $enquiry->test_drive_no ?? '') }}">
+                                            <input type="text" class="form-control" value="{{ $enquiry->test_drive_no ?? '—' }}" readonly>
                                         </div>
                                         <div class="col-md-3 mb-3">
                                             <label class="form-label">Test Drive Date</label>
-                                            <input type="text" id="td_date" name="td_date" class="form-control" value="{{ old('td_date', $enquiry->td_date ?? '') }}" placeholder="YYYY-MM-DD">
+                                            <input type="text" class="form-control" value="{{ isset($enquiry) && $enquiry->td_date ? \Carbon\Carbon::parse($enquiry->td_date)->format('d-M-Y') : '—' }}" readonly>
                                         </div>
                                         <div class="col-md-3 mb-3">
                                             <label class="form-label">Booking Date</label>
@@ -922,22 +947,22 @@
                                     </div>
 
                                     <h4 class="mt-4 mb-3">Lost Information</h4>
-                                    <div class="row">
+                                    <div class="row" style="opacity: 0.8; pointer-events:none;">
                                         <div class="col-md-3 mb-3">
                                             <label class="form-label">Lost Reason</label>
-                                            <input type="text" name="lost_reason" class="form-control" value="{{ old('lost_reason', $enquiry->lost_reason ?? '') }}">
+                                            <input type="text" class="form-control" value="{{ $enquiry->lost_reason ?? '—' }}" readonly>
                                         </div>
                                         <div class="col-md-3 mb-3">
                                             <label class="form-label">Lost Sub Reason</label>
-                                            <input type="text" name="lost_sub_reason" class="form-control" value="{{ old('lost_sub_reason', $enquiry->lost_sub_reason ?? '') }}">
+                                            <input type="text" class="form-control" value="{{ $enquiry->lost_sub_reason ?? '—' }}" readonly>
                                         </div>
                                         <div class="col-md-3 mb-3">
                                             <label class="form-label">Lost Detail Reason</label>
-                                            <input type="text" name="lost_detail_reason" class="form-control" value="{{ old('lost_detail_reason', $enquiry->lost_detail_reason ?? '') }}">
+                                            <input type="text" class="form-control" value="{{ $enquiry->lost_detail_reason ?? '—' }}" readonly>
                                         </div>
                                         <div class="col-md-3 mb-3">
                                             <label class="form-label">Lost Remarks</label>
-                                            <input type="text" name="lost_remarks" class="form-control" value="{{ old('lost_remarks', $enquiry->lost_remarks ?? '') }}">
+                                            <input type="text" class="form-control" value="{{ $enquiry->lost_remarks ?? '—' }}" readonly>
                                         </div>
                                     </div>
                                 </div>
@@ -966,7 +991,7 @@
                                 </div>
 
                                 @if(!$isVirtual)
-                                {{-- =========================== REMARKS (Req 2) =========================== --}}
+                                {{-- =========================== REMARKS =========================== --}}
                                 <h3 class="mb-0 ms-3 mt-4">Remarks</h3>
                                 <div class="card-body">
                                     <div class="row">
@@ -979,12 +1004,9 @@
                                     </div>
                                 </div>
                                 @endif
-
-                                <div id="duplicateEnquiry" style="display:none;"></div>
                                 
-                            </div> {{-- End Full Enquiry Form wrapper --}}
+                            </div> 
 
-                            {{-- =========================== FORM ACTIONS =========================== --}}
                             <div class="d-flex justify-content-between align-items-center flex-wrap mt-3">
                                 <div>
                                     <button type="submit" class="btn btn-success btn-lg">
@@ -1015,20 +1037,13 @@
 
         function loadKeywordDropdown(keyword, parent, $target, placeholder = 'Select Option', selected = '') {
             if (!parent) return $target.html(`<option value="">${placeholder}</option>`).prop('disabled', true);
-
-            const url = "{{ route('admin.master.keyword-values', ['keyword' => '__K__', 'parent' => '__P__']) }}"
-                .replace('__K__', encodeURIComponent(keyword))
-                .replace('__P__', encodeURIComponent(parent));
-
+            const url = "{{ route('admin.master.keyword-values', ['keyword' => '__K__', 'parent' => '__P__']) }}".replace('__K__', encodeURIComponent(keyword)).replace('__P__', encodeURIComponent(parent));
             $.ajax({
-                url: url,
-                type: "GET",
+                url: url, type: "GET",
                 beforeSend: () => $target.html('<option>Loading...</option>').prop('disabled', true),
                 success: (response) => {
                     let html = `<option value="">${placeholder}</option>`;
-                    $.each(response, (_, item) => {
-                        html += `<option value="${item.code}" ${selected == item.code ? 'selected' : ''}>${item.value}</option>`;
-                    });
+                    $.each(response, (_, item) => { html += `<option value="${item.code}" ${selected == item.code ? 'selected' : ''}>${item.value}</option>`; });
                     $target.html(html).prop('disabled', false);
                 },
                 error: () => $target.html(`<option value="">${placeholder}</option>`).prop('disabled', true)
@@ -1037,21 +1052,16 @@
 
         function fetchDropdown(url, $target, placeholder, selected = '', callback = null) {
             $target.html('<option value="">Loading...</option>').prop('disabled', true);
-
-            $.get(url)
-                .done((response) => {
-                    let html = `<option value="">${placeholder}</option>`;
-                    $.each(response, (code, item) => {
-                        let val = typeof item === 'object' ? item.name : item;
-                        let attrs = typeof item === 'object' ?
-                            `data-fuel="${item.fuel_type || ''}" data-fuel-id="${item.fuel_type_id || ''}" data-transmission="${item.transmission || ''}" data-drivetrain="${item.drivetrain || ''}" data-seating="${item.seating || ''}"` : '';
-
-                        html += `<option value="${code}" ${selected == code ? 'selected' : ''} ${attrs}>${val}</option>`;
-                    });
-                    $target.html(html).prop('disabled', false);
-                    if (callback) callback();
-                })
-                .fail(() => $target.html(`<option value="">${placeholder}</option>`).prop('disabled', true));
+            $.get(url).done((response) => {
+                let html = `<option value="">${placeholder}</option>`;
+                $.each(response, (code, item) => {
+                    let val = typeof item === 'object' ? item.name : item;
+                    let attrs = typeof item === 'object' ? `data-fuel="${item.fuel_type || ''}" data-fuel-id="${item.fuel_type_id || ''}" data-transmission="${item.transmission || ''}" data-drivetrain="${item.drivetrain || ''}" data-seating="${item.seating || ''}"` : '';
+                    html += `<option value="${code}" ${selected == code ? 'selected' : ''} ${attrs}>${val}</option>`;
+                });
+                $target.html(html).prop('disabled', false);
+                if (callback) callback();
+            }).fail(() => $target.html(`<option value="">${placeholder}</option>`).prop('disabled', true));
         }
 
         const currentEnquiry = {
@@ -1084,11 +1094,7 @@
                     if (text.includes('SALES')) {
                         $fullForm.show();
                         $fullForm.find('input, select, textarea').prop('disabled', false);
-                        setTimeout(() => {
-                            $('#segment_code').trigger('change');
-                            $('#source_code').trigger('change');
-                            $('#referred_by').trigger('change');
-                        }, 50);
+                        setTimeout(() => { $('#segment_code').trigger('change'); $('#source_code').trigger('change'); $('#referred_by').trigger('change'); }, 50);
                     } else {
                         $fullForm.hide();
                         $fullForm.find('input, select, textarea').prop('disabled', true);
@@ -1106,15 +1112,9 @@
             const $subSource = $('#sub_source');
             const $plannedCampaign = $('#planned_campaign');
 
-            let maxDob = new Date();
-            maxDob.setFullYear(maxDob.getFullYear() - 18);
-
+            let maxDob = new Date(); maxDob.setFullYear(maxDob.getFullYear() - 18);
             flatpickr("#dob", { dateFormat: "Y-m-d", maxDate: maxDob, allowInput: false });
-            flatpickr("#followup_date", { dateFormat: "Y-m-d", minDate: "today", allowInput: false });
-            flatpickr("#actual_fup_date", { dateFormat: "Y-m-d", allowInput: false });
-            flatpickr("#recent_actual_followup_date", { dateFormat: "Y-m-d", allowInput: false });
             flatpickr("#cre_next_fup_date", { dateFormat: "Y-m-d", allowInput: false });
-            flatpickr("#td_date", { dateFormat: "Y-m-d", allowInput: false });
             flatpickr("#marriage_date", { dateFormat: "Y-m-d", maxDate: "today", allowInput: false });
 
             $('#fin_mode').on('change', function() {
@@ -1163,17 +1163,13 @@
             $segmentCode.on('change', function() {
                 const segmentCode = $(this).val();
                 const segmentText = $(this).find('option:selected').text().trim().toUpperCase();
-
                 checkDuplicateEnquiry();
-
                 $('#bevSection').toggle(segmentText === 'BEV');
                 const isCommercial = ['LMM', 'COMMERCIAL'].includes(segmentText);
                 $('#commercialSection').toggle(isCommercial);
                 if (!isCommercial) $('#commercialSection').find('select,input').val('').prop('required', false);
-
                 $modelCode.add($variantCode).add($colorCode).html('<option value="">Select Option</option>').prop('disabled', true);
                 $('#fuel_type, #fuel_type_id, #transmission, #drivetrain, #seating').val('');
-
                 if (segmentCode) {
                     fetchDropdown("{{ backpack_url('enquiry/models') }}/" + segmentCode, $modelCode, 'Select Model', currentEnquiry.isEdit ? currentEnquiry.model : '', () => {
                         if (currentEnquiry.isEdit && currentEnquiry.model) $modelCode.trigger('change');
@@ -1185,7 +1181,6 @@
                 const modelCode = $(this).val();
                 $variantCode.add($colorCode).html('<option value="">Select Option</option>').prop('disabled', true);
                 $('#fuel_type, #fuel_type_id, #transmission, #drivetrain, #seating').val('');
-
                 if (modelCode) {
                     fetchDropdown("{{ backpack_url('enquiry/variants') }}/" + modelCode, $variantCode, 'Select Variant', currentEnquiry.isEdit ? currentEnquiry.variant : '', () => {
                         if (currentEnquiry.isEdit && currentEnquiry.variant) $variantCode.trigger('change');
@@ -1196,15 +1191,12 @@
             $variantCode.on('change', function() {
                 const variantCode = $(this).val();
                 const $selected = $(this).find(':selected');
-
                 $('#fuel_type').val($selected.data('fuel') || '');
                 $('#fuel_type_id').val($selected.data('fuel-id') || '');
                 $('#transmission').val($selected.data('transmission') || '');
                 $('#drivetrain').val($selected.data('drivetrain') || '');
                 $('#seating').val($selected.data('seating') || '');
-
                 $colorCode.html('<option value="">Loading...</option>').prop('disabled', true);
-
                 if (variantCode) {
                     fetchDropdown("{{ backpack_url('enquiry/colors') }}/" + variantCode, $colorCode, 'Select Color', currentEnquiry.isEdit ? currentEnquiry.color : '');
                 }
@@ -1214,12 +1206,10 @@
                 const mobile = $(this).val();
                 const type = $('#referred_by').val();
                 if (mobile.length !== 10 || !type) return;
-
                 $.get("{{ route('enquiry.reference-users') }}", { type, mobile }, function(response) {
                     const isEmpty = $.isEmptyObject(response);
                     $('#referee_name_dropdown').toggle(!isEmpty);
                     $('#referee_name_manual').toggle(isEmpty);
-
                     if (isEmpty) {
                         $('#person_code').html('<option value="">Select Name</option>');
                     } else {
@@ -1230,38 +1220,23 @@
                 });
             }));
 
-            $('#person_code').on('change', function() {
-                $('#referee_name').val($(this).val() ? $(this).find('option:selected').text() : '');
-            });
-
-            $('#referee_name_manual_input').on('input', function() {
-                $('#referee_name').val($(this).val());
-            });
+            $('#person_code').on('change', function() { $('#referee_name').val($(this).val() ? $(this).find('option:selected').text() : ''); });
+            $('#referee_name_manual_input').on('input', function() { $('#referee_name').val($(this).val()); });
 
             const checkDuplicateEnquiry = debounce(() => {
                 if (currentEnquiry.isEdit) return;
                 const mobile = $('#mobile').val();
                 const segment = $segmentCode.val();
                 if (mobile.length !== 10 || !segment) return;
-
                 $.get("{{ route('enquiry.check-duplicate') }}", { mobile, segment_code: segment }, function(response) {
-                    if (response.exists) {
-                        Swal.fire({
-                            icon: 'warning',
-                            title: 'Duplicate Enquiry',
-                            html: `Enquiry No. : <b>${response.enquiry_no}</b>`
-                        });
-                    }
+                    if (response.exists) { Swal.fire({ icon: 'warning', title: 'Duplicate Enquiry', html: `Enquiry No. : <b>${response.enquiry_no}</b>` }); }
                 });
             });
-
             $('#mobile').on('input', checkDuplicateEnquiry);
 
-            // Dynamic Location Input/Select Logic
             function setupDynamicLocation(selectId, inputId, inputName, existingValue) {
                 const $select = $(`#${selectId}`);
                 const $input = $(`#${inputId}`);
-                
                 $select.on('change', function() {
                     if ($(this).val() === 'OTHER') {
                         $input.removeClass('d-none').attr('name', inputName);
@@ -1279,7 +1254,6 @@
             setupDynamicLocation('district_select', 'district_input', 'district', currentEnquiry.district);
             setupDynamicLocation('state_select', 'state_input', 'city', currentEnquiry.city);
             
-            // Zipcode Lookup via Open India Post API
             $('#zipcode').on('input blur', debounce(function() {
                 const pincode = $('#zipcode').val().trim();
                 const $bpoSelect = $('#vpo_select');
@@ -1306,12 +1280,7 @@
                     .then(data => {
                         if (data && data[0] && data[0].Status === 'Success') {
                             const postOffices = data[0].PostOffice;
-                            
-                            let bpos = [];
-                            let tehsils = [];
-                            let districts = [];
-                            let cities = [];
-
+                            let bpos = [], tehsils = [], districts = [], cities = [];
                             postOffices.forEach(po => {
                                 if (po.Name && !bpos.includes(po.Name)) bpos.push(po.Name);
                                 let block = (po.Block && po.Block !== "NA") ? po.Block : po.District;
@@ -1351,14 +1320,10 @@
                             handleRender('district_select', 'district_input', 'district', districts, 'Select District', currentEnquiry.district);
                             handleRender('state_select', 'state_input', 'city', cities, 'Select State', currentEnquiry.city);
 
-                            // Req 1: Auto-Detect Territory logic
                             if(districts.length > 0) {
                                 const dist = districts[0].toUpperCase();
-                                if(['BIKANER', 'CHURU', 'SUJANGARH'].includes(dist)) {
-                                    $territorySelect.val('OWN TERRITORY');
-                                } else {
-                                    $territorySelect.val('OTHER TERRITORY');
-                                }
+                                if(['BIKANER', 'CHURU', 'SUJANGARH'].includes(dist)) $territorySelect.val('OWN TERRITORY');
+                                else $territorySelect.val('OTHER TERRITORY');
                             }
                             if (currentEnquiry.territory) $territorySelect.val(currentEnquiry.territory);
 
@@ -1370,7 +1335,6 @@
                         }
                     })
                     .catch(error => {
-                        console.error("Pincode API Error:", error);
                         $bpoSelect.html('<option value="">Select VPO</option>');
                         $tehsilSelect.html('<option value="">Select Tehsil</option>');
                         $districtSelect.html('<option value="">Select District</option>');
@@ -1379,14 +1343,9 @@
             }));
 
             $('#enquiry_type').trigger('change');
-            if (currentEnquiry.isEdit && currentEnquiry.dealerBranch) {
-                $('#dealer_branch').trigger('change');
-            }
+            if (currentEnquiry.isEdit && currentEnquiry.dealerBranch) $('#dealer_branch').trigger('change');
             $segmentCode.trigger('change');
-
-            if ($('#zipcode').val().length === 6) {
-                $('#zipcode').trigger('blur');
-            }
+            if ($('#zipcode').val().length === 6) $('#zipcode').trigger('blur');
         });
     </script>
 @endpush

@@ -8,8 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class TestDrive extends Model
 {
-    use CrudTrait;
-    use SoftDeletes;
+    use CrudTrait, SoftDeletes;
 
     protected $table = 'xlr8_crm_testdrive';
     protected $guarded = ['id'];
@@ -17,6 +16,6 @@ class TestDrive extends Model
     // Relationship to Enquiry
     public function enquiry()
     {
-        return $this->belongsTo(Enquiry::class, 'enquiry_no', 'enquiry_no');
+        return $this->belongsTo(\App\Models\CRM\Enquiry::class, 'enquiry_no', 'enquiry_no');
     }
 }
