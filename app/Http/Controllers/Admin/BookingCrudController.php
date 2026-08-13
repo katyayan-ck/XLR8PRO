@@ -10733,6 +10733,14 @@ class BookingCrudController extends CrudController
             $finalData
         );
 
+        \Log::info('OTF Data - Insurance Covers', [
+            'insurance_covers' => $otfData['insurance_covers'] ?? 'NOT SET',
+            'insurance_amount' => $otfData['insurance_amount'] ?? 'NOT SET',
+            'policy_type' => $otfData['policy_type'] ?? 'NOT SET',
+            'quotationData_insurance_covers' => $quotationData['insurance_covers'] ?? 'NOT SET',
+            'finalData_insurance_covers' => $finalData['insurance_covers'] ?? 'NOT SET',
+        ]);
+
         // ================= GROUP A SELECTED =================
         $groupASelected = 'cash_scheme_oem';
 
@@ -10935,8 +10943,10 @@ class BookingCrudController extends CrudController
 
         // ================= INSURANCE PRINT DATA =================
         $insurancePrintData = [];
-        if (!empty($otfData['insurance_covers']) && is_array($otfData['insurance_covers'])) {
-            foreach ($otfData['insurance_covers'] as $cover) {
+        $insuranceCovers = $otfData['insurance_covers'] ?? [];
+
+        if (!empty($insuranceCovers) && is_array($insuranceCovers)) {
+            foreach ($insuranceCovers as $cover) {
                 if (is_string($cover)) {
                     $price = 0;
                     $name = $cover;
@@ -10945,7 +10955,7 @@ class BookingCrudController extends CrudController
                         $name = trim(preg_replace('/\(₹[\d,]+\.?\d*\)/', '', $cover));
                     }
                     $insurancePrintData[] = ['name' => $name, 'price' => $price];
-                } else {
+                } elseif (is_array($cover)) {
                     $insurancePrintData[] = [
                         'name' => $cover['name'] ?? '',
                         'price' => floatval($cover['price'] ?? 0)
@@ -10954,18 +10964,24 @@ class BookingCrudController extends CrudController
             }
         }
 
-        // If no insurance covers are saved but insurance_amount exists, show it
-        if (empty($insurancePrintData) && !empty($otfData['insurance_amount']) && $otfData['insurance_amount'] > 0) {
-            $insurancePrintData[] = [
-                'name' => 'Insurance Amount',
-                'price' => floatval($otfData['insurance_amount'])
-            ];
+        // ✅ FIX: Agar insurance_amount hai aur insurance_covers empty hai
+        if (empty($insurancePrintData)) {
+            $insAmount = floatval($otfData['insurance_amount'] ?? 0);
+            if ($insAmount > 0) {
+                $policyLabel = $insurance_type_map[$otfData['policy_type'] ?? ''] ?? '';
+                $insurancePrintData[] = [
+                    'name' => $policyLabel ?: 'Insurance Amount',
+                    'price' => $insAmount
+                ];
+            }
         }
 
         // ================= ACCESSORIES PRINT DATA =================
         $accessoriesPrintData = [];
-        if (!empty($otfData['accessories']) && is_array($otfData['accessories'])) {
-            foreach ($otfData['accessories'] as $accCode) {
+        $accessories = $otfData['accessories'] ?? [];
+
+        if (!empty($accessories) && is_array($accessories)) {
+            foreach ($accessories as $accCode) {
                 $accessory = DB::table('xlr8_vehicle_accessories')
                     ->where('part_no', trim($accCode))
                     ->first();
@@ -10975,6 +10991,17 @@ class BookingCrudController extends CrudController
                         'price' => (float)$accessory->ndp
                     ];
                 }
+            }
+        }
+
+        // ✅ FIX: Agar accessories_amount hai aur accessories empty hai
+        if (empty($accessoriesPrintData)) {
+            $accAmount = floatval($otfData['accessories_amount'] ?? 0);
+            if ($accAmount > 0) {
+                $accessoriesPrintData[] = [
+                    'name' => 'Accessories',
+                    'price' => $accAmount
+                ];
             }
         }
 
@@ -11021,7 +11048,7 @@ class BookingCrudController extends CrudController
                 'groupBSelected',
                 'groupCSelected',
                 'deliveryOptions',
-                'insurancePrintData',      // ✅ ADD THIS
+                'insurancePrintData',
                 'accessoriesPrintData'
             )
         );
