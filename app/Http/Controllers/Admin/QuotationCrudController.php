@@ -583,16 +583,14 @@ class QuotationCrudController extends CrudController
                 \Log::info('Mock enquiry detected: ' . $request->enquiry_no);
             }
 
-            // ✅ SAVE INSURANCE COMPANY
-            if ($request->has('insurance_company') && $request->insurance_company) {
-                $quotationData['insurance_company'] = $request->insurance_company;
-            }
-
-            // Inside store() and update() methods:
-
-            // ✅ 1. Normalize Insurance Covers into structured name/price arrays
-            // ✅ Normalize Insurance Covers into structured name/price arrays
-            if ($request->has('insurance_covers')) {
+            // ✅ FIX: Use insurance_covers_data instead of insurance_covers
+            if ($request->has('insurance_covers_data') && !empty($request->insurance_covers_data)) {
+                $coversData = json_decode($request->insurance_covers_data, true);
+                if (is_array($coversData) && !empty($coversData)) {
+                    $quotationData['insurance_covers'] = $coversData;
+                }
+            } else if ($request->has('insurance_covers')) {
+                // Fallback to old method if needed
                 $covers = $request->insurance_covers;
                 $formattedCovers = [];
                 if (is_array($covers)) {
@@ -613,8 +611,18 @@ class QuotationCrudController extends CrudController
                             ];
                         }
                     }
+                    $quotationData['insurance_covers'] = $formattedCovers;
                 }
-                $quotationData['insurance_covers'] = $formattedCovers;
+            }
+
+            // ✅ FIX: Insurance amount ko bhi sahi se set karein
+            if ($request->has('insurance_amount') && !empty($request->insurance_amount)) {
+                $quotationData['insurance_amount'] = $request->insurance_amount;
+            }
+
+            // ✅ SAVE INSURANCE COMPANY
+            if ($request->has('insurance_company') && $request->insurance_company) {
+                $quotationData['insurance_company'] = $request->insurance_company;
             }
 
             // ✅ 2. Ensure Accessories are stored as a clean array of part numbers
@@ -960,10 +968,7 @@ class QuotationCrudController extends CrudController
             $quotation = Quotation::findOrFail($id);
             $enquiry = Enquiry::findOrFail($request->enquiry_no);
 
-            // Previous quotation snapshot
             $previousProposal = $quotation->proposed_data ?? [];
-
-            // Current edited quotation
             $quotationData = $request->except(['_token', '_method']);
 
             // Preserve frozen fields
@@ -972,12 +977,18 @@ class QuotationCrudController extends CrudController
             $quotationData['variant_code'] = $request->variant_code;
             $quotationData['color_code'] = $request->color_code;
 
+            // ✅ FIX: Use insurance_covers_data instead of insurance_covers
+            if ($request->has('insurance_covers_data') && !empty($request->insurance_covers_data)) {
+                $coversData = json_decode($request->insurance_covers_data, true);
+                if (is_array($coversData) && !empty($coversData)) {
+                    $quotationData['insurance_covers'] = $coversData;
+                }
+            }
+
             // ✅ SAVE INSURANCE COMPANY
             if ($request->has('insurance_company')) {
                 $quotationData['insurance_company'] = $request->insurance_company;
             }
-
-            // Inside store() and update() methods:
 
             // ✅ 1. Normalize Insurance Covers into structured name/price arrays
             if ($request->has('insurance_covers')) {
@@ -987,7 +998,6 @@ class QuotationCrudController extends CrudController
                     foreach ($covers as $cover) {
                         if (is_string($cover)) {
                             $price = 0;
-                            // Parse out price if formatted like "Cover Name (₹9,200.00)"
                             if (preg_match('/\(₹([\d,]+\.?\d*)\)/', $cover, $matches)) {
                                 $price = floatval(str_replace(',', '', $matches[1]));
                                 $name = trim(preg_replace('/\(₹[\d,]+\.?\d*\)/', '', $cover));
@@ -1002,8 +1012,8 @@ class QuotationCrudController extends CrudController
                             ];
                         }
                     }
+                    $quotationData['insurance_covers'] = $formattedCovers;
                 }
-                $quotationData['insurance_covers'] = $formattedCovers;
             }
 
             // ✅ 2. Ensure Accessories are stored as a clean array of part numbers
@@ -1273,11 +1283,13 @@ class QuotationCrudController extends CrudController
             $groupCSelected = 'welcome_bonus';
         }
 
-        // ✅ Prepare Insurance Data for Print
-        // ✅ Prepare Insurance Data for Print
         $insurancePrintData = [];
-        if (!empty($quotationData['insurance_covers']) && is_array($quotationData['insurance_covers'])) {
-            foreach ($quotationData['insurance_covers'] as $cover) {
+        $insuranceCovers = $quotationData['insurance_covers'] ?? [];
+
+        // ✅ FIX: Properly handle insurance covers
+        if (!empty($insuranceCovers) && is_array($insuranceCovers)) {
+            foreach ($insuranceCovers as $cover) {
+                // Handle string format
                 if (is_string($cover)) {
                     $price = 0;
                     $name = $cover;
@@ -1286,7 +1298,9 @@ class QuotationCrudController extends CrudController
                         $name = trim(preg_replace('/\(₹[\d,]+\.?\d*\)/', '', $cover));
                     }
                     $insurancePrintData[] = ['name' => $name, 'price' => $price];
-                } else {
+                }
+                // Handle array format
+                elseif (is_array($cover)) {
                     $insurancePrintData[] = [
                         'name' => $cover['name'] ?? '',
                         'price' => floatval($cover['price'] ?? 0)
@@ -1295,28 +1309,49 @@ class QuotationCrudController extends CrudController
             }
         }
 
-        // If no explicit sub-covers are saved, dynamically provide standard breakdown matching your pricing scheme
+        // ✅ FIX: If insurance_covers is empty but insurance_amount exists
         if (empty($insurancePrintData)) {
             $insAmount = floatval($quotationData['insurance_amount'] ?? 0);
-
-            // Example split mapping matching your XUV700 / standard pricing structure
             if ($insAmount > 0) {
-                // If it matches standard breakdown totals, display the exact items:
-                $insurancePrintData[] = ['name' => 'Basic OD + TP', 'price' => $insAmount * 0.8];
-                $insurancePrintData[] = ['name' => 'Nil Depreciation', 'price' => $insAmount * 0.15];
-                $insurancePrintData[] = ['name' => 'Consumables', 'price' => $insAmount * 0.05];
+                // Try to get covers from insurance_covers_display if exists
+                $displayCovers = $quotationData['insurance_covers_display'] ?? [];
+                if (!empty($displayCovers) && is_array($displayCovers)) {
+                    foreach ($displayCovers as $cover) {
+                        if (is_array($cover)) {
+                            $insurancePrintData[] = [
+                                'name' => $cover['name'] ?? '',
+                                'price' => floatval($cover['price'] ?? 0)
+                            ];
+                        }
+                    }
+                } else {
+                    // Fallback: Show just the amount with policy type
+                    $policyLabel = $insurance_type_map[$quotationData['policy_type'] ?? ''] ?? '';
+                    $insurancePrintData[] = [
+                        'name' => $policyLabel ?: 'Insurance',
+                        'price' => $insAmount
+                    ];
+                }
             }
         }
 
+        // ✅ DEBUG LOG
+        \Log::info('Insurance Print Data Final', [
+            'insurancePrintData' => $insurancePrintData,
+            'count' => count($insurancePrintData),
+        ]);
+
         // ✅ Prepare Accessories Data for Print
         $accessoriesPrintData = [];
-        if (!empty($quotationData['accessories']) && is_array($quotationData['accessories'])) {
-            foreach ($quotationData['accessories'] as $accCode) {
+        $accessories = $quotationData['accessories'] ?? [];
+
+        if (!empty($accessories) && is_array($accessories)) {
+            foreach ($accessories as $accCode) {
                 $accessory = Accessory::where('part_no', $accCode)->first();
                 if ($accessory) {
                     $accessoriesPrintData[] = [
                         'name' => $accessory->item,
-                        'price' => $accessory->ndp
+                        'price' => floatval($accessory->ndp ?? 0)
                     ];
                 }
             }

@@ -1983,6 +1983,13 @@ use App\Services\OrgService;
 
                             <table class="bill-table mt-2">
                                 <tr>
+                                    <td class="title">Expected Balance</td>
+                                    <td>
+                                        <input id="expected_balance" name="expected_balance" readonly
+                                            value="{{ old('expected_balance') }}">
+                                    </td>
+                                </tr>
+                                <tr>
                                     <td class="title" width="33%">DO Settlement Difference</td>
                                     <td width="67%">
                                         <input id="do_settlement_difference" name="do_settlement_difference"
@@ -1996,13 +2003,7 @@ use App\Services\OrgService;
                                             value="{{ old('discount_through_jv', $otfData['discount_through_jv'] ?? '') }}">
                                     </td>
                                 </tr>
-                                <tr>
-                                    <td class="title">Expected Balance</td>
-                                    <td>
-                                        <input id="expected_balance" name="expected_balance" readonly
-                                            value="{{ old('expected_balance') }}">
-                                    </td>
-                                </tr>
+
                                 <tr>
                                     <td class="title">Final Balance</td>
                                     <td>
@@ -2123,15 +2124,33 @@ use App\Services\OrgService;
                     @php
                     $insuranceNoteText = '';
                     $insuranceCovers = $otfData['insurance_covers'] ?? [];
+
+                    // ✅ Debug: Check data
+                    \Log::info('OTF Blade - Insurance Data', [
+                    'insurance_covers' => $insuranceCovers,
+                    'insurance_amount' => $otfData['insurance_amount'] ?? null,
+                    ]);
+
                     if (!empty($insuranceCovers) && is_array($insuranceCovers)) {
                     $insuranceNoteText = collect($insuranceCovers)->map(function ($cover) {
+                    // Handle string cover
+                    if (is_string($cover)) {
+                    $price = 0;
+                    $name = $cover;
+                    if (preg_match('/\(₹([\d,]+\.?\d*)\)/', $cover, $matches)) {
+                    $price = floatval(str_replace(',', '', $matches[1]));
+                    $name = trim(preg_replace('/\(₹[\d,]+\.?\d*\)/', '', $cover));
+                    }
+                    return $name . ($price > 0 ? ' (₹' . number_format($price, 2) . ')' : '');
+                    }
+                    // Handle array cover
                     $name = $cover['name'] ?? '';
                     $price = (float) ($cover['price'] ?? 0);
-                    return $price > 0
-                    ? $name . ' (₹' . number_format($price, 2) . ')'
-                    : $name;
+                    return $name . ($price > 0 ? ' (₹' . number_format($price, 2) . ')' : '');
                     })->filter()->implode(', ');
                     }
+
+                    // ✅ FALLBACK: If no insurance covers, use insurance_amount
                     if (empty($insuranceNoteText) && !empty($otfData['insurance_amount'] ?? '') &&
                     ($otfData['insurance_amount'] ?? '0') != '0' && ($otfData['insurance_amount'] ?? '0.00') != '0.00')
                     {
@@ -2150,8 +2169,9 @@ use App\Services\OrgService;
                     <div class="accessories-note-row">
                         Accessories:
                         <span id="accessories_print"
-                            style="font-weight:normal; display:inline-block; min-width:70%; border-bottom:1px solid #000;">{{
-                            $accessories !== 'N/A' ? $accessories : '' }}&nbsp;</span>
+                            style="font-weight:normal; display:inline-block; min-width:70%; border-bottom:1px solid #000;">
+                            &nbsp;
+                        </span>
                     </div>
                     {{-- ================= NOTE ================= --}}
                     <table class="bill-table note-box flex-grow-1 mt-3">
@@ -2169,6 +2189,16 @@ use App\Services\OrgService;
                                     <b>5.</b> Self attested coloured copy of original documents is required for any
                                     claim. Claims will be rejected in absence of original documents.
                                 </p>
+                            </td>
+
+                            <td style="width:10%; vertical-align:bottom; text-align:center; height:90px;">
+
+
+                                <div style="border-top:1px solid #000; width:85%; margin:0 auto; padding-top:3px;">
+                                    <span style="font-size:7px; font-weight:bold;">
+                                        Customer Signature
+                                    </span>
+                                </div>
                             </td>
                         </tr>
                     </table>

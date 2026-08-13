@@ -823,6 +823,7 @@ use App\Services\OrgService;
 
         <form method="POST" action="{{ route('quotation.store') }}" enctype="multipart/form-data">
             @csrf
+
             <div class="quotation-sheet">
 
                 <div class="form-section">
@@ -994,6 +995,8 @@ use App\Services\OrgService;
                                                 {{-- ================= PRICE DETAILS BOX ================= --}}
                                                 <select id="insurance_covers" name="insurance_covers[]"
                                                     class="form-control" multiple style="height:auto; min-height:30px;">
+                                                    <input type="hidden" id="insurance_covers_data"
+                                                        name="insurance_covers_data" value="">
                                             </td>
                                             <td class="cell-amount">
                                                 <input type="text" id="insurance_amount" name="insurance_amount"
@@ -1575,12 +1578,43 @@ use App\Services\OrgService;
 
 
 
-                    {{-- ================= Accessories (shown only while printing) ================= --}}
-                    {{-- ================= Insurance (shown only while printing) ================= --}}
+                    @php
+                    $insuranceNoteText = '';
+                    $insuranceCovers = $otfData['insurance_covers'] ?? [];
+
+                    if (!empty($insuranceCovers) && is_array($insuranceCovers)) {
+                    $insuranceNoteText = collect($insuranceCovers)->map(function ($cover) {
+                    $name = $cover['name'] ?? '';
+                    // If cover is a string, use it directly
+                    if (is_string($cover)) {
+                    $name = $cover;
+                    $price = 0;
+                    // Extract price if present
+                    if (preg_match('/\(₹([\d,]+\.?\d*)\)/', $cover, $matches)) {
+                    $price = floatval(str_replace(',', '', $matches[1]));
+                    $name = trim(preg_replace('/\(₹[\d,]+\.?\d*\)/', '', $cover));
+                    }
+                    return $name . ($price > 0 ? ' (₹' . number_format($price, 2) . ')' : '');
+                    }
+                    $price = (float) ($cover['price'] ?? 0);
+                    return $name . ($price > 0 ? ' (₹' . number_format($price, 2) . ')' : '');
+                    })->filter()->implode(', ');
+                    }
+
+                    // ✅ FALLBACK: If no insurance covers, use insurance_amount
+                    if (empty($insuranceNoteText) && !empty($otfData['insurance_amount'] ?? '') &&
+                    ($otfData['insurance_amount'] ?? '0') != '0' && ($otfData['insurance_amount'] ?? '0.00') != '0.00')
+                    {
+                    $insurancePolicyLabel = $insurance_type_map[$otfData['policy_type'] ?? ''] ?? '';
+                    $insuranceNoteText = trim($insurancePolicyLabel . ' (₹' . number_format((float)
+                    ($otfData['insurance_amount'] ?? 0), 2) . ')');
+                    }
+                    @endphp
                     <div class="insurance-note-row">
                         Insurance:
                         <span id="insurance_print"
-                            style="font-weight:normal; display:inline-block; min-width:70%; border-bottom:1px solid #000;">&nbsp;</span>
+                            style="font-weight:normal; display:inline-block; min-width:70%; border-bottom:1px solid #000;">{{
+                            $insuranceNoteText ?: '' }}&nbsp;</span>
                     </div>
 
                     {{-- ================= Accessories (shown only while printing) ================= --}}
@@ -3222,18 +3256,35 @@ function loadInsurance(company) {
     $("#insurance_covers").empty();
 
     company.price.forEach(function (item) {
+        let isMandatory = (item.Nature == "M");
         let option = new Option(
             item.head + " (₹" + item.price + ")",
             item.head,
-            item.Nature == "M",
-            item.Nature == "M"
+            isMandatory,  // ✅ Selected
+            isMandatory   // ✅ Selected
         );
         $(option).attr("data-price", item.price);
-        if (item.Nature == "M") {
-            $(option).prop("disabled", true);
+        
+        // ❌ REMOVE disabled - iski wajah se submit nahi ho raha
+        // if (isMandatory) {
+        //     $(option).prop("disabled", true);
+        //     total += item.price;
+        // }
+        
+        // ✅ Instead, use a data attribute to mark mandatory
+        if (isMandatory) {
+            $(option).attr("data-mandatory", "true");
             total += item.price;
         }
+        
         $("#insurance_covers").append(option);
+    });
+
+    // ✅ Select all mandatory items (they are NOT disabled now)
+    $("#insurance_covers option").each(function() {
+        if ($(this).attr("data-mandatory") === "true") {
+            $(this).prop("selected", true);
+        }
     });
 
     $("#insurance_covers").trigger("change");
@@ -4245,6 +4296,23 @@ function printQuotation() {
     restoreOptionLabelsAfterPrint();
     restoreItemVisibilityAfterPrint();
 }
+
+$(document).ready(function() {
+    // ✅ Form submit se pehle insurance covers ko save karein
+    $('form').on('submit', function(e) {
+        var covers = [];
+        $('#insurance_covers option:selected').each(function() {
+            var price = Number($(this).data('price') || 0);
+            var name = $(this).val();
+            covers.push({ name: name, price: price });
+        });
+        $('#insurance_covers_data').val(JSON.stringify(covers));
+        
+        // Debug - console me check karein
+        console.log('Insurance Covers being saved:', covers);
+        console.log('Insurance Covers Data:', $('#insurance_covers_data').val());
+    });
+});
 
 // ============================================================
 // 11. DOCUMENT READY

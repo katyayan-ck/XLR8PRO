@@ -1524,18 +1524,71 @@ use App\Services\OrgService;
 
                 </div>
 
-                {{-- ================= Insurance & Accessories (Print Only) ================= --}}
-                {{-- ================= Insurance & Accessories (Print Only) ================= --}}
+                @php
+                $insuranceNoteText = '';
+                $insuranceCovers = $otfData['insurance_covers'] ?? [];
+
+                if (!empty($insuranceCovers) && is_array($insuranceCovers)) {
+                $insuranceNoteText = collect($insuranceCovers)->map(function ($cover) {
+                $name = $cover['name'] ?? '';
+                // If cover is a string, use it directly
+                if (is_string($cover)) {
+                $name = $cover;
+                $price = 0;
+                // Extract price if present
+                if (preg_match('/\(₹([\d,]+\.?\d*)\)/', $cover, $matches)) {
+                $price = floatval(str_replace(',', '', $matches[1]));
+                $name = trim(preg_replace('/\(₹[\d,]+\.?\d*\)/', '', $cover));
+                }
+                return $name . ($price > 0 ? ' (₹' . number_format($price, 2) . ')' : '');
+                }
+                $price = (float) ($cover['price'] ?? 0);
+                return $name . ($price > 0 ? ' (₹' . number_format($price, 2) . ')' : '');
+                })->filter()->implode(', ');
+                }
+
+                // ✅ FALLBACK: If no insurance covers, use insurance_amount
+                if (empty($insuranceNoteText) && !empty($otfData['insurance_amount'] ?? '') &&
+                ($otfData['insurance_amount'] ?? '0') != '0' && ($otfData['insurance_amount'] ?? '0.00') != '0.00') {
+                $insurancePolicyLabel = $insurance_type_map[$otfData['policy_type'] ?? ''] ?? '';
+                $insuranceNoteText = trim($insurancePolicyLabel . ' (₹' . number_format((float)
+                ($otfData['insurance_amount'] ?? 0), 2) . ')');
+                }
+                @endphp
                 <div class="insurance-note-row">
                     Insurance:
                     <span id="insurance_print"
-                        style="font-weight:normal; display:inline-block; min-width:70%; border-bottom:1px solid #000;">&nbsp;</span>
+                        style="font-weight:normal; display:inline-block; min-width:70%; border-bottom:1px solid #000;">{{
+                        $insuranceNoteText ?: '' }}&nbsp;</span>
                 </div>
 
+                {{-- Accessories Display --}}
+                @php
+                $accessoriesNoteText = '';
+                $accessoriesCovers = $otfData['accessories'] ?? [];
+                if (!empty($accessoriesCovers) && is_array($accessoriesCovers)) {
+                $accessoryNames = [];
+                foreach ($accessoriesCovers as $accCode) {
+                $acc = $accessoryList->firstWhere('part_no', $accCode);
+                if ($acc) {
+                $accessoryNames[] = $acc->item . ' (₹' . number_format((float)$acc->ndp, 2) . ')';
+                }
+                }
+                $accessoriesNoteText = implode(', ', $accessoryNames);
+                }
+                // ✅ FALLBACK: If no accessories, use accessories_amount
+                if (empty($accessoriesNoteText) && !empty($otfData['accessories_amount'] ?? '') &&
+                ($otfData['accessories_amount'] ?? '0') != '0' && ($otfData['accessories_amount'] ?? '0.00') != '0.00')
+                {
+                $accessoriesNoteText = 'Accessories (₹' . number_format((float) ($otfData['accessories_amount'] ?? 0),
+                2) . ')';
+                }
+                @endphp
                 <div class="accessories-note-row">
                     Accessories:
                     <span id="accessories_print"
-                        style="font-weight:normal; display:inline-block; min-width:70%; border-bottom:1px solid #000;">&nbsp;</span>
+                        style="font-weight:normal; display:inline-block; min-width:70%; border-bottom:1px solid #000;">{{
+                        $accessoriesNoteText ?: '&nbsp;' }}</span>
                 </div>
 
                 <table class="bill-table note-box flex-grow-1">
@@ -1638,19 +1691,14 @@ function numberToIndianWords(num) {
 function buildInsuranceTextFromData() {
     var insuranceData = $('#insurance_print_data').val();
     
-    // Agar data khali nahi hai to try karein
-    if (insuranceData && insuranceData !== '[]' && insuranceData !== '""') {
+    // ✅ Check if data exists and is valid
+    if (insuranceData && insuranceData !== '[]' && insuranceData !== '""' && insuranceData !== 'null') {
         try {
             var parsed = JSON.parse(insuranceData);
-            
-            // Agar array hai to process karein
             if (Array.isArray(parsed) && parsed.length > 0) {
                 var list = parsed.map(function(item) {
-                    // Yahan 'name' aur 'price' field ko handle kar rahe hain
                     var name = item.name || '';
                     var price = Number(item.price || 0);
-                    
-                    // Sirf price wale items ko format karke return karein
                     return name + (price > 0 ? ' (₹' + price.toLocaleString('en-IN') + ')' : '');
                 });
                 return list.join(', ');
@@ -1660,26 +1708,40 @@ function buildInsuranceTextFromData() {
         }
     }
     
-    // Fallback logic agar data JSON mein nahi milta
-    return "";
+    // ✅ FALLBACK: Check insurance_amount field
+    var insuranceAmount = $('#insurance_amount').val();
+    if (insuranceAmount && parseFloat(insuranceAmount) > 0) {
+        var policyType = $('#policy_type').find('option:selected').text() || '';
+        return (policyType ? policyType + ' ' : '') + '(₹' + parseFloat(insuranceAmount).toLocaleString('en-IN') + ')';
+    }
+    
+    return '';
 }
 
 function buildAccessoriesTextFromData() {
     var rawData = $('#accessories_print_data').val();
-    if (rawData && rawData !== '[]') {
+    
+    if (rawData && rawData !== '[]' && rawData !== '""' && rawData !== 'null') {
         try {
             var items = JSON.parse(rawData);
             if (items && items.length > 0) {
                 return items.map(function(item) {
                     var name = item.name || '';
                     var price = Number(item.price || 0);
-                    return name + ' (₹' + price.toLocaleString('en-IN') + ')';
+                    return name + (price > 0 ? ' (₹' + price.toLocaleString('en-IN') + ')' : '');
                 }).join(', ');
             }
         } catch(e) {
             console.log('Error parsing accessories print data:', e);
         }
     }
+    
+    // ✅ FALLBACK: Check accessories_amount field
+    var accAmount = $('#accessories_amount').val();
+    if (accAmount && parseFloat(accAmount) > 0) {
+        return 'Accessories (₹' + parseFloat(accAmount).toLocaleString('en-IN') + ')';
+    }
+    
     return '';
 }
 
