@@ -1454,6 +1454,17 @@ class BookingCrudController extends CrudController
 
         $data = [];
 
+        // ✅ ADD: Models, Variants, Colors for dropdowns
+        $data['segments'] = CommonHelper::getVehicleSegments();
+        $data['models'] = CommonHelper::getVehicleModels($quotation?->segment_code ?? $enquiry?->segment_code ?? null) ?? [];
+        $data['variants'] = CommonHelper::getVehicleVariants($quotation?->model_code ?? $enquiry?->model_code ?? null) ?? [];
+        $data['colors'] = CommonHelper::getVehicleColors($quotation?->variant_code ?? $enquiry?->variant_code ?? null) ?? [];
+        $data['accessories_dropdown'] = Accessory::getAccessories(
+            $quotation?->segment_code ?? $enquiry?->segment_code ?? null,
+            $quotation?->model_code ?? $enquiry?->model_code ?? null,
+            $quotation?->variant_code ?? $enquiry?->variant_code ?? null
+        );
+
         $data['branches']       = collect(CommonHelper::getBranches())->map(fn($b) => (object) $b);
         $data['location']       = collect(CommonHelper::getLocations())->map(fn($l) => (object)$l);
         $data['allusers']       = OrgService::getUsers(deptCode: 'SLS');
@@ -1482,6 +1493,24 @@ class BookingCrudController extends CrudController
 
         $data['quotation'] = $quotation;
         $data['enquiry']   = $enquiry; // Pass enquiry object to view
+
+        // ========== ADD THIS SECTION ==========
+        // Extract quotation data for the $q variable used in view
+        $data['q'] = [];
+        if ($quotation) {
+            $data['q'] = $quotation->proposed_data ?? [];
+
+            // Also set individual fields for the view
+            $data['segment_code'] = $quotation->segment_code ??
+                ($enquiry ? $enquiry->segment_code : null);
+            $data['model_code'] = $quotation->model_code ??
+                ($enquiry ? $enquiry->model_code : null);
+            $data['variant_code'] = $quotation->variant_code ??
+                ($enquiry ? $enquiry->variant_code : null);
+            $data['color_code'] = $quotation->color_code ??
+                ($enquiry ? $enquiry->color_code : null);
+        }
+        // ======================================
 
         $this->data['data']    = $data;
         $this->data['enquiry'] = $enquiry; // Explicitly set for standalone variable access in view
@@ -1696,6 +1725,9 @@ class BookingCrudController extends CrudController
             $booking->quotation_id = $quotation->id;
         } elseif ($request->filled('enquiry_no')) {
             $booking->enq_no = $request->enquiry_no;
+        } else {
+            // Set to null (now allowed after migration)
+            $booking->enq_no = null;
         }
 
         $booking->b_type           = $customerType;
@@ -10651,6 +10683,13 @@ class BookingCrudController extends CrudController
             desigCode: 'SLS_CONS'
         );
 
+        $salesconsultants = array_map(function ($consultant) {
+            $consultant['branch_name'] = OrgService::branchName($consultant['primary_branch_code'] ?? '');
+            $consultant['location_name'] = OrgService::locationName($consultant['primary_loc_code'] ?? '');
+            return $consultant;
+        }, $salesconsultants);
+
+
         $dsaList = XL_DSA_MASTER::orderBy('name')
             ->get(['id', 'name', 'dlocation']);
         $finance = XFinance::where('bid', $id)->first();
@@ -10848,10 +10887,20 @@ class BookingCrudController extends CrudController
             '4' => 'Higher (Nil Dep + Consumables + Add Ons)',
         ];
         $registration_type_map = [
-            '0' => 'Exempted',
-            '1' => 'TRC Only',
-            '2' => 'Tax Only',
-            '3' => 'TRC + Tax',
+            '0' => 'Tax Only',
+            '1' => 'TRC + Tax',
+            '2' => 'TRC Only',
+            '3' => 'Exempted',
+
+
+        ];
+
+        $deliveryOptions = [
+            1 => 'Payment',
+            2 => 'DO',
+            3 => 'Sanction Letter',
+            4 => 'Mail',
+            5 => 'Whatsapp'
         ];
 
         $financierName = XlFinancier::find($booking->financier)?->name ?? 'N/A';
@@ -10884,11 +10933,57 @@ class BookingCrudController extends CrudController
                 ->first();
         }
 
+        // ================= INSURANCE PRINT DATA =================
+        $insurancePrintData = [];
+        if (!empty($otfData['insurance_covers']) && is_array($otfData['insurance_covers'])) {
+            foreach ($otfData['insurance_covers'] as $cover) {
+                if (is_string($cover)) {
+                    $price = 0;
+                    $name = $cover;
+                    if (preg_match('/\(₹([\d,]+\.?\d*)\)/', $cover, $matches)) {
+                        $price = floatval(str_replace(',', '', $matches[1]));
+                        $name = trim(preg_replace('/\(₹[\d,]+\.?\d*\)/', '', $cover));
+                    }
+                    $insurancePrintData[] = ['name' => $name, 'price' => $price];
+                } else {
+                    $insurancePrintData[] = [
+                        'name' => $cover['name'] ?? '',
+                        'price' => floatval($cover['price'] ?? 0)
+                    ];
+                }
+            }
+        }
+
+        // If no insurance covers are saved but insurance_amount exists, show it
+        if (empty($insurancePrintData) && !empty($otfData['insurance_amount']) && $otfData['insurance_amount'] > 0) {
+            $insurancePrintData[] = [
+                'name' => 'Insurance Amount',
+                'price' => floatval($otfData['insurance_amount'])
+            ];
+        }
+
+        // ================= ACCESSORIES PRINT DATA =================
+        $accessoriesPrintData = [];
+        if (!empty($otfData['accessories']) && is_array($otfData['accessories'])) {
+            foreach ($otfData['accessories'] as $accCode) {
+                $accessory = DB::table('xlr8_vehicle_accessories')
+                    ->where('part_no', trim($accCode))
+                    ->first();
+                if ($accessory) {
+                    $accessoriesPrintData[] = [
+                        'name' => $accessory->item,
+                        'price' => (float)$accessory->ndp
+                    ];
+                }
+            }
+        }
+
         return view(
             'admin.booking.otf-form',
             compact(
                 'booking',
                 'finance',
+                'salesconsultants',
                 'taStatement',
                 'enquiry',
                 'quotationData',
@@ -10924,22 +11019,35 @@ class BookingCrudController extends CrudController
                 'chassisImage',
                 'groupASelected',
                 'groupBSelected',
-                'groupCSelected'
+                'groupCSelected',
+                'deliveryOptions',
+                'insurancePrintData',      // ✅ ADD THIS
+                'accessoriesPrintData'
             )
         );
     }
-    public function getDOAmount(Request $request)
+    public function getDoAmount(Request $request)
     {
-        $record = DB::table('xlr8_financer_statement')
-            ->where('do_no', $request->do_no)
-            ->whereNull('deleted_at')
+        $doNo = $request->input('do_no');
+
+        if (empty($doNo)) {
+            return response()->json(['amount' => '', 'date' => '']);
+        }
+
+        // Search for exact match in do_no column
+        $statement = DB::table('xlr8_financer_statement')
+            ->where('do_no', $doNo)
+            ->where('trans_type', 'C') // Credit transactions only
             ->first();
 
-        return response()->json([
-            'amount'       => $record->credit_amount ?? '',
-            'voucher_date' => $record->trans_date ?? '',
-            'do_number'    => $record->do_no ?? '',
-        ]);
+        if ($statement) {
+            return response()->json([
+                'amount' => number_format($statement->credit_amount ?? 0, 2),
+                'date' => $statement->trans_date ? \Carbon\Carbon::parse($statement->trans_date)->format('d-M-Y') : ''
+            ]);
+        }
+
+        return response()->json(['amount' => '', 'date' => '']);
     }
 
     public function getTAStatement(Request $request)

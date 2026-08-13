@@ -43,6 +43,10 @@ use App\Services\OrgService;
             display: none !important;
         }
 
+        .print-only-inline {
+            display: inline-block !important;
+        }
+
         body {
             margin: 0;
             padding: 0;
@@ -175,6 +179,10 @@ use App\Services\OrgService;
             justify-content: flex-end !important;
         }
 
+    }
+
+    .print-only-inline {
+        display: none;
     }
 
 
@@ -595,19 +603,19 @@ use App\Services\OrgService;
            table-layout:fixed column sizing) so they always add up to 100%
            while printing. Price and discount keep their own ratio. */
         .price-grid th:nth-child(1) {
-            width: 53% !important;
+            width: 70% !important;
         }
 
         .price-grid th:nth-child(3) {
-            width: 47% !important;
+            width: 30% !important;
         }
 
         .discount-grid th:nth-child(1) {
-            width: 49% !important;
+            width: 70% !important;
         }
 
         .discount-grid th:nth-child(3) {
-            width: 51% !important;
+            width: 30% !important;
         }
 
         /* Every price/discount item is its own independent row now. A row is
@@ -855,6 +863,8 @@ use App\Services\OrgService;
                             <td width="32%">
                                 <input type="text" id="customer_name"
                                     value="{{ optional($selectedEnquiry)->full_name }}" readonly>
+                                <input type="hidden" name="customer_name" id="customer_name_hidden"
+                                    value="{{ optional($selectedEnquiry)->full_name }}">
                             </td>
                         </tr>
 
@@ -862,6 +872,8 @@ use App\Services\OrgService;
                             <td class="title">Mobile Number</td>
                             <td>
                                 <input type="text" value="{{ optional($selectedEnquiry)->mobile }}" readonly>
+                                <input type="hidden" name="mobile" id="mobile_hidden"
+                                    value="{{ optional($selectedEnquiry)->mobile }}">
                             </td>
 
 
@@ -971,7 +983,7 @@ use App\Services\OrgService;
                                         </tr>
 
                                         <tr class="grid-row">
-                                            <td class="cell-label">Insurance</td>
+                                            <td class="cell-label">Insurance </td>
                                             <td class="cell-option">
                                                 {{-- Insurance Company --}}
                                                 <select id="insurance_company" class="form-control mb-1"
@@ -979,9 +991,9 @@ use App\Services\OrgService;
                                                     <option value="">Select Company</option>
                                                 </select>
                                                 {{-- Insurance Covers --}}
-                                                <select id="insurance_covers" class="form-control" multiple
-                                                    style="height:auto; min-height:30px;">
-                                                </select>
+                                                {{-- ================= PRICE DETAILS BOX ================= --}}
+                                                <select id="insurance_covers" name="insurance_covers[]"
+                                                    class="form-control" multiple style="height:auto; min-height:30px;">
                                             </td>
                                             <td class="cell-amount">
                                                 <input type="text" id="insurance_amount" name="insurance_amount"
@@ -990,7 +1002,12 @@ use App\Services\OrgService;
                                         </tr>
 
                                         <tr class="grid-row">
-                                            <td class="cell-label">Registration</td>
+                                            <td class="cell-label">
+                                                Registration
+                                                <!-- Printed text span for Registration details -->
+                                                <span id="registration_details_print"
+                                                    class="print-only-inline fw-bold ms-1"></span>
+                                            </td>
                                             <td class="cell-option" style="padding: 2px 4px !important;">
                                                 <div
                                                     style="display: flex; gap: 4px; align-items: center; justify-content: space-between; width: 100%;">
@@ -1001,9 +1018,8 @@ use App\Services\OrgService;
                                                             class="form-select form-select-sm"
                                                             style="font-size: 9px; padding: 1px 3px; height: 22px; border: 1px solid #ccc; border-radius: 3px; width: 100%; background: #fff;">
                                                             <option value="">Select Type</option>
-
-                                                            @foreach($reg_no_type_map ?? ['1'=>'Regular', '2'=>'BH',
-                                                            '3'=>'Special'] as $key => $value)
+                                                            @foreach($reg_no_type_map ?? ['1'=>'Regular', '2'=>'BH
+                                                            Series', '3'=>'Special Number'] as $key => $value)
                                                             <option value="{{ $key }}" {{ old('registration_no_type',
                                                                 $rto?->rgn_no_type ?? '') == $key ? 'selected' : '' }}>
                                                                 {{ $value }}
@@ -1018,19 +1034,19 @@ use App\Services\OrgService;
                                                             class="form-select form-select-sm"
                                                             style="font-size: 9px; padding: 1px 3px; height: 22px; border: 1px solid #ccc; border-radius: 3px; width: 100%; background: #fff;">
                                                             <option value="">Select Category</option>
-                                                            <option value="Exempted" {{ old('registration_category',
+                                                            @foreach($registration_type_map as $key => $value)
+                                                            <option value="{{ $key }}" {{ old('registration_category',
                                                                 $otfData['registration_category'] ?? $rto?->
-                                                                registration_category ?? '') == 'Exempted' ? 'selected'
-                                                                : '' }}>Exempted</option>
-                                                            <option value="Standard" {{ old('registration_category',
-                                                                $otfData['registration_category'] ?? $rto?->
-                                                                registration_category ?? '') == 'Standard' ? 'selected'
-                                                                : '' }}>Standard</option>
+                                                                registration_category ?? '') == $key ? 'selected' : ''
+                                                                }}>
+                                                                {{ $value }}
+                                                            </option>
+                                                            @endforeach
                                                         </select>
                                                     </div>
 
-                                                    <!-- 3. In House RTO (Compact Toggle Radio Buttons) -->
-                                                    <div
+                                                    <!-- 3. In House RTO (Radio Buttons - Screen View Only) -->
+                                                    <div class="no-print"
                                                         style="flex: 0 0 auto; display: flex; align-items: center; border: 1px solid #ccc; border-radius: 3px; padding: 1px; background: #fff; height: 22px;">
                                                         <span
                                                             style="font-size: 8px; font-weight: bold; margin-right: 3px; margin-left: 2px; color: #555; white-space: nowrap;">In-House:</span>
@@ -1315,12 +1331,7 @@ use App\Services\OrgService;
                                         </tr>
 
                                         <tr class="grid-row">
-                                            <td class="cell-label">
-                                                <select id="group_b_select" class="group-select">
-                                                    <option value="corporate_discount">Corporate Discount</option>
-                                                    <option value="loyalty_bonus">Loyalty Bonus</option>
-                                                </select>
-                                            </td>
+                                            <td class="cell-label">Corporate Discount</td>
                                             <td class="cell-type">
                                                 <input type="text" id="group_b_type" value="INV" readonly>
                                             </td>
@@ -1330,8 +1341,6 @@ use App\Services\OrgService;
                                                 <input type="hidden" id="corporate_discount" name="corporate_discount">
                                                 <input type="hidden" id="corporate_discount_type"
                                                     name="corporate_discount_type">
-                                                <input type="hidden" id="loyalty_bonus" name="loyalty_bonus">
-                                                <input type="hidden" id="loyalty_bonus_type" name="loyalty_bonus_type">
                                             </td>
                                         </tr>
 
@@ -1341,6 +1350,7 @@ use App\Services\OrgService;
                                                     <option value="exchange_bonus">Exchange Bonus</option>
                                                     <option value="green_bonus">Green Bonus</option>
                                                     <option value="welcome_bonus">Welcome Bonus</option>
+                                                    <option value="loyalty_bonus">Loyalty Bonus</option>
                                                 </select>
                                             </td>
                                             <td class="cell-type">
@@ -1356,11 +1366,13 @@ use App\Services\OrgService;
                                                 <input type="hidden" id="green_bonus_type" name="green_bonus_type">
                                                 <input type="hidden" id="welcome_bonus" name="welcome_bonus">
                                                 <input type="hidden" id="welcome_bonus_type" name="welcome_bonus_type">
+                                                <input type="hidden" id="loyalty_bonus" name="loyalty_bonus">
+                                                <input type="hidden" id="loyalty_bonus_type" name="loyalty_bonus_type">
                                             </td>
                                         </tr>
 
                                         <tr class="grid-row">
-                                            <td class="cell-label">Accessories Spl Disc</td>
+                                            <td class="cell-label">Accessories Special Discount</td>
                                             <td class="cell-type">
                                                 <select id="accessories_spl_disc_type" name="accessories_spl_disc_type">
                                                     <option value="INV">INV</option>
@@ -1375,7 +1387,7 @@ use App\Services\OrgService;
 
                                         <tr class="grid-row">
                                             <td class="cell-label" id="coating_discount_label">
-                                                Coating Spl Discount
+                                                Coating Special Discount
                                             </td>
                                             <td class="cell-type">
                                                 <select id="ceramic_discount_type" name="ceramic_discount_type">
@@ -1390,7 +1402,7 @@ use App\Services\OrgService;
                                         </tr>
 
                                         <tr class="grid-row">
-                                            <td class="cell-label">PPF Spl Discount</td>
+                                            <td class="cell-label">PPF Special Discount</td>
                                             <td class="cell-type">
                                                 <select id="ppf_discount_type" name="ppf_discount_type">
                                                     <option value="INV">INV</option>
@@ -1553,7 +1565,7 @@ use App\Services\OrgService;
 
                             <!-- 3. NET RECEIVABLE Words (Dynamic Text) -->
                             <div class="onroad-row-cell onroad-words"
-                                style="background: #abb8ca; color: #000; font-size: 11px; font-weight: bold; padding: 5px 8px; flex: 1 1 64%; display: flex; align-items: center; justify-content: flex-end; border-right: 1px solid #000;">
+                                style="background: #abb8ca; color: #000; font-size: 13px; font-weight: bold; padding: 5px 8px; flex: 1 1 64%; display: flex; align-items: center; justify-content: flex-end; border-right: 1px solid #000;">
                                 <span id="net_receivable_words">Zero Rupees Only</span>
                             </div>
 
@@ -1861,6 +1873,86 @@ const ENQUIRIES = {
             oem_code: "LMM-KAZAM-CHARGING"
         },
         pricingKey: "lmmKazam"
+    },
+        "014": {
+        enquiry_no: "ENQ0014",
+        customer: { name: "Ananya Sharma", mobile: "9876500014", careOf: "2", careOfName: "Rajesh Sharma" },
+        vehicle: {
+            segment_code: "PV",
+            segment_name: "Personal Vehicle",
+            model_code: "XUV700",
+            model_name: "XUV700",
+            variant_code: "AX7L",
+            variant_name: "AX7 L Diesel AT",
+            color_code: "BA",
+            color_name: "Electric Blue",
+            oem_code: "XUV700-AX7L-DIE-AT-BA"
+        },
+        pricingKey: "xuv700" // Uses the existing comprehensive XUV700 pricing
+    },
+    "015": {
+        enquiry_no: "ENQ0015",
+        customer: { name: "Vivek Patel", mobile: "9876500015", careOf: "1", careOfName: "Mahendra Patel" },
+        vehicle: {
+            segment_code: "BEV",
+            segment_name: "Electric Vehicle",
+            model_code: "BE6",
+            model_name: "BE6",
+            variant_code: "BM12AH515MB01D00",
+            variant_name: "BE6 One Above B59 R19 C11",
+            color_code: "QK",
+            color_name: "Galaxy Grey",
+            oem_code: "BE6-ONE-ABOVE-GALAXY-GREY"
+        },
+        pricingKey: "bevx9" // Uses the existing BEV X9 pricing
+    },
+    "016": {
+        enquiry_no: "ENQ0016",
+        customer: { name: "Kavya Nair", mobile: "9876500016", careOf: "3", careOfName: "Deepak Nair" },
+        vehicle: {
+            segment_code: "CV",
+            segment_name: "Commercial Vehicle",
+            model_code: "MAXX HD",
+            model_name: "MAXX HD",
+            variant_code: "PFN2EADMBS6PPFD3",
+            variant_name: "MAXX HD 1.7 VXi AC BS6.2",
+            color_code: "WD",
+            color_name: "Diamond White",
+            oem_code: "MAXX-HD-1.7-VXI-AC-WD"
+        },
+        pricingKey: "maxxhd" // New pricing for MAXX HD
+    },
+    "017": {
+        enquiry_no: "ENQ0017",
+        customer: { name: "Arjun Mehta", mobile: "9876500017", careOf: "1", careOfName: "Ravi Mehta" },
+        vehicle: {
+            segment_code: "LMM",
+            segment_name: "Last Mile Mobility",
+            model_code: "TREO YAARI",
+            model_name: "Treo Yaari",
+            variant_code: "0000AMJ0002",
+            variant_name: "Treo Yaari Soft Top",
+            color_code: "0N",
+            color_name: "Blue White",
+            oem_code: "TREO-YAARI-SOFT-TOP-BW"
+        },
+        pricingKey: "treoYaari" // New pricing for Treo Yaari
+    },
+    "018": {
+        enquiry_no: "ENQ0018",
+        customer: { name: "Priya Singh", mobile: "9876500018", careOf: "2", careOfName: "Vikram Singh" },
+        vehicle: {
+            segment_code: "PV",
+            segment_name: "Personal Vehicle",
+            model_code: "SCORPIO-N",
+            model_name: "Scorpio-N",
+            variant_code: "AZ1116YGTTA4GA01",
+            variant_name: "Z4 D AT 2WD 7 STR BS6.2",
+            color_code: "JD",
+            color_name: "Deep Forest",
+            oem_code: "SCORPIO-N-Z4-D-AT-JD"
+        },
+        pricingKey: "scorpioN" // New pricing for Scorpio-N
     }
 };
 
@@ -2896,6 +2988,187 @@ const PRICING = {
             "other-cash-discount": { amount: 0, type: "CN", editable: true },
             "special-cash-discount": { enabled: true, lower: 250000, upper: 400000, max: 15000, amount: 0, type: "INV" }
         }
+    },
+        maxxhd: {
+        permit: [{ type: "Goods", default: true }],
+        receivables: {
+            exShowroom: 895000,
+            insurance: [{
+                permit: "Goods",
+                default: true,
+                companies: [{
+                    insCo: "ICICI Lombard",
+                    default: true,
+                    price: [
+                        { head: "Basic OD TP", price: 17800, Nature: "M" },
+                        { head: "Nil Depreciation", price: 3500, Nature: "M" },
+                        { head: "Consumables", price: 750, Nature: "M" },
+                        { head: "Engine Protect", price: 4200, Nature: "O" },
+                        { head: "RTI", price: 3800, Nature: "O" }
+                    ]
+                }]
+            }],
+            RTO: { TRC: 2000, TAX: [{ permit: "Goods", default: true, amount: 72000 }] },
+            accessories: [
+                { item: "Loading Body Cover", mrp: 8500, discount: 1000, code: "LBC-MH" },
+                { item: "Seat Cover Heavy Duty", mrp: 6200, discount: 800, code: "SC-HD" },
+                { item: "Mud Flaps Set", mrp: 1200, discount: 0, code: "MF-MH" }
+            ],
+            shield: [
+                { title: "4th Year", price: 12990, default: true },
+                { title: "No Shield", price: 0, default: false }
+            ],
+            rsa: [
+                { title: "1 Year", price: 1099, default: true },
+                { title: "No RSA", price: 0, default: false }
+            ],
+            vltd: { permit: "Goods", price: 3800 },
+            kazam: 0,
+            incidental: 1800,
+            "rto-tape": 1299,
+            fastag: 600,
+            COD: 0,
+            "charger-swapping": [],
+            tcs: { limit: 1000000, rate: 1.0 }
+        },
+        deductibles: {
+            "oem-schemes": [
+                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 20000, type: "INV" }
+            ],
+            "dealer-scheme": { amount: 7000, type: "CN" },
+            "accessory-scheme": { amount: 1500, type: "INV" },
+            "shield-scheme": { amount: 1000, type: "CN" },
+            "corp-scheme": [
+                { name: "Corporate Discount", amount: 15000, type: "INV" },
+                { name: "Loyalty Bonus", amount: 8000, type: "INV" }
+            ],
+            "exchange-scheme": [
+                { name: "Exchange Bonus", amount: 12000, type: "CN1" }
+            ],
+            "other-cash-discount": { amount: 0, type: "CN", editable: true },
+            "special-cash-discount": { enabled: true, lower: 700000, upper: 900000, max: 25000, amount: 0, type: "INV" }
+        }
+    },
+    treoYaari: {
+        permit: [{ type: "LMM", default: true }],
+        receivables: {
+            exShowroom: 325000,
+            insurance: [{
+                permit: "LMM",
+                default: true,
+                companies: [{
+                    insCo: "USGI",
+                    default: true,
+                    price: [
+                        { head: "Basic OD TP", price: 8900, Nature: "M" },
+                        { head: "Nil Depreciation", price: 1900, Nature: "M" },
+                        { head: "Consumables", price: 500, Nature: "M" },
+                        { head: "RTI", price: 1300, Nature: "O" }
+                    ]
+                }]
+            }],
+            RTO: { TRC: 800, TAX: [{ permit: "LMM", default: true, amount: 19500 }] },
+            accessories: [
+                { item: "Welcome Kit", mrp: 589, discount: 0, code: "WK-TY" },
+                { item: "Seat Cover", mrp: 2300, discount: 250, code: "SC-TY" },
+                { item: "Floor Mat", mrp: 950, discount: 0, code: "FM-TY" }
+            ],
+            shield: [
+                { title: "4th Year", price: 4990, default: true },
+                { title: "No Shield", price: 0, default: false }
+            ],
+            rsa: [
+                { title: "1 Year", price: 699, default: true },
+                { title: "No RSA", price: 0, default: false }
+            ],
+            vltd: null,
+            kazam: 0,
+            incidental: 1200,
+            "rto-tape": 0,
+            fastag: 0,
+            COD: 2500,
+            "charger-swapping": [],
+            tcs: { limit: 1000000, rate: 1.0 }
+        },
+        deductibles: {
+            "oem-schemes": [
+                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 10000, type: "INV" }
+            ],
+            "dealer-scheme": { amount: 3000, type: "CN" },
+            "accessory-scheme": { amount: 500, type: "INV" },
+            "shield-scheme": { amount: 500, type: "CN" },
+            "corp-scheme": [
+                { name: "Corporate Discount", amount: 8000, type: "INV" },
+                { name: "Loyalty Bonus", amount: 4000, type: "INV" }
+            ],
+            "exchange-scheme": [
+                { name: "Exchange Bonus", amount: 6000, type: "CN1" }
+            ],
+            "other-cash-discount": { amount: 0, type: "CN", editable: true },
+            "special-cash-discount": { enabled: true, lower: 250000, upper: 400000, max: 15000, amount: 0, type: "INV" }
+        }
+    },
+    scorpioN: {
+        permit: [{ type: "Private", default: true }],
+        receivables: {
+            exShowroom: 1425000,
+            insurance: [{
+                permit: "Private",
+                default: true,
+                companies: [{
+                    insCo: "ICICI Lombard",
+                    default: true,
+                    price: [
+                        { head: "Basic OD TP", price: 26500, Nature: "M" },
+                        { head: "Nil Depreciation", price: 5500, Nature: "M" },
+                        { head: "Consumables", price: 1250, Nature: "M" },
+                        { head: "Engine Protect", price: 4800, Nature: "O" },
+                        { head: "RTI", price: 4200, Nature: "O" }
+                    ]
+                }]
+            }],
+            RTO: { TRC: 1200, TAX: [{ permit: "Private", default: true, amount: 125000 }] },
+            accessories: [
+                { item: "Dash Cam", mrp: 4079, discount: 500, code: "DC-SN" },
+                { item: "Seat Cover 7Str", mrp: 7190, discount: 800, code: "SC-SN" },
+                { item: "Floor Mat Set", mrp: 3452, discount: 400, code: "FM-SN" }
+            ],
+            shield: [
+                { title: "4th Year", price: 19990, default: true },
+                { title: "No Shield", price: 0, default: false }
+            ],
+            rsa: [
+                { title: "1 Year", price: 1499, default: true },
+                { title: "2 Year", price: 2699, default: false },
+                { title: "No RSA", price: 0, default: false }
+            ],
+            vltd: null,
+            kazam: 0,
+            incidental: 2500,
+            "rto-tape": 1499,
+            fastag: 600,
+            COD: 0,
+            "charger-swapping": [],
+            tcs: { limit: 1000000, rate: 1.0 }
+        },
+        deductibles: {
+            "oem-schemes": [
+                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 35000, type: "INV" }
+            ],
+            "dealer-scheme": { amount: 10000, type: "CN" },
+            "accessory-scheme": { amount: 2500, type: "INV" },
+            "shield-scheme": { amount: 1500, type: "CN" },
+            "corp-scheme": [
+                { name: "Corporate Discount", amount: 25000, type: "INV" },
+                { name: "Loyalty Bonus", amount: 12000, type: "INV" }
+            ],
+            "exchange-scheme": [
+                { name: "Exchange Bonus", amount: 18000, type: "CN1" },
+                { name: "Welcome Bonus", amount: 8000, type: "CN1" }
+            ],
+            "other-cash-discount": { amount: 0, type: "CN", editable: true },
+            "special-cash-discount": { enabled: true, lower: 1200000, upper: 1600000, max: 40000, amount: 0, type: "INV" }
+        }
     }
 };
 
@@ -3195,6 +3468,8 @@ $('#btnFetchMock').click(function () {
     // ---- Populate Customer Details ----
     $('#customer_name').val(enquiry.customer.name);
     $('#mobile').val(enquiry.customer.mobile);
+    $('#customer_name_hidden').val(enquiry.customer.name);
+$('#mobile_hidden').val(enquiry.customer.mobile);
     $('#careof').val(enquiry.customer.careOf || '').trigger('change');
     $('#careofname').val(enquiry.customer.careOfName || '');
     $('#enquiry_id').val(enquiry.enquiry_no);
@@ -3358,15 +3633,25 @@ if (groupASelected && groupAAmount) {
         $('#shield_scheme_type').val(pricing.deductibles["shield-scheme"].type);
     }
     if (pricing.deductibles["corp-scheme"] && pricing.deductibles["corp-scheme"].length > 0) {
-        let corp = pricing.deductibles["corp-scheme"][0];
+    let corp = pricing.deductibles["corp-scheme"].find(x => x.name === "Corporate Discount") || pricing.deductibles["corp-scheme"][0];
+    if (corp && corp.name === "Corporate Discount") {
         $('#group_b_select').val('corporate_discount').trigger('change');
-        $('#group_b_type').val(corp.type);
+        $('#group_b_type').val(corp.type || 'INV');
         $('#group_b_amount').val(corp.amount).trigger('keyup');
     }
+
+    // Agar corp-scheme mein Loyalty Bonus milta hai, to usse Group C mein set karein
+    let loyalty = pricing.deductibles["corp-scheme"].find(x => x.name === "Loyalty Bonus");
+    if (loyalty) {
+        $('#group_c_select').val('loyalty_bonus').trigger('change');
+        $('#group_c_type').val(loyalty.type || 'CN1');
+        $('#group_c_amount').val(loyalty.amount).trigger('keyup');
+    }
+}
     if (pricing.deductibles["exchange-scheme"] && pricing.deductibles["exchange-scheme"].length > 0) {
         let exch = pricing.deductibles["exchange-scheme"][0];
-        $('#group_c_select').val('exchange_bonus').trigger('change');
-        $('#group_c_type').val(exch.type);
+        $('#group_c_select').val(exch.name ? exch.name.toLowerCase().replace(' ', '_') : 'exchange_bonus').trigger('change');
+        $('#group_c_type').val(exch.type || 'CN1');
         $('#group_c_amount').val(exch.amount).trigger('keyup');
     }
     if (pricing.deductibles["accessories-spl-discount"]) {
@@ -3597,11 +3882,11 @@ $('#charger_swapping').on('change', function () {
 // ---- Update Coating Discount Label ----
 function updateCoatingDiscountLabel() {
     let coating = $('#coating').val();
-    let label = 'Coating Spl Discount';
+    let label = 'Coating Special Discount';
     if (coating === 'Ceramic') {
-        label = 'Ceramic Coating Spl Discount';
+        label = 'Ceramic Coating Special Discount';
     } else if (coating === 'Graphene') {
-        label = 'Graphene Coating Spl Discount';
+        label = 'Graphene Coating Special Discount';
     }
     $('#coating_discount_label').text(label);
 }
@@ -3644,8 +3929,15 @@ function setupGroupDiscount(groupPrefix, fieldNames) {
 
 // Setup all groups
 setupGroupDiscount('group_a', ['cash_scheme_oem', 'csd_discount', 'fame_subsidy']);
-setupGroupDiscount('group_b', ['corporate_discount', 'loyalty_bonus']);
-setupGroupDiscount('group_c', ['exchange_bonus', 'green_bonus', 'welcome_bonus']);
+// Group B - Corporate Discount (static label)
+$(document).on('keyup change', '#group_b_amount', function() {
+    let amount = $(this).val();
+    $('#corporate_discount').val(amount);
+    $('#corporate_discount_type').val($('#group_b_type').val());
+    calculateQuotation();
+    toggleRowVisibility();
+});
+setupGroupDiscount('group_c', ['exchange_bonus', 'green_bonus', 'welcome_bonus', 'loyalty_bonus']);
 
 // ---- Group A Select change (static fallback) ----
 $('#group_a_select').on('change', function () {
@@ -3887,23 +4179,30 @@ function prepareOptionLabelsForPrint() {
     printLabelRestoreList = [];
     $('.quotation-grid td.cell-option select').not('#accessories').each(function () {
         let $select = $(this);
-        if ($select.attr('id') === 'insurance_covers') {
+        let selectId = $select.attr('id');
+
+        // Registration Dropdowns aur Insurance Covers ko generic loop se exclude karein
+        if (selectId === 'insurance_covers' || selectId === 'registration_no_type' || selectId === 'registration_category') {
             return;
         }
+
         let selectedText = $select.find('option:selected').first().text().trim();
         if (!selectedText || selectedText.toLowerCase() === 'select') {
             return;
         }
+
         let $label = $select.closest('tr').find('td.cell-label').first();
         printLabelRestoreList.push({
             el: $label,
             html: $label.html()
         });
-        if ($select.attr('id') === 'insurance_company') {
+
+        if (selectId === 'insurance_company') {
             $label.html('Insurance');
             $label.append('(' + $select.val() + ')');
             return;
         }
+
         $label.append('(' + selectedText + ')');
     });
 }
@@ -4165,9 +4464,8 @@ function toggleRtoChargesNote() {
     let $rtoNoteItem = $('#rto_charges_note_item');
 
     if (inHouseValue === "1") {
-        // Agar 9th point pehle se exist nahi karta toh append karein
         if ($rtoNoteItem.length === 0) {
-            $('#quotation_notes_list').append('<li id="rto_charges_note_item">RTO Charges will be applicable.</li>');
+            $('#quotation_notes_list').append('<li id="rto_charges_note_item">RTO Charges are subject to the vehicle\'s registration category.</li>');
         }
     } else {
         // Radio No (0) hone par 9th point remove karein
@@ -4183,6 +4481,34 @@ $(document).on('change', 'input[name="in_house_rto"]', function () {
 // Document Ready par Initial State Check Karne Ke Liye Call Karein
 $(document).ready(function () {
     toggleRtoChargesNote();
+});
+
+function updateRegistrationPrintText() {
+    let typeText = $('#registration_no_type option:selected').text().trim();
+    let categoryText = $('#registration_category option:selected').text().trim();
+    let inHouseVal = $('input[name="in_house_rto"]:checked').val();
+    let inHouseText = (inHouseVal === "1") ? "Yes" : "No";
+
+    let parts = [];
+
+    if (typeText && typeText.toLowerCase() !== 'select type') {
+        parts.push('(' + typeText + ')');
+    }
+    if (categoryText && categoryText.toLowerCase() !== 'select category') {
+        parts.push('(' + categoryText + ')');
+    }
+    parts.push('(In-House: ' + inHouseText + ')');
+
+    $('#registration_details_print').text(parts.join(' '));
+}
+
+// Event Listeners
+$(document).on('change', '#registration_no_type, #registration_category, input[name="in_house_rto"]', function () {
+    updateRegistrationPrintText();
+});
+
+$(document).ready(function () {
+    updateRegistrationPrintText();
 });
 </script>
 @endpush

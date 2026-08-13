@@ -1,3 +1,4 @@
+{{-- admin/quotation/preview.blade.php --}}
 @extends(backpack_view('blank'))
 
 @php
@@ -10,12 +11,21 @@ use App\Services\OrgService;
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
 <style>
     .header-logo-left img {
-        height: 75 px;
+        height: 75px;
     }
 
     .header-logo-right img {
         max-height: 85px;
         max-width: 170px;
+    }
+
+    .header-title h3 {
+        margin-bottom: 4px;
+    }
+
+    .header-title h4 {
+        margin-top: 8px;
+        font-weight: bold;
     }
 
     @media print {
@@ -34,6 +44,10 @@ use App\Services\OrgService;
             display: none !important;
         }
 
+        .print-only-inline {
+            display: inline-block !important;
+        }
+
         body {
             margin: 0;
             padding: 0;
@@ -49,15 +63,13 @@ use App\Services\OrgService;
             flex-direction: column;
         }
 
-        /* Hide column 2 (OPTION in the price table, TYPE in the discount table).
-           Each table now only has 3 columns of its own. */
+        /* Hide column 2 (OPTION in the price table, TYPE in the discount table) */
         .quotation-grid th:nth-child(2),
         .quotation-grid td:nth-child(2) {
             display: none !important;
         }
 
-        /* Reassign widths for the 2 remaining columns per table - each totals 100%.
-           Price and discount keep their own ratio. */
+        /* Reassign widths for the 2 remaining columns per table */
         .price-grid th:nth-child(1) {
             width: 53% !important;
         }
@@ -83,10 +95,6 @@ use App\Services\OrgService;
             gap: 6px !important;
         }
 
-        /* Every price/discount item is its own independent row now. A row is
-           hidden purely on its own value being blank / 0 / N/A — the other box
-           is completely unaffected, and its own remaining rows just move up to
-           close the gap since it's normal table flow. */
         .quotation-grid tr.print-hide {
             display: none !important;
         }
@@ -106,14 +114,12 @@ use App\Services\OrgService;
             width: 100% !important;
         }
 
-        /* Fix summary alignment to match 4 columns */
-        /* Fix summary alignment to match 4 columns */
+        /* Fix summary alignment */
         .quotation-summary {
             display: flex !important;
             align-items: stretch !important;
             width: 100% !important;
             border: 1px solid #000 !important;
-            /* add border here */
         }
 
         .quotation-summary .total-row-cell,
@@ -122,16 +128,14 @@ use App\Services\OrgService;
             align-items: center !important;
             box-sizing: border-box !important;
             margin: 0 !important;
-            border: none !important;
-            /* remove individual borders */
-            border-right: 1px solid #000 !important;
+            border-right: none !important;
             padding: 5px 8px !important;
             min-height: 30px !important;
         }
 
         .quotation-summary .total-row-cell:last-child,
         .quotation-summary .onroad-row-cell:last-child {
-            border-right: none !important;
+            border-right: 1px solid #000 !important;
         }
 
         .quotation-summary input {
@@ -142,7 +146,7 @@ use App\Services\OrgService;
             padding: 2px 5px !important;
         }
 
-        /* Match the 4-column proportions: 25% | 22% | 26% | 27% */
+        /* Match the 4-column proportions */
         .quotation-summary .total-receivable-label {
             flex: 0 0 32% !important;
         }
@@ -162,20 +166,28 @@ use App\Services\OrgService;
         }
 
         .quotation-summary .onroad-label {
-            flex: 0 0 82% !important;
+            flex: 0 0 17% !important;
         }
 
         .quotation-summary .onroad-amount {
-            flex: 0 0 18% !important;
+            flex: 0 0 13% !important;
+            justify-content: center !important;
+            align-items: center !important;
+        }
+
+        .quotation-summary .onroad-words {
+            flex: 1 1 70% !important;
             justify-content: flex-end !important;
         }
 
-        /* Form me select hide */
+        .discount-bifurcation-box {
+            display: none !important;
+        }
+
         #accessories+.select2-container {
             display: none !important;
         }
 
-        /* Sirf text dikhao */
         #accessories_print {
             display: block !important;
             white-space: normal;
@@ -183,72 +195,16 @@ use App\Services\OrgService;
             font-size: 11px;
             line-height: 15px;
         }
+    }
 
-        #accessories+.select2-container {
-            display: none !important;
-        }
-
-        /* Sirf text dikhao */
-        #accessories_print {
-            display: block !important;
-            white-space: normal;
-            word-break: break-word;
-            font-size: 11px;
-            line-height: 15px;
-        }
+    .print-only-inline {
+        display: none;
     }
 
     .quotation-sheet {
-
         background: #fff;
-
         border: 1px solid #000;
-
         padding: 15px;
-
-    }
-
-
-    .bill-table {
-
-        width: 100%;
-
-        border-collapse: collapse;
-
-    }
-
-
-
-    .bill-table .title {
-
-        background: #f2f2f2;
-
-        font-weight: bold;
-
-    }
-
-
-
-    .bill-table input:focus {
-
-        outline: none;
-
-    }
-
-    .bill-table select {
-
-        border: none;
-
-        width: 100%;
-
-        background: transparent;
-
-    }
-
-    .bill-table select:focus {
-
-        outline: none;
-
     }
 
     .bill-table {
@@ -257,12 +213,29 @@ use App\Services\OrgService;
         margin-bottom: 15px;
     }
 
+    .bill-table .title {
+        background: #f2f2f2;
+        font-weight: bold;
+    }
+
+    .bill-table input:focus {
+        outline: none;
+    }
+
+    .bill-table select {
+        border: none;
+        width: 100%;
+        background: transparent;
+    }
+
+    .bill-table select:focus {
+        outline: none;
+    }
+
     .bill-table td {
         border: 1px solid #000;
         padding: 2px 5px;
-
         height: 26px;
-
         font-size: 10px;
         vertical-align: middle;
     }
@@ -280,9 +253,7 @@ use App\Services\OrgService;
         padding: 2px;
     }
 
-
     /* Hide Backpack UI */
-
     .page-header {
         display: none !important;
     }
@@ -319,7 +290,6 @@ use App\Services\OrgService;
         margin-top: 0 !important;
     }
 
-
     .row.align-items-stretch {
         align-items: stretch;
     }
@@ -336,21 +306,14 @@ use App\Services\OrgService;
         margin-top: 12px;
     }
 
-    /* ================= Quotation Grid (Price / Discount) — now TWO independent
-       tables/boxes placed side by side. Because each side is its own table with
-       its own <tbody>, every row (price item or discount item) can be shown or
-       hidden completely independently. When a field is blank / 0 / N/A, its row
-       is simply removed from the flow (display:none), and the remaining rows in
-       that box naturally move up to close the gap — the two boxes no longer need
-       to stay row-for-row aligned with each other. ================= */
-
+    /* ================= Quotation Grid ================= */
     .quotation-box {
         margin-bottom: 15px;
     }
 
     .quotation-grid-split {
         display: flex;
-        gap: 0.5px;
+        gap: 3px;
         align-items: flex-start;
     }
 
@@ -381,11 +344,6 @@ use App\Services\OrgService;
         text-align: center;
     }
 
-    /* Column widths are set on the <thead> cells (not a <colgroup>/<col>) because
-       with table-layout:fixed the widths of the FIRST ROW's cells define every
-       column's width for the whole table — this is the spec-defined, most
-       reliably-supported way across browsers/print engines, unlike overriding
-       <col> widths which some print renderers ignore. */
     .price-grid th:nth-child(1) {
         width: 32%;
     }
@@ -415,14 +373,10 @@ use App\Services\OrgService;
         font-weight: 600;
     }
 
-
-
     .quotation-grid td.cell-label .group-select {
         background: #f2f2f2;
         font-weight: 600;
     }
-
-
 
     .quotation-grid input,
     .quotation-grid select {
@@ -438,12 +392,13 @@ use App\Services\OrgService;
         outline: none;
     }
 
-    /* ================= Quotation Summary (Total Receivable / Total Discount / On Road Price) ================= */
+    /* ================= Quotation Summary ================= */
     .quotation-summary {
         display: flex;
         font-weight: bold;
         border: 1px solid #000;
         width: 100%;
+        margin-top: 10px;
     }
 
     .quotation-summary .total-row-cell {
@@ -482,12 +437,12 @@ use App\Services\OrgService;
     }
 
     .quotation-summary .onroad-label {
-        flex: 0 0 82%;
+        flex: 0 0 25%;
     }
 
     .quotation-summary .onroad-amount {
         flex: 1 1 18%;
-        justify-content: flex-end;
+        justify-content: center;
     }
 
     .quotation-summary input {
@@ -500,88 +455,46 @@ use App\Services\OrgService;
         padding: 2px 5px;
     }
 
-    /* ================= Financier Invoice / Discount Bifurcation — div based ================= */
-    .financier-discount-grid {
-        display: grid;
-        grid-template-columns: 25% 25% 25% 25%;
-        border-left: 1px solid #000;
-        border-top: 1px solid #000;
-        margin-bottom: 15px;
+    /* ================= Discount Bifurcation Box ================= */
+    .discount-bifurcation-box {
+        margin-top: 10px;
     }
 
-    .financier-discount-grid>div {
-        border-right: 1px solid #000;
-        border-bottom: 1px solid #000;
-        padding: 3px 5px;
-        font-size: 10px;
-        min-height: 26px;
-        display: flex;
-        align-items: center;
-    }
-
-    .financier-discount-grid .fd-header {
-        background: #d9d9d9;
-        font-weight: bold;
-        text-align: center;
-        justify-content: center;
-        grid-column: span 2;
-    }
-
-    .financier-discount-grid .fd-label {
-        background: #f2f2f2;
-        font-weight: 600;
-    }
-
-    .financier-discount-grid .fd-bold input {
-        font-weight: bold;
-    }
-
-    .financier-discount-grid input {
+    .bifurcation-grid input {
         width: 100%;
         border: none;
         background: transparent;
         font-size: 10px;
+        padding: 2px;
     }
 
-
-    .cell-label:has(.group-select) {
-        background: #f2f2f2;
-        font-weight: 600;
+    .bifurcation-grid input:focus {
+        outline: none;
     }
 
-    /* Accessories note line: hidden on screen, shown only in print above the Note box */
+    /* ================= Insurance & Accessories Note Rows ================= */
+    .insurance-note-row,
     .accessories-note-row {
-        display: none;
-        padding: 2px 5px;
-        font-size: 9px;
+        display: block;
+        padding: 4px 5px;
+        font-size: 10px;
         font-weight: bold;
+        margin-bottom: 6px;
     }
 
+    #insurance_print,
+    #accessories_print {
+        font-weight: normal;
+        white-space: normal;
+        word-break: break-word;
+        display: inline;
+    }
 
-    /* =================================================================
-       PREVIEW / READ-ONLY MODE
-       Same rules the print stylesheet already uses (folding OPTION/TYPE
-       columns, hiding the financier bifurcation box, showing the plain
-       text accessories line), applied permanently on screen — plus a
-       hard block on editing any field. This makes the preview page
-       always look like the printed sheet, and nothing on it is editable.
-       ================================================================= */
+    /* ================= PREVIEW MODE ================= */
     .quotation-form.preview-mode input,
     .quotation-form.preview-mode select,
     .quotation-form.preview-mode textarea {
         pointer-events: none !important;
-    }
-
-    .quotation-form.preview-mode #accessories+.select2-container {
-        display: none !important;
-    }
-
-    .quotation-form.preview-mode #accessories_print {
-        display: block !important;
-        white-space: normal;
-        word-break: break-word;
-        font-size: 11px;
-        line-height: 15px;
     }
 
     .quotation-form.preview-mode .quotation-grid th:nth-child(2),
@@ -613,7 +526,7 @@ use App\Services\OrgService;
         display: none !important;
     }
 
-    .quotation-form.preview-mode .financier-discount-grid {
+    .quotation-form.preview-mode .discount-bifurcation-box {
         display: none !important;
     }
 
@@ -621,7 +534,6 @@ use App\Services\OrgService;
         display: block !important;
     }
 
-    /* Fix summary alignment for preview mode to match 4 columns */
     .quotation-form.preview-mode .quotation-summary {
         display: flex !important;
         align-items: stretch !important;
@@ -662,7 +574,6 @@ use App\Services\OrgService;
         font-size: 10px !important;
     }
 
-    /* Match the 4-column proportions: 25% | 22% | 26% | 27% */
     .quotation-form.preview-mode .quotation-summary .total-receivable-label {
         flex: 0 0 32% !important;
     }
@@ -682,7 +593,7 @@ use App\Services\OrgService;
     }
 
     .quotation-form.preview-mode .quotation-summary .onroad-label {
-        flex: 0 0 82% !important;
+        flex: 0 0 25% !important;
     }
 
     .quotation-form.preview-mode .quotation-summary .onroad-amount {
@@ -691,12 +602,35 @@ use App\Services\OrgService;
     }
 
     .quotation-grid input,
-    .quotation-summary input,
-    .financier-discount-grid input {
+    .quotation-summary input {
         text-align: right !important;
     }
-</style>
 
+    .select2-container--default .select2-selection--multiple {
+        min-height: 32px !important;
+        height: 32px !important;
+        overflow: hidden !important;
+    }
+
+    .select2-container--default .select2-selection__rendered {
+        display: flex !important;
+        align-items: center;
+        height: 30px;
+        overflow: hidden;
+    }
+
+    .select2-selection__choice {
+        display: none !important;
+    }
+
+    .select2-search--inline {
+        width: 100% !important;
+    }
+
+    .select2-search__field {
+        width: 100% !important;
+    }
+</style>
 @endpush
 
 @section('content')
@@ -720,39 +654,24 @@ use App\Services\OrgService;
 
                 <div class="row align-items-center">
 
-                    <!-- Left Logo -->
-                    <div class="col-md-2 text-center">
+                    <div class="col-2 text-center">
                         <img src="{{ asset('images/bikaner_logo.png') }}" style="height:75px;">
                     </div>
 
-                    <!-- Center -->
-                    <div class="col-md-8 text-center">
-
-                        <h3 class="fw-bold mb-1">
-                            BIKANER MOTORS PRIVATE LIMITED
-                        </h3>
-
-                        <div style="font-size:13px">
-                            Regd. Office : Sunderi Chhabil Mansion,
-                            NH-11, Jaipur Road,
-                            P.O. Udasar,
-                            Bikaner-334022
+                    <div class="col-8 text-center">
+                        <h3 class="fw-bold mb-1">BIKANER MOTORS PRIVATE LIMITED</h3>
+                        <div style="font-size:13px;">
+                            Regd. Office : Sunderi Chhabil Mansion, NH-11,
+                            Jaipur Road, P.O. Udasar, Bikaner-334022
                         </div>
-
-                        <div style="font-size:13px">
+                        <div style="font-size:13px;">
                             Branch Office : 6th KM Stone,
-                            Ratangarh Road,
-                            Churu (Raj.)
+                            Ratangarh Road, Churu (Raj.)
                         </div>
-
-                        <h4 class="mt-2 mb-0 text-uppercase fw-bold">
-                            VEHICLE QUOTATION
-                        </h4>
-
+                        <h4 class="mt-2 mb-0 fw-bold text-uppercase">Vehicle Quotation</h4>
                     </div>
 
-                    <!-- Right Logo -->
-                    <div class="col-md-2 text-center">
+                    <div class="col-2 text-center">
                         <img src="{{ $mahindraLogo }}" style="max-width:110px; max-height:60px;">
                     </div>
 
@@ -761,1568 +680,1168 @@ use App\Services\OrgService;
             </div>
         </div>
 
-        <div class="quotation-preview-form">
-            <div class="quotation-sheet">
+        <div class="quotation-sheet">
+            <input type="hidden" id="insurance_print_data" value='{{ $insurancePrintData ?? ' []' }}'>
+            <input type="hidden" id="accessories_print_data" value='{{ $accessoriesPrintData ?? ' []' }}'>
 
-                <div class="form-section">
+            <div class="form-section">
 
-                    {{-- ================= Customer Details ================= --}}
-                    <table class="bill-table mb-3">
+                {{-- ================= Customer Details ================= --}}
+                <table class="bill-table mb-3">
+                    <tr>
+                        <td class="title" width="18%">Enquiry ID</td>
+                        <td width="32%">
+                            <input type="text" id="enquiry_id" value="{{ optional($selectedEnquiry)->id }}" readonly>
+                            <input type="hidden" name="enquiry_no" id="enquiry_no_hidden"
+                                value="{{ optional($selectedEnquiry)->id }}">
+                        </td>
+                        <td class="title" width="18%">Customer Name</td>
+                        <td width="32%">
+                            <input type="text" id="customer_name"
+                                value="{{ $quotationData['customer_name'] ?? optional($selectedEnquiry)->full_name }}"
+                                readonly>
+                        </td>
+                    </tr>
 
-                        <tr>
-                            <td class="title" width="18%">Enquiry No.</td>
-                            <td width="32%">
-                                <input type="text" value="{{ optional($selectedEnquiry)->id }}" readonly>
+                    <tr>
+                        <td class="title">Mobile Number</td>
+                        <td>
+                            <input type="text"
+                                value="{{ $quotationData['customer_mobile'] ?? optional($selectedEnquiry)->mobile }}"
+                                readonly>
+                        </td>
+                        <td class="title">Care Of Name</td>
+                        <td>
+                            <div class="input-group">
+                                <select name="careof" id="careof" class="form-select2" style="max-width: 80px;"
+                                    disabled>
+                                    <option value="">Select</option>
+                                    <option value="1" {{ ($quotationData['careof'] ?? '' )=='1' ? 'selected' : '' }}>Son
+                                        of</option>
+                                    <option value="2" {{ ($quotationData['careof'] ?? '' )=='2' ? 'selected' : '' }}>
+                                        Daughter of</option>
+                                    <option value="3" {{ ($quotationData['careof'] ?? '' )=='3' ? 'selected' : '' }}>
+                                        Married to</option>
+                                    <option value="4" {{ ($quotationData['careof'] ?? '' )=='4' ? 'selected' : '' }}>
+                                        Guardian Name</option>
+                                </select>
+                                <input type="text" name="careofname" id="careofname" placeholder="Enter Name"
+                                    value="{{ $quotationData['careofname'] ?? '' }}" readonly>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
 
-                                <input type="hidden" name="enquiry_no" value="{{ optional($selectedEnquiry)->id }}">
-                            </td>
+                {{-- ================= Vehicle Details ================= --}}
+                <table class="bill-table mb-3">
+                    <tr>
+                        <td class="title" width="18%">Segment</td>
+                        <td width="32%">
+                            <input type="text" id="segment_display"
+                                value="{{ optional($selectedEnquiry->segment)->name ?? $selectedEnquiry->segment_code ?? $quotationData['segment_code'] ?? '' }}"
+                                readonly>
+                            <input type="hidden" name="segment_code" id="segment_code"
+                                value="{{ $quotationData['segment_code'] ?? optional($selectedEnquiry)->segment_code }}">
+                        </td>
+                        <td class="title" width="18%">Model</td>
+                        <td width="32%">
+                            <input type="text" id="model_display"
+                                value="{{ optional($selectedEnquiry->model)->name ?? $selectedEnquiry->model_code ?? $quotationData['model_code'] ?? '' }}"
+                                readonly>
+                            <input type="hidden" name="model_code" id="model_code"
+                                value="{{ $quotationData['model_code'] ?? optional($selectedEnquiry)->model_code }}">
+                        </td>
+                    </tr>
 
-                            <td class="title" width="18%">Customer Name</td>
-                            <td width="32%">
-                                <input type="text" id="customer_name"
-                                    value="{{ optional($selectedEnquiry)->full_name }}" readonly>
-                            </td>
-                        </tr>
+                    <tr>
+                        <td class="title">Variant</td>
+                        <td>
+                            <input type="text" id="variant_display"
+                                value="{{ optional($selectedEnquiry->variant)->display_name ?? optional($selectedEnquiry->variant)->custom_name ?? $selectedEnquiry->variant_code ?? $quotationData['variant_code'] ?? '' }}"
+                                readonly>
+                            <input type="hidden" name="variant_code" id="variant_code"
+                                value="{{ $quotationData['variant_code'] ?? optional($selectedEnquiry)->variant_code }}">
+                        </td>
+                        <td class="title">Color</td>
+                        <td>
+                            <input type="text" id="color_display"
+                                value="{{ optional($selectedEnquiry->color)->name ?? $selectedEnquiry->color_code ?? $quotationData['color_code'] ?? '' }}"
+                                readonly>
+                            <input type="hidden" name="color_code" id="color_code"
+                                value="{{ $quotationData['color_code'] ?? optional($selectedEnquiry)->color_code }}">
+                        </td>
+                    </tr>
 
-                        <tr>
-                            <td class="title">Mobile Number</td>
-                            <td>
-                                <input type="text" value="{{ optional($selectedEnquiry)->mobile }}" readonly>
-                            </td>
+                    <tr>
+                        <td class="title">Permit</td>
+                        <td>
+                            <select id="permit" disabled>
+                                <option value="">Select Permit</option>
+                                @foreach($permitOptions ?? [] as $permit)
+                                <option value="{{ $permit }}" {{ ($quotationData['permit'] ?? '' )==$permit ? 'selected'
+                                    : '' }}>
+                                    {{ $permit }}
+                                </option>
+                                @endforeach
+                            </select>
+                        </td>
+                        <td class="title">OEM Code</td>
+                        <td>
+                            <input type="text" id="oem_code"
+                                value="{{ $quotationData['oem_code'] ?? optional($selectedEnquiry)->oem_code }}"
+                                readonly>
+                            <input type="hidden" name="oem_code" id="oem_code_hidden"
+                                value="{{ $quotationData['oem_code'] ?? optional($selectedEnquiry)->oem_code }}">
+                        </td>
+                    </tr>
+                </table>
 
-                            <td class="title">Care Of Name</td>
-                            <td>
+                <div class="quotation-box">
 
-                                @php
-                                $careOfTypes = [
-                                1 => 'Son of',
-                                2 => 'Daughter of',
-                                3 => 'Married to',
-                                4 => 'Guardian Name',
-                                5 => 'Owned By',
-                                ];
-                                @endphp
+                    <div class="quotation-grid-split">
 
-                                <input type="text"
-                                    value="{{ ($careOfTypes[$quotationData['careof'] ?? ''] ?? '') . ' ' . ($quotationData['careofname'] ?? '') }}"
-                                    readonly>
+                        {{-- ================= PRICE DETAILS BOX ================= --}}
+                        <div class="quotation-grid-col">
+                            <table class="quotation-grid price-grid">
+                                <thead>
+                                    <tr>
+                                        <th>PRICE DETAILS</th>
+                                        <th>OPTION</th>
+                                        <th>AMOUNT</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
 
-                            </td>
-                        </tr>
+                                    <tr class="grid-row">
+                                        <td class="cell-label">Ex-Showroom Price</td>
+                                        <td class="cell-option"></td>
+                                        <td class="cell-amount">
+                                            <input name="ex_showroom_price" id="ex_showroom_price" class="numeric-only"
+                                                value="{{ $quotationData['ex_showroom_price'] ?? '' }}" readonly>
+                                        </td>
+                                    </tr>
 
-                    </table>
+                                    <tr class="grid-row">
+                                        <td class="cell-label">Insurance</td>
+                                        <td class="cell-option">
+                                            <select id="insurance_company" class="form-control mb-1" disabled>
+                                                <option value="">Select Company</option>
+                                                @foreach($quotationData['insurance_companies'] ?? [] as $company)
+                                                <option value="{{ $company }}" {{ ($quotationData['insurance_company']
+                                                    ?? '' )==$company ? 'selected' : '' }}>
+                                                    {{ $company }}
+                                                </option>
+                                                @endforeach
+                                            </select>
+                                            <select id="insurance_covers" name="insurance_covers[]" class="form-control"
+                                                multiple disabled>
+                                                @foreach($quotationData['insurance_covers'] ?? [] as $cover)
+                                                @php
+                                                $coverName = is_array($cover) ? ($cover['name'] ?? $cover) : $cover;
+                                                $coverPrice = is_array($cover) ? ($cover['price'] ?? 0) : 0;
 
-                    {{-- ================= Vehicle Details ================= --}}
+                                                // If it's a string, try to extract price
+                                                if (is_string($cover) && preg_match('/\(₹([\d,]+\.?\d*)\)/', $cover,
+                                                $matches)) {
+                                                $coverPrice = floatval(str_replace(',', '', $matches[1]));
+                                                $coverName = trim(preg_replace('/\(₹[\d,]+\.?\d*\)/', '', $cover));
+                                                }
+                                                @endphp
+                                                <option value="{{ $coverName }}" data-price="{{ $coverPrice }}" {{
+                                                    isset($cover['selected']) && $cover['selected'] ? 'selected' : ''
+                                                    }}>
+                                                    {{ $coverName }} (₹{{ number_format($coverPrice, 2) }})
+                                                </option>
+                                                @endforeach
+                                            </select>
+                                        </td>
+                                        <td class="cell-amount">
+                                            <input type="text" id="insurance_amount" name="insurance_amount"
+                                                class="numeric-only" placeholder="0.00"
+                                                value="{{ $quotationData['insurance_amount'] ?? '' }}" readonly>
+                                        </td>
+                                    </tr>
 
-                    <table class="bill-table mb-3">
 
-                        <tr>
-                            <td class="title" width="18%">Segment</td>
-                            <td width="32%">
-                                <input type="text"
-                                    value="{{ optional($selectedEnquiry->segment)->name ?? $selectedEnquiry->segment_code }}"
-                                    readonly>
 
-                                <input type="hidden" name="segment_code" value="{{ $selectedEnquiry->segment_code }}">
-                            </td>
+                                    <tr class="grid-row">
+                                        <td class="cell-label">
+                                            Registration
+                                            <span id="registration_details_print"
+                                                class="print-only-inline fw-bold ms-1"></span>
+                                        </td>
+                                        <td class="cell-option" style="padding: 2px 4px !important;">
+                                            <div
+                                                style="display: flex; gap: 4px; align-items: center; justify-content: space-between; width: 100%;">
 
-                            <td class="title" width="18%">Model</td>
-                            <td width="32%">
-                                <input type="text"
-                                    value="{{ optional($selectedEnquiry->model)->name ?? $selectedEnquiry->model_code }}"
-                                    readonly>
+                                                <div style="flex: 1 1 38%;">
+                                                    <select name="registration_no_type" id="registration_no_type"
+                                                        class="form-select form-select-sm"
+                                                        style="font-size: 9px; padding: 1px 3px; height: 22px; border: 1px solid #ccc; border-radius: 3px; width: 100%; background: #fff;"
+                                                        disabled>
+                                                        <option value="">Select Type</option>
+                                                        @foreach($reg_no_type_map ?? ['1'=>'Regular', '2'=>'BH Series',
+                                                        '3'=>'Special Number'] as $key => $value)
+                                                        <option value="{{ $key }}" {{
+                                                            ($quotationData['registration_no_type'] ?? '' )==$key
+                                                            ? 'selected' : '' }}>
+                                                            {{ $value }}
+                                                        </option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
 
-                                <input type="hidden" name="model_code" value="{{ $selectedEnquiry->model_code }}">
-                            </td>
-                        </tr>
+                                                <div style="flex: 1 1 38%;">
+                                                    <select name="registration_category" id="registration_category"
+                                                        class="form-select form-select-sm"
+                                                        style="font-size: 9px; padding: 1px 3px; height: 22px; border: 1px solid #ccc; border-radius: 3px; width: 100%; background: #fff;"
+                                                        disabled>
+                                                        <option value="">Select Category</option>
+                                                        @foreach($registration_type_map as $key => $value)
+                                                        <option value="{{ $key }}" {{
+                                                            ($quotationData['registration_category'] ?? '' )==$key
+                                                            ? 'selected' : '' }}>
+                                                            {{ $value }}
+                                                        </option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
 
-                        <tr>
-                            <td class="title">Variant</td>
-                            <td>
-                                <input type="text" value="{{ optional($selectedEnquiry->variant)->display_name
-            ?? optional($selectedEnquiry->variant)->custom_name
-            ?? $selectedEnquiry->variant_code }}" readonly>
+                                                <div class="no-print"
+                                                    style="flex: 0 0 auto; display: flex; align-items: center; border: 1px solid #ccc; border-radius: 3px; padding: 1px; background: #fff; height: 22px;">
+                                                    <span
+                                                        style="font-size: 8px; font-weight: bold; margin-right: 3px; margin-left: 2px; color: #555; white-space: nowrap;">In-House:</span>
+                                                    <label
+                                                        style="font-size: 8px; font-weight: bold; margin: 0 2px; cursor: pointer; display: flex; align-items: center; gap: 1px;">
+                                                        <input type="radio" name="in_house_rto" value="1" {{
+                                                            ($quotationData['in_house_rto'] ?? '0' )=='1' ? 'checked'
+                                                            : '' }} style="width: auto !important; margin: 0;" disabled>
+                                                        Yes
+                                                    </label>
+                                                    <label
+                                                        style="font-size: 8px; font-weight: bold; margin: 0 2px; cursor: pointer; display: flex; align-items: center; gap: 1px;">
+                                                        <input type="radio" name="in_house_rto" value="0" {{
+                                                            ($quotationData['in_house_rto'] ?? '0' )=='0' ? 'checked'
+                                                            : '' }} style="width: auto !important; margin: 0;" disabled>
+                                                        No
+                                                    </label>
+                                                </div>
 
-                                <input type="hidden" name="variant_code" value="{{ $selectedEnquiry->variant_code }}">
-                            </td>
+                                            </div>
+                                        </td>
+                                        <td class="cell-amount">
+                                            <input type="text" id="registration_amount" name="registration_amount"
+                                                class="numeric-only" placeholder="0.00"
+                                                value="{{ $quotationData['registration_amount'] ?? '' }}" readonly>
+                                        </td>
+                                    </tr>
 
-                            <td class="title">Color</td>
-                            <td>
-                                <input type="text"
-                                    value="{{ optional($selectedEnquiry->color)->name ?? $selectedEnquiry->color_code }}"
-                                    readonly>
+                                    <tr class="grid-row">
+                                        <td class="cell-label">Accessories</td>
+                                        <td class="cell-option">
+                                            <select name="accessories[]" id="accessories" multiple disabled>
+                                                @foreach($accessoryList as $accessory)
+                                                <option value="{{ $accessory->part_no }}"
+                                                    data-price="{{ $accessory->ndp }}" {{ in_array($accessory->part_no,
+                                                    (array)($quotationData['accessories'] ?? [])) ? 'selected' : '' }}>
+                                                    {{ $accessory->item }} (₹{{ number_format($accessory->ndp,2) }})
+                                                </option>
+                                                @endforeach
+                                            </select>
+                                        </td>
+                                        <td class="cell-amount">
+                                            <input id="accessories_amount" name="accessories_amount"
+                                                class="numeric-only"
+                                                value="{{ $quotationData['accessories_amount'] ?? '0.00' }}" readonly>
+                                        </td>
+                                    </tr>
 
-                                <input type="hidden" name="color_code" value="{{ $selectedEnquiry->color_code }}">
-                            </td>
-                        </tr>
+                                    <tr class="grid-row">
+                                        <td class="cell-label">Maxicare</td>
+                                        <td class="cell-option"></td>
+                                        <td class="cell-amount">
+                                            <input id="maxicare" name="maxicare" class="numeric-only"
+                                                value="{{ $quotationData['maxicare'] ?? '' }}" readonly>
+                                        </td>
+                                    </tr>
 
-                    </table>
+                                    <tr class="grid-row">
+                                        <td class="cell-label">VLTD Device (GPS)</td>
+                                        <td class="cell-option"></td>
+                                        <td class="cell-amount">
+                                            <input id="vltd_device" name="vltd_device" class="numeric-only"
+                                                value="{{ $quotationData['vltd_device'] ?? '' }}" readonly>
+                                        </td>
+                                    </tr>
 
-                    <div class="quotation-box">
+                                    <tr class="grid-row">
+                                        <td class="cell-label">Coating</td>
+                                        <td class="cell-option">
+                                            <select id="coating" name="coating" disabled>
+                                                <option value="No Coating" {{ ($quotationData['coating'] ?? ''
+                                                    )=='No Coating' ? 'selected' : '' }}>No Coating</option>
+                                                <option value="Ceramic" {{ ($quotationData['coating'] ?? '' )=='Ceramic'
+                                                    ? 'selected' : '' }}>Ceramic</option>
+                                                <option value="Graphene" {{ ($quotationData['coating'] ?? ''
+                                                    )=='Graphene' ? 'selected' : '' }}>Graphene</option>
+                                            </select>
+                                        </td>
+                                        <td class="cell-amount">
+                                            <input id="coating_price" name="coating_price" class="numeric-only"
+                                                value="{{ $quotationData['coating_price'] ?? '' }}" readonly>
+                                        </td>
+                                    </tr>
 
-                        <div class="quotation-grid-split">
-                            <div class="quotation-grid-col">
-                                <table class="quotation-grid price-grid">
+                                    <tr class="grid-row">
+                                        <td class="cell-label">PPF</td>
+                                        <td class="cell-option"></td>
+                                        <td class="cell-amount">
+                                            <input id="ppf" name="ppf" class="numeric-only"
+                                                value="{{ $quotationData['ppf'] ?? '' }}" readonly>
+                                        </td>
+                                    </tr>
+
+                                    <tr class="grid-row">
+                                        <td class="cell-label">RTO Yellow Tape</td>
+                                        <td class="cell-option"></td>
+                                        <td class="cell-amount">
+                                            <input id="rto_yellow_tape" name="rto_yellow_tape" class="numeric-only"
+                                                value="{{ $quotationData['rto_yellow_tape'] ?? '' }}" readonly>
+                                        </td>
+                                    </tr>
+
+                                    <tr class="grid-row">
+                                        <td class="cell-label">Kazam Charging Kit</td>
+                                        <td class="cell-option"></td>
+                                        <td class="cell-amount">
+                                            <input id="kazam_charging_kit" name="kazam_charging_kit"
+                                                class="numeric-only"
+                                                value="{{ $quotationData['kazam_charging_kit'] ?? '' }}" readonly>
+                                        </td>
+                                    </tr>
+
+                                    <tr class="grid-row">
+                                        <td class="cell-label">Incidental Charges</td>
+                                        <td class="cell-option"></td>
+                                        <td class="cell-amount">
+                                            <input id="incidental_charges" name="incidental_charges"
+                                                class="numeric-only"
+                                                value="{{ $quotationData['incidental_charges'] ?? '' }}" readonly>
+                                        </td>
+                                    </tr>
+
+                                    <tr class="grid-row">
+                                        <td class="cell-label">Shield</td>
+                                        <td class="cell-option">
+                                            <select id="shield" name="shield" disabled>
+                                                <option value="4th Year" {{ ($quotationData['shield'] ?? ''
+                                                    )=='4th Year' ? 'selected' : '' }}>4th Year</option>
+                                                <option value="4th + 5th Year" {{ ($quotationData['shield'] ?? ''
+                                                    )=='4th + 5th Year' ? 'selected' : '' }}>4th + 5th Year</option>
+                                                <option value="No Shield" {{ ($quotationData['shield'] ?? ''
+                                                    )=='No Shield' ? 'selected' : '' }}>No Shield</option>
+                                            </select>
+                                        </td>
+                                        <td class="cell-amount">
+                                            <input id="shield_price" name="shield_price" class="numeric-only"
+                                                value="{{ $quotationData['shield_price'] ?? '' }}" readonly>
+                                        </td>
+                                    </tr>
+
+                                    <tr class="grid-row">
+                                        <td class="cell-label">RSA</td>
+                                        <td class="cell-option">
+                                            <select id="rsa" name="rsa" disabled>
+                                                <option value="1 Year" {{ ($quotationData['rsa'] ?? '' )=='1 Year'
+                                                    ? 'selected' : '' }}>1 Year</option>
+                                                <option value="2 Year" {{ ($quotationData['rsa'] ?? '' )=='2 Year'
+                                                    ? 'selected' : '' }}>2 Year</option>
+                                                <option value="3 Year" {{ ($quotationData['rsa'] ?? '' )=='3 Year'
+                                                    ? 'selected' : '' }}>3 Year</option>
+                                                <option value="4 Year" {{ ($quotationData['rsa'] ?? '' )=='4 Year'
+                                                    ? 'selected' : '' }}>4 Year</option>
+                                                <option value="5 Year" {{ ($quotationData['rsa'] ?? '' )=='5 Year'
+                                                    ? 'selected' : '' }}>5 Year</option>
+                                                <option value="No RSA" {{ ($quotationData['rsa'] ?? '' )=='No RSA'
+                                                    ? 'selected' : '' }}>No RSA</option>
+                                            </select>
+                                        </td>
+                                        <td class="cell-amount">
+                                            <input id="rsa_amount" name="rsa_amount" class="numeric-only"
+                                                value="{{ $quotationData['rsa_amount'] ?? '' }}" readonly>
+                                        </td>
+                                    </tr>
+
+                                    <tr class="grid-row">
+                                        <td class="cell-label">Fastag</td>
+                                        <td class="cell-option"></td>
+                                        <td class="cell-amount">
+                                            <input id="fastag" name="fastag" class="numeric-only"
+                                                value="{{ $quotationData['fastag'] ?? '' }}" readonly>
+                                        </td>
+                                    </tr>
+
+                                    <tr class="grid-row">
+                                        <td class="cell-label">COD Charges</td>
+                                        <td class="cell-option"></td>
+                                        <td class="cell-amount">
+                                            <input id="cod_charges" name="cod_charges" class="numeric-only"
+                                                value="{{ $quotationData['cod_charges'] ?? '' }}" readonly>
+                                        </td>
+                                    </tr>
+
+                                    <tr class="grid-row">
+                                        <td class="cell-label">Charger Swapping</td>
+                                        <td class="cell-option">
+                                            <select id="charger_swapping" name="charger_swapping" disabled>
+                                                <option value="N/A" {{ ($quotationData['charger_swapping'] ?? ''
+                                                    )=='N/A' ? 'selected' : '' }}>N/A</option>
+                                                <option value="NCH to 7.2 kW" {{ ($quotationData['charger_swapping']
+                                                    ?? '' )=='NCH to 7.2 kW' ? 'selected' : '' }}>NCH to 7.2 kW</option>
+                                                <option value="NCH to 11.2 kW" {{ ($quotationData['charger_swapping']
+                                                    ?? '' )=='NCH to 11.2 kW' ? 'selected' : '' }}>NCH to 11.2 kW
+                                                </option>
+                                                <option value="7.2 kW to 11.2 kW" {{ ($quotationData['charger_swapping']
+                                                    ?? '' )=='7.2 kW to 11.2 kW' ? 'selected' : '' }}>7.2 kW to 11.2 kW
+                                                </option>
+                                            </select>
+                                        </td>
+                                        <td class="cell-amount">
+                                            <input id="charger_swapping_amount" name="charger_swapping_amount"
+                                                class="numeric-only"
+                                                value="{{ $quotationData['charger_swapping_amount'] ?? '' }}" readonly>
+                                        </td>
+                                    </tr>
+
+                                    <tr class="grid-row">
+                                        <td class="cell-label">TCS @1%</td>
+                                        <td class="cell-option"></td>
+                                        <td class="cell-amount">
+                                            <input id="tcs" name="tcs" class="numeric-only"
+                                                value="{{ $quotationData['tcs'] ?? '' }}" readonly>
+                                        </td>
+                                    </tr>
+
+                                    <tr class="grid-row total-row" style="background: #f2f2f2; font-weight: bold;">
+                                        <td class="cell-label"
+                                            style="text-align: center; font-weight: bold; font-size: 11px;">TOTAL
+                                            RECEIVABLE</td>
+                                        <td class="cell-option"></td>
+                                        <td class="cell-amount">
+                                            <input id="total_receivable" name="total_receivable" readonly
+                                                style="font-weight: bold; font-size: 11px; text-align: right;"
+                                                value="{{ $quotationData['total_receivable'] ?? '' }}">
+                                        </td>
+                                    </tr>
+
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {{-- ================= DISCOUNT DETAILS BOX ================= --}}
+                        <div class="quotation-grid-col">
+                            <table class="quotation-grid discount-grid">
+                                <thead>
+                                    <tr>
+                                        <th>DISCOUNT DETAILS</th>
+                                        <th>TYPE</th>
+                                        <th>AMOUNT</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+
+                                    <tr class="grid-row">
+                                        <td class="cell-label">
+                                            <select id="group_a_select" class="group-select" disabled>
+                                                <option value="cash_scheme_oem" {{ ($quotationData['group_a_select']
+                                                    ?? '' )=='cash_scheme_oem' ? 'selected' : '' }}>Cash Scheme OEM
+                                                </option>
+                                                <option value="csd_discount" {{ ($quotationData['group_a_select'] ?? ''
+                                                    )=='csd_discount' ? 'selected' : '' }}>CSD Discount</option>
+                                                <option value="fame_subsidy" id="fame_subsidy_option" {{
+                                                    ($quotationData['group_a_select'] ?? '' )=='fame_subsidy'
+                                                    ? 'selected' : '' }}>Fame Subsidy (LMM)</option>
+                                            </select>
+                                        </td>
+                                        <td class="cell-type">
+                                            <select id="group_a_type" disabled>
+                                                <option value="INV" {{ ($quotationData['group_a_type'] ?? '' )=='INV'
+                                                    ? 'selected' : '' }}>INV</option>
+                                                <option value="CN" {{ ($quotationData['group_a_type'] ?? '' )=='CN'
+                                                    ? 'selected' : '' }}>CN</option>
+                                            </select>
+                                        </td>
+                                        <td class="cell-amount">
+                                            <input type="text" id="group_a_amount" class="numeric-only"
+                                                placeholder="0.00" value="{{ $quotationData['group_a_amount'] ?? '' }}"
+                                                readonly>
+                                            <input type="hidden" id="cash_scheme_oem" name="cash_scheme_oem"
+                                                value="{{ $quotationData['cash_scheme_oem'] ?? '' }}">
+                                            <input type="hidden" id="cash_scheme_oem_type" name="cash_scheme_oem_type"
+                                                value="{{ $quotationData['cash_scheme_oem_type'] ?? '' }}">
+                                            <input type="hidden" id="csd_discount" name="csd_discount"
+                                                value="{{ $quotationData['csd_discount'] ?? '' }}">
+                                            <input type="hidden" id="csd_discount_type" name="csd_discount_type"
+                                                value="{{ $quotationData['csd_discount_type'] ?? '' }}">
+                                            <input type="hidden" id="fame_subsidy" name="fame_subsidy"
+                                                value="{{ $quotationData['fame_subsidy'] ?? '' }}">
+                                            <input type="hidden" id="fame_subsidy_type" name="fame_subsidy_type"
+                                                value="{{ $quotationData['fame_subsidy_type'] ?? '' }}">
+                                        </td>
+                                    </tr>
+
+                                    <tr class="grid-row">
+                                        <td class="cell-label">Cash Scheme Dealer</td>
+                                        <td class="cell-type">
+                                            <select id="dealer_discount_type" name="dealer_discount_type" disabled>
+                                                <option value="INV" {{ ($quotationData['dealer_discount_type'] ?? ''
+                                                    )=='INV' ? 'selected' : '' }}>INV</option>
+                                                <option value="CN" {{ ($quotationData['dealer_discount_type'] ?? ''
+                                                    )=='CN' ? 'selected' : '' }}>CN</option>
+                                            </select>
+                                        </td>
+                                        <td class="cell-amount">
+                                            <input type="text" name="dealer_discount" id="dealer_discount"
+                                                class="numeric-only" placeholder="0.00"
+                                                value="{{ $quotationData['dealer_discount'] ?? '' }}" readonly>
+                                        </td>
+                                    </tr>
+
+                                    <tr class="grid-row">
+                                        <td class="cell-label">Accessories Scheme</td>
+                                        <td class="cell-type">
+                                            <select id="accessories_discount_type" name="accessories_discount_type"
+                                                disabled>
+                                                <option value="INV" {{ ($quotationData['accessories_discount_type']
+                                                    ?? '' )=='INV' ? 'selected' : '' }}>INV</option>
+                                                <option value="CN" {{ ($quotationData['accessories_discount_type'] ?? ''
+                                                    )=='CN' ? 'selected' : '' }}>CN</option>
+                                            </select>
+                                        </td>
+                                        <td class="cell-amount">
+                                            <input type="text" name="accessories_discount" id="accessories_discount"
+                                                class="numeric-only" placeholder="0.00"
+                                                value="{{ $quotationData['accessories_discount'] ?? '' }}" readonly>
+                                        </td>
+                                    </tr>
+
+                                    <tr class="grid-row">
+                                        <td class="cell-label">Shield Scheme</td>
+                                        <td class="cell-type">
+                                            <select id="shield_scheme_type" name="shield_scheme_type" disabled>
+                                                <option value="INV" {{ ($quotationData['shield_scheme_type'] ?? ''
+                                                    )=='INV' ? 'selected' : '' }}>INV</option>
+                                                <option value="CN" {{ ($quotationData['shield_scheme_type'] ?? ''
+                                                    )=='CN' ? 'selected' : '' }}>CN</option>
+                                            </select>
+                                        </td>
+                                        <td class="cell-amount">
+                                            <input type="text" name="shield_scheme" id="shield_scheme"
+                                                class="numeric-only" placeholder="0.00"
+                                                value="{{ $quotationData['shield_scheme'] ?? '' }}" readonly>
+                                        </td>
+                                    </tr>
+
+                                    <tr class="grid-row">
+                                        <td class="cell-label">Corporate Discount</td>
+                                        <td class="cell-type">
+                                            <input type="text" id="group_b_type"
+                                                value="{{ $quotationData['group_b_type'] ?? 'INV' }}" readonly>
+                                        </td>
+                                        <td class="cell-amount">
+                                            <input type="text" id="group_b_amount" class="numeric-only"
+                                                placeholder="0.00" value="{{ $quotationData['group_b_amount'] ?? '' }}"
+                                                readonly>
+                                            <input type="hidden" id="corporate_discount" name="corporate_discount"
+                                                value="{{ $quotationData['corporate_discount'] ?? '' }}">
+                                            <input type="hidden" id="corporate_discount_type"
+                                                name="corporate_discount_type"
+                                                value="{{ $quotationData['corporate_discount_type'] ?? '' }}">
+                                        </td>
+                                    </tr>
+
+                                    <tr class="grid-row">
+                                        <td class="cell-label">
+                                            <select id="group_c_select" class="group-select" disabled>
+                                                <option value="exchange_bonus" {{ ($quotationData['group_c_select']
+                                                    ?? '' )=='exchange_bonus' ? 'selected' : '' }}>Exchange Bonus
+                                                </option>
+                                                <option value="green_bonus" {{ ($quotationData['group_c_select'] ?? ''
+                                                    )=='green_bonus' ? 'selected' : '' }}>Green Bonus</option>
+                                                <option value="welcome_bonus" {{ ($quotationData['group_c_select'] ?? ''
+                                                    )=='welcome_bonus' ? 'selected' : '' }}>Welcome Bonus</option>
+                                                <option value="loyalty_bonus" {{ ($quotationData['group_c_select'] ?? ''
+                                                    )=='loyalty_bonus' ? 'selected' : '' }}>Loyalty Bonus</option>
+                                            </select>
+                                        </td>
+                                        <td class="cell-type">
+                                            <input type="text" id="group_c_type"
+                                                value="{{ $quotationData['group_c_type'] ?? 'CN1' }}" readonly>
+                                        </td>
+                                        <td class="cell-amount">
+                                            <input type="text" id="group_c_amount" class="numeric-only"
+                                                placeholder="0.00" value="{{ $quotationData['group_c_amount'] ?? '' }}"
+                                                readonly>
+                                            <input type="hidden" id="exchange_bonus" name="exchange_bonus"
+                                                value="{{ $quotationData['exchange_bonus'] ?? '' }}">
+                                            <input type="hidden" id="exchange_bonus_type" name="exchange_bonus_type"
+                                                value="{{ $quotationData['exchange_bonus_type'] ?? '' }}">
+                                            <input type="hidden" id="green_bonus" name="green_bonus"
+                                                value="{{ $quotationData['green_bonus'] ?? '' }}">
+                                            <input type="hidden" id="green_bonus_type" name="green_bonus_type"
+                                                value="{{ $quotationData['green_bonus_type'] ?? '' }}">
+                                            <input type="hidden" id="welcome_bonus" name="welcome_bonus"
+                                                value="{{ $quotationData['welcome_bonus'] ?? '' }}">
+                                            <input type="hidden" id="welcome_bonus_type" name="welcome_bonus_type"
+                                                value="{{ $quotationData['welcome_bonus_type'] ?? '' }}">
+                                            <input type="hidden" id="loyalty_bonus" name="loyalty_bonus"
+                                                value="{{ $quotationData['loyalty_bonus'] ?? '' }}">
+                                            <input type="hidden" id="loyalty_bonus_type" name="loyalty_bonus_type"
+                                                value="{{ $quotationData['loyalty_bonus_type'] ?? '' }}">
+                                        </td>
+                                    </tr>
+
+                                    <tr class="grid-row">
+                                        <td class="cell-label">Accessories Special Discount</td>
+                                        <td class="cell-type">
+                                            <select id="accessories_spl_disc_type" name="accessories_spl_disc_type"
+                                                disabled>
+                                                <option value="INV" {{ ($quotationData['accessories_spl_disc_type']
+                                                    ?? '' )=='INV' ? 'selected' : '' }}>INV</option>
+                                                <option value="CN" {{ ($quotationData['accessories_spl_disc_type'] ?? ''
+                                                    )=='CN' ? 'selected' : '' }}>CN</option>
+                                            </select>
+                                        </td>
+                                        <td class="cell-amount">
+                                            <input type="text" name="accessories_spl_disc" id="accessories_spl_disc"
+                                                class="numeric-only" placeholder="0.00"
+                                                value="{{ $quotationData['accessories_spl_disc'] ?? '' }}" readonly>
+                                        </td>
+                                    </tr>
+
+                                    <tr class="grid-row">
+                                        <td class="cell-label" id="coating_discount_label">
+                                            {{ $quotationData['coating_discount_label'] ?? 'Coating Special Discount' }}
+                                        </td>
+                                        <td class="cell-type">
+                                            <select id="ceramic_discount_type" name="ceramic_discount_type" disabled>
+                                                <option value="INV" {{ ($quotationData['ceramic_discount_type'] ?? ''
+                                                    )=='INV' ? 'selected' : '' }}>INV</option>
+                                                <option value="CN" {{ ($quotationData['ceramic_discount_type'] ?? ''
+                                                    )=='CN' ? 'selected' : '' }}>CN</option>
+                                            </select>
+                                        </td>
+                                        <td class="cell-amount">
+                                            <input type="text" name="ceramic_discount" id="ceramic_discount"
+                                                class="numeric-only" placeholder="0.00"
+                                                value="{{ $quotationData['ceramic_discount'] ?? '' }}" readonly>
+                                        </td>
+                                    </tr>
+
+                                    <tr class="grid-row">
+                                        <td class="cell-label">PPF Special Discount</td>
+                                        <td class="cell-type">
+                                            <select id="ppf_discount_type" name="ppf_discount_type" disabled>
+                                                <option value="INV" {{ ($quotationData['ppf_discount_type'] ?? ''
+                                                    )=='INV' ? 'selected' : '' }}>INV</option>
+                                                <option value="CN" {{ ($quotationData['ppf_discount_type'] ?? '' )=='CN'
+                                                    ? 'selected' : '' }}>CN</option>
+                                            </select>
+                                        </td>
+                                        <td class="cell-amount">
+                                            <input type="text" name="ppf_discount" id="ppf_discount"
+                                                class="numeric-only" placeholder="0.00"
+                                                value="{{ $quotationData['ppf_discount'] ?? '' }}" readonly>
+                                        </td>
+                                    </tr>
+
+                                    <tr class="grid-row">
+                                        <td class="cell-label" id="charger_discount_title">Charger Swapping Discount
+                                        </td>
+                                        <td class="cell-type">
+                                            <input type="text" id="charger_swapping_discount_type"
+                                                name="charger_swapping_discount_type"
+                                                value="{{ $quotationData['charger_swapping_discount_type'] ?? 'CN2' }}"
+                                                readonly disabled>
+                                        </td>
+                                        <td class="cell-amount" id="charger_discount_cell">
+                                            <input type="text" id="charger_swapping_discount"
+                                                name="charger_swapping_discount" class="numeric-only" placeholder="0.00"
+                                                value="{{ $quotationData['charger_swapping_discount'] ?? '' }}"
+                                                readonly>
+                                        </td>
+                                    </tr>
+
+                                    <tr class="grid-row">
+                                        <td class="cell-label">Other Cash Discount</td>
+                                        <td class="cell-type">
+                                            <select id="other_cash_discount_type" name="other_cash_discount_type"
+                                                disabled>
+                                                <option value="INV" {{ ($quotationData['other_cash_discount_type'] ?? ''
+                                                    )=='INV' ? 'selected' : '' }}>INV</option>
+                                                <option value="CN" {{ ($quotationData['other_cash_discount_type'] ?? ''
+                                                    )=='CN' ? 'selected' : '' }}>CN</option>
+                                            </select>
+                                        </td>
+                                        <td class="cell-amount">
+                                            <input type="text" name="other_cash_discount" id="other_cash_discount"
+                                                class="numeric-only" placeholder="0.00"
+                                                value="{{ $quotationData['other_cash_discount'] ?? '' }}" readonly>
+                                        </td>
+                                    </tr>
+
+                                    <tr class="grid-row">
+                                        <td class="cell-label">Special Cash Discount</td>
+                                        <td class="cell-type">
+                                            <input type="text" id="special_cash_discount_type"
+                                                name="special_cash_discount_type"
+                                                value="{{ $quotationData['special_cash_discount_type'] ?? 'INV' }}"
+                                                readonly>
+                                        </td>
+                                        <td class="cell-amount">
+                                            <input type="text" name="special_cash_discount" id="special_cash_discount"
+                                                class="numeric-only" placeholder="0.00"
+                                                value="{{ $quotationData['special_cash_discount'] ?? '' }}" readonly>
+                                        </td>
+                                    </tr>
+
+                                    <tr class="grid-row total-row" style="background: #f2f2f2; font-weight: bold;">
+                                        <td class="cell-label"
+                                            style="text-align: center; font-weight: bold; font-size: 11px;">TOTAL
+                                            DISCOUNT</td>
+                                        <td class="cell-type"></td>
+                                        <td class="cell-amount">
+                                            <input id="total_discount_amount" readonly
+                                                style="font-weight: bold; font-size: 11px; text-align: right;"
+                                                value="{{ $quotationData['total_discount'] ?? $quotationData['total_discount_amount'] ?? '' }}">
+                                            <input type="hidden" id="total_discount" name="total_discount"
+                                                value="{{ $quotationData['total_discount'] ?? '' }}">
+                                        </td>
+                                    </tr>
+
+                                </tbody>
+                            </table>
+
+                            {{-- ================= DISCOUNT BIFURCATION BOX (Hidden in Preview) ================= --}}
+                            <div class="discount-bifurcation-box"
+                                style="margin-top: 3px; border: 1px solid #000; width: 100%;">
+                                <table class="quotation-grid bifurcation-grid"
+                                    style="width:100%; border-collapse: collapse; table-layout: fixed;">
                                     <thead>
                                         <tr>
-                                            <th>PRICE DETAILS</th>
-                                            <th>OPTION</th>
-                                            <th>AMOUNT</th>
+                                            <th
+                                                style="width:20%; background: #d9d9d9; border:1px solid #000; padding:3px 5px; font-size:10px; font-weight:bold; text-align:center;">
+                                                DISCOUNT BIFURCATION</th>
+                                            <th
+                                                style="width:16%; background: #d9d9d9; border:1px solid #000; padding:3px 5px; font-size:10px; font-weight:bold; text-align:center;">
+                                                INV</th>
+                                            <th
+                                                style="width:16%; background: #d9d9d9; border:1px solid #000; padding:3px 5px; font-size:10px; font-weight:bold; text-align:center;">
+                                                CN</th>
+                                            <th
+                                                style="width:16%; background: #d9d9d9; border:1px solid #000; padding:3px 5px; font-size:10px; font-weight:bold; text-align:center;">
+                                                CN1</th>
+                                            <th
+                                                style="width:16%; background: #d9d9d9; border:1px solid #000; padding:3px 5px; font-size:10px; font-weight:bold; text-align:center;">
+                                                CN2</th>
+                                            <th
+                                                style="width:16%; background: #d9d9d9; border:1px solid #000; padding:3px 5px; font-size:10px; font-weight:bold; text-align:center;">
+                                                TOTAL</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr class="grid-row">
-                                            <td class="cell-label">Ex-Showroom Price</td>
-                                            <td class="cell-option"></td>
-                                            <td class="cell-amount">
-                                                <input name="ex_showroom_price" id="ex_showroom_price"
-                                                    class="numeric-only"
-                                                    value="{{ old('ex_showroom_price', $quotationData['ex_showroom_price'] ?? '') }}">
+                                        <tr>
+                                            <td
+                                                style="background:#f2f2f2; border:1px solid #000; padding:3px 5px; font-size:10px; font-weight:bold; text-align:center;">
+                                                AMOUNT</td>
+                                            <td style="border:1px solid #000; padding:3px 5px; text-align:right;">
+                                                <input id="inv_discount_display" readonly
+                                                    style="font-weight:bold; font-size:11px; text-align:center; width:100%; border:none; background:transparent;"
+                                                    value="{{ $quotationData['inv_discount_display'] ?? '' }}">
                                             </td>
-                                        </tr>
-
-                                        <tr class="grid-row">
-                                            <td class="cell-label">Insurance</td>
-                                            <td class="cell-option">
-
-                                                <select name="policy_type" id="policy_type">
-
-                                                    @foreach($insurance_type_map as $key => $value)
-
-                                                    <option value="{{ $key }}" {{ old('policy_type',
-                                                        $quotationData['policy_type'] ?? '' )==$key ? 'selected' : ''
-                                                        }}>
-                                                        {{ $value }}
-                                                    </option>
-
-                                                    @endforeach
-
-                                                </select>
-
+                                            <td style="border:1px solid #000; padding:3px 5px; text-align:right;">
+                                                <input id="cn_discount_display" readonly
+                                                    style="font-weight:bold; font-size:11px; text-align:center; width:100%; border:none; background:transparent;"
+                                                    value="{{ $quotationData['cn_discount_display'] ?? '' }}">
                                             </td>
-                                            <td class="cell-amount">
-
-                                                <input type="text" id="insurance_amount" name="insurance_amount"
-                                                    class="numeric-only" placeholder="0.00"
-                                                    value="{{ old('insurance_amount', $quotationData['insurance_amount'] ?? '') }}">
-
+                                            <td style="border:1px solid #000; padding:3px 5px; text-align:right;">
+                                                <input id="cn1_discount_display" readonly
+                                                    style="font-weight:bold; font-size:11px; text-align:center; width:100%; border:none; background:transparent;"
+                                                    value="{{ $quotationData['cn1_discount_display'] ?? '' }}">
                                             </td>
-                                        </tr>
-
-                                        <tr class="grid-row">
-                                            <td class="cell-label">Registration</td>
-                                            <td class="cell-option">
-                                                <select name="registration_type" id="registration_type">
-
-                                                    @foreach($registration_type_map as $key => $value)
-
-                                                    <option value="{{ $key }}" {{ old('registration_type',
-                                                        $quotationData['registration_type'] ?? '' )==$key ? 'selected'
-                                                        : '' }}>
-                                                        {{ $value }}
-                                                    </option>
-
-                                                    @endforeach
-
-                                                </select>
+                                            <td style="border:1px solid #000; padding:3px 5px; text-align:right;">
+                                                <input id="cn2_discount_display" readonly
+                                                    style="font-weight:bold; font-size:11px; text-align:center; width:100%; border:none; background:transparent;"
+                                                    value="{{ $quotationData['cn2_discount_display'] ?? '' }}">
                                             </td>
-                                            <td class="cell-amount">
-                                                <input type="text" id="registration_amount" name="registration_amount"
-                                                    class="numeric-only" placeholder="0.00"
-                                                    value="{{ old('registration_amount', $quotationData['registration_amount'] ?? '') }}">
-                                            </td>
-                                        </tr>
-
-                                        <tr class="grid-row">
-                                            <td class="cell-label">Accessories</td>
-                                            <td class="cell-option">
-
-                                                <select name="accessories[]" id="accessories" multiple>
-
-                                                    @php
-                                                    $selectedAccessories = old(
-                                                    'accessories',
-                                                    $quotationData['accessories'] ?? []
-                                                    );
-                                                    @endphp
-
-                                                    @foreach($accessoryList as $accessory)
-
-                                                    <option value="{{ $accessory->part_no }}"
-                                                        data-price="{{ $accessory->ndp }}" {{ in_array($accessory->
-                                                        part_no, (array)$selectedAccessories) ?
-                                                        'selected' : '' }}>
-
-                                                        {{ $accessory->item }}
-                                                        (₹{{ number_format($accessory->ndp,2) }})
-
-                                                    </option>
-
-                                                    @endforeach
-
-                                                </select>
-
-                                            </td>
-                                            <td class="cell-amount">
-
-                                                <input id="accessories_amount" name="accessories_amount" readonly
-                                                    value="{{ old('accessories_amount', $quotationData['accessories_amount'] ?? '0.00') }}">
-
-                                            </td>
-                                        </tr>
-
-                                        <tr class="grid-row">
-                                            <td class="cell-label">Maxicare</td>
-                                            <td class="cell-option"></td>
-                                            <td class="cell-amount">
-                                                <input id="maxicare" name="maxicare" class="numeric-only"
-                                                    value="{{ old('maxicare', $quotationData['maxicare'] ?? '') }}">
-                                            </td>
-                                        </tr>
-
-                                        <tr class="grid-row">
-                                            <td class="cell-label">VLTD Device (GPS)</td>
-                                            <td class="cell-option"></td>
-                                            <td class="cell-amount">
-
-                                                <input id="vltd_device" name="vltd_device" class="numeric-only"
-                                                    value="{{ old('vltd_device', $quotationData['vltd_device'] ?? '') }}">
-
-                                            </td>
-                                        </tr>
-
-                                        <tr class="grid-row">
-                                            <td class="cell-label">Coating</td>
-                                            <td class="cell-option">
-
-                                                <select id="coating" name="coating">
-
-                                                    <option value="Ceramic" {{ old('coating', $quotationData['coating']
-                                                        ?? '' )=='Ceramic' ? 'selected' : '' }}>
-                                                        Ceramic
-                                                    </option>
-
-                                                    <option value="Graphene" {{ old('coating', $quotationData['coating']
-                                                        ?? '' )=='Graphene' ? 'selected' : '' }}>
-                                                        Graphene
-                                                    </option>
-
-                                                    <option value="No Coating" {{ old('coating',
-                                                        $quotationData['coating'] ?? '' )=='No Coating' ? 'selected'
-                                                        : '' }}>
-                                                        No Coating
-                                                    </option>
-
-                                                </select>
-
-                                            </td>
-                                            <td class="cell-amount">
-
-                                                <input id="coating_price" name="coating_price" class="numeric-only"
-                                                    value="{{ old('coating_price', $quotationData['coating_price'] ?? '') }}">
-
-                                            </td>
-                                        </tr>
-
-                                        <tr class="grid-row">
-                                            <td class="cell-label">PPF</td>
-                                            <td class="cell-option"></td>
-                                            <td class="cell-amount">
-
-                                                <input id="ppf" name="ppf" class="numeric-only"
-                                                    value="{{ old('ppf', $quotationData['ppf'] ?? '') }}">
-
-                                            </td>
-                                        </tr>
-
-                                        <tr class="grid-row">
-                                            <td class="cell-label">RTO Yellow Tape</td>
-                                            <td class="cell-option"></td>
-                                            <td class="cell-amount">
-
-                                                <input id="rto_yellow_tape" name="rto_yellow_tape" class="numeric-only"
-                                                    value="{{ old('rto_yellow_tape', $quotationData['rto_yellow_tape'] ?? '') }}">
-
-                                            </td>
-                                        </tr>
-
-                                        <tr class="grid-row">
-                                            <td class="cell-label">Kazam Charging Kit</td>
-                                            <td class="cell-option"></td>
-                                            <td class="cell-amount">
-
-                                                <input id="kazam_charging_kit" name="kazam_charging_kit"
-                                                    class="numeric-only"
-                                                    value="{{ old('kazam_charging_kit', $quotationData['kazam_charging_kit'] ?? '') }}">
-
-                                            </td>
-                                        </tr>
-
-                                        <tr class="grid-row">
-                                            <td class="cell-label">Incidental Charges</td>
-                                            <td class="cell-option"></td>
-                                            <td class="cell-amount">
-
-                                                <input id="incidental_charges" name="incidental_charges"
-                                                    class="numeric-only"
-                                                    value="{{ old('incidental_charges', $quotationData['incidental_charges'] ?? '') }}">
-
-                                            </td>
-                                        </tr>
-
-                                        <tr class="grid-row">
-                                            <td class="cell-label">Shield</td>
-                                            <td class="cell-option">
-
-                                                <select id="shield" name="shield">
-
-                                                    <option value="4th Year" {{ old('shield', $quotationData['shield']
-                                                        ?? '' )=='4th Year' ? 'selected' : '' }}>
-                                                        4th Year
-                                                    </option>
-
-                                                    <option value="4th + 5th Year" {{ old('shield',
-                                                        $quotationData['shield'] ?? '' )=='4th + 5th Year' ? 'selected'
-                                                        : '' }}>
-                                                        4th + 5th Year
-                                                    </option>
-
-                                                    <option value="No Shield" {{ old('shield', $quotationData['shield']
-                                                        ?? '' )=='No Shield' ? 'selected' : '' }}>
-                                                        No Shield
-                                                    </option>
-
-                                                </select>
-
-                                            </td>
-                                            <td class="cell-amount">
-
-                                                <input id="shield_price" name="shield_price" class="numeric-only"
-                                                    value="{{ old('shield_price', $quotationData['shield_price'] ?? '') }}">
-
-                                            </td>
-                                        </tr>
-
-                                        <tr class="grid-row">
-                                            <td class="cell-label">RSA</td>
-                                            <td class="cell-option">
-
-                                                <select id="rsa" name="rsa">
-
-                                                    <option value="1 Year" {{ old('rsa', $quotationData['rsa'] ?? ''
-                                                        )=='1 Year' ? 'selected' : '' }}>
-                                                        1 Year
-                                                    </option>
-
-                                                    <option value="2 Year" {{ old('rsa', $quotationData['rsa'] ?? ''
-                                                        )=='2 Year' ? 'selected' : '' }}>
-                                                        2 Year
-                                                    </option>
-
-                                                    <option value="3 Year" {{ old('rsa', $quotationData['rsa'] ?? ''
-                                                        )=='3 Year' ? 'selected' : '' }}>
-                                                        3 Year
-                                                    </option>
-
-                                                    <option value="4 Year" {{ old('rsa', $quotationData['rsa'] ?? ''
-                                                        )=='4 Year' ? 'selected' : '' }}>
-                                                        4 Year
-                                                    </option>
-
-                                                    <option value="5 Year" {{ old('rsa', $quotationData['rsa'] ?? ''
-                                                        )=='5 Year' ? 'selected' : '' }}>
-                                                        5 Year
-                                                    </option>
-
-                                                    <option value="No RSA" {{ old('rsa', $quotationData['rsa'] ?? ''
-                                                        )=='No RSA' ? 'selected' : '' }}>
-                                                        No RSA
-                                                    </option>
-
-                                                </select>
-
-                                            </td>
-                                            <td class="cell-amount">
-
-                                                <input id="rsa_amount" name="rsa_amount" class="numeric-only"
-                                                    value="{{ old('rsa_amount', $quotationData['rsa_amount'] ?? '') }}">
-
-                                            </td>
-                                        </tr>
-
-                                        <tr class="grid-row">
-                                            <td class="cell-label">Fastag</td>
-                                            <td class="cell-option"></td>
-                                            <td class="cell-amount">
-
-                                                <input id="fastag" name="fastag" class="numeric-only"
-                                                    value="{{ old('fastag', $quotationData['fastag'] ?? '') }}">
-
-                                            </td>
-                                        </tr>
-
-                                        <tr class="grid-row">
-                                            <td class="cell-label">COD Charges</td>
-                                            <td class="cell-option"></td>
-                                            <td class="cell-amount">
-                                                <input id="cod_charges" name="cod_charges" class="numeric-only"
-                                                    value="{{ old('cod_charges', $quotationData['cod_charges'] ?? '') }}">
-                                            </td>
-                                        </tr>
-
-                                        <tr class="grid-row">
-                                            <td class="cell-label">Charger Swapping</td>
-                                            <td class="cell-option">
-
-                                                <select id="charger_swapping" name="charger_swapping">
-
-                                                    <option value="N/A" {{ old('charger_swapping',
-                                                        $quotationData['charger_swapping'] ?? '' )=='N/A' ? 'selected'
-                                                        : '' }}>
-                                                        N/A
-                                                    </option>
-
-                                                    <option value="NCH to 7.2 kW" {{ old('charger_swapping',
-                                                        $quotationData['charger_swapping'] ?? '' )=='NCH to 7.2 kW'
-                                                        ? 'selected' : '' }}>
-                                                        NCH to 7.2 kW
-                                                    </option>
-
-                                                    <option value="NCH to 11.2 kW" {{ old('charger_swapping',
-                                                        $quotationData['charger_swapping'] ?? '' )=='NCH to 11.2 kW'
-                                                        ? 'selected' : '' }}>
-                                                        NCH to 11.2 kW
-                                                    </option>
-
-                                                    <option value="7.2 kW to 11.2 kW" {{ old('charger_swapping',
-                                                        $quotationData['charger_swapping'] ?? '' )=='7.2 kW to 11.2 kW'
-                                                        ? 'selected' : '' }}>
-                                                        7.2 kW to 11.2 kW
-                                                    </option>
-
-                                                    <option value="7.2 kW to NCH" {{ old('charger_swapping',
-                                                        $quotationData['charger_swapping'] ?? '' )=='7.2 kW to NCH'
-                                                        ? 'selected' : '' }}>
-                                                        7.2 kW to NCH
-                                                    </option>
-
-                                                    <option value="11.2 kW to NCH" {{ old('charger_swapping',
-                                                        $quotationData['charger_swapping'] ?? '' )=='11.2 kW to NCH'
-                                                        ? 'selected' : '' }}>
-                                                        11.2 kW to NCH
-                                                    </option>
-
-                                                    <option value="11.2 kW to 7.2 kW" {{ old('charger_swapping',
-                                                        $quotationData['charger_swapping'] ?? '' )=='11.2 kW to 7.2 kW'
-                                                        ? 'selected' : '' }}>
-                                                        11.2 kW to 7.2 kW
-                                                    </option>
-
-                                                </select>
-
-                                            </td>
-                                            <td class="cell-amount">
-
-                                                <input id="charger_swapping_amount" name="charger_swapping_amount"
-                                                    class="numeric-only"
-                                                    value="{{ old('charger_swapping_amount', $quotationData['charger_swapping_amount'] ?? '') }}">
-
-                                            </td>
-                                        </tr>
-
-                                        <tr class="grid-row">
-                                            <td class="cell-label">TCS @1%</td>
-                                            <td class="cell-option"></td>
-                                            <td class="cell-amount">
-
-                                                <input id="tcs" name="tcs" class="numeric-only" readonly
-                                                    value="{{ old('tcs', $quotationData['tcs'] ?? '') }}">
-
+                                            <td
+                                                style="background:#abb8ca; border:1px solid #000; padding:3px 5px; text-align:right;">
+                                                <input id="total_discount_bifurcation_display" readonly
+                                                    style="font-weight:bold; font-size:11px; text-align:center; width:100%; border:none; background:transparent;"
+                                                    value="{{ $quotationData['total_discount_bifurcation_display'] ?? '' }}">
                                             </td>
                                         </tr>
                                     </tbody>
                                 </table>
                             </div>
 
-                            <div class="quotation-grid-col">
-                                <table class="quotation-grid discount-grid">
-                                    <thead>
-                                        <tr>
-                                            <th>DISCOUNT DETAILS</th>
-                                            <th>TYPE</th>
-                                            <th>AMOUNT</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr class="grid-row">
-                                            <td class="cell-label">
-                                                <select id="group_a_select" class="group-select">
-                                                    <option value="cash_scheme_oem" {{ old('group_a_select',
-                                                        $groupASelected ?? '' )=='cash_scheme_oem' ? 'selected' : '' }}>
-                                                        Cash Scheme OEM
-                                                    </option>
-
-                                                    <option value="csd_discount" {{ old('group_a_select',
-                                                        $groupASelected ?? '' )=='csd_discount' ? 'selected' : '' }}>
-                                                        CSD Discount
-                                                    </option>
-
-                                                    <option value="fame_subsidy" id="fame_subsidy_option" {{
-                                                        old('group_a_select', $groupASelected ?? '' )=='fame_subsidy'
-                                                        ? 'selected' : '' }}>
-                                                        Fame Subsidy (LMM)
-                                                    </option>
-                                                </select>
-                                            </td>
-                                            <td class="cell-type">
-                                                <select id="group_a_type">
-                                                    <option value="INV">INV</option>
-                                                    <option value="CN">CN</option>
-                                                </select>
-                                            </td>
-                                            <td class="cell-amount">
-
-                                                <input type="text" id="group_a_amount" class="numeric-only"
-                                                    placeholder="0.00">
-
-                                                <input type="hidden" id="cash_scheme_oem" name="cash_scheme_oem"
-                                                    value="{{ old('cash_scheme_oem', $quotationData['cash_scheme_oem'] ?? '') }}">
-
-                                                <input type="hidden" id="cash_scheme_oem_type"
-                                                    name="cash_scheme_oem_type"
-                                                    value="{{ old('cash_scheme_oem_type', $quotationData['cash_scheme_oem_type'] ?? '') }}">
-
-                                                <input type="hidden" id="csd_discount" name="csd_discount"
-                                                    value="{{ old('csd_discount', $quotationData['csd_discount'] ?? '') }}">
-
-                                                <input type="hidden" id="csd_discount_type" name="csd_discount_type"
-                                                    value="{{ old('csd_discount_type', $quotationData['csd_discount_type'] ?? '') }}">
-
-                                                <input type="hidden" id="fame_subsidy" name="fame_subsidy"
-                                                    value="{{ old('fame_subsidy', $quotationData['fame_subsidy'] ?? '') }}">
-
-                                                <input type="hidden" id="fame_subsidy_type" name="fame_subsidy_type"
-                                                    value="{{ old('fame_subsidy_type', $quotationData['fame_subsidy_type'] ?? '') }}">
-                                            </td>
-                                        </tr>
-
-                                        <tr class="grid-row">
-                                            <td class="cell-label">Cash Scheme Dealer</td>
-                                            <td class="cell-type">
-
-                                                <select id="dealer_discount_type" name="dealer_discount_type">
-
-                                                    <option value="INV" {{ old('dealer_discount_type',
-                                                        $quotationData['dealer_discount_type'] ?? '' )=='INV'
-                                                        ? 'selected' : '' }}>
-                                                        INV
-                                                    </option>
-
-                                                    <option value="CN" {{ old('dealer_discount_type',
-                                                        $quotationData['dealer_discount_type'] ?? '' )=='CN'
-                                                        ? 'selected' : '' }}>
-                                                        CN
-                                                    </option>
-
-                                                </select>
-
-                                            </td>
-                                            <td class="cell-amount">
-
-                                                <input type="text" name="dealer_discount" id="dealer_discount"
-                                                    class="numeric-only" placeholder="0.00"
-                                                    value="{{ old('dealer_discount', $quotationData['dealer_discount'] ?? '') }}">
-
-                                            </td>
-                                        </tr>
-
-                                        <tr class="grid-row">
-                                            <td class="cell-label">Accessories Scheme</td>
-                                            <td class="cell-type">
-
-                                                <select id="accessories_discount_type" name="accessories_discount_type">
-
-                                                    <option value="INV" {{ old('accessories_discount_type',
-                                                        $quotationData['accessories_discount_type'] ?? '' )=='INV'
-                                                        ? 'selected' : '' }}>
-                                                        INV
-                                                    </option>
-
-                                                    <option value="CN" {{ old('accessories_discount_type',
-                                                        $quotationData['accessories_discount_type'] ?? '' )=='CN'
-                                                        ? 'selected' : '' }}>
-                                                        CN
-                                                    </option>
-
-                                                </select>
-
-                                            </td>
-                                            <td class="cell-amount">
-
-                                                <input type="text" name="accessories_discount" id="accessories_discount"
-                                                    class="numeric-only" placeholder="0.00"
-                                                    value="{{ old('accessories_discount', $quotationData['accessories_discount'] ?? '') }}">
-
-                                            </td>
-                                        </tr>
-
-                                        <tr class="grid-row">
-                                            <td class="cell-label">Shield Scheme</td>
-                                            <td class="cell-type">
-
-                                                <select id="shield_scheme_type" name="shield_scheme_type">
-
-                                                    <option value="INV" {{ old('shield_scheme_type',
-                                                        $quotationData['shield_scheme_type'] ?? '' )=='INV' ? 'selected'
-                                                        : '' }}>
-                                                        INV
-                                                    </option>
-
-                                                    <option value="CN" {{ old('shield_scheme_type',
-                                                        $quotationData['shield_scheme_type'] ?? '' )=='CN' ? 'selected'
-                                                        : '' }}>
-                                                        CN
-                                                    </option>
-
-                                                </select>
-
-                                            </td>
-                                            <td class="cell-amount">
-
-                                                <input type="text" name="shield_scheme" id="shield_scheme"
-                                                    class="numeric-only" placeholder="0.00"
-                                                    value="{{ old('shield_scheme', $quotationData['shield_scheme'] ?? '') }}">
-
-                                            </td>
-                                        </tr>
-
-                                        <tr class="grid-row">
-                                            <td class="cell-label">
-
-                                                <select id="group_b_select" class="group-select">
-
-                                                    <option value="corporate_discount" {{ old('group_b_select',
-                                                        $groupBSelected ?? '' )=='corporate_discount' ? 'selected' : ''
-                                                        }}>
-                                                        Corporate Discount
-                                                    </option>
-
-                                                    <option value="loyalty_bonus" {{ old('group_b_select',
-                                                        $groupBSelected ?? '' )=='loyalty_bonus' ? 'selected' : '' }}>
-                                                        Loyalty Bonus
-                                                    </option>
-
-                                                </select>
-
-                                            </td>
-                                            <td class="cell-type">
-
-                                                <select id="group_b_type">
-                                                    <option value="INV">INV</option>
-                                                </select>
-
-                                            </td>
-                                            <td class="cell-amount">
-
-                                                <input type="text" id="group_b_amount" class="numeric-only"
-                                                    placeholder="0.00">
-
-                                                <input type="hidden" id="corporate_discount" name="corporate_discount"
-                                                    value="{{ old('corporate_discount', $quotationData['corporate_discount'] ?? '') }}">
-
-                                                <input type="hidden" id="corporate_discount_type"
-                                                    name="corporate_discount_type"
-                                                    value="{{ old('corporate_discount_type', $quotationData['corporate_discount_type'] ?? '') }}">
-
-                                                <input type="hidden" id="loyalty_bonus" name="loyalty_bonus"
-                                                    value="{{ old('loyalty_bonus', $quotationData['loyalty_bonus'] ?? '') }}">
-
-                                                <input type="hidden" id="loyalty_bonus_type" name="loyalty_bonus_type"
-                                                    value="{{ old('loyalty_bonus_type', $quotationData['loyalty_bonus_type'] ?? '') }}">
-
-                                            </td>
-                                        </tr>
-
-                                        <tr class="grid-row">
-                                            <td class="cell-label">
-
-                                                <select id="group_c_select" class="group-select">
-
-                                                    <option value="exchange_bonus" {{ old('group_c_select',
-                                                        $groupCSelected ?? '' )=='exchange_bonus' ? 'selected' : '' }}>
-                                                        Exchange Bonus
-                                                    </option>
-
-                                                    <option value="green_bonus" {{ old('group_c_select', $groupCSelected
-                                                        ?? '' )=='green_bonus' ? 'selected' : '' }}>
-                                                        Green Bonus
-                                                    </option>
-
-                                                    <option value="welcome_bonus" {{ old('group_c_select',
-                                                        $groupCSelected ?? '' )=='welcome_bonus' ? 'selected' : '' }}>
-                                                        Welcome Bonus
-                                                    </option>
-
-                                                </select>
-
-                                            </td>
-                                            <td class="cell-type">
-
-                                                <select id="group_c_type">
-                                                    <option value="CN1">CN1</option>
-                                                </select>
-
-                                            </td>
-                                            <td class="cell-amount">
-
-                                                <input type="text" id="group_c_amount" class="numeric-only"
-                                                    placeholder="0.00">
-
-                                                <input type="hidden" id="exchange_bonus" name="exchange_bonus"
-                                                    value="{{ old('exchange_bonus', $quotationData['exchange_bonus'] ?? '') }}">
-
-                                                <input type="hidden" id="exchange_bonus_type" name="exchange_bonus_type"
-                                                    value="{{ old('exchange_bonus_type', $quotationData['exchange_bonus_type'] ?? '') }}">
-
-                                                <input type="hidden" id="green_bonus" name="green_bonus"
-                                                    value="{{ old('green_bonus', $quotationData['green_bonus'] ?? '') }}">
-
-                                                <input type="hidden" id="green_bonus_type" name="green_bonus_type"
-                                                    value="{{ old('green_bonus_type', $quotationData['green_bonus_type'] ?? '') }}">
-
-                                                <input type="hidden" id="welcome_bonus" name="welcome_bonus"
-                                                    value="{{ old('welcome_bonus', $quotationData['welcome_bonus'] ?? '') }}">
-
-                                                <input type="hidden" id="welcome_bonus_type" name="welcome_bonus_type"
-                                                    value="{{ old('welcome_bonus', $quotationData['welcome_bonus_type'] ?? '') }}">
-
-                                            </td>
-                                        </tr>
-
-                                        <tr class="grid-row">
-                                            <td class="cell-label">Accessories Spl Disc</td>
-                                            <td class="cell-type">
-
-                                                <select id="accessories_spl_disc_type" name="accessories_spl_disc_type">
-
-                                                    <option value="INV" {{ old('accessories_spl_disc_type',
-                                                        $quotationData['accessories_spl_disc_type'] ?? '' )=='INV'
-                                                        ? 'selected' : '' }}>
-                                                        INV
-                                                    </option>
-
-                                                    <option value="CN" {{ old('accessories_spl_disc_type',
-                                                        $quotationData['accessories_spl_disc_type'] ?? '' )=='CN'
-                                                        ? 'selected' : '' }}>
-                                                        CN
-                                                    </option>
-
-                                                </select>
-
-                                            </td>
-                                            <td class="cell-amount">
-
-                                                <input type="text" name="accessories_spl_disc" id="accessories_spl_disc"
-                                                    class="numeric-only" placeholder="0.00"
-                                                    value="{{ old('accessories_spl_disc', $quotationData['accessories_spl_disc'] ?? '') }}">
-
-                                            </td>
-                                        </tr>
-
-                                        <tr class="grid-row">
-                                            <td class="cell-label" id="coating_discount_label">
-                                                Coating Spl Discount
-                                            </td>
-                                            <td class="cell-type">
-
-                                                <select id="ceramic_discount_type" name="ceramic_discount_type">
-
-                                                    <option value="INV" {{ old('ceramic_discount_type',
-                                                        $quotationData['ceramic_discount_type'] ?? '' )=='INV'
-                                                        ? 'selected' : '' }}>
-                                                        INV
-                                                    </option>
-
-                                                    <option value="CN" {{ old('ceramic_discount_type',
-                                                        $quotationData['ceramic_discount_type'] ?? '' )=='CN'
-                                                        ? 'selected' : '' }}>
-                                                        CN
-                                                    </option>
-
-                                                </select>
-
-                                            </td>
-                                            <td class="cell-amount">
-
-                                                <input type="text" name="ceramic_discount" id="ceramic_discount"
-                                                    class="numeric-only" placeholder="0.00"
-                                                    value="{{ old('ceramic_discount', $quotationData['ceramic_discount'] ?? '') }}">
-
-                                            </td>
-                                        </tr>
-
-                                        <tr class="grid-row">
-                                            <td class="cell-label">PPF Spl Discount</td>
-                                            <td class="cell-type">
-
-                                                <select id="ppf_discount_type" name="ppf_discount_type">
-
-                                                    <option value="INV" {{ old('ppf_discount_type',
-                                                        $quotationData['ppf_discount_type'] ?? '' )=='INV' ? 'selected'
-                                                        : '' }}>
-                                                        INV
-                                                    </option>
-
-                                                    <option value="CN" {{ old('ppf_discount_type',
-                                                        $quotationData['ppf_discount_type'] ?? '' )=='CN' ? 'selected'
-                                                        : '' }}>
-                                                        CN
-                                                    </option>
-
-                                                </select>
-
-                                            </td>
-                                            <td class="cell-amount">
-
-                                                <input type="text" name="ppf_discount" id="ppf_discount"
-                                                    class="numeric-only" placeholder="0.00"
-                                                    value="{{ old('ppf_discount', $quotationData['ppf_discount'] ?? '') }}">
-
-                                            </td>
-                                        </tr>
-
-                                        <tr class="grid-row">
-                                            <td class="cell-label" id="charger_discount_title">
-                                                Charger Swapping Discount
-                                            </td>
-                                            <td class="cell-type">
-
-                                                <select id="charger_swapping_discount_type"
-                                                    name="charger_swapping_discount_type" disabled>
-
-                                                    <option value="CN2" {{ old('charger_swapping_discount_type',
-                                                        $quotationData['charger_swapping_discount_type'] ?? '' )=='CN2'
-                                                        ? 'selected' : '' }}>
-                                                        CN2
-                                                    </option>
-
-                                                </select>
-
-                                            </td>
-                                            <td class="cell-amount" id="charger_discount_cell">
-
-                                                <input type="text" id="charger_swapping_discount"
-                                                    name="charger_swapping_discount" class="numeric-only"
-                                                    placeholder="0.00"
-                                                    value="{{ old('charger_swapping_discount', $quotationData['charger_swapping_discount'] ?? '') }}">
-
-                                            </td>
-                                        </tr>
-
-                                        <tr class="grid-row">
-                                            <td class="cell-label">Other Cash Discount</td>
-                                            <td class="cell-type">
-
-                                                <select id="other_cash_discount_type" name="other_cash_discount_type">
-
-                                                    <option value="INV" {{ old('other_cash_discount_type',
-                                                        $quotationData['other_cash_discount_type'] ?? '' )=='INV'
-                                                        ? 'selected' : '' }}>
-                                                        INV
-                                                    </option>
-
-                                                    <option value="CN" {{ old('other_cash_discount_type',
-                                                        $quotationData['other_cash_discount_type'] ?? '' )=='CN'
-                                                        ? 'selected' : '' }}>
-                                                        CN
-                                                    </option>
-
-                                                </select>
-
-                                            </td>
-                                            <td class="cell-amount">
-
-                                                <input type="text" name="other_cash_discount" id="other_cash_discount"
-                                                    class="numeric-only" placeholder="0.00"
-                                                    value="{{ old('other_cash_discount', $quotationData['other_cash_discount'] ?? '') }}">
-
-                                            </td>
-                                        </tr>
-
-                                        <tr class="grid-row">
-                                            <td class="cell-label">Special Cash Discount</td>
-                                            <td class="cell-type">
-
-                                                <select id="special_cash_discount_type"
-                                                    name="special_cash_discount_type">
-
-                                                    <option value="INV" {{ old('special_cash_discount_type',
-                                                        $quotationData['special_cash_discount_type'] ?? '' )=='INV'
-                                                        ? 'selected' : '' }}>
-                                                        INV
-                                                    </option>
-
-                                                </select>
-
-                                            </td>
-                                            <td class="cell-amount">
-
-                                                <input type="text" name="special_cash_discount"
-                                                    id="special_cash_discount" class="numeric-only" placeholder="0.00"
-                                                    value="{{ old('special_cash_discount', $quotationData['special_cash_discount'] ?? '') }}">
-
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        <div class="quotation-summary">
-                            <div class="total-row-cell total-receivable-label">TOTAL RECEIVABLE</div>
-                            <div class="total-row-cell total-receivable-amount">
-                                <input id="total_receivable" name="total_receivable" readonly>
-                            </div>
-                            <div class="total-row-cell total-discount-label">TOTAL DISCOUNT</div>
-                            <div class="total-row-cell total-discount-amount">
-                                <input id="total_discount_amount" readonly>
-                                <input type="hidden" id="total_discount" name="total_discount">
-                            </div>
-                        </div>
-
-                        <div class="quotation-summary">
-                            <div class="onroad-row-cell onroad-label">ON ROAD PRICE</div>
-                            <div class="onroad-row-cell onroad-amount">
-                                <input id="net_receivable_summary" name="net_receivable_summary" readonly>
-                            </div>
+                            <input type="hidden" id="invoiced_discount_summary" name="invoiced_discount_summary"
+                                value="{{ $quotationData['invoiced_discount_summary'] ?? '' }}">
+                            <input type="hidden" id="credit_note_discount_summary" name="credit_note_discount_summary"
+                                value="{{ $quotationData['credit_note_discount_summary'] ?? '' }}">
+                            <input type="hidden" id="cn1_discount_summary" name="cn1_discount_summary"
+                                value="{{ $quotationData['cn1_discount_summary'] ?? '' }}">
+                            <input type="hidden" id="cn2_discount_summary" name="cn2_discount_summary"
+                                value="{{ $quotationData['cn2_discount_summary'] ?? '' }}">
                         </div>
 
                     </div>
 
-                    {{-- ================= Financier Invoice / Discount Bifurcation (hidden on print) =================
-                    --}}
-                    <div class="financier-discount-grid">
+                    {{-- ================= NET RECEIVABLE - 3 Columns Layout ================= --}}
+                    <div class="quotation-summary mt-1"
+                        style="border: 2px solid #000; margin-top: 10px; display: flex;">
 
-                        <div class="fd-header">FINANCIER INVOICE</div>
-                        <div class="fd-header">DISCOUNT BIFURCATION</div>
-
-                        <div class="fd-label">Total Receivable</div>
-                        <div>
-                            <input id="fi_total_receivable" name="fi_total_receivable" readonly>
-                        </div>
-                        <div class="fd-label">Invoiced Discount</div>
-                        <div>
-                            <input id="invoiced_discount" name="invoiced_discount" readonly>
+                        <div class="onroad-row-cell onroad-label"
+                            style="background: #abb8ca; color: #000; font-size:13px; font-weight: bold; padding: 5px 8px; flex: 0 0 16%; border-right: 1px solid #000;">
+                            NET RECEIVABLE
                         </div>
 
-                        <div class="fd-label">Less INV Discount</div>
-                        <div>
-                            <input id="less_inv_discount" name="less_inv_discount" readonly>
-                        </div>
-                        <div class="fd-label">Credit Note Discount</div>
-                        <div>
-                            <input id="credit_note_discount" name="credit_note_discount" readonly>
+
+                        <div class="onroad-row-cell onroad-amount"
+                            style="background: #abb8ca; color: #000; font-weight: bold; padding: 5px 8px; flex: 0 0 20%; justify-content: flex-end; border-right: 1px solid #000;">
+                            <input id="net_receivable_summary" name="net_receivable_summary" readonly
+                                style="font-weight: bold; font-size: 12px; text-align: center; background: transparent; border: none; width: 100%;"
+                                value="{{ $quotationData['net_receivable'] ?? $quotationData['net_receivable_summary'] ?? '' }}">
                         </div>
 
-                        <div class="fd-label fd-bold">Finvoice Amount</div>
-                        <div class="fd-bold">
-                            <input id="finvoice_amount" name="finvoice_amount" readonly>
+                        <div class="onroad-row-cell onroad-words"
+                            style="background: #abb8ca; color: #000; font-size: 13px; font-weight: bold; padding: 5px 8px; flex: 1 1 64%; display: flex; align-items: center; justify-content: flex-end; border-right: 1px solid #000;">
+                            <span id="net_receivable_words">Zero Rupees Only</span>
                         </div>
-                        <div class="fd-label fd-bold">Total Discount</div>
-                        <div class="fd-bold">
-                            <input id="total_discount_summary" name="total_discount_summary" readonly>
-                        </div>
+
 
                     </div>
-
-                    {{-- ================= Accessories (shown only while printing) ================= --}}
-                    <div class="accessories-note-row">
-                        Accessories:
-                        <span id="accessories_print"
-                            style="font-weight:normal; display:inline-block; min-width:70%; border-bottom:1px solid #000;">&nbsp;</span>
-                    </div>
-
-                    <table class="bill-table note-box flex-grow-1">
-
-
-                        <tr>
-
-                            <td>
-
-                                <div style="font-weight:bold; font-size:8px; margin-bottom:3px;">
-                                    NOTE:
-                                </div>
-
-                                <p style="
-                                font-size:7px;
-                                font-weight:bold;
-                                line-height:1.3;
-                                text-align:justify;
-                                margin:0;
-                                ">
-
-                                    <b>1.</b> Price quoted is current and subject to change without notice.
-                                    <b>2.</b> The Price ruling at the time of delivery only will be applicable
-                                    irrespective of when payment was made.
-                                    <b>3.</b> All specifications, colors and features are subject to change without
-                                    prior notice.
-                                    <b>4.</b> TCS @ 1 % Will be collected on full invoice value, if value is equal to or
-                                    exceeds INR 10 Lakhs.
-                                    <b>5.</b> Delivery will be against full payment only.
-                                    <b>6.</b> This is not a firm order and no claim for priority can be made on the
-                                    basis of proforma invoice.
-                                    <b>7.</b> All disputes shall be subject to Bikaner jurisdiction only.
-                                    <b>8.</b> Booking need to be done with minimum INR 21,000.
-
-                                </p>
-
-
-
-                            </td>
-
-                        </tr>
-
-                    </table>
 
                 </div>
 
+                {{-- ================= Insurance & Accessories (Print Only) ================= --}}
+                {{-- ================= Insurance & Accessories (Print Only) ================= --}}
+                <div class="insurance-note-row">
+                    Insurance:
+                    <span id="insurance_print"
+                        style="font-weight:normal; display:inline-block; min-width:70%; border-bottom:1px solid #000;">&nbsp;</span>
+                </div>
+
+                <div class="accessories-note-row">
+                    Accessories:
+                    <span id="accessories_print"
+                        style="font-weight:normal; display:inline-block; min-width:70%; border-bottom:1px solid #000;">&nbsp;</span>
+                </div>
+
+                <table class="bill-table note-box flex-grow-1">
+                    <tr>
+                        <td>
+                            <div style="font-weight:bold; font-size:8px; margin-bottom:3px;">NOTE:</div>
+                            <ol id="quotation_notes_list"
+                                style="font-size:8px; font-weight:bold; line-height:1.4; text-align:justify; margin:0; padding-left:12px;">
+                                <li>Price quoted is current and subject to change without notice.</li>
+                                <li>The Price ruling at the time of delivery only will be applicable irrespective of
+                                    when payment was made.</li>
+                                <li>All specifications, colors and features are subject to change without prior notice.
+                                </li>
+                                <li>TCS @ 1 % Will be collected on full invoice value, if value is equal to or exceeds
+                                    INR 10 Lakhs.</li>
+                                <li>Delivery will be against full payment only.</li>
+                                <li>This is not a firm order and no claim for priority can be made on the basis of
+                                    proforma invoice.</li>
+                                <li>All disputes shall be subject to Bikaner jurisdiction only.</li>
+                                <li>Booking need to be done with minimum INR 21,000.</li>
+                                <li id="rto_charges_note_item">RTO Charges are subject to the vehicle's registration
+                                    category.</li>
+                            </ol>
+                        </td>
+                    </tr>
+                </table>
+
             </div>
 
-
         </div>
+
     </div>
 </div>
 
 <div class="card-footer text-end mt-3 no-print">
     <button type="button" class="btn btn-primary no-print" onclick="printQuotation();">
-
-        <i class="la la-print"></i>
-
-        Print / Save PDF
-
+        <i class="la la-print"></i> Print / Save PDF
     </button>
-
-    <a href="{{ backpack_url('quotation-form') }}" class="btn btn-secondary">
-        Close
+    @if($quotation->status != 'booked')
+    <a href="{{ backpack_url('quotation-form/' . $quotation->id . '/edit') }}" class="btn btn-warning">
+        <i class="la la-edit"></i> Edit Quotation
     </a>
-</div>
-</div>
-
-</div>
+    <button type="button" class="btn btn-success" onclick="processBooking({{ $quotation->id }})">
+        <i class="la la-check-circle"></i> Process to Booking
+    </button>
+    @endif
+    <a href="{{ backpack_url('quotation-form') }}" class="btn btn-secondary">
+        <i class="la la-arrow-left"></i> Back to List
+    </a>
 </div>
 
 @endsection
 
 @push('after_scripts')
-{{--
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"> --}}
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-    $(document).on('input', '.numeric-only', function () {
-
-    let value = $(this).val();
-
-    // Allow only digits and one decimal
-    value = value.replace(/[^\d.]/g, '');
-    value = value.replace(/(\..*)\./g, '$1');
-
-    $(this).val(value);
-
-});
-    function updateAccessoriesAmount() {
-
-    let total = 0;
-
-    $('#accessories option:selected').each(function () {
-
-        total += parseFloat($(this).data('price')) || 0;
-
-    });
-
-    $('#accessories_amount').val(total.toFixed(2));
-
-    calculateQuotation();
-
-}
-
-function updateAccessoriesPrintText() {
-
-    let list = [];
-
-    $('#accessories option:selected').each(function () {
-        list.push($(this).text());
-    });
-
-    $('#accessories_print').text(list.join(', '));
-}
-
-$('#accessories').on(
-    'change',
-    function () {
-        updateAccessoriesAmount();
-        updateAccessoriesPrintText();
-    }
-);
-
-$(document).ready(function () {
-    updateAccessoriesPrintText();
-});
-
-$(document).ready(function () {
-
-    updateAccessoriesAmount();
-
-});
-
-$(document).ready(function () {
-
-    let segment = ($('input[name="segment_code"]').val() || '').toLowerCase();
-
-    if (!segment.includes('commercial')) {
-        $('#vltd_device').closest('tr').addClass('print-hide');
-    }
-
-});
-
-
-
-
-// Registration amount stays locked until a Registration option is selected
-
-
-
-
-// ================= Unified "pick one of N" discount groups =================
-// Each group has a visible select (which discount), a visible type select (INV/CN/CN1/CN2)
-// and a visible amount input. These sync into the real hidden fields that
-// calculateQuotation() / the backend already understand, so nothing else has to change.
-function setupGroupDiscount(groupPrefix, fieldNames) {
-
-    function sync() {
-
-        let selected = $('#' + groupPrefix + '_select').val();
-        let type = $('#' + groupPrefix + '_type').val();
-        let amount = $('#' + groupPrefix + '_amount').val();
-
-        fieldNames.forEach(function (name) {
-
-            if (name === selected) {
-                $('#' + name).val(amount);
-                $('#' + name + '_type').val(type);
-            } else {
-                $('#' + name).val('');
-                $('#' + name + '_type').val('');
-            }
-
-        });
-
-        calculateQuotation();
-    }
-
-    $(document).on('change', '#' + groupPrefix + '_select, #' + groupPrefix + '_type', sync);
-    $(document).on('keyup change', '#' + groupPrefix + '_amount', sync);
-}
-
-setupGroupDiscount('group_a', ['cash_scheme_oem', 'csd_discount', 'fame_subsidy']);
-setupGroupDiscount('group_b', ['corporate_discount', 'loyalty_bonus']);
-setupGroupDiscount('group_c', ['exchange_bonus', 'green_bonus', 'welcome_bonus']);
-
-function num(id) {
-
-    let value = $('#' + id).val();
-
-    if (value === 'N/A' || value === '' || value == null) {
-        return 0;
-    }
-
-    return parseFloat(value) || 0;
-
-}
-
-// Discount fields paired with their Type select — used for the Financier Invoice /
-// Discount Bifurcation boxes (INV type = Invoiced Discount, CN/CN1/CN2 = Credit Note Discount)
-const DISCOUNT_TYPE_PAIRS = [
-    ['cash_scheme_oem', 'cash_scheme_oem_type'],
-    ['csd_discount', 'csd_discount_type'],
-    ['fame_subsidy', 'fame_subsidy_type'],
-    ['ppf_discount', 'ppf_discount_type'],
-    ['dealer_discount', 'dealer_discount_type'],
-    ['corporate_discount', 'corporate_discount_type'],
-    ['loyalty_bonus', 'loyalty_bonus_type'],
-    ['accessories_discount', 'accessories_discount_type'],
-    ['ceramic_discount', 'ceramic_discount_type'],
-    ['exchange_bonus', 'exchange_bonus_type'],
-    ['green_bonus', 'green_bonus_type'],
-    ['welcome_bonus', 'welcome_bonus_type'],
-    ['charger_swapping_discount', 'charger_swapping_discount_type'],
-    ['shield_scheme', 'shield_scheme_type'],
-    ['accessories_spl_disc', 'accessories_spl_disc_type'],
-    ['other_cash_discount', 'other_cash_discount_type'],
-    ['special_cash_discount', 'special_cash_discount_type']
-];
-
-function calculateDiscountBifurcation() {
-
-    let invoicedDiscount = 0;
-    let creditNoteDiscount = 0;
-
-    DISCOUNT_TYPE_PAIRS.forEach(function (pair) {
-
-        let amount = num(pair[0]);
-        let type = $('#' + pair[1]).val();
-
-        if (type === 'INV') {
-            invoicedDiscount += amount;
-        } else if (type === 'CN' || type === 'CN1' || type === 'CN2') {
-            creditNoteDiscount += amount;
-        }
-
-    });
-
-    return { invoicedDiscount: invoicedDiscount, creditNoteDiscount: creditNoteDiscount };
-}
-
-function calculateQuotation() {
-
-    // Total Receivable
-    let subtotal =
-        num('ex_showroom_price') +
-        num('insurance_amount') +
-        num('registration_amount') +
-        num('accessories_amount') +
-        num('maxicare') +
-        num('vltd_device') +
-        num('coating_price') +
-        num('ppf') +
-        num('rto_yellow_tape') +
-        num('kazam_charging_kit') +
-        num('incidental_charges') +
-        num('shield_price') +
-        num('rsa_amount') +
-        num('fastag') +
-        num('cod_charges') +
-        num('charger_swapping_amount');
-    
-    // Financier Invoice / Discount Bifurcation must be computed BEFORE TCS,
-    // because TCS is based on the Finvoice Amount (subtotal - Invoiced Discount),
-    // not on the raw subtotal — matching the Excel formula chain:
-    //   B24 (Total Receivable, Financier box) = subtotal (no TCS)
-    //   B25 (Less INV Discount)              = SUMIF(type,"INV")
-    //   B26 (Finvoice Amount)                = B24 - B25
-    //   D20 (TCS)                            = IF(B26 >= 1000000, B26 * 1%, 0)
-    //   D21 (Total Receivables)              = subtotal + TCS
-    let bifurcation = calculateDiscountBifurcation();
-    let finvoiceAmount = subtotal - bifurcation.invoicedDiscount;
-
-    let tcs = 0;
-
-        if (finvoiceAmount >= 1000000) {
-
-            tcs = finvoiceAmount * 0.01;
-
-            $('#tcs')
-                .val(tcs.toFixed(2))
-                .prop('readonly', true)
-                .prop('disabled', false);
-
-        } else {
-
-            $('#tcs')
-                .val('N/A')
-                .prop('readonly', true)
-                .prop('disabled', true);
-        }
-    let totalReceivable = subtotal + tcs;
-
-
-    $('#total_receivable').val(totalReceivable.toFixed(2));
-
-    // Total Discount
-    let totalDiscount =
-        num('cash_scheme_oem') +
-        num('fame_subsidy') +
-        num('exchange_bonus') +
-        num('corporate_discount') +
-        num('accessories_discount') +
-        num('ceramic_discount') +
-        num('ppf_discount') +
-        num('dealer_discount') +
-        num('charger_swapping_discount') +
-        num('csd_discount') +
-        num('shield_scheme') +
-        num('loyalty_bonus') +
-        num('green_bonus') +
-        num('welcome_bonus') +
-        num('accessories_spl_disc') +
-        num('other_cash_discount') +
-        num('special_cash_discount');
-
-    let discount = totalDiscount.toFixed(2);
-
-    $('#total_discount_amount').val(discount);
-    $('#total_discount').val(discount);
-
-
-    // Net Receivable
-    let netReceivable = totalReceivable - totalDiscount;
-
-    $('#net_receivable_summary').val(netReceivable.toFixed(2));
-
-    // Financier Invoice box — Total Receivable here is the subtotal WITHOUT TCS
-    // (matches Excel B24 = M12, not D21)
-    $('#fi_total_receivable').val(subtotal.toFixed(2));
-    $('#less_inv_discount').val(bifurcation.invoicedDiscount.toFixed(2));
-    $('#finvoice_amount').val(finvoiceAmount.toFixed(2));
-
-    $('#invoiced_discount').val(bifurcation.invoicedDiscount.toFixed(2));
-    $('#credit_note_discount').val(bifurcation.creditNoteDiscount.toFixed(2));
-    $('#total_discount_summary').val((bifurcation.invoicedDiscount + bifurcation.creditNoteDiscount).toFixed(2));
-
-}
-
-// Recalculate whenever any input changes
-$(document).on(
-    'keyup change',
-    '#ex_showroom_price,' +
-    '#accessories_amount,' +
-    '#maxicare,' +
-    '#vltd_device,' +
-    '#coating_price,' +
-    '#ppf,' +
-    '#rto_yellow_tape,' +
-    '#kazam_charging_kit,' +
-    '#incidental_charges,' +
-    '#shield_price,' +
-    '#rsa_amount,' +
-    '#fastag,' +
-    '#cod_charges,' +
-    '#charger_swapping_amount,' +
-    '#tcs,' +
-    '#cash_scheme_oem,' +
-    '#cash_scheme_oem_type,' +
-    '#fame_subsidy,' +
-    '#fame_subsidy_type,' +
-    '#exchange_bonus,' +
-    '#exchange_bonus_type,' +
-    '#corporate_discount,' +
-    '#corporate_discount_type,' +
-    '#accessories_discount,' +
-    '#accessories_discount_type,' +
-    '#ceramic_discount,' +
-    '#ceramic_discount_type,' +
-    '#ppf_discount,' +
-    '#ppf_discount_type,' +
-    '#dealer_discount,' +
-    '#dealer_discount_type,' +
-    '#charger_swapping_discount,' +
-    '#charger_swapping_discount_type,' +
-    '#csd_discount,' +
-    '#csd_discount_type,' +
-    '#shield_scheme,' +
-    '#shield_scheme_type,' +
-    '#loyalty_bonus,' +
-    '#loyalty_bonus_type,' +
-    '#green_bonus,' +
-    '#green_bonus_type,' +
-    '#welcome_bonus,' +
-    '#welcome_bonus_type,' +
-    '#accessories_spl_disc,' +
-    '#accessories_spl_disc_type,' +
-    '#other_cash_discount,' +
-    '#other_cash_discount_type,' +
-    '#special_cash_discount,' +
-    '#special_cash_discount_type,' +
-    '#registration_amount,' +
-    '#insurance_amount',
-    calculateQuotation
-);
-
-// Accessories selection change
-$('#accessories').on('change', function () {
-    updateAccessoriesAmount();
-    calculateQuotation();
-});
-
-// Initial calculation
-$(document).ready(function () {
-    calculateQuotation();
-});
-$(document).ready(function () {
-
-    $('#accessories').select2({
-
-        placeholder: 'Select Accessories',
-
-        width: '100%',
-
-        closeOnSelect: false
-
-    });
-
-});
-
-// Segment -> Model
-
-
-
-// Model -> Variant
-
-
-
-
-
-function toggleLMMFields() {
-
-    let isLMM = "{{ optional($selectedEnquiry)->segment_code }}" === "LMM";
-
-    const fields = [
-        '#kazam_charging_kit',
-        '#incidental_charges'
+    // ============================================================
+// PREVIEW PAGE - COMPLETE SCRIPT
+// ============================================================
+
+// ============================================================
+// 1. NUMBER TO INDIAN WORDS
+// ============================================================
+function numberToIndianWords(num) {
+    num = parseFloat(num) || 0;
+    if (num === 0) return 'Zero Rupees Only';
+
+    const a = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten',
+        'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'
     ];
+    const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
 
-    fields.forEach(function (field) {
-
-        $(field).prop('disabled', !isLMM);
-
-        if (!isLMM) {
-            $(field).val('N/A');
-        } else {
-            $(field);
-        }
-
-    });
-
-    $('#charger_swapping_discount_type')
-    .prop('disabled', false)
-    .empty()
-    .append('<option value="CN2">CN2</option>')
-    .val('CN2');
-
-    // Fame Subsidy (LMM) is only available as an option in Group A when segment is LMM
-    $('#fame_subsidy_option').prop('disabled', !isLMM);
-
-    if (!isLMM && $('#group_a_select').val() === 'fame_subsidy') {
-        $('#group_a_select').val('').trigger('change');
+    function inWords(n) {
+        if (n < 20) return a[n];
+        if (n < 100) return b[Math.floor(n / 10)] + (n % 10 !== 0 ? ' ' + a[n % 10] : '');
+        if (n < 1000) return a[Math.floor(n / 100)] + ' Hundred' + (n % 100 !== 0 ? ' ' + inWords(n % 100) : '');
+        if (n < 100000) return inWords(Math.floor(n / 1000)) + ' Thousand' + (n % 1000 !== 0 ? ' ' + inWords(n % 1000) : '');
+        if (n < 10000000) return inWords(Math.floor(n / 100000)) + ' Lakh' + (n % 100000 !== 0 ? ' ' + inWords(n % 100000) : '');
+        return inWords(Math.floor(n / 10000000)) + ' Crore' + (n % 10000000 !== 0 ? ' ' + inWords(n % 10000000) : '');
     }
 
-    // Charger Swapping Amount
-    if (!isLMM) {
+    let parts = num.toFixed(2).split('.');
+    let rupees = parseInt(parts[0], 10);
+    let paise = parseInt(parts[1], 10);
 
-        $('#charger_swapping')
-            .val('N/A')
-            .prop('disabled', true);
-
-        $('#charger_swapping_amount')
-            .val('N/A')
-            .prop('disabled', true);
-
-        $('#charger_swapping_discount')
-            .val('N/A')
-            .prop('disabled', true);
-
-        $('#charger_swapping_discount_type')
-            .val('')
-            .prop('disabled', true);
-
-    } else {
-
-        $('#charger_swapping')
-            .prop('disabled', false);
-
-        $('#charger_swapping_amount')
-            .prop('disabled', false);
-
-        $('#charger_swapping_discount')
-            .prop('disabled', false);
-
-        $('#charger_swapping_discount_type')
-            .prop('disabled', false);
-
+    let result = '';
+    if (rupees > 0) result += inWords(rupees) + ' Rupees';
+    if (paise > 0) {
+        if (rupees > 0) result += ' ';
+        result += inWords(paise) + ' Paise';
     }
-
-    calculateQuotation();
+    return result ? result + ' Only' : 'Zero Rupees Only';
 }
-$(document).ready(function () {
 
-    toggleLMMFields();
+// ============================================================
+// 2. BUILD INSURANCE TEXT FROM QUOTATION DATA
+// ============================================================
+function buildInsuranceTextFromData() {
+    var insuranceData = $('#insurance_print_data').val();
+    
+    // Agar data khali nahi hai to try karein
+    if (insuranceData && insuranceData !== '[]' && insuranceData !== '""') {
+        try {
+            var parsed = JSON.parse(insuranceData);
+            
+            // Agar array hai to process karein
+            if (Array.isArray(parsed) && parsed.length > 0) {
+                var list = parsed.map(function(item) {
+                    // Yahan 'name' aur 'price' field ko handle kar rahe hain
+                    var name = item.name || '';
+                    var price = Number(item.price || 0);
+                    
+                    // Sirf price wale items ko format karke return karein
+                    return name + (price > 0 ? ' (₹' + price.toLocaleString('en-IN') + ')' : '');
+                });
+                return list.join(', ');
+            }
+        } catch(e) {
+            console.log('Error parsing insurance data:', e);
+        }
+    }
+    
+    // Fallback logic agar data JSON mein nahi milta
+    return "";
+}
 
-});
-// Keep track of PRICE DETAILS / DISCOUNT DETAILS labels we temporarily change,
-// so we can restore them after print
-let printLabelRestoreList = [];
+function buildAccessoriesTextFromData() {
+    var rawData = $('#accessories_print_data').val();
+    if (rawData && rawData !== '[]') {
+        try {
+            var items = JSON.parse(rawData);
+            if (items && items.length > 0) {
+                return items.map(function(item) {
+                    var name = item.name || '';
+                    var price = Number(item.price || 0);
+                    return name + ' (₹' + price.toLocaleString('en-IN') + ')';
+                }).join(', ');
+            }
+        } catch(e) {
+            console.log('Error parsing accessories print data:', e);
+        }
+    }
+    return '';
+}
+
+// ============================================================
+// 4. UPDATE ALL DISPLAY ELEMENTS
+// ============================================================
+function updatePreviewDisplay() {
+    // Update Insurance Print Text
+    var insuranceText = buildInsuranceTextFromData();
+    if (insuranceText) {
+        $('#insurance_print').text(insuranceText);
+    }
+
+    // Update Accessories Print Text
+    var accessoriesText = buildAccessoriesTextFromData();
+    if (accessoriesText) {
+        $('#accessories_print').text(accessoriesText);
+    }
+
+    // Update Net Receivable Words
+    var netReceivable = $('#net_receivable_summary').val();
+    if (netReceivable && netReceivable !== '') {
+        var words = numberToIndianWords(netReceivable);
+        $('#net_receivable_words').text(words);
+    }
+
+    // Update Registration Print Text
+    updateRegistrationPrintText();
+
+    // Toggle RTO Charges Note
+    toggleRtoChargesNote();
+
+    // Toggle Row Visibility
+    toggleRowVisibility();
+}
+
+// ============================================================
+// 5. UPDATE REGISTRATION PRINT TEXT
+// ============================================================
+function updateRegistrationPrintText() {
+    var typeText = $('#registration_no_type option:selected').text().trim();
+    var categoryText = $('#registration_category option:selected').text().trim();
+    var inHouseVal = $('input[name="in_house_rto"]:checked').val();
+    var inHouseText = (inHouseVal === "1") ? "Yes" : "No";
+
+    var parts = [];
+    if (typeText && typeText.toLowerCase() !== 'select type') {
+        parts.push('(' + typeText + ')');
+    }
+    if (categoryText && categoryText.toLowerCase() !== 'select category') {
+        parts.push('(' + categoryText + ')');
+    }
+    parts.push('(In-House: ' + inHouseText + ')');
+
+    $('#registration_details_print').text(parts.join(' '));
+}
+
+// ============================================================
+// 6. TOGGLE RTO CHARGES NOTE
+// ============================================================
+function toggleRtoChargesNote() {
+    var inHouseValue = $('input[name="in_house_rto"]:checked').val();
+    var $rtoNoteItem = $('#rto_charges_note_item');
+
+    if (inHouseValue === "1") {
+        if ($rtoNoteItem.length === 0) {
+            $('#quotation_notes_list').append('<li id="rto_charges_note_item">RTO Charges are subject to the vehicle\'s registration category.</li>');
+        }
+    } else {
+        $rtoNoteItem.remove();
+    }
+}
+
+// ============================================================
+// 7. TOGGLE ROW VISIBILITY FOR PREVIEW/PRINT
+// ============================================================
+function toggleRowVisibility() {
+    $('.price-grid tbody tr').each(function() {
+        var $row = $(this);
+        var $input = $row.find('td.cell-amount input').first();
+        var value = $input.length ? $input.val() : '';
+        
+        if (value === 'N/A' || value === '' || value === null || value === '0' || value === '0.00') {
+            $row.addClass('print-hide');
+        } else {
+            $row.removeClass('print-hide');
+        }
+    });
+    
+    $('.discount-grid tbody tr').each(function() {
+        var $row = $(this);
+        var $input = $row.find('td.cell-amount input').first();
+        var value = $input.length ? $input.val() : '';
+        
+        if (value === 'N/A' || value === '' || value === null || value === '0' || value === '0.00') {
+            $row.addClass('print-hide');
+        } else {
+            $row.removeClass('print-hide');
+        }
+    });
+}
+
+// ============================================================
+// 8. PRINT FUNCTIONS - SAME AS CREATE.BLADE.PHP
+// ============================================================
+var printLabelRestoreList = [];
 
 function prepareOptionLabelsForPrint() {
-
     printLabelRestoreList = [];
-
-    // Merge the selected OPTION value into the PRICE DETAILS label,
-    // e.g. "Insurance" + "Standard" => "Insurance(Standard)"
-    // Accessories is a multi-select and is shown separately above the Note box, so skip it here.
     $('.quotation-grid td.cell-option select').not('#accessories').each(function () {
+        var $select = $(this);
+        var selectId = $select.attr('id');
 
-        let $select = $(this);
-        let selectedText = $select.find('option:selected').first().text().trim();
+        if (selectId === 'insurance_covers' || selectId === 'registration_no_type' || selectId === 'registration_category') {
+            return;
+        }
 
+        var selectedText = $select.find('option:selected').first().text().trim();
         if (!selectedText || selectedText.toLowerCase() === 'select') {
             return;
         }
 
-        let $label = $select.closest('tr').find('td.cell-label').first();
-
+        var $label = $select.closest('tr').find('td.cell-label').first();
         printLabelRestoreList.push({
             el: $label,
             html: $label.html()
         });
+
+        if (selectId === 'insurance_company') {
+            $label.html('Insurance');
+            $label.append('(' + $select.val() + ')');
+            return;
+        }
 
         $label.append('(' + selectedText + ')');
     });
 }
 
 function restoreOptionLabelsAfterPrint() {
-
     printLabelRestoreList.forEach(function (item) {
         item.el.html(item.html);
     });
-
     printLabelRestoreList = [];
 }
 
 function isEmptyGridValue(value) {
-
     value = (value || '').toString().trim();
-
-    return (
-        value === '' ||
-        value === '0' ||
-        value === '0.00' ||
-        value === 'N/A'
-    );
+    return (value === '' || value === '0' || value === '0.00' || value === 'N/A');
 }
 
 function prepareItemVisibilityForPrint() {
-
-    // The price box and discount box are now two completely independent
-    // tables/tbodies. Every row (one price item OR one discount item) is
-    // judged purely on its own amount value — if it's blank / 0 / N/A the
-    // row is hidden. Because the two sides no longer share a <tr>, hiding a
-    // row never leaves a gap: the remaining rows in that box simply move up
-    // to fill the space (normal table flow), and the other box is untouched.
     $('.quotation-grid tbody tr').each(function () {
-
-        let $row = $(this);
-        let $amountInput = $row.find('td.cell-amount input').first();
-        let value = $amountInput.length ? $amountInput.val() : '';
+        var $row = $(this);
+        var $amountInput = $row.find('td.cell-amount input').first();
+        var value = $amountInput.length ? $amountInput.val() : '';
 
         if (isEmptyGridValue(value)) {
             $row.addClass('print-hide');
         } else {
             $row.removeClass('print-hide');
         }
-
     });
-
 }
 
 function restoreItemVisibilityAfterPrint() {
@@ -2330,308 +1849,69 @@ function restoreItemVisibilityAfterPrint() {
 }
 
 function printQuotation() {
-
     prepareOptionLabelsForPrint();
     prepareItemVisibilityForPrint();
-
     window.print();
-
     restoreOptionLabelsAfterPrint();
     restoreItemVisibilityAfterPrint();
 }
-$('#policy_type').on('change', function () {
 
-    let hasValue = $(this).val() !== '';
+// ============================================================
+// 9. PROCESS BOOKING
+// ============================================================
+function processBooking(quotationId) {
+    Swal.fire({
+        title: 'Process to Booking',
+        text: 'Are you sure you want to create a booking from this quotation?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#28a745',
+        cancelButtonColor: '#dc3545',
+        confirmButtonText: 'Yes, Process to Booking!',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal.fire({
+                title: 'Processing...',
+                text: 'Please wait while we create the booking.',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                showConfirmButton: false,
+                willOpen: () => {
+                    Swal.showLoading();
+                }
+            });
 
-    $('#insurance_amount')
-        .prop('disabled', !hasValue)
-        .val(hasValue ? $('#insurance_amount').val() : '');
-
-    calculateQuotation();
-});
-
-$('#registration_type').on('change', function () {
-
-    let hasValue = $(this).val() !== '';
-
-    $('#registration_amount')
-        .prop('disabled', !hasValue)
-        .val(hasValue ? $('#registration_amount').val() : '');
-
-    calculateQuotation();
-
-});
-
-$('#coating').on('change', function () {
-
-    let value = $(this).val();
-
-    if (value === '') {
-
-        $('#coating_price').val('').prop('disabled', true);
-
-        $('#ceramic_discount')
-            .val('')
-            .prop('disabled', true);
-
-        $('#ceramic_discount_type')
-            .val('')
-            .prop('disabled', true);
-    }
-    else if (value === 'No Coating') {
-
-        $('#coating_price')
-            .val('N/A')
-            .prop('disabled', true);
-
-        $('#ceramic_discount')
-            .val('N/A')
-            .prop('disabled', true);
-
-        $('#ceramic_discount_type')
-            .val('')
-            .prop('disabled', true);
-    }
-    else {
-
-        $('#coating_price')
-            .val('')
-            .prop('disabled', false);
-
-        $('#ceramic_discount')
-            .val('')
-            .prop('disabled', false);
-
-        $('#ceramic_discount_type')
-            .prop('disabled', false);
-    }
-
-    calculateQuotation();
-});
-
-$('#shield').on('change', function () {
-
-    let value = $(this).val();
-
-    if (value === '') {
-        $('#shield_price').val('').prop('disabled', true);
-    }
-    else if (value === 'No Shield') {
-        $('#shield_price')
-            .val('N/A')
-            .prop('disabled', true);
-    }
-    else {
-        $('#shield_price')
-            .val('')
-            .prop('disabled', false);
-    }
-
-    calculateQuotation();
-});
-
-$('#rsa').on('change', function () {
-
-    let value = $(this).val();
-
-    if (value === '') {
-        $('#rsa_amount').val('').prop('disabled', true);
-    }
-    else if (value === 'No RSA') {
-        $('#rsa_amount')
-            .val('N/A')
-            .prop('disabled', true);
-    }
-    else {
-    $('#rsa_amount')
-        .prop('disabled', false);
-}
-
-    calculateQuotation();
-});
-
-$('#charger_swapping').on('change', function () {
-
-    let value = $(this).val();
-
-    if (value === '') {
-
-        $('#charger_swapping_amount')
-            .val('')
-            .prop('disabled', true);
-
-        $('#charger_swapping_discount')
-            .val('')
-            .prop('disabled', true);
-
-        $('#charger_swapping_discount_type')
-            .val('')
-            .prop('disabled', true);
-
-    }
-    else if (value === 'N/A') {
-
-        $('#charger_swapping_amount')
-            .val('N/A')
-            .prop('disabled', true);
-
-        $('#charger_swapping_discount')
-            .val('N/A')
-            .prop('disabled', true);
-
-        $('#charger_swapping_discount_type')
-            .val('')
-            .prop('disabled', true);
-
-    }
-    else {
-
-    $('#charger_swapping_amount')
-        .prop('disabled', false);
-
-    $('#charger_swapping_discount')
-        .prop('disabled', false);
-
-    $('#charger_swapping_discount_type')
-        .prop('disabled', false)
-        .empty()
-        .append('<option value="CN2">CN2</option>')
-        .val('CN2');
-}
-
-    calculateQuotation();
-
-});
-
-    $(document).ready(function () {
-
-        $('#policy_type').trigger('change');
-        $('#registration_type').trigger('change');
-        $('#rsa').trigger('change');
-        $('#charger_swapping').trigger('change');
+            window.location.href = '{{ backpack_url("booking/create") }}?quotation_id=' + quotationId;
+        }
     });
-    $('#group_a_select').on('change', function () {
-
-    let value = $(this).val();
-    let $type = $('#group_a_type');
-
-    $type.empty();
-
-    switch (value) {
-
-        case 'cash_scheme_oem':
-            $type.append('<option value="INV">INV</option>');
-            $type.append('<option value="CN">CN</option>');
-            break;
-
-        case 'csd_discount':
-            $type.append('<option value="INV">INV</option>');
-            break;
-
-        case 'fame_subsidy':
-            $type.append('<option value="INV">INV</option>');
-            break;
-    }
-
-    // Trigger sync so hidden field gets updated
-    $type.trigger('change');
-});
-
-$(document).ready(function () {
-
-    let selected = $('#group_a_select').val();
-
-    if (selected) {
-
-        $('#group_a_amount').val($('#' + selected).val());
-
-        $('#group_a_type').val($('#' + selected + '_type').val());
-
-    }
-
-});
-$(document).ready(function () {
-
-    let selected = $('#group_b_select').val();
-
-    if (selected) {
-
-        $('#group_b_amount').val($('#' + selected).val());
-
-        $('#group_b_type').val($('#' + selected + '_type').val());
-
-    }
-
-});
-
-$(document).ready(function () {
-
-    let selected = $('#group_c_select').val();
-
-    if (selected) {
-
-        $('#group_c_amount').val($('#' + selected).val());
-
-        $('#group_c_type').val($('#' + selected + '_type').val());
-
-    }
-
-});
-
-function updateCoatingDiscountLabel() {
-
-    let coating = $('#coating').val();
-
-    let label = 'Coating Spl Discount';
-
-    if (coating === 'Ceramic') {
-        label = 'Ceramic Coating Spl Discount';
-    }
-    else if (coating === 'Graphene') {
-        label = 'Graphene Coating Spl Discount';
-    }
-
-    $('#coating_discount_label').text(label);
 }
 
-$(document).on('change', '#coating', function () {
+// ============================================================
+// 10. DOCUMENT READY
+// ============================================================
+$(document).ready(function() {
+    // Initialize Select2 (disabled for preview)
+    $('#accessories').select2({
+        placeholder: 'Select accessories...',
+        width: '100%',
+        closeOnSelect: false,
+        allowClear: false
+    }).prop('disabled', true);
 
-    updateCoatingDiscountLabel();
+    $('#insurance_covers').select2({
+        placeholder: 'Select insurance covers...',
+        width: '100%',
+        closeOnSelect: false,
+        allowClear: false
+    }).prop('disabled', true);
 
+    // ✅ Update all display elements
+    updatePreviewDisplay();
+
+    console.log('✅ Quotation Preview loaded successfully!');
+    console.log('Insurance Text:', $('#insurance_print').text());
+    console.log('Accessories Text:', $('#accessories_print').text());
 });
-
-$(document).ready(function () {
-
-    updateCoatingDiscountLabel();
-
-});
-
-/* =====================================================================
-   PREVIEW PAGE — apply the exact same "hide blank rows / fold selected
-   option into label" rules that create/edit use, but PERMANENTLY on
-   screen (not just during window.print()), since this page is always
-   meant to look like the printed sheet.
-
-   prepareOptionLabelsForPrint() / prepareItemVisibilityForPrint() /
-   isEmptyGridValue() are unchanged — copied as-is from create/edit —
-   so any row/field that would be hidden while printing a quotation
-   there is hidden here too, with the same rules.
-   ===================================================================== */
-$(document).ready(function () {
-
-    prepareOptionLabelsForPrint();
-    prepareItemVisibilityForPrint();
-
-});
-
-// Preview page never needs to "restore" — it should stay in print-ready
-// state permanently, so printQuotation() here just triggers the browser
-// print dialog without undoing the hidden rows / folded labels afterwards.
-function printQuotation() {
-    window.print();
-}
-
-
-
 </script>
 @endpush
