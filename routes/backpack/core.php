@@ -150,6 +150,14 @@ Route::group([
     Route::get('exchange/enquiry/{id}/edit', [EnquiryCrudController::class, 'exchangeEnquiryEdit']);
     Route::post('enquiry/{id}/exchange-update', [EnquiryCrudController::class, 'exchangeEnquiryUpdate']);
 
+    // =========================================================
+    // FINANCE ENQUIRY ROUTES (NEW)
+    // =========================================================
+    Route::get('finance/enquiry/int-in-finance', [EnquiryCrudController::class, 'financeEnquiryList']);
+    Route::get('finance/enquiry/not-interested', [EnquiryCrudController::class, 'financeNotInterestedList']);
+    Route::get('finance/enquiry/{id}/edit', [EnquiryCrudController::class, 'financeEnquiryEdit']);
+    Route::put('finance/enquiry/{id}/update', [EnquiryCrudController::class, 'financeEnquiryUpdate'])->name('enquiry.finance.update');
+
 
     // =========== CAMPAIGN ========================
     Route::crud('campaign', 'CampaignCrudController');
