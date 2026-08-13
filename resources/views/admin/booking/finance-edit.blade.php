@@ -218,6 +218,13 @@
                                     value="{{ old('file_charge', $finance->file_charge ?? '') }}">
                             </div>
 
+                            <div class="col-sm-3 finance-field" id="subvention_wrapper" style="display:none;">
+                                <label class="form-label">Financier Subvention</label>
+                                <input type="number" name="financier_subvention" id="financier_subvention"
+                                    class="form-control calc-field" min="0" step="0.01"
+                                    value="{{ old('financier_subvention', $finance->subvention_amount ?? '') }}">
+                            </div>
+
                             <div class="col-sm-3 finance-field" id="payment_amount_wrapper" style="display:none;">
                                 <label class="form-label">Net Settlement Amount</label>
                                 <input type="text" id="payment_amount" class="form-control" readonly>
@@ -621,8 +628,9 @@
 
         function showFinanceFields() {
 
-    $('#instrument_type_wrapper, #instrument_ref_no_wrapper, #instrument_proof_wrapper, ' +
-      '#loan_amount_wrapper, #margin_money_wrapper, #file_charge_wrapper, #payment_amount_wrapper').show();
+        $('#instrument_type_wrapper, #instrument_ref_no_wrapper, #instrument_proof_wrapper, ' +
+        '#loan_amount_wrapper, #margin_money_wrapper, #file_charge_wrapper, ' +
+        '#subvention_wrapper, #payment_amount_wrapper').show();
 
     const mode = $('#fin_mode').val();
     const caseStatus = $('#case_status').val();
@@ -662,10 +670,20 @@
         }
 
         function calculatePayment() {
-            const l = parseFloat($('#loan_amount').val()) || 0;
-            const m = parseFloat($('#margin_money').val()) || 0;
-            const c = parseFloat($('#file_charge').val()) || 0;
-            $('#payment_amount').val((l + m - c).toFixed(2));
+            const loanAmount = parseFloat($('#loan_amount').val()) || 0;
+            const marginMoney = parseFloat($('#margin_money').val()) || 0;
+            const fileCharge = parseFloat($('#file_charge').val()) || 0;
+            const subvention = parseFloat($('#financier_subvention').val()) || 0;
+
+            // Same logic as OTF:
+            // Loan Amount - File Charge + Payment Made to Financier - Financier Subvention
+            const doAmount =
+                loanAmount
+                - fileCharge
+                + marginMoney
+                - subvention;
+
+            $('#payment_amount').val(doAmount.toFixed(2));
         }
 
         function checkPayoutEligibility() {

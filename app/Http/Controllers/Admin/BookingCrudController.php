@@ -90,6 +90,7 @@ class BookingCrudController extends CrudController
         }
         $data = [
             'booking'           => $booking,
+            'otf_processed' => !empty($booking->final_data),
             'uid'               => Auth::id(),
             'dsaname'           => 'N/A',
             'receiptLogs'       => Bookingamount::where('bid', $id)
@@ -11092,79 +11093,598 @@ class BookingCrudController extends CrudController
                 : '',
         ]);
     }
+    // public function otfSave(Request $request, $id)
+    // {
+    //     $booking = Booking::findOrFail($id);
+
+    //     if ($request->hasFile('chassis_image')) {
+    //         $booking->addMedia($request->file('chassis_image'))
+    //             ->toMediaCollection('chassis_image');
+    //     }
+
+    //     // Get all data except files and tokens
+    //     $data = $request->except(['_token', '_method', 'chassis_image']);
+
+    //     $data['dsa_location'] = $request->dsa_location;
+
+    //     // Save ALL fields including price and discount data
+    //     $booking->final_data = json_encode($data);
+    //     $booking->gstn = strtoupper(trim($request->gstn));
+    //     $booking->pan_no = strtoupper(trim($request->pan_no));
+    //     $booking->adhar_no = preg_replace('/\D/', '', $request->adhar_no);
+    //     XlRto::updateOrCreate(
+    //         ['bid' => $booking->id],
+    //         [
+    //             'rgn_no_type' => $request->registration_no_type,
+    //             'permit'      => $request->permit,
+    //             'body_type'   => $request->body_type,
+    //             'sale_type'   => $request->sale_type,
+    //         ]
+    //     );
+
+    //     $booking->consultant = $request->consultant;
+    //     $booking->dms_no = $request->dms_no;
+    //     $booking->dms_otf = $request->dms_otf;
+    //     $booking->b_cat = $request->b_cat;
+    //     $booking->dsa_id = $request->dsa_id;
+    //     $booking->buyer_type = $request->exchange;
+    //     // ================= Update Enquiry =================
+    //     $enquiry = null;
+
+    //     if (!empty($booking->enquiry_id)) {
+    //         $enquiry = \App\Models\CRM\Enquiry::find($booking->enquiry_id);
+    //     }
+
+    //     if (!$enquiry && !empty($booking->enquiry_no)) {
+    //         $enquiry = \App\Models\CRM\Enquiry::where('enquiry_no', $booking->enquiry_no)->first();
+    //     }
+
+    //     if ($enquiry) {
+    //         $enquiry->update([
+    //             'zipcode'  => $request->pincode,
+    //             'tehsil'   => $request->customer_tehsil,
+    //             'district' => $request->customer_district,
+    //         ]);
+    //     }
+    //     $booking->chassis_no = $request->chassis;
+    //     $booking->inv_no = $request->inv_no;
+    //     $booking->inv_date = $request->inv_date;
+    //     $finance->branch = $request->financier_branch;
+    //     $finance->loan_amount = $request->loan_amount;
+    //     $finance->file_charge = $request->deduction;
+    //     $finance->margin = $request->margin_money;
+    //     $finance->do_amount = $request->do_amount;
+
+    //     $finance = XFinance::firstOrNew([
+    //         'bid' => $booking->id
+    //     ]);
+
+    //     $finance->instrument_type = $request->vehicle_delivery_on;
+
+    //     $finance->save();
+    //     $booking->save();
+
+    //     return redirect()
+    //         ->back()
+    //         ->with('success', 'OTF form saved successfully.');
+    // }
     public function otfSave(Request $request, $id)
     {
+        \Log::info('🔥🔥🔥 OTF SAVE CALLED 🔥🔥🔥', [
+            'booking_id' => $id,
+            'method'     => $request->method(),
+            'user_id'    => backpack_auth()->id(),
+            'all_inputs' => $request->except(['_token', 'chassis_image']),
+        ]);
+
         $booking = Booking::findOrFail($id);
 
+        /*
+    |--------------------------------------------------------------------------
+    | 1. SAVE CHASSIS IMAGE
+    |--------------------------------------------------------------------------
+    */
         if ($request->hasFile('chassis_image')) {
             $booking->addMedia($request->file('chassis_image'))
                 ->toMediaCollection('chassis_image');
         }
 
-        // Get all data except files and tokens
-        $data = $request->except(['_token', '_method', 'chassis_image']);
+        /*
+    |--------------------------------------------------------------------------
+    | 2. GET EXISTING FINAL JSON
+    |--------------------------------------------------------------------------
+    */
+        $existingFinalData = [];
 
-        $data['dsa_location'] = $request->dsa_location;
+        if (!empty($booking->final_data)) {
+            $decoded = json_decode($booking->final_data, true);
 
-        // Save ALL fields including price and discount data
-        $booking->final_data = json_encode($data);
-        $booking->gstn = strtoupper(trim($request->gstn));
-        $booking->pan_no = strtoupper(trim($request->pan_no));
-        $booking->adhar_no = preg_replace('/\D/', '', $request->adhar_no);
-        XlRto::updateOrCreate(
-            ['bid' => $booking->id],
-            [
-                'rgn_no_type' => $request->registration_no_type,
-                'permit'      => $request->permit,
-                'body_type'   => $request->body_type,
-                'sale_type'   => $request->sale_type,
-            ]
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $existingFinalData = $decoded;
+            }
+        }
+
+        /*
+    |--------------------------------------------------------------------------
+    | 3. GET QUOTATION DATA
+    |--------------------------------------------------------------------------
+    | Quotation data will act as initial/default data.
+    |--------------------------------------------------------------------------
+    */
+        $quotationData = [];
+
+        if (!empty($booking->quotation_id)) {
+
+            $quotation = Quotation::find($booking->quotation_id);
+
+            if ($quotation && !empty($quotation->proposed_data)) {
+
+                if (is_array($quotation->proposed_data)) {
+                    $quotationData = $quotation->proposed_data;
+                } elseif (is_string($quotation->proposed_data)) {
+
+                    $decodedQuotation = json_decode(
+                        $quotation->proposed_data,
+                        true
+                    );
+
+                    if (
+                        json_last_error() === JSON_ERROR_NONE &&
+                        is_array($decodedQuotation)
+                    ) {
+                        $quotationData = $decodedQuotation;
+                    }
+                }
+            }
+        }
+
+        /*
+    |--------------------------------------------------------------------------
+    | 4. GET CURRENT FORM DATA
+    |--------------------------------------------------------------------------
+    */
+        $formData = $request->except([
+            '_token',
+            '_method',
+            'chassis_image',
+        ]);
+
+        /*
+    |--------------------------------------------------------------------------
+    | 5. CONVERT REQUEST DATA TO NORMAL ARRAY
+    |--------------------------------------------------------------------------
+    */
+        $formData = collect($formData)->map(function ($value) {
+
+            // Laravel arrays remain arrays
+            if (is_array($value)) {
+                return array_values($value);
+            }
+
+            return $value;
+        })->toArray();
+
+        /*
+    |--------------------------------------------------------------------------
+    | 6. MERGE ALL DATA
+    |--------------------------------------------------------------------------
+    |
+    | Priority:
+    |
+    | Quotation Data
+    |      ↓
+    | Existing Saved OTF Data
+    |      ↓
+    | Current Form Data  <-- HIGHEST PRIORITY
+    |
+    |--------------------------------------------------------------------------
+    */
+
+        $finalJsonData = array_replace_recursive(
+            $quotationData,
+            $existingFinalData,
+            $formData
         );
 
-        $booking->consultant = $request->consultant;
-        $booking->dms_no = $request->dms_no;
-        $booking->dms_otf = $request->dms_otf;
-        $booking->b_cat = $request->b_cat;
-        $booking->dsa_id = $request->dsa_id;
-        $booking->buyer_type = $request->exchange;
-        // ================= Update Enquiry =================
+        /*
+    |--------------------------------------------------------------------------
+    | 7. IMPORTANT FIELDS
+    |--------------------------------------------------------------------------
+    | Make sure important price/detail fields are explicitly retained.
+    |--------------------------------------------------------------------------
+    */
+
+        $importantFields = [
+            'ex_showroom_price',
+            'insurance_amount',
+            'insurance_covers',
+            'policy_type',
+
+            'registration_type',
+            'registration_no_type',
+            'registration_category',
+
+            'accessories',
+            'accessories_amount',
+
+            'coating',
+            'coating_price',
+            'ceramic_discount',
+
+            'shield',
+            'shield_price',
+
+            'rsa',
+            'rsa_amount',
+
+            'charger_swapping',
+            'charger_swapping_amount',
+            'charger_swapping_discount',
+            'charger_swapping_discount_type',
+
+            'tcs',
+            'total_receivable',
+            'total_discount',
+            'net_receivable',
+
+            'cash_scheme_oem',
+            'csd_discount',
+            'fame_subsidy',
+
+            'corporate_discount',
+            'loyalty_bonus',
+
+            'exchange_bonus',
+            'green_bonus',
+            'welcome_bonus',
+        ];
+
+        foreach ($importantFields as $field) {
+
+            /*
+         * Agar request mein field nahi aayi because it was disabled,
+         * existing value ko preserve karo.
+         */
+            if (
+                !$request->has($field) &&
+                array_key_exists($field, $existingFinalData)
+            ) {
+                $finalJsonData[$field] = $existingFinalData[$field];
+            }
+
+            /*
+         * Agar existing mein bhi nahi hai but quotation mein hai,
+         * quotation value preserve karo.
+         */ elseif (
+                !$request->has($field) &&
+                !array_key_exists($field, $existingFinalData) &&
+                array_key_exists($field, $quotationData)
+            ) {
+                $finalJsonData[$field] = $quotationData[$field];
+            }
+        }
+
+        /*
+    |--------------------------------------------------------------------------
+    | 8. ACCESSORIES
+    |--------------------------------------------------------------------------
+    */
+        if ($request->has('accessories')) {
+
+            $accessories = $request->input('accessories');
+
+            if (is_array($accessories)) {
+
+                $accessories = array_values(
+                    array_filter(
+                        array_map('trim', $accessories),
+                        fn($value) => $value !== ''
+                    )
+                );
+
+                $finalJsonData['accessories'] = $accessories;
+            }
+        }
+
+        /*
+    |--------------------------------------------------------------------------
+    | 9. INSURANCE COVERS
+    |--------------------------------------------------------------------------
+    */
+        if ($request->has('insurance_covers')) {
+
+            $insuranceCovers = $request->input('insurance_covers');
+
+            if (is_array($insuranceCovers)) {
+                $finalJsonData['insurance_covers'] = array_values(
+                    $insuranceCovers
+                );
+            }
+        }
+
+        /*
+    |--------------------------------------------------------------------------
+    | 10. SAVE FINAL JSON
+    |--------------------------------------------------------------------------
+    */
+        $booking->final_data = json_encode(
+            $finalJsonData,
+            JSON_UNESCAPED_UNICODE |
+                JSON_UNESCAPED_SLASHES |
+                JSON_PRETTY_PRINT
+        );
+
+        /*
+    |--------------------------------------------------------------------------
+    | 11. UPDATE BOOKING MAIN FIELDS
+    |--------------------------------------------------------------------------
+    */
+
+        $booking->gstn = strtoupper(trim($request->gstn ?? $booking->gstn ?? ''));
+        $booking->pan_no = strtoupper(trim($request->pan_no ?? $booking->pan_no ?? ''));
+
+        $booking->adhar_no = preg_replace(
+            '/\D/',
+            '',
+            $request->adhar_no ?? $booking->adhar_no ?? ''
+        );
+
+        $booking->consultant = $request->consultant
+            ?? $booking->consultant;
+
+        $booking->dms_no = $request->dms_no
+            ?? $booking->dms_no;
+
+        $booking->dms_otf = $request->dms_otf
+            ?? $booking->dms_otf;
+
+        $booking->b_cat = $request->b_cat
+            ?? $booking->b_cat;
+
+        $booking->dsa_id = $request->dsa_id
+            ?? $booking->dsa_id;
+
+        $booking->buyer_type = $request->exchange
+            ?? $booking->buyer_type;
+
+        $booking->chassis_no = $request->chassis
+            ?? $booking->chassis_no;
+
+        $booking->inv_no = $request->inv_no
+            ?? $booking->inv_no;
+
+        $booking->inv_date = $request->inv_date
+            ?? $booking->inv_date;
+
+
+
+
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | 12. UPDATE ENQUIRY
+    |--------------------------------------------------------------------------
+    */
+
         $enquiry = null;
 
         if (!empty($booking->enquiry_id)) {
-            $enquiry = \App\Models\CRM\Enquiry::find($booking->enquiry_id);
+            $enquiry = \App\Models\CRM\Enquiry::find(
+                $booking->enquiry_id
+            );
         }
 
         if (!$enquiry && !empty($booking->enquiry_no)) {
-            $enquiry = \App\Models\CRM\Enquiry::where('enquiry_no', $booking->enquiry_no)->first();
+            $enquiry = \App\Models\CRM\Enquiry::where(
+                'enquiry_no',
+                $booking->enquiry_no
+            )->first();
         }
 
         if ($enquiry) {
+
             $enquiry->update([
-                'zipcode'  => $request->pincode,
-                'tehsil'   => $request->customer_tehsil,
-                'district' => $request->customer_district,
+                'zipcode' => $request->pincode
+                    ?? $enquiry->zipcode,
+
+                'tehsil' => $request->customer_tehsil
+                    ?? $enquiry->tehsil,
+
+                'district' => $request->customer_district
+                    ?? $enquiry->district,
             ]);
         }
-        $booking->chassis_no = $request->chassis;
-        $booking->inv_no = $request->inv_no;
-        $booking->inv_date = $request->inv_date;
-        $finance->branch = $request->financier_branch;
-        $finance->loan_amount = $request->loan_amount;
-        $finance->file_charge = $request->deduction;
-        $finance->margin = $request->margin_money;
-        $finance->do_amount = $request->do_amount;
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | 13. UPDATE RTO
+    |--------------------------------------------------------------------------
+    */
+
+        $rtoData = [
+            'rgn_no_type' => $request->registration_no_type
+                ?? $existingFinalData['registration_no_type']
+                ?? null,
+
+            'permit' => $request->permit
+                ?? $existingFinalData['permit']
+                ?? null,
+
+            'body_type' => $request->body_type
+                ?? $existingFinalData['body_type']
+                ?? null,
+
+            'sale_type' => $request->sale_type
+                ?? $existingFinalData['sale_type']
+                ?? null,
+
+            'registration_category' => $request->registration_category
+                ?? $existingFinalData['registration_category']
+                ?? null,
+
+            'in_house_rto' => $request->input(
+                'in_house_rto',
+                $existingFinalData['in_house_rto'] ?? 0
+            ),
+        ];
+
+        XlRto::updateOrCreate(
+            ['bid' => $booking->id],
+            $rtoData
+        );
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | 14. UPDATE FINANCE
+    |--------------------------------------------------------------------------
+    */
 
         $finance = XFinance::firstOrNew([
             'bid' => $booking->id
         ]);
 
-        $finance->instrument_type = $request->vehicle_delivery_on;
+
+        $finance->loan_amount = $request->loan_amount
+            ?? $finance->loan_amount;
+
+        $finance->file_charge = $request->file_charge
+            ?? $finance->file_charge;
+
+        $finance->margin = $request->margin_money
+            ?? $finance->margin;
+
+        $finance->subvention_amount = $request->financier_subvention
+            ?? $finance->subvention_amount;
+
+        $finance->instrument_type = $request->vehicle_delivery_on
+            ?? $finance->instrument_type;
+
+        $finance->instrument_ref_no = $request->do_number
+            ?? $finance->instrument_ref_no;
+
+        if (!$finance->exists) {
+            $finance->verification_status = 0;
+            $finance->case_status = 1;
+        }
+
+
+
 
         $finance->save();
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | 15. UPDATE INSURANCE
+    |--------------------------------------------------------------------------
+    */
+
+        if (
+            $request->has('policy_type') ||
+            $request->has('insurance_amount') ||
+            $request->has('policy_no') ||
+            $request->has('policy_date') ||
+            $request->has('insurance_company') ||
+            $request->has('insurance_source')
+        ) {
+
+            $insurance = XlInsurance::firstOrNew([
+                'bid' => $booking->id
+            ]);
+
+            $insurance->pol_type = $request->policy_type
+                ?? $insurance->pol_type;
+
+            $insurance->pol_no = $request->policy_no
+                ?? $insurance->pol_no;
+
+            $insurance->pol_date = $request->policy_date
+                ?? $insurance->pol_date;
+
+            $insurance->insurer = $request->insurance_company
+                ?? $insurance->insurer;
+
+            $insurance->source = $request->insurance_source
+                ?? $insurance->source;
+
+            $insurance->save();
+        }
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | 16. ACCESSORIES MAIN COLUMN
+    |--------------------------------------------------------------------------
+    */
+
+        if ($request->has('accessories')) {
+
+            $accessories = $request->input('accessories');
+
+            if (is_array($accessories)) {
+
+                $booking->accessories = implode(
+                    ',',
+                    array_filter(
+                        array_map('trim', $accessories),
+                        fn($value) => $value !== ''
+                    )
+                );
+            }
+        }
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | 17. SAVE BOOKING
+    |--------------------------------------------------------------------------
+    */
+
         $booking->save();
 
+
+        /*
+    |--------------------------------------------------------------------------
+    | 18. DEBUG FINAL JSON
+    |--------------------------------------------------------------------------
+    */
+
+        \Log::info('✅ OTF FINAL JSON SAVED', [
+            'booking_id' => $booking->id,
+            'final_data' => $finalJsonData,
+        ]);
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | 19. ADD HISTORY
+    |--------------------------------------------------------------------------
+    */
+
+        $booking->addHistory(
+            'commented',
+            'OTF Form Saved',
+            'OTF form data saved successfully',
+            [
+                'module' => 'OTF Form',
+                'saved_fields' => array_keys($finalJsonData),
+            ],
+            null,
+            backpack_user()
+        );
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | 20. REDIRECT
+    |--------------------------------------------------------------------------
+    */
+
         return redirect()
-            ->back()
+            ->to(backpack_url('booking/' . $booking->id . '/show'))
             ->with('success', 'OTF form saved successfully.');
     }
 }
