@@ -44,13 +44,22 @@ class EnquiryCrudController extends CrudController
         $this->crud->setListView('admin.enquiry.list');
 
         $filters = [
-            'missed_fup', 'today_fup', 'birthday', 'anniversary', 'exchange',
-            'pending_eval', 'delayed', 'wrong_assign', 'finance', 'stage_mismatch', 'lost_verif'
+            'missed_fup',
+            'today_fup',
+            'birthday',
+            'anniversary',
+            'exchange',
+            'pending_eval',
+            'delayed',
+            'wrong_assign',
+            'finance',
+            'stage_mismatch',
+            'lost_verif'
         ];
 
         $highlightCounts = [];
         foreach ($filters as $filter) {
-            $query = \App\Models\CRM\Enquiry::query(); 
+            $query = \App\Models\CRM\Enquiry::query();
             \App\Services\OrgService::applyHighlightFilter($query, $filter);
             $highlightCounts[$filter] = $query->count();
         }
@@ -79,6 +88,7 @@ class EnquiryCrudController extends CrudController
             'reference' => Enquiry::reference(),
             'virtual' => Enquiry::virtual(),
             'whatsapp' => Enquiry::whatsapp(),
+            'hyperlocal' => Enquiry::hyperlocal(),
             'assigned_long' => Enquiry::assignedLong(),
             'unassigned_long' => Enquiry::unassignedLong(),
             'assigned_quick' => Enquiry::assignedQuick(),
@@ -102,12 +112,71 @@ class EnquiryCrudController extends CrudController
 
         $mapType = in_array($listType, ['assigned_long', 'unassigned_long']) ? 'long' : (in_array($listType, ['assigned_quick', 'unassigned_quick']) ? 'quick' : (in_array($listType, ['reference', 'virtual', 'whatsapp', 'exchange', 'scrappage', 'exchange_not_interested', 'finance', 'finance_not_interested']) ? $listType : 'all'));
 
-        $lpMap = collect(OrgService::keywordValueByCode('LIKELY_PURCHASE_DATE'))->pluck('value', 'code')->toArray();
-        $fuelMap = collect(OrgService::getKeyValuesByCode('FUEL_TYPE'))->pluck('value', 'id')->toArray();
-        $finMap = collect(\App\Models\Module\Booking\XlFinancier::select('id', 'name')->get())->pluck('name', 'id')->toArray();
+        $lpMap = collect(OrgService::keywordValueByCode('LIKELY_PURCHASE_DATE'))
+            ->pluck('value', 'code')
+            ->toArray();
+
+        $fuelMap = collect(OrgService::getKeyValuesByCode('FUEL_TYPE'))
+            ->pluck('value', 'id')
+            ->toArray();
+
+        $finMap = collect(\App\Models\Module\Booking\XlFinancier::select('id', 'name')->get())
+            ->pluck('name', 'id')
+            ->toArray();
+
+
+
+        $scUsers = OrgService::getUsers(
+            'ALL',
+            'ALL',
+            'ALL',
+            'ALL',
+            'ALL',
+            'ALL',
+            'ALL',
+            'ALL',
+            'ALL',
+            'ALL',
+            null,
+            true
+        );
+
+        $scByCode = collect($scUsers)
+            ->filter(
+                fn($user) =>
+                !empty($user['employee_code']) ||
+                    !empty($user['person_code'])
+            )
+            ->flatMap(function ($user) {
+                $result = [];
+
+                if (!empty($user['employee_code'])) {
+                    $result[$user['employee_code']] = $user;
+                }
+
+                if (!empty($user['person_code'])) {
+                    $result[$user['person_code']] = $user;
+                }
+
+                return $result;
+            });
+
+        $scByMileId = collect($scUsers)
+            ->filter(fn($user) => !empty($user['mile_id']))
+            ->keyBy('mile_id');
 
         $gridData = $query->skip($startRow)->take($limit)->get()
-            ->map(fn($e, $i) => $this->mapData($e, $startRow + $i, $mapType, $lpMap, $fuelMap, $finMap))->all();
+            ->map(fn($e, $i) => $this->mapData(
+                $e,
+                $startRow + $i,
+                $mapType,
+                $lpMap,
+                $fuelMap,
+                $finMap,
+                $scByCode,
+                $scByMileId
+            ))
+            ->all();
 
         return response()->json(['rows' => $gridData, 'lastRow' => $total]);
     }
@@ -123,6 +192,7 @@ class EnquiryCrudController extends CrudController
             'reference' => Enquiry::reference(),
             'virtual' => Enquiry::virtual(),
             'whatsapp' => Enquiry::whatsapp(),
+            'hyperlocal' => Enquiry::hyperlocal(),
             'assigned_long' => Enquiry::assignedLong(),
             'unassigned_long' => Enquiry::unassignedLong(),
             'assigned_quick' => Enquiry::assignedQuick(),
@@ -153,16 +223,81 @@ class EnquiryCrudController extends CrudController
         $lpMap = collect(OrgService::keywordValueByCode('LIKELY_PURCHASE_DATE'))->pluck('value', 'code')->toArray();
         $fuelMap = collect(OrgService::getKeyValuesByCode('FUEL_TYPE'))->pluck('value', 'id')->toArray();
         $finMap = collect(\App\Models\Module\Booking\XlFinancier::select('id', 'name')->get())->pluck('name', 'id')->toArray();
+        $scUsers = OrgService::getUsers(
+            'ALL',
+            'ALL',
+            'ALL',
+            'ALL',
+            'ALL',
+            'ALL',
+            'ALL',
+            'ALL',
+            'ALL',
+            'ALL',
+            null,
+            true
+        );
 
-        return response()->streamDownload(function () use ($query, $columns, $mapType, $lpMap, $fuelMap, $finMap) {
+        $scByCode = collect($scUsers)
+            ->filter(
+                fn($user) =>
+                !empty($user['employee_code']) ||
+                    !empty($user['person_code'])
+            )
+            ->flatMap(function ($user) {
+                $result = [];
+
+                if (!empty($user['employee_code'])) {
+                    $result[$user['employee_code']] = $user;
+                }
+
+                if (!empty($user['person_code'])) {
+                    $result[$user['person_code']] = $user;
+                }
+
+                return $result;
+            });
+
+        $scByMileId = collect($scUsers)
+            ->filter(fn($user) => !empty($user['mile_id']))
+            ->keyBy('mile_id');
+        return response()->streamDownload(function () use (
+            $query,
+            $columns,
+            $mapType,
+            $lpMap,
+            $fuelMap,
+            $finMap,
+            $scByCode,
+            $scByMileId
+        ) {
             $out = fopen('php://output', 'w');
 
             fputcsv($out, array_merge(['S.No.'], array_map(fn($c) => $c['headerName'], $columns)));
 
             $serial = 0;
-            $query->chunk(500, function ($chunk) use ($out, &$serial, $columns, $mapType, $lpMap, $fuelMap, $finMap) {
+            $query->chunk(500, function ($chunk) use (
+                $out,
+                &$serial,
+                $columns,
+                $mapType,
+                $lpMap,
+                $fuelMap,
+                $finMap,
+                $scByCode,
+                $scByMileId
+            ) {
                 foreach ($chunk as $e) {
-                    $rowData = $this->mapData($e, $serial, $mapType, $lpMap, $fuelMap, $finMap);
+                    $rowData = $this->mapData(
+                        $e,
+                        $serial,
+                        $mapType,
+                        $lpMap,
+                        $fuelMap,
+                        $finMap,
+                        $scByCode,
+                        $scByMileId
+                    );
                     $serial++;
                     fputcsv($out, array_merge(
                         [$serial],
@@ -183,6 +318,29 @@ class EnquiryCrudController extends CrudController
     {
         return $this->buildGrid(Enquiry::virtual(), 'admin.enquiry.virtual-number-enquiry', 'Virtual Number Enquiries', 'virtual');
     }
+
+    /**
+     * Display Hyperlocal Enquiries
+     * 
+     * @return \Illuminate\View\View
+     */
+    public function hyperlocalList()
+    {
+        $this->crud->hasAccessOrFail('list');
+
+        $query = Enquiry::hyperlocal();
+
+        // Get counts for the badge
+        $count = (clone $query)->count();
+
+        return $this->buildGrid(
+            $query,
+            'admin.enquiry.hyperlocal-enquiry',
+            'Hyperlocal Enquiries (' . $count . ')',
+            'hyperlocal'
+        );
+    }
+
     public function whatsappCampaignList()
     {
         return $this->buildGrid(Enquiry::whatsapp(), 'admin.enquiry.whatsapp-campaign-enquiry', 'WhatsApp Campaign Enquiries', 'whatsapp');
@@ -230,9 +388,59 @@ class EnquiryCrudController extends CrudController
     {
         $this->crud->setListView($view);
 
-        $lpMap = collect(OrgService::keywordValueByCode('LIKELY_PURCHASE_DATE'))->pluck('value', 'code')->toArray();
-        $fuelMap = collect(OrgService::getKeyValuesByCode('FUEL_TYPE'))->pluck('value', 'id')->toArray();
-        $finMap = collect(\App\Models\Module\Booking\XlFinancier::select('id', 'name')->get())->pluck('name', 'id')->toArray();
+        $lpMap = collect(OrgService::keywordValueByCode('LIKELY_PURCHASE_DATE'))
+            ->pluck('value', 'code')
+            ->toArray();
+
+        $fuelMap = collect(OrgService::getKeyValuesByCode('FUEL_TYPE'))
+            ->pluck('value', 'id')
+            ->toArray();
+
+        $finMap = collect(
+            \App\Models\Module\Booking\XlFinancier::select('id', 'name')->get()
+        )->pluck('name', 'id')->toArray();
+
+        // Get Sales Consultant users from OrgService
+        $scUsers = OrgService::getUsers(
+            'ALL',
+            'ALL',
+            'ALL',
+            'ALL',
+            'ALL',
+            'ALL',
+            'ALL',
+            'ALL',
+            'ALL',
+            'ALL',
+            null,
+            true
+        );
+
+        // Lookup by SC code
+        $scByCode = collect($scUsers)
+            ->filter(
+                fn($user) =>
+                !empty($user['employee_code']) ||
+                    !empty($user['person_code'])
+            )
+            ->flatMap(function ($user) {
+                $result = [];
+
+                if (!empty($user['employee_code'])) {
+                    $result[$user['employee_code']] = $user;
+                }
+
+                if (!empty($user['person_code'])) {
+                    $result[$user['person_code']] = $user;
+                }
+
+                return $result;
+            });
+
+        // Lookup by Mile ID
+        $scByMileId = collect($scUsers)
+            ->filter(fn($user) => !empty($user['mile_id']))
+            ->keyBy('mile_id');
 
         $enquiries = $query->with(['segment', 'model', 'variant', 'color', 'campaign'])
             ->orderByDesc('created_at')
@@ -244,13 +452,59 @@ class EnquiryCrudController extends CrudController
             'segments' => OrgService::segments(),
             'gridConfig' => [
                 'columns' => $this->getColumns($type),
-                'data' => $enquiries->map(fn($e, $i) => $this->mapData($e, $i, $type, $lpMap, $fuelMap, $finMap))->values()
+
+                'data' => $enquiries->map(fn($e, $i) => $this->mapData(
+                    $e,
+                    $i,
+                    $type,
+                    $lpMap,
+                    $fuelMap,
+                    $finMap,
+                    $scByCode,
+                    $scByMileId
+                ))->values()
             ]
         ]);
     }
 
-    private function mapData($e, $i, $type, $lpMap = [], $fuelMap = [], $finMap = [])
+    private function getAssignedSc($code, $mileId, $scByCode, $scByMileId): ?array
     {
+        $assignedSc = null;
+
+        if (!empty($code) && $scByCode) {
+            $assignedSc = $scByCode->get($code);
+        }
+
+        if (!$assignedSc && !empty($mileId) && $scByMileId) {
+            $assignedSc = $scByMileId->get($mileId);
+        }
+
+        return $assignedSc;
+    }
+
+    private function mapData(
+        $e,
+        $i,
+        $type,
+        $lpMap = [],
+        $fuelMap = [],
+        $finMap = [],
+        $scByCode = null,
+        $scByMileId = null
+    ) {
+        $x8AssignedSc = $this->getAssignedSc(
+            $e->x8_sc_code ?? null,
+            $e->x8_sc_mile_id ?? null,
+            $scByCode,
+            $scByMileId
+        );
+
+        $oemAssignedSc = $this->getAssignedSc(
+            $e->sc_code ?? null,
+            $e->sc_mile_id ?? null,
+            $scByCode,
+            $scByMileId
+        );
         $c = function ($d, $f) {
             try {
                 return (!empty(trim((string) $d)) && !str_starts_with((string) $d, '0000'))
@@ -263,12 +517,72 @@ class EnquiryCrudController extends CrudController
 
         $editUrl = backpack_url("enquiry/{$e->id}/edit");
         $quotUrl = backpack_url("quotation-form/create?id={$e->id}");
+        $bookUrl = backpack_url("booking/create?enquiry_id={$e->id}");
 
+        // ============================================================
+        // HYPERLOCAL SPECIFIC MAPPING - RETURN EARLY
+        // ============================================================
+        if ($type === 'hyperlocal') {
+            $actionBtns = '
+            <a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a>
+            <a href="' . $quotUrl . '" class="btn btn-sm btn-success">Quote</a>
+            <a href="' . $bookUrl . '" class="btn btn-sm btn-warning" title="Convert to Booking">Process</a>
+        ';
+
+            return [
+                'serial_no' => $i + 1,
+                'lead_id' => $e->lead_id ?? $e->id ?? '—',
+                'name' => trim(($e->first_name ?? '') . ' ' . ($e->last_name ?? '')) ?: ($e->name ?? '—'),
+                'email' => $e->email ?? '—',
+                'phone_number' => $e->mobile ?? $e->phone_number ?? '—',
+                'call_start_time' => $c($e->call_start_time ?? $e->created_at, 'd-M-Y H:i:s'),
+                'call_end_time' => $c($e->call_end_time, 'd-M-Y H:i:s'),
+                'call_recording_url' => $e->call_recording_url ?? '—',
+                'call_duration' => $e->call_duration ?? $e->call_duration_in_seconds ?? '—',
+                'call_status' => $e->call_status ?? '—',
+                'call_type' => $e->call_type ?? '—',
+                'notes' => $e->notes ?? $e->remarks ?? '—',
+                'lead_status' => $e->lead_status ?? $e->status ?? '—',
+                'multi_visit' => $e->multi_visit ?? '—',
+                'lead_intent' => $e->lead_intent ?? '—',
+                'lead_type' => $e->lead_type ?? '—',
+                'lead_for' => $e->lead_for ?? '—',
+                'medium' => $e->medium ?? '—',
+                'source' => $e->source_code ?? $e->source_name ?? '—',
+                'client_crm_status' => $e->client_crm_status ?? '—',
+                'client_crm_message' => $e->client_crm_message ?? '—',
+                'enquiry_status' => $e->enquiry_status ?? $e->status ?? '—',
+                'enquiry_date' => $c($e->enquiry_date ?? $e->created_at, 'd-M-Y'),
+                'model' => $e->model_name ?? $e->model ?? '—',
+                'dealer_code' => $e->dealer_code ?? $e->dealer_branch ?? '—',
+                'dms_enquiry_stage' => $e->stage ?? '—',
+                'cre_enquiry_stage' => '—',
+                'cre_next_fup_date' => '—',
+                'cre_next_fup_time' => '—',
+                'cre_next_fup_remarks' => '—',
+                'x8_quotation_no' => $e->x8_quotation_no ?? $e->quotation_no ?? '—',
+                'x8_booking_no' => $e->x8_booking_no ?? $e->booking_no ?? '—',
+                'x8_booking_date' => $c($e->x8_booking_date ?? $e->booking_date, 'd-M-Y'),
+                'oem_booking_no' => $e->oem_booking_no ?? '—',
+                'oem_booking_date' => $c($e->oem_booking_date, 'd-M-Y'),
+                'oem_otf_no' => $e->oem_otf_no ?? '—',
+                'oem_test_drive_no' => $e->oem_test_drive_no ?? $e->test_drive_no ?? '—',
+                'territory' => $e->territory ?? '—',
+                'fup_count' => $e->fup_count ?? '—',
+                'td_date' => $c($e->td_date, 'd-M-Y'),
+                'lost_reason' => $e->lost_reason ?? '—',
+                'followup_status' => $e->fup_status ?? '—',
+                'action' => '<div class="d-flex justify-content-center gap-2">' . $actionBtns . '</div>',
+            ];
+        }
+
+        // ============================================================
+        // ACTION BUTTONS FOR OTHER TYPES
+        // ============================================================
         $actionBtns = '<a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a>';
 
         if ($type === 'all') {
             $actionBtns .= '<a href="' . $quotUrl . '" class="btn btn-success btn-sm">Quote</a>';
-            $bookUrl = backpack_url("booking/create?enquiry_id={$e->id}");
             $actionBtns .= '<a href="' . $bookUrl . '" class="btn btn-warning btn-sm" title="Convert to Booking">Process</a>';
         }
 
@@ -276,16 +590,25 @@ class EnquiryCrudController extends CrudController
             $exchUrl = backpack_url("exchange/enquiry/{$e->id}/edit");
             $actionBtns = '<a href="' . $exchUrl . '" class="btn btn-sm btn-primary">Process</a>';
         }
-        
+
         if (in_array($type, ['finance', 'finance_not_interested'])) {
             $finUrl = backpack_url("finance/enquiry/{$e->id}/edit");
             $actionBtns = '<a href="' . $finUrl . '" class="btn btn-sm btn-primary">Process</a>';
         }
 
+        if (in_array($type, ['all', 'reference', 'virtual', 'whatsapp', 'long', 'quick'])) {
+            $actionBtns = '<a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a>';
+            $actionBtns .= '<a href="' . $quotUrl . '" class="btn btn-success btn-sm">Quote</a>';
+            $actionBtns .= '<a href="' . $bookUrl . '" class="btn btn-warning btn-sm" title="Convert to Booking">Process</a>';
+        }
+
+        // ============================================================
+        // BASE ROW FOR OTHER TYPES
+        // ============================================================
         $row = [
             'serial_no' => $i + 1,
-            'x8_enquiry_no' => 'XENQ-' . $e->id, 
-            'x8_enquiry_date' => $c($e->created_at, 'd-M-Y H:i'), 
+            'x8_enquiry_no' => 'XENQ-' . $e->id,
+            'x8_enquiry_date' => $c($e->created_at, 'd-M-Y H:i'),
             'x8_enquiry_assign_date' => $c($e->x8_enquiry_assign_date ?? $e->enq_assign_date, 'd-M-Y'),
             'oem_enquiry_no' => $e->x8_enquiry_no ?? $e->enquiry_no ?? $e->oem_enquiry_no ?? '—',
             'oem_enquiry_date' => $c($e->x8_enquiry_date ?? $e->enquiry_date ?? $e->oem_enquiry_date, 'd-M-Y'),
@@ -298,9 +621,9 @@ class EnquiryCrudController extends CrudController
             'alternate_mobile' => $e->alternate_mobile ?? '—',
             'dms_enquiry_stage' => $e->stage ?? '—',
             'cre_enquiry_stage' => '—',
-            'cre_next_fup_date' => '—', 
-            'cre_next_fup_time' => '—', 
-            'cre_next_fup_remarks' => '—', 
+            'cre_next_fup_date' => '—',
+            'cre_next_fup_time' => '—',
+            'cre_next_fup_remarks' => '—',
             'x8_quotation_no' => $e->x8_quotation_no ?? $e->quotation_no ?? '—',
             'x8_booking_no' => $e->x8_booking_no ?? $e->booking_no ?? '—',
             'x8_booking_date' => $c($e->x8_booking_date ?? $e->booking_date, 'd-M-Y'),
@@ -312,10 +635,13 @@ class EnquiryCrudController extends CrudController
             'fup_count' => $e->fup_count ?? '—',
             'td_date' => $c($e->td_date, 'd-M-Y'),
             'lost_reason' => $e->lost_reason ?? '—',
-            'followup_status' => $e->fup_status ?? '—', 
+            'followup_status' => $e->fup_status ?? '—',
             'action' => '<div class="d-flex justify-content-center gap-2">' . $actionBtns . '</div>',
         ];
 
+        // ============================================================
+        // TYPE-SPECIFIC ADDITIONS
+        // ============================================================
         if ($type === 'reference') {
             $row['referee_name'] = $e->referee_name ?? '—';
             $row['referee_phone'] = $e->referee_phone ?? '—';
@@ -323,7 +649,7 @@ class EnquiryCrudController extends CrudController
         } elseif ($type === 'virtual') {
             $row['virtual_no'] = $e->virtual_no ?? '—';
             $row['call_date_and_time'] = $c($e->virtual_call_date, 'd-M-Y H:i');
-            $row['call_date'] = $c($e->virtual_call_date, 'd-M-Y'); 
+            $row['call_date'] = $c($e->virtual_call_date, 'd-M-Y');
             $row['call_nature'] = $e->call_nature ?? '—';
             $row['remarks'] = $e->remarks ?? '—';
         } elseif ($type === 'whatsapp') {
@@ -356,7 +682,35 @@ class EnquiryCrudController extends CrudController
                 'tehsil' => $e->tehsil ?? '—',
                 'district' => $e->district ?? '—',
                 'city' => $e->city ?? '—',
-                'sc_code' => $e->sc_code ? (OrgService::getUserNameByCode($e->sc_code, null, $e->sc_code)) : '—',
+                'x8_sc_code' => $e->x8_sc_code ?? '—',
+
+                'x8_sc_mile_id' => $e->x8_sc_mile_id
+                    ?? $x8AssignedSc['mile_id']
+                    ?? '—',
+
+                'x8_sc_branch' => !empty($x8AssignedSc['primary_branch_code'])
+                    ? OrgService::branchName($x8AssignedSc['primary_branch_code'])
+                    : '—',
+
+                'x8_sc_location' => !empty($x8AssignedSc['primary_loc_code'])
+                    ? OrgService::locationName($x8AssignedSc['primary_loc_code'])
+                    : '—',
+
+                'sc_code' => $e->sc_code
+                    ? OrgService::getUserNameByCode($e->sc_code, null, $e->sc_code)
+                    : '—',
+
+                'sc_mile_id' => $e->sc_mile_id
+                    ?? $oemAssignedSc['mile_id']
+                    ?? '—',
+
+                'oem_sc_branch' => !empty($oemAssignedSc['primary_branch_code'])
+                    ? OrgService::branchName($oemAssignedSc['primary_branch_code'])
+                    : '—',
+
+                'oem_sc_location' => !empty($oemAssignedSc['primary_loc_code'])
+                    ? OrgService::locationName($oemAssignedSc['primary_loc_code'])
+                    : '—',
                 'dealer_branch' => $e->dealer_branch ?? '—',
                 'dealer_location' => $e->dealer_location ?? '—',
                 'followup_type' => $e->followup_type ? (OrgService::getKeyValueByCode($e->followup_type)?->value ?? $e->followup_type) : '—',
@@ -388,7 +742,7 @@ class EnquiryCrudController extends CrudController
                 'price_gap' => ($e->expected_price ?? 0) - ($e->offered_price ?? 0) - ($e->exchange_bonus ?? 0),
                 'fin_mode' => $e->fin_mode ?? '—',
                 'financier_name' => $finMap[$e->financier] ?? $e->financier ?? '—',
-                'loan_status' => $e->loan_status ?? '—', 
+                'loan_status' => $e->loan_status ?? '—',
             ];
         }
 
@@ -398,20 +752,20 @@ class EnquiryCrudController extends CrudController
     private function getColumns($type)
     {
         $commonEnd = [
-            ['field' => 'dms_enquiry_stage', 'headerName' => 'DMS Stage'],
-            ['field' => 'cre_enquiry_stage', 'headerName' => 'CRE Stage'],
-            ['field' => 'followup_status', 'headerName' => 'FOLLOW UP STATUS'],
-            ['field' => 'cre_next_fup_date', 'headerName' => 'Next FUP Date'],
-            ['field' => 'cre_next_fup_time', 'headerName' => 'Next FUP Time'],
-            ['field' => 'cre_next_fup_remarks', 'headerName' => 'FUP Remarks'],
-            ['field' => 'x8_quotation_no', 'headerName' => 'X8 Quotation No.'],
-            ['field' => 'x8_booking_no', 'headerName' => 'X8 Booking No.'],
-            ['field' => 'x8_booking_date', 'headerName' => 'X8 Booking Date'],
-            ['field' => 'oem_booking_no', 'headerName' => 'OEM Booking No.'],
-            ['field' => 'oem_booking_date', 'headerName' => 'OEM Booking Date'],
-            ['field' => 'oem_otf_no', 'headerName' => 'OEM OTF No.'],
-            ['field' => 'oem_test_drive_no', 'headerName' => 'OEM Test Drive No.'],
-            [
+            // ['field' => 'dms_enquiry_stage', 'headerName' => 'DMS Stage'],
+            // ['field' => 'cre_enquiry_stage', 'headerName' => 'CRE Stage'],
+            // ['field' => 'followup_status', 'headerName' => 'FOLLOW UP STATUS'],
+            // ['field' => 'cre_next_fup_date', 'headerName' => 'Next FUP Date'],
+            // ['field' => 'cre_next_fup_time', 'headerName' => 'Next FUP Time'],
+            // ['field' => 'cre_next_fup_remarks', 'headerName' => 'FUP Remarks'],
+            // ['field' => 'x8_quotation_no', 'headerName' => 'X8 Quotation No.'],
+            // ['field' => 'x8_booking_no', 'headerName' => 'X8 Booking No.'],
+            // ['field' => 'x8_booking_date', 'headerName' => 'X8 Booking Date'],
+            // ['field' => 'oem_booking_no', 'headerName' => 'OEM Booking No.'],
+            // ['field' => 'oem_booking_date', 'headerName' => 'OEM Booking Date'],
+            // ['field' => 'oem_otf_no', 'headerName' => 'OEM OTF No.'],
+            // ['field' => 'oem_test_drive_no', 'headerName' => 'OEM Test Drive No.'],
+            
                 'field'         => 'action',
                 'headerName'    => 'Action',
                 'width'         => 220,
@@ -420,7 +774,7 @@ class EnquiryCrudController extends CrudController
                 'sortable'      => false,
                 'filter'        => false,
                 'cellClass'     => 'text-center p-0'
-            ]
+            
         ];
 
         if ($type === 'reference')
@@ -456,6 +810,36 @@ class EnquiryCrudController extends CrudController
                 ['field' => 'remarks', 'headerName' => 'Remarks'],
             ], $commonEnd);
 
+        if ($type === 'hyperlocal') {
+            return array_merge([
+                ['field' => 'serial_no', 'headerName' => 'S.No.', 'width' => 80, 'pinned' => 'left'],
+                ['field' => 'lead_id', 'headerName' => 'Leads-ID', 'width' => 120],
+                ['field' => 'name', 'headerName' => 'Name', 'width' => 180],
+                ['field' => 'email', 'headerName' => 'Email', 'width' => 200],
+                ['field' => 'phone_number', 'headerName' => 'Phone-Number', 'width' => 150],
+                ['field' => 'call_start_time', 'headerName' => 'Call-Start-Time', 'width' => 180, 'type' => 'date'],
+                ['field' => 'call_end_time', 'headerName' => 'Call-End-Time', 'width' => 180, 'type' => 'date'],
+                ['field' => 'call_recording_url', 'headerName' => 'Call-Recording-URL', 'width' => 250],
+                ['field' => 'call_duration', 'headerName' => 'Call-Duration-in-Seconds', 'width' => 180, 'type' => 'number'],
+                ['field' => 'call_status', 'headerName' => 'Call-Status', 'width' => 150],
+                ['field' => 'call_type', 'headerName' => 'Call-Type', 'width' => 150],
+                ['field' => 'notes', 'headerName' => 'Notes', 'width' => 250],
+                ['field' => 'lead_status', 'headerName' => 'Lead-Status', 'width' => 150],
+                ['field' => 'multi_visit', 'headerName' => 'Multi-Visit', 'width' => 130],
+                ['field' => 'lead_intent', 'headerName' => 'Lead-Intent', 'width' => 150],
+                ['field' => 'lead_type', 'headerName' => 'Lead-Type', 'width' => 150],
+                ['field' => 'lead_for', 'headerName' => 'Lead-For', 'width' => 150],
+                ['field' => 'medium', 'headerName' => 'Medium', 'width' => 150],
+                ['field' => 'source', 'headerName' => 'Source', 'width' => 150],
+                ['field' => 'client_crm_status', 'headerName' => 'Client-CRM-Status', 'width' => 180],
+                ['field' => 'client_crm_message', 'headerName' => 'Client-CRM-Message', 'width' => 250],
+                ['field' => 'enquiry_status', 'headerName' => 'Enquiry-Status', 'width' => 150],
+                ['field' => 'enquiry_date', 'headerName' => 'Enquiry-Date', 'width' => 150, 'type' => 'date'],
+                ['field' => 'model', 'headerName' => 'Model', 'width' => 180],
+                ['field' => 'dealer_code', 'headerName' => 'Dealer-Code', 'width' => 150],
+            ], $commonEnd);
+        }
+
         if ($type === 'whatsapp')
             return array_merge([
                 ['field' => 'serial_no', 'headerName' => 'S.No.'],
@@ -479,33 +863,58 @@ class EnquiryCrudController extends CrudController
             ['field' => 'x8_enquiry_assign_date', 'headerName' => 'X8 Enquiry Assign Date'],
             ['field' => 'oem_enquiry_no', 'headerName' => 'OEM Enquiry No.'],
             ['field' => 'oem_enquiry_date', 'headerName' => 'OEM Enquiry Date'],
-            ['field' => 'oem_enquiry_assign_date', 'headerName' => 'OEM Enquiry Assign Date'], 
+            ['field' => 'oem_enquiry_assign_date', 'headerName' => 'OEM Enquiry Assign Date'],
+            ['field' => 'oem_quick_enquiry_no', 'headerName' => 'OEM Quick Enquiry No.'],
+            ['field' => 'oem_quick_enquiry_date', 'headerName' => 'OEM Quick Enquiry Date'],
+            ['field' => 'oem_quick_enquiry_assign_date', 'headerName' => 'OEM Quick Enquiry Assign Date'],
+            ['field' => 'x8_enq_source', 'headerName' => 'X8 Enquiry Source'],
+            ['field' => 'enquiry_type', 'headerName' => 'OEM Enquiry Type'],
+            ['field' => 'source_code', 'headerName' => 'OEM Enquiry Source'],
+            ['field' => 'sub_source', 'headerName' => 'OEM Enquiry Sub Source'],
+            ['field' => 'likely_purchase_date', 'headerName' => 'Likely Purchase In Days'],
+            ['field' => 'quotation_no', 'headerName' => 'X8 Quotation No.'],
+            ['field' => 'quotation_date', 'headerName' => 'X8 Quotation Date'],
+            ['field' => 'oem_booking_no', 'headerName' => 'OEM Booking No.'],
+            ['field' => 'oem_booking_date', 'headerName' => 'OEM Booking Date'],
+            ['field' => 'oem_otf_no', 'headerName' => 'OEM OTF No.'],
+            ['field' => 'x8_booking_no', 'headerName' => 'X8 Booking No.'],
+            ['field' => 'x8_booking_date', 'headerName' => 'X8 Booking Date'],
         ];
 
-        if ($type === 'all' || in_array($type, ['exchange', 'scrappage', 'exchange_not_interested', 'finance', 'finance_not_interested'])) {
-            $baseCols = array_merge($baseCols, [
-                ['field' => 'oem_quick_enquiry_no', 'headerName' => 'OEM Quick Enquiry No.'],
-                ['field' => 'oem_quick_enquiry_date', 'headerName' => 'OEM Quick Enquiry Date'],
-                ['field' => 'oem_quick_enquiry_assign_date', 'headerName' => 'OEM Quick Enquiry Assign Date'],
-            ]);
-        } elseif ($type === 'quick') {
-            $baseCols = array_merge($baseCols, [
-                ['field' => 'oem_quick_enquiry_no', 'headerName' => 'OEM Quick Enquiry No.'],
-                ['field' => 'oem_quick_enquiry_date', 'headerName' => 'OEM Quick Enquiry Date'],
-            ]);
-        } elseif ($type === 'long') {
-            $baseCols = array_merge($baseCols, [
-                ['field' => 'oem_long_enquiry_no', 'headerName' => 'OEM Long Enquiry No.'],
-                ['field' => 'oem_long_enquiry_date', 'headerName' => 'OEM Long Enquiry Date'],
-                ['field' => 'oem_long_enquiry_assign_date', 'headerName' => 'OEM Enquiry Assign Date'],
-            ]);
-        }
+        // if ($type === 'all' || in_array($type, ['exchange', 'scrappage', 'exchange_not_interested', 'finance', 'finance_not_interested'])) {
+        //     $baseCols = array_merge($baseCols, [
+        //         ['field' => 'oem_quick_enquiry_no', 'headerName' => 'OEM Quick Enquiry No.'],
+        //         ['field' => 'oem_quick_enquiry_date', 'headerName' => 'OEM Quick Enquiry Date'],
+        //         ['field' => 'oem_quick_enquiry_assign_date', 'headerName' => 'OEM Quick Enquiry Assign Date'],
+        //     ]);
+        // } elseif ($type === 'quick') {
+        //     $baseCols = array_merge($baseCols, [
+        //         ['field' => 'oem_quick_enquiry_no', 'headerName' => 'OEM Quick Enquiry No.'],
+        //         ['field' => 'oem_quick_enquiry_date', 'headerName' => 'OEM Quick Enquiry Date'],
+        //     ]);
+        // } elseif ($type === 'long') {
+        //     $baseCols = array_merge($baseCols, [
+        //         ['field' => 'oem_long_enquiry_no', 'headerName' => 'OEM Long Enquiry No.'],
+        //         ['field' => 'oem_long_enquiry_date', 'headerName' => 'OEM Long Enquiry Date'],
+        //         ['field' => 'oem_long_enquiry_assign_date', 'headerName' => 'OEM Enquiry Assign Date'],
+        //     ]);
+        // }
 
         $midCols = [
             ['field' => 'segment_name', 'headerName' => 'Segment'],
             ['field' => 'model_name', 'headerName' => 'Model'],
             ['field' => 'variant_name', 'headerName' => 'Variant'],
             ['field' => 'color_name', 'headerName' => 'Color'],
+            ['field' => 'fuel_type', 'headerName' => 'Fuel Type'],
+            ['field' => 'transmission', 'headerName' => 'Transmission'],
+            ['field' => 'drivetrain', 'headerName' => 'Drivetrain'],
+            ['field' => 'seating', 'headerName' => 'Seating'],
+            ['field' => 'usage_area', 'headerName' => 'Usage Area'],
+            ['field' => 'km_travelled_daily', 'headerName' => 'KM Travelled Daily'],
+            ['field' => 'application_type', 'headerName' => 'Application Type'],
+            ['field' => 'application', 'headerName' => 'Application'],
+            ['field' => 'has_ev', 'headerName' => 'Has EV'],
+
             ['field' => 'first_name', 'headerName' => 'First Name'],
             ['field' => 'last_name', 'headerName' => 'Last Name'],
             ['field' => 'full_name', 'headerName' => 'Full Name'],
@@ -513,24 +922,28 @@ class EnquiryCrudController extends CrudController
             ['field' => 'alternate_mobile', 'headerName' => 'Alternate Mobile'],
             ['field' => 'email', 'headerName' => 'Email'],
             ['field' => 'gender', 'headerName' => 'Gender'],
-            ['field' => 'enquiry_type', 'headerName' => 'Enquiry Type'],
-            ['field' => 'source_name', 'headerName' => 'Source'],
-            ['field' => 'sub_source', 'headerName' => 'Sub Source'],
-            ['field' => 'likely_purchase_in_days', 'headerName' => 'Likely Purchase In Days'],
-            ['field' => 'fuel_type', 'headerName' => 'Fuel Type'],
-            ['field' => 'transmission', 'headerName' => 'Transmission'],
-            ['field' => 'drivetrain', 'headerName' => 'Drivetrain'],
-            ['field' => 'seating', 'headerName' => 'Seating'],
+            ['field' => 'pincode', 'headerName' => 'Pincode'],
             ['field' => 'territory', 'headerName' => 'Territory'],
             ['field' => 'tehsil', 'headerName' => 'Tehsil'],
             ['field' => 'district', 'headerName' => 'District'],
             ['field' => 'city', 'headerName' => 'State'],
-            ['field' => 'sc_code', 'headerName' => 'Sales Consultant'], 
-            ['field' => 'dealer_branch', 'headerName' => 'Dealer Branch'],
-            ['field' => 'dealer_location', 'headerName' => 'Dealer Location'],
-            ['field' => 'followup_type', 'headerName' => 'Followup Type'],
-            ['field' => 'followup_date', 'headerName' => 'Followup Date'],
-            ['field' => 'followup_time', 'headerName' => 'Followup Time'],
+            ['field' => 'address', 'headerName' => 'Address'],
+            ['field' => 'purchase_type', 'headerName' => 'Purchase Type'],
+            ['field' => 'expected_price', 'headerName' => 'Expected Price'],
+            ['field' => 'offered_price', 'headerName' => 'Offered Price'],
+            ['field' => 'exchange_bonus', 'headerName' => 'Exchange Bonus'],
+            ['field' => 'price_gap', 'headerName' => 'Price Gap'],
+            ['field' => 'fin_mode', 'headerName' => 'Finance Mode'],
+            ['field' => 'financier_name', 'headerName' => 'Financier'],
+            ['field' => 'loan_status', 'headerName' => 'Loan Status'],
+            ['field' => 'x8_sc_code', 'headerName' => 'X8 Assigned SC'],
+            ['field' => 'x8_sc_mile_id', 'headerName' => 'X8 Assigned SC Mile ID'],
+            ['field' => 'x8_sc_branch', 'headerName' => 'X8 Assigned SC Branch'],
+            ['field' => 'x8_sc_location', 'headerName' => 'X8 Assigned SC Location'],
+            ['field' => 'sc_code', 'headerName' => 'OEM Assigned SC'],
+            ['field' => 'sc_mile_id', 'headerName' => 'OEM Assigned SC Mile ID'],
+            ['field' => 'oem_sc_branch', 'headerName' => 'OEM Assigned SC Branch'],
+            ['field' => 'oem_sc_location', 'headerName' => 'OEM Assigned SC Location'],
             ['field' => 'occupation_type', 'headerName' => 'Occupation Type'],
             ['field' => 'customer_type', 'headerName' => 'Customer Type'],
             ['field' => 'occupation_sub_type', 'headerName' => 'Occupation Sub Type'],
@@ -539,34 +952,49 @@ class EnquiryCrudController extends CrudController
             ['field' => 'marital_status', 'headerName' => 'Marital Status'],
             ['field' => 'marriage_date', 'headerName' => 'Marriage Date'],
             ['field' => 'age_group', 'headerName' => 'Age Group'],
-            ['field' => 'usage_area', 'headerName' => 'Usage Area'],
-            ['field' => 'km_travelled_daily', 'headerName' => 'KM Travelled Daily'], 
-            ['field' => 'application_type', 'headerName' => 'Application Type'],
-            ['field' => 'application', 'headerName' => 'Application'],
-            ['field' => 'pincode', 'headerName' => 'Pincode'],
-            ['field' => 'address', 'headerName' => 'Address'],
-            ['field' => 'has_ev', 'headerName' => 'Has EV'],
-            ['field' => 'purchase_type', 'headerName' => 'Purchase Type'],
-            ['field' => 'remarks', 'headerName' => 'Remarks'],
-            ['field' => 'consider_make', 'headerName' => 'Consideration Make'],
-            ['field' => 'consider_model', 'headerName' => 'Consideration Model'],
-            ['field' => 'consider_variant', 'headerName' => 'Consideration Variant'],
-            ['field' => 'expected_price', 'headerName' => 'Expected Price'],
-            ['field' => 'offered_price', 'headerName' => 'Offered Price'],
-            ['field' => 'exchange_bonus', 'headerName' => 'Exchange Bonus'],
-            ['field' => 'price_gap', 'headerName' => 'Price Gap'],
-            ['field' => 'fin_mode', 'headerName' => 'Finance Mode'],
-            ['field' => 'financier_name', 'headerName' => 'Financier'],
-            ['field' => 'loan_status', 'headerName' => 'Loan Status']
+            ['field' => 'consid_brand', 'headerName' => 'Consideration Make'],
+            ['field' => 'consid_model', 'headerName' => 'Consideration Model'],
+            ['field' => 'consid_variant', 'headerName' => 'Consideration Variant'],
+
+            ['field' => 'fup_count', 'headerName' => 'SC Follow-up Count'],
+            ['field' => 'followup_type', 'headerName' => 'SC Followup Type'],
+            ['field' => 'recent_planned_followup_date', 'headerName' => 'Planned FUP Date & Time'],
+            ['field' => 'recent_actual_followup_date', 'headerName' => 'Actual FUP Date & Time'],
+            ['field' => 'call_duration', 'headerName' => 'FUP Call Duration'],
+            //['field' => 'deviation_stage', 'headerName' => 'FUP Deviation Stage'],
+            ['field' => 'remarks', 'headerName' => 'FUP Remarks'],
+            ['field' => 'followup_remarks_type', 'headerName' => 'FUP Remarks Type'],
+            //['field' => 'comments', 'headerName' => 'FUP Comments'],
+
+            ['field' => 'stage', 'headerName' => 'SC Enquiry Stage'],
+            ['field' => 'td_count', 'headerName' => 'Test Drive Count'],
+            ['field' => 'test_drive_no', 'headerName' => 'Test Drive No.'],
+            ['field' => 'td_date', 'headerName' => 'Test drive Date'],
+            ['field' => 'lost_reason', 'headerName' => 'SC Lost Reason'],
+            ['field' => 'lost_sub_reason', 'headerName' => 'SC Lost Sub Reason'],
+            ['field' => 'lost_detail_reason', 'headerName' => 'SC Lost Detail Reason'],
+            ['field' => 'lost_remarks', 'headerName' => 'SC Lost Remarks'],
+
+            ['field' => 'cre_fup_count', 'headerName' => 'CRE FUP Count'],
+            ['field' => 'cre_planned_fup_date', 'headerName' => 'CRE Planned FUP Date & Time'],
+            ['field' => 'cre_actual_fup_date', 'headerName' => 'CRE Actual FUP Date & Time'],
+            ['field' => 'cre_fup_call_duration', 'headerName' => 'CRE FUP Call Duration'],
+            ['field' => 'cre_fup_deviation_stage', 'headerName' => 'CRE FUP Deviation Stage'],
+            ['field' => 'cre_enq_stage', 'headerName' => 'CRE Enquiry Satge'],
+            ['field' => 'cre_customer_stage', 'headerName' => 'CRE Customer Stage'],
+            ['field' => 'cre_fup_remarks', 'headerName' => 'CRE FUP Remarks'],
+            ['field' => 'cre_next_fup_date', 'headerName' => 'CRE Next FUP Date'],
+
+
         ];
 
-        if ($type === 'quick') {
-            $remove = ['drivetrain', 'seating', 'tehsil', 'district', 'occupation_sub_type', 'company_name', 'dob', 'marital_status', 'marriage_date', 'age_group', 'usage_area', 'km_travelled_daily', 'application_type', 'application', 'pincode', 'address', 'has_ev', 'consider_make', 'consider_model', 'consider_variant', 'full_name'];
-            $midCols = array_values(array_filter($midCols, fn($c) => !in_array($c['field'], $remove)));
-        } elseif ($type === 'long') {
-            $remove = ['drivetrain', 'seating', 'usage_area', 'application_type', 'application', 'has_ev', 'full_name'];
-            $midCols = array_values(array_filter($midCols, fn($c) => !in_array($c['field'], $remove)));
-        }
+        // if ($type === 'quick') {
+        //     $remove = ['drivetrain', 'seating', 'tehsil', 'district', 'occupation_sub_type', 'company_name', 'dob', 'marital_status', 'marriage_date', 'age_group', 'usage_area', 'km_travelled_daily', 'application_type', 'application', 'pincode', 'address', 'has_ev', 'consider_make', 'consider_model', 'consider_variant', 'full_name'];
+        //     $midCols = array_values(array_filter($midCols, fn($c) => !in_array($c['field'], $remove)));
+        // } elseif ($type === 'long') {
+        //     $remove = ['drivetrain', 'seating', 'usage_area', 'application_type', 'application', 'has_ev', 'full_name'];
+        //     $midCols = array_values(array_filter($midCols, fn($c) => !in_array($c['field'], $remove)));
+        // }
 
         return array_merge($baseCols, $midCols, $commonEnd);
     }
@@ -623,13 +1051,13 @@ class EnquiryCrudController extends CrudController
     }
 
     private const FILTER_FIELD_MAP = [
-        'full_name' => null, 
+        'full_name' => null,
         'action' => null,
         'source_name' => 'source_code',
-        'segment_name' => null, 
-        'model_name' => null,   
-        'variant_name' => null, 
-        'color_name' => null,   
+        'segment_name' => null,
+        'model_name' => null,
+        'variant_name' => null,
+        'color_name' => null,
         'exchange_make' => 'brand_make',
         'exchange_model' => 'brand_model',
         'consider_make' => 'consid_brand',
@@ -671,7 +1099,7 @@ class EnquiryCrudController extends CrudController
             }
 
             $column = array_key_exists($field, self::FILTER_FIELD_MAP) ? self::FILTER_FIELD_MAP[$field] : $field;
-            if ($column === null) continue; 
+            if ($column === null) continue;
             $this->applyFilterCondition($query, $column, $condition);
         }
     }
@@ -705,12 +1133,26 @@ class EnquiryCrudController extends CrudController
         $value = $condition['filter'] ?? null;
 
         switch ($type) {
-            case 'equals': $query->where($column, $value); break;
-            case 'notEqual': $query->where($column, '!=', $value); break;
-            case 'startsWith': $query->where($column, 'like', "{$value}%"); break;
-            case 'endsWith': $query->where($column, 'like', "%{$value}"); break;
-            case 'blank': $query->where(function ($q) use ($column) { $q->whereNull($column)->orWhere($column, ''); }); break;
-            case 'notBlank': $query->whereNotNull($column)->where($column, '!=', ''); break;
+            case 'equals':
+                $query->where($column, $value);
+                break;
+            case 'notEqual':
+                $query->where($column, '!=', $value);
+                break;
+            case 'startsWith':
+                $query->where($column, 'like', "{$value}%");
+                break;
+            case 'endsWith':
+                $query->where($column, 'like', "%{$value}");
+                break;
+            case 'blank':
+                $query->where(function ($q) use ($column) {
+                    $q->whereNull($column)->orWhere($column, '');
+                });
+                break;
+            case 'notBlank':
+                $query->whereNotNull($column)->where($column, '!=', '');
+                break;
             case 'contains':
             default:
                 if ($value !== null && $value !== '') {
@@ -745,13 +1187,13 @@ class EnquiryCrudController extends CrudController
         $data = $this->getEnquiryFormData();
         $data['title'] = 'Edit Enquiry';
         $enquiry = Enquiry::with(['campaign', 'segment', 'model', 'variant', 'color'])->findOrFail($id);
-        
+
         $fups = [];
         if (strtoupper($enquiry->current_origin ?? '') === 'LONG') {
             $fups = DB::table('xlr8_crm_enquiries_fup')
-                        ->where('enquiry_no', $enquiry->enquiry_no)
-                        ->orderBy('id', 'asc')
-                        ->get();
+                ->where('enquiry_no', $enquiry->enquiry_no)
+                ->orderBy('id', 'asc')
+                ->get();
         }
         
         $creFups = DB::table('crm_enquiry_fup')
@@ -852,12 +1294,19 @@ class EnquiryCrudController extends CrudController
     {
         $enquiry = Enquiry::findOrFail($id);
         $enquiry->update($request->only([
-            'brand_make', 'brand_model', 'vehicle_no', 'lost_reason',
-            'make_year', 'odo_reading', 'expected_price', 'offered_price', 'exchange_bonus'
+            'brand_make',
+            'brand_model',
+            'vehicle_no',
+            'lost_reason',
+            'make_year',
+            'odo_reading',
+            'expected_price',
+            'offered_price',
+            'exchange_bonus'
         ]));
         Alert::success('Exchange Details Updated successfully.')->flash();
-        
-        if($enquiry->purchase_type === 'Scrappage') {
+
+        if ($enquiry->purchase_type === 'Scrappage') {
             return redirect(backpack_url('exchange/enquiry/int-in-scrappage'));
         }
         return redirect(backpack_url('exchange/enquiry/int-in-exchange'));
@@ -878,14 +1327,14 @@ class EnquiryCrudController extends CrudController
         $enquiry = Enquiry::with(['segment', 'model', 'variant'])->findOrFail($id);
         $finance = \App\Models\Module\Finance\XFinance::where('enq_no', $enquiry->enquiry_no)->first();
         $financiers = \App\Models\Module\Booking\XlFinancier::select('id', 'name', 'short_name')->get()->toArray();
-        
+
         return view('admin.enquiry.finance-edit', compact('enquiry', 'finance', 'financiers'));
     }
 
     public function financeEnquiryUpdate(Request $request, $id)
     {
         $enquiry = Enquiry::findOrFail($id);
-        
+
         $enquiry->update([
             'fin_mode' => $request->fin_mode,
             'financier' => $request->financier,
@@ -893,15 +1342,15 @@ class EnquiryCrudController extends CrudController
         ]);
 
         $finance = \App\Models\Module\Finance\XFinance::firstOrNew(['enq_no' => $enquiry->enquiry_no]);
-        
-        $finance->bid = $enquiry->id; 
+
+        $finance->bid = $enquiry->id;
         $finance->fin_mode = $request->fin_mode;
         $finance->financier = $request->financier;
         $finance->loan_status = $request->loan_status;
         $finance->case_status = $request->case_status ?? 1;
         $finance->verification_status = $request->verification_status ?? 1;
         $finance->case_lost_reason = $request->case_lost_reason;
-        
+
         if (!in_array($request->fin_mode, ['Cash', 'Customer Self', 'Yet To Decide', 'Purchase Plan Cancelled'])) {
             $finance->instrument_type = $request->instrument_type;
             $finance->instrument_ref_no = $request->instrument_ref_no;
@@ -926,7 +1375,7 @@ class EnquiryCrudController extends CrudController
         }
 
         Alert::success('Finance Details Updated successfully.')->flash();
-        
+
         if (in_array($enquiry->fin_mode, ['Cash', 'Customer Self', 'Yet To Decide', 'Purchase Plan Cancelled'])) {
             return redirect(backpack_url('finance/enquiry/not-interested'));
         }
@@ -1016,11 +1465,11 @@ class EnquiryCrudController extends CrudController
             'vpo' => 'nullable|max:150', 
             'tehsil' => 'nullable|max:100',
             'district' => 'nullable|max:100',
-            'city' => 'nullable|max:100', 
-            'territory' => 'nullable|string|max:100', 
+            'city' => 'nullable|max:100',
+            'territory' => 'nullable|string|max:100',
             'has_ev' => 'nullable',
             'purchase_type' => 'nullable',
-            'purchase_type_crm' => 'nullable|string|max:100', 
+            'purchase_type_crm' => 'nullable|string|max:100',
             'consider_make' => 'nullable|max:100',
             'consider_model' => 'nullable|max:100',
             'consider_variant' => 'nullable|max:100',
@@ -1060,8 +1509,8 @@ class EnquiryCrudController extends CrudController
             'recent_fup_comments' => 'nullable|string|max:255',
             'test_drive_count' => 'nullable|integer',
             'test_drive_no' => 'nullable|string|max:100',
-            'td_date' => 'nullable|date', 
-            'lost_reason' => 'nullable|string|max:100', 
+            'td_date' => 'nullable|date',
+            'lost_reason' => 'nullable|string|max:100',
             'lost_sub_reason' => 'nullable|string|max:100',
             'lost_detail_reason' => 'nullable|string|max:100',
             'lost_remarks' => 'nullable|string|max:100',
@@ -1081,10 +1530,10 @@ class EnquiryCrudController extends CrudController
             'offered_price' => 'nullable|numeric',
             'exchange_bonus' => 'nullable|numeric',
             'fin_mode' => 'nullable|string|max:50',
-            'financier' => 'nullable|integer', 
+            'financier' => 'nullable|integer',
             'brand_make' => 'nullable|string|max:100',
             'brand_model' => 'nullable|string|max:100',
-            'call_nature' => 'nullable|string', 
+            'call_nature' => 'nullable|string',
         ];
     }
 
@@ -1215,5 +1664,130 @@ class EnquiryCrudController extends CrudController
     public function importHistory()
     {
         return response()->json(DB::table('xlr8_crm_import_logs')->orderByDesc('id')->limit(5)->get());
+    }
+
+    // ============================================================
+    // OTF BOOKINGS LIST (Directly from xlr8_crm_booking)
+    // ============================================================
+    public function otfBookings(Request $request)
+    {
+        $this->crud->hasAccessOrFail('list');
+
+        $this->data['crud'] = $this->crud;
+        $this->data['title'] = 'OTF Bookings';
+
+        // ✅ Directly query xlr8_crm_booking table - NO JOINS
+        $query = \App\Models\Module\Booking\Booking::withoutGlobalScope(\Illuminate\Database\Eloquent\SoftDeletingScope::class)
+            ->from('xlr8_crm_booking as crm_booking')
+            ->select([
+                'crm_booking.id',
+                'crm_booking.booking_date',
+                'crm_booking.status',
+                'crm_booking.cancellation_date',
+                'crm_booking.model_code',
+                'crm_booking.variant_code',
+
+                // ✅ All columns directly from xlr8_crm_booking
+                'crm_booking.sc_mile_id as sc_code', // SC Code
+                'crm_booking.oem_code',
+                'crm_booking.customer_code',
+                'crm_booking.customer_tan as tan_no',
+
+                'crm_booking.customer_name',
+                'crm_booking.customer_address',
+                'crm_booking.customer_city as city',
+                'crm_booking.customer_tehsil as tehsil',
+                'crm_booking.customer_district as district',
+                'crm_booking.customer_pan as pan_no',
+                'crm_booking.customer_aadhar as adhar_no',
+                'crm_booking.otf_no as otf_number',
+            ])
+            // ✅ Filter only records where OTF number is not empty
+            ->whereNotNull('crm_booking.otf_no')
+            ->where('crm_booking.otf_no', '!=', '')
+            ->where('crm_booking.is_active', 1);
+
+        $query->orderBy('crm_booking.id', 'desc');
+
+        $paginatedBookings = $query->paginate(50);
+
+        // Map data for grid
+        $gridData = $paginatedBookings->map(function ($booking, $index) use ($paginatedBookings) {
+            $mapped = [];
+
+            $mapped['serial_no'] = ($paginatedBookings->currentPage() - 1) * $paginatedBookings->perPage() + $index + 1;
+            $mapped['booking_no'] = $booking->id ?? '—';
+            $mapped['booking_date'] = $booking->booking_date ? \Carbon\Carbon::parse($booking->booking_date)->format('d-M-Y') : '—';
+            $mapped['sc_code'] = $booking->sc_code ?? '—';
+            $mapped['booking_status'] = $booking->status ?? '—'; // Status already string
+            $mapped['cancellation_date'] = $booking->cancellation_date ? \Carbon\Carbon::parse($booking->cancellation_date)->format('d-M-Y') : '—';
+            $mapped['model_group'] = $booking->model_code ?? '—';
+            $mapped['model'] = $booking->model_code ?? '—';
+            $mapped['variant'] = $booking->variant_code ?? '—';
+            $mapped['oem_model_code'] = $booking->oem_code ?? '—';
+            $mapped['customer_code'] = $booking->customer_code ?? '—';
+            $mapped['customer_name'] = $booking->customer_name ?? '—';
+            $mapped['customer_address'] = $booking->customer_address ?? '—';
+            $mapped['customer_city'] = $booking->city ?? '—';
+            $mapped['customer_tehsil'] = $booking->tehsil ?? '—';
+            $mapped['customer_district'] = $booking->district ?? '—';
+            $mapped['pan_number'] = $booking->pan_no ?? '—';
+            $mapped['tan_number'] = $booking->tan_no ?? '—';
+            $mapped['aadhaar_number'] = $booking->adhar_no ?? '—';
+            $mapped['otf_number'] = $booking->otf_number ?? '—';
+
+            // No action buttons as requested
+
+            return $mapped;
+        })->values();
+
+        // Columns as per your headers
+        $columns = [
+            ['field' => 'serial_no', 'headerName' => 'S.No.', 'width' => 80, 'pinned' => 'left'],
+            ['field' => 'booking_no', 'headerName' => 'X8 Booking Number', 'width' => 150],
+            ['field' => 'booking_date', 'headerName' => 'X8 Booking Date', 'width' => 130],
+            ['field' => 'sc_code', 'headerName' => 'SC Code', 'width' => 120],
+            ['field' => 'booking_status', 'headerName' => 'Booking Status', 'width' => 130],
+            ['field' => 'cancellation_date', 'headerName' => 'Booking Cancellation Date', 'width' => 160],
+            ['field' => 'model_group', 'headerName' => 'Model Group', 'width' => 140],
+            ['field' => 'model', 'headerName' => 'Model', 'width' => 160],
+            ['field' => 'variant', 'headerName' => 'Variant', 'width' => 160],
+            ['field' => 'oem_model_code', 'headerName' => 'OEM Model Code', 'width' => 160],
+            ['field' => 'customer_code', 'headerName' => 'Booking Customer Code', 'width' => 160],
+            ['field' => 'customer_name', 'headerName' => 'Booking Customer Name', 'width' => 200],
+            ['field' => 'customer_address', 'headerName' => 'Booking Customer Address', 'width' => 250],
+            ['field' => 'customer_city', 'headerName' => 'Booking Customer City', 'width' => 150],
+            ['field' => 'customer_tehsil', 'headerName' => 'Booking Customer Tehsil', 'width' => 150],
+            ['field' => 'customer_district', 'headerName' => 'Booking Customer District', 'width' => 150],
+            ['field' => 'pan_number', 'headerName' => 'Billing Customer PAN Number', 'width' => 160],
+            ['field' => 'tan_number', 'headerName' => 'Billing Customer TAN Number', 'width' => 160],
+            ['field' => 'aadhaar_number', 'headerName' => 'Billing Customer Aadhaar Number', 'width' => 180],
+            ['field' => 'otf_number', 'headerName' => 'OTF Number', 'width' => 160],
+            [
+                'field'         => 'action',
+                'headerName'    => 'Action',
+                'width'         => 100,
+                'sortable'      => false,
+                'filter'        => false,
+                'cellRenderer'  => 'htmlRenderer',
+                'pinned'        => 'right',
+                'cellClass'     => 'text-center',
+            ]
+        ];
+
+        $gridConfig = [
+            'columns' => $columns,
+            'data'    => $gridData,
+        ];
+
+        $this->data['gridConfig'] = $gridConfig;
+        $this->data['pagination'] = [
+            'total'       => $paginatedBookings->total(),
+            'perPage'     => $paginatedBookings->perPage(),
+            'currentPage' => $paginatedBookings->currentPage(),
+            'lastPage'    => $paginatedBookings->lastPage(),
+        ];
+
+        return view('admin.enquiry.otf-bookings', $this->data);
     }
 }

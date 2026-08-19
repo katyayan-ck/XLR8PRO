@@ -28,7 +28,7 @@ Route::group([
     Route::get('insurance/import', [App\Http\Controllers\Admin\InsuranceCrudController::class, 'import'])->name('insurance.import');
     Route::get('rto/import', [App\Http\Controllers\Admin\RtoCrudController::class, 'import'])->name('rto.import');
     Route::post('segment/import', [App\Http\Controllers\Admin\SegmentCrudController::class, 'import'])->name('segment.import');
-    
+
     Route::get('home', [DashboardController::class, 'index'])->name('backpack.dashboard.home');
     Route::get('dashboard', [DashboardController::class, 'index'])->name('backpack.dashboard');
 
@@ -43,7 +43,7 @@ Route::group([
 
     Route::get('variant/subsegments', [VariantCrudController::class, 'getSubSegments']);
     Route::get('variant/models', [VariantCrudController::class, 'getModels']);
-    
+
     Route::get('color/subsegments', [ColorCrudController::class, 'getSubSegments']);
     Route::get('color/models', [ColorCrudController::class, 'getModels']);
     Route::get('color/variants', [ColorCrudController::class, 'getVariants']);
@@ -109,7 +109,7 @@ Route::group([
     Route::match(['get', 'post'], 'enquiry/data', [EnquiryCrudController::class, 'gridData'])->name('enquiry.data');
     Route::get('enquiries/export', [EnquiryCrudController::class, 'export']);
     Route::get('enquiry/export', [EnquiryCrudController::class, 'exportData'])->name('enquiry.export');
-    
+
     // AJAX Lookups for Enquiry
     Route::get('enquiry/lead/{leadNo}', [EnquiryCrudController::class, 'getLead']);
     Route::get('enquiry/variants/{modelCode}', [EnquiryCrudController::class, 'getVariants']);
@@ -131,7 +131,7 @@ Route::group([
     Route::get('enquiries/unassigned-long', [EnquiryCrudController::class, 'unassignedLongList']);
     Route::get('enquiries/assigned-quick', [EnquiryCrudController::class, 'assignedQuickList']);
     Route::get('enquiries/unassigned-quick', [EnquiryCrudController::class, 'unassignedQuickList']);
-    
+
     // Reference Forms
     Route::get('enquiries/reference/add', [EnquiryCrudController::class, 'createReference'])->name('enquiry.reference.create');
     Route::post('enquiries/reference/store', [EnquiryCrudController::class, 'storeReference'])->name('enquiry.reference.store');
@@ -172,5 +172,9 @@ Route::group([
 
     // =========== TEST DRIVE =====================
     Route::crud('testdrive', 'TestDriveCrudController');
-
+    // =========== HYPERLOCAL ENQUIRIES ===========
+    Route::get('enquiries/hyperlocal', [EnquiryCrudController::class, 'hyperlocalList'])
+        ->name('enquiry.hyperlocal');
+    Route::get('enquiries/otf-bookings', [EnquiryCrudController::class, 'otfBookings'])
+        ->name('enquiry.otf-bookings');
 }); // ← This should be the last line

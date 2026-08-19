@@ -152,8 +152,9 @@ return [
             icon="la la-user-times" :link="backpack_url('enquiries/reference')" />
         <x-backpack::menu-dropdown-item title="Virtual Number Enquiries ({{ $enqCounts['virtual'] }})"
             icon="la la-user-times" :link="backpack_url('enquiries/virtual-number')" />
-        <x-backpack::menu-dropdown-item title="OTF Bookings" icon="la la-file-invoice"
-            :link="backpack_url('booking/otf-bookings')" />
+        <x-backpack::menu-dropdown-item title="Hyperlocal Enquiries" icon="la la-map-marker"
+            :link="backpack_url('enquiries/hyperlocal')" />
+
         <x-backpack::menu-dropdown-item title="WhatsApp Campaign Enquiries ({{ $enqCounts['whatsapp'] }})"
             icon="la la-user-times" :link="backpack_url('enquiries/whatsapp-campaign')" />
         <x-backpack::menu-dropdown-item title="Unassigned Quick Enquiries ({{ $enqCounts['unassigned_quick'] }})"
@@ -164,6 +165,8 @@ return [
             icon="la la-user-times" :link="backpack_url('enquiries/unassigned-long')" />
         <x-backpack::menu-dropdown-item title="Assigned Long Enquiries ({{ $enqCounts['assigned_long'] }})"
             icon="la la-user-times" :link="backpack_url('enquiries/assigned-long')" />
+        <x-backpack::menu-dropdown-item title="OTF Bookings" icon="la la-file-invoice"
+            :link="backpack_url('enquiries/otf-bookings')" />
 
         <x-backpack::menu-dropdown-item title="Campaigns" icon="la la-list" :link="backpack_url('campaign')" />
 
