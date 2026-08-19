@@ -295,6 +295,7 @@ class EnquiryCrudController extends CrudController
             'variant_name' => $e->variant_code ? ($e->getRelation('variant')?->display_name ?? $e->getRelation('variant')?->custom_name ?? $e->getRelation('variant')?->oem_name ?? $e->variant ?? $e->variant_code) : ($e->variant ?? '—'),
             'color_name' => $e->color_code ? ($e->getRelation('color')?->name ?? $e->color ?? $e->color_code) : ($e->color ?? '—'),
             'mobile' => $e->mobile ?? '—',
+            'alternate_mobile' => $e->alternate_mobile ?? '—',
             'dms_enquiry_stage' => $e->stage ?? '—',
             'cre_enquiry_stage' => '—',
             'cre_next_fup_date' => '—', 
@@ -509,6 +510,7 @@ class EnquiryCrudController extends CrudController
             ['field' => 'last_name', 'headerName' => 'Last Name'],
             ['field' => 'full_name', 'headerName' => 'Full Name'],
             ['field' => 'mobile', 'headerName' => 'Mobile'],
+            ['field' => 'alternate_mobile', 'headerName' => 'Alternate Mobile'],
             ['field' => 'email', 'headerName' => 'Email'],
             ['field' => 'gender', 'headerName' => 'Gender'],
             ['field' => 'enquiry_type', 'headerName' => 'Enquiry Type'],
@@ -588,6 +590,7 @@ class EnquiryCrudController extends CrudController
                     ->orWhere('first_name', 'like', $like)
                     ->orWhere('last_name', 'like', $like)
                     ->orWhere('mobile', 'like', $like)
+                    ->orWhere('alternate_mobile', 'like', $like)
                     ->orWhere('email', 'like', $like)
                     ->orWhere('source_code', 'like', $like)
                     ->orWhere('sub_source', 'like', $like)
@@ -722,7 +725,8 @@ class EnquiryCrudController extends CrudController
         return view('admin.enquiry.create', [
             'title' => 'Add New Enquiry', 
             'enquiry' => null, 
-            'fups' => []       
+            'fups' => [],
+            'creFups' => []       
         ] + $this->getEnquiryFormData());
     }
 
@@ -731,7 +735,8 @@ class EnquiryCrudController extends CrudController
         return view('admin.enquiry.reference-create', [
             'title' => 'Add Reference Enquiry', 
             'enquiry' => null, 
-            'fups' => []
+            'fups' => [],
+            'creFups' => []
         ] + $this->getEnquiryFormData());
     }
 
@@ -748,11 +753,49 @@ class EnquiryCrudController extends CrudController
                         ->orderBy('id', 'asc')
                         ->get();
         }
+        
+        $creFups = DB::table('crm_enquiry_fup')
+            ->where('x8_enq_no', 'XENQ-' . $enquiry->id)
+            ->orderBy('id', 'asc')
+            ->get();
 
         $data['enquiry'] = $enquiry;
         $data['fups'] = $fups;
+        $data['creFups'] = $creFups;
         
         return view('admin.enquiry.create', $data);
+    }
+
+    private function saveCreFup($enquiry, $request)
+    {
+        if ($request->filled('cre_enq_stage') || $request->filled('cre_customer_stage') || $request->filled('cre_next_fup_date') || $request->filled('cre_fup_remarks')) {
+            $previousFup = DB::table('crm_enquiry_fup')
+                ->where('x8_enq_no', 'XENQ-' . $enquiry->id)
+                ->orderBy('id', 'desc')
+                ->first();
+
+            $fupCount = $previousFup ? ($previousFup->cre_fup_count + 1) : 1;
+            $plannedDate = $previousFup ? $previousFup->cre_next_fup_date : Carbon::now()->format('Y-m-d');
+            $actualDate = Carbon::now()->format('Y-m-d');
+
+            DB::table('crm_enquiry_fup')->insert([
+                'enquiry_no' => $enquiry->oem_enquiry_no ?? $enquiry->enquiry_no,
+                'quick_enquiry_no' => $enquiry->quick_enquiry_no ?? $enquiry->oem_quick_enquiry_no,
+                'x8_enq_no' => 'XENQ-' . $enquiry->id,
+                'cre_fup_count' => $fupCount,
+                'cre_planned_fup_date' => $plannedDate,
+                'cre_actual_fup_date' => $actualDate,
+                'cre_fup_call_duration' => $request->cre_fup_call_duration,
+                'cre_fup_deviation_stage' => $request->cre_fup_deviation_stage,
+                'cre_enq_stage' => $request->cre_enq_stage,
+                'cre_customer_stage' => $request->cre_customer_stage,
+                'cre_fup_remarks' => $request->cre_fup_remarks,
+                'cre_next_fup_date' => $request->cre_next_fup_date,
+                'created_by' => backpack_user()->id,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
     }
 
     public function store(Request $request)
@@ -765,7 +808,13 @@ class EnquiryCrudController extends CrudController
             $validated['current_origin'] = 'QUICK';
             $validated['cne'] = 1;
 
-            Enquiry::create($validated);
+            $creFields = ['cre_fup_call_duration', 'cre_fup_deviation_stage', 'cre_enq_stage', 'cre_customer_stage', 'cre_fup_remarks', 'cre_next_fup_date'];
+            $enquiryData = collect($validated)->except($creFields)->toArray();
+
+            $enquiry = Enquiry::create($enquiryData);
+            
+            $this->saveCreFup($enquiry, $request);
+
             Alert::success('Enquiry created successfully.')->flash();
             return redirect(backpack_url('enquiry'));
         } catch (\Throwable $e) {
@@ -781,7 +830,13 @@ class EnquiryCrudController extends CrudController
         $this->processEntityRelations($validated);
         $validated['updated_by'] = backpack_user()->id;
 
-        $enquiry->update($validated);
+        $creFields = ['cre_fup_call_duration', 'cre_fup_deviation_stage', 'cre_enq_stage', 'cre_customer_stage', 'cre_fup_remarks', 'cre_next_fup_date'];
+        $enquiryData = collect($validated)->except($creFields)->toArray();
+
+        $enquiry->update($enquiryData);
+        
+        $this->saveCreFup($enquiry, $request);
+
         Alert::success('Enquiry updated successfully.')->flash();
         return redirect(backpack_url('enquiry'));
     }
@@ -807,6 +862,16 @@ class EnquiryCrudController extends CrudController
         }
         return redirect(backpack_url('exchange/enquiry/int-in-exchange'));
     }
+
+    // public function financeEnquiryList()
+    // {
+    //     return $this->buildGrid(Enquiry::where('fin_mode', 'In-house'), 'admin.enquiry.finance-list', 'Enquiries - Int in Finance', 'finance');
+    // }
+
+    // public function financeNotInterestedList()
+    // {
+    //     return $this->buildGrid(Enquiry::whereIn('fin_mode', ['Cash', 'Customer Self', 'Yet To Decide', 'Purchase Plan Cancelled']), 'admin.enquiry.finance-list', 'Enquiries - Finance Not Interested', 'finance_not_interested');
+    // }
 
     public function financeEnquiryEdit($id)
     {
@@ -935,7 +1000,8 @@ class EnquiryCrudController extends CrudController
             'activity_location' => 'nullable',
             'first_name' => $req . '|max:100',
             'last_name' => 'nullable|max:100',
-            'mobile' => 'required|max:15', 
+            'mobile' => 'required|max:15',
+            'alternate_mobile' => 'nullable|max:15', // ADDED: Alternate Mobile Validation
             'email' => 'nullable|email|max:150',
             'occupation_type' => 'nullable',
             'customer_type' => 'nullable',
@@ -947,7 +1013,7 @@ class EnquiryCrudController extends CrudController
             'marriage_date' => 'nullable|date',
             'age_group' => 'nullable',
             'pincode' => 'nullable|max:10',
-            'vpo' => 'nullable|max:150', // FIXED: Validating 'vpo' instead of 'bpo'
+            'vpo' => 'nullable|max:150', 
             'tehsil' => 'nullable|max:100',
             'district' => 'nullable|max:100',
             'city' => 'nullable|max:100', 
@@ -975,7 +1041,11 @@ class EnquiryCrudController extends CrudController
             'place_of_registration' => 'nullable|max:100',
             'dealer_branch' => $req,
             'dealer_location' => $req,
-            'sc_code' => $req,
+            'sc_code' => 'nullable',
+            'x8_sc_code' => 'nullable|string|max:200',
+            'x8_sc_mile_id' => 'nullable|string|max:100',
+            
+            // Follow Up Rules
             'followup_type' => 'nullable',
             'followup_date' => 'nullable|date',
             'followup_time' => 'nullable',
@@ -995,6 +1065,16 @@ class EnquiryCrudController extends CrudController
             'lost_sub_reason' => 'nullable|string|max:100',
             'lost_detail_reason' => 'nullable|string|max:100',
             'lost_remarks' => 'nullable|string|max:100',
+            
+            // CRE Follow up validations
+            'cre_fup_call_duration' => 'nullable|string|max:50',
+            'cre_fup_deviation_stage' => 'nullable|string|max:50',
+            'cre_enq_stage' => 'nullable|string|max:50',
+            'cre_customer_stage' => 'nullable|string|max:50',
+            'cre_fup_remarks' => 'nullable|string|max:255',
+            'cre_next_fup_date' => 'nullable|date',
+
+            // Financial & Exchange Rules
             'make_year' => 'nullable|integer',
             'odo_reading' => 'nullable|numeric',
             'expected_price' => 'nullable|numeric',
