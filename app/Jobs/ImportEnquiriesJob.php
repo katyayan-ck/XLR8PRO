@@ -23,12 +23,28 @@ class ImportEnquiriesJob implements ShouldQueue
 
     private const CHUNK_SIZE = 300;
 
+    // 1. ADDED ALL REQUESTED KEYVALUE CODES HERE
     private const KEYVALUE_CODES = [
         'ENQUIRY_TYPE',
         'ENQUIRY_SUB_SOURCE',
         'LIKELY_PURCHASE_DATE',
         'FOLLOW_UP_TYPE',
         'FOLLOW_UP_REMARKS_TYPE',
+        'TEST_DRIVE_STAGE',
+        'DEVIATION_STAGE',
+        'LOST_SUBREASON',
+        'LOST_REASON',
+        'APPLICATION',
+        'SC_FUP_REMARKS_TYPE',
+        'SC_FUP_REMARKS',
+        'CALL_NATURE_VIRTUAL',
+        'APPLICATION_TYPE',
+        'KM_TRAVELLED_DAILY',
+        'USAGE_AREA',
+        'AGE_GROUP',
+        'OCCUPATION_SUB_TYPE',
+        'OCCUPATION_TYPE',
+        'ACTIVITY_TYPE',
     ];
 
     private const PURCHASE_TYPE_MAP = [
@@ -60,6 +76,7 @@ class ImportEnquiriesJob implements ShouldQueue
         $log = DB::table('xlr8_crm_import_logs')->where('id', $this->importLogId);
         $log->update(['status' => 'processing', 'updated_at' => now()]);
 
+        // 2. ADDED 'Booking' TO SHEET HANDLERS
         $sheetHandlers = [
             'Virtual'    => 'importVirtualSheet',
             'Hyperlocal' => 'importHyperlocalSheet',
@@ -69,6 +86,7 @@ class ImportEnquiriesJob implements ShouldQueue
             'Whatsapp'   => 'importWhatsappSheet',
             'Follow Up'  => 'importFollowUpSheet',
             'Test Drive' => 'importTestDriveSheet',
+            'Booking'    => 'importBookingSheet',
         ];
 
         $now = now();
@@ -208,6 +226,7 @@ class ImportEnquiriesJob implements ShouldQueue
                             continue;
                         }
 
+                        // UNIQUENESS: By Mobile for Virtual
                         $existed = $this->upsertRow(
                             'xlr8_crm_enquiries',
                             ['mobile' => $mobile],
@@ -249,22 +268,24 @@ class ImportEnquiriesJob implements ShouldQueue
                         $modelName = $this->cell($row, $headerMap, 'Model');
                         $modelMatch = $this->resolveVehicleModel($modelName);
 
+                        // 3. UPDATED HYPERLOCAL COLUMNS PER YOUR SPECIFICATION
                         $data = $this->stripNulls([
-                            'first_name'        => $this->cleanString($firstName, 100),
-                            'last_name'         => $this->cleanString($lastName, 100),
-                            'mobile'            => $mobile,
-                            'email'             => $this->cleanString($this->cell($row, $headerMap, 'Email'), 150),
-                            'call_status'       => $this->cleanString($this->cell($row, $headerMap, 'Call-Status'), 50),
-                            'call_duration'     => $this->formatCallDuration($this->cell($row, $headerMap, 'Call-Duration-in-Seconds')),
-                            'virtual_call_date' => $this->excelDate($this->cell($row, $headerMap, 'Call-Start-Time'), true),
-                            'model'             => $this->cleanString($modelName, 100),
-                            'model_code'        => $modelMatch['model_code'],
-                            'segment_code'      => $modelMatch['segment_code'],
-                            'lead_datetime'     => $this->excelDate($this->cell($row, $headerMap, 'Lead-Date'), true),
-                            'tehsil'            => $this->cleanString($this->cell($row, $headerMap, 'Location-Name'), 100),
-                            'district'          => $this->cleanString($this->cell($row, $headerMap, 'Location-City'), 100),
-                            'zipcode'           => $this->cleanString($this->cell($row, $headerMap, 'Location-Pincode'), 20),
-                            'customer_address'  => $this->cleanString($this->cell($row, $headerMap, 'Location-Address'), 255),
+                            'lead_id'             => $this->cleanString($this->cell($row, $headerMap, 'Leads-ID'), 100),
+                            'first_name'           => $this->cleanString($firstName, 100),
+                            'last_name'            => $this->cleanString($lastName, 100),
+                            'mobile'               => $mobile,
+                            'virtual_call_date'    => $this->excelDate($this->cell($row, $headerMap, 'Call-Start-Time'), true),
+                            'call_recording_url'   => $this->cleanString($this->cell($row, $headerMap, 'Call-Recording-URL'), 255),
+                            'call_duration'        => $this->formatCallDuration($this->cell($row, $headerMap, 'Call-Duration-in-Seconds')),
+                            'call_status'          => $this->cleanString($this->cell($row, $headerMap, 'Call-Status'), 50),
+                            'call_type'            => $this->cleanString($this->cell($row, $headerMap, 'Call-Type'), 50),
+                            'notes'                => $this->cleanString($this->cell($row, $headerMap, 'Notes')),
+                            'lead_status'          => $this->cleanString($this->cell($row, $headerMap, 'Lead-Status'), 50),
+                            'client_crm_status'    => $this->cleanString($this->cell($row, $headerMap, 'Client-CRM-Status'), 50),
+                            'model'                => $this->cleanString($modelName, 100),
+                            'model_code'           => $modelMatch['model_code'],
+                            'segment_code'         => $modelMatch['segment_code'],
+                            'dealer_code'          => $this->cleanString($this->cell($row, $headerMap, 'Dealer-Code'), 50),
                         ]);
                         $data['updated_at'] = $now;
 
@@ -277,6 +298,7 @@ class ImportEnquiriesJob implements ShouldQueue
                             continue;
                         }
 
+                        // UNIQUENESS: By Mobile for Hyperlocal
                         $existed = $this->upsertRow(
                             'xlr8_crm_enquiries',
                             ['mobile' => $mobile],
@@ -345,6 +367,7 @@ class ImportEnquiriesJob implements ShouldQueue
                         ]);
                         $data['updated_at'] = $now;
 
+                        // UNIQUENESS: By Quick Enquiry Number for Quick Sheet
                         if (empty($enquiryNo)) {
                             $data['quick_enquiry_no'] = null;
                             DB::table('xlr8_crm_enquiries')->insert(array_merge(
@@ -425,13 +448,15 @@ class ImportEnquiriesJob implements ShouldQueue
                             'customer_type'           => $this->cleanString($this->cell($row, $headerMap, 'Customer Type'), 50),
                             'interested_in_exchange'  => $this->cleanString($this->cell($row, $headerMap, 'Intrested In Exchange'), 10),
                             'td_count'                => $this->cleanString($this->cell($row, $headerMap, 'TD Count'), 10),
-                            'lost_reason'             => $this->cleanString($this->cell($row, $headerMap, 'Lost-Reason'), 100),
-                            'lost_sub_reason'         => $this->cleanString($this->cell($row, $headerMap, 'Lost-Sub Reason'), 100),
+                            // 4. ADDED resolveKeyValue FOR LOST REASONS
+                            'lost_reason'             => $this->resolveKeyValue('LOST_REASON', $this->cell($row, $headerMap, 'Lost-Reason')),
+                            'lost_sub_reason'         => $this->resolveKeyValue('LOST_SUBREASON', $this->cell($row, $headerMap, 'Lost-Sub Reason')),
                             'lost_detail_reason'      => $this->cleanString($this->cell($row, $headerMap, 'Lost-Detailed Reason'), 255),
                             'lost_remarks'            => $this->cleanString($this->cell($row, $headerMap, 'Lost remarks by Sales Consultant'), 255),
                         ]);
                         $data['updated_at'] = $now;
 
+                        // UNIQUENESS: By Enquiry Number for Long Sheet
                         if (empty($enquiryNo)) {
                             $data['enquiry_no'] = null;
                             DB::table('xlr8_crm_enquiries')->insert(array_merge(
@@ -502,11 +527,10 @@ class ImportEnquiriesJob implements ShouldQueue
                             continue;
                         }
 
-                        $matchCriteria = $model !== null ? ['mobile' => $mobile, 'model' => $model] : ['mobile' => $mobile];
-
+                        // UNIQUENESS: Updated strictly to checking 'mobile' (number uniqueness) as requested
                         $existed = $this->upsertRow(
                             'xlr8_crm_enquiries',
-                            $matchCriteria,
+                            ['mobile' => $mobile],
                             $data,
                             ['created_at' => $now, 'origin' => 'REFERENCE', 'current_origin' => 'REFERENCE']
                         );
@@ -564,11 +588,10 @@ class ImportEnquiriesJob implements ShouldQueue
                             continue;
                         }
 
-                        $matchCriteria = $model !== null ? ['mobile' => $mobile, 'model' => $model] : ['mobile' => $mobile];
-
+                        // Aligning with standard uniqueness by mobile
                         $existed = $this->upsertRow(
                             'xlr8_crm_enquiries',
-                            $matchCriteria,
+                            ['mobile' => $mobile],
                             $data,
                             ['created_at' => $now, 'origin' => 'WHATSAPP', 'current_origin' => 'WHATSAPP']
                         );
@@ -600,23 +623,24 @@ class ImportEnquiriesJob implements ShouldQueue
                         $modelName = $this->cell($row, $headerMap, 'Model Name');
                         $modelMatch = $this->resolveVehicleModel($modelName);
 
+                        // 5. APPLIED resolveKeyValue FOR FUP SHEET FIELDS
                         $data = [
                             'enquiry_no'            => $this->cleanString($this->cell($row, $headerMap, 'Enquiry Number'), 50),
                             'sc_code'               => $this->cleanString($this->cell($row, $headerMap, 'Sales Consultant'), 200),
                             'sc_mile_id'            => $this->cleanString($this->cell($row, $headerMap, 'SC Mile Id'), 100),
-                            'followup_type'         => $this->cleanString($this->cell($row, $headerMap, 'Followup Type'), 50),
-                            'remark_type'           => $this->cleanString($this->cell($row, $headerMap, 'Remark Type'), 200),
+                            'followup_type'         => $this->resolveKeyValue('FOLLOW_UP_TYPE', $this->cell($row, $headerMap, 'Followup Type')),
+                            'remark_type'           => $this->resolveKeyValue('SC_FUP_REMARKS_TYPE', $this->cell($row, $headerMap, 'Remark Type')),
                             'planned_followup_date' => $this->excelDate($this->cell($row, $headerMap, 'Planned Followup Date')),
                             'actual_followup_date'  => $this->excelDate($this->cell($row, $headerMap, 'Actual Followup Date')),
-                            'remarks'               => $this->cleanString($this->cell($row, $headerMap, 'Remark')),
+                            'remarks'               => $this->resolveKeyValue('SC_FUP_REMARKS', $this->cell($row, $headerMap, 'Remark')),
                             'comments'              => $this->cleanString($this->cell($row, $headerMap, 'Comments')),
                             'enquiry_date'          => $this->excelDate($this->cell($row, $headerMap, 'Enquiry Date')),
-                            'enquiry_type'          => $this->cleanString($this->cell($row, $headerMap, 'Enquiry Type'), 50),
+                            'enquiry_type'          => $this->resolveKeyValue('ENQUIRY_TYPE', $this->cell($row, $headerMap, 'Enquiry Type')),
                             'enquiry_source'        => $this->cleanString($this->cell($row, $headerMap, 'Enquiry Source'), 50),
-                            'enquiry_sub_source'    => $this->cleanString($this->cell($row, $headerMap, 'Enquiry Sub Source'), 50),
+                            'enquiry_sub_source'    => $this->resolveKeyValue('ENQUIRY_SUB_SOURCE', $this->cell($row, $headerMap, 'Enquiry Sub Source')),
                             'enquiry_status'        => $this->cleanString($this->cell($row, $headerMap, 'Enquiry Status'), 50),
                             'purchase_type'         => $this->cleanString($this->cell($row, $headerMap, 'Purchase Type'), 50),
-                            'deviation_stage'       => $this->cleanString($this->cell($row, $headerMap, 'Deviation Stage'), 100),
+                            'deviation_stage'       => $this->resolveKeyValue('DEVIATION_STAGE', $this->cell($row, $headerMap, 'Deviation Stage')),
                             'customer_name'         => $this->cleanString($this->cell($row, $headerMap, 'Customer Name'), 200),
                             'customer_phone'        => $this->cleanString($this->cell($row, $headerMap, 'Customer Phone'), 15),
                             'model_name'            => $this->cleanString($modelName, 150),
@@ -630,7 +654,6 @@ class ImportEnquiriesJob implements ShouldQueue
                             'segment_code'          => $modelMatch['segment_code'] ?? null,
                         ];
 
-                        // Check exact duplicate row in database
                         $query = DB::table('xlr8_crm_enquiries_fup');
                         foreach ($data as $column => $value) {
                             if (is_null($value)) {
@@ -642,10 +665,6 @@ class ImportEnquiriesJob implements ShouldQueue
 
                         if ($query->exists()) {
                             $stats['skipped']++;
-                            Log::info("[Follow Up] Row {$excelRow} SKIPPED (Exact duplicate entry already exists)", [
-                                'enquiry_no' => $data['enquiry_no'],
-                                'customer_phone' => $data['customer_phone']
-                            ]);
                         } else {
                             DB::table('xlr8_crm_enquiries_fup')->insert(array_merge($data, [
                                 'is_active'  => 1,
@@ -683,12 +702,13 @@ class ImportEnquiriesJob implements ShouldQueue
                         $customerName  = $this->cell($row, $headerMap, 'Customer Name') ?? $this->cell($row, $headerMap, 'Lead Name');
                         $customerPhone = $this->cell($row, $headerMap, 'Customer Phone') ?? $this->cell($row, $headerMap, 'Lead Phone');
 
+                        // 6. APPLIED resolveKeyValue FOR TD STAGE
                         $data = [
                             'test_drive_no'           => $this->cleanString($this->cell($row, $headerMap, 'Test Drive Number'), 50),
                             'enquiry_no'              => $this->cleanString($this->cell($row, $headerMap, 'Enquiry Number'), 50),
                             'sc_code'                 => $this->cleanString($this->cell($row, $headerMap, 'Sales Consultant'), 200),
                             'sc_mile_id'              => $this->cleanString($this->cell($row, $headerMap, 'SC Mile Id'), 100),
-                            'stage'                   => $this->cleanString($this->cell($row, $headerMap, 'Stage'), 100),
+                            'stage'                   => $this->resolveKeyValue('TEST_DRIVE_STAGE', $this->cell($row, $headerMap, 'Stage')),
                             'td_created_date'         => $this->excelDate($this->cell($row, $headerMap, 'TD Created Date')),
                             'scheduled_td_start_time' => $this->excelDate($this->cell($row, $headerMap, 'Scheduled TD Start Time'), true),
                             'scheduled_td_end_time'   => $this->excelDate($this->cell($row, $headerMap, 'Scheduled TD End Time'), true),
@@ -702,7 +722,6 @@ class ImportEnquiriesJob implements ShouldQueue
                             'customer_phone'          => $this->cleanString($customerPhone, 15),
                         ];
 
-                        // Check exact duplicate row in database
                         $query = DB::table('xlr8_crm_testdrive');
                         foreach ($data as $column => $value) {
                             if (is_null($value)) {
@@ -714,10 +733,6 @@ class ImportEnquiriesJob implements ShouldQueue
 
                         if ($query->exists()) {
                             $stats['skipped']++;
-                            Log::info("[Test Drive] Row {$excelRow} SKIPPED (Exact duplicate entry already exists)", [
-                                'test_drive_no' => $data['test_drive_no'],
-                                'enquiry_no' => $data['enquiry_no']
-                            ]);
                         } else {
                             DB::table('xlr8_crm_testdrive')->insert(array_merge($data, [
                                 'is_active'  => 1,
@@ -729,6 +744,71 @@ class ImportEnquiriesJob implements ShouldQueue
                     } catch (\Throwable $e) {
                         $stats['skipped']++;
                         Log::error("[Test Drive] Row {$excelRow} SKIPPED (Parsing Exception) — " . $e->getMessage(), ['row' => $row]);
+                    }
+                }
+            });
+            $this->bumpProgress($log, count($chunk));
+        }
+
+        return $stats;
+    }
+
+    // 7. NEW BOOKING SHEET FUNCTION
+    private function importBookingSheet(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet, $now, $log): array
+    {
+        $stats = ['inserted' => 0, 'updated' => 0, 'skipped' => 0];
+        $headerMap = $this->getSheetHeaderMap($sheet);
+        $rows = array_slice($sheet->toArray(null, true, true, false), 1);
+
+        foreach (array_chunk($rows, self::CHUNK_SIZE, true) as $chunk) {
+            DB::transaction(function () use ($chunk, $headerMap, $now, &$stats) {
+                foreach ($chunk as $i => $row) {
+                    $excelRow = $i + 2;
+                    try {
+                        $bookingNumber = $this->cleanString($this->cell($row, $headerMap, 'Booking Number'), 100);
+
+                        if (empty($bookingNumber)) {
+                            $stats['skipped']++;
+                            continue;
+                        }
+
+                        $data = $this->stripNulls([
+                            'booking_date'                    => $this->excelDate($this->cell($row, $headerMap, 'Booking Date')),
+                            'sc_code'                         => $this->cleanString($this->cell($row, $headerMap, 'SC Code'), 100),
+                            'booking_status'                  => $this->cleanString($this->cell($row, $headerMap, 'Booking Status'), 50),
+                            'booking_cancellation_date'       => $this->excelDate($this->cell($row, $headerMap, 'Booking Cancellation Date')),
+                            'model_group'                     => $this->cleanString($this->cell($row, $headerMap, 'Model Group'), 100),
+                            'model_variant'                   => $this->cleanString($this->cell($row, $headerMap, 'Model Variant'), 100),
+                            'oem_model_code'                  => $this->cleanString($this->cell($row, $headerMap, 'OEM Model Code'), 100),
+                            'booking_customer_code'           => $this->cleanString($this->cell($row, $headerMap, 'Booking Customer Code'), 100),
+                            'booking_customer_name'           => $this->cleanString($this->cell($row, $headerMap, 'Booking Customer Name'), 255),
+                            'booking_customer_address'        => $this->cleanString($this->cell($row, $headerMap, 'Booking Customer Address'), 255),
+                            'booking_customer_city'           => $this->cleanString($this->cell($row, $headerMap, 'Booking Customer City'), 100),
+                            'booking_customer_tehsil'         => $this->cleanString($this->cell($row, $headerMap, 'Booking Customer Tehsil'), 100),
+                            'booking_customer_district'       => $this->cleanString($this->cell($row, $headerMap, 'Booking Customer District'), 100),
+                            'billing_customer_pan_number'     => $this->cleanString($this->cell($row, $headerMap, 'Billing Customer PAN Number'), 50),
+                            'billing_customer_tan_number'     => $this->cleanString($this->cell($row, $headerMap, 'Billing Customer TAN Number'), 50),
+                            'billing_customer_aadhaar_number' => $this->cleanString($this->cell($row, $headerMap, 'Billing Customer Aadhaar Number'), 50),
+                            'invoice_no'                      => $this->cleanString($this->cell($row, $headerMap, 'Invoice No.'), 100),
+                            'evaluation_id'                   => $this->cleanString($this->cell($row, $headerMap, 'Evaluation ID'), 100),
+                            'so_number'                       => $this->cleanString($this->cell($row, $headerMap, 'SO Number'), 100),
+                            'otf_number'                      => $this->cleanString($this->cell($row, $headerMap, 'OTF Number'), 100),
+                        ]);
+
+                        $data['updated_at'] = $now;
+
+                        // UNIQUENESS: Handled by Booking Number
+                        $existed = $this->upsertRow(
+                            'xlr8_crm_booking',
+                            ['booking_number' => $bookingNumber],
+                            $data,
+                            ['created_at' => $now]
+                        );
+
+                        $existed ? $stats['updated']++ : $stats['inserted']++;
+                    } catch (\Throwable $e) {
+                        $stats['skipped']++;
+                        Log::error("[Booking] Row {$excelRow} FAILED — " . $e->getMessage(), ['row' => $row]);
                     }
                 }
             });

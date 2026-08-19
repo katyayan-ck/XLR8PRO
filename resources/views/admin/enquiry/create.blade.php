@@ -1112,12 +1112,15 @@
 
             $('#consider_make').on('change', function() {
                 const isValid = $(this).val() && $(this).val() !== 'No Consideration';
-                $('#consider_model, #consider_variant').prop('disabled', !isValid).val(isValid ? undefined : '');
+                $('#consider_model, #consider_variant').prop('disabled', !isValid).val(isValid ? undefined :
+                    '');
             }).trigger('change');
 
             $('#enquiry_type').on('change', function() {
-                loadKeywordDropdown('ENQ_SOURCE', $(this).val(), $sourceCode, 'Select Enquiry Source', currentEnquiry.source);
-                $subSource.html('<option value="">Select Enquiry Sub Source</option>').prop('disabled', true);
+                loadKeywordDropdown('ENQ_SOURCE', $(this).val(), $sourceCode, 'Select Enquiry Source',
+                    currentEnquiry.source);
+                $subSource.html('<option value="">Select Enquiry Sub Source</option>').prop('disabled',
+                    true);
                 if (currentEnquiry.isEdit) setTimeout(() => $sourceCode.trigger('change'), 300);
             });
 
@@ -1135,17 +1138,22 @@
                     loadKeywordDropdown('ENQUIRY_SUB_SOURCE', source, $subSource,
                         'Select Enquiry Sub Source', currentEnquiry.subSource);
                 } else {
-                    $subSource.html('<option value="">Select Enquiry Sub Source</option>').val('').prop('disabled', true);
+                    $subSource.html('<option value="">Select Enquiry Sub Source</option>').val('').prop(
+                        'disabled', true);
                 }
-                $plannedCampaign.prop('disabled', source !== 'ACTIVATIONS').prop('required', source === 'ACTIVATIONS').val(source === 'ACTIVATIONS' ? $plannedCampaign.val() : '');
+                $plannedCampaign.prop('disabled', source !== 'ACTIVATIONS').prop('required', source ===
+                    'ACTIVATIONS').val(source === 'ACTIVATIONS' ? $plannedCampaign.val() : '');
             }).trigger('change');
 
             $('#application_type').on('change', function() {
-                loadKeywordDropdown('APPLICATION', $(this).val(), $('#application'), 'Select Application', currentEnquiry.application);
+                loadKeywordDropdown('APPLICATION', $(this).val(), $('#application'), 'Select Application',
+                    currentEnquiry.application);
             }).trigger('change');
 
             $('#dealer_branch').on('change', function() {
-                fetchDropdown("{{ backpack_url('enquiry/locations') }}/" + $(this).val(), $('#dealer_location'), 'Select Dealer Location', currentEnquiry.isEdit ? currentEnquiry.dealerLocation : '');
+                fetchDropdown("{{ backpack_url('enquiry/locations') }}/" + $(this).val(), $(
+                        '#dealer_location'), 'Select Dealer Location', currentEnquiry.isEdit ?
+                    currentEnquiry.dealerLocation : '');
             });
 
             $segmentCode.on('change', function() {
@@ -1155,8 +1163,10 @@
                 $('#bevSection').toggle(segmentText === 'BEV');
                 const isCommercial = ['LMM', 'COMMERCIAL'].includes(segmentText);
                 $('#commercialSection').toggle(isCommercial);
-                if (!isCommercial) $('#commercialSection').find('select,input').val('').prop('required', false);
-                $modelCode.add($variantCode).add($colorCode).html('<option value="">Select Option</option>').prop('disabled', true);
+                if (!isCommercial) $('#commercialSection').find('select,input').val('').prop('required',
+                    false);
+                $modelCode.add($variantCode).add($colorCode).html('<option value="">Select Option</option>')
+                    .prop('disabled', true);
                 $('#fuel_type, #fuel_type_id, #transmission, #drivetrain, #seating').val('');
                 if (segmentCode) {
                     fetchDropdown("{{ backpack_url('enquiry/models') }}/" + segmentCode, $modelCode,
@@ -1168,7 +1178,8 @@
 
             $modelCode.on('change', function() {
                 const modelCode = $(this).val();
-                $variantCode.add($colorCode).html('<option value="">Select Option</option>').prop('disabled', true);
+                $variantCode.add($colorCode).html('<option value="">Select Option</option>').prop(
+                    'disabled', true);
                 $('#fuel_type, #fuel_type_id, #transmission, #drivetrain, #seating').val('');
                 if (modelCode) {
                     fetchDropdown("{{ backpack_url('enquiry/variants') }}/" + modelCode, $variantCode,
@@ -1188,7 +1199,8 @@
                 $('#seating').val($selected.data('seating') || '');
                 $colorCode.html('<option value="">Loading...</option>').prop('disabled', true);
                 if (variantCode) {
-                    fetchDropdown("{{ backpack_url('enquiry/colors') }}/" + variantCode, $colorCode, 'Select Color', currentEnquiry.isEdit ? currentEnquiry.color : '');
+                    fetchDropdown("{{ backpack_url('enquiry/colors') }}/" + variantCode, $colorCode,
+                        'Select Color', currentEnquiry.isEdit ? currentEnquiry.color : '');
                 }
             });
 
@@ -1258,10 +1270,14 @@
                     .then(data => {
                         if (data && data[0] && data[0].Status === 'Success') {
                             const postOffices = data[0].PostOffice;
-                            let bpos = [], tehsils = [], districts = [], cities = [];
+                            let bpos = [],
+                                tehsils = [],
+                                districts = [],
+                                cities = [];
                             postOffices.forEach(po => {
                                 if (po.Name && !bpos.includes(po.Name)) bpos.push(po.Name);
-                                let block = (po.Block && po.Block !== "NA") ? po.Block : po.District;
+                                let block = (po.Block && po.Block !== "NA") ? po.Block : po
+                                    .District;
                                 if (block && !tehsils.includes(block)) tehsils.push(block);
                                 if (po.District && !districts.includes(po.District)) districts.push(po.District);
                                 if (po.State && !cities.includes(po.State)) cities.push(po.State);
@@ -1304,8 +1320,10 @@
                                 };
                             };
 
-                            const handleRender = (selectId, inputId, inputName, optionsArr, placeholder, currentValue) => {
-                                const renderData = buildOptions(optionsArr, placeholder, currentValue);
+                            const handleRender = (selectId, inputId, inputName, optionsArr,
+                                placeholder, currentValue) => {
+                                const renderData = buildOptions(optionsArr, placeholder,
+                                    currentValue);
                                 $(`#${selectId}`).html(renderData.html);
                                 if (!renderData.valueFound && currentValue) {
                                     $(`#${inputId}`).val(currentValue).removeClass('d-none').attr('name', inputName);
@@ -1317,10 +1335,14 @@
                                 }
                             };
 
-                            handleRender('vpo_select', 'vpo_input', 'vpo', bpos, 'Select VPO', currentEnquiry.vpo);
-                            handleRender('tehsil_select', 'tehsil_input', 'tehsil', tehsils, 'Select Tehsil', currentEnquiry.tehsil);
-                            handleRender('district_select', 'district_input', 'district', districts, 'Select District', currentEnquiry.district);
-                            handleRender('state_select', 'state_input', 'city', cities, 'Select State', currentEnquiry.city);
+                            handleRender('vpo_select', 'vpo_input', 'vpo', bpos, 'Select VPO',
+                                currentEnquiry.vpo);
+                            handleRender('tehsil_select', 'tehsil_input', 'tehsil', tehsils,
+                                'Select Tehsil', currentEnquiry.tehsil);
+                            handleRender('district_select', 'district_input', 'district', districts,
+                                'Select District', currentEnquiry.district);
+                            handleRender('state_select', 'state_input', 'city', cities,
+                                'Select State', currentEnquiry.city);
 
                             if (districts.length > 0) {
                                 const dist = districts[0].toUpperCase();
@@ -1328,7 +1350,8 @@
                                     $territorySelect.val('OWN TERRITORY');
                                 else $territorySelect.val('OTHER TERRITORY');
                             }
-                            if (currentEnquiry.territory) $territorySelect.val(currentEnquiry.territory);
+                            if (currentEnquiry.territory) $territorySelect.val(currentEnquiry
+                                .territory);
 
                         } else {
                             $bpoSelect.html('<option value="">No VPO Found</option>');
