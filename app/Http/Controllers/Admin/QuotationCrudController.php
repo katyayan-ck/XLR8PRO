@@ -760,16 +760,12 @@ class QuotationCrudController extends CrudController
 
     public function edit($id)
     {
-        $this->crud->setEditView('admin.quotation.edit');
-
+        $this->crud->setEditView('admin.quotation.create');
         $quotation = Quotation::findOrFail($id);
 
-        $selectedEnquiry = Enquiry::with([
-            'segment',
-            'model',
-            'variant',
-            'color',
-        ])->findOrFail($quotation->enquiry_no);
+        // Fetch enquiry safely (fallback for mock data)
+        $selectedEnquiry = Enquiry::with(['segment', 'model', 'variant', 'color'])
+            ->find($quotation->enquiry_no);
 
         $insurance_type_map = [
             1 => 'Nil Dep',
@@ -781,58 +777,50 @@ class QuotationCrudController extends CrudController
             '1' => 'TRC + Tax',
             '2' => 'TRC Only',
             '3' => 'Exempted',
-
-
         ];
 
-        $accessoryList = Accessory::where('status', 1)
-            ->orderBy('item')
-            ->get();
+        $reg_no_type_map = [
+            '1' => 'Regular',
+            '2' => 'BH Series',
+            '3' => 'Special Number',
+        ];
 
+        $accessoryList = Accessory::where('status', 1)->orderBy('item')->get();
         $quotationData = $quotation->proposed_data ?? [];
+
         $groupASelected = 'cash_scheme_oem';
-
-        if (!empty($quotationData['csd_discount'])) {
+        if (!empty($quotationData['csd_discount']) && !in_array($quotationData['csd_discount'], ['0', '0.00', 'N/A'])) {
             $groupASelected = 'csd_discount';
-        }
-
-        if (!empty($quotationData['fame_subsidy'])) {
+        } elseif (!empty($quotationData['fame_subsidy']) && !in_array($quotationData['fame_subsidy'], ['0', '0.00', 'N/A'])) {
             $groupASelected = 'fame_subsidy';
+        } elseif (!empty($quotationData['cash_scheme_oem']) && !in_array($quotationData['cash_scheme_oem'], ['0', '0.00', 'N/A'])) {
+            $groupASelected = 'cash_scheme_oem';
         }
 
         $groupBSelected = 'corporate_discount';
 
-        if (!empty($quotationData['loyalty_bonus'])) {
-            $groupBSelected = 'loyalty_bonus';
-        }
-
         $groupCSelected = 'exchange_bonus';
-
-        if (!empty($quotationData['green_bonus'])) {
+        if (!empty($quotationData['loyalty_bonus']) && !in_array($quotationData['loyalty_bonus'], ['0', 'N/A', '0.00'])) {
+            $groupCSelected = 'loyalty_bonus';
+        } elseif (!empty($quotationData['green_bonus']) && !in_array($quotationData['green_bonus'], ['0', 'N/A', '0.00'])) {
             $groupCSelected = 'green_bonus';
-        }
-
-        if (!empty($quotationData['welcome_bonus'])) {
+        } elseif (!empty($quotationData['welcome_bonus']) && !in_array($quotationData['welcome_bonus'], ['0', 'N/A', '0.00'])) {
             $groupCSelected = 'welcome_bonus';
+        } elseif (!empty($quotationData['exchange_bonus']) && !in_array($quotationData['exchange_bonus'], ['0', 'N/A', '0.00'])) {
+            $groupCSelected = 'exchange_bonus';
         }
 
-        return view('admin.quotation.edit', [
-
+        return view('admin.quotation.create', [
             'quotation' => $quotation,
-
             'quotationData' => $quotationData,
-
             'selectedEnquiry' => $selectedEnquiry,
-
             'insurance_type_map' => $insurance_type_map,
-
             'registration_type_map' => $registration_type_map,
-
+            'reg_no_type_map' => $reg_no_type_map,
             'accessoryList' => $accessoryList,
             'groupASelected' => $groupASelected,
             'groupBSelected' => $groupBSelected,
             'groupCSelected' => $groupCSelected,
-
         ]);
     }
 
@@ -1107,63 +1095,142 @@ class QuotationCrudController extends CrudController
             ->orderBy('revision', 'asc')
             ->get();
 
-
+        // create.blade.php ke sare form fields ka clean mapping
         $fieldNames = [
+            // Customer & Vehicle
+            'customer_name'             => 'Customer Name',
+            'customer_mobile'           => 'Mobile',
+            'mobile'                    => 'Mobile',
+            'careof'                    => 'Care Of',
+            'careofname'                => 'Care Of Name',
+            'segment_code'              => 'Segment',
+            'model_code'                => 'Model',
+            'variant_code'              => 'Variant',
+            'color_code'                => 'Color',
+            'permit'                    => 'Permit',
+            'oem_code'                  => 'OEM Code',
 
-            'enquiry_no' => 'Enquiry No.',
-            'segment_code' => 'Segment',
-            'model_code' => 'Model',
-            'variant_code' => 'Variant',
-            'color_code' => 'Color',
+            // Price Details (Receivables)
+            'ex_showroom_price'         => 'Ex Showroom Price',
+            'insurance_company'         => 'Insurance Company',
+            'insurance_covers'          => 'Insurance Covers',
+            'insurance_amount'          => 'Insurance Amount',
+            'registration_no_type'      => 'Registration Type',
+            'registration_category'     => 'Registration Category',
+            'in_house_rto'              => 'In-House RTO',
+            'registration_amount'       => 'Registration Amount',
+            'accessories'               => 'Accessories',
+            'accessories_amount'        => 'Accessories Amount',
+            'maxicare'                  => 'Maxicare',
+            'vltd_device'               => 'VLTD Device',
+            'coating'                   => 'Coating',
+            'coating_price'             => 'Coating Price',
+            'ppf'                       => 'PPF',
+            'rto_yellow_tape'           => 'RTO Yellow Tape',
+            'kazam_charging_kit'        => 'Kazam Charging Kit',
+            'incidental_charges'        => 'Incidental Charges',
+            'shield'                    => 'Shield',
+            'shield_price'              => 'Shield Price',
+            'rsa'                       => 'RSA',
+            'rsa_amount'                => 'RSA Amount',
+            'fastag'                    => 'Fastag',
+            'cod_charges'               => 'COD Charges',
+            'charger_swapping'          => 'Charger Swapping',
+            'charger_swapping_amount'   => 'Charger Swapping Amount',
+            'tcs'                       => 'TCS @1%',
+            'total_receivable'          => 'Total Receivable',
 
-            'ex_showroom_price' => 'Ex Showroom Price',
-            'policy_type' => 'Insurance Type',
-            'registration_type' => 'Registration Type',
-
-            'accessories' => 'Accessories',
-            'accessories_amount' => 'Accessories Amount',
-
-            'maxicare' => 'Maxicare',
-            'vltd_device' => 'VLTD Device',
-            'coating' => 'Coating',
-            'coating_price' => 'Coating Price',
-            'ppf' => 'PPF',
-            'rto_yellow_tape' => 'RTO Yellow Tape',
-            'kazam_charging_kit' => 'Kazam Charging Kit',
-            'incidental_charges' => 'Incidental Charges',
-
-            'shield' => 'Shield',
-            'shield_price' => 'Shield Price',
-
-            'rsa' => 'RSA',
-            'rsa_amount' => 'RSA Amount',
-
-            'fastag' => 'Fastag',
-            'cod_charges' => 'COD Charges',
-
-            'charger_swapping' => 'Charger Swapping',
-            'charger_swapping_amount' => 'Charger Swapping Amount',
-
-            'tcs' => 'TCS',
-
-            'oem_scheme_discount' => 'OEM Scheme Discount',
-            'fame_subsidy' => 'Fame Subsidy',
-            'exchange_bonus' => 'Exchange Bonus',
-            'corporate_discount' => 'Corporate Discount',
-            'accessories_discount' => 'Accessories Discount',
-            'ceramic_discount' => 'Ceramic Discount',
-            'ppf_discount' => 'PPF Discount',
-            'dealer_discount' => 'Dealer Discount',
+            // Discount Details (Group A, B, C & Others)
+            'cash_scheme_oem'           => 'Cash Scheme OEM',
+            'cash_scheme_oem_type'      => 'Cash Scheme OEM Type',
+            'csd_discount'              => 'CSD Discount',
+            'csd_discount_type'         => 'CSD Discount Type',
+            'fame_subsidy'              => 'Fame Subsidy',
+            'fame_subsidy_type'         => 'Fame Subsidy Type',
+            'dealer_discount'           => 'Dealer Discount',
+            'dealer_discount_type'      => 'Dealer Discount Type',
+            'accessories_discount'      => 'Accessories Discount',
+            'accessories_discount_type' => 'Accessories Discount Type',
+            'shield_scheme'             => 'Shield Scheme',
+            'shield_scheme_type'        => 'Shield Scheme Type',
+            'corporate_discount'        => 'Corporate Discount',
+            'corporate_discount_type'   => 'Corporate Discount Type',
+            'exchange_bonus'            => 'Exchange Bonus',
+            'exchange_bonus_type'       => 'Exchange Bonus Type',
+            'green_bonus'               => 'Green Bonus',
+            'green_bonus_type'          => 'Green Bonus Type',
+            'welcome_bonus'             => 'Welcome Bonus',
+            'welcome_bonus_type'        => 'Welcome Bonus Type',
+            'loyalty_bonus'             => 'Loyalty Bonus',
+            'loyalty_bonus_type'        => 'Loyalty Bonus Type',
+            'accessories_spl_disc'      => 'Accessories Special Discount',
+            'accessories_spl_disc_type' => 'Accessories Special Discount Type',
+            'ceramic_discount'          => 'Coating Special Discount',
+            'ceramic_discount_type'     => 'Coating Special Discount Type',
+            'ppf_discount'              => 'PPF Special Discount',
+            'ppf_discount_type'         => 'PPF Special Discount Type',
             'charger_swapping_discount' => 'Charger Swapping Discount',
+            'charger_swapping_discount_type' => 'Charger Swapping Discount Type',
+            'other_cash_discount'       => 'Other Cash Discount',
+            'other_cash_discount_type'  => 'Other Cash Discount Type',
+            'special_cash_discount'     => 'Special Cash Discount',
+            'special_cash_discount_type' => 'Special Cash Discount Type',
 
-            'total_receivable' => 'Total Receivable',
-            'total_discount' => 'Total Discount',
-            'net_receivable_summary' => 'Net Receivable',
-
+            // Summary Totals
+            'total_discount'            => 'Total Discount',
+            'net_receivable_summary'    => 'Net Receivable',
+            'invoiced_discount_summary' => 'Invoiced Discount (INV)',
+            'credit_note_discount_summary' => 'Credit Note Discount (CN)',
+            'cn1_discount_summary'      => 'CN1 Discount',
+            'cn2_discount_summary'      => 'CN2 Discount',
         ];
 
-        foreach ($actions as $index => $action) {
+        // Values format karne ke liye safe helper function (Arrays & Objects handle karne ke liye)
+        $formatValue = function ($key, $val) {
+            if ($val === null || $val === '' || $val === 'N/A') {
+                return '-';
+            }
 
+            // In-House RTO Radio format
+            if ($key === 'in_house_rto') {
+                return ($val == '1' || $val === 1) ? 'Yes' : 'No';
+            }
+
+            // Care of type format
+            if ($key === 'careof') {
+                return [
+                    1 => 'Son of',
+                    2 => 'Daughter of',
+                    3 => 'Married to',
+                    4 => 'Guardian Name',
+                ][$val] ?? $val;
+            }
+
+            // Non-array direct string
+            if (!is_array($val)) {
+                return (string) $val;
+            }
+
+            // 1. Insurance Covers Array: [{"name": "OD", "price": 50000}]
+            if ($key === 'insurance_covers' || (!empty($val) && is_array(reset($val)))) {
+                return collect($val)->map(function ($item) {
+                    if (is_array($item)) {
+                        $name = $item['name'] ?? '';
+                        $price = isset($item['price']) && $item['price'] !== '' ? ' (₹' . number_format((float)$item['price'], 2) . ')' : '';
+                        return trim($name . $price);
+                    }
+                    return (string) $item;
+                })->filter()->implode(', ');
+            }
+
+            // 2. Accessories List Array: ["AT00298", "AS20059"]
+            return implode(', ', array_filter($val, fn($v) => !is_array($v)));
+        };
+
+        // System internal fields jinhe comparison me ignore karna hai
+        $ignoredFields = ['_token', '_method', 'insurance_covers_data'];
+
+        foreach ($actions as $index => $action) {
             $oldData = $action->requested ?? [];
 
             if (isset($actions[$index + 1])) {
@@ -1174,30 +1241,26 @@ class QuotationCrudController extends CrudController
 
             $changes = [];
 
-            foreach ($newData as $key => $newValue) {
+            // Merge all keys from both sets to catch added and removed items
+            $allKeys = array_unique(array_merge(array_keys($oldData), array_keys($newData)));
 
-                $oldValue = $oldData[$key] ?? '';
-
-                // Accessories array support
-                if (is_array($oldValue)) {
-                    $oldValue = implode(', ', $oldValue);
+            foreach ($allKeys as $key) {
+                if (in_array($key, $ignoredFields)) {
+                    continue;
                 }
 
-                if (is_array($newValue)) {
-                    $newValue = implode(', ', $newValue);
-                }
+                $rawOld = $oldData[$key] ?? '';
+                $rawNew = $newData[$key] ?? '';
 
-                if ((string)$oldValue !== (string)$newValue) {
+                $oldFormatted = $formatValue($key, $rawOld);
+                $newFormatted = $formatValue($key, $rawNew);
 
+                // Check difference
+                if (trim((string)$oldFormatted) !== trim((string)$newFormatted)) {
                     $changes[] = [
-
-                        'field' => $fieldNames[$key]
-                            ?? ucwords(str_replace('_', ' ', $key)),
-
-                        'old' => $oldValue,
-
-                        'new' => $newValue,
-
+                        'field' => $fieldNames[$key] ?? ucwords(str_replace('_', ' ', $key)),
+                        'old'   => $oldFormatted,
+                        'new'   => $newFormatted,
                     ];
                 }
             }
@@ -1206,11 +1269,8 @@ class QuotationCrudController extends CrudController
         }
 
         return view('admin.quotation.history', [
-
             'quotation' => $quotation,
-
-            'actions' => $actions,
-
+            'actions'   => $actions,
         ]);
     }
 

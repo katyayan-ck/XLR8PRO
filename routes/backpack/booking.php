@@ -466,4 +466,9 @@ Route::group([
         ->name('booking.check-field-payment');
     Route::post('booking/{id}/otf-save', 'BookingCrudController@otfSave')
         ->name('booking.otf.save');
+
+    // Add this with other Booking routes
+    Route::get('booking/otf-bookings', 'BookingCrudController@otfBookings')
+        ->name('booking.otf-bookings')
+        ->middleware('admin');
 });
