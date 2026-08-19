@@ -426,6 +426,17 @@ class Enquiry extends BaseModel
     }
 
 
+    /**
+     * Scope a query to only include Hyperlocal enquiries
+     */
+    public function scopeHyperlocal($query)
+    {
+        return $query->where('source_code', 'HYPERLOCAL')
+            ->orWhere('source_code', 'hyperlocal')
+            ->orWhere('sub_source', 'Hyperlocal')
+            ->orWhere('sub_source', 'hyperlocal');
+    }
+
 
 
     public function scopeCurrentOrigin($query, string $origin)

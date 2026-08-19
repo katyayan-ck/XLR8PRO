@@ -13,11 +13,8 @@
                         d-flex justify-content-between align-items-center
                         flex-nowrap flex-md-nowrap flex-wrap">
                 <h2 class="card-title mb-0 fw-bold text-black text-nowrap">
-                    OTF Bookings
+                    {{ $title ?? 'OTF Bookings' }}
                 </h2>
-                {{-- <span class="badge bg-light text-dark px-3 py-2">
-                    Total: {{ $gridConfig['data']->count() ?? 0 }}
-                </span> --}}
             </div>
 
             <div class="card-body p-0" style="background:#f8fafc">
@@ -130,112 +127,44 @@
 
 <script>
     const ALL_COLUMNS = @json($gridConfig['columns'] ?? []);
-
-    function getCols(fields) {
-        return ALL_COLUMNS.filter(col => fields.includes(col.field));
-    }
+    const GRID_DATA = @json($gridConfig['data'] ?? []);
 
     let gridApi;
 
     const DEFAULT_VISIBLE_FIELDS = [
         'serial_no',
         'booking_no',
-        'created_at',
         'booking_date',
-        'name',
-        'mobile',
-        'branch_name',
-        'location_name',
-        'segment',
+        'sc_code',
+        'booking_status',
+        'cancellation_date',
+        'model_group',
         'model',
         'variant',
-        'color',
-        'booking_amount',
-        'status',
-        'consultant',
-        'otf_date',
-        'dms_no',
-        'dms_otf',
-        'dms_so',
-        'action'
+        'oem_model_code',
+        'customer_code',
+        'customer_name',
+        'customer_city',
+        'pan_number',
+        'aadhaar_number',
+        'otf_number'
     ];
 
-    const columnGroups = [
-        {
-            headerName: 'Primary',
-            headerClass: 'ag-header-center',
-            children: getCols([
-                'serial_no',
-                'booking_no',
-                'created_at',
-                'booking_date',
-                'days_count'
-            ]).map(col => {
-                if (col.field === 'serial_no' || col.field === 'booking_no') {
-                    col.pinned = 'left';
-                }
-                return col;
-            })
-        },
-        {
-            headerName: 'Customer',
-            headerClass: 'ag-header-center',
-            children: getCols([
-                'name',
-                'mobile',
-                'alt_mobile',
-                'pan_no',
-                'adhar_no',
-                'gstn',
-                'branch_name',
-                'location_name'
-            ])
-        },
-        {
-            headerName: 'Vehicle',
-            headerClass: 'ag-header-center',
-            children: getCols([
-                'segment',
-                'model',
-                'variant',
-                'color',
-                'chassis_no',
-                'booking_amount'
-            ])
-        },
-        {
-            headerName: 'OTF Details',
-            headerClass: 'ag-header-center',
-            children: getCols([
-                'otf_date',
-                'dms_no',
-                'dms_otf',
-                'dms_so',
-                'status'
-            ])
-        },
-        {
-            headerName: 'Consultant',
-            headerClass: 'ag-header-center',
-            children: getCols([
-                'consultant',
-                'b_source',
-                'b_mode'
-            ])
-        },
-        {
-            headerName: 'Action',
-            headerClass: 'ag-header-center',
-            children: getCols(['action']).map(col => {
-                col.pinned = 'right';
-                return col;
-            })
+    // Flat columnDefs (Parent headers removed)
+    const columnDefs = ALL_COLUMNS.map(col => {
+        if (col.field === 'serial_no' || col.field === 'booking_no') {
+            col.pinned = 'left';
         }
-    ];
+        if (col.field === 'action') {
+            col.pinned = 'right';
+            col.cellRenderer = 'htmlRenderer';
+        }
+        return col;
+    });
 
     const gridOptions = {
-        columnDefs: columnGroups,
-        rowData: @json($gridConfig['data'] ?? []),
+        columnDefs: columnDefs,
+        rowData: GRID_DATA,
         pagination: true,
         paginationPageSize: 50,
         paginationPageSizeSelector: [20, 50, 100, 200],
@@ -252,20 +181,16 @@
         },
 
         components: {
-            htmlRenderer: params => params.value || '',
+            htmlRenderer: function(params) {
+                if (!params.value) return '';
+                return params.value;
+            }
         },
 
         onGridReady: params => {
             gridApi = params.api;
 
-            const allFields = [];
-            columnGroups.forEach(group => {
-                if (group.children) {
-                    group.children.forEach(child => {
-                        if (child.field) allFields.push(child.field);
-                    });
-                }
-            });
+            const allFields = columnDefs.map(col => col.field);
 
             gridApi.setColumnsVisible(allFields, false);
             gridApi.setColumnsVisible(DEFAULT_VISIBLE_FIELDS, true);
@@ -284,86 +209,65 @@
 
         tbody.innerHTML = '';
 
-        columnGroups.forEach(group => {
-            const groupName = group.headerName;
-            const children  = group.children || [];
+        const allFields = columnDefs.map(col => col.field).filter(f => f !== 'action');
 
-            if (groupName === 'Action') return;
+        const groupTr = document.createElement('tr');
+        groupTr.style.background = '#f0f0f0';
 
-            const groupTr = document.createElement('tr');
-            groupTr.style.background = '#f0f0f0';
+        const groupCheckTd = document.createElement('td');
+        groupCheckTd.style.width = '30px';
+        groupCheckTd.className = 'text-center';
 
-            const groupCheckTd = document.createElement('td');
-            groupCheckTd.style.width = '30px';
-            groupCheckTd.className = 'text-center';
+        const groupCheckbox = document.createElement('input');
+        groupCheckbox.type = 'checkbox';
 
-            const groupCheckbox = document.createElement('input');
-            groupCheckbox.type = 'checkbox';
+        const visibleCount = allFields.filter(f => {
+            const col = gridApi.getColumn(f);
+            return col && col.isVisible();
+        }).length;
 
-            const fields = children.map(c => c.field).filter(Boolean);
-            const visibleCount = fields.filter(f => {
-                const col = gridApi.getColumn(f);
-                return col && col.isVisible();
-            }).length;
+        groupCheckbox.checked = visibleCount === allFields.length && allFields.length > 0;
+        groupCheckbox.indeterminate = visibleCount > 0 && visibleCount < allFields.length;
+        groupCheckbox.disabled = true;
 
-            groupCheckbox.checked = visibleCount === fields.length && visibleCount > 0;
-            groupCheckbox.indeterminate = visibleCount > 0 && visibleCount < fields.length;
+        groupCheckTd.appendChild(groupCheckbox);
 
-            if (groupName === 'Primary') {
-                groupCheckbox.checked = true;
-                groupCheckbox.disabled = true;
-            }
+        const groupLabelTd = document.createElement('td');
+        groupLabelTd.colSpan = 2;
+        groupLabelTd.innerHTML = `<strong>All Headers</strong>`;
 
-            groupCheckbox.addEventListener('change', () => {
-                gridApi.setColumnsVisible(fields, groupCheckbox.checked);
-                tbody.querySelectorAll(`tr[data-group="${groupName}"] input`)
-                    .forEach(cb => cb.checked = groupCheckbox.checked);
+        groupTr.appendChild(groupCheckTd);
+        groupTr.appendChild(groupLabelTd);
+        tbody.appendChild(groupTr);
+
+        allFields.forEach(field => {
+            const colDef = columnDefs.find(c => c.field === field);
+            if (!colDef) return;
+
+            const tr = document.createElement('tr');
+
+            const tdCheck = document.createElement('td');
+            tdCheck.style.paddingLeft = '40px';
+            tdCheck.className = 'text-center';
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+
+            const col = gridApi.getColumn(field);
+            checkbox.checked = col ? col.isVisible() : false;
+
+            checkbox.addEventListener('change', () => {
+                gridApi.setColumnsVisible([field], checkbox.checked);
             });
 
-            groupCheckTd.appendChild(groupCheckbox);
+            tdCheck.appendChild(checkbox);
 
-            const groupLabelTd = document.createElement('td');
-            groupLabelTd.colSpan = 2;
-            groupLabelTd.innerHTML = `<strong>${groupName}</strong>`;
+            const tdLabel = document.createElement('td');
+            tdLabel.innerText = colDef.headerName;
 
-            groupTr.appendChild(groupCheckTd);
-            groupTr.appendChild(groupLabelTd);
-            tbody.appendChild(groupTr);
-
-            children.forEach(child => {
-                if (!child.field) return;
-
-                const tr = document.createElement('tr');
-                tr.dataset.group = groupName;
-
-                const tdCheck = document.createElement('td');
-                tdCheck.style.paddingLeft = '40px';
-                tdCheck.className = 'text-center';
-
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-
-                const col = gridApi.getColumn(child.field);
-                checkbox.checked = col ? col.isVisible() : false;
-
-                if (groupName === 'Primary') {
-                    checkbox.disabled = true;
-                    checkbox.checked = true;
-                }
-
-                checkbox.addEventListener('change', () => {
-                    gridApi.setColumnsVisible([child.field], checkbox.checked);
-                });
-
-                tdCheck.appendChild(checkbox);
-
-                const tdLabel = document.createElement('td');
-                tdLabel.innerText = child.headerName;
-
-                tr.appendChild(tdCheck);
-                tr.appendChild(tdLabel);
-                tbody.appendChild(tr);
-            });
+            tr.appendChild(tdCheck);
+            tr.appendChild(tdLabel);
+            tbody.appendChild(tr);
         });
 
         bubble.style.display = 'block';
@@ -386,14 +290,7 @@
     });
 
     document.getElementById('btnAllHeaders')?.addEventListener('click', () => {
-        const allFields = [];
-        columnGroups.forEach(group => {
-            if (group.children) {
-                group.children.forEach(c => {
-                    if (c.field) allFields.push(c.field);
-                });
-            }
-        });
+        const allFields = columnDefs.map(col => col.field);
         gridApi.setColumnsVisible(allFields, true);
         setTimeout(() => {
             const visibleIds = gridApi.getAllDisplayedColumns().map(c => c.getColId());
@@ -402,14 +299,7 @@
     });
 
     document.getElementById('btnDefaultHeaders')?.addEventListener('click', () => {
-        const allFields = [];
-        columnGroups.forEach(group => {
-            if (group.children) {
-                group.children.forEach(c => {
-                    if (c.field) allFields.push(c.field);
-                });
-            }
-        });
+        const allFields = columnDefs.map(col => col.field);
 
         gridApi.setColumnsVisible(allFields, false);
         gridApi.setColumnsVisible(DEFAULT_VISIBLE_FIELDS, true);
