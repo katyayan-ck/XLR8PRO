@@ -65,6 +65,17 @@
                 @method('PUT')
             @endif
 
+            {{-- ERROR DISPLAY BLOCK --}}
+            @if ($errors->any())
+                <div class="alert alert-danger rounded-3 shadow-sm pb-0 mb-4">
+                    <ul class="mb-3">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             {{-- Hidden fields to preserve validation for frozen OEM SC Location/Branch --}}
             <input type="hidden" name="dealer_branch" value="{{ old('dealer_branch', $enquiry->dealer_branch ?? '') }}">
             <input type="hidden" name="dealer_location" value="{{ old('dealer_location', $enquiry->dealer_location ?? '') }}">
@@ -127,9 +138,9 @@
                         @if (isset($enquiry) && !$isVirtual)
                             <div class="table-responsive mb-4">
                                 <table class="table table-bordered text-center align-middle mb-0" style="background-color: #e9ecef;">
-                                    <thead class="table-secondary">
+                                    <thead class="table-light text-secondary text-uppercase" style="font-size: 0.85rem;">
                                         <tr>
-                                            <th>Enquiry Platform</th>
+                                            <th class="text-start px-3">Enquiry Platform</th>
                                             <th>Enquiry No.</th>
                                             <th>Enquiry Date</th>
                                             <th>Assignment Date</th>
@@ -138,27 +149,27 @@
                                     <tbody>
                                         @if (!empty($enquiry->quick_enquiry_no) || !empty($enquiry->quick_enquiry_date) || !empty($enquiry->quick_enq_assign_date))
                                         <tr>
-                                            <td class="fw-bold align-middle table-secondary text-start px-3">OEM Quick</td>
-                                            <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $enquiry->quick_enquiry_no ?: '—' }}</div></td>
-                                            <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $enquiry->quick_enquiry_date ? \Carbon\Carbon::parse($enquiry->quick_enquiry_date)->format('d-M-Y') : '—' }}</div></td>
-                                            <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $enquiry->quick_enq_assign_date ? \Carbon\Carbon::parse($enquiry->quick_enq_assign_date)->format('d-M-Y') : '—' }}</div></td>
+                                            <td class="fw-bold align-middle text-start px-3 text-dark">OEM Quick</td>
+                                            <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $enquiry->quick_enquiry_no ?: '—' }}</div></td>
+                                            <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $enquiry->quick_enquiry_date ? \Carbon\Carbon::parse($enquiry->quick_enquiry_date)->format('d-M-Y') : '—' }}</div></td>
+                                            <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $enquiry->quick_enq_assign_date ? \Carbon\Carbon::parse($enquiry->quick_enq_assign_date)->format('d-M-Y') : '—' }}</div></td>
                                         </tr>
                                         @endif
                                         
                                         @if (!empty($enquiry->enquiry_no) || !empty($enquiry->enquiry_date))
                                         <tr>
-                                            <td class="fw-bold align-middle table-secondary text-start px-3">OEM Long</td>
-                                            <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $enquiry->enquiry_no ?: '—' }}</div></td>
-                                            <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $enquiry->enquiry_date ? \Carbon\Carbon::parse($enquiry->enquiry_date)->format('d-M-Y') : '—' }}</div></td>
-                                            <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $enquiry->enq_assign_date ? \Carbon\Carbon::parse($enquiry->enq_assign_date)->format('d-M-Y') : '—' }}</div></td>
+                                            <td class="fw-bold align-middle text-start px-3 text-dark">OEM Long</td>
+                                            <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $enquiry->enquiry_no ?: '—' }}</div></td>
+                                            <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $enquiry->enquiry_date ? \Carbon\Carbon::parse($enquiry->enquiry_date)->format('d-M-Y') : '—' }}</div></td>
+                                            <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $enquiry->enq_assign_date ? \Carbon\Carbon::parse($enquiry->enq_assign_date)->format('d-M-Y') : '—' }}</div></td>
                                         </tr>
                                         @endif
 
                                         <tr>
-                                            <td class="fw-bold align-middle table-secondary text-start px-3">Xceler8</td>
-                                            <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ 'XENQ-' . $enquiry->id }}</div></td>
-                                            <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $enquiry->created_at ? \Carbon\Carbon::parse($enquiry->created_at)->format('d-M-Y') : '—' }}</div></td>
-                                            <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $enquiry->enq_assign_date ? \Carbon\Carbon::parse($enquiry->enq_assign_date)->format('d-M-Y') : '—' }}</div></td>
+                                            <td class="fw-bold align-middle text-start px-3 text-dark">Xceler8</td>
+                                            <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ 'XENQ-' . $enquiry->id }}</div></td>
+                                            <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $enquiry->created_at ? \Carbon\Carbon::parse($enquiry->created_at)->format('d-M-Y') : '—' }}</div></td>
+                                            <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $enquiry->enq_assign_date ? \Carbon\Carbon::parse($enquiry->enq_assign_date)->format('d-M-Y') : '—' }}</div></td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -347,7 +358,7 @@
                             @endif
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">Alternate Mobile <small class="text-muted">(Optional)</small></label>
-                                <input type="text" id="alternate_mobile" name="alternate_mobile" maxlength="10" class="form-control" value="{{ old('alternate_mobile', $enquiry->alternate_mobile ?? '') }}">
+                                <input type="text" id="alternate_mobile" name="alternate_mobile" maxlength="15" class="form-control" value="{{ old('alternate_mobile', $enquiry->alternate_mobile ?? '') }}">
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">Email ID <small class="text-muted">(Optional)</small></label>
@@ -431,6 +442,7 @@
                                 </div>
                             </div>
 
+                            @if (isset($enquiry))
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">Purchase Type <small class="text-muted">(enq dump)</small></label>
                                 <select name="purchase_type" id="purchase_type" class="form-control form-select">
@@ -441,9 +453,10 @@
                                     <option value="Scrappage" {{ old('purchase_type', $enquiry->purchase_type ?? '') == 'Scrappage' ? 'selected' : '' }}>Scrappage</option>
                                 </select>
                             </div>
+                            @endif
 
                             <div class="col-md-3 mb-3">
-                                <label class="form-label">CRM Purchase Type <small class="text-muted">(enq dump)</small></label>
+                                <label class="form-label">CRM Purchase Type</label>
                                 <select name="purchase_type_crm" id="purchase_type_crm" class="form-control form-select">
                                     <option value="">Select CRM Purchase Type</option>
                                     <option value="First Time Buy" {{ old('purchase_type_crm', $enquiry->purchase_type_crm ?? '') == 'First Time Buy' ? 'selected' : '' }}>First Time Buy</option>
@@ -504,6 +517,7 @@
                     </div>
                     <div class="card-body">
                         
+                        @if (isset($enquiry))
                         <h5 class="mb-3 fw-bold">OEM SC Details (Read-only)</h5>
                         <div class="row mb-4" style="opacity: 0.8; pointer-events:none;">
                             <div class="col-md-3 mb-3">
@@ -535,6 +549,7 @@
                                 <input type="text" id="oem_sc_location" class="form-control" readonly>
                             </div>
                         </div>
+                        @endif
 
                         <h5 class="mb-3 fw-bold">X8 SC Details</h5>
                         <div class="row">
@@ -678,9 +693,9 @@
                             @if (strtoupper($enquiry->current_origin ?? '') === 'LONG')
                                 <div class="table-responsive">
                                     <table class="table table-bordered text-center align-middle mb-0" style="background-color: #e9ecef;">
-                                        <thead class="table-secondary">
+                                        <thead class="table-light text-secondary text-uppercase" style="font-size: 0.85rem;">
                                             <tr>
-                                                <th>Fup Count</th>
+                                                <th class="text-start px-3">Fup Count</th>
                                                 <th>Planned Date</th>
                                                 <th>Actual Date</th>
                                                 <th>Fup Status</th>
@@ -694,14 +709,14 @@
                                             @if (isset($fups) && count($fups) > 0)
                                                 @foreach ($fups as $index => $fup)
                                                     <tr>
-                                                        <td><div class="form-control bg-light h-auto border-0">{{ ['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth'][$index] ?? $index + 1 . 'th' }} Fup</div></td>
-                                                        <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $fup?->planned_followup_date ? \Carbon\Carbon::parse($fup->planned_followup_date)->format('d-M-Y') : '—' }}</div></td>
-                                                        <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $fup?->actual_followup_date ? \Carbon\Carbon::parse($fup->actual_followup_date)->format('d-M-Y') : '—' }}</div></td>
-                                                        <td><div class="form-control bg-light h-auto border-0">{{ $fup?->enquiry_status ?: '—' }}</div></td>
-                                                        <td><div class="form-control bg-light h-auto border-0">{{ $fup?->deviation_stage ?: '—' }}</div></td>
-                                                        <td><div class="form-control bg-light h-auto border-0 text-wrap text-start" style="min-width: 150px;">{{ $fup?->remarks ?: '—' }}</div></td>
-                                                        <td><div class="form-control bg-light h-auto border-0 text-wrap text-start" style="min-width: 120px;">{{ $fup?->remark_type ?: '—' }}</div></td>
-                                                        <td><div class="form-control bg-light h-auto border-0 text-wrap text-start" style="min-width: 150px;">{{ $fup?->comments ?: '—' }}</div></td>
+                                                        <td class="fw-bold align-middle text-start px-3 text-dark">{{ ['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth'][$index] ?? $index + 1 . 'th' }} Fup</td>
+                                                        <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $fup?->planned_followup_date ? \Carbon\Carbon::parse($fup->planned_followup_date)->format('d-M-Y') : '—' }}</div></td>
+                                                        <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $fup?->actual_followup_date ? \Carbon\Carbon::parse($fup->actual_followup_date)->format('d-M-Y') : '—' }}</div></td>
+                                                        <td><div class="form-control bg-white h-auto border-0 text-center">{{ $fup?->enquiry_status ?: '—' }}</div></td>
+                                                        <td><div class="form-control bg-white h-auto border-0 text-center">{{ $fup?->deviation_stage ?: '—' }}</div></td>
+                                                        <td><div class="form-control bg-white h-auto border-0 text-wrap text-center" style="min-width: 150px;">{{ $fup?->remarks ?: '—' }}</div></td>
+                                                        <td><div class="form-control bg-white h-auto border-0 text-wrap text-center" style="min-width: 120px;">{{ $fup?->remark_type ?: '—' }}</div></td>
+                                                        <td><div class="form-control bg-white h-auto border-0 text-wrap text-center" style="min-width: 150px;">{{ $fup?->comments ?: '—' }}</div></td>
                                                     </tr>
                                                 @endforeach
                                             @else
@@ -715,9 +730,9 @@
                             @else
                                 <div class="table-responsive">
                                     <table class="table table-bordered text-center align-middle mb-0" style="background-color: #e9ecef;">
-                                        <thead class="table-secondary">
+                                        <thead class="table-light text-secondary text-uppercase" style="font-size: 0.85rem;">
                                             <tr>
-                                                <th></th>
+                                                <th class="text-start px-3">Fup Count</th>
                                                 <th>Planned Date</th>
                                                 <th>Actual Date</th>
                                                 <th>Next Fup Date</th>
@@ -728,22 +743,22 @@
                                         </thead>
                                         <tbody>
                                             <tr>
-                                                <td class="fw-bold align-middle table-secondary text-start px-3">First Fup</td>
-                                                <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $enquiry?->first_planned_followup_date ? \Carbon\Carbon::parse($enquiry->first_planned_followup_date)->format('d-M-Y') : '—' }}</div></td>
-                                                <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $enquiry?->first_actual_followup_date ? \Carbon\Carbon::parse($enquiry->first_actual_followup_date)->format('d-M-Y') : '—' }}</div></td>
-                                                <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $enquiry?->next_planned_followup_date ? \Carbon\Carbon::parse($enquiry->next_planned_followup_date)->format('d-M-Y') : '—' }}</div></td>
-                                                <td><div class="form-control bg-light h-auto border-0">{{ $enquiry?->stage ?: '—' }}</div></td>
-                                                <td><div class="form-control bg-light h-auto border-0">{{ $enquiry?->followup_type ?: '—' }}</div></td>
-                                                <td><div class="form-control bg-light h-auto border-0 text-wrap text-start" style="min-width: 200px;">{{ $enquiry?->remarks ?: '—' }}</div></td>
+                                                <td class="fw-bold align-middle text-start px-3 text-dark">First Fup</td>
+                                                <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $enquiry?->first_planned_followup_date ? \Carbon\Carbon::parse($enquiry->first_planned_followup_date)->format('d-M-Y') : '—' }}</div></td>
+                                                <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $enquiry?->first_actual_followup_date ? \Carbon\Carbon::parse($enquiry->first_actual_followup_date)->format('d-M-Y') : '—' }}</div></td>
+                                                <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $enquiry?->next_planned_followup_date ? \Carbon\Carbon::parse($enquiry->next_planned_followup_date)->format('d-M-Y') : '—' }}</div></td>
+                                                <td><div class="form-control bg-white h-auto border-0 text-center">{{ $enquiry?->stage ?: '—' }}</div></td>
+                                                <td><div class="form-control bg-white h-auto border-0 text-center">{{ $enquiry?->followup_type ?: '—' }}</div></td>
+                                                <td><div class="form-control bg-white h-auto border-0 text-wrap text-center" style="min-width: 200px;">{{ $enquiry?->remarks ?: '—' }}</div></td>
                                             </tr>
                                             <tr>
-                                                <td class="fw-bold align-middle table-secondary text-start px-3">Recent Fup</td>
-                                                <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $enquiry?->recent_planned_followup_date ? \Carbon\Carbon::parse($enquiry->recent_planned_followup_date)->format('d-M-Y') : '—' }}</div></td>
-                                                <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $enquiry?->recent_actual_followup_date ? \Carbon\Carbon::parse($enquiry->recent_actual_followup_date)->format('d-M-Y') : '—' }}</div></td>
-                                                <td><div class="form-control bg-light h-auto border-0 text-nowrap">—</div></td>
-                                                <td><div class="form-control bg-light h-auto border-0">{{ $enquiry?->quick_status ?? ($enquiry?->stage ?? '—') }}</div></td>
-                                                <td><div class="form-control bg-light h-auto border-0">—</div></td>
-                                                <td><div class="form-control bg-light h-auto border-0 text-wrap text-start" style="min-width: 200px;">{{ $enquiry?->recent_fup_comments ?? ($enquiry?->remarks ?? '—') }}</div></td>
+                                                <td class="fw-bold align-middle text-start px-3 text-dark">Recent Fup</td>
+                                                <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $enquiry?->recent_planned_followup_date ? \Carbon\Carbon::parse($enquiry->recent_planned_followup_date)->format('d-M-Y') : '—' }}</div></td>
+                                                <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $enquiry?->recent_actual_followup_date ? \Carbon\Carbon::parse($enquiry->recent_actual_followup_date)->format('d-M-Y') : '—' }}</div></td>
+                                                <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">—</div></td>
+                                                <td><div class="form-control bg-white h-auto border-0 text-center">{{ $enquiry?->quick_status ?? ($enquiry?->stage ?? '—') }}</div></td>
+                                                <td><div class="form-control bg-white h-auto border-0 text-center">—</div></td>
+                                                <td><div class="form-control bg-white h-auto border-0 text-wrap text-center" style="min-width: 200px;">{{ $enquiry?->recent_fup_comments ?? ($enquiry?->remarks ?? '—') }}</div></td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -786,9 +801,9 @@
                             {{-- History Table --}}
                             <div class="table-responsive mb-4">
                                 <table class="table table-bordered text-center align-middle mb-0" style="background-color: #e9ecef;">
-                                    <thead class="table-secondary">
+                                    <thead class="table-light text-secondary text-uppercase" style="font-size: 0.85rem;">
                                         <tr>
-                                            <th>Fup Count</th>
+                                            <th class="text-start px-3">Fup Count</th>
                                             <th>Planned Date</th>
                                             <th>Actual Date</th>
                                             <th>Call Duration</th>
@@ -803,15 +818,15 @@
                                         @if (isset($creFups) && count($creFups) > 0)
                                             @foreach ($creFups as $index => $cre)
                                                 <tr>
-                                                    <td class="table-secondary fw-bold text-start px-3">{{ ['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth'][$index] ?? $index + 1 . 'th' }} Fup</td>
-                                                    <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $cre?->cre_planned_fup_date ? \Carbon\Carbon::parse($cre->cre_planned_fup_date)->format('d-M-Y') : '—' }}</div></td>
-                                                    <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $cre?->cre_actual_fup_date ? \Carbon\Carbon::parse($cre->cre_actual_fup_date)->format('d-M-Y') : '—' }}</div></td>
-                                                    <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $cre?->cre_fup_call_duration ?: '—' }}</div></td>
-                                                    <td><div class="form-control bg-light h-auto border-0 text-nowrap">—</div></td>
-                                                    <td><div class="form-control bg-light h-auto border-0">{{ $cre?->cre_fup_deviation_stage ?: '—' }}</div></td>
-                                                    <td><div class="form-control bg-light h-auto border-0">{{ $cre?->cre_enq_stage ?: '—' }}</div></td>
-                                                    <td><div class="form-control bg-light h-auto border-0">{{ $cre?->cre_customer_stage ?: '—' }}</div></td>
-                                                    <td><div class="form-control bg-light h-auto border-0 text-wrap text-start" style="min-width: 150px;">{{ $cre?->cre_fup_remarks ?: '—' }}</div></td>
+                                                    <td class="fw-bold align-middle text-start px-3 text-dark">{{ ['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth'][$index] ?? $index + 1 . 'th' }} Fup</td>
+                                                    <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $cre?->cre_planned_fup_date ? \Carbon\Carbon::parse($cre->cre_planned_fup_date)->format('d-M-Y') : '—' }}</div></td>
+                                                    <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $cre?->cre_actual_fup_date ? \Carbon\Carbon::parse($cre->cre_actual_fup_date)->format('d-M-Y') : '—' }}</div></td>
+                                                    <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $cre?->cre_fup_call_duration ?: '—' }}</div></td>
+                                                    <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">—</div></td>
+                                                    <td><div class="form-control bg-white h-auto border-0 text-center">{{ $cre?->cre_fup_deviation_stage ?: '—' }}</div></td>
+                                                    <td><div class="form-control bg-white h-auto border-0 text-center">{{ $cre?->cre_enq_stage ?: '—' }}</div></td>
+                                                    <td><div class="form-control bg-white h-auto border-0 text-center">{{ $cre?->cre_customer_stage ?: '—' }}</div></td>
+                                                    <td><div class="form-control bg-white h-auto border-0 text-wrap text-center" style="min-width: 150px;">{{ $cre?->cre_fup_remarks ?: '—' }}</div></td>
                                                 </tr>
                                             @endforeach
                                         @else
@@ -895,7 +910,7 @@
                             @endphp
                             <div class="table-responsive">
                                 <table class="table table-bordered text-center align-middle mb-0" style="background-color: #e9ecef;">
-                                    <thead class="table-secondary">
+                                    <thead class="table-light text-secondary text-uppercase" style="font-size: 0.85rem;">
                                         <tr>
                                             <th class="text-start px-3">Enq & Fup</th>
                                             <th>SC</th>
@@ -904,34 +919,45 @@
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td class="fw-bold table-secondary align-middle text-start px-3">Actual Fup Date</td>
-                                            <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $scActualDate ? \Carbon\Carbon::parse($scActualDate)->format('d-M-Y') : '—' }}</div></td>
-                                            <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $creActualDate ? \Carbon\Carbon::parse($creActualDate)->format('d-M-Y') : '—' }}</div></td>
+                                            <td class="fw-bold align-middle text-start px-3 text-dark">Actual Fup Date</td>
+                                            <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $scActualDate ? \Carbon\Carbon::parse($scActualDate)->format('d-M-Y') : '—' }}</div></td>
+                                            <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $creActualDate ? \Carbon\Carbon::parse($creActualDate)->format('d-M-Y') : '—' }}</div></td>
                                         </tr>
                                         <tr>
-                                            <td class="fw-bold table-secondary align-middle text-start px-3">Next Fup Date</td>
-                                            <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $scNextDate ? \Carbon\Carbon::parse($scNextDate)->format('d-M-Y') : '—' }}</div></td>
-                                            <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $creNextDate ? \Carbon\Carbon::parse($creNextDate)->format('d-M-Y') : '—' }}</div></td>
+                                            <td class="fw-bold align-middle text-start px-3 text-dark">Next Fup Date</td>
+                                            <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $scNextDate ? \Carbon\Carbon::parse($scNextDate)->format('d-M-Y') : '—' }}</div></td>
+                                            <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $creNextDate ? \Carbon\Carbon::parse($creNextDate)->format('d-M-Y') : '—' }}</div></td>
                                         </tr>
                                         <tr>
-                                            <td class="fw-bold table-secondary align-middle text-start px-3">Next Fup Gap</td>
-                                            <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $scGap }}</div></td>
-                                            <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $creGap }}</div></td>
+                                            <td class="fw-bold align-middle text-start px-3 text-dark">Next Fup Gap</td>
+                                            <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $scGap }}</div></td>
+                                            <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $creGap }}</div></td>
                                         </tr>
                                         <tr>
-                                            <td class="fw-bold table-secondary align-middle text-start px-3">Enq Stage</td>
-                                            <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $enquiry?->dms_enquiry_stage ?? $enquiry?->stage ?? '—' }}</div></td>
-                                            <td><div class="form-control bg-light h-auto border-0 text-nowrap">{{ $lastCre?->cre_enq_stage ?? '—' }}</div></td>
+                                            <td class="fw-bold align-middle text-start px-3 text-dark">Enq Stage</td>
+                                            <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $enquiry?->dms_enquiry_stage ?? $enquiry?->stage ?? '—' }}</div></td>
+                                            <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $lastCre?->cre_enq_stage ?? '—' }}</div></td>
                                         </tr>
                                         <tr>
-                                            <td class="fw-bold table-secondary align-middle text-start px-3">Call Recording</td>
-                                            <td><div class="form-control bg-light h-auto border-0 text-nowrap">Attachment</div></td>
-                                            <td><div class="form-control bg-light h-auto border-0 text-nowrap">—</div></td>
+                                            <td class="fw-bold align-middle text-start px-3 text-dark">Call Recording</td>
+                                            <td>
+                                                <div class="form-control bg-white h-auto border-0 d-flex justify-content-center">
+                                                    @if(!empty($enquiry->call_url))
+                                                        <audio controls style="height: 35px; width: 220px;">
+                                                            <source src="{{ $enquiry->call_url }}" type="audio/mpeg">
+                                                            Your browser does not support the audio element.
+                                                        </audio>
+                                                    @else
+                                                        —
+                                                    @endif
+                                                </div>
+                                            </td>
+                                            <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">—</div></td>
                                         </tr>
                                         <tr>
-                                            <td class="fw-bold table-secondary align-middle text-start px-3">Remarks</td>
-                                            <td><div class="form-control bg-light h-auto border-0 text-wrap text-start">{{ $enquiry?->recent_fup_comments ?? $enquiry?->remarks ?? '—' }}</div></td>
-                                            <td><div class="form-control bg-light h-auto border-0 text-wrap text-start">{{ $lastCre?->cre_fup_remarks ?? '—' }}</div></td>
+                                            <td class="fw-bold align-middle text-start px-3 text-dark">Remarks</td>
+                                            <td><div class="form-control bg-white h-auto border-0 text-wrap text-center">{{ $enquiry?->recent_fup_comments ?? $enquiry?->remarks ?? '—' }}</div></td>
+                                            <td><div class="form-control bg-white h-auto border-0 text-wrap text-center">{{ $lastCre?->cre_fup_remarks ?? '—' }}</div></td>
                                         </tr>
                                     </tbody>
                                 </table>
