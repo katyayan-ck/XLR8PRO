@@ -1522,7 +1522,9 @@ class EnquiryCrudController extends CrudController
             'sc_code' => 'nullable',
             'x8_sc_code' => 'nullable|string|max:200',
             'x8_sc_mile_id' => 'nullable|string|max:100',
-
+            'booking_no' => 'nullable|string|max:50',
+            'otf_no' => 'nullable|string|max:50',
+            'dms_enq_no' => 'nullable|string|max:50',
             // Follow Up Rules
             'followup_type' => 'nullable',
             'followup_date' => 'nullable|date',
