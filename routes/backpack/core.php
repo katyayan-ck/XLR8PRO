@@ -175,6 +175,6 @@ Route::group([
     // =========== HYPERLOCAL ENQUIRIES ===========
     Route::get('enquiries/hyperlocal', [EnquiryCrudController::class, 'hyperlocalList'])
         ->name('enquiry.hyperlocal');
-    Route::get('enquiries/otf-bookings', [EnquiryCrudController::class, 'otfBookings'])
+    Route::get('enquiries/otf-bookings', [EnquiryCrudController::class, 'otfBookingsList'])
         ->name('enquiry.otf-bookings');
 }); // ← This should be the last line
