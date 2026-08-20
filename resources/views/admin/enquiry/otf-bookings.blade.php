@@ -143,8 +143,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
 
     <script>
-        // ALL_COLUMNS ab controller ke getColumns('otf') se aata hai — koi GRID_DATA nahi,
-        // rows ab server se infinite-scroll ke through fetch honge (jaisa exchange/finance lists me hai).
         const ALL_COLUMNS = @json($gridConfig['columns'] ?? []);
         const LIST_TYPE = @json($gridConfig['list_type'] ?? 'otf');
 
@@ -159,7 +157,6 @@
             'booking_status',
             'cancellation_date',
             'model_group',
-            'model',
             'variant',
             'oem_model_code',
             'customer_code',
@@ -171,11 +168,13 @@
             'pan_number',
             'tan_number',
             'aadhaar_number',
+            'invoice_no',
+            'evaluation_id',
+            'so_number',
             'otf_number',
             'action'
         ];
 
-        // Flat columnDefs — action column pin/renderer set karo, width ab backend se dynamic aati hai
         const columnDefs = ALL_COLUMNS.map(col => {
             if (col.field === 'serial_no' || col.field === 'booking_no') {
                 col.pinned = 'left';
@@ -188,7 +187,6 @@
             return col;
         });
 
-        // Server-side infinite datasource — same endpoint jo baaki saari lists use karti hain
         const dataSource = {
             getRows: function(params) {
                 fetch('{{ backpack_url('enquiries/data') }}', {
@@ -381,8 +379,6 @@
             const gridDiv = document.querySelector('#myGrid');
             gridApi = agGrid.createGrid(gridDiv, gridOptions);
 
-            // Ab quickFilter server-side search hai (client-side quickFilterText nahi),
-            // kyunki poora data ab client pe load nahi hota — infinite scroll se aata hai.
             document.getElementById('quickFilter')?.addEventListener('input', debounce(e => {
                 currentSearchText = e.target.value.trim();
                 gridApi.setGridOption('datasource', dataSource);
@@ -400,7 +396,6 @@
                 gridApi.setGridOption('datasource', dataSource);
             });
 
-            // Ab generic streamed CSV export endpoint use karta hai (same jo baaki saari lists use karti hain)
             document.getElementById('exportCsv')?.addEventListener('click', () => {
                 const params = new URLSearchParams({
                     searchText: currentSearchText,
@@ -410,41 +405,42 @@
             });
 
             $('#exportPdf').on('click', function() {
-                const selectedRows = gridApi.getSelectedRows();
+                const selectedRows = gridApi ? gridApi.getSelectedRows() : [];
 
-                if (selectedRows.length === 0) {
+                if (!selectedRows || selectedRows.length === 0) {
                     alert('Please select at least one record to export PDF.');
                     return;
                 }
 
-                const selectedIds = selectedRows.map(row => row.id);
-
-                $.ajax({
-                    url: "{{ route('otf-bookings.export-pdf') }}",
-                    type: "POST",
-                    data: {
-                        _token: "{{ csrf_token() }}",
-                        ids: selectedIds
-                    },
-                    xhrFields: {
-                        responseType: 'blob'
-                    },
-                    success: function(blob) {
-                        const url = window.URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = 'otf_bookings_' + new Date().toISOString().slice(0, 10) +
-                            '.pdf';
-                        document.body.appendChild(a);
-                        a.click();
-                        a.remove();
-                        window.URL.revokeObjectURL(url);
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('PDF Export Error:', error);
-                        alert('Failed to generate PDF export. Please try again.');
-                    }
-                });
+                {{-- 
+                    When a dedicated PDF export route is created, un-comment the request below:
+                    const selectedIds = selectedRows.map(row => row.id);
+                    $.ajax({
+                        url: "{{ url('admin/otf-bookings/export-pdf') }}",
+                        type: "POST",
+                        data: {
+                            _token: "{{ csrf_token() }}",
+                            ids: selectedIds
+                        },
+                        xhrFields: {
+                            responseType: 'blob'
+                        },
+                        success: function(blob) {
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = 'otf_bookings_' + new Date().toISOString().slice(0, 10) + '.pdf';
+                            document.body.appendChild(a);
+                            a.click();
+                            a.remove();
+                            window.URL.revokeObjectURL(url);
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('PDF Export Error:', error);
+                            alert('Failed to generate PDF export. Please try again.');
+                        }
+                    });
+                --}}
             });
         });
     </script>
