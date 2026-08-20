@@ -117,6 +117,7 @@ class EnquiryCrudController extends CrudController
         return match (true) {
             in_array($listType, ['assigned_long', 'unassigned_long']) => 'long',
             in_array($listType, ['assigned_quick', 'unassigned_quick']) => 'quick',
+            $listType === 'otf' => 'otf',
             in_array($listType, [
                 'reference',
                 'virtual',
@@ -134,6 +135,31 @@ class EnquiryCrudController extends CrudController
 
     private function getBaseQuery(string $listType)
     {
+        if ($listType === 'otf') {
+            return \App\Models\Module\Booking\Booking::withoutGlobalScope(\Illuminate\Database\Eloquent\SoftDeletingScope::class)
+                ->from('xlr8_crm_booking as crm_booking')
+                ->select([
+                    'crm_booking.id',
+                    'crm_booking.booking_date',
+                    'crm_booking.status',
+                    'crm_booking.cancellation_date',
+                    'crm_booking.sc_mile_id as sc_code',
+                    'crm_booking.oem_code',
+                    'crm_booking.customer_code',
+                    'crm_booking.customer_tan as tan_no',
+                    'crm_booking.customer_name',
+                    'crm_booking.customer_address',
+                    'crm_booking.customer_city as city',
+                    'crm_booking.customer_tehsil as tehsil',
+                    'crm_booking.customer_district as district',
+                    'crm_booking.customer_pan as pan_no',
+                    'crm_booking.customer_aadhar as adhar_no',
+                    'crm_booking.otf_no as otf_number',
+                ])
+
+                ->where('crm_booking.is_active', 1);
+        }
+
         $query = match ($listType) {
             'reference' => Enquiry::reference(),
             'virtual' => Enquiry::virtual(),
@@ -217,10 +243,16 @@ class EnquiryCrudController extends CrudController
 
         $query = $this->getBaseQuery($listType);
 
-        $this->applyEnquirySearch($query, $searchText);
-        $this->applyEnquirySort($query, (array) $request->input('sortModel', []));
-        $this->applyEnquiryFilter($query, $filterModel);
-        OrgService::applyHighlightFilter($query, $highlightFilter);
+        if ($listType === 'otf') {
+            $this->applyOtfSearch($query, $searchText);
+            $this->applyOtfFilter($query, $filterModel);
+            $this->applyOtfSort($query, (array) $request->input('sortModel', []));
+        } else {
+            $this->applyEnquirySearch($query, $searchText);
+            $this->applyEnquirySort($query, (array) $request->input('sortModel', []));
+            $this->applyEnquiryFilter($query, $filterModel);
+            OrgService::applyHighlightFilter($query, $highlightFilter);
+        }
 
         $total = (clone $query)->count();
         $mapType = $this->resolveMapType($listType);
@@ -242,11 +274,18 @@ class EnquiryCrudController extends CrudController
 
         $query = $this->getBaseQuery($listType);
 
-        $this->applyEnquirySearch($query, $searchText);
-        $this->applyEnquiryFilter($query, $filterModel);
-        OrgService::applyHighlightFilter($query, $highlightFilter);
-
-        $query->orderByDesc('created_at');
+        if ($listType === 'otf') {
+            $this->applyOtfSearch($query, $searchText);
+            $this->applyOtfFilter($query, $filterModel);
+            $this->applyOtfSort($query, (array) $request->input('sortModel', []));
+            $query->orderByDesc('crm_booking.id');
+        } else {
+            $this->applyEnquirySearch($query, $searchText);
+            $this->applyEnquirySort($query, (array) $request->input('sortModel', []));
+            $this->applyEnquiryFilter($query, $filterModel);
+            OrgService::applyHighlightFilter($query, $highlightFilter);
+            $query->orderByDesc('created_at');
+        }
 
         $mapType = $this->resolveMapType($listType);
         $columns = array_values(array_filter(
@@ -254,7 +293,11 @@ class EnquiryCrudController extends CrudController
             fn($col) => ($col['field'] ?? null) !== 'action'
         ));
 
-        $lookups = $this->getEnquiryLookupMaps();
+        $lookups = $listType === 'otf' ? [] : $this->getEnquiryLookupMaps();
+
+        $fileName = $listType === 'otf'
+            ? 'otf-bookings-' . now()->format('Y-m-d_His') . '.csv'
+            : 'enquiries-' . now()->format('Y-m-d_His') . '.csv';
 
         return response()->streamDownload(function () use ($query, $columns, $mapType, $lookups) {
             $out = fopen('php://output', 'w');
@@ -274,9 +317,70 @@ class EnquiryCrudController extends CrudController
             });
 
             fclose($out);
-        }, 'enquiries-' . now()->format('Y-m-d_His') . '.csv', ['Content-Type' => 'text/csv']);
+        }, $fileName, ['Content-Type' => 'text/csv']);
+    }
+    private function applyOtfSearch($query, string $searchText): void
+    {
+        if ($searchText === '') return;
+        $like = "%{$searchText}%";
+        $query->where(function ($q) use ($like, $searchText) {
+            $q->where('crm_booking.id', (int) $searchText)
+                ->orWhere('crm_booking.otf_no', 'like', $like)
+                ->orWhere('crm_booking.customer_name', 'like', $like)
+                ->orWhere('crm_booking.customer_code', 'like', $like)
+                ->orWhere('crm_booking.customer_pan', 'like', $like)
+                ->orWhere('crm_booking.customer_aadhar', 'like', $like);
+        });
     }
 
+    private const OTF_SORT_COLUMN_MAP = [
+        'booking_no' => 'crm_booking.id',
+        'booking_date' => 'crm_booking.booking_date',
+        'booking_status' => 'crm_booking.status',
+        'cancellation_date' => 'crm_booking.cancellation_date',
+        'customer_name' => 'crm_booking.customer_name',
+        'customer_code' => 'crm_booking.customer_code',
+        'otf_number' => 'crm_booking.otf_no',
+    ];
+
+    private function applyOtfSort($query, array $sortModel): void
+    {
+        $applied = false;
+        foreach ($sortModel as $sort) {
+            $colId = $sort['colId'] ?? null;
+            if ($colId && isset(self::OTF_SORT_COLUMN_MAP[$colId])) {
+                $query->orderBy(self::OTF_SORT_COLUMN_MAP[$colId], strtolower($sort['sort'] ?? 'asc') === 'desc' ? 'desc' : 'asc');
+                $applied = true;
+            }
+        }
+        if (!$applied) $query->orderByDesc('crm_booking.id');
+    }
+
+    private const OTF_FILTER_FIELD_MAP = [
+        'booking_no' => 'crm_booking.id',
+        'booking_date' => 'crm_booking.booking_date',
+        'sc_code' => 'crm_booking.sc_mile_id',
+        'booking_status' => 'crm_booking.status',
+        'cancellation_date' => 'crm_booking.cancellation_date',
+        'customer_code' => 'crm_booking.customer_code',
+        'customer_name' => 'crm_booking.customer_name',
+        'customer_address' => 'crm_booking.customer_address',
+        'customer_city' => 'crm_booking.customer_city',
+        'customer_tehsil' => 'crm_booking.customer_tehsil',
+        'customer_district' => 'crm_booking.customer_district',
+        'pan_number' => 'crm_booking.customer_pan',
+        'tan_number' => 'crm_booking.customer_tan',
+        'aadhaar_number' => 'crm_booking.customer_aadhar',
+        'otf_number' => 'crm_booking.otf_no',
+    ];
+
+    private function applyOtfFilter($query, array $filterModel): void
+    {
+        foreach ($filterModel as $field => $condition) {
+            if (!is_array($condition) || !isset(self::OTF_FILTER_FIELD_MAP[$field])) continue;
+            $this->applyFilterCondition($query, self::OTF_FILTER_FIELD_MAP[$field], $condition);
+        }
+    }
     public function referenceList()
     {
         return $this->renderGridPage('admin.enquiry.reference-enquiry', 'Reference Enquiries', 'reference');
@@ -397,17 +501,19 @@ class EnquiryCrudController extends CrudController
         $x8AssignedSc = $this->getAssignedSc($e->x8_sc_code ?? null, $e->x8_sc_mile_id ?? null, $scByCode, $scByMileId);
         $oemAssignedSc = $this->getAssignedSc($e->sc_code ?? null, $e->sc_mile_id ?? null, $scByCode, $scByMileId);
 
+        // Relation object ko sirf ek baar resolve karo (agar loaded hai) — pehle getRelation()
+        // seedha call hota tha jo relation eager-loaded na hone par PHP "undefined array key"
+        // warning deta tha aur 'variant' ke liye 3 baar dobara resolve karta tha.
+        $segmentRel = $e instanceof \Illuminate\Database\Eloquent\Model && $e->relationLoaded('segment') ? $e->getRelation('segment') : null;
+        $modelRel = $e instanceof \Illuminate\Database\Eloquent\Model && $e->relationLoaded('model') ? $e->getRelation('model') : null;
+        $variantRel = $e instanceof \Illuminate\Database\Eloquent\Model && $e->relationLoaded('variant') ? $e->getRelation('variant') : null;
+        $colorRel = $e instanceof \Illuminate\Database\Eloquent\Model && $e->relationLoaded('color') ? $e->getRelation('color') : null;
+
         $editUrl = backpack_url("enquiry/{$e->id}/edit");
         $quotUrl = backpack_url("quotation-form/create?id={$e->id}");
         $bookUrl = backpack_url("booking/create?enquiry_id={$e->id}");
 
         if ($type === 'hyperlocal') {
-            $actionBtns = '
-            <a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a>
-            <a href="' . $quotUrl . '" class="btn btn-sm btn-success">Quote</a>
-            <a href="' . $bookUrl . '" class="btn btn-sm btn-warning" title="Convert to Booking">Process</a>
-            ';
-
             return [
                 'serial_no' => $i + 1,
                 'lead_id' => $e->lead_id ?? $e->id ?? '—',
@@ -451,7 +557,34 @@ class EnquiryCrudController extends CrudController
                 'td_date' => $this->formatDate($e->td_date, 'd-M-Y'),
                 'lost_reason' => $e->lost_reason ?? '—',
                 'followup_status' => $e->fup_status ?? '—',
-                'action' => '<div class="d-flex justify-content-center gap-2">' . $actionBtns . '</div>',
+                'action' => '<span class="text-muted">—</span>',
+            ];
+        }
+        if ($type === 'otf') {
+            $editUrl = backpack_url("booking/{$e->id}/edit"); // ⚠️ apna actual booking-edit route confirm kar lena
+
+            return [
+                'serial_no'         => $i + 1,
+                'booking_no'        => $e->id ?? '—',
+                'booking_date'      => $this->formatDate($e->booking_date, 'd-M-Y'),
+                'sc_code'           => $e->sc_code ?? '—',
+                'booking_status'    => $e->status ?? '—',
+                'cancellation_date' => $this->formatDate($e->cancellation_date, 'd-M-Y'),
+                'model_group'       => $e->oem_code ?? '—',
+                'model'             => $e->oem_code ?? '—',
+                'variant'           => '—',
+                'oem_model_code'    => $e->oem_code ?? '—',
+                'customer_code'     => $e->customer_code ?? '—',
+                'customer_name'     => $e->customer_name ?? '—',
+                'customer_address'  => $e->customer_address ?? '—',
+                'customer_city'     => $e->city ?? '—',
+                'customer_tehsil'   => $e->tehsil ?? '—',
+                'customer_district' => $e->district ?? '—',
+                'pan_number'        => $e->pan_no ?? '—',
+                'tan_number'        => $e->tan_no ?? '—',
+                'aadhaar_number'    => $e->adhar_no ?? '—',
+                'otf_number'        => $e->otf_number ?? '—',
+                'action'            => '<div class="d-flex justify-content-center gap-2"><a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a></div>',
             ];
         }
 
@@ -476,10 +609,10 @@ class EnquiryCrudController extends CrudController
             'oem_enquiry_no' => $e->x8_enquiry_no ?? $e->enquiry_no ?? $e->oem_enquiry_no ?? '—',
             'oem_enquiry_date' => $this->formatDate($e->x8_enquiry_date ?? $e->enquiry_date ?? $e->oem_enquiry_date, 'd-M-Y'),
             'oem_enquiry_assign_date' => $this->formatDate($e->oem_enquiry_assign_date ?? $e->enq_assign_date, 'd-M-Y'),
-            'segment_name' => $e->segment_code ? ($e->getRelation('segment')?->name ?? $e->segment ?? $e->segment_code) : ($e->segment ?? '—'),
-            'model_name' => $e->model_code ? ($e->getRelation('model')?->name ?? $e->model ?? $e->model_code) : ($e->model ?? '—'),
-            'variant_name' => $e->variant_code ? ($e->getRelation('variant')?->display_name ?? $e->getRelation('variant')?->custom_name ?? $e->getRelation('variant')?->oem_name ?? $e->variant ?? $e->variant_code) : ($e->variant ?? '—'),
-            'color_name' => $e->color_code ? ($e->getRelation('color')?->name ?? $e->color ?? $e->color_code) : ($e->color ?? '—'),
+            'segment_name' => $e->segment_code ? ($segmentRel?->name ?? $e->segment ?? $e->segment_code) : ($e->segment ?? '—'),
+            'model_name' => $e->model_code ? ($modelRel?->name ?? $e->model ?? $e->model_code) : ($e->model ?? '—'),
+            'variant_name' => $e->variant_code ? ($variantRel?->display_name ?? $variantRel?->custom_name ?? $variantRel?->oem_name ?? $e->variant ?? $e->variant_code) : ($e->variant ?? '—'),
+            'color_name' => $e->color_code ? ($colorRel?->name ?? $e->color ?? $e->color_code) : ($e->color ?? '—'),
             'mobile' => $e->mobile ?? '—',
             'alternate_mobile' => $e->alternate_mobile ?? '—',
             'dms_enquiry_stage' => $e->stage ?? '—',
@@ -591,8 +724,24 @@ class EnquiryCrudController extends CrudController
         return $row;
     }
 
+    /**
+     * Action column width per list_type — button count alag hota hai har list me,
+     * isliye width bhi usi ke hisab se honi chahiye (aur mapData() ke button count
+     * ke sath sync rehni chahiye — dono ek hi $type se driven hain).
+     */
+    private function actionWidth(string $type): int
+    {
+        return match ($type) {
+            'all', 'quick', 'long' => 220,   // Edit + Quote + Process (3 buttons)
+            'hyperlocal' => 90,               // sirf dash, koi button nahi
+            default => 110,                   // 1 button (Edit ya Process) — reference/virtual/whatsapp/exchange/finance/otf/etc.
+        };
+    }
+
     private function getColumns($type)
     {
+        $actionWidth = $this->actionWidth($type);
+
         $commonEnd = [
             ['field' => 'dms_enquiry_stage', 'headerName' => 'DMS Stage'],
             ['field' => 'cre_enquiry_stage', 'headerName' => 'CRE Stage'],
@@ -606,8 +755,8 @@ class EnquiryCrudController extends CrudController
             [
                 'field'         => 'action',
                 'headerName'    => 'Action',
-                'width'         => 220,
-                'minWidth'      => 220,
+                'width'         => $actionWidth,
+                'minWidth'      => $actionWidth,
                 'pinned'        => 'right',
                 'sortable'      => false,
                 'filter'        => false,
@@ -631,6 +780,41 @@ class EnquiryCrudController extends CrudController
                 ['field' => 'model_name', 'headerName' => 'Model'],
                 ['field' => 'variant_name', 'headerName' => 'Variant']
             ], $commonEnd);
+        }
+        if ($type === 'otf') {
+            return [
+                ['field' => 'serial_no', 'headerName' => 'S.No.', 'width' => 80, 'pinned' => 'left'],
+                ['field' => 'booking_no', 'headerName' => 'X8 Booking Number', 'width' => 150, 'pinned' => 'left'],
+                ['field' => 'booking_date', 'headerName' => 'X8 Booking Date', 'width' => 130],
+                ['field' => 'sc_code', 'headerName' => 'SC Code', 'width' => 120],
+                ['field' => 'booking_status', 'headerName' => 'Booking Status', 'width' => 130],
+                ['field' => 'cancellation_date', 'headerName' => 'Booking Cancellation Date', 'width' => 160],
+                ['field' => 'model_group', 'headerName' => 'Model Group', 'width' => 140],
+                ['field' => 'model', 'headerName' => 'Model', 'width' => 160],
+                ['field' => 'variant', 'headerName' => 'Variant', 'width' => 160],
+                ['field' => 'oem_model_code', 'headerName' => 'OEM Model Code', 'width' => 160],
+                ['field' => 'customer_code', 'headerName' => 'Booking Customer Code', 'width' => 160],
+                ['field' => 'customer_name', 'headerName' => 'Booking Customer Name', 'width' => 200],
+                ['field' => 'customer_address', 'headerName' => 'Booking Customer Address', 'width' => 250],
+                ['field' => 'customer_city', 'headerName' => 'Booking Customer City', 'width' => 150],
+                ['field' => 'customer_tehsil', 'headerName' => 'Booking Customer Tehsil', 'width' => 150],
+                ['field' => 'customer_district', 'headerName' => 'Booking Customer District', 'width' => 150],
+                ['field' => 'pan_number', 'headerName' => 'Billing Customer PAN Number', 'width' => 160],
+                ['field' => 'tan_number', 'headerName' => 'Billing Customer TAN Number', 'width' => 160],
+                ['field' => 'aadhaar_number', 'headerName' => 'Billing Customer Aadhaar Number', 'width' => 180],
+                ['field' => 'otf_number', 'headerName' => 'OTF Number', 'width' => 160],
+                [
+                    'field'        => 'action',
+                    'headerName'   => 'Action',
+                    'width'        => $this->actionWidth('otf'),   // default branch → 110 (1 button)
+                    'minWidth'     => $this->actionWidth('otf'),
+                    'pinned'       => 'right',
+                    'sortable'     => false,
+                    'filter'       => false,
+                    'cellRenderer' => 'htmlRenderer',
+                    'cellClass'    => 'text-center',
+                ],
+            ];
         }
 
         if ($type === 'virtual') {
@@ -1049,7 +1233,7 @@ class EnquiryCrudController extends CrudController
                 ->get();
         }
 
-        $creFups = DB::table('crm_enquiry_fup')
+        $creFups = DB::table('xlr8_cre_enquiry_fup')
             ->where('x8_enq_no', 'XENQ-' . $enquiry->id)
             ->orderBy('id', 'asc')
             ->get();
@@ -1064,7 +1248,7 @@ class EnquiryCrudController extends CrudController
     private function saveCreFup($enquiry, $request)
     {
         if ($request->filled('cre_enq_stage') || $request->filled('cre_customer_stage') || $request->filled('cre_next_fup_date') || $request->filled('cre_fup_remarks')) {
-            $previousFup = DB::table('crm_enquiry_fup')
+            $previousFup = DB::table('xlr8_cre_enquiry_fup')
                 ->where('x8_enq_no', 'XENQ-' . $enquiry->id)
                 ->orderBy('id', 'desc')
                 ->first();
@@ -1073,7 +1257,7 @@ class EnquiryCrudController extends CrudController
             $plannedDate = $previousFup ? $previousFup->cre_next_fup_date : Carbon::now()->format('Y-m-d');
             $actualDate = Carbon::now()->format('Y-m-d');
 
-            DB::table('crm_enquiry_fup')->insert([
+            DB::table('xlr8_cre_enquiry_fup')->insert([
                 'enquiry_no' => $enquiry->oem_enquiry_no ?? $enquiry->enquiry_no,
                 'quick_enquiry_no' => $enquiry->quick_enquiry_no ?? $enquiry->oem_quick_enquiry_no,
                 'x8_enq_no' => 'XENQ-' . $enquiry->id,
@@ -1519,109 +1703,8 @@ class EnquiryCrudController extends CrudController
         return response()->json(DB::table('xlr8_crm_import_logs')->orderByDesc('id')->limit(5)->get());
     }
 
-    public function otfBookings(Request $request)
+    public function otfBookingsList()
     {
-        $this->crud->hasAccessOrFail('list');
-
-        $this->data['crud'] = $this->crud;
-        $this->data['title'] = 'OTF Bookings';
-
-        $query = \App\Models\Module\Booking\Booking::withoutGlobalScope(\Illuminate\Database\Eloquent\SoftDeletingScope::class)
-            ->from('xlr8_crm_booking as crm_booking')
-            ->select([
-                'crm_booking.id',
-                'crm_booking.booking_date',
-                'crm_booking.status',
-                'crm_booking.cancellation_date',
-                'crm_booking.sc_mile_id as sc_code',
-                'crm_booking.oem_code',
-                'crm_booking.customer_code',
-                'crm_booking.customer_tan as tan_no',
-                'crm_booking.customer_name',
-                'crm_booking.customer_address',
-                'crm_booking.customer_city as city',
-                'crm_booking.customer_tehsil as tehsil',
-                'crm_booking.customer_district as district',
-                'crm_booking.customer_pan as pan_no',
-                'crm_booking.customer_aadhar as adhar_no',
-                'crm_booking.otf_no as otf_number',
-            ])
-            ->whereNotNull('crm_booking.otf_no')
-            ->where('crm_booking.otf_no', '!=', '')
-            ->where('crm_booking.is_active', 1)
-            ->orderBy('crm_booking.id', 'desc');
-
-        $paginatedBookings = $query->paginate(50);
-
-        $gridData = $paginatedBookings->map(function ($booking, $index) use ($paginatedBookings) {
-            return [
-                'serial_no' => ($paginatedBookings->currentPage() - 1) * $paginatedBookings->perPage() + $index + 1,
-                'booking_no' => $booking->id ?? '—',
-                'booking_date' => $booking->booking_date ? Carbon::parse($booking->booking_date)->format('d-M-Y') : '—',
-                'sc_code' => $booking->sc_code ?? '—',
-                'booking_status' => $booking->status ?? '—',
-                'cancellation_date' => $booking->cancellation_date ? Carbon::parse($booking->cancellation_date)->format('d-M-Y') : '—',
-                'model_group' => $booking->model_code ?? '—',
-                'model' => $booking->model_code ?? '—',
-                'variant' => $booking->variant_code ?? '—',
-                'oem_model_code' => $booking->oem_code ?? '—',
-                'customer_code' => $booking->customer_code ?? '—',
-                'customer_name' => $booking->customer_name ?? '—',
-                'customer_address' => $booking->customer_address ?? '—',
-                'customer_city' => $booking->city ?? '—',
-                'customer_tehsil' => $booking->tehsil ?? '—',
-                'customer_district' => $booking->district ?? '—',
-                'pan_number' => $booking->pan_no ?? '—',
-                'tan_number' => $booking->tan_no ?? '—',
-                'aadhaar_number' => $booking->adhar_no ?? '—',
-                'otf_number' => $booking->otf_number ?? '—',
-            ];
-        })->values();
-
-        $columns = [
-            ['field' => 'serial_no', 'headerName' => 'S.No.', 'width' => 80, 'pinned' => 'left'],
-            ['field' => 'booking_no', 'headerName' => 'X8 Booking Number', 'width' => 150],
-            ['field' => 'booking_date', 'headerName' => 'X8 Booking Date', 'width' => 130],
-            ['field' => 'sc_code', 'headerName' => 'SC Code', 'width' => 120],
-            ['field' => 'booking_status', 'headerName' => 'Booking Status', 'width' => 130],
-            ['field' => 'cancellation_date', 'headerName' => 'Booking Cancellation Date', 'width' => 160],
-            ['field' => 'model_group', 'headerName' => 'Model Group', 'width' => 140],
-            ['field' => 'model', 'headerName' => 'Model', 'width' => 160],
-            ['field' => 'variant', 'headerName' => 'Variant', 'width' => 160],
-            ['field' => 'oem_model_code', 'headerName' => 'OEM Model Code', 'width' => 160],
-            ['field' => 'customer_code', 'headerName' => 'Booking Customer Code', 'width' => 160],
-            ['field' => 'customer_name', 'headerName' => 'Booking Customer Name', 'width' => 200],
-            ['field' => 'customer_address', 'headerName' => 'Booking Customer Address', 'width' => 250],
-            ['field' => 'customer_city', 'headerName' => 'Booking Customer City', 'width' => 150],
-            ['field' => 'customer_tehsil', 'headerName' => 'Booking Customer Tehsil', 'width' => 150],
-            ['field' => 'customer_district', 'headerName' => 'Booking Customer District', 'width' => 150],
-            ['field' => 'pan_number', 'headerName' => 'Billing Customer PAN Number', 'width' => 160],
-            ['field' => 'tan_number', 'headerName' => 'Billing Customer TAN Number', 'width' => 160],
-            ['field' => 'aadhaar_number', 'headerName' => 'Billing Customer Aadhaar Number', 'width' => 180],
-            ['field' => 'otf_number', 'headerName' => 'OTF Number', 'width' => 160],
-            [
-                'field'         => 'action',
-                'headerName'    => 'Action',
-                'width'         => 100,
-                'sortable'      => false,
-                'filter'        => false,
-                'cellRenderer'  => 'htmlRenderer',
-                'pinned'        => 'right',
-                'cellClass'     => 'text-center',
-            ]
-        ];
-
-        $this->data['gridConfig'] = [
-            'columns' => $columns,
-            'data'    => $gridData,
-        ];
-        $this->data['pagination'] = [
-            'total'       => $paginatedBookings->total(),
-            'perPage'     => $paginatedBookings->perPage(),
-            'currentPage' => $paginatedBookings->currentPage(),
-            'lastPage'    => $paginatedBookings->lastPage(),
-        ];
-
-        return view('admin.enquiry.otf-bookings', $this->data);
+        return $this->renderGridPage('admin.enquiry.otf-bookings', 'OTF Bookings', 'otf');
     }
 }
