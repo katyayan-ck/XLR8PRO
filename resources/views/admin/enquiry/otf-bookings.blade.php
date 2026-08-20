@@ -138,16 +138,25 @@
         'sc_code',
         'booking_status',
         'cancellation_date',
-        'model_group',
+        'segment',
         'model',
         'variant',
+        'color',
         'oem_model_code',
         'customer_code',
         'customer_name',
+        'customer_address',
         'customer_city',
+        'customer_tehsil',
+        'customer_district',
         'pan_number',
+        'tan_number',
         'aadhaar_number',
-        'otf_number'
+        'invoice_no',
+        'evaluation_id',
+        'so_number',
+        'otf_number',
+        'action'
     ];
 
     // Flat columnDefs (Parent headers removed)

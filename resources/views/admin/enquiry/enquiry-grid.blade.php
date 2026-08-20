@@ -7,7 +7,7 @@
                 <div
                     class="card-header bg-gradient-primary d-flex justify-content-between align-items-center flex-nowrap flex-md-nowrap flex-wrap gap-3">
                     <h2 class="card-title mb-0 fw-bold text-black text-nowrap">
-                        {{ $title ?? 'Unassigned Long Enquiries' }}
+                        {{ $title ?? 'Enquiry Grid' }}
                     </h2>
                 </div>
 
@@ -44,13 +44,11 @@
                         </div>
 
                         <div class="d-flex gap-2 flex-nowrap">
-                            <button id="exportCsv" class="btn btn-sm text-nowrap d-flex align-items-center gap-2">
-                                <img src="{{ asset('images/export-excel.png') }}" alt="Excel"
-                                    style="height:30px; width:auto;">
+                            <button id="exportCsv" class="btn btn-sm text-nowrap d-flex align-items-center gap-2" title="Export Excel">
+                                <img src="{{ asset('images/export-excel.png') }}" alt="Excel" style="height:30px; width:auto;">
                             </button>
-                            <button id="exportPdf" class="btn btn-sm text-nowrap d-flex align-items-center gap-2">
-                                <img src="{{ asset('images/export-pdf.png') }}" alt="PDF"
-                                    style="height:30px; width:auto;">
+                            <button id="exportPdf" class="btn btn-sm text-nowrap d-flex align-items-center gap-2" title="Export PDF">
+                                <img src="{{ asset('images/export-pdf.png') }}" alt="PDF" style="height:30px; width:auto;">
                             </button>
                         </div>
                     </div>
@@ -79,69 +77,66 @@
 
     <script>
         const ALL_COLUMNS = @json($gridConfig['columns'] ?? []);
+        const DEFAULT_FIELDS = @json($gridConfig['defaultColumns'] ?? []);
+        const LIST_TYPE = @json($gridConfig['list_type'] ?? 'assigned_quick');
+        
         let gridApi;
+        let currentSearchText = '';
 
         const columnDefs = [
-
-            ...ALL_COLUMNS.filter(col => [
-
-                'serial_no',
-                'x8_enquiry_no',
-                'x8_enquiry_date',
-                'oem_enquiry_no',
-                'oem_enquiry_date',
-                // 'oem_long_enquiry_no',
-                // 'oem_long_enquiry_date',
-                // 'oem_long_enquiry_status',             
-                'segment_name',
-                'model_name',
-                'variant_name',
-                'first_name',
-                'mobile',
-                'enquiry_type',
-                'source_name',
-                'sub_source',
-                'likely_purchase_in_days',                                
-                'dealer_branch',
-                'dealer_location', 
-                'customer_type',  
-                'pincode', 
-                'address', 
-                'purchase_type',
-                'dms_enquiry_stage',
-                'cre_enquiry_stage',
-                'cre_next_fup_date',
-                'cre_next_fup_time',
-                'cre_next_fup_remarks',
-                'x8_quotation_no',
-                'x8_booking_no',
-                'x8_booking_date',
-                'oem_booking_no',
-                'oem_booking_date',
-                'oem_otf_no',
-                'oem_test_drive_no'
-
-            ].includes(col.field)),
-
-            ...ALL_COLUMNS.filter(col => ['action'].includes(col.field)).map(col => {
-
+            ...ALL_COLUMNS.filter(col => col.field !== 'action'),
+            ...ALL_COLUMNS.filter(col => col.field === 'action').map(col => {
                 col.pinned = 'right';
                 col.width = 140;
                 col.sortable = false;
                 col.filter = false;
                 col.cellRenderer = 'htmlRenderer';
-
                 return col;
-
             })
-
         ];
+
+        function getValidDefaultColumns() {
+            if (!gridApi) return [];
+            const allColsInGrid = gridApi.getAllGridColumns().map(c => c.getColId());
+            return DEFAULT_FIELDS.filter(field => allColsInGrid.includes(field));
+        }
+
+        const dataSource = {
+            getRows: function(params) {
+                fetch('{{ backpack_url('enquiries/data') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        startRow: params.startRow,
+                        endRow: params.endRow,
+                        sortModel: params.sortModel,
+                        filterModel: params.filterModel,
+                        searchText: currentSearchText,
+                        list_type: LIST_TYPE
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    params.successCallback(data.rows || [], data.lastRow ?? 0);
+                })
+                .catch(err => {
+                    console.error('Failed to load enquiries', err);
+                    params.failCallback();
+                });
+            }
+        };
 
         const gridOptions = {
             columnDefs: columnDefs,
-            rowData: @json($gridConfig['data'] ?? []),
+            rowModelType: 'infinite',
+            datasource: dataSource,
             pagination: true,
             paginationPageSize: 50,
+            cacheBlockSize: 50,
             rowHeight: 28,
             animateRows: true,
             defaultColDef: {
@@ -149,47 +144,19 @@
                 filter: true,
                 resizable: true,
                 headerClass: 'center-header',
-                cellStyle: {
-                    textAlign: 'center'
-                }
+                cellStyle: { textAlign: 'center' }
             },
             components: {
                 htmlRenderer: params => params.value || ''
             },
             onGridReady: params => {
                 gridApi = params.api;
-
-                const defaultFields = [
-
-                'serial_no',
-                'x8_enquiry_no',
-                'x8_enquiry_date',
-                'oem_enquiry_no',
-                'oem_enquiry_date',
-                // 'oem_long_enquiry_no',
-                // 'oem_long_enquiry_date',
-                // 'oem_long_enquiry_status',              
-                'segment_name',
-                'model_name',
-                'variant_name',
-                'first_name',
-                'mobile',
-                'enquiry_type',
-                'source_name',
-                'sub_source',
-                'likely_purchase_in_days',                                
-                'dealer_branch',
-                'dealer_location', 
-                'customer_type',  
-                'pincode', 
-                'address', 
-                'purchase_type',
-                'action'
-
-                ];
                 const allCols = gridApi.getAllGridColumns().map(col => col.getColId());
                 gridApi.setColumnsVisible(allCols, false);
-                gridApi.setColumnsVisible(defaultFields, true);
+                
+                const validDefaults = getValidDefaultColumns();
+                gridApi.setColumnsVisible(validDefaults.length ? validDefaults : allCols, true);
+                
                 setTimeout(() => gridApi.autoSizeAllColumns(), 300);
             }
         };
@@ -201,9 +168,7 @@
 
             tbody.innerHTML = '';
 
-            const allFlatColumns = ALL_COLUMNS;
-
-            allFlatColumns.forEach(col => {
+            ALL_COLUMNS.forEach(col => {
                 if (!col.field) return;
 
                 const tr = document.createElement('tr');
@@ -214,7 +179,7 @@
                 checkbox.type = 'checkbox';
                 checkbox.checked = gridApi.getColumn(col.field)?.isVisible() ?? false;
 
-                if (['serial_no', 'long_enq_no', 'action'].includes(col.field)) {
+                if (['serial_no', 'x8_enquiry_no', 'action'].includes(col.field)) {
                     checkbox.disabled = true;
                 }
 
@@ -234,19 +199,29 @@
             bubble.style.display = 'block';
         }
 
+        function debounce(fn, delay) {
+            let timer;
+            return (...args) => {
+                clearTimeout(timer);
+                timer = setTimeout(() => fn(...args), delay);
+            };
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             const gridDiv = document.querySelector('#myGrid');
             agGrid.createGrid(gridDiv, gridOptions);
 
-            document.getElementById('quickFilter').addEventListener('input', e => {
-                gridApi.setGridOption('quickFilterText', e.target.value);
-            });
+            document.getElementById('quickFilter').addEventListener('input', debounce(e => {
+                currentSearchText = e.target.value.trim();
+                gridApi.setGridOption('datasource', dataSource);
+            }, 400));
 
             document.getElementById('resetAll').addEventListener('click', () => {
-                gridApi.setFilterModel(null);
                 document.getElementById('quickFilter').value = '';
-                gridApi.setGridOption('quickFilterText', '');
-                gridApi.setSortModel(null);
+                currentSearchText = '';
+                gridApi.setFilterModel(null);
+                gridApi.applyColumnState({ defaultState: { sort: null } });
+                gridApi.setGridOption('datasource', dataSource);
             });
 
             document.getElementById('btnCustomiseHeaders').addEventListener('click', e => {
@@ -272,66 +247,25 @@
             });
 
             document.getElementById('btnDefaultHeaders').addEventListener('click', () => {
-                const defaultFields = [
-
-                'serial_no',
-                'x8_enquiry_no',
-                'x8_enquiry_date',
-                'oem_enquiry_no',
-                'oem_enquiry_date',
-                // 'oem_long_enquiry_no',
-                // 'oem_long_enquiry_date',
-                // 'oem_long_enquiry_status',            
-                'segment_name',
-                'model_name',
-                'variant_name',
-                'first_name',
-                'mobile',
-                'enquiry_type',
-                'source_name',
-                'sub_source',
-                'likely_purchase_in_days',                                
-                'dealer_branch',
-                'dealer_location', 
-                'customer_type',  
-                'pincode', 
-                'address', 
-                'purchase_type',
-                'action'
-
-                ];
                 const allCols = gridApi.getAllGridColumns().map(c => c.getColId());
-
                 gridApi.setColumnsVisible(allCols, false);
-                gridApi.setColumnsVisible(defaultFields, true);
+                
+                const validDefaults = getValidDefaultColumns();
+                gridApi.setColumnsVisible(validDefaults, true);
+                
                 setTimeout(() => gridApi.autoSizeAllColumns(), 200);
             });
 
             document.getElementById('exportCsv').addEventListener('click', () => {
-                const visibleColumns = gridApi.getAllDisplayedColumns()
-                    .map(col => col.getColDef())
-                    .filter(col => col.field && col.field !== 'action');
-
-                const rows = [];
-                gridApi.forEachNodeAfterFilterAndSort(node => {
-                    const row = {};
-                    visibleColumns.forEach(col => {
-                        row[col.headerName] = node.data[col.field] ?? '';
-                    });
-                    rows.push(row);
+                const params = new URLSearchParams({
+                    searchText: currentSearchText,
+                    list_type: LIST_TYPE
                 });
-
-                const wb = XLSX.utils.book_new();
-                const ws = XLSX.utils.json_to_sheet(rows);
-                XLSX.utils.book_append_sheet(wb, ws, "Unassigned Long Enquiries");
-                XLSX.writeFile(wb,
-                    `unassigned-long-enquiries-${new Date().toISOString().slice(0, 10)}.xlsx`);
+                window.location.href = '{{ backpack_url('enquiries/export') }}?' + params.toString();
             });
 
             document.getElementById('exportPdf').addEventListener('click', () => {
-                const {
-                    jsPDF
-                } = window.jspdf;
+                const { jsPDF } = window.jspdf;
                 const doc = new jsPDF();
 
                 const visibleColumns = gridApi.getAllDisplayedColumns()
@@ -342,28 +276,19 @@
                 const rows = [];
 
                 gridApi.forEachNodeAfterFilterAndSort(node => {
+                    if (!node.data) return;
                     rows.push(visibleColumns.map(col => node.data[col.field] ?? ''));
                 });
 
                 doc.autoTable({
                     head: [headers],
                     body: rows,
-                    styles: {
-                        fontSize: 8
-                    },
-                    headStyles: {
-                        fillColor: [41, 128, 185]
-                    },
+                    styles: { fontSize: 8 },
+                    headStyles: { fillColor: [41, 128, 185] },
                 });
 
-                doc.save(`unassigned-long-enquiries-${new Date().toISOString().slice(0, 10)}.pdf`);
+                doc.save(`${LIST_TYPE}-enquiries-${new Date().toISOString().slice(0, 10)}.pdf`);
             });
         });
-
-        function redirectToEnquiryList(selectElement) {
-            if (selectElement.value) {
-                window.location.href = selectElement.value;
-            }
-        }
     </script>
 @endpush
