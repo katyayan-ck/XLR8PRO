@@ -11,78 +11,74 @@
                     </h2>
 
                     <div class="d-flex align-items-center gap-3 flex-nowrap">
-                        <a href="{{ backpack_url('enquiries/add') }}" class="btn btn-blue btn-sm fw-bold shadow-sm">
-                            <i class="la la-plus me-1"></i> Add New Enquiry
-                        </a>
+                        @if (Route::has('enquiry.add') || Route::has('enquiries.create'))
+                            <a href="{{ backpack_url('enquiries/add') }}" class="btn btn-blue btn-sm fw-bold shadow-sm">
+                                <i class="la la-plus me-1"></i> Add New Enquiry
+                            </a>
+                        @endif
                     </div>
                 </div>
 
                 <div class="card-body p-0" style="background:#f8fafc">
 
-                    <!-- Import Section -->
-                    <div class="p-3 border-bottom bg-white">
-                        <div class="row align-items-end">
-                            <div class="col-md-8">
-                                <h5 class="mb-2 text-dark">
-                                    <i class="la la-file-excel-o"></i> Import Enquiries from Excel
-                                </h5>
-                                <small class="text-muted">
-                                    Upload Excel file containing enquiry data. First row should contain headers.
-                                </small>
+                    {{-- Optional Import Section --}}
+                    @if (Route::has('enquiry.import'))
+                        <div class="p-3 border-bottom bg-white">
+                            <div class="row align-items-end">
+                                <div class="col-md-8">
+                                    <h5 class="mb-2 text-dark">
+                                        <i class="la la-file-excel-o"></i> Import Enquiries from Excel
+                                    </h5>
+                                    <small class="text-muted">
+                                        Upload Excel file containing enquiry data. First row should contain headers.
+                                    </small>
+                                </div>
+                                <div class="col-md-4">
+                                    <form action="{{ route('enquiry.import') }}" method="POST"
+                                        enctype="multipart/form-data" class="d-flex gap-2">
+                                        @csrf
+                                        <input type="file" name="excel_file" class="form-control form-control-sm"
+                                            accept=".xlsx,.xls" required>
+                                        <button type="submit" class="btn btn-success btn-sm px-4 text-nowrap">
+                                            <i class="la la-upload"></i> Import
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
-                            <div class="col-md-4">
-                                <form action="{{ route('enquiry.import') }}" method="POST" enctype="multipart/form-data"
-                                    class="d-flex gap-2">
-                                    @csrf
-                                    <input type="file" name="excel_file" class="form-control form-control-sm"
-                                        accept=".xlsx,.xls" required>
-                                    <button type="submit" class="btn btn-success btn-sm px-4 text-nowrap">
-                                        <i class="la la-upload"></i> Import
-                                    </button>
-                                </form>
-                            </div>
                         </div>
-                    </div>
+                    @endif
 
-                    <!-- Import Status Panel -->
-                    <div class="p-3 border-bottom bg-white" id="importStatusPanel" style="display:none;">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <strong id="importStatusTitle">Import in progress…</strong>
-                            <span class="text-muted small" id="importStatusPercent">0%</span>
+                    {{-- HIGHLIGHT FILTERS --}}
+                    @isset($highlightCounts)
+                        <div class="px-3 py-2 border-bottom bg-white d-flex gap-2 flex-wrap align-items-center">
+                            <span class="fw-bold text-muted small me-1">Highlights:</span>
+                            @foreach ([
+                'missed_fup' => 'Missed Follow-up',
+                'today_fup' => "Today's Follow-up",
+                'birthday' => 'Birthday',
+                'anniversary' => 'Anniversary',
+                'exchange' => 'Exchange',
+                'pending_eval' => 'Pending Evaluation',
+                'delayed' => 'Delayed',
+                'wrong_assign' => 'Wrong Assignment',
+                'finance' => 'Finance',
+                'lost_verif' => 'Lost Verifications',
+            ] as $key => $label)
+                                <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
+                                    data-filter="{{ $key }}">
+                                    {{ $label }} <span
+                                        class="badge ms-1 count-badge">{{ $highlightCounts[$key] ?? 0 }}</span>
+                                </button>
+                            @endforeach
                         </div>
-                        <div class="progress" style="height: 8px;">
-                            <div class="progress-bar bg-success" id="importProgressBar" role="progressbar"
-                                style="width: 0%"></div>
-                        </div>
-                        <div class="small text-muted mt-2" id="importStatusDetail"></div>
-                    </div>
+                    @endisset
 
-                    <!-- Recent Imports -->
-                    <div class="p-3 border-bottom bg-white">
-                        <h6 class="text-muted mb-2">Recent Imports</h6>
-                        <table class="table table-sm mb-0" id="importHistoryTable">
-                            <thead>
-                                <tr>
-                                    <th>File</th>
-                                    <th>Status</th>
-                                    <th>Progress</th>
-                                    <th>When</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td colspan="4" class="text-muted">Loading…</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- Grid Controls -->
+                    {{-- Grid Controls Bar --}}
                     <div
                         class="d-flex justify-content-between align-items-center flex-wrap gap-3 p-3 border-bottom bg-white">
                         <div class="d-flex align-items-center gap-2 flex-nowrap">
                             <input type="text" id="quickFilter" class="form-control w-100 w-md-auto"
-                                style="width:360px; min-width:260px;" placeholder="Smart Search...">
+                                style="width:360px; min-width:260px;" placeholder="Smart Global Search...">
                             <button id="resetAll" class="btn btn-outline-danger btn-sm text-nowrap">Reset</button>
                         </div>
 
@@ -110,73 +106,21 @@
                         </div>
 
                         <div class="d-flex gap-2 flex-nowrap">
-                            <button id="exportCsv" class="btn btn-sm text-nowrap d-flex align-items-center gap-2">
+                            <button id="exportCsv" class="btn btn-sm text-nowrap d-flex align-items-center gap-2"
+                                title="Export Excel">
                                 <img src="{{ asset('images/export-excel.png') }}" alt="Excel"
                                     style="height:30px; width:auto;">
                             </button>
-                            <button id="exportPdf" class="btn btn-sm text-nowrap d-flex align-items-center gap-2">
+                            <button id="exportPdf" class="btn btn-sm text-nowrap d-flex align-items-center gap-2"
+                                title="Export PDF">
                                 <img src="{{ asset('images/export-pdf.png') }}" alt="PDF"
                                     style="height:30px; width:auto;">
                             </button>
                         </div>
                     </div>
 
-                    {{-- =========================== HIGHLIGHT FILTERS =========================== --}}
-                    <div class="px-3 py-2 border-bottom bg-white d-flex gap-2 flex-wrap align-items-center">
-                        <span class="fw-bold text-muted small me-1">Highlights:</span>
-
-                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
-                            data-filter="missed_fup">
-                            Missed Follow-up <span
-                                class="badge ms-1 count-badge">{{ $highlightCounts['missed_fup'] ?? 0 }}</span>
-                        </button>
-                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
-                            data-filter="today_fup">
-                            Today's Follow-up <span
-                                class="badge ms-1 count-badge">{{ $highlightCounts['today_fup'] ?? 0 }}</span>
-                        </button>
-                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter" data-filter="birthday">
-                            Birthday <span class="badge ms-1 count-badge">{{ $highlightCounts['birthday'] ?? 0 }}</span>
-                        </button>
-                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
-                            data-filter="anniversary">
-                            Anniversary <span
-                                class="badge ms-1 count-badge">{{ $highlightCounts['anniversary'] ?? 0 }}</span>
-                        </button>
-                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
-                            data-filter="exchange">
-                            Exchange <span class="badge ms-1 count-badge">{{ $highlightCounts['exchange'] ?? 0 }}</span>
-                        </button>
-                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
-                            data-filter="pending_eval">
-                            Pending Evaluation <span
-                                class="badge ms-1 count-badge">{{ $highlightCounts['pending_eval'] ?? 0 }}</span>
-                        </button>
-                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
-                            data-filter="delayed">
-                            Delayed <span class="badge ms-1 count-badge">{{ $highlightCounts['delayed'] ?? 0 }}</span>
-                        </button>
-                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
-                            data-filter="wrong_assign">
-                            Wrong Assignment <span
-                                class="badge ms-1 count-badge">{{ $highlightCounts['wrong_assign'] ?? 0 }}</span>
-                        </button>
-                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
-                            data-filter="finance">
-                            Finance <span class="badge ms-1 count-badge">{{ $highlightCounts['finance'] ?? 0 }}</span>
-                        </button>
-                        {{-- <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter" data-filter="stage_mismatch">
-                            Stage Mismatch <span class="badge ms-1 count-badge">{{ $highlightCounts['stage_mismatch'] ?? 0 }}</span>
-                        </button> --}}
-                        <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
-                            data-filter="lost_verif">
-                            Lost Verifications <span
-                                class="badge ms-1 count-badge">{{ $highlightCounts['lost_verif'] ?? 0 }}</span>
-                        </button>
-                    </div>
-
-                    <!-- ag-Grid -->
-                    <div id="myGrid" class="ag-theme-quartz" style="height: calc(93vh - 310px); width:100%;"></div>
+                    {{-- AG-Grid Container --}}
+                    <div id="myGrid" class="ag-theme-quartz" style="height: calc(93vh - 280px); width:100%;"></div>
                 </div>
             </div>
         </div>
@@ -190,21 +134,18 @@
             justify-content: center !important;
         }
 
-        /* Style for active highlight pill */
         .highlight-filter.active {
             background-color: #0d6efd;
             color: #fff;
             border-color: #0d6efd;
         }
 
-        /* Badge default styling */
         .highlight-filter .count-badge {
             background-color: rgba(13, 110, 253, 0.1);
             color: #0d6efd;
             border-radius: 50rem;
         }
 
-        /* Badge styling when the button is active */
         .highlight-filter.active .count-badge {
             background-color: #fff;
             color: #0d6efd;
@@ -218,78 +159,12 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
 
-    <!-- Import Polling Script -->
     <script>
-        (function() {
-            const statusUrlBase = "{{ url('/' . config('backpack.base.route_prefix') . '/enquiry/import/status') }}";
-            const historyUrl = "{{ route('enquiry.import.history') }}";
-            let pollTimer = null;
-
-            function renderHistory(rows) {
-                const tbody = document.querySelector('#importHistoryTable tbody');
-                if (!rows.length) {
-                    tbody.innerHTML = '<tr><td colspan="4" class="text-muted">No imports yet</td></tr>';
-                    return;
-                }
-                tbody.innerHTML = rows.map(r => {
-                    const pct = r.total_rows > 0 ? Math.round((r.processed_rows / r.total_rows) * 100) : 0;
-                    const badge = r.status === 'completed' ? 'success' :
-                        r.status === 'failed' ? 'danger' :
-                        'warning';
-                    return `<tr>
-                <td>${r.file_name}</td>
-                <td><span class="badge bg-${badge}">${r.status}</span></td>
-                <td>${r.status === 'processing' ? pct + '%' : '-'}</td>
-                <td>${r.updated_at}</td>
-            </tr>`;
-                }).join('');
-
-                const newest = rows[0];
-                if (newest && (newest.status === 'processing' || newest.status === 'queued')) {
-                    startPolling(newest.id);
-                }
-            }
-
-            function startPolling(id) {
-                const panel = document.getElementById('importStatusPanel');
-                panel.style.display = 'block';
-                if (pollTimer) clearInterval(pollTimer);
-
-                function tick() {
-                    fetch(`${statusUrlBase}/${id}`).then(r => r.json()).then(data => {
-                        document.getElementById('importProgressBar').style.width = data.percent + '%';
-                        document.getElementById('importStatusPercent').innerText = data.percent + '%';
-                        document.getElementById('importStatusDetail').innerText =
-                            `${data.processed_rows} / ${data.total_rows} rows processed`;
-
-                        if (data.status === 'completed') {
-                            document.getElementById('importStatusTitle').innerText = 'Import completed ✅';
-                            clearInterval(pollTimer);
-                            setTimeout(() => location.reload(), 1500);
-                        } else if (data.status === 'failed') {
-                            document.getElementById('importStatusTitle').innerText = 'Import failed ❌';
-                            document.getElementById('importStatusDetail').innerText = data.error_message ||
-                                'Unknown error';
-                            clearInterval(pollTimer);
-                        }
-                    }).catch(() => {});
-                }
-
-                tick();
-                pollTimer = setInterval(tick, 3000);
-            }
-
-            fetch(historyUrl).then(r => r.json()).then(renderHistory);
-        })();
-    </script>
-
-    <!-- Grid Script -->
-    <script>
-        // DYNAMICALLY FETCH ALL COLUMNS FROM CONTROLLER
         const ALL_COLUMNS = @json($gridConfig['columns'] ?? []);
+        const DEFAULT_COLUMNS = @json($gridConfig['defaultColumns'] ?? []);
+        const LIST_TYPE = @json($listType ?? 'all');
         let gridApi;
 
-        // Auto-map every backend column, pinning the Action column to the right
         const columnDefs = [
             ...ALL_COLUMNS.filter(col => col.field !== 'action'),
             ...ALL_COLUMNS.filter(col => col.field === 'action').map(col => {
@@ -302,16 +177,8 @@
             })
         ];
 
-        function debounce(fn, delay) {
-            let timer;
-            return (...args) => {
-                clearTimeout(timer);
-                timer = setTimeout(() => fn(...args), delay);
-            };
-        }
-
         let currentSearchText = '';
-        let currentHighlightFilter = ''; // Tracks active pill filter
+        let currentHighlightFilter = '';
 
         const dataSource = {
             getRows: function(params) {
@@ -326,17 +193,19 @@
                             startRow: params.startRow,
                             endRow: params.endRow,
                             sortModel: params.sortModel,
-                            filterModel: params.filterModel,
+                            filterModel: params
+                                .filterModel, // Column filters triggered from the header menu
                             searchText: currentSearchText,
-                            highlightFilter: currentHighlightFilter
+                            highlightFilter: currentHighlightFilter,
+                            list_type: LIST_TYPE
                         })
                     })
                     .then(res => res.json())
                     .then(data => {
-                        params.successCallback(data.rows || [], data.lastRow ?? -1);
+                        params.successCallback(data.rows || [], data.lastRow ?? 0);
                     })
                     .catch(err => {
-                        console.error('Failed to load enquiries page', err);
+                        console.error('Failed to load enquiries', err);
                         params.failCallback();
                     });
             }
@@ -344,20 +213,17 @@
 
         const gridOptions = {
             columnDefs: columnDefs,
-            rowModelType: 'infinite',
+            rowModelType: 'infinite', // Free Community model working with your backend
             datasource: dataSource,
-            cacheBlockSize: 100,
-            maxBlocksInCache: 10,
-            infiniteInitialRowCount: 100,
-            // Built-in ag-Grid pagination controls (Next/Prev + page numbers).
-            // For the Infinite Row Model, page size always equals cacheBlockSize (100).
-            pagination: true,
-            paginationAutoPageSize: false,
+            pagination: true, // Enables traditional page-by-page pagination controls at the bottom
+            paginationPageSize: 50, // Number of rows per page
+            cacheBlockSize: 50,
             rowHeight: 28,
             animateRows: true,
             defaultColDef: {
                 sortable: true,
-                filter: true,
+                filter: true, // Enables filter icon inside column header menu (No floating filter row)
+                floatingFilter: false, // Explicitly disabled to remove the extra filter header row
                 resizable: true,
                 headerClass: 'center-header',
                 cellStyle: {
@@ -369,19 +235,9 @@
             },
             onGridReady: params => {
                 gridApi = params.api;
-
-                // These are the fields visible by default on page load
-                const defaultFields = [
-                    'serial_no', 'x8_enquiry_no', 'x8_enquiry_date', 'oem_enquiry_no', 'oem_enquiry_date',
-                    'oem_quick_enquiry_no', 'segment_name', 'model_name', 'variant_name', 'first_name',
-                    'mobile', 'enquiry_type', 'source_name', 'sub_source', 'tehsil', 'district', 'city',
-                    'sc_code', 'dealer_branch', 'dealer_location', 'followup_type', 'followup_date',
-                    'customer_type', 'purchase_type', 'action'
-                ];
-
                 const allCols = gridApi.getAllGridColumns().map(col => col.getColId());
                 gridApi.setColumnsVisible(allCols, false);
-                gridApi.setColumnsVisible(defaultFields, true);
+                gridApi.setColumnsVisible(DEFAULT_COLUMNS.length ? DEFAULT_COLUMNS : allCols, true);
                 setTimeout(() => gridApi.autoSizeAllColumns(), 300);
             }
         };
@@ -404,7 +260,6 @@
                 checkbox.type = 'checkbox';
                 checkbox.checked = gridApi.getColumn(col.field)?.isVisible() ?? false;
 
-                // Disable unchecking mandatory columns
                 if (['serial_no', 'action'].includes(col.field)) {
                     checkbox.disabled = true;
                 }
@@ -424,17 +279,25 @@
             bubble.style.display = 'block';
         }
 
+        function debounce(fn, delay) {
+            let timer;
+            return (...args) => {
+                clearTimeout(timer);
+                timer = setTimeout(() => fn(...args), delay);
+            };
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             const gridDiv = document.querySelector('#myGrid');
             agGrid.createGrid(gridDiv, gridOptions);
 
-            // Quick Search Event
+            // Smart Global Search Input
             document.getElementById('quickFilter').addEventListener('input', debounce(e => {
                 currentSearchText = e.target.value.trim();
                 gridApi.setGridOption('datasource', dataSource);
             }, 400));
 
-            // Highlight Filters Event
+            // Highlight Filters
             document.querySelectorAll('.highlight-filter').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const filterValue = this.getAttribute('data-filter');
@@ -449,19 +312,17 @@
                         this.classList.add('active');
                     }
 
-                    // Reload Grid
                     gridApi.setGridOption('datasource', dataSource);
                 });
             });
 
-            // Reset All
+            // Reset All Button
             document.getElementById('resetAll').addEventListener('click', () => {
                 document.getElementById('quickFilter').value = '';
                 currentSearchText = '';
                 currentHighlightFilter = '';
-
                 document.querySelectorAll('.highlight-filter').forEach(b => b.classList.remove('active'));
-
+                gridApi.setFilterModel(null);
                 gridApi.applyColumnState({
                     defaultState: {
                         sort: null
@@ -470,7 +331,7 @@
                 gridApi.setGridOption('datasource', dataSource);
             });
 
-            // Header Controls
+            // Column Header Controls
             document.getElementById('btnCustomiseHeaders').addEventListener('click', e => {
                 e.stopPropagation();
                 openColumnBubble();
@@ -494,30 +355,23 @@
             });
 
             document.getElementById('btnDefaultHeaders').addEventListener('click', () => {
-                const defaultFields = [
-                    'serial_no', 'x8_enquiry_no', 'x8_enquiry_date', 'oem_enquiry_no',
-                    'oem_enquiry_date',
-                    'oem_quick_enquiry_no', 'segment_name', 'model_name', 'variant_name', 'first_name',
-                    'mobile', 'enquiry_type', 'source_name', 'sub_source', 'tehsil', 'district', 'city',
-                    'sc_code', 'dealer_branch', 'dealer_location', 'followup_type', 'followup_date',
-                    'customer_type', 'purchase_type', 'action'
-                ];
                 const allCols = gridApi.getAllGridColumns().map(c => c.getColId());
                 gridApi.setColumnsVisible(allCols, false);
-                gridApi.setColumnsVisible(defaultFields, true);
+                gridApi.setColumnsVisible(DEFAULT_COLUMNS, true);
                 setTimeout(() => gridApi.autoSizeAllColumns(), 200);
             });
 
-            // Exports
+            // CSV Export
             document.getElementById('exportCsv').addEventListener('click', () => {
                 const params = new URLSearchParams({
                     searchText: currentSearchText,
                     highlightFilter: currentHighlightFilter,
-                    filterModel: JSON.stringify(gridApi.getFilterModel())
+                    list_type: LIST_TYPE
                 });
                 window.location.href = '{{ backpack_url('enquiries/export') }}?' + params.toString();
             });
 
+            // PDF Export
             document.getElementById('exportPdf').addEventListener('click', () => {
                 const {
                     jsPDF
@@ -548,12 +402,6 @@
                 });
 
                 doc.save(`enquiries-${new Date().toISOString().slice(0, 10)}.pdf`);
-
-                if (rows.length < gridApi.getDisplayedRowCount()) {
-                    alert(
-                        'PDF export includes only the rows currently loaded in the grid (scroll to load more, then export again). For the full list, use the CSV export instead.'
-                    );
-                }
             });
         });
     </script>

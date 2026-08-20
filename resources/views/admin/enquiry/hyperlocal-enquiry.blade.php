@@ -15,9 +15,7 @@
                 <h2 class="card-title mb-0 fw-bold text-black text-nowrap">
                     {{ $title ?? 'Hyperlocal Enquiries' }}
                 </h2>
-                {{-- <span class="badge bg-light text-dark px-3 py-2">
-                    Total: {{ $gridConfig['data']->count() ?? 0 }}
-                </span> --}}
+
             </div>
 
             <div class="card-body p-0" style="background:#f8fafc">
@@ -131,31 +129,30 @@
 <script>
     const ALL_COLUMNS = @json($gridConfig['columns'] ?? []);
 
+    const LIST_TYPE = @json($gridConfig['list_type'] ?? 'hyperlocal');
+
     function getCols(fields) {
         return ALL_COLUMNS.filter(col => fields.includes(col.field));
     }
 
     let gridApi;
+    let currentSearchText = '';
 
     const DEFAULT_VISIBLE_FIELDS = [
         'serial_no',
         'lead_id',
         'name',
         'phone_number',
-        'email',
         'call_start_time',
-        'call_end_time',
+        'call_recording_url',
         'call_duration',
         'call_status',
         'call_type',
+        'notes',
         'lead_status',
-        'lead_intent',
-        'lead_type',
-        'source',
+        'client_crm_status',
         'model',
         'dealer_code',
-        'enquiry_status',
-        'enquiry_date',
         'action'
     ];
 
@@ -173,12 +170,43 @@
         return col;
     });
 
+    const dataSource = {
+        getRows: function(params) {
+            fetch('{{ backpack_url('enquiries/data') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        startRow: params.startRow,
+                        endRow: params.endRow,
+                        sortModel: params.sortModel,
+                        filterModel: params.filterModel,
+                        searchText: currentSearchText,
+                        list_type: LIST_TYPE
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    params.successCallback(data.rows || [], data.lastRow ?? 0);
+                })
+                .catch(err => {
+                    console.error('Failed to load enquiries', err);
+                    params.failCallback();
+                });
+        }
+    };
+
     // ✅ Single gridOptions declaration (Removed duplicate)
     const gridOptions = {
-        columnDefs: columnDefs, 
-        rowData: @json($gridConfig['data'] ?? []),
+        columnDefs: columnDefs,
+        rowModelType: 'infinite',
+        datasource: dataSource,
         pagination: true,
         paginationPageSize: 50,
+        cacheBlockSize: 50,
         paginationPageSizeSelector: [20, 50, 100, 200],
         rowHeight: 30,
         animateRows: true,
@@ -328,36 +356,40 @@
         const gridDiv = document.querySelector('#myGrid');
         gridApi = agGrid.createGrid(gridDiv, gridOptions);
 
-        document.getElementById('quickFilter')?.addEventListener('input', e => {
-            gridApi.setGridOption('quickFilterText', e.target.value);
-        });
+        function debounce(fn, delay) {
+            let timer;
+            return (...args) => {
+                clearTimeout(timer);
+                timer = setTimeout(() => fn(...args), delay);
+            };
+        }
+
+        document.getElementById('quickFilter')?.addEventListener('input', debounce(e => {
+            currentSearchText = e.target.value.trim();
+            gridApi.setGridOption('datasource', dataSource);
+        }, 400));
 
         document.getElementById('resetAll')?.addEventListener('click', () => {
-            gridApi.setFilterModel(null);
-            gridApi.setGridOption('quickFilterText', '');
             document.getElementById('quickFilter').value = '';
+            currentSearchText = '';
+            gridApi.setFilterModel(null);
+            gridApi.applyColumnState({ defaultState: { sort: null } });
+            gridApi.setGridOption('datasource', dataSource);
         });
 
+        // Server-side CSV export (covers ALL matching rows, not just the
+        // rows currently cached in the browser).
         document.getElementById('exportCsv')?.addEventListener('click', () => {
-            const visibleColumns = gridApi.getAllDisplayedColumns()
-                .map(col => col.getColDef())
-                .filter(col => col.field && col.field !== 'action');
-
-            const rows = [];
-            gridApi.forEachNodeAfterFilterAndSort(node => {
-                const row = {};
-                visibleColumns.forEach(col => {
-                    row[col.headerName] = node.data[col.field] ?? '';
-                });
-                rows.push(row);
+            const params = new URLSearchParams({
+                searchText: currentSearchText,
+                list_type: LIST_TYPE
             });
-
-            const worksheet = XLSX.utils.json_to_sheet(rows);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, 'Hyperlocal Enquiries');
-            XLSX.writeFile(workbook, 'hyperlocal-enquiries.xlsx');
+            window.location.href = '{{ backpack_url('enquiries/export') }}?' + params.toString();
         });
 
+        // PDF export only covers rows already fetched into the grid's
+        // cache, since the full result set is no longer loaded client-side.
+        // Use the CSV export above for a complete export.
         document.getElementById('exportExcel')?.addEventListener('click', () => {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('l', 'pt', 'a4');
@@ -373,6 +405,7 @@
 
             const rows = [];
             gridApi.forEachNodeAfterFilterAndSort(node => {
+                if (!node.data) return;
                 const row = {};
                 visibleColumns.forEach(col => {
                     row[col.field] = node.data[col.field];

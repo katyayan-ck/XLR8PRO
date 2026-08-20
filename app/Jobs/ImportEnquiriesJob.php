@@ -63,6 +63,8 @@ class ImportEnquiriesJob implements ShouldQueue
     private array $vehicleColorCache = [];
     private bool $vehicleColorCacheLoaded = false;
 
+
+
     private int $processedSoFar = 0;
 
     public function __construct(int $importLogId, string $storedPath)
@@ -254,6 +256,10 @@ class ImportEnquiriesJob implements ShouldQueue
     private function importHyperlocalSheet(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet, $now, $log): array
     {
         $stats = ['inserted' => 0, 'updated' => 0, 'skipped' => 0];
+
+        // 1. Delete all existing enquiries where origin is HYPERLOCAL before import
+        DB::table('xlr8_crm_enquiries')->where('origin', 'HYPERLOCAL')->delete();
+
         $headerMap = $this->getSheetHeaderMap($sheet);
         $rows = array_slice($sheet->toArray(null, true, true, false), 1);
 
@@ -262,30 +268,39 @@ class ImportEnquiriesJob implements ShouldQueue
                 foreach ($chunk as $i => $row) {
                     $excelRow = $i + 2;
                     try {
+                        // Extract and check Client-CRM-Status filter condition
+                        $clientCrmStatus = $this->cleanString($this->cell($row, $headerMap, 'Client-CRM-Status'), 50);
+
+                        // 2. Only import entries whose Client-CRM-Status is either 'pending' or 'failed'
+                        if (!in_array(strtolower(trim($clientCrmStatus)), ['pending', 'failed'], true)) {
+                            $stats['skipped']++;
+                            continue;
+                        }
+
                         [$firstName, $lastName] = $this->splitCustomerName($this->cell($row, $headerMap, 'Name'));
                         $mobile = $this->cleanString($this->cell($row, $headerMap, 'Phone-Number'), 15);
 
                         $modelName = $this->cell($row, $headerMap, 'Model');
                         $modelMatch = $this->resolveVehicleModel($modelName);
 
-                        // 3. UPDATED HYPERLOCAL COLUMNS PER YOUR SPECIFICATION
+                        // UPDATED HYPERLOCAL COLUMNS PER YOUR SPECIFICATION
                         $data = $this->stripNulls([
-                            'lead_id'             => $this->cleanString($this->cell($row, $headerMap, 'Leads-ID'), 100),
-                            'first_name'           => $this->cleanString($firstName, 100),
-                            'last_name'            => $this->cleanString($lastName, 100),
-                            'mobile'               => $mobile,
-                            'virtual_call_date'    => $this->excelDate($this->cell($row, $headerMap, 'Call-Start-Time'), true),
-                            'call_recording_url'   => $this->cleanString($this->cell($row, $headerMap, 'Call-Recording-URL'), 255),
-                            'call_duration'        => $this->formatCallDuration($this->cell($row, $headerMap, 'Call-Duration-in-Seconds')),
-                            'call_status'          => $this->cleanString($this->cell($row, $headerMap, 'Call-Status'), 50),
-                            'call_type'            => $this->cleanString($this->cell($row, $headerMap, 'Call-Type'), 50),
-                            'notes'                => $this->cleanString($this->cell($row, $headerMap, 'Notes')),
-                            'lead_status'          => $this->cleanString($this->cell($row, $headerMap, 'Lead-Status'), 50),
-                            'client_crm_status'    => $this->cleanString($this->cell($row, $headerMap, 'Client-CRM-Status'), 50),
-                            'model'                => $this->cleanString($modelName, 100),
-                            'model_code'           => $modelMatch['model_code'],
-                            'segment_code'         => $modelMatch['segment_code'],
-                            'dealer_code'          => $this->cleanString($this->cell($row, $headerMap, 'Dealer-Code'), 50),
+                            'lead_id'           => $this->cleanString($this->cell($row, $headerMap, 'Leads-ID'), 100),
+                            'first_name'        => $this->cleanString($firstName, 100),
+                            'last_name'         => $this->cleanString($lastName, 100),
+                            'mobile'            => $mobile,
+                            'virtual_call_date' => $this->excelDate($this->cell($row, $headerMap, 'Call-Start-Time'), true),
+                            'call_url'          => $this->cleanString($this->cell($row, $headerMap, 'Call-Recording-URL'), 255),
+                            'call_duration'     => $this->formatCallDuration($this->cell($row, $headerMap, 'Call-Duration-in-Seconds')),
+                            'call_status'       => $this->cleanString($this->cell($row, $headerMap, 'Call-Status'), 50),
+                            'call_type'         => $this->cleanString($this->cell($row, $headerMap, 'Call-Type'), 50),
+                            'remarks'           => $this->cleanString($this->cell($row, $headerMap, 'Notes')),
+                            'lead_status'       => $this->cleanString($this->cell($row, $headerMap, 'Lead-Status'), 50),
+                            'client_crm_status' => $clientCrmStatus,
+                            'model'             => $this->cleanString($modelName, 100),
+                            'model_code'        => $modelMatch['model_code'],
+                            'segment_code'      => $modelMatch['segment_code'],
+                            'dealer_code'       => $this->cleanString($this->cell($row, $headerMap, 'Dealer-Code'), 50),
                         ]);
                         $data['updated_at'] = $now;
 
@@ -318,7 +333,6 @@ class ImportEnquiriesJob implements ShouldQueue
 
         return $stats;
     }
-
     private function importQuickSheet(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet, $now, $log): array
     {
         $stats = ['inserted' => 0, 'updated' => 0, 'skipped' => 0];
@@ -765,39 +779,41 @@ class ImportEnquiriesJob implements ShouldQueue
                 foreach ($chunk as $i => $row) {
                     $excelRow = $i + 2;
                     try {
-                        $bookingNumber = $this->cleanString($this->cell($row, $headerMap, 'Booking Number'), 100);
+                        $bookingNumber = $this->cleanString($this->cell($row, $headerMap, 'Booking Number'), 50);
 
                         if (empty($bookingNumber)) {
                             $stats['skipped']++;
                             continue;
                         }
 
+
                         $data = $this->stripNulls([
-                            'booking_date'                    => $this->excelDate($this->cell($row, $headerMap, 'Booking Date')),
-                            'sc_code'                         => $this->cleanString($this->cell($row, $headerMap, 'SC Code'), 100),
-                            'booking_status'                  => $this->cleanString($this->cell($row, $headerMap, 'Booking Status'), 50),
-                            'booking_cancellation_date'       => $this->excelDate($this->cell($row, $headerMap, 'Booking Cancellation Date')),
-                            'model_group'                     => $this->cleanString($this->cell($row, $headerMap, 'Model Group'), 100),
-                            'model_variant'                   => $this->cleanString($this->cell($row, $headerMap, 'Model Variant'), 100),
-                            'oem_model_code'                  => $this->cleanString($this->cell($row, $headerMap, 'OEM Model Code'), 100),
-                            'booking_customer_code'           => $this->cleanString($this->cell($row, $headerMap, 'Booking Customer Code'), 100),
-                            'booking_customer_name'           => $this->cleanString($this->cell($row, $headerMap, 'Booking Customer Name'), 255),
-                            'booking_customer_address'        => $this->cleanString($this->cell($row, $headerMap, 'Booking Customer Address'), 255),
-                            'booking_customer_city'           => $this->cleanString($this->cell($row, $headerMap, 'Booking Customer City'), 100),
-                            'booking_customer_tehsil'         => $this->cleanString($this->cell($row, $headerMap, 'Booking Customer Tehsil'), 100),
-                            'booking_customer_district'       => $this->cleanString($this->cell($row, $headerMap, 'Booking Customer District'), 100),
-                            'billing_customer_pan_number'     => $this->cleanString($this->cell($row, $headerMap, 'Billing Customer PAN Number'), 50),
-                            'billing_customer_tan_number'     => $this->cleanString($this->cell($row, $headerMap, 'Billing Customer TAN Number'), 50),
-                            'billing_customer_aadhaar_number' => $this->cleanString($this->cell($row, $headerMap, 'Billing Customer Aadhaar Number'), 50),
-                            'invoice_no'                      => $this->cleanString($this->cell($row, $headerMap, 'Invoice No.'), 100),
-                            'evaluation_id'                   => $this->cleanString($this->cell($row, $headerMap, 'Evaluation ID'), 100),
-                            'so_number'                       => $this->cleanString($this->cell($row, $headerMap, 'SO Number'), 100),
-                            'otf_number'                      => $this->cleanString($this->cell($row, $headerMap, 'OTF Number'), 100),
+                            'booking_date'      => $this->excelDate($this->cell($row, $headerMap, 'Booking Date')),
+                            'sc_mile_id'        => $this->cleanString($this->cell($row, $headerMap, 'SC Code'), 50),
+                            'status'            => $this->cleanString($this->cell($row, $headerMap, 'Booking Status'), 50),
+                            'cancellation_date' => $this->excelDate($this->cell($row, $headerMap, 'Booking Cancellation Date')),
+                            'oem_code'          => $this->cleanString($this->cell($row, $headerMap, 'OEM Model Code'), 50),
+
+                            'customer_code'     => $this->cleanString($this->cell($row, $headerMap, 'Booking Customer Code'), 50),
+                            'customer_name'     => $this->cleanString($this->cell($row, $headerMap, 'Booking Customer Name'), 100),
+                            'customer_address'  => $this->cleanString($this->cell($row, $headerMap, 'Booking Customer Address'), 500),
+                            'customer_city'     => $this->cleanString($this->cell($row, $headerMap, 'Booking Customer City'), 50),
+                            'customer_tehsil'   => $this->cleanString($this->cell($row, $headerMap, 'Booking Customer Tehsil'), 50),
+                            'customer_district' => $this->cleanString($this->cell($row, $headerMap, 'Booking Customer District'), 50),
+
+                            'customer_pan'      => $this->cleanString($this->cell($row, $headerMap, 'Billing Customer PAN Number'), 50),
+                            'customer_tan'      => $this->cleanString($this->cell($row, $headerMap, 'Billing Customer TAN Number'), 50),
+                            'customer_aadhar'   => $this->cleanString($this->cell($row, $headerMap, 'Billing Customer Aadhaar Number'), 50),
+
+                            'invoice_no'        => $this->cleanString($this->cell($row, $headerMap, 'Invoice No.'), 50),
+                            'evaluation_no'     => $this->cleanString($this->cell($row, $headerMap, 'Evaluation ID'), 50),
+                            'so_no'             => $this->cleanString($this->cell($row, $headerMap, 'SO Number'), 50),
+                            'otf_no'            => $this->cleanString($this->cell($row, $headerMap, 'OTF Number'), 50),
                         ]);
 
                         $data['updated_at'] = $now;
 
-                        // UNIQUENESS: Handled by Booking Number
+                        // UNIQUENESS: by 'number' column (matches table structure)
                         $existed = $this->upsertRow(
                             'xlr8_crm_booking',
                             ['booking_number' => $bookingNumber],
@@ -982,6 +998,7 @@ class ImportEnquiriesJob implements ShouldQueue
 
         return $this->vehicleModelCache[$normalized];
     }
+
 
     private function resolveVehicleColor($rawColorName): array
     {
