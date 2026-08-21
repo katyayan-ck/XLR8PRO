@@ -9,6 +9,11 @@ use App\Services\OrgService;
 @push('after_styles')
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
 <style>
+    @page {
+        size: A4 portrait;
+        margin: 0;
+    }
+
     .header-logo-left img {
         height: 75px;
     }
@@ -55,7 +60,7 @@ use App\Services\OrgService;
         .quotation-sheet {
             width: 100%;
             margin: 0;
-            padding: 2mm;
+            padding: 0;
             box-shadow: none;
             border: 1px solid #000;
             display: flex;
@@ -574,9 +579,9 @@ use App\Services\OrgService;
     .accessories-note-row {
         display: block;
         padding: 4px 5px;
-        font-size: 10px;
+        font-size: 11px;
         font-weight: bold;
-        margin-bottom: 6px;
+        margin-bottom: 5px;
     }
 
     #insurance_print,
@@ -656,7 +661,6 @@ use App\Services\OrgService;
         #accessories_print {
             display: block !important;
             white-space: normal;
-            word-break: break-word;
             font-size: 11px;
             line-height: 15px;
         }
@@ -755,6 +759,505 @@ use App\Services\OrgService;
         .discount-bifurcation-box {
             display: none !important;
         }
+
+        #careof_name_print {
+            font-weight: 500 !important;
+            font-size: 10px !important;
+            color: #000 !important;
+            display: inline-block !important;
+        }
+    }
+
+    /* ============================================================
+   INSURANCE DROPDOWNS
+   ============================================================ */
+
+    /* Insurance Company */
+    #insurance_company {
+        width: 100% !important;
+        height: 26px !important;
+
+        appearance: auto !important;
+        -webkit-appearance: auto !important;
+        -moz-appearance: auto !important;
+
+        background-color: #fff !important;
+        background-image: var(--bs-form-select-bg-img) !important;
+        background-repeat: no-repeat !important;
+        background-position: right 6px center !important;
+        background-size: 10px 7px !important;
+
+        padding: 1px 22px 1px 5px !important;
+        border: 1px solid #ccc !important;
+        border-radius: 3px !important;
+
+        font-size: 10px !important;
+        line-height: 22px !important;
+    }
+
+
+    /* ============================================================
+   Insurance Covers - Select2
+   ============================================================ */
+
+    /* ============================================================
+   INSURANCE COVERS - FINAL SELECT2 FIX
+   ============================================================ */
+
+    #insurance_covers+.select2-container {
+        width: 100% !important;
+        height: 26px !important;
+        position: relative !important;
+    }
+
+    /* Select2 outer box */
+    #insurance_covers+.select2-container .select2-selection--multiple {
+        width: 100% !important;
+        height: 26px !important;
+        min-height: 26px !important;
+
+        border: 1px solid #ccc !important;
+        border-radius: 3px !important;
+
+        background: #fff !important;
+
+        padding: 0 !important;
+        margin: 0 !important;
+
+        box-sizing: border-box !important;
+
+        overflow: visible !important;
+    }
+
+    /* Rendered UL */
+    #insurance_covers+.select2-container .select2-selection--multiple .select2-selection__rendered {
+        width: 100% !important;
+        height: 24px !important;
+        min-height: 24px !important;
+
+        display: block !important;
+
+        padding: 0 !important;
+        margin: 0 !important;
+
+        position: relative !important;
+
+        overflow: visible !important;
+    }
+
+    /* Search LI */
+    #insurance_covers+.select2-container .select2-selection--multiple .select2-search--inline {
+        position: absolute !important;
+
+        left: 4px !important;
+        right: 22px !important;
+        top: 1px !important;
+
+        width: auto !important;
+        height: 22px !important;
+
+        display: block !important;
+
+        margin: 0 !important;
+        padding: 0 !important;
+
+        z-index: 10 !important;
+    }
+
+    /* ACTUAL SEARCH INPUT */
+    #insurance_covers+.select2-container .select2-selection--multiple .select2-search--inline .select2-search__field {
+        display: block !important;
+
+        width: 100% !important;
+        min-width: 100% !important;
+        max-width: 100% !important;
+
+        height: 22px !important;
+
+        margin: 0 !important;
+        padding: 1px 0 !important;
+
+        border: 0 !important;
+        outline: 0 !important;
+        box-shadow: none !important;
+
+        background: transparent !important;
+
+        color: #212529 !important;
+        -webkit-text-fill-color: #212529 !important;
+
+        caret-color: #212529 !important;
+
+        font-size: 10px !important;
+        line-height: 20px !important;
+
+        opacity: 1 !important;
+
+        text-indent: 0 !important;
+
+        visibility: visible !important;
+    }
+
+    /* Placeholder */
+    #insurance_covers+.select2-container .select2-selection--multiple .select2-search--inline .select2-search__field::placeholder {
+        color: #6c757d !important;
+        -webkit-text-fill-color: #6c757d !important;
+        opacity: 1 !important;
+    }
+
+    /* Hide selected chips */
+    #insurance_covers+.select2-container .select2-selection--multiple .select2-selection__choice {
+        display: none !important;
+    }
+
+    /* Small arrow - same visual weight as Insurance Company */
+    #insurance_covers+.select2-container::after {
+        content: "" !important;
+
+        position: absolute !important;
+
+        right: 7px !important;
+        top: 50% !important;
+
+        width: 4px !important;
+        height: 4px !important;
+
+        border-right: 1px solid #6c757d !important;
+        border-bottom: 1px solid #6c757d !important;
+
+        transform: translateY(-65%) rotate(45deg) !important;
+
+        pointer-events: none !important;
+
+        z-index: 100 !important;
+    }
+
+
+    /* Keep arrow visible even when Select2 is focused */
+    #insurance_covers+.select2-container .select2-selection--multiple:focus,
+    #insurance_covers+.select2-container .select2-selection--multiple.select2-selection--multiple {
+
+        position: relative !important;
+    }
+
+
+    /* Don't let selected chips/search hide arrow */
+    #insurance_covers+.select2-container .select2-selection--multiple .select2-selection__choice {
+
+        display: none !important;
+    }
+
+    /* ============================================================
+   ACCESSORIES - SELECT2 FINAL FIX
+   Same UI as Insurance Covers
+   ============================================================ */
+
+    #accessories+.select2-container {
+        width: 100% !important;
+        height: 26px !important;
+        position: relative !important;
+    }
+
+    /* Select2 outer box */
+    #accessories+.select2-container .select2-selection--multiple {
+        width: 100% !important;
+        height: 26px !important;
+        min-height: 26px !important;
+
+        border: 1px solid #ccc !important;
+        border-radius: 3px !important;
+
+        background: #fff !important;
+
+        padding: 0 !important;
+        margin: 0 !important;
+
+        box-sizing: border-box !important;
+        overflow: visible !important;
+    }
+
+    /* Rendered UL */
+    #accessories+.select2-container .select2-selection--multiple .select2-selection__rendered {
+
+        width: 100% !important;
+        height: 24px !important;
+        min-height: 24px !important;
+
+        display: block !important;
+
+        padding: 0 !important;
+        margin: 0 !important;
+
+        position: relative !important;
+        overflow: visible !important;
+    }
+
+    /* Search LI */
+    #accessories+.select2-container .select2-selection--multiple .select2-search--inline {
+
+        position: absolute !important;
+
+        left: 4px !important;
+        right: 22px !important;
+        top: 1px !important;
+
+        width: auto !important;
+        height: 22px !important;
+
+        display: block !important;
+
+        margin: 0 !important;
+        padding: 0 !important;
+
+        z-index: 10 !important;
+    }
+
+    /* Actual Search Input */
+    #accessories+.select2-container .select2-selection--multiple .select2-search--inline .select2-search__field {
+
+        display: block !important;
+
+        width: 100% !important;
+        min-width: 100% !important;
+        max-width: 100% !important;
+
+        height: 22px !important;
+
+        margin: 0 !important;
+        padding: 1px 0 !important;
+
+        border: 0 !important;
+        outline: 0 !important;
+        box-shadow: none !important;
+
+        background: transparent !important;
+
+        color: #212529 !important;
+        -webkit-text-fill-color: #212529 !important;
+
+        caret-color: #212529 !important;
+
+        font-size: 10px !important;
+        line-height: 20px !important;
+
+        opacity: 1 !important;
+        text-indent: 0 !important;
+        visibility: visible !important;
+    }
+
+    /* Placeholder */
+    #accessories+.select2-container .select2-selection--multiple .select2-search--inline .select2-search__field::placeholder {
+
+        color: #6c757d !important;
+        -webkit-text-fill-color: #6c757d !important;
+        opacity: 1 !important;
+    }
+
+    /* Hide selected chips */
+    #accessories+.select2-container .select2-selection--multiple .select2-selection__choice {
+
+        display: none !important;
+    }
+
+    /* Small dropdown arrow */
+    #accessories+.select2-container::after {
+
+        content: "" !important;
+
+        position: absolute !important;
+
+        right: 7px !important;
+        top: 50% !important;
+
+        width: 4px !important;
+        height: 4px !important;
+
+        border-right: 1px solid #6c757d !important;
+        border-bottom: 1px solid #6c757d !important;
+
+        transform: translateY(-65%) rotate(45deg) !important;
+
+        pointer-events: none !important;
+
+        z-index: 100 !important;
+    }
+
+    /* Keep arrow visible */
+    #accessories+.select2-container .select2-selection--multiple:focus,
+    #accessories+.select2-container .select2-selection--multiple.select2-selection--multiple {
+
+        position: relative !important;
+    }
+
+    @media print {
+        .net-receivable-container {
+            display: block !important;
+            width: 100% !important;
+            border: 2px solid #000 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+            page-break-inside: avoid !important;
+        }
+
+        .net-receivable-container>div:first-child {
+            background: #abb8ca !important;
+            border-bottom: 2px solid #000 !important;
+        }
+
+        .net-receivable-container input {
+            font-size: 13px !important;
+            font-weight: bold !important;
+            text-align: right !important;
+        }
+
+        .net-receivable-container #net_receivable_words {
+            font-style: italic !important;
+            font-weight: bold !important;
+        }
+    }
+
+    .terms-notes-container {
+        width: 100%;
+        border: 1px solid #000;
+        margin-top: 6px;
+        box-sizing: border-box;
+        page-break-inside: avoid;
+    }
+
+    .terms-notes-header {
+        background: #f2f2f2;
+        border-bottom: 1px solid #000;
+        font-size: 9px;
+        font-weight: bold;
+        padding: 3px 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .terms-notes-body {
+        display: flex;
+        width: 100%;
+    }
+
+    .notes-column {
+        flex: 1 1 50%;
+        padding: 4px 6px 4px 20px;
+        box-sizing: border-box;
+    }
+
+    .notes-column:first-child {
+        border-right: 1px solid #000;
+    }
+
+    .notes-list-split {
+        margin: 0;
+        padding: 0 0 0 10px;
+        font-size: 9px;
+        line-height: 1.35;
+        font-weight: normal;
+        text-align: left;
+    }
+
+    .notes-list-split li {
+        margin-bottom: 1px;
+        padding-left: 2px;
+    }
+
+    @media print {
+        .terms-notes-container {
+            border: 1px solid #000 !important;
+            margin-top: 4px !important;
+        }
+
+        .terms-notes-header {
+            background: #f2f2f2 !important;
+            border-bottom: 1px solid #000 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .notes-column:first-child {
+            border-right: 1px solid #000 !important;
+        }
+    }
+
+    /* ================= GROUP DROPDOWNS ================= */
+    /* Same visual weight as normal form text */
+    select.group-select {
+        width: 100% !important;
+        height: 100% !important;
+        min-height: 24px !important;
+
+        background-color: #f2f2f2 !important;
+        color: #495261 !important;
+
+        font-family: inherit !important;
+        font-size: 10px !important;
+        font-weight: 600 !important;
+        line-height: 22px !important;
+
+        border: none !important;
+        outline: none !important;
+        box-shadow: none !important;
+
+        margin: 0 !important;
+        padding: 1px 18px 1px 5px !important;
+
+        vertical-align: middle !important;
+        cursor: pointer !important;
+
+        appearance: none !important;
+        -webkit-appearance: none !important;
+        -moz-appearance: none !important;
+
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%236c757d' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+        background-repeat: no-repeat !important;
+        background-position: right 6px center !important;
+        background-size: 8px 6px !important;
+    }
+
+    /* Parent cell should have same normal text weight */
+    .bill-table td:has(.group-select),
+    .quotation-grid td:has(.group-select) {
+        padding: 0 !important;
+        background-color: #f2f2f2 !important;
+        font-weight: 500 !important;
+    }
+
+    select.group-select:focus {
+        outline: none !important;
+        box-shadow: none !important;
+        background-color: #f2f2f2 !important;
+        font-weight: 500 !important;
+    }
+
+    /* ================= PRINT ================= */
+    @media print {
+
+        select.group-select {
+            font-weight: 600 !important;
+            color: #495261 !important;
+            background-color: transparent !important;
+            background-image: none !important;
+        }
+
+        .bill-table td:has(.group-select),
+        .quotation-grid td:has(.group-select) {
+            font-weight: 600 !important;
+            color: #495261 !important;
+        }
+
+        #careof_relation_print {
+            font-weight: 600 !important;
+            color: #495261 !important;
+        }
+
+        #careof_name_print {
+            font-weight: 500 !important;
+            color: #000 !important;
+        }
     }
 </style>
 @endpush
@@ -788,9 +1291,9 @@ use App\Services\OrgService;
                     <!-- Center Text -->
                     <div class="col-8 text-center">
                         <h3 class="fw-bold mb-1">BIKANER MOTORS PRIVATE LIMITED</h3>
-                        <div style="font-size:13px;">Regd. Office : Sunderi Chhabil Mansion, NH-11, Jaipur Road, P.O.
-                            Udasar, Bikaner-334022</div>
-                        <div style="font-size:13px;">Branch Office : 6th KM Stone, Ratangarh Road, Churu (Raj.)</div>
+                        <div style="font-size:13px;">Regd. Office : Sunheri Chhabil Mansion, NH-11, Jaipur Road,
+                            Bikaner-334022</div>
+                        <div style="font-size:13px;">Branch Office : 6th KM Stone, Ratangarh Road, Churu-331001</div>
                         <h4 class="mt-2 mb-0 fw-bold text-uppercase">Vehicle Quotation</h4>
                     </div>
 
@@ -882,10 +1385,9 @@ use App\Services\OrgService;
                     @endif
 
                     {{-- ================= Customer Details ================= --}}
-                    {{-- ================= Customer Details ================= --}}
-                    <table class="bill-table mb-3">
+                    <table class="bill-table mb-2">
                         <tr>
-                            <td class="title" width="18%">Enquiry ID</td>
+                            <td class="title" width="18%">Enquiry No.</td>
                             <td width="32%">
                                 <input type="text" id="enquiry_id"
                                     value="{{ old('enquiry_no', $quotationData['enquiry_no'] ?? optional($selectedEnquiry)->id ?? '') }}"
@@ -903,7 +1405,7 @@ use App\Services\OrgService;
                             </td>
                         </tr>
                         <tr>
-                            <td class="title">Mobile Number</td>
+                            <td class="title">Mobile No.</td>
                             <td>
                                 <input type="text" id="mobile"
                                     value="{{ old('customer_mobile', $quotationData['customer_mobile'] ?? $quotationData['mobile'] ?? optional($selectedEnquiry)->mobile ?? '') }}"
@@ -911,11 +1413,13 @@ use App\Services\OrgService;
                                 <input type="hidden" name="mobile" id="mobile_hidden"
                                     value="{{ old('customer_mobile', $quotationData['customer_mobile'] ?? $quotationData['mobile'] ?? optional($selectedEnquiry)->mobile ?? '') }}">
                             </td>
-                            <td class="title">Care Of Name</td>
-                            <td>
-                                <div class="input-group">
-                                    <select name="careof" id="careof" class="form-select2" style="max-width: 80px;">
-                                        <option value="">Select</option>
+
+                            <!-- CARE OF LABEL CELL -->
+                            <td class="title cell-label" style="width: 18%; padding: 0 !important;">
+                                <!-- Screen par sirf Dropdown dikhega -->
+                                <div class="no-print" style="width: 100%; height: 100%;">
+                                    <select name="careof" id="careof" class="group-select">
+                                        <option value="">Care Of</option>
                                         <option value="1" {{ old('careof', $quotationData['careof'] ?? '' )=='1'
                                             ? 'selected' : '' }}>Son of</option>
                                         <option value="2" {{ old('careof', $quotationData['careof'] ?? '' )=='2'
@@ -925,16 +1429,26 @@ use App\Services\OrgService;
                                         <option value="4" {{ old('careof', $quotationData['careof'] ?? '' )=='4'
                                             ? 'selected' : '' }}>Guardian Name</option>
                                     </select>
+                                </div>
+                                <!-- Print ke waqt sirf plain text dikhega -->
+                                <span id="careof_relation_print" class="print-only-inline"
+                                    style="padding-left: 5px;">Care Of</span>
+                            </td>
+
+                            <!-- CARE OF VALUE CELL -->
+                            <!-- CARE OF VALUE CELL -->
+                            <td>
+                                <!-- Screen par input box -->
+                                <div class="no-print">
                                     <input type="text" name="careofname" id="careofname" placeholder="Enter Name"
+                                        style="width: 100%; font-size: 10px; padding: 2px;"
                                         value="{{ old('careofname', $quotationData['careofname'] ?? '') }}">
                                 </div>
+                                <!-- Print ke waqt sirf Customer/Relative ka Name (Same Weight & Padding) -->
+                                <span id="careof_name_print" class="print-only-inline"
+                                    style="padding-left: 2px; font-weight: 600; color: #000;"></span>
                             </td>
                         </tr>
-                    </table>
-
-                    {{-- ================= Vehicle Details ================= --}}
-                    {{-- Vehicle Details --}}
-                    <table class="bill-table mb-3">
                         <tr>
                             <td class="title" width="18%">Segment</td>
                             <td width="32%">
@@ -1019,7 +1533,8 @@ use App\Services\OrgService;
                                             <td class="cell-label">Insurance</td>
                                             <td class="cell-option">
                                                 <select id="insurance_company" name="insurance_company"
-                                                    class="form-control mb-1" style="margin-bottom:2px !important;">
+                                                    class="form-control form-select"
+                                                    style="margin-bottom:2px !important;">
                                                     <option value="">Select Company</option>
                                                 </select>
                                                 <select id="insurance_covers" name="insurance_covers[]"
@@ -1103,21 +1618,27 @@ use App\Services\OrgService;
 
                                         <tr class="grid-row">
                                             <td class="cell-label">Accessories</td>
+
                                             <td class="cell-option">
                                                 <select name="accessories[]" id="accessories" multiple>
                                                     @php
-                                                    $selectedAccessories = old('accessories',
-                                                    $quotationData['accessories'] ?? []);
+                                                    $selectedAccessories = old(
+                                                    'accessories',
+                                                    $quotationData['accessories'] ?? []
+                                                    );
                                                     @endphp
+
                                                     @foreach($accessoryList as $accessory)
                                                     <option value="{{ $accessory->part_no }}"
                                                         data-price="{{ $accessory->ndp }}" {{ in_array($accessory->
-                                                        part_no, (array)$selectedAccessories) ? 'selected' : '' }}>
-                                                        {{ $accessory->item }} (₹{{ number_format($accessory->ndp,2) }})
+                                                        part_no, (array) $selectedAccessories) ? 'selected' : '' }}>
+                                                        {{ $accessory->item }}
+                                                        (₹{{ number_format($accessory->ndp, 2) }})
                                                     </option>
                                                     @endforeach
                                                 </select>
                                             </td>
+
                                             <td class="cell-amount">
                                                 <input id="accessories_amount" name="accessories_amount"
                                                     class="numeric-only" readonly
@@ -1147,9 +1668,8 @@ use App\Services\OrgService;
                                             <td class="cell-label">Coating</td>
                                             <td class="cell-option">
                                                 <select id="coating" name="coating">
-                                                    <option value="No Coating" {{ old('coating',
-                                                        $quotationData['coating'] ?? '' )=='No Coating' ? 'selected'
-                                                        : '' }}>No Coating</option>
+                                                    <option value="" {{ old('coating', $quotationData['coating'] ?? ''
+                                                        )=='' ? 'selected' : '' }}>Please Select...</option>
                                                     <option value="Ceramic" {{ old('coating', $quotationData['coating']
                                                         ?? '' )=='Ceramic' ? 'selected' : '' }}>Ceramic</option>
                                                     <option value="Graphene" {{ old('coating', $quotationData['coating']
@@ -1323,7 +1843,7 @@ use App\Services\OrgService;
                                     <tbody>
                                         {{-- Group A: Cash Scheme OEM, CSD Discount, Fame Subsidy --}}
                                         <tr class="grid-row">
-                                            <td class="cell-label">
+                                            <td class="cell-label" style="font-weight:500 !important;">
                                                 <select id="group_a_select" class="group-select">
                                                     <option value="cash_scheme_oem" {{ old('group_a_select',
                                                         $groupASelected)=='cash_scheme_oem' ? 'selected' : '' }}>Cash
@@ -1673,22 +2193,29 @@ use App\Services\OrgService;
                             </div>
                         </div>
 
-                        <!-- ON ROAD PRICE / NET RECEIVABLE - 3 Columns Layout -->
-                        <div class="quotation-summary mt-1"
-                            style="border: 2px solid #000; margin-top: 10px; display: flex;">
-                            <div class="onroad-row-cell onroad-label"
-                                style="background: #abb8ca; color: #000; font-size:13px; font-weight: bold; padding: 5px 8px; flex: 0 0 16%; border-right: 1px solid #000;">
-                                NET RECEIVABLE
+                        <!-- UNIFIED NET RECEIVABLE & AMOUNT IN WORDS BOX -->
+                        <div class="net-receivable-container mt-2" style="border: 2px solid #000; width: 100%;">
+                            <!-- Top Bar: NET RECEIVABLE & AMOUNT -->
+                            <div
+                                style="display: flex; width: 100%; border-bottom: 2px solid #000; background: #abb8ca;">
+                                <div
+                                    style="flex: 0 0 50%; font-size: 13px; font-weight: bold; padding: 6px 10px; border-right: 2px solid #000; color: #000;">
+                                    NET RECEIVABLE
+                                </div>
+                                <div
+                                    style="flex: 0 0 50%; padding: 6px 10px; display: flex; justify-content: flex-end; align-items: center;">
+                                    <input id="net_receivable_summary" name="net_receivable_summary" readonly
+                                        style="font-weight: bold; font-size: 14px; text-align: right; background: transparent; border: none; width: 100%; color: #000; outline: none; padding: 0;"
+                                        value="{{ old('net_receivable_summary', $quotationData['net_receivable_summary'] ?? '') }}">
+                                </div>
                             </div>
-                            <div class="onroad-row-cell onroad-amount"
-                                style="background: #abb8ca; color: #000; font-weight: bold; padding: 5px 8px; flex: 0 0 20%; justify-content: flex-end; border-right: 1px solid #000;">
-                                <input id="net_receivable_summary" name="net_receivable_summary" readonly
-                                    style="font-weight: bold; font-size: 12px; text-align: center; background: transparent; border: none; width: 100%;"
-                                    value="{{ old('net_receivable_summary', $quotationData['net_receivable_summary'] ?? '') }}">
-                            </div>
-                            <div class="onroad-row-cell onroad-words"
-                                style="background: #abb8ca; color: #000; font-size: 13px; font-weight: bold; padding: 5px 8px; flex: 1 1 64%; display: flex; align-items: center; justify-content: flex-end; border-right: 1px solid #000;">
-                                <span id="net_receivable_words">Zero Rupees Only</span>
+
+                            <!-- Bottom Bar: AMOUNT IN WORDS -->
+                            <div
+                                style="width: 100%; padding: 5px 10px; font-size: 12px; background: #fff; color: #000;">
+                                <strong style="font-weight: bold; font-size: 12px;">Amount in Words:</strong>
+                                <span id="net_receivable_words" style="font-weight: bold; font-style: italic;">Zero
+                                    Rupees Only</span>
                             </div>
                         </div>
                     </div>
@@ -1736,7 +2263,7 @@ use App\Services\OrgService;
                             style="font-weight:normal; display:inline-block; min-width:70%; border-bottom:1px solid #000;">&nbsp;</span>
                     </div>
 
-                    <table class="bill-table note-box flex-grow-1">
+                    {{-- <table class="bill-table note-box flex-grow-1">
                         <tr>
                             <td>
                                 <div style="font-weight:bold; font-size:8px; margin-bottom:3px;">NOTE:</div>
@@ -1757,7 +2284,32 @@ use App\Services\OrgService;
                                 </ol>
                             </td>
                         </tr>
-                    </table>
+                    </table> --}}
+                    <div class="terms-notes-container mt-1">
+                        <div class="terms-notes-header">NOTES:</div>
+                        <div class="terms-notes-body" style="font-weight: bold;">
+                            <div class="notes-column">
+                                <ol class="notes-list-split">
+                                    <li>Price quoted is current and subject to change without notice.</li>
+                                    <li>Price ruling at time of delivery will apply irrespective of payment date.</li>
+                                    <li>All specifications, colors, and features subject to change without notice.</li>
+                                    <li>TCS @ 1% collected on full invoice value if value equals/exceeds INR 10 Lakhs.
+                                    </li>
+                                    <li>Delivery will be processed against full clearance of payment only.</li>
+                                </ol>
+                            </div>
+                            <div class="notes-column">
+                                <ol class="notes-list-split" start="6">
+                                    <li>This is not a firm order; no priority claim can be made on proforma invoice.
+                                    </li>
+                                    <li>All disputes shall be subject strictly to Bikaner jurisdiction only.</li>
+                                    <li>Booking needs to be completed with a minimum amount of INR 21,000.</li>
+                                    <li id="rto_charges_note_item" style="display: none;">RTO Charges are completely
+                                        subject to the vehicle's registration category.</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
 
                 </div>
             </div>
@@ -1822,7 +2374,7 @@ const ENQUIRIES = {
     },
     "003": {
         enquiry_no: "ENQ0003",
-        customer: { name: "Suresh Yadav", mobile: "9988776655", careOf: "", careOfName: "" },  // edge case: Care Of left blank
+        customer: { name: "Suresh Yadav", mobile: "9988776655", careOf: "", careOfName: "" },
         vehicle: {
             segment_code: "CV",
             segment_name: "Commercial",
@@ -1873,7 +2425,7 @@ const ENQUIRIES = {
         customer: { name: "Rohan Verma", mobile: "9876500006", careOf: "1", careOfName: "Suresh Verma" },
         vehicle: {
             segment_code: "PV",
-            segment_name: "Personal Vehicle",
+            segment_name: "Personal",
             model_code: "PVX1",
             model_name: "PV X1",
             variant_code: "X1-AT",
@@ -1889,7 +2441,7 @@ const ENQUIRIES = {
         customer: { name: "Sneha Gupta", mobile: "9876500007", careOf: "3", careOfName: "Rajesh Gupta" },
         vehicle: {
             segment_code: "PV",
-            segment_name: "Personal Vehicle",
+            segment_name: "Personal",
             model_code: "PVX2",
             model_name: "PV X2",
             variant_code: "X2-MT",
@@ -1905,7 +2457,7 @@ const ENQUIRIES = {
         customer: { name: "Vikas Shah", mobile: "9876500008", careOf: "1", careOfName: "Prakash Shah" },
         vehicle: {
             segment_code: "PV",
-            segment_name: "Personal Vehicle",
+            segment_name: "Personal",
             model_code: "PVX3",
             model_name: "PV X3",
             variant_code: "X3-AT",
@@ -2001,7 +2553,7 @@ const ENQUIRIES = {
         customer: { name: "Ananya Sharma", mobile: "9876500014", careOf: "2", careOfName: "Rajesh Sharma" },
         vehicle: {
             segment_code: "PV",
-            segment_name: "Personal Vehicle",
+            segment_name: "Personal",
             model_code: "XUV700",
             model_name: "XUV700",
             variant_code: "AX7L",
@@ -2065,7 +2617,7 @@ const ENQUIRIES = {
         customer: { name: "Priya Singh", mobile: "9876500018", careOf: "2", careOfName: "Vikram Singh" },
         vehicle: {
             segment_code: "PV",
-            segment_name: "Personal Vehicle",
+            segment_name: "Personal",
             model_code: "SCORPIO-N",
             model_name: "Scorpio-N",
             variant_code: "AZ1116YGTTA4GA01",
@@ -2165,8 +2717,8 @@ const PRICING = {
             ],
             maxicare: 24999,
             coating: [
-                { title: "No Coating", price: 0, default: true },
-                { title: "Ceramic", price: 16729, default: false },
+                { title: "No Coating", price: 0, default: false },
+                { title: "Ceramic", price: 16729, default: true },
                 { title: "Graphene", price: 24500, default: false }
             ],
             ppf: [
@@ -4373,21 +4925,28 @@ let printLabelRestoreList = [];
 
 function prepareOptionLabelsForPrint() {
     printLabelRestoreList = [];
+
     $('.quotation-grid td.cell-option select').not('#accessories').each(function () {
         let $select = $(this);
         let selectId = $select.attr('id');
 
         // Registration Dropdowns aur Insurance Covers ko generic loop se exclude karein
-        if (selectId === 'insurance_covers' || selectId === 'registration_no_type' || selectId === 'registration_category') {
+        if (
+            selectId === 'insurance_covers' ||
+            selectId === 'registration_no_type' ||
+            selectId === 'registration_category'
+        ) {
             return;
         }
 
         let selectedText = $select.find('option:selected').first().text().trim();
+
         if (!selectedText || selectedText.toLowerCase() === 'select') {
             return;
         }
 
         let $label = $select.closest('tr').find('td.cell-label').first();
+
         printLabelRestoreList.push({
             el: $label,
             html: $label.html()
@@ -4395,11 +4954,11 @@ function prepareOptionLabelsForPrint() {
 
         if (selectId === 'insurance_company') {
             $label.html('Insurance');
-            $label.append('(' + $select.val() + ')');
+            $label.append(' (' + $select.val() + ')');
             return;
         }
 
-        $label.append('(' + selectedText + ')');
+        $label.append(' (' + selectedText + ')');
     });
 }
 
@@ -4434,12 +4993,48 @@ function restoreItemVisibilityAfterPrint() {
     $('.quotation-grid tbody tr').removeClass('print-hide');
 }
 
+function updateCareOfPrint() {
+    const relationText = $('#careof option:selected').text().trim();
+    const name = $('#careofname').val().trim();
+
+    if (relationText && relationText !== 'Please Select...') {
+        $('#careof_relation_print').text(relationText);
+    } else {
+        $('#careof_relation_print').text('Care Of');
+    }
+
+    $('#careof_name_print').text(name);
+}
+
+$(document).on('change keyup', '#careof, #careofname', function () {
+    updateCareOfPrint();
+});
+
 function printQuotation() {
     prepareOptionLabelsForPrint();
     prepareItemVisibilityForPrint();
+    updateCareOfPrint();
+    const modelName = ($('#model').val() || 'Quotation')
+        .toString()
+        .trim();
+
+    const safeModelName = modelName
+        .replace(/[\\/:*?"<>|]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    const originalTitle = document.title;
+
+    document.title = `Vehicle Quotation - ${safeModelName || 'Quotation'}`;
+
     window.print();
-    restoreOptionLabelsAfterPrint();
-    restoreItemVisibilityAfterPrint();
+
+    setTimeout(function () {
+        document.title = originalTitle;
+
+        restoreOptionLabelsAfterPrint();
+        restoreItemVisibilityAfterPrint();
+    }, 500);
 }
 
 $(document).ready(function() {
@@ -4555,7 +5150,7 @@ $(document).ready(function () {
         templateSelection: function (data) {
             return data.text || 'Search insurance covers...';
         }
-    }).on('select2:select select2:unselect', function (e) {
+        }).on('select2:select select2:unselect', function (e) {
         if (e.params && e.params.data && e.params.data.disabled) {
             var val = $('#insurance_covers').val() || [];
             if (!val.includes(e.params.data.id)) {
@@ -4570,6 +5165,23 @@ $(document).ready(function () {
             toggleRowVisibility();
         }, 50);
     });
+
+    $('#insurance_covers').on('select2:open', function () {
+    setTimeout(function () {
+        const searchInput = document.querySelector(
+            '#insurance_covers + .select2-container .select2-search__field'
+        );
+
+        if (searchInput) {
+            searchInput.style.color = '#212529';
+            searchInput.style.webkitTextFillColor = '#212529';
+            searchInput.style.opacity = '1';
+            searchInput.style.visibility = 'visible';
+
+            searchInput.focus();
+        }
+    }, 50);
+});
 
     var groupASelected = '{{ $groupASelected }}';
     var groupCSelected = '{{ $groupCSelected }}';
@@ -4747,19 +5359,15 @@ $('form').on('submit', function (e) {
     }
 
 });
-// Function to toggle RTO Charges text visibility based on In-House Radio selection
-// Function to dynamically append/remove 9th note point based on In-House RTO selection
+
 function toggleRtoChargesNote() {
     let inHouseValue = $('input[name="in_house_rto"]:checked').val();
     let $rtoNoteItem = $('#rto_charges_note_item');
 
     if (inHouseValue === "1") {
-        if ($rtoNoteItem.length === 0) {
-            $('#quotation_notes_list').append('<li id="rto_charges_note_item">RTO Charges are subject to the vehicle\'s registration category.</li>');
-        }
+        $rtoNoteItem.show();
     } else {
-        // Radio No (0) hone par 9th point remove karein
-        $rtoNoteItem.remove();
+        $rtoNoteItem.hide();
     }
 }
 
@@ -4771,6 +5379,7 @@ $(document).on('change', 'input[name="in_house_rto"]', function () {
 // Document Ready par Initial State Check Karne Ke Liye Call Karein
 $(document).ready(function () {
     toggleRtoChargesNote();
+    updateCareOfPrint();
 });
 
 function updateRegistrationPrintText() {
