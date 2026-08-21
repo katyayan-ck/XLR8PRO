@@ -147,13 +147,9 @@ class EnquiryCrudController extends CrudController
                     'crm_booking.cancellation_date',
                     'crm_booking.sc_mile_id as sc_code',
                     'crm_booking.oem_code',
-                    'crm_booking.segment_code',
-                    'crm_booking.model_code',
-                    'crm_booking.variant_code',
-                    'crm_booking.color_code',
                     'crm_booking.invoice_no',
-                    'crm_booking.evaluation_id',
-                    'crm_booking.so_number',
+                    'crm_booking.evaluation_no',
+                    'crm_booking.so_no',
                     'crm_booking.customer_code',
                     'crm_booking.customer_tan as tan_no',
                     'crm_booking.customer_name',
@@ -186,6 +182,51 @@ class EnquiryCrudController extends CrudController
         };
 
         return $query->with(['segment', 'model', 'variant', 'color', 'campaign']);
+    }
+    private static array $vehicleFromOemCodeCache = [];
+
+
+
+    private function resolveVehicleFromOemCode(?string $oemCode): array
+    {
+        $empty = ['segment' => '—', 'model' => '—', 'variant' => '—', 'color' => '—'];
+
+        $oemCode = trim((string) $oemCode);
+        if (strlen($oemCode) < 3) {
+            return $empty;
+        }
+
+        if (isset(self::$vehicleFromOemCodeCache[$oemCode])) {
+            return self::$vehicleFromOemCodeCache[$oemCode];
+        }
+
+        // 1. Base code (variant code) aur last 2 chars (color code) alag karein
+        $variantCode = substr($oemCode, 0, -2);
+        $colorCode   = strtoupper(substr($oemCode, -2));
+
+        // 2. Direct xlr8_vehicle_variant table se rows fetch karein
+        $rows = DB::table('xlr8_vehicle_variant')
+            ->where('code', $variantCode)
+            ->get(['segment_code', 'model_code', 'custom_name', 'color', 'color_code']);
+
+        if ($rows->isEmpty()) {
+            return self::$vehicleFromOemCodeCache[$oemCode] = $empty;
+        }
+
+        // 3. Variant details ke liye any row
+        $baseRow = $rows->first();
+
+        // 4. Color column data jahan color_code matching ho
+        $colorRow = $rows->first(fn($r) => strtoupper((string) $r->color_code) === $colorCode);
+
+        $result = [
+            'segment' => $baseRow->segment_code ?? '—',
+            'model'   => $baseRow->model_code ?? '—',
+            'variant' => $baseRow->custom_name ?? '—',
+            'color'   => ($colorRow->color ?? $baseRow->color) ?? '—',
+        ];
+
+        return self::$vehicleFromOemCodeCache[$oemCode] = $result;
     }
 
     /**
@@ -599,17 +640,13 @@ class EnquiryCrudController extends CrudController
                 'td_date' => $this->formatDate($e->td_date, 'd-M-Y'),
                 'lost_reason' => $e->lost_reason ?? '—',
                 'followup_status' => $e->fup_status ?? '—',
-                'action' => '<div class="d-flex justify-content-center gap-2">'
-                    . '<a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a>'
-                    . '<a href="' . $quotUrl . '" class="btn btn-sm btn-success">Quote</a>'
-                    . '<a href="' . $bookUrl . '" class="btn btn-sm btn-warning" title="Convert to Booking">Process</a>'
-                    . '</div>',
+                'action' => '—',
             ];
         }
 
         if ($type === 'otf') {
             $editUrl = backpack_url("booking/{$e->id}/edit");
-
+            $vehicle = $this->resolveVehicleFromOemCode($e->oem_code ?? null);
             return [
                 'serial_no'         => $i + 1,
                 'booking_no'        => $e->id ?? '—',
@@ -617,8 +654,10 @@ class EnquiryCrudController extends CrudController
                 'sc_code'           => $e->sc_code ?? '—',
                 'booking_status'    => $e->status ?? '—',
                 'cancellation_date' => $this->formatDate($e->cancellation_date, 'd-M-Y'),
-                'model_group'       => $e->oem_code ?? '—',
-                'variant'           => $e->variant_code ?? '—',
+                'segment'           => $vehicle['segment'],
+                'model'             => $vehicle['model'],
+                'variant'           => $vehicle['variant'],
+                'color'             => $vehicle['color'],
                 'oem_model_code'    => $e->oem_code ?? '—',
                 'customer_code'     => $e->customer_code ?? '—',
                 'customer_name'     => $e->customer_name ?? '—',
@@ -836,15 +875,6 @@ class EnquiryCrudController extends CrudController
         ];
 
         $commonEnd = [
-            ['field' => 'dms_enquiry_stage', 'headerName' => 'DMS Stage'],
-            ['field' => 'cre_enquiry_stage', 'headerName' => 'CRE Stage'],
-            ['field' => 'followup_status', 'headerName' => 'FOLLOW UP STATUS'],
-            ['field' => 'cre_next_fup_date', 'headerName' => 'Next FUP Date'],
-            ['field' => 'cre_next_fup_time', 'headerName' => 'Next FUP Time'],
-            ['field' => 'cre_next_fup_remarks', 'headerName' => 'FUP Remarks'],
-            ['field' => 'x8_quotation_no', 'headerName' => 'X8 Quotation No.'],
-            ['field' => 'oem_otf_no', 'headerName' => 'OEM OTF No.'],
-            ['field' => 'oem_test_drive_no', 'headerName' => 'OEM Test Drive No.'],
             $actionColumn
         ];
 
@@ -858,7 +888,7 @@ class EnquiryCrudController extends CrudController
                 ['field' => 'first_name', 'headerName' => 'Customer Name'],
                 ['field' => 'mobile', 'headerName' => 'Customer Contact No.'],
                 ['field' => 'model_name', 'headerName' => 'Model'],
-                ['field' => 'variant_name', 'headerName' => 'Variant (Optional)'],
+                ['field' => 'variant_name', 'headerName' => 'Variant'],
                 ['field' => 'pincode', 'headerName' => 'Pin Code'],
                 ['field' => 'vpo', 'headerName' => 'VPO'],
                 ['field' => 'tehsil', 'headerName' => 'Tehsil'],
@@ -902,8 +932,10 @@ class EnquiryCrudController extends CrudController
                 ['field' => 'sc_code', 'headerName' => 'SC Code', 'width' => 120],
                 ['field' => 'booking_status', 'headerName' => 'Booking Status', 'width' => 130],
                 ['field' => 'cancellation_date', 'headerName' => 'Booking Cancellation Date', 'width' => 160],
-                ['field' => 'model_group', 'headerName' => 'Model Group', 'width' => 140],
-                ['field' => 'variant', 'headerName' => 'Model Variant', 'width' => 160],
+                ['field' => 'segment', 'headerName' => 'Segment', 'width' => 120],
+                ['field' => 'model', 'headerName' => 'Model', 'width' => 140],
+                ['field' => 'variant', 'headerName' => 'Variant', 'width' => 160],
+                ['field' => 'color', 'headerName' => 'Color', 'width' => 130],
                 ['field' => 'oem_model_code', 'headerName' => 'OEM Model Code', 'width' => 160],
                 ['field' => 'customer_code', 'headerName' => 'Booking Customer Code', 'width' => 160],
                 ['field' => 'customer_name', 'headerName' => 'Booking Customer Name', 'width' => 200],
@@ -973,7 +1005,7 @@ class EnquiryCrudController extends CrudController
                 ['field' => 'first_name', 'headerName' => 'Customer Name'],
                 ['field' => 'mobile', 'headerName' => 'Customer Contact No.'],
                 ['field' => 'model_name', 'headerName' => 'Model'],
-                ['field' => 'variant_name', 'headerName' => 'Variant (Optional)'],
+                ['field' => 'variant_name', 'headerName' => 'Variant'],
                 ['field' => 'pincode', 'headerName' => 'Pin Code'],
                 ['field' => 'vpo', 'headerName' => 'VPO'],
                 ['field' => 'tehsil', 'headerName' => 'Tehsil'],
