@@ -61,6 +61,11 @@ class EnquiryCrudController extends CrudController
             $branchesMap = collect(OrgService::branches())->toArray();
             $segmentsMap = collect(OrgService::segments())->toArray();
 
+            $fupTypesMap = collect(OrgService::keywordValueByCode('FOLLOW_UP_TYPE'))->pluck('value', 'code')->toArray();
+            $enqStageMap = collect(OrgService::keywordValueByCode('ENQUIRY_STAGE'))->pluck('value', 'code')->toArray();
+            $custStageMap = collect(OrgService::keywordValueByCode('CUSTOMER_STAGE'))->pluck('value', 'code')->toArray();
+            $purcTypeMap = collect(OrgService::keywordValueByCode('PURCHASE_TYPE'))->pluck('value', 'code')->toArray();
+
             $scUsers = OrgService::getUsers(
                 'ALL',
                 'ALL',
@@ -96,10 +101,6 @@ class EnquiryCrudController extends CrudController
                 }
             }
 
-            $fupTypesMap = collect(OrgService::keywordValueByCode('FOLLOW_UP_TYPE'))
-                ->pluck('value', 'code')
-                ->toArray();
-
             return compact(
                 'lpMap',
                 'fuelMap',
@@ -109,7 +110,10 @@ class EnquiryCrudController extends CrudController
                 'scByCode',
                 'scByMileId',
                 'scNamesByCode',
-                'fupTypesMap'
+                'fupTypesMap',
+                'enqStageMap',
+                'custStageMap',
+                'purcTypeMap'
             );
         });
     }
@@ -542,6 +546,9 @@ class EnquiryCrudController extends CrudController
         $scByMileId = $lookups['scByMileId'] ?? [];
         $scNamesByCode = $lookups['scNamesByCode'] ?? [];
         $fupTypesMap = $lookups['fupTypesMap'] ?? [];
+        $enqStageMap = $lookups['enqStageMap'] ?? [];
+        $custStageMap = $lookups['custStageMap'] ?? [];
+        $purcTypeMap = $lookups['purcTypeMap'] ?? [];
 
         $x8AssignedSc = $this->getAssignedSc($e->x8_sc_code ?? null, $e->x8_sc_mile_id ?? null, $scByCode, $scByMileId);
         $oemAssignedSc = $this->getAssignedSc($e->sc_code ?? null, $e->sc_mile_id ?? null, $scByCode, $scByMileId);
@@ -582,7 +589,7 @@ class EnquiryCrudController extends CrudController
                 'enquiry_date' => $this->formatDate($e->enquiry_date ?? $e->created_at, 'd-M-Y'),
                 'model' => $e->model_name ?? $e->model ?? '—',
                 'dealer_code' => $e->dealer_code ?? $e->dealer_branch ?? '—',
-                'dms_enquiry_stage' => $e->stage ?? '—',
+                'dms_enquiry_stage' => $enqStageMap[$e->stage ?? ''] ?? $e->stage ?? '—',
                 'cre_enquiry_stage' => '—',
                 'cre_next_fup_date' => '—',
                 'cre_next_fup_time' => '—',
@@ -664,7 +671,7 @@ class EnquiryCrudController extends CrudController
             'color_name' => $e->color_code ? ($colorRel?->name ?? $e->color ?? $e->color_code) : ($e->color ?? '—'),
             'mobile' => $e->mobile ?? '—',
             'alternate_mobile' => $e->alternate_mobile ?? '—',
-            'dms_enquiry_stage' => $e->stage ?? '—',
+            'dms_enquiry_stage' => $enqStageMap[$e->stage ?? ''] ?? $e->stage ?? '—',
             'cre_enquiry_stage' => '—',
             'cre_next_fup_date' => '—',
             'cre_next_fup_time' => '—',
@@ -742,7 +749,7 @@ class EnquiryCrudController extends CrudController
                 'application_type' => $e->application_type ?? '—',
                 'application' => $e->application ?? '—',
                 'has_ev' => $e->has_ev ?? '—',
-                'purchase_type' => $e->purchase_type ?? '—',
+                'purchase_type' => $purcTypeMap[$e->purchase_type ?? ''] ?? $e->purchase_type ?? '—',
                 'consid_brand' => $e->consid_brand ?? $e->consider_make ?? '—',
                 'consid_model' => $e->consid_model ?? $e->consider_model ?? '—',
                 'consid_variant' => $e->consid_variant ?? $e->consider_variant ?? '—',
@@ -766,7 +773,7 @@ class EnquiryCrudController extends CrudController
                 'remarks' => $e->recent_fup_remarks ?? $e->remarks ?? '—',
                 'followup_remarks_type' => $e->recent_fup_remarks_type ?? '—',
                 'comments' => $e->recent_fup_comments ?? '—',
-                'stage' => $e->stage ?? '—',
+                'stage' => $enqStageMap[$e->stage ?? ''] ?? $e->stage ?? '—',
                 'td_count' => $e->test_drive_count ?? '—',
                 'test_drive_no' => $e->test_drive_no ?? $e->oem_test_drive_no ?? '—',
                 'td_date' => $this->formatDate($e->td_date, 'd-M-Y'),
@@ -781,8 +788,8 @@ class EnquiryCrudController extends CrudController
                 'cre_actual_fup_date' => $creFup ? $this->formatDate($creFup->cre_actual_fup_date, 'd-M-Y') : '—',
                 'cre_fup_call_duration' => $creFup->cre_fup_call_duration ?? '—',
                 'cre_fup_deviation_stage' => $creFup->cre_fup_deviation_stage ?? '—',
-                'cre_enq_stage' => $creFup->cre_enq_stage ?? '—',
-                'cre_customer_stage' => $creFup->cre_customer_stage ?? '—',
+                'cre_enq_stage' => $enqStageMap[$creFup->cre_enq_stage ?? ''] ?? $creFup->cre_enq_stage ?? '—',
+                'cre_customer_stage' => $custStageMap[$creFup->cre_customer_stage ?? ''] ?? $creFup->cre_customer_stage ?? '—',
                 'cre_fup_remarks' => $creFup->cre_fup_remarks ?? '—',
                 'cre_next_fup_date' => $creFup ? $this->formatDate($creFup->cre_next_fup_date, 'd-M-Y') : '—',
             ];
@@ -1363,6 +1370,9 @@ class EnquiryCrudController extends CrudController
             $plannedDate = $previousFup ? $previousFup->cre_next_fup_date : Carbon::now()->format('Y-m-d');
             $actualDate = Carbon::now()->format('Y-m-d');
 
+            // Convert frontend dd-MMM-yyyy format to MySQL YYYY-MM-DD
+            $nextFupDate = $request->cre_next_fup_date ? Carbon::parse($request->cre_next_fup_date)->format('Y-m-d') : null;
+
             DB::table('xlr8_cre_enquiry_fup')->insert([
                 'enquiry_no' => $enquiry->oem_enquiry_no ?? $enquiry->enquiry_no,
                 'quick_enquiry_no' => $enquiry->quick_enquiry_no ?? $enquiry->oem_quick_enquiry_no,
@@ -1375,7 +1385,7 @@ class EnquiryCrudController extends CrudController
                 'cre_enq_stage' => $request->cre_enq_stage,
                 'cre_customer_stage' => $request->cre_customer_stage,
                 'cre_fup_remarks' => $request->cre_fup_remarks,
-                'cre_next_fup_date' => $request->cre_next_fup_date,
+                'cre_next_fup_date' => $nextFupDate,
                 'created_by' => backpack_user()->id,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -1389,8 +1399,12 @@ class EnquiryCrudController extends CrudController
             $validated = $request->validate($this->getValidationRules());
             $this->processEntityRelations($validated);
             $validated['created_by'] = backpack_user()->id;
-            $validated['origin'] = 'QUICK';
-            $validated['current_origin'] = 'QUICK';
+            
+            // Reference leads get LONG immediately, otherwise QUICK
+            $isRef = isset($validated['source_code']) && strtoupper($validated['source_code']) === 'REFERENCE';
+            $validated['origin'] = $isRef ? 'LONG' : 'QUICK';
+            $validated['current_origin'] = $isRef ? 'LONG' : 'QUICK';
+            
             $validated['cne'] = 1;
 
             $creFields = ['cre_fup_call_duration', 'cre_fup_deviation_stage', 'cre_enq_stage', 'cre_customer_stage', 'cre_fup_remarks', 'cre_next_fup_date'];
@@ -1414,6 +1428,11 @@ class EnquiryCrudController extends CrudController
         $validated = $request->validate($this->getValidationRules($id));
         $this->processEntityRelations($validated);
         $validated['updated_by'] = backpack_user()->id;
+
+        // Force to LONG if source changed to Reference
+        if (isset($validated['source_code']) && strtoupper($validated['source_code']) === 'REFERENCE') {
+            $validated['current_origin'] = 'LONG';
+        }
 
         $creFields = ['cre_fup_call_duration', 'cre_fup_deviation_stage', 'cre_enq_stage', 'cre_customer_stage', 'cre_fup_remarks', 'cre_next_fup_date'];
         $enquiryData = collect($validated)->except($creFields)->toArray();
@@ -1521,26 +1540,49 @@ class EnquiryCrudController extends CrudController
             $validated = $request->validate([
                 'referee_name' => 'required|max:100',
                 'referee_phone' => 'required|numeric|digits:10',
+                
+                // Customer Primary
                 'first_name' => 'required|max:100',
-                'last_name' => 'nullable|max:100',
+                'last_name' => 'required|max:100',
                 'mobile' => 'required|numeric|digits:10',
+                'alternate_mobile' => 'nullable|max:15',
+                'email' => 'nullable|email|max:150',
+                'gender' => 'required',
+                'zipcode' => 'required|max:10',
+                'vpo' => 'required|max:150',
+                'tehsil' => 'required|max:100',
+                'district' => 'required|max:100',
+                'city' => 'required|max:100',
+                'territory' => 'required|string|max:100',
+                
+                // Vehicle
                 'segment_code' => 'required',
                 'model_code' => 'required',
-                'variant_code' => 'nullable',
+                'variant_code' => 'nullable', // Variant & Color are optional on Reference
+                'color_code' => 'nullable',
+                
+                // SC Details
+                'x8_sc_code' => 'required|string|max:200',
+                'x8_sc_mile_id' => 'nullable|string|max:100',
             ]);
 
-            $validated['enquiry_no'] = 'REF-' . strtoupper(uniqid());
             $this->processEntityRelations($validated);
 
-            $validated['source_code'] = 'REFERENCE';
-            $validated['created_by'] = backpack_user()->id;
-            $validated['origin'] = 'REFERENCE';
-            $validated['current_origin'] = 'REFERENCE';
-            $validated['cne'] = 1;
+            // Required Forced Values
+            $validated['enquiry_type'] = 'TELEPHONE';
+            $validated['source_code']  = 'REFERENCE';
+            
+            // Standard metadata
+            $validated['created_by']     = backpack_user()->id;
+            $validated['origin']         = 'REFERENCE';
+            // $validated['current_origin'] = 'LONG';
+            $validated['cne']            = 1;
 
             Enquiry::create($validated);
+            
             Alert::success('Reference Enquiry created successfully.')->flash();
             return redirect(backpack_url('enquiries/reference'));
+            
         } catch (\Throwable $e) {
             Log::error($e->getMessage());
             throw $e;
@@ -1563,6 +1605,10 @@ class EnquiryCrudController extends CrudController
     {
         $fullFormActive = request()->has('segment_code') || !request()->has('call_nature');
         $req = $fullFormActive ? 'required' : 'nullable';
+        
+        // CRE fields are only mandatory on EDIT
+        $isEdit = $id !== null;
+        $creReq = ($isEdit && $fullFormActive) ? 'required' : 'nullable';
 
         return [
             'enquiry_type' => $req,
@@ -1582,56 +1628,79 @@ class EnquiryCrudController extends CrudController
             'activity_end_date' => 'nullable|date',
             'activity_branch' => 'nullable',
             'activity_location' => 'nullable',
+            
+            // 1. Customer Primary Details (All mandatory except email & alternate_mobile)
             'first_name' => $req . '|max:100',
-            'last_name' => 'nullable|max:100',
+            'last_name' => $req . '|max:100',
             'mobile' => 'required|max:15',
             'alternate_mobile' => 'nullable|max:15',
             'email' => 'nullable|email|max:150',
+            'gender' => $req,
+            'zipcode' => $req . '|max:10',
+            'vpo' => $req . '|max:150',
+            'tehsil' => $req . '|max:100',
+            'district' => $req . '|max:100',
+            'city' => $req . '|max:100',
+            'territory' => $req . '|string|max:100',
+
+            // 2. Vehicle Info (All mandatory)
+            'segment_code' => $req,
+            'model_code' => $req,
+            'variant_code' => $req,
+            'color_code' => $req,
+            'fuel_type' => 'nullable', // Fetched automatically
+            'usage_area' => 'nullable', // Checked dynamically by HTML5 based on segment
+            'km_travelled_daily' => 'nullable',
+            'application_type' => 'nullable',
+            'application' => 'nullable',
+
+            // 3. X8 SC Details
+            'x8_sc_code' => $req . '|string|max:200',
+            'x8_sc_mile_id' => 'nullable|string|max:100',
+
+            // 4. CRM Purchase Type
+            'purchase_type_crm' => $req . '|string|max:100',
+
+            // 5. CRE Enquiry Stage (Mandatory on EDIT only)
+            'cre_enq_stage' => $creReq . '|string|max:50',
+            'cre_customer_stage' => $creReq . '|string|max:50',
+            'cre_next_fup_date' => $creReq . '|date',
+            'cre_fup_remarks' => $creReq . '|string|max:255',
+            'cre_fup_call_duration' => 'nullable|string|max:50',
+            'cre_fup_deviation_stage' => 'nullable|string|max:50',
+            
+            // WhatsApp Campaign Fields
+            'wapp_campaign_name' => 'nullable|string|max:150',
+            'wapp_campaign_date' => 'nullable|date',
+            'wapp_campaign_segment' => 'nullable|string|max:50',
+            'wapp_campaign_model' => 'nullable|string|max:150',
+
+            // --- OTHER EXISTING FIELDS ---
             'occupation_type' => 'nullable',
             'customer_type' => 'nullable',
             'occupation_sub_type' => 'nullable',
             'company_name' => 'nullable|max:150',
-            'gender' => 'nullable',
             'dob' => 'nullable|date',
             'marital_status' => 'nullable',
             'marriage_date' => 'nullable|date',
             'age_group' => 'nullable',
-            'pincode' => 'nullable|max:10',
-            'vpo' => 'nullable|max:150',
-            'tehsil' => 'nullable|max:100',
-            'district' => 'nullable|max:100',
-            'city' => 'nullable|max:100',
-            'territory' => 'nullable|string|max:100',
             'has_ev' => 'nullable',
             'purchase_type' => 'nullable',
-            'purchase_type_crm' => 'nullable|string|max:100',
             'consider_make' => 'nullable|max:100',
             'consider_model' => 'nullable|max:100',
             'consider_variant' => 'nullable|max:100',
             'vehicle_no' => 'nullable|max:30',
             'remarks' => 'nullable',
-            'segment_code' => $req,
-            'model_code' => $req,
-            'variant_code' => $req,
-            'color_code' => $req,
-            'fuel_type' => 'nullable',
             'transmission' => 'nullable',
             'drivetrain' => 'nullable',
             'seating' => 'nullable',
-            'usage_area' => 'nullable',
-            'km_travelled_daily' => 'nullable',
-            'application_type' => 'nullable',
-            'application' => 'nullable',
             'place_of_registration' => 'nullable|max:100',
             'dealer_branch' => $req,
             'dealer_location' => $req,
             'sc_code' => 'nullable',
-            'x8_sc_code' => 'nullable|string|max:200',
-            'x8_sc_mile_id' => 'nullable|string|max:100',
             'booking_no' => 'nullable|string|max:50',
             'otf_no' => 'nullable|string|max:50',
             'dms_enq_no' => 'nullable|string|max:50',
-            // Follow Up Rules
             'followup_type' => 'nullable',
             'followup_date' => 'nullable|date',
             'followup_time' => 'nullable',
@@ -1651,16 +1720,6 @@ class EnquiryCrudController extends CrudController
             'lost_sub_reason' => 'nullable|string|max:100',
             'lost_detail_reason' => 'nullable|string|max:100',
             'lost_remarks' => 'nullable|string|max:100',
-
-            // CRE Follow up validations
-            'cre_fup_call_duration' => 'nullable|string|max:50',
-            'cre_fup_deviation_stage' => 'nullable|string|max:50',
-            'cre_enq_stage' => 'nullable|string|max:50',
-            'cre_customer_stage' => 'nullable|string|max:50',
-            'cre_fup_remarks' => 'nullable|string|max:255',
-            'cre_next_fup_date' => 'nullable|date',
-
-            // Financial & Exchange Rules
             'make_year' => 'nullable|integer',
             'odo_reading' => 'nullable|numeric',
             'expected_price' => 'nullable|numeric',
@@ -1703,6 +1762,10 @@ class EnquiryCrudController extends CrudController
             'call_nature_virtual' => $kw('CALL_NATURE_VIRTUAL'),
             'sc_fup_remarks' => $kw('SC_FUP_REMARKS'),
             'sc_fup_remarks_types' => $kw('SC_FUP_REMARKS_TYPE'),
+            'deviation_stages' => $kw('DEVIATION_STAGE'),
+            'enquiry_stages' => $kw('ENQUIRY_STAGE'),
+            'customer_stages' => $kw('CUSTOMER_STAGE'),
+            'purchase_types' => $kw('PURCHASE_TYPE'),
             'enquiry_sources' => $kw('ENQ_SOURCE'),
             'enquiry_sub_sources' => $kw('ENQUIRY_SUB_SOURCE'),
             'existing_car_oems' => $kw('EXISTING_CAR_OEM'),
