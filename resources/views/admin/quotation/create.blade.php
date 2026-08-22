@@ -1304,7 +1304,7 @@ $viewMode = $viewMode ?? false;
                     <!-- Center Text -->
                     <div class="col-8 text-center">
                         <h3 class="fw-bold mb-1">BIKANER MOTORS PRIVATE LIMITED</h3>
-                        <div style="font-size:13px;">Regd. Office : Sunehri Chhabil Mansion, NH-11, Jaipur Road,
+                        <div style="font-size:13px;">Regd. Office : Sunheri Chhabil Mansion, NH-11, Jaipur Road,
                             Bikaner-334022</div>
                         <div style="font-size:13px;">Branch Office : 6th KM Stone, Ratangarh Road, Churu-331001</div>
                         <h4 class="mt-2 mb-0 fw-bold text-uppercase">Vehicle Quotation</h4>
@@ -3943,6 +3943,7 @@ const SAVED_ACCESSORIES =
 
 let currentInsurance = null;
 let currentPricing = null;
+let STARTER_PACK_ACCESSORIES = []; // Lock track karne ke liye
 
 function loadInsurance(company) {
     let total = 0;
@@ -3950,62 +3951,33 @@ function loadInsurance(company) {
 
     company.price.forEach(function (item) {
         let isMandatory = (item.Nature == "M");
-        let option = new Option(
-            item.head + " (₹" + item.price + ")",
-            item.head,
-            isMandatory,  // ✅ Selected
-            isMandatory   // ✅ Selected
-        );
+        let option = new Option(item.head + " (₹" + item.price + ")", item.head, isMandatory, isMandatory);
         $(option).attr("data-price", item.price);
         
-        // ❌ REMOVE disabled - iski wajah se submit nahi ho raha
-        // if (isMandatory) {
-        //     $(option).prop("disabled", true);
-        //     total += item.price;
-        // }
-        
-        // ✅ Instead, use a data attribute to mark mandatory
         if (isMandatory) {
             $(option).attr("data-mandatory", "true");
             total += item.price;
         }
-        
         $("#insurance_covers").append(option);
     });
 
-    // Default mandatory covers select karo
-$("#insurance_covers option").each(function() {
-    if ($(this).attr("data-mandatory") === "true") {
-        $(this).prop("selected", true);
-    }
-});
-
-// EDIT MODE → saved covers restore karo
-if (IS_EDIT_MODE && Array.isArray(SAVED_INSURANCE_COVERS) && SAVED_INSURANCE_COVERS.length) {
-
-    let savedNames = SAVED_INSURANCE_COVERS.map(function (cover) {
-
-        // Database mein [{name, price}] format hai
-        if (typeof cover === 'object' && cover !== null) {
-            return cover.name;
-        }
-
-        // Fallback agar simple string hai
-        return cover;
-    });
-
     $("#insurance_covers option").each(function() {
-        let optionName = $(this).val();
-
-        if (savedNames.includes(optionName)) {
-            $(this).prop("selected", true);
-        }
+        if ($(this).attr("data-mandatory") === "true") $(this).prop("selected", true);
     });
-}
 
-$("#insurance_covers").trigger("change");
+    if (IS_EDIT_MODE && Array.isArray(SAVED_INSURANCE_COVERS) && SAVED_INSURANCE_COVERS.length) {
+        let savedNames = SAVED_INSURANCE_COVERS.map(cover => typeof cover === 'object' && cover !== null ? cover.name : cover);
+        $("#insurance_covers option").each(function() {
+            if (savedNames.includes($(this).val())) $(this).prop("selected", true);
+        });
+    }
 
-updateInsurancePrintText();
+    // ✅ Move all selected covers to TOP
+    let $selectedIns = $('#insurance_covers option:selected');
+    $('#insurance_covers').prepend($selectedIns);
+
+    $("#insurance_covers").trigger("change");
+    updateInsurancePrintText();
 }
 
 function loadInsuranceByPermit() {
@@ -4195,36 +4167,54 @@ function renderGroupADiscounts(pricing) {
 // 5. POPULATE ACCESSORIES - MAP MOCK CODES TO ACTUAL VALUES
 // ============================================================
 
-function populateAccessories(accessoryCodes) {
-    if (!accessoryCodes || accessoryCodes.length === 0) {
+// ============================================================
+// 5. POPULATE ACCESSORIES - SMART MATCH FOR MOCK CODES & REAL PART NUMBERS
+// ============================================================
+
+function populateAccessories(accessoriesList) {
+    if (!accessoriesList || accessoriesList.length === 0) {
+        STARTER_PACK_ACCESSORIES = [];
         $('#accessories').val([]).trigger('change');
         return;
     }
     
-    // Deselect all first
-    $('#accessories option').prop('selected', false);
-    
-    // Select matching options - match by code (part_no) or by item name
-    $('#accessories option').each(function() {
-        let optionValue = $(this).val();
-        let optionText = $(this).text().trim();
+    // Deselect all first & clear locks
+    $('#accessories option').prop('selected', false).removeAttr('data-locked');
+    STARTER_PACK_ACCESSORIES = [];
+
+    accessoriesList.forEach(function(acc) {
+        // Handle object or string
+        let code = typeof acc === 'object' ? acc.code : acc;
+        let name = typeof acc === 'object' ? acc.item : acc;
+        let price = typeof acc === 'object' ? acc.mrp : 0;
         
-        // Check if the option value matches any of the codes
-        if (accessoryCodes.includes(optionValue)) {
-            $(this).prop('selected', true);
-            return;
-        }
-        
-        // Also try to match by partial text match (for safety)
-        for (let i = 0; i < accessoryCodes.length; i++) {
-            if (optionText.includes(accessoryCodes[i]) || accessoryCodes[i].includes(optionText)) {
-                $(this).prop('selected', true);
-                break;
+        let $matchedOption = null;
+
+        // Smart Exact/First Match (Prevents 30+ items getting selected)
+        $('#accessories option').each(function() {
+            let optVal = $(this).val();
+            let optText = $(this).text().toLowerCase();
+            if (optVal === code || optText.includes(name.toLowerCase())) {
+                if (!$matchedOption) $matchedOption = $(this); // Select ONLY the first matched item
             }
+        });
+
+        if ($matchedOption) {
+            $matchedOption.prop('selected', true).attr('data-locked', 'true');
+            STARTER_PACK_ACCESSORIES.push($matchedOption.val());
+        } else {
+            // Append missing mock item
+            let newOption = new Option(name + ' (₹' + price + ')', code, true, true);
+            $(newOption).attr('data-price', price).attr('data-locked', 'true');
+            $('#accessories').append(newOption);
+            STARTER_PACK_ACCESSORIES.push(code);
         }
     });
     
-    // Trigger change to update UI
+    // ✅ Move all selected accessories to TOP
+    let $selectedAcc = $('#accessories option:selected');
+    $('#accessories').prepend($selectedAcc);
+
     $('#accessories').trigger('change');
 }
 
@@ -4392,8 +4382,7 @@ $('#mobile_hidden').val(enquiry.customer.mobile);
 
     // ---- Populate Accessories ----
     if (pricing.receivables.accessories && pricing.receivables.accessories.length > 0) {
-        let accessoryCodes = pricing.receivables.accessories.map(acc => acc.code);
-        populateAccessories(accessoryCodes);
+        populateAccessories(pricing.receivables.accessories);
     } else {
         $('#accessories').val([]).trigger('change');
     }
