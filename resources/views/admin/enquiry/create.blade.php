@@ -100,6 +100,7 @@
         
         $enqStageMap = collect($enquiry_stages ?? [])->pluck('value', 'code')->toArray();
         $custStageMap = collect($customer_stages ?? [])->pluck('value', 'code')->toArray();
+        $fupTypeMap = collect($follow_up_types ?? [])->pluck('value', 'code')->toArray();
     @endphp
 
     <div class="container-fluid pb-5">
@@ -371,8 +372,8 @@
                                 </select>
                             </div>
                             <div class="col-md-3 mb-3">
-                                <label class="form-label">Color @if(!$isReference && !$isWhatsapp)<span class="text-danger">*</span>@endif</label>
-                                <select name="color_code" id="color_code" class="form-control form-select" @if(!$isReference && !$isWhatsapp) required @endif>
+                                <label class="form-label">Color @if(!$isReference && !$isWhatsapp)<span class="text-danger"></span>@endif</label>
+                                <select name="color_code" id="color_code" class="form-control form-select" @if(!$isReference && !$isWhatsapp)  @endif>
                                     <option value="">Select Color</option>
                                 </select>
                             </div>
@@ -464,8 +465,8 @@
                                 <input type="text" name="first_name" class="form-control" value="{{ old('first_name', $enquiry->first_name ?? '') }}" required>
                             </div>
                             <div class="col-md-3 mb-3">
-                                <label class="form-label">Customer Last Name <span class="text-danger">*</span></label>
-                                <input type="text" name="last_name" class="form-control" value="{{ old('last_name', $enquiry->last_name ?? '') }}" required>
+                                <label class="form-label">Customer Last Name <span class="text-danger"></span></label>
+                                <input type="text" name="last_name" class="form-control" value="{{ old('last_name', $enquiry->last_name ?? '') }}" >
                             </div>
                             @if (!$isVirtual)
                                 <div class="col-md-3 mb-3">
@@ -797,12 +798,14 @@
                                         <thead class="table-secondary text-uppercase" style="font-size: 0.85rem;">
                                             <tr>
                                                 <th class="text-center px-3">Fup Count</th>
+                                                <th class="text-center px-3">Type</th>
+                                                <th class="text-center px-3">Status</th>
                                                 <th class="text-center px-3">Planned Date</th>
                                                 <th class="text-center px-3">Actual Date</th>
-                                                <th class="text-center px-3">Fup Status</th>
-                                                <th class="text-center px-3">Deviation Stage</th>
-                                                <th class="text-center px-3">Remarks</th>
-                                                <th class="text-center px-3">Remarks Type</th>
+                                                <th class="text-center px-3">Duration</th>
+                                                <th class="text-center px-3">Deviation</th>
+                                                <th class="text-center px-3">ENQ Status</th>
+                                                <th class="text-center px-3">Remark Type</th>
                                                 <th class="text-center px-3">Comments</th>
                                             </tr>
                                         </thead>
@@ -811,58 +814,81 @@
                                                 @foreach ($fups as $index => $fup)
                                                     <tr>
                                                         <td class="fw-bold align-middle table-secondary text-center px-3 text-dark">{{ ['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth'][$index] ?? $index + 1 . 'th' }} Fup</td>
-                                                        <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $fup?->planned_followup_date ? \Carbon\Carbon::parse($fup->planned_followup_date)->format('d-M-Y') : '—' }}</div></td>
-                                                        <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $fup?->actual_followup_date ? \Carbon\Carbon::parse($fup->actual_followup_date)->format('d-M-Y') : '—' }}</div></td>
-                                                        <td><div class="form-control bg-white h-auto border-0 text-center">{{ $fup?->enquiry_status ?: '—' }}</div></td>
-                                                        <td><div class="form-control bg-white h-auto border-0 text-wrap text-center" style="min-width: 150px;">{{ $devMap[$fup?->deviation_stage] ?? ($fup?->deviation_stage ?: '—') }}</div></td>
-                                                        <td><div class="form-control bg-white h-auto border-0 text-wrap text-center" style="min-width: 150px;">{{ $remMap[$fup?->remarks] ?? ($fup?->remarks ?: '—') }}</div></td>
-                                                        <td><div class="form-control bg-white h-auto border-0 text-wrap text-center" style="min-width: 120px;">{{ $remTypeMap[$fup?->remark_type] ?? ($fup?->remark_type ?: '—') }}</div></td>
-                                                        <td><div class="form-control bg-white h-auto border-0 text-wrap text-center" style="min-width: 150px;">{{ $fup?->comments ?: '—' }}</div></td>
+                                                        <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $fupTypeMap[$fup->followup_type ?? ''] ?? ($fup->followup_type ?? '—') }}</div></td>
+                                                        <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $fup->followup_status ?? '—' }}</div></td>
+                                                        <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ !empty($fup->planned_followup_date) ? \Carbon\Carbon::parse($fup->planned_followup_date)->format('d-M-Y') : '—' }}</div></td>
+                                                        <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ !empty($fup->actual_followup_date) ? \Carbon\Carbon::parse($fup->actual_followup_date)->format('d-M-Y') : '—' }}</div></td>
+                                                        <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $fup->call_duration ?? '—' }}</div></td>
+                                                        <td><div class="form-control bg-white h-auto border-0 text-wrap text-center" style="min-width: 150px;">{{ $devMap[$fup->deviation_stage ?? ''] ?? ($fup->deviation_stage ?? '—') }}</div></td>
+                                                        <td><div class="form-control bg-white h-auto border-0 text-wrap text-center" style="min-width: 120px;">{{ $enqStageMap[$fup->enquiry_status ?? ''] ?? ($fup->enquiry_status ?? '—') }}</div></td>
+                                                        <td><div class="form-control bg-white h-auto border-0 text-wrap text-center" style="min-width: 120px;">{{ $remTypeMap[$fup->remark_type ?? ''] ?? ($fup->remark_type ?? '—') }}</div></td>
+                                                        <td><div class="form-control bg-white h-auto border-0 text-wrap text-center" style="min-width: 150px;">{{ $fup->comments ?? '—' }}</div></td>
                                                     </tr>
                                                 @endforeach
                                             @else
                                                 <tr>
-                                                    <td colspan="8" class="text-muted py-3 bg-white text-center">No Follow-up Data Found</td>
+                                                    <td colspan="10" class="text-muted py-3 bg-white text-center">No Follow-up Data Found</td>
                                                 </tr>
                                             @endif
                                         </tbody>
                                     </table>
                                 </div>
                             @else
-                                <div class="table-responsive mb-4">
-                                    <table class="table table-bordered text-center align-middle mb-0" style="background-color: #e9ecef;">
-                                        <thead class="table-secondary text-uppercase" style="font-size: 0.85rem;">
-                                            <tr>
-                                                <th class="text-center px-3">Fup Count</th>
-                                                <th class="text-center px-3">Planned Date</th>
-                                                <th class="text-center px-3">Actual Date</th>
-                                                <th class="text-center px-3">Next Fup Date</th>
-                                                <th class="text-center px-3">Status</th>
-                                                <th class="text-center px-3">Follow Up Type</th>
-                                                <th class="text-center px-3">Remarks</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td class="fw-bold align-middle table-secondary text-center px-3 text-dark">First Fup</td>
-                                                <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $enquiry?->first_planned_followup_date ? \Carbon\Carbon::parse($enquiry->first_planned_followup_date)->format('d-M-Y') : '—' }}</div></td>
-                                                <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $enquiry?->first_actual_followup_date ? \Carbon\Carbon::parse($enquiry->first_actual_followup_date)->format('d-M-Y') : '—' }}</div></td>
-                                                <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $enquiry?->next_planned_followup_date ? \Carbon\Carbon::parse($enquiry->next_planned_followup_date)->format('d-M-Y') : '—' }}</div></td>
-                                                <td><div class="form-control bg-white h-auto border-0 text-center">{{ $enqStageMap[$enquiry?->stage ?? ''] ?? ($enquiry?->stage ?: '—') }}</div></td>
-                                                <td><div class="form-control bg-white h-auto border-0 text-center">{{ $enquiry?->followup_type ?: '—' }}</div></td>
-                                                <td><div class="form-control bg-white h-auto border-0 text-wrap text-center" style="min-width: 200px;">{{ $remMap[$enquiry?->remarks] ?? ($enquiry?->remarks ?: '—') }}</div></td>
-                                            </tr>
-                                            <tr>
-                                                <td class="fw-bold align-middle table-secondary text-center px-3 text-dark">Recent Fup</td>
-                                                <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $enquiry?->recent_planned_followup_date ? \Carbon\Carbon::parse($enquiry->recent_planned_followup_date)->format('d-M-Y') : '—' }}</div></td>
-                                                <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $enquiry?->recent_actual_followup_date ? \Carbon\Carbon::parse($enquiry->recent_actual_followup_date)->format('d-M-Y') : '—' }}</div></td>
-                                                <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">—</div></td>
-                                                <td><div class="form-control bg-white h-auto border-0 text-center">{{ $enqStageMap[$enquiry?->quick_status ?? ''] ?? ($enquiry?->quick_status ?? ($enquiry?->stage ?? '—')) }}</div></td>
-                                                <td><div class="form-control bg-white h-auto border-0 text-center">—</div></td>
-                                                <td><div class="form-control bg-white h-auto border-0 text-wrap text-center" style="min-width: 200px;">{{ $remMap[$enquiry?->recent_fup_comments] ?? ($enquiry?->recent_fup_comments ?? ($enquiry?->remarks ?: '—')) }}</div></td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
+                                @php
+                                    $tatMins = '—';
+                                    if (!empty($enquiry?->first_planned_followup_date) && !empty($enquiry?->first_actual_followup_date)) {
+                                        $pDate = \Carbon\Carbon::parse($enquiry->first_planned_followup_date);
+                                        $aDate = \Carbon\Carbon::parse($enquiry->first_actual_followup_date);
+                                        $tatMins = abs($pDate->diffInMinutes($aDate));
+                                    }
+                                @endphp
+                                <div class="row mb-4" style="opacity: 0.85; pointer-events:none;">
+                                    <div class="col-md-3 mb-3">
+                                        <label class="form-label">Enq Status</label>
+                                        <input type="text" class="form-control" value="{{ $enqStageMap[$enquiry?->quick_status ?? ''] ?? ($enquiry?->quick_status ?? ($enquiry?->stage ?? '—')) }}" readonly style="background-color: #e9ecef;">
+                                    </div>
+                                    <div class="col-md-2 mb-3">
+                                        <label class="form-label">Fup Count</label>
+                                        <input type="text" class="form-control" value="{{ $enquiry?->fup_count ?? '—' }}" readonly style="background-color: #e9ecef;">
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label class="form-label">1st Plan Fup Date</label>
+                                        <input type="text" class="form-control" value="{{ !empty($enquiry?->first_planned_followup_date) ? \Carbon\Carbon::parse($enquiry->first_planned_followup_date)->format('d-M-Y H:i') : '—' }}" readonly style="background-color: #e9ecef;">
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">1st Act Fup Date</label>
+                                        <input type="text" class="form-control" value="{{ !empty($enquiry?->first_actual_followup_date) ? \Carbon\Carbon::parse($enquiry->first_actual_followup_date)->format('d-M-Y H:i') : '—' }}" readonly style="background-color: #e9ecef;">
+                                    </div>
+
+                                    <div class="col-md-3 mb-3">
+                                        <label class="form-label">TAT (In Mins)</label>
+                                        <input type="text" class="form-control" value="{{ $tatMins }}" readonly style="background-color: #e9ecef;">
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label class="form-label">Rec Plan Fup Date</label>
+                                        <input type="text" class="form-control" value="{{ !empty($enquiry?->recent_planned_followup_date) ? \Carbon\Carbon::parse($enquiry->recent_planned_followup_date)->format('d-M-Y H:i') : '—' }}" readonly style="background-color: #e9ecef;">
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label class="form-label">Rec Act Fup Date</label>
+                                        <input type="text" class="form-control" value="{{ !empty($enquiry?->recent_actual_followup_date) ? \Carbon\Carbon::parse($enquiry->recent_actual_followup_date)->format('d-M-Y H:i') : '—' }}" readonly style="background-color: #e9ecef;">
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label class="form-label">Next Fup Date</label>
+                                        <input type="text" class="form-control" value="{{ !empty($enquiry?->next_fup_date) ? \Carbon\Carbon::parse($enquiry->next_fup_date)->format('d-M-Y H:i') : (!empty($enquiry?->next_planned_followup_date) ? \Carbon\Carbon::parse($enquiry->next_planned_followup_date)->format('d-M-Y H:i') : '—') }}" readonly style="background-color: #e9ecef;">
+                                    </div>
+
+                                    <div class="col-md-3 mb-3">
+                                        <label class="form-label">Rec Fup Type</label>
+                                        <input type="text" class="form-control" value="{{ $fupTypeMap[$enquiry?->followup_type ?? ''] ?? ($enquiry?->followup_type ?: '—') }}" readonly style="background-color: #e9ecef;">
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">1st Fup Remarks</label>
+                                        <input type="text" class="form-control" value="{{ $remMap[$enquiry?->first_fup_remarks ?? ''] ?? ($enquiry?->first_fup_remarks ?: '—') }}" readonly style="background-color: #e9ecef;" title="{{ $remMap[$enquiry?->first_fup_remarks ?? ''] ?? ($enquiry?->first_fup_remarks ?? '') }}">
+                                    </div>
+                                    <div class="col-md-5 mb-3">
+                                        <label class="form-label">Rec Fup Remarks</label>
+                                        <input type="text" class="form-control" value="{{ $remTypeMap[$enquiry?->remark_type ?? ''] ?? ($enquiry?->remark_type ?: '—') }}" readonly style="background-color: #e9ecef;">
+                                    </div>
                                 </div>
                             @endif
                         </div>

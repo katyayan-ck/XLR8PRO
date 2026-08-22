@@ -1479,11 +1479,49 @@ class EnquiryCrudController extends CrudController
         }
     }
 
+    // public function store(Request $request)
+    // {
+    //     try {
+    //         $validated = $request->validate($this->getValidationRules());
+    //         $this->processEntityRelations($validated);
+    //         $validated['created_by'] = backpack_user()->id;
+            
+    //         // Reference leads get REFERENCE immediately, otherwise standard new enquiries get LONG
+    //         $isRef = isset($validated['source_code']) && strtoupper($validated['source_code']) === 'REFERENCE';
+    //         $validated['origin'] = $isRef ? 'REFERENCE' : 'LONG';
+    //         $validated['current_origin'] = $isRef ? 'REFERENCE' : 'LONG';
+            
+    //         $validated['cne'] = 1;
+
+    //         $creFields = ['cre_fup_call_duration', 'cre_fup_deviation_stage', 'cre_enq_stage', 'cre_customer_stage', 'cre_fup_remarks', 'cre_next_fup_date'];
+    //         $enquiryData = collect($validated)->except($creFields)->toArray();
+
+    //         $enquiry = Enquiry::create($enquiryData);
+
+    //         $this->saveCreFup($enquiry, $request);
+
+    //         Alert::success('Enquiry created successfully.')->flash();
+    //         return redirect(backpack_url('enquiry'));
+    //     } catch (\Throwable $e) {
+    //         Log::error($e->getMessage());
+    //         throw $e;
+    //     }
+    // }
+
     public function store(Request $request)
     {
         try {
             $validated = $request->validate($this->getValidationRules());
             $this->processEntityRelations($validated);
+
+            // Format all possible date fields for MySQL
+            $dateFields = ['virtual_call_date', 'wapp_campaign_date', 'dob', 'marriage_date', 'activity_start_date', 'activity_end_date'];
+            foreach ($dateFields as $field) {
+                if (!empty($validated[$field])) {
+                    $validated[$field] = Carbon::parse($validated[$field])->format('Y-m-d H:i:s');
+                }
+            }
+
             $validated['created_by'] = backpack_user()->id;
 
             // Reference leads get REFERENCE immediately, otherwise standard new enquiries get LONG
@@ -1508,11 +1546,44 @@ class EnquiryCrudController extends CrudController
         }
     }
 
+    // public function update(Request $request, $id)
+    // {
+    //     $enquiry = Enquiry::findOrFail($id);
+    //     $validated = $request->validate($this->getValidationRules($id));
+    //     $this->processEntityRelations($validated);
+    //     $validated['updated_by'] = backpack_user()->id;
+
+    //     // When editing a Reference, force current_origin to LONG and cne to true (1)
+    //     if (isset($validated['source_code']) && strtoupper($validated['source_code']) === 'REFERENCE') {
+    //         $validated['current_origin'] = 'LONG';
+    //         $validated['cne'] = 1;
+    //     }
+
+    //     $creFields = ['cre_fup_call_duration', 'cre_fup_deviation_stage', 'cre_enq_stage', 'cre_customer_stage', 'cre_fup_remarks', 'cre_next_fup_date'];
+    //     $enquiryData = collect($validated)->except($creFields)->toArray();
+
+    //     $enquiry->update($enquiryData);
+
+    //     $this->saveCreFup($enquiry, $request);
+
+    //     Alert::success('Enquiry updated successfully.')->flash();
+    //     return redirect(backpack_url('enquiry'));
+    // }
+
     public function update(Request $request, $id)
     {
         $enquiry = Enquiry::findOrFail($id);
         $validated = $request->validate($this->getValidationRules($id));
         $this->processEntityRelations($validated);
+
+        // Format all possible date fields for MySQL
+        $dateFields = ['virtual_call_date', 'wapp_campaign_date', 'dob', 'marriage_date', 'activity_start_date', 'activity_end_date'];
+        foreach ($dateFields as $field) {
+            if (!empty($validated[$field])) {
+                $validated[$field] = Carbon::parse($validated[$field])->format('Y-m-d H:i:s');
+            }
+        }
+
         $validated['updated_by'] = backpack_user()->id;
 
         // When editing a Reference, force current_origin to LONG and cne to true (1)
@@ -1531,7 +1602,7 @@ class EnquiryCrudController extends CrudController
         Alert::success('Enquiry updated successfully.')->flash();
         return redirect(backpack_url('enquiry'));
     }
-
+    
     public function exchangeEnquiryEdit($id)
     {
         $enquiry = Enquiry::with(['segment', 'model', 'variant'])->findOrFail($id);
@@ -1678,14 +1749,30 @@ class EnquiryCrudController extends CrudController
         }
     }
 
+    // private function processEntityRelations(array &$validated)
+    // {
+    //     $validated['segment'] = OrgService::segments()[$validated['segment_code']] ?? null;
+    //     $validated['model'] = OrgService::models($validated['segment_code'])[$validated['model_code']] ?? null;
+    //     if (!empty($validated['variant_code'])) {
+    //         $validated['variant'] = OrgService::variants($validated['model_code'])[$validated['variant_code']]['name'] ?? null;
+    //     }
+    //     if (!empty($validated['color_code'])) {
+    //         $validated['color'] = OrgService::colors($validated['variant_code'])[$validated['color_code']] ?? null;
+    //     }
+    // }
+
     private function processEntityRelations(array &$validated)
     {
-        $validated['segment'] = OrgService::segments()[$validated['segment_code']] ?? null;
-        $validated['model'] = OrgService::models($validated['segment_code'])[$validated['model_code']] ?? null;
-        if (!empty($validated['variant_code'])) {
+        if (!empty($validated['segment_code'])) {
+            $validated['segment'] = OrgService::segments()[$validated['segment_code']] ?? null;
+        }
+        if (!empty($validated['segment_code']) && !empty($validated['model_code'])) {
+            $validated['model'] = OrgService::models($validated['segment_code'])[$validated['model_code']] ?? null;
+        }
+        if (!empty($validated['model_code']) && !empty($validated['variant_code'])) {
             $validated['variant'] = OrgService::variants($validated['model_code'])[$validated['variant_code']]['name'] ?? null;
         }
-        if (!empty($validated['color_code'])) {
+        if (!empty($validated['variant_code']) && !empty($validated['color_code'])) {
             $validated['color'] = OrgService::colors($validated['variant_code'])[$validated['color_code']] ?? null;
         }
     }
@@ -1693,22 +1780,36 @@ class EnquiryCrudController extends CrudController
     private function getValidationRules($id = null)
     {
         $fullFormActive = request()->has('segment_code') || !request()->has('call_nature');
-        $req = $fullFormActive ? 'required' : 'nullable';
+        
+        // 1. FAST-PATH BYPASS: For Non-Sales Virtual Enquiries
+        if (!$fullFormActive) {
+            return [
+                'call_nature' => 'required|string',
+                'mobile' => 'required|max:15',
+                'remarks' => 'nullable|string',
+                'virtual_no' => 'nullable|string',
+                'virtual_call_date' => 'nullable',
+                'call_duration' => 'nullable|string',
+                'dealer_branch' => 'nullable',
+                'dealer_location' => 'nullable',
+            ];
+        }
 
+        // 2. STANDARD VALIDATION RULES
+        $req = 'required';
+        
         $sourceCode = strtoupper(request()->input('source_code', ''));
         $isRef = $sourceCode === 'REFERENCE';
-        $isRefOrWapp = in_array($sourceCode, ['REFERENCE', 'WHATSAPP']);
-
+        
         // Dynamic field requirements based on source
-        $colorReq = ($fullFormActive && !$isRefOrWapp) ? 'required' : 'nullable';
-        $refReq = ($fullFormActive && $isRef) ? 'required' : 'nullable';
-
+        $refReq = $isRef ? 'required' : 'nullable';
+        
         // If the frontend disabled source_code (e.g., for Walk-In), it won't be sent in the request.
-        $sourceReq = ($fullFormActive && request()->has('source_code')) ? 'required' : 'nullable';
+        $sourceReq = request()->has('source_code') ? 'required' : 'nullable';
 
         // CRE fields are only mandatory on EDIT
         $isEdit = $id !== null;
-        $creReq = ($isEdit && $fullFormActive) ? 'required' : 'nullable';
+        $creReq = $isEdit ? 'required' : 'nullable';
 
         return [
             'enquiry_type' => $req,
@@ -1731,10 +1832,10 @@ class EnquiryCrudController extends CrudController
             'activity_end_date' => 'nullable|date',
             'activity_branch' => 'nullable',
             'activity_location' => 'nullable',
-
-            // 1. Customer Primary Details (All mandatory except email & alternate_mobile)
+            
+            // 1. Customer Primary Details
             'first_name' => $req . '|max:100',
-            'last_name' => $req . '|max:100',
+            'last_name' => 'nullable',
             'mobile' => 'required|max:15',
             'alternate_mobile' => 'nullable|max:15',
             'email' => 'nullable|email|max:150',
@@ -1746,11 +1847,11 @@ class EnquiryCrudController extends CrudController
             'city' => $req . '|max:100',
             'territory' => $req . '|string|max:100',
 
-            // 2. Vehicle Info (All mandatory, except color for reference/whatsapp)
+            // 2. Vehicle Info (Color is now optional everywhere)
             'segment_code' => $req,
             'model_code' => $req,
             'variant_code' => $req,
-            'color_code' => $colorReq,
+            'color_code' => 'nullable', 
             'fuel_type' => 'nullable', // Fetched automatically
             'usage_area' => 'nullable', // Checked dynamically by HTML5 based on segment
             'km_travelled_daily' => 'nullable',
