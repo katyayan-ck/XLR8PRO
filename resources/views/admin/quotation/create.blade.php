@@ -1100,7 +1100,7 @@ use App\Services\OrgService;
         }
 
         .net-receivable-container>div:first-child {
-            background: #abb8ca !important;
+            background: #f2f2f2 !important;
             border-bottom: 2px solid #000 !important;
         }
 
@@ -1259,12 +1259,25 @@ use App\Services\OrgService;
             color: #000 !important;
         }
     }
+
+    /* View Mode: Disable all interactions */
+    .view-mode input,
+    .view-mode select,
+    .view-mode textarea,
+    .view-mode .select2-selection {
+        pointer-events: none !important;
+        cursor: default !important;
+    }
 </style>
 @endpush
 
 @section('content')
 
-<div class="quotation-form">
+@php
+$viewMode = $viewMode ?? false;
+@endphp
+
+<div class="quotation-form {{ $viewMode ? 'view-mode' : '' }}">
     <div class="container-fluid">
 
         <div class="card shadow-sm mb-3">
@@ -1291,7 +1304,7 @@ use App\Services\OrgService;
                     <!-- Center Text -->
                     <div class="col-8 text-center">
                         <h3 class="fw-bold mb-1">BIKANER MOTORS PRIVATE LIMITED</h3>
-                        <div style="font-size:13px;">Regd. Office : Sunheri Chhabil Mansion, NH-11, Jaipur Road,
+                        <div style="font-size:13px;">Regd. Office : Sunehri Chhabil Mansion, NH-11, Jaipur Road,
                             Bikaner-334022</div>
                         <div style="font-size:13px;">Branch Office : 6th KM Stone, Ratangarh Road, Churu-331001</div>
                         <h4 class="mt-2 mb-0 fw-bold text-uppercase">Vehicle Quotation</h4>
@@ -1352,7 +1365,8 @@ use App\Services\OrgService;
         }
         @endphp
 
-        <form method="POST" action="{{ $formAction }}" enctype="multipart/form-data">
+        <form method="POST" action="{{ $formAction }}" enctype="multipart/form-data" @if($viewMode)
+            onsubmit="return false;" @endif>
             @csrf
             @if(isset($quotation))
             @method('PUT')
@@ -1362,7 +1376,7 @@ use App\Services\OrgService;
                 <div class="form-section">
 
                     {{-- MOCK ENQUIRY TEST INPUT (NO-PRINT) - Only in create mode --}}
-                    @if(!isset($quotation))
+                    @if(!isset($quotation) && !$viewMode)
                     <div class="no-print mb-3">
                         <div class="row">
                             <div class="col-md-6">
@@ -1629,10 +1643,14 @@ use App\Services\OrgService;
                                                     @endphp
 
                                                     @foreach($accessoryList as $accessory)
+                                                    @php
+                                                    // Pure UPPERCASE ko proper format me convert karein
+                                                    $formattedItemName = ucwords(strtolower($accessory->item));
+                                                    @endphp
                                                     <option value="{{ $accessory->part_no }}"
                                                         data-price="{{ $accessory->ndp }}" {{ in_array($accessory->
                                                         part_no, (array) $selectedAccessories) ? 'selected' : '' }}>
-                                                        {{ $accessory->item }}
+                                                        {{ $formattedItemName }}
                                                         (₹{{ number_format($accessory->ndp, 2) }})
                                                     </option>
                                                     @endforeach
@@ -1817,7 +1835,8 @@ use App\Services\OrgService;
 
                                         <tr class="grid-row total-row" style="background: #f2f2f2; font-weight: bold;">
                                             <td class="cell-label"
-                                                style="text-align: center; font-weight: bold; font-size: 11px;">TOTAL
+                                                style="text-align: center; font-weight: bold; font-size: 11px; text-align:left;">
+                                                TOTAL
                                                 RECEIVABLE</td>
                                             <td class="cell-option"></td>
                                             <td class="cell-amount">
@@ -2112,7 +2131,8 @@ use App\Services\OrgService;
 
                                         <tr class="grid-row total-row" style="background: #f2f2f2; font-weight: bold;">
                                             <td class="cell-label"
-                                                style="text-align: center; font-weight: bold; font-size: 11px;">TOTAL
+                                                style="text-align: center; font-weight: bold; font-size: 11px; text-align:left;">
+                                                TOTAL
                                                 DISCOUNT</td>
                                             <td class="cell-type"></td>
                                             <td class="cell-amount">
@@ -2175,7 +2195,7 @@ use App\Services\OrgService;
                                                         style="font-weight:bold; font-size:11px; text-align:center; width:100%; border:none; background:transparent;">
                                                 </td>
                                                 <td
-                                                    style="background:#abb8ca; border:1px solid #000; padding:3px 5px; text-align:right;">
+                                                    style="background:#f2f2f2; border:1px solid #000; padding:3px 5px; text-align:right;">
                                                     <input id="total_discount_bifurcation_display" readonly
                                                         style="font-weight:bold; font-size:11px; text-align:center; width:100%; border:none; background:transparent;">
                                                 </td>
@@ -2197,10 +2217,10 @@ use App\Services\OrgService;
                         <div class="net-receivable-container mt-2" style="border: 2px solid #000; width: 100%;">
                             <!-- Top Bar: NET RECEIVABLE & AMOUNT -->
                             <div
-                                style="display: flex; width: 100%; border-bottom: 2px solid #000; background: #abb8ca;">
+                                style="display: flex; width: 100%; border-bottom: 2px solid #000; background: #f2f2f2;">
                                 <div
-                                    style="flex: 0 0 50%; font-size: 13px; font-weight: bold; padding: 6px 10px; border-right: 2px solid #000; color: #000;">
-                                    NET RECEIVABLE
+                                    style="flex: 0 0 50%; font-size: 13px; font-weight: bold; padding: 6px 10px;  color: #000;">
+                                    NET RECEIVABLE AMOUNT (In Figures) :
                                 </div>
                                 <div
                                     style="flex: 0 0 50%; padding: 6px 10px; display: flex; justify-content: flex-end; align-items: center;">
@@ -2211,11 +2231,24 @@ use App\Services\OrgService;
                             </div>
 
                             <!-- Bottom Bar: AMOUNT IN WORDS -->
-                            <div
-                                style="width: 100%; padding: 5px 10px; font-size: 12px; background: #fff; color: #000;">
-                                <strong style="font-weight: bold; font-size: 12px;">Amount in Words:</strong>
-                                <span id="net_receivable_words" style="font-weight: bold; font-style: italic;">Zero
-                                    Rupees Only</span>
+                            <div style="
+                                width: 100%;
+                                padding: 5px 10px;
+                                font-size: 12px;
+                                background: #fff;
+                                color: #000;
+                                display: flex;
+                                align-items: center;
+                                justify-content: space-between;
+                            ">
+                                <strong style="font-weight: bold; font-size: 12px;">
+                                    Amount In Words :
+                                </strong>
+
+                                <span id="net_receivable_words"
+                                    style="font-weight: bold; font-style: italic; text-align: right;">
+                                    Zero Rupees Only
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -2315,13 +2348,22 @@ use App\Services\OrgService;
             </div>
 
             <div class="card-footer text-end mt-3 no-print">
-                <button type="button" class="btn btn-primary no-print" onclick="printQuotation();">
+                <button type="button" class="btn btn-primary" onclick="printQuotation();">
                     <i class="la la-print"></i> Print / Save PDF
                 </button>
+
+                @if($viewMode)
+                <a href="{{ backpack_url('quotation-form') }}" class="btn btn-secondary">
+                    <i class="la la-arrow-left"></i> Back
+                </a>
+                @else
                 <button type="submit" class="btn btn-success">
                     <i class="la la-save"></i> {{ isset($quotation) ? 'Update Quotation' : 'Save Quotation' }}
                 </button>
-                <a href="{{ backpack_url('quotation-form') }}" class="btn btn-secondary">Cancel</a>
+                <a href="{{ backpack_url('quotation-form') }}" class="btn btn-secondary">
+                    Cancel
+                </a>
+                @endif
             </div>
         </form>
 
@@ -4034,9 +4076,16 @@ function updateInsurancePrintText() {
 function updateAccessoriesPrintText() {
     let list = [];
     $('#accessories option:selected').each(function () {
-        let name = $(this).text().trim();
+        let rawText = $(this).text().trim();
         let price = parseFloat($(this).data('price') || 0);
-        list.push(name.replace(/\(.*?\)/, '').trim() + ' (₹' + price.toLocaleString('en-IN') + ')');
+        let itemName = rawText.replace(/\(.*?\)/, '').trim();
+
+        // Convert to proper case (e.g., Ceramic Coating - Thar 3 Door)
+        let formattedName = itemName.toLowerCase().replace(/\b\w/g, function(l) {
+            return l.toUpperCase();
+        });
+
+        list.push(formattedName + ' (₹' + price.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ')');
     });
     $('#accessories_print').text(list.join(', '));
 }
@@ -5189,12 +5238,14 @@ $(document).ready(function () {
     $('#group_a_select').val(groupASelected).trigger('change');
     $('#group_c_select').val(groupCSelected).trigger('change');
 
+    const IS_VIEW_MODE = @json($viewMode);
+
     @if(isset($quotation))
-        // 1. Identify mock enquiry number (e.g. "001", "014")
         let enquiryNo = "{{ $quotationData['enquiry_no'] ?? $quotation->enquiry_no ?? '' }}";
         let savedCompany = "{{ $quotationData['insurance_company'] ?? '' }}";
 
-        if (ENQUIRIES[enquiryNo]) {
+        // Fallback options population if mock ENQUIRIES object has this enquiry
+        if (typeof ENQUIRIES !== 'undefined' && ENQUIRIES[enquiryNo]) {
             let enquiry = ENQUIRIES[enquiryNo];
             currentPricing = PRICING[enquiry.pricingKey];
 
@@ -5233,20 +5284,21 @@ $(document).ready(function () {
                 $("#insurance_company").val(activeComp.insCo);
                 loadInsurance(activeComp);
             }
-        } 
-        
-        // 2. Direct Fallback if saved covers exist in proposed_data
+        } else if (savedCompany) {
+            // Direct injection if not found in mock array
+            $("#insurance_company").html(`<option value="${savedCompany}" selected>${savedCompany}</option>`);
+        }
+
+        // Restore Saved Insurance Covers from proposed_data
         if (Array.isArray(SAVED_INSURANCE_COVERS) && SAVED_INSURANCE_COVERS.length > 0) {
             let selectedValues = [];
-            
             SAVED_INSURANCE_COVERS.forEach(function(cover) {
                 let name = typeof cover === 'object' ? cover.name : cover;
                 let price = typeof cover === 'object' ? (cover.price || 0) : 0;
                 
-                // If option doesn't exist in dropdown, append it
                 let exists = false;
                 $('#insurance_covers option').each(function() {
-                    if ($(this).val().replace(/\s+/g, '').toLowerCase() === name.replace(/\s+/g, '').toLowerCase()) {
+                    if ($(this).val().trim().toLowerCase() === name.trim().toLowerCase()) {
                         $(this).prop('selected', true);
                         selectedValues.push($(this).val());
                         exists = true;
@@ -5260,7 +5312,6 @@ $(document).ready(function () {
                     selectedValues.push(name);
                 }
             });
-
             $('#insurance_covers').val(selectedValues).trigger('change');
         }
     @endif
@@ -5272,10 +5323,12 @@ $(document).ready(function () {
     updateInsurancePrintText();
     updateRegistrationPrintText();
     
-    // Auto-load first enquiry for demo (only in create mode)
+    // Auto-load first enquiry for demo (only in create mode and not in view mode)
     @if(!isset($quotation))
-        $('#mock_enquiry_no').val('005');
-        $('#btnFetchMock').click();
+        if (!IS_VIEW_MODE) {
+            $('#mock_enquiry_no').val('005');
+            $('#btnFetchMock').click();
+        }
     @endif
 });
 
