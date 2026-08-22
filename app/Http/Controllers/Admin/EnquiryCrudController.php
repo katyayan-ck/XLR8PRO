@@ -637,6 +637,19 @@ class EnquiryCrudController extends CrudController
         $variantRel = $e instanceof \Illuminate\Database\Eloquent\Model && $e->relationLoaded('variant') ? $e->getRelation('variant') : null;
         $colorRel = $e instanceof \Illuminate\Database\Eloquent\Model && $e->relationLoaded('color') ? $e->getRelation('color') : null;
 
+        $cleanVal = function ($val) {
+            $trimmed = trim((string) $val);
+            if ($trimmed === '' || in_array(strtoupper($trimmed), ['NA', 'N/A', 'NULL', '—'])) {
+                return '—';
+            }
+            return $trimmed;
+        };
+
+        $resolvedSegment = $cleanVal($e->segment_code ? ($segmentRel?->name ?? $e->segment ?? $e->segment_code) : $e->segment);
+        $resolvedModel   = $cleanVal($e->model_code ? ($modelRel?->name ?? $e->model ?? $e->model_code) : $e->model);
+        $resolvedVariant = $cleanVal($e->variant_code ? ($variantRel?->display_name ?? $variantRel?->custom_name ?? $variantRel?->oem_name ?? $e->variant ?? $e->variant_code) : $e->variant);
+        $resolvedColor   = $cleanVal($e->color_code ? ($colorRel?->name ?? $e->color ?? $e->color_code) : $e->color);
+
         $editUrl = backpack_url("enquiry/{$e->id}/edit");
         $quotUrl = backpack_url("quotation-form/create?id={$e->id}");
         $bookUrl = backpack_url("booking/create?enquiry_id={$e->id}");
@@ -742,10 +755,10 @@ class EnquiryCrudController extends CrudController
             'oem_enquiry_no' => $e->x8_enquiry_no ?? $e->enquiry_no ?? $e->oem_enquiry_no ?? '—',
             'oem_enquiry_date' => $this->formatDate($e->x8_enquiry_date ?? $e->enquiry_date ?? $e->oem_enquiry_date, 'd-M-Y'),
             'oem_enquiry_assign_date' => $this->formatDate($e->oem_enquiry_assign_date ?? $e->enq_assign_date, 'd-M-Y'),
-            'segment_name' => $e->segment_code ? ($segmentRel?->name ?? $e->segment ?? $e->segment_code) : ($e->segment ?? '—'),
-            'model_name' => $e->model_code ? ($modelRel?->name ?? $e->model ?? $e->model_code) : ($e->model ?? '—'),
-            'variant_name' => $e->variant_code ? ($variantRel?->display_name ?? $variantRel?->custom_name ?? $variantRel?->oem_name ?? $e->variant ?? $e->variant_code) : ($e->variant ?? '—'),
-            'color_name' => $e->color_code ? ($colorRel?->name ?? $e->color ?? $e->color_code) : ($e->color ?? '—'),
+            'segment_name'            => $resolvedSegment,
+            'model_name'              => $resolvedModel,
+            'variant_name'            => $resolvedVariant,
+            'color_name'              => $resolvedColor,
             'mobile' => $e->mobile ?? '—',
             'alternate_mobile' => $e->alternate_mobile ?? '—',
             'dms_enquiry_stage' => $enqStageMap[$e->stage ?? ''] ?? $e->stage ?? '—',
@@ -793,10 +806,10 @@ class EnquiryCrudController extends CrudController
                 'sub_source'                   => $subSourceMap[$e->sub_source ?? ''] ?? $e->sub_source ?? '—',
                 'likely_purchase_date'         => $lpMap[$e->likely_purchase_date] ?? $e->likely_purchase_date ?? '—',
                 'x8_quotation_date'            => $this->formatDate($e->x8_quotation_date ?? $e->quotation_date, 'd-M-Y'),
-                'fuel_type'                    => $fuelMap[$e->fuel_type] ?? $e->fuel_type ?? '—',
-                'transmission'                 => $e->transmission ?? '—',
-                'drivetrain'                   => $e->drivetrain ?? '—',
-                'seating'                      => $e->seating ?? '—',
+                'fuel_type'            => $cleanVal($fuelMap[$e->fuel_type] ?? $e->fuel_type),
+                'transmission'         => $cleanVal($e->transmission),
+                'drivetrain'           => $cleanVal($e->drivetrain),
+                'seating'              => $cleanVal($e->seating),
                 'pincode'                      => $e->pincode ?? $e->zipcode ?? '—',
                 'vpo'                          => $e->vpo ?? '—',
                 'tehsil'                       => $e->tehsil ?? '—',
@@ -1485,12 +1498,12 @@ class EnquiryCrudController extends CrudController
     //         $validated = $request->validate($this->getValidationRules());
     //         $this->processEntityRelations($validated);
     //         $validated['created_by'] = backpack_user()->id;
-            
+
     //         // Reference leads get REFERENCE immediately, otherwise standard new enquiries get LONG
     //         $isRef = isset($validated['source_code']) && strtoupper($validated['source_code']) === 'REFERENCE';
     //         $validated['origin'] = $isRef ? 'REFERENCE' : 'LONG';
     //         $validated['current_origin'] = $isRef ? 'REFERENCE' : 'LONG';
-            
+
     //         $validated['cne'] = 1;
 
     //         $creFields = ['cre_fup_call_duration', 'cre_fup_deviation_stage', 'cre_enq_stage', 'cre_customer_stage', 'cre_fup_remarks', 'cre_next_fup_date'];
@@ -1602,7 +1615,7 @@ class EnquiryCrudController extends CrudController
         Alert::success('Enquiry updated successfully.')->flash();
         return redirect(backpack_url('enquiry'));
     }
-    
+
     public function exchangeEnquiryEdit($id)
     {
         $enquiry = Enquiry::with(['segment', 'model', 'variant'])->findOrFail($id);
@@ -1780,7 +1793,7 @@ class EnquiryCrudController extends CrudController
     private function getValidationRules($id = null)
     {
         $fullFormActive = request()->has('segment_code') || !request()->has('call_nature');
-        
+
         // 1. FAST-PATH BYPASS: For Non-Sales Virtual Enquiries
         if (!$fullFormActive) {
             return [
@@ -1797,13 +1810,13 @@ class EnquiryCrudController extends CrudController
 
         // 2. STANDARD VALIDATION RULES
         $req = 'required';
-        
+
         $sourceCode = strtoupper(request()->input('source_code', ''));
         $isRef = $sourceCode === 'REFERENCE';
-        
+
         // Dynamic field requirements based on source
         $refReq = $isRef ? 'required' : 'nullable';
-        
+
         // If the frontend disabled source_code (e.g., for Walk-In), it won't be sent in the request.
         $sourceReq = request()->has('source_code') ? 'required' : 'nullable';
 
@@ -1832,7 +1845,7 @@ class EnquiryCrudController extends CrudController
             'activity_end_date' => 'nullable|date',
             'activity_branch' => 'nullable',
             'activity_location' => 'nullable',
-            
+
             // 1. Customer Primary Details
             'first_name' => $req . '|max:100',
             'last_name' => 'nullable',
@@ -1851,7 +1864,7 @@ class EnquiryCrudController extends CrudController
             'segment_code' => $req,
             'model_code' => $req,
             'variant_code' => $req,
-            'color_code' => 'nullable', 
+            'color_code' => 'nullable',
             'fuel_type' => 'nullable', // Fetched automatically
             'usage_area' => 'nullable', // Checked dynamically by HTML5 based on segment
             'km_travelled_daily' => 'nullable',
