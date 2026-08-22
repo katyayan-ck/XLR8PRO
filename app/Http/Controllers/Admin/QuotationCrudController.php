@@ -37,6 +37,264 @@ class QuotationCrudController extends CrudController
         $this->crud->setListView('admin.quotation.list');
     }
 
+    // public function index()
+    // {
+    //     $insurance_type_map = [
+    //         1 => 'Standard',
+    //         2 => 'Nil Dep',
+    //         3 => 'Base',
+    //         4 => 'Higher',
+    //     ];
+
+
+    //     $registration_type_map = [
+    //         '0' => 'Tax Only',
+    //         '1' => 'TRC + Tax',
+    //         '2' => 'TRC Only',
+    //         '3' => 'Exempted',
+
+
+    //     ];
+    //     $this->crud->setListView('admin.quotation.list');
+
+    //     $quotations = Quotation::with('enquiry')
+    //         ->whereNotIn('status', ['booked'])
+    //         ->latest('id')
+    //         ->get();
+
+
+
+    //     $gridData = $quotations->map(function ($quotation, $index) use ($insurance_type_map, $registration_type_map) {
+    //         $data = $quotation->proposed_data ?? [];
+    //         $enquiry = $quotation->enquiry;
+
+    //         // ✅ Get customer name from enquiry or fallback to proposed_data
+    //         $customerName = '-';
+    //         $mobile = '-';
+
+    //         // ✅ Check if customer_name exists (even if empty string)
+    //         if (isset($data['customer_name']) && $data['customer_name'] !== '') {
+    //             $customerName = $data['customer_name'];
+    //             $mobile = $data['customer_mobile'] ?? '-';
+    //         } elseif ($enquiry) {
+    //             $customerName = trim($enquiry->first_name . ' ' . $enquiry->last_name);
+    //             $mobile = $enquiry->mobile ?? '-';
+    //         } else {
+    //             $customerName = '-';
+    //             $mobile = '-';
+    //         }
+
+    //         $segmentCode = $data['segment_code']
+    //             ?? $enquiry?->segment_code
+    //             ?? '';
+
+    //         $modelCode = $data['model_code']
+    //             ?? $enquiry?->model_code
+    //             ?? '';
+
+    //         $variantCode = $data['variant_code']
+    //             ?? $enquiry?->variant_code
+    //             ?? '';
+
+    //         $colorCode = $data['color_code']
+    //             ?? $enquiry?->color_code
+    //             ?? '';
+
+    //         $segment = DB::table('xlr8_vehicle_segment')
+    //             ->where('code', $segmentCode)
+    //             ->first();
+
+    //         $model = DB::table('xlr8_vehicle_model')
+    //             ->where('code', $modelCode)
+    //             ->first();
+
+    //         $variant = DB::table('xlr8_vehicle_variant')
+    //             ->where('code', $variantCode)
+    //             ->first();
+
+    //         $color = DB::table('xlr8_vehicle_color')
+    //             ->where('code', $colorCode)
+    //             ->first();
+
+    //         return [
+
+    //             'serial_no' => $index + 1,
+
+    //             'quotation_no' => $quotation->quotation_no,
+
+    //             'enquiry_no' => $enquiry?->id,
+
+    //             'customer_name' => $customerName,
+    //             'mobile' => $mobile,
+
+
+
+    //             'care_of_type' => [
+    //                 1 => 'Son of',
+    //                 2 => 'Daughter of',
+    //                 3 => 'Married to',
+    //                 4 => 'Guardian Name',
+    //             ][$data['careof'] ?? ''] ?? '',
+
+    //             'care_of_name' => $data['careofname'] ?? '',
+
+    //             'segment' => $segment->name ?? $segmentCode,
+
+    //             'model' => $model->name ?? $modelCode,
+
+    //             'variant' => $variant->name ?? $variantCode,
+
+    //             'color' => $color->name ?? $colorCode,
+
+    //             'revision' => $quotation->revision,
+
+
+    //             'ex_showroom_price' => $data['ex_showroom_price'] ?? '',
+    //             'policy_type' => $insurance_type_map[$data['policy_type'] ?? ''] ?? '-',
+    //             'registration_type' => $registration_type_map[$data['registration_type'] ?? ''] ?? '-',
+    //             'insurance_amount' => $data['insurance_amount'] ?? '',
+    //             'registration_amount' => $data['registration_amount'] ?? '',
+
+    //             'accessories' => isset($data['accessories'])
+    //                 ? (is_array($data['accessories'])
+    //                     ? implode(', ', $data['accessories'])
+    //                     : $data['accessories'])
+    //                 : '',
+
+    //             'accessories_amount' => $data['accessories_amount'] ?? '',
+    //             'maxicare' => $data['maxicare'] ?? '',
+    //             'vltd_device' => $data['vltd_device'] ?? '',
+    //             'coating' => $data['coating'] ?? '',
+    //             'coating_price' => $data['coating_price'] ?? '',
+    //             'ppf' => $data['ppf'] ?? '',
+    //             'rto_yellow_tape' => $data['rto_yellow_tape'] ?? '',
+    //             'kazam_charging_kit' => $data['kazam_charging_kit'] ?? '',
+    //             'incidental_charges' => $data['incidental_charges'] ?? '',
+    //             'shield' => $data['shield'] ?? '',
+    //             'shield_price' => $data['shield_price'] ?? '',
+    //             'rsa' => $data['rsa'] ?? '',
+    //             'rsa_amount' => $data['rsa_amount'] ?? '',
+    //             'fastag' => $data['fastag'] ?? '',
+    //             'cod_charges' => $data['cod_charges'] ?? '',
+    //             'charger_swapping' => $data['charger_swapping'] ?? '',
+    //             'charger_swapping_amount' => $data['charger_swapping_amount'] ?? '',
+    //             'tcs' => $data['tcs'] ?? '',
+
+
+    //             'onroad_price' => number_format($quotation->onroad_price, 2),
+    //             'invoice_price' => number_format($quotation->invoice_price, 2),
+    //             'total_receivable' => $data['total_receivable'] ?? '',
+    //             'total_discount' => $data['total_discount'] ?? '',
+    //             'net_receivable' => $data['net_receivable_summary'] ?? '',
+
+
+    //             'oem_scheme_discount' => $data['oem_scheme_discount'] ?? '',
+    //             'fame_subsidy' => $data['fame_subsidy'] ?? '',
+    //             'exchange_bonus' => $data['exchange_bonus'] ?? '',
+    //             'corporate_discount' => $data['corporate_discount'] ?? '',
+    //             'accessories_discount' => $data['accessories_discount'] ?? '',
+    //             'ceramic_discount' => $data['ceramic_discount'] ?? '',
+    //             'ppf_discount' => $data['ppf_discount'] ?? '',
+    //             'dealer_discount' => $data['dealer_discount'] ?? '',
+    //             'charger_swapping_discount' => $data['charger_swapping_discount'] ?? '',
+
+    //             'status' => ucfirst($quotation->status),
+
+    //             'action' => '
+    //     <div class="d-flex gap-2 justify-content-center">
+
+    //         <a href="' . backpack_url('quotation-form/' . $quotation->id . '/edit') . '"
+    //             class="btn btn-sm btn-primary">
+    //             Edit
+    //         </a>
+
+    //         <a href="' . backpack_url('quotation-form/' . $quotation->id . '/history') . '"
+    //             class="btn btn-sm btn-info">
+    //             History
+    //         </a>
+
+    //         <button
+    //             type="button"
+    //             class="btn btn-sm btn-success"
+    //             onclick="confirmBookingProcess(' . $quotation->id . ')">
+    //             Process
+    //         </button>
+
+    //     </div>',
+    //         ];
+    //     })->values();
+
+    //     return view('admin.quotation.list', [
+
+    //         'title' => 'Quotation Listing',
+
+    //         'gridConfig' => [
+
+    //             'columns' => [
+
+    //                 ['field' => 'serial_no', 'headerName' => 'S.No.'],
+    //                 ['field' => 'quotation_no', 'headerName' => 'Quotation No.'],
+    //                 ['field' => 'enquiry_no', 'headerName' => 'Enquiry No.'],
+    //                 ['field' => 'customer_name', 'headerName' => 'Customer'],
+    //                 ['field' => 'mobile', 'headerName' => 'Mobile'],
+    //                 ['field' => 'care_of_type', 'headerName' => 'Care Of'],
+    //                 ['field' => 'care_of_name', 'headerName' => 'Care Of Name'],
+    //                 ['field' => 'segment', 'headerName' => 'Segment'],
+    //                 ['field' => 'model', 'headerName' => 'Model'],
+    //                 ['field' => 'variant', 'headerName' => 'Variant'],
+    //                 ['field' => 'color', 'headerName' => 'Color'],
+
+    //                 ['field' => 'revision', 'headerName' => 'Revision'],
+
+    //                 ['field' => 'ex_showroom_price', 'headerName' => 'Ex Showroom'],
+    //                 ['field' => 'insurance_amount', 'headerName' => 'Insurance Amount'],
+    //                 ['field' => 'registration_amount', 'headerName' => 'Registration Amount'],
+    //                 ['field' => 'policy_type', 'headerName' => 'Insurance'],
+    //                 ['field' => 'registration_type', 'headerName' => 'Registration'],
+
+    //                 ['field' => 'accessories', 'headerName' => 'Accessories'],
+    //                 ['field' => 'accessories_amount', 'headerName' => 'Accessories Amount'],
+
+    //                 ['field' => 'maxicare', 'headerName' => 'Maxicare'],
+    //                 ['field' => 'vltd_device', 'headerName' => 'VLTD'],
+    //                 ['field' => 'coating', 'headerName' => 'Coating'],
+    //                 ['field' => 'coating_price', 'headerName' => 'Coating Price'],
+    //                 ['field' => 'ppf', 'headerName' => 'PPF'],
+    //                 ['field' => 'rto_yellow_tape', 'headerName' => 'Yellow Tape'],
+    //                 ['field' => 'kazam_charging_kit', 'headerName' => 'Kazam Kit'],
+    //                 ['field' => 'incidental_charges', 'headerName' => 'Incidental'],
+    //                 ['field' => 'shield', 'headerName' => 'Shield'],
+    //                 ['field' => 'shield_price', 'headerName' => 'Shield Price'],
+    //                 ['field' => 'rsa', 'headerName' => 'RSA'],
+    //                 ['field' => 'rsa_amount', 'headerName' => 'RSA Amount'],
+    //                 ['field' => 'fastag', 'headerName' => 'Fastag'],
+    //                 ['field' => 'cod_charges', 'headerName' => 'COD Charges'],
+    //                 ['field' => 'charger_swapping', 'headerName' => 'Charger Swapping'],
+    //                 ['field' => 'charger_swapping_amount', 'headerName' => 'Swapping Amount'],
+    //                 ['field' => 'tcs', 'headerName' => 'TCS'],
+
+    //                 ['field' => 'onroad_price', 'headerName' => 'On Road Price'],
+    //                 ['field' => 'oem_scheme_discount', 'headerName' => 'OEM Discount'],
+    //                 ['field' => 'fame_subsidy', 'headerName' => 'Fame Subsidy'],
+    //                 ['field' => 'exchange_bonus', 'headerName' => 'Exchange Bonus'],
+    //                 ['field' => 'corporate_discount', 'headerName' => 'Corporate Discount'],
+    //                 ['field' => 'accessories_discount', 'headerName' => 'Accessories Discount'],
+    //                 ['field' => 'ceramic_discount', 'headerName' => 'Ceramic Discount'],
+    //                 ['field' => 'ppf_discount', 'headerName' => 'PPF Discount'],
+    //                 ['field' => 'dealer_discount', 'headerName' => 'Dealer Discount'],
+    //                 ['field' => 'charger_swapping_discount', 'headerName' => 'Swapping Discount'],
+    //                 ['field' => 'total_discount', 'headerName' => 'Total Discount'],
+    //                 ['field' => 'net_receivable', 'headerName' => 'Net Receivable'],
+    //                 ['field' => 'invoice_price', 'headerName' => 'Invoice Price'],
+
+    //                 ['field' => 'status', 'headerName' => 'Status'],
+    //                 ['field' => 'action', 'headerName' => 'Action'],
+    //             ],
+
+    //             'data' => $gridData,
+    //         ],
+    //     ]);
+    // }
     public function index()
     {
         $insurance_type_map = [
@@ -46,15 +304,41 @@ class QuotationCrudController extends CrudController
             4 => 'Higher',
         ];
 
-
         $registration_type_map = [
             '0' => 'Tax Only',
             '1' => 'TRC + Tax',
             '2' => 'TRC Only',
             '3' => 'Exempted',
-
-
         ];
+
+        $reg_no_type_map = [
+            '1' => 'Regular',
+            '2' => 'BH Series',
+            '3' => 'Special Number',
+        ];
+
+        // Mock Enquiries Reference for fallback customer details
+        $mockEnquiries = [
+            "001" => ["name" => "Rajesh Kumar", "mobile" => "9876543210"],
+            "002" => ["name" => "Priya Sharma", "mobile" => "9123456780"],
+            "003" => ["name" => "Suresh Yadav", "mobile" => "9988776655"],
+            "004" => ["name" => "Amit Singh", "mobile" => "9811223344"],
+            "005" => ["name" => "Vikram Mehta", "mobile" => "9765432109"],
+            "006" => ["name" => "Rohan Verma", "mobile" => "9876500006"],
+            "007" => ["name" => "Sneha Gupta", "mobile" => "9876500007"],
+            "008" => ["name" => "Vikas Shah", "mobile" => "9876500008"],
+            "009" => ["name" => "Priya Mehra", "mobile" => "9876500009"],
+            "010" => ["name" => "Karan Joshi", "mobile" => "9876500010"],
+            "011" => ["name" => "Manoj Yadav", "mobile" => "9876500011"],
+            "012" => ["name" => "Deepak Singh", "mobile" => "9876500012"],
+            "013" => ["name" => "Vikram Mehta", "mobile" => "9876500013"],
+            "014" => ["name" => "Ananya Sharma", "mobile" => "9876500014"],
+            "015" => ["name" => "Vivek Patel", "mobile" => "9876500015"],
+            "016" => ["name" => "Kavya Nair", "mobile" => "9876500016"],
+            "017" => ["name" => "Arjun Mehta", "mobile" => "9876500017"],
+            "018" => ["name" => "Priya Singh", "mobile" => "9876500018"],
+        ];
+
         $this->crud->setListView('admin.quotation.list');
 
         $quotations = Quotation::with('enquiry')
@@ -62,105 +346,82 @@ class QuotationCrudController extends CrudController
             ->latest('id')
             ->get();
 
-
-
-        $gridData = $quotations->map(function ($quotation, $index) use ($insurance_type_map, $registration_type_map) {
+        $gridData = $quotations->map(function ($quotation, $index) use ($insurance_type_map, $registration_type_map, $reg_no_type_map, $mockEnquiries) {
             $data = $quotation->proposed_data ?? [];
             $enquiry = $quotation->enquiry;
+            $enquiryNo = $data['enquiry_no'] ?? $quotation->enquiry_no ?? '';
 
-            // ✅ Get customer name from enquiry or fallback to proposed_data
-            $customerName = '-';
-            $mobile = '-';
-
-            // ✅ Check if customer_name exists (even if empty string)
-            if (isset($data['customer_name']) && $data['customer_name'] !== '') {
+            // ✅ Extract Customer Name
+            $customerName = '';
+            if (!empty($data['customer_name'])) {
                 $customerName = $data['customer_name'];
-                $mobile = $data['customer_mobile'] ?? '-';
-            } elseif ($enquiry) {
+            } elseif ($enquiry && !empty(trim($enquiry->first_name . ' ' . $enquiry->last_name))) {
                 $customerName = trim($enquiry->first_name . ' ' . $enquiry->last_name);
-                $mobile = $enquiry->mobile ?? '-';
+            } elseif (isset($mockEnquiries[$enquiryNo])) {
+                $customerName = $mockEnquiries[$enquiryNo]['name'];
             } else {
                 $customerName = '-';
+            }
+
+            // ✅ Extract Mobile
+            $mobile = '';
+            if (!empty($data['customer_mobile'])) {
+                $mobile = $data['customer_mobile'];
+            } elseif (!empty($data['mobile'])) {
+                $mobile = $data['mobile'];
+            } elseif ($enquiry && !empty($enquiry->mobile)) {
+                $mobile = $enquiry->mobile;
+            } elseif (isset($mockEnquiries[$enquiryNo])) {
+                $mobile = $mockEnquiries[$enquiryNo]['mobile'];
+            } else {
                 $mobile = '-';
             }
 
-            $segmentCode = $data['segment_code']
-                ?? $enquiry?->segment_code
-                ?? '';
+            $segmentCode = $data['segment_code'] ?? $enquiry?->segment_code ?? '';
+            $modelCode = $data['model_code'] ?? $enquiry?->model_code ?? '';
+            $variantCode = $data['variant_code'] ?? $enquiry?->variant_code ?? '';
+            $colorCode = $data['color_code'] ?? $enquiry?->color_code ?? '';
 
-            $modelCode = $data['model_code']
-                ?? $enquiry?->model_code
-                ?? '';
-
-            $variantCode = $data['variant_code']
-                ?? $enquiry?->variant_code
-                ?? '';
-
-            $colorCode = $data['color_code']
-                ?? $enquiry?->color_code
-                ?? '';
-
-            $segment = DB::table('xlr8_vehicle_segment')
-                ->where('code', $segmentCode)
-                ->first();
-
-            $model = DB::table('xlr8_vehicle_model')
-                ->where('code', $modelCode)
-                ->first();
-
-            $variant = DB::table('xlr8_vehicle_variant')
-                ->where('code', $variantCode)
-                ->first();
-
-            $color = DB::table('xlr8_vehicle_color')
-                ->where('code', $colorCode)
-                ->first();
+            $segment = DB::table('xlr8_vehicle_segment')->where('code', $segmentCode)->first();
+            $model = DB::table('xlr8_vehicle_model')->where('code', $modelCode)->first();
+            $variant = DB::table('xlr8_vehicle_variant')->where('code', $variantCode)->first();
+            $color = DB::table('xlr8_vehicle_color')->where('code', $colorCode)->first();
 
             return [
-
                 'serial_no' => $index + 1,
-
                 'quotation_no' => $quotation->quotation_no,
-
-                'enquiry_no' => $enquiry?->id,
-
+                'enquiry_no' => $enquiryNo ?: ($enquiry?->id ?? '-'),
                 'customer_name' => $customerName,
                 'mobile' => $mobile,
-
-
-
                 'care_of_type' => [
                     1 => 'Son of',
                     2 => 'Daughter of',
                     3 => 'Married to',
                     4 => 'Guardian Name',
-                ][$data['careof'] ?? ''] ?? '',
-
-                'care_of_name' => $data['careofname'] ?? '',
-
+                ][$data['careof'] ?? ''] ?? '-',
+                'care_of_name' => $data['careofname'] ?? '-',
                 'segment' => $segment->name ?? $segmentCode,
-
                 'model' => $model->name ?? $modelCode,
-
                 'variant' => $variant->name ?? $variantCode,
-
                 'color' => $color->name ?? $colorCode,
-
+                'permit' => $data['permit'] ?? '-',
+                'oem_code' => $data['oem_code'] ?? optional($enquiry)->oem_code ?? '-',
                 'revision' => $quotation->revision,
 
-
+                // Receivables
                 'ex_showroom_price' => $data['ex_showroom_price'] ?? '',
+                'insurance_company' => $data['insurance_company'] ?? '-',
                 'policy_type' => $insurance_type_map[$data['policy_type'] ?? ''] ?? '-',
-                'registration_type' => $registration_type_map[$data['registration_type'] ?? ''] ?? '-',
                 'insurance_amount' => $data['insurance_amount'] ?? '',
+                'registration_no_type' => $reg_no_type_map[$data['registration_no_type'] ?? ''] ?? ($data['registration_no_type'] ?? '-'),
+                'registration_category' => $registration_type_map[$data['registration_category'] ?? ''] ?? ($data['registration_category'] ?? '-'),
+                'in_house_rto' => (isset($data['in_house_rto']) && $data['in_house_rto'] == '1') ? 'Yes' : 'No',
+                'registration_type' => $registration_type_map[$data['registration_type'] ?? ''] ?? '-',
                 'registration_amount' => $data['registration_amount'] ?? '',
 
                 'accessories' => isset($data['accessories'])
-                    ? (is_array($data['accessories'])
-                        ? implode(', ', $data['accessories'])
-                        : $data['accessories'])
+                    ? (is_array($data['accessories']) ? implode(', ', $data['accessories']) : $data['accessories'])
                     : '',
-
                 'accessories_amount' => $data['accessories_amount'] ?? '',
                 'maxicare' => $data['maxicare'] ?? '',
                 'vltd_device' => $data['vltd_device'] ?? '',
@@ -180,26 +441,42 @@ class QuotationCrudController extends CrudController
                 'charger_swapping_amount' => $data['charger_swapping_amount'] ?? '',
                 'tcs' => $data['tcs'] ?? '',
 
-
-                'onroad_price' => number_format($quotation->onroad_price, 2),
-                'invoice_price' => number_format($quotation->invoice_price, 2),
+                // Totals & Prices
+                'onroad_price' => number_format((float)$quotation->onroad_price, 2),
+                'invoice_price' => number_format((float)$quotation->invoice_price, 2),
                 'total_receivable' => $data['total_receivable'] ?? '',
                 'total_discount' => $data['total_discount'] ?? '',
                 'net_receivable' => $data['net_receivable_summary'] ?? '',
 
-
-                'oem_scheme_discount' => $data['oem_scheme_discount'] ?? '',
+                // Group A, B, C & Static Discounts
+                'oem_scheme_discount' => $data['cash_scheme_oem'] ?? $data['oem_scheme_discount'] ?? '',
+                'cash_scheme_oem' => $data['cash_scheme_oem'] ?? '',
+                'cash_scheme_oem_type' => $data['cash_scheme_oem_type'] ?? '',
+                'csd_discount' => $data['csd_discount'] ?? '',
                 'fame_subsidy' => $data['fame_subsidy'] ?? '',
                 'exchange_bonus' => $data['exchange_bonus'] ?? '',
+                'green_bonus' => $data['green_bonus'] ?? '',
+                'welcome_bonus' => $data['welcome_bonus'] ?? '',
+                'loyalty_bonus' => $data['loyalty_bonus'] ?? '',
                 'corporate_discount' => $data['corporate_discount'] ?? '',
                 'accessories_discount' => $data['accessories_discount'] ?? '',
+                'accessories_spl_disc' => $data['accessories_spl_disc'] ?? '',
                 'ceramic_discount' => $data['ceramic_discount'] ?? '',
                 'ppf_discount' => $data['ppf_discount'] ?? '',
                 'dealer_discount' => $data['dealer_discount'] ?? '',
                 'charger_swapping_discount' => $data['charger_swapping_discount'] ?? '',
+                'other_cash_discount' => $data['other_cash_discount'] ?? '',
+                'special_cash_discount' => $data['special_cash_discount'] ?? '',
+
+                // Bifurcations
+                'inv_discount' => $data['invoiced_discount_summary'] ?? '',
+                'cn_discount' => $data['credit_note_discount_summary'] ?? '',
+                'cn1_discount' => $data['cn1_discount_summary'] ?? '',
+                'cn2_discount' => $data['cn2_discount_summary'] ?? '',
 
                 'status' => ucfirst($quotation->status),
 
+                // EXACT UNTOUCHED ACTION BUTTONS
                 'action' => '
         <div class="d-flex gap-2 justify-content-center">
 
@@ -225,13 +502,9 @@ class QuotationCrudController extends CrudController
         })->values();
 
         return view('admin.quotation.list', [
-
             'title' => 'Quotation Listing',
-
             'gridConfig' => [
-
                 'columns' => [
-
                     ['field' => 'serial_no', 'headerName' => 'S.No.'],
                     ['field' => 'quotation_no', 'headerName' => 'Quotation No.'],
                     ['field' => 'enquiry_no', 'headerName' => 'Enquiry No.'],
@@ -243,18 +516,22 @@ class QuotationCrudController extends CrudController
                     ['field' => 'model', 'headerName' => 'Model'],
                     ['field' => 'variant', 'headerName' => 'Variant'],
                     ['field' => 'color', 'headerName' => 'Color'],
-
+                    ['field' => 'permit', 'headerName' => 'Permit'],
+                    ['field' => 'oem_code', 'headerName' => 'OEM Code'],
                     ['field' => 'revision', 'headerName' => 'Revision'],
 
                     ['field' => 'ex_showroom_price', 'headerName' => 'Ex Showroom'],
+                    ['field' => 'insurance_company', 'headerName' => 'Insurance Co.'],
                     ['field' => 'insurance_amount', 'headerName' => 'Insurance Amount'],
                     ['field' => 'registration_amount', 'headerName' => 'Registration Amount'],
+                    ['field' => 'registration_no_type', 'headerName' => 'Reg Type'],
+                    ['field' => 'registration_category', 'headerName' => 'Reg Category'],
+                    ['field' => 'in_house_rto', 'headerName' => 'In-House RTO'],
                     ['field' => 'policy_type', 'headerName' => 'Insurance'],
                     ['field' => 'registration_type', 'headerName' => 'Registration'],
 
                     ['field' => 'accessories', 'headerName' => 'Accessories'],
                     ['field' => 'accessories_amount', 'headerName' => 'Accessories Amount'],
-
                     ['field' => 'maxicare', 'headerName' => 'Maxicare'],
                     ['field' => 'vltd_device', 'headerName' => 'VLTD'],
                     ['field' => 'coating', 'headerName' => 'Coating'],
@@ -275,14 +552,28 @@ class QuotationCrudController extends CrudController
 
                     ['field' => 'onroad_price', 'headerName' => 'On Road Price'],
                     ['field' => 'oem_scheme_discount', 'headerName' => 'OEM Discount'],
+                    ['field' => 'cash_scheme_oem', 'headerName' => 'Cash OEM Scheme'],
+                    ['field' => 'cash_scheme_oem_type', 'headerName' => 'OEM Scheme Type'],
+                    ['field' => 'csd_discount', 'headerName' => 'CSD Discount'],
                     ['field' => 'fame_subsidy', 'headerName' => 'Fame Subsidy'],
                     ['field' => 'exchange_bonus', 'headerName' => 'Exchange Bonus'],
+                    ['field' => 'green_bonus', 'headerName' => 'Green Bonus'],
+                    ['field' => 'welcome_bonus', 'headerName' => 'Welcome Bonus'],
+                    ['field' => 'loyalty_bonus', 'headerName' => 'Loyalty Bonus'],
                     ['field' => 'corporate_discount', 'headerName' => 'Corporate Discount'],
                     ['field' => 'accessories_discount', 'headerName' => 'Accessories Discount'],
+                    ['field' => 'accessories_spl_disc', 'headerName' => 'Acc Spl Disc'],
                     ['field' => 'ceramic_discount', 'headerName' => 'Ceramic Discount'],
                     ['field' => 'ppf_discount', 'headerName' => 'PPF Discount'],
                     ['field' => 'dealer_discount', 'headerName' => 'Dealer Discount'],
                     ['field' => 'charger_swapping_discount', 'headerName' => 'Swapping Discount'],
+                    ['field' => 'other_cash_discount', 'headerName' => 'Other Cash Disc'],
+                    ['field' => 'special_cash_discount', 'headerName' => 'Special Cash Disc'],
+
+                    ['field' => 'inv_discount', 'headerName' => 'Total INV'],
+                    ['field' => 'cn_discount', 'headerName' => 'Total CN'],
+                    ['field' => 'cn1_discount', 'headerName' => 'Total CN1'],
+                    ['field' => 'cn2_discount', 'headerName' => 'Total CN2'],
                     ['field' => 'total_discount', 'headerName' => 'Total Discount'],
                     ['field' => 'net_receivable', 'headerName' => 'Net Receivable'],
                     ['field' => 'invoice_price', 'headerName' => 'Invoice Price'],
@@ -290,7 +581,6 @@ class QuotationCrudController extends CrudController
                     ['field' => 'status', 'headerName' => 'Status'],
                     ['field' => 'action', 'headerName' => 'Action'],
                 ],
-
                 'data' => $gridData,
             ],
         ]);
@@ -1274,6 +1564,165 @@ class QuotationCrudController extends CrudController
         ]);
     }
 
+    // public function preview($quotation_no)
+    // {
+    //     $quotation = Quotation::with('enquiry')
+    //         ->where('quotation_no', $quotation_no)
+    //         ->firstOrFail();
+
+    //     $selectedEnquiry = Enquiry::with([
+    //         'segment',
+    //         'model',
+    //         'variant',
+    //         'color',
+    //     ])->findOrFail($quotation->enquiry_no);
+
+    //     // ✅ Fetch variant with permits
+    //     $variant = null;
+    //     if ($selectedEnquiry->variant_code) {
+    //         $variant = \App\Models\Vehicle\Variant::with(['permit'])
+    //             ->where('code', $selectedEnquiry->variant_code)
+    //             ->first();
+    //     }
+
+    //     $permitOptions = $variant ? $variant->permit->pluck('name')->toArray() : [];
+
+    //     $insurance_type_map = [
+    //         1 => 'Nil Dep',
+    //         2 => 'Higher',
+    //     ];
+
+    //     $registration_type_map = [
+    //         0 => 'Exempted',
+    //         1 => 'TRC Only',
+    //         2 => 'Tax Only',
+    //         3 => 'TRC + Tax',
+    //     ];
+
+    //     $registration_category_map = [
+    //         '1' => 'Exempted',
+    //         '2' => 'Standard',
+    //         '3' => 'Special',
+    //     ];
+
+    //     $accessoryList = Accessory::where('status', 1)
+    //         ->orderBy('item')
+    //         ->get();
+
+    //     $quotationData = $quotation->proposed_data ?? [];
+
+    //     // Group selections
+    //     $groupASelected = 'cash_scheme_oem';
+    //     if (!empty($quotationData['csd_discount'])) {
+    //         $groupASelected = 'csd_discount';
+    //     }
+    //     if (!empty($quotationData['fame_subsidy'])) {
+    //         $groupASelected = 'fame_subsidy';
+    //     }
+
+    //     $groupBSelected = 'corporate_discount';
+    //     if (!empty($quotationData['loyalty_bonus'])) {
+    //         $groupBSelected = 'loyalty_bonus';
+    //     }
+
+    //     $groupCSelected = 'exchange_bonus';
+    //     if (!empty($quotationData['green_bonus'])) {
+    //         $groupCSelected = 'green_bonus';
+    //     }
+    //     if (!empty($quotationData['welcome_bonus'])) {
+    //         $groupCSelected = 'welcome_bonus';
+    //     }
+
+    //     $insurancePrintData = [];
+    //     $insuranceCovers = $quotationData['insurance_covers'] ?? [];
+
+    //     // ✅ FIX: Properly handle insurance covers
+    //     if (!empty($insuranceCovers) && is_array($insuranceCovers)) {
+    //         foreach ($insuranceCovers as $cover) {
+    //             // Handle string format
+    //             if (is_string($cover)) {
+    //                 $price = 0;
+    //                 $name = $cover;
+    //                 if (preg_match('/\(₹([\d,]+\.?\d*)\)/', $cover, $matches)) {
+    //                     $price = floatval(str_replace(',', '', $matches[1]));
+    //                     $name = trim(preg_replace('/\(₹[\d,]+\.?\d*\)/', '', $cover));
+    //                 }
+    //                 $insurancePrintData[] = ['name' => $name, 'price' => $price];
+    //             }
+    //             // Handle array format
+    //             elseif (is_array($cover)) {
+    //                 $insurancePrintData[] = [
+    //                     'name' => $cover['name'] ?? '',
+    //                     'price' => floatval($cover['price'] ?? 0)
+    //                 ];
+    //             }
+    //         }
+    //     }
+
+    //     // ✅ FIX: If insurance_covers is empty but insurance_amount exists
+    //     if (empty($insurancePrintData)) {
+    //         $insAmount = floatval($quotationData['insurance_amount'] ?? 0);
+    //         if ($insAmount > 0) {
+    //             // Try to get covers from insurance_covers_display if exists
+    //             $displayCovers = $quotationData['insurance_covers_display'] ?? [];
+    //             if (!empty($displayCovers) && is_array($displayCovers)) {
+    //                 foreach ($displayCovers as $cover) {
+    //                     if (is_array($cover)) {
+    //                         $insurancePrintData[] = [
+    //                             'name' => $cover['name'] ?? '',
+    //                             'price' => floatval($cover['price'] ?? 0)
+    //                         ];
+    //                     }
+    //                 }
+    //             } else {
+    //                 // Fallback: Show just the amount with policy type
+    //                 $policyLabel = $insurance_type_map[$quotationData['policy_type'] ?? ''] ?? '';
+    //                 $insurancePrintData[] = [
+    //                     'name' => $policyLabel ?: 'Insurance',
+    //                     'price' => $insAmount
+    //                 ];
+    //             }
+    //         }
+    //     }
+
+    //     // ✅ DEBUG LOG
+    //     \Log::info('Insurance Print Data Final', [
+    //         'insurancePrintData' => $insurancePrintData,
+    //         'count' => count($insurancePrintData),
+    //     ]);
+
+    //     // ✅ Prepare Accessories Data for Print
+    //     $accessoriesPrintData = [];
+    //     $accessories = $quotationData['accessories'] ?? [];
+
+    //     if (!empty($accessories) && is_array($accessories)) {
+    //         foreach ($accessories as $accCode) {
+    //             $accessory = Accessory::where('part_no', $accCode)->first();
+    //             if ($accessory) {
+    //                 $accessoriesPrintData[] = [
+    //                     'name' => $accessory->item,
+    //                     'price' => floatval($accessory->ndp ?? 0)
+    //                 ];
+    //             }
+    //         }
+    //     }
+
+    //     return view('admin.quotation.preview', [
+    //         'quotation' => $quotation,
+    //         'quotationData' => $quotationData,
+    //         'selectedEnquiry' => $selectedEnquiry,
+    //         'insurance_type_map' => $insurance_type_map,
+    //         'registration_type_map' => $registration_type_map,
+    //         'registration_category_map' => $registration_category_map,
+    //         'accessoryList' => $accessoryList,
+    //         'groupASelected' => $groupASelected,
+    //         'groupBSelected' => $groupBSelected,
+    //         'groupCSelected' => $groupCSelected,
+    //         'permitOptions' => $permitOptions,
+    //         'insurancePrintData' => json_encode($insurancePrintData),
+    //         'accessoriesPrintData' => json_encode($accessoriesPrintData),
+    //     ]);
+    // }
     public function preview($quotation_no)
     {
         $quotation = Quotation::with('enquiry')
@@ -1285,17 +1734,7 @@ class QuotationCrudController extends CrudController
             'model',
             'variant',
             'color',
-        ])->findOrFail($quotation->enquiry_no);
-
-        // ✅ Fetch variant with permits
-        $variant = null;
-        if ($selectedEnquiry->variant_code) {
-            $variant = \App\Models\Vehicle\Variant::with(['permit'])
-                ->where('code', $selectedEnquiry->variant_code)
-                ->first();
-        }
-
-        $permitOptions = $variant ? $variant->permit->pluck('name')->toArray() : [];
+        ])->find($quotation->enquiry_no);
 
         $insurance_type_map = [
             1 => 'Nil Dep',
@@ -1303,134 +1742,55 @@ class QuotationCrudController extends CrudController
         ];
 
         $registration_type_map = [
-            0 => 'Exempted',
-            1 => 'TRC Only',
-            2 => 'Tax Only',
-            3 => 'TRC + Tax',
+            '0' => 'Tax Only',
+            '1' => 'TRC + Tax',
+            '2' => 'TRC Only',
+            '3' => 'Exempted',
         ];
 
-        $registration_category_map = [
-            '1' => 'Exempted',
-            '2' => 'Standard',
-            '3' => 'Special',
+        $reg_no_type_map = [
+            '1' => 'Regular',
+            '2' => 'BH Series',
+            '3' => 'Special Number',
         ];
 
-        $accessoryList = Accessory::where('status', 1)
-            ->orderBy('item')
-            ->get();
-
+        $accessoryList = Accessory::where('status', 1)->orderBy('item')->get();
         $quotationData = $quotation->proposed_data ?? [];
 
-        // Group selections
         $groupASelected = 'cash_scheme_oem';
-        if (!empty($quotationData['csd_discount'])) {
+        if (!empty($quotationData['csd_discount']) && !in_array($quotationData['csd_discount'], ['0', '0.00', 'N/A'])) {
             $groupASelected = 'csd_discount';
-        }
-        if (!empty($quotationData['fame_subsidy'])) {
+        } elseif (!empty($quotationData['fame_subsidy']) && !in_array($quotationData['fame_subsidy'], ['0', '0.00', 'N/A'])) {
             $groupASelected = 'fame_subsidy';
+        } elseif (!empty($quotationData['cash_scheme_oem']) && !in_array($quotationData['cash_scheme_oem'], ['0', '0.00', 'N/A'])) {
+            $groupASelected = 'cash_scheme_oem';
         }
 
         $groupBSelected = 'corporate_discount';
-        if (!empty($quotationData['loyalty_bonus'])) {
-            $groupBSelected = 'loyalty_bonus';
-        }
 
         $groupCSelected = 'exchange_bonus';
-        if (!empty($quotationData['green_bonus'])) {
+        if (!empty($quotationData['loyalty_bonus']) && !in_array($quotationData['loyalty_bonus'], ['0', 'N/A', '0.00'])) {
+            $groupCSelected = 'loyalty_bonus';
+        } elseif (!empty($quotationData['green_bonus']) && !in_array($quotationData['green_bonus'], ['0', 'N/A', '0.00'])) {
             $groupCSelected = 'green_bonus';
-        }
-        if (!empty($quotationData['welcome_bonus'])) {
+        } elseif (!empty($quotationData['welcome_bonus']) && !in_array($quotationData['welcome_bonus'], ['0', 'N/A', '0.00'])) {
             $groupCSelected = 'welcome_bonus';
+        } elseif (!empty($quotationData['exchange_bonus']) && !in_array($quotationData['exchange_bonus'], ['0', 'N/A', '0.00'])) {
+            $groupCSelected = 'exchange_bonus';
         }
 
-        $insurancePrintData = [];
-        $insuranceCovers = $quotationData['insurance_covers'] ?? [];
-
-        // ✅ FIX: Properly handle insurance covers
-        if (!empty($insuranceCovers) && is_array($insuranceCovers)) {
-            foreach ($insuranceCovers as $cover) {
-                // Handle string format
-                if (is_string($cover)) {
-                    $price = 0;
-                    $name = $cover;
-                    if (preg_match('/\(₹([\d,]+\.?\d*)\)/', $cover, $matches)) {
-                        $price = floatval(str_replace(',', '', $matches[1]));
-                        $name = trim(preg_replace('/\(₹[\d,]+\.?\d*\)/', '', $cover));
-                    }
-                    $insurancePrintData[] = ['name' => $name, 'price' => $price];
-                }
-                // Handle array format
-                elseif (is_array($cover)) {
-                    $insurancePrintData[] = [
-                        'name' => $cover['name'] ?? '',
-                        'price' => floatval($cover['price'] ?? 0)
-                    ];
-                }
-            }
-        }
-
-        // ✅ FIX: If insurance_covers is empty but insurance_amount exists
-        if (empty($insurancePrintData)) {
-            $insAmount = floatval($quotationData['insurance_amount'] ?? 0);
-            if ($insAmount > 0) {
-                // Try to get covers from insurance_covers_display if exists
-                $displayCovers = $quotationData['insurance_covers_display'] ?? [];
-                if (!empty($displayCovers) && is_array($displayCovers)) {
-                    foreach ($displayCovers as $cover) {
-                        if (is_array($cover)) {
-                            $insurancePrintData[] = [
-                                'name' => $cover['name'] ?? '',
-                                'price' => floatval($cover['price'] ?? 0)
-                            ];
-                        }
-                    }
-                } else {
-                    // Fallback: Show just the amount with policy type
-                    $policyLabel = $insurance_type_map[$quotationData['policy_type'] ?? ''] ?? '';
-                    $insurancePrintData[] = [
-                        'name' => $policyLabel ?: 'Insurance',
-                        'price' => $insAmount
-                    ];
-                }
-            }
-        }
-
-        // ✅ DEBUG LOG
-        \Log::info('Insurance Print Data Final', [
-            'insurancePrintData' => $insurancePrintData,
-            'count' => count($insurancePrintData),
-        ]);
-
-        // ✅ Prepare Accessories Data for Print
-        $accessoriesPrintData = [];
-        $accessories = $quotationData['accessories'] ?? [];
-
-        if (!empty($accessories) && is_array($accessories)) {
-            foreach ($accessories as $accCode) {
-                $accessory = Accessory::where('part_no', $accCode)->first();
-                if ($accessory) {
-                    $accessoriesPrintData[] = [
-                        'name' => $accessory->item,
-                        'price' => floatval($accessory->ndp ?? 0)
-                    ];
-                }
-            }
-        }
-
-        return view('admin.quotation.preview', [
+        return view('admin.quotation.create', [
             'quotation' => $quotation,
             'quotationData' => $quotationData,
             'selectedEnquiry' => $selectedEnquiry,
             'insurance_type_map' => $insurance_type_map,
             'registration_type_map' => $registration_type_map,
-            'registration_category_map' => $registration_category_map,
+            'reg_no_type_map' => $reg_no_type_map,
             'accessoryList' => $accessoryList,
             'groupASelected' => $groupASelected,
             'groupBSelected' => $groupBSelected,
             'groupCSelected' => $groupCSelected,
-            'permitOptions' => $permitOptions,
-            'insurancePrintData' => json_encode($insurancePrintData),
-            'accessoriesPrintData' => json_encode($accessoriesPrintData),
+            'viewMode' => true,
         ]);
     }
 }
