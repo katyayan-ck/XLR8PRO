@@ -632,6 +632,7 @@ class EnquiryCrudController extends CrudController
         $x8AssignedSc = $this->getAssignedSc($e->x8_sc_code ?? null, $e->x8_sc_mile_id ?? null, $scByCode, $scByMileId);
         $oemAssignedSc = $this->getAssignedSc($e->sc_code ?? null, $e->sc_mile_id ?? null, $scByCode, $scByMileId);
 
+        
         $segmentRel = $e instanceof \Illuminate\Database\Eloquent\Model && $e->relationLoaded('segment') ? $e->getRelation('segment') : null;
         $modelRel = $e instanceof \Illuminate\Database\Eloquent\Model && $e->relationLoaded('model') ? $e->getRelation('model') : null;
         $variantRel = $e instanceof \Illuminate\Database\Eloquent\Model && $e->relationLoaded('variant') ? $e->getRelation('variant') : null;
