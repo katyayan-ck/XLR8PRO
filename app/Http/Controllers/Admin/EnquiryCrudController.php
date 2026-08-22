@@ -687,7 +687,7 @@ class EnquiryCrudController extends CrudController
 
         if ($type === 'all') {
             $actionBtns .= '<a href="' . $quotUrl . '" class="btn btn-success btn-sm">Quote</a>';
-            $actionBtns .= '<a href="' . $bookUrl . '" class="btn btn-warning btn-sm" title="Convert to Booking">Process</a>';
+            $actionBtns .= '<a href="' . $bookUrl . '" class="btn btn-warning btn-sm" title="Convert to Booking">Book</a>';
         } elseif (in_array($type, ['exchange', 'scrappage', 'exchange_not_interested'])) {
             $exchUrl = backpack_url("exchange/enquiry/{$e->id}/edit");
             $actionBtns = '<a href="' . $exchUrl . '" class="btn btn-sm btn-primary">Process</a>';
@@ -1402,6 +1402,22 @@ class EnquiryCrudController extends CrudController
             $plannedDate = $previousFup ? $previousFup->cre_next_fup_date : Carbon::now()->format('Y-m-d');
             $actualDate = Carbon::now()->format('Y-m-d');
 
+            // --- DEVIATION STAGE CALCULATION ---
+            $planned = Carbon::parse($plannedDate)->startOfDay();
+            $actual = Carbon::parse($actualDate)->startOfDay();
+            $diffDays = $planned->diffInDays($actual, false); // $actual - $planned
+
+            $deviationCode = 'SAME_DAY';
+            if ($diffDays < 0) {
+                $deviationCode = 'PREPONED_FOLLOW_UPS';
+            } elseif ($diffDays == 1 || $diffDays == 2) {
+                $deviationCode = '1_AND_2_DAYS';
+            } elseif ($diffDays >= 3 && $diffDays <= 10) {
+                $deviationCode = '3_TO_10_DAYS';
+            } elseif ($diffDays > 10) {
+                $deviationCode = 'GREATER_THAN_10_DAYS';
+            }
+
             // Convert frontend dd-MMM-yyyy format to MySQL YYYY-MM-DD
             $nextFupDate = $request->cre_next_fup_date ? Carbon::parse($request->cre_next_fup_date)->format('Y-m-d') : null;
 
@@ -1413,7 +1429,7 @@ class EnquiryCrudController extends CrudController
                 'cre_planned_fup_date' => $plannedDate,
                 'cre_actual_fup_date' => $actualDate,
                 'cre_fup_call_duration' => $request->cre_fup_call_duration,
-                'cre_fup_deviation_stage' => $request->cre_fup_deviation_stage,
+                'cre_fup_deviation_stage' => $deviationCode, // Automatically Calculated
                 'cre_enq_stage' => $request->cre_enq_stage,
                 'cre_customer_stage' => $request->cre_customer_stage,
                 'cre_fup_remarks' => $request->cre_fup_remarks,
@@ -1432,10 +1448,10 @@ class EnquiryCrudController extends CrudController
             $this->processEntityRelations($validated);
             $validated['created_by'] = backpack_user()->id;
             
-            // Reference leads get LONG immediately, otherwise QUICK
+            // Reference leads get REFERENCE immediately, otherwise standard new enquiries get LONG
             $isRef = isset($validated['source_code']) && strtoupper($validated['source_code']) === 'REFERENCE';
-            $validated['origin'] = $isRef ? 'LONG' : 'QUICK';
-            $validated['current_origin'] = $isRef ? 'LONG' : 'QUICK';
+            $validated['origin'] = $isRef ? 'REFERENCE' : 'LONG';
+            $validated['current_origin'] = $isRef ? 'REFERENCE' : 'LONG';
             
             $validated['cne'] = 1;
 
@@ -1461,9 +1477,10 @@ class EnquiryCrudController extends CrudController
         $this->processEntityRelations($validated);
         $validated['updated_by'] = backpack_user()->id;
 
-        // Force to LONG if source changed to Reference
+        // When editing a Reference, force current_origin to LONG and cne to true (1)
         if (isset($validated['source_code']) && strtoupper($validated['source_code']) === 'REFERENCE') {
             $validated['current_origin'] = 'LONG';
+            $validated['cne'] = 1;
         }
 
         $creFields = ['cre_fup_call_duration', 'cre_fup_deviation_stage', 'cre_enq_stage', 'cre_customer_stage', 'cre_fup_remarks', 'cre_next_fup_date'];
@@ -1570,31 +1587,34 @@ class EnquiryCrudController extends CrudController
     {
         try {
             $validated = $request->validate([
+                // Strictly Mandatory Fields
                 'referee_name' => 'required|max:100',
                 'referee_phone' => 'required|numeric|digits:10',
-                
-                // Customer Primary
                 'first_name' => 'required|max:100',
-                'last_name' => 'required|max:100',
                 'mobile' => 'required|numeric|digits:10',
-                'alternate_mobile' => 'nullable|max:15',
-                'email' => 'nullable|email|max:150',
-                'gender' => 'required',
-                'zipcode' => 'required|max:10',
-                'vpo' => 'required|max:150',
-                'tehsil' => 'required|max:100',
-                'district' => 'required|max:100',
-                'city' => 'required|max:100',
-                'territory' => 'required|string|max:100',
-                
-                // Vehicle
                 'segment_code' => 'required',
                 'model_code' => 'required',
-                'variant_code' => 'nullable', // Variant & Color are optional on Reference
-                'color_code' => 'nullable',
                 
-                // SC Details
-                'x8_sc_code' => 'required|string|max:200',
+                // Everything else is optional during Creation
+                'referred_by' => 'nullable|max:100',
+                'last_name' => 'nullable|max:100',
+                'alternate_mobile' => 'nullable|max:15',
+                'email' => 'nullable|email|max:150',
+                'gender' => 'nullable',
+                'zipcode' => 'nullable|max:10',
+                'vpo' => 'nullable|max:150',
+                'tehsil' => 'nullable|max:100',
+                'district' => 'nullable|max:100',
+                'city' => 'nullable|max:100',
+                'territory' => 'nullable|string|max:100',
+                'variant_code' => 'nullable', 
+                'color_code' => 'nullable',
+                'fuel_type' => 'nullable',
+                'usage_area' => 'nullable',
+                'km_travelled_daily' => 'nullable',
+                'application_type' => 'nullable',
+                'application' => 'nullable',
+                'x8_sc_code' => 'nullable|string|max:200',
                 'x8_sc_mile_id' => 'nullable|string|max:100',
             ]);
 
@@ -1607,7 +1627,7 @@ class EnquiryCrudController extends CrudController
             // Standard metadata
             $validated['created_by']     = backpack_user()->id;
             $validated['origin']         = 'REFERENCE';
-            // $validated['current_origin'] = 'LONG';
+            $validated['current_origin'] = 'REFERENCE';
             $validated['cne']            = 1;
 
             Enquiry::create($validated);
@@ -1638,19 +1658,33 @@ class EnquiryCrudController extends CrudController
         $fullFormActive = request()->has('segment_code') || !request()->has('call_nature');
         $req = $fullFormActive ? 'required' : 'nullable';
         
+        $sourceCode = strtoupper(request()->input('source_code', ''));
+        $isRef = $sourceCode === 'REFERENCE';
+        $isRefOrWapp = in_array($sourceCode, ['REFERENCE', 'WHATSAPP']);
+        
+        // Dynamic field requirements based on source
+        $colorReq = ($fullFormActive && !$isRefOrWapp) ? 'required' : 'nullable';
+        $refReq = ($fullFormActive && $isRef) ? 'required' : 'nullable';
+        
+        // If the frontend disabled source_code (e.g., for Walk-In), it won't be sent in the request.
+        $sourceReq = ($fullFormActive && request()->has('source_code')) ? 'required' : 'nullable';
+
         // CRE fields are only mandatory on EDIT
         $isEdit = $id !== null;
         $creReq = ($isEdit && $fullFormActive) ? 'required' : 'nullable';
 
         return [
             'enquiry_type' => $req,
-            'source_code' => $req,
+            'source_code' => $sourceReq,
             'sub_source' => 'nullable',
             'person_code' => 'nullable',
             'reference_details' => 'nullable|max:255',
-            'referred_by' => 'nullable|max:100',
-            'referee_phone' => 'nullable|max:15',
-            'referee_name' => 'nullable|max:100',
+            
+            // Reference Details (Mandatory if Source is Reference)
+            'referred_by' => $refReq . '|max:100',
+            'referee_phone' => $refReq . '|max:15',
+            'referee_name' => $refReq . '|max:100',
+            
             'planned_campaign' => 'nullable|max:150',
             'likely_purchase_date' => 'nullable|max:150',
             'activity_type' => 'nullable',
@@ -1675,11 +1709,11 @@ class EnquiryCrudController extends CrudController
             'city' => $req . '|max:100',
             'territory' => $req . '|string|max:100',
 
-            // 2. Vehicle Info (All mandatory)
+            // 2. Vehicle Info (All mandatory, except color for reference/whatsapp)
             'segment_code' => $req,
             'model_code' => $req,
             'variant_code' => $req,
-            'color_code' => $req,
+            'color_code' => $colorReq,
             'fuel_type' => 'nullable', // Fetched automatically
             'usage_area' => 'nullable', // Checked dynamically by HTML5 based on segment
             'km_travelled_daily' => 'nullable',

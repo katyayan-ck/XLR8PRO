@@ -474,15 +474,18 @@ class Enquiry extends BaseModel
     // Unassigned = both sc_code AND sc_mile_id are blank
 
     public function scopeAssigned($query)
-    {
-        return $query->where(function ($q) {
-            $q->where(function ($q2) {
-                $q2->whereNotNull('sc_code')->where('sc_code', '!=', '');
-            })->orWhere(function ($q2) {
-                $q2->whereNotNull('sc_mile_id')->where('sc_mile_id', '!=', '');
-            });
+{
+    return $query->where(function ($q) {
+        $q->where(function ($q2) {
+            $q2->whereNotNull('sc_code')->where('sc_code', '!=', '');
+        })->orWhere(function ($q2) {
+            $q2->whereNotNull('sc_mile_id')->where('sc_mile_id', '!=', '');
+        })->orWhere(function ($q2) {
+            // Yeh new block add kardo
+            $q2->whereNotNull('x8_sc_code')->where('x8_sc_code', '!=', ''); 
         });
-    }
+    });
+}
 
     public function scopeUnassigned($query)
     {
