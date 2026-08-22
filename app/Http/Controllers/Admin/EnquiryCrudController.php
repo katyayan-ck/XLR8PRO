@@ -65,6 +65,26 @@ class EnquiryCrudController extends CrudController
             $enqStageMap = collect(OrgService::keywordValueByCode('ENQUIRY_STAGE'))->pluck('value', 'code')->toArray();
             $custStageMap = collect(OrgService::keywordValueByCode('CUSTOMER_STAGE'))->pluck('value', 'code')->toArray();
             $purcTypeMap = collect(OrgService::keywordValueByCode('PURCHASE_TYPE'))->pluck('value', 'code')->toArray();
+            $lostReasonMap = collect(OrgService::keywordValueByCode('LOST_REASON'))->pluck('value', 'code')->toArray();
+
+            // 1. Source & Sub-Source Maps
+            $sourcesMap   = collect(OrgService::keywordValueByCode('ENQ_SOURCE'))->pluck('value', 'code')->toArray();
+            $subSourceMap = collect(OrgService::keywordValueByCode('ENQUIRY_SUB_SOURCE'))->pluck('value', 'code')->toArray();
+
+            // 2. OEM Enquiry Type Map
+            $enquiryTypeMap = collect(OrgService::keywordValueByCode('ENQUIRY_TYPE'))->pluck('value', 'code')->toArray();
+
+            // 3. Demographics: Marital Status & Age Group
+            $maritalStatusMap = collect(OrgService::keywordValueByCode('MARITAL_STATUS'))->pluck('value', 'code')->toArray();
+            $ageGroupMap      = collect(OrgService::keywordValueByCode('AGE_GROUP'))->pluck('value', 'code')->toArray();
+
+            // 4. Lost Sub Reason Map (checks both LOST_SUBREASON and LOST_SUB_REASON variations)
+            $sub1 = OrgService::keywordValueByCode('LOST_SUBREASON');
+            $sub2 = OrgService::keywordValueByCode('LOST_SUB_REASON');
+            $lostSubReasonMap = collect(array_merge($sub1, $sub2))->pluck('value', 'code')->toArray();
+
+            // 5. CRE Deviation Stage Map
+            $deviationStageMap = collect(OrgService::keywordValueByCode('DEVIATION_STAGE'))->pluck('value', 'code')->toArray();
 
             $scUsers = OrgService::getUsers(
                 'ALL',
@@ -113,7 +133,15 @@ class EnquiryCrudController extends CrudController
                 'fupTypesMap',
                 'enqStageMap',
                 'custStageMap',
-                'purcTypeMap'
+                'purcTypeMap',
+                'lostReasonMap',
+                'sourcesMap',
+                'subSourceMap',
+                'enquiryTypeMap',
+                'maritalStatusMap',
+                'ageGroupMap',
+                'lostSubReasonMap',
+                'deviationStageMap'
             );
         });
     }
@@ -586,10 +614,20 @@ class EnquiryCrudController extends CrudController
         $scByCode = $lookups['scByCode'] ?? [];
         $scByMileId = $lookups['scByMileId'] ?? [];
         $scNamesByCode = $lookups['scNamesByCode'] ?? [];
+        $x8AssignedSc  = $this->getAssignedSc($e->x8_sc_code ?? null, $e->x8_sc_mile_id ?? null, $scByCode, $scByMileId);
+        $oemAssignedSc = $this->getAssignedSc($e->sc_code ?? null, $e->sc_mile_id ?? null, $scByCode, $scByMileId);
         $fupTypesMap = $lookups['fupTypesMap'] ?? [];
         $enqStageMap = $lookups['enqStageMap'] ?? [];
         $custStageMap = $lookups['custStageMap'] ?? [];
         $purcTypeMap = $lookups['purcTypeMap'] ?? [];
+        $lostReasonMap = $lookups['lostReasonMap'] ?? [];
+        $sourcesMap        = $lookups['sourcesMap'] ?? [];
+        $subSourceMap      = $lookups['subSourceMap'] ?? [];
+        $enquiryTypeMap    = $lookups['enquiryTypeMap'] ?? [];
+        $maritalStatusMap  = $lookups['maritalStatusMap'] ?? [];
+        $ageGroupMap       = $lookups['ageGroupMap'] ?? [];
+        $lostSubReasonMap  = $lookups['lostSubReasonMap'] ?? [];
+        $deviationStageMap = $lookups['deviationStageMap'] ?? [];
 
         $x8AssignedSc = $this->getAssignedSc($e->x8_sc_code ?? null, $e->x8_sc_mile_id ?? null, $scByCode, $scByMileId);
         $oemAssignedSc = $this->getAssignedSc($e->sc_code ?? null, $e->sc_mile_id ?? null, $scByCode, $scByMileId);
@@ -725,7 +763,7 @@ class EnquiryCrudController extends CrudController
             'territory' => $e->territory ?? '—',
             'fup_count' => $e->fup_count ?? '—',
             'td_date' => $this->formatDate($e->td_date, 'd-M-Y'),
-            'lost_reason' => $e->lost_reason ?? '—',
+            'lost_reason'     => $lostReasonMap[$e->lost_reason ?? ''] ?? $e->lost_reason ?? '—',
             'followup_status' => $e->fup_status ?? '—',
             'action' => '<div class="d-flex justify-content-center gap-2">' . $actionBtns . '</div>',
         ];
@@ -737,100 +775,100 @@ class EnquiryCrudController extends CrudController
             $creFup = $lookups['creFups']['XENQ-' . $e->id] ?? null;
 
             $row += [
-                'oem_long_enquiry_no' => $e->oem_long_enquiry_no ?? '—',
-                'oem_long_enquiry_date' => $this->formatDate($e->oem_long_enquiry_date, 'd-M-Y'),
+                'oem_long_enquiry_no'          => $e->oem_long_enquiry_no ?? '—',
+                'oem_long_enquiry_date'        => $this->formatDate($e->oem_long_enquiry_date, 'd-M-Y'),
                 'oem_long_enquiry_assign_date' => $this->formatDate($e->oem_long_enquiry_assign_date, 'd-M-Y'),
-                'oem_quick_enquiry_no' => $e->oem_quick_enquiry_no ?? $e->quick_enquiry_no ?? '—',
-                'oem_quick_enquiry_date' => $this->formatDate($e->oem_quick_enquiry_date ?? $e->quick_enquiry_date, 'd-M-Y'),
-                'oem_quick_enquiry_status' => $e->oem_quick_enquiry_status ?? $e->quick_status ?? '—',
+                'oem_quick_enquiry_no'         => $e->oem_quick_enquiry_no ?? $e->quick_enquiry_no ?? '—',
+                'oem_quick_enquiry_date'       => $this->formatDate($e->oem_quick_enquiry_date ?? $e->quick_enquiry_date, 'd-M-Y'),
+                'oem_quick_enquiry_status'     => $e->oem_quick_enquiry_status ?? $e->quick_status ?? '—',
                 'oem_quick_enquiry_assign_date' => $this->formatDate($e->oem_quick_enquiry_assign_date ?? $e->quick_enq_assign_date, 'd-M-Y'),
-                'x8_enq_source' => $e->x8_enq_source ?? $e->x8_source_code ?? '—',
-                'first_name' => $e->first_name ?? '—',
-                'last_name' => $e->last_name ?? '—',
-                'full_name' => $e->full_name ?? trim(($e->first_name ?? '') . ' ' . ($e->last_name ?? '')),
-                'email' => $e->email ?? '—',
-                'gender' => $e->gender ?? '—',
-                'enquiry_type' => $e->enquiry_type ?? '—',
-                'source_code' => $e->source?->name ?? $e->source_code ?? '—',
-                'sub_source' => $e->sub_source ?? '—',
-                'likely_purchase_date' => $lpMap[$e->likely_purchase_date] ?? $e->likely_purchase_date ?? '—',
-                'x8_quotation_date' => $this->formatDate($e->x8_quotation_date ?? $e->quotation_date, 'd-M-Y'),
-                'fuel_type' => $fuelMap[$e->fuel_type] ?? $e->fuel_type ?? '—',
-                'transmission' => $e->transmission ?? '—',
-                'drivetrain' => $e->drivetrain ?? '—',
-                'seating' => $e->seating ?? '—',
-                'pincode' => $e->pincode ?? $e->zipcode ?? '—',
-                'vpo' => $e->vpo ?? '—',
-                'tehsil' => $e->tehsil ?? '—',
-                'district' => $e->district ?? '—',
-                'city' => $e->city ?? '—',
-                'address' => $e->address ?? $e->customer_address ?? '—',
-                'x8_sc_code' => $e->x8_sc_code ?? '—',
-                'x8_sc_mile_id' => $e->x8_sc_mile_id ?? $x8AssignedSc['mile_id'] ?? '—',
-                'x8_sc_branch' => $branchesMap[$x8BranchCode] ?? $x8BranchCode ?? '—',
-                'x8_sc_location' => $x8AssignedSc['primary_loc_code'] ?? '—',
-                'sc_code' => $scNamesByCode[$e->sc_code] ?? $e->sc_code ?? '—',
-                'sc_mile_id' => $e->sc_mile_id ?? $oemAssignedSc['mile_id'] ?? '—',
-                'oem_sc_branch' => $branchesMap[$oemBranchCode] ?? $oemBranchCode ?? '—',
-                'oem_sc_location' => $oemAssignedSc['primary_loc_code'] ?? '—',
-                'dealer_branch' => $e->dealer_branch ?? '—',
-                'dealer_location' => $e->dealer_location ?? '—',
-                'occupation_type' => $e->occupation_type ?? '—',
-                'customer_type' => $e->customer_type ?? '—',
-                'occupation_sub_type' => $e->occupation_sub_type ?? '—',
-                'company_name' => $e->company_name ?? '—',
-                'dob' => $this->formatDate($e->dob, 'd-M-Y'),
-                'marital_status' => $e->marital_status ?? '—',
-                'marriage_date' => $this->formatDate($e->marriage_date, 'd-M-Y'),
-                'age_group' => $e->age_group ?? '—',
-                'usage_area' => $e->usage_area ?? '—',
-                'km_travelled_daily' => $e->km_travelled_daily ?? '—',
-                'application_type' => $e->application_type ?? '—',
-                'application' => $e->application ?? '—',
-                'has_ev' => $e->has_ev ?? '—',
-                'purchase_type' => $purcTypeMap[$e->purchase_type ?? ''] ?? $e->purchase_type ?? '—',
-                'consid_brand' => $e->consid_brand ?? $e->consider_make ?? '—',
-                'consid_model' => $e->consid_model ?? $e->consider_model ?? '—',
-                'consid_variant' => $e->consid_variant ?? $e->consider_variant ?? '—',
-                'expected_price' => $e->expected_price ?? '—',
-                'offered_price' => $e->offered_price ?? '—',
-                'exchange_bonus' => $e->exchange_bonus ?? '—',
-                'price_gap' => ($e->expected_price ?? 0) - ($e->offered_price ?? 0) - ($e->exchange_bonus ?? 0),
-                'fin_mode' => $e->fin_mode ?? '—',
-                'financier_name' => $finMap[$e->financier] ?? $e->financier ?? '—',
-                'loan_status' => $e->loan_status ?? '—',
+                'x8_enq_source'                => $e->x8_enq_source ?? $e->x8_source_code ?? '—',
+                'first_name'                   => $e->first_name ?? '—',
+                'last_name'                    => $e->last_name ?? '—',
+                'full_name'                    => $e->full_name ?? trim(($e->first_name ?? '') . ' ' . ($e->last_name ?? '')),
+                'email'                        => $e->email ?? '—',
+                'gender'                       => $e->gender ?? '—',
+                'enquiry_type'                 => $enquiryTypeMap[$e->enquiry_type ?? ''] ?? $e->enquiry_type ?? '—',
+                'source_code'                  => $sourcesMap[$e->source_code ?? ''] ?? $e->source?->name ?? $e->source_code ?? '—',
+                'sub_source'                   => $subSourceMap[$e->sub_source ?? ''] ?? $e->sub_source ?? '—',
+                'likely_purchase_date'         => $lpMap[$e->likely_purchase_date] ?? $e->likely_purchase_date ?? '—',
+                'x8_quotation_date'            => $this->formatDate($e->x8_quotation_date ?? $e->quotation_date, 'd-M-Y'),
+                'fuel_type'                    => $fuelMap[$e->fuel_type] ?? $e->fuel_type ?? '—',
+                'transmission'                 => $e->transmission ?? '—',
+                'drivetrain'                   => $e->drivetrain ?? '—',
+                'seating'                      => $e->seating ?? '—',
+                'pincode'                      => $e->pincode ?? $e->zipcode ?? '—',
+                'vpo'                          => $e->vpo ?? '—',
+                'tehsil'                       => $e->tehsil ?? '—',
+                'district'                     => $e->district ?? '—',
+                'city'                         => $e->city ?? '—',
+                'address'                      => $e->address ?? $e->customer_address ?? '—',
+                'x8_sc_code'                   => $x8AssignedSc['display_name'] ?? $scNamesByCode[$e->x8_sc_code] ?? $e->x8_sc_code ?? '—',
+                'x8_sc_mile_id'                => $e->x8_sc_mile_id ?? $x8AssignedSc['mile_id'] ?? '—',
+                'x8_sc_branch'                 => $branchesMap[$x8BranchCode] ?? $x8BranchCode ?? '—',
+                'x8_sc_location'               => $x8AssignedSc['primary_loc_code'] ?? '—',
+                'sc_code'                      => $scNamesByCode[$e->sc_code] ?? $e->sc_code ?? '—',
+                'sc_mile_id'                   => $e->sc_mile_id ?? $oemAssignedSc['mile_id'] ?? '—',
+                'oem_sc_branch'                => $branchesMap[$oemBranchCode] ?? $oemBranchCode ?? '—',
+                'oem_sc_location'              => $oemAssignedSc['primary_loc_code'] ?? '—',
+                'dealer_branch'                => $e->dealer_branch ?? '—',
+                'dealer_location'              => $e->dealer_location ?? '—',
+                'occupation_type'              => $e->occupation_type ?? '—',
+                'customer_type'                => $e->customer_type ?? '—',
+                'occupation_sub_type'          => $e->occupation_sub_type ?? '—',
+                'company_name'                 => $e->company_name ?? '—',
+                'dob'                          => $this->formatDate($e->dob, 'd-M-Y'),
+                'marital_status'               => $maritalStatusMap[$e->marital_status ?? ''] ?? $e->marital_status ?? '—',
+                'marriage_date'                => $this->formatDate($e->marriage_date, 'd-M-Y'),
+                'age_group'                    => $ageGroupMap[$e->age_group ?? ''] ?? $e->age_group ?? '—',
+                'usage_area'                   => $e->usage_area ?? '—',
+                'km_travelled_daily'           => $e->km_travelled_daily ?? '—',
+                'application_type'             => $e->application_type ?? '—',
+                'application'                  => $e->application ?? '—',
+                'has_ev'                       => $e->has_ev ?? '—',
+                'purchase_type'                => $purcTypeMap[$e->purchase_type ?? ''] ?? $e->purchase_type ?? '—',
+                'consid_brand'                 => $e->consid_brand ?? $e->consider_make ?? '—',
+                'consid_model'                 => $e->consid_model ?? $e->consider_model ?? '—',
+                'consid_variant'               => $e->consid_variant ?? $e->consider_variant ?? '—',
+                'expected_price'               => $e->expected_price ?? '—',
+                'offered_price'                => $e->offered_price ?? '—',
+                'exchange_bonus'               => $e->exchange_bonus ?? '—',
+                'price_gap'                    => ($e->expected_price ?? 0) - ($e->offered_price ?? 0) - ($e->exchange_bonus ?? 0),
+                'fin_mode'                     => $e->fin_mode ?? '—',
+                'financier_name'               => $finMap[$e->financier] ?? $e->financier ?? '—',
+                'loan_status'                  => $e->loan_status ?? '—',
 
                 // Follow up (SC side)
-                'fup_type' => $fupTypesMap[$e->followup_type] ?? $e->followup_type ?? '—',
-                'followup_type' => $fupTypesMap[$e->followup_type] ?? $e->followup_type ?? '—',
-                'followup_date' => $this->formatDate($e->followup_date, 'd-M-Y'),
-                'followup_time' => $e->followup_time ?? '—',
+                'fup_type'                     => $fupTypesMap[$e->followup_type] ?? $e->followup_type ?? '—',
+                'followup_type'                => $fupTypesMap[$e->followup_type] ?? $e->followup_type ?? '—',
+                'followup_date'                => $this->formatDate($e->followup_date, 'd-M-Y'),
+                'followup_time'                => $e->followup_time ?? '—',
                 'recent_planned_followup_date' => trim($this->formatDate($e->followup_date, 'd-M-Y') . ' ' . ($e->followup_time ?? '')) ?: '—',
-                'recent_actual_followup_date' => $this->formatDate($e->recent_actual_followup_date, 'd-M-Y H:i'),
-                'call_duration' => $e->actual_fup_duration ?? $e->call_duration ?? '—',
-                'deviation_stage' => $e->deviation_stage ?? '—',
-                'remarks' => $e->recent_fup_remarks ?? $e->remarks ?? '—',
-                'followup_remarks_type' => $e->recent_fup_remarks_type ?? '—',
-                'comments' => $e->recent_fup_comments ?? '—',
-                'stage' => $enqStageMap[$e->stage ?? ''] ?? $e->stage ?? '—',
-                'td_count' => $e->test_drive_count ?? '—',
-                'test_drive_no' => $e->test_drive_no ?? $e->oem_test_drive_no ?? '—',
-                'td_date' => $this->formatDate($e->td_date, 'd-M-Y'),
-                'lost_reason' => $e->lost_reason ?? '—',
-                'lost_sub_reason' => $e->lost_sub_reason ?? '—',
-                'lost_detail_reason' => $e->lost_detail_reason ?? '—',
-                'lost_remarks' => $e->lost_remarks ?? '—',
+                'recent_actual_followup_date'  => $this->formatDate($e->recent_actual_followup_date, 'd-M-Y H:i'),
+                'call_duration'                => $e->actual_fup_duration ?? $e->call_duration ?? '—',
+                'deviation_stage'              => $deviationStageMap[$e->deviation_stage ?? ''] ?? $e->deviation_stage ?? '—',
+                'remarks'                      => $e->recent_fup_remarks ?? $e->remarks ?? '—',
+                'followup_remarks_type'        => $e->recent_fup_remarks_type ?? '—',
+                'comments'                     => $e->recent_fup_comments ?? '—',
+                'stage'                        => $enqStageMap[$e->stage ?? ''] ?? $e->stage ?? '—',
+                'td_count'                     => $e->test_drive_count ?? '—',
+                'test_drive_no'                => $e->test_drive_no ?? $e->oem_test_drive_no ?? '—',
+                'td_date'                      => $this->formatDate($e->td_date, 'd-M-Y'),
+                'lost_reason'                  => $lostReasonMap[$e->lost_reason ?? ''] ?? $e->lost_reason ?? '—',
+                'lost_sub_reason'              => $lostSubReasonMap[$e->lost_sub_reason ?? ''] ?? $e->lost_sub_reason ?? '—',
+                'lost_detail_reason'           => $e->lost_detail_reason ?? '—',
+                'lost_remarks'                 => $e->lost_remarks ?? '—',
 
                 // Follow up (CRE side)
-                'cre_fup_count' => $creFup->cre_fup_count ?? '—',
-                'cre_planned_fup_date' => $creFup ? $this->formatDate($creFup->cre_planned_fup_date, 'd-M-Y') : '—',
-                'cre_actual_fup_date' => $creFup ? $this->formatDate($creFup->cre_actual_fup_date, 'd-M-Y') : '—',
-                'cre_fup_call_duration' => $creFup->cre_fup_call_duration ?? '—',
-                'cre_fup_deviation_stage' => $creFup->cre_fup_deviation_stage ?? '—',
-                'cre_enq_stage' => $enqStageMap[$creFup->cre_enq_stage ?? ''] ?? $creFup->cre_enq_stage ?? '—',
-                'cre_customer_stage' => $custStageMap[$creFup->cre_customer_stage ?? ''] ?? $creFup->cre_customer_stage ?? '—',
-                'cre_fup_remarks' => $creFup->cre_fup_remarks ?? '—',
-                'cre_next_fup_date' => $creFup ? $this->formatDate($creFup->cre_next_fup_date, 'd-M-Y') : '—',
+                'cre_fup_count'                => $creFup->cre_fup_count ?? '—',
+                'cre_planned_fup_date'         => $creFup ? $this->formatDate($creFup->cre_planned_fup_date, 'd-M-Y') : '—',
+                'cre_actual_fup_date'          => $creFup ? $this->formatDate($creFup->cre_actual_fup_date, 'd-M-Y') : '—',
+                'cre_fup_call_duration'        => $creFup->cre_fup_call_duration ?? '—',
+                'cre_fup_deviation_stage'      => $deviationStageMap[$creFup->cre_fup_deviation_stage ?? ''] ?? $creFup->cre_fup_deviation_stage ?? '—',
+                'cre_enq_stage'                => $enqStageMap[$creFup->cre_enq_stage ?? ''] ?? $creFup->cre_enq_stage ?? '—',
+                'cre_customer_stage'           => $custStageMap[$creFup->cre_customer_stage ?? ''] ?? $creFup->cre_customer_stage ?? '—',
+                'cre_fup_remarks'              => $creFup->cre_fup_remarks ?? '—',
+                'cre_next_fup_date'            => $creFup ? $this->formatDate($creFup->cre_next_fup_date, 'd-M-Y') : '—',
             ];
         }
 
@@ -1447,12 +1485,12 @@ class EnquiryCrudController extends CrudController
             $validated = $request->validate($this->getValidationRules());
             $this->processEntityRelations($validated);
             $validated['created_by'] = backpack_user()->id;
-            
+
             // Reference leads get REFERENCE immediately, otherwise standard new enquiries get LONG
             $isRef = isset($validated['source_code']) && strtoupper($validated['source_code']) === 'REFERENCE';
             $validated['origin'] = $isRef ? 'REFERENCE' : 'LONG';
             $validated['current_origin'] = $isRef ? 'REFERENCE' : 'LONG';
-            
+
             $validated['cne'] = 1;
 
             $creFields = ['cre_fup_call_duration', 'cre_fup_deviation_stage', 'cre_enq_stage', 'cre_customer_stage', 'cre_fup_remarks', 'cre_next_fup_date'];
@@ -1594,7 +1632,7 @@ class EnquiryCrudController extends CrudController
                 'mobile' => 'required|numeric|digits:10',
                 'segment_code' => 'required',
                 'model_code' => 'required',
-                
+
                 // Everything else is optional during Creation
                 'referred_by' => 'nullable|max:100',
                 'last_name' => 'nullable|max:100',
@@ -1607,7 +1645,7 @@ class EnquiryCrudController extends CrudController
                 'district' => 'nullable|max:100',
                 'city' => 'nullable|max:100',
                 'territory' => 'nullable|string|max:100',
-                'variant_code' => 'nullable', 
+                'variant_code' => 'nullable',
                 'color_code' => 'nullable',
                 'fuel_type' => 'nullable',
                 'usage_area' => 'nullable',
@@ -1623,7 +1661,7 @@ class EnquiryCrudController extends CrudController
             // Required Forced Values
             $validated['enquiry_type'] = 'TELEPHONE';
             $validated['source_code']  = 'REFERENCE';
-            
+
             // Standard metadata
             $validated['created_by']     = backpack_user()->id;
             $validated['origin']         = 'REFERENCE';
@@ -1631,10 +1669,9 @@ class EnquiryCrudController extends CrudController
             $validated['cne']            = 1;
 
             Enquiry::create($validated);
-            
+
             Alert::success('Reference Enquiry created successfully.')->flash();
             return redirect(backpack_url('enquiries/reference'));
-            
         } catch (\Throwable $e) {
             Log::error($e->getMessage());
             throw $e;
@@ -1657,15 +1694,15 @@ class EnquiryCrudController extends CrudController
     {
         $fullFormActive = request()->has('segment_code') || !request()->has('call_nature');
         $req = $fullFormActive ? 'required' : 'nullable';
-        
+
         $sourceCode = strtoupper(request()->input('source_code', ''));
         $isRef = $sourceCode === 'REFERENCE';
         $isRefOrWapp = in_array($sourceCode, ['REFERENCE', 'WHATSAPP']);
-        
+
         // Dynamic field requirements based on source
         $colorReq = ($fullFormActive && !$isRefOrWapp) ? 'required' : 'nullable';
         $refReq = ($fullFormActive && $isRef) ? 'required' : 'nullable';
-        
+
         // If the frontend disabled source_code (e.g., for Walk-In), it won't be sent in the request.
         $sourceReq = ($fullFormActive && request()->has('source_code')) ? 'required' : 'nullable';
 
@@ -1679,12 +1716,12 @@ class EnquiryCrudController extends CrudController
             'sub_source' => 'nullable',
             'person_code' => 'nullable',
             'reference_details' => 'nullable|max:255',
-            
+
             // Reference Details (Mandatory if Source is Reference)
             'referred_by' => $refReq . '|max:100',
             'referee_phone' => $refReq . '|max:15',
             'referee_name' => $refReq . '|max:100',
-            
+
             'planned_campaign' => 'nullable|max:150',
             'likely_purchase_date' => 'nullable|max:150',
             'activity_type' => 'nullable',
@@ -1694,7 +1731,7 @@ class EnquiryCrudController extends CrudController
             'activity_end_date' => 'nullable|date',
             'activity_branch' => 'nullable',
             'activity_location' => 'nullable',
-            
+
             // 1. Customer Primary Details (All mandatory except email & alternate_mobile)
             'first_name' => $req . '|max:100',
             'last_name' => $req . '|max:100',
@@ -1734,7 +1771,7 @@ class EnquiryCrudController extends CrudController
             'cre_fup_remarks' => $creReq . '|string|max:255',
             'cre_fup_call_duration' => 'nullable|string|max:50',
             'cre_fup_deviation_stage' => 'nullable|string|max:50',
-            
+
             // WhatsApp Campaign Fields
             'wapp_campaign_name' => 'nullable|string|max:150',
             'wapp_campaign_date' => 'nullable|date',
