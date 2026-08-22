@@ -354,6 +354,8 @@ class ImportEnquiriesJob implements ShouldQueue
                         $modelMatch = $this->resolveVehicleModel($modelName);
                         $colorMatch = $this->resolveVehicleColor($this->cell($row, $headerMap, 'Color'));
 
+                        $fupCountRaw = $this->cell($row, $headerMap, 'Completed Followup Count');
+
                         $data = $this->stripNulls([
                             'first_name'                   => $this->cleanString($firstName, 100),
                             'last_name'                     => $this->cleanString($lastName, 100),
@@ -378,6 +380,13 @@ class ImportEnquiriesJob implements ShouldQueue
                             'first_actual_followup_date'    => $this->excelDate($this->cell($row, $headerMap, 'First Actual Followup')),
                             'recent_planned_followup_date'  => $this->excelDate($this->cell($row, $headerMap, 'Recent Planned Followup')),
                             'recent_actual_followup_date'   => $this->excelDate($this->cell($row, $headerMap, 'Recent Actual Followup')),
+
+                            // NEW FIELDS
+                            'first_fup_remarks'            => $this->resolveKeyValue('SC_FUP_REMARKS', $this->cell($row, $headerMap, 'First Followup Remarks')),
+                            'next_planned_followup_date'   => $this->excelDate($this->cell($row, $headerMap, 'Next Planned Followup')),
+                            'followup_type'                => $this->resolveKeyValue('FOLLOW_UP_TYPE', $this->cell($row, $headerMap, 'Followup Type')),
+                            'followup_remarks_type'        => $this->resolveKeyValue('SC_FUP_REMARKS_TYPE', $this->cell($row, $headerMap, 'Follow-up Remarks Type')),
+                            'fup_count'                     => is_numeric($fupCountRaw) ? (int) $fupCountRaw : null,
                         ]);
                         $data['updated_at'] = $now;
 
@@ -637,7 +646,6 @@ class ImportEnquiriesJob implements ShouldQueue
                         $modelName = $this->cell($row, $headerMap, 'Model Name');
                         $modelMatch = $this->resolveVehicleModel($modelName);
 
-                        // 5. APPLIED resolveKeyValue FOR FUP SHEET FIELDS
                         $data = [
                             'enquiry_no'            => $this->cleanString($this->cell($row, $headerMap, 'Enquiry Number'), 50),
                             'sc_code'               => $this->cleanString($this->cell($row, $headerMap, 'Sales Consultant'), 200),
@@ -646,6 +654,8 @@ class ImportEnquiriesJob implements ShouldQueue
                             'remark_type'           => $this->resolveKeyValue('SC_FUP_REMARKS_TYPE', $this->cell($row, $headerMap, 'Remark Type')),
                             'planned_followup_date' => $this->excelDate($this->cell($row, $headerMap, 'Planned Followup Date')),
                             'actual_followup_date'  => $this->excelDate($this->cell($row, $headerMap, 'Actual Followup Date')),
+                            'followup_status'       => $this->cleanString($this->cell($row, $headerMap, 'Followup Status'), 50),
+                            'call_duration'        => $this->minutesToDuration($this->cell($row, $headerMap, 'Actual followup call duration')),
                             'remarks'               => $this->resolveKeyValue('SC_FUP_REMARKS', $this->cell($row, $headerMap, 'Remark')),
                             'comments'              => $this->cleanString($this->cell($row, $headerMap, 'Comments')),
                             'enquiry_date'          => $this->excelDate($this->cell($row, $headerMap, 'Enquiry Date')),
@@ -1226,12 +1236,44 @@ class ImportEnquiriesJob implements ShouldQueue
             if (is_numeric($value)) {
                 $dt = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($value);
             } else {
-                $dt = new \DateTime((string) $value);
+                $str = trim((string) $value);
+
+                // Explicitly handle the "27-Sep-25 17:47" style export format
+                // (2-digit year + textual month is otherwise ambiguous to auto-parse).
+                $dt = \DateTime::createFromFormat('d-M-y H:i', $str)
+                    ?: \DateTime::createFromFormat('d-M-y H:i:s', $str)
+                    ?: \DateTime::createFromFormat('d-M-Y H:i', $str)
+                    ?: \DateTime::createFromFormat('d-M-Y H:i:s', $str)
+                    ?: null;
+
+                if (!$dt) {
+                    $dt = new \DateTime($str); // fallback for any other format
+                }
             }
 
-            return $withTime ? $dt->format('Y-m-d H:i:s') : $dt->format('Y-m-d');
+            // Every sheet now supplies datetime values and every matching SQL
+            // column is DATETIME, so always persist full date + time.
+            // ($withTime kept in signature only so existing call sites don't break.)
+            return $dt->format('Y-m-d H:i:s');
         } catch (\Throwable $e) {
             return null;
         }
+    }
+
+    private function minutesToDuration($value): ?string
+    {
+        if ($value === null || $value === '' || $value === '-' || $value === 'N/A' || $value === 'NaT') {
+            return null;
+        }
+
+        if (!is_numeric($value)) {
+            return null;
+        }
+
+        $totalMinutes = (int) round((float) $value);
+        $h = intdiv($totalMinutes, 60);
+        $m = $totalMinutes % 60;
+
+        return sprintf('%02d:%02d:00', $h, $m);
     }
 }
