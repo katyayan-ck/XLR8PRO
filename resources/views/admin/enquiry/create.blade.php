@@ -271,13 +271,13 @@
                                 </select>
                             </div>
                             <div class="col-md-3 mb-3">
-                                <label class="form-label">Enquiry Source <span class="text-danger">*</span></label>
+                                <label class="form-label">Enquiry Source <span class="text-danger" id="source_code_asterisk">*</span></label>
                                 <select name="source_code" id="source_code" class="form-control form-select" required>
                                     <option value="">Select Enquiry Source</option>
                                 </select>
                             </div>
                             <div class="col-md-3 mb-3">
-                                <label class="form-label">Enquiry Sub Source <span class="text-danger">*</span></label>
+                                <label class="form-label">Enquiry Sub Source <span class="text-danger d-none" id="sub_source_asterisk">*</span></label>
                                 <select name="sub_source" id="sub_source" class="form-control form-select" disabled>
                                     <option value="">Select Enquiry Sub Source</option>
                                 </select>
@@ -919,7 +919,7 @@
                                             <th class="text-center px-3">Planned Date</th>
                                             <th class="text-center px-3">Actual Date</th>
                                             <th class="text-center px-3">Call Duration</th>
-                                            <th class="text-center px-3">Fup Status</th>
+                                            <th class="text-center px-3">Next Fup Date</th>
                                             <th class="text-center px-3">Deviation Stage</th>
                                             <th class="text-center px-3">Enq Stage</th>
                                             <th class="text-center px-3">Customer Stage</th>
@@ -934,8 +934,8 @@
                                                     <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $cre?->cre_planned_fup_date ? \Carbon\Carbon::parse($cre->cre_planned_fup_date)->format('d-M-Y') : '—' }}</div></td>
                                                     <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $cre?->cre_actual_fup_date ? \Carbon\Carbon::parse($cre->cre_actual_fup_date)->format('d-M-Y') : '—' }}</div></td>
                                                     <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $cre?->cre_fup_call_duration ?: '—' }}</div></td>
-                                                    <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">—</div></td>
-                                                    <td><div class="form-control bg-white h-auto border-0 text-center">{{ $cre?->cre_fup_deviation_stage ?: '—' }}</div></td>
+                                                    <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $cre?->cre_next_fup_date ? \Carbon\Carbon::parse($cre->cre_next_fup_date)->format('d-M-Y') : '—' }}</div></td>
+                                                    <td><div class="form-control bg-white h-auto border-0 text-center">{{ $devMap[$cre?->cre_fup_deviation_stage ?? ''] ?? ($cre?->cre_fup_deviation_stage ?: '—') }}</div></td>
                                                     <td><div class="form-control bg-white h-auto border-0 text-center">{{ $enqStageMap[$cre?->cre_enq_stage ?? ''] ?? ($cre?->cre_enq_stage ?: '—') }}</div></td>
                                                     <td><div class="form-control bg-white h-auto border-0 text-center">{{ $custStageMap[$cre?->cre_customer_stage ?? ''] ?? ($cre?->cre_customer_stage ?: '—') }}</div></td>
                                                     <td><div class="form-control bg-white h-auto border-0 text-wrap text-center" style="min-width: 150px;">{{ $cre?->cre_fup_remarks ?: '—' }}</div></td>
@@ -956,10 +956,6 @@
                                 <div class="col-md-2 mb-3">
                                     <label class="form-label">Call Duration</label>
                                     <input type="text" id="cre_fup_call_duration" name="cre_fup_call_duration" class="form-control" placeholder="HH:MM:SS" maxlength="8" value="{{ old('cre_fup_call_duration') }}" oninput="formatDuration(this)">
-                                </div>
-                                <div class="col-md-2 mb-3">
-                                    <label class="form-label">Deviation Stage</label>
-                                    <input type="text" name="cre_fup_deviation_stage" class="form-control" value="{{ old('cre_fup_deviation_stage') }}">
                                 </div>
                                 <div class="col-md-2 mb-3">
                                     <label class="form-label">Enquiry Stage @if(isset($enquiry))<span class="text-danger">*</span>@endif</label>
@@ -983,9 +979,9 @@
                                     <label class="form-label">Next Fup Date @if(isset($enquiry))<span class="text-danger">*</span>@endif</label>
                                     <input type="text" id="cre_next_fup_date" name="cre_next_fup_date" class="form-control" value="{{ old('cre_next_fup_date') }}" placeholder="DD-MMM-YYYY" @if(isset($enquiry)) required @endif>
                                 </div>
-                                <div class="col-md-12 mb-3">
+                                <div class="col-md-4 mb-3">
                                     <label class="form-label">Remarks @if(isset($enquiry))<span class="text-danger">*</span>@endif</label>
-                                    <textarea name="cre_fup_remarks" class="form-control" rows="2" @if(isset($enquiry)) required @endif>{{ old('cre_fup_remarks') }}</textarea>
+                                    <textarea name="cre_fup_remarks" class="form-control" rows="1" @if(isset($enquiry)) required @endif>{{ old('cre_fup_remarks') }}</textarea>
                                 </div>
                             </div>
                         </div>
@@ -1261,9 +1257,35 @@
             }).trigger('change');
 
             $('#enquiry_type').on('change', function() {
-                loadKeywordDropdown('ENQ_SOURCE', $(this).val(), $sourceCode, 'Select Enquiry Source', currentEnquiry.source);
-                $subSource.html('<option value="">Select Enquiry Sub Source</option>').prop('disabled', true);
-                if (currentEnquiry.isEdit) setTimeout(() => $sourceCode.trigger('change'), 300);
+                // Get both the hidden value (code) and the visible text
+                const typeVal = String($(this).val()).trim().toUpperCase();
+                const typeText = $(this).find('option:selected').text().trim().toUpperCase().replace(/\s+/g, '');
+
+                // Check for WALK_IN (value), or any text variations like WALKIN, WALK-IN
+                if (typeVal === 'WALK_IN' || typeText.includes('WALKIN') || typeText.includes('WALK_IN')) {
+                    // Disable Source & hide asterisk
+                    $sourceCode.html('<option value="">Select Enquiry Source</option>').val('').prop('disabled', true).prop('required', false);
+                    $('#source_code_asterisk').addClass('d-none');
+                    
+                    // Disable Sub Source & hide asterisk
+                    $subSource.html('<option value="">Select Enquiry Sub Source</option>').val('').prop('disabled', true).prop('required', false);
+                    $('#sub_source_asterisk').addClass('d-none');
+                    
+                    // Trigger change to hide any reference fields
+                    $sourceCode.trigger('change');
+                } else {
+                    // Enable Source & show asterisk
+                    $sourceCode.prop('disabled', false).prop('required', true);
+                    $('#source_code_asterisk').removeClass('d-none');
+                    
+                    loadKeywordDropdown('ENQ_SOURCE', $(this).val(), $sourceCode, 'Select Enquiry Source', currentEnquiry.source);
+                    
+                    // Reset Sub Source
+                    $subSource.html('<option value="">Select Enquiry Sub Source</option>').prop('disabled', true).prop('required', false);
+                    $('#sub_source_asterisk').addClass('d-none');
+                    
+                    if (currentEnquiry.isEdit) setTimeout(() => $sourceCode.trigger('change'), 300);
+                }
             });
 
             // Flag to prevent wiping data during the page load and AJAX calls
@@ -1301,11 +1323,13 @@
                 const source = $(this).val();
                 toggleReferenceFields();
                 if (source === 'HYPERLOCAL') {
-                    $subSource.prop('disabled', false);
+                    $subSource.prop('disabled', false).prop('required', true);
+                    $('#sub_source_asterisk').removeClass('d-none');
                     loadKeywordDropdown('ENQUIRY_SUB_SOURCE', source, $subSource,
                         'Select Enquiry Sub Source', currentEnquiry.subSource);
                 } else {
-                    $subSource.html('<option value="">Select Enquiry Sub Source</option>').val('').prop('disabled', true);
+                    $subSource.html('<option value="">Select Enquiry Sub Source</option>').val('').prop('disabled', true).prop('required', false);
+                    $('#sub_source_asterisk').addClass('d-none');
                 }
                 $plannedCampaign.prop('disabled', source !== 'ACTIVATIONS').prop('required', source === 'ACTIVATIONS').val(source === 'ACTIVATIONS' ? $plannedCampaign.val() : '');
             }).trigger('change');
