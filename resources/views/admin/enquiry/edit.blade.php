@@ -570,7 +570,7 @@
                         <div class="row">
 
                             {{-- Dealer Branch --}}
-                            <div class="col-md-4 mb-3">
+                            {{-- <div class="col-md-4 mb-3">
 
                                 <label class="form-label">
                                     Select Dealer Branch
@@ -590,10 +590,10 @@
 
                                 </select>
 
-                            </div>
+                            </div> --}}
 
                             {{-- Dealer Location --}}
-                            <div class="col-md-4 mb-3">
+                            {{-- <div class="col-md-4 mb-3">
 
                                 <label class="form-label">
                                     Select Dealer Location
@@ -607,7 +607,7 @@
 
                                 </select>
 
-                            </div>
+                            </div> --}}
 
                             {{-- Sales Consultant --}}
                             <div class="col-md-4 mb-3">

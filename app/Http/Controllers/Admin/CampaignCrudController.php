@@ -130,15 +130,15 @@ class CampaignCrudController extends CrudController
                         'headerName' => 'End Date'
                     ],
 
-                    [
-                        'field' => 'branch_name',
-                        'headerName' => 'Dealer Branch'
-                    ],
+                    // [
+                    //     'field' => 'branch_name',
+                    //     'headerName' => 'Dealer Branch'
+                    // ],
 
-                    [
-                        'field' => 'location_name',
-                        'headerName' => 'Dealer Location'
-                    ],
+                    // [
+                    //     'field' => 'location_name',
+                    //     'headerName' => 'Dealer Location'
+                    // ],
 
                     [
                         'field' => 'action',
