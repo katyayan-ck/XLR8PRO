@@ -1443,20 +1443,40 @@ class EnquiryCrudController extends CrudController
 
     private function saveCreFup($enquiry, $request)
     {
-        if ($request->filled('cre_enq_stage') || $request->filled('cre_customer_stage') || $request->filled('cre_next_fup_date') || $request->filled('cre_fup_remarks')) {
-            $previousFup = DB::table('xlr8_cre_enquiry_fup')
-                ->where('x8_enq_no', 'XENQ-' . $enquiry->id)
+        if ($request->filled('cre_enq_stage') || $request->filled('cre_customer_stage') || $request->filled('cre_fup_remarks')) {
+
+            $x8EnqNo = 'XENQ-' . $enquiry->id;
+
+            // 1. Check if there's a pending OPEN_FOLLOW_UP row
+            $openFup = DB::table('xlr8_cre_enquiry_fup')
+                ->where('x8_enq_no', $x8EnqNo)
+                ->where('cre_fup_deviation_stage', 'OPEN_FOLLOW_UP')
                 ->orderBy('id', 'desc')
                 ->first();
 
-            $fupCount = $previousFup ? ($previousFup->cre_fup_count + 1) : 1;
-            $plannedDate = $previousFup ? $previousFup->cre_next_fup_date : Carbon::now()->format('Y-m-d');
+            $fupCount = 1;
+            $plannedDate = Carbon::now()->format('Y-m-d');
+
+            if ($openFup) {
+                $fupCount = $openFup->cre_fup_count;
+                $plannedDate = $openFup->cre_planned_fup_date;
+            } else {
+                // Determine Fup Count if no Open Fup exists
+                $lastFup = DB::table('xlr8_cre_enquiry_fup')
+                    ->where('x8_enq_no', $x8EnqNo)
+                    ->orderBy('id', 'desc')
+                    ->first();
+                if ($lastFup) {
+                    $fupCount = $lastFup->cre_fup_count + 1;
+                }
+            }
+
             $actualDate = Carbon::now()->format('Y-m-d');
 
             // --- DEVIATION STAGE CALCULATION ---
             $planned = Carbon::parse($plannedDate)->startOfDay();
             $actual = Carbon::parse($actualDate)->startOfDay();
-            $diffDays = $planned->diffInDays($actual, false); // $actual - $planned
+            $diffDays = $planned->diffInDays($actual, false);
 
             $deviationCode = 'SAME_DAY';
             if ($diffDays < 0) {
@@ -1469,26 +1489,53 @@ class EnquiryCrudController extends CrudController
                 $deviationCode = 'GREATER_THAN_10_DAYS';
             }
 
-            // Convert frontend dd-MMM-yyyy format to MySQL YYYY-MM-DD
             $nextFupDate = $request->cre_next_fup_date ? Carbon::parse($request->cre_next_fup_date)->format('Y-m-d') : null;
 
-            DB::table('xlr8_cre_enquiry_fup')->insert([
+            // Data for the ACTUAL completed follow up
+            $actualData = [
                 'enquiry_no' => $enquiry->oem_enquiry_no ?? $enquiry->enquiry_no,
                 'quick_enquiry_no' => $enquiry->quick_enquiry_no ?? $enquiry->oem_quick_enquiry_no,
-                'x8_enq_no' => 'XENQ-' . $enquiry->id,
+                'x8_enq_no' => $x8EnqNo,
                 'cre_fup_count' => $fupCount,
                 'cre_planned_fup_date' => $plannedDate,
                 'cre_actual_fup_date' => $actualDate,
-                'cre_fup_call_duration' => $request->cre_fup_call_duration,
-                'cre_fup_deviation_stage' => $deviationCode, // Automatically Calculated
+                'cre_fup_deviation_stage' => $deviationCode,
                 'cre_enq_stage' => $request->cre_enq_stage,
                 'cre_customer_stage' => $request->cre_customer_stage,
                 'cre_fup_remarks' => $request->cre_fup_remarks,
                 'cre_next_fup_date' => $nextFupDate,
-                'created_by' => backpack_user()->id,
-                'created_at' => now(),
                 'updated_at' => now(),
-            ]);
+            ];
+
+            // Complete the pending row OR insert a new one
+            if ($openFup) {
+                $actualData['updated_by'] = backpack_user()->id;
+                DB::table('xlr8_cre_enquiry_fup')->where('id', $openFup->id)->update($actualData);
+            } else {
+                $actualData['created_by'] = backpack_user()->id;
+                $actualData['created_at'] = now();
+                DB::table('xlr8_cre_enquiry_fup')->insert($actualData);
+            }
+
+            // 2. Create the NEXT pending row (Only if not LOST/DROPPED and date is provided)
+            if ($nextFupDate && !in_array($request->cre_enq_stage, ['LOST', 'DROPPED'])) {
+                DB::table('xlr8_cre_enquiry_fup')->insert([
+                    'enquiry_no' => $enquiry->oem_enquiry_no ?? $enquiry->enquiry_no,
+                    'quick_enquiry_no' => $enquiry->quick_enquiry_no ?? $enquiry->oem_quick_enquiry_no,
+                    'x8_enq_no' => $x8EnqNo,
+                    'cre_fup_count' => $fupCount + 1,
+                    'cre_planned_fup_date' => $nextFupDate,
+                    'cre_actual_fup_date' => null,
+                    'cre_fup_deviation_stage' => 'OPEN_FOLLOW_UP',
+                    'cre_enq_stage' => null,
+                    'cre_customer_stage' => null,
+                    'cre_fup_remarks' => null,
+                    'cre_next_fup_date' => null,
+                    'created_by' => backpack_user()->id,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
         }
     }
 
@@ -1528,7 +1575,7 @@ class EnquiryCrudController extends CrudController
             $this->processEntityRelations($validated);
 
             // Format all possible date fields for MySQL
-            $dateFields = ['virtual_call_date', 'wapp_campaign_date', 'dob', 'marriage_date', 'activity_start_date', 'activity_end_date'];
+        $dateFields = ['virtual_call_date', 'wapp_campaign_date', 'dob', 'marriage_date', 'activity_start_date', 'activity_end_date', 'cre_likely_purchase_date'];
             foreach ($dateFields as $field) {
                 if (!empty($validated[$field])) {
                     $validated[$field] = Carbon::parse($validated[$field])->format('Y-m-d H:i:s');
@@ -1543,6 +1590,7 @@ class EnquiryCrudController extends CrudController
             $validated['current_origin'] = $isRef ? 'REFERENCE' : 'LONG';
 
             $validated['cne'] = 1;
+            $validated['x8_enq_assign_date'] = now();
 
             $creFields = ['cre_fup_call_duration', 'cre_fup_deviation_stage', 'cre_enq_stage', 'cre_customer_stage', 'cre_fup_remarks', 'cre_next_fup_date'];
             $enquiryData = collect($validated)->except($creFields)->toArray();
@@ -1590,7 +1638,7 @@ class EnquiryCrudController extends CrudController
         $this->processEntityRelations($validated);
 
         // Format all possible date fields for MySQL
-        $dateFields = ['virtual_call_date', 'wapp_campaign_date', 'dob', 'marriage_date', 'activity_start_date', 'activity_end_date'];
+        $dateFields = ['virtual_call_date', 'wapp_campaign_date', 'dob', 'marriage_date', 'activity_start_date', 'activity_end_date', 'cre_likely_purchase_date'];
         foreach ($dateFields as $field) {
             if (!empty($validated[$field])) {
                 $validated[$field] = Carbon::parse($validated[$field])->format('Y-m-d H:i:s');
@@ -1605,8 +1653,29 @@ class EnquiryCrudController extends CrudController
             $validated['cne'] = 1;
         }
 
+        if (isset($validated['x8_sc_code']) && $enquiry->x8_sc_code !== $validated['x8_sc_code']) {
+            $validated['x8_enq_assign_date'] = now();
+        }
+
         $creFields = ['cre_fup_call_duration', 'cre_fup_deviation_stage', 'cre_enq_stage', 'cre_customer_stage', 'cre_fup_remarks', 'cre_next_fup_date'];
         $enquiryData = collect($validated)->except($creFields)->toArray();
+
+        // --- MISMATCH TRACKING LOGIC ---
+        // Only run if the comparison table was actually rendered and submitted
+        if ($request->has('comparison_rendered')) {
+            if (!$request->has('match_enq_stage')) {
+                $enquiryData['enq_stage_mismatch'] = $enquiry->enq_stage_mismatch + 1;
+            }
+            if (!$request->has('match_next_fup')) {
+                $enquiryData['next_fup_mismatch'] = $enquiry->next_fup_mismatch + 1;
+            }
+            if (!$request->has('match_fup_remarks')) {
+                $enquiryData['latest_fup_remarks_mismatch'] = $enquiry->latest_fup_remarks_mismatch + 1;
+            }
+            if (!empty($enquiry->test_drive_no) && !$request->has('match_test_drive')) {
+                $enquiryData['test_drive_mismatch'] = $enquiry->test_drive_mismatch + 1;
+            }
+        }
 
         $enquiry->update($enquiryData);
 
@@ -1837,7 +1906,9 @@ class EnquiryCrudController extends CrudController
             'referee_name' => $refReq . '|max:100',
 
             'planned_campaign' => 'nullable|max:150',
-            'likely_purchase_date' => 'nullable|max:150',
+            'likely_purchase_days' => 'nullable|max:150',
+            'cre_likely_purchase_date' => 'nullable|date',
+            'cre_likely_purchase_days' => 'nullable|max:150',
             'activity_type' => 'nullable',
             'activity_segment' => 'nullable',
             'activity_model' => 'nullable',
@@ -1871,8 +1942,8 @@ class EnquiryCrudController extends CrudController
             'application_type' => 'nullable',
             'application' => 'nullable',
 
-            // 3. X8 SC Details
-            'x8_sc_code' => $req . '|string|max:200',
+            // 3. X8 SC Details (Optional on Create, Mandatory on Edit)
+            'x8_sc_code' => ($isEdit ? 'required' : 'nullable') . '|string|max:200',
             'x8_sc_mile_id' => 'nullable|string|max:100',
 
             // 4. CRM Purchase Type
@@ -1881,9 +1952,8 @@ class EnquiryCrudController extends CrudController
             // 5. CRE Enquiry Stage (Mandatory on EDIT only)
             'cre_enq_stage' => $creReq . '|string|max:50',
             'cre_customer_stage' => $creReq . '|string|max:50',
-            'cre_next_fup_date' => $creReq . '|date',
+            'cre_next_fup_date' => (in_array(request('cre_enq_stage'), ['LOST', 'DROPPED']) ? 'nullable' : $creReq) . '|date',
             'cre_fup_remarks' => $creReq . '|string|max:255',
-            'cre_fup_call_duration' => 'nullable|string|max:50',
             'cre_fup_deviation_stage' => 'nullable|string|max:50',
 
             // WhatsApp Campaign Fields
