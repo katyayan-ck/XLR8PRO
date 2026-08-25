@@ -331,7 +331,7 @@
                                             </td>
                                             <td>
                                                 <div class="form-control bg-white h-auto border-0 text-nowrap text-center">
-                                                    {{ $enquiry->enq_assign_date ? \Carbon\Carbon::parse($enquiry->enq_assign_date)->format('d-M-Y') : '—' }}
+                                                    {{ !empty($enquiry->x8_enq_assign_date) ? \Carbon\Carbon::parse($enquiry->x8_enq_assign_date)->format('d-M-Y') : '—' }}
                                                 </div>
                                             </td>
                                         </tr>
@@ -407,7 +407,7 @@
                                 </div>
                             </div>
 
-                            <div class="col-md-3 mb-3">
+                            {{-- <div class="col-md-3 mb-3">
                                 <label class="form-label">Likely Purchase In Days <span
                                         class="text-danger">*</span></label>
                                 <select name="likely_purchase_date" class="form-control form-select">
@@ -418,7 +418,7 @@
                                             {{ $item['value'] }}</option>
                                     @endforeach
                                 </select>
-                            </div>
+                            </div> --}}
 
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">Select Dealer Branch <span class="text-danger">*</span></label>
@@ -841,8 +841,8 @@
                         <h5 class="mb-3 fw-bold">X8 SC Details</h5>
                         <div class="row">
                             <div class="col-md-3 mb-3">
-                                <label class="form-label">X8 Assigned SC <span class="text-danger">*</span></label>
-                                <select name="x8_sc_code" id="x8_sc_code" class="form-control form-select" required>
+                                <label class="form-label">X8 Assigned SC @if(isset($enquiry))<span class="text-danger">*</span>@endif</label>
+                                <select name="x8_sc_code" id="x8_sc_code" class="form-control form-select" @if(isset($enquiry)) required @endif>
                                     <option value="">Select X8 SC</option>
                                     @foreach ($saleconsultants as $consultant)
                                         <option value="{{ $consultant['person_code'] }}"
@@ -1255,8 +1255,6 @@
                                             <th class="text-center px-3">Fup Count</th>
                                             <th class="text-center px-3">Planned Date</th>
                                             <th class="text-center px-3">Actual Date</th>
-                                            <th class="text-center px-3">Call Duration</th>
-                                            <th class="text-center px-3">Next Fup Date</th>
                                             <th class="text-center px-3">Deviation Stage</th>
                                             <th class="text-center px-3">Enq Stage</th>
                                             <th class="text-center px-3">Customer Stage</th>
@@ -1267,120 +1265,82 @@
                                         @if (isset($creFups) && count($creFups) > 0)
                                             @foreach ($creFups as $index => $cre)
                                                 <tr>
-                                                    <td
-                                                        class="fw-bold align-middle table-secondary text-center px-3 text-dark">
-                                                        {{ ['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth'][$index] ?? $index + 1 . 'th' }}
-                                                        Fup</td>
-                                                    <td>
-                                                        <div
-                                                            class="form-control bg-white h-auto border-0 text-nowrap text-center">
-                                                            {{ $cre?->cre_planned_fup_date ? \Carbon\Carbon::parse($cre->cre_planned_fup_date)->format('d-M-Y') : '—' }}
-                                                        </div>
+                                                    <td class="fw-bold align-middle table-secondary text-center px-3 text-dark">
+                                                        {{ ['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth'][$index] ?? $index + 1 . 'th' }} Fup
                                                     </td>
-                                                    <td>
-                                                        <div
-                                                            class="form-control bg-white h-auto border-0 text-nowrap text-center">
-                                                            {{ $cre?->cre_actual_fup_date ? \Carbon\Carbon::parse($cre->cre_actual_fup_date)->format('d-M-Y') : '—' }}
-                                                        </div>
-                                                    </td>
-                                                    <td>
-                                                        <div
-                                                            class="form-control bg-white h-auto border-0 text-nowrap text-center">
-                                                            {{ $cre?->cre_fup_call_duration ?: '—' }}</div>
-                                                    </td>
-                                                    <td>
-                                                        <div
-                                                            class="form-control bg-white h-auto border-0 text-nowrap text-center">
-                                                            {{ $cre?->cre_next_fup_date ? \Carbon\Carbon::parse($cre->cre_next_fup_date)->format('d-M-Y') : '—' }}
-                                                        </div>
-                                                    </td>
-                                                    <td>
-                                                        <div class="form-control bg-white h-auto border-0 text-center">
-                                                            {{ $devMap[$cre?->cre_fup_deviation_stage ?? ''] ?? ($cre?->cre_fup_deviation_stage ?: '—') }}
-                                                        </div>
-                                                    </td>
-                                                    <td>
-                                                        <div class="form-control bg-white h-auto border-0 text-center">
-                                                            {{ $enqStageMap[$cre?->cre_enq_stage ?? ''] ?? ($cre?->cre_enq_stage ?: '—') }}
-                                                        </div>
-                                                    </td>
-                                                    <td>
-                                                        <div class="form-control bg-white h-auto border-0 text-center">
-                                                            {{ $custStageMap[$cre?->cre_customer_stage ?? ''] ?? ($cre?->cre_customer_stage ?: '—') }}
-                                                        </div>
-                                                    </td>
-                                                    <td>
-                                                        <div class="form-control bg-white h-auto border-0 text-wrap text-center"
-                                                            style="min-width: 150px;">{{ $cre?->cre_fup_remarks ?: '—' }}
-                                                        </div>
-                                                    </td>
+                                                    <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $cre?->cre_planned_fup_date ? \Carbon\Carbon::parse($cre->cre_planned_fup_date)->format('d-M-Y') : '—' }}</div></td>
+                                                    <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $cre?->cre_actual_fup_date ? \Carbon\Carbon::parse($cre->cre_actual_fup_date)->format('d-M-Y') : '—' }}</div></td>
+                                                    <td><div class="form-control bg-white h-auto border-0 text-center">{{ $devMap[$cre?->cre_fup_deviation_stage ?? ''] ?? ($cre?->cre_fup_deviation_stage ?: '—') }}</div></td>
+                                                    <td><div class="form-control bg-white h-auto border-0 text-center">{{ $enqStageMap[$cre?->cre_enq_stage ?? ''] ?? ($cre?->cre_enq_stage ?: '—') }}</div></td>
+                                                    <td><div class="form-control bg-white h-auto border-0 text-center">{{ $custStageMap[$cre?->cre_customer_stage ?? ''] ?? ($cre?->cre_customer_stage ?: '—') }}</div></td>
+                                                    <td><div class="form-control bg-white h-auto border-0 text-wrap text-center" style="min-width: 150px;">{{ $cre?->cre_fup_remarks ?: '—' }}</div></td>
                                                 </tr>
                                             @endforeach
                                         @else
                                             <tr>
-                                                <td colspan="9" class="text-muted py-3 bg-white text-center">No CRE
-                                                    Follow-up Data Found</td>
+                                                <td colspan="7" class="text-muted py-3 bg-white text-center">No CRE Follow-up Data Found</td>
                                             </tr>
                                         @endif
                                     </tbody>
                                 </table>
                             </div>
+                            {{-- Likely Purchase Details --}}
+                            <h5 class="fw-bold mb-3">Likely Purchase Details</h5>
+                            <div class="row mb-4">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Likely Purchase Days (Dump)</label>
+                                    <select class="form-control form-select" disabled style="background-color: #e9ecef;">
+                                        <option value="">—</option>
+                                        @foreach ($likely_purchase_dates as $item)
+                                            <option value="{{ $item['code'] }}" {{ old('likely_purchase_days', $enquiry->likely_purchase_days ?? '') == $item['code'] ? 'selected' : '' }}>{{ $item['value'] }}</option>
+                                        @endforeach
+                                    </select>
+                                    {{-- Hidden input preserves the value on submit --}}
+                                    <input type="hidden" name="likely_purchase_days" value="{{ old('likely_purchase_days', $enquiry->likely_purchase_days ?? '') }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">CRE Likely Purchase Date</label>
+                                    <input type="text" id="cre_likely_purchase_date" name="cre_likely_purchase_date" class="form-control" value="{{ !empty($enquiry->cre_likely_purchase_date) ? \Carbon\Carbon::parse($enquiry->cre_likely_purchase_date)->format('d-M-Y') : '' }}" placeholder="DD-MMM-YYYY">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">CRE Likely Purchase Days</label>
+                                    <select id="cre_likely_purchase_days" name="cre_likely_purchase_days" class="form-control form-select">
+                                        <option value="">Select Option</option>
+                                        @foreach ($likely_purchase_dates as $item)
+                                            <option value="{{ $item['code'] }}" {{ old('cre_likely_purchase_days', $enquiry->cre_likely_purchase_days ?? '') == $item['code'] ? 'selected' : '' }}>{{ $item['value'] }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
 
                             {{-- Editable Input Row --}}
                             <h5 class="fw-bold mb-3">Add CRE Follow Up</h5>
                             <div class="row">
-                                <div class="col-md-2 mb-3">
-                                    <label class="form-label">Call Duration</label>
-                                    <input type="text" id="cre_fup_call_duration" name="cre_fup_call_duration"
-                                        class="form-control" placeholder="HH:MM:SS" maxlength="8"
-                                        value="{{ old('cre_fup_call_duration') }}" oninput="formatDuration(this)">
-                                </div>
-                                <div class="col-md-2 mb-3">
-                                    <label class="form-label">Enquiry Stage @if (isset($enquiry))
-                                            <span class="text-danger">*</span>
-                                        @endif
-                                    </label>
-                                    <select name="cre_enq_stage" class="form-control form-select"
-                                        @if (isset($enquiry)) required @endif>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Enquiry Stage @if (isset($enquiry))<span class="text-danger">*</span>@endif</label>
+                                    <select name="cre_enq_stage" class="form-control form-select" @if (isset($enquiry)) required @endif>
                                         <option value="">Select Option</option>
                                         @foreach ($enquiry_stages as $item)
-                                            <option value="{{ $item['code'] }}"
-                                                {{ old('cre_enq_stage') == $item['code'] ? 'selected' : '' }}>
-                                                {{ $item['value'] }}</option>
+                                            <option value="{{ $item['code'] }}" {{ old('cre_enq_stage') == $item['code'] ? 'selected' : '' }}>{{ $item['value'] }}</option>
                                         @endforeach
                                     </select>
                                 </div>
-                                <div class="col-md-2 mb-3">
-                                    <label class="form-label">Customer Stage @if (isset($enquiry))
-                                            <span class="text-danger">*</span>
-                                        @endif
-                                    </label>
-                                    <select name="cre_customer_stage" class="form-control form-select"
-                                        @if (isset($enquiry)) required @endif>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Customer Stage @if (isset($enquiry))<span class="text-danger">*</span>@endif</label>
+                                    <select name="cre_customer_stage" class="form-control form-select" @if (isset($enquiry)) required @endif>
                                         <option value="">Select Option</option>
                                         @foreach ($customer_stages as $item)
-                                            <option value="{{ $item['code'] }}"
-                                                {{ old('cre_customer_stage') == $item['code'] ? 'selected' : '' }}>
-                                                {{ $item['value'] }}</option>
+                                            <option value="{{ $item['code'] }}" {{ old('cre_customer_stage') == $item['code'] ? 'selected' : '' }}>{{ $item['value'] }}</option>
                                         @endforeach
                                     </select>
                                 </div>
                                 <div class="col-md-2 mb-3">
-                                    <label class="form-label">Next Fup Date @if (isset($enquiry))
-                                            <span class="text-danger">*</span>
-                                        @endif
-                                    </label>
-                                    <input type="text" id="cre_next_fup_date" name="cre_next_fup_date"
-                                        class="form-control" value="{{ old('cre_next_fup_date') }}"
-                                        placeholder="DD-MMM-YYYY" @if (isset($enquiry)) required @endif>
+                                    <label class="form-label">Next Fup Date @if (isset($enquiry))<span class="text-danger" id="cre_next_fup_asterisk">*</span>@endif</label>
+                                    <input type="text" id="cre_next_fup_date" name="cre_next_fup_date" class="form-control" value="{{ old('cre_next_fup_date') }}" placeholder="DD-MMM-YYYY" @if (isset($enquiry)) required @endif>
                                 </div>
                                 <div class="col-md-4 mb-3">
-                                    <label class="form-label">Remarks @if (isset($enquiry))
-                                            <span class="text-danger">*</span>
-                                        @endif
-                                    </label>
-                                    <textarea name="cre_fup_remarks" class="form-control" rows="1"
-                                        @if (isset($enquiry)) required @endif>{{ old('cre_fup_remarks') }}</textarea>
+                                    <label class="form-label">Remarks @if (isset($enquiry))<span class="text-danger">*</span>@endif</label>
+                                    <textarea name="cre_fup_remarks" class="form-control" rows="1" @if (isset($enquiry)) required @endif>{{ old('cre_fup_remarks') }}</textarea>
                                 </div>
                             </div>
                         </div>
@@ -1393,132 +1353,72 @@
                         </div>
                         <div class="card-body">
                             @php
-                                $scActualDate =
-                                    $enquiry?->recent_actual_followup_date ?: $enquiry?->first_actual_followup_date;
                                 $scNextDate = $enquiry?->next_planned_followup_date;
-                                $scGap = '—';
-                                if ($scActualDate && $scNextDate) {
-                                    $scGap =
-                                        \Carbon\Carbon::parse($scActualDate)->diffInDays(
-                                            \Carbon\Carbon::parse($scNextDate),
-                                        ) . ' Days';
-                                }
 
-                                $lastCre =
-                                    isset($creFups) && count($creFups) > 0
-                                        ? (is_array($creFups)
-                                            ? end($creFups)
-                                            : $creFups->last())
-                                        : null;
-                                $creActualDate = $lastCre?->cre_actual_fup_date;
+                                $lastCre = (isset($creFups) && count($creFups) > 0) ? (is_array($creFups) ? end($creFups) : $creFups->last()) : null;
                                 $creNextDate = $lastCre?->cre_next_fup_date;
-                                $creGap = '—';
-                                if ($creActualDate && $creNextDate) {
-                                    $creGap =
-                                        \Carbon\Carbon::parse($creActualDate)->diffInDays(
-                                            \Carbon\Carbon::parse($creNextDate),
-                                        ) . ' Days';
-                                }
                             @endphp
+                            
+                            {{-- Hidden input to tell the backend this comparison table was rendered --}}
+                            <input type="hidden" name="comparison_rendered" value="1">
+                            
                             <div class="table-responsive mb-4">
-                                <table class="table table-bordered text-center align-middle mb-0"
-                                    style="background-color: #e9ecef;">
+                                <table class="table table-bordered text-center align-middle mb-0" style="background-color: #e9ecef;">
                                     <thead class="table-secondary text-uppercase" style="font-size: 0.85rem;">
                                         <tr>
-                                            <th class="text-center px-3">Enq & Fup</th>
-                                            <th class="text-center px-3">SC</th>
-                                            <th class="text-center px-3">CRE</th>
+                                            <th class="text-center p-3">CRE Vs SC Comparison</th>
+                                            <th class="text-center p-3" style="width: 25%;">CRE</th>
+                                            <th class="text-center p-3" style="width: 25%;">SC</th>
+                                            <th class="text-center p-3" style="width: 20%;">Status</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td class="fw-bold align-middle table-secondary text-center px-3 text-dark">
-                                                Actual Fup Date</td>
-                                            <td>
-                                                <div class="form-control bg-white h-auto border-0 text-nowrap text-center">
-                                                    {{ $scActualDate ? \Carbon\Carbon::parse($scActualDate)->format('d-M-Y') : '—' }}
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-control bg-white h-auto border-0 text-nowrap text-center">
-                                                    {{ $creActualDate ? \Carbon\Carbon::parse($creActualDate)->format('d-M-Y') : '—' }}
+                                            <td class="fw-bold align-middle table-secondary text-start px-4 py-2 text-dark">Enquiry Stage</td>
+                                            <td class="align-middle p-2"><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $enqStageMap[$lastCre?->cre_enq_stage ?? ''] ?? ($lastCre?->cre_enq_stage ?? '—') }}</div></td>
+                                            <td class="align-middle p-2"><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $enqStageMap[$enquiry?->dms_enquiry_stage ?? ''] ?? ($enquiry?->dms_enquiry_stage ?? ($enquiry?->stage ?? '—')) }}</div></td>
+                                            <td class="align-middle p-2">
+                                                <div class="form-control bg-white h-auto border-0 d-flex justify-content-center align-items-center">
+                                                    <input class="form-check-input border-secondary cursor-pointer m-0" type="checkbox" name="match_enq_stage" value="1" checked style="width: 1.2rem; height: 1.2rem;">
+                                                    <label class="form-check-label ms-2 mb-0">Matched</label>
                                                 </div>
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td class="fw-bold align-middle table-secondary text-center px-3 text-dark">
-                                                Next Fup Date</td>
-                                            <td>
-                                                <div class="form-control bg-white h-auto border-0 text-nowrap text-center">
-                                                    {{ $scNextDate ? \Carbon\Carbon::parse($scNextDate)->format('d-M-Y') : '—' }}
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-control bg-white h-auto border-0 text-nowrap text-center">
-                                                    {{ $creNextDate ? \Carbon\Carbon::parse($creNextDate)->format('d-M-Y') : '—' }}
+                                            <td class="fw-bold align-middle table-secondary text-start px-4 py-2 text-dark">Next Fup Date</td>
+                                            <td class="align-middle p-2"><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $creNextDate ? \Carbon\Carbon::parse($creNextDate)->format('d-M-Y') : '—' }}</div></td>
+                                            <td class="align-middle p-2"><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $scNextDate ? \Carbon\Carbon::parse($scNextDate)->format('d-M-Y') : '—' }}</div></td>
+                                            <td class="align-middle p-2">
+                                                <div class="form-control bg-white h-auto border-0 d-flex justify-content-center align-items-center">
+                                                    <input class="form-check-input border-secondary cursor-pointer m-0" type="checkbox" name="match_next_fup" value="1" checked style="width: 1.2rem; height: 1.2rem;">
+                                                    <label class="form-check-label ms-2 mb-0">Matched</label>
                                                 </div>
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td class="fw-bold align-middle table-secondary text-center px-3 text-dark">
-                                                Next Fup Gap</td>
-                                            <td>
-                                                <div class="form-control bg-white h-auto border-0 text-nowrap text-center">
-                                                    {{ $scGap }}</div>
-                                            </td>
-                                            <td>
-                                                <div class="form-control bg-white h-auto border-0 text-nowrap text-center">
-                                                    {{ $creGap }}</div>
+                                            <td class="fw-bold align-middle table-secondary text-start px-4 py-2 text-dark">Latest Fup Remarks</td>
+                                            <td class="align-middle p-2"><div class="form-control bg-white h-auto border-0 text-wrap text-center" style="max-height: 50px; overflow-y: auto;">{{ $lastCre?->cre_fup_remarks ?? '—' }}</div></td>
+                                            <td class="align-middle p-2"><div class="form-control bg-white h-auto border-0 text-wrap text-center" style="max-height: 50px; overflow-y: auto;">{{ $remMap[$enquiry?->recent_fup_comments] ?? ($enquiry?->recent_fup_comments ?? ($enquiry?->remarks ?? '—')) }}</div></td>
+                                            <td class="align-middle p-2">
+                                                <div class="form-control bg-white h-auto border-0 d-flex justify-content-center align-items-center" style="height: 100%; min-height: 38px;">
+                                                    <input class="form-check-input border-secondary cursor-pointer m-0" type="checkbox" name="match_fup_remarks" value="1" checked style="width: 1.2rem; height: 1.2rem;">
+                                                    <label class="form-check-label ms-2 mb-0">Matched</label>
+                                                </div>
                                             </td>
                                         </tr>
+                                        @if(!empty($enquiry?->test_drive_no))
                                         <tr>
-                                            <td class="fw-bold align-middle table-secondary text-center px-3 text-dark">Enq
-                                                Stage</td>
-                                            <td>
-                                                <div class="form-control bg-white h-auto border-0 text-nowrap text-center">
-                                                    {{ $enqStageMap[$enquiry?->dms_enquiry_stage ?? ''] ?? ($enquiry?->dms_enquiry_stage ?? ($enquiry?->stage ?? '—')) }}
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-control bg-white h-auto border-0 text-nowrap text-center">
-                                                    {{ $enqStageMap[$lastCre?->cre_enq_stage ?? ''] ?? ($lastCre?->cre_enq_stage ?? '—') }}
+                                            <td class="fw-bold align-middle table-secondary text-start px-4 py-2 text-dark">Test Drive Verification</td>
+                                            <td class="align-middle p-2"><div class="form-control bg-white h-auto border-0 text-nowrap text-center">—</div></td>
+                                            <td class="align-middle p-2"><div class="form-control bg-white h-auto border-0 text-nowrap text-center">—</div></td>
+                                            <td class="align-middle p-2">
+                                                <div class="form-control bg-white h-auto border-0 d-flex justify-content-center align-items-center">
+                                                    <input class="form-check-input border-secondary cursor-pointer m-0" type="checkbox" name="match_test_drive" value="1" checked style="width: 1.2rem; height: 1.2rem;">
+                                                    <label class="form-check-label ms-2 mb-0">Matched</label>
                                                 </div>
                                             </td>
                                         </tr>
-                                        <tr>
-                                            <td class="fw-bold align-middle table-secondary text-center px-3 text-dark">
-                                                Call Recording</td>
-                                            <td>
-                                                <div
-                                                    class="form-control bg-white h-auto border-0 d-flex justify-content-center text-center">
-                                                    @if (!empty($enquiry->call_url))
-                                                        <audio controls style="height: 35px; width: 220px;">
-                                                            <source src="{{ $enquiry->call_url }}" type="audio/mpeg">
-                                                            Your browser does not support the audio element.
-                                                        </audio>
-                                                    @else
-                                                        —
-                                                    @endif
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-control bg-white h-auto border-0 text-nowrap text-center">
-                                                    —</div>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="fw-bold align-middle table-secondary text-center px-3 text-dark">
-                                                Remarks</td>
-                                            <td>
-                                                <div class="form-control bg-white h-auto border-0 text-wrap text-center">
-                                                    {{ $remMap[$enquiry?->recent_fup_comments] ?? ($enquiry?->recent_fup_comments ?? ($enquiry?->remarks ?? '—')) }}
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-control bg-white h-auto border-0 text-wrap text-center">
-                                                    {{ $lastCre?->cre_fup_remarks ?? '—' }}</div>
-                                            </td>
-                                        </tr>
+                                        @endif
                                     </tbody>
                                 </table>
                             </div>
@@ -1703,6 +1603,40 @@
                 dateFormat: "d-M-Y",
                 allowInput: false
             });
+            flatpickr("#cre_likely_purchase_date", {
+                dateFormat: "d-M-Y",
+                allowInput: false,
+                onChange: function(selectedDates, dateStr, instance) {
+                    if (selectedDates.length > 0) {
+                        // Calculate difference in days from today
+                        const today = new Date();
+                        today.setHours(0,0,0,0);
+                        const selectedDate = selectedDates[0];
+                        selectedDate.setHours(0,0,0,0);
+                        
+                        const diffTime = selectedDate - today;
+                        // Use Math.max to prevent negative days from breaking the logic if they pick a past date
+                        const diffDays = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+                        
+                        let selectedCode = '';
+                        
+                        // Exact mapping based on your DB Keyword Codes
+                        if (diffDays <= 15) {
+                            selectedCode = '15_DAYS';
+                        } else if (diffDays > 15 && diffDays <= 45) {
+                            selectedCode = '15_45_DAYS';
+                        } else if (diffDays > 45) {
+                            selectedCode = '45_DAYS';
+                        }
+                        
+                        // Auto-select the dropdown
+                        $('#cre_likely_purchase_days').val(selectedCode).trigger('change');
+                    } else {
+                        // Clear if date is removed
+                        $('#cre_likely_purchase_days').val('').trigger('change');
+                    }
+                }
+            });
             flatpickr("#marriage_date", {
                 dateFormat: "d-M-Y",
                 maxDate: "today",
@@ -1757,6 +1691,35 @@
                     if (currentEnquiry.isEdit) setTimeout(() => $sourceCode.trigger('change'), 300);
                 }
             });
+
+            $('select[name="cre_enq_stage"]').on('change', function() {
+                const val = $(this).val();
+                
+                if (val === 'LOST' || val === 'DROPPED') {
+                    // Auto-set Customer Stage to LOST
+                    let $custStage = $('select[name="cre_customer_stage"]');
+                    $custStage.find('option').each(function() {
+                        if ($(this).val() === 'LOST' || $(this).text().trim().toUpperCase() === 'LOST') {
+                            $custStage.val($(this).val()).trigger('change');
+                        }
+                    });
+                    
+                    // Make Planned Fup Date Optional
+                    $('#cre_next_fup_date').prop('required', false);
+                    $('#cre_next_fup_asterisk').addClass('d-none');
+                } else {
+                    // Re-apply requirement if stage changes
+                    if (currentEnquiry.isEdit) {
+                        $('#cre_next_fup_date').prop('required', true);
+                        $('#cre_next_fup_asterisk').removeClass('d-none');
+                    }
+                }
+            });
+            
+            // Trigger check on page load if editing
+            if (currentEnquiry.isEdit) {
+                $('select[name="cre_enq_stage"]').trigger('change');
+            }
 
             // Flag to prevent wiping data during the page load and AJAX calls
             let isInitialLoad = true;
