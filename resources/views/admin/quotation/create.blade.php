@@ -68,9 +68,11 @@ use App\Services\OrgService;
         }
 
         /* Hide column 2 (OPTION in the price table, TYPE in the discount table) */
-        .quotation-grid th:nth-child(2),
-        .quotation-grid td:nth-child(2) {
-            display: none !important;
+        .price-grid th:nth-child(2),
+        .price-grid td:nth-child(2),
+        .discount-grid th:nth-child(2),
+        .discount-grid td:nth-child(2) {
+        display: none !important;
         }
 
         /* Reassign widths for the 2 remaining columns per table - each totals 100% */
@@ -596,8 +598,10 @@ use App\Services\OrgService;
 
         /* OPTION and TYPE columns are always folded into the label / omitted for print.
            Each table now only has 3 columns of its own, so this is simply column 2. */
-        .quotation-grid th:nth-child(2),
-        .quotation-grid td:nth-child(2) {
+        .price-grid th:nth-child(2),
+        .price-grid td:nth-child(2),
+        .discount-grid th:nth-child(2),
+        .discount-grid td:nth-child(2) {
             display: none !important;
         }
 
@@ -2146,6 +2150,38 @@ $viewMode = $viewMode ?? false;
                                     </tbody>
                                 </table>
 
+                                <div class="invoice-amount-box"
+                                    style="width:100%; margin-top:3px; border:1px solid #000;">
+
+                                    <table class="quotation-grid"
+                                        style="width:100%; border-collapse:collapse; table-layout:fixed;">
+
+                                        <tbody>
+                                            <tr class="grid-row total-row"
+                                                style="background:#f2f2f2; font-weight:bold;">
+
+                                                <td class="cell-label"
+                                                    style="width:50%; text-align:left; font-weight:bold; font-size:11px;">
+                                                    INVOICE AMOUNT
+                                                </td>
+
+                                                <td class="cell-amount" style="width:50%;">
+                                                    <input id="invoice_amount_display" readonly
+                                                        style="font-weight:bold; font-size:11px; text-align:right;"
+                                                        value="{{ old('invoice_amount', $quotationData['invoice_amount'] ?? '') }}">
+
+                                                    <input type="hidden" id="invoice_amount" name="invoice_amount"
+                                                        value="{{ old('invoice_amount', $quotationData['invoice_amount'] ?? '') }}">
+                                                </td>
+
+                                            </tr>
+                                        </tbody>
+
+                                    </table>
+                                </div>
+
+
+
                                 {{-- ================= DISCOUNT BIFURCATION BOX ================= --}}
                                 <div class="discount-bifurcation-box"
                                     style="margin-top: 3px; border: 1px solid #000; width: 100%;">
@@ -2350,6 +2386,12 @@ $viewMode = $viewMode ?? false;
             <div class="card-footer text-end mt-3 no-print">
                 <button type="button" class="btn btn-primary" onclick="printQuotation();">
                     <i class="la la-print"></i> Print / Save PDF
+                </button>
+
+                <button type="button"
+                        class="btn btn-success"
+                        onclick="printBankQuotation()">
+                    Print Bank Quotation
                 </button>
 
                 @if($viewMode)
@@ -4163,6 +4205,121 @@ function renderGroupADiscounts(pricing) {
     $('#group_a_amount').trigger('change');
 }
 
+    // ============================================================
+// CASH SCHEME OEM TYPE -> LINKED DISCOUNT TYPES
+// Cash Scheme OEM is the MASTER.
+// Dealer / Accessories / Shield will show plain text only.
+// ============================================================
+
+function syncCashSchemeLinkedTypes() {
+
+    const cashOemType = $('#group_a_type').val();
+
+    if (cashOemType !== 'INV' && cashOemType !== 'CN') {
+        return;
+    }
+
+    // --------------------------------------------------------
+    // Cash Scheme OEM hidden value
+    // --------------------------------------------------------
+    $('#cash_scheme_oem_type').val(cashOemType);
+
+
+    // --------------------------------------------------------
+    // Replace Dealer dropdown with plain input
+    // --------------------------------------------------------
+    setLinkedSchemeType(
+        '#dealer_discount_type',
+        'dealer_discount_type',
+        cashOemType
+    );
+
+
+    // --------------------------------------------------------
+    // Replace Accessories Scheme dropdown with plain input
+    // --------------------------------------------------------
+    setLinkedSchemeType(
+        '#accessories_discount_type',
+        'accessories_discount_type',
+        cashOemType
+    );
+
+
+    // --------------------------------------------------------
+    // Replace Shield Scheme dropdown with plain input
+    // --------------------------------------------------------
+    setLinkedSchemeType(
+        '#shield_scheme_type',
+        'shield_scheme_type',
+        cashOemType
+    );
+
+    $('#accessories_spl_disc_type').val(cashOemType);
+
+    $('#ceramic_discount_type').val(cashOemType);
+
+    $('#ppf_discount_type').val(cashOemType);
+
+    $('#other_cash_discount_type').val(cashOemType);
+
+
+
+    // Recalculate
+    calculateQuotation();
+    toggleRowVisibility();
+}
+
+$(document).on('change', '#group_a_type', function () {
+
+    if ($('#group_a_select').val() !== 'cash_scheme_oem') {
+        return;
+    }
+
+    syncCashSchemeLinkedTypes();
+});
+
+
+// ============================================================
+// Render linked scheme type as plain text/input
+// ============================================================
+
+function setLinkedSchemeType(selector, id, value) {
+
+    const $old = $(selector);
+
+    if (!$old.length) {
+        return;
+    }
+
+    // If already converted to input, just update value
+    if ($old.is('input')) {
+        $old.val(value);
+        return;
+    }
+
+    // Replace SELECT with INPUT
+    const $new = $('<input>', {
+        type: 'text',
+        id: id,
+        name: id,
+        value: value,
+        readonly: true
+    });
+
+    // Keep same styling as quotation grid
+    $new.css({
+        'width': '100%',
+        'border': 'none',
+        'background': 'transparent',
+        'font-size': '10px',
+        'padding': '2px',
+        'text-align': 'left',
+        'cursor': 'default'
+    });
+
+    $old.replaceWith($new);
+}
+
 // ============================================================
 // 5. POPULATE ACCESSORIES - MAP MOCK CODES TO ACTUAL VALUES
 // ============================================================
@@ -4399,21 +4556,36 @@ if (groupASelected && groupAAmount) {
 }
 
     // ---- Populate Static Discounts ----
+    // ---- Populate Static Discounts ----
+
     if (pricing.deductibles["dealer-scheme"]) {
         let val = pricing.deductibles["dealer-scheme"].amount;
-        $('#dealer_discount').val(val > 0 ? val : 'N/A');
-        $('#dealer_discount_type').val(pricing.deductibles["dealer-scheme"].type);
+
+        $('#dealer_discount').val(
+            val > 0 ? val : 'N/A'
+        );
     }
+
     if (pricing.deductibles["accessory-scheme"]) {
         let val = pricing.deductibles["accessory-scheme"].amount;
-        $('#accessories_discount').val(val > 0 ? val : 'N/A');
-        $('#accessories_discount_type').val(pricing.deductibles["accessory-scheme"].type);
+
+        $('#accessories_discount').val(
+            val > 0 ? val : 'N/A'
+        );
     }
+
     if (pricing.deductibles["shield-scheme"]) {
         let val = pricing.deductibles["shield-scheme"].amount;
-        $('#shield_scheme').val(val > 0 ? val : 'N/A');
-        $('#shield_scheme_type').val(pricing.deductibles["shield-scheme"].type);
+
+        $('#shield_scheme').val(
+            val > 0 ? val : 'N/A'
+        );
     }
+
+    // IMPORTANT:
+    // Types are NOT taken independently from mock data.
+    // Cash Scheme OEM Type is the master.
+    syncCashSchemeLinkedTypes();
     if (pricing.deductibles["corp-scheme"] && pricing.deductibles["corp-scheme"].length > 0) {
     let corp = pricing.deductibles["corp-scheme"].find(x => x.name === "Corporate Discount") || pricing.deductibles["corp-scheme"][0];
     if (corp && corp.name === "Corporate Discount") {
@@ -4723,20 +4895,52 @@ $(document).on('keyup change', '#group_b_amount', function() {
 setupGroupDiscount('group_c', ['exchange_bonus', 'green_bonus', 'welcome_bonus', 'loyalty_bonus']);
 
 // Group A Select change - rebuild type field
+// ============================================================
+// GROUP A SELECT CHANGE
+// ============================================================
+
 $('#group_a_select').on('change', function () {
+
     const value = $(this).val();
     const $old = $('#group_a_type');
     let $new;
 
     if (value === 'cash_scheme_oem') {
-        $new = $('<select id="group_a_type"><option value="INV">INV</option><option value="CN">CN</option></select>');
+
+        $new = $(
+            '<select id="group_a_type">' +
+                '<option value="INV">INV</option>' +
+                '<option value="CN">CN</option>' +
+            '</select>'
+        );
+
+        // Restore saved/current Cash OEM type
+        const savedType =
+            $('#cash_scheme_oem_type').val() ||
+            '{{ $quotationData["cash_scheme_oem_type"] ?? "INV" }}';
+
+        $new.val(savedType === 'CN' ? 'CN' : 'INV');
+
     } else {
+
         $new = $('<input type="text" id="group_a_type" readonly>');
         $new.val('INV');
     }
 
     $old.replaceWith($new);
-    $new.trigger('change');
+
+    // Cash Scheme OEM is the master
+    if (value === 'cash_scheme_oem') {
+        syncCashSchemeLinkedTypes();
+
+        // Whenever user changes INV/CN
+        $(document)
+            .off('change.cashSchemeType', '#group_a_type')
+            .on('change.cashSchemeType', '#group_a_type', function () {
+                syncCashSchemeLinkedTypes();
+            });
+    }
+
     $('#group_a_amount').trigger('change');
 });
 // ============================================================
@@ -4823,6 +5027,17 @@ function calculateQuotation() {
 
     // 4. TCS = IF((Ex-Showroom - INV Discount) >= 1000000, (Ex-Showroom - INV Discount) * 1%, 0)
     let exShowroom = num('ex_showroom_price');
+
+    // INVOICE AMOUNT = EX-SHOWROOM - INV DISCOUNT
+    let invoiceAmount = exShowroom - totalInvoicedDiscount;
+
+    $('#invoice_amount_display').val(
+        invoiceAmount.toFixed(2)
+    );
+
+    $('#invoice_amount').val(
+        invoiceAmount.toFixed(2)
+    );
     let tcsBaseAmount = exShowroom - totalInvoicedDiscount;
     let tcs = 0;
     if (tcsBaseAmount >= 1000000) {
@@ -4870,27 +5085,27 @@ function calculateQuotation() {
     // 8. FINANCIER INVOICE BOX - ✅ FIXED
     // ============================================================
     // 8. Discount Bifurcation by Type - Display in new box
-let bifurcationByType = calculateDiscountBifurcationByType();
-let invTotal = bifurcationByType.invTotal;
-let cnTotal = bifurcationByType.cnTotal;
-let cn1Total = bifurcationByType.cn1Total;
-let cn2Total = bifurcationByType.cn2Total;
+    let bifurcationByType = calculateDiscountBifurcationByType();
+    let invTotal = bifurcationByType.invTotal;
+    let cnTotal = bifurcationByType.cnTotal;
+    let cn1Total = bifurcationByType.cn1Total;
+    let cn2Total = bifurcationByType.cn2Total;
 
-// Hidden fields
-$('#invoiced_discount_summary').val(invTotal.toFixed(2));
-$('#credit_note_discount_summary').val(cnTotal.toFixed(2));
-$('#cn1_discount_summary').val(cn1Total.toFixed(2));
-$('#cn2_discount_summary').val(cn2Total.toFixed(2));
+    // Hidden fields
+    $('#invoiced_discount_summary').val(invTotal.toFixed(2));
+    $('#credit_note_discount_summary').val(cnTotal.toFixed(2));
+    $('#cn1_discount_summary').val(cn1Total.toFixed(2));
+    $('#cn2_discount_summary').val(cn2Total.toFixed(2));
 
-// Display in bifurcation box
-$('#inv_discount_display').val(invTotal.toFixed(2));
-$('#cn_discount_display').val(cnTotal.toFixed(2));
-$('#cn1_discount_display').val(cn1Total.toFixed(2));
-$('#cn2_discount_display').val(cn2Total.toFixed(2));
+    // Display in bifurcation box
+    $('#inv_discount_display').val(invTotal.toFixed(2));
+    $('#cn_discount_display').val(cnTotal.toFixed(2));
+    $('#cn1_discount_display').val(cn1Total.toFixed(2));
+    $('#cn2_discount_display').val(cn2Total.toFixed(2));
 
-// Display total in bifurcation box
-let totalBifurcation = invTotal + cnTotal + cn1Total + cn2Total;
-$('#total_discount_bifurcation_display').val(totalBifurcation.toFixed(2));
+    // Display total in bifurcation box
+    let totalBifurcation = invTotal + cnTotal + cn1Total + cn2Total;
+    $('#total_discount_bifurcation_display').val(totalBifurcation.toFixed(2));
     
     // 10. Toggle row visibility
     toggleRowVisibility();
@@ -4905,6 +5120,192 @@ $('#total_discount_bifurcation_display').val(totalBifurcation.toFixed(2));
     console.log('Finvoice Amount:', finvoiceAmount);
     console.log('Total Discount:', totalDiscount);
     console.log('Net Receivable:', netReceivable);
+}
+
+function calculateBankQuotation() {
+
+    // ============================================
+    // BANK QUOTATION
+    // ONLY INV DISCOUNTS ARE CONSIDERED
+    // ============================================
+
+    function bankNum(id) {
+        const value = $('#' + id).val();
+
+        if (
+            value === undefined ||
+            value === null ||
+            value === '' ||
+            value === 'N/A'
+        ) {
+            return 0;
+        }
+
+        const number = parseFloat(
+            value.toString().replace(/,/g, '')
+        );
+
+        return isNaN(number) ? 0 : number;
+    }
+
+    // --------------------------------------------
+    // 1. Subtotal
+    // Same additions as normal quotation
+    // --------------------------------------------
+
+    let subtotal =
+        bankNum('ex_showroom_price') +
+        bankNum('insurance_amount') +
+        bankNum('registration_amount') +
+        bankNum('accessories_amount') +
+        bankNum('maxicare') +
+        bankNum('vltd_device') +
+        bankNum('coating_price') +
+        bankNum('ppf') +
+        bankNum('rto_yellow_tape') +
+        bankNum('kazam_charging_kit') +
+        bankNum('incidental_charges') +
+        bankNum('shield_price') +
+        bankNum('rsa_amount') +
+        bankNum('fastag') +
+        bankNum('cod_charges') +
+        bankNum('charger_swapping_amount');
+
+    // --------------------------------------------
+    // 2. ONLY INV DISCOUNTS
+    // --------------------------------------------
+
+    const bankDiscountPairs = [
+        ['cash_scheme_oem', 'cash_scheme_oem_type'],
+        ['csd_discount', 'csd_discount_type'],
+        ['fame_subsidy', 'fame_subsidy_type'],
+        ['dealer_discount', 'dealer_discount_type'],
+        ['accessories_discount', 'accessories_discount_type'],
+        ['shield_scheme', 'shield_scheme_type'],
+        ['corporate_discount', 'corporate_discount_type'],
+        ['loyalty_bonus', 'loyalty_bonus_type'],
+        ['exchange_bonus', 'exchange_bonus_type'],
+        ['green_bonus', 'green_bonus_type'],
+        ['welcome_bonus', 'welcome_bonus_type'],
+        ['accessories_spl_disc', 'accessories_spl_disc_type'],
+        ['ceramic_discount', 'ceramic_discount_type'],
+        ['ppf_discount', 'ppf_discount_type'],
+        ['charger_swapping_discount', 'charger_swapping_discount_type'],
+        ['other_cash_discount', 'other_cash_discount_type'],
+        ['special_cash_discount', 'special_cash_discount_type']
+    ];
+
+    let totalBankInvDiscount = 0;
+
+    bankDiscountPairs.forEach(function (pair) {
+
+        const amount = bankNum(pair[0]);
+        const type = $('#' + pair[1]).val();
+
+        if (type === 'INV') {
+            totalBankInvDiscount += amount;
+        }
+    });
+
+    // --------------------------------------------
+    // 3. Invoice Amount
+    // EX-SHOWROOM - ONLY INV DISCOUNT
+    // --------------------------------------------
+
+    const exShowroom = bankNum('ex_showroom_price');
+
+    const bankInvoiceAmount =
+        exShowroom - totalBankInvDiscount;
+
+    // --------------------------------------------
+    // 4. TCS
+    // Same existing rule
+    // --------------------------------------------
+
+    const tcsBaseAmount = bankInvoiceAmount;
+
+    let bankTcs = 0;
+
+    if (tcsBaseAmount >= 1000000) {
+        bankTcs = tcsBaseAmount * 0.01;
+    }
+
+    // --------------------------------------------
+    // 5. Total Receivable
+    // --------------------------------------------
+
+    const bankTotalReceivable =
+        subtotal + bankTcs;
+
+    // --------------------------------------------
+    // 6. Bank Net Receivable
+    //
+    // IMPORTANT:
+    // Bank quotation uses ONLY INV discount
+    // --------------------------------------------
+
+    const bankNetReceivable =
+        bankTotalReceivable - totalBankInvDiscount;
+
+    // --------------------------------------------
+    // 7. Update existing display fields
+    // --------------------------------------------
+
+    $('#subtotal_value').val(
+        subtotal.toFixed(2)
+    );
+
+    $('#invoice_amount_display').val(
+        bankInvoiceAmount.toFixed(2)
+    );
+
+    $('#invoice_amount').val(
+        bankInvoiceAmount.toFixed(2)
+    );
+
+    if (bankTcs > 0) {
+        $('#tcs')
+            .val(bankTcs.toFixed(2))
+            .prop('readonly', true)
+            .prop('disabled', false);
+    } else {
+        $('#tcs')
+            .val('N/A')
+            .prop('readonly', true)
+            .prop('disabled', true);
+    }
+
+    $('#total_receivable').val(
+        bankTotalReceivable.toFixed(2)
+    );
+
+    $('#total_discount_amount').val(
+        totalBankInvDiscount.toFixed(2)
+    );
+
+    $('#total_discount').val(
+        totalBankInvDiscount.toFixed(2)
+    );
+
+    $('#net_receivable_summary').val(
+        bankNetReceivable.toFixed(2)
+    );
+
+    $('#net_receivable_words').text(
+        numberToIndianWords(bankNetReceivable)
+    );
+
+    // --------------------------------------------
+    // Debug
+    // --------------------------------------------
+
+    console.log('=== BANK QUOTATION ===');
+    console.log('Subtotal:', subtotal);
+    console.log('INV Discount:', totalBankInvDiscount);
+    console.log('Invoice Amount:', bankInvoiceAmount);
+    console.log('TCS:', bankTcs);
+    console.log('Total Receivable:', bankTotalReceivable);
+    console.log('Bank Net Receivable:', bankNetReceivable);
 }
 
 // ---- Event Listeners for recalculation ----
@@ -4960,6 +5361,72 @@ STATIC_DISCOUNT_FIELDS.forEach(function(field) {
 // ============================================================
 
 let printLabelRestoreList = [];
+let bankQuotationRestoreData = null;
+
+function saveQuotationValuesBeforeBankPrint() {
+
+    bankQuotationRestoreData = {
+        subtotal_value: $('#subtotal_value').val(),
+        invoice_amount_display: $('#invoice_amount_display').val(),
+        invoice_amount: $('#invoice_amount').val(),
+        tcs: $('#tcs').val(),
+        total_receivable: $('#total_receivable').val(),
+        total_discount_amount: $('#total_discount_amount').val(),
+        total_discount: $('#total_discount').val(),
+        net_receivable_summary: $('#net_receivable_summary').val(),
+        net_receivable_words: $('#net_receivable_words').text(),
+
+        tcs_disabled: $('#tcs').prop('disabled'),
+        tcs_readonly: $('#tcs').prop('readonly')
+    };
+}
+
+
+function restoreQuotationValuesAfterBankPrint() {
+
+    if (!bankQuotationRestoreData) {
+        return;
+    }
+
+    $('#subtotal_value').val(
+        bankQuotationRestoreData.subtotal_value
+    );
+
+    $('#invoice_amount_display').val(
+        bankQuotationRestoreData.invoice_amount_display
+    );
+
+    $('#invoice_amount').val(
+        bankQuotationRestoreData.invoice_amount
+    );
+
+    $('#tcs')
+        .val(bankQuotationRestoreData.tcs)
+        .prop('disabled', bankQuotationRestoreData.tcs_disabled)
+        .prop('readonly', bankQuotationRestoreData.tcs_readonly);
+
+    $('#total_receivable').val(
+        bankQuotationRestoreData.total_receivable
+    );
+
+    $('#total_discount_amount').val(
+        bankQuotationRestoreData.total_discount_amount
+    );
+
+    $('#total_discount').val(
+        bankQuotationRestoreData.total_discount
+    );
+
+    $('#net_receivable_summary').val(
+        bankQuotationRestoreData.net_receivable_summary
+    );
+
+    $('#net_receivable_words').text(
+        bankQuotationRestoreData.net_receivable_words
+    );
+
+    bankQuotationRestoreData = null;
+}
 
 function prepareOptionLabelsForPrint() {
     printLabelRestoreList = [];
@@ -5027,6 +5494,85 @@ function prepareItemVisibilityForPrint() {
     });
 }
 
+function prepareBankItemVisibilityForPrint() {
+
+    // First remove previous print-hide state
+    $('.quotation-grid tbody tr').removeClass('print-hide');
+
+    // All discount fields with their corresponding type fields
+    const bankDiscountFields = [
+        { amount: 'cash_scheme_oem', type: 'cash_scheme_oem_type' },
+        { amount: 'csd_discount', type: 'csd_discount_type' },
+        { amount: 'fame_subsidy', type: 'fame_subsidy_type' },
+        { amount: 'dealer_discount', type: 'dealer_discount_type' },
+        { amount: 'accessories_discount', type: 'accessories_discount_type' },
+        { amount: 'shield_scheme', type: 'shield_scheme_type' },
+        { amount: 'corporate_discount', type: 'corporate_discount_type' },
+        { amount: 'loyalty_bonus', type: 'loyalty_bonus_type' },
+        { amount: 'exchange_bonus', type: 'exchange_bonus_type' },
+        { amount: 'green_bonus', type: 'green_bonus_type' },
+        { amount: 'welcome_bonus', type: 'welcome_bonus_type' },
+        { amount: 'accessories_spl_disc', type: 'accessories_spl_disc_type' },
+        { amount: 'ceramic_discount', type: 'ceramic_discount_type' },
+        { amount: 'ppf_discount', type: 'ppf_discount_type' },
+        { amount: 'charger_swapping_discount', type: 'charger_swapping_discount_type' },
+        { amount: 'other_cash_discount', type: 'other_cash_discount_type' },
+        { amount: 'special_cash_discount', type: 'special_cash_discount_type' }
+    ];
+
+    bankDiscountFields.forEach(function (field) {
+
+        const amount = $('#' + field.amount).val();
+        const type = $('#' + field.type).val();
+
+        // Find the row containing this discount amount field
+        const $input = $('#' + field.amount);
+
+        if (!$input.length) {
+            return;
+        }
+
+        const $row = $input.closest('tr');
+
+        // Bank quotation = ONLY INV discounts
+        if (type !== 'INV' || isEmptyGridValue(amount)) {
+            $row.addClass('print-hide');
+        } else {
+            $row.removeClass('print-hide');
+        }
+    });
+
+    // Also hide empty rows using normal quotation logic
+    $('.quotation-grid tbody tr').each(function () {
+
+        const $row = $(this);
+
+        if ($row.hasClass('print-hide')) {
+            return;
+        }
+
+        const amountCells = $row.find('td.cell-amount');
+
+        const priceValue = amountCells.eq(0).find('input').val();
+
+        const discountValue =
+            amountCells.length > 1
+                ? amountCells.eq(1).find('input').first().val()
+                : '';
+
+        if (
+            isEmptyGridValue(priceValue) &&
+            isEmptyGridValue(discountValue)
+        ) {
+            $row.addClass('print-hide');
+        }
+    });
+}
+
+function restoreBankItemVisibilityAfterPrint() {
+    $('.quotation-grid tbody tr').removeClass('print-hide');
+}
+
 function restoreItemVisibilityAfterPrint() {
     $('.quotation-grid tbody tr').removeClass('print-hide');
 }
@@ -5072,6 +5618,53 @@ function printQuotation() {
 
         restoreOptionLabelsAfterPrint();
         restoreItemVisibilityAfterPrint();
+    }, 500);
+}
+
+function printBankQuotation() {
+
+    saveQuotationValuesBeforeBankPrint();
+
+    // Bank print mode
+    document.body.classList.add('bank-print');
+
+    // Calculate Bank quotation using ONLY INV discounts
+    calculateBankQuotation();
+
+    // Prepare the same existing print layout
+    prepareOptionLabelsForPrint();
+    prepareBankItemVisibilityForPrint();
+    updateCareOfPrint();
+
+    const modelName = ($('#model').val() || 'Quotation')
+        .toString()
+        .trim();
+
+    const safeModelName = modelName
+        .replace(/[\\/:*?"<>|]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    const originalTitle = document.title;
+
+    document.title =
+        `Vehicle Quotation - ${safeModelName || 'Quotation'} (For Bank)`;
+
+    window.print();
+
+    setTimeout(function () {
+
+        document.title = originalTitle;
+
+        restoreOptionLabelsAfterPrint();
+        restoreBankItemVisibilityAfterPrint();
+
+       // Restore normal customer quotation values
+        restoreQuotationValuesAfterBankPrint();
+
+        // Return to normal customer quotation
+        document.body.classList.remove('bank-print');
+
     }, 500);
 }
 
