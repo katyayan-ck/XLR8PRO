@@ -46,7 +46,7 @@
                             <div class="row">
 
                                 {{-- Activity Name --}}
-                                <div class="col-md-6 mb-3">
+                                <div class="col-md-3 mb-3">
                                     <label class="form-label">
                                         Activity Name <span class="text-danger">*</span>
                                     </label>
@@ -54,7 +54,7 @@
                                 </div>
 
                                 {{-- Segment --}}
-                                <div class="col-md-6 mb-3">
+                                <div class="col-md-3 mb-3">
                                     <label class="form-label">
                                         Segment <span class="text-danger">*</span>
                                     </label>
@@ -69,7 +69,7 @@
                                 </div>
 
                                 {{-- Model --}}
-                                <div class="col-md-6 mb-3">
+                                <div class="col-md-3 mb-3">
                                     <label class="form-label">
                                         Model <span class="text-danger">*</span>
                                     </label>
@@ -84,7 +84,7 @@
                                 </div>
 
                                 {{-- Activity Type --}}
-                                <div class="col-md-6 mb-3">
+                                <div class="col-md-3 mb-3">
                                     <label class="form-label">
                                         Activity Type <span class="text-danger">*</span>
                                     </label>
@@ -99,7 +99,7 @@
                                 </div>
 
                                 {{-- Start Date (Flatpickr) --}}
-                                <div class="col-md-6 mb-3">
+                                <div class="col-md-3 mb-3">
                                     <label class="form-label">
                                         Start Date <span class="text-danger">*</span>
                                     </label>
@@ -108,7 +108,7 @@
                                 </div>
 
                                 {{-- End Date (Flatpickr) --}}
-                                <div class="col-md-6 mb-3">
+                                <div class="col-md-3 mb-3">
                                     <label class="form-label">
                                         End Date <span class="text-danger">*</span>
                                     </label>
@@ -117,7 +117,7 @@
                                 </div>
 
                                 {{-- Dealer Branch --}}
-                                <div class="col-md-6 mb-3">
+                                {{-- <div class="col-md-6 mb-3">
                                     <label class="form-label">
                                         Dealer Branch <span class="text-danger">*</span>
                                     </label>
@@ -129,10 +129,10 @@
                                             </option>
                                         @endforeach
                                     </select>
-                                </div>
+                                </div> --}}
 
                                 {{-- Dealer Location --}}
-                                <div class="col-md-6 mb-3">
+                                {{-- <div class="col-md-6 mb-3">
                                     <label class="form-label">
                                         Dealer Location <span class="text-danger">*</span>
                                     </label>
@@ -144,7 +144,7 @@
                                             </option>
                                         @endforeach
                                     </select>
-                                </div>
+                                </div> --}}
 
                             </div>
                         </div>

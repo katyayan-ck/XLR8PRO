@@ -28,7 +28,7 @@
                         <div class="card-body">
                             <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label">Referee Phone Number <span class="text-danger">*</span></label>
+                                    <label class="form-label">Referee Contact No. <span class="text-danger">*</span></label>
                                     <!-- Changed to text, strictly restricted to 10 numbers -->
                                     <input type="text" name="referee_phone" id="referee_phone" class="form-control" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);" required>
                                 </div>
@@ -52,7 +52,7 @@
                                     <input type="text" name="last_name" class="form-control">
                                 </div>
                                 <div class="col-md-4 mb-3">
-                                    <label class="form-label">Customer Mobile <span class="text-danger">*</span></label>
+                                    <label class="form-label">Customer Contact No. <span class="text-danger">*</span></label>
                                     <!-- Changed to text, strictly restricted to 10 numbers -->
                                     <input type="text" id="mobile" name="mobile" class="form-control" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);" required>
                                 </div>
