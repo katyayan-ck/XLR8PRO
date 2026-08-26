@@ -48,7 +48,7 @@
                                     <input type="text" name="first_name" class="form-control" required>
                                 </div>
                                 <div class="col-md-4 mb-3">
-                                    <label class="form-label">Customer Last Name <small class="text-muted">(Optional)</small></label>
+                                    <label class="form-label">Customer Last Name <small class="text-muted"></small></label>
                                     <input type="text" name="last_name" class="form-control">
                                 </div>
                                 <div class="col-md-4 mb-3">
@@ -79,7 +79,7 @@
                                     </select>
                                 </div>
                                 <div class="col-md-4 mb-3">
-                                    <label class="form-label">Variant <small class="text-muted">(Optional)</small></label>
+                                    <label class="form-label">Variant <small class="text-muted"></small></label>
                                     <select name="variant_code" id="variant_code" class="form-control form-select" disabled>
                                         <option value="">Select Variant</option>
                                     </select>
