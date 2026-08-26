@@ -1663,16 +1663,17 @@ class EnquiryCrudController extends CrudController
         // --- MISMATCH TRACKING LOGIC ---
         // Only run if the comparison table was actually rendered and submitted
         if ($request->has('comparison_rendered')) {
-            if (!$request->has('match_enq_stage')) {
+            // Now checking IF the box IS checked (meaning the user flagged it as unmatched)
+            if ($request->has('mismatch_enq_stage')) {
                 $enquiryData['enq_stage_mismatch'] = $enquiry->enq_stage_mismatch + 1;
             }
-            if (!$request->has('match_next_fup')) {
+            if ($request->has('mismatch_next_fup')) {
                 $enquiryData['next_fup_mismatch'] = $enquiry->next_fup_mismatch + 1;
             }
-            if (!$request->has('match_fup_remarks')) {
+            if ($request->has('mismatch_fup_remarks')) {
                 $enquiryData['latest_fup_remarks_mismatch'] = $enquiry->latest_fup_remarks_mismatch + 1;
             }
-            if (!empty($enquiry->test_drive_no) && !$request->has('match_test_drive')) {
+            if (!empty($enquiry->test_drive_no) && $request->has('mismatch_test_drive')) {
                 $enquiryData['test_drive_mismatch'] = $enquiry->test_drive_mismatch + 1;
             }
         }
@@ -2118,7 +2119,11 @@ class EnquiryCrudController extends CrudController
     public function checkDuplicateEnquiry(Request $request)
     {
         $enquiry = Enquiry::where('mobile', $request->mobile)->where('segment_code', $request->segment_code)->first();
-        return response()->json(['exists' => (bool) $enquiry, 'enquiry_no' => $enquiry?->enquiry_no]);
+        return response()->json([
+            'exists' => (bool) $enquiry, 
+            'enquiry_no' => $enquiry?->enquiry_no,
+            'id' => $enquiry?->id
+        ]);
     }
 
     public function importEnquiries(Request $request)
