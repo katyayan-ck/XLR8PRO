@@ -344,7 +344,11 @@ class ImportEnquiriesJob implements ShouldQueue
                 foreach ($chunk as $i => $row) {
                     $excelRow = $i + 2;
                     try {
-                        $enquiryNo = $this->cleanString($this->cell($row, $headerMap, 'Enquiry Number'), 50);
+                        // Inside your foreach ($chunk as $i => $row) loop...
+
+                        // 1. Explicitly grab both enquiry numbers for your logic
+                        $quickEnquiryNo = $this->cleanString($this->cell($row, $headerMap, 'Quick Enquiry Number'), 50);
+                        $longEnquiryNo  = $this->cleanString($this->cell($row, $headerMap, 'Enquiry Number'), 50);
 
                         [$firstName, $lastName] = $this->splitCustomerName($this->cell($row, $headerMap, 'Customer Name'));
                         $scMileId = $this->cleanString($this->cell($row, $headerMap, 'SC Mile Id'), 50);
@@ -357,53 +361,59 @@ class ImportEnquiriesJob implements ShouldQueue
                         $fupCountRaw = $this->cell($row, $headerMap, 'Completed Followup Count');
 
                         $data = $this->stripNulls([
+                            'enquiry_no'                   => $longEnquiryNo, // Use the extracted variable here
                             'first_name'                   => $this->cleanString($firstName, 100),
-                            'last_name'                     => $this->cleanString($lastName, 100),
-                            'mobile'                        => $mobile,
-                            'email'                         => $this->cleanString($this->cell($row, $headerMap, 'Email'), 150),
-                            'sc_mile_id'                    => $scMileId,
-                            'model'                         => $this->cleanString($modelName, 100),
-                            'model_code'                    => $modelMatch['model_code'],
-                            'segment_code'                  => $modelMatch['segment_code'],
-                            'variant'                       => $this->cleanString($this->cell($row, $headerMap, 'Variant Description'), 100),
-                            'color'                         => $this->cleanString($colorMatch['color'], 100),
-                            'color_code'                    => $colorMatch['color_code'],
-                            'fuel_type'                     => $this->cleanString($this->cell($row, $headerMap, 'Fuel Type'), 50),
-                            'seating'                       => $this->cleanString($this->cell($row, $headerMap, 'Seating Capacity'), 20),
-                            'enquiry_type'                  => $this->resolveKeyValue('ENQUIRY_TYPE', $this->cell($row, $headerMap, 'Enquiry Type')),
-                            'source_code'                   => $this->cleanString($this->cell($row, $headerMap, 'Enquiry Source'), 50),
-                            'sub_source'                    => $this->resolveKeyValue('ENQUIRY_SUB_SOURCE', $this->cell($row, $headerMap, 'Enquiry Sub Source')),
-                            'quick_status'                  => $this->cleanString($this->cell($row, $headerMap, 'Status'), 50),
-                            'quick_enquiry_date'            => $this->excelDate($this->cell($row, $headerMap, 'Quick Enquiry Date')),
-                            'test_drive_no'                 => $this->cleanString($this->cell($row, $headerMap, 'Test Drive Number'), 50),
-                            'first_planned_followup_date'   => $this->excelDate($this->cell($row, $headerMap, 'First Planned Followup')),
-                            'first_actual_followup_date'    => $this->excelDate($this->cell($row, $headerMap, 'First Actual Followup')),
-                            'recent_planned_followup_date'  => $this->excelDate($this->cell($row, $headerMap, 'Recent Planned Followup')),
-                            'recent_actual_followup_date'   => $this->excelDate($this->cell($row, $headerMap, 'Recent Actual Followup')),
-
-                            // NEW FIELDS
+                            'last_name'                    => $this->cleanString($lastName, 100),
+                            'mobile'                       => $mobile,
+                            'email'                        => $this->cleanString($this->cell($row, $headerMap, 'Email'), 150),
+                            'sc_mile_id'                   => $scMileId,
+                            'model'                        => $this->cleanString($modelName, 100),
+                            'model_code'                   => $modelMatch['model_code'],
+                            'segment_code'                 => $modelMatch['segment_code'],
+                            'variant'                      => $this->cleanString($this->cell($row, $headerMap, 'Variant Description'), 100),
+                            'color'                        => $this->cleanString($colorMatch['color'], 100),
+                            'color_code'                   => $colorMatch['color_code'],
+                            'fuel_type'                    => $this->cleanString($this->cell($row, $headerMap, 'Fuel Type'), 50),
+                            'seating'                      => $this->cleanString($this->cell($row, $headerMap, 'Seating Capacity'), 20),
+                            'enquiry_type'                 => $this->resolveKeyValue('ENQUIRY_TYPE', $this->cell($row, $headerMap, 'Enquiry Type')),
+                            'source_code'                  => $this->cleanString($this->cell($row, $headerMap, 'Enquiry Source'), 50),
+                            'sub_source'                   => $this->resolveKeyValue('ENQUIRY_SUB_SOURCE', $this->cell($row, $headerMap, 'Enquiry Sub Source')),
+                            'quick_status'                 => $this->cleanString($this->cell($row, $headerMap, 'Status'), 50),
+                            'quick_enquiry_date'           => $this->excelDate($this->cell($row, $headerMap, 'Quick Enquiry Date')),
+                            'quick_enq_assign_date'        => $this->excelDate($this->cell($row, $headerMap, 'Quick Enquiry Assignment DateTime')),
+                            'test_drive_no'                => $this->cleanString($this->cell($row, $headerMap, 'Test Drive Number'), 50),
+                            'first_planned_followup_date'  => $this->excelDate($this->cell($row, $headerMap, 'First Planned Followup')),
+                            'first_actual_followup_date'   => $this->excelDate($this->cell($row, $headerMap, 'First Actual Followup')),
+                            'recent_planned_followup_date' => $this->excelDate($this->cell($row, $headerMap, 'Recent Planned Followup')),
+                            'recent_actual_followup_date'  => $this->excelDate($this->cell($row, $headerMap, 'Recent Actual Followup')),
                             'first_fup_remarks'            => $this->resolveKeyValue('SC_FUP_REMARKS', $this->cell($row, $headerMap, 'First Followup Remarks')),
                             'next_planned_followup_date'   => $this->excelDate($this->cell($row, $headerMap, 'Next Planned Followup')),
                             'followup_type'                => $this->resolveKeyValue('FOLLOW_UP_TYPE', $this->cell($row, $headerMap, 'Followup Type')),
                             'followup_remarks_type'        => $this->resolveKeyValue('SC_FUP_REMARKS_TYPE', $this->cell($row, $headerMap, 'Follow-up Remarks Type')),
-                            'fup_count'                     => is_numeric($fupCountRaw) ? (int) $fupCountRaw : null,
+                            'fup_count'                    => is_numeric($fupCountRaw) ? (int) $fupCountRaw : null,
                         ]);
+
+                        // 2. Determine current_origin dynamically
+                        $currentOrigin = (!empty($quickEnquiryNo) && !empty($longEnquiryNo)) ? 'LONG' : 'QUICK';
+
                         $data['updated_at'] = $now;
+                        // Put current_origin in $data so it forces an update if the row already exists
+                        $data['current_origin'] = $currentOrigin;
 
                         // UNIQUENESS: By Quick Enquiry Number for Quick Sheet
-                        if (empty($enquiryNo)) {
+                        if (empty($quickEnquiryNo)) {
                             $data['quick_enquiry_no'] = null;
                             DB::table('xlr8_crm_enquiries')->insert(array_merge(
                                 $data,
-                                ['created_at' => $now, 'origin' => 'QUICK', 'current_origin' => 'QUICK']
+                                ['created_at' => $now, 'origin' => 'QUICK'] // Origin stays QUICK forever
                             ));
                             $stats['inserted']++;
                         } else {
                             $existed = $this->upsertRowWithAssignment(
                                 'xlr8_crm_enquiries',
-                                ['quick_enquiry_no' => $enquiryNo],
+                                ['quick_enquiry_no' => $quickEnquiryNo],
                                 $data,
-                                ['created_at' => $now, 'origin' => 'QUICK', 'current_origin' => 'QUICK'],
+                                ['created_at' => $now, 'origin' => 'QUICK'], // Origin stays QUICK forever
                                 $scMileId,
                                 'quick_enq_assign_date',
                                 $now
@@ -462,6 +472,7 @@ class ImportEnquiriesJob implements ShouldQueue
                             'sub_source'              => $this->resolveKeyValue('ENQUIRY_SUB_SOURCE', $this->cell($row, $headerMap, 'Enquiry Sub Source')),
                             'stage'                   => $this->cleanString($this->cell($row, $headerMap, 'Stage'), 50),
                             'enquiry_date'            => $this->excelDate($this->cell($row, $headerMap, 'Enquiry Date')),
+                            'enq_assign_date'            => $this->excelDate($this->cell($row, $headerMap, 'Enq Assign Date')),
                             'customer_address'        => $this->cleanString($this->cell($row, $headerMap, 'Customer Address'), 255),
                             'tehsil'                  => $this->cleanString($this->cell($row, $headerMap, 'Tehsil'), 100),
                             'district'                => $this->cleanString($this->cell($row, $headerMap, 'District'), 100),
@@ -655,7 +666,7 @@ class ImportEnquiriesJob implements ShouldQueue
                             'planned_followup_date' => $this->excelDate($this->cell($row, $headerMap, 'Planned Followup Date')),
                             'actual_followup_date'  => $this->excelDate($this->cell($row, $headerMap, 'Actual Followup Date')),
                             'followup_status'       => $this->cleanString($this->cell($row, $headerMap, 'Followup Status'), 50),
-                            'call_duration'        => $this->minutesToDuration($this->cell($row, $headerMap, 'Actual followup call duration')),
+                            'call_duration'        => $this->secondsToDuration($this->cell($row, $headerMap, 'Actual followup call duration')),
                             'remarks'               => $this->resolveKeyValue('SC_FUP_REMARKS', $this->cell($row, $headerMap, 'Remark')),
                             'comments'              => $this->cleanString($this->cell($row, $headerMap, 'Comments')),
                             'enquiry_date'          => $this->excelDate($this->cell($row, $headerMap, 'Enquiry Date')),
@@ -1260,7 +1271,7 @@ class ImportEnquiriesJob implements ShouldQueue
         }
     }
 
-    private function minutesToDuration($value): ?string
+    private function secondsToDuration($value): ?string
     {
         if ($value === null || $value === '' || $value === '-' || $value === 'N/A' || $value === 'NaT') {
             return null;
@@ -1270,10 +1281,11 @@ class ImportEnquiriesJob implements ShouldQueue
             return null;
         }
 
-        $totalMinutes = (int) round((float) $value);
-        $h = intdiv($totalMinutes, 60);
-        $m = $totalMinutes % 60;
+        $totalSeconds = (int) round((float) $value);
+        $h = intdiv($totalSeconds, 3600);
+        $m = intdiv($totalSeconds % 3600, 60);
+        $s = $totalSeconds % 60;
 
-        return sprintf('%02d:%02d:00', $h, $m);
+        return sprintf('%02d:%02d:%02d', $h, $m, $s);
     }
 }
