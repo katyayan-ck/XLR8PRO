@@ -34,7 +34,7 @@
 
                 <tr>
 
-                    <th width="6%">Rev</th>
+                    <th width="6%">Version</th>
 
                     <th width="10%">Action</th>
 
@@ -46,7 +46,8 @@
 
                     <th width="15%">Date</th>
 
-                    <th width="39%">Changes</th>
+                    <th width="34%">Changes</th>
+                    <th width="5%">PDF</th>
 
                 </tr>
 
@@ -59,7 +60,7 @@
                 <tr>
 
                     <td>
-                        <strong>{{ $row->revision }}</strong>
+                        <strong>V{{ $row->version }}</strong>
                     </td>
 
                     <td>
@@ -156,6 +157,14 @@
 
                         @endif
 
+                    </td>
+                    <td class="text-center">
+                        <a href="{{ backpack_url('quotation-form/' . $quotation->id . '/history/' . $row->version . '/pdf') }}"
+                        target="_blank"
+                        title="View PDF"
+                        class="btn btn-sm btn-outline-danger">
+                            <i class="la la-file-pdf"></i>
+                        </a>
                     </td>
 
                 </tr>

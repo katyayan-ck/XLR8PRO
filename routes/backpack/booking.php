@@ -98,6 +98,8 @@ Route::group([
         [QuotationCrudController::class, 'update']
     )->name('quotation.update');
 
+
+
     Route::get('quotation/{quotation_no}/preview', [QuotationCrudController::class, 'preview'])->name('quotation.preview');
 
 
@@ -105,6 +107,12 @@ Route::group([
         'quotation-form/{id}/history',
         [QuotationCrudController::class, 'history']
     )->name('quotation.history');
+
+    Route::get(
+        'quotation-form/{id}/history/{version}/pdf',
+        [QuotationCrudController::class, 'historyPdf']
+    )->name('quotation.history.pdf');
+
     Route::get(
         'booking-process/{id}/preview',
         'BookingCrudController@preview'

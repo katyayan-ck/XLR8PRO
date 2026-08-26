@@ -28,8 +28,8 @@ class Quotation extends BaseModel
         'assigned_to',
         'revision',
         'standard_data',
-        'requested_data',
-        'proposed_data',
+        // 'requested_data',
+        // 'proposed_data',
         'final_data',
         'onroad_price',
         'invoice_price',
@@ -46,8 +46,8 @@ class Quotation extends BaseModel
 
         $this->casts = array_merge($this->casts, [
             'standard_data'  => 'array',
-            'requested_data' => 'array',
-            'proposed_data'  => 'array',
+            // 'requested_data' => 'array',
+            // 'proposed_data'  => 'array',
             'onroad_price'   => 'decimal:2',
             'invoice_price'  => 'decimal:2',
             'revision'       => 'integer',

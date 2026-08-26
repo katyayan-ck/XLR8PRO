@@ -1308,7 +1308,7 @@ $viewMode = $viewMode ?? false;
                     <!-- Center Text -->
                     <div class="col-8 text-center">
                         <h3 class="fw-bold mb-1">BIKANER MOTORS PRIVATE LIMITED</h3>
-                        <div style="font-size:13px;">Regd. Office : Sunheri Chhabil Mansion, NH-11, Jaipur Road,
+                        <div style="font-size:13px;">Regd. Office : Sunehri Chhabil Mansion, NH-11, Jaipur Road,
                             Bikaner-334022</div>
                         <div style="font-size:13px;">Branch Office : 6th KM Stone, Ratangarh Road, Churu-331001</div>
                         <h4 class="mt-2 mb-0 fw-bold text-uppercase">Vehicle Quotation</h4>
@@ -1324,50 +1324,75 @@ $viewMode = $viewMode ?? false;
         </div>
 
         @php
-        $formAction = isset($quotation)
-        ? route('quotation.update', $quotation->id)
-        : route('quotation.store');
-        $formMethod = isset($quotation) ? 'PUT' : 'POST';
-        $quotationData = isset($quotation) ? ($quotation->proposed_data ?? []) : [];
+$formAction = isset($quotation)
+    ? route('quotation.update', $quotation->id)
+    : route('quotation.store');
 
-        $isEditMode = isset($quotation);
+$formMethod = isset($quotation) ? 'PUT' : 'POST';
 
-        $savedInsuranceCompany = $quotationData['insurance_company'] ?? '';
+$quotationData = $quotationData ?? [];
 
-        $savedInsuranceCovers = $quotationData['insurance_covers'] ?? [];
+$isEditMode = isset($quotation);
 
-        $savedAccessories = $quotationData['accessories'] ?? [];
+$savedInsuranceCompany = $quotationData['insurance_company'] ?? '';
+
+$savedInsuranceCovers = $quotationData['insurance_covers'] ?? [];
+
+$savedAccessories = $quotationData['accessories'] ?? [];
 
 
-        // Determine group selections based on existing data
-        // Determine group selections based on existing data
-        $groupASelected = 'cash_scheme_oem';
-        if (!empty($quotationData['csd_discount']) && !in_array($quotationData['csd_discount'], ['0', '0.00', 'N/A'])) {
-        $groupASelected = 'csd_discount';
-        } elseif (!empty($quotationData['fame_subsidy']) && !in_array($quotationData['fame_subsidy'], ['0', '0.00',
-        'N/A'])) {
-        $groupASelected = 'fame_subsidy';
-        } elseif (!empty($quotationData['cash_scheme_oem']) && !in_array($quotationData['cash_scheme_oem'], ['0',
-        '0.00', 'N/A'])) {
-        $groupASelected = 'cash_scheme_oem';
-        }
+// Determine group selections based on existing data
+$groupASelected = 'cash_scheme_oem';
 
-        // Group B - Only Corporate Discount (Loyalty Bonus moved to Group C)
-        $groupBSelected = 'corporate_discount';
+if (
+    !empty($quotationData['csd_discount']) &&
+    !in_array($quotationData['csd_discount'], ['0', '0.00', 'N/A'])
+) {
+    $groupASelected = 'csd_discount';
 
-        // Group C - Exchange Bonus, Green Bonus, Welcome Bonus, Loyalty Bonus
-        $groupCSelected = 'exchange_bonus';
-        if (!empty($quotationData['green_bonus']) && $quotationData['green_bonus'] != '0' &&
-        $quotationData['green_bonus'] != 'N/A') {
-        $groupCSelected = 'green_bonus';
-        } elseif (!empty($quotationData['welcome_bonus']) && $quotationData['welcome_bonus'] != '0' &&
-        $quotationData['welcome_bonus'] != 'N/A') {
-        $groupCSelected = 'welcome_bonus';
-        } elseif (!empty($quotationData['loyalty_bonus']) && $quotationData['loyalty_bonus'] != '0' &&
-        $quotationData['loyalty_bonus'] != 'N/A') {
-        $groupCSelected = 'loyalty_bonus';
-        }
-        @endphp
+} elseif (
+    !empty($quotationData['fame_subsidy']) &&
+    !in_array($quotationData['fame_subsidy'], ['0', '0.00', 'N/A'])
+) {
+    $groupASelected = 'fame_subsidy';
+
+} elseif (
+    !empty($quotationData['cash_scheme_oem']) &&
+    !in_array($quotationData['cash_scheme_oem'], ['0', '0.00', 'N/A'])
+) {
+    $groupASelected = 'cash_scheme_oem';
+}
+
+
+// Group B
+$groupBSelected = 'corporate_discount';
+
+
+// Group C
+$groupCSelected = 'exchange_bonus';
+
+if (
+    !empty($quotationData['green_bonus']) &&
+    $quotationData['green_bonus'] != '0' &&
+    $quotationData['green_bonus'] != 'N/A'
+) {
+    $groupCSelected = 'green_bonus';
+
+} elseif (
+    !empty($quotationData['welcome_bonus']) &&
+    $quotationData['welcome_bonus'] != '0' &&
+    $quotationData['welcome_bonus'] != 'N/A'
+) {
+    $groupCSelected = 'welcome_bonus';
+
+} elseif (
+    !empty($quotationData['loyalty_bonus']) &&
+    $quotationData['loyalty_bonus'] != '0' &&
+    $quotationData['loyalty_bonus'] != 'N/A'
+) {
+    $groupCSelected = 'loyalty_bonus';
+}
+@endphp
 
         <form method="POST" action="{{ $formAction }}" enctype="multipart/form-data" @if($viewMode)
             onsubmit="return false;" @endif>
