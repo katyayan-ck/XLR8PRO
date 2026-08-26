@@ -1880,13 +1880,19 @@ $viewMode = $viewMode ?? false;
                                                 </select>
                                             </td>
                                             <td class="cell-type">
+                                                @php
+                                                    $selectedGroupAType = 'INV';
+                                                    if ($groupASelected === 'cash_scheme_oem') {
+                                                        $selectedGroupAType = $quotationData['cash_scheme_oem_type'] ?? 'INV';
+                                                    } elseif ($groupASelected === 'csd_discount') {
+                                                        $selectedGroupAType = $quotationData['csd_discount_type'] ?? 'INV';
+                                                    } elseif ($groupASelected === 'fame_subsidy') {
+                                                        $selectedGroupAType = $quotationData['fame_subsidy_type'] ?? 'INV';
+                                                    }
+                                                @endphp
                                                 <select id="group_a_type">
-                                                    <option value="INV" {{ old('group_a_type',
-                                                        $quotationData['cash_scheme_oem_type'] ?? 'INV' )=='INV'
-                                                        ? 'selected' : '' }}>INV</option>
-                                                    <option value="CN" {{ old('group_a_type',
-                                                        $quotationData['cash_scheme_oem_type'] ?? 'INV' )=='CN'
-                                                        ? 'selected' : '' }}>CN</option>
+                                                    <option value="INV" {{ old('group_a_type', $selectedGroupAType) == 'INV' ? 'selected' : '' }}>INV</option>
+                                                    <option value="CN" {{ old('group_a_type', $selectedGroupAType) == 'CN' ? 'selected' : '' }}>CN</option>
                                                 </select>
                                             </td>
                                             <td class="cell-amount">
@@ -4156,16 +4162,13 @@ function toggleRowVisibility() {
 // plain readonly field instead. Keeps the same #group_a_type id either way.
 function renderGroupAType(key, presetType) {
     const $old = $('#group_a_type');
-    let $new;
-
-    if (key === 'cash_scheme_oem') {
-        $new = $('<select id="group_a_type"><option value="INV">INV</option><option value="CN">CN</option></select>');
-        $new.val(presetType || 'INV');
-    } else {
-        $new = $('<input type="text" id="group_a_type" readonly>');
-        $new.val(presetType || (key ? 'INV' : ''));
-    }
-
+    let $new = $(
+        '<select id="group_a_type">' +
+            '<option value="INV">INV</option>' +
+            '<option value="CN">CN</option>' +
+        '</select>'
+    );
+    $new.val(presetType || 'INV');
     $old.replaceWith($new);
     return $new;
 }
@@ -4211,73 +4214,152 @@ function renderGroupADiscounts(pricing) {
 // Dealer / Accessories / Shield will show plain text only.
 // ============================================================
 
-function syncCashSchemeLinkedTypes() {
+// function syncCashSchemeLinkedTypes() {
 
-    const cashOemType = $('#group_a_type').val();
+//     const cashOemType = $('#group_a_type').val();
 
-    if (cashOemType !== 'INV' && cashOemType !== 'CN') {
+//     if (cashOemType !== 'INV' && cashOemType !== 'CN') {
+//         return;
+//     }
+
+//     // --------------------------------------------------------
+//     // Cash Scheme OEM hidden value
+//     // --------------------------------------------------------
+//     $('#cash_scheme_oem_type').val(cashOemType);
+
+
+//     // --------------------------------------------------------
+//     // Replace Dealer dropdown with plain input
+//     // --------------------------------------------------------
+//     setLinkedSchemeType(
+//         '#dealer_discount_type',
+//         'dealer_discount_type',
+//         cashOemType
+//     );
+
+
+//     // --------------------------------------------------------
+//     // Replace Accessories Scheme dropdown with plain input
+//     // --------------------------------------------------------
+//     setLinkedSchemeType(
+//         '#accessories_discount_type',
+//         'accessories_discount_type',
+//         cashOemType
+//     );
+
+
+//     // --------------------------------------------------------
+//     // Replace Shield Scheme dropdown with plain input
+//     // --------------------------------------------------------
+//     setLinkedSchemeType(
+//         '#shield_scheme_type',
+//         'shield_scheme_type',
+//         cashOemType
+//     );
+
+//     $('#accessories_spl_disc_type').val(cashOemType);
+
+//     $('#ceramic_discount_type').val(cashOemType);
+
+//     $('#ppf_discount_type').val(cashOemType);
+
+//     $('#other_cash_discount_type').val(cashOemType);
+
+
+
+//     // Recalculate
+//     calculateQuotation();
+//     toggleRowVisibility();
+// }
+
+// $(document).on('change', '#group_a_type', function () {
+
+//     if ($('#group_a_select').val() !== 'cash_scheme_oem') {
+//         return;
+//     }
+
+//     syncCashSchemeLinkedTypes();
+// });
+
+// ============================================================
+// GROUP A TYPE -> LINKED DISCOUNT TYPES
+// Whichever Group A option is selected acts as the MASTER.
+// Dealer / Accessories / Shield will show plain text only.
+// ============================================================
+
+function syncGroupALinkedTypes() {
+    const groupAType = $('#group_a_type').val();
+    const selectedGroupA = $('#group_a_select').val();
+
+    if (groupAType !== 'INV' && groupAType !== 'CN') {
         return;
     }
 
-    // --------------------------------------------------------
-    // Cash Scheme OEM hidden value
-    // --------------------------------------------------------
-    $('#cash_scheme_oem_type').val(cashOemType);
+    // Update active Group A item hidden type field
+    if (selectedGroupA) {
+        $('#' + selectedGroupA + '_type').val(groupAType);
+    }
 
-
-    // --------------------------------------------------------
-    // Replace Dealer dropdown with plain input
-    // --------------------------------------------------------
+    // Replace Dealer, Accessories Scheme, Shield Scheme with plain readonly inputs
     setLinkedSchemeType(
         '#dealer_discount_type',
         'dealer_discount_type',
-        cashOemType
+        groupAType
     );
 
-
-    // --------------------------------------------------------
-    // Replace Accessories Scheme dropdown with plain input
-    // --------------------------------------------------------
     setLinkedSchemeType(
         '#accessories_discount_type',
         'accessories_discount_type',
-        cashOemType
+        groupAType
     );
 
-
-    // --------------------------------------------------------
-    // Replace Shield Scheme dropdown with plain input
-    // --------------------------------------------------------
     setLinkedSchemeType(
         '#shield_scheme_type',
         'shield_scheme_type',
-        cashOemType
+        groupAType
     );
-
-    $('#accessories_spl_disc_type').val(cashOemType);
-
-    $('#ceramic_discount_type').val(cashOemType);
-
-    $('#ppf_discount_type').val(cashOemType);
-
-    $('#other_cash_discount_type').val(cashOemType);
-
-
 
     // Recalculate
     calculateQuotation();
     toggleRowVisibility();
 }
 
+// Trigger whenever Group A type changes
 $(document).on('change', '#group_a_type', function () {
-
-    if ($('#group_a_select').val() !== 'cash_scheme_oem') {
-        return;
-    }
-
-    syncCashSchemeLinkedTypes();
+    syncGroupALinkedTypes();
 });
 
+
+// ============================================================
+// 4 SPECIAL DISCOUNTS SYNC (Accessories Spl, Coating Spl, PPF Spl, Other Cash)
+// If any one changes, all four update together. Default: INV.
+// ============================================================
+
+const SPECIAL_FOUR_TYPES = [
+    '#accessories_spl_disc_type',
+    '#ceramic_discount_type',
+    '#ppf_discount_type',
+    '#other_cash_discount_type'
+];
+
+function syncSpecialFourDiscountTypes(newVal) {
+    if (newVal !== 'INV' && newVal !== 'CN') {
+        newVal = 'INV';
+    }
+
+    SPECIAL_FOUR_TYPES.forEach(function (selector) {
+        $(selector).val(newVal);
+    });
+
+    calculateQuotation();
+    toggleRowVisibility();
+}
+
+// Event listener on change of any of the 4 dropdowns
+$(document).on('change', SPECIAL_FOUR_TYPES.join(', '), function () {
+    const changedVal = $(this).val();
+    syncSpecialFourDiscountTypes(changedVal);
+});
 
 // ============================================================
 // Render linked scheme type as plain text/input
@@ -4585,7 +4667,7 @@ if (groupASelected && groupAAmount) {
     // IMPORTANT:
     // Types are NOT taken independently from mock data.
     // Cash Scheme OEM Type is the master.
-    syncCashSchemeLinkedTypes();
+    syncGroupALinkedTypes();
     if (pricing.deductibles["corp-scheme"] && pricing.deductibles["corp-scheme"].length > 0) {
     let corp = pricing.deductibles["corp-scheme"].find(x => x.name === "Corporate Discount") || pricing.deductibles["corp-scheme"][0];
     if (corp && corp.name === "Corporate Discount") {
@@ -4612,18 +4694,16 @@ if (groupASelected && groupAAmount) {
     if (pricing.deductibles["accessories-spl-discount"]) {
         let val = pricing.deductibles["accessories-spl-discount"].amount;
         $('#accessories_spl_disc').val(val > 0 ? val : 'N/A');
-        $('#accessories_spl_disc_type').val(pricing.deductibles["accessories-spl-discount"].type);
     }
     if (pricing.deductibles["coating-spl-discount"]) {
         let val = pricing.deductibles["coating-spl-discount"].amount;
         $('#ceramic_discount').val(val > 0 ? val : 'N/A');
-        $('#ceramic_discount_type').val(pricing.deductibles["coating-spl-discount"].type);
     }
     if (pricing.deductibles["ppf-spl-discount"]) {
         let val = pricing.deductibles["ppf-spl-discount"].amount;
         $('#ppf_discount').val(val > 0 ? val : 'N/A');
-        $('#ppf_discount_type').val(pricing.deductibles["ppf-spl-discount"].type);
     }
+
     if (pricing.deductibles["charger-swapping-discount"]) {
         let val = pricing.deductibles["charger-swapping-discount"].amount;
         $('#charger_swapping_discount').val(val > 0 ? val : 'N/A');
@@ -4632,8 +4712,12 @@ if (groupASelected && groupAAmount) {
     if (pricing.deductibles["other-cash-discount"]) {
         let val = pricing.deductibles["other-cash-discount"].amount;
         $('#other_cash_discount').val(val > 0 ? val : 'N/A');
-        $('#other_cash_discount_type').val(pricing.deductibles["other-cash-discount"].type);
     }
+
+    // 4 special fields ka common type sync karein (Default: INV)
+    let specialType = pricing.deductibles["accessories-spl-discount"]?.type || 'INV';
+    syncSpecialFourDiscountTypes(specialType);
+
     if (pricing.deductibles["special-cash-discount"]) {
         let val = pricing.deductibles["special-cash-discount"].amount;
         $('#special_cash_discount').val(val > 0 ? val : 'N/A');
@@ -4703,6 +4787,7 @@ $('#btnResetMock').click(function () {
     $('#charger_swapping_discount').val('');
     $('#other_cash_discount').val('');
     $('#special_cash_discount').val('');
+    syncSpecialFourDiscountTypes('INV');
     $('#insurance_covers').empty();
     $('#insurance_print').text('');
     $('#accessories_print').text('');
@@ -4899,47 +4984,24 @@ setupGroupDiscount('group_c', ['exchange_bonus', 'green_bonus', 'welcome_bonus',
 // GROUP A SELECT CHANGE
 // ============================================================
 
+// ============================================================
+// GROUP A SELECT CHANGE
+// ============================================================
+
 $('#group_a_select').on('change', function () {
-
     const value = $(this).val();
-    const $old = $('#group_a_type');
-    let $new;
+    let currentType = 'INV';
 
     if (value === 'cash_scheme_oem') {
-
-        $new = $(
-            '<select id="group_a_type">' +
-                '<option value="INV">INV</option>' +
-                '<option value="CN">CN</option>' +
-            '</select>'
-        );
-
-        // Restore saved/current Cash OEM type
-        const savedType =
-            $('#cash_scheme_oem_type').val() ||
-            '{{ $quotationData["cash_scheme_oem_type"] ?? "INV" }}';
-
-        $new.val(savedType === 'CN' ? 'CN' : 'INV');
-
-    } else {
-
-        $new = $('<input type="text" id="group_a_type" readonly>');
-        $new.val('INV');
+        currentType = $('#cash_scheme_oem_type').val() || 'INV';
+    } else if (value === 'csd_discount') {
+        currentType = $('#csd_discount_type').val() || 'INV';
+    } else if (value === 'fame_subsidy') {
+        currentType = $('#fame_subsidy_type').val() || 'INV';
     }
 
-    $old.replaceWith($new);
-
-    // Cash Scheme OEM is the master
-    if (value === 'cash_scheme_oem') {
-        syncCashSchemeLinkedTypes();
-
-        // Whenever user changes INV/CN
-        $(document)
-            .off('change.cashSchemeType', '#group_a_type')
-            .on('change.cashSchemeType', '#group_a_type', function () {
-                syncCashSchemeLinkedTypes();
-            });
-    }
+    renderGroupAType(value, currentType);
+    syncGroupALinkedTypes();
 
     $('#group_a_amount').trigger('change');
 });
@@ -5689,8 +5751,10 @@ $(document).ready(function() {
 // ============================================================
 
 $(document).ready(function () {
-    
 
+    const initialSpecialType = $('#accessories_spl_disc_type').val() || 'INV';
+    syncSpecialFourDiscountTypes(initialSpecialType);
+    
     // Initialize Select2 for Accessories
     $('#accessories').select2({
         placeholder: 'Search & select accessories...',
@@ -5945,27 +6009,23 @@ function calculateDiscountBifurcationByType() {
 // when Cash OEM Scheme Type = INV
 // ======================================
 
+// ======================================
+// Validation before saving quotation
+// Rule:
+// Total CN Discount >= Group A Scheme Amount
+// when Group A Scheme Type = INV
+// ======================================
+
 $('form').on('submit', function (e) {
-
-    let cashOemAmount = 0;
-    let cashOemType = '';
-
-    if ($('#group_a_select').val() === 'cash_scheme_oem') {
-        cashOemAmount = parseFloat($('#group_a_amount').val()) || 0;
-        cashOemType = $('#group_a_type').val();
-    } else {
-        cashOemAmount = num('cash_scheme_oem');
-        cashOemType = $('#cash_scheme_oem_type').val();
-    }
+    const selectedKey = $('#group_a_select').val();
+    const groupAAmount = parseFloat($('#group_a_amount').val()) || 0;
+    const groupAType = $('#group_a_type').val();
+    const selectedLabel = $('#group_a_select option:selected').text().trim();
 
     let bifurcation = calculateDiscountBifurcation();
     let totalCNDiscount = bifurcation.creditNoteDiscount;
 
-    if (
-        cashOemType === 'INV' &&
-        totalCNDiscount < cashOemAmount
-    ) {
-
+    if (groupAType === 'INV' && totalCNDiscount < groupAAmount) {
         e.preventDefault();
 
         Swal.fire({
@@ -5974,13 +6034,13 @@ $('form').on('submit', function (e) {
             html: `
                 Total <b>CN Discount</b> should be
                 <b>equal to or greater than</b>
-                <b>Cash OEM Scheme</b> when
-                <b>Cash OEM Scheme Type</b> is <b>INV</b>.
+                <b>${selectedLabel}</b> when
+                <b>${selectedLabel} Type</b> is <b>INV</b>.
 
                 <br><br>
 
-                <b>Cash OEM Scheme :</b>
-                ₹${cashOemAmount.toFixed(2)}
+                <b>${selectedLabel} :</b>
+                ₹${groupAAmount.toFixed(2)}
 
                 <br>
 
@@ -5992,7 +6052,6 @@ $('form').on('submit', function (e) {
 
         return false;
     }
-
 });
 
 function toggleRtoChargesNote() {

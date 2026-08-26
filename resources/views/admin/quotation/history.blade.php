@@ -4,11 +4,25 @@
 
 <div class="card">
 
-    <div class="card-header">
+    <div class="card-header" style="display: block;">
 
-        <h3 class="mb-0">
+        <h3 class="mb-1">
             Quotation History
         </h3>
+
+        <div style="font-size: 12px; color: #666; margin-top: 5px;">
+
+            <strong>Quotation No.:</strong> {{ $quotation->quotation_no }}
+
+            &nbsp;&nbsp; | &nbsp;&nbsp;
+
+            <strong>Customer Name:</strong> {{ $customerName ?? '-' }}
+
+            &nbsp;&nbsp; | &nbsp;&nbsp;
+
+            <strong>Model:</strong> {{ $modelName ?? '-' }}
+
+        </div>
 
     </div>
 
