@@ -4,11 +4,25 @@
 
 <div class="card">
 
-    <div class="card-header">
+    <div class="card-header" style="display: block;">
 
-        <h3 class="mb-0">
+        <h3 class="mb-1">
             Quotation History
         </h3>
+
+        <div style="font-size: 12px; color: #666; margin-top: 5px;">
+
+            <strong>Quotation No.:</strong> {{ $quotation->quotation_no }}
+
+            &nbsp;&nbsp; | &nbsp;&nbsp;
+
+            <strong>Customer Name:</strong> {{ $customerName ?? '-' }}
+
+            &nbsp;&nbsp; | &nbsp;&nbsp;
+
+            <strong>Model:</strong> {{ $modelName ?? '-' }}
+
+        </div>
 
     </div>
 
@@ -20,7 +34,7 @@
 
                 <tr>
 
-                    <th width="6%">Rev</th>
+                    <th width="6%">Version</th>
 
                     <th width="10%">Action</th>
 
@@ -32,7 +46,8 @@
 
                     <th width="15%">Date</th>
 
-                    <th width="39%">Changes</th>
+                    <th width="34%">Changes</th>
+                    <th width="5%">PDF</th>
 
                 </tr>
 
@@ -45,7 +60,7 @@
                 <tr>
 
                     <td>
-                        <strong>{{ $row->revision }}</strong>
+                        <strong>V{{ $row->version }}</strong>
                     </td>
 
                     <td>
@@ -142,6 +157,14 @@
 
                         @endif
 
+                    </td>
+                    <td class="text-center">
+                        <a href="{{ backpack_url('quotation-form/' . $quotation->id . '/history/' . $row->version . '/pdf') }}"
+                        target="_blank"
+                        title="View PDF"
+                        class="btn btn-sm btn-outline-danger">
+                            <i class="la la-file-pdf"></i>
+                        </a>
                     </td>
 
                 </tr>

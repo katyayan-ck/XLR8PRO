@@ -202,6 +202,7 @@ const columnDefs = [
         'onroad_price',
 
         'oem_scheme_discount',
+        'csd_discount',
         'fame_subsidy',
         'exchange_bonus',
         'corporate_discount',
@@ -357,6 +358,7 @@ const columnDefs = [
     'onroad_price',
 
     'oem_scheme_discount',
+    'csd_discount',
     'fame_subsidy',
     'exchange_bonus',
     'corporate_discount',
