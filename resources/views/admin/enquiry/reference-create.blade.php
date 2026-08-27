@@ -24,7 +24,7 @@
                         {{-- =========================== REQUESTED VISIBLE FIELDS =========================== --}}
                         
                         <!-- Referee Details -->
-                        <h3 class="mb-0 ms-3" style="color: #000 !important;">Reference Details</h3>
+                        <h3 class="mb-0 ms-3" style="color: #000 !important;">Referee Details</h3>
                         <div class="card-body">
                             <div class="row">
                                 <div class="col-md-6 mb-3">

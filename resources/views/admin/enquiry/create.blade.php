@@ -380,9 +380,9 @@
 
                             <div class="row w-100 m-0 p-0 {{ $isReference ? 'd-flex' : 'd-none' }}" id="referenceFields">
                                 <div class="col-md-3 mb-3">
-                                    <label class="form-label">Referred By <span class="text-danger">*</span></label>
+                                    <label class="form-label">Referee Type <span class="text-danger">*</span></label>
                                     <select name="referred_by" id="referred_by" class="form-control form-select">
-                                        <option value="">Select Referred By</option>
+                                        <option value="">Select Referee Type</option>
                                         <option value="Customer"
                                             {{ old('referred_by', $enquiry->referred_by ?? '') == 'Customer' ? 'selected' : '' }}>
                                             Customer</option>
@@ -702,7 +702,7 @@
                         <div class="row">
                             @if (isset($enquiry))
                                 <div class="col-md-3 mb-3">
-                                    <label class="form-label">Purchase Type</label>
+                                    <label class="form-label">Purchase Type (SC Input)</label>
                                     <input type="text" class="form-control" 
                                         value="{{ collect($purchase_types ?? [])->firstWhere('code', $enquiry?->purchase_type)['value'] ?? ($enquiry?->purchase_type ?? '—') }}" 
                                         readonly style="background-color: #e9ecef;">
@@ -713,10 +713,10 @@
                             @endif
 
                             <div class="col-md-3 mb-3">
-                                <label class="form-label">CRE Purchase Type <span class="text-danger">*</span></label>
+                                <label class="form-label">Purchase Type (CRE Input) <span class="text-danger">*</span></label>
                                 <select name="purchase_type_crm" id="purchase_type_crm" class="form-control form-select"
                                     required>
-                                    <option value="">Select CRE Purchase Type</option>
+                                    <option value="">Select Purchase Type (CRE Input)</option>
                                     @foreach ($purchase_types as $item)
                                         <option value="{{ $item['code'] }}"
                                             {{ old('purchase_type_crm', $enquiry->purchase_type_crm ?? '') == $item['code'] ? 'selected' : '' }}>
@@ -1407,21 +1407,6 @@
                             {{-- Editable Input Row --}}
                             <div class="row">
                                 <div class="col-md-3 mb-3">
-                                    <label class="form-label">Enquiry Stage @if (isset($enquiry))
-                                            <span class="text-danger">*</span>
-                                        @endif
-                                    </label>
-                                    <select name="cre_enq_stage" class="form-control form-select"
-                                        @if (isset($enquiry)) required @endif>
-                                        <option value="">Select Option</option>
-                                        @foreach ($enquiry_stages as $item)
-                                            <option value="{{ $item['code'] }}"
-                                                {{ old('cre_enq_stage') == $item['code'] ? 'selected' : '' }}>
-                                                {{ $item['value'] }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="col-md-3 mb-3">
                                     <label class="form-label">Customer Stage @if (isset($enquiry))
                                             <span class="text-danger">*</span>
                                         @endif
@@ -1436,6 +1421,23 @@
                                         @endforeach
                                     </select>
                                 </div>
+
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Enquiry Stage @if (isset($enquiry))
+                                            <span class="text-danger">*</span>
+                                        @endif
+                                    </label>
+                                    <select name="cre_enq_stage" class="form-control form-select"
+                                        @if (isset($enquiry)) required @endif>
+                                        <option value="">Select Option</option>
+                                        @foreach ($enquiry_stages as $item)
+                                            <option value="{{ $item['code'] }}"
+                                                {{ old('cre_enq_stage') == $item['code'] ? 'selected' : '' }}>
+                                                {{ $item['value'] }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                
                                 <div class="col-md-2 mb-3">
                                     <label class="form-label">Next Fup Date @if (isset($enquiry))
                                             <span class="text-danger" id="cre_next_fup_asterisk">*</span>
@@ -1508,7 +1510,7 @@
                                                         <input class="form-check-input border-secondary cursor-pointer m-0"
                                                             type="checkbox" name="mismatch_enq_stage" value="1"
                                                             style="width: 1.2rem; height: 1.2rem;">
-                                                        <label class="form-check-label ms-2 mb-0">Unmatched</label>
+                                                        <label class="form-check-label ms-2 mb-0">Mismatch</label>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -1530,7 +1532,7 @@
                                                         <input class="form-check-input border-secondary cursor-pointer m-0"
                                                             type="checkbox" name="mismatch_next_fup" value="1"
                                                             style="width: 1.2rem; height: 1.2rem;">
-                                                        <label class="form-check-label ms-2 mb-0">Unmatched</label>
+                                                        <label class="form-check-label ms-2 mb-0">Mismatch</label>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -1554,7 +1556,7 @@
                                                         <input class="form-check-input border-secondary cursor-pointer m-0"
                                                             type="checkbox" name="mismatch_fup_remarks" value="1"
                                                             style="width: 1.2rem; height: 1.2rem;">
-                                                        <label class="form-check-label ms-2 mb-0">Unmatched</label>
+                                                        <label class="form-check-label ms-2 mb-0">Mismatch</label>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -1575,7 +1577,7 @@
                                                             <input class="form-check-input border-secondary cursor-pointer m-0"
                                                                 type="checkbox" name="mismatch_test_drive" value="1"
                                                                 style="width: 1.2rem; height: 1.2rem;">
-                                                            <label class="form-check-label ms-2 mb-0">Unmatched</label>
+                                                            <label class="form-check-label ms-2 mb-0">Mismatch</label>
                                                         </div>
                                                     </td>
                                                 </tr>
