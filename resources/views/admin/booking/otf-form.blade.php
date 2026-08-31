@@ -794,8 +794,21 @@ use App\Services\OrgService;
                                 </tr>
                                 <tr>
                                     <td class="title">VOTF Number</td>
-                                    <td><input type="text" name="votf_no" id="votf_no"
-                                            value="{{ old('votf_no', $otfData['votf_no'] ?? '') }}"></td>
+                                    <td>
+                                        <div style="display:flex; gap:5px; align-items:center;">
+                                            <input type="text"
+                                                name="votf_no"
+                                                id="votf_no"
+                                                value="{{ old('votf_no', $otfData['votf_no'] ?? '') }}">
+
+                                            <button type="button"
+                                                    id="generate_votf"
+                                                    class="btn btn-sm btn-primary no-print"
+                                                    style="white-space:nowrap;">
+                                                Generate
+                                            </button>
+                                        </div>
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td class="title">Customer Name</td>
@@ -832,35 +845,9 @@ use App\Services\OrgService;
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td class="title">Customer Contact Number</td>
+                                    <td class="title">Customer Contact No.</td>
                                     <td><input type="text" name="customer_mobile" id="customer_mobile"
                                             value="{{ $booking->mobile ?? '' }}" readonly></td>
-                                </tr>
-
-                            </table>
-
-                            {{-- Contact & Personal Details --}}
-                            <table class="bill-table">
-                                <tr>
-                                    <td colspan="2" class="section-title">CONTACT & PERSONAL DETAILS</td>
-                                </tr>
-                                <tr>
-                                    <td class="title">Contact Person (If Any Other)</td>
-                                    <td><input type="text" name="contact_person" id="contact_person"
-                                            value="{{ old('contact_person', $otfData['contact_person'] ?? $booking->contact_person ?? '') }}">
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="title">Contact Person Phone No.</td>
-                                    <td><input type="text" name="contact_person_mobile" id="contact_person_mobile"
-                                            value="{{ old('contact_person_mobile', $otfData['contact_person_mobile'] ?? $booking->contact_person_mobile ?? '') }}"
-                                            maxlength="10" inputmode="numeric"
-                                            oninput="this.value=this.value.replace(/\D/g,'').slice(0,10);"></td>
-                                </tr>
-                                <tr>
-                                    <td class="title">Email ID</td>
-                                    <td><input type="email" name="email" id="email"
-                                            value="{{ old('email', $otfData['email'] ?? $booking->email ?? '') }}"></td>
                                 </tr>
                                 <tr>
                                     <td class="title">Date of Birth</td>
@@ -887,7 +874,35 @@ use App\Services\OrgService;
                                             class="date-picker"
                                             value="{{ old('anniversary_date', $otfData['anniversary_date'] ?? $booking->anniversary_date ?? '') }}">
                                     </td>
+                                </tr> 
+                                <tr>
+                                    <td class="title">Email ID</td>
+                                    <td><input type="email" name="email" id="email"
+                                            value="{{ old('email', $otfData['email'] ?? $booking->email ?? '') }}"></td>
+                                </tr>  
+                            </table>
+
+                            {{-- Contact & Personal Details --}}
+                            <table class="bill-table">
+                                <tr>
+                                    <td colspan="2" class="section-title">Contact & Personal Details</td>
                                 </tr>
+                                <tr>
+                                    <td class="title">Contact Person (If Any Other)</td>
+                                    <td><input type="text" name="contact_person" id="contact_person"
+                                            value="{{ old('contact_person', $otfData['contact_person'] ?? $booking->contact_person ?? '') }}">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="title">Contact Person Contact No.</td>
+                                    <td><input type="text" name="contact_person_mobile" id="contact_person_mobile"
+                                            value="{{ old('contact_person_mobile', $otfData['contact_person_mobile'] ?? $booking->contact_person_mobile ?? '') }}"
+                                            maxlength="10" inputmode="numeric"
+                                            oninput="this.value=this.value.replace(/\D/g,'').slice(0,10);"></td>
+                                </tr>
+                                
+                                
+                                
                             </table>
 
                             {{-- KYC & Nominee --}}
@@ -1876,7 +1891,7 @@ use App\Services\OrgService;
                                 <div class="form-section">
                                     <div class="table-responsive">
                                         <table class="table table-bordered table-sm mb-0 receipt-table">
-                                            <thead style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                                            <thead style="background: #F2F2F2; border-bottom: 2px solid #dee2e6;">
                                                 <tr>
                                                     <th
                                                         style="font-size: 10px; font-weight: 700; color: #495057; text-transform: uppercase; padding: 6px 8px; width: 30%;">
@@ -2232,11 +2247,69 @@ use App\Services\OrgService;
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
 <script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+    const generateButton = document.getElementById('generate_votf');
+    const votfInput = document.getElementById('votf_no');
+
+    if (!generateButton || !votfInput) {
+        return;
+    }
+
+    generateButton.addEventListener('click', function () {
+
+        generateButton.disabled = true;
+        generateButton.innerText = 'Generating...';
+
+        fetch("{{ route('booking.generate-votf', $booking->id) }}", {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+
+            if (!data.success) {
+                throw new Error(
+                    data.message || 'Unable to generate VOTF number.'
+                );
+            }
+
+            votfInput.value = data.votf_no;
+
+        })
+        .catch(error => {
+
+            console.error('VOTF generation error:', error);
+
+            alert(
+                error.message ||
+                'Unable to generate VOTF number.'
+            );
+
+        })
+        .finally(() => {
+
+            generateButton.disabled = false;
+            generateButton.innerText = 'Generate';
+
+        });
+
+    });
+
+});
     const consultants = @json($salesconsultants);
 
     document.getElementById('saleconsultant').addEventListener('change', function () {
         const personCode = this.value;
         const consultant = consultants.find(c => c.person_code === personCode);
+
+        console.log('Selected Person Code:', personCode);
+        console.log('Consultants:', consultants);
+        console.log('Matched Consultant:', consultant);
+        console.log('Mile ID:', consultant?.mile_id);
 
         if (!consultant) {
             document.getElementById('sc_mile_id').value = '';
@@ -2249,7 +2322,7 @@ use App\Services\OrgService;
         document.getElementById('sc_branch').value = consultant.branch_name ?? consultant.primary_branch_code ?? '';
         document.getElementById('sc_location').value = consultant.location_name ?? consultant.primary_loc_code ?? '';
     });
-    
+        
     window.addEventListener('DOMContentLoaded', function () {
         document.getElementById('saleconsultant').dispatchEvent(new Event('change'));
     });

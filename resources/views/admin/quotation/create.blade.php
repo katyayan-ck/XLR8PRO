@@ -72,7 +72,7 @@ use App\Services\OrgService;
         .price-grid td:nth-child(2),
         .discount-grid th:nth-child(2),
         .discount-grid td:nth-child(2) {
-        display: none !important;
+            display: none !important;
         }
 
         /* Reassign widths for the 2 remaining columns per table - each totals 100% */
@@ -200,7 +200,7 @@ use App\Services\OrgService;
         display: none;
     }
 
-    
+
 
 
 
@@ -1272,6 +1272,7 @@ use App\Services\OrgService;
             font-weight: 500 !important;
             color: #000 !important;
         }
+
         .alert {
             display: none !important;
         }
@@ -1352,75 +1353,75 @@ $viewMode = $viewMode ?? false;
         </div>
 
         @php
-$formAction = isset($quotation)
-    ? route('quotation.update', $quotation->id)
-    : route('quotation.store');
+        $formAction = isset($quotation)
+        ? route('quotation.update', $quotation->id)
+        : route('quotation.store');
 
-$formMethod = isset($quotation) ? 'PUT' : 'POST';
+        $formMethod = isset($quotation) ? 'PUT' : 'POST';
 
-$quotationData = $quotationData ?? [];
+        $quotationData = $quotationData ?? [];
 
-$isEditMode = isset($quotation);
+        $isEditMode = isset($quotation);
 
-$savedInsuranceCompany = $quotationData['insurance_company'] ?? '';
+        $savedInsuranceCompany = $quotationData['insurance_company'] ?? '';
 
-$savedInsuranceCovers = $quotationData['insurance_covers'] ?? [];
+        $savedInsuranceCovers = $quotationData['insurance_covers'] ?? [];
 
-$savedAccessories = $quotationData['accessories'] ?? [];
-
-
-// Determine group selections based on existing data
-$groupASelected = 'cash_scheme_oem';
-
-if (
-    !empty($quotationData['csd_discount']) &&
-    !in_array($quotationData['csd_discount'], ['0', '0.00', 'N/A'])
-) {
-    $groupASelected = 'csd_discount';
-
-} elseif (
-    !empty($quotationData['fame_subsidy']) &&
-    !in_array($quotationData['fame_subsidy'], ['0', '0.00', 'N/A'])
-) {
-    $groupASelected = 'fame_subsidy';
-
-} elseif (
-    !empty($quotationData['cash_scheme_oem']) &&
-    !in_array($quotationData['cash_scheme_oem'], ['0', '0.00', 'N/A'])
-) {
-    $groupASelected = 'cash_scheme_oem';
-}
+        $savedAccessories = $quotationData['accessories'] ?? [];
 
 
-// Group B
-$groupBSelected = 'corporate_discount';
+        // Determine group selections based on existing data
+        $groupASelected = 'cash_scheme_oem';
+
+        if (
+        !empty($quotationData['csd_discount']) &&
+        !in_array($quotationData['csd_discount'], ['0', '0.00', 'N/A'])
+        ) {
+        $groupASelected = 'csd_discount';
+
+        } elseif (
+        !empty($quotationData['fame_subsidy']) &&
+        !in_array($quotationData['fame_subsidy'], ['0', '0.00', 'N/A'])
+        ) {
+        $groupASelected = 'fame_subsidy';
+
+        } elseif (
+        !empty($quotationData['cash_scheme_oem']) &&
+        !in_array($quotationData['cash_scheme_oem'], ['0', '0.00', 'N/A'])
+        ) {
+        $groupASelected = 'cash_scheme_oem';
+        }
 
 
-// Group C
-$groupCSelected = 'exchange_bonus';
+        // Group B
+        $groupBSelected = 'corporate_discount';
 
-if (
-    !empty($quotationData['green_bonus']) &&
-    $quotationData['green_bonus'] != '0' &&
-    $quotationData['green_bonus'] != 'N/A'
-) {
-    $groupCSelected = 'green_bonus';
 
-} elseif (
-    !empty($quotationData['welcome_bonus']) &&
-    $quotationData['welcome_bonus'] != '0' &&
-    $quotationData['welcome_bonus'] != 'N/A'
-) {
-    $groupCSelected = 'welcome_bonus';
+        // Group C
+        $groupCSelected = 'exchange_bonus';
 
-} elseif (
-    !empty($quotationData['loyalty_bonus']) &&
-    $quotationData['loyalty_bonus'] != '0' &&
-    $quotationData['loyalty_bonus'] != 'N/A'
-) {
-    $groupCSelected = 'loyalty_bonus';
-}
-@endphp
+        if (
+        !empty($quotationData['green_bonus']) &&
+        $quotationData['green_bonus'] != '0' &&
+        $quotationData['green_bonus'] != 'N/A'
+        ) {
+        $groupCSelected = 'green_bonus';
+
+        } elseif (
+        !empty($quotationData['welcome_bonus']) &&
+        $quotationData['welcome_bonus'] != '0' &&
+        $quotationData['welcome_bonus'] != 'N/A'
+        ) {
+        $groupCSelected = 'welcome_bonus';
+
+        } elseif (
+        !empty($quotationData['loyalty_bonus']) &&
+        $quotationData['loyalty_bonus'] != '0' &&
+        $quotationData['loyalty_bonus'] != 'N/A'
+        ) {
+        $groupCSelected = 'loyalty_bonus';
+        }
+        @endphp
 
         <form method="POST" action="{{ $formAction }}" enctype="multipart/form-data" @if($viewMode)
             onsubmit="return false;" @endif>
@@ -1559,19 +1560,44 @@ if (
                         <tr>
                             <td class="title">Permit</td>
                             <td>
-                                <select id="permit" name="permit">
-                                    <option value="{{ $quotationData['permit'] ?? '' }}" selected>
-                                        {{ $quotationData['permit'] ?? 'Select Permit' }}
+                                <select name="permit" id="permit">
+                                    <option value="">Select Permit</option>
+
+                                    @foreach($permit_map as $key => $value)
+                                    <option value="{{ $key }}" {{ old('permit', $quotationData['permit'] ?? '' )==$key
+                                        ? 'selected' : '' }}>
+                                        {{ $value }}
                                     </option>
+                                    @endforeach
                                 </select>
                             </td>
-                            <td class="title">OEM Code</td>
+                            {{-- <td class="title">OEM Code</td>
                             <td>
                                 <input type="text" id="oem_code"
                                     value="{{ old('oem_code', $quotationData['oem_code'] ?? optional($selectedEnquiry)->oem_code ?? '') }}"
                                     readonly>
                                 <input type="hidden" name="oem_code" id="oem_code_hidden"
                                     value="{{ old('oem_code', $quotationData['oem_code'] ?? optional($selectedEnquiry)->oem_code ?? '') }}">
+                            </td> --}}
+                            <td class="title">Financier</td>
+                            <td>
+                                @if($revisionPdf ?? false)
+                                {{ $quotationData['financier_display'] ?? '-' }}
+                                @else
+                                <select name="financier" id="financier">
+                                    <option value="">Select Financier</option>
+
+                                    @foreach ($financiers ?? [] as $financier)
+                                    <option value="{{ $financier->id }}"
+                                        data-shortname="{{ $financier->short_name ?? '' }}" {{ old( 'financier' ,
+                                        $quotationData['financier'] ?? optional($selectedEnquiry)->financier ?? ''
+                                        ) == $financier->id ? 'selected' : '' }}
+                                        >
+                                        {{ $financier->name }}
+                                    </option>
+                                    @endforeach
+                                </select>
+                                @endif
                             </td>
                         </tr>
                     </table>
@@ -1665,17 +1691,19 @@ if (
                                                             style="font-size: 8px; font-weight: bold; margin-right: 3px; margin-left: 2px; color: #555; white-space: nowrap;">In-House:</span>
                                                         <label
                                                             style="font-size: 8px; font-weight: bold; margin: 0 2px; cursor: pointer; display: flex; align-items: center; gap: 1px;">
-                                                            <input type="radio" name="in_house_rto" value="1" {{
-                                                                old('in_house_rto', $quotationData['in_house_rto']
-                                                                ?? '0' )=='1' ? 'checked' : '' }}
-                                                                style="width: auto !important; margin: 0;"> Yes
+                                                            <input type="radio"
+                                                                name="in_house_rto"
+                                                                value="1"
+                                                                {{ old('in_house_rto', $quotationData['in_house_rto'] ?? '0') == '1' ? 'checked' : '' }}
+                                                                {{ $viewMode ? 'disabled' : '' }}> Yes
                                                         </label>
                                                         <label
                                                             style="font-size: 8px; font-weight: bold; margin: 0 2px; cursor: pointer; display: flex; align-items: center; gap: 1px;">
-                                                            <input type="radio" name="in_house_rto" value="0" {{
-                                                                old('in_house_rto', $quotationData['in_house_rto']
-                                                                ?? '0' )=='0' ? 'checked' : '' }}
-                                                                style="width: auto !important; margin: 0;"> No
+                                                            <input type="radio"
+                                                                name="in_house_rto"
+                                                                value="0"
+                                                                {{ old('in_house_rto', $quotationData['in_house_rto'] ?? '0') == '0' ? 'checked' : '' }}
+                                                                {{ $viewMode ? 'disabled' : '' }}> No
                                                         </label>
                                                     </div>
                                                 </div>
@@ -1934,18 +1962,21 @@ if (
                                             </td>
                                             <td class="cell-type">
                                                 @php
-                                                    $selectedGroupAType = 'INV';
-                                                    if ($groupASelected === 'cash_scheme_oem') {
-                                                        $selectedGroupAType = $quotationData['cash_scheme_oem_type'] ?? 'INV';
-                                                    } elseif ($groupASelected === 'csd_discount') {
-                                                        $selectedGroupAType = $quotationData['csd_discount_type'] ?? 'INV';
-                                                    } elseif ($groupASelected === 'fame_subsidy') {
-                                                        $selectedGroupAType = $quotationData['fame_subsidy_type'] ?? 'INV';
-                                                    }
+                                                $selectedGroupAType = 'INV';
+                                                if ($groupASelected === 'cash_scheme_oem') {
+                                                $selectedGroupAType = $quotationData['cash_scheme_oem_type'] ?? 'INV';
+                                                } elseif ($groupASelected === 'csd_discount') {
+                                                $selectedGroupAType = $quotationData['csd_discount_type'] ?? 'INV';
+                                                } elseif ($groupASelected === 'fame_subsidy') {
+                                                $selectedGroupAType = $quotationData['fame_subsidy_type'] ?? 'INV';
+                                                }
                                                 @endphp
                                                 <select id="group_a_type">
-                                                    <option value="INV_OE" {{ old('group_a_type', $selectedGroupAType) == 'INV_OE' ? 'selected' : '' }}>Inv Disc. (OE)</option>
-                                                    <option value="CN1" {{ old('group_a_type', $selectedGroupAType) == 'CN1' ? 'selected' : '' }}>CN1</option>
+                                                    <option value="INV_OE" {{ old('group_a_type',
+                                                        $selectedGroupAType)=='INV_OE' ? 'selected' : '' }}>Inv Disc.
+                                                        (OE)</option>
+                                                    <option value="CN1" {{ old('group_a_type',
+                                                        $selectedGroupAType)=='CN1' ? 'selected' : '' }}>CN1</option>
                                                 </select>
                                             </td>
                                             <td class="cell-amount">
@@ -2131,8 +2162,8 @@ if (
                                             <td class="cell-type">
                                                 <select id="ppf_discount_type" name="ppf_discount_type">
                                                     <option value="INV_D" {{ old('ppf_discount_type',
-                                                        $quotationData['ppf_discount_type'] ?? '' )=='INV_D' ? 'selected'
-                                                        : '' }}>Inv Disc. (D)</option>
+                                                        $quotationData['ppf_discount_type'] ?? '' )=='INV_D'
+                                                        ? 'selected' : '' }}>Inv Disc. (D)</option>
                                                     <option value="CN1" {{ old('ppf_discount_type',
                                                         $quotationData['ppf_discount_type'] ?? '' )=='CN1' ? 'selected'
                                                         : '' }}>CN1</option>
@@ -2148,30 +2179,30 @@ if (
                                         <tr class="grid-row">
                                             <td class="cell-label" id="charger_discount_title"
                                                 style="white-space: nowrap;">
-                                                <span id="charger_discount_label"
-                                                    class="group-select"
+                                                <span id="charger_discount_label" class="group-select"
                                                     style="margin-left: 5px;">
                                                     Charger Swapping Discount
                                                 </span>
 
-                                                <select id="charger_swapping_option"
-                                                    name="charger_swapping_option"
-                                                    class="group-select"
-                                                    style="display: inline-block;
+                                                <select id="charger_swapping_option" name="charger_swapping_option"
+                                                    class="group-select" style="display: inline-block;
                                                         width: 42% !important;
                                                         min-width: 0;
                                                         margin-left: 5px;
                                                         vertical-align: middle;">
-                                                    <option value="7.2 kW to NCH"
-                                                        {{ old('charger_swapping_option', $quotationData['charger_swapping_option'] ?? '') == '7.2 kW to NCH' ? 'selected' : '' }}>
+                                                    <option value="7.2 kW to NCH" {{ old('charger_swapping_option',
+                                                        $quotationData['charger_swapping_option'] ?? ''
+                                                        )=='7.2 kW to NCH' ? 'selected' : '' }}>
                                                         7.2 kW to NCH
                                                     </option>
-                                                    <option value="11.2 kW to NCH"
-                                                        {{ old('charger_swapping_option', $quotationData['charger_swapping_option'] ?? '') == '11.2 kW to NCH' ? 'selected' : '' }}>
+                                                    <option value="11.2 kW to NCH" {{ old('charger_swapping_option',
+                                                        $quotationData['charger_swapping_option'] ?? ''
+                                                        )=='11.2 kW to NCH' ? 'selected' : '' }}>
                                                         11.2 kW to NCH
                                                     </option>
-                                                    <option value="11.2 kW to 7.2 kW"
-                                                        {{ old('charger_swapping_option', $quotationData['charger_swapping_option'] ?? '') == '11.2 kW to 7.2 kW' ? 'selected' : '' }}>
+                                                    <option value="11.2 kW to 7.2 kW" {{ old('charger_swapping_option',
+                                                        $quotationData['charger_swapping_option'] ?? ''
+                                                        )=='11.2 kW to 7.2 kW' ? 'selected' : '' }}>
                                                         11.2 kW to 7.2 kW
                                                     </option>
                                                 </select>
@@ -2181,19 +2212,13 @@ if (
                                             </td>
 
                                             <td class="cell-type">
-                                                <input type="text"
-                                                    id="charger_swapping_discount_type"
-                                                    name="charger_swapping_discount_type"
-                                                    value="CN3"
-                                                    readonly
-                                                    disabled>
+                                                <input type="text" id="charger_swapping_discount_type"
+                                                    name="charger_swapping_discount_type" value="CN3" readonly disabled>
                                             </td>
 
                                             <td class="cell-amount" id="charger_discount_cell">
-                                                <input type="text"
-                                                    id="charger_swapping_discount"
-                                                    name="charger_swapping_discount"
-                                                    class="numeric-only"
+                                                <input type="text" id="charger_swapping_discount"
+                                                    name="charger_swapping_discount" class="numeric-only"
                                                     placeholder="0.00"
                                                     value="{{ old('charger_swapping_discount', $quotationData['charger_swapping_discount'] ?? '') }}">
                                             </td>
@@ -2356,7 +2381,8 @@ if (
                                 <input type="hidden" id="invoiced_discount_summary" name="invoiced_discount_summary">
                                 <input type="hidden" id="inv_oe_discount_summary" name="inv_oe_discount_summary">
                                 <input type="hidden" id="inv_d_discount_summary" name="inv_d_discount_summary">
-                                <input type="hidden" id="credit_note_discount_summary" name="credit_note_discount_summary">
+                                <input type="hidden" id="credit_note_discount_summary"
+                                    name="credit_note_discount_summary">
                                 <input type="hidden" id="cn1_discount_summary" name="cn1_discount_summary">
                                 <input type="hidden" id="cn2_discount_summary" name="cn2_discount_summary">
                                 <input type="hidden" id="cn3_discount_summary" name="cn3_discount_summary">
@@ -2499,36 +2525,34 @@ if (
 
             <div class="d-flex gap-2 justify-content-center mt-2 no-print">
 
-    @if($viewMode)
+                @if($viewMode)
 
-        <button type="button" class="btn btn-primary" onclick="printQuotation();">
-            <i class="la la-print"></i> Print / Save PDF
-        </button>
+                <button type="button" class="btn btn-primary" onclick="printQuotation();">
+                    <i class="la la-print"></i> Print Quotation
+                </button>
 
-        <button type="button"
-                class="btn btn-success"
-                onclick="printBankQuotation()">
-            Print Bank Quotation
-        </button>
+                <button type="button" class="btn btn-success" onclick="printBankQuotation()">
+                    Print Quotation without Credit Note
+                </button>
 
-        <a href="{{ backpack_url('quotation-form') }}" class="btn btn-secondary">
-            <i class="la la-arrow-left"></i> Back
-        </a>
+                <a href="{{ backpack_url('quotation-form') }}" class="btn btn-secondary">
+                    Back
+                </a>
 
-    @else
+                @else
 
-        <button type="submit" class="btn btn-success">
-            <i class="la la-save"></i>
-            {{ isset($quotation) ? 'Update Quotation' : 'Save Quotation' }}
-        </button>
+                <button type="submit" class="btn btn-success">
+                    <i class="la la-save"></i>
+                    {{ isset($quotation) ? 'Update Quotation' : 'Save Quotation' }}
+                </button>
 
-        <a href="{{ backpack_url('quotation-form') }}" class="btn btn-secondary">
-            Cancel
-        </a>
+                <a href="{{ backpack_url('quotation-form') }}" class="btn btn-secondary">
+                    Cancel
+                </a>
 
-    @endif
+                @endif
 
-</div>
+            </div>
         </form>
 
     </div>
@@ -4138,12 +4162,30 @@ function loadInsurance(company) {
 
 function loadInsuranceByPermit() {
     let permit = $("#permit").val();
+
+    const permitPricingType = {
+        '1': 'Private',
+        '2': 'Private',
+        '3': 'Private',
+        '4': 'Goods',
+        '5': 'Goods',
+        '6': 'Goods',
+        '7': 'Goods',
+        '8': 'Passenger',
+        '9': 'Passenger',
+        '10': 'Passenger',
+        '11': 'Passenger'
+    };
+
+    let pricingPermit = permitPricingType[permit] || permit;
+
     let enquiry = ENQUIRIES[$("#mock_enquiry_no").val()];
     if (!enquiry) return;
+
     let pricing = PRICING[enquiry.pricingKey];
 
     currentInsurance = pricing.receivables.insurance.find(
-        x => x.permit === permit
+        x => x.permit === pricingPermit
     );
 
     if (!currentInsurance) {
@@ -4152,42 +4194,64 @@ function loadInsuranceByPermit() {
 
     $("#insurance_company").empty();
 
-currentInsurance.companies.forEach(function (company) {
-    $("#insurance_company").append(
-        `<option value="${company.insCo}">${company.insCo}</option>`
-    );
-});
+    currentInsurance.companies.forEach(function (company) {
+        $("#insurance_company").append(
+            `<option value="${company.insCo}">${company.insCo}</option>`
+        );
+    });
 
-// EDIT MODE → saved company select karo
-let selectedCompany = null;
+    let selectedCompany = null;
 
-if (IS_EDIT_MODE && SAVED_INSURANCE_COMPANY) {
-    selectedCompany = currentInsurance.companies.find(
-        x => x.insCo === SAVED_INSURANCE_COMPANY
-    );
-}
+    if (IS_EDIT_MODE && SAVED_INSURANCE_COMPANY) {
+        selectedCompany = currentInsurance.companies.find(
+            x => x.insCo === SAVED_INSURANCE_COMPANY
+        );
+    }
 
-// Agar saved company nahi mili to default company
-if (!selectedCompany) {
-    selectedCompany =
-        currentInsurance.companies.find(x => x.default) ||
-        currentInsurance.companies[0];
-}
+    if (!selectedCompany) {
+        selectedCompany =
+            currentInsurance.companies.find(x => x.default) ||
+            currentInsurance.companies[0];
+    }
 
-if (selectedCompany) {
-    $("#insurance_company").val(selectedCompany.insCo);
+    if (selectedCompany) {
+        $("#insurance_company").val(selectedCompany.insCo);
 
-    loadInsurance(selectedCompany);
-}
+        loadInsurance(selectedCompany);
+    }
 }
 
 function updateRegistrationAmount() {
     let permit = $("#permit").val();
+
+    const permitPricingType = {
+        '1': 'Private',
+        '2': 'Private',
+        '3': 'Private',
+        '4': 'Goods',
+        '5': 'Goods',
+        '6': 'Goods',
+        '7': 'Goods',
+        '8': 'Passenger',
+        '9': 'Passenger',
+        '10': 'Passenger',
+        '11': 'Passenger'
+    };
+
+    let pricingPermit = permitPricingType[permit] || permit;
+
     let enquiry = ENQUIRIES[$("#mock_enquiry_no").val()];
     if (!enquiry) return;
+
     let pricing = PRICING[enquiry.pricingKey];
-    let tax = pricing.receivables.RTO.TAX.find(x => x.permit === permit) || pricing.receivables.RTO.TAX[0];
-    $('#registration_amount').val((tax.amount + pricing.receivables.RTO.TRC).toFixed(2));
+
+    let tax = pricing.receivables.RTO.TAX.find(
+        x => x.permit === pricingPermit
+    ) || pricing.receivables.RTO.TAX[0];
+
+    $('#registration_amount').val(
+        (tax.amount + pricing.receivables.RTO.TRC).toFixed(2)
+    );
 }
 
 function updateInsurancePrintText() {
@@ -4638,10 +4702,34 @@ $('#btnFetchMock').click(function () {
     currentPricing = pricing;
 
     // ---- Populate Permit ----
+    const PERMIT_MAP = @json($permit_map ?? []);
+
     $("#permit").empty();
-    pricing.permit.forEach(function (item) {
-        let selected = item.default ? 'selected' : '';
-        $("#permit").append(`<option value="${item.type}" ${selected}>${item.type}</option>`);
+    $("#permit").append('<option value="">Select Permit</option>');
+
+    Object.entries(PERMIT_MAP).forEach(function ([key, label]) {
+
+        let selectedPermit = "{{ $quotationData['permit'] ?? '' }}";
+
+        /*
+        * Backward compatibility for old quotations which stored
+        * permit names instead of numeric permit IDs.
+        */
+        const legacyPermitMap = {
+            'Private': '1',
+            'Passenger': '9',
+            'Goods': '4'
+        };
+
+        if (legacyPermitMap[selectedPermit]) {
+            selectedPermit = legacyPermitMap[selectedPermit];
+        }
+
+        let isSel = selectedPermit === key;
+
+        $("#permit").append(
+            `<option value="${key}" ${isSel ? 'selected' : ''}>${label}</option>`
+        );
     });
 
     // ---- Populate Insurance ----
@@ -4651,7 +4739,7 @@ $('#btnFetchMock').click(function () {
     $('#customer_name').val(enquiry.customer.name);
     $('#mobile').val(enquiry.customer.mobile);
     $('#customer_name_hidden').val(enquiry.customer.name);
-$('#mobile_hidden').val(enquiry.customer.mobile);
+    $('#mobile_hidden').val(enquiry.customer.mobile);
     $('#careof').val(enquiry.customer.careOf || '').trigger('change');
     $('#careofname').val(enquiry.customer.careOfName || '');
     $('#enquiry_id').val(enquiry.enquiry_no);
@@ -6208,7 +6296,7 @@ function showPrintOptions() {
         showDenyButton: true,
         showCancelButton: true,
         confirmButtonText: 'Print Quotation',
-        denyButtonText: 'Print Bank Quotation',
+        denyButtonText: 'Print Quotation without Credit Note',
         cancelButtonText: 'Close'
     }).then((result) => {
 

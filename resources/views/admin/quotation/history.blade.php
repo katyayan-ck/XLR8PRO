@@ -40,14 +40,14 @@
 
                     <th width="10%">Status</th>
 
-                    <th width="10%">On Road</th>
+                    
 
                     <th width="10%">User</th>
 
                     <th width="15%">Date</th>
-
-                    <th width="34%">Changes</th>
-                    <th width="5%">PDF</th>
+                    <th width="10%">On Road</th>
+                    <th width="34%">Financier</th>
+                    <th width="5%">View</th>
 
                 </tr>
 
@@ -71,11 +71,7 @@
                         {{ ucfirst($row->status) }}
                     </td>
 
-                    <td>
-
-                        ₹ {{ number_format($row->onroad,2) }}
-
-                    </td>
+                    
 
                     <td>
 
@@ -88,75 +84,14 @@
                         {{ $row->created_at->format('d M Y h:i A') }}
 
                     </td>
-
                     <td>
 
-                        @if(count($row->changes))
+                        ₹ {{ number_format($row->onroad,2) }}
 
-                        <table class="table table-sm table-bordered mb-0">
+                    </td>
 
-                            <thead>
-
-                                <tr>
-
-                                    <th>Field</th>
-
-                                    <th>Old Value</th>
-
-                                    <th>New Value</th>
-
-                                </tr>
-
-                            </thead>
-
-                            <tbody>
-
-                                @foreach($row->changes as $change)
-
-                                <tr>
-
-                                    <td>
-
-                                        <strong>
-
-                                            {{ $change['field'] }}
-
-                                        </strong>
-
-                                    </td>
-
-                                    <td class="text-danger">
-
-                                        {{ is_array($change['old']) ? implode(', ', $change['old']) : ($change['old'] ?:
-                                        '-') }}
-
-                                    </td>
-
-                                    <td class="text-success">
-
-                                        {{ is_array($change['new']) ? implode(', ', $change['new']) : ($change['new'] ?:
-                                        '-') }}
-
-                                    </td>
-
-                                </tr>
-
-                                @endforeach
-
-                            </tbody>
-
-                        </table>
-
-                        @else
-
-                        <span class="text-muted">
-
-                            No Changes
-
-                        </span>
-
-                        @endif
-
+                    <td>
+                        {{ $row->financier_display ?: '-' }}
                     </td>
                     <td class="text-center">
                         <a href="{{ backpack_url('quotation-form/' . $quotation->id . '/history/' . $row->version . '/pdf') }}"

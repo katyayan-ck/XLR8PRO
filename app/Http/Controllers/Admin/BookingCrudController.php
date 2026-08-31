@@ -1864,19 +1864,11 @@ class BookingCrudController extends CrudController
                 QuoteAction::create([
 
                     'quotation_no' => $quotation->quotation_no,
-
                     'action_by' => backpack_user()->id,
-
                     'action' => 'BOOKED',
-
-                    'revision' => $quotation->revision,
-
                     'requested' => $quotation->proposed_data,
-
                     'onroad' => $quotation->onroad_price,
-
                     'status' => 'booked',
-
                     'remarks' => 'Converted into Booking #' . $booking->id,
 
                 ]);
@@ -7600,6 +7592,7 @@ class BookingCrudController extends CrudController
             'loan_amount'       => 'nullable',
             'margin_money'      => 'nullable',
             'file_charge'       => 'nullable',
+            'financier_subvention'  => 'nullable|numeric|min:0',
             'remark'            => 'required',
             'verification_status' => 'required',
             'case_lost_reason'  => 'nullable',
@@ -7736,6 +7729,7 @@ class BookingCrudController extends CrudController
             $finance->loan_amount       = $request->loan_amount;
             $finance->margin            = $request->margin_money;
             $finance->file_charge       = $request->file_charge;
+            $finance->subvention_amount = $request->financier_subvention;
             $finance->case_lost_reason  = $request->case_lost_reason;
         }
 
@@ -10685,8 +10679,17 @@ class BookingCrudController extends CrudController
         );
 
         $salesconsultants = array_map(function ($consultant) {
-            $consultant['branch_name'] = OrgService::branchName($consultant['primary_branch_code'] ?? '');
-            $consultant['location_name'] = OrgService::locationName($consultant['primary_loc_code'] ?? '');
+            $consultant['branch_name'] = OrgService::branchName(
+                $consultant['primary_branch_code'] ?? ''
+            );
+
+            $consultant['location_name'] = OrgService::locationName(
+                $consultant['primary_loc_code'] ?? ''
+            );
+
+            // Mile ID should be the employee code
+            $consultant['mile_id'] = $consultant['employee_code'] ?? '';
+
             return $consultant;
         }, $salesconsultants);
 
@@ -10694,6 +10697,12 @@ class BookingCrudController extends CrudController
         $dsaList = XL_DSA_MASTER::orderBy('name')
             ->get(['id', 'name', 'dlocation']);
         $finance = XFinance::where('bid', $id)->first();
+
+        \Log::info('OTF FINANCE DEBUG', [
+            'booking_id' => $id,
+            'finance_id' => $finance?->id,
+            'subvention_amount' => $finance?->subvention_amount,
+        ]);
 
         $insurance = XlInsurance::where('bid', $id)->first();
 
@@ -11686,5 +11695,116 @@ class BookingCrudController extends CrudController
         return redirect()
             ->to(backpack_url('booking/' . $booking->id . '/show'))
             ->with('success', 'OTF form saved successfully.');
+    }
+
+    public function generateVotfNumber($id)
+    {
+        $booking = Booking::findOrFail($id);
+
+        $branchCode = strtoupper(trim($booking->branch_code ?? ''));
+
+        if ($branchCode === '') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Branch code is missing for this booking.'
+            ], 422);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Financial Year
+        |--------------------------------------------------------------------------
+        | April 2026 - March 2027 = 27
+        |--------------------------------------------------------------------------
+        */
+        $now = now();
+
+        $financialYear = $now->month >= 4
+            ? $now->copy()->addYear()->format('y')
+            : $now->format('y');
+
+        /*
+        |--------------------------------------------------------------------------
+        | Find latest VOTF numbers
+        |--------------------------------------------------------------------------
+        */
+
+        $records = Booking::query()
+            ->whereNotNull('final_data')
+            ->where('final_data', '!=', '')
+            ->get(['id', 'final_data']);
+
+        $latestGlobalCount = 0;
+        $latestBranchCount = 0;
+
+        foreach ($records as $record) {
+
+            $data = is_array($record->final_data)
+                ? $record->final_data
+                : json_decode($record->final_data, true);
+
+            if (!is_array($data)) {
+                continue;
+            }
+
+            $votf = trim($data['votf_no'] ?? '');
+
+            if ($votf === '') {
+                continue;
+            }
+
+            $parts = explode('/', $votf);
+
+            if (count($parts) !== 3) {
+                continue;
+            }
+
+            [$fy, $branchPart, $globalPart] = $parts;
+
+            // Only current financial year
+            if ($fy !== $financialYear) {
+                continue;
+            }
+
+            /*
+            * Global BMPL count
+            */
+            $globalNumber = (int) $globalPart;
+
+            if ($globalNumber > $latestGlobalCount) {
+                $latestGlobalCount = $globalNumber;
+            }
+
+            /*
+            * Branch count
+            */
+            if (str_starts_with(strtoupper($branchPart), $branchCode)) {
+
+                $branchNumber = (int) substr(
+                    $branchPart,
+                    strlen($branchCode)
+                );
+
+                if ($branchNumber > $latestBranchCount) {
+                    $latestBranchCount = $branchNumber;
+                }
+            }
+        }
+
+        $nextBranchCount = $latestBranchCount + 1;
+        $nextGlobalCount = $latestGlobalCount + 1;
+
+        $votfNo = sprintf(
+            '%s/%s%04d/%04d',
+            $financialYear,
+            $branchCode,
+            $nextBranchCount,
+            $nextGlobalCount
+        );
+
+        return response()->json([
+            'success' => true,
+            'votf_no' => $votfNo,
+        ]);
     }
 }

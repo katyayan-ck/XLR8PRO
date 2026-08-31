@@ -218,6 +218,11 @@ Route::group([
 
     // AJAX / HELPER ROUTES
 
+    Route::get(
+        'booking/{id}/generate-votf',
+        [BookingCrudController::class, 'generateVotfNumber']
+    )->name('booking.generate-votf');
+
     Route::get('/branchlocations/{bid}', 'BookingCrudController@getBranchLocation')
         ->name('get.branch');
 
