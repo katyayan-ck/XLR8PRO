@@ -105,6 +105,14 @@ use App\Services\OrgService;
             display: none !important;
         }
 
+        .bank-print .quotation-grid tbody tr:not(.print-hide) {
+            display: table-row !important;
+        }
+
+        .bank-print .quotation-grid tbody tr.print-hide {
+            display: none !important;
+        }
+
         .financier-discount-grid {
             display: none !important;
         }
@@ -177,7 +185,7 @@ use App\Services\OrgService;
 
         .quotation-summary .onroad-amount {
             flex: 0 0 13% !important;
-            justify-content: flex-center !important;
+            justify-content: center !important;
             align-items: center !important;
         }
 
@@ -191,6 +199,8 @@ use App\Services\OrgService;
     .print-only-inline {
         display: none;
     }
+
+    
 
 
 
@@ -425,11 +435,11 @@ use App\Services\OrgService;
     }
 
     .discount-grid th:nth-child(1) {
-        width: 33%;
+        width: 35%;
     }
 
     .discount-grid th:nth-child(2) {
-        width: 33%;
+        width: 31%;
     }
 
     .discount-grid th:nth-child(3) {
@@ -1262,6 +1272,24 @@ use App\Services\OrgService;
             font-weight: 500 !important;
             color: #000 !important;
         }
+        .alert {
+            display: none !important;
+        }
+
+        #charger_discount_label {
+            display: none !important;
+        }
+
+        #charger_swapping_option {
+            display: none !important;
+        }
+
+        #charger_swapping_option_print {
+            display: inline-block !important;
+            font-weight: 600 !important;
+            color: #495261 !important;
+            margin-left: 5px !important;
+        }
     }
 
     /* View Mode: Disable all interactions */
@@ -1916,8 +1944,8 @@ if (
                                                     }
                                                 @endphp
                                                 <select id="group_a_type">
-                                                    <option value="INV" {{ old('group_a_type', $selectedGroupAType) == 'INV' ? 'selected' : '' }}>INV</option>
-                                                    <option value="CN" {{ old('group_a_type', $selectedGroupAType) == 'CN' ? 'selected' : '' }}>CN</option>
+                                                    <option value="INV_OE" {{ old('group_a_type', $selectedGroupAType) == 'INV_OE' ? 'selected' : '' }}>Inv Disc. (OE)</option>
+                                                    <option value="CN1" {{ old('group_a_type', $selectedGroupAType) == 'CN1' ? 'selected' : '' }}>CN1</option>
                                                 </select>
                                             </td>
                                             <td class="cell-amount">
@@ -2001,7 +2029,7 @@ if (
                                         <tr class="grid-row">
                                             <td class="cell-label">Corporate Discount</td>
                                             <td class="cell-type">
-                                                <input type="text" id="group_b_type" value="INV" readonly>
+                                                <input type="text" id="group_b_type" value="Inv Disc." readonly>
                                             </td>
                                             <td class="cell-amount">
                                                 <input type="text" id="group_b_amount" class="numeric-only"
@@ -2034,7 +2062,7 @@ if (
                                                 </select>
                                             </td>
                                             <td class="cell-type">
-                                                <input type="text" id="group_c_type" value="CN1" readonly>
+                                                <input type="text" id="group_c_type" value="CN2" readonly>
                                             </td>
                                             <td class="cell-amount">
                                                 <input type="text" id="group_c_amount" class="numeric-only"
@@ -2063,12 +2091,12 @@ if (
                                             <td class="cell-label">Accessories Special Discount</td>
                                             <td class="cell-type">
                                                 <select id="accessories_spl_disc_type" name="accessories_spl_disc_type">
-                                                    <option value="INV" {{ old('accessories_spl_disc_type',
-                                                        $quotationData['accessories_spl_disc_type'] ?? '' )=='INV'
-                                                        ? 'selected' : '' }}>INV</option>
-                                                    <option value="CN" {{ old('accessories_spl_disc_type',
-                                                        $quotationData['accessories_spl_disc_type'] ?? '' )=='CN'
-                                                        ? 'selected' : '' }}>CN</option>
+                                                    <option value="INV_D" {{ old('accessories_spl_disc_type',
+                                                        $quotationData['accessories_spl_disc_type'] ?? '' )=='INV_D'
+                                                        ? 'selected' : '' }}>Inv Disc. (D)</option>
+                                                    <option value="CN1" {{ old('accessories_spl_disc_type',
+                                                        $quotationData['accessories_spl_disc_type'] ?? '' )=='CN1'
+                                                        ? 'selected' : '' }}>CN1</option>
                                                 </select>
                                             </td>
                                             <td class="cell-amount">
@@ -2083,12 +2111,12 @@ if (
                                             </td>
                                             <td class="cell-type">
                                                 <select id="ceramic_discount_type" name="ceramic_discount_type">
-                                                    <option value="INV" {{ old('ceramic_discount_type',
-                                                        $quotationData['ceramic_discount_type'] ?? '' )=='INV'
-                                                        ? 'selected' : '' }}>INV</option>
-                                                    <option value="CN" {{ old('ceramic_discount_type',
-                                                        $quotationData['ceramic_discount_type'] ?? '' )=='CN'
-                                                        ? 'selected' : '' }}>CN</option>
+                                                    <option value="INV_D" {{ old('ceramic_discount_type',
+                                                        $quotationData['ceramic_discount_type'] ?? '' )=='INV_D'
+                                                        ? 'selected' : '' }}>Inv Disc. (D)</option>
+                                                    <option value="CN1" {{ old('ceramic_discount_type',
+                                                        $quotationData['ceramic_discount_type'] ?? '' )=='CN1'
+                                                        ? 'selected' : '' }}>CN1</option>
                                                 </select>
                                             </td>
                                             <td class="cell-amount">
@@ -2102,12 +2130,12 @@ if (
                                             <td class="cell-label">PPF Special Discount</td>
                                             <td class="cell-type">
                                                 <select id="ppf_discount_type" name="ppf_discount_type">
-                                                    <option value="INV" {{ old('ppf_discount_type',
-                                                        $quotationData['ppf_discount_type'] ?? '' )=='INV' ? 'selected'
-                                                        : '' }}>INV</option>
-                                                    <option value="CN" {{ old('ppf_discount_type',
-                                                        $quotationData['ppf_discount_type'] ?? '' )=='CN' ? 'selected'
-                                                        : '' }}>CN</option>
+                                                    <option value="INV_D" {{ old('ppf_discount_type',
+                                                        $quotationData['ppf_discount_type'] ?? '' )=='INV_D' ? 'selected'
+                                                        : '' }}>Inv Disc. (D)</option>
+                                                    <option value="CN1" {{ old('ppf_discount_type',
+                                                        $quotationData['ppf_discount_type'] ?? '' )=='CN1' ? 'selected'
+                                                        : '' }}>CN1</option>
                                                 </select>
                                             </td>
                                             <td class="cell-amount">
@@ -2118,15 +2146,54 @@ if (
                                         </tr>
 
                                         <tr class="grid-row">
-                                            <td class="cell-label" id="charger_discount_title">Charger Swapping Discount
+                                            <td class="cell-label" id="charger_discount_title"
+                                                style="white-space: nowrap;">
+                                                <span id="charger_discount_label"
+                                                    class="group-select"
+                                                    style="margin-left: 5px;">
+                                                    Charger Swapping Discount
+                                                </span>
+
+                                                <select id="charger_swapping_option"
+                                                    name="charger_swapping_option"
+                                                    class="group-select"
+                                                    style="display: inline-block;
+                                                        width: 42% !important;
+                                                        min-width: 0;
+                                                        margin-left: 5px;
+                                                        vertical-align: middle;">
+                                                    <option value="7.2 kW to NCH"
+                                                        {{ old('charger_swapping_option', $quotationData['charger_swapping_option'] ?? '') == '7.2 kW to NCH' ? 'selected' : '' }}>
+                                                        7.2 kW to NCH
+                                                    </option>
+                                                    <option value="11.2 kW to NCH"
+                                                        {{ old('charger_swapping_option', $quotationData['charger_swapping_option'] ?? '') == '11.2 kW to NCH' ? 'selected' : '' }}>
+                                                        11.2 kW to NCH
+                                                    </option>
+                                                    <option value="11.2 kW to 7.2 kW"
+                                                        {{ old('charger_swapping_option', $quotationData['charger_swapping_option'] ?? '') == '11.2 kW to 7.2 kW' ? 'selected' : '' }}>
+                                                        11.2 kW to 7.2 kW
+                                                    </option>
+                                                </select>
+
+                                                <span id="charger_swapping_option_print"
+                                                    class="print-only-inline"></span>
                                             </td>
+
                                             <td class="cell-type">
-                                                <input type="text" id="charger_swapping_discount_type"
-                                                    name="charger_swapping_discount_type" value="CN2" readonly disabled>
+                                                <input type="text"
+                                                    id="charger_swapping_discount_type"
+                                                    name="charger_swapping_discount_type"
+                                                    value="CN3"
+                                                    readonly
+                                                    disabled>
                                             </td>
+
                                             <td class="cell-amount" id="charger_discount_cell">
-                                                <input type="text" id="charger_swapping_discount"
-                                                    name="charger_swapping_discount" class="numeric-only"
+                                                <input type="text"
+                                                    id="charger_swapping_discount"
+                                                    name="charger_swapping_discount"
+                                                    class="numeric-only"
                                                     placeholder="0.00"
                                                     value="{{ old('charger_swapping_discount', $quotationData['charger_swapping_discount'] ?? '') }}">
                                             </td>
@@ -2136,12 +2203,12 @@ if (
                                             <td class="cell-label">Other Cash Discount</td>
                                             <td class="cell-type">
                                                 <select id="other_cash_discount_type" name="other_cash_discount_type">
-                                                    <option value="INV" {{ old('other_cash_discount_type',
-                                                        $quotationData['other_cash_discount_type'] ?? '' )=='INV'
-                                                        ? 'selected' : '' }}>INV</option>
-                                                    <option value="CN" {{ old('other_cash_discount_type',
-                                                        $quotationData['other_cash_discount_type'] ?? '' )=='CN'
-                                                        ? 'selected' : '' }}>CN</option>
+                                                    <option value="INV_D" {{ old('other_cash_discount_type',
+                                                        $quotationData['other_cash_discount_type'] ?? '' )=='INV_D'
+                                                        ? 'selected' : '' }}>Inv Disc. (D)</option>
+                                                    <option value="CN1" {{ old('other_cash_discount_type',
+                                                        $quotationData['other_cash_discount_type'] ?? '' )=='CN1'
+                                                        ? 'selected' : '' }}>CN1</option>
                                                 </select>
                                             </td>
                                             <td class="cell-amount">
@@ -2155,7 +2222,7 @@ if (
                                             <td class="cell-label">Special Cash Discount</td>
                                             <td class="cell-type">
                                                 <input type="text" id="special_cash_discount_type"
-                                                    name="special_cash_discount_type" value="INV" readonly>
+                                                    name="special_cash_discount_type" value="Inv Disc. (D)" readonly>
                                             </td>
                                             <td class="cell-amount">
                                                 <input type="text" name="special_cash_discount"
@@ -2221,50 +2288,64 @@ if (
                                         <thead>
                                             <tr>
                                                 <th
-                                                    style="width:20%; background: #d9d9d9; border:1px solid #000; padding:3px 5px; font-size:10px; font-weight:bold; text-align:center;">
+                                                    style="width:16%; background: #d9d9d9; border:1px solid #000; padding:3px 2px; font-size:9px; font-weight:bold; text-align:center;">
                                                     DISCOUNT BIFURCATION</th>
                                                 <th
-                                                    style="width:16%; background: #d9d9d9; border:1px solid #000; padding:3px 5px; font-size:10px; font-weight:bold; text-align:center;">
-                                                    INV</th>
+                                                    style="width:12%; background: #d9d9d9; border:1px solid #000; padding:3px 2px; font-size:9px; font-weight:bold; text-align:center;">
+                                                    Inv Disc.</th>
                                                 <th
-                                                    style="width:16%; background: #d9d9d9; border:1px solid #000; padding:3px 5px; font-size:10px; font-weight:bold; text-align:center;">
-                                                    CN</th>
+                                                    style="width:12%; background: #d9d9d9; border:1px solid #000; padding:3px 2px; font-size:9px; font-weight:bold; text-align:center;">
+                                                    Inv Disc. (OE)</th>
                                                 <th
-                                                    style="width:16%; background: #d9d9d9; border:1px solid #000; padding:3px 5px; font-size:10px; font-weight:bold; text-align:center;">
+                                                    style="width:12%; background: #d9d9d9; border:1px solid #000; padding:3px 2px; font-size:9px; font-weight:bold; text-align:center;">
+                                                    Inv Disc. (D)</th>
+                                                <th
+                                                    style="width:12%; background: #d9d9d9; border:1px solid #000; padding:3px 2px; font-size:9px; font-weight:bold; text-align:center;">
                                                     CN1</th>
                                                 <th
-                                                    style="width:16%; background: #d9d9d9; border:1px solid #000; padding:3px 5px; font-size:10px; font-weight:bold; text-align:center;">
+                                                    style="width:12%; background: #d9d9d9; border:1px solid #000; padding:3px 2px; font-size:9px; font-weight:bold; text-align:center;">
                                                     CN2</th>
                                                 <th
-                                                    style="width:16%; background: #d9d9d9; border:1px solid #000; padding:3px 5px; font-size:10px; font-weight:bold; text-align:center;">
+                                                    style="width:12%; background: #d9d9d9; border:1px solid #000; padding:3px 2px; font-size:9px; font-weight:bold; text-align:center;">
+                                                    CN3</th>
+                                                <th
+                                                    style="width:12%; background: #d9d9d9; border:1px solid #000; padding:3px 2px; font-size:9px; font-weight:bold; text-align:center;">
                                                     TOTAL</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             <tr>
                                                 <td
-                                                    style="background:#f2f2f2; border:1px solid #000; padding:3px 5px; font-size:10px; font-weight:bold; text-align:center;">
+                                                    style="background:#f2f2f2; border:1px solid #000; padding:3px 2px; font-size:9px; font-weight:bold; text-align:center;">
                                                     AMOUNT</td>
-                                                <td style="border:1px solid #000; padding:3px 5px; text-align:right;">
+                                                <td style="border:1px solid #000; padding:3px 2px; text-align:right;">
                                                     <input id="inv_discount_display" readonly
-                                                        style="font-weight:bold; font-size:11px; text-align:center; width:100%; border:none; background:transparent;">
+                                                        style="font-weight:bold; font-size:10px; text-align:center; width:100%; border:none; background:transparent;">
                                                 </td>
-                                                <td style="border:1px solid #000; padding:3px 5px; text-align:right;">
-                                                    <input id="cn_discount_display" readonly
-                                                        style="font-weight:bold; font-size:11px; text-align:center; width:100%; border:none; background:transparent;">
+                                                <td style="border:1px solid #000; padding:3px 2px; text-align:right;">
+                                                    <input id="inv_oe_discount_display" readonly
+                                                        style="font-weight:bold; font-size:10px; text-align:center; width:100%; border:none; background:transparent;">
                                                 </td>
-                                                <td style="border:1px solid #000; padding:3px 5px; text-align:right;">
+                                                <td style="border:1px solid #000; padding:3px 2px; text-align:right;">
+                                                    <input id="inv_d_discount_display" readonly
+                                                        style="font-weight:bold; font-size:10px; text-align:center; width:100%; border:none; background:transparent;">
+                                                </td>
+                                                <td style="border:1px solid #000; padding:3px 2px; text-align:right;">
                                                     <input id="cn1_discount_display" readonly
-                                                        style="font-weight:bold; font-size:11px; text-align:center; width:100%; border:none; background:transparent;">
+                                                        style="font-weight:bold; font-size:10px; text-align:center; width:100%; border:none; background:transparent;">
                                                 </td>
-                                                <td style="border:1px solid #000; padding:3px 5px; text-align:right;">
+                                                <td style="border:1px solid #000; padding:3px 2px; text-align:right;">
                                                     <input id="cn2_discount_display" readonly
-                                                        style="font-weight:bold; font-size:11px; text-align:center; width:100%; border:none; background:transparent;">
+                                                        style="font-weight:bold; font-size:10px; text-align:center; width:100%; border:none; background:transparent;">
+                                                </td>
+                                                <td style="border:1px solid #000; padding:3px 2px; text-align:right;">
+                                                    <input id="cn3_discount_display" readonly
+                                                        style="font-weight:bold; font-size:10px; text-align:center; width:100%; border:none; background:transparent;">
                                                 </td>
                                                 <td
-                                                    style="background:#f2f2f2; border:1px solid #000; padding:3px 5px; text-align:right;">
+                                                    style="background:#f2f2f2; border:1px solid #000; padding:3px 2px; text-align:right;">
                                                     <input id="total_discount_bifurcation_display" readonly
-                                                        style="font-weight:bold; font-size:11px; text-align:center; width:100%; border:none; background:transparent;">
+                                                        style="font-weight:bold; font-size:10px; text-align:center; width:100%; border:none; background:transparent;">
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -2273,10 +2354,12 @@ if (
 
                                 {{-- Hidden inputs for form submission --}}
                                 <input type="hidden" id="invoiced_discount_summary" name="invoiced_discount_summary">
-                                <input type="hidden" id="credit_note_discount_summary"
-                                    name="credit_note_discount_summary">
+                                <input type="hidden" id="inv_oe_discount_summary" name="inv_oe_discount_summary">
+                                <input type="hidden" id="inv_d_discount_summary" name="inv_d_discount_summary">
+                                <input type="hidden" id="credit_note_discount_summary" name="credit_note_discount_summary">
                                 <input type="hidden" id="cn1_discount_summary" name="cn1_discount_summary">
                                 <input type="hidden" id="cn2_discount_summary" name="cn2_discount_summary">
+                                <input type="hidden" id="cn3_discount_summary" name="cn3_discount_summary">
                             </div>
                         </div>
 
@@ -2414,30 +2497,38 @@ if (
                 </div>
             </div>
 
-            <div class="card-footer text-end mt-3 no-print">
-                <button type="button" class="btn btn-primary" onclick="printQuotation();">
-                    <i class="la la-print"></i> Print / Save PDF
-                </button>
+            <div class="d-flex gap-2 justify-content-center mt-2 no-print">
 
-                <button type="button"
-                        class="btn btn-success"
-                        onclick="printBankQuotation()">
-                    Print Bank Quotation
-                </button>
+    @if($viewMode)
 
-                @if($viewMode)
-                <a href="{{ backpack_url('quotation-form') }}" class="btn btn-secondary">
-                    <i class="la la-arrow-left"></i> Back
-                </a>
-                @else
-                <button type="submit" class="btn btn-success">
-                    <i class="la la-save"></i> {{ isset($quotation) ? 'Update Quotation' : 'Save Quotation' }}
-                </button>
-                <a href="{{ backpack_url('quotation-form') }}" class="btn btn-secondary">
-                    Cancel
-                </a>
-                @endif
-            </div>
+        <button type="button" class="btn btn-primary" onclick="printQuotation();">
+            <i class="la la-print"></i> Print / Save PDF
+        </button>
+
+        <button type="button"
+                class="btn btn-success"
+                onclick="printBankQuotation()">
+            Print Bank Quotation
+        </button>
+
+        <a href="{{ backpack_url('quotation-form') }}" class="btn btn-secondary">
+            <i class="la la-arrow-left"></i> Back
+        </a>
+
+    @else
+
+        <button type="submit" class="btn btn-success">
+            <i class="la la-save"></i>
+            {{ isset($quotation) ? 'Update Quotation' : 'Save Quotation' }}
+        </button>
+
+        <a href="{{ backpack_url('quotation-form') }}" class="btn btn-secondary">
+            Cancel
+        </a>
+
+    @endif
+
+</div>
         </form>
 
     </div>
@@ -2864,28 +2955,28 @@ const PRICING = {
         },
         deductibles: {
             "oem-schemes": [
-                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 45000, type: "INV" },
-                { key: "csd_discount", label: "CSD Discount", amount: 20000, type: "INV" },
-                { key: "fame_subsidy", label: "Fame Subsidy", amount: 10000, type: "INV" }
+                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 45000, type: "INV_OE" },
+                { key: "csd_discount", label: "CSD Discount", amount: 20000, type: "INV_OE" },
+                { key: "fame_subsidy", label: "Fame Subsidy", amount: 10000, type: "INV_OE" }
             ],
-            "dealer-scheme": { amount: 15000, type: "CN" },
-            "accessory-scheme": { amount: 5000, type: "INV" },
-            "shield-scheme": { amount: 2500, type: "CN" },
+            "dealer-scheme": { amount: 15000, type: "CN1" },
+            "accessory-scheme": { amount: 5000, type: "INV_OE" },
+            "shield-scheme": { amount: 2500, type: "CN1" },
             "corp-scheme": [
                 { name: "Corporate Discount", amount: 50000, type: "INV" },
                 { name: "Loyalty Bonus", amount: 25000, type: "INV" }
             ],
             "exchange-scheme": [
-                { name: "Exchange Bonus", amount: 30000, type: "CN1" },
-                { name: "Green Bonus", amount: 15000, type: "CN1" },
-                { name: "Welcome Bonus", amount: 10000, type: "CN1" }
+                { name: "Exchange Bonus", amount: 30000, type: "CN2" },
+                { name: "Green Bonus", amount: 15000, type: "CN2" },
+                { name: "Welcome Bonus", amount: 10000, type: "CN2" }
             ],
-            "accessories-spl-discount": { amount: 2500, type: "INV" },
-            "coating-spl-discount": { amount: 2000, type: "INV" },
-            "ppf-spl-discount": { amount: 5000, type: "CN" },
-            "charger-swapping-discount": { amount: 3500, type: "CN2" },
-            "other-cash-discount": { amount: 1000, type: "CN" },
-            "special-cash-discount": { amount: 12000, type: "INV" }
+            "accessories-spl-discount": { amount: 2500, type: "INV_D" },
+            "coating-spl-discount": { amount: 2000, type: "INV_D" },
+            "ppf-spl-discount": { amount: 5000, type: "CN1" },
+            "charger-swapping-discount": { amount: 3500, type: "CN3" },
+            "other-cash-discount": { amount: 1000, type: "CN1" },
+            "special-cash-discount": { amount: 12000, type: "INV_D" }
         }
     },
     bevx9: {
@@ -2936,22 +3027,22 @@ const PRICING = {
         },
         deductibles: {
             "oem-schemes": [
-                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 75000, type: "INV" }
+                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 75000, type: "INV_OE" }
             ],
-            "dealer-scheme": { amount: 10000, type: "CN" },
-            "accessory-scheme": { amount: 3000, type: "INV" },
-            "shield-scheme": { amount: 1500, type: "CN" },
+            "dealer-scheme": { amount: 10000, type: "CN1" },
+            "accessory-scheme": { amount: 3000, type: "INV_OE" },
+            "shield-scheme": { amount: 1500, type: "CN1" },
             "corp-scheme": [
                 { name: "Corporate Discount", amount: 40000, type: "INV" },
                 { name: "Loyalty Bonus", amount: 20000, type: "INV" }
             ],
             "exchange-scheme": [
-                { name: "Exchange Bonus", amount: 25000, type: "CN1" },
-                { name: "Green Bonus", amount: 35000, type: "CN1" }
+                { name: "Exchange Bonus", amount: 25000, type: "CN2" },
+                { name: "Green Bonus", amount: 35000, type: "CN2" }
             ],
-            "fame-subsidy": { amount: 100000, type: "INV" },
-            "other-cash-discount": { amount: 0, type: "CN", editable: true },
-            "special-cash-discount": { enabled: true, lower: 100000, upper: 1050000, max: 50000, amount: 0, type: "INV" }
+            "fame-subsidy": { amount: 100000, type: "INV_OE" },
+            "other-cash-discount": { amount: 0, type: "CN1", editable: true },
+            "special-cash-discount": { enabled: true, lower: 100000, upper: 1050000, max: 50000, amount: 0, type: "INV_D" }
         }
     },
     bolero: {
@@ -3000,21 +3091,21 @@ const PRICING = {
         },
         deductibles: {
             "oem-schemes": [
-                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 25000, type: "INV" }
+                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 25000, type: "INV_OE" }
             ],
-            "dealer-scheme": { amount: 8000, type: "CN" },
-            "accessory-scheme": { amount: 2000, type: "INV" },
-            "shield-scheme": { amount: 1000, type: "CN" },
+            "dealer-scheme": { amount: 8000, type: "CN1" },
+            "accessory-scheme": { amount: 2000, type: "INV_OE" },
+            "shield-scheme": { amount: 1000, type: "CN1" },
             "corp-scheme": [
                 { name: "Corporate Discount", amount: 20000, type: "INV" },
                 { name: "Loyalty Bonus", amount: 10000, type: "INV" }
             ],
             "exchange-scheme": [
-                { name: "Exchange Bonus", amount: 15000, type: "CN1" },
-                { name: "Welcome Bonus", amount: 8000, type: "CN1" }
+                { name: "Exchange Bonus", amount: 15000, type: "CN2" },
+                { name: "Welcome Bonus", amount: 8000, type: "CN2" }
             ],
-            "other-cash-discount": { amount: 0, type: "CN", editable: true },
-            "special-cash-discount": { enabled: true, lower: 100000, upper: 1050000, max: 50000, amount: 0, type: "INV" }
+            "other-cash-discount": { amount: 0, type: "CN1", editable: true },
+            "special-cash-discount": { enabled: true, lower: 100000, upper: 1050000, max: 50000, amount: 0, type: "INV_D" }
         }
     },
     veero: {
@@ -3062,20 +3153,20 @@ const PRICING = {
         },
         deductibles: {
             "oem-schemes": [
-                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 18000, type: "INV" }
+                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 18000, type: "INV_OE" }
             ],
-            "dealer-scheme": { amount: 5000, type: "CN" },
-            "accessory-scheme": { amount: 1000, type: "INV" },
-            "shield-scheme": { amount: 800, type: "CN" },
+            "dealer-scheme": { amount: 5000, type: "CN1" },
+            "accessory-scheme": { amount: 1000, type: "INV_OE" },
+            "shield-scheme": { amount: 800, type: "CN1" },
             "corp-scheme": [
                 { name: "Corporate Discount", amount: 15000, type: "INV" },
                 { name: "Loyalty Bonus", amount: 8000, type: "INV" }
             ],
             "exchange-scheme": [
-                { name: "Exchange Bonus", amount: 12000, type: "CN1" }
+                { name: "Exchange Bonus", amount: 12000, type: "CN2" }
             ],
-            "other-cash-discount": { amount: 0, type: "CN", editable: true },
-            "special-cash-discount": { enabled: true, lower: 100000, upper: 1050000, max: 50000, amount: 0, type: "INV" }
+            "other-cash-discount": { amount: 0, type: "CN1", editable: true },
+            "special-cash-discount": { enabled: true, lower: 100000, upper: 1050000, max: 50000, amount: 0, type: "INV_D" }
         }
     },
     treo: {
@@ -3127,26 +3218,25 @@ const PRICING = {
         },
         deductibles: {
             "oem-schemes": [
-                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 12000, type: "INV" }
+                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 12000, type: "INV_OE" }
             ],
-            "dealer-scheme": { amount: 3000, type: "CN" },
-            "accessory-scheme": { amount: 500, type: "INV" },
-            "shield-scheme": { amount: 500, type: "CN" },
+            "dealer-scheme": { amount: 3000, type: "CN1" },
+            "accessory-scheme": { amount: 500, type: "INV_OE" },
+            "shield-scheme": { amount: 500, type: "CN1" },
             "corp-scheme": [
                 { name: "Corporate Discount", amount: 8000, type: "INV" },
                 { name: "Loyalty Bonus", amount: 5000, type: "INV" }
             ],
             "exchange-scheme": [
-                { name: "Exchange Bonus", amount: 7000, type: "CN1" },
-                { name: "Welcome Bonus", amount: 3000, type: "CN1" }
+                { name: "Exchange Bonus", amount: 7000, type: "CN2" },
+                { name: "Welcome Bonus", amount: 3000, type: "CN2" }
             ],
-            "fame-subsidy": { amount: 0, type: "INV" },
-            "other-cash-discount": { amount: 0, type: "CN", editable: true },
-            "special-cash-discount": { enabled: true, lower: 100000, upper: 1050000, max: 50000, amount: 0, type: "INV" }
+            "fame-subsidy": { amount: 0, type: "INV_OE" },
+            "other-cash-discount": { amount: 0, type: "CN1", editable: true },
+            "special-cash-discount": { enabled: true, lower: 100000, upper: 1050000, max: 50000, amount: 0, type: "INV_D" }
         }
     },
 
-    // 006 — PV above TCS threshold: high ex-showroom, multi-insurer, rich accessories (Maxicare/PPF/Ceramic)
     pvAboveTcs: {
         permit: [{ type: "Private", default: true }],
         receivables: {
@@ -3223,30 +3313,29 @@ const PRICING = {
         },
         deductibles: {
             "oem-schemes": [
-                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 45000, type: "INV" },
-                { key: "csd_discount", label: "CSD Discount", amount: 15000, type: "INV" }
+                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 45000, type: "INV_OE" },
+                { key: "csd_discount", label: "CSD Discount", amount: 15000, type: "INV_OE" }
             ],
-            "dealer-scheme": { amount: 15000, type: "CN" },
-            "accessory-scheme": { amount: 5000, type: "INV" },
-            "shield-scheme": { amount: 2500, type: "CN" },
+            "dealer-scheme": { amount: 15000, type: "CN1" },
+            "accessory-scheme": { amount: 5000, type: "INV_OE" },
+            "shield-scheme": { amount: 2500, type: "CN1" },
             "corp-scheme": [
                 { name: "Corporate Discount", amount: 40000, type: "INV" },
                 { name: "Loyalty Bonus", amount: 25000, type: "INV" }
             ],
             "exchange-scheme": [
-                { name: "Exchange Bonus", amount: 30000, type: "CN1" },
-                { name: "Green Bonus", amount: 20000, type: "CN1" }
+                { name: "Exchange Bonus", amount: 30000, type: "CN2" },
+                { name: "Green Bonus", amount: 20000, type: "CN2" }
             ],
-            "accessories-spl-discount": { amount: 2500, type: "INV" },
-            "coating-spl-discount": { amount: 2000, type: "INV" },
-            "ppf-spl-discount": { amount: 8000, type: "CN" },
-            "charger-swapping-discount": { amount: 5000, type: "CN2" },
-            "other-cash-discount": { amount: 0, type: "CN", editable: true },
-            "special-cash-discount": { enabled: true, lower: 1600000, upper: 2000000, max: 60000, amount: 0, type: "INV" }
+            "accessories-spl-discount": { amount: 2500, type: "INV_D" },
+            "coating-spl-discount": { amount: 2000, type: "INV_D" },
+            "ppf-spl-discount": { amount: 8000, type: "CN1" },
+            "charger-swapping-discount": { amount: 5000, type: "CN3" },
+            "other-cash-discount": { amount: 0, type: "CN1", editable: true },
+            "special-cash-discount": { enabled: true, lower: 1600000, upper: 2000000, max: 60000, amount: 0, type: "INV_D" }
         }
     },
 
-    // 007 — PV below TCS threshold: mid-range ex-showroom, multi-insurer with different addon sets
     pvBelowTcs: {
         permit: [{ type: "Private", default: true }],
         receivables: {
@@ -3304,24 +3393,23 @@ const PRICING = {
         },
         deductibles: {
             "oem-schemes": [
-                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 25000, type: "INV" }
+                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 25000, type: "INV_OE" }
             ],
-            "dealer-scheme": { amount: 8000, type: "CN" },
-            "accessory-scheme": { amount: 2000, type: "INV" },
-            "shield-scheme": { amount: 1000, type: "CN" },
+            "dealer-scheme": { amount: 8000, type: "CN1" },
+            "accessory-scheme": { amount: 2000, type: "INV_OE" },
+            "shield-scheme": { amount: 1000, type: "CN1" },
             "corp-scheme": [
                 { name: "Corporate Discount", amount: 15000, type: "INV" }
             ],
             "exchange-scheme": [
-                { name: "Exchange Bonus", amount: 10000, type: "CN1" }
+                { name: "Exchange Bonus", amount: 10000, type: "CN2" }
             ],
-            "accessories-spl-discount": { amount: 4500, type: "INV" },
-            "other-cash-discount": { amount: 0, type: "CN", editable: true },
-            "special-cash-discount": { enabled: false, lower: 0, upper: 0, max: 0, amount: 0, type: "INV" }
+            "accessories-spl-discount": { amount: 4500, type: "INV_D" },
+            "other-cash-discount": { amount: 0, type: "CN1", editable: true },
+            "special-cash-discount": { enabled: false, lower: 0, upper: 0, max: 0, amount: 0, type: "INV_D" }
         }
     },
 
-    // 008 — PV near TCS threshold: special-cash-discount enabled to nudge Finvoice above/below the boundary
     pvNearTcs: {
         permit: [{ type: "Private", default: true }],
         receivables: {
@@ -3378,25 +3466,24 @@ const PRICING = {
         },
         deductibles: {
             "oem-schemes": [
-                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 35000, type: "INV" }
+                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 35000, type: "INV_OE" }
             ],
-            "dealer-scheme": { amount: 10000, type: "CN" },
-            "accessory-scheme": { amount: 3000, type: "INV" },
-            "shield-scheme": { amount: 1500, type: "CN" },
+            "dealer-scheme": { amount: 10000, type: "CN1" },
+            "accessory-scheme": { amount: 3000, type: "INV_OE" },
+            "shield-scheme": { amount: 1500, type: "CN1" },
             "corp-scheme": [
                 { name: "Corporate Discount", amount: 25000, type: "INV" }
             ],
             "exchange-scheme": [
-                { name: "Exchange Bonus", amount: 20000, type: "CN1" },
-                { name: "Welcome Bonus", amount: 8000, type: "CN1" }
+                { name: "Exchange Bonus", amount: 20000, type: "CN2" },
+                { name: "Welcome Bonus", amount: 8000, type: "CN2" }
             ],
-            "accessories-spl-discount": { amount: 1200, type: "INV" },
-            "other-cash-discount": { amount: 0, type: "CN", editable: true },
-            "special-cash-discount": { enabled: true, lower: 900000, upper: 1020000, max: 30000, amount: 0, type: "INV" }
+            "accessories-spl-discount": { amount: 1200, type: "INV_D" },
+            "other-cash-discount": { amount: 0, type: "CN1", editable: true },
+            "special-cash-discount": { enabled: true, lower: 900000, upper: 1020000, max: 30000, amount: 0, type: "INV_D" }
         }
     },
 
-    // 009 — BEV with FAME + OEM scheme, multi-insurer EV covers, charger-swapping on receivable & discount sides
     bevFameOem: {
         permit: [{ type: "Private", default: true }],
         receivables: {
@@ -3458,27 +3545,26 @@ const PRICING = {
         },
         deductibles: {
             "oem-schemes": [
-                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 75000, type: "INV" },
-                { key: "fame_subsidy", label: "Fame Subsidy", amount: 100000, type: "INV" }
+                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 75000, type: "INV_OE" },
+                { key: "fame_subsidy", label: "Fame Subsidy", amount: 100000, type: "INV_OE" }
             ],
-            "dealer-scheme": { amount: 10000, type: "CN" },
-            "accessory-scheme": { amount: 3000, type: "INV" },
-            "shield-scheme": { amount: 1500, type: "CN" },
+            "dealer-scheme": { amount: 10000, type: "CN1" },
+            "accessory-scheme": { amount: 3000, type: "INV_OE" },
+            "shield-scheme": { amount: 1500, type: "CN1" },
             "corp-scheme": [
                 { name: "Corporate Discount", amount: 40000, type: "INV" },
                 { name: "Loyalty Bonus", amount: 20000, type: "INV" }
             ],
             "exchange-scheme": [
-                { name: "Exchange Bonus", amount: 25000, type: "CN1" }
+                { name: "Exchange Bonus", amount: 25000, type: "CN2" }
             ],
-            "fame-subsidy": { amount: 100000, type: "INV" },
-            "charger-swapping-discount": { amount: 5000, type: "CN2" },
-            "other-cash-discount": { amount: 0, type: "CN", editable: true },
-            "special-cash-discount": { enabled: true, lower: 1500000, upper: 2100000, max: 80000, amount: 0, type: "INV" }
+            "fame-subsidy": { amount: 100000, type: "INV_OE" },
+            "charger-swapping-discount": { amount: 5000, type: "CN3" },
+            "other-cash-discount": { amount: 0, type: "CN1", editable: true },
+            "special-cash-discount": { enabled: true, lower: 1500000, upper: 2100000, max: 80000, amount: 0, type: "INV_D" }
         }
     },
 
-    // 010 — BEV with FAME only (no OEM scheme): isolates FAME-only behaviour, simpler accessories/discounts
     bevFameOnly: {
         permit: [{ type: "Private", default: true }],
         receivables: {
@@ -3533,24 +3619,23 @@ const PRICING = {
         },
         deductibles: {
             "oem-schemes": [
-                { key: "fame_subsidy", label: "Fame Subsidy", amount: 80000, type: "INV" }
+                { key: "fame_subsidy", label: "Fame Subsidy", amount: 80000, type: "INV_OE" }
             ],
-            "dealer-scheme": { amount: 8000, type: "CN" },
-            "accessory-scheme": { amount: 2000, type: "INV" },
-            "shield-scheme": { amount: 1200, type: "CN" },
+            "dealer-scheme": { amount: 8000, type: "CN1" },
+            "accessory-scheme": { amount: 2000, type: "INV_OE" },
+            "shield-scheme": { amount: 1200, type: "CN1" },
             "corp-scheme": [
                 { name: "Corporate Discount", amount: 25000, type: "INV" }
             ],
             "exchange-scheme": [
-                { name: "Exchange Bonus", amount: 15000, type: "CN1" }
+                { name: "Exchange Bonus", amount: 15000, type: "CN2" }
             ],
-            "fame-subsidy": { amount: 80000, type: "INV" },
-            "other-cash-discount": { amount: 0, type: "CN", editable: true },
-            "special-cash-discount": { enabled: true, lower: 1100000, upper: 1500000, max: 40000, amount: 0, type: "INV" }
+            "fame-subsidy": { amount: 80000, type: "INV_OE" },
+            "other-cash-discount": { amount: 0, type: "CN1", editable: true },
+            "special-cash-discount": { enabled: true, lower: 1100000, upper: 1500000, max: 40000, amount: 0, type: "INV_D" }
         }
     },
 
-    // 011 — PV multi-permit (Private + Passenger, default Passenger), VLTD only for Passenger, RTO Yellow Tape auto-added
     pvPassengerTape: {
         permit: [
             { type: "Private", default: false },
@@ -3613,24 +3698,23 @@ const PRICING = {
         },
         deductibles: {
             "oem-schemes": [
-                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 30000, type: "INV" }
+                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 30000, type: "INV_OE" }
             ],
-            "dealer-scheme": { amount: 12000, type: "CN" },
-            "accessory-scheme": { amount: 4000, type: "INV" },
-            "shield-scheme": { amount: 1500, type: "CN" },
+            "dealer-scheme": { amount: 12000, type: "CN1" },
+            "accessory-scheme": { amount: 4000, type: "INV_OE" },
+            "shield-scheme": { amount: 1500, type: "CN1" },
             "corp-scheme": [
                 { name: "Corporate Discount", amount: 26000, type: "INV" }
             ],
             "exchange-scheme": [
-                { name: "Exchange Bonus", amount: 18000, type: "CN1" },
-                { name: "Green Bonus", amount: 12000, type: "CN1" }
+                { name: "Exchange Bonus", amount: 18000, type: "CN2" },
+                { name: "Green Bonus", amount: 12000, type: "CN2" }
             ],
-            "other-cash-discount": { amount: 0, type: "CN", editable: true },
-            "special-cash-discount": { enabled: true, lower: 1300000, upper: 1700000, max: 40000, amount: 0, type: "INV" }
+            "other-cash-discount": { amount: 0, type: "CN1", editable: true },
+            "special-cash-discount": { enabled: true, lower: 1300000, upper: 1700000, max: 40000, amount: 0, type: "INV_D" }
         }
     },
 
-    // 012 — PV with permit-driven Insurance AND RTO (Passenger/Taxi), VLTD, TRC/TAX combos, standard CN/OEM validation
     pvPermitInsRto: {
         permit: [
             { type: "Private", default: false },
@@ -3686,23 +3770,22 @@ const PRICING = {
         },
         deductibles: {
             "oem-schemes": [
-                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 25000, type: "INV" }
+                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 25000, type: "INV_OE" }
             ],
-            "dealer-scheme": { amount: 8000, type: "CN" },
-            "accessory-scheme": { amount: 2000, type: "INV" },
-            "shield-scheme": { amount: 1000, type: "CN" },
+            "dealer-scheme": { amount: 8000, type: "CN1" },
+            "accessory-scheme": { amount: 2000, type: "INV_OE" },
+            "shield-scheme": { amount: 1000, type: "CN1" },
             "corp-scheme": [
                 { name: "Corporate Discount", amount: 15000, type: "INV" }
             ],
             "exchange-scheme": [
-                { name: "Exchange Bonus", amount: 15000, type: "CN1" }
+                { name: "Exchange Bonus", amount: 15000, type: "CN2" }
             ],
-            "other-cash-discount": { amount: 0, type: "CN", editable: true },
-            "special-cash-discount": { enabled: true, lower: 1000000, upper: 1300000, max: 25000, amount: 0, type: "INV" }
+            "other-cash-discount": { amount: 0, type: "CN1", editable: true },
+            "special-cash-discount": { enabled: true, lower: 1000000, upper: 1300000, max: 25000, amount: 0, type: "INV_D" }
         }
     },
 
-    // 013 — LMM with Kazam charging kit, charger-swapping add-on with corresponding C2 discount, small TCS config
     lmmKazam: {
         permit: [{ type: "LMM", default: true }],
         receivables: {
@@ -3760,25 +3843,25 @@ const PRICING = {
         },
         deductibles: {
             "oem-schemes": [
-                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 12000, type: "INV" }
+                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 12000, type: "INV_OE" }
             ],
-            "dealer-scheme": { amount: 3000, type: "CN" },
-            "accessory-scheme": { amount: 500, type: "INV" },
-            "shield-scheme": { amount: 500, type: "CN" },
+            "dealer-scheme": { amount: 3000, type: "CN1" },
+            "accessory-scheme": { amount: 500, type: "INV_OE" },
+            "shield-scheme": { amount: 500, type: "CN1" },
             "corp-scheme": [
                 { name: "Corporate Discount", amount: 8000, type: "INV" },
                 { name: "Loyalty Bonus", amount: 5000, type: "INV" }
             ],
             "exchange-scheme": [
-                { name: "Exchange Bonus", amount: 7000, type: "CN1" }
+                { name: "Exchange Bonus", amount: 7000, type: "CN2" }
             ],
-            "fame-subsidy": { amount: 0, type: "INV" },
-            "charger-swapping-discount": { amount: 4000, type: "CN2" },
-            "other-cash-discount": { amount: 0, type: "CN", editable: true },
-            "special-cash-discount": { enabled: true, lower: 250000, upper: 400000, max: 15000, amount: 0, type: "INV" }
+            "fame-subsidy": { amount: 0, type: "INV_OE" },
+            "charger-swapping-discount": { amount: 4000, type: "CN3" },
+            "other-cash-discount": { amount: 0, type: "CN1", editable: true },
+            "special-cash-discount": { enabled: true, lower: 250000, upper: 400000, max: 15000, amount: 0, type: "INV_D" }
         }
     },
-        maxxhd: {
+    maxxhd: {
         permit: [{ type: "Goods", default: true }],
         receivables: {
             exShowroom: 895000,
@@ -3822,20 +3905,20 @@ const PRICING = {
         },
         deductibles: {
             "oem-schemes": [
-                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 20000, type: "INV" }
+                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 20000, type: "INV_OE" }
             ],
-            "dealer-scheme": { amount: 7000, type: "CN" },
-            "accessory-scheme": { amount: 1500, type: "INV" },
-            "shield-scheme": { amount: 1000, type: "CN" },
+            "dealer-scheme": { amount: 7000, type: "CN1" },
+            "accessory-scheme": { amount: 1500, type: "INV_OE" },
+            "shield-scheme": { amount: 1000, type: "CN1" },
             "corp-scheme": [
                 { name: "Corporate Discount", amount: 15000, type: "INV" },
                 { name: "Loyalty Bonus", amount: 8000, type: "INV" }
             ],
             "exchange-scheme": [
-                { name: "Exchange Bonus", amount: 12000, type: "CN1" }
+                { name: "Exchange Bonus", amount: 12000, type: "CN2" }
             ],
-            "other-cash-discount": { amount: 0, type: "CN", editable: true },
-            "special-cash-discount": { enabled: true, lower: 700000, upper: 900000, max: 25000, amount: 0, type: "INV" }
+            "other-cash-discount": { amount: 0, type: "CN1", editable: true },
+            "special-cash-discount": { enabled: true, lower: 700000, upper: 900000, max: 25000, amount: 0, type: "INV_D" }
         }
     },
     treoYaari: {
@@ -3881,20 +3964,20 @@ const PRICING = {
         },
         deductibles: {
             "oem-schemes": [
-                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 10000, type: "INV" }
+                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 10000, type: "INV_OE" }
             ],
-            "dealer-scheme": { amount: 3000, type: "CN" },
-            "accessory-scheme": { amount: 500, type: "INV" },
-            "shield-scheme": { amount: 500, type: "CN" },
+            "dealer-scheme": { amount: 3000, type: "CN1" },
+            "accessory-scheme": { amount: 500, type: "INV_OE" },
+            "shield-scheme": { amount: 500, type: "CN1" },
             "corp-scheme": [
                 { name: "Corporate Discount", amount: 8000, type: "INV" },
                 { name: "Loyalty Bonus", amount: 4000, type: "INV" }
             ],
             "exchange-scheme": [
-                { name: "Exchange Bonus", amount: 6000, type: "CN1" }
+                { name: "Exchange Bonus", amount: 6000, type: "CN2" }
             ],
-            "other-cash-discount": { amount: 0, type: "CN", editable: true },
-            "special-cash-discount": { enabled: true, lower: 250000, upper: 400000, max: 15000, amount: 0, type: "INV" }
+            "other-cash-discount": { amount: 0, type: "CN1", editable: true },
+            "special-cash-discount": { enabled: true, lower: 250000, upper: 400000, max: 15000, amount: 0, type: "INV_D" }
         }
     },
     scorpioN: {
@@ -3942,21 +4025,21 @@ const PRICING = {
         },
         deductibles: {
             "oem-schemes": [
-                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 35000, type: "INV" }
+                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 35000, type: "INV_OE" }
             ],
-            "dealer-scheme": { amount: 10000, type: "CN" },
-            "accessory-scheme": { amount: 2500, type: "INV" },
-            "shield-scheme": { amount: 1500, type: "CN" },
+            "dealer-scheme": { amount: 10000, type: "CN1" },
+            "accessory-scheme": { amount: 2500, type: "INV_OE" },
+            "shield-scheme": { amount: 1500, type: "CN1" },
             "corp-scheme": [
                 { name: "Corporate Discount", amount: 25000, type: "INV" },
                 { name: "Loyalty Bonus", amount: 12000, type: "INV" }
             ],
             "exchange-scheme": [
-                { name: "Exchange Bonus", amount: 18000, type: "CN1" },
-                { name: "Welcome Bonus", amount: 8000, type: "CN1" }
+                { name: "Exchange Bonus", amount: 18000, type: "CN2" },
+                { name: "Welcome Bonus", amount: 8000, type: "CN2" }
             ],
-            "other-cash-discount": { amount: 0, type: "CN", editable: true },
-            "special-cash-discount": { enabled: true, lower: 1200000, upper: 1600000, max: 40000, amount: 0, type: "INV" }
+            "other-cash-discount": { amount: 0, type: "CN1", editable: true },
+            "special-cash-discount": { enabled: true, lower: 1200000, upper: 1600000, max: 40000, amount: 0, type: "INV_D" }
         }
     }
 };
@@ -4187,13 +4270,17 @@ function toggleRowVisibility() {
 // plain readonly field instead. Keeps the same #group_a_type id either way.
 function renderGroupAType(key, presetType) {
     const $old = $('#group_a_type');
+    let typeVal = presetType || 'INV_OE';
+    if (typeVal === 'INV') typeVal = 'INV_OE';
+    if (typeVal === 'CN') typeVal = 'CN1';
+
     let $new = $(
         '<select id="group_a_type">' +
-            '<option value="INV">INV</option>' +
-            '<option value="CN">CN</option>' +
+            '<option value="INV_OE">Inv Disc. (OE)</option>' +
+            '<option value="CN1">CN1</option>' +
         '</select>'
     );
-    $new.val(presetType || 'INV');
+    $new.val(typeVal);
     $old.replaceWith($new);
     return $new;
 }
@@ -4311,79 +4398,127 @@ function renderGroupADiscounts(pricing) {
 // Whichever Group A option is selected acts as the MASTER.
 // Dealer / Accessories / Shield will show plain text only.
 // ============================================================
-
-function syncGroupALinkedTypes() {
-    const groupAType = $('#group_a_type').val();
-    const selectedGroupA = $('#group_a_select').val();
-
-    if (groupAType !== 'INV' && groupAType !== 'CN') {
-        return;
-    }
-
-    // Update active Group A item hidden type field
-    if (selectedGroupA) {
-        $('#' + selectedGroupA + '_type').val(groupAType);
-    }
-
-    // Replace Dealer, Accessories Scheme, Shield Scheme with plain readonly inputs
-    setLinkedSchemeType(
-        '#dealer_discount_type',
-        'dealer_discount_type',
-        groupAType
-    );
-
-    setLinkedSchemeType(
-        '#accessories_discount_type',
-        'accessories_discount_type',
-        groupAType
-    );
-
-    setLinkedSchemeType(
-        '#shield_scheme_type',
-        'shield_scheme_type',
-        groupAType
-    );
-
-    // Recalculate
-    calculateQuotation();
-    toggleRowVisibility();
-}
-
-// Trigger whenever Group A type changes
-$(document).on('change', '#group_a_type', function () {
-    syncGroupALinkedTypes();
-});
-
-
 // ============================================================
-// 4 SPECIAL DISCOUNTS SYNC (Accessories Spl, Coating Spl, PPF Spl, Other Cash)
-// If any one changes, all four update together. Default: INV.
+// 4 SPECIAL DISCOUNTS CONFIGURATION
 // ============================================================
-
-const SPECIAL_FOUR_TYPES = [
-    '#accessories_spl_disc_type',
-    '#ceramic_discount_type',
-    '#ppf_discount_type',
-    '#other_cash_discount_type'
+const SPECIAL_FOUR_CONFIG = [
+    { id: 'accessories_spl_disc_type', selector: '#accessories_spl_disc_type' },
+    { id: 'ceramic_discount_type', selector: '#ceramic_discount_type' },
+    { id: 'ppf_discount_type', selector: '#ppf_discount_type' },
+    { id: 'other_cash_discount_type', selector: '#other_cash_discount_type' }
 ];
 
+// Jab Group A "Inv Disc. (OE)" ho toh 4 discounts ko Readonly text banana
+function setSpecialFourAsReadonly() {
+    SPECIAL_FOUR_CONFIG.forEach(function (field) {
+        let $el = $(field.selector);
+        if (!$el.length) return;
+
+        if ($el.is('select')) {
+            let $input = $('<input>', {
+                type: 'text',
+                id: field.id,
+                name: field.id,
+                value: 'Inv Disc. (D)',
+                readonly: true
+            }).css({
+                'width': '100%',
+                'border': 'none',
+                'background': 'transparent',
+                'font-size': '10px',
+                'padding': '2px',
+                'text-align': 'left',
+                'cursor': 'default'
+            });
+            $el.replaceWith($input);
+        } else if ($el.is('input')) {
+            $el.val('Inv Disc. (D)');
+        }
+    });
+}
+
+// Jab Group A "CN1" ho toh 4 discounts me Dropdown wapas lana
+function restoreSpecialFourDropdowns(defaultVal = 'CN1') {
+    SPECIAL_FOUR_CONFIG.forEach(function (field) {
+        let $el = $(field.selector);
+        if (!$el.length) return;
+
+        if ($el.is('input')) {
+            let $select = $('<select>', {
+                id: field.id,
+                name: field.id
+            }).append(
+                '<option value="INV_D">Inv Disc. (D)</option>' +
+                '<option value="CN1">CN1</option>'
+            );
+            $select.val(defaultVal);
+            $el.replaceWith($select);
+        }
+    });
+}
+
 function syncSpecialFourDiscountTypes(newVal) {
-    if (newVal !== 'INV' && newVal !== 'CN') {
-        newVal = 'INV';
+    if (newVal !== 'INV_D' && newVal !== 'CN1') {
+        newVal = 'INV_D';
     }
 
-    SPECIAL_FOUR_TYPES.forEach(function (selector) {
-        $(selector).val(newVal);
+    SPECIAL_FOUR_CONFIG.forEach(function (field) {
+        let $el = $(field.selector);
+        if ($el.is('select')) {
+            $el.val(newVal);
+        } else {
+            $el.val(newVal === 'CN1' ? 'CN1' : 'Inv Disc. (D)');
+        }
     });
 
     calculateQuotation();
     toggleRowVisibility();
 }
 
-// Event listener on change of any of the 4 dropdowns
-$(document).on('change', SPECIAL_FOUR_TYPES.join(', '), function () {
-    const changedVal = $(this).val();
-    syncSpecialFourDiscountTypes(changedVal);
+// Event listener jab dropdown active ho
+$(document).on('change', '#accessories_spl_disc_type, #ceramic_discount_type, #ppf_discount_type, #other_cash_discount_type', function () {
+    if ($(this).is('select')) {
+        syncSpecialFourDiscountTypes($(this).val());
+    }
+});
+
+// ============================================================
+// GROUP A TYPE -> LINKED DISCOUNT TYPES
+// ============================================================
+function syncGroupALinkedTypes() {
+    let groupAType = $('#group_a_type').val() || 'INV_OE';
+    if (groupAType === 'INV') groupAType = 'INV_OE';
+    if (groupAType === 'CN') groupAType = 'CN1';
+
+    if (groupAType !== 'INV_OE' && groupAType !== 'CN1') {
+        return;
+    }
+
+    const selectedGroupA = $('#group_a_select').val();
+    if (selectedGroupA) {
+        $('#' + selectedGroupA + '_type').val(groupAType);
+    }
+
+    // 1. Dealer, Accessories Scheme, Shield Scheme ka name change
+    const displayLabel = (groupAType === 'INV_OE') ? 'Inv Disc. (OE)' : 'CN1';
+    setLinkedSchemeType('#dealer_discount_type', 'dealer_discount_type', displayLabel);
+    setLinkedSchemeType('#accessories_discount_type', 'accessories_discount_type', displayLabel);
+    setLinkedSchemeType('#shield_scheme_type', 'shield_scheme_type', displayLabel);
+
+    // 2. Naya Rule: Inv Disc. (OE) par dropdown gayab aur Inv Disc. (D) lock
+    if (groupAType === 'INV_OE') {
+        setSpecialFourAsReadonly();
+    } else {
+        restoreSpecialFourDropdowns('CN1');
+    }
+
+    calculateQuotation();
+    toggleRowVisibility();
+}
+
+// Group A change hote hi function trigger hoga
+$(document).on('change', '#group_a_type', function () {
+    syncGroupALinkedTypes();
 });
 
 // ============================================================
@@ -4634,11 +4769,14 @@ $('#mobile_hidden').val(enquiry.customer.mobile);
         });
         $('#charger_swapping_discount').prop('disabled', false);
         $('#charger_swapping_discount_type').prop('disabled', false);
+        $('#charger_swapping_option').prop('disabled', false);
     } else {
         $('#charger_swapping').val('N/A').prop('disabled', true);
         $('#charger_swapping_amount').val('N/A').prop('disabled', true);
         $('#charger_swapping_discount').val('N/A').prop('disabled', true);
         $('#charger_swapping_discount_type').val('').prop('disabled', true);
+        $('#charger_swapping_option').val('').prop('disabled', true);
+        $('#charger_swapping_option_print').text('');
     }
 
     // TCS
@@ -4694,13 +4832,12 @@ if (groupASelected && groupAAmount) {
     // Cash Scheme OEM Type is the master.
     syncGroupALinkedTypes();
     if (pricing.deductibles["corp-scheme"] && pricing.deductibles["corp-scheme"].length > 0) {
-    let corp = pricing.deductibles["corp-scheme"].find(x => x.name === "Corporate Discount") || pricing.deductibles["corp-scheme"][0];
-    if (corp && corp.name === "Corporate Discount") {
-        $('#group_b_type').val(corp.type || 'INV');
-        $('#group_b_amount').val(corp.amount).trigger('keyup');
-        $('#group_b_type').val(corp.type || 'INV');
-        $('#group_b_amount').val(corp.amount).trigger('keyup');
-    }
+        let corp = pricing.deductibles["corp-scheme"].find(x => x.name === "Corporate Discount") || pricing.deductibles["corp-scheme"][0];
+        if (corp && corp.name === "Corporate Discount") {
+            $('#group_b_type').val('Inv Disc.');
+            $('#corporate_discount_type').val(corp.type || 'INV');
+            $('#group_b_amount').val(corp.amount).trigger('keyup');
+        }
 
     // Agar corp-scheme mein Loyalty Bonus milta hai, to usse Group C mein set karein
     let loyalty = pricing.deductibles["corp-scheme"].find(x => x.name === "Loyalty Bonus");
@@ -4733,6 +4870,8 @@ if (groupASelected && groupAAmount) {
         let val = pricing.deductibles["charger-swapping-discount"].amount;
         $('#charger_swapping_discount').val(val > 0 ? val : 'N/A');
         $('#charger_swapping_discount_type').val(pricing.deductibles["charger-swapping-discount"].type);
+
+        updateChargerSwappingPrint();
     }
     if (pricing.deductibles["other-cash-discount"]) {
         let val = pricing.deductibles["other-cash-discount"].amount;
@@ -4746,7 +4885,7 @@ if (groupASelected && groupAAmount) {
     if (pricing.deductibles["special-cash-discount"]) {
         let val = pricing.deductibles["special-cash-discount"].amount;
         $('#special_cash_discount').val(val > 0 ? val : 'N/A');
-        $('#special_cash_discount_type').val(pricing.deductibles["special-cash-discount"].type);
+        $('#special_cash_discount_type').val('Inv Disc. (D)');
     }
 
     // ---- Hide rows with N/A or 0 values ----
@@ -4804,15 +4943,17 @@ $('#btnResetMock').click(function () {
     $('#dealer_discount').val('');
     $('#accessories_discount').val('');
     $('#shield_scheme').val('');
+    $('#group_b_type').val('Inv Disc.');
     $('#group_b_amount').val('');
-    $('#group_c_amount').val('');
+    $('#special_cash_discount_type').val('Inv Disc. (D)');
+    $('#special_cash_discount').val('');
     $('#accessories_spl_disc').val('');
     $('#ceramic_discount').val('');
     $('#ppf_discount').val('');
     $('#charger_swapping_discount').val('');
     $('#other_cash_discount').val('');
     $('#special_cash_discount').val('');
-    syncSpecialFourDiscountTypes('INV');
+    syncGroupALinkedTypes();
     $('#insurance_covers').empty();
     $('#insurance_print').text('');
     $('#accessories_print').text('');
@@ -4935,6 +5076,7 @@ $('#charger_swapping').on('change', function () {
         $('#charger_swapping_amount').val(amount).prop('disabled', false);
         $('#charger_swapping_discount').prop('disabled', false);
         $('#charger_swapping_discount_type').prop('disabled', false);
+        $('#charger_swapping_option').prop('disabled', false);
     } else {
         $('#charger_swapping_amount').val('N/A').prop('disabled', true);
         $('#charger_swapping_discount').val('N/A').prop('disabled', true);
@@ -5065,25 +5207,11 @@ const DISCOUNT_TYPE_PAIRS = [
 ];
 
 function calculateDiscountBifurcation() {
-    let invoicedDiscount = 0;
-    let creditNoteDiscount = 0;
-
-    DISCOUNT_TYPE_PAIRS.forEach(function (pair) {
-        let amount = num(pair[0]);
-        let type = $('#' + pair[1]).val();
-        
-        if (type === 'INV') {
-            invoicedDiscount += amount;  // ✅ Sirf INV wale count ho rahe hain
-        } else if (type && (type === 'CN' || type === 'CN1' || type === 'CN2')) {
-            creditNoteDiscount += amount;
-        }
-    });
-
-    return { invoicedDiscount: invoicedDiscount, creditNoteDiscount: creditNoteDiscount };
+    let bif = calculateDiscountBifurcationByType();
+    return { invoicedDiscount: bif.totalInvSide, creditNoteDiscount: bif.totalCNSide };
 }
 
 function calculateQuotation() {
-    // 1. Subtotal = SUM of all Additions (Excel D3:D19)
     let subtotal = 
         num('ex_showroom_price') +
         num('insurance_amount') +
@@ -5104,109 +5232,51 @@ function calculateQuotation() {
 
     $('#subtotal_value').val(subtotal.toFixed(2));
 
-    // 2. Calculate Discount Bifurcation
-    let bifurcation = calculateDiscountBifurcation();
-    let totalInvoicedDiscount = bifurcation.invoicedDiscount;
-    let totalCreditNoteDiscount = bifurcation.creditNoteDiscount;
-
-    // 3. Finvoice Amount (for display only - not used for TCS)
-    let finvoiceAmount = subtotal - totalInvoicedDiscount;
-
-    // 4. TCS = IF((Ex-Showroom - INV Discount) >= 1000000, (Ex-Showroom - INV Discount) * 1%, 0)
+    let bif = calculateDiscountBifurcationByType();
     let exShowroom = num('ex_showroom_price');
+    let invoiceAmount = exShowroom - bif.totalInvSide;
 
-    // INVOICE AMOUNT = EX-SHOWROOM - INV DISCOUNT
-    let invoiceAmount = exShowroom - totalInvoicedDiscount;
+    $('#invoice_amount_display').val(invoiceAmount.toFixed(2));
+    $('#invoice_amount').val(invoiceAmount.toFixed(2));
 
-    $('#invoice_amount_display').val(
-        invoiceAmount.toFixed(2)
-    );
-
-    $('#invoice_amount').val(
-        invoiceAmount.toFixed(2)
-    );
-    let tcsBaseAmount = exShowroom - totalInvoicedDiscount;
     let tcs = 0;
-    if (tcsBaseAmount >= 1000000) {
-        tcs = tcsBaseAmount * 0.01;
+    if (invoiceAmount >= 1000000) {
+        tcs = invoiceAmount * 0.01;
         $('#tcs').val(tcs.toFixed(2)).prop('readonly', true).prop('disabled', false);
     } else {
         $('#tcs').val('N/A').prop('readonly', true).prop('disabled', true);
     }
 
-    // 5. Total Receivables = Subtotal + TCS
     let totalReceivable = subtotal + tcs;
     $('#total_receivable').val(totalReceivable.toFixed(2));
 
-    // 6. Total Discount = SUM of ALL discounts (Excel D43)
-    let totalDiscount = 
-        num('cash_scheme_oem') +
-        num('csd_discount') +
-        num('fame_subsidy') +
-        num('dealer_discount') +
-        num('accessories_discount') +
-        num('shield_scheme') +
-        num('corporate_discount') +
-        num('loyalty_bonus') +
-        num('exchange_bonus') +
-        num('green_bonus') +
-        num('welcome_bonus') +
-        num('accessories_spl_disc') +
-        num('ceramic_discount') +
-        num('ppf_discount') +
-        num('charger_swapping_discount') +
-        num('other_cash_discount') +
-        num('special_cash_discount');
-
+    let totalDiscount = bif.totalInvSide + bif.totalCNSide;
     $('#total_discount_amount').val(totalDiscount.toFixed(2));
     $('#total_discount').val(totalDiscount.toFixed(2));
 
-    // 7. On Road Price = Total Receivables - Total Discount
     let netReceivable = totalReceivable - totalDiscount;
     $('#net_receivable_summary').val(netReceivable.toFixed(2));
-
     $('#net_receivable_words').text(numberToIndianWords(netReceivable));
-    
 
-    // ============================================================
-    // 8. FINANCIER INVOICE BOX - ✅ FIXED
-    // ============================================================
-    // 8. Discount Bifurcation by Type - Display in new box
-    let bifurcationByType = calculateDiscountBifurcationByType();
-    let invTotal = bifurcationByType.invTotal;
-    let cnTotal = bifurcationByType.cnTotal;
-    let cn1Total = bifurcationByType.cn1Total;
-    let cn2Total = bifurcationByType.cn2Total;
+    // Display in 6-column bifurcation box
+    $('#inv_discount_display').val(bif.inv.toFixed(2));
+    $('#inv_oe_discount_display').val(bif.inv_oe.toFixed(2));
+    $('#inv_d_discount_display').val(bif.inv_d.toFixed(2));
+    $('#cn1_discount_display').val(bif.cn1.toFixed(2));
+    $('#cn2_discount_display').val(bif.cn2.toFixed(2));
+    $('#cn3_discount_display').val(bif.cn3.toFixed(2));
+    $('#total_discount_bifurcation_display').val(totalDiscount.toFixed(2));
 
-    // Hidden fields
-    $('#invoiced_discount_summary').val(invTotal.toFixed(2));
-    $('#credit_note_discount_summary').val(cnTotal.toFixed(2));
-    $('#cn1_discount_summary').val(cn1Total.toFixed(2));
-    $('#cn2_discount_summary').val(cn2Total.toFixed(2));
+    // Set Hidden Summaries
+    $('#invoiced_discount_summary').val(bif.totalInvSide.toFixed(2));
+    $('#inv_oe_discount_summary').val(bif.inv_oe.toFixed(2));
+    $('#inv_d_discount_summary').val(bif.inv_d.toFixed(2));
+    $('#credit_note_discount_summary').val(bif.totalCNSide.toFixed(2));
+    $('#cn1_discount_summary').val(bif.cn1.toFixed(2));
+    $('#cn2_discount_summary').val(bif.cn2.toFixed(2));
+    $('#cn3_discount_summary').val(bif.cn3.toFixed(2));
 
-    // Display in bifurcation box
-    $('#inv_discount_display').val(invTotal.toFixed(2));
-    $('#cn_discount_display').val(cnTotal.toFixed(2));
-    $('#cn1_discount_display').val(cn1Total.toFixed(2));
-    $('#cn2_discount_display').val(cn2Total.toFixed(2));
-
-    // Display total in bifurcation box
-    let totalBifurcation = invTotal + cnTotal + cn1Total + cn2Total;
-    $('#total_discount_bifurcation_display').val(totalBifurcation.toFixed(2));
-    
-    // 10. Toggle row visibility
     toggleRowVisibility();
-    
-    // Debug - console mein check karo
-    console.log('=== QUOTATION CALCULATION ===');
-    console.log('Subtotal:', subtotal);
-    console.log('TCS:', tcs);
-    console.log('Total Receivable (with TCS):', totalReceivable);
-    console.log('INV Discount:', totalInvoicedDiscount);
-    console.log('CN Discount:', totalCreditNoteDiscount);
-    console.log('Finvoice Amount:', finvoiceAmount);
-    console.log('Total Discount:', totalDiscount);
-    console.log('Net Receivable:', netReceivable);
 }
 
 function calculateBankQuotation() {
@@ -5282,14 +5352,29 @@ function calculateBankQuotation() {
         ['special_cash_discount', 'special_cash_discount_type']
     ];
 
-    let totalBankInvDiscount = 0;
+   let totalBankInvDiscount = 0;
 
     bankDiscountPairs.forEach(function (pair) {
-
         const amount = bankNum(pair[0]);
-        const type = $('#' + pair[1]).val();
+        let type = $('#' + pair[1]).val() || '';
 
-        if (type === 'INV') {
+        if (type === 'Inv Disc.' || type === 'Inv. Disc.' || type === 'INV') {
+            type = 'INV';
+        }
+
+        if (type === 'Inv Disc. (OE)' || type === 'INV_OE') {
+            type = 'INV_OE';
+        }
+
+        if (type === 'Inv Disc. (D)' || type === 'INV_D') {
+            type = 'INV_D';
+        }
+
+        if (type === 'CN1' || type === 'CN2' || type === 'CN3') {
+            // Credit Note — bank calculation mein include nahi hoga
+        }
+
+        if (type === 'INV' || type === 'INV_OE' || type === 'INV_D') {
             totalBankInvDiscount += amount;
         }
     });
@@ -5583,75 +5668,45 @@ function prepareItemVisibilityForPrint() {
 
 function prepareBankItemVisibilityForPrint() {
 
-    // First remove previous print-hide state
+    // 1. Saari rows se pehle print-hide hatao
     $('.quotation-grid tbody tr').removeClass('print-hide');
 
-    // All discount fields with their corresponding type fields
-    const bankDiscountFields = [
-        { amount: 'cash_scheme_oem', type: 'cash_scheme_oem_type' },
-        { amount: 'csd_discount', type: 'csd_discount_type' },
-        { amount: 'fame_subsidy', type: 'fame_subsidy_type' },
-        { amount: 'dealer_discount', type: 'dealer_discount_type' },
-        { amount: 'accessories_discount', type: 'accessories_discount_type' },
-        { amount: 'shield_scheme', type: 'shield_scheme_type' },
-        { amount: 'corporate_discount', type: 'corporate_discount_type' },
-        { amount: 'loyalty_bonus', type: 'loyalty_bonus_type' },
-        { amount: 'exchange_bonus', type: 'exchange_bonus_type' },
-        { amount: 'green_bonus', type: 'green_bonus_type' },
-        { amount: 'welcome_bonus', type: 'welcome_bonus_type' },
-        { amount: 'accessories_spl_disc', type: 'accessories_spl_disc_type' },
-        { amount: 'ceramic_discount', type: 'ceramic_discount_type' },
-        { amount: 'ppf_discount', type: 'ppf_discount_type' },
-        { amount: 'charger_swapping_discount', type: 'charger_swapping_discount_type' },
-        { amount: 'other_cash_discount', type: 'other_cash_discount_type' },
-        { amount: 'special_cash_discount', type: 'special_cash_discount_type' }
-    ];
-
-    bankDiscountFields.forEach(function (field) {
-
-        const amount = $('#' + field.amount).val();
-        const type = $('#' + field.type).val();
-
-        // Find the row containing this discount amount field
-        const $input = $('#' + field.amount);
-
-        if (!$input.length) {
-            return;
-        }
-
-        const $row = $input.closest('tr');
-
-        // Bank quotation = ONLY INV discounts
-        if (type !== 'INV' || isEmptyGridValue(amount)) {
+    // 2. Price Table Rows: Empty/0/N/A ko hide karo
+    $('.price-grid tbody tr:not(.total-row)').each(function () {
+        const $row = $(this);
+        const amount = $row.find('td.cell-amount input').first().val();
+        if (isEmptyGridValue(amount)) {
             $row.addClass('print-hide');
-        } else {
-            $row.removeClass('print-hide');
         }
     });
 
-    // Also hide empty rows using normal quotation logic
-    $('.quotation-grid tbody tr').each(function () {
-
+    // 3. Discount Table Rows: 
+    // - CN1, CN2, CN3 -> HIDE
+    // - INV, INV_OE, INV_D -> SHOW (agar amount > 0 ho)
+    $('.discount-grid tbody tr:not(.total-row)').each(function () {
         const $row = $(this);
+        const amount = $row.find('td.cell-amount input').first().val();
+        let rawType = $row.find('td.cell-type select, td.cell-type input').first().val() || '';
 
-        if ($row.hasClass('print-hide')) {
-            return;
+        // Type string normalize karein
+        let normalizedType = rawType.toString().trim();
+        if (normalizedType === 'Inv Disc.' || normalizedType === 'Inv. Disc.' || normalizedType === 'INV') {
+            normalizedType = 'INV';
+        } else if (normalizedType === 'Inv Disc. (OE)' || normalizedType === 'INV_OE') {
+            normalizedType = 'INV_OE';
+        } else if (normalizedType === 'Inv Disc. (D)' || normalizedType === 'INV_D') {
+            normalizedType = 'INV_D';
+        } else if (normalizedType === 'CN' || normalizedType === 'CN1') {
+            normalizedType = 'CN1';
         }
 
-        const amountCells = $row.find('td.cell-amount');
+        // CN Discount Types (CN1, CN2, CN3) ya Empty Amount -> HIDE
+        const isCreditNote = (normalizedType === 'CN1' || normalizedType === 'CN2' || normalizedType === 'CN3');
 
-        const priceValue = amountCells.eq(0).find('input').val();
-
-        const discountValue =
-            amountCells.length > 1
-                ? amountCells.eq(1).find('input').first().val()
-                : '';
-
-        if (
-            isEmptyGridValue(priceValue) &&
-            isEmptyGridValue(discountValue)
-        ) {
+        if (isCreditNote || isEmptyGridValue(amount)) {
             $row.addClass('print-hide');
+        } else {
+            $row.removeClass('print-hide');
         }
     });
 }
@@ -5677,6 +5732,16 @@ function updateCareOfPrint() {
     $('#careof_name_print').text(name);
 }
 
+function updateChargerSwappingPrint() {
+    const selectedText = $('#charger_swapping_option option:selected').text().trim();
+
+    $('#charger_swapping_option_print').text(selectedText);
+}
+
+$(document).on('change', '#charger_swapping_option', function () {
+    updateChargerSwappingPrint();
+});
+
 $(document).on('change keyup', '#careof, #careofname', function () {
     updateCareOfPrint();
 });
@@ -5685,6 +5750,7 @@ function printQuotation() {
     prepareOptionLabelsForPrint();
     prepareItemVisibilityForPrint();
     updateCareOfPrint();
+    updateChargerSwappingPrint();
     const modelName = ($('#model').val() || 'Quotation')
         .toString()
         .trim();
@@ -5777,8 +5843,7 @@ $(document).ready(function() {
 
 $(document).ready(function () {
 
-    const initialSpecialType = $('#accessories_spl_disc_type').val() || 'INV';
-    syncSpecialFourDiscountTypes(initialSpecialType);
+    syncGroupALinkedTypes();
     
     // Initialize Select2 for Accessories
     $('#accessories').select2({
@@ -6004,27 +6069,31 @@ $(document).ready(function () {
 });
 
 function calculateDiscountBifurcationByType() {
-    let invTotal = 0;
-    let cnTotal = 0;
-    let cn1Total = 0;
-    let cn2Total = 0;
+    let inv = 0, inv_oe = 0, inv_d = 0;
+    let cn1 = 0, cn2 = 0, cn3 = 0;
 
     DISCOUNT_TYPE_PAIRS.forEach(function (pair) {
         let amount = num(pair[0]);
-        let type = $('#' + pair[1]).val();
-        
-        if (type === 'INV') {
-            invTotal += amount;
-        } else if (type === 'CN') {
-            cnTotal += amount;
-        } else if (type === 'CN1') {
-            cn1Total += amount;
-        } else if (type === 'CN2') {
-            cn2Total += amount;
-        }
+        let type = $('#' + pair[1]).val() || '';
+
+        // Normalize legacy & display keys
+        if (type === 'Inv Disc.' || type === 'Inv. Disc.' || type === 'INV') type = 'INV';
+        if (type === 'Inv Disc. (OE)' || type === 'INV_OE') type = 'INV_OE';
+        if (type === 'Inv Disc. (D)' || type === 'INV_D') type = 'INV_D';
+        if (type === 'CN' || type === 'CN1') type = 'CN1';
+
+        if (type === 'INV') inv += amount;
+        else if (type === 'INV_OE') inv_oe += amount;
+        else if (type === 'INV_D') inv_d += amount;
+        else if (type === 'CN1') cn1 += amount;
+        else if (type === 'CN2') cn2 += amount;
+        else if (type === 'CN3') cn3 += amount;
     });
 
-    return { invTotal, cnTotal, cn1Total, cn2Total };
+    let totalInvSide = inv + inv_oe + inv_d;
+    let totalCNSide = cn1 + cn2 + cn3;
+
+    return { inv, inv_oe, inv_d, cn1, cn2, cn3, totalInvSide, totalCNSide };
 }
 
 // ======================================
@@ -6050,7 +6119,7 @@ $('form').on('submit', function (e) {
     let bifurcation = calculateDiscountBifurcation();
     let totalCNDiscount = bifurcation.creditNoteDiscount;
 
-    if (groupAType === 'INV' && totalCNDiscount < groupAAmount) {
+    if ((groupAType === 'INV' || groupAType === 'INV_OE') && totalCNDiscount < groupAAmount) {
         e.preventDefault();
 
         Swal.fire({
@@ -6128,5 +6197,60 @@ $(document).on('change', '#registration_no_type, #registration_category, input[n
 $(document).ready(function () {
     updateRegistrationPrintText();
 });
+@if(request()->query('saved') == '1')
+
+function showPrintOptions() {
+
+    Swal.fire({
+        icon: 'success',
+        title: 'Quotation Saved Successfully',
+        text: 'What would you like to do?',
+        showDenyButton: true,
+        showCancelButton: true,
+        confirmButtonText: 'Print Quotation',
+        denyButtonText: 'Print Bank Quotation',
+        cancelButtonText: 'Close'
+    }).then((result) => {
+
+        if (result.isConfirmed) {
+
+            Swal.close();
+
+            setTimeout(function () {
+
+                printQuotation();
+
+                // After print dialog is closed,
+                // show print options again
+                setTimeout(function () {
+                    showPrintOptions();
+                }, 700);
+
+            }, 300);
+        }
+
+        if (result.isDenied) {
+
+            Swal.close();
+
+            setTimeout(function () {
+
+                printBankQuotation();
+
+                // After print dialog is closed,
+                // show print options again
+                setTimeout(function () {
+                    showPrintOptions();
+                }, 700);
+
+            }, 300);
+        }
+
+    });
+}
+
+showPrintOptions();
+
+@endif
 </script>
 @endpush

@@ -468,11 +468,13 @@ class QuotationCrudController extends CrudController
                 'other_cash_discount' => $data['other_cash_discount'] ?? '',
                 'special_cash_discount' => $data['special_cash_discount'] ?? '',
 
-                // Bifurcations
                 'inv_discount' => $data['invoiced_discount_summary'] ?? '',
+                'inv_oe_discount' => $data['inv_oe_discount_summary'] ?? '',
+                'inv_d_discount' => $data['inv_d_discount_summary'] ?? '',
                 'cn_discount' => $data['credit_note_discount_summary'] ?? '',
                 'cn1_discount' => $data['cn1_discount_summary'] ?? '',
                 'cn2_discount' => $data['cn2_discount_summary'] ?? '',
+                'cn3_discount' => $data['cn3_discount_summary'] ?? '',
 
                 'status' => ucfirst($quotation->status),
 
@@ -571,9 +573,12 @@ class QuotationCrudController extends CrudController
                     ['field' => 'special_cash_discount', 'headerName' => 'Special Cash Disc'],
 
                     ['field' => 'inv_discount', 'headerName' => 'Total INV'],
+                    ['field' => 'inv_oe_discount', 'headerName' => 'Total INV (OE)'],
+                    ['field' => 'inv_d_discount', 'headerName' => 'Total INV (D)'],
                     ['field' => 'cn_discount', 'headerName' => 'Total CN'],
                     ['field' => 'cn1_discount', 'headerName' => 'Total CN1'],
                     ['field' => 'cn2_discount', 'headerName' => 'Total CN2'],
+                    ['field' => 'cn3_discount', 'headerName' => 'Total CN3'],
                     ['field' => 'total_discount', 'headerName' => 'Total Discount'],
                     ['field' => 'net_receivable', 'headerName' => 'Net Receivable'],
                     ['field' => 'invoice_price', 'headerName' => 'Invoice Price'],
@@ -747,7 +752,7 @@ class QuotationCrudController extends CrudController
 
     //         \Alert::success('Quotation created successfully.')->flash();
 
-    //         return redirect(backpack_url('quotation-form'));
+    //         return redirect(backpack_url('quotation-form/' . $quotation->id . '/edit') . '?saved=1');
     //     } catch (\Exception $e) {
 
     //         DB::rollBack();
@@ -840,7 +845,7 @@ class QuotationCrudController extends CrudController
     //         DB::commit();
 
     //         \Alert::success('Quotation created successfully.')->flash();
-    //         return redirect(backpack_url('quotation-form'));
+    //         return redirect(backpack_url('quotation-form/' . $quotation->id . '/edit') . '?saved=1');
     //     } catch (\Exception $e) {
     //         DB::rollBack();
     //         \Log::error('Quotation Store Error: ' . $e->getMessage());
@@ -864,6 +869,8 @@ class QuotationCrudController extends CrudController
 
         try {
             $quotationData = $request->except('_token');
+
+            $quotationData['charger_swapping_option'] = $request->input('charger_swapping_option');
 
             // Fetch enquiry
             $enquiry = null;
@@ -1011,7 +1018,7 @@ class QuotationCrudController extends CrudController
             DB::commit();
 
             \Alert::success('Quotation created successfully.')->flash();
-            return redirect(backpack_url('quotation-form'));
+            return redirect(backpack_url('quotation-form/' . $quotation->id . '/edit') . '?saved=1');
         } catch (\Exception $e) {
             DB::rollBack();
             \Log::error('Quotation Store Error: ' . $e->getMessage());
@@ -1599,7 +1606,7 @@ class QuotationCrudController extends CrudController
 
     //         \Alert::success('Quotation updated successfully.')->flash();
 
-    //         return redirect(backpack_url('quotation-form'));
+    //         return redirect(backpack_url('quotation-form/' . $quotation->id . '/edit') . '?saved=1');
     //     } catch (\Exception $e) {
 
     //         DB::rollBack();
@@ -1629,6 +1636,8 @@ class QuotationCrudController extends CrudController
 
             $previousProposal = $quotation->standard_data ?? [];
             $quotationData = $request->except(['_token', '_method']);
+
+            $quotationData['charger_swapping_option'] = $request->input('charger_swapping_option');
 
             // Preserve frozen fields
             $quotationData['segment_code'] = $request->segment_code;
@@ -1753,7 +1762,7 @@ class QuotationCrudController extends CrudController
             DB::commit();
 
             \Alert::success('Quotation updated successfully.')->flash();
-            return redirect(backpack_url('quotation-form'));
+            return redirect(backpack_url('quotation-form/' . $quotation->id . '/edit') . '?saved=1');
         } catch (\Exception $e) {
             DB::rollBack();
             \Log::error('Quotation Update Error: ' . $e->getMessage());
@@ -1930,9 +1939,12 @@ class QuotationCrudController extends CrudController
             'total_discount'            => 'Total Discount',
             'net_receivable_summary'    => 'Net Receivable',
             'invoiced_discount_summary' => 'Invoiced Discount (INV)',
+            'inv_oe_discount_summary'   => 'Inv Disc. (OE) Total',
+            'inv_d_discount_summary'    => 'Inv Disc. (D) Total',
             'credit_note_discount_summary' => 'Credit Note Discount (CN)',
             'cn1_discount_summary'      => 'CN1 Discount',
             'cn2_discount_summary'      => 'CN2 Discount',
+            'cn3_discount_summary'      => 'CN3 Discount Total',
         ];
 
         // Values format karne ke liye safe helper function (Arrays & Objects handle karne ke liye)
