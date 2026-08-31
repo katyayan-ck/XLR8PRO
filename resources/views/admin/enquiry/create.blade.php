@@ -43,6 +43,10 @@
         input[type=number] {
             -moz-appearance: textfield;
         }
+
+        .table-responsive table {
+            white-space: nowrap;
+        }
     </style>
 @endpush
 
@@ -452,6 +456,23 @@
                     </div>
                     <div class="card-body">
                         <div class="row">
+
+                            {{-- Dynamically show raw DB Model if the actual Model Code is missing --}}
+                            @if (isset($enquiry) && empty($enquiry->model_code) && !empty($enquiry->model))
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Model Family</label>
+                                    <input type="text" class="form-control" value="{{ $enquiry->model }}" readonly style="background-color: #e9ecef;">
+                                </div>
+                            @endif
+
+                             {{-- Dynamically show raw DB Variant if the actual Variant Code is missing --}}
+                            @if (isset($enquiry) && empty($enquiry->variant_code) && !empty($enquiry->variant))
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Variant Family</label>
+                                    <input type="text" class="form-control" value="{{ $enquiry->variant }}" readonly style="background-color: #e9ecef;">
+                                </div>
+                            @endif
+
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">Segment <span class="text-danger">*</span></label>
                                 <select name="segment_code" id="segment_code" class="form-control form-select" required>
@@ -469,14 +490,6 @@
                                     <option value="">Select Model</option>
                                 </select>
                             </div>
-                            
-                            {{-- Dynamically show raw DB Model if the actual Model Code is missing --}}
-                            @if (isset($enquiry) && empty($enquiry->model_code) && !empty($enquiry->model))
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label">Model Family (Dump)</label>
-                                    <input type="text" class="form-control" value="{{ $enquiry->model }}" readonly style="background-color: #e9ecef;">
-                                </div>
-                            @endif
 
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">Variant <span class="text-danger">*</span></label>
@@ -484,14 +497,6 @@
                                     <option value="">Select Variant</option>
                                 </select>
                             </div>
-
-                            {{-- Dynamically show raw DB Variant if the actual Variant Code is missing --}}
-                            @if (isset($enquiry) && empty($enquiry->variant_code) && !empty($enquiry->variant))
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label">Variant Family (Dump)</label>
-                                    <input type="text" class="form-control" value="{{ $enquiry->variant }}" readonly style="background-color: #e9ecef;">
-                                </div>
-                            @endif
 
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">Color @if (!$isReference && !$isWhatsapp)
@@ -759,6 +764,37 @@
                                 </select>
                             </div>
 
+                            {{-- NEW: Additional Buy Vehicle Section --}}
+                            <div class="row w-100 m-0 p-0" id="additional_vehicle_section" style="display:none;">
+                                <div class="col-md-12 mt-2 mb-2">
+                                    <h6 class="text-secondary fw-bold border-bottom pb-2">Existing Vehicle Details</h6>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Existing Make</label>
+                                    <select name="brand_make" id="brand_make" class="form-control form-select">
+                                        <option value="">Select Make</option>
+                                        @foreach ($existing_car_oems as $item)
+                                            <option value="{{ $item['code'] }}"
+                                                {{ old('brand_make', $enquiry->brand_make ?? '') == $item['code'] ? 'selected' : '' }}>
+                                                {{ $item['value'] }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Existing Model</label>
+                                    <input type="text" name="brand_model" class="form-control" value="{{ old('brand_model', $enquiry->brand_model ?? '') }}">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Existing Vehicle No.</label>
+                                    <input type="text" name="vehicle_no" class="form-control" value="{{ old('vehicle_no', $enquiry->vehicle_no ?? '') }}">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Existing Make Year</label>
+                                    <input type="number" name="make_year" class="form-control" value="{{ old('make_year', $enquiry->make_year ?? '') }}">
+                                </div>
+                            </div>
+
                             @if (isset($enquiry) &&
                                     in_array($enquiry->purchase_type, ['Exchange Buy', 'Scrappage']) &&
                                     ($enquiry->brand_make || $enquiry->expected_price || $enquiry->lost_reason))
@@ -813,36 +849,41 @@
                     <div class="card-body">
 
                         @if (isset($enquiry) && !$isReference && !$isVirtual && !$isWhatsapp)
-                            <div class="row mb-4" style="opacity: 0.8; pointer-events:none;">
+                            @php
+                                $oemScCode = old('sc_code', $enquiry->sc_code ?? '');
+                                $oemScDisplay = '';
+                                $oemScMileId = '';
+                                $oemScBranch = '';
+                                $oemScLocation = '';
+
+                                if ($oemScCode && isset($saleconsultants)) {
+                                    $matchedSc = collect($saleconsultants)->firstWhere('person_code', $oemScCode);
+                                    if ($matchedSc) {
+                                        $oemScDisplay = ($matchedSc['display_name'] ?? '') . ' - ' . ($matchedSc['employee_code'] ?? '');
+                                        $oemScMileId = $matchedSc['employee_code'] ?? '';
+                                        $oemScBranch = \App\Services\OrgService::branchName($matchedSc['primary_branch_code'] ?? '');
+                                        $oemScLocation = \App\Services\OrgService::locationName($matchedSc['primary_loc_code'] ?? '');
+                                    }
+                                }
+                            @endphp
+
+                            <div class="row mb-4" style="pointer-events:none;">
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">OEM Assigned SC</label>
-                                    <select id="oem_sc_code_display" class="form-control form-select" readonly
-                                        tabindex="-1" style="background-color: #e9ecef;">
-                                        <option value="">Select OEM SC</option>
-                                        @foreach ($saleconsultants as $consultant)
-                                            <option value="{{ $consultant['person_code'] }}"
-                                                data-mile-id="{{ $consultant['employee_code'] ?? '' }}"
-                                                data-branch="{{ \App\Services\OrgService::branchName($consultant['primary_branch_code'] ?? '') }}"
-                                                data-location="{{ \App\Services\OrgService::locationName($consultant['primary_loc_code'] ?? '') }}"
-                                                {{ old('sc_code', $enquiry->sc_code ?? '') == $consultant['person_code'] ? 'selected' : '' }}>
-                                                {{ $consultant['display_name'] }} - {{ $consultant['employee_code'] }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    <input type="hidden" name="sc_code"
-                                        value="{{ old('sc_code', $enquiry->sc_code ?? '') }}">
+                                    <input type="text" class="form-control" value="{{ $oemScDisplay }}" readonly tabindex="-1" style="background-color: #e9ecef;">
+                                    <input type="hidden" name="sc_code" value="{{ $oemScCode }}">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">OEM Assigned SC Mile ID</label>
-                                    <input type="text" id="oem_sc_mile_id" class="form-control" readonly>
+                                    <input type="text" id="oem_sc_mile_id" class="form-control" value="{{ $oemScMileId }}" readonly tabindex="-1" style="background-color: #e9ecef;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">OEM Assigned SC Branch</label>
-                                    <input type="text" id="oem_sc_branch" class="form-control" readonly>
+                                    <input type="text" id="oem_sc_branch" class="form-control" value="{{ $oemScBranch }}" readonly tabindex="-1" style="background-color: #e9ecef;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">OEM Assigned SC Location</label>
-                                    <input type="text" id="oem_sc_location" class="form-control" readonly>
+                                    <input type="text" id="oem_sc_location" class="form-control" value="{{ $oemScLocation }}" readonly tabindex="-1" style="background-color: #e9ecef;">
                                 </div>
                             </div>
                         @endif
@@ -1407,12 +1448,8 @@
                             {{-- Editable Input Row --}}
                             <div class="row">
                                 <div class="col-md-3 mb-3">
-                                    <label class="form-label">Customer Stage @if (isset($enquiry))
-                                            <span class="text-danger">*</span>
-                                        @endif
-                                    </label>
-                                    <select name="cre_customer_stage" class="form-control form-select"
-                                        @if (isset($enquiry)) required @endif>
+                                    <label class="form-label">Customer Stage</label>
+                                    <select name="cre_customer_stage" class="form-control form-select">
                                         <option value="">Select Option</option>
                                         @foreach ($customer_stages as $item)
                                             <option value="{{ $item['code'] }}"
@@ -1423,12 +1460,8 @@
                                 </div>
 
                                 <div class="col-md-3 mb-3">
-                                    <label class="form-label">Enquiry Stage @if (isset($enquiry))
-                                            <span class="text-danger">*</span>
-                                        @endif
-                                    </label>
-                                    <select name="cre_enq_stage" class="form-control form-select"
-                                        @if (isset($enquiry)) required @endif>
+                                    <label class="form-label">Enquiry Stage</label>
+                                    <select name="cre_enq_stage" class="form-control form-select">
                                         <option value="">Select Option</option>
                                         @foreach ($enquiry_stages as $item)
                                             <option value="{{ $item['code'] }}"
@@ -1439,21 +1472,14 @@
                                 </div>
                                 
                                 <div class="col-md-2 mb-3">
-                                    <label class="form-label">Next Fup Date @if (isset($enquiry))
-                                            <span class="text-danger" id="cre_next_fup_asterisk">*</span>
-                                        @endif
-                                    </label>
+                                    <label class="form-label">Next Fup Date</label>
                                     <input type="text" id="cre_next_fup_date" name="cre_next_fup_date"
                                         class="form-control" value="{{ old('cre_next_fup_date') }}"
-                                        placeholder="DD-MMM-YYYY" @if (isset($enquiry)) required @endif>
+                                        placeholder="DD-MMM-YYYY">
                                 </div>
                                 <div class="col-md-4 mb-3">
-                                    <label class="form-label">CRE Followup Remarks @if (isset($enquiry))
-                                            <span class="text-danger">*</span>
-                                        @endif
-                                    </label>
-                                    <textarea name="cre_fup_remarks" class="form-control" rows="1"
-                                        @if (isset($enquiry)) required @endif>{{ old('cre_fup_remarks') }}</textarea>
+                                    <label class="form-label">CRE Followup Remarks</label>
+                                    <textarea name="cre_fup_remarks" class="form-control" rows="1">{{ old('cre_fup_remarks') }}</textarea>
                                 </div>
                             </div>
                         </div>
@@ -1714,15 +1740,15 @@
         };
 
         $(function() {
-            $('#oem_sc_code_display').on('change', function() {
-                populateScDetails($(this), 'oem_sc');
-            });
+            // Bind X8 SC dropdown to auto-fill its corresponding details
             $('#x8_sc_code').on('change', function() {
                 populateScDetails($(this), 'x8_sc');
             });
 
-            if ($('#oem_sc_code_display').val()) $('#oem_sc_code_display').trigger('change');
-            if ($('#x8_sc_code').val()) $('#x8_sc_code').trigger('change');
+            // Trigger the change on page load to fill details for Edit mode
+            if ($('#x8_sc_code').val()) {
+                $('#x8_sc_code').trigger('change');
+            }
 
             const isVirtual = @json($isVirtual);
             if (isVirtual && $('#call_nature').length > 0) {
@@ -1753,6 +1779,8 @@
             const $sourceCode = $('#source_code');
             const $subSource = $('#sub_source');
             const $plannedCampaign = $('#planned_campaign');
+
+            
 
             let maxDob = new Date();
             maxDob.setFullYear(maxDob.getFullYear() - 18);
@@ -1785,24 +1813,58 @@
                             selectedCode = '45_YEARS';     // > 45 Years
                         }
 
-                        // 3. Auto-select and Freeze the dropdown
+                        // 3. Auto-select and Freeze the dropdown (removes arrow)
                         if (selectedCode) {
                             $ageGroup.val(selectedCode).trigger('change');
-                            $ageGroup.css({'pointer-events': 'none', 'background-color': '#e9ecef'}).attr('tabindex', '-1');
+                            $ageGroup.css({
+                                'pointer-events': 'none', 
+                                'background-color': '#e9ecef',
+                                '-webkit-appearance': 'none',
+                                '-moz-appearance': 'none',
+                                'appearance': 'none'
+                            }).attr('tabindex', '-1');
+                        }
+
+                        // 4. Calculate Minimum Marriage Date (18 years after DOB)
+                        let minMarriageDate = new Date(birthDate);
+                        minMarriageDate.setFullYear(minMarriageDate.getFullYear() + 18);
+                        if (window.marriagePicker) {
+                            window.marriagePicker.set('minDate', minMarriageDate);
                         }
                     } else {
-                        // Clear and Unfreeze if date is completely removed
+                        // Clear and Unfreeze if date is completely removed (restores arrow)
                         $ageGroup.val('').trigger('change');
-                        $ageGroup.css({'pointer-events': 'auto', 'background-color': ''}).removeAttr('tabindex');
+                        $ageGroup.css({
+                            'pointer-events': 'auto', 
+                            'background-color': '',
+                            '-webkit-appearance': '',
+                            '-moz-appearance': '',
+                            'appearance': ''
+                        }).removeAttr('tabindex');
+                        if (window.marriagePicker) {
+                            window.marriagePicker.set('minDate', null); // Reset min limit
+                        }
                     }
                 }
             });
 
             // Page Load Check for Edit Mode (Freezes the dropdown if a DOB was already saved)
             if (($('#dob').val() || '').trim() !== '') {
-                $('select[name="age_group"]').css({'pointer-events': 'none', 'background-color': '#e9ecef'}).attr('tabindex', '-1');
+                $('select[name="age_group"]').css({
+                    'pointer-events': 'none', 
+                    'background-color': '#e9ecef',
+                    '-webkit-appearance': 'none',
+                    '-moz-appearance': 'none',
+                    'appearance': 'none'
+                }).attr('tabindex', '-1');
             } else {
-                $('select[name="age_group"]').css({'pointer-events': 'auto', 'background-color': ''}).removeAttr('tabindex');
+                $('select[name="age_group"]').css({
+                    'pointer-events': 'auto', 
+                    'background-color': '',
+                    '-webkit-appearance': '',
+                    '-moz-appearance': '',
+                    'appearance': ''
+                }).removeAttr('tabindex');
             }
 
             flatpickr("#cre_next_fup_date", {
@@ -1858,17 +1920,45 @@
             if ($('#cre_likely_purchase_date').val()) {
                 $('#cre_likely_purchase_days').css({'pointer-events': 'none', 'background-color': '#e9ecef'}).attr('tabindex', '-1');
             }
-            flatpickr("#marriage_date", {
+            
+            window.marriagePicker = flatpickr("#marriage_date", {
                 dateFormat: "d-M-Y",
                 maxDate: "today",
-                allowInput: false
+                allowInput: true // Allow user to manually clear it
             });
 
-            $('#fin_mode').on('change', function() {
-                const isInHouse = $(this).val() === 'In-house';
-                $('#financierbox').toggle(isInHouse);
-                $('#financier').val(isInHouse ? $('#financier').val() : '');
-            }).trigger('change');
+            // Listen for Marital Status Changes
+            $('select[name="marital_status"]').on('change', function() {
+                let statusText = $(this).find('option:selected').text().trim().toUpperCase();
+                
+                if (statusText === 'MARRIED') {
+                    // Enable Marriage Date
+                    $('#marriage_date').prop('disabled', false).css('background-color', '#fff');
+                } else {
+                    // Disable and clear Marriage Date
+                    window.marriagePicker.clear();
+                    $('#marriage_date').prop('disabled', true).css('background-color', '#e9ecef');
+                }
+            });
+
+            // Initialize Marital Status Logic on Page Load
+            setTimeout(() => {
+                $('select[name="marital_status"]').trigger('change');
+            }, 100);
+
+            // NEW: Purchase Type listener to show/hide Additional Vehicle fields
+            $('#purchase_type_crm').on('change', function() {
+                const ptText = $(this).find('option:selected').text().trim().toUpperCase();
+                
+                if (ptText.includes('ADDITIONAL')) {
+                    $('#additional_vehicle_section').show();
+                } else {
+                    $('#additional_vehicle_section').hide();
+                }
+            });
+
+            // Trigger on page load so it opens immediately if editing an Additional Buy case
+            setTimeout(() => { $('#purchase_type_crm').trigger('change'); }, 100);
 
             // ================= CONSIDERATION SET 1 =================
             $('#consider_make').on('change', function() {
@@ -1967,35 +2057,55 @@
                 }
             });
 
-            $('select[name="cre_enq_stage"]').on('change', function() {
-                const val = $(this).val();
-                let $custStage = $('select[name="cre_customer_stage"]');
+            // Helper to freeze/unfreeze Next Fup Date based on stage
+            function handleStageRules() {
+                const enqStageVal = ($('select[name="cre_enq_stage"]').val() || '').trim().toUpperCase();
+                const $custStage = $('select[name="cre_customer_stage"]');
+                let custStageVal = ($custStage.val() || '').trim().toUpperCase();
+                let custStageText = ($custStage.find('option:selected').text() || '').trim().toUpperCase();
 
-                if (val === 'LOST' || val === 'DROPPED') {
-                    // Auto-set Customer Stage to LOST
+                // 1. If Enquiry Stage is LOST or DROPPED, auto-select LOST and freeze Customer Stage
+                if (enqStageVal === 'LOST' || enqStageVal === 'DROPPED') {
                     $custStage.find('option').each(function() {
                         if ($(this).val() === 'LOST' || $(this).text().trim().toUpperCase() === 'LOST') {
-                            $custStage.val($(this).val()).trigger('change');
+                            $custStage.val($(this).val());
                         }
                     });
-
-                    // FREEZE Customer Stage
                     $custStage.css({'pointer-events': 'none', 'background-color': '#e9ecef'}).attr('tabindex', '-1');
-
-                    // Make Planned Fup Date Optional
-                    $('#cre_next_fup_date').prop('required', false);
-                    $('#cre_next_fup_asterisk').addClass('d-none');
+                    custStageVal = 'LOST';
+                    custStageText = 'LOST';
                 } else {
-                    // UNFREEZE Customer Stage
                     $custStage.css({'pointer-events': 'auto', 'background-color': ''}).removeAttr('tabindex');
-
-                    // Re-apply requirement if stage changes
-                    if (currentEnquiry.isEdit) {
-                        $('#cre_next_fup_date').prop('required', true);
-                        $('#cre_next_fup_asterisk').removeClass('d-none');
-                    }
                 }
-            });
+
+                // 2. Freeze Next FUP Date if Customer Stage OR Enquiry Stage is LOST or DROPPED
+                const isLostOrDropped = (
+                    custStageVal === 'LOST' || custStageVal === 'DROPPED' ||
+                    custStageText === 'LOST' || custStageText === 'DROPPED' ||
+                    enqStageVal === 'LOST' || enqStageVal === 'DROPPED'
+                );
+
+                const $nextFup = $('#cre_next_fup_date');
+
+                if (isLostOrDropped) {
+                    $nextFup.val('')
+                        .prop('required', false)
+                        .css({'pointer-events': 'none', 'background-color': '#e9ecef'})
+                        .attr('tabindex', '-1');
+                } else {
+                    $nextFup.css({'pointer-events': 'auto', 'background-color': ''})
+                        .removeAttr('tabindex');
+                }
+            }
+
+            // Bind listeners to both Enquiry Stage and Customer Stage
+            $('select[name="cre_enq_stage"]').on('change', handleStageRules);
+            $('select[name="cre_customer_stage"]').on('change', handleStageRules);
+
+            // Trigger check on page load if editing
+            if (currentEnquiry.isEdit) {
+                setTimeout(handleStageRules, 150);
+            }
 
             // Trigger check on page load if editing
             if (currentEnquiry.isEdit) {
@@ -2072,26 +2182,18 @@
                             $(this).val('').trigger('change'); // Reset the dropdown if they hit cancel
                         }
                     });
-                    return; // Stop further execution so fields don't toggle before the redirect
+                    return; // Stop execution before toggling fields
                 }
 
-                // 2. Normal execution for non-reference options (or if editing)
                 toggleReferenceFields();
                 
-                if (source !== '') {
-                    $subSource.prop('disabled', false);
-                    
-                    if (source === 'HYPERLOCAL') {
-                        $subSource.prop('required', true);
-                        $('#sub_source_asterisk').removeClass('d-none');
-                    } else {
-                        $subSource.prop('required', false);
-                        $('#sub_source_asterisk').addClass('d-none');
-                    }
-                    
-                    // Fetch Sub-Source dynamically using the exact DB code
+                // 2. STRICT Sub-Source Rule: ONLY allow if Source is HYPERLOCAL
+                if (source === 'HYPERLOCAL') {
+                    $subSource.prop('disabled', false).prop('required', true);
+                    $('#sub_source_asterisk').removeClass('d-none');
                     loadKeywordDropdown('ENQUIRY_SUB_SOURCE', source, $subSource, 'Select Enquiry Sub Source', currentEnquiry.subSource);
                 } else {
+                    // Grey out and clear for absolutely every other Source
                     $subSource.html('<option value="">Select Enquiry Sub Source</option>').val('').prop('disabled', true).prop('required', false);
                     $('#sub_source_asterisk').addClass('d-none');
                 }
@@ -2100,8 +2202,23 @@
             });
 
             $('#application_type').on('change', function() {
+                // Load the secondary dropdown options via AJAX
                 loadKeywordDropdown('APPLICATION', $(this).val(), $('#application'), 'Select Application',
                     currentEnquiry.application);
+                
+                // Freeze the #application dropdown if Personal or Commercial is selected
+                const valText = $(this).find('option:selected').text().trim().toUpperCase();
+                
+                if (valText === 'PERSONAL' || valText === 'COMMERCIAL') {
+                    // Freeze the child 'application' dropdown
+                    $('#application').css({'pointer-events': 'none', 'background-color': '#e9ecef'}).attr('tabindex', '-1');
+                    
+                    // Clear its value after a slight delay to allow the AJAX loadKeywordDropdown to finish
+                    setTimeout(() => { $('#application').val(''); }, 100);
+                } else {
+                    // Unfreeze the child 'application' dropdown
+                    $('#application').css({'pointer-events': 'auto', 'background-color': ''}).removeAttr('tabindex');
+                }
             }).trigger('change');
 
             // $('#dealer_branch').on('change', function() {
@@ -2219,6 +2336,27 @@
             setupDynamicLocation('district_select', 'district_input', 'district');
             setupDynamicLocation('state_select', 'state_input', 'city');
 
+            function updateTerritory() {
+                // Get value from select, or from input if 'OTHER' is selected
+                let distVal = $('#district_select').val();
+                if (distVal === 'OTHER') {
+                    distVal = $('#district_input').val();
+                }
+                
+                distVal = String(distVal || '').trim().toUpperCase();
+
+                if (distVal) {
+                    if (['BIKANER', 'CHURU', 'SUJANGARH'].includes(distVal)) {
+                        $('#territory').val('OWN TERRITORY');
+                    } else {
+                        $('#territory').val('OTHER TERRITORY');
+                    }
+                }
+            }
+
+            $('#district_select').on('change', updateTerritory);
+            $('#district_input').on('input', updateTerritory);
+
             $('#zipcode').on('input blur', debounce(function() {
                 const pincode = ($('#zipcode').val() || '').trim();
                 const $bpoSelect = $('#vpo_select');
@@ -2330,14 +2468,17 @@
                             handleRender('state_select', 'state_input', 'city', cities,
                                 'Select State', currentEnquiry.city);
 
-                            if (districts.length > 0) {
-                                const dist = districts[0].toUpperCase();
-                                if (['BIKANER', 'CHURU', 'SUJANGARH'].includes(dist))
-                                    $territorySelect.val('OWN TERRITORY');
-                                else $territorySelect.val('OTHER TERRITORY');
+                            // Trigger the district change to apply territory logic automatically
+                            $('#district_select').trigger('change');
+                            
+                            // Restore existing territory from DB if it was overridden manually before
+                            if (currentEnquiry.territory && currentEnquiry.isEdit) {
+                                setTimeout(() => {
+                                    if ($('#territory').val() === '') {
+                                        $('#territory').val(currentEnquiry.territory);
+                                    }
+                                }, 50);
                             }
-                            if (currentEnquiry.territory) $territorySelect.val(currentEnquiry
-                                .territory);
 
                         } else {
                             $bpoSelect.html('<option value="">No VPO Found</option>');

@@ -605,6 +605,15 @@ class EnquiryCrudController extends CrudController
         return null;
     }
 
+    private function actionWidth(string $type): int
+    {
+        return match ($type) {
+            'all', 'quick', 'long', 'exchange', 'scrappage', 'exchange_not_interested', 'finance', 'finance_not_interested' => 240,
+            'hyperlocal' => 90,
+            default => 200,
+        };
+    }
+
     private function mapData($e, $i, $type, array $lookups)
     {
         $lpMap = $lookups['lpMap'] ?? [];
@@ -614,8 +623,6 @@ class EnquiryCrudController extends CrudController
         $scByCode = $lookups['scByCode'] ?? [];
         $scByMileId = $lookups['scByMileId'] ?? [];
         $scNamesByCode = $lookups['scNamesByCode'] ?? [];
-        $x8AssignedSc  = $this->getAssignedSc($e->x8_sc_code ?? null, $e->x8_sc_mile_id ?? null, $scByCode, $scByMileId);
-        $oemAssignedSc = $this->getAssignedSc($e->sc_code ?? null, $e->sc_mile_id ?? null, $scByCode, $scByMileId);
         $fupTypesMap = $lookups['fupTypesMap'] ?? [];
         $enqStageMap = $lookups['enqStageMap'] ?? [];
         $custStageMap = $lookups['custStageMap'] ?? [];
@@ -735,16 +742,20 @@ class EnquiryCrudController extends CrudController
         }
 
         $actionBtns = '<a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a>';
+        
+        // Added globally to ensure Quote shows up in all standard listings
+        $actionBtns .= '<a href="' . $quotUrl . '" class="btn btn-success btn-sm">Quote</a>';
 
         if ($type === 'all') {
-            $actionBtns .= '<a href="' . $quotUrl . '" class="btn btn-success btn-sm">Quote</a>';
             $actionBtns .= '<a href="' . $bookUrl . '" class="btn btn-warning btn-sm" title="Convert to Booking">Book</a>';
         } elseif (in_array($type, ['exchange', 'scrappage', 'exchange_not_interested'])) {
             $exchUrl = backpack_url("exchange/enquiry/{$e->id}/edit");
-            $actionBtns = '<a href="' . $exchUrl . '" class="btn btn-sm btn-primary">Process</a>';
+            // Appended process instead of overwriting, keeping Edit and Quote accessible
+            $actionBtns .= '<a href="' . $exchUrl . '" class="btn btn-sm btn-info">Process</a>';
         } elseif (in_array($type, ['finance', 'finance_not_interested'])) {
             $finUrl = backpack_url("finance/enquiry/{$e->id}/edit");
-            $actionBtns = '<a href="' . $finUrl . '" class="btn btn-sm btn-primary">Process</a>';
+            // Appended process instead of overwriting, keeping Edit and Quote accessible
+            $actionBtns .= '<a href="' . $finUrl . '" class="btn btn-sm btn-info">Process</a>';
         }
 
         $row = [
@@ -906,15 +917,6 @@ class EnquiryCrudController extends CrudController
         }
 
         return $row;
-    }
-
-    private function actionWidth(string $type): int
-    {
-        return match ($type) {
-            'all', 'quick', 'long' => 220,
-            'hyperlocal' => 90,
-            default => 110,
-        };
     }
 
     private function getColumns($type)
@@ -1950,11 +1952,11 @@ class EnquiryCrudController extends CrudController
             // 4. CRM Purchase Type
             'purchase_type_crm' => $req . '|string|max:100',
 
-            // 5. CRE Enquiry Stage (Mandatory on EDIT only)
-            'cre_enq_stage' => $creReq . '|string|max:50',
-            'cre_customer_stage' => $creReq . '|string|max:50',
-            'cre_next_fup_date' => (in_array(request('cre_enq_stage'), ['LOST', 'DROPPED']) ? 'nullable' : $creReq) . '|date',
-            'cre_fup_remarks' => $creReq . '|string|max:255',
+            // 5. CRE Enquiry Stage (No longer mandatory)
+            'cre_enq_stage' => 'nullable|string|max:50',
+            'cre_customer_stage' => 'nullable|string|max:50',
+            'cre_next_fup_date' => 'nullable|date',
+            'cre_fup_remarks' => 'nullable|string|max:255',
             'cre_fup_deviation_stage' => 'nullable|string|max:50',
 
             // WhatsApp Campaign Fields
