@@ -328,7 +328,7 @@ class EnquiryCrudController extends CrudController
         });
 
         return view('admin.enquiry.list', [
-            'title' => 'Xlr8 Enquiries',
+            'title' => 'Xceler8 Enquiries',
             'gridConfig' => [
                 'columns' => $this->getColumns('all'),
                 'defaultColumns' => $this->getDefaultColumns(),

@@ -1,6 +1,6 @@
 @php
 
-$q = $data['quotation']?->proposed_data ?? [];
+$q = $data['quotation']?->standard_data ?? [];
 
 $quotation = $data['quotation'] ?? null;
 
