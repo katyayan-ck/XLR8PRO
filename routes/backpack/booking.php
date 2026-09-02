@@ -78,6 +78,9 @@ Route::group([
         [QuotationCrudController::class, 'index']
     )->name('quotation.index');
 
+    Route::get('quotation-form/pending', [QuotationCrudController::class, 'pendingQuotations'])
+        ->name('quotation.pending');
+
     Route::get(
         'quotation-form/create',
         [QuotationCrudController::class, 'create']

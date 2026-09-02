@@ -124,6 +124,7 @@ Route::group([
     Route::get('enquiry/location-by-pincode', [EnquiryCrudController::class, 'locationByPincode'])->name('enquiry.location-by-pincode');
 
     // Specialized Enquiry Listings
+    Route::get('enquiries/hyperlocal', [EnquiryCrudController::class, 'hyperlocalList'])->name('enquiry.hyperlocal');
     Route::get('enquiries/reference', [EnquiryCrudController::class, 'referenceList']);
     Route::get('enquiries/virtual-number', [EnquiryCrudController::class, 'virtualNumberList']);
     Route::get('enquiries/whatsapp-campaign', [EnquiryCrudController::class, 'whatsappCampaignList']);
@@ -131,6 +132,8 @@ Route::group([
     Route::get('enquiries/unassigned-long', [EnquiryCrudController::class, 'unassignedLongList']);
     Route::get('enquiries/assigned-quick', [EnquiryCrudController::class, 'assignedQuickList']);
     Route::get('enquiries/unassigned-quick', [EnquiryCrudController::class, 'unassignedQuickList']);
+    Route::get('enquiries/pending', [EnquiryCrudController::class, 'pendingList'])->name('enquiry.pending');
+    Route::get('enquiries/erroneous', [EnquiryCrudController::class, 'erroneousList'])->name('enquiry.erroneous');
 
     // Reference Forms
     Route::get('enquiries/reference/add', [EnquiryCrudController::class, 'createReference'])->name('enquiry.reference.create');
@@ -171,7 +174,7 @@ Route::group([
     Route::get('campaign/locations/{branchCode}', [CampaignCrudController::class, 'getLocations']);
 
     // =========== TEST DRIVE =====================
-    Route::crud('testdrive', 'TestDriveCrudController');
+    //Route::crud('testdrive', 'TestDriveCrudController');
     // =========== HYPERLOCAL ENQUIRIES ===========
     Route::get('enquiries/hyperlocal', [EnquiryCrudController::class, 'hyperlocalList'])
         ->name('enquiry.hyperlocal');

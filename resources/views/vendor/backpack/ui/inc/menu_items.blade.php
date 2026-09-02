@@ -150,6 +150,8 @@ return [
             <span class="badge rounded-pill text-dark" style="background-color: #e9ecef;">{{ $enqCounts['all'] ?? 0 }}</span>
         </a>
 
+        <x-backpack::menu-dropdown-item title="Hyperlocal Enquiries" icon="la la-map-marker" :link="backpack_url('enquiries/hyperlocal')" />
+
         <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ backpack_url('enquiries/reference') }}">
             <span><i class="nav-icon la la-user-times me-2"></i> Reference Enquiries</span>
             <span class="badge rounded-pill text-dark" style="background-color: #e9ecef;">{{ $enqCounts['reference'] ?? 0 }}</span>
@@ -160,8 +162,7 @@ return [
             <span class="badge rounded-pill text-dark" style="background-color: #e9ecef;">{{ $enqCounts['virtual'] ?? 0 }}</span>
         </a>
 
-        <x-backpack::menu-dropdown-item title="Hyperlocal Enquiries" icon="la la-map-marker" :link="backpack_url('enquiries/hyperlocal')" />
-
+        
         <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ backpack_url('enquiries/whatsapp-campaign') }}">
             <span><i class="nav-icon la la-user-times me-2"></i> WhatsApp Campaign Enquiries</span>
             <span class="badge rounded-pill text-dark" style="background-color: #e9ecef;">{{ $enqCounts['whatsapp'] ?? 0 }}</span>
@@ -187,25 +188,36 @@ return [
             <span class="badge rounded-pill text-dark" style="background-color: #e9ecef;">{{ $enqCounts['assigned_long'] ?? 0 }}</span>
         </a>
 
-        <x-backpack::menu-dropdown-item title="OTF Bookings" icon="la la-file-invoice" :link="backpack_url('enquiries/otf-bookings')" />
+       <!-- <x-backpack::menu-dropdown-item title="OTF Bookings" icon="la la-file-invoice" :link="backpack_url('enquiries/otf-bookings')" /> -->
 
         <x-backpack::menu-dropdown-item title="Campaigns" icon="la la-list" :link="backpack_url('campaign')" />
+
+        <x-backpack::menu-dropdown-item title="Pending Enquiries" icon="la la-exclamation-triangle" :link="backpack_url('enquiries/pending')" />
+        <x-backpack::menu-dropdown-item title="Erroneous Entries" icon="la la-bug" :link="backpack_url('enquiries/erroneous')" />
 
     </x-backpack::menu-dropdown>
 
     {{-- Quotation --}}
-    <x-backpack::menu-dropdown-item title="Quotation" icon="la la-file-alt" :link="backpack_url('quotation-form')" />
+    <x-backpack::menu-dropdown title="Quotation" icon="la la-file-alt" nested="true">
+        <x-backpack::menu-dropdown-item title="Quotation List" icon="la la-file-signature" :link="backpack_url('quotation-form')" />
+        <x-backpack::menu-dropdown-item title="Pending Quotations" icon="la la-clock" :link="backpack_url('quotation-form/pending')" />
+    </x-backpack::menu-dropdown>    
 
     {{-- Test Drive --}}
-    <x-backpack::menu-dropdown-item title="Test Drive" icon="la la-car-side" :link="backpack_url('testdrive')" />
+    <!-- <x-backpack::menu-dropdown-item title="Test Drive" icon="la la-car-side" :link="backpack_url('testdrive')" /> -->
 
     {{-- Booking --}}
     <x-backpack::menu-dropdown title="Booking" icon="la la-book-open" nested="true">
-        <x-backpack::menu-dropdown-item title="Add New Booking" icon="la la-plus-circle"
-            :link="backpack_url('booking/create')" />
+        <!-- <x-backpack::menu-dropdown-item title="Add New Booking" icon="la la-plus-circle"
+            :link="backpack_url('booking/create')" /> -->
         <x-backpack::menu-dropdown-item title="Booking List" icon="la la-list" :link="backpack_url('booking')" />
 
-        <x-backpack::menu-separator title="Pending Stages" />
+        <x-backpack::menu-dropdown-item title="DMS Booking List" icon="la la-database" :link="backpack_url('booking/dms-list')" />
+
+        <x-backpack::menu-dropdown-item title="Dummy Bookings" icon="la la-flask"
+            :link="backpack_url('booking/dummy')" />
+
+        <!-- <x-backpack::menu-separator title="Pending Stages" />
         <x-backpack::menu-dropdown-item title="Pending DMS Booking" icon="la la-database"
             :link="backpack_url('booking/pending-dms')" />
         <x-backpack::menu-dropdown-item title="Pending Sales Order" icon="la la-file-alt"
@@ -225,9 +237,14 @@ return [
         <x-backpack::menu-dropdown-item title="Pending Reg. No." icon="la la-hashtag"
             :link="backpack_url('booking/pending-registration')" />
         <x-backpack::menu-dropdown-item title="Pending DO" icon="la la-file-signature"
-            :link="backpack_url('booking/pending-do')" />
-        <x-backpack::menu-dropdown-item title="Dummy Bookings" icon="la la-flask"
-            :link="backpack_url('booking/dummy')" />
+            :link="backpack_url('booking/pending-do')" /> -->
+        <x-backpack::menu-dropdown title="Pending" icon="la la-clock" nested="true">
+            <x-backpack::menu-dropdown-item title="DMS" icon="la la-database" :link="backpack_url('booking/pending-dms')" />
+            <x-backpack::menu-dropdown-item title="SO" icon="la la-file-alt" :link="backpack_url('booking/pending/sales-order')" />
+            <x-backpack::menu-dropdown-item title="KYC" icon="la la-id-card" :link="backpack_url('booking/pending-kyc')" />
+            <x-backpack::menu-dropdown-item title="Payment" icon="la la-rupee-sign" :link="backpack_url('booking/pending-payment')" />
+        </x-backpack::menu-dropdown>
+        
 
         <x-backpack::menu-dropdown title="Erroneous Entries" icon="la la-exclamation-circle" nested="true">
             <x-backpack::menu-dropdown-item title="Booking" icon="la la-book"
@@ -238,6 +255,94 @@ return [
                 :link="backpack_url('insurance/erroneous')" />
             <x-backpack::menu-dropdown-item title="RTO" icon="la la-id-card" :link="backpack_url('rto/erroneous')" />
         </x-backpack::menu-dropdown>
+    </x-backpack::menu-dropdown>
+
+    {{--  Transactions --}}
+    <x-backpack::menu-dropdown title="Transactions" icon="la la-handshake" nested="true">
+        <x-backpack::menu-dropdown-item title="Transaction List" icon="la la-list" :link="backpack_url('co-dealer/transaction')" />
+
+        <x-backpack::menu-dropdown title="Pending" icon="la la-clock" nested="true">
+            <x-backpack::menu-dropdown-item title="Payment" icon="la la-rupee-sign" :link="backpack_url('co-dealer/pending-payment')" />
+            <x-backpack::menu-dropdown-item title="Invoices" icon="la la-file-invoice" :link="backpack_url('co-dealer/pending-invoices')" />
+            <x-backpack::menu-dropdown-item title="Insurance" icon="la la-shield-alt" :link="backpack_url('co-dealer/pending-insurance')" />
+            <x-backpack::menu-dropdown-item title="RTO Delivery" icon="la la-truck" :link="backpack_url('co-dealer/pending-deliveries')" />
+            <x-backpack::menu-dropdown-item title="Registration No." icon="la la-hashtag" :link="backpack_url('co-dealer/pending-registration')" />
+            <x-backpack::menu-dropdown-item title="DO" icon="la la-file-signature" :link="backpack_url('co-dealer/pending-do')" />
+        </x-backpack::menu-dropdown>
+
+        <x-backpack::menu-dropdown-item title="Erroneous Entries" icon="la la-exclamation-circle" :link="backpack_url('co-dealer/erroneous')" />
+    </x-backpack::menu-dropdown>
+
+    {{-- CRM Sales --}}
+    <x-backpack::menu-dropdown title="CRM Sales" icon="la la-headset" nested="true">
+        
+        {{-- Feedback --}}
+        <x-backpack::menu-dropdown title="Feedback" icon="la la-comment-alt" nested="true">
+            <x-backpack::menu-dropdown-item title="New Enquiry" icon="la la-question-circle" :link="backpack_url('crm-sales/feedback/new-enquiry')" />
+            <x-backpack::menu-dropdown-item title="New Test Drive" icon="la la-car" :link="backpack_url('crm-sales/feedback/new-test-drive')" />
+            <x-backpack::menu-dropdown-item title="New Booking" icon="la la-book" :link="backpack_url('crm-sales/feedback/new-booking')" />
+            <x-backpack::menu-dropdown-item title="Cancelled Booking" icon="la la-times-circle" :link="backpack_url('crm-sales/feedback/cancelled-booking')" />
+            <x-backpack::menu-dropdown-item title="New Vehicle Delivery" icon="la la-key" :link="backpack_url('crm-sales/feedback/new-delivery')" />
+        </x-backpack::menu-dropdown>
+
+        {{-- Followup --}}
+        <x-backpack::menu-dropdown title="Followup" icon="la la-phone" nested="true">
+            {{-- Enquiry Sub-items --}}
+            <x-backpack::menu-dropdown title="Enquiry" icon="la la-clipboard-list" nested="true">
+                <x-backpack::menu-dropdown-item title="Live Enquiries" icon="la la-stream" :link="backpack_url('crm-sales/followup/enquiry/live')" />
+                <x-backpack::menu-dropdown-item title="Int in Exchange" icon="la la-sync" :link="backpack_url('crm-sales/followup/enquiry/int-exchange')" />
+                <x-backpack::menu-dropdown-item title="Int in Finance" icon="la la-file-invoice-dollar" :link="backpack_url('crm-sales/followup/enquiry/int-finance')" />
+                <x-backpack::menu-dropdown-item title="Int in Ceramic/PPF" icon="la la-spray-can" :link="backpack_url('crm-sales/followup/enquiry/int-ceramic-ppf')" />
+            </x-backpack::menu-dropdown>
+
+            {{-- Booking Sub-items --}}
+            <x-backpack::menu-dropdown title="Booking" icon="la la-bookmark" nested="true">
+                <x-backpack::menu-dropdown-item title="Live Bookings" icon="la la-stream" :link="backpack_url('crm-sales/followup/booking/live')" />
+                <x-backpack::menu-dropdown-item title="Int in Exchange" icon="la la-sync" :link="backpack_url('crm-sales/followup/booking/int-exchange')" />
+                <x-backpack::menu-dropdown-item title="Int in Finance" icon="la la-file-invoice-dollar" :link="backpack_url('crm-sales/followup/booking/int-finance')" />
+                <x-backpack::menu-dropdown-item title="Int in Ceramic/PPF" icon="la la-spray-can" :link="backpack_url('crm-sales/followup/booking/int-ceramic-ppf')" />
+            </x-backpack::menu-dropdown>
+        </x-backpack::menu-dropdown>
+
+        {{-- Verifications --}}
+        <x-backpack::menu-dropdown title="Verifications" icon="la la-check-double" nested="true">
+            <x-backpack::menu-dropdown-item title="Lost Enquiries" icon="la la-user-slash" :link="backpack_url('crm-sales/verifications/lost-enquiries')" />
+            <x-backpack::menu-dropdown-item title="Receipt Confirmation" icon="la la-receipt" :link="backpack_url('crm-sales/verifications/receipt-confirmation')" />
+            <x-backpack::menu-dropdown-item title="Outstanding Controls" icon="la la-sliders-h" :link="backpack_url('crm-sales/verifications/outstanding-controls')" />
+        </x-backpack::menu-dropdown>
+
+        {{-- Activations --}}
+        <x-backpack::menu-dropdown title="Activations" icon="la la-toggle-on" nested="true">
+            <x-backpack::menu-dropdown-item title="List" icon="la la-list" :link="backpack_url('crm-sales/activations/list')" />
+        </x-backpack::menu-dropdown>
+
+        {{-- Alerts --}}
+        <x-backpack::menu-dropdown title="Alerts" icon="la la-bell" nested="true">
+            <x-backpack::menu-dropdown-item title="Fup Comments Mismatch" icon="la la-exclamation-circle" :link="backpack_url('crm-sales/alerts/fup-comments-mismatch')" />
+            <x-backpack::menu-dropdown-item title="Fup Date Mismatch" icon="la la-calendar-times" :link="backpack_url('crm-sales/alerts/fup-date-mismatch')" />
+            <x-backpack::menu-dropdown-item title="Wrongfully Lost Enquiries" icon="la la-user-times" :link="backpack_url('crm-sales/alerts/wrongfully-lost-enquiries')" />
+            <x-backpack::menu-dropdown-item title="Fake Test Drive" icon="la la-ban" :link="backpack_url('crm-sales/alerts/fake-test-drive')" />
+            <x-backpack::menu-dropdown-item title="Purchase Type Mismatch (Exchange)" icon="la la-exchange-alt" :link="backpack_url('crm-sales/alerts/purchase-type-mismatch')" />
+        </x-backpack::menu-dropdown>
+
+        {{-- Internal Concerns --}}
+        <x-backpack::menu-dropdown title="Internal Concerns" icon="la la-exclamation-triangle" nested="true">
+            <x-backpack::menu-dropdown-item title="Enquiry" icon="la la-question-circle" :link="backpack_url('crm-sales/internal-concerns/enquiry')" />
+            <x-backpack::menu-dropdown-item title="Test Drive" icon="la la-car" :link="backpack_url('crm-sales/internal-concerns/test-drive')" />
+            <x-backpack::menu-dropdown-item title="Live Bookings" icon="la la-bookmark" :link="backpack_url('crm-sales/internal-concerns/live-bookings')" />
+            <x-backpack::menu-dropdown-item title="Cancelled Bookings" icon="la la-ban" :link="backpack_url('crm-sales/internal-concerns/cancelled-bookings')" />
+            <x-backpack::menu-dropdown-item title="Delivered Vehicles" icon="la la-truck-loading" :link="backpack_url('crm-sales/internal-concerns/delivered-vehicles')" />
+        </x-backpack::menu-dropdown>
+
+        {{-- Registered Concerns --}}
+        <x-backpack::menu-dropdown title="Registered Concerns" icon="la la-folder-open" nested="true">
+            <x-backpack::menu-dropdown-item title="Enquiry" icon="la la-question-circle" :link="backpack_url('crm-sales/registered-concerns/enquiry')" />
+            <x-backpack::menu-dropdown-item title="Test Drive" icon="la la-car" :link="backpack_url('crm-sales/registered-concerns/test-drive')" />
+            <x-backpack::menu-dropdown-item title="Live Bookings" icon="la la-bookmark" :link="backpack_url('crm-sales/registered-concerns/live-bookings')" />
+            <x-backpack::menu-dropdown-item title="Cancelled Bookings" icon="la la-ban" :link="backpack_url('crm-sales/registered-concerns/cancelled-bookings')" />
+            <x-backpack::menu-dropdown-item title="Delivered Vehicles" icon="la la-truck-loading" :link="backpack_url('crm-sales/registered-concerns/delivered-vehicles')" />
+        </x-backpack::menu-dropdown>
+
     </x-backpack::menu-dropdown>
 
     {{-- Exchange --}}
@@ -292,25 +397,10 @@ return [
     </x-backpack::menu-dropdown>
 
     {{-- OTF Form --}}
-    <x-backpack::menu-dropdown-item title="OTF Form" icon="la la-file-alt" :link="backpack_url('booking/otf-form')" />
+    <!-- <x-backpack::menu-dropdown-item title="OTF Form" icon="la la-file-alt" :link="backpack_url('booking/otf-form')" /> -->
 
-    {{-- Co Dealer Transactions --}}
-    <x-backpack::menu-dropdown title="Co Dealer Transactions" icon="la la-handshake" nested="true">
-        <x-backpack::menu-dropdown-item title="Add Co Dealer" icon="la la-user-plus"
-            :link="backpack_url('co-dealer/add')" />
-        <x-backpack::menu-dropdown-item title="Add New Request" icon="la la-plus-circle"
-            :link="backpack_url('co-dealer/new-request')" />
-        <x-backpack::menu-dropdown-item title="Pending Requests" icon="la la-clock"
-            :link="backpack_url('co-dealer/pending-requests')" />
-        <x-backpack::menu-dropdown-item title="Approved Requests" icon="la la-check-circle"
-            :link="backpack_url('co-dealer/approved')" />
-        <x-backpack::menu-dropdown-item title="Pending Transactions" icon="la la-exchange-alt"
-            :link="backpack_url('co-dealer/pending-transactions')" />
-        <x-backpack::menu-dropdown-item title="Pending Payment" icon="la la-money-bill-wave"
-            :link="backpack_url('co-dealer/pending-payment')" />
-        <x-backpack::menu-dropdown-item title="Dealer Ledger" icon="la la-book"
-            :link="backpack_url('co-dealer/ledger')" />
-    </x-backpack::menu-dropdown>
+    
+    
 
     {{-- Other (Fees) --}}
     @can(['create_fee_collection', 'verify_fee_collection'])
