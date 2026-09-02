@@ -113,18 +113,19 @@
 {{-- FETCH ENQUIRY COUNTS (Cached for 60 seconds to prevent slow page loads) --}}
 {{-- ========================================================================= --}}
 @php
-$enqCounts = \Illuminate\Support\Facades\Cache::remember('menu_enquiry_counts', 60, function () {
-return [
-'all' => \App\Models\CRM\Enquiry::count(),
-'reference' => \App\Models\CRM\Enquiry::reference()->count(),
-'virtual' => \App\Models\CRM\Enquiry::virtual()->count(),
-'whatsapp' => \App\Models\CRM\Enquiry::whatsapp()->count(),
-'unassigned_quick' => \App\Models\CRM\Enquiry::unassignedQuick()->count(),
-'assigned_quick' => \App\Models\CRM\Enquiry::assignedQuick()->count(),
-'unassigned_long' => \App\Models\CRM\Enquiry::unassignedLong()->count(),
-'assigned_long' => \App\Models\CRM\Enquiry::assignedLong()->count(),
-];
-});
+    $enqCounts = \Illuminate\Support\Facades\Cache::remember('menu_enquiry_counts', 60, function () {
+        return [
+            'all' => \App\Models\CRM\Enquiry::count(),
+            'reference' => \App\Models\CRM\Enquiry::reference()->count(),
+            'virtual' => \App\Models\CRM\Enquiry::virtual()->count(),
+            'whatsapp' => \App\Models\CRM\Enquiry::whatsapp()->count(),
+            'hyperlocal' => \App\Models\CRM\Enquiry::hyperlocal()->count(), // Added line
+            'unassigned_quick' => \App\Models\CRM\Enquiry::unassignedQuick()->count(),
+            'assigned_quick' => \App\Models\CRM\Enquiry::assignedQuick()->count(),
+            'unassigned_long' => \App\Models\CRM\Enquiry::unassignedLong()->count(),
+            'assigned_long' => \App\Models\CRM\Enquiry::assignedLong()->count(),
+        ];
+    });
 @endphp
 
 {{-- SALES MAIN DROPDOWN --}}
@@ -145,47 +146,67 @@ return [
         <x-backpack::menu-dropdown-item title="Add New Enquiry" icon="la la-plus-circle" :link="backpack_url('enquiries/add')" />
 
         {{-- Custom HTML items with Light Grey Badges and 0 defaults --}}
-        <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ backpack_url('enquiries-list') }}">
+        <a class="dropdown-item d-flex align-items-center justify-content-between"
+            href="{{ backpack_url('enquiries-list') }}">
             <span><i class="nav-icon la la-list me-2"></i> Enquiry List</span>
-            <span class="badge rounded-pill text-dark" style="background-color: #e9ecef;">{{ $enqCounts['all'] ?? 0 }}</span>
+            <span class="badge rounded-pill text-dark"
+                style="background-color: #e9ecef;">{{ $enqCounts['all'] ?? 0 }}</span>
         </a>
 
-        <x-backpack::menu-dropdown-item title="Hyperlocal Enquiries" icon="la la-map-marker" :link="backpack_url('enquiries/hyperlocal')" />
+        <a class="dropdown-item d-flex align-items-center justify-content-between"
+            href="{{ backpack_url('enquiries/hyperlocal') }}">
+            <span><i class="nav-icon la la-map-marker me-2"></i> Hyperlocal Enquiries</span>
+            <span class="badge rounded-pill text-dark"
+                style="background-color: #e9ecef;">{{ $enqCounts['hyperlocal'] ?? 0 }}</span>
+        </a>
 
-        <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ backpack_url('enquiries/reference') }}">
+        <a class="dropdown-item d-flex align-items-center justify-content-between"
+            href="{{ backpack_url('enquiries/reference') }}">
             <span><i class="nav-icon la la-user-times me-2"></i> Reference Enquiries</span>
-            <span class="badge rounded-pill text-dark" style="background-color: #e9ecef;">{{ $enqCounts['reference'] ?? 0 }}</span>
+            <span class="badge rounded-pill text-dark"
+                style="background-color: #e9ecef;">{{ $enqCounts['reference'] ?? 0 }}</span>
         </a>
 
-        <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ backpack_url('enquiries/virtual-number') }}">
+        <a class="dropdown-item d-flex align-items-center justify-content-between"
+            href="{{ backpack_url('enquiries/virtual-number') }}">
             <span><i class="nav-icon la la-user-times me-2"></i> Virtual Number Enquiries</span>
-            <span class="badge rounded-pill text-dark" style="background-color: #e9ecef;">{{ $enqCounts['virtual'] ?? 0 }}</span>
+            <span class="badge rounded-pill text-dark"
+                style="background-color: #e9ecef;">{{ $enqCounts['virtual'] ?? 0 }}</span>
         </a>
 
-        
-        <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ backpack_url('enquiries/whatsapp-campaign') }}">
+        <a class="dropdown-item d-flex align-items-center justify-content-between"
+            href="{{ backpack_url('enquiries/whatsapp-campaign') }}">
             <span><i class="nav-icon la la-user-times me-2"></i> WhatsApp Campaign Enquiries</span>
-            <span class="badge rounded-pill text-dark" style="background-color: #e9ecef;">{{ $enqCounts['whatsapp'] ?? 0 }}</span>
+            <span class="badge rounded-pill text-dark"
+                style="background-color: #e9ecef;">{{ $enqCounts['whatsapp'] ?? 0 }}</span>
         </a>
 
-        <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ backpack_url('enquiries/unassigned-quick') }}">
+        <a class="dropdown-item d-flex align-items-center justify-content-between"
+            href="{{ backpack_url('enquiries/unassigned-quick') }}">
             <span><i class="nav-icon la la-user-times me-2"></i> Unassigned Quick Enquiries</span>
-            <span class="badge rounded-pill text-dark" style="background-color: #e9ecef;">{{ $enqCounts['unassigned_quick'] ?? 0 }}</span>
+            <span class="badge rounded-pill text-dark"
+                style="background-color: #e9ecef;">{{ $enqCounts['unassigned_quick'] ?? 0 }}</span>
         </a>
 
-        <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ backpack_url('enquiries/assigned-quick') }}">
+        <a class="dropdown-item d-flex align-items-center justify-content-between"
+            href="{{ backpack_url('enquiries/assigned-quick') }}">
             <span><i class="nav-icon la la-user-times me-2"></i> Assigned Quick Enquiries</span>
-            <span class="badge rounded-pill text-dark" style="background-color: #e9ecef;">{{ $enqCounts['assigned_quick'] ?? 0 }}</span>
+            <span class="badge rounded-pill text-dark"
+                style="background-color: #e9ecef;">{{ $enqCounts['assigned_quick'] ?? 0 }}</span>
         </a>
 
-        <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ backpack_url('enquiries/unassigned-long') }}">
+        <a class="dropdown-item d-flex align-items-center justify-content-between"
+            href="{{ backpack_url('enquiries/unassigned-long') }}">
             <span><i class="nav-icon la la-user-times me-2"></i> Unassigned Long Enquiries</span>
-            <span class="badge rounded-pill text-dark" style="background-color: #e9ecef;">{{ $enqCounts['unassigned_long'] ?? 0 }}</span>
+            <span class="badge rounded-pill text-dark"
+                style="background-color: #e9ecef;">{{ $enqCounts['unassigned_long'] ?? 0 }}</span>
         </a>
 
-        <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ backpack_url('enquiries/assigned-long') }}">
+        <a class="dropdown-item d-flex align-items-center justify-content-between"
+            href="{{ backpack_url('enquiries/assigned-long') }}">
             <span><i class="nav-icon la la-user-times me-2"></i> Assigned Long Enquiries</span>
-            <span class="badge rounded-pill text-dark" style="background-color: #e9ecef;">{{ $enqCounts['assigned_long'] ?? 0 }}</span>
+            <span class="badge rounded-pill text-dark"
+                style="background-color: #e9ecef;">{{ $enqCounts['assigned_long'] ?? 0 }}</span>
         </a>
 
        <!-- <x-backpack::menu-dropdown-item title="OTF Bookings" icon="la la-file-invoice" :link="backpack_url('enquiries/otf-bookings')" /> -->
