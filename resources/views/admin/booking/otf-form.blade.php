@@ -308,50 +308,57 @@ use App\Services\OrgService;
         display: block;
     }
 
-    /* Receipt Table Styling */
+    /* Receipt Table Styling - Match OTF bill-table */
     .receipt-table {
-        border-collapse: separate;
+        width: 100%;
+        border-collapse: collapse !important;
         border-spacing: 0;
-        border-radius: 6px;
-        overflow: hidden;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        border-radius: 0 !important;
+        overflow: visible !important;
+        box-shadow: none !important;
+        margin-bottom: 6px !important;
     }
 
     .receipt-table thead th {
-        background: #f8f9fa !important;
-        border-bottom: 2px solid #dee2e6 !important;
+        background: #f2f2f2 !important;
+        border: 1px solid #000 !important;
+        border-bottom: 1px solid #000 !important;
         font-size: 10px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.3px;
-        color: #495057;
-        padding: 8px 10px;
-    }
-
-    .receipt-table tbody tr {
-        transition: background 0.15s ease;
-    }
-
-    .receipt-table tbody tr:hover {
-        background: #f8f9fa !important;
+        font-weight: 600;
+        text-transform: none;
+        letter-spacing: normal;
+        color: #000;
+        padding: 3px 5px !important;
+        height: 26px;
+        vertical-align: middle;
     }
 
     .receipt-table tbody td {
-        padding: 6px 10px;
+        background: #fff !important;
+        border: 1px solid #000 !important;
+        padding: 3px 5px !important;
+        height: 26px;
         vertical-align: middle;
         font-size: 10px;
-        border-bottom: 1px solid #f0f0f0;
+        color: #000;
     }
 
-    .receipt-table tbody tr:last-child td {
-        border-bottom: none;
+    .receipt-table tbody tr:hover {
+        background: transparent !important;
+    }
+
+    .receipt-table tbody tr:hover td {
+        background: #fff !important;
     }
 
     .receipt-table tfoot td {
-        padding: 8px 10px;
-        font-weight: 700;
-        background: #f8f9fa;
-        border-top: 2px solid #dee2e6;
+        background: #f2f2f2 !important;
+        border: 1px solid #000 !important;
+        padding: 3px 5px !important;
+        height: 26px;
+        font-size: 10px;
+        font-weight: 600;
+        color: #000;
     }
 
     .receipt-header {
@@ -431,6 +438,9 @@ use App\Services\OrgService;
             display: none !important;
         }
     }
+    .quotation-stacked-table tr.print-hide {
+        display: none !important;
+    }
 </style>
 @endpush
 
@@ -495,7 +505,7 @@ use App\Services\OrgService;
                                     <td colspan="2" class="section-title">Vehicle Details</td>
                                 </tr>
                                 <tr>
-                                    <td class="title">GST Number</td>
+                                    <td class="title">GST No.</td>
                                     <td><input type="text" name="gstn" value="{{ old('gstn', $booking->gstn) }}"></td>
                                 </tr>
                                 <tr>
@@ -595,8 +605,10 @@ use App\Services\OrgService;
                                             <option value="">Select Registration Type</option>
 
                                             @foreach($reg_no_type_map as $key => $value)
-                                            <option value="{{ $key }}" {{ old('registration_no_type', $rto?->rgn_no_type
-                                                ?? '') == $key ? 'selected' : '' }}>
+                                            <option value="{{ $key }}" {{ old(
+                                                    'registration_no_type',
+                                                    $otfData['registration_no_type'] ?? $rto?->rgn_no_type ?? ''
+                                                ) == $key ? 'selected' : '' }}>
                                                 {{ $value }}
                                             </option>
                                             @endforeach
@@ -625,7 +637,7 @@ use App\Services\OrgService;
                                             <option value="">Select Permit</option>
 
                                             @foreach($permit_map as $key => $value)
-                                            <option value="{{ $key }}" {{ old('permit', $rto?->permit ?? '') == $key ?
+                                            <option value="{{ $key }}" {{ old('permit', $otfData['permit'] ?? $rto?->permit ?? '') == $key ?
                                                 'selected' : '' }}>
                                                 {{ $value }}
                                             </option>
@@ -669,14 +681,14 @@ use App\Services\OrgService;
                                     <td><input type="text" id="sc_location" readonly></td>
                                 </tr>
                                 <tr>
-                                    <td class="title">DMS Enquiry Number</td>
+                                    <td class="title">DMS Enquiry No.</td>
                                     <td>
                                         <input type="text" name="dms_no" id="dms_no"
                                             value="{{ old('dms_no', $enquiry->oem_enquiry_no ?? '') }} " readonly>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td class="title">DMS OTF Number</td>
+                                    <td class="title">DMS OTF No.</td>
                                     <td><input type="text" name="dms_otf" id="dms_otf"
                                             value="{{ old('dms_otf', $booking->dms_otf ?? ($otfData['dms_otf'] ?? '')) }}">
                                     </td>
@@ -775,13 +787,6 @@ use App\Services\OrgService;
                                 </tr>
                             </table>
 
-                            {{-- Chassis Box --}}
-                            <div class="chassis-box">
-                                <h6>Chassis Verification Image</h6>
-                                <img id="chassis_preview" src="{{ $chassisImage ?? '' }}"
-                                    style="display:{{ !empty($chassisImage) ? 'block':'none' }}; margin:auto;">
-                            </div>
-
                         </div>
 
                         {{-- ================= RIGHT COLUMN ================= --}}
@@ -793,7 +798,7 @@ use App\Services\OrgService;
                                     <td colspan="2" class="section-title">Customer Information</td>
                                 </tr>
                                 <tr>
-                                    <td class="title">VOTF Number</td>
+                                    <td class="title">VOTF No.</td>
                                     <td>
                                         <div style="display:flex; gap:5px; align-items:center;">
                                             <input type="text"
@@ -852,7 +857,7 @@ use App\Services\OrgService;
                                 <tr>
                                     <td class="title">Date of Birth</td>
                                     <td><input type="text" name="dob" id="dob" class="date-picker"
-                                            value="{{ old('dob', $otfData['dob'] ?? $booking->c_dob ?? '') }}"></td>
+                                        value="{{ old('dob', $booking->c_dob ? \Carbon\Carbon::parse($booking->c_dob)->format('d-M-Y') : '') }}"></td>
                                 </tr>
                                 <tr>
                                     <td class="title">Marital Status</td>
@@ -994,14 +999,14 @@ use App\Services\OrgService;
                                     <td colspan="2" class="section-title">Vehicle Delivery / Invoice Details</td>
                                 </tr>
                                 <tr>
-                                    <td class="title">Chassis Number</td>
+                                    <td class="title">Chassis No.</td>
                                     <td>
                                         <input type="text" name="chassis" id="chassis_no_display"
                                             value="{{ old('chassis', $booking->chassis_no ?? '') }}">
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td class="title">Engine Number</td>
+                                    <td class="title">Engine No.</td>
                                     <td><input type="text" name="engine_no" id="engine_no"
                                             value="{{ old('engine_no', $otfData['engine_no'] ?? '') }}"></td>
                                 </tr>
@@ -1054,55 +1059,85 @@ use App\Services\OrgService;
                                         <tr>
                                             <td colspan="2"
                                                 style="background:#d9d9d9; font-weight:bold; text-align:center; border:1px solid #000;">
-                                                PRICE DETAILS
+                                                Price Details
                                             </td>
                                         </tr>
                                     </thead>
                                     <tbody id="price-details-body">
-                                        {{-- Ex-Showroom Price --}}
-                                        @php $exShowroom = $otfData['ex_showroom_price'] ?? ''; @endphp
+                                        @php
+                                            $exShowroom = $otfData['ex_showroom_price'] ?? '';
+                                        @endphp
+
+                                        @if($exShowroom !== '' && $exShowroom !== null && $exShowroom !== '0' && $exShowroom !== '0.00' && $exShowroom !== 'N/A')
                                         <tr class="grid-row">
                                             <td class="ql-label">Ex-Showroom Price</td>
                                             <td class="ql-amount">
-                                                <input name="ex_showroom_price" id="ex_showroom_price"
+                                                <input name="ex_showroom_price"
+                                                    id="ex_showroom_price"
                                                     class="numeric-only"
                                                     value="{{ old('ex_showroom_price', $exShowroom) }}">
                                             </td>
                                         </tr>
+                                        @endif
 
                                         {{-- Insurance --}}
                                         @php
-                                        $insuranceAmount = $otfData['insurance_amount'] ?? '';
-                                        $policyType = $otfData['policy_type'] ?? '';
-                                        $insuranceCompany = $otfData['insurance_company'] ?? '';
+                                            $insuranceAmount = $otfData['insurance_amount'] ?? '';
+                                            $policyType = $otfData['policy_type'] ?? '';
+                                            $insuranceCompany = $otfData['insurance_company'] ?? '';
+                                            $insuranceCovers = $otfData['insurance_covers'] ?? [];
+
+                                            if (!is_array($insuranceCovers)) {
+                                                $insuranceCovers = [$insuranceCovers];
+                                            }
+
+                                            $insuranceCovers = array_values(
+                                                array_filter($insuranceCovers)
+                                            );
+
+                                            $showInsurance =
+                                                !empty($insuranceCompany) ||
+                                                !empty($insuranceCovers) ||
+                                                (
+                                                    $insuranceAmount !== '' &&
+                                                    $insuranceAmount !== null &&
+                                                    $insuranceAmount != '0' &&
+                                                    $insuranceAmount != '0.00'
+                                                );
                                         @endphp
+
+                                        @if($showInsurance)
                                         <tr class="grid-row">
                                             <td class="ql-label">
                                                 Insurance
-                                                <span id="insurance_option_label" class="fw-bold ms-1">
-                                                    @if($insuranceCompany)
-                                                    ({{ $insuranceCompany }})
-                                                    @endif
-                                                </span>
+                                                @if($insuranceCompany)
+                                                    <span class="fw-bold ms-1">
+                                                        ({{ $insuranceCompany }})
+                                                    </span>
+                                                @endif
                                             </td>
+
                                             <td class="ql-amount">
-                                                <input type="text" id="insurance_amount" name="insurance_amount"
-                                                    class="numeric-only" placeholder="0.00"
+                                                <input type="text"
+                                                    id="insurance_amount"
+                                                    name="insurance_amount"
+                                                    class="numeric-only"
+                                                    placeholder="0.00"
                                                     value="{{ old('insurance_amount', $insuranceAmount) }}">
-                                                <select name="policy_type" id="policy_type" style="display:none;">
-                                                    @foreach($insurance_type_map as $key=>$value)
-                                                    <option value="{{ $key }}" {{ old('policy_type', $policyType)==$key
-                                                        ? 'selected' : '' }}>
-                                                        {{ $value }}
-                                                    </option>
-                                                    @endforeach
-                                                </select>
-                                                <select name="insurance_company" id="insurance_company"
-                                                    style="display:none;">
-                                                    <option value="">Select</option>
-                                                </select>
+
+                                                {{-- Keep quotation insurance data for OTF save --}}
+                                                <input type="hidden"
+                                                    name="policy_type"
+                                                    value="{{ old('policy_type', $policyType) }}">
+
+                                                <input type="hidden"
+                                                    name="insurance_company"
+                                                    value="{{ old('insurance_company', $insuranceCompany) }}">
+
+                                                
                                             </td>
                                         </tr>
+                                        @endif
 
                                         {{-- Registration --}}
                                         @php
@@ -1116,12 +1151,16 @@ use App\Services\OrgService;
                                             <td class="ql-label">
                                                 Registration
                                                 <span id="registration_option_label" class="fw-bold ms-1">
-                                                    @if($regNoType || $regCategory || $inHouseRto !== '')
-                                                    ({{ $regNoType ? $reg_no_type_map[$regNoType] ?? '' : '' }}
-                                                    {{ $regCategory ? $registration_category_map[$regCategory] ?? '' :
-                                                    '' }}
-                                                    {{ $inHouseRto !== '' ? 'In-House: ' . ($inHouseRto == '1' ? 'Yes' :
-                                                    'No') : '' }})
+                                                    @if($regNoType)
+                                                        ({{ $reg_no_type_map[$regNoType] ?? '' }})
+                                                    @endif
+
+                                                    @if($regCategory !== '' && $regCategory !== null)
+                                                        ({{ $registration_type_map[$regCategory] ?? '' }})
+                                                    @endif
+
+                                                    @if($inHouseRto !== '')
+                                                        (In-House: {{ $inHouseRto == '1' ? 'Yes' : 'No' }})
                                                     @endif
                                                 </span>
                                             </td>
@@ -1138,22 +1177,14 @@ use App\Services\OrgService;
                                                     </option>
                                                     @endforeach
                                                 </select>
-                                                <select name="registration_no_type" id="registration_no_type"
-                                                    style="display:none;">
-                                                    @foreach($reg_no_type_map as $key=>$value)
-                                                    <option value="{{ $key }}" {{ old('registration_no_type',
-                                                        $regNoType)==$key ? 'selected' : '' }}>
-                                                        {{ $value }}
-                                                    </option>
-                                                    @endforeach
-                                                </select>
+                                                
                                                 <select name="registration_category" id="registration_category"
                                                     style="display:none;">
-                                                    @foreach($registration_category_map as $key=>$value)
-                                                    <option value="{{ $key }}" {{ old('registration_category',
-                                                        $regCategory)==$key ? 'selected' : '' }}>
-                                                        {{ $value }}
-                                                    </option>
+                                                    @foreach($registration_type_map as $key => $value)
+                                                        <option value="{{ $key }}" {{ old('registration_category',
+                                                            $regCategory)==$key ? 'selected' : '' }}>
+                                                            {{ $value }}
+                                                        </option>
                                                     @endforeach
                                                 </select>
                                                 <input type="hidden" name="in_house_rto" id="in_house_rto"
@@ -1164,55 +1195,60 @@ use App\Services\OrgService;
                                         {{-- Accessories --}}
                                         @php
                                         $accessoriesAmount = $otfData['accessories_amount'] ?? '0.00';
-                                        $selectedAccessories = $selectedAccessories ?? [];
-                                        $accessoryNames = [];
-                                        foreach($selectedAccessories as $accCode) {
-                                        $acc = $accessoryList->firstWhere('part_no', $accCode);
-                                        if($acc) $accessoryNames[] = $acc->item;
-                                        }
+                                        $selectedAccessories = (array) ($selectedAccessories ?? []);
                                         @endphp
+
                                         <tr class="grid-row">
                                             <td class="ql-label">
                                                 Accessories
-                                                <span id="accessories_price_label" class="fw-bold ms-1">
-                                                    @if(count($accessoryNames) > 0)
-                                                    ({{ count($accessoryNames) }} items)
-                                                    @endif
-                                                </span>
                                             </td>
+
                                             <td class="ql-amount">
-                                                <input id="accessories_amount" name="accessories_amount"
-                                                    class="numeric-only" readonly
+                                                <input id="accessories_amount"
+                                                    name="accessories_amount"
+                                                    class="numeric-only"
+                                                    readonly
                                                     value="{{ old('accessories_amount', $accessoriesAmount) }}">
-                                                <select name="accessories[]" id="accessories" multiple
-                                                    style="display:none;">
+
+                                                {{-- Keep selected accessories for save --}}
+                                                <select name="accessories[]" id="accessories" multiple style="display:none;">
                                                     @foreach($accessoryList as $accessory)
-                                                    <option value="{{ $accessory->part_no }}"
-                                                        data-price="{{ $accessory->ndp }}" {{ in_array($accessory->
-                                                        part_no, $selectedAccessories) ? 'selected' : '' }}>
-                                                        {{ $accessory->item }} (₹{{ number_format($accessory->ndp,2) }})
-                                                    </option>
+                                                        <option value="{{ $accessory->part_no }}"
+                                                            data-price="{{ $accessory->ndp }}"
+                                                            {{ in_array($accessory->part_no, $selectedAccessories) ? 'selected' : '' }}>
+                                                            {{ $accessory->item }} (₹{{ number_format($accessory->ndp, 2) }})
+                                                        </option>
                                                     @endforeach
                                                 </select>
                                             </td>
                                         </tr>
 
                                         {{-- Maxicare --}}
-                                        @php $maxicare = $otfData['maxicare'] ?? ''; @endphp
+                                        @php
+                                            $maxicare = $otfData['maxicare'] ?? '';
+                                        @endphp
+
                                         <tr class="grid-row">
                                             <td class="ql-label">Maxicare</td>
                                             <td class="ql-amount">
-                                                <input id="maxicare" name="maxicare" class="numeric-only"
+                                                <input id="maxicare"
+                                                    name="maxicare"
+                                                    class="numeric-only"
                                                     value="{{ old('maxicare', $maxicare) }}">
                                             </td>
                                         </tr>
 
                                         {{-- VLTD Device --}}
-                                        @php $vltdDevice = $otfData['vltd_device'] ?? ''; @endphp
+                                        @php
+                                            $vltdDevice = $otfData['vltd_device'] ?? '';
+                                        @endphp
+
                                         <tr class="grid-row">
                                             <td class="ql-label">VLTD Device (GPS)</td>
                                             <td class="ql-amount">
-                                                <input id="vltd_device" name="vltd_device" class="numeric-only"
+                                                <input id="vltd_device"
+                                                    name="vltd_device"
+                                                    class="numeric-only"
                                                     value="{{ old('vltd_device', $vltdDevice) }}">
                                             </td>
                                         </tr>
@@ -1414,74 +1450,131 @@ use App\Services\OrgService;
                                                     value="{{ old('tcs', $tcs) }}">
                                             </td>
                                         </tr>
+                                        <tr class="grid-row total-row">
+                                            <td class="ql-label"
+                                                style="background:#f2f2f2; font-weight:bold;">
+                                                TOTAL RECEIVABLE
+                                            </td>
+                                            <td class="ql-amount"
+                                                style="background:#f2f2f2; font-weight:bold;">
+                                                <input id="total_receivable"
+                                                    name="total_receivable"
+                                                    readonly
+                                                    style="font-weight:bold;"
+                                                    value="{{ old('total_receivable', $otfData['total_receivable'] ?? '') }}">
+                                            </td>
+                                        </tr>
                                     </tbody>
                                 </table>
 
-                                {{-- ================ DISCOUNT DETAILS ================ --}}
                                 {{-- ================ DISCOUNT DETAILS ================ --}}
                                 <table class="quotation-stacked-table">
                                     <thead>
                                         <tr>
                                             <td colspan="2"
                                                 style="background:#d9d9d9; font-weight:bold; text-align:center; border:1px solid #000;">
-                                                DISCOUNT DETAILS
+                                                Discount Details
                                             </td>
                                         </tr>
                                     </thead>
                                     <tbody id="discount-details-body">
 
-                                        {{-- Group A --}}
+                                        {{-- Group A: Cash Scheme OEM / CSD Discount / Fame Subsidy --}}
                                         @php
-                                        $cashSchemeOem = $otfData['cash_scheme_oem'] ?? '';
-                                        $csdDiscount = $otfData['csd_discount'] ?? '';
-                                        $fameSubsidy = $otfData['fame_subsidy'] ?? '';
-                                        $groupASelected = $groupASelected ?? 'cash_scheme_oem';
-                                        $groupAType = $otfData['cash_scheme_oem_type'] ?? ($otfData['csd_discount_type']
-                                        ?? ($otfData['fame_subsidy_type'] ?? 'INV'));
+                                            $cashSchemeOem = $otfData['cash_scheme_oem'] ?? '';
+                                            $csdDiscount = $otfData['csd_discount'] ?? '';
+                                            $fameSubsidy = $otfData['fame_subsidy'] ?? '';
+
+                                            $groupASelected = $groupASelected ?? 'cash_scheme_oem';
+
+                                            $selectedGroupAType = 'INV_OE';
+
+                                            if ($groupASelected === 'cash_scheme_oem') {
+                                                $selectedGroupAType = $otfData['cash_scheme_oem_type'] ?? 'INV_OE';
+                                            } elseif ($groupASelected === 'csd_discount') {
+                                                $selectedGroupAType = $otfData['csd_discount_type'] ?? 'INV_OE';
+                                            } elseif ($groupASelected === 'fame_subsidy') {
+                                                $selectedGroupAType = $otfData['fame_subsidy_type'] ?? 'INV_OE';
+                                            }
+
+                                            // Legacy values normalize
+                                            if ($selectedGroupAType === 'INV') {
+                                                $selectedGroupAType = 'INV_OE';
+                                            }
+
+                                            if ($selectedGroupAType === 'CN') {
+                                                $selectedGroupAType = 'CN1';
+                                            }
                                         @endphp
+
                                         <tr class="grid-row">
                                             <td class="ql-label">
-                                                <select id="group_a_select" class="group-select"
+                                                <select id="group_a_select"
+                                                    class="group-select"
                                                     style="background:transparent; border:none; font-weight:600; width:100%;">
-                                                    <option value="cash_scheme_oem" {{ old('group_a_select',
-                                                        $groupASelected)=='cash_scheme_oem' ? 'selected' : '' }}>
+
+                                                    <option value="cash_scheme_oem"
+                                                        {{ old('group_a_select', $groupASelected) == 'cash_scheme_oem' ? 'selected' : '' }}>
                                                         Cash Scheme OEM
                                                     </option>
-                                                    <option value="csd_discount" {{ old('group_a_select',
-                                                        $groupASelected)=='csd_discount' ? 'selected' : '' }}>
+
+                                                    <option value="csd_discount"
+                                                        {{ old('group_a_select', $groupASelected) == 'csd_discount' ? 'selected' : '' }}>
                                                         CSD Discount
                                                     </option>
-                                                    <option value="fame_subsidy" id="fame_subsidy_option" {{
-                                                        old('group_a_select', $groupASelected)=='fame_subsidy'
-                                                        ? 'selected' : '' }}>
+
+                                                    <option value="fame_subsidy"
+                                                        id="fame_subsidy_option"
+                                                        {{ old('group_a_select', $groupASelected) == 'fame_subsidy' ? 'selected' : '' }}>
                                                         Fame Subsidy (LMM)
                                                     </option>
+
                                                 </select>
-                                                {{-- REMOVED: Type label --}}
                                             </td>
+
                                             <td class="ql-amount">
-                                                <input type="text" id="group_a_amount" class="numeric-only"
+
+                                                <input type="text"
+                                                    id="group_a_amount"
+                                                    class="numeric-only"
                                                     placeholder="0.00"
-                                                    value="{{ old('group_a_amount', $cashSchemeOem ?: $csdDiscount ?: $fameSubsidy ?: '') }}">
-                                                <select id="group_a_type" style="display:none;">
-                                                    <option value="INV" {{ $groupAType=='INV' ? 'selected' : '' }}>INV
-                                                    </option>
-                                                    <option value="CN" {{ $groupAType=='CN' ? 'selected' : '' }}>CN
-                                                    </option>
-                                                </select>
-                                                <input type="hidden" id="cash_scheme_oem" name="cash_scheme_oem"
+                                                    value="{{ old('group_a_amount', $otfData[$groupASelected] ?? '') }}">
+
+                                                {{-- TYPE IS HIDDEN — only used for saving/calculation --}}
+                                                <input type="hidden"
+                                                    id="group_a_type"
+                                                    value="{{ $selectedGroupAType }}">
+
+                                                <input type="hidden"
+                                                    id="cash_scheme_oem"
+                                                    name="cash_scheme_oem"
                                                     value="{{ old('cash_scheme_oem', $cashSchemeOem) }}">
-                                                <input type="hidden" id="cash_scheme_oem_type"
+
+                                                <input type="hidden"
+                                                    id="cash_scheme_oem_type"
                                                     name="cash_scheme_oem_type"
                                                     value="{{ old('cash_scheme_oem_type', $otfData['cash_scheme_oem_type'] ?? '') }}">
-                                                <input type="hidden" id="csd_discount" name="csd_discount"
+
+                                                <input type="hidden"
+                                                    id="csd_discount"
+                                                    name="csd_discount"
                                                     value="{{ old('csd_discount', $csdDiscount) }}">
-                                                <input type="hidden" id="csd_discount_type" name="csd_discount_type"
+
+                                                <input type="hidden"
+                                                    id="csd_discount_type"
+                                                    name="csd_discount_type"
                                                     value="{{ old('csd_discount_type', $otfData['csd_discount_type'] ?? '') }}">
-                                                <input type="hidden" id="fame_subsidy" name="fame_subsidy"
+
+                                                <input type="hidden"
+                                                    id="fame_subsidy"
+                                                    name="fame_subsidy"
                                                     value="{{ old('fame_subsidy', $fameSubsidy) }}">
-                                                <input type="hidden" id="fame_subsidy_type" name="fame_subsidy_type"
+
+                                                <input type="hidden"
+                                                    id="fame_subsidy_type"
+                                                    name="fame_subsidy_type"
                                                     value="{{ old('fame_subsidy_type', $otfData['fame_subsidy_type'] ?? '') }}">
+
                                             </td>
                                         </tr>
 
@@ -1554,95 +1647,140 @@ use App\Services\OrgService;
                                             </td>
                                         </tr>
 
-                                        {{-- Group B --}}
+                                        {{-- Group B: Corporate Discount ONLY --}}
                                         @php
-                                        $corporateDiscount = $otfData['corporate_discount'] ?? '';
-                                        $loyaltyBonus = $otfData['loyalty_bonus'] ?? '';
-                                        $groupBSelected = $groupBSelected ?? 'corporate_discount';
-                                        $groupBType = $otfData['corporate_discount_type'] ??
-                                        ($otfData['loyalty_bonus_type'] ?? 'INV');
+                                            $corporateDiscount = $otfData['corporate_discount'] ?? '';
                                         @endphp
+
                                         <tr class="grid-row">
                                             <td class="ql-label">
-                                                <select id="group_b_select" class="group-select"
-                                                    style="background:transparent; border:none; font-weight:600; width:100%;">
-                                                    <option value="corporate_discount" {{ old('group_b_select',
-                                                        $groupBSelected)=='corporate_discount' ? 'selected' : '' }}>
-                                                        Corporate Discount
-                                                    </option>
-                                                    <option value="loyalty_bonus" {{ old('group_b_select',
-                                                        $groupBSelected)=='loyalty_bonus' ? 'selected' : '' }}>
-                                                        Loyalty Bonus
-                                                    </option>
-                                                </select>
-                                                {{-- REMOVED: Type label --}}
+                                                Corporate Discount
                                             </td>
+
                                             <td class="ql-amount">
-                                                <input type="text" id="group_b_amount" class="numeric-only"
+                                                <input type="text"
+                                                    id="group_b_amount"
+                                                    class="numeric-only"
                                                     placeholder="0.00"
-                                                    value="{{ old('group_b_amount', $corporateDiscount ?: $loyaltyBonus ?: '') }}">
-                                                <select id="group_b_type" style="display:none;">
-                                                    <option value="INV">INV</option>
-                                                </select>
-                                                <input type="hidden" id="corporate_discount" name="corporate_discount"
+                                                    value="{{ old('group_b_amount', $corporateDiscount) }}">
+
+                                                <input type="hidden"
+                                                    id="corporate_discount"
+                                                    name="corporate_discount"
                                                     value="{{ old('corporate_discount', $corporateDiscount) }}">
-                                                <input type="hidden" id="corporate_discount_type"
+
+                                                <input type="hidden"
+                                                    id="corporate_discount_type"
                                                     name="corporate_discount_type"
-                                                    value="{{ old('corporate_discount_type', $otfData['corporate_discount_type'] ?? '') }}">
-                                                <input type="hidden" id="loyalty_bonus" name="loyalty_bonus"
-                                                    value="{{ old('loyalty_bonus', $loyaltyBonus) }}">
-                                                <input type="hidden" id="loyalty_bonus_type" name="loyalty_bonus_type"
-                                                    value="{{ old('loyalty_bonus_type', $otfData['loyalty_bonus_type'] ?? '') }}">
+                                                    value="{{ old(
+                                                        'corporate_discount_type',
+                                                        $otfData['corporate_discount_type'] ?? 'INV'
+                                                    ) }}">
                                             </td>
                                         </tr>
 
-                                        {{-- Group C --}}
+                                        {{-- Group C: Exchange Bonus, Green Bonus, Welcome Bonus, Loyalty Bonus --}}
                                         @php
-                                        $exchangeBonus = $otfData['exchange_bonus'] ?? '';
-                                        $greenBonus = $otfData['green_bonus'] ?? '';
-                                        $welcomeBonus = $otfData['welcome_bonus'] ?? '';
-                                        $groupCSelected = $groupCSelected ?? 'exchange_bonus';
-                                        $groupCType = $otfData['exchange_bonus_type'] ?? ($otfData['green_bonus_type']
-                                        ?? ($otfData['welcome_bonus_type'] ?? 'CN1'));
+                                            $exchangeBonus = $otfData['exchange_bonus'] ?? '';
+                                            $greenBonus = $otfData['green_bonus'] ?? '';
+                                            $welcomeBonus = $otfData['welcome_bonus'] ?? '';
+                                            $loyaltyBonus = $otfData['loyalty_bonus'] ?? '';
+
+                                            $groupCSelected = $groupCSelected ?? 'exchange_bonus';
                                         @endphp
+
                                         <tr class="grid-row">
                                             <td class="ql-label">
-                                                <select id="group_c_select" class="group-select"
-                                                    style="background:transparent; border:none; font-weight:600; width:100%;">
-                                                    <option value="exchange_bonus" {{ old('group_c_select',
-                                                        $groupCSelected)=='exchange_bonus' ? 'selected' : '' }}>
+                                                <select id="group_c_select"
+                                                        class="group-select"
+                                                        style="background:transparent; border:none; font-weight:600; width:100%;">
+
+                                                    <option value="exchange_bonus"
+                                                        {{ old('group_c_select', $groupCSelected) == 'exchange_bonus' ? 'selected' : '' }}>
                                                         Exchange Bonus
                                                     </option>
-                                                    <option value="green_bonus" {{ old('group_c_select',
-                                                        $groupCSelected)=='green_bonus' ? 'selected' : '' }}>
+
+                                                    <option value="green_bonus"
+                                                        {{ old('group_c_select', $groupCSelected) == 'green_bonus' ? 'selected' : '' }}>
                                                         Green Bonus
                                                     </option>
-                                                    <option value="welcome_bonus" {{ old('group_c_select',
-                                                        $groupCSelected)=='welcome_bonus' ? 'selected' : '' }}>
+
+                                                    <option value="welcome_bonus"
+                                                        {{ old('group_c_select', $groupCSelected) == 'welcome_bonus' ? 'selected' : '' }}>
                                                         Welcome Bonus
                                                     </option>
+
+                                                    <option value="loyalty_bonus"
+                                                        {{ old('group_c_select', $groupCSelected) == 'loyalty_bonus' ? 'selected' : '' }}>
+                                                        Loyalty Bonus
+                                                    </option>
+
                                                 </select>
-                                                {{-- REMOVED: Type label --}}
                                             </td>
+
                                             <td class="ql-amount">
-                                                <input type="text" id="group_c_amount" class="numeric-only"
+
+                                                <input type="text"
+                                                    id="group_c_amount"
+                                                    class="numeric-only"
                                                     placeholder="0.00"
-                                                    value="{{ old('group_c_amount', $exchangeBonus ?: $greenBonus ?: $welcomeBonus ?: '') }}">
-                                                <select id="group_c_type" style="display:none;">
-                                                    <option value="CN1">CN1</option>
-                                                </select>
-                                                <input type="hidden" id="exchange_bonus" name="exchange_bonus"
+                                                    value="{{ old(
+                                                        'group_c_amount',
+                                                        $otfData[$groupCSelected] ?? ''
+                                                    ) }}">
+
+                                                <input type="hidden"
+                                                    id="exchange_bonus"
+                                                    name="exchange_bonus"
                                                     value="{{ old('exchange_bonus', $exchangeBonus) }}">
-                                                <input type="hidden" id="exchange_bonus_type" name="exchange_bonus_type"
-                                                    value="{{ old('exchange_bonus_type', $otfData['exchange_bonus_type'] ?? '') }}">
-                                                <input type="hidden" id="green_bonus" name="green_bonus"
+
+                                                <input type="hidden"
+                                                    id="exchange_bonus_type"
+                                                    name="exchange_bonus_type"
+                                                    value="{{ old(
+                                                        'exchange_bonus_type',
+                                                        $otfData['exchange_bonus_type'] ?? 'CN1'
+                                                    ) }}">
+
+                                                <input type="hidden"
+                                                    id="green_bonus"
+                                                    name="green_bonus"
                                                     value="{{ old('green_bonus', $greenBonus) }}">
-                                                <input type="hidden" id="green_bonus_type" name="green_bonus_type"
-                                                    value="{{ old('green_bonus_type', $otfData['green_bonus_type'] ?? '') }}">
-                                                <input type="hidden" id="welcome_bonus" name="welcome_bonus"
+
+                                                <input type="hidden"
+                                                    id="green_bonus_type"
+                                                    name="green_bonus_type"
+                                                    value="{{ old(
+                                                        'green_bonus_type',
+                                                        $otfData['green_bonus_type'] ?? 'CN1'
+                                                    ) }}">
+
+                                                <input type="hidden"
+                                                    id="welcome_bonus"
+                                                    name="welcome_bonus"
                                                     value="{{ old('welcome_bonus', $welcomeBonus) }}">
-                                                <input type="hidden" id="welcome_bonus_type" name="welcome_bonus_type"
-                                                    value="{{ old('welcome_bonus_type', $otfData['welcome_bonus_type'] ?? '') }}">
+
+                                                <input type="hidden"
+                                                    id="welcome_bonus_type"
+                                                    name="welcome_bonus_type"
+                                                    value="{{ old(
+                                                        'welcome_bonus_type',
+                                                        $otfData['welcome_bonus_type'] ?? 'CN1'
+                                                    ) }}">
+
+                                                <input type="hidden"
+                                                    id="loyalty_bonus"
+                                                    name="loyalty_bonus"
+                                                    value="{{ old('loyalty_bonus', $loyaltyBonus) }}">
+
+                                                <input type="hidden"
+                                                    id="loyalty_bonus_type"
+                                                    name="loyalty_bonus_type"
+                                                    value="{{ old(
+                                                        'loyalty_bonus_type',
+                                                        $otfData['loyalty_bonus_type'] ?? 'CN1'
+                                                    ) }}">
+
                                             </td>
                                         </tr>
 
@@ -1657,15 +1795,27 @@ use App\Services\OrgService;
                                                 <input type="text" name="accessories_spl_disc" id="accessories_spl_disc"
                                                     class="numeric-only" placeholder="0.00"
                                                     value="{{ old('accessories_spl_disc', $accessoriesSplDisc) }}">
-                                                <select id="accessories_spl_disc_type" name="accessories_spl_disc_type"
+                                                <select id="accessories_spl_disc_type"
+                                                    name="accessories_spl_disc_type"
                                                     style="display:none;">
-                                                    <option value="INV" {{ old('accessories_spl_disc_type',
-                                                        $otfData['accessories_spl_disc_type'] ?? '' )=='INV'
-                                                        ? 'selected' : '' }}>INV</option>
-                                                    <option value="CN" {{ old('accessories_spl_disc_type',
-                                                        $otfData['accessories_spl_disc_type'] ?? '' )=='CN' ? 'selected'
-                                                        : '' }}>CN</option>
-                                                </select>
+
+                                                <option value="INV_D"
+                                                    {{ old(
+                                                        'accessories_spl_disc_type',
+                                                        $otfData['accessories_spl_disc_type'] ?? 'INV_D'
+                                                    ) == 'INV_D' ? 'selected' : '' }}>
+                                                    INV_D
+                                                </option>
+
+                                                <option value="CN1"
+                                                    {{ old(
+                                                        'accessories_spl_disc_type',
+                                                        $otfData['accessories_spl_disc_type'] ?? ''
+                                                    ) == 'CN1' ? 'selected' : '' }}>
+                                                    CN1
+                                                </option>
+
+                                            </select>
                                             </td>
                                         </tr>
 
@@ -1683,12 +1833,21 @@ use App\Services\OrgService;
                                                     value="{{ old('ceramic_discount', $ceramicDiscount) }}">
                                                 <select id="ceramic_discount_type" name="ceramic_discount_type"
                                                     style="display:none;">
-                                                    <option value="INV" {{ old('ceramic_discount_type',
-                                                        $otfData['ceramic_discount_type'] ?? '' )=='INV' ? 'selected'
-                                                        : '' }}>INV</option>
-                                                    <option value="CN" {{ old('ceramic_discount_type',
-                                                        $otfData['ceramic_discount_type'] ?? '' )=='CN' ? 'selected'
-                                                        : '' }}>CN</option>
+                                                    <option value="INV_D"
+                                                        {{ old(
+                                                            'ceramic_discount_type',
+                                                            $otfData['ceramic_discount_type'] ?? 'INV_D'
+                                                        ) == 'INV_D' ? 'selected' : '' }}>
+                                                        INV_D
+                                                    </option>
+
+                                                    <option value="CN1"
+                                                        {{ old(
+                                                            'ceramic_discount_type',
+                                                            $otfData['ceramic_discount_type'] ?? ''
+                                                        ) == 'CN1' ? 'selected' : '' }}>
+                                                        CN1
+                                                    </option>
                                                 </select>
                                             </td>
                                         </tr>
@@ -1706,35 +1865,58 @@ use App\Services\OrgService;
                                                     value="{{ old('ppf_discount', $ppfDiscount) }}">
                                                 <select id="ppf_discount_type" name="ppf_discount_type"
                                                     style="display:none;">
-                                                    <option value="INV" {{ old('ppf_discount_type',
-                                                        $otfData['ppf_discount_type'] ?? '' )=='INV' ? 'selected' : ''
-                                                        }}>INV</option>
-                                                    <option value="CN" {{ old('ppf_discount_type',
-                                                        $otfData['ppf_discount_type'] ?? '' )=='CN' ? 'selected' : ''
-                                                        }}>CN</option>
+                                                    <option value="INV_D"
+                                                        {{ old(
+                                                            'ppf_discount_type',
+                                                            $otfData['ppf_discount_type'] ?? 'INV_D'
+                                                        ) == 'INV_D' ? 'selected' : '' }}>
+                                                        INV_D
+                                                    </option>
+
+                                                    <option value="CN1"
+                                                        {{ old(
+                                                            'ppf_discount_type',
+                                                            $otfData['ppf_discount_type'] ?? ''
+                                                        ) == 'CN1' ? 'selected' : '' }}>
+                                                        CN1
+                                                    </option>
                                                 </select>
                                             </td>
                                         </tr>
 
                                         {{-- Charger Swapping Discount --}}
-                                        @php $chargerSwappingDiscount = $otfData['charger_swapping_discount'] ?? '';
+                                        @php
+                                            $chargerSwappingDiscount = $otfData['charger_swapping_discount'] ?? '';
                                         @endphp
+
                                         <tr class="grid-row">
-                                            <td class="ql-label" id="charger_discount_title">
+                                            <td class="ql-label">
                                                 Charger Swapping Discount
-                                                {{-- REMOVED: Type label --}}
+                                                <span id="charger_swapping_discount_option_label" class="fw-bold ms-1">
+                                                    @if(!empty($otfData['charger_swapping_option']) && $otfData['charger_swapping_option'] != 'N/A')
+                                                        ({{ $otfData['charger_swapping_option'] }})
+                                                    @endif
+                                                </span>
                                             </td>
+
                                             <td class="ql-amount" id="charger_discount_cell">
-                                                <input type="text" id="charger_swapping_discount"
-                                                    name="charger_swapping_discount" class="numeric-only"
+                                                <input type="text"
+                                                    id="charger_swapping_discount"
+                                                    name="charger_swapping_discount"
+                                                    class="numeric-only"
                                                     placeholder="0.00"
                                                     value="{{ old('charger_swapping_discount', $chargerSwappingDiscount) }}">
+
                                                 <select id="charger_swapping_discount_type"
-                                                    name="charger_swapping_discount_type" style="display:none;"
-                                                    disabled>
-                                                    <option value="CN2" {{ old('charger_swapping_discount_type',
-                                                        $otfData['charger_swapping_discount_type'] ?? '' )=='CN2'
-                                                        ? 'selected' : '' }}>CN2</option>
+                                                        name="charger_swapping_discount_type"
+                                                        style="display:none;">
+                                                    <option value="CN3"
+                                                        {{ old(
+                                                            'charger_swapping_discount_type',
+                                                            $otfData['charger_swapping_discount_type'] ?? 'CN3'
+                                                        ) == 'CN3' ? 'selected' : '' }}>
+                                                        CN3
+                                                    </option>
                                                 </select>
                                             </td>
                                         </tr>
@@ -1750,15 +1932,27 @@ use App\Services\OrgService;
                                                 <input type="text" name="other_cash_discount" id="other_cash_discount"
                                                     class="numeric-only" placeholder="0.00"
                                                     value="{{ old('other_cash_discount', $otherCashDiscount) }}">
-                                                <select id="other_cash_discount_type" name="other_cash_discount_type"
+                                                <select id="other_cash_discount_type"
+                                                    name="other_cash_discount_type"
                                                     style="display:none;">
-                                                    <option value="INV" {{ old('other_cash_discount_type',
-                                                        $otfData['other_cash_discount_type'] ?? '' )=='INV' ? 'selected'
-                                                        : '' }}>INV</option>
-                                                    <option value="CN" {{ old('other_cash_discount_type',
-                                                        $otfData['other_cash_discount_type'] ?? '' )=='CN' ? 'selected'
-                                                        : '' }}>CN</option>
-                                                </select>
+
+                                                <option value="INV_D"
+                                                    {{ old(
+                                                        'other_cash_discount_type',
+                                                        $otfData['other_cash_discount_type'] ?? 'INV_D'
+                                                    ) == 'INV_D' ? 'selected' : '' }}>
+                                                    INV_D
+                                                </option>
+
+                                                <option value="CN1"
+                                                    {{ old(
+                                                        'other_cash_discount_type',
+                                                        $otfData['other_cash_discount_type'] ?? ''
+                                                    ) == 'CN1' ? 'selected' : '' }}>
+                                                    CN1
+                                                </option>
+
+                                            </select>
                                             </td>
                                         </tr>
 
@@ -1774,17 +1968,23 @@ use App\Services\OrgService;
                                                     id="special_cash_discount" class="numeric-only" placeholder="0.00"
                                                     value="{{ old('special_cash_discount', $specialCashDiscount) }}">
                                                 <select id="special_cash_discount_type"
-                                                    name="special_cash_discount_type" style="display:none;">
-                                                    <option value="INV" {{ old('special_cash_discount_type',
-                                                        $otfData['special_cash_discount_type'] ?? '' )=='INV'
-                                                        ? 'selected' : '' }}>INV</option>
-                                                </select>
+                                                    name="special_cash_discount_type"
+                                                    style="display:none;">
+
+                                                <option value="INV_D"
+                                                    {{ old(
+                                                        'special_cash_discount_type',
+                                                        $otfData['special_cash_discount_type'] ?? 'INV_D'
+                                                    ) == 'INV_D' ? 'selected' : '' }}>
+                                                    INV_D
+                                                </option>
+
+                                            </select>
                                             </td>
                                         </tr>
 
                                     </tbody>
                                 </table>
-
                                 {{-- TOTAL DISCOUNT & TOTAL RECEIVABLE & NET RECEIVABLE --}}
                                 <table class="bill-table" style="margin-top:-1px; border-top:1px solid #000;">
                                     <tr>
@@ -1800,17 +2000,7 @@ use App\Services\OrgService;
                                                 value="{{ old('total_discount', $otfData['total_discount'] ?? '') }}">
                                         </td>
                                     </tr>
-                                    <tr>
-                                        <td class="title"
-                                            style="width:50%; background:#f2f2f2; font-weight:bold; font-size:10px; border-right:1px solid #000;">
-                                            TOTAL RECEIVABLE
-                                        </td>
-                                        <td style="width:50%; padding:3px 5px;">
-                                            <input id="total_receivable" name="total_receivable" readonly
-                                                style="width:100%; border:none; background:transparent; font-size:10px; font-weight:bold; text-align:right;"
-                                                value="{{ old('total_receivable', $otfData['total_receivable'] ?? '') }}">
-                                        </td>
-                                    </tr>
+                                    
                                 </table>
                                 <table class="bill-table" style="margin-top:-1px; border-top:1px solid #000;">
                                     <tr>
@@ -1825,6 +2015,120 @@ use App\Services\OrgService;
                                         </td>
                                     </tr>
                                 </table>
+
+                                {{-- Receipt Table --}}
+                                <div class="col-12 mt-1">
+                                    <div class="form-section">
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered table-sm mb-0 receipt-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th style="font-size: 10px; font-weight: 700; color: #495057; text-transform: uppercase; padding: 6px 8px; width: 30%;">
+                                                            <i class="la la-hashtag me-1"></i> Receipt No.
+                                                        </th>
+
+                                                        <th style="font-size: 10px; font-weight: 700; color: #495057; text-transform: uppercase; padding: 6px 8px; width: 20%;">
+                                                            <i class="la la-calendar me-1"></i> Date
+                                                        </th>
+
+                                                        <th style="font-size: 10px; font-weight: 700; color: #495057; text-transform: uppercase; padding: 6px 8px; width: 20%;">
+                                                            <i class="la la-credit-card me-1"></i> Receipt Mode
+                                                        </th>
+
+                                                        <th style="font-size: 10px; font-weight: 700; color: #495057; text-transform: uppercase; padding: 6px 8px; width: 20%;">
+                                                            <i class="la la-money me-1"></i> Amount
+                                                        </th>
+
+                                                        <th style="font-size: 10px; font-weight: 700; color: #495057; text-transform: uppercase; padding: 6px 8px; width: 10%; text-align: center;">
+                                                            <i class="la la-eye me-1"></i> View
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @forelse($receiptLogs ?? [] as $receipt)
+                                                    <tr style="transition: background 0.2s ease;">
+                                                        <td style="padding: 5px 8px; vertical-align: middle;">
+                                                            <span class="badge bg-light text-dark"
+                                                                style="font-size: 10px; font-weight: 600; padding: 4px 10px; border: 1px solid #dee2e6;">
+                                                                {{ $receipt->reciept }}
+                                                            </span>
+                                                        </td>
+                                                        <td
+                                                            style="padding: 5px 8px; vertical-align: middle; font-size: 10px; color: #495057;">
+                                                            {{ \Carbon\Carbon::parse($receipt->date)->format('d M Y') }}
+                                                        </td>
+                                                        <td style="padding: 5px 8px; vertical-align: middle; font-size: 10px; color: #495057;">
+                                                            {{ $receipt->mode ?? '' }}
+                                                        </td>
+                                                        <td
+                                                            style="padding: 5px 8px; vertical-align: middle; font-size: 10px; font-weight: 600; color: #28a745;">
+                                                            ₹ {{ number_format($receipt->amount, 2) }}
+                                                        </td>
+                                                        <td
+                                                            style="padding: 5px 8px; vertical-align: middle; text-align: center;">
+                                                            @php
+                                                            $receiptImage = $receipt->getFirstMediaUrl('amount-proof');
+                                                            @endphp
+                                                            @if($receiptImage)
+                                                            <a href="{{ $receiptImage }}" data-lightbox="receipt-images"
+                                                                data-title="Receipt {{ $receipt->reciept }}"
+                                                                class="btn btn-sm btn-outline-primary"
+                                                                style="padding: 2px 8px; font-size: 9px; border-radius: 4px;">
+                                                                <i class="la la-eye" style="font-size: 14px;"></i>
+                                                            </a>
+                                                            @else
+                                                            <span class="text-muted" style="font-size: 9px;">
+                                                                <i class="la la-eye-slash"></i> No File
+                                                            </span>
+                                                            @endif
+                                                        </td>
+                                                    </tr>
+                                                    @empty
+                                                    <tr>
+                                                        <td colspan="4" class="text-center py-3"
+                                                            style="font-size: 11px; color: #6c757d;">
+                                                            <i class="la la-inbox"
+                                                                style="font-size: 24px; display: block; margin-bottom: 5px;"></i>
+                                                            No Receipts Found
+                                                        </td>
+                                                    </tr>
+                                                    @endforelse
+                                                </tbody>
+                                                @if($receiptLogs->count() > 0)
+                                                <tfoot>
+                                                    <tr>
+                                                        <td colspan="2"
+                                                            style="padding: 5px 8px; font-size: 10px; font-weight: 700; color: #495057; text-align: right;">
+                                                            TOTAL:
+                                                        </td>
+                                                        <td
+                                                            style="padding: 5px 8px; font-size: 10px; font-weight: 700; color: #28a745;">
+                                                            ₹ {{ number_format($receiptLogs->sum('amount') ?? 0, 2) }}
+                                                        </td>
+                                                        <td style="padding: 5px 8px;"></td>
+                                                        <td style="padding: 5px 8px;"></td>
+                                                    </tr>
+                                                </tfoot>
+                                                @endif
+                                            </table>
+                                        </div>
+
+                                        {{-- Receipt Count Badge --}}
+                                        @if($receiptLogs->count() > 0)
+                                        <div class="mt-1 text-end">
+                                            <small class="text-muted" style="font-size: 9px;">
+                                                <i class="la la-file-text-o me-1"></i>
+                                                {{ $receiptLogs->count() }} {{ Str::plural('receipt', $receiptLogs->count())
+                                                }} found
+                                            </small>
+                                        </div>
+                                        @endif
+
+                                        {{-- HIDDEN FIELD FOR RECEIPT TOTAL --}}
+                                        <input type="hidden" id="receipt_total" name="receipt_total"
+                                            value="{{ number_format($receiptLogs->sum('amount') ?? 0, 2) }}">
+                                    </div>
+                                </div>
                             </div>
 
                         </div>
@@ -1883,120 +2187,14 @@ use App\Services\OrgService;
                                         <input type="text" id="net_settlement_amount" readonly>
                                     </td>
                                 </tr>
+                                <tr>
+                                    <td class="title">Receipt Amount</td>
+                                    <td>
+                                        <input type="text" id="receipt_amount" readonly
+                                            value="{{ number_format($receiptLogs->sum('amount'), 2, '.', '') }}">
+                                    </td>
+                                </tr>
 
-                            </table>
-                            {{-- Receipt Table --}}
-                            {{-- Receipt Table --}}
-                            <div class="col-12 mt-1">
-                                <div class="form-section">
-                                    <div class="table-responsive">
-                                        <table class="table table-bordered table-sm mb-0 receipt-table">
-                                            <thead style="background: #F2F2F2; border-bottom: 2px solid #dee2e6;">
-                                                <tr>
-                                                    <th
-                                                        style="font-size: 10px; font-weight: 700; color: #495057; text-transform: uppercase; padding: 6px 8px; width: 30%;">
-                                                        <i class="la la-hashtag me-1"></i> Receipt No.
-                                                    </th>
-                                                    <th
-                                                        style="font-size: 10px; font-weight: 700; color: #495057; text-transform: uppercase; padding: 6px 8px; width: 25%;">
-                                                        <i class="la la-calendar me-1"></i> Date
-                                                    </th>
-                                                    <th
-                                                        style="font-size: 10px; font-weight: 700; color: #495057; text-transform: uppercase; padding: 6px 8px; width: 25%;">
-                                                        <i class="la la-money me-1"></i> Amount
-                                                    </th>
-                                                    <th
-                                                        style="font-size: 10px; font-weight: 700; color: #495057; text-transform: uppercase; padding: 6px 8px; width: 20%; text-align: center;">
-                                                        <i class="la la-eye me-1"></i> View
-                                                    </th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                @forelse($receiptLogs ?? [] as $receipt)
-                                                <tr style="transition: background 0.2s ease;">
-                                                    <td style="padding: 5px 8px; vertical-align: middle;">
-                                                        <span class="badge bg-light text-dark"
-                                                            style="font-size: 10px; font-weight: 600; padding: 4px 10px; border: 1px solid #dee2e6;">
-                                                            {{ $receipt->reciept }}
-                                                        </span>
-                                                    </td>
-                                                    <td
-                                                        style="padding: 5px 8px; vertical-align: middle; font-size: 10px; color: #495057;">
-                                                        {{ \Carbon\Carbon::parse($receipt->date)->format('d M Y') }}
-                                                    </td>
-                                                    <td
-                                                        style="padding: 5px 8px; vertical-align: middle; font-size: 10px; font-weight: 600; color: #28a745;">
-                                                        ₹ {{ number_format($receipt->amount, 2) }}
-                                                    </td>
-                                                    <td
-                                                        style="padding: 5px 8px; vertical-align: middle; text-align: center;">
-                                                        @php
-                                                        $receiptImage = $receipt->getFirstMediaUrl('amount-proof');
-                                                        @endphp
-                                                        @if($receiptImage)
-                                                        <a href="{{ $receiptImage }}" data-lightbox="receipt-images"
-                                                            data-title="Receipt {{ $receipt->reciept }}"
-                                                            class="btn btn-sm btn-outline-primary"
-                                                            style="padding: 2px 8px; font-size: 9px; border-radius: 4px;">
-                                                            <i class="la la-eye" style="font-size: 14px;"></i>
-                                                        </a>
-                                                        @else
-                                                        <span class="text-muted" style="font-size: 9px;">
-                                                            <i class="la la-eye-slash"></i> No File
-                                                        </span>
-                                                        @endif
-                                                    </td>
-                                                </tr>
-                                                @empty
-                                                <tr>
-                                                    <td colspan="4" class="text-center py-3"
-                                                        style="font-size: 11px; color: #6c757d;">
-                                                        <i class="la la-inbox"
-                                                            style="font-size: 24px; display: block; margin-bottom: 5px;"></i>
-                                                        No Receipts Found
-                                                    </td>
-                                                </tr>
-                                                @endforelse
-                                            </tbody>
-                                            @if($receiptLogs->count() > 0)
-                                            <tfoot style="background: #f8f9fa; border-top: 2px solid #dee2e6;">
-                                                <tr>
-                                                    <td colspan="2"
-                                                        style="padding: 5px 8px; font-size: 10px; font-weight: 700; color: #495057; text-align: right;">
-                                                        TOTAL:
-                                                    </td>
-                                                    <td
-                                                        style="padding: 5px 8px; font-size: 10px; font-weight: 700; color: #28a745;">
-                                                        ₹ {{ number_format($receiptLogs->sum('amount') ?? 0, 2) }}
-                                                    </td>
-                                                    <td style="padding: 5px 8px;"></td>
-                                                </tr>
-                                            </tfoot>
-                                            @endif
-                                        </table>
-                                    </div>
-
-                                    {{-- Receipt Count Badge --}}
-                                    @if($receiptLogs->count() > 0)
-                                    <div class="mt-1 text-end">
-                                        <small class="text-muted" style="font-size: 9px;">
-                                            <i class="la la-file-text-o me-1"></i>
-                                            {{ $receiptLogs->count() }} {{ Str::plural('receipt', $receiptLogs->count())
-                                            }} found
-                                        </small>
-                                    </div>
-                                    @endif
-
-                                    {{-- HIDDEN FIELD FOR RECEIPT TOTAL --}}
-                                    <input type="hidden" id="receipt_total" name="receipt_total"
-                                        value="{{ number_format($receiptLogs->sum('amount') ?? 0, 2) }}">
-                                </div>
-                            </div>
-
-                            {{-- DO Settlement Difference Table --}}
-
-
-                            <table class="bill-table mt-2">
                                 <tr>
                                     <td class="title">Expected Balance</td>
                                     <td>
@@ -2026,7 +2224,9 @@ use App\Services\OrgService;
                                             value="{{ old('final_balance') }}">
                                     </td>
                                 </tr>
+
                             </table>
+                        
 
                             {{-- Financier Verified, Delivery, DO Details --}}
                             <table class="bill-table mt-2">
@@ -2137,50 +2337,52 @@ use App\Services\OrgService;
                     </div>
 
                     @php
-                    $insuranceNoteText = '';
-                    $insuranceCovers = $otfData['insurance_covers'] ?? [];
+                        $insuranceCovers = $otfData['insurance_covers'] ?? [];
 
-                    // ✅ Debug: Check data
-                    \Log::info('OTF Blade - Insurance Data', [
-                    'insurance_covers' => $insuranceCovers,
-                    'insurance_amount' => $otfData['insurance_amount'] ?? null,
-                    ]);
+                        if (!is_array($insuranceCovers)) {
+                            $insuranceCovers = [$insuranceCovers];
+                        }
 
-                    if (!empty($insuranceCovers) && is_array($insuranceCovers)) {
-                    $insuranceNoteText = collect($insuranceCovers)->map(function ($cover) {
-                    // Handle string cover
-                    if (is_string($cover)) {
-                    $price = 0;
-                    $name = $cover;
-                    if (preg_match('/\(₹([\d,]+\.?\d*)\)/', $cover, $matches)) {
-                    $price = floatval(str_replace(',', '', $matches[1]));
-                    $name = trim(preg_replace('/\(₹[\d,]+\.?\d*\)/', '', $cover));
-                    }
-                    return $name . ($price > 0 ? ' (₹' . number_format($price, 2) . ')' : '');
-                    }
-                    // Handle array cover
-                    $name = $cover['name'] ?? '';
-                    $price = (float) ($cover['price'] ?? 0);
-                    return $name . ($price > 0 ? ' (₹' . number_format($price, 2) . ')' : '');
-                    })->filter()->implode(', ');
-                    }
+                        $insuranceCovers = array_values(
+                            array_filter($insuranceCovers)
+                        );
 
-                    // ✅ FALLBACK: If no insurance covers, use insurance_amount
-                    if (empty($insuranceNoteText) && !empty($otfData['insurance_amount'] ?? '') &&
-                    ($otfData['insurance_amount'] ?? '0') != '0' && ($otfData['insurance_amount'] ?? '0.00') != '0.00')
-                    {
-                    $insurancePolicyLabel = $insurance_type_map[$otfData['policy_type'] ?? ''] ?? '';
-                    $insuranceNoteText = trim($insurancePolicyLabel . ' (₹' . number_format((float)
-                    ($otfData['insurance_amount'] ?? 0), 2) . ')');
-                    }
+                        $insuranceNoteText = collect($insuranceCovers)->map(function ($cover) {
+
+                            if (is_array($cover)) {
+                                $name = trim($cover['name'] ?? '');
+                                $price = (float) ($cover['price'] ?? 0);
+
+                                return $name . (
+                                    $price > 0
+                                        ? ' (₹' . number_format($price, 2) . ')'
+                                        : ''
+                                );
+                            }
+
+                            $cover = trim((string) $cover);
+
+                            // If price is already stored inside the cover text,
+                            // keep it exactly as quotation print data.
+                            return $cover;
+
+                        })->filter()->implode(', ');
                     @endphp
+
+                    @if($insuranceNoteText)
                     <div class="insurance-note-row">
                         Insurance:
                         <span id="insurance_print"
-                            style="font-weight:normal; display:inline-block; min-width:70%; border-bottom:1px solid #000;">
-                            &nbsp;
+                            style="
+                                font-weight:normal;
+                                display:inline-block;
+                                min-width:70%;
+                                border-bottom:1px solid #000;
+                            ">
+                            {{ $insuranceNoteText }}
                         </span>
                     </div>
+                    @endif
 
                     <div class="accessories-note-row">
                         Accessories:
@@ -2190,7 +2392,7 @@ use App\Services\OrgService;
                         </span>
                     </div>
                     {{-- ================= NOTE ================= --}}
-                    <table class="bill-table note-box flex-grow-1 mt-3">
+                    {{-- <table class="bill-table note-box flex-grow-1 mt-3">
                         <tr>
                             <td>
                                 <div style="font-weight:bold; font-size:8px; margin-bottom:3px;">NOTE:</div>
@@ -2217,7 +2419,75 @@ use App\Services\OrgService;
                                 </div>
                             </td>
                         </tr>
-                    </table>
+                    </table> --}}
+                    <table class="bill-table note-box flex-grow-1 mt-3">
+                    <tr>
+
+                        {{-- NOTE --}}
+                        <td style="width:55%; vertical-align:top;">
+                            <div style="font-weight:bold; font-size:8px; margin-bottom:3px;">
+                                NOTE:
+                            </div>
+
+                            <p style="font-size:7px; font-weight:bold; line-height:1.3; text-align:justify; margin:0;">
+                                <b>1.</b> Vehicle shall be delivered only against payment.<br>
+                                <b>2.</b> Interest shall be charged @ 24% P.A. in case of payments delayed over
+                                three days.<br>
+                                <b>3.</b> No Interest shall be payable on Booking Amount.<br>
+                                <b>4.</b> Price & Scheme of the vehicle is applicable as on the date of delivery.
+                                Price & Scheme are subjected to change without any prior notice.<br>
+                                <b>5.</b> Self attested coloured copy of original documents is required for any
+                                claim. Claims will be rejected in absence of original documents.
+                            </p>
+                        </td>
+
+                        {{-- CHASSIS IMAGE --}}
+                        <td style="width:25%; vertical-align:middle; padding:3px;">
+                        <div style="
+                            display:flex;
+                            align-items:center;
+                            justify-content:center;
+                            gap:5px;
+                            min-height:85px;
+                        ">
+
+                            {{-- Vertical Label --}}
+                            <div style="
+                                writing-mode:vertical-rl;
+                                transform:rotate(180deg);
+                                font-size:7px;
+                                font-weight:bold;
+                                white-space:nowrap;
+                                text-align:center;
+                            ">
+                                Chassis Verification
+                            </div>
+
+                            {{-- Image --}}
+                            <img id="chassis_preview"
+                                src="{{ $chassisImage ?? '' }}"
+                                style="
+                                    display:{{ !empty($chassisImage) ? 'block' : 'none' }};
+                                    max-width:145px;
+                                    max-height:80px;
+                                    width:auto;
+                                    height:auto;
+                                    object-fit:contain;
+                                ">
+                        </div>
+                    </td>
+
+                        {{-- CUSTOMER SIGNATURE --}}
+                        <td style="width:20%; vertical-align:bottom; text-align:center; height:90px;">
+                            <div style="border-top:1px solid #000; width:85%; margin:0 auto; padding-top:3px;">
+                                <span style="font-size:7px; font-weight:bold;">
+                                    Customer Signature
+                                </span>
+                            </div>
+                        </td>
+
+                    </tr>
+                </table>
                 </div>
 
             </div> <!-- /.quotation-sheet -->
@@ -2375,38 +2645,7 @@ $('#accessories').on('change', function () {
     updateAccessoriesPrintText();
 });
 
-function updateInsurancePrintText() {
-    let list = [];
 
-    $('#policy_type option:selected').each(function () {
-        let text = $(this).text().trim();
-
-        if (text) {
-            let amount = parseFloat($('#insurance_amount').val()) || 0;
-
-            if (amount > 0) {
-                text += ' (₹' + amount.toLocaleString('en-IN', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                }) + ')';
-            }
-
-            list.push(text);
-        }
-    });
-
-    $('#insurance_print').text(
-        list.length ? list.join(', ') : ''
-    );
-}
-
-$('#policy_type, #insurance_amount, #insurance_company').on('change input', function () {
-    updateInsurancePrintText();
-});
-
-$(document).ready(function () {
-    updateInsurancePrintText();
-});
 $(document).ready(function () {
 
     $('#accessories').select2({
@@ -2448,8 +2687,8 @@ function toggleLMMFields() {
     $('#charger_swapping_discount_type')
         .prop('disabled', false)
         .empty()
-        .append('<option value="CN2">CN2</option>')
-        .val('CN2');
+        .append('<option value="CN3">CN3</option>')
+        .val('CN3');
 
     $('#fame_subsidy_option').prop('disabled', !isLMM);
 
@@ -2458,11 +2697,11 @@ function toggleLMMFields() {
     }
 
     if (!isLMM) {
-        $('#charger_swapping').val('N/A').prop('disabled', true);
-        $('#charger_swapping_amount').val('N/A').prop('disabled', true);
-        $('#charger_swapping_discount').val('N/A').prop('disabled', true);
+        $('#charger_swapping').prop('disabled', true);
+        $('#charger_swapping_amount').prop('disabled', true);
+        $('#charger_swapping_discount').prop('disabled', true);
         $('#charger_swapping_discount_type').val('').prop('disabled', true);
-    } else {
+    }else {
         $('#charger_swapping').prop('disabled', false);
         $('#charger_swapping_amount').prop('disabled', false);
         $('#charger_swapping_discount').prop('disabled', false);
@@ -2588,16 +2827,13 @@ function prepareItemVisibilityForPrint() {
     });
 }
 
-function restoreItemVisibilityAfterPrint() {
-    $('.quotation-stacked-table tbody tr').removeClass('print-hide');
-}
+
 
 function printQuotation() {
     prepareOptionLabelsForPrint();
     prepareItemVisibilityForPrint();
     window.print();
     restoreOptionLabelsAfterPrint();
-    restoreItemVisibilityAfterPrint();
 }
 
 // ================= PERMANENT VISIBILITY (screen + print) =================
@@ -2606,45 +2842,82 @@ $(document).ready(function () {
     prepareOptionLabelsForPrint();
     // Permanently hide empty rows
     prepareItemVisibilityForPrint();
-    // Group A type change handler
+
     $('#group_a_select').on('change', function () {
-        let value = $(this).val();
-        let $type = $('#group_a_type');
-        $type.empty();
-        switch (value) {
-            case 'cash_scheme_oem':
-                $type.append('<option value="INV">INV</option>');
-                $type.append('<option value="CN">CN</option>');
-                break;
-            case 'csd_discount':
-                $type.append('<option value="INV">INV</option>');
-                break;
-            case 'fame_subsidy':
-                $type.append('<option value="INV">INV</option>');
-                break;
+
+        let selected = $(this).val();
+
+        let type = 'INV_OE';
+
+        // Selected Group A ka existing saved type
+        if (selected === 'cash_scheme_oem') {
+            type = $('#cash_scheme_oem_type').val() || 'INV_OE';
+        } else if (selected === 'csd_discount') {
+            type = $('#csd_discount_type').val() || 'INV_OE';
+        } else if (selected === 'fame_subsidy') {
+            type = $('#fame_subsidy_type').val() || 'INV_OE';
         }
-        $type.trigger('change');
+
+        // Legacy values normalize
+        if (type === 'INV') type = 'INV_OE';
+        if (type === 'CN') type = 'CN1';
+
+        $('#group_a_type').val(type);
+
+        // Selected Group A amount visible field mein lao
+        let amount = $('#' + selected).val() || '';
+        $('#group_a_amount').val(amount);
+        syncGroupALinkedTypes();
     });
-    $('#group_a_select').trigger('change');
+
+    function syncGroupALinkedTypes() {
+        let groupAType = $('#group_a_type').val() || 'INV_OE';
+
+        if (groupAType === 'INV') groupAType = 'INV_OE';
+        if (groupAType === 'CN') groupAType = 'CN1';
+
+        if (groupAType !== 'INV_OE' && groupAType !== 'CN1') {
+            return;
+        }
+
+        const selectedGroupA = $('#group_a_select').val();
+
+        if (selectedGroupA) {
+            $('#' + selectedGroupA + '_type').val(groupAType);
+        }
+
+        // Keep these fields hidden.
+        // Only their values are used for saving/calculation.
+        $('#dealer_discount_type').val(
+            groupAType === 'INV_OE' ? 'INV' : 'CN'
+        );
+
+        $('#accessories_discount_type').val(
+            groupAType === 'INV_OE' ? 'INV' : 'CN'
+        );
+
+        $('#shield_scheme_type').val(
+            groupAType === 'INV_OE' ? 'INV' : 'CN'
+        );
+    }
+
+    
+    syncGroupALinkedTypes();
 
     // ================= OPTION FIELD SYNC (show selected in label) =================
     function syncOptionLabel(selectId, labelSuffixId) {
-    $(document).on('change', selectId, function () {
-        let selectedText = $(this).find('option:selected').first().text().trim();
-        if (selectedText && selectedText.toLowerCase() !== 'select' && selectedText !== 'N/A') {
-            $('#' + labelSuffixId).text('(' + selectedText + ')');
-        } else {
-            $('#' + labelSuffixId).text('');
-        }
-    });
-    $(selectId).trigger('change');
-}
+        $(document).on('change', selectId, function () {
+            let selectedText = $(this).find('option:selected').first().text().trim();
+            if (selectedText && selectedText.toLowerCase() !== 'select' && selectedText !== 'N/A') {
+                $('#' + labelSuffixId).text('(' + selectedText + ')');
+            } else {
+                $('#' + labelSuffixId).text('');
+            }
+        });
+        $(selectId).trigger('change');
+    }
     
-    $('#accessories').on('change', function () {
-        let count = $(this).find('option:selected').length;
-        $('#accessories_price_label').text(count > 0 ? '(' + count + ' items)' : '');
-    });
-    $('#accessories').trigger('change');
+   
 
     // Coating discount label update
     function updateCoatingDiscountLabel() {
@@ -2657,18 +2930,7 @@ $(document).ready(function () {
     $(document).on('change', '#coating', updateCoatingDiscountLabel);
     updateCoatingDiscountLabel();
 
-    // VLTD toggle for CV segment
-    function toggleVltdField() {
-        let segment = ($('input[name="segment_code"]').val() || '').trim().toUpperCase();
-        if (segment === 'CV') {
-            $('#vltd_device').val('').prop('readonly', false).prop('disabled', false);
-            $('#vltd_device').closest('tr').removeClass('print-hide');
-        } else {
-            $('#vltd_device').val('N/A').prop('readonly', true).prop('disabled', true);
-            $('#vltd_device').closest('tr').addClass('print-hide');
-        }
-    }
-    toggleVltdField();
+    
 
     // Policy/Registration/Coating/Shield/RSA/ChargerSwapping — enable/disable on change
     $('#policy_type').on('change', function () {
@@ -2686,8 +2948,8 @@ $(document).ready(function () {
             $('#ceramic_discount').val('').prop('disabled', true);
             $('#ceramic_discount_type').val('').prop('disabled', true);
         } else if (value === 'No Coating') {
-            $('#coating_price').val('N/A').prop('disabled', true);
-            $('#ceramic_discount').val('N/A').prop('disabled', true);
+            $('#coating_price').val('').prop('disabled', true);
+            $('#ceramic_discount').val('').prop('disabled', true);
             $('#ceramic_discount_type').val('').prop('disabled', true);
         } else {
             $('#coating_price').prop('disabled', false);
@@ -2700,7 +2962,7 @@ $(document).ready(function () {
         if (value === '') {
             $('#shield_price').val('').prop('disabled', true);
         } else if (value === 'No Shield') {
-            $('#shield_price').val('N/A').prop('disabled', true);
+            $('#shield_price').val('').prop('disabled', true);
         } else {
             $('#shield_price').prop('disabled', false);
         }
@@ -2710,7 +2972,7 @@ $(document).ready(function () {
         if (value === '') {
             $('#rsa_amount').val('').prop('disabled', true);
         } else if (value === 'No RSA') {
-            $('#rsa_amount').val('N/A').prop('disabled', true);
+            $('#rsa_amount').val('').prop('disabled', true);
         } else {
             $('#rsa_amount').prop('disabled', false);
         }
@@ -2721,18 +2983,14 @@ $(document).ready(function () {
             $('#charger_swapping_amount').val('').prop('disabled', true);
             $('#charger_swapping_discount').val('').prop('disabled', true);
             $('#charger_swapping_discount_type').val('').prop('disabled', true);
-        } else if (value === 'N/A') {
-            $('#charger_swapping_amount').val('N/A').prop('disabled', true);
-            $('#charger_swapping_discount').val('N/A').prop('disabled', true);
-            $('#charger_swapping_discount_type').val('').prop('disabled', true);
-        } else {
+        }else {
             $('#charger_swapping_amount').prop('disabled', false);
             $('#charger_swapping_discount').prop('disabled', false);
             $('#charger_swapping_discount_type')
                 .prop('disabled', false)
                 .empty()
-                .append('<option value="CN2">CN2</option>')
-                .val('CN2');
+                .append('<option value="CN3">CN3</option>')     
+                .val('CN3');
         }
     });
 
@@ -2756,33 +3014,28 @@ $(document).ready(function () {
     });
 });
 
-$(document).ready(function () {
-    function toggleDONumber() {
-    var deliveryValue = $('#vehicle_delivery_on_display').val();
-    var isDO = (deliveryValue === 'DO');
-    
-    if (isDO) {
-        // ✅ Auto-fill DO Number (Delivery Time) ONLY from finance data
-        var doNumber = "{{ old('do_number', $otfData['do_number'] ?? $finance?->instrument_ref_no ?? '') }}";
-        if (doNumber) {
-            $('#do_number').val(doNumber);
-            // ❌ REMOVE: Do NOT auto-fill TA Statement field
-            // $('#do_number_ta').val(doNumber);
-            // $('#do_number_ta').trigger('blur');
+    $(document).ready(function () {
+        function toggleDONumber() {
+        var deliveryValue = $('#vehicle_delivery_on_display').val();
+        var isDO = (deliveryValue === 'DO');
+        
+        if (isDO) {
+            var doNumber = "{{ old('do_number', $otfData['do_number'] ?? $finance?->instrument_ref_no ?? '') }}";
+            if (doNumber) {
+                $('#do_number').val(doNumber);
+            }
+            $('#do_number').prop('disabled', false);
+            $('#do_number_ta').prop('disabled', false);
+        } else {
+            $('#do_number').val('').prop('disabled', true);
+            $('#do_number_ta').val('').prop('disabled', true);
+            $('#do_amount_ta').val('');
+            $('#do_voucher_date').val('');
         }
-        $('#do_number').prop('disabled', false);
-        $('#do_number_ta').prop('disabled', false);
-    } else {
-        $('#do_number').val('').prop('disabled', true);
-        $('#do_number_ta').val('').prop('disabled', true);
-        $('#do_amount_ta').val('');
-        $('#do_voucher_date').val('');
     }
-}
 
     toggleDONumber();
 
-    // DO Number (TA Statement) — fetch DO Amount & Date from financier statement
     $('#do_number_ta').on('blur', function () {
         let doNo = $(this).val().trim();
         if (doNo == '') {
@@ -2935,13 +3188,14 @@ $('#loan_amount, #margin_money, #file_charge, #financier_subvention').on('input 
 calculateNetSettlement();
 
 function calculateExpectedBalance() {
-    const netReceivable = parseFloat($('#net_receivable').val()) || 0;
-    const doAmount      = parseFloat($('#do_amount').val()) || 0;
-    const receiptTotal  = parseFloat($('#receipt_total').val()) || 0;
+    const netReceivable = parseFloat($('#net_receivable_summary').val()) || 0;
+    const doAmount = parseFloat($('#net_settlement_amount').val()) || 0;
+    const receiptTotal = parseFloat($('#receipt_total').val()) || 0;
     const settlementDiff = parseFloat($('#do_settlement_difference').val()) || 0;
 
     // Expected Balance = Net Receivable - DO Amount - Receipts + DO Settlement Difference
-    const expectedBalance = netReceivable - doAmount - receiptTotal + settlementDiff;
+    const expectedBalance =
+        netReceivable - doAmount - receiptTotal + settlementDiff;
 
     $('#expected_balance').val(expectedBalance.toFixed(2));
 }
@@ -2960,7 +3214,7 @@ function calculateFinalBalance() {
 function calculateReceiptTotal() {
     let total = 0;
     $('.receipt-table tbody tr').each(function() {
-        const amountText = $(this).find('td:eq(2)').text().trim();
+        const amountText = $(this).find('td:eq(3)').text().trim();
         const amount = parseFloat(amountText.replace(/[^0-9.]/g, '')) || 0;
         total += amount;
     });
@@ -2969,7 +3223,7 @@ function calculateReceiptTotal() {
 }
 
 // Trigger on all relevant fields
-$('#net_receivable, #do_amount, #do_settlement_difference, #discount_through_jv').on('input', function () {
+$('#net_receivable_summary, #net_settlement_amount, #do_settlement_difference, #discount_through_jv').on('input', function () {
     calculateExpectedBalance();
     calculateFinalBalance();
 });

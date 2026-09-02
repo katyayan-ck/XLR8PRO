@@ -1582,7 +1582,9 @@ $viewMode = $viewMode ?? false;
                             <td class="title">Financier</td>
                             <td>
                                 @if($revisionPdf ?? false)
-                                {{ $quotationData['financier_display'] ?? '-' }}
+                                    <span style="color: #000 !important; font-weight: 400; font-size: 10px;">
+                                        {{ $quotationData['financier_display'] ?? '-' }}
+                                    </span>
                                 @else
                                 <select name="financier" id="financier">
                                     <option value="">Select Financier</option>
@@ -4295,28 +4297,79 @@ function updateAccessoriesAmount() {
 // 3. HIDE/SHOW ROWS BASED ON VALUE
 // ============================================================
 
+// function toggleRowVisibility() {
+//     // Price grid rows - hide if value is N/A, empty, 0, or 0.00
+//     $('.price-grid tbody tr').each(function() {
+//         let $row = $(this);
+//         let $input = $row.find('td.cell-amount input').first();
+//         let value = $input.length ? $input.val() : '';
+        
+//         // Check if value is N/A or empty or 0
+//         if (value === 'N/A' || value === '' || value === null || value === '0' || value === '0.00') {
+//             $row.hide();
+//         } else {
+//             $row.show();
+//         }
+//     });
+    
+//     // Discount grid rows
+//     $('.discount-grid tbody tr').each(function() {
+//         let $row = $(this);
+//         let $input = $row.find('td.cell-amount input').first();
+//         let value = $input.length ? $input.val() : '';
+        
+//         if (value === 'N/A' || value === '' || value === null || value === '0' || value === '0.00') {
+//             $row.hide();
+//         } else {
+//             $row.show();
+//         }
+//     });
+// }
 function toggleRowVisibility() {
-    // Price grid rows - hide if value is N/A, empty, 0, or 0.00
+
+    // Price grid rows
     $('.price-grid tbody tr').each(function() {
         let $row = $(this);
         let $input = $row.find('td.cell-amount input').first();
-        let value = $input.length ? $input.val() : '';
-        
-        // Check if value is N/A or empty or 0
-        if (value === 'N/A' || value === '' || value === null || value === '0' || value === '0.00') {
+        let value = $input.length ? ($input.val() || '').toString().trim() : '';
+
+        // If the field currently has a real amount,
+        // mark this row as "present".
+        if (value !== '' && value !== 'N/A' && Number(value) !== 0) {
+            $row.data('was-present', true);
+        }
+
+        // Hide only if:
+        // 1. Field was never present AND
+        // 2. Current value is empty / 0 / N/A
+        if (
+            !$row.data('was-present') &&
+            (value === '' || value === 'N/A' || Number(value) === 0)
+        ) {
             $row.hide();
         } else {
             $row.show();
         }
     });
-    
+
+
     // Discount grid rows
     $('.discount-grid tbody tr').each(function() {
         let $row = $(this);
         let $input = $row.find('td.cell-amount input').first();
-        let value = $input.length ? $input.val() : '';
-        
-        if (value === 'N/A' || value === '' || value === null || value === '0' || value === '0.00') {
+        let value = $input.length ? ($input.val() || '').toString().trim() : '';
+
+        // If the field currently has a real amount,
+        // mark this row as "present".
+        if (value !== '' && value !== 'N/A' && Number(value) !== 0) {
+            $row.data('was-present', true);
+        }
+
+        // Hide only if the field was never present.
+        if (
+            !$row.data('was-present') &&
+            (value === '' || value === 'N/A' || Number(value) === 0)
+        ) {
             $row.hide();
         } else {
             $row.show();
