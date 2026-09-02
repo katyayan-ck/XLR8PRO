@@ -135,6 +135,9 @@
                 @method('PUT')
             @endif
 
+            {{-- Capture previous URL to redirect back to the exact listing page --}}
+            <input type="hidden" name="http_referrer" value="{{ old('http_referrer', url()->previous()) }}">
+
             {{-- ERROR DISPLAY BLOCK --}}
             @if ($errors->any())
                 <div class="alert alert-danger rounded-3 shadow-sm pb-0 mb-4">
@@ -371,8 +374,8 @@
                                 </select>
                             </div>
                             <div class="col-md-3 mb-3">
-                                <label class="form-label">Planned Campaign</label>
-                                <select name="planned_campaign" id="planned_campaign" class="form-control form-select">
+                                <label class="form-label">Planned Campaign <span class="text-danger d-none" id="planned_campaign_asterisk">*</span></label>
+                                <select name="planned_campaign" id="planned_campaign" class="form-control form-select" disabled>
                                     <option value="">Select Planned Campaign</option>
                                     @foreach ($campaigns as $name)
                                         <option value="{{ $name }}"
@@ -757,18 +760,20 @@
                                 <select name="financier" id="financier" class="form-control form-select">
                                     <option value="">Select Financier</option>
                                     @foreach ($financiers ?? [] as $financier)
-                                        <option value="{{ $financier->id }}"
-                                            {{ old('financier', $enquiry->financier ?? '') == $financier->id ? 'selected' : '' }}>
+                                        <option value="{{ $financier->id }}" data-shortname="{{ $financier->short_name ?? '' }}"
+                                            {{ (string) old('financier', $enquiry->financier ?? '') === (string) $financier->id ? 'selected' : '' }}>
                                             {{ $financier->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
 
+                            <div class="col-md-3 mb-3" id="financiershortnamebox" style="display:none;">
+                                <label class="form-label">Financier Short Name</label>
+                                <input type="text" id="financiershortname" class="form-control" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                            </div>
+
                             {{-- NEW: Additional Buy Vehicle Section --}}
                             <div class="row w-100 m-0 p-0" id="additional_vehicle_section" style="display:none;">
-                                <div class="col-md-12 mt-2 mb-2">
-                                    <h6 class="text-secondary fw-bold border-bottom pb-2">Existing Vehicle Details</h6>
-                                </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Existing Make</label>
                                     <select name="brand_make" id="brand_make" class="form-control form-select">
@@ -1135,8 +1140,18 @@
                                             </thead>
                                             <tbody>
                                                 @if (isset($fups) && count($fups) > 0)
+                                                    @php $fupCount = count($fups); @endphp
                                                     @foreach ($fups as $index => $fup)
-                                                        <tr>
+                                                        @php
+                                                            $isHidden = false;
+                                                            if ($fupCount > 4) {
+                                                                // Show 1st FUP (index 0) and last 3 FUPs. Hide the rest.
+                                                                if ($index > 0 && $index < $fupCount - 3) {
+                                                                    $isHidden = true;
+                                                                }
+                                                            }
+                                                        @endphp
+                                                        <tr class="{{ $isHidden ? 'hidden-fup-row d-none' : '' }}">
                                                             <td
                                                                 class="fw-bold align-middle table-secondary text-center px-3 text-dark">
                                                                 {{ ['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth'][$index] ?? $index + 1 . 'th' }}
@@ -1197,6 +1212,15 @@
                                                                 </div>
                                                             </td>
                                                         </tr>
+                                                        @if ($fupCount > 4 && $index == 0)
+                                                            <tr id="toggleFupsRow" style="background-color: #f8f9fa;">
+                                                                <td colspan="10" class="text-center py-2">
+                                                                    <button type="button" class="btn btn-sm btn-outline-secondary fw-bold shadow-sm" id="toggleFupsBtn">
+                                                                        <i class="la la-angle-down"></i> Show {{ $fupCount - 4 }} More FUPs
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        @endif
                                                     @endforeach
                                                 @else
                                                     <tr>
@@ -1372,8 +1396,18 @@
                                     </thead>
                                     <tbody>
                                         @if (isset($creFups) && count($creFups) > 0)
+                                            @php $creFupCount = count($creFups); @endphp
                                             @foreach ($creFups as $index => $cre)
-                                                <tr>
+                                                @php
+                                                    $isHidden = false;
+                                                    if ($creFupCount > 4) {
+                                                        // Show 1st FUP (index 0) and last 3 FUPs. Hide the rest.
+                                                        if ($index > 0 && $index < $creFupCount - 3) {
+                                                            $isHidden = true;
+                                                        }
+                                                    }
+                                                @endphp
+                                                <tr class="{{ $isHidden ? 'hidden-cre-fup-row d-none' : '' }}">
                                                     <td
                                                         class="fw-bold align-middle table-secondary text-center px-3 text-dark">
                                                         {{ ['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth'][$index] ?? $index + 1 . 'th' }}
@@ -1382,13 +1416,13 @@
                                                     <td>
                                                         <div
                                                             class="form-control bg-white h-auto border-0 text-nowrap text-center">
-                                                            {{ $cre?->cre_planned_fup_date ? \Carbon\Carbon::parse($cre->cre_planned_fup_date)->format('d-M-Y') : '—' }}
+                                                            {{ $cre?->cre_planned_fup_date ? \Carbon\Carbon::parse($cre->cre_planned_fup_date)->format('d-M-Y H:i') : '—' }}
                                                         </div>
                                                     </td>
                                                     <td>
                                                         <div
                                                             class="form-control bg-white h-auto border-0 text-nowrap text-center">
-                                                            {{ $cre?->cre_actual_fup_date ? \Carbon\Carbon::parse($cre->cre_actual_fup_date)->format('d-M-Y') : '—' }}
+                                                            {{ $cre?->cre_actual_fup_date ? \Carbon\Carbon::parse($cre->cre_actual_fup_date)->format('d-M-Y H:i') : '—' }}
                                                         </div>
                                                     </td>
                                                     <td>
@@ -1412,6 +1446,15 @@
                                                         </div>
                                                     </td>
                                                 </tr>
+                                                @if ($creFupCount > 4 && $index == 0)
+                                                    <tr id="toggleCreFupsRow" style="background-color: #f8f9fa;">
+                                                        <td colspan="7" class="text-center py-2">
+                                                            <button type="button" class="btn btn-sm btn-outline-secondary fw-bold shadow-sm" id="toggleCreFupsBtn">
+                                                                <i class="la la-angle-down"></i> Show {{ $creFupCount - 4 }} More FUPs
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                @endif
                                             @endforeach
                                         @else
                                             <tr>
@@ -1475,7 +1518,7 @@
                                     <label class="form-label">Next Fup Date</label>
                                     <input type="text" id="cre_next_fup_date" name="cre_next_fup_date"
                                         class="form-control" value="{{ old('cre_next_fup_date') }}"
-                                        placeholder="DD-MMM-YYYY">
+                                        placeholder="DD-MMM-YYYY HH:MM">
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label">CRE Followup Remarks</label>
@@ -1756,7 +1799,9 @@
 
                 function toggleVirtualForm() {
                     const text = $('#call_nature').find('option:selected').text().trim().toUpperCase();
-                    if (text.includes('SALES')) {
+                    
+                    // Changed from includes('SALES') to strict exact match
+                    if (text === 'SALES') {
                         $fullForm.removeClass('d-none').addClass('d-flex flex-column');
                         $fullForm.find('input, select, textarea').prop('disabled', false);
                         setTimeout(() => {
@@ -1868,9 +1913,35 @@
             }
 
             flatpickr("#cre_next_fup_date", {
-                dateFormat: "d-M-Y",
+                dateFormat: "d-M-Y H:i",
+                enableTime: true,
                 allowInput: false
             });
+
+            // Toggle FUPs button listener
+            $('#toggleFupsBtn').on('click', function() {
+                const $hiddenRows = $('.hidden-fup-row');
+                if ($hiddenRows.hasClass('d-none')) {
+                    $hiddenRows.removeClass('d-none');
+                    $(this).html('<i class="la la-angle-up"></i> Hide FUPs');
+                } else {
+                    $hiddenRows.addClass('d-none');
+                    $(this).html('<i class="la la-angle-down"></i> Show ' + $hiddenRows.length + ' More FUPs');
+                }
+            });
+
+            // Toggle CRE FUPs button listener
+            $('#toggleCreFupsBtn').on('click', function() {
+                const $hiddenRows = $('.hidden-cre-fup-row');
+                if ($hiddenRows.hasClass('d-none')) {
+                    $hiddenRows.removeClass('d-none');
+                    $(this).html('<i class="la la-angle-up"></i> Hide FUPs');
+                } else {
+                    $hiddenRows.addClass('d-none');
+                    $(this).html('<i class="la la-angle-down"></i> Show ' + $hiddenRows.length + ' More FUPs');
+                }
+            });
+
             flatpickr("#cre_likely_purchase_date", {
                 dateFormat: "d-M-Y",
                 allowInput: true, // Allows the user to backspace/clear the date if they want to manually pick days
@@ -1945,6 +2016,31 @@
             setTimeout(() => {
                 $('select[name="marital_status"]').trigger('change');
             }, 100);
+
+            // Safer Finance Mode listener to show Financier dropdowns and prevent clearing on load
+            $('#fin_mode').on('change', function() {
+                const isInHouse = $(this).val() === 'In-house';
+                
+                // Show or hide both the financier and short name boxes based on the selection
+                $('#financierbox, #financiershortnamebox').toggle(isInHouse);
+                
+                // Only clear the values if it is NOT In-house. 
+                if (!isInHouse) {
+                    $('#financier').val('');
+                    $('#financiershortname').val('');
+                }
+            }).trigger('change');
+
+            // Auto-populate Financier Short Name when a Financier is selected
+            $('#financier').on('change', function() {
+                const shortName = $(this).find(':selected').data('shortname') || '';
+                $('#financiershortname').val(shortName);
+            });
+
+            // Trigger on page load so it pre-fills if editing an existing record
+            if ($('#financier').val()) {
+                $('#financier').trigger('change');
+            }
 
             // NEW: Purchase Type listener to show/hide Additional Vehicle fields
             $('#purchase_type_crm').on('change', function() {
@@ -2162,8 +2258,10 @@
             //     $plannedCampaign.prop('disabled', source !== 'ACTIVATIONS').prop('required', source ===
             //         'ACTIVATIONS').val(source === 'ACTIVATIONS' ? $plannedCampaign.val() : '');
             // }).trigger('change');
+            
             $sourceCode.on('change', function() {
                 const source = $(this).val() || '';
+                const sourceText = $(this).find('option:selected').text().trim().toUpperCase();
                 
                 // 1. Redirect to Reference Enquiries page on creation
                 if (!currentEnquiry.isEdit && source === 'REFERENCE') {
@@ -2198,7 +2296,15 @@
                     $('#sub_source_asterisk').addClass('d-none');
                 }
                 
-                $plannedCampaign.prop('disabled', source !== 'ACTIVATIONS').prop('required', source === 'ACTIVATIONS').val(source === 'ACTIVATIONS' ? $plannedCampaign.val() : '');
+                // 3. Planned Campaign Rule: ONLY allow if Source is ACTIVATIONS
+                const isActivations = (source === 'ACTIVATIONS' || sourceText === 'ACTIVATIONS');
+                if (isActivations) {
+                    $plannedCampaign.prop('disabled', false).prop('required', true);
+                    $('#planned_campaign_asterisk').removeClass('d-none');
+                } else {
+                    $plannedCampaign.val('').prop('disabled', true).prop('required', false);
+                    $('#planned_campaign_asterisk').addClass('d-none');
+                }
             });
 
             $('#application_type').on('change', function() {
