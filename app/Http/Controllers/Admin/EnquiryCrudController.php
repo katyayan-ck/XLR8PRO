@@ -886,13 +886,14 @@ class EnquiryCrudController extends CrudController
                 // Follow up (CRE side)
                 'cre_fup_count'                => $creFup->cre_fup_count ?? '—',
                 'cre_planned_fup_date'         => $creFup ? $this->formatDate($creFup->cre_planned_fup_date, 'd-M-Y') : '—',
-                'cre_actual_fup_date'          => $creFup ? $this->formatDate($creFup->cre_actual_fup_date, 'd-M-Y') : '—',
+                'cre_actual_fup_date'          => $creFup ? $this->formatDate($creFup->cre_actual_fup_date, 'd-M-Y H:i') : '—',
                 'cre_fup_call_duration'        => $creFup->cre_fup_call_duration ?? '—',
                 'cre_fup_deviation_stage'      => $deviationStageMap[$creFup->cre_fup_deviation_stage ?? ''] ?? $creFup->cre_fup_deviation_stage ?? '—',
                 'cre_enq_stage'                => $enqStageMap[$creFup->cre_enq_stage ?? ''] ?? $creFup->cre_enq_stage ?? '—',
                 'cre_customer_stage'           => $custStageMap[$creFup->cre_customer_stage ?? ''] ?? $creFup->cre_customer_stage ?? '—',
                 'cre_fup_remarks'              => $creFup->cre_fup_remarks ?? '—',
-                'cre_next_fup_date'            => $creFup ? $this->formatDate($creFup->cre_next_fup_date, 'd-M-Y') : '—',
+                // 'cre_next_fup_date'            => $creFup ? $this->formatDate($creFup->cre_next_fup_date, 'd-M-Y') : '—',
+                'cre_next_fup_date'            => $creFup ? $this->formatDate($creFup->cre_next_fup_date, 'd-M-Y H:i') : '—',
             ];
         }
 
@@ -942,7 +943,7 @@ class EnquiryCrudController extends CrudController
             return [
                 ['field' => 'serial_no', 'headerName' => 'S.No.'],
                 ['field' => 'x8_enquiry_date', 'headerName' => 'Lead Date & Time'],
-                ['field' => 'referred_by', 'headerName' => 'Referred By'],
+                ['field' => 'referred_by', 'headerName' => 'Referee Type'],
                 ['field' => 'referee_name', 'headerName' => 'Referee Name'],
                 ['field' => 'referee_phone', 'headerName' => 'Referee Contact No.'],
                 ['field' => 'first_name', 'headerName' => 'Customer Name'],
@@ -1457,7 +1458,8 @@ class EnquiryCrudController extends CrudController
                 ->first();
 
             $fupCount = 1;
-            $plannedDate = Carbon::now()->format('Y-m-d');
+            // Force IST Timezone
+            $plannedDate = Carbon::now('Asia/Kolkata')->format('Y-m-d H:i:s'); 
 
             if ($openFup) {
                 $fupCount = $openFup->cre_fup_count;
@@ -1473,11 +1475,12 @@ class EnquiryCrudController extends CrudController
                 }
             }
 
-            $actualDate = Carbon::now()->format('Y-m-d');
+            // Force IST Timezone
+            $actualDate = Carbon::now('Asia/Kolkata')->format('Y-m-d H:i:s'); 
 
             // --- DEVIATION STAGE CALCULATION ---
-            $planned = Carbon::parse($plannedDate)->startOfDay();
-            $actual = Carbon::parse($actualDate)->startOfDay();
+            $planned = Carbon::parse($plannedDate, 'Asia/Kolkata')->startOfDay();
+            $actual = Carbon::parse($actualDate, 'Asia/Kolkata')->startOfDay();
             $diffDays = $planned->diffInDays($actual, false);
 
             $deviationCode = 'SAME_DAY';
@@ -1491,7 +1494,8 @@ class EnquiryCrudController extends CrudController
                 $deviationCode = 'GREATER_THAN_10_DAYS';
             }
 
-            $nextFupDate = $request->cre_next_fup_date ? Carbon::parse($request->cre_next_fup_date)->format('Y-m-d') : null;
+            // Force IST Timezone for user input
+            $nextFupDate = $request->cre_next_fup_date ? Carbon::parse($request->cre_next_fup_date, 'Asia/Kolkata')->format('Y-m-d H:i:s') : null;
 
             // Data for the ACTUAL completed follow up
             $actualData = [
@@ -1506,7 +1510,7 @@ class EnquiryCrudController extends CrudController
                 'cre_customer_stage' => $request->cre_customer_stage,
                 'cre_fup_remarks' => $request->cre_fup_remarks,
                 'cre_next_fup_date' => $nextFupDate,
-                'updated_at' => now(),
+                'updated_at' => now('Asia/Kolkata'), // Force IST
             ];
 
             // Complete the pending row OR insert a new one
@@ -1515,7 +1519,7 @@ class EnquiryCrudController extends CrudController
                 DB::table('xlr8_cre_enquiry_fup')->where('id', $openFup->id)->update($actualData);
             } else {
                 $actualData['created_by'] = backpack_user()->id;
-                $actualData['created_at'] = now();
+                $actualData['created_at'] = now('Asia/Kolkata'); // Force IST
                 DB::table('xlr8_cre_enquiry_fup')->insert($actualData);
             }
 
@@ -1534,8 +1538,8 @@ class EnquiryCrudController extends CrudController
                     'cre_fup_remarks' => null,
                     'cre_next_fup_date' => null,
                     'created_by' => backpack_user()->id,
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                    'created_at' => now('Asia/Kolkata'), // Force IST
+                    'updated_at' => now('Asia/Kolkata'), // Force IST
                 ]);
             }
         }
@@ -1614,6 +1618,15 @@ class EnquiryCrudController extends CrudController
     //     $enquiry = Enquiry::findOrFail($id);
     //     $validated = $request->validate($this->getValidationRules($id));
     //     $this->processEntityRelations($validated);
+
+    //     // Format all possible date fields for MySQL
+    //     $dateFields = ['virtual_call_date', 'wapp_campaign_date', 'dob', 'marriage_date', 'activity_start_date', 'activity_end_date', 'cre_likely_purchase_date'];
+    //     foreach ($dateFields as $field) {
+    //         if (!empty($validated[$field])) {
+    //             $validated[$field] = Carbon::parse($validated[$field])->format('Y-m-d H:i:s');
+    //         }
+    //     }
+
     //     $validated['updated_by'] = backpack_user()->id;
 
     //     // When editing a Reference, force current_origin to LONG and cne to true (1)
@@ -1622,8 +1635,30 @@ class EnquiryCrudController extends CrudController
     //         $validated['cne'] = 1;
     //     }
 
+    //     if (isset($validated['x8_sc_code']) && $enquiry->x8_sc_code !== $validated['x8_sc_code']) {
+    //         $validated['x8_enq_assign_date'] = now();
+    //     }
+
     //     $creFields = ['cre_fup_call_duration', 'cre_fup_deviation_stage', 'cre_enq_stage', 'cre_customer_stage', 'cre_fup_remarks', 'cre_next_fup_date'];
     //     $enquiryData = collect($validated)->except($creFields)->toArray();
+
+    //     // --- MISMATCH TRACKING LOGIC ---
+    //     // Only run if the comparison table was actually rendered and submitted
+    //     if ($request->has('comparison_rendered')) {
+    //         // Now checking IF the box IS checked (meaning the user flagged it as unmatched)
+    //         if ($request->has('mismatch_enq_stage')) {
+    //             $enquiryData['enq_stage_mismatch'] = $enquiry->enq_stage_mismatch + 1;
+    //         }
+    //         if ($request->has('mismatch_next_fup')) {
+    //             $enquiryData['next_fup_mismatch'] = $enquiry->next_fup_mismatch + 1;
+    //         }
+    //         if ($request->has('mismatch_fup_remarks')) {
+    //             $enquiryData['latest_fup_remarks_mismatch'] = $enquiry->latest_fup_remarks_mismatch + 1;
+    //         }
+    //         if (!empty($enquiry->test_drive_no) && $request->has('mismatch_test_drive')) {
+    //             $enquiryData['test_drive_mismatch'] = $enquiry->test_drive_mismatch + 1;
+    //         }
+    //     }
 
     //     $enquiry->update($enquiryData);
 
@@ -1685,6 +1720,28 @@ class EnquiryCrudController extends CrudController
         $this->saveCreFup($enquiry, $request);
 
         Alert::success('Enquiry updated successfully.')->flash();
+
+        // --- DYNAMIC REDIRECT LOGIC ---
+        // 1. Try to return to the exact previous list using http_referrer
+        if ($request->filled('http_referrer') && !str_contains($request->http_referrer, '/edit')) {
+            return redirect($request->http_referrer);
+        }
+
+        // 2. Fallback routing based on enquiry traits if referrer is missing or invalid
+        $source = strtoupper($enquiry->source_code ?? '');
+        $origin = strtoupper($enquiry->current_origin ?? '');
+
+        if ($source === 'REFERENCE') {
+            return redirect(backpack_url('enquiries/reference'));
+        } elseif ($source === 'WHATSAPP') {
+            return redirect(backpack_url('enquiries/whatsapp'));
+        } elseif ($source === 'HYPERLOCAL') {
+            return redirect(backpack_url('enquiries/hyperlocal'));
+        } elseif ($origin === 'VIRTUAL') {
+            return redirect(backpack_url('enquiries/virtual'));
+        }
+
+        // 3. Default fallback
         return redirect(backpack_url('enquiry'));
     }
 
