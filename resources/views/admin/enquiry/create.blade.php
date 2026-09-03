@@ -1544,6 +1544,18 @@
                                                 : $creFups->last())
                                             : null;
                                     $creNextDate = $lastCre?->cre_next_fup_date;
+
+                                    // Resolve X8 Assigned SC Name
+                                    $creScCode = $enquiry?->x8_sc_code;
+                                    $creScDisplay = '—';
+                                    if ($creScCode && isset($saleconsultants)) {
+                                        $matchedCreSc = collect($saleconsultants)->firstWhere('person_code', $creScCode);
+                                        if ($matchedCreSc) {
+                                            $creScDisplay = ($matchedCreSc['display_name'] ?? '') . ' - ' . ($matchedCreSc['employee_code'] ?? '');
+                                        } else {
+                                            $creScDisplay = $creScCode;
+                                        }
+                                    }
                                 @endphp
 
                                 {{-- Hidden input to tell the backend this comparison table was rendered --}}
@@ -1588,12 +1600,12 @@
                                                     Next Fup Date</td>
                                                 <td class="align-middle p-2">
                                                     <div class="form-control bg-white h-auto border-0 text-nowrap text-center">
-                                                        {{ $creNextDate ? \Carbon\Carbon::parse($creNextDate)->format('d-M-Y') : '—' }}
+                                                        {{ $creNextDate ? \Carbon\Carbon::parse($creNextDate)->format('d-M-Y H:i') : '—' }}
                                                     </div>
                                                 </td>
                                                 <td class="align-middle p-2">
                                                     <div class="form-control bg-white h-auto border-0 text-nowrap text-center">
-                                                        {{ $scNextDate ? \Carbon\Carbon::parse($scNextDate)->format('d-M-Y') : '—' }}
+                                                        {{ $scNextDate ? \Carbon\Carbon::parse($scNextDate)->format('d-M-Y H:i') : '—' }}
                                                     </div>
                                                 </td>
                                                 <td class="align-middle p-2">
@@ -1624,6 +1636,72 @@
                                                         style="height: 100%; min-height: 38px;">
                                                         <input class="form-check-input border-secondary cursor-pointer m-0"
                                                             type="checkbox" name="mismatch_fup_remarks" value="1"
+                                                            style="width: 1.2rem; height: 1.2rem;">
+                                                        <label class="form-check-label ms-2 mb-0">Mismatch</label>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="fw-bold align-middle table-secondary text-start px-4 py-2 text-dark">
+                                                    Purchase Type</td>
+                                                <td class="align-middle p-2">
+                                                    <div class="form-control bg-white h-auto border-0 text-nowrap text-center">
+                                                        {{ collect($purchase_types ?? [])->firstWhere('code', $enquiry?->purchase_type_crm)['value'] ?? ($enquiry?->purchase_type_crm ?? '—') }}
+                                                    </div>
+                                                </td>
+                                                <td class="align-middle p-2">
+                                                    <div class="form-control bg-white h-auto border-0 text-nowrap text-center">
+                                                        {{ collect($purchase_types ?? [])->firstWhere('code', $enquiry?->purchase_type)['value'] ?? ($enquiry?->purchase_type ?? '—') }}
+                                                    </div>
+                                                </td>
+                                                <td class="align-middle p-2">
+                                                    <div class="form-control bg-white h-auto border-0 d-flex justify-content-center align-items-center">
+                                                        <input class="form-check-input border-secondary cursor-pointer m-0"
+                                                            type="checkbox" name="mismatch_purchase_type" value="1"
+                                                            style="width: 1.2rem; height: 1.2rem;">
+                                                        <label class="form-check-label ms-2 mb-0">Mismatch</label>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="fw-bold align-middle table-secondary text-start px-4 py-2 text-dark">
+                                                    Likely Purchase In Days</td>
+                                                <td class="align-middle p-2">
+                                                    <div class="form-control bg-white h-auto border-0 text-nowrap text-center">
+                                                        {{ collect($likely_purchase_dates ?? [])->firstWhere('code', $enquiry?->cre_likely_purchase_days)['value'] ?? ($enquiry?->cre_likely_purchase_days ?? '—') }}
+                                                    </div>
+                                                </td>
+                                                <td class="align-middle p-2">
+                                                    <div class="form-control bg-white h-auto border-0 text-nowrap text-center">
+                                                        {{ collect($likely_purchase_dates ?? [])->firstWhere('code', $enquiry?->likely_purchase_days)['value'] ?? ($enquiry?->likely_purchase_days ?? '—') }}
+                                                    </div>
+                                                </td>
+                                                <td class="align-middle p-2">
+                                                    <div class="form-control bg-white h-auto border-0 d-flex justify-content-center align-items-center">
+                                                        <input class="form-check-input border-secondary cursor-pointer m-0"
+                                                            type="checkbox" name="mismatch_likely_purchase" value="1"
+                                                            style="width: 1.2rem; height: 1.2rem;">
+                                                        <label class="form-check-label ms-2 mb-0">Mismatch</label>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="fw-bold align-middle table-secondary text-start px-4 py-2 text-dark">
+                                                    Assigned SC</td>
+                                                <td class="align-middle p-2">
+                                                    <div class="form-control bg-white h-auto border-0 text-nowrap text-center">
+                                                        {{ $creScDisplay }}
+                                                    </div>
+                                                </td>
+                                                <td class="align-middle p-2">
+                                                    <div class="form-control bg-white h-auto border-0 text-nowrap text-center">
+                                                        {{ !empty($oemScDisplay) ? $oemScDisplay : ($enquiry?->sc_code ?? '—') }}
+                                                    </div>
+                                                </td>
+                                                <td class="align-middle p-2">
+                                                    <div class="form-control bg-white h-auto border-0 d-flex justify-content-center align-items-center">
+                                                        <input class="form-check-input border-secondary cursor-pointer m-0"
+                                                            type="checkbox" name="mismatch_assigned_sc" value="1"
                                                             style="width: 1.2rem; height: 1.2rem;">
                                                         <label class="form-check-label ms-2 mb-0">Mismatch</label>
                                                     </div>

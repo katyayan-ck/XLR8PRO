@@ -2094,7 +2094,12 @@ class EnquiryCrudController extends CrudController
             'locations' => [],
             'saleconsultants' => OrgService::getUsers(desigCode: 'CNS'),
             'branches' => OrgService::branches(),
-            'campaigns' => Campaign::orderBy('name')->pluck('name')->toArray(),
+            // 'campaigns' => Campaign::orderBy('name')->pluck('name')->toArray(),
+            'campaigns' => Campaign::where('forever', 1)
+                                   ->orWhereDate('end_date', '>=', Carbon::today())
+                                   ->orderBy('name')
+                                   ->pluck('name')
+                                   ->toArray(),
             'likely_purchase_dates' => $kw('LIKELY_PURCHASE_DATE'),
             'enquiry_types' => $kw('ENQUIRY_TYPE'),
             'activity_types' => $kw('ACTIVITY_TYPE'),
