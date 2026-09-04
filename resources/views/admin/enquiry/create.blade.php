@@ -460,16 +460,16 @@
                     <div class="card-body">
                         <div class="row">
 
-                            {{-- Dynamically show raw DB Model if the actual Model Code is missing --}}
-                            @if (isset($enquiry) && empty($enquiry->model_code) && !empty($enquiry->model))
+                            {{-- Always show raw DB Model if it exists in DB --}}
+                            @if (isset($enquiry) && !empty($enquiry->model))
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Model Family</label>
                                     <input type="text" class="form-control" value="{{ $enquiry->model }}" readonly style="background-color: #e9ecef;">
                                 </div>
                             @endif
 
-                             {{-- Dynamically show raw DB Variant if the actual Variant Code is missing --}}
-                            @if (isset($enquiry) && empty($enquiry->variant_code) && !empty($enquiry->variant))
+                             {{-- Always show raw DB Variant if it exists in DB --}}
+                            @if (isset($enquiry) && !empty($enquiry->variant))
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Variant Family</label>
                                     <input type="text" class="form-control" value="{{ $enquiry->variant }}" readonly style="background-color: #e9ecef;">
@@ -1133,7 +1133,7 @@
                                                     <th class="text-center px-3">Actual Date</th>
                                                     <th class="text-center px-3">Duration</th>
                                                     <th class="text-center px-3">Deviation</th>
-                                                    <th class="text-center px-3">ENQ Status</th>
+                                                    <th class="text-center px-3">Enquiry Status</th>
                                                     <th class="text-center px-3">Remark Type</th>
                                                     <th class="text-center px-3">Comments</th>
                                                 </tr>
@@ -1245,7 +1245,7 @@
                                     @endphp
                                     <div class="row mb-4" style="opacity: 0.85; pointer-events:none;">
                                         <div class="col-md-3 mb-3">
-                                            <label class="form-label">Enq Status</label>
+                                            <label class="form-label">Enquiry Status</label>
                                             <input type="text" class="form-control"
                                                 value="{{ $enqStageMap[$enquiry?->quick_status ?? ''] ?? ($enquiry?->quick_status ?? ($enquiry?->stage ?? '—')) }}"
                                                 readonly style="background-color: #e9ecef;">
@@ -1389,7 +1389,7 @@
                                             <th class="text-center px-3">Planned Date</th>
                                             <th class="text-center px-3">Actual Date</th>
                                             <th class="text-center px-3">Deviation Stage</th>
-                                            <th class="text-center px-3">Enq Stage</th>
+                                            <th class="text-center px-3">Enquiry Stage</th>
                                             <th class="text-center px-3">Customer Stage</th>
                                             <th class="text-center px-3">Remarks</th>
                                         </tr>
@@ -1492,11 +1492,11 @@
                             <div class="row">
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Customer Stage</label>
-                                    <select name="cre_customer_stage" class="form-control form-select">
+                                    <select name="cre_customer_stage" id="cre_customer_stage" class="form-control form-select">
                                         <option value="">Select Option</option>
                                         @foreach ($customer_stages as $item)
                                             <option value="{{ $item['code'] }}"
-                                                {{ old('cre_customer_stage') == $item['code'] ? 'selected' : '' }}>
+                                                {{ old('cre_customer_stage', $enquiry->cre_customer_stage ?? '') == $item['code'] ? 'selected' : '' }}>
                                                 {{ $item['value'] }}</option>
                                         @endforeach
                                     </select>
@@ -1504,13 +1504,8 @@
 
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Enquiry Stage</label>
-                                    <select name="cre_enq_stage" class="form-control form-select">
+                                    <select name="cre_enq_stage" id="cre_enq_stage" class="form-control form-select" disabled>
                                         <option value="">Select Option</option>
-                                        @foreach ($enquiry_stages as $item)
-                                            <option value="{{ $item['code'] }}"
-                                                {{ old('cre_enq_stage') == $item['code'] ? 'selected' : '' }}>
-                                                {{ $item['value'] }}</option>
-                                        @endforeach
                                     </select>
                                 </div>
                                 
@@ -1857,7 +1852,8 @@
             tehsil: @json(old('tehsil', $enquiry->tehsil ?? '')),
             district: @json(old('district', $enquiry->district ?? '')),
             city: @json(old('city', $enquiry->city ?? '')),
-            territory: @json(old('territory', $enquiry->territory ?? ''))
+            territory: @json(old('territory', $enquiry->territory ?? '')),
+            creEnqStage: @json(old('cre_enq_stage', $enquiry->cre_enq_stage ?? ''))
         };
 
         $(function() {
@@ -2032,7 +2028,6 @@
                         selectedDate.setHours(0, 0, 0, 0);
 
                         const diffTime = selectedDate - today;
-                        // Use Math.max to prevent negative days from breaking the logic if they pick a past date
                         const diffDays = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
 
                         let selectedCode = '';
@@ -2046,14 +2041,21 @@
                             selectedCode = '45_DAYS';
                         }
 
-                        // Auto-select the dropdown and FREEZE IT (Not allowed to change manually)
+                        // Auto-select the dropdown and FREEZE IT
                         $('#cre_likely_purchase_days').val(selectedCode).trigger('change');
                         $('#cre_likely_purchase_days').css({'pointer-events': 'none', 'background-color': '#e9ecef'}).attr('tabindex', '-1');
                     } else {
-                        // Clear if date is removed and UNFREEZE IT (Allowed to change manually)
+                        // Clear if date is removed via calendar and UNFREEZE IT
                         $('#cre_likely_purchase_days').val('').trigger('change');
                         $('#cre_likely_purchase_days').css({'pointer-events': 'auto', 'background-color': ''}).removeAttr('tabindex');
                     }
+                }
+            });
+
+            // NEW: Instantly unfreeze the dropdown if the user manually backspaces/deletes the text
+            $('#cre_likely_purchase_date').on('input blur clear', function() {
+                if ($(this).val().trim() === '') {
+                    $('#cre_likely_purchase_days').css({'pointer-events': 'auto', 'background-color': ''}).removeAttr('tabindex');
                 }
             });
 
@@ -2061,7 +2063,6 @@
             if (($('#cre_likely_purchase_date').val() || '').trim() !== '') {
                 $('#cre_likely_purchase_days').css({'pointer-events': 'none', 'background-color': '#e9ecef'}).attr('tabindex', '-1');
             } else {
-                // If no date is saved, ensure the days dropdown is completely fillable
                 $('#cre_likely_purchase_days').css({'pointer-events': 'auto', 'background-color': ''}).removeAttr('tabindex');
             }
 
@@ -2230,6 +2231,30 @@
                     $('#sub_source_asterisk').addClass('d-none');
                 }
             });
+
+            // CONDITIONAL DROPDOWN: Customer Stage -> Enquiry Stage
+            $('#cre_customer_stage').on('change', function() {
+                const rawVal = $(this).val() || '';
+                const $enqStage = $('#cre_enq_stage');
+
+                if (rawVal === '') {
+                    $enqStage.html('<option value="">Select Option</option>').val('').prop('disabled', true);
+                    return;
+                }
+
+                $enqStage.prop('disabled', false);
+                
+                // Fetch Enquiry Stages based on the selected Customer Stage
+                loadKeywordDropdown('ENQUIRY_STAGE', rawVal, $enqStage, 'Select Option', currentEnquiry.creEnqStage);
+                
+                // Wait slightly for AJAX to populate, then trigger change to fire handleStageRules()
+                setTimeout(() => { $enqStage.trigger('change'); }, 600);
+            });
+
+            // Trigger on page load to pre-fill Edit mode correctly
+            if ($('#cre_customer_stage').val()) {
+                $('#cre_customer_stage').trigger('change');
+            }
 
             // Helper to freeze/unfreeze Next Fup Date based on stage
             function handleStageRules() {

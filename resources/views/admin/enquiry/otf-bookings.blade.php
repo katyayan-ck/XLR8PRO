@@ -56,6 +56,12 @@
                                         <button id="closeColumnBubble"
                                             class="btn btn-sm btn-link text-danger p-0">✕</button>
                                     </div>
+                                    
+                                    <!-- NEW: Search Input for Columns -->
+                                    <div class="p-2 border-bottom">
+                                        <input type="text" id="columnSearch" class="form-control form-control-sm" placeholder="Search headers...">
+                                    </div>
+
                                     <div style="max-height:260px; overflow:auto;">
                                         <table class="table table-sm mb-0">
                                             <tbody id="columnBubbleBody"></tbody>
@@ -264,9 +270,16 @@
         function openColumnBubble() {
             const bubble = document.getElementById('columnBubble');
             const tbody = document.getElementById('columnBubbleBody');
+            
+            // NEW: Grab the search input
+            const searchInput = document.getElementById('columnSearch');
+            
             if (!gridApi || !bubble || !tbody) return;
 
             tbody.innerHTML = '';
+            
+            // NEW: Clear search value when opening
+            if (searchInput) searchInput.value = '';
 
             const allFields = columnDefs.map(col => col.field).filter(f => f !== 'action');
 
@@ -328,6 +341,9 @@
                 tr.appendChild(tdLabel);
                 tbody.appendChild(tr);
             });
+            
+            // NEW: Ensure all generated rows are visible initially
+            document.querySelectorAll('#columnBubbleBody tr').forEach(row => row.style.display = '');
 
             bubble.style.display = 'block';
         }
@@ -343,6 +359,20 @@
         document.getElementById('btnCustomiseHeaders')?.addEventListener('click', e => {
             e.stopPropagation();
             openColumnBubble();
+        });
+
+        // NEW: Search filter event listener
+        document.getElementById('columnSearch')?.addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const rows = document.querySelectorAll('#columnBubbleBody tr');
+            
+            rows.forEach(row => {
+                const labelTd = row.querySelector('td:nth-child(2)');
+                if (labelTd) {
+                    const text = labelTd.textContent.toLowerCase();
+                    row.style.display = text.includes(searchTerm) ? '' : 'none';
+                }
+            });
         });
 
         document.getElementById('closeColumnBubble')?.addEventListener('click', () => {
