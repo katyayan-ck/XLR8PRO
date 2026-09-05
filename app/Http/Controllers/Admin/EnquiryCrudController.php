@@ -170,8 +170,7 @@ class EnquiryCrudController extends CrudController
     private function getBaseQuery(string $listType)
     {
         if ($listType === 'otf') {
-            return \App\Models\Module\Booking\Booking::withoutGlobalScope(\Illuminate\Database\Eloquent\SoftDeletingScope::class)
-                ->from('xlr8_crm_booking as crm_booking')
+            return DB::table('xlr8_crm_booking as crm_booking')
                 ->select([
                     'crm_booking.id',
                     'crm_booking.booking_date',
@@ -195,7 +194,6 @@ class EnquiryCrudController extends CrudController
                 ])
                 ->where('crm_booking.is_active', 1);
         }
-
         $query = match ($listType) {
             'reference' => Enquiry::reference(),
             'virtual' => Enquiry::virtual(),
@@ -652,10 +650,19 @@ class EnquiryCrudController extends CrudController
             return $trimmed;
         };
 
-        $resolvedSegment = $cleanVal($e->segment_code ? ($segmentRel?->name ?? $e->segment ?? $e->segment_code) : $e->segment);
-        $resolvedModel   = $cleanVal($e->model_code ? ($modelRel?->name ?? $e->model ?? $e->model_code) : $e->model);
-        $resolvedVariant = $cleanVal($e->variant_code ? ($variantRel?->display_name ?? $variantRel?->custom_name ?? $variantRel?->oem_name ?? $e->variant ?? $e->variant_code) : $e->variant);
-        $resolvedColor   = $cleanVal($e->color_code ? ($colorRel?->name ?? $e->color ?? $e->color_code) : $e->color);
+        $resolvedSegment = $resolvedModel = $resolvedVariant = $resolvedColor = null;
+
+        if ($type !== 'otf') {
+            $segmentRel = $e instanceof \Illuminate\Database\Eloquent\Model && $e->relationLoaded('segment') ? $e->getRelation('segment') : null;
+            $modelRel = $e instanceof \Illuminate\Database\Eloquent\Model && $e->relationLoaded('model') ? $e->getRelation('model') : null;
+            $variantRel = $e instanceof \Illuminate\Database\Eloquent\Model && $e->relationLoaded('variant') ? $e->getRelation('variant') : null;
+            $colorRel = $e instanceof \Illuminate\Database\Eloquent\Model && $e->relationLoaded('color') ? $e->getRelation('color') : null;
+
+            $resolvedSegment = $cleanVal($e->segment_code ? ($segmentRel?->name ?? $e->segment ?? $e->segment_code) : $e->segment);
+            $resolvedModel   = $cleanVal($e->model_code ? ($modelRel?->name ?? $e->model ?? $e->model_code) : $e->model);
+            $resolvedVariant = $cleanVal($e->variant_code ? ($variantRel?->display_name ?? $variantRel?->custom_name ?? $variantRel?->oem_name ?? $e->variant ?? $e->variant_code) : $e->variant);
+            $resolvedColor   = $cleanVal($e->color_code ? ($colorRel?->name ?? $e->color ?? $e->color_code) : $e->color);
+        }
 
         $editUrl = backpack_url("enquiry/{$e->id}/edit");
         $quotUrl = backpack_url("quotation-form/create?id={$e->id}");
@@ -1738,7 +1745,7 @@ class EnquiryCrudController extends CrudController
         } elseif ($source === 'HYPERLOCAL') {
             return redirect(backpack_url('enquiries/hyperlocal'));
         } elseif ($origin === 'VIRTUAL') {
-            return redirect(backpack_url('enquiries/virtual'));
+            return redirect(backpack_url('enquiries/virtual-number'));
         }
 
         // 3. Default fallback
