@@ -14,6 +14,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use App\Models\Admin\PinCodes;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class OrgService
 {
@@ -269,33 +270,37 @@ class OrgService
         });
     }
 
-    public static function colors(?string $variantCode = null): array
-    {
-        $key = $variantCode
-            ? "org.colors.{$variantCode}"
-            : 'org.colors.all';
+   public static function colors(?string $variantCode = null): array
+{
+    $key = $variantCode
+        ? "org.colors.{$variantCode}"
+        : 'org.colors.all';
 
-        return Cache::remember(
-            $key,
-            self::CACHE_TTL,
-            function () use ($variantCode) {
+    return Cache::remember(
+        $key,
+        self::CACHE_TTL,
+        function () use ($variantCode) {
 
-                return Color::where('is_active', true)
+            return DB::table('xlr8_vehicle_variant')
+                ->where('is_active', 1)
+                ->whereNotNull('color_code')
+                ->where('color_code', '!=', '')
 
-                    ->when(
-                        $variantCode,
-                        fn($q) => $q->where('variant_code', $variantCode)
-                    )
+                ->when(
+                    $variantCode,
+                    fn($q) => $q->where('code', $variantCode)
+                )
 
-                    ->orderBy('name')
-
-                    ->pluck('name', 'code')
-
-                    ->toArray();
-            }
-        );
-    }
-
+                ->distinct()
+                ->orderBy('color')
+                ->get(['color', 'color_code'])
+                ->mapWithKeys(fn($row) => [
+                    $row->color_code => $row->color ?: 'UNNAMED',
+                ])
+                ->toArray();
+        }
+    );
+}
     // ── User Query Helpers ───────────────────────────────────────────────
     public static function usersByPost(string $postCode, string $branchCode = 'ALL', string $locationCode = 'ALL'): array
     {
