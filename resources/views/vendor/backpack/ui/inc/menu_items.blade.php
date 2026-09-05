@@ -233,7 +233,7 @@
             :link="backpack_url('booking/create')" /> -->
         <x-backpack::menu-dropdown-item title="Booking List" icon="la la-list" :link="backpack_url('booking')" />
 
-        <x-backpack::menu-dropdown-item title="DMS Booking List" icon="la la-database" :link="backpack_url('booking/dms-list')" />
+        <x-backpack::menu-dropdown-item title="DMS Booking List" icon="la la-database" :link="backpack_url('enquiries/otf-bookings')" />
 
         <x-backpack::menu-dropdown-item title="Dummy Bookings" icon="la la-flask"
             :link="backpack_url('booking/dummy')" />
@@ -260,8 +260,8 @@
         <x-backpack::menu-dropdown-item title="Pending DO" icon="la la-file-signature"
             :link="backpack_url('booking/pending-do')" /> -->
         <x-backpack::menu-dropdown title="Pending" icon="la la-clock" nested="true">
-            <x-backpack::menu-dropdown-item title="DMS" icon="la la-database" :link="backpack_url('booking/pending-dms')" />
-            <x-backpack::menu-dropdown-item title="SO" icon="la la-file-alt" :link="backpack_url('booking/pending/sales-order')" />
+            <x-backpack::menu-dropdown-item title="DMS Booking" icon="la la-database" :link="backpack_url('booking/pending-dms')" />
+            <x-backpack::menu-dropdown-item title="Sales Order" icon="la la-file-alt" :link="backpack_url('booking/pending/sales-order')" />
             <x-backpack::menu-dropdown-item title="KYC" icon="la la-id-card" :link="backpack_url('booking/pending-kyc')" />
             <x-backpack::menu-dropdown-item title="Payment" icon="la la-rupee-sign" :link="backpack_url('booking/pending-payment')" />
         </x-backpack::menu-dropdown>
@@ -280,15 +280,16 @@
 
     {{--  Transactions --}}
     <x-backpack::menu-dropdown title="Transactions" icon="la la-handshake" nested="true">
-        <x-backpack::menu-dropdown-item title="Transaction List" icon="la la-list" :link="backpack_url('co-dealer/transaction')" />
+        <x-backpack::menu-dropdown-item title="Transaction List" icon="la la-list" :link="backpack_url('booking/otf-form')" />
 
         <x-backpack::menu-dropdown title="Pending" icon="la la-clock" nested="true">
-            <x-backpack::menu-dropdown-item title="Payment" icon="la la-rupee-sign" :link="backpack_url('co-dealer/pending-payment')" />
-            <x-backpack::menu-dropdown-item title="Invoices" icon="la la-file-invoice" :link="backpack_url('co-dealer/pending-invoices')" />
-            <x-backpack::menu-dropdown-item title="Insurance" icon="la la-shield-alt" :link="backpack_url('co-dealer/pending-insurance')" />
-            <x-backpack::menu-dropdown-item title="RTO Delivery" icon="la la-truck" :link="backpack_url('co-dealer/pending-deliveries')" />
-            <x-backpack::menu-dropdown-item title="Registration No." icon="la la-hashtag" :link="backpack_url('co-dealer/pending-registration')" />
-            <x-backpack::menu-dropdown-item title="DO" icon="la la-file-signature" :link="backpack_url('co-dealer/pending-do')" />
+            <x-backpack::menu-dropdown-item title="Payment" icon="la la-rupee-sign" :link="backpack_url('booking/pending-payment')" />
+            <x-backpack::menu-dropdown-item title="Invoices" icon="la la-file-invoice" :link="backpack_url('booking/pending-invoices')" />
+            <x-backpack::menu-dropdown-item title="Insurance" icon="la la-shield-alt" :link="backpack_url('booking/pending-insurance')" />
+            <x-backpack::menu-dropdown-item title="RTO" icon="la la-truck" :link="backpack_url('booking/pending-rto')" />
+            <x-backpack::menu-dropdown-item title="Deliveries" icon="la la-truck" :link="backpack_url('booking/pending-deliveries')" />          
+            <x-backpack::menu-dropdown-item title="Registration No." icon="la la-hashtag" :link="backpack_url('booking/pending-registration')" />
+            <x-backpack::menu-dropdown-item title="DO" icon="la la-file-signature" :link="backpack_url('bookingr/pending-do')" />
         </x-backpack::menu-dropdown>
 
         <x-backpack::menu-dropdown-item title="Erroneous Entries" icon="la la-exclamation-circle" :link="backpack_url('co-dealer/erroneous')" />
