@@ -3073,14 +3073,14 @@ const PRICING = {
         },
         conditional_rules: {
             accessories_scheme: {
-                min_amount: 15000,
-                discount_amount: 4000,
-                freeze_message: 'Requires accessories worth ₹15,000+'
+                min_amount: 8000,
+                discount_amount: 4000,  // or discount_percentage: 20
+                freeze_message: 'Accessories above ₹8,000'
             },
             shield_scheme: {
-                min_price: 0,
-                discount_amount: 2500,
-                freeze_message: 'Select Shield to avail discount'
+                min_amount: 6000,
+                discount_amount: 2500,  // or discount_percentage: 20
+                freeze_message: 'Shield above ₹6,000'
             }
         }
     },
@@ -4336,14 +4336,14 @@ const PRICING = {
         },
         conditional_rules: {
             accessories_scheme: {
-                min_amount: 5000,
+                min_amount: 8000,
                 discount_percentage: 20,  // 20% of accessories amount
-                freeze_message: 'Requires accessories worth ₹5,000+'
+                freeze_message: 'Accessories above ₹8,000'
             },
             shield_scheme: {
-                min_price: 0,
+                min_amount: 6000,
                 discount_amount: 3000,
-                freeze_message: 'Select Shield to avail discount'
+                freeze_message: 'Shield above ₹6,000'
             }
         }
     },
@@ -5131,6 +5131,7 @@ function updateAccessoriesAmount() {
 //         }
 //     });
 // }
+
 function toggleRowVisibility() {
 
     // Price grid rows
@@ -5139,15 +5140,24 @@ function toggleRowVisibility() {
         let $input = $row.find('td.cell-amount input').first();
         let value = $input.length ? ($input.val() || '').toString().trim() : '';
 
-        // If the field currently has a real amount,
-        // mark this row as "present".
+        // If the field currently has a real amount, mark this row as "present"
         if (value !== '' && value !== 'N/A' && Number(value) !== 0) {
             $row.data('was-present', true);
         }
 
-        // Hide only if:
-        // 1. Field was never present AND
-        // 2. Current value is empty / 0 / N/A
+        // EXCEPT: Always show accessories_discount and shield_scheme rows in Edit Mode
+        if (IS_EDIT_MODE) {
+            // Check if this is the accessories_discount row
+            let isAccessorySchemeRow = $row.find('#accessories_discount').length > 0;
+            let isShieldSchemeRow = $row.find('#shield_scheme').length > 0;
+            
+            if (isAccessorySchemeRow || isShieldSchemeRow) {
+                // Always show these rows in Edit Mode, regardless of value
+                $row.show();
+                return;
+            }
+        }
+        
         if (
             !$row.data('was-present') &&
             (value === '' || value === 'N/A' || Number(value) === 0)
@@ -5158,20 +5168,31 @@ function toggleRowVisibility() {
         }
     });
 
-
     // Discount grid rows
     $('.discount-grid tbody tr').each(function() {
         let $row = $(this);
         let $input = $row.find('td.cell-amount input').first();
         let value = $input.length ? ($input.val() || '').toString().trim() : '';
 
-        // If the field currently has a real amount,
-        // mark this row as "present".
+        // If the field currently has a real amount, mark this row as "present"
         if (value !== '' && value !== 'N/A' && Number(value) !== 0) {
             $row.data('was-present', true);
         }
 
-        // Hide only if the field was never present.
+        // EXCEPT: Always show accessories_discount and shield_scheme rows in Edit Mode
+        if (IS_EDIT_MODE) {
+            // Check if this is the accessories_discount or shield_scheme row
+            let isAccessorySchemeRow = $row.find('#accessories_discount').length > 0;
+            let isShieldSchemeRow = $row.find('#shield_scheme').length > 0;
+            
+            if (isAccessorySchemeRow || isShieldSchemeRow) {
+                // Always show these rows in Edit Mode, regardless of value
+                $row.show();
+                return;
+            }
+        }
+        
+        // Hide only if the field was never present
         if (
             !$row.data('was-present') &&
             (value === '' || value === 'N/A' || Number(value) === 0)
@@ -6911,7 +6932,7 @@ $(document).ready(function () {
         templateSelection: function (data) {
             return data.text || 'Search insurance covers...';
         }
-        }).on('select2:select select2:unselect', function (e) {
+    }).on('select2:select select2:unselect', function (e) {
         if (e.params && e.params.data && e.params.data.disabled) {
             var val = $('#insurance_covers').val() || [];
             if (!val.includes(e.params.data.id)) {
@@ -6928,21 +6949,21 @@ $(document).ready(function () {
     });
 
     $('#insurance_covers').on('select2:open', function () {
-    setTimeout(function () {
-        const searchInput = document.querySelector(
-            '#insurance_covers + .select2-container .select2-search__field'
-        );
+        setTimeout(function () {
+            const searchInput = document.querySelector(
+                '#insurance_covers + .select2-container .select2-search__field'
+            );
 
-        if (searchInput) {
-            searchInput.style.color = '#212529';
-            searchInput.style.webkitTextFillColor = '#212529';
-            searchInput.style.opacity = '1';
-            searchInput.style.visibility = 'visible';
+            if (searchInput) {
+                searchInput.style.color = '#212529';
+                searchInput.style.webkitTextFillColor = '#212529';
+                searchInput.style.opacity = '1';
+                searchInput.style.visibility = 'visible';
 
-            searchInput.focus();
-        }
-    }, 50);
-});
+                searchInput.focus();
+            }
+        }, 50);
+    });
 
     var groupASelected = '{{ $groupASelected }}';
     var groupCSelected = '{{ $groupCSelected }}';
@@ -6953,8 +6974,18 @@ $(document).ready(function () {
     const IS_VIEW_MODE = @json($viewMode);
 
     @if(isset($quotation))
-        let enquiryNo = "{{ $quotationData['enquiry_no'] ?? $quotation->enquiry_no ?? '' }}";
-        let savedCompany = "{{ $quotationData['insurance_company'] ?? '' }}";
+
+        let enquiryNo = @json(
+            $quotationData['enquiry_no']
+            ?? $quotation->enquiry_no
+            ?? ''
+        );
+
+        $('#mock_enquiry_no').val(enquiryNo);
+
+        let savedCompany = @json(
+            $quotationData['insurance_company'] ?? ''
+        );
 
         // Fallback options population if mock ENQUIRIES object has this enquiry
         if (typeof ENQUIRIES !== 'undefined' && ENQUIRIES[enquiryNo]) {
@@ -6996,63 +7027,63 @@ $(document).ready(function () {
                 $("#insurance_company").val(activeComp.insCo);
                 loadInsurance(activeComp);
             }
-            } else if (savedCompany) {
-                // Direct injection if not found in mock array
-                $("#insurance_company").html(`<option value="${savedCompany}" selected>${savedCompany}</option>`);
-            }
+        } else if (savedCompany) {
+            // Direct injection if not found in mock array
+            $("#insurance_company").html(`<option value="${savedCompany}" selected>${savedCompany}</option>`);
+        }
 
-            // ========================================================
-            // RESTORE CHARGER SWAPPING OPTIONS IN EDIT MODE
-            // ========================================================
+        // ========================================================
+        // RESTORE CHARGER SWAPPING OPTIONS IN EDIT MODE
+        // ========================================================
 
-            if (
-                currentPricing &&
-                currentPricing.receivables &&
-                currentPricing.receivables["charger-swapping"] &&
-                currentPricing.receivables["charger-swapping"].length > 0
-            ) {
-                const chargerOptions = currentPricing.receivables["charger-swapping"];
+        if (
+            currentPricing &&
+            currentPricing.receivables &&
+            currentPricing.receivables["charger-swapping"] &&
+            currentPricing.receivables["charger-swapping"].length > 0
+        ) {
+            const chargerOptions = currentPricing.receivables["charger-swapping"];
 
-                $('#charger_swapping').empty();
+            $('#charger_swapping').empty();
 
-                chargerOptions.forEach(function (item) {
+            chargerOptions.forEach(function (item) {
 
-                    $('#charger_swapping').append(
-                        $('<option>', {
-                            value: item.title,
-                            text: item.title,
-                            'data-amount': item.amount
-                        })
-                    );
+                $('#charger_swapping').append(
+                    $('<option>', {
+                        value: item.title,
+                        text: item.title,
+                        'data-amount': item.amount
+                    })
+                );
 
-                });
+            });
 
-                // Restore saved quotation selection
-                if (SAVED_CHARGER_SWAPPING) {
-                    $('#charger_swapping')
-                        .val(SAVED_CHARGER_SWAPPING)
-                        .prop('disabled', false);
-                }
-
-                if (SAVED_CHARGER_SWAPPING_AMOUNT !== '') {
-                    $('#charger_swapping_amount')
-                        .val(SAVED_CHARGER_SWAPPING_AMOUNT)
-                        .prop('disabled', false);
-                }
-
-                $('#charger_swapping_discount').prop('disabled', false);
-                $('#charger_swapping_discount_type').prop('disabled', false);
-                $('#charger_swapping_option').prop('disabled', false);
-
-            } else {
+            // Restore saved quotation selection
+            if (SAVED_CHARGER_SWAPPING) {
                 $('#charger_swapping')
-                    .val('N/A')
-                    .prop('disabled', true);
-
-                $('#charger_swapping_amount')
-                    .val('N/A')
-                    .prop('disabled', true);
+                    .val(SAVED_CHARGER_SWAPPING)
+                    .prop('disabled', false);
             }
+
+            if (SAVED_CHARGER_SWAPPING_AMOUNT !== '') {
+                $('#charger_swapping_amount')
+                    .val(SAVED_CHARGER_SWAPPING_AMOUNT)
+                    .prop('disabled', false);
+            }
+
+            $('#charger_swapping_discount').prop('disabled', false);
+            $('#charger_swapping_discount_type').prop('disabled', false);
+            $('#charger_swapping_option').prop('disabled', false);
+
+        } else {
+            $('#charger_swapping')
+                .val('N/A')
+                .prop('disabled', true);
+
+            $('#charger_swapping_amount')
+                .val('N/A')
+                .prop('disabled', true);
+        }
 
         // Restore Saved Insurance Covers from proposed_data
         if (Array.isArray(SAVED_INSURANCE_COVERS) && SAVED_INSURANCE_COVERS.length > 0) {
@@ -7080,6 +7111,8 @@ $(document).ready(function () {
             $('#insurance_covers').val(selectedValues).trigger('change');
         }
         restoreSavedQuotationValues();
+        
+        
     @endif
     
     // Initial calculations
@@ -7108,6 +7141,13 @@ function calculateDiscountBifurcationByType() {
 
     DISCOUNT_TYPE_PAIRS.forEach(function (pair) {
         let amount = num(pair[0]);
+
+        if (
+            (pair[0] === 'accessories_discount' || pair[0] === 'shield_scheme') &&
+            $('#' + pair[0]).prop('disabled')
+        ) {
+            amount = 0;
+        }
         let type = $('#' + pair[1]).val() || '';
 
         // Normalize legacy & display keys
@@ -7239,14 +7279,23 @@ $(document).ready(function () {
 let conditionalRules = null;
 
 function loadConditionalRules() {
+
     let enquiryNo = $('#mock_enquiry_no').val();
+
+    // In Edit Mode, mock_enquiry_no may be empty.
+    // Use the saved quotation enquiry number instead.
+    if (IS_EDIT_MODE && (!enquiryNo || !ENQUIRIES[enquiryNo])) {
+        enquiryNo = "{{ $quotationData['enquiry_no'] ?? $quotation->enquiry_no ?? '' }}";
+    }
+
     if (!enquiryNo || !ENQUIRIES[enquiryNo]) {
         conditionalRules = null;
         return;
     }
-    
+
     let pricing = PRICING[ENQUIRIES[enquiryNo].pricingKey];
-    conditionalRules = pricing.conditional_rules || null;
+
+    conditionalRules = pricing?.conditional_rules || null;
 }
 
 function checkConditionalFields() {
@@ -7275,14 +7324,21 @@ function checkAccessoriesSchemeCondition() {
     let rule = conditionalRules.accessories_scheme;
     let accessoriesDiscountInput = $('#accessories_discount');
     let labelCell = accessoriesDiscountInput.closest('tr').find('td.cell-label');
+    let row = accessoriesDiscountInput.closest('tr');
     
     // Remove existing freeze message
     labelCell.find('.freeze-message').remove();
+    
+    // ALWAYS show the row in Edit Mode
+    if (IS_EDIT_MODE) {
+        row.show();
+    }
     
     if (!rule) {
         // No rule - enable field
         accessoriesDiscountInput.prop('disabled', false).removeClass('frozen-field');
         accessoriesDiscountInput.attr('placeholder', '0.00');
+        accessoriesDiscountInput.removeClass('frozen-field');
         return;
     }
     
@@ -7293,176 +7349,123 @@ function checkAccessoriesSchemeCondition() {
     let minAmount = rule.min_amount || 0;
     let isEligible = accessoriesAmount >= minAmount;
     
+    // Calculate the scheme amount based on rule
+    let schemeAmount = 0;
+    if (rule.discount_amount !== undefined && rule.discount_amount !== null) {
+        // Use fixed discount amount
+        schemeAmount = parseFloat(rule.discount_amount) || 0;
+    } else if (rule.discount_percentage) {
+        // Use percentage
+        schemeAmount = accessoriesAmount * (parseFloat(rule.discount_percentage) / 100);
+        schemeAmount = Math.round(schemeAmount * 100) / 100;
+    }
+    
+    // Store the scheme amount in a data attribute for reference
+    accessoriesDiscountInput.data('scheme-amount', schemeAmount);
+    
     if (isEligible) {
-        // Enable field
-        accessoriesDiscountInput.prop('disabled', false).removeClass('frozen-field');
+        // Enable field - set the scheme amount and make it active
+        accessoriesDiscountInput
+            .prop('disabled', false)
+            .removeClass('frozen-field')
+            .val(schemeAmount.toFixed(2));
         accessoriesDiscountInput.attr('placeholder', '0.00');
         
-        // Calculate discount based on rule configuration
-        let calculatedDiscount = 0;
-        if (rule.discount_amount !== undefined && rule.discount_amount !== null) {
-            // Use fixed discount amount
-            calculatedDiscount = parseFloat(rule.discount_amount) || 0;
-        } else if (rule.discount_percentage) {
-            // Use percentage
-            calculatedDiscount = accessoriesAmount * (parseFloat(rule.discount_percentage) / 100);
-        } else {
-            // Default: No discount
-            calculatedDiscount = 0;
-        }
-        
-        // Round to 2 decimal places
-        calculatedDiscount = Math.round(calculatedDiscount * 100) / 100;
-        
-        // If field is empty or has N/A, set the calculated value
-        let currentVal = accessoriesDiscountInput.val();
-        if (currentVal === 'N/A' || currentVal === '' || currentVal === null || currentVal === '0' || currentVal === '0.00') {
-            accessoriesDiscountInput.val(calculatedDiscount.toFixed(2));
-        }
+        // Remove any freeze indicator
+        labelCell.css('color', '');
     } else {
-        // Disable/freeze field - set to 0 (not N/A) so it doesn't participate in calculations
+        // Disable/freeze field - scheme amount displayed but NOT participating in calculations
         accessoriesDiscountInput
             .prop('disabled', true)
             .addClass('frozen-field')
-            .val('0.00');
+            .val(schemeAmount.toFixed(2)); // Show the amount but frozen
         accessoriesDiscountInput.attr('placeholder', 'Currently not applicable');
         
         // Add freeze message to label
-        let message = rule.freeze_message || `(Requires accessories worth ₹${minAmount.toFixed(0)}+)`;
+        let message = '';
+        if (IS_EDIT_MODE) {
+            message = `(₹${minAmount.toFixed(0)}+ required - Edit accessories to avail)`;
+        } else {
+            message = rule.freeze_message || `(Requires accessories worth ₹${minAmount.toFixed(0)}+)`;
+        }
         labelCell.append(` <span class="freeze-message" style="color: #dc3545; font-weight: normal; font-size: 9px;">${message}</span>`);
     }
 }
-
 function checkShieldSchemeCondition() {
     let rule = conditionalRules.shield_scheme;
     let shieldSchemeInput = $('#shield_scheme');
     let labelCell = shieldSchemeInput.closest('tr').find('td.cell-label');
+    let row = shieldSchemeInput.closest('tr');
     
     // Remove existing freeze message
     labelCell.find('.freeze-message').remove();
+    
+    // ALWAYS show the row in Edit Mode
+    if (IS_EDIT_MODE) {
+        row.show();
+    }
     
     if (!rule) {
         // No rule - enable field
         shieldSchemeInput.prop('disabled', false).removeClass('frozen-field');
         shieldSchemeInput.attr('placeholder', '0.00');
+        shieldSchemeInput.removeClass('frozen-field');
         return;
     }
     
-    // Get shield status
+    // Get shield status and price
     let shieldValue = $('#shield').val();
     let shieldPrice = parseFloat($('#shield_price').val()) || 0;
     
-    // Check if shield is selected and has price > 0 (if rule requires it)
-    let minPrice = rule.min_price || 0;
+    // Check if shield is selected and price meets minimum
+    let minAmount = rule.min_amount || 0;
     let isEligible = shieldValue && 
                      shieldValue !== '' && 
                      shieldValue !== 'No Shield' && 
-                     shieldPrice >= minPrice;
+                     shieldPrice >= minAmount;
+    
+    // Calculate the scheme amount based on rule
+    let schemeAmount = 0;
+    if (rule.discount_amount !== undefined && rule.discount_amount !== null) {
+        // Use fixed discount amount
+        schemeAmount = parseFloat(rule.discount_amount) || 0;
+    } else if (rule.discount_percentage) {
+        // Use percentage
+        schemeAmount = shieldPrice * (parseFloat(rule.discount_percentage) / 100);
+        schemeAmount = Math.round(schemeAmount * 100) / 100;
+    }
+    
+    // Store the scheme amount in a data attribute for reference
+    shieldSchemeInput.data('scheme-amount', schemeAmount);
     
     if (isEligible) {
-        // Enable field
-        shieldSchemeInput.prop('disabled', false).removeClass('frozen-field');
+        // Enable field - set the scheme amount and make it active
+        shieldSchemeInput
+            .prop('disabled', false)
+            .removeClass('frozen-field')
+            .val(schemeAmount.toFixed(2));
         shieldSchemeInput.attr('placeholder', '0.00');
         
-        // Calculate discount based on rule configuration
-        let calculatedDiscount = 0;
-        if (rule.discount_amount !== undefined && rule.discount_amount !== null) {
-            // Use fixed discount amount
-            calculatedDiscount = parseFloat(rule.discount_amount) || 0;
-        } else if (rule.discount_percentage) {
-            // Use percentage
-            calculatedDiscount = shieldPrice * (parseFloat(rule.discount_percentage) / 100);
-        } else {
-            // Default: No discount
-            calculatedDiscount = 0;
-        }
-        
-        // Round to 2 decimal places
-        calculatedDiscount = Math.round(calculatedDiscount * 100) / 100;
-        
-        // If field is empty or has N/A, set the calculated value
-        let currentVal = shieldSchemeInput.val();
-        if (currentVal === 'N/A' || currentVal === '' || currentVal === null || currentVal === '0' || currentVal === '0.00') {
-            shieldSchemeInput.val(calculatedDiscount.toFixed(2));
-        }
+        // Remove any freeze indicator
+        labelCell.css('color', '');
     } else {
-        // Disable/freeze field - set to 0 (not N/A) so it doesn't participate in calculations
+        // Disable/freeze field - scheme amount displayed but NOT participating in calculations
         shieldSchemeInput
             .prop('disabled', true)
             .addClass('frozen-field')
-            .val('0.00');
+            .val(schemeAmount.toFixed(2)); // Show the amount but frozen
         shieldSchemeInput.attr('placeholder', 'Currently not applicable');
         
         // Add freeze message to label
-        let message = rule.freeze_message || '(Select Shield to avail discount)';
-        labelCell.append(` <span class="freeze-message" style="color: #dc3545; font-weight: normal; font-size: 9px;">${message}</span>`);
-    }
-}function checkShieldSchemeCondition() {
-    let rule = conditionalRules.shield_scheme;
-    let shieldSchemeInput = $('#shield_scheme');
-    let labelCell = shieldSchemeInput.closest('tr').find('td.cell-label');
-    
-    // Remove existing freeze message
-    labelCell.find('.freeze-message').remove();
-    
-    if (!rule) {
-        // No rule - enable field
-        shieldSchemeInput.prop('disabled', false).removeClass('frozen-field');
-        shieldSchemeInput.attr('placeholder', '0.00');
-        return;
-    }
-    
-    // Get shield status
-    let shieldValue = $('#shield').val();
-    let shieldPrice = parseFloat($('#shield_price').val()) || 0;
-    
-    // Check if shield is selected and has price > 0 (if rule requires it)
-    let minPrice = rule.min_price || 0;
-    let isEligible = shieldValue && 
-                     shieldValue !== '' && 
-                     shieldValue !== 'No Shield' && 
-                     shieldPrice >= minPrice;
-    
-    if (isEligible) {
-        // Enable field
-        shieldSchemeInput.prop('disabled', false).removeClass('frozen-field');
-        shieldSchemeInput.attr('placeholder', '0.00');
-        
-        // Calculate discount based on rule configuration
-        let calculatedDiscount = 0;
-        if (rule.discount_amount !== undefined && rule.discount_amount !== null) {
-            // Use fixed discount amount
-            calculatedDiscount = parseFloat(rule.discount_amount) || 0;
-        } else if (rule.discount_percentage) {
-            // Use percentage
-            calculatedDiscount = shieldPrice * (parseFloat(rule.discount_percentage) / 100);
+        let message = '';
+        if (IS_EDIT_MODE) {
+            message = `(₹${minAmount.toFixed(0)}+ required - Edit shield to avail)`;
         } else {
-            // Default: No discount
-            calculatedDiscount = 0;
+            message = rule.freeze_message || `(Requires Shield worth ₹${minAmount.toFixed(0)}+)`;
         }
-        
-        // Round to 2 decimal places
-        calculatedDiscount = Math.round(calculatedDiscount * 100) / 100;
-        
-        // If field is empty or has N/A, set the calculated value
-        let currentVal = shieldSchemeInput.val();
-        if (currentVal === 'N/A' || currentVal === '' || currentVal === null || currentVal === '0' || currentVal === '0.00') {
-            shieldSchemeInput.val(calculatedDiscount.toFixed(2));
-        }
-    } else {
-        // Disable/freeze field - set to 0 (not N/A) so it doesn't participate in calculations
-        shieldSchemeInput
-            .prop('disabled', true)
-            .addClass('frozen-field')
-            .val('0.00');
-        shieldSchemeInput.attr('placeholder', 'Currently not applicable');
-        
-        // Add freeze message to label
-        let message = rule.freeze_message || '(Select Shield to avail discount)';
         labelCell.append(` <span class="freeze-message" style="color: #dc3545; font-weight: normal; font-size: 9px;">${message}</span>`);
     }
 }
-
 // ============================================================
 // CONDITIONAL FIELD EVENT HANDLERS
 // ============================================================
@@ -7481,9 +7484,12 @@ $(document).on('change', '#shield', function() {
 });
 
 $(document).on('keyup change', '#shield_price', function() {
-    setTimeout(function() {
-        checkConditionalFields();
-    }, 100);
+
+    checkConditionalFields();
+
+    calculateQuotation();
+
+    toggleRowVisibility();
 });
 
 $(document).on('keyup change', '#accessories_amount', function() {

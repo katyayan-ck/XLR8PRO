@@ -223,28 +223,57 @@
                     <label class="form-label">Permit</label>
                     <select name="permit" id="permit" class="form-control form-select">
                         <option value="">Select Permit</option>
-                        <option value="1" {{ old('permit', $rto->permit ?? '') == '1' ? 'selected' : '' }}>Private - U/C
-                            (4 Wheeler)</option>
-                        <option value="2" {{ old('permit', $rto->permit ?? '') == '2' ? 'selected' : '' }}>Private - BH
-                            (4 Wheeler)</option>
-                        <option value="3" {{ old('permit', $rto->permit ?? '') == '3' ? 'selected' : '' }}>Private - EV
-                            (4 Wheeler)</option>
-                        <option value="4" {{ old('permit', $rto->permit ?? '') == '4' ? 'selected' : '' }}>Goods - G (4
-                            Wheeler)</option>
-                        <option value="5" {{ old('permit', $rto->permit ?? '') == '5' ? 'selected' : '' }}>Goods - G 3
-                            Ton+ (4 Wheeler)</option>
-                        <option value="6" {{ old('permit', $rto->permit ?? '') == '6' ? 'selected' : '' }}>Goods - G (3
-                            Wheeler)</option>
-                        <option value="7" {{ old('permit', $rto->permit ?? '') == '7' ? 'selected' : '' }}>Goods - G EV
-                            (3 Wheeler)</option>
-                        <option value="8" {{ old('permit', $rto->permit ?? '') == '8' ? 'selected' : '' }}>Taxi - T (4
-                            Wheeler)</option>
-                        <option value="9" {{ old('permit', $rto->permit ?? '') == '9' ? 'selected' : '' }}>Passenger - P
-                            (3 Wheeler)</option>
-                        <option value="10" {{ old('permit', $rto->permit ?? '') == '10' ? 'selected' : '' }}>Passenger -
-                            P EV (3 Wheeler)</option>
-                        <option value="11" {{ old('permit', $rto->permit ?? '') == '11' ? 'selected' : '' }}>Ambulance
-                            (Misc.)</option>
+                        <option value="1" {{ old('permit', $rto->permit ?? '') == '1' ? 'selected' : '' }}>
+                            Private - U/C (4 Wheeler)
+                        </option>
+
+                        <option value="2" {{ old('permit', $rto->permit ?? '') == '2' ? 'selected' : '' }}>
+                            Private - BH (4 Wheeler)
+                        </option>
+
+                        <option value="3" {{ old('permit', $rto->permit ?? '') == '3' ? 'selected' : '' }}>
+                            Private - EV (4 Wheeler)
+                        </option>
+
+                        <option value="4" {{ old('permit', $rto->permit ?? '') == '4' ? 'selected' : '' }}>
+                            Goods - G (4 Wheeler)
+                        </option>
+
+                        <option value="5" {{ old('permit', $rto->permit ?? '') == '5' ? 'selected' : '' }}>
+                            Goods - G 3 Ton+ (4 Wheeler)
+                        </option>
+
+                        <option value="6" {{ old('permit', $rto->permit ?? '') == '6' ? 'selected' : '' }}>
+                            Goods - G (3 Wheeler)
+                        </option>
+
+                        <option value="7" {{ old('permit', $rto->permit ?? '') == '7' ? 'selected' : '' }}>
+                            Goods - G EV (3 Wheeler)
+                        </option>
+
+                        <option value="8" {{ old('permit', $rto->permit ?? '') == '8' ? 'selected' : '' }}>
+                            Goods - G EV (4 Wheeler)
+                        </option>
+
+                        <option value="9" {{ old('permit', $rto->permit ?? '') == '9' ? 'selected' : '' }}>
+                            Taxi - T (4 Wheeler)
+                        </option>
+
+                        <option value="10" {{ old('permit', $rto->permit ?? '') == '10' ? 'selected' : '' }}>
+                            Taxi - T EV (4 Wheeler)
+                        </option>
+
+                        <option value="11" {{ old('permit', $rto->permit ?? '') == '11' ? 'selected' : '' }}>
+                            Passenger - P (3 Wheeler)
+                        </option>
+
+                        <option value="12" {{ old('permit', $rto->permit ?? '') == '12' ? 'selected' : '' }}>
+                            Passenger - P EV (3 Wheeler)
+                        </option>
+
+                        <option value="13" {{ old('permit', $rto->permit ?? '') == '13' ? 'selected' : '' }}>
+                            Ambulance (Misc.)
+                        </option>
                     </select>
                     @error('permit') <span class="text-danger small">{{ $message }}</span> @enderror
                 </div>

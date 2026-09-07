@@ -615,18 +615,20 @@ class QuotationCrudController extends CrudController
         ])->findOrFail($enquiryId);
 
         $permit_map = [
-            '1' => 'Private - U/C (4 Wheeler)',
-            '2' => 'Private - BH (4 Wheeler)',
-            '3' => 'Private - EV (4 Wheeler)',
-            '4' => 'Goods - G (4 Wheeler)',
-            '5' => 'Goods - G 3 Ton+ (4 Wheeler)',
-            '6' => 'Goods - G (3 Wheeler)',
-            '7' => 'Goods - G EV (3 Wheeler)',
-            '8' => 'Taxi - T (4 Wheeler)',
-            '9' => 'Passenger - P (3 Wheeler)',
-            '10' => 'Passenger - P EV (3 Wheeler)',
-            '11' => 'Ambulance (Misc.)',
-        ];
+    '1'  => 'Private - U/C (4 Wheeler)',
+    '2'  => 'Private - BH (4 Wheeler)',
+    '3'  => 'Private - EV (4 Wheeler)',
+    '4'  => 'Goods - G (4 Wheeler)',
+    '5'  => 'Goods - G 3 Ton+ (4 Wheeler)',
+    '6'  => 'Goods - G (3 Wheeler)',
+    '7'  => 'Goods - G EV (3 Wheeler)',
+    '8'  => 'Goods - G EV (4 Wheeler)',
+    '9'  => 'Taxi - T (4 Wheeler)',
+    '10' => 'Taxi - T EV (4 Wheeler)',
+    '11' => 'Passenger - P (3 Wheeler)',
+    '12' => 'Passenger - P EV (3 Wheeler)',
+    '13' => 'Ambulance (Misc.)',
+];
 
 
 
@@ -1237,18 +1239,20 @@ class QuotationCrudController extends CrudController
         ];
 
         $permit_map = [
-            '1' => 'Private - U/C (4 Wheeler)',
-            '2' => 'Private - BH (4 Wheeler)',
-            '3' => 'Private - EV (4 Wheeler)',
-            '4' => 'Goods - G (4 Wheeler)',
-            '5' => 'Goods - G 3 Ton+ (4 Wheeler)',
-            '6' => 'Goods - G (3 Wheeler)',
-            '7' => 'Goods - G EV (3 Wheeler)',
-            '8' => 'Taxi - T (4 Wheeler)',
-            '9' => 'Passenger - P (3 Wheeler)',
-            '10' => 'Passenger - P EV (3 Wheeler)',
-            '11' => 'Ambulance (Misc.)',
-        ];
+    '1'  => 'Private - U/C (4 Wheeler)',
+    '2'  => 'Private - BH (4 Wheeler)',
+    '3'  => 'Private - EV (4 Wheeler)',
+    '4'  => 'Goods - G (4 Wheeler)',
+    '5'  => 'Goods - G 3 Ton+ (4 Wheeler)',
+    '6'  => 'Goods - G (3 Wheeler)',
+    '7'  => 'Goods - G EV (3 Wheeler)',
+    '8'  => 'Goods - G EV (4 Wheeler)',
+    '9'  => 'Taxi - T (4 Wheeler)',
+    '10' => 'Taxi - T EV (4 Wheeler)',
+    '11' => 'Passenger - P (3 Wheeler)',
+    '12' => 'Passenger - P EV (3 Wheeler)',
+    '13' => 'Ambulance (Misc.)',
+];
 
         $reg_no_type_map = [
             '1' => 'Regular',
@@ -1803,40 +1807,80 @@ class QuotationCrudController extends CrudController
                 $quotationData['permit'] = $request->permit;
             }
 
-            // ✅ SAVE CUSTOMER DETAILS
-            $quotationData['customer_name'] = trim($enquiry->first_name . ' ' . $enquiry->last_name) ?: ($enquiry->full_name ?? '');
-            $quotationData['customer_mobile'] = $enquiry->mobile ?? $enquiry->phone ?? '';
+            /*
+            |--------------------------------------------------------------------------
+            | SAVE CUSTOMER DETAILS
+            |--------------------------------------------------------------------------
+            */
+
+            if ($request->has('customer_name')) {
+                $quotationData['customer_name'] = $request->customer_name;
+            } else {
+                $quotationData['customer_name'] =
+                    trim($enquiry->first_name . ' ' . $enquiry->last_name)
+                    ?: ($enquiry->full_name ?? '');
+            }
+
+            if ($request->has('customer_mobile')) {
+                $quotationData['customer_mobile'] = $request->customer_mobile;
+            } elseif ($request->has('mobile')) {
+                $quotationData['customer_mobile'] = $request->mobile;
+            } else {
+                $quotationData['customer_mobile'] =
+                    $enquiry->mobile ?? $enquiry->phone ?? '';
+            }
+
             $quotationData['enquiry_id'] = $enquiry->id;
 
 
 
+            /*
+            |--------------------------------------------------------------------------
+            | Detect actual quotation changes
+            |--------------------------------------------------------------------------
+            | financier IS included because it is now one of the 6 history groups.
+            | financier_history is internal and should not itself count as a change.
+            |--------------------------------------------------------------------------
+            */
+
             $oldDataForComparison = $previousProposal;
             $newDataForComparison = $quotationData;
-
-            unset($oldDataForComparison['financier']);
-            unset($newDataForComparison['financier']);
 
             unset($oldDataForComparison['financier_history']);
             unset($newDataForComparison['financier_history']);
 
+            /*
+            |--------------------------------------------------------------------------
+            | Remove empty newly-created fields from comparison
+            |--------------------------------------------------------------------------
+            */
             foreach ($newDataForComparison as $key => $value) {
                 if (
                     !array_key_exists($key, $oldDataForComparison) &&
-                    ($value === null || $value === '' || $value === [] || $value === '0')
+                    ($value === null ||
+                        $value === '' ||
+                        $value === [] ||
+                        $value === '0' ||
+                        $value === '0.00')
                 ) {
                     unset($newDataForComparison[$key]);
                 }
             }
 
-            \Log::info('QUOTATION REVISION DEBUG', [
-                'old' => $oldDataForComparison,
-                'new' => $newDataForComparison,
-            ]);
-
-            $hasNonFinancierChanges =
+            /*
+            |--------------------------------------------------------------------------
+            | Actual quotation change
+            |--------------------------------------------------------------------------
+            */
+            $hasQuotationChanges =
                 $oldDataForComparison != $newDataForComparison;
 
-            $newRevision = $hasNonFinancierChanges
+            /*
+            |--------------------------------------------------------------------------
+            | Every real quotation update gets a new history revision
+            |--------------------------------------------------------------------------
+            */
+            $newRevision = $hasQuotationChanges
                 ? ((int) $quotation->revision) + 1
                 : (int) $quotation->revision;
 
@@ -1866,13 +1910,13 @@ class QuotationCrudController extends CrudController
             // Update discount fields
             $this->saveDiscountFields($quotation, $quotationData);
 
-            if ($hasNonFinancierChanges) {
+            if ($hasQuotationChanges) {
 
                 QuoteAction::create([
                     'quotation_no' => $quotation->quotation_no,
                     'action_by'    => backpack_user()->id,
                     'action'       => 'REVISED',
-                    'requested'   => $quotationData,
+                    'requested'    => $quotationData,
                     'onroad'       => $request->net_receivable_summary
                         ?? $request->total_receivable
                         ?? 0,
@@ -2139,6 +2183,145 @@ class QuotationCrudController extends CrudController
             'cn3_discount_summary'      => 'CN3 Discount Total',
         ];
 
+        /*
+        |--------------------------------------------------------------------------
+        | CHANGE GROUPS
+        |--------------------------------------------------------------------------
+        | These are the ONLY categories shown in:
+        | "Changes after Financier"
+        |--------------------------------------------------------------------------
+        */
+
+        $changeGroups = [
+            'Permit' => [
+                'permit',
+            ],
+
+            'Financier' => [
+                'financier',
+            ],
+
+            'Scheme' => [
+
+                // Group A
+                'cash_scheme_oem',
+                'cash_scheme_oem_type',
+                'csd_discount',
+                'csd_discount_type',
+                'fame_subsidy',
+                'fame_subsidy_type',
+
+                // Dealer / Group B
+                'dealer_discount',
+                'dealer_discount_type',
+                'accessories_discount',
+                'accessories_discount_type',
+                'shield_scheme',
+                'shield_scheme_type',
+                'corporate_discount',
+                'corporate_discount_type',
+                'loyalty_bonus',
+                'loyalty_bonus_type',
+
+                // Group C
+                'exchange_bonus',
+                'exchange_bonus_type',
+                'green_bonus',
+                'green_bonus_type',
+                'welcome_bonus',
+                'welcome_bonus_type',
+
+                // Special discounts
+                'accessories_spl_disc',
+                'accessories_spl_disc_type',
+                'ceramic_discount',
+                'ceramic_discount_type',
+                'ppf_discount',
+                'ppf_discount_type',
+                'charger_swapping_discount',
+                'charger_swapping_discount_type',
+                'other_cash_discount',
+                'other_cash_discount_type',
+                'special_cash_discount',
+                'special_cash_discount_type',
+
+                // Discount totals / summary
+                'total_discount',
+                'invoice_amount',
+                'invoiced_discount_summary',
+                'inv_oe_discount_summary',
+                'inv_d_discount_summary',
+                'credit_note_discount_summary',
+                'cn1_discount_summary',
+                'cn2_discount_summary',
+                'cn3_discount_summary',
+            ],
+
+            'Price' => [
+
+                'ex_showroom_price',
+
+                'insurance_company',
+                'insurance_covers',
+                'insurance_amount',
+
+                'registration_no_type',
+                'registration_category',
+                'in_house_rto',
+                'registration_amount',
+
+                'accessories',
+                'accessories_amount',
+
+                'maxicare',
+
+                'vltd_device',
+
+                'coating',
+                'coating_price',
+
+                'ppf',
+
+                'rto_yellow_tape',
+
+                'kazam_charging_kit',
+
+                'incidental_charges',
+
+                'shield',
+                'shield_price',
+
+                'rsa',
+                'rsa_amount',
+
+                'fastag',
+
+                'cod_charges',
+
+                'charger_swapping',
+                'charger_swapping_amount',
+
+                'tcs',
+
+                'total_receivable',
+            ],
+
+            'Customer' => [
+                'customer_name',
+                'customer_mobile',
+                'mobile',
+                'careof',
+                'careofname',
+            ],
+
+            'Vehicle' => [
+                'segment_code',
+                'model_code',
+                'variant_code',
+                'color_code',
+            ],
+        ];
+
         // Values format karne ke liye safe helper function (Arrays & Objects handle karne ke liye)
         $formatValue = function ($key, $val) {
             if ($val === null || $val === '' || $val === 'N/A') {
@@ -2184,50 +2367,101 @@ class QuotationCrudController extends CrudController
         // System internal fields jinhe comparison me ignore karna hai
         $ignoredFields = ['_token', '_method', 'insurance_covers_data','financier_history'];
 
+        /*
+        |--------------------------------------------------------------------------
+        | Detect change groups for each history revision
+        |--------------------------------------------------------------------------
+        |
+        | V1 = quotation creation
+        | V2 = changes from V1 -> V2
+        | V3 = changes from V2 -> V3
+        | etc.
+        |
+        */
+
         foreach ($actions as $index => $action) {
 
-            $oldData = $action->requested ?? [];
+            /*
+            |--------------------------------------------------------------------------
+            | First revision = creation, so no "after financier" changes
+            |--------------------------------------------------------------------------
+            */
 
-            if (isset($actions[$index + 1])) {
-                $newData = $actions[$index + 1]->requested ?? [];
-            } else {
-                $newData = $quotation->standard_data ?? [];
+            if ($index === 0) {
+                $action->change_groups = '';
+                continue;
             }
 
-            $changes = [];
+            /*
+            |--------------------------------------------------------------------------
+            | Previous quotation snapshot
+            |--------------------------------------------------------------------------
+            */
 
-            $allKeys = array_unique(
-                array_merge(
-                    array_keys($oldData),
-                    array_keys($newData)
-                )
-            );
+            $previousAction = $actions[$index - 1];
 
-            foreach ($allKeys as $key) {
+            $oldData = $previousAction->requested ?? [];
+            $newData = $action->requested ?? [];
 
-                if (in_array($key, $ignoredFields)) {
-                    continue;
+            if (is_string($oldData)) {
+                $oldData = json_decode($oldData, true) ?? [];
+            }
+
+            if (is_string($newData)) {
+                $newData = json_decode($newData, true) ?? [];
+            }
+
+            $changedGroups = [];
+
+            /*
+            |--------------------------------------------------------------------------
+            | Compare all six groups
+            |--------------------------------------------------------------------------
+            */
+
+            foreach ($changeGroups as $groupName => $fields) {
+
+                $groupChanged = false;
+
+                foreach ($fields as $field) {
+
+                    $oldValue = $oldData[$field] ?? '';
+                    $newValue = $newData[$field] ?? '';
+
+                    /*
+                    * Normalize arrays so accessories / insurance covers
+                    * are compared by their actual contents.
+                    */
+                    $oldFormatted = $formatValue($field, $oldValue);
+                    $newFormatted = $formatValue($field, $newValue);
+
+                    if (
+                        trim((string) $oldFormatted) !==
+                        trim((string) $newFormatted)
+                    ) {
+                        $groupChanged = true;
+                        break;
+                    }
                 }
 
-                $rawOld = $oldData[$key] ?? '';
-                $rawNew = $newData[$key] ?? '';
+                /*
+                |--------------------------------------------------------------------------
+                | Add group only once
+                |--------------------------------------------------------------------------
+                */
 
-                $oldFormatted = $formatValue($key, $rawOld);
-                $newFormatted = $formatValue($key, $rawNew);
-
-                if (trim((string) $oldFormatted) !== trim((string) $newFormatted)) {
-
-                    $changes[] = [
-                        'field' => $fieldNames[$key]
-                            ?? ucwords(str_replace('_', ' ', $key)),
-
-                        'old' => $oldFormatted,
-                        'new' => $newFormatted,
-                    ];
+                if ($groupChanged) {
+                    $changedGroups[] = $groupName;
                 }
             }
 
-            $action->changes = $changes;
+            /*
+            |--------------------------------------------------------------------------
+            | Final display value
+            |--------------------------------------------------------------------------
+            */
+
+            $action->change_groups = implode(', ', $changedGroups);
         }
 
 
@@ -2345,18 +2579,20 @@ class QuotationCrudController extends CrudController
         ];
 
         $permit_map = [
-            '1' => 'Private - U/C (4 Wheeler)',
-            '2' => 'Private - BH (4 Wheeler)',
-            '3' => 'Private - EV (4 Wheeler)',
-            '4' => 'Goods - G (4 Wheeler)',
-            '5' => 'Goods - G 3 Ton+ (4 Wheeler)',
-            '6' => 'Goods - G (3 Wheeler)',
-            '7' => 'Goods - G EV (3 Wheeler)',
-            '8' => 'Taxi - T (4 Wheeler)',
-            '9' => 'Passenger - P (3 Wheeler)',
-            '10' => 'Passenger - P EV (3 Wheeler)',
-            '11' => 'Ambulance (Misc.)',
-        ];
+    '1'  => 'Private - U/C (4 Wheeler)',
+    '2'  => 'Private - BH (4 Wheeler)',
+    '3'  => 'Private - EV (4 Wheeler)',
+    '4'  => 'Goods - G (4 Wheeler)',
+    '5'  => 'Goods - G 3 Ton+ (4 Wheeler)',
+    '6'  => 'Goods - G (3 Wheeler)',
+    '7'  => 'Goods - G EV (3 Wheeler)',
+    '8'  => 'Goods - G EV (4 Wheeler)',
+    '9'  => 'Taxi - T (4 Wheeler)',
+    '10' => 'Taxi - T EV (4 Wheeler)',
+    '11' => 'Passenger - P (3 Wheeler)',
+    '12' => 'Passenger - P EV (3 Wheeler)',
+    '13' => 'Ambulance (Misc.)',
+];
 
         $reg_no_type_map = [
             '1' => 'Regular',
@@ -2647,18 +2883,20 @@ class QuotationCrudController extends CrudController
         ];
 
         $permit_map = [
-            '1' => 'Private - U/C (4 Wheeler)',
-            '2' => 'Private - BH (4 Wheeler)',
-            '3' => 'Private - EV (4 Wheeler)',
-            '4' => 'Goods - G (4 Wheeler)',
-            '5' => 'Goods - G 3 Ton+ (4 Wheeler)',
-            '6' => 'Goods - G (3 Wheeler)',
-            '7' => 'Goods - G EV (3 Wheeler)',
-            '8' => 'Taxi - T (4 Wheeler)',
-            '9' => 'Passenger - P (3 Wheeler)',
-            '10' => 'Passenger - P EV (3 Wheeler)',
-            '11' => 'Ambulance (Misc.)',
-        ];
+    '1'  => 'Private - U/C (4 Wheeler)',
+    '2'  => 'Private - BH (4 Wheeler)',
+    '3'  => 'Private - EV (4 Wheeler)',
+    '4'  => 'Goods - G (4 Wheeler)',
+    '5'  => 'Goods - G 3 Ton+ (4 Wheeler)',
+    '6'  => 'Goods - G (3 Wheeler)',
+    '7'  => 'Goods - G EV (3 Wheeler)',
+    '8'  => 'Goods - G EV (4 Wheeler)',
+    '9'  => 'Taxi - T (4 Wheeler)',
+    '10' => 'Taxi - T EV (4 Wheeler)',
+    '11' => 'Passenger - P (3 Wheeler)',
+    '12' => 'Passenger - P EV (3 Wheeler)',
+    '13' => 'Ambulance (Misc.)',
+];
 
         $reg_no_type_map = [
             '1' => 'Regular',
