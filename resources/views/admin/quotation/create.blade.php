@@ -1301,6 +1301,12 @@ use App\Services\OrgService;
         pointer-events: none !important;
         cursor: default !important;
     }
+
+    /* Highlight financier field when empty */
+    #financier.field-error {
+        border: 2px solid #dc3545 !important;
+        background-color: #fff8f8 !important;
+    }
 </style>
 @endpush
 
@@ -1582,9 +1588,9 @@ $viewMode = $viewMode ?? false;
                             <td class="title">Financier</td>
                             <td>
                                 @if($revisionPdf ?? false)
-                                    <span style="color: #000 !important; font-weight: 400; font-size: 10px;">
-                                        {{ $quotationData['financier_display'] ?? '-' }}
-                                    </span>
+                                <span style="color: #000 !important; font-weight: 400; font-size: 10px;">
+                                    {{ $quotationData['financier_display'] ?? '-' }}
+                                </span>
                                 @else
                                 <select name="financier" id="financier">
                                     <option value="">Select Financier</option>
@@ -1693,19 +1699,17 @@ $viewMode = $viewMode ?? false;
                                                             style="font-size: 8px; font-weight: bold; margin-right: 3px; margin-left: 2px; color: #555; white-space: nowrap;">In-House:</span>
                                                         <label
                                                             style="font-size: 8px; font-weight: bold; margin: 0 2px; cursor: pointer; display: flex; align-items: center; gap: 1px;">
-                                                            <input type="radio"
-                                                                name="in_house_rto"
-                                                                value="1"
-                                                                {{ old('in_house_rto', $quotationData['in_house_rto'] ?? '0') == '1' ? 'checked' : '' }}
-                                                                {{ $viewMode ? 'disabled' : '' }}> Yes
+                                                            <input type="radio" name="in_house_rto" value="1" {{
+                                                                old('in_house_rto', $quotationData['in_house_rto']
+                                                                ?? '0' )=='1' ? 'checked' : '' }} {{ $viewMode
+                                                                ? 'disabled' : '' }}> Yes
                                                         </label>
                                                         <label
                                                             style="font-size: 8px; font-weight: bold; margin: 0 2px; cursor: pointer; display: flex; align-items: center; gap: 1px;">
-                                                            <input type="radio"
-                                                                name="in_house_rto"
-                                                                value="0"
-                                                                {{ old('in_house_rto', $quotationData['in_house_rto'] ?? '0') == '0' ? 'checked' : '' }}
-                                                                {{ $viewMode ? 'disabled' : '' }}> No
+                                                            <input type="radio" name="in_house_rto" value="0" {{
+                                                                old('in_house_rto', $quotationData['in_house_rto']
+                                                                ?? '0' )=='0' ? 'checked' : '' }} {{ $viewMode
+                                                                ? 'disabled' : '' }}> No
                                                         </label>
                                                     </div>
                                                 </div>
@@ -1911,7 +1915,7 @@ $viewMode = $viewMode ?? false;
                                             </td>
                                         </tr>
 
-                                        <tr class="grid-row">
+                                        <tr class="grid-row tcs-row">
                                             <td class="cell-label">TCS @1%</td>
                                             <td class="cell-option"></td>
                                             <td class="cell-amount">
@@ -2859,6 +2863,69 @@ const ENQUIRIES = {
             oem_code: "SCORPIO-N-Z4-D-AT-JD"
         },
         pricingKey: "scorpioN" // New pricing for Scorpio-N
+    },
+    "019": {
+        enquiry_no: "ENQ0019",
+        customer: { 
+            name: "Dr. Ananya Reddy", 
+            mobile: "9876500019", 
+            careOf: "3", 
+            careOfName: "Dr. Suresh Reddy" 
+        },
+        vehicle: {
+            segment_code: "BEV",
+            segment_name: "Electric Vehicle",
+            model_code: "BE6",
+            model_name: "BE6",
+            variant_code: "BM12AH515MB01D00",
+            variant_name: "BE6 One Above B59 R19 C11",
+            color_code: "QK",
+            color_name: "Galaxy Grey",
+            oem_code: "BEV-BE6-ONE-ABOVE-GALAXY-GREY"
+        },
+        pricingKey: "bev6Premium"
+    },
+    "020": {
+        enquiry_no: "ENQ0020",
+        customer: { 
+            name: "Mohan Transport", 
+            mobile: "9876500020", 
+            careOf: "1", 
+            careOfName: "Ram Singh" 
+        },
+        vehicle: {
+            segment_code: "CV",
+            segment_name: "Commercial Vehicle",
+            model_code: "BOLERO CAMPER",
+            model_name: "Bolero Camper",
+            variant_code: "CAMPER-4WD",
+            variant_name: "Camper 4WD BS6.2",
+            color_code: "GR",
+            color_name: "Dune Beige",
+            oem_code: "CV-BOLERO-CAMPER-4WD-DUNE"
+        },
+        pricingKey: "boleroCamperGoods"
+    },
+    "021": {
+        enquiry_no: "ENQ0021",
+        customer: { 
+            name: "Sakshi Enterprises", 
+            mobile: "9876500021", 
+            careOf: "4", 
+            careOfName: "Rajesh Gupta" 
+        },
+        vehicle: {
+            segment_code: "LMM",
+            segment_name: "LMM",
+            model_code: "TREO",
+            model_name: "Treo",
+            variant_code: "TREO-YAARI",
+            variant_name: "Treo Yaari LMM",
+            color_code: "0N",
+            color_name: "Blue White",
+            oem_code: "LMM-TREO-YAARI-BLUE-WHITE"
+        },
+        pricingKey: "treoLmm"
     }
 };
 
@@ -3003,6 +3070,18 @@ const PRICING = {
             "charger-swapping-discount": { amount: 3500, type: "CN3" },
             "other-cash-discount": { amount: 1000, type: "CN1" },
             "special-cash-discount": { amount: 12000, type: "INV_D" }
+        },
+        conditional_rules: {
+            accessories_scheme: {
+                min_amount: 15000,
+                discount_amount: 4000,
+                freeze_message: 'Requires accessories worth ₹15,000+'
+            },
+            shield_scheme: {
+                min_price: 0,
+                discount_amount: 2500,
+                freeze_message: 'Select Shield to avail discount'
+            }
         }
     },
     bevx9: {
@@ -4067,7 +4146,411 @@ const PRICING = {
             "other-cash-discount": { amount: 0, type: "CN1", editable: true },
             "special-cash-discount": { enabled: true, lower: 1200000, upper: 1600000, max: 40000, amount: 0, type: "INV_D" }
         }
+    },
+    bev6Premium: {
+        permit: [
+            { type: "Private", default: true },
+            { type: "Private - BH", default: false }
+        ],
+        receivables: {
+            exShowroom: 2499000,
+            
+            // Insurance with multiple companies and covers
+            insurance: [
+                {
+                    permit: "Private",
+                    default: true,
+                    companies: [
+                        {
+                            insCo: "ICICI Lombard",
+                            default: true,
+                            price: [
+                                { head: "Basic OD + TP", price: 42500, Nature: "M" },
+                                { head: "Nil Depreciation", price: 8500, Nature: "M" },
+                                { head: "Consumables", price: 1800, Nature: "M" },
+                                { head: "Battery Protect Plus", price: 12000, Nature: "O" },
+                                { head: "RTI", price: 6800, Nature: "O" },
+                                { head: "Engine Protect", price: 5500, Nature: "O" },
+                                { head: "Key Protect", price: 1200, Nature: "O" },
+                                { head: "Tyre Protect", price: 3200, Nature: "O" },
+                                { head: "RSA Premium", price: 2800, Nature: "O" },
+                                { head: "NCB Protect Plus", price: 4500, Nature: "O" }
+                            ]
+                        },
+                        {
+                            insCo: "Bajaj Allianz",
+                            default: false,
+                            price: [
+                                { head: "Basic OD + TP", price: 39800, Nature: "M" },
+                                { head: "Nil Depreciation", price: 7800, Nature: "M" },
+                                { head: "Consumables", price: 1600, Nature: "M" },
+                                { head: "Battery Protect Plus", price: 10500, Nature: "O" },
+                                { head: "RTI", price: 6200, Nature: "O" },
+                                { head: "Key Protect", price: 1100, Nature: "O" },
+                                { head: "Tyre Protect", price: 2800, Nature: "O" }
+                            ]
+                        },
+                        {
+                            insCo: "United India (USGI)",
+                            default: false,
+                            price: [
+                                { head: "Basic OD + TP", price: 41500, Nature: "M" },
+                                { head: "Nil Depreciation", price: 8200, Nature: "M" },
+                                { head: "Consumables", price: 1700, Nature: "M" },
+                                { head: "Battery Protect", price: 9800, Nature: "O" },
+                                { head: "RTI", price: 6500, Nature: "O" },
+                                { head: "Engine Protect", price: 5200, Nature: "O" },
+                                { head: "NCB Protect", price: 3500, Nature: "O" }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    permit: "Private - BH",
+                    default: false,
+                    companies: [
+                        {
+                            insCo: "ICICI Lombard",
+                            default: true,
+                            price: [
+                                { head: "Basic OD + TP", price: 45200, Nature: "M" },
+                                { head: "Nil Depreciation", price: 9200, Nature: "M" },
+                                { head: "Consumables", price: 2000, Nature: "M" },
+                                { head: "Battery Protect Plus", price: 13000, Nature: "O" },
+                                { head: "RTI", price: 7200, Nature: "O" }
+                            ]
+                        }
+                    ]
+                }
+            ],
+            
+            // RTO Registration
+            RTO: {
+                TRC: 1800,
+                TAX: [
+                    { permit: "Private", default: true, amount: 245000 },
+                    { permit: "Private - BH", default: false, amount: 280000 }
+                ]
+            },
+            
+            // ✅ FIX: Coating options with correct defaults
+            coating: [
+                { title: "Ceramic", price: 24999, default: true },
+                { title: "Graphene", price: 45999, default: false },
+                { title: "No Coating", price: 0, default: false }
+            ],
+            
+            // ✅ FIX: PPF options with correct defaults
+            ppf: [
+                { title: "PPF Ultra", price: 124999, default: true },
+                { title: "PPF Premium", price: 164999, default: false },
+                { title: "PPF Ultimate", price: 199999, default: false },
+                { title: "No PPF", price: 0, default: false }
+            ],
+            
+            // ✅ FIX: Accessories list with actual item names that match dropdown options
+            accessories: [
+                { item: "7.2 kW Home Charger", mrp: 45000, discount: 5000, code: "HC-72" },
+                { item: "11.2 kW Home Charger", mrp: 65000, discount: 8000, code: "HC-112" },
+                { item: "Dash Cam Dual Channel", mrp: 8299, discount: 1200, code: "DC-DUAL" },
+                { item: "Parking Assist 360°", mrp: 15999, discount: 2500, code: "PA-360" },
+                { item: "Leather Seat Covers", mrp: 14990, discount: 2000, code: "LSC-7" },
+                { item: "Premium Floor Mats", mrp: 5899, discount: 800, code: "PFM-7" },
+                { item: "Chrome Door Visors", mrp: 4999, discount: 500, code: "CDV" },
+                { item: "Alloy Wheel Locks", mrp: 2999, discount: 400, code: "AWL" },
+                { item: "Scuff Plates LED", mrp: 3899, discount: 600, code: "SP-LED" },
+                { item: "Mud Flaps", mrp: 1299, discount: 200, code: "MF" },
+                { item: "Perfume Dispenser", mrp: 899, discount: 0, code: "PD-001" },
+                { item: "Car Cover Premium", mrp: 3499, discount: 500, code: "CC-PREM" },
+                { item: "Sun Shade Set", mrp: 2499, discount: 300, code: "SS-4" },
+                { item: "USB C Charging Kit", mrp: 1899, discount: 200, code: "USB-C" },
+                { item: "First Aid Kit", mrp: 999, discount: 0, code: "FAK" }
+            ],
+            
+            maxicare: 34999,
+            shield: [
+                { title: "4th Year", price: 34990, default: true },
+                { title: "4th + 5th Year", price: 52990, default: false },
+                { title: "No Shield", price: 0, default: false }
+            ],
+            
+            rsa: [
+                { title: "1 Year", price: 2499, default: true },
+                { title: "2 Year", price: 4599, default: false },
+                { title: "3 Year", price: 6499, default: false },
+                { title: "No RSA", price: 0, default: false }
+            ],
+            
+            vltd: { permit: "Private", price: 5499 },
+            kazam: 8500,
+            incidental: 5000,
+            "rto-tape": 1999,
+            fastag: 600,
+            COD: 2500,
+            
+            "charger-swapping": [
+                { title: "No Swapping @ ₹0", amount: 0, default: false },
+                { title: "NCH to 7.2 kW @ ₹18,500", amount: 18500, default: true },
+                { title: "NCH to 11.2 kW @ ₹28,500", amount: 28500, default: false },
+                { title: "7.2 kW to 11.2 kW @ ₹15,000", amount: 15000, default: false }
+            ],
+            
+            tcs: { limit: 1000000, rate: 1.0 }
+        },
+        
+        // Deductibles / Discounts
+        deductibles: {
+            // Group A - OEM Schemes
+            "oem-schemes": [
+                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 8500, type: "INV_OE" },
+                { key: "csd_discount", label: "CSD Discount", amount: 3500, type: "INV_OE" },
+                { key: "fame_subsidy", label: "Fame Subsidy (LMM)", amount: 1500, type: "INV_OE" }
+            ],
+            
+            "dealer-scheme": { amount: 25000, type: "CN1" },
+            "accessory-scheme": { amount: 8000, type: "INV_OE" },
+            "shield-scheme": { amount: 3500, type: "CN1" },
+            
+            "corp-scheme": [
+                { name: "Corporate Discount", amount: 60000, type: "INV" },
+                { name: "Loyalty Bonus", amount: 35000, type: "INV" }
+            ],
+            
+            "exchange-scheme": [
+                { name: "Exchange Bonus", amount: 45000, type: "CN2" },
+                { name: "Green Bonus", amount: 25000, type: "CN2" },
+                { name: "Welcome Bonus", amount: 15000, type: "CN2" }
+            ],
+            
+            "accessories-spl-discount": { amount: 5000, type: "INV_D" },
+            "coating-spl-discount": { amount: 3000, type: "INV_D" },
+            "ppf-spl-discount": { amount: 10000, type: "CN1" },
+            "charger-swapping-discount": { amount: 7500, type: "CN3", option: "7.2 kW to NCH" },
+            "other-cash-discount": { amount: 2000, type: "CN1" },
+            
+            // ✅ FIX: Special Cash Discount with actual amount
+            "special-cash-discount": { 
+                amount: 75000,  // ← Added actual amount
+                type: "INV_D"
+            }
+        },
+        conditional_rules: {
+            accessories_scheme: {
+                min_amount: 5000,
+                discount_percentage: 20,  // 20% of accessories amount
+                freeze_message: 'Requires accessories worth ₹5,000+'
+            },
+            shield_scheme: {
+                min_price: 0,
+                discount_amount: 3000,
+                freeze_message: 'Select Shield to avail discount'
+            }
+        }
+    },
+    boleroCamperGoods: {
+        permit: [
+            { type: "Goods", default: true },
+            { type: "Goods - 3 Ton+", default: false }
+        ],
+        receivables: {
+            exShowroom: 1285000,
+            insurance: [
+                {
+                    permit: "Goods",
+                    default: true,
+                    companies: [
+                        {
+                            insCo: "ICICI Lombard",
+                            default: true,
+                            price: [
+                                { head: "Basic OD + TP", price: 28500, Nature: "M" },
+                                { head: "Nil Depreciation", price: 5800, Nature: "M" },
+                                { head: "Consumables", price: 1200, Nature: "M" },
+                                { head: "RTI", price: 4500, Nature: "O" },
+                                { head: "Engine Protect", price: 6800, Nature: "O" }
+                            ]
+                        }
+                    ]
+                }
+            ],
+            RTO: {
+                TRC: 3000,
+                TAX: [
+                    { permit: "Goods", default: true, amount: 98000 },
+                    { permit: "Goods - 3 Ton+", default: false, amount: 125000 }
+                ]
+            },
+            accessories: [
+                { item: "Canopy Full", mrp: 35000, discount: 4000, code: "CAN-FULL" },
+                { item: "Seat Cover Heavy", mrp: 8000, discount: 1000, code: "SC-HVY" },
+                { item: "Mud Flaps Set", mrp: 1500, discount: 200, code: "MF-SET" },
+                { item: "Load Body Liner", mrp: 12000, discount: 1500, code: "LBL" }
+            ],
+            maxicare: 0,
+            coating: [
+                { title: "No Coating", price: 0, default: true }
+            ],
+            ppf: [
+                { title: "No PPF", price: 0, default: true }
+            ],
+            shield: [
+                { title: "4th Year", price: 18990, default: true },
+                { title: "No Shield", price: 0, default: false }
+            ],
+            rsa: [
+                { title: "1 Year", price: 1499, default: true },
+                { title: "No RSA", price: 0, default: false }
+            ],
+            vltd: { permit: "Goods", price: 4800 },
+            kazam: 0,
+            incidental: 3500,
+            "rto-tape": 1499,
+            fastag: 600,
+            COD: 0,
+            "charger-swapping": [],
+            tcs: { limit: 1000000, rate: 1.0 }
+        },
+        deductibles: {
+            "oem-schemes": [
+                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 25000, type: "INV_OE" }
+            ],
+            "dealer-scheme": { amount: 10000, type: "CN1" },
+            "accessory-scheme": { amount: 2000, type: "INV_OE" },
+            "shield-scheme": { amount: 1200, type: "CN1" },
+            "corp-scheme": [
+                { name: "Corporate Discount", amount: 20000, type: "INV" }
+            ],
+            "exchange-scheme": [
+                { name: "Exchange Bonus", amount: 18000, type: "CN2" }
+            ],
+            "other-cash-discount": { amount: 0, type: "CN1", editable: true },
+            "special-cash-discount": { 
+                enabled: true, 
+                lower: 1000000, 
+                upper: 1400000, 
+                max: 30000, 
+                amount: 0, 
+                type: "INV_D" 
+            }
+        }
+    },
+    treoLmm: {
+        permit: [
+            { type: "LMM", default: true }
+        ],
+        receivables: {
+            exShowroom: 325000,
+            insurance: [
+                {
+                    permit: "LMM",
+                    default: true,
+                    companies: [
+                        {
+                            insCo: "United India (USGI)",
+                            default: true,
+                            price: [
+                                { head: "Basic OD + TP", price: 9200, Nature: "M" },
+                                { head: "Nil Depreciation", price: 2000, Nature: "M" },
+                                { head: "Consumables", price: 550, Nature: "M" },
+                                { head: "RTI", price: 1400, Nature: "O" }
+                            ]
+                        },
+                        {
+                            insCo: "ICICI Lombard",
+                            default: false,
+                            price: [
+                                { head: "Basic OD + TP", price: 8800, Nature: "M" },
+                                { head: "Nil Depreciation", price: 1900, Nature: "M" },
+                                { head: "RTI", price: 1300, Nature: "O" }
+                            ]
+                        }
+                    ]
+                }
+            ],
+            RTO: {
+                TRC: 800,
+                TAX: [
+                    { permit: "LMM", default: true, amount: 19500 }
+                ]
+            },
+            accessories: [
+                { item: "Welcome Kit", mrp: 589, discount: 0, code: "WK-LMM3" },
+                { item: "Seat Cover", mrp: 2400, discount: 300, code: "SC-LMM3" },
+                { item: "Floor Mat", mrp: 990, discount: 0, code: "FM-LMM3" },
+                { item: "Mobile Holder", mrp: 499, discount: 0, code: "MH-LMM" }
+            ],
+            maxicare: 0,
+            coating: [
+                { title: "No Coating", price: 0, default: true }
+            ],
+            ppf: [
+                { title: "No PPF", price: 0, default: true }
+            ],
+            shield: [
+                { title: "4th Year", price: 4990, default: true },
+                { title: "No Shield", price: 0, default: false }
+            ],
+            rsa: [
+                { title: "1 Year", price: 699, default: true },
+                { title: "No RSA", price: 0, default: false }
+            ],
+            vltd: null,
+            kazam: 0,
+            incidental: 1200,
+            "rto-tape": 0,
+            fastag: 0,
+            COD: 2500,
+            "charger-swapping": [
+                { title: "No Swapping @ ₹0", amount: 0, default: true },
+                { title: "NCH to 7.2 kW @ ₹12,500", amount: 12500, default: false }
+            ],
+            tcs: { limit: 1000000, rate: 1.0 }
+        },
+        deductibles: {
+            "oem-schemes": [
+                { key: "cash_scheme_oem", label: "Cash Scheme OEM", amount: 10000, type: "INV_OE" },
+                { key: "fame_subsidy", label: "Fame Subsidy", amount: 0, type: "INV_OE" }
+            ],
+            "dealer-scheme": { amount: 3000, type: "CN1" },
+            "accessory-scheme": { amount: 500, type: "INV_OE" },
+            "shield-scheme": { amount: 500, type: "CN1" },
+            "corp-scheme": [
+                { name: "Corporate Discount", amount: 8000, type: "INV" },
+                { name: "Loyalty Bonus", amount: 4000, type: "INV" }
+            ],
+            "exchange-scheme": [
+                { name: "Exchange Bonus", amount: 7000, type: "CN2" }
+            ],
+            "other-cash-discount": { amount: 0, type: "CN1", editable: true },
+            "special-cash-discount": { 
+                enabled: true, 
+                lower: 200000, 
+                upper: 400000, 
+                max: 15000, 
+                amount: 0, 
+                type: "INV_D" 
+            }
+        }
     }
+};
+
+// Add this at the top of your script, after PRICING definition
+const ACCESSORY_NAME_MAP = {
+    "7.2 kW Home Charger": "7.2 Kw Home Charger",
+    "11.2 kW Home Charger": "11.2 Kw Home Charger",
+    "Dash Cam Dual Channel": "Dash Cam Dual Channel",
+    "Parking Assist 360°": "Parking Assist 360°",
+    "Leather Seat Covers": "Leather Seat Covers",
+    "Premium Floor Mats": "Premium Float Mats",
+    "Chrome Door Visors": "Chrome Door Visors",
+    "Alloy Wheel Locks": "Alloy Wheel Locks",
+    "Scuff Plates LED": "Scuff Plates Led",
+    "Mud Flaps": "Mud Flaps",
+    "Perfume Dispenser": "Perfume Dispenser",
+    "Car Cover Premium": "Car Cover Premium",
+    "Sun Shade Set": "Magnetic Sun Shade Set",
+    "USB C Charging Kit": "Usb Charging Kit",
+    "First Aid Kit": "First Aid Kit"
 };
 
 // ============================================================
@@ -4122,6 +4605,61 @@ const SAVED_INSURANCE_COVERS =
 
 const SAVED_ACCESSORIES =
     @json($quotationData['accessories'] ?? []);
+
+// ============================================================
+// SAVED QUOTATION VALUES - EDIT MODE
+// ============================================================
+
+const SAVED_CHARGER_SWAPPING =
+    @json($quotationData['charger_swapping'] ?? '');
+
+const SAVED_CHARGER_SWAPPING_AMOUNT =
+    @json($quotationData['charger_swapping_amount'] ?? '');
+
+const SAVED_CHARGER_SWAPPING_OPTION =
+    @json($quotationData['charger_swapping_option'] ?? '');
+
+const SAVED_COATING =
+    @json($quotationData['coating'] ?? '');
+
+const SAVED_COATING_PRICE =
+    @json($quotationData['coating_price'] ?? '');
+
+const SAVED_PPF =
+    @json($quotationData['ppf'] ?? '');
+
+const SAVED_SHIELD =
+    @json($quotationData['shield'] ?? '');
+
+const SAVED_SHIELD_PRICE =
+    @json($quotationData['shield_price'] ?? '');
+
+const SAVED_RSA =
+    @json($quotationData['rsa'] ?? '');
+
+const SAVED_RSA_AMOUNT =
+    @json($quotationData['rsa_amount'] ?? '');
+
+const SAVED_MAXICARE =
+    @json($quotationData['maxicare'] ?? '');
+
+const SAVED_VLTD_DEVICE =
+    @json($quotationData['vltd_device'] ?? '');
+
+const SAVED_RTO_YELLOW_TAPE =
+    @json($quotationData['rto_yellow_tape'] ?? '');
+
+const SAVED_KAZAM_CHARGING_KIT =
+    @json($quotationData['kazam_charging_kit'] ?? '');
+
+const SAVED_INCIDENTAL_CHARGES =
+    @json($quotationData['incidental_charges'] ?? '');
+
+const SAVED_FASTAG =
+    @json($quotationData['fastag'] ?? '');
+
+const SAVED_COD_CHARGES =
+    @json($quotationData['cod_charges'] ?? '');
 
 let currentInsurance = null;
 let currentPricing = null;
@@ -4221,6 +4759,274 @@ function loadInsuranceByPermit() {
 
         loadInsurance(selectedCompany);
     }
+}
+// ============================================================
+// RESTORE SAVED QUOTATION VALUES IN EDIT MODE
+// ============================================================
+
+function restoreSavedQuotationValues() {
+
+    if (!IS_EDIT_MODE) {
+        return;
+    }
+
+    if (Array.isArray(SAVED_ACCESSORIES) && SAVED_ACCESSORIES.length > 0) {
+
+    let selectedAccessories = [];
+
+    // Current mock enquiry pricing
+    let savedEnquiryNo = "{{ $quotationData['enquiry_no'] ?? $quotation->enquiry_no ?? '' }}";
+    let savedEnquiry = ENQUIRIES[savedEnquiryNo] || null;
+    let savedPricing = savedEnquiry
+        ? PRICING[savedEnquiry.pricingKey]
+        : null;
+
+    let mockAccessories =
+        savedPricing?.receivables?.accessories || [];
+
+    SAVED_ACCESSORIES.forEach(function (accessory) {
+
+        let value = typeof accessory === 'object'
+            ? (
+                accessory.part_no ??
+                accessory.code ??
+                accessory.value ??
+                ''
+            )
+            : accessory;
+
+        value = String(value).trim();
+
+        if (!value) {
+            return;
+        }
+
+        let found = false;
+
+        // ------------------------------------------------
+        // 1. First try existing DB option
+        // ------------------------------------------------
+        $('#accessories option').each(function () {
+
+            let optionValue = String($(this).val()).trim();
+
+            if (optionValue === value) {
+
+                $(this).prop('selected', true);
+
+                selectedAccessories.push($(this).val());
+
+                found = true;
+
+                return false;
+            }
+        });
+
+        if (found) {
+            return;
+        }
+
+        // ------------------------------------------------
+        // 2. If DB option not found, find it in MOCK data
+        // ------------------------------------------------
+        let mockAccessory = mockAccessories.find(function (acc) {
+
+            return String(acc.code || '').trim() === value;
+
+        });
+
+        if (mockAccessory) {
+
+            let name = mockAccessory.item || value;
+            let price = Number(mockAccessory.mrp || 0);
+
+            let option = new Option(
+                name + ' (₹' + price.toLocaleString('en-IN', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }) + ')',
+                value,
+                true,
+                true
+            );
+
+            $(option)
+                .attr('data-price', price)
+                .attr('data-mock', 'true');
+
+            $('#accessories').append(option);
+
+            selectedAccessories.push(value);
+
+            return;
+        }
+
+        // ------------------------------------------------
+        // 3. If saved data itself is an object
+        // ------------------------------------------------
+        if (typeof accessory === 'object') {
+
+            let name =
+                accessory.item ??
+                accessory.name ??
+                value;
+
+            let price =
+                Number(
+                    accessory.mrp ??
+                    accessory.price ??
+                    0
+                );
+
+            let option = new Option(
+                name + ' (₹' + price.toLocaleString('en-IN', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }) + ')',
+                value,
+                true,
+                true
+            );
+
+            $(option).attr('data-price', price);
+
+            $('#accessories').append(option);
+
+            selectedAccessories.push(value);
+        }
+    });
+
+    // ------------------------------------------------
+    // Apply all selected accessories
+    // ------------------------------------------------
+    $('#accessories')
+        .val(selectedAccessories)
+        .trigger('change');
+
+    updateAccessoriesAmount();
+    updateAccessoriesPrintText();
+}
+
+    // --------------------------------------------------------
+    // Charger Swapping
+    // --------------------------------------------------------
+    if (SAVED_CHARGER_SWAPPING) {
+        $('#charger_swapping')
+            .val(SAVED_CHARGER_SWAPPING)
+            .prop('disabled', false);
+
+        if (SAVED_CHARGER_SWAPPING_AMOUNT !== '') {
+            $('#charger_swapping_amount')
+                .val(SAVED_CHARGER_SWAPPING_AMOUNT)
+                .prop('disabled', false);
+        }
+
+        if (SAVED_CHARGER_SWAPPING_OPTION) {
+            $('#charger_swapping_option')
+                .val(SAVED_CHARGER_SWAPPING_OPTION)
+                .prop('disabled', false);
+        }
+    }
+
+    // --------------------------------------------------------
+    // Coating
+    // --------------------------------------------------------
+    if (SAVED_COATING !== '') {
+        $('#coating').val(SAVED_COATING);
+    }
+
+    if (SAVED_COATING_PRICE !== '') {
+        $('#coating_price')
+            .val(SAVED_COATING_PRICE)
+            .prop('disabled', SAVED_COATING_PRICE === 'N/A');
+    }
+
+    // --------------------------------------------------------
+    // PPF
+    // --------------------------------------------------------
+    if (SAVED_PPF !== '') {
+        $('#ppf')
+            .val(SAVED_PPF)
+            .prop('disabled', SAVED_PPF === 'N/A');
+    }
+
+    // --------------------------------------------------------
+    // Shield
+    // --------------------------------------------------------
+    if (SAVED_SHIELD !== '') {
+        $('#shield').val(SAVED_SHIELD);
+    }
+
+    if (SAVED_SHIELD_PRICE !== '') {
+        $('#shield_price')
+            .val(SAVED_SHIELD_PRICE)
+            .prop('disabled', SAVED_SHIELD_PRICE === 'N/A');
+    }
+
+    // --------------------------------------------------------
+    // RSA
+    // --------------------------------------------------------
+    if (SAVED_RSA !== '') {
+        $('#rsa').val(SAVED_RSA);
+    }
+
+    if (SAVED_RSA_AMOUNT !== '') {
+        $('#rsa_amount')
+            .val(SAVED_RSA_AMOUNT)
+            .prop('disabled', SAVED_RSA_AMOUNT === 'N/A');
+    }
+
+    // --------------------------------------------------------
+    // Simple amount fields
+    // --------------------------------------------------------
+    if (SAVED_MAXICARE !== '') {
+        $('#maxicare')
+            .val(SAVED_MAXICARE)
+            .prop('disabled', SAVED_MAXICARE === 'N/A');
+    }
+
+    if (SAVED_VLTD_DEVICE !== '') {
+        $('#vltd_device')
+            .val(SAVED_VLTD_DEVICE)
+            .prop('disabled', SAVED_VLTD_DEVICE === 'N/A');
+    }
+
+    if (SAVED_RTO_YELLOW_TAPE !== '') {
+        $('#rto_yellow_tape')
+            .val(SAVED_RTO_YELLOW_TAPE)
+            .prop('disabled', SAVED_RTO_YELLOW_TAPE === 'N/A');
+    }
+
+    if (SAVED_KAZAM_CHARGING_KIT !== '') {
+        $('#kazam_charging_kit')
+            .val(SAVED_KAZAM_CHARGING_KIT)
+            .prop('disabled', SAVED_KAZAM_CHARGING_KIT === 'N/A');
+    }
+
+    if (SAVED_INCIDENTAL_CHARGES !== '') {
+        $('#incidental_charges')
+            .val(SAVED_INCIDENTAL_CHARGES)
+            .prop('disabled', SAVED_INCIDENTAL_CHARGES === 'N/A');
+    }
+
+    if (SAVED_FASTAG !== '') {
+        $('#fastag')
+            .val(SAVED_FASTAG)
+            .prop('disabled', SAVED_FASTAG === 'N/A');
+    }
+
+    if (SAVED_COD_CHARGES !== '') {
+        $('#cod_charges')
+            .val(SAVED_COD_CHARGES)
+            .prop('disabled', SAVED_COD_CHARGES === 'N/A');
+    }
+
+    // Recalculate after restoring saved values
+    calculateQuotation();
+    updateCoatingDiscountLabel();
+    updateAccessoriesPrintText();
+    updateInsurancePrintText();
+    updateRegistrationPrintText();
 }
 
 function updateRegistrationAmount() {
@@ -4370,6 +5176,19 @@ function toggleRowVisibility() {
             !$row.data('was-present') &&
             (value === '' || value === 'N/A' || Number(value) === 0)
         ) {
+            $row.hide();
+        } else {
+            $row.show();
+        }
+    });
+
+    // Hide TCS row if value is N/A or 0
+    $('.tcs-row').each(function() {
+        let $row = $(this);
+        let tcsInput = $row.find('td.cell-amount input');
+        let tcsValue = tcsInput.length ? (tcsInput.val() || '').toString().trim() : '';
+        
+        if (tcsValue === '' || tcsValue === 'N/A' || Number(tcsValue) === 0) {
             $row.hide();
         } else {
             $row.show();
@@ -5035,6 +5854,8 @@ if (groupASelected && groupAAmount) {
     // ---- Final Calculation ----
     calculateQuotation();
 
+    checkConditionalFields();
+
     Swal.fire({
         icon: 'success',
         title: 'Enquiry Loaded',
@@ -5107,6 +5928,7 @@ $('#btnResetMock').click(function () {
     $('.price-grid tbody tr, .discount-grid tbody tr').show();
     
     calculateQuotation();
+    checkConditionalFields();
 });
 
 // ============================================================
@@ -5321,6 +6143,15 @@ $('#group_a_select').on('change', function () {
 function num(id) {
     let value = $('#' + id).val();
     if (value === 'N/A' || value === '' || value == null) {
+        return 0;
+    }
+    // Check if the field is frozen (disabled with class 'frozen-field')
+    let $field = $('#' + id);
+    if ($field.prop('disabled') && $field.hasClass('frozen-field')) {
+        return 0; // Frozen fields do NOT participate in calculations
+    }
+    // Check if the field is disabled for other reasons
+    if ($field.prop('disabled')) {
         return 0;
     }
     return parseFloat(value) || 0;
@@ -5660,6 +6491,10 @@ const STATIC_DISCOUNT_FIELDS = [
 // Add event listeners for static discount fields
 STATIC_DISCOUNT_FIELDS.forEach(function(field) {
     $(document).on('keyup change', '#' + field.amount, function() {
+        // Check if field is frozen
+        if ($(this).hasClass('frozen-field') && $(this).prop('disabled')) {
+            return; // Don't calculate if frozen
+        }
         calculateQuotation();
         toggleRowVisibility();
     });
@@ -6161,10 +6996,63 @@ $(document).ready(function () {
                 $("#insurance_company").val(activeComp.insCo);
                 loadInsurance(activeComp);
             }
-        } else if (savedCompany) {
-            // Direct injection if not found in mock array
-            $("#insurance_company").html(`<option value="${savedCompany}" selected>${savedCompany}</option>`);
-        }
+            } else if (savedCompany) {
+                // Direct injection if not found in mock array
+                $("#insurance_company").html(`<option value="${savedCompany}" selected>${savedCompany}</option>`);
+            }
+
+            // ========================================================
+            // RESTORE CHARGER SWAPPING OPTIONS IN EDIT MODE
+            // ========================================================
+
+            if (
+                currentPricing &&
+                currentPricing.receivables &&
+                currentPricing.receivables["charger-swapping"] &&
+                currentPricing.receivables["charger-swapping"].length > 0
+            ) {
+                const chargerOptions = currentPricing.receivables["charger-swapping"];
+
+                $('#charger_swapping').empty();
+
+                chargerOptions.forEach(function (item) {
+
+                    $('#charger_swapping').append(
+                        $('<option>', {
+                            value: item.title,
+                            text: item.title,
+                            'data-amount': item.amount
+                        })
+                    );
+
+                });
+
+                // Restore saved quotation selection
+                if (SAVED_CHARGER_SWAPPING) {
+                    $('#charger_swapping')
+                        .val(SAVED_CHARGER_SWAPPING)
+                        .prop('disabled', false);
+                }
+
+                if (SAVED_CHARGER_SWAPPING_AMOUNT !== '') {
+                    $('#charger_swapping_amount')
+                        .val(SAVED_CHARGER_SWAPPING_AMOUNT)
+                        .prop('disabled', false);
+                }
+
+                $('#charger_swapping_discount').prop('disabled', false);
+                $('#charger_swapping_discount_type').prop('disabled', false);
+                $('#charger_swapping_option').prop('disabled', false);
+
+            } else {
+                $('#charger_swapping')
+                    .val('N/A')
+                    .prop('disabled', true);
+
+                $('#charger_swapping_amount')
+                    .val('N/A')
+                    .prop('disabled', true);
+            }
 
         // Restore Saved Insurance Covers from proposed_data
         if (Array.isArray(SAVED_INSURANCE_COVERS) && SAVED_INSURANCE_COVERS.length > 0) {
@@ -6191,6 +7079,7 @@ $(document).ready(function () {
             });
             $('#insurance_covers').val(selectedValues).trigger('change');
         }
+        restoreSavedQuotationValues();
     @endif
     
     // Initial calculations
@@ -6207,6 +7096,10 @@ $(document).ready(function () {
             $('#btnFetchMock').click();
         }
     @endif
+
+    setTimeout(function() {
+        checkConditionalFields();
+    }, 500);
 });
 
 function calculateDiscountBifurcationByType() {
@@ -6338,6 +7231,271 @@ $(document).on('change', '#registration_no_type, #registration_category, input[n
 $(document).ready(function () {
     updateRegistrationPrintText();
 });
+
+// ============================================================
+// CONDITIONAL FIELD FREEZING LOGIC
+// ============================================================
+
+let conditionalRules = null;
+
+function loadConditionalRules() {
+    let enquiryNo = $('#mock_enquiry_no').val();
+    if (!enquiryNo || !ENQUIRIES[enquiryNo]) {
+        conditionalRules = null;
+        return;
+    }
+    
+    let pricing = PRICING[ENQUIRIES[enquiryNo].pricingKey];
+    conditionalRules = pricing.conditional_rules || null;
+}
+
+function checkConditionalFields() {
+    // Load rules first
+    loadConditionalRules();
+    
+    if (!conditionalRules) {
+        // No rules - enable both fields
+        $('#accessories_discount').prop('disabled', false).removeClass('frozen-field');
+        $('#shield_scheme').prop('disabled', false).removeClass('frozen-field');
+        $('.freeze-message').remove();
+        return;
+    }
+    
+    // Check Accessories Scheme condition
+    checkAccessoriesSchemeCondition();
+    
+    // Check Shield Scheme condition
+    checkShieldSchemeCondition();
+    
+    // Recalculate after state changes
+    calculateQuotation();
+}
+
+function checkAccessoriesSchemeCondition() {
+    let rule = conditionalRules.accessories_scheme;
+    let accessoriesDiscountInput = $('#accessories_discount');
+    let labelCell = accessoriesDiscountInput.closest('tr').find('td.cell-label');
+    
+    // Remove existing freeze message
+    labelCell.find('.freeze-message').remove();
+    
+    if (!rule) {
+        // No rule - enable field
+        accessoriesDiscountInput.prop('disabled', false).removeClass('frozen-field');
+        accessoriesDiscountInput.attr('placeholder', '0.00');
+        return;
+    }
+    
+    // Get accessories amount
+    let accessoriesAmount = parseFloat($('#accessories_amount').val()) || 0;
+    
+    // Check if criteria is met (if min_amount is 0, always eligible)
+    let minAmount = rule.min_amount || 0;
+    let isEligible = accessoriesAmount >= minAmount;
+    
+    if (isEligible) {
+        // Enable field
+        accessoriesDiscountInput.prop('disabled', false).removeClass('frozen-field');
+        accessoriesDiscountInput.attr('placeholder', '0.00');
+        
+        // Calculate discount based on rule configuration
+        let calculatedDiscount = 0;
+        if (rule.discount_amount !== undefined && rule.discount_amount !== null) {
+            // Use fixed discount amount
+            calculatedDiscount = parseFloat(rule.discount_amount) || 0;
+        } else if (rule.discount_percentage) {
+            // Use percentage
+            calculatedDiscount = accessoriesAmount * (parseFloat(rule.discount_percentage) / 100);
+        } else {
+            // Default: No discount
+            calculatedDiscount = 0;
+        }
+        
+        // Round to 2 decimal places
+        calculatedDiscount = Math.round(calculatedDiscount * 100) / 100;
+        
+        // If field is empty or has N/A, set the calculated value
+        let currentVal = accessoriesDiscountInput.val();
+        if (currentVal === 'N/A' || currentVal === '' || currentVal === null || currentVal === '0' || currentVal === '0.00') {
+            accessoriesDiscountInput.val(calculatedDiscount.toFixed(2));
+        }
+    } else {
+        // Disable/freeze field - set to 0 (not N/A) so it doesn't participate in calculations
+        accessoriesDiscountInput
+            .prop('disabled', true)
+            .addClass('frozen-field')
+            .val('0.00');
+        accessoriesDiscountInput.attr('placeholder', 'Currently not applicable');
+        
+        // Add freeze message to label
+        let message = rule.freeze_message || `(Requires accessories worth ₹${minAmount.toFixed(0)}+)`;
+        labelCell.append(` <span class="freeze-message" style="color: #dc3545; font-weight: normal; font-size: 9px;">${message}</span>`);
+    }
+}
+
+function checkShieldSchemeCondition() {
+    let rule = conditionalRules.shield_scheme;
+    let shieldSchemeInput = $('#shield_scheme');
+    let labelCell = shieldSchemeInput.closest('tr').find('td.cell-label');
+    
+    // Remove existing freeze message
+    labelCell.find('.freeze-message').remove();
+    
+    if (!rule) {
+        // No rule - enable field
+        shieldSchemeInput.prop('disabled', false).removeClass('frozen-field');
+        shieldSchemeInput.attr('placeholder', '0.00');
+        return;
+    }
+    
+    // Get shield status
+    let shieldValue = $('#shield').val();
+    let shieldPrice = parseFloat($('#shield_price').val()) || 0;
+    
+    // Check if shield is selected and has price > 0 (if rule requires it)
+    let minPrice = rule.min_price || 0;
+    let isEligible = shieldValue && 
+                     shieldValue !== '' && 
+                     shieldValue !== 'No Shield' && 
+                     shieldPrice >= minPrice;
+    
+    if (isEligible) {
+        // Enable field
+        shieldSchemeInput.prop('disabled', false).removeClass('frozen-field');
+        shieldSchemeInput.attr('placeholder', '0.00');
+        
+        // Calculate discount based on rule configuration
+        let calculatedDiscount = 0;
+        if (rule.discount_amount !== undefined && rule.discount_amount !== null) {
+            // Use fixed discount amount
+            calculatedDiscount = parseFloat(rule.discount_amount) || 0;
+        } else if (rule.discount_percentage) {
+            // Use percentage
+            calculatedDiscount = shieldPrice * (parseFloat(rule.discount_percentage) / 100);
+        } else {
+            // Default: No discount
+            calculatedDiscount = 0;
+        }
+        
+        // Round to 2 decimal places
+        calculatedDiscount = Math.round(calculatedDiscount * 100) / 100;
+        
+        // If field is empty or has N/A, set the calculated value
+        let currentVal = shieldSchemeInput.val();
+        if (currentVal === 'N/A' || currentVal === '' || currentVal === null || currentVal === '0' || currentVal === '0.00') {
+            shieldSchemeInput.val(calculatedDiscount.toFixed(2));
+        }
+    } else {
+        // Disable/freeze field - set to 0 (not N/A) so it doesn't participate in calculations
+        shieldSchemeInput
+            .prop('disabled', true)
+            .addClass('frozen-field')
+            .val('0.00');
+        shieldSchemeInput.attr('placeholder', 'Currently not applicable');
+        
+        // Add freeze message to label
+        let message = rule.freeze_message || '(Select Shield to avail discount)';
+        labelCell.append(` <span class="freeze-message" style="color: #dc3545; font-weight: normal; font-size: 9px;">${message}</span>`);
+    }
+}function checkShieldSchemeCondition() {
+    let rule = conditionalRules.shield_scheme;
+    let shieldSchemeInput = $('#shield_scheme');
+    let labelCell = shieldSchemeInput.closest('tr').find('td.cell-label');
+    
+    // Remove existing freeze message
+    labelCell.find('.freeze-message').remove();
+    
+    if (!rule) {
+        // No rule - enable field
+        shieldSchemeInput.prop('disabled', false).removeClass('frozen-field');
+        shieldSchemeInput.attr('placeholder', '0.00');
+        return;
+    }
+    
+    // Get shield status
+    let shieldValue = $('#shield').val();
+    let shieldPrice = parseFloat($('#shield_price').val()) || 0;
+    
+    // Check if shield is selected and has price > 0 (if rule requires it)
+    let minPrice = rule.min_price || 0;
+    let isEligible = shieldValue && 
+                     shieldValue !== '' && 
+                     shieldValue !== 'No Shield' && 
+                     shieldPrice >= minPrice;
+    
+    if (isEligible) {
+        // Enable field
+        shieldSchemeInput.prop('disabled', false).removeClass('frozen-field');
+        shieldSchemeInput.attr('placeholder', '0.00');
+        
+        // Calculate discount based on rule configuration
+        let calculatedDiscount = 0;
+        if (rule.discount_amount !== undefined && rule.discount_amount !== null) {
+            // Use fixed discount amount
+            calculatedDiscount = parseFloat(rule.discount_amount) || 0;
+        } else if (rule.discount_percentage) {
+            // Use percentage
+            calculatedDiscount = shieldPrice * (parseFloat(rule.discount_percentage) / 100);
+        } else {
+            // Default: No discount
+            calculatedDiscount = 0;
+        }
+        
+        // Round to 2 decimal places
+        calculatedDiscount = Math.round(calculatedDiscount * 100) / 100;
+        
+        // If field is empty or has N/A, set the calculated value
+        let currentVal = shieldSchemeInput.val();
+        if (currentVal === 'N/A' || currentVal === '' || currentVal === null || currentVal === '0' || currentVal === '0.00') {
+            shieldSchemeInput.val(calculatedDiscount.toFixed(2));
+        }
+    } else {
+        // Disable/freeze field - set to 0 (not N/A) so it doesn't participate in calculations
+        shieldSchemeInput
+            .prop('disabled', true)
+            .addClass('frozen-field')
+            .val('0.00');
+        shieldSchemeInput.attr('placeholder', 'Currently not applicable');
+        
+        // Add freeze message to label
+        let message = rule.freeze_message || '(Select Shield to avail discount)';
+        labelCell.append(` <span class="freeze-message" style="color: #dc3545; font-weight: normal; font-size: 9px;">${message}</span>`);
+    }
+}
+
+// ============================================================
+// CONDITIONAL FIELD EVENT HANDLERS
+// ============================================================
+
+$(document).on('change', '#accessories', function() {
+    // Small delay to ensure accessories_amount is updated first
+    setTimeout(function() {
+        checkConditionalFields();
+    }, 100);
+});
+
+$(document).on('change', '#shield', function() {
+    setTimeout(function() {
+        checkConditionalFields();
+    }, 100);
+});
+
+$(document).on('keyup change', '#shield_price', function() {
+    setTimeout(function() {
+        checkConditionalFields();
+    }, 100);
+});
+
+$(document).on('keyup change', '#accessories_amount', function() {
+    checkConditionalFields();
+});
+
+$(document).on('click', '#btnFetchMock', function() {
+    // Wait for all data to populate then check conditions
+    setTimeout(function() {
+        checkConditionalFields();
+    }, 300);
+});
 @if(request()->query('saved') == '1')
 
 function showPrintOptions() {
@@ -6386,6 +7544,9 @@ function showPrintOptions() {
 
             }, 300);
         }
+        if (result.isDismissed) {
+            window.location.href = "{{ backpack_url('quotation-form') }}";
+        }
 
     });
 }
@@ -6393,5 +7554,64 @@ function showPrintOptions() {
 showPrintOptions();
 
 @endif
+
+// ============================================================
+// FINANCIER FIELD VALIDATION
+// ============================================================
+
+// Function to check if financier is selected
+function validateFinancierField() {
+    let financierVal = $('#financier').val();
+    
+    // Check if financier is empty or has placeholder value
+    if (!financierVal || financierVal === '' || financierVal === '0' || financierVal === 'Select Financier') {
+        return false;
+    }
+    return true;
+}
+
+// Add validation to form submit
+$('form').on('submit', function(e) {
+    // Check financier field
+    if (!validateFinancierField()) {
+        e.preventDefault();
+        
+        Swal.fire({
+            icon: 'error',
+            title: 'Cannot Save Quotation',
+            html: `
+                <div style="text-align: left;">
+                    <p style="font-weight: bold; margin-bottom: 10px;">Please select a Financier before saving.</p>
+                    <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin: 10px 0;">
+                        ⚠️ <b>Financier</b> field is mandatory.
+                    </div>
+                    <p style="color: #6c757d; font-size: 12px; margin-top: 10px;">
+                        Please select a financier from the dropdown.
+                    </p>
+                </div>
+            `,
+            confirmButtonText: 'OK, Select Financier',
+            confirmButtonColor: '#3085d6'
+        });
+        
+        // Highlight the financier field
+        $('#financier').css('border', '2px solid #dc3545');
+        
+        return false;
+    }
+    
+    // Clear highlight if valid
+    $('#financier').css('border', '');
+    
+    return true;
+});
+
+// Clear error border when user selects a value
+$(document).on('change', '#financier', function() {
+    let val = $(this).val();
+    if (val && val !== '' && val !== '0' && val !== 'Select Financier') {
+        $(this).css('border', '');
+    }
+});
 </script>
 @endpush

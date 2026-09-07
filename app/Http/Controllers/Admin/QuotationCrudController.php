@@ -338,6 +338,9 @@ class QuotationCrudController extends CrudController
             "016" => ["name" => "Kavya Nair", "mobile" => "9876500016"],
             "017" => ["name" => "Arjun Mehta", "mobile" => "9876500017"],
             "018" => ["name" => "Priya Singh", "mobile" => "9876500018"],
+            "019" => ["name" => "Dr. Ananya Reddy", "mobile" => "9876500019"],
+            "020" => ["name" => "Mohan Transport", "mobile" => "9876500020"],
+            "021" => ["name" => "Sakshi Enterprises", "mobile" => "9876500021"],
         ];
 
         $this->crud->setListView('admin.quotation.list');
@@ -1695,7 +1698,15 @@ class QuotationCrudController extends CrudController
             $enquiry = Enquiry::findOrFail($request->enquiry_no);
 
             $previousProposal = $quotation->standard_data ?? [];
-            $quotationData = $request->except(['_token', '_method']);
+
+            if (!is_array($previousProposal)) {
+                $previousProposal = [];
+            }
+
+            $quotationData = array_merge(
+                $previousProposal,
+                $request->except(['_token', '_method'])
+            );
 
             $oldFinancier = $previousProposal['financier'] ?? null;
             $newFinancier = $quotationData['financier'] ?? null;

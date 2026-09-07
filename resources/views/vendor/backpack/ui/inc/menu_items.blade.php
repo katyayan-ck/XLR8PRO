@@ -233,7 +233,7 @@
             :link="backpack_url('booking/create')" /> -->
         <x-backpack::menu-dropdown-item title="Booking List" icon="la la-list" :link="backpack_url('booking')" />
 
-        <x-backpack::menu-dropdown-item title="DMS Booking List" icon="la la-database" :link="backpack_url('enquiries/otf-bookings')" />
+        <x-backpack::menu-dropdown-item title="DMS Booking List" icon="la la-database" :link="backpack_url('booking/pending-dms')" />
 
         <x-backpack::menu-dropdown-item title="Dummy Bookings" icon="la la-flask"
             :link="backpack_url('booking/dummy')" />
