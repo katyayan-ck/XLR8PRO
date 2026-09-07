@@ -46,7 +46,8 @@
 
                     <th width="15%">Date</th>
                     <th width="10%">On Road</th>
-                    <th width="34%">Financier</th>
+                    <th width="24%">Financier</th>
+                    <th width="15%">Changes</th>
                     <th width="5%">View</th>
 
                 </tr>
@@ -92,6 +93,9 @@
 
                     <td>
                         {{ $row->financier_display ?: '-' }}
+                    </td>
+                    <td>
+                        {{ $row->change_groups ?: '' }}
                     </td>
                     <td class="text-center">
                         <a href="{{ backpack_url('quotation-form/' . $quotation->id . '/history/' . $row->version . '/pdf') }}"

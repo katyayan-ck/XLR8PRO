@@ -7107,10 +7107,12 @@ class BookingCrudController extends CrudController
                 '5'  => 'Goods - G 3 Ton+ (4 Wheeler)',
                 '6'  => 'Goods - G (3 Wheeler)',
                 '7'  => 'Goods - G EV (3 Wheeler)',
-                '8'  => 'Taxi - T (4 Wheeler)',
-                '9'  => 'Passenger - P (3 Wheeler)',
-                '10' => 'Passenger - P EV (3 Wheeler)',
-                '11' => 'Ambulance (Misc.)',
+                '8'  => 'Goods - G EV (4 Wheeler)',
+                '9'  => 'Taxi - T (4 Wheeler)',
+                '10' => 'Taxi - T EV (4 Wheeler)',
+                '11' => 'Passenger - P (3 Wheeler)',
+                '12' => 'Passenger - P EV (3 Wheeler)',
+                '13' => 'Ambulance (Misc.)',
             ];
 
             $bodyTypeMap = [
@@ -11591,10 +11593,12 @@ class BookingCrudController extends CrudController
             '5'  => 'Goods - G 3 Ton+ (4 Wheeler)',
             '6'  => 'Goods - G (3 Wheeler)',
             '7'  => 'Goods - G EV (3 Wheeler)',
-            '8'  => 'Taxi - T (4 Wheeler)',
-            '9'  => 'Passenger - P (3 Wheeler)',
-            '10' => 'Passenger - P EV (3 Wheeler)',
-            '11' => 'Ambulance (Misc.)',
+            '8'  => 'Goods - G EV (4 Wheeler)',
+            '9'  => 'Taxi - T (4 Wheeler)',
+            '10' => 'Taxi - T EV (4 Wheeler)',
+            '11' => 'Passenger - P (3 Wheeler)',
+            '12' => 'Passenger - P EV (3 Wheeler)',
+            '13' => 'Ambulance (Misc.)',
         ];
 
         $reg_no_type_map = [
