@@ -482,4 +482,6 @@ Route::group([
         ->name('booking.check-field-payment');
     Route::post('booking/{id}/otf-save', 'BookingCrudController@otfSave')
         ->name('booking.otf.save');
+    Route::get('booking/{id}/download-otf-pdf', [BookingCrudController::class, 'downloadOtfPdf'])
+        ->name('booking.download-otf-pdf');
 });

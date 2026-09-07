@@ -468,10 +468,11 @@ use App\Services\OrgService;
                     <div class="col-8 text-center">
                         <h3 class="fw-bold mb-1">BIKANER MOTORS PRIVATE LIMITED</h3>
                         <div style="font-size:13px;">
-                            Regd. Office : Sunderi Chhabil Mansion, NH-11, Jaipur Road, P.O. Udasar, Bikaner-334022
+                            Regd. Office : Sunehri Chhabil Mansion, NH-11, Jaipur Road,
+                            Bikaner-334022
                         </div>
                         <div style="font-size:13px;">
-                            Branch Office : 6th KM Stone, Ratangarh Road, Churu (Raj.)
+                            Branch Office : 6th KM Stone, Ratangarh Road, Churu-331001
                         </div>
                         <h4 class="mt-2 mb-0 fw-bold text-uppercase">Transaction Sheet</h4>
                     </div>
@@ -698,9 +699,6 @@ use App\Services\OrgService;
                                     <td><input type="text" value="{{ $booking->id }}" readonly></td>
                                 </tr>
                             </table>
-
-
-
 
                             {{-- Additional Sales Details --}}
                             <table class="bill-table">
@@ -1038,7 +1036,7 @@ use App\Services\OrgService;
                                     <td>
                                         <input type="text" name="invoice_date_display" id="invoice_date"
                                             class="flatpickr" placeholder="dd-MMM-yyyy" value="{{ old('invoice_date_display',
-                    $booking->inv_date ? \Carbon\Carbon::parse($booking->inv_date)->format('d-M-Y') : '') }}">
+                                $booking->inv_date ? \Carbon\Carbon::parse($booking->inv_date)->format('d-M-Y') : '') }}">
 
                                         <input type="hidden" name="inv_date" id="hidden_invoice_date"
                                             value="{{ old('inv_date', $booking->inv_date) }}">
@@ -1216,7 +1214,8 @@ use App\Services\OrgService;
                                                         <option value="{{ $accessory->part_no }}"
                                                             data-price="{{ $accessory->ndp }}"
                                                             {{ in_array($accessory->part_no, $selectedAccessories) ? 'selected' : '' }}>
-                                                            {{ $accessory->item }} (₹{{ number_format($accessory->ndp, 2) }})
+                                                            {{ mb_convert_case(trim($accessory->item), MB_CASE_TITLE, 'UTF-8') }}
+                                                            (₹{{ number_format($accessory->ndp, 2) }})
                                                         </option>
                                                     @endforeach
                                                 </select>
@@ -2016,119 +2015,7 @@ use App\Services\OrgService;
                                     </tr>
                                 </table>
 
-                                {{-- Receipt Table --}}
-                                <div class="col-12 mt-1">
-                                    <div class="form-section">
-                                        <div class="table-responsive">
-                                            <table class="table table-bordered table-sm mb-0 receipt-table">
-                                                <thead>
-                                                    <tr>
-                                                        <th style="font-size: 10px; font-weight: 700; color: #495057; text-transform: uppercase; padding: 6px 8px; width: 30%;">
-                                                            <i class="la la-hashtag me-1"></i> Receipt No.
-                                                        </th>
-
-                                                        <th style="font-size: 10px; font-weight: 700; color: #495057; text-transform: uppercase; padding: 6px 8px; width: 20%;">
-                                                            <i class="la la-calendar me-1"></i> Date
-                                                        </th>
-
-                                                        <th style="font-size: 10px; font-weight: 700; color: #495057; text-transform: uppercase; padding: 6px 8px; width: 20%;">
-                                                            <i class="la la-credit-card me-1"></i> Receipt Mode
-                                                        </th>
-
-                                                        <th style="font-size: 10px; font-weight: 700; color: #495057; text-transform: uppercase; padding: 6px 8px; width: 20%;">
-                                                            <i class="la la-money me-1"></i> Amount
-                                                        </th>
-
-                                                        <th style="font-size: 10px; font-weight: 700; color: #495057; text-transform: uppercase; padding: 6px 8px; width: 10%; text-align: center;">
-                                                            <i class="la la-eye me-1"></i> View
-                                                        </th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    @forelse($receiptLogs ?? [] as $receipt)
-                                                    <tr style="transition: background 0.2s ease;">
-                                                        <td style="padding: 5px 8px; vertical-align: middle;">
-                                                            <span class="badge bg-light text-dark"
-                                                                style="font-size: 10px; font-weight: 600; padding: 4px 10px; border: 1px solid #dee2e6;">
-                                                                {{ $receipt->reciept }}
-                                                            </span>
-                                                        </td>
-                                                        <td
-                                                            style="padding: 5px 8px; vertical-align: middle; font-size: 10px; color: #495057;">
-                                                            {{ \Carbon\Carbon::parse($receipt->date)->format('d M Y') }}
-                                                        </td>
-                                                        <td style="padding: 5px 8px; vertical-align: middle; font-size: 10px; color: #495057;">
-                                                            {{ $receipt->mode ?? '' }}
-                                                        </td>
-                                                        <td
-                                                            style="padding: 5px 8px; vertical-align: middle; font-size: 10px; font-weight: 600; color: #28a745;">
-                                                            ₹ {{ number_format($receipt->amount, 2) }}
-                                                        </td>
-                                                        <td
-                                                            style="padding: 5px 8px; vertical-align: middle; text-align: center;">
-                                                            @php
-                                                            $receiptImage = $receipt->getFirstMediaUrl('amount-proof');
-                                                            @endphp
-                                                            @if($receiptImage)
-                                                            <a href="{{ $receiptImage }}" data-lightbox="receipt-images"
-                                                                data-title="Receipt {{ $receipt->reciept }}"
-                                                                class="btn btn-sm btn-outline-primary"
-                                                                style="padding: 2px 8px; font-size: 9px; border-radius: 4px;">
-                                                                <i class="la la-eye" style="font-size: 14px;"></i>
-                                                            </a>
-                                                            @else
-                                                            <span class="text-muted" style="font-size: 9px;">
-                                                                <i class="la la-eye-slash"></i> No File
-                                                            </span>
-                                                            @endif
-                                                        </td>
-                                                    </tr>
-                                                    @empty
-                                                    <tr>
-                                                        <td colspan="4" class="text-center py-3"
-                                                            style="font-size: 11px; color: #6c757d;">
-                                                            <i class="la la-inbox"
-                                                                style="font-size: 24px; display: block; margin-bottom: 5px;"></i>
-                                                            No Receipts Found
-                                                        </td>
-                                                    </tr>
-                                                    @endforelse
-                                                </tbody>
-                                                @if($receiptLogs->count() > 0)
-                                                <tfoot>
-                                                    <tr>
-                                                        <td colspan="2"
-                                                            style="padding: 5px 8px; font-size: 10px; font-weight: 700; color: #495057; text-align: right;">
-                                                            TOTAL:
-                                                        </td>
-                                                        <td
-                                                            style="padding: 5px 8px; font-size: 10px; font-weight: 700; color: #28a745;">
-                                                            ₹ {{ number_format($receiptLogs->sum('amount') ?? 0, 2) }}
-                                                        </td>
-                                                        <td style="padding: 5px 8px;"></td>
-                                                        <td style="padding: 5px 8px;"></td>
-                                                    </tr>
-                                                </tfoot>
-                                                @endif
-                                            </table>
-                                        </div>
-
-                                        {{-- Receipt Count Badge --}}
-                                        @if($receiptLogs->count() > 0)
-                                        <div class="mt-1 text-end">
-                                            <small class="text-muted" style="font-size: 9px;">
-                                                <i class="la la-file-text-o me-1"></i>
-                                                {{ $receiptLogs->count() }} {{ Str::plural('receipt', $receiptLogs->count())
-                                                }} found
-                                            </small>
-                                        </div>
-                                        @endif
-
-                                        {{-- HIDDEN FIELD FOR RECEIPT TOTAL --}}
-                                        <input type="hidden" id="receipt_total" name="receipt_total"
-                                            value="{{ number_format($receiptLogs->sum('amount') ?? 0, 2) }}">
-                                    </div>
-                                </div>
+                                
                             </div>
 
                         </div>
@@ -2332,6 +2219,119 @@ use App\Services\OrgService;
                                     </td>
                                 </tr>
                             </table>
+                            {{-- Receipt Table --}}
+                                <div class="col-12 mt-1">
+                                    <div class="form-section">
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered table-sm mb-0 receipt-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th style="font-size: 10px; font-weight: 700; color: #495057; text-transform: uppercase; padding: 6px 8px; width: 30%;">
+                                                            <i class="la la-hashtag me-1"></i> Receipt No.
+                                                        </th>
+
+                                                        <th style="font-size: 10px; font-weight: 700; color: #495057; text-transform: uppercase; padding: 6px 8px; width: 20%;">
+                                                            <i class="la la-calendar me-1"></i> Date
+                                                        </th>
+
+                                                        <th style="font-size: 10px; font-weight: 700; color: #495057; text-transform: uppercase; padding: 6px 8px; width: 20%;">
+                                                            <i class="la la-credit-card me-1"></i> Receipt Mode
+                                                        </th>
+
+                                                        <th style="font-size: 10px; font-weight: 700; color: #495057; text-transform: uppercase; padding: 6px 8px; width: 20%;">
+                                                            <i class="la la-money me-1"></i> Amount
+                                                        </th>
+
+                                                        <th style="font-size: 10px; font-weight: 700; color: #495057; text-transform: uppercase; padding: 6px 8px; width: 10%; text-align: center;">
+                                                            <i class="la la-eye me-1"></i> View
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @forelse($receiptLogs ?? [] as $receipt)
+                                                    <tr style="transition: background 0.2s ease;">
+                                                        <td style="padding: 5px 8px; vertical-align: middle;">
+                                                            <span class="badge bg-light text-dark"
+                                                                style="font-size: 10px; font-weight: 600; padding: 4px 10px; border: 1px solid #dee2e6;">
+                                                                {{ $receipt->reciept }}
+                                                            </span>
+                                                        </td>
+                                                        <td
+                                                            style="padding: 5px 8px; vertical-align: middle; font-size: 10px; color: #495057;">
+                                                            {{ \Carbon\Carbon::parse($receipt->date)->format('d M Y') }}
+                                                        </td>
+                                                        <td style="padding: 5px 8px; vertical-align: middle; font-size: 10px; color: #495057;">
+                                                            {{ $receipt->mode ?? '' }}
+                                                        </td>
+                                                        <td
+                                                            style="padding: 5px 8px; vertical-align: middle; font-size: 10px; font-weight: 600; color: #28a745;">
+                                                            ₹ {{ number_format($receipt->amount, 2) }}
+                                                        </td>
+                                                        <td
+                                                            style="padding: 5px 8px; vertical-align: middle; text-align: center;">
+                                                            @php
+                                                            $receiptImage = $receipt->getFirstMediaUrl('amount-proof');
+                                                            @endphp
+                                                            @if($receiptImage)
+                                                            <a href="{{ $receiptImage }}" data-lightbox="receipt-images"
+                                                                data-title="Receipt {{ $receipt->reciept }}"
+                                                                class="btn btn-sm btn-outline-primary"
+                                                                style="padding: 2px 8px; font-size: 9px; border-radius: 4px;">
+                                                                <i class="la la-eye" style="font-size: 14px;"></i>
+                                                            </a>
+                                                            @else
+                                                            <span class="text-muted" style="font-size: 9px;">
+                                                                <i class="la la-eye-slash"></i> No File
+                                                            </span>
+                                                            @endif
+                                                        </td>
+                                                    </tr>
+                                                    @empty
+                                                    <tr>
+                                                        <td colspan="4" class="text-center py-3"
+                                                            style="font-size: 11px; color: #6c757d;">
+                                                            <i class="la la-inbox"
+                                                                style="font-size: 24px; display: block; margin-bottom: 5px;"></i>
+                                                            No Receipts Found
+                                                        </td>
+                                                    </tr>
+                                                    @endforelse
+                                                </tbody>
+                                                @if($receiptLogs->count() > 0)
+                                                <tfoot>
+                                                    <tr>
+                                                        <td colspan="2"
+                                                            style="padding: 5px 8px; font-size: 10px; font-weight: 700; color: #495057; text-align: right;">
+                                                            TOTAL:
+                                                        </td>
+                                                        <td
+                                                            style="padding: 5px 8px; font-size: 10px; font-weight: 700; color: #28a745;">
+                                                            ₹ {{ number_format($receiptLogs->sum('amount') ?? 0, 2) }}
+                                                        </td>
+                                                        <td style="padding: 5px 8px;"></td>
+                                                        <td style="padding: 5px 8px;"></td>
+                                                    </tr>
+                                                </tfoot>
+                                                @endif
+                                            </table>
+                                        </div>
+
+                                        {{-- Receipt Count Badge --}}
+                                        @if($receiptLogs->count() > 0)
+                                        <div class="mt-1 text-end">
+                                            <small class="text-muted" style="font-size: 9px;">
+                                                <i class="la la-file-text-o me-1"></i>
+                                                {{ $receiptLogs->count() }} {{ Str::plural('receipt', $receiptLogs->count())
+                                                }} found
+                                            </small>
+                                        </div>
+                                        @endif
+
+                                        {{-- HIDDEN FIELD FOR RECEIPT TOTAL --}}
+                                        <input type="hidden" id="receipt_total" name="receipt_total"
+                                            value="{{ number_format($receiptLogs->sum('amount') ?? 0, 2) }}">
+                                    </div>
+                                </div>
 
                         </div>
                     </div>
@@ -2496,12 +2496,22 @@ use App\Services\OrgService;
 </div> <!-- /.quotation-form -->
 
 <div class="card-footer text-end mt-3 no-print">
-    <button type="button" class="btn btn-primary no-print" onclick="printQuotation();">
-        <i class="la la-print"></i> Print / Save PDF
-    </button>
+    {{-- DOWNLOAD PDF BUTTON --}}
+    <a href="{{ route('booking.download-otf-pdf', $booking->id) }}" 
+       class="btn btn-primary no-print" 
+       target="_blank">
+        <i class="la la-file-pdf"></i> Download PDF
+    </a>
+    
+    {{-- PRINT / SAVE PDF (still available) --}}
+    {{-- <button type="button" class="btn btn-secondary no-print" onclick="window.print();">
+        <i class="la la-print"></i> Print
+    </button> --}}
+    
     <button type="submit" class="btn btn-success">
         <i class="la la-save"></i> Save Transaction Form
     </button>
+    
     <a href="{{ backpack_url('quotation-form') }}" class="btn btn-secondary">Cancel</a>
 </div>
 </form>
@@ -2633,7 +2643,16 @@ function updateAccessoriesPrintText() {
     let list = [];
 
     $('#accessories option:selected').each(function () {
-        list.push($(this).text());
+
+        let text = $(this).text().trim();
+
+        // Convert accessory name to Title Case
+        text = text.replace(/\b([A-Z]+)\b/g, function(word) {
+            return word.charAt(0).toUpperCase() +
+                   word.slice(1).toLowerCase();
+        });
+
+        list.push(text);
     });
 
     $('#accessories_print').html(

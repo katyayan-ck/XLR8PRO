@@ -50,6 +50,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use App\Models\CRM\QuoteAction;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 
 class BookingCrudController extends CrudController
@@ -1103,116 +1104,112 @@ class BookingCrudController extends CrudController
         return [
             // ----- BASIC INFO -----
             ['headerName' => 'S.No.', 'field' => 'serial_no', 'width' => 70, 'sortable' => false, 'filter' => false],
-            ['headerName' => 'Branch', 'field' => 'branch_name', 'width' => 130, 'filter' => true],
-            ['headerName' => 'Location', 'field' => 'location_name', 'width' => 130, 'filter' => true],
+            ['headerName' => 'VOTF No.', 'field' => 'votf_no', 'width' => 130],
+            ['headerName' => 'Chassis No.', 'field' => 'chassis_no', 'width' => 140],
+            ['headerName' => 'Invoice Type', 'field' => 'invoice_type', 'width' => 120, 'filter' => true],
+            ['headerName' => 'Invoice No.', 'field' => 'inv_no', 'width' => 120],
+            ['headerName' => 'Invoice Date', 'field' => 'inv_date', 'width' => 120, 'type' => 'date'],
+            
+            // ----- X8 Fields -----
+            ['headerName' => 'X8 Enq Date', 'field' => 'x8_enq_date', 'width' => 120, 'type' => 'date'],
+            ['headerName' => 'X8 Booking No.', 'field' => 'x8_booking_no', 'width' => 120],
+            ['headerName' => 'X8 Booking Date', 'field' => 'x8_booking_date', 'width' => 130, 'type' => 'date'],
+            
+            // ----- DMS -----
+            ['headerName' => 'DMS OTF No.', 'field' => 'dms_otf', 'width' => 130],
+            ['headerName' => 'DMS Enq No.', 'field' => 'dms_no', 'width' => 130],
+            
+            // ----- Customer -----
             ['headerName' => 'Customer Name', 'field' => 'customer_name', 'width' => 160, 'filter' => true],
-            ['headerName' => 'Address', 'field' => 'customer_address', 'width' => 200],
+            ['headerName' => 'Contact No.', 'field' => 'mobile', 'width' => 120],
             ['headerName' => 'Tehsil', 'field' => 'customer_tehsil', 'width' => 120],
             ['headerName' => 'District', 'field' => 'customer_district', 'width' => 120],
+            ['headerName' => 'Customer Category', 'field' => 'customer_category', 'width' => 150, 'filter' => true],
+            ['headerName' => 'Retail Category', 'field' => 'retail_category', 'width' => 130, 'filter' => true],
+            ['headerName' => 'Customer GSTIN', 'field' => 'gstn', 'width' => 140],
+            ['headerName' => 'Customer PAN', 'field' => 'pan_no', 'width' => 120],
+            ['headerName' => 'Customer Adhaar', 'field' => 'adhar_no', 'width' => 140],
+            
+            // ----- Vehicle -----
             ['headerName' => 'Segment', 'field' => 'segment', 'width' => 120, 'filter' => true],
             ['headerName' => 'Model', 'field' => 'model', 'width' => 140, 'filter' => true],
             ['headerName' => 'Variant', 'field' => 'variant', 'width' => 140, 'filter' => true],
-            ['headerName' => 'Chassis Number', 'field' => 'chassis_no', 'width' => 140],
-            
-            // ----- VEHICLE DETAILS -----
-            ['headerName' => 'Body Type', 'field' => 'body_type', 'width' => 140, 'filter' => true],
-            ['headerName' => 'Sale Type', 'field' => 'sale_type', 'width' => 150, 'filter' => true],
-            ['headerName' => 'Permit', 'field' => 'permit', 'width' => 200, 'filter' => true],
-            ['headerName' => 'RTO Type', 'field' => 'registration_no_type', 'width' => 150, 'filter' => true],
+            ['headerName' => 'Color', 'field' => 'color', 'width' => 100],
+            ['headerName' => 'Body Type', 'field' => 'body_type', 'width' => 120, 'filter' => true],
+            ['headerName' => 'Sale Type', 'field' => 'sale_type', 'width' => 130, 'filter' => true],
+            ['headerName' => 'Registration Type', 'field' => 'registration_type', 'width' => 140, 'filter' => true],
             ['headerName' => 'Registration Category', 'field' => 'registration_category', 'width' => 160, 'filter' => true],
+            ['headerName' => 'Permit', 'field' => 'permit', 'width' => 200, 'filter' => true],
             
-            // ----- OTF / DMS -----
-            ['headerName' => 'VOTF Number', 'field' => 'votf_no', 'width' => 150],
-            ['headerName' => 'FSC Name', 'field' => 'fsc_name', 'width' => 150, 'filter' => true],
-            ['headerName' => 'FSC Mile ID', 'field' => 'fsc_mile_id', 'width' => 140],
-            ['headerName' => 'DMS Enquiry No.', 'field' => 'dms_no', 'width' => 150],
-            ['headerName' => 'DMS OTF No.', 'field' => 'dms_otf', 'width' => 150],
+            // ----- SC (Sales Consultant) -----
+            ['headerName' => 'SC Name', 'field' => 'fsc_name', 'width' => 150, 'filter' => true],
+            ['headerName' => 'SC Mile ID', 'field' => 'fsc_mile_id', 'width' => 130],
+            ['headerName' => 'SC Branch', 'field' => 'sc_branch', 'width' => 130],
+            ['headerName' => 'SC Location', 'field' => 'sc_location', 'width' => 140],
+            
+            // ----- PMS SC -----
+            ['headerName' => 'PMS SC Name', 'field' => 'pms_sc_name', 'width' => 150, 'filter' => true],
+            ['headerName' => 'PMS SC Mile ID', 'field' => 'pms_sc_mile_id', 'width' => 140],
+            
+            // ----- DSA -----
+            ['headerName' => 'DSA Retail', 'field' => 'dsa_retail', 'width' => 110, 'filter' => true],
+            ['headerName' => 'DSA Name', 'field' => 'dsa_name', 'width' => 160, 'filter' => true],
+            ['headerName' => 'DSA Location', 'field' => 'dsa_location', 'width' => 150],
+            ['headerName' => 'Exchange', 'field' => 'exchange', 'width' => 120, 'filter' => true],
+            ['headerName' => 'In-House RTO', 'field' => 'in_house_rto', 'width' => 120, 'filter' => true],
+            ['headerName' => 'In-House Insurance', 'field' => 'in_house_insurance', 'width' => 140, 'filter' => true],
             
             // ----- PRICE DETAILS -----
-            ['headerName' => 'Ex-Showroom Price', 'field' => 'ex_showroom_price', 'width' => 150, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'Insurance Company', 'field' => 'insurance_company', 'width' => 160, 'filter' => true],
-            ['headerName' => 'Insurance Type', 'field' => 'insurance_type', 'width' => 180, 'filter' => true],
-            ['headerName' => 'Insurance Covers', 'field' => 'insurance_covers', 'width' => 220],
-            ['headerName' => 'Insurance Amount', 'field' => 'insurance_amount', 'width' => 150, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'Registration Type', 'field' => 'registration_type', 'width' => 150, 'filter' => true],
-            ['headerName' => 'Registration Amount', 'field' => 'registration_amount', 'width' => 160, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'Accessories', 'field' => 'accessories', 'width' => 200],
-            ['headerName' => 'Accessories Amount', 'field' => 'accessories_amount', 'width' => 160, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'Maxicare', 'field' => 'maxicare', 'width' => 130, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'VLTD Device (GPS)', 'field' => 'vltd_device', 'width' => 150, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'Coating', 'field' => 'coating', 'width' => 140, 'filter' => true],
-            ['headerName' => 'Coating Price', 'field' => 'coating_price', 'width' => 130, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'PPF', 'field' => 'ppf', 'width' => 120, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'RTO Yellow Tape', 'field' => 'rto_yellow_tape', 'width' => 150, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'Kazam Charging Kit', 'field' => 'kazam', 'width' => 160, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'Incidental Charges', 'field' => 'incidental_charges', 'width' => 150, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'Shield', 'field' => 'shield', 'width' => 140, 'filter' => true],
-            ['headerName' => 'Shield Price', 'field' => 'shield_price', 'width' => 130, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'RSA', 'field' => 'rsa', 'width' => 120, 'filter' => true],
-            ['headerName' => 'RSA Amount', 'field' => 'rsa_amount', 'width' => 130, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'Fastag', 'field' => 'fastag', 'width' => 120, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'COD Charges', 'field' => 'cod_charges', 'width' => 130, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'Charger Swapping', 'field' => 'charger_swapping', 'width' => 180, 'filter' => true],
-            ['headerName' => 'Charger Swapping Amount', 'field' => 'charger_swapping_amount', 'width' => 180, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'Charger Swapping Option', 'field' => 'charger_swapping_option', 'width' => 180, 'filter' => true],
-            ['headerName' => 'TCS @ 1%', 'field' => 'tcs', 'width' => 120, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'Total Receivable', 'field' => 'total_receivable', 'width' => 150, 'type' => 'number', 'cellClass' => 'text-right fw-bold'],
+            ['headerName' => 'Ex SR Price', 'field' => 'ex_showroom_price', 'width' => 130, 'type' => 'number', 'cellClass' => 'text-right'],
+            ['headerName' => 'Insurance', 'field' => 'insurance_amount', 'width' => 130, 'type' => 'number', 'cellClass' => 'text-right'],
+            ['headerName' => 'Registration', 'field' => 'registration_amount', 'width' => 130, 'type' => 'number', 'cellClass' => 'text-right'],
+            ['headerName' => 'Accessories', 'field' => 'accessories_amount', 'width' => 130, 'type' => 'number', 'cellClass' => 'text-right'],
+            ['headerName' => 'Maxicare', 'field' => 'maxicare', 'width' => 110, 'type' => 'number', 'cellClass' => 'text-right'],
+            ['headerName' => 'VLTD Device (GPS)', 'field' => 'vltd_device', 'width' => 140, 'type' => 'number', 'cellClass' => 'text-right'],
+            ['headerName' => 'Ceramic Coating', 'field' => 'coating_price', 'width' => 130, 'type' => 'number', 'cellClass' => 'text-right'],
+            ['headerName' => 'PPF', 'field' => 'ppf', 'width' => 100, 'type' => 'number', 'cellClass' => 'text-right'],
+            ['headerName' => 'RTO Yellow Tape', 'field' => 'rto_yellow_tape', 'width' => 130, 'type' => 'number', 'cellClass' => 'text-right'],
+            ['headerName' => 'Total Receivable', 'field' => 'total_receivable', 'width' => 140, 'type' => 'number', 'cellClass' => 'text-right fw-bold'],
             
             // ----- DISCOUNTS -----
-            ['headerName' => 'Cash Scheme OEM', 'field' => 'cash_scheme_oem', 'width' => 150, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'CSD Discount', 'field' => 'csd_discount', 'width' => 140, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'Fame Subsidy', 'field' => 'fame_subsidy', 'width' => 140, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'Cash Scheme Dealer', 'field' => 'dealer_discount', 'width' => 160, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'Accessories Scheme', 'field' => 'accessories_discount', 'width' => 160, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'Shield Scheme', 'field' => 'shield_scheme', 'width' => 140, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'Corporate Discount', 'field' => 'corporate_discount', 'width' => 160, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'Loyalty Bonus', 'field' => 'loyalty_bonus', 'width' => 140, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'Exchange Bonus', 'field' => 'exchange_bonus', 'width' => 150, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'Green Bonus', 'field' => 'green_bonus', 'width' => 140, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'Welcome Bonus', 'field' => 'welcome_bonus', 'width' => 150, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'Accessories Spl Disc', 'field' => 'accessories_spl_disc', 'width' => 170, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'Coating Spl Discount', 'field' => 'ceramic_discount', 'width' => 170, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'PPF Spl Discount', 'field' => 'ppf_discount', 'width' => 160, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'Charger Swapping Disc.', 'field' => 'charger_swapping_discount', 'width' => 190, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'Charger Swapping Disc. Type', 'field' => 'charger_swapping_discount_type', 'width' => 190],
-            ['headerName' => 'Other Cash Discount', 'field' => 'other_cash_discount', 'width' => 160, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'Special Cash Discount', 'field' => 'special_cash_discount', 'width' => 170, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'Total Discount', 'field' => 'total_discount', 'width' => 150, 'type' => 'number', 'cellClass' => 'text-right fw-bold'],
-            ['headerName' => 'Net Receivable', 'field' => 'net_receivable', 'width' => 150, 'type' => 'number', 'cellClass' => 'text-right fw-bold'],
+            ['headerName' => 'Disc 1', 'field' => 'disc_1', 'width' => 100, 'type' => 'number', 'cellClass' => 'text-right'],
+            ['headerName' => 'Disc 2', 'field' => 'disc_2', 'width' => 100, 'type' => 'number', 'cellClass' => 'text-right'],
+            ['headerName' => 'Total Disc', 'field' => 'total_discount', 'width' => 120, 'type' => 'number', 'cellClass' => 'text-right fw-bold'],
+            ['headerName' => 'Net Receivable', 'field' => 'net_receivable', 'width' => 140, 'type' => 'number', 'cellClass' => 'text-right fw-bold'],
             
             // ----- FINANCE -----
             ['headerName' => 'Financier Name', 'field' => 'financier', 'width' => 160, 'filter' => true],
-            ['headerName' => 'Financier Branch', 'field' => 'financier_branch', 'width' => 150],
-            ['headerName' => 'Loan Amount', 'field' => 'loan_amount', 'width' => 140, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'File Charge', 'field' => 'file_charge', 'width' => 140, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'Margin Money', 'field' => 'margin_money', 'width' => 140, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'Financier Subvention', 'field' => 'financier_subvention', 'width' => 170, 'type' => 'number', 'cellClass' => 'text-right'],
+            ['headerName' => 'Loan Amount', 'field' => 'loan_amount', 'width' => 130, 'type' => 'number', 'cellClass' => 'text-right'],
+            ['headerName' => 'File Charge', 'field' => 'file_charge', 'width' => 120, 'type' => 'number', 'cellClass' => 'text-right'],
+            ['headerName' => 'Payment Made to Financier by Customer', 'field' => 'margin_money', 'width' => 220, 'type' => 'number', 'cellClass' => 'text-right'],
+            ['headerName' => 'Financier Subvention Amount', 'field' => 'financier_subvention', 'width' => 190, 'type' => 'number', 'cellClass' => 'text-right'],
             ['headerName' => 'DO Amount', 'field' => 'do_amount', 'width' => 130, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'Receipt Details', 'field' => 'receipt_details', 'width' => 280],
-            ['headerName' => 'Receipt Total', 'field' => 'receipt_total', 'width' => 140, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'DO Settlement Diff.', 'field' => 'do_settlement_difference', 'width' => 160, 'type' => 'number', 'cellClass' => 'text-right'],
+            
+            // ----- RECEIPTS -----
+            ['headerName' => 'Receipt No. 1', 'field' => 'receipt_no_1', 'width' => 130],
+            ['headerName' => 'Receipt Date 1', 'field' => 'receipt_date_1', 'width' => 130, 'type' => 'date'],
+            ['headerName' => 'Receipt Amount 1', 'field' => 'receipt_amount_1', 'width' => 140, 'type' => 'number', 'cellClass' => 'text-right'],
+            ['headerName' => 'Receipt No. 2', 'field' => 'receipt_no_2', 'width' => 130],
+            ['headerName' => 'Receipt Date 2', 'field' => 'receipt_date_2', 'width' => 130, 'type' => 'date'],
+            ['headerName' => 'Receipt Amount 3', 'field' => 'receipt_amount_3', 'width' => 140, 'type' => 'number', 'cellClass' => 'text-right'],
+            ['headerName' => 'Total Receipt Amount', 'field' => 'receipt_total', 'width' => 160, 'type' => 'number', 'cellClass' => 'text-right fw-bold'],
+            
+            // ----- BALANCE -----
             ['headerName' => 'Expected Balance', 'field' => 'expected_balance', 'width' => 150, 'type' => 'number', 'cellClass' => 'text-right'],
+            ['headerName' => 'DO Settlement Difference', 'field' => 'do_settlement_difference', 'width' => 180, 'type' => 'number', 'cellClass' => 'text-right'],
             ['headerName' => 'Discount Through JV', 'field' => 'discount_through_jv', 'width' => 160, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'Final Balance', 'field' => 'final_balance', 'width' => 150, 'type' => 'number', 'cellClass' => 'text-right fw-bold'],
+            ['headerName' => 'Final Balance', 'field' => 'final_balance', 'width' => 140, 'type' => 'number', 'cellClass' => 'text-right fw-bold'],
             
             // ----- DELIVERY -----
-            ['headerName' => 'Financier Verified', 'field' => 'financier_verified', 'width' => 150],
-            ['headerName' => 'Vehicle Delivery On', 'field' => 'vehicle_delivery_on', 'width' => 160, 'filter' => true],
             ['headerName' => 'DO Number (Delivery Time)', 'field' => 'do_number_delivery', 'width' => 180],
             ['headerName' => 'DO Number (TA Statement)', 'field' => 'do_number_ta', 'width' => 180],
             ['headerName' => 'DO Amount (TA Statement)', 'field' => 'do_amount_ta', 'width' => 180, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'DO Voucher Date', 'field' => 'do_voucher_date', 'width' => 160],
             
-            // ----- OTHER -----
+            // ----- OTHER RECEIVABLES -----
             ['headerName' => 'Brokerage Amount', 'field' => 'brokerage_amount', 'width' => 150, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'Other Discount (M&M Support)', 'field' => 'mm_support_receivable', 'width' => 210, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'Liquidation Scheme', 'field' => 'liquidation_scheme_receivable', 'width' => 180, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'Other Discount Receivable', 'field' => 'other_discount_receivable', 'width' => 190, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'Reg. Service Charge (Receivable)', 'field' => 'registration_service_charge_receivable', 'width' => 220, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'Reg. Service Charge (Received)', 'field' => 'registration_service_charge_received', 'width' => 220, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'GST Slab', 'field' => 'gst_slab', 'width' => 120],
-            ['headerName' => 'OEM Model Code', 'field' => 'oem_model_code', 'width' => 150],
-            ['headerName' => 'XB Booking ID', 'field' => 'booking_no', 'width' => 130],
+            ['headerName' => 'Other Receivable', 'field' => 'other_discount_receivable', 'width' => 160, 'type' => 'number', 'cellClass' => 'text-right'],
+            ['headerName' => 'M&M Support Receivable', 'field' => 'mm_support_receivable', 'width' => 180, 'type' => 'number', 'cellClass' => 'text-right'],
+            ['headerName' => 'Liquidation Scheme Receivable', 'field' => 'liquidation_scheme_receivable', 'width' => 190, 'type' => 'number', 'cellClass' => 'text-right'],
             
             // ----- ACTION -----
             ['headerName' => 'Action', 'field' => 'action', 'width' => 150, 'sortable' => false, 'filter' => false, 'cellRenderer' => 'htmlRenderer', 'pinned' => 'right'],
@@ -1885,6 +1882,7 @@ class BookingCrudController extends CrudController
                 'bookingamount'     => 'required|numeric',
                 'bookingmode'       => 'required|string|max:255',
                 'coltype'           => 'required',
+                'mode'              => 'required|in:Cash,Cheque,Bank Transfer,UPI',
             ]);
 
             if ($validator->fails()) {
@@ -2317,6 +2315,7 @@ class BookingCrudController extends CrudController
                 $payment->date    = $request->input('hiddenreceiptdate') ?? now();
                 $payment->amount  = $booking->booking_amount;
                 $payment->reciept = $number;
+                $payment->mode    = $request->input('mode');
                 $payment->voucher = ($booking->col_type == 4) ? 1 : 0;
                 $payment->save();
 
@@ -2487,6 +2486,7 @@ class BookingCrudController extends CrudController
                 ],
                 'amount' => 'required|numeric|min:0.01',
                 'amount_proof' => 'required|file|mimes:jpeg,png,jpg,pdf|max:2048',
+                'mode' => 'required|in:Cash,Cheque,Bank Transfer,UPI',
             ]);
 
             if ($validator->fails()) {
@@ -2514,6 +2514,7 @@ class BookingCrudController extends CrudController
                 $amountRecord->date = Carbon::parse($request->receipt_date)->format('Y-m-d');
                 $amountRecord->amount  = $request->amount;
                 $amountRecord->reciept = $request->reciept_no;
+                $amountRecord->mode    = $request->mode;
                 $amountRecord->save();
 
                 $amountRecord->addMedia($tempDir . $fileName)
@@ -2604,6 +2605,7 @@ class BookingCrudController extends CrudController
                         'receipt_no'        => $newReceipt,
                         'receipt_date'      => $newDate,
                         'amount_added'      => $newAmount,
+                        'mode'           => $request->mode,
                         'old_amount'        => $oldBookingAmount,
                         'new_total_amount'  => $booking->booking_amount,
                     ],
@@ -2660,6 +2662,7 @@ class BookingCrudController extends CrudController
             ],
             'amount' => 'required|numeric|min:0.01',
             'amount_proof' => 'required|file|mimes:jpeg,png,jpg,pdf|max:2048',
+            'mode' => 'required|in:Cash,Cheque,Bank Transfer,UPI',
         ]);
 
         if ($validator->fails()) {
@@ -2681,6 +2684,7 @@ class BookingCrudController extends CrudController
                 $receipt->date    = $receiptDate;
                 $receipt->amount  = $amount;
                 $receipt->reciept = $receiptNo;
+                $receipt->mode = $request->input('mode');
                 $receipt->save();
 
                 $receipt->addMediaFromRequest('amount_proof')
@@ -6508,12 +6512,14 @@ class BookingCrudController extends CrudController
 
         $validated = $request->validate([
             'reciept'      => 'required|string|max:100',
+            'mode' => 'required|in:Cash,Cheque,Bank Transfer,UPI',
             'date'         => 'required|date_format:d-M-Y',
             'amount'       => 'required|numeric|min:0',
             'amount_proof' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
         ]);
 
         $receipt->reciept = $request->reciept;
+        $receipt->mode = $request->mode;
         $receipt->date    = \Carbon\Carbon::createFromFormat('d-M-Y', $request->date)->format('Y-m-d');
         $receipt->amount  = $request->amount;
 
@@ -10846,266 +10852,501 @@ class BookingCrudController extends CrudController
         );
     }
 
+    // public function liveNotInvoiced()
+    // {
+    //     $this->crud->hasAccessOrFail('list');
+
+    //     // Use the new transaction-list Blade
+    //     $this->crud->setListView('admin.booking.transaction-list');
+
+    //     $this->data['crud'] = $this->crud;
+    //     $this->data['title'] = 'Transaction / OTF Listings';
+
+    //     $query = $this->getBaseQuery();
+
+    //     // Only status 1 (Live) and 8 (Pending)
+    //     $query->whereIn('bookings.status', [1, 8]);
+
+    //     $query->orderBy('bookings.id', 'desc');
+
+    //     $paginatedBookings = $query->paginate(50);
+
+    //     $gridData = $paginatedBookings->map(function ($booking, $index) use ($paginatedBookings) {
+    //         // Start with basic mapped data
+    //         $mapped = $this->mapBookingForGrid($booking);
+
+    //         $mapped->serial_no = ($paginatedBookings->currentPage() - 1) * $paginatedBookings->perPage() + $index + 1;
+
+    //         // ============================================================
+    //         // 1. FETCH FINAL_DATA (OTF saved data)
+    //         // ============================================================
+    //         $finalData = [];
+    //         if (!empty($booking->final_data)) {
+    //             $finalData = json_decode($booking->final_data, true) ?? [];
+    //             // Add logging for debugging
+    //             Log::info('OTF FINAL DATA FETCHED', [
+    //                 'booking_id' => $booking->id,
+    //                 'final_data_keys' => array_keys($finalData),
+    //                 'ex_showroom_price' => $finalData['ex_showroom_price'] ?? 'NOT FOUND',
+    //                 'insurance_amount' => $finalData['insurance_amount'] ?? 'NOT FOUND',
+    //             ]);
+    //         } else {
+    //             Log::warning('NO FINAL DATA FOR BOOKING', ['booking_id' => $booking->id]);
+    //         }
+
+    //         // ============================================================
+    //         // 2. FETCH QUOTATION DATA (if available)
+    //         // ============================================================
+    //         $quotationData = [];
+    //         if (!empty($booking->quotation_id)) {
+    //             $quotation = Quotation::find($booking->quotation_id);
+    //             if ($quotation && !empty($quotation->standard_data)) {
+    //                 if (is_array($quotation->standard_data)) {
+    //                     $quotationData = $quotation->standard_data;
+    //                 } elseif (is_string($quotation->standard_data)) {
+    //                     $quotationData = json_decode($quotation->standard_data, true) ?? [];
+    //                 }
+    //             }
+    //         }
+
+    //         // ============================================================
+    //         // 3. MERGE DATA (final_data overrides quotation_data)
+    //         // ============================================================
+    //         $otfData = $quotationData;
+
+    //         foreach ($finalData as $key => $value) {
+    //             if ($value !== null && $value !== '') {
+    //                 $otfData[$key] = $value;
+    //             }
+    //         }
+
+    //         // ============================================================
+    //         // 4. FETCH RELATED MODELS
+    //         // ============================================================
+    //         $rto = XlRto::where('bid', $booking->id)->first();
+    //         $finance = XFinance::where('bid', $booking->id)->first();
+
+    //         // ============================================================
+    //         // 5. MAP ALL OTF FIELDS (COMPREHENSIVE FIX)
+    //         // ============================================================
+
+    //         // ----- BASIC INFO -----
+    //         $mapped->branch_name = $booking->branch?->name ?? 'N/A';
+    //         $mapped->location_name = $booking->location?->name ?? ($booking->location_other ?? 'N/A');
+    //         $mapped->customer_name = $booking->name ?? 'N/A';
+    //         $mapped->customer_address = $otfData['registration_address'] ?? $booking->address ?? 'N/A';
+    //         $mapped->customer_tehsil = $otfData['customer_tehsil'] ?? 'N/A';
+    //         $mapped->customer_district = $otfData['customer_district'] ?? 'N/A';
+    //         $mapped->segment = $booking->segment_code ?? 'N/A';
+    //         $mapped->model = $booking->model_code ?? 'N/A';
+    //         $mapped->variant = $booking->variant_code ?? 'N/A';
+    //         $mapped->chassis_no = $booking->chassis_no ?? 'N/A';
+
+    //         // ----- VEHICLE DETAILS -----
+    //         $mapped->body_type = $this->getBodyTypeLabel($rto->body_type ?? $otfData['body_type'] ?? null);
+    //         $mapped->sale_type = $this->getSaleTypeLabel($rto->sale_type ?? $otfData['sale_type'] ?? null);
+    //         $mapped->permit = $this->getPermitLabel($rto->permit ?? $otfData['permit'] ?? null);
+    //         $mapped->registration_no_type = $this->getRegNoTypeLabel($rto->rgn_no_type ?? $otfData['registration_no_type'] ?? null);
+    //         $mapped->registration_category = $otfData['registration_category'] ?? 'N/A';
+
+    //         // ----- OTF / DMS -----
+    //         $mapped->votf_no = $otfData['votf_no'] ?? 'N/A';
+    //         $consultant = $this->getConsultantDetails($booking->consultant);
+    //         $mapped->fsc_name = $consultant['name'] ?? 'N/A';
+    //         $mapped->fsc_mile_id = $consultant['mile_id'] ?? 'N/A';
+    //         $mapped->dms_no = $booking->dms_no ?? 'N/A';
+    //         $mapped->dms_otf = $booking->dms_otf ?? 'N/A';
+    //         $mapped->booking_no = $booking->id;
+
+    //         // ----- PRICE DETAILS (CRITICAL FIX) -----
+    //         $mapped->ex_showroom_price = $otfData['ex_showroom_price'] ?? 'N/A';
+    //         $mapped->insurance_type = $this->getInsuranceTypeLabel($otfData['policy_type'] ?? null);
+    //         $mapped->insurance_amount = $otfData['insurance_amount'] ?? 'N/A';
+    //         $mapped->insurance_company = $otfData['insurance_company'] ?? 'N/A';
+    //         $mapped->insurance_covers = $this->formatInsuranceCovers($otfData['insurance_covers'] ?? []);
+    //         $mapped->registration_type = $this->getRegistrationTypeLabel($rto->rgn_type ?? $otfData['registration_type'] ?? null);
+    //         $mapped->registration_amount = $otfData['registration_amount'] ?? 'N/A';
+    //         $mapped->accessories = $this->getAccessoriesList($booking->accessories ?? $otfData['accessories'] ?? null);
+    //         $mapped->accessories_amount = $otfData['accessories_amount'] ?? '0.00';
+    //         $mapped->maxicare = $otfData['maxicare'] ?? 'N/A';
+    //         $mapped->vltd_device = $otfData['vltd_device'] ?? 'N/A';
+    //         $mapped->coating = $otfData['coating'] ?? 'N/A';
+    //         $mapped->coating_price = $otfData['coating_price'] ?? 'N/A';
+    //         $mapped->ppf = $otfData['ppf'] ?? 'N/A';
+    //         $mapped->rto_yellow_tape = $otfData['rto_yellow_tape'] ?? 'N/A';
+    //         $mapped->kazam = $otfData['kazam_charging_kit'] ?? 'N/A';
+    //         $mapped->incidental_charges = $otfData['incidental_charges'] ?? 'N/A';
+    //         $mapped->shield = $otfData['shield'] ?? 'N/A';
+    //         $mapped->shield_price = $otfData['shield_price'] ?? 'N/A';
+    //         $mapped->rsa = $otfData['rsa'] ?? 'N/A';
+    //         $mapped->rsa_amount = $otfData['rsa_amount'] ?? 'N/A';
+    //         $mapped->fastag = $otfData['fastag'] ?? 'N/A';
+    //         $mapped->cod_charges = $otfData['cod_charges'] ?? 'N/A';
+    //         $mapped->charger_swapping = $otfData['charger_swapping'] ?? 'N/A';
+    //         $mapped->charger_swapping_amount = $otfData['charger_swapping_amount'] ?? 'N/A';
+    //         $mapped->charger_swapping_option = $otfData['charger_swapping_option'] ?? 'N/A';
+    //         $mapped->tcs = $otfData['tcs'] ?? 'N/A';
+    //         $mapped->total_receivable = $otfData['total_receivable'] ?? 'N/A';
+
+    //         // ----- DISCOUNTS -----
+    //         $mapped->cash_scheme_oem = $otfData['cash_scheme_oem'] ?? 'N/A';
+    //         $mapped->csd_discount = $otfData['csd_discount'] ?? 'N/A';
+    //         $mapped->fame_subsidy = $otfData['fame_subsidy'] ?? 'N/A';
+    //         $mapped->dealer_discount = $otfData['dealer_discount'] ?? 'N/A';
+    //         $mapped->accessories_discount = $otfData['accessories_discount'] ?? 'N/A';
+    //         $mapped->shield_scheme = $otfData['shield_scheme'] ?? 'N/A';
+    //         $mapped->corporate_discount = $otfData['corporate_discount'] ?? 'N/A';
+    //         $mapped->loyalty_bonus = $otfData['loyalty_bonus'] ?? 'N/A';
+    //         $mapped->exchange_bonus = $otfData['exchange_bonus'] ?? 'N/A';
+    //         $mapped->green_bonus = $otfData['green_bonus'] ?? 'N/A';
+    //         $mapped->welcome_bonus = $otfData['welcome_bonus'] ?? 'N/A';
+    //         $mapped->accessories_spl_disc = $otfData['accessories_spl_disc'] ?? 'N/A';
+    //         $mapped->ceramic_discount = $otfData['ceramic_discount'] ?? 'N/A';
+    //         $mapped->ppf_discount = $otfData['ppf_discount'] ?? 'N/A';
+    //         $mapped->charger_swapping_discount = $otfData['charger_swapping_discount'] ?? 'N/A';
+    //         $mapped->charger_swapping_discount_type = $otfData['charger_swapping_discount_type'] ?? 'N/A';
+    //         $mapped->other_cash_discount = $otfData['other_cash_discount'] ?? 'N/A';
+    //         $mapped->special_cash_discount = $otfData['special_cash_discount'] ?? 'N/A';
+    //         $mapped->total_discount = $otfData['total_discount'] ?? 'N/A';
+    //         $mapped->net_receivable = $otfData['net_receivable_summary'] ?? 'N/A';
+
+    //         // ----- FINANCE -----
+
+    //         $financierValue = $otfData['financier']
+    //             ?? $booking->financier
+    //             ?? $finance?->financier
+    //             ?? null;
+
+    //         if (is_numeric($financierValue)) {
+    //             $mapped->financier = XlFinancier::find($financierValue)?->name ?? '';
+    //         } else {
+    //             $mapped->financier = $financierValue ?? '';
+    //         }
+
+    //         $mapped->financier_branch = $otfData['financier_branch'] ?? '';
+
+    //         $mapped->loan_amount = $otfData['loan_amount']
+    //             ?? $finance?->loan_amount
+    //             ?? '';
+
+    //         $mapped->file_charge = $otfData['file_charge']
+    //             ?? $finance?->file_charge
+    //             ?? '';
+
+    //         $mapped->margin_money = $otfData['margin_money']
+    //             ?? $finance?->margin
+    //             ?? '';
+
+    //         $mapped->financier_subvention = $otfData['financier_subvention']
+    //             ?? $finance?->subvention_amount
+    //             ?? '';
+
+    //         $mapped->do_amount = $otfData['net_settlement_amount'] ?? 'N/A';
+
+    //         $mapped->do_settlement_difference = $otfData['do_settlement_difference'] ?? '';
+
+    //         $mapped->expected_balance = $otfData['expected_balance'] ?? '';
+
+    //         $mapped->discount_through_jv = $otfData['discount_through_jv'] ?? '';
+
+    //         $mapped->final_balance = $otfData['final_balance'] ?? '';
+
+    //         // ----- DELIVERY -----
+    //         $mapped->financier_verified = $otfData['financier_verified'] ?? 'N/A';
+    //         $mapped->vehicle_delivery_on = $this->getDeliveryOptionLabel($otfData['vehicle_delivery_on'] ?? $finance?->instrument_type ?? null);
+    //         $mapped->do_number_delivery = $otfData['do_number'] ?? $finance?->instrument_ref_no ?? 'N/A';
+    //         $mapped->do_number_ta = $otfData['do_number_ta'] ?? 'N/A';
+    //         $mapped->do_amount_ta = $otfData['do_amount_ta'] ?? 'N/A';
+    //         $mapped->do_voucher_date = $otfData['do_voucher_date'] ?? 'N/A';
+
+    //         // ----- OTHER -----
+    //         $mapped->brokerage_amount = $otfData['brokerage_amount'] ?? 'N/A';
+    //         $mapped->mm_support_receivable = $otfData['mm_support_receivable'] ?? 'N/A';
+    //         $mapped->liquidation_scheme_receivable = $otfData['liquidation_scheme_receivable'] ?? 'N/A';
+    //         $mapped->other_discount_receivable = $otfData['other_discount_receivable'] ?? 'N/A';
+    //         $mapped->registration_service_charge_receivable = $otfData['registration_service_charge_receivable'] ?? 'N/A';
+    //         $mapped->registration_service_charge_received = $otfData['registration_service_charge_received'] ?? 'N/A';
+    //         $mapped->gst_slab = $otfData['gst_slab'] ?? 'N/A';
+    //         $mapped->oem_model_code = $otfData['oem_model_code'] ?? 'N/A';
+
+    //         // ----- RECEIPT DETAILS -----
+    //         $receiptLogs = Bookingamount::where('bid', $booking->id)
+    //             ->whereNull('deleted_at')
+    //             ->orderBy('date')
+    //             ->get();
+
+    //         $receiptDisplay = [];
+    //         $receiptTotal = 0;
+    //         foreach ($receiptLogs as $receipt) {
+    //             $receiptDisplay[] = "{$receipt->reciept} / " . \Carbon\Carbon::parse($receipt->date)->format('d-M-Y') . " / ₹" . number_format($receipt->amount, 2);
+    //             $receiptTotal += (float) $receipt->amount;
+    //         }
+    //         $mapped->receipt_details = !empty($receiptDisplay) ? implode(' | ', $receiptDisplay) : 'N/A';
+    //         $mapped->receipt_total = number_format($receiptTotal, 2);
+
+    //         // ----- OTF Action Button -----
+    //         $otfUrl = backpack_url("booking/otf-form/{$booking->id}");
+
+    //         $mapped->action = '
+    //         <div class="d-flex justify-content-center gap-2">
+    //             <a href="' . $otfUrl . '" class="btn btn-sm btn-success">OTF Form</a>
+    //         </div>';
+
+    //         return $mapped;
+    //     })->values();
+
+    //     // Build columns for Transaction listing
+    //     $columns = $this->getTransactionGridColumns();
+
+    //     $this->data['gridConfig'] = [
+    //         'columns' => $columns,
+    //         'data'    => $gridData,
+    //     ];
+
+    //     $this->data['pagination'] = [
+    //         'total'       => $paginatedBookings->total(),
+    //         'perPage'     => $paginatedBookings->perPage(),
+    //         'currentPage' => $paginatedBookings->currentPage(),
+    //         'lastPage'    => $paginatedBookings->lastPage(),
+    //     ];
+
+    //     return view('admin.booking.transaction-list', $this->data);
+    // }
+
     public function liveNotInvoiced()
-{
-    $this->crud->hasAccessOrFail('list');
+    {
+        $this->crud->hasAccessOrFail('list');
 
-    // Use the new transaction-list Blade
-    $this->crud->setListView('admin.booking.transaction-list');
+        $this->crud->setListView('admin.booking.transaction-list');
 
-    $this->data['crud'] = $this->crud;
-    $this->data['title'] = 'Transaction / OTF Listings';
+        $this->data['crud'] = $this->crud;
+        $this->data['title'] = 'Transaction / OTF Listings';
 
-    $query = $this->getBaseQuery();
+        $query = $this->getBaseQuery();
+        $query->whereIn('bookings.status', [1, 8]);
+        $query->orderBy('bookings.id', 'desc');
 
-    // Only status 1 (Live) and 8 (Pending)
-    $query->whereIn('bookings.status', [1, 8]);
+        $paginatedBookings = $query->paginate(50);
 
-    $query->orderBy('bookings.id', 'desc');
+        $gridData = $paginatedBookings->map(function ($booking, $index) use ($paginatedBookings) {
+            $mapped = $this->mapBookingForGrid($booking);
+            $mapped->serial_no = ($paginatedBookings->currentPage() - 1) * $paginatedBookings->perPage() + $index + 1;
 
-    $paginatedBookings = $query->paginate(50);
+            // Fetch OTF Data
+            $finalData = [];
+            if (!empty($booking->final_data)) {
+                $finalData = json_decode($booking->final_data, true) ?? [];
+            }
 
-    $gridData = $paginatedBookings->map(function ($booking, $index) use ($paginatedBookings) {
-        // Start with basic mapped data
-        $mapped = $this->mapBookingForGrid($booking);
-
-        $mapped->serial_no = ($paginatedBookings->currentPage() - 1) * $paginatedBookings->perPage() + $index + 1;
-
-        // ============================================================
-        // 1. FETCH FINAL_DATA (OTF saved data)
-        // ============================================================
-        $finalData = [];
-        if (!empty($booking->final_data)) {
-            $finalData = json_decode($booking->final_data, true) ?? [];
-            // Add logging for debugging
-            Log::info('OTF FINAL DATA FETCHED', [
-                'booking_id' => $booking->id,
-                'final_data_keys' => array_keys($finalData),
-                'ex_showroom_price' => $finalData['ex_showroom_price'] ?? 'NOT FOUND',
-                'insurance_amount' => $finalData['insurance_amount'] ?? 'NOT FOUND',
-            ]);
-        } else {
-            Log::warning('NO FINAL DATA FOR BOOKING', ['booking_id' => $booking->id]);
-        }
-
-        // ============================================================
-        // 2. FETCH QUOTATION DATA (if available)
-        // ============================================================
-        $quotationData = [];
-        if (!empty($booking->quotation_id)) {
-            $quotation = Quotation::find($booking->quotation_id);
-            if ($quotation && !empty($quotation->standard_data)) {
-                if (is_array($quotation->standard_data)) {
-                    $quotationData = $quotation->standard_data;
-                } elseif (is_string($quotation->standard_data)) {
-                    $quotationData = json_decode($quotation->standard_data, true) ?? [];
+            $quotationData = [];
+            if (!empty($booking->quotation_id)) {
+                $quotation = Quotation::find($booking->quotation_id);
+                if ($quotation && !empty($quotation->standard_data)) {
+                    if (is_array($quotation->standard_data)) {
+                        $quotationData = $quotation->standard_data;
+                    } elseif (is_string($quotation->standard_data)) {
+                        $quotationData = json_decode($quotation->standard_data, true) ?? [];
+                    }
                 }
             }
-        }
 
-        // ============================================================
-        // 3. MERGE DATA (final_data overrides quotation_data)
-        // ============================================================
-        $otfData = $quotationData;
-
-        foreach ($finalData as $key => $value) {
-            if ($value !== null && $value !== '') {
-                $otfData[$key] = $value;
+            $otfData = $quotationData;
+            foreach ($finalData as $key => $value) {
+                if ($value !== null && $value !== '') {
+                    $otfData[$key] = $value;
+                }
             }
-        }
 
-        // ============================================================
-        // 4. FETCH RELATED MODELS
-        // ============================================================
-        $rto = XlRto::where('bid', $booking->id)->first();
-        $finance = XFinance::where('bid', $booking->id)->first();
+            $rto = XlRto::where('bid', $booking->id)->first();
+            $finance = XFinance::where('bid', $booking->id)->first();
+            $insurance = XlInsurance::where('bid', $booking->id)->first();
+            $consultant = $this->getConsultantDetails($booking->consultant);
 
-        // ============================================================
-        // 5. MAP ALL OTF FIELDS (COMPREHENSIVE FIX)
-        // ============================================================
+            // ----- BASIC INFO -----
+            $mapped->branch_name = $booking->branch?->name ?? 'N/A';
+            $mapped->location_name = $booking->location?->name ?? ($booking->location_other ?? 'N/A');
+            $mapped->customer_name = $booking->name ?? 'N/A';
+            $mapped->customer_address = $otfData['registration_address'] ?? $booking->address ?? 'N/A';
+            $mapped->customer_tehsil = $otfData['customer_tehsil'] ?? 'N/A';
+            $mapped->customer_district = $otfData['customer_district'] ?? 'N/A';
+            $mapped->segment = $booking->segment_code ?? 'N/A';
+            $mapped->model = $booking->model_code ?? 'N/A';
+            $mapped->variant = $booking->variant_code ?? 'N/A';
+            $mapped->chassis_no = $booking->chassis_no ?? 'N/A';
+            $mapped->mobile = $booking->mobile ?? 'N/A';
+            $mapped->gstn = $booking->gstn ?? 'N/A';
+            $mapped->pan_no = $booking->pan_no ?? 'N/A';
+            $mapped->adhar_no = $booking->adhar_no ?? 'N/A';
 
-        // ----- BASIC INFO -----
-        $mapped->branch_name = $booking->branch?->name ?? 'N/A';
-        $mapped->location_name = $booking->location?->name ?? ($booking->location_other ?? 'N/A');
-        $mapped->customer_name = $booking->name ?? 'N/A';
-        $mapped->customer_address = $otfData['registration_address'] ?? $booking->address ?? 'N/A';
-        $mapped->customer_tehsil = $otfData['customer_tehsil'] ?? 'N/A';
-        $mapped->customer_district = $otfData['customer_district'] ?? 'N/A';
-        $mapped->segment = $booking->segment_code ?? 'N/A';
-        $mapped->model = $booking->model_code ?? 'N/A';
-        $mapped->variant = $booking->variant_code ?? 'N/A';
-        $mapped->chassis_no = $booking->chassis_no ?? 'N/A';
+            // ----- VEHICLE DETAILS -----
+            $mapped->body_type = $this->getBodyTypeLabel($rto->body_type ?? $otfData['body_type'] ?? null);
+            $mapped->sale_type = $this->getSaleTypeLabel($rto->sale_type ?? $otfData['sale_type'] ?? null);
+            $mapped->permit = $this->getPermitLabel($rto->permit ?? $otfData['permit'] ?? null);
+            $mapped->registration_no_type = $this->getRegNoTypeLabel($rto->rgn_no_type ?? $otfData['registration_no_type'] ?? null);
+            $mapped->registration_category = $otfData['registration_category'] ?? 'N/A';
+            $mapped->registration_type = $this->getRegistrationTypeLabel($rto->rgn_type ?? $otfData['registration_type'] ?? null);
+            $mapped->color = $booking->color_code ?? 'N/A';
 
-        // ----- VEHICLE DETAILS -----
-        $mapped->body_type = $this->getBodyTypeLabel($rto->body_type ?? $otfData['body_type'] ?? null);
-        $mapped->sale_type = $this->getSaleTypeLabel($rto->sale_type ?? $otfData['sale_type'] ?? null);
-        $mapped->permit = $this->getPermitLabel($rto->permit ?? $otfData['permit'] ?? null);
-        $mapped->registration_no_type = $this->getRegNoTypeLabel($rto->rgn_no_type ?? $otfData['registration_no_type'] ?? null);
-        $mapped->registration_category = $otfData['registration_category'] ?? 'N/A';
+            // ----- OTF / DMS -----
+            $mapped->votf_no = $otfData['votf_no'] ?? 'N/A';
+            $mapped->fsc_name = $consultant['name'] ?? 'N/A';
+            $mapped->fsc_mile_id = $consultant['mile_id'] ?? 'N/A';
+            $mapped->dms_no = $booking->dms_no ?? 'N/A';
+            $mapped->dms_otf = $booking->dms_otf ?? 'N/A';
+            $mapped->booking_no = $booking->id;
 
-        // ----- OTF / DMS -----
-        $mapped->votf_no = $otfData['votf_no'] ?? 'N/A';
-        $consultant = $this->getConsultantDetails($booking->consultant);
-        $mapped->fsc_name = $consultant['name'] ?? 'N/A';
-        $mapped->fsc_mile_id = $consultant['mile_id'] ?? 'N/A';
-        $mapped->dms_no = $booking->dms_no ?? 'N/A';
-        $mapped->dms_otf = $booking->dms_otf ?? 'N/A';
-        $mapped->booking_no = $booking->id;
+            // ----- X8 Fields -----
+            $mapped->x8_enq_date = $booking->created_at ? Carbon::parse($booking->created_at)->format('d-M-Y') : 'N/A';
+            $mapped->x8_booking_no = $booking->id;
+            $mapped->x8_booking_date = $booking->booking_date ? Carbon::parse($booking->booking_date)->format('d-M-Y') : 'N/A';
 
-        // ----- PRICE DETAILS (CRITICAL FIX) -----
-        $mapped->ex_showroom_price = $otfData['ex_showroom_price'] ?? 'N/A';
-        $mapped->insurance_type = $this->getInsuranceTypeLabel($otfData['policy_type'] ?? null);
-        $mapped->insurance_amount = $otfData['insurance_amount'] ?? 'N/A';
-        $mapped->insurance_company = $otfData['insurance_company'] ?? 'N/A';
-        $mapped->insurance_covers = $this->formatInsuranceCovers($otfData['insurance_covers'] ?? []);
-        $mapped->registration_type = $this->getRegistrationTypeLabel($rto->rgn_type ?? $otfData['registration_type'] ?? null);
-        $mapped->registration_amount = $otfData['registration_amount'] ?? 'N/A';
-        $mapped->accessories = $this->getAccessoriesList($booking->accessories ?? $otfData['accessories'] ?? null);
-        $mapped->accessories_amount = $otfData['accessories_amount'] ?? '0.00';
-        $mapped->maxicare = $otfData['maxicare'] ?? 'N/A';
-        $mapped->vltd_device = $otfData['vltd_device'] ?? 'N/A';
-        $mapped->coating = $otfData['coating'] ?? 'N/A';
-        $mapped->coating_price = $otfData['coating_price'] ?? 'N/A';
-        $mapped->ppf = $otfData['ppf'] ?? 'N/A';
-        $mapped->rto_yellow_tape = $otfData['rto_yellow_tape'] ?? 'N/A';
-        $mapped->kazam = $otfData['kazam_charging_kit'] ?? 'N/A';
-        $mapped->incidental_charges = $otfData['incidental_charges'] ?? 'N/A';
-        $mapped->shield = $otfData['shield'] ?? 'N/A';
-        $mapped->shield_price = $otfData['shield_price'] ?? 'N/A';
-        $mapped->rsa = $otfData['rsa'] ?? 'N/A';
-        $mapped->rsa_amount = $otfData['rsa_amount'] ?? 'N/A';
-        $mapped->fastag = $otfData['fastag'] ?? 'N/A';
-        $mapped->cod_charges = $otfData['cod_charges'] ?? 'N/A';
-        $mapped->charger_swapping = $otfData['charger_swapping'] ?? 'N/A';
-        $mapped->charger_swapping_amount = $otfData['charger_swapping_amount'] ?? 'N/A';
-        $mapped->charger_swapping_option = $otfData['charger_swapping_option'] ?? 'N/A';
-        $mapped->tcs = $otfData['tcs'] ?? 'N/A';
-        $mapped->total_receivable = $otfData['total_receivable'] ?? 'N/A';
+            // ----- Invoice Type -----
+            $mapped->invoice_type = $booking->dealer_status == 2 ? 'Dealer Invoice' : 'Normal Invoice';
+            $mapped->inv_no = $booking->inv_no ?? 'N/A';
+            $mapped->inv_date = $booking->inv_date ? Carbon::parse($booking->inv_date)->format('d-M-Y') : 'N/A';
 
-        // ----- DISCOUNTS -----
-        $mapped->cash_scheme_oem = $otfData['cash_scheme_oem'] ?? 'N/A';
-        $mapped->csd_discount = $otfData['csd_discount'] ?? 'N/A';
-        $mapped->fame_subsidy = $otfData['fame_subsidy'] ?? 'N/A';
-        $mapped->dealer_discount = $otfData['dealer_discount'] ?? 'N/A';
-        $mapped->accessories_discount = $otfData['accessories_discount'] ?? 'N/A';
-        $mapped->shield_scheme = $otfData['shield_scheme'] ?? 'N/A';
-        $mapped->corporate_discount = $otfData['corporate_discount'] ?? 'N/A';
-        $mapped->loyalty_bonus = $otfData['loyalty_bonus'] ?? 'N/A';
-        $mapped->exchange_bonus = $otfData['exchange_bonus'] ?? 'N/A';
-        $mapped->green_bonus = $otfData['green_bonus'] ?? 'N/A';
-        $mapped->welcome_bonus = $otfData['welcome_bonus'] ?? 'N/A';
-        $mapped->accessories_spl_disc = $otfData['accessories_spl_disc'] ?? 'N/A';
-        $mapped->ceramic_discount = $otfData['ceramic_discount'] ?? 'N/A';
-        $mapped->ppf_discount = $otfData['ppf_discount'] ?? 'N/A';
-        $mapped->charger_swapping_discount = $otfData['charger_swapping_discount'] ?? 'N/A';
-        $mapped->charger_swapping_discount_type = $otfData['charger_swapping_discount_type'] ?? 'N/A';
-        $mapped->other_cash_discount = $otfData['other_cash_discount'] ?? 'N/A';
-        $mapped->special_cash_discount = $otfData['special_cash_discount'] ?? 'N/A';
-        $mapped->total_discount = $otfData['total_discount'] ?? 'N/A';
-        $mapped->net_receivable = $otfData['net_receivable_summary'] ?? 'N/A';
+            // ----- Customer Category -----
+            $mapped->customer_category = $booking->b_cat ?? 'N/A';
+            $mapped->retail_category = $otfData['retail_category'] ?? 'N/A';
 
-        // ----- FINANCE -----
+            // ----- SC Branch & Location -----
+            $mapped->sc_branch = $consultant['branch_name'] ?? 'N/A';
+            $mapped->sc_location = $consultant['location_name'] ?? 'N/A';
 
-        $financierValue = $otfData['financier']
-            ?? $booking->financier
-            ?? $finance?->financier
-            ?? null;
+            // ----- PMS SC -----
+            $pmsConsultant = $this->getConsultantDetails($booking->consultant);
+            $mapped->pms_sc_name = $pmsConsultant['name'] ?? 'N/A';
+            $mapped->pms_sc_mile_id = $pmsConsultant['mile_id'] ?? 'N/A';
 
-        if (is_numeric($financierValue)) {
-            $mapped->financier = XlFinancier::find($financierValue)?->name ?? '';
-        } else {
-            $mapped->financier = $financierValue ?? '';
-        }
+            // ----- DSA -----
+            $mapped->dsa_retail = !empty($otfData['dsa_id'] ?? $booking->dsa_id ?? '') ? 'Yes' : 'No';
+            $dsaName = $booking->dsa_id ? (XL_DSA_MASTER::find($booking->dsa_id)?->name ?? 'N/A') : 'N/A';
+            $mapped->dsa_name = $dsaName;
+            $mapped->dsa_location = $otfData['dsa_location'] ?? 'N/A';
+            $mapped->exchange = $otfData['exchange'] ?? $booking->buyer_type ?? 'NA';
 
-        $mapped->financier_branch = $otfData['financier_branch'] ?? '';
+            // ----- In-House -----
+            $mapped->in_house_rto = ($otfData['in_house_rto'] ?? $rto?->in_house_rto ?? 0) == 1 ? 'Yes' : 'No';
+            $mapped->in_house_insurance = $insurance ? 'Yes' : 'No';
 
-        $mapped->loan_amount = $otfData['loan_amount']
-            ?? $finance?->loan_amount
-            ?? '';
+            // ----- PRICE DETAILS -----
+            $mapped->ex_showroom_price = $otfData['ex_showroom_price'] ?? 'N/A';
+            $mapped->insurance_amount = $otfData['insurance_amount'] ?? 'N/A';
+            $mapped->registration_amount = $otfData['registration_amount'] ?? 'N/A';
+            $mapped->accessories_amount = $otfData['accessories_amount'] ?? '0.00';
+            $mapped->maxicare = $otfData['maxicare'] ?? 'N/A';
+            $mapped->vltd_device = $otfData['vltd_device'] ?? 'N/A';
+            $mapped->coating_price = $otfData['coating_price'] ?? 'N/A';
+            $mapped->ppf = $otfData['ppf'] ?? 'N/A';
+            $mapped->rto_yellow_tape = $otfData['rto_yellow_tape'] ?? 'N/A';
+            $mapped->total_receivable = $otfData['total_receivable'] ?? 'N/A';
 
-        $mapped->file_charge = $otfData['file_charge']
-            ?? $finance?->file_charge
-            ?? '';
+            // ----- DISCOUNTS -----
+            $disc1 = 0;
+            $disc2 = 0;
 
-        $mapped->margin_money = $otfData['margin_money']
-            ?? $finance?->margin
-            ?? '';
+            $disc1 += (float)($otfData['cash_scheme_oem'] ?? 0);
+            $disc1 += (float)($otfData['csd_discount'] ?? 0);
+            $disc1 += (float)($otfData['fame_subsidy'] ?? 0);
+            $disc1 += (float)($otfData['dealer_discount'] ?? 0);
+            $disc1 += (float)($otfData['accessories_discount'] ?? 0);
+            $disc1 += (float)($otfData['shield_scheme'] ?? 0);
+            $disc1 += (float)($otfData['corporate_discount'] ?? 0);
 
-        $mapped->financier_subvention = $otfData['financier_subvention']
-            ?? $finance?->subvention_amount
-            ?? '';
+            $disc2 += (float)($otfData['loyalty_bonus'] ?? 0);
+            $disc2 += (float)($otfData['exchange_bonus'] ?? 0);
+            $disc2 += (float)($otfData['green_bonus'] ?? 0);
+            $disc2 += (float)($otfData['welcome_bonus'] ?? 0);
+            $disc2 += (float)($otfData['accessories_spl_disc'] ?? 0);
+            $disc2 += (float)($otfData['ceramic_discount'] ?? 0);
+            $disc2 += (float)($otfData['ppf_discount'] ?? 0);
+            $disc2 += (float)($otfData['charger_swapping_discount'] ?? 0);
+            $disc2 += (float)($otfData['other_cash_discount'] ?? 0);
+            $disc2 += (float)($otfData['special_cash_discount'] ?? 0);
 
-        $mapped->do_amount = $otfData['net_settlement_amount'] ?? '';
+            $mapped->disc_1 = $disc1 > 0 ? number_format($disc1, 2) : 'N/A';
+            $mapped->disc_2 = $disc2 > 0 ? number_format($disc2, 2) : 'N/A';
+            $mapped->total_discount = $otfData['total_discount'] ?? 'N/A';
+            $mapped->net_receivable = $otfData['net_receivable_summary'] ?? 'N/A';
 
-        $mapped->do_settlement_difference = $otfData['do_settlement_difference'] ?? '';
+            // ----- FINANCE -----
+            $financierValue = $otfData['financier'] ?? $booking->financier ?? $finance?->financier ?? null;
+            if (is_numeric($financierValue)) {
+                $mapped->financier = XlFinancier::find($financierValue)?->name ?? '';
+            } else {
+                $mapped->financier = $financierValue ?? '';
+            }
+            $mapped->loan_amount = $otfData['loan_amount'] ?? $finance?->loan_amount ?? '';
+            $mapped->file_charge = $otfData['file_charge'] ?? $finance?->file_charge ?? '';
+            $mapped->margin_money = $otfData['margin_money'] ?? $finance?->margin ?? '';
+            $mapped->financier_subvention = $otfData['financier_subvention'] ?? $finance?->subvention_amount ?? '';
+            $mapped->do_amount = $otfData['net_settlement_amount'] ?? 'N/A';
 
-        $mapped->expected_balance = $otfData['expected_balance'] ?? '';
+            // ----- RECEIPTS -----
+            $receiptLogs = Bookingamount::where('bid', $booking->id)
+                ->whereNull('deleted_at')
+                ->orderBy('date')
+                ->get();
 
-        $mapped->discount_through_jv = $otfData['discount_through_jv'] ?? '';
+            $receiptDisplay = [];
+            $receiptTotal = 0;
+            foreach ($receiptLogs as $receipt) {
+                $receiptDisplay[] = "{$receipt->reciept} / " . Carbon::parse($receipt->date)->format('d-M-Y') . " / ₹" . number_format($receipt->amount, 2);
+                $receiptTotal += (float) $receipt->amount;
+            }
+            $mapped->receipt_details = !empty($receiptDisplay) ? implode(' | ', $receiptDisplay) : 'N/A';
+            $mapped->receipt_total = number_format($receiptTotal, 2);
 
-        $mapped->final_balance = $otfData['final_balance'] ?? '';
+            $receipts = $receiptLogs->values();
+            $mapped->receipt_no_1 = isset($receipts[0]) ? $receipts[0]->reciept : 'N/A';
+            $mapped->receipt_date_1 = isset($receipts[0]) ? Carbon::parse($receipts[0]->date)->format('d-M-Y') : 'N/A';
+            $mapped->receipt_amount_1 = isset($receipts[0]) ? number_format($receipts[0]->amount, 2) : 'N/A';
+            $mapped->receipt_no_2 = isset($receipts[1]) ? $receipts[1]->reciept : 'N/A';
+            $mapped->receipt_date_2 = isset($receipts[1]) ? Carbon::parse($receipts[1]->date)->format('d-M-Y') : 'N/A';
+            $mapped->receipt_amount_3 = isset($receipts[2]) ? number_format($receipts[2]->amount, 2) : 'N/A';
 
-        // ----- DELIVERY -----
-        $mapped->financier_verified = $otfData['financier_verified'] ?? 'N/A';
-        $mapped->vehicle_delivery_on = $this->getDeliveryOptionLabel($otfData['vehicle_delivery_on'] ?? $finance?->instrument_type ?? null);
-        $mapped->do_number_delivery = $otfData['do_number'] ?? $finance?->instrument_ref_no ?? 'N/A';
-        $mapped->do_number_ta = $otfData['do_number_ta'] ?? 'N/A';
-        $mapped->do_amount_ta = $otfData['do_amount_ta'] ?? 'N/A';
-        $mapped->do_voucher_date = $otfData['do_voucher_date'] ?? 'N/A';
+            // ----- BALANCE -----
+            $mapped->expected_balance = $otfData['expected_balance'] ?? '';
+            $mapped->do_settlement_difference = $otfData['do_settlement_difference'] ?? '';
+            $mapped->discount_through_jv = $otfData['discount_through_jv'] ?? '';
+            $mapped->final_balance = $otfData['final_balance'] ?? '';
 
-        // ----- OTHER -----
-        $mapped->brokerage_amount = $otfData['brokerage_amount'] ?? 'N/A';
-        $mapped->mm_support_receivable = $otfData['mm_support_receivable'] ?? 'N/A';
-        $mapped->liquidation_scheme_receivable = $otfData['liquidation_scheme_receivable'] ?? 'N/A';
-        $mapped->other_discount_receivable = $otfData['other_discount_receivable'] ?? 'N/A';
-        $mapped->registration_service_charge_receivable = $otfData['registration_service_charge_receivable'] ?? 'N/A';
-        $mapped->registration_service_charge_received = $otfData['registration_service_charge_received'] ?? 'N/A';
-        $mapped->gst_slab = $otfData['gst_slab'] ?? 'N/A';
-        $mapped->oem_model_code = $otfData['oem_model_code'] ?? 'N/A';
+            // ----- DELIVERY -----
+            $mapped->do_number_delivery = $otfData['do_number'] ?? $finance?->instrument_ref_no ?? 'N/A';
+            $mapped->do_number_ta = $otfData['do_number_ta'] ?? 'N/A';
+            $mapped->do_amount_ta = $otfData['do_amount_ta'] ?? 'N/A';
 
-        // ----- RECEIPT DETAILS -----
-        $receiptLogs = Bookingamount::where('bid', $booking->id)
-            ->whereNull('deleted_at')
-            ->orderBy('date')
-            ->get();
+            // ----- OTHER RECEIVABLES -----
+            $mapped->brokerage_amount = $otfData['brokerage_amount'] ?? 'N/A';
+            $mapped->other_discount_receivable = $otfData['other_discount_receivable'] ?? 'N/A';
+            $mapped->mm_support_receivable = $otfData['mm_support_receivable'] ?? 'N/A';
+            $mapped->liquidation_scheme_receivable = $otfData['liquidation_scheme_receivable'] ?? 'N/A';
 
-        $receiptDisplay = [];
-        $receiptTotal = 0;
-        foreach ($receiptLogs as $receipt) {
-            $receiptDisplay[] = "{$receipt->reciept} / " . \Carbon\Carbon::parse($receipt->date)->format('d-M-Y') . " / ₹" . number_format($receipt->amount, 2);
-            $receiptTotal += (float) $receipt->amount;
-        }
-        $mapped->receipt_details = !empty($receiptDisplay) ? implode(' | ', $receiptDisplay) : 'N/A';
-        $mapped->receipt_total = number_format($receiptTotal, 2);
+            // ----- OTF Action Button -----
+            $otfUrl = backpack_url("booking/otf-form/{$booking->id}");
+            $mapped->action = '<div class="d-flex justify-content-center gap-2">
+                <a href="' . $otfUrl . '" class="btn btn-sm btn-success">OTF Form</a>
+            </div>';
 
-        // ----- OTF Action Button -----
-        $otfUrl = backpack_url("booking/otf-form/{$booking->id}");
+            return $mapped;
+        })->values();
 
-        $mapped->action = '
-        <div class="d-flex justify-content-center gap-2">
-            <a href="' . $otfUrl . '" class="btn btn-sm btn-success">OTF Form</a>
-        </div>';
+        $columns = $this->getTransactionGridColumns();
 
-        return $mapped;
-    })->values();
+        $this->data['gridConfig'] = [
+            'columns' => $columns,
+            'data'    => $gridData,
+        ];
 
-    // Build columns for Transaction listing
-    $columns = $this->getTransactionGridColumns();
+        $this->data['pagination'] = [
+            'total'       => $paginatedBookings->total(),
+            'perPage'     => $paginatedBookings->perPage(),
+            'currentPage' => $paginatedBookings->currentPage(),
+            'lastPage'    => $paginatedBookings->lastPage(),
+        ];
 
-    $this->data['gridConfig'] = [
-        'columns' => $columns,
-        'data'    => $gridData,
-    ];
-
-    $this->data['pagination'] = [
-        'total'       => $paginatedBookings->total(),
-        'perPage'     => $paginatedBookings->perPage(),
-        'currentPage' => $paginatedBookings->currentPage(),
-        'lastPage'    => $paginatedBookings->lastPage(),
-    ];
-
-    return view('admin.booking.transaction-list', $this->data);
-}
+        return view('admin.booking.transaction-list', $this->data);
+    }
 
     public function otfProcess($id)
     {
@@ -11130,6 +11371,21 @@ class BookingCrudController extends CrudController
             $quotationData,
             $finalData
         );
+
+        if (!empty($otfData['net_settlement_amount'])) {
+            $otfData['net_settlement_amount'] = $otfData['net_settlement_amount'];
+        } else {
+            // Calculate it from available data if not saved
+            $loanAmount = (float) ($otfData['loan_amount'] ?? 0);
+            $fileCharge = (float) ($otfData['file_charge'] ?? 0);
+            $marginMoney = (float) ($otfData['margin_money'] ?? 0);
+            $financierSubvention = (float) ($otfData['financier_subvention'] ?? 0);
+            
+            $otfData['net_settlement_amount'] = number_format(
+                $loanAmount - $fileCharge + $marginMoney - $financierSubvention, 
+                2
+            );
+        }
 
         // Debug log
         \Log::info('OTF Quotation fetch', [
@@ -11690,6 +11946,21 @@ class BookingCrudController extends CrudController
                 $formData
             );
 
+            // ✅ FIX: Add net_settlement_amount to finalJsonData
+            if ($request->has('net_settlement_amount')) {
+                $finalJsonData['net_settlement_amount'] = $request->net_settlement_amount;
+            }
+
+            // ✅ FIX: Also add do_amount_ta if exists
+            if ($request->has('do_amount_ta')) {
+                $finalJsonData['do_amount_ta'] = $request->do_amount_ta;
+            }
+
+            // Add this after the merge logic in otfSave()
+            if ($request->has('net_settlement_amount')) {
+                $finalJsonData['net_settlement_amount'] = $request->net_settlement_amount;
+            }
+
             /*
         |--------------------------------------------------------------------------
         | 7. IMPORTANT FIELDS
@@ -12202,5 +12473,169 @@ class BookingCrudController extends CrudController
             'success' => true,
             'votf_no' => $votfNo,
         ]);
+    }
+
+    public function downloadOtfPdf($id)
+    {
+        $this->crud->hasAccessOrFail('show');
+        
+        $booking = Booking::findOrFail($id);
+        
+        // Get all the data needed for the OTF form (reuse from otfProcess)
+        $data = $this->getOtfPdfData($booking);
+        
+        // Load the view for PDF
+        $pdf = Pdf::loadView('admin.pdf.otf-form-pdf', $data);
+        
+        // Set paper size and options
+        $pdf->setPaper('a4', 'portrait');
+        $pdf->setOptions([
+            'isHtml5ParserEnabled' => true,
+            'isPhpEnabled' => false,
+            'dpi' => 150,
+            'defaultFont' => 'DejaVu Sans',
+            'isRemoteEnabled' => true, // For images
+        ]);
+        
+        $filename = sprintf(
+            'OTF_Form_%s_%s_%s.pdf',
+            $booking->id,
+            str_replace(' ', '_', $booking->name ?? 'Unknown'),
+            now()->format('Y-m-d')
+        );
+        
+        return $pdf->download($filename);
+    }
+
+    /**
+     * Prepare OTF data for PDF (reuse from otfProcess)
+     */
+    /**
+     * Prepare OTF data for PDF (reuse from otfProcess)
+     */
+    private function getOtfPdfData($booking)
+    {
+        // Reuse the same logic from otfProcess method
+        $quotation = null;
+        
+        if (!empty($booking->enquiry_id)) {
+            $quotation = Quotation::where('enquiry_no', $booking->enquiry_id)->latest()->first();
+        }
+        
+        if (!empty($booking->quotation_id)) {
+            $quotation = Quotation::find($booking->quotation_id);
+        }
+        
+        $quotationData = $quotation?->standard_data ?? [];
+        $finalData = !empty($booking->final_data) ? json_decode($booking->final_data, true) ?? [] : [];
+        
+        $otfData = array_merge($quotationData, $finalData);
+        
+        // Get related data
+        $rto = XlRto::where('bid', $booking->id)->first();
+        $finance = XFinance::where('bid', $booking->id)->first();
+        $insurance = XlInsurance::where('bid', $booking->id)->first();
+        
+        $receiptLogs = Bookingamount::where('bid', $booking->id)
+            ->whereNull('deleted_at')
+            ->orderBy('date')
+            ->get();
+        
+        $receiptTotal = $receiptLogs->sum(function ($receipt) {
+            return (float) $receipt->amount;
+        });
+        
+        $chassisImage = $booking->getFirstMediaUrl('chassis_image') ?: '';
+        
+        $segment = Segment::where('code', $booking->segment_code)->first();
+        $model = VehicleModel::where('code', $booking->model_code)->first();
+        $variant = Variant::with(['permit', 'fuelType', 'bodyType', 'bodyMake'])
+            ->where('code', $booking->variant_code)->first();
+        $color = Color::where('code', $booking->color_code)->first();
+        
+        $consultants = OrgService::getUsers(desigCode: 'SLS_CONS');
+        
+        $consultants = array_map(function ($consultant) {
+            $consultant['branch_name'] = OrgService::branchName($consultant['primary_branch_code'] ?? '');
+            $consultant['location_name'] = OrgService::locationName($consultant['primary_loc_code'] ?? '');
+            $consultant['mile_id'] = $consultant['employee_code'] ?? '';
+            return $consultant;
+        }, $consultants);
+        
+        $dsaList = XL_DSA_MASTER::orderBy('name')->get(['id', 'name', 'dlocation']);
+        
+        // Maps
+        $permit_map = [
+            '1' => 'Private - U/C (4 Wheeler)',
+            '2' => 'Private - BH (4 Wheeler)',
+            '3' => 'Private - EV (4 Wheeler)',
+            '4' => 'Goods - G (4 Wheeler)',
+            '5' => 'Goods - G 3 Ton+ (4 Wheeler)',
+            '6' => 'Goods - G (3 Wheeler)',
+            '7' => 'Goods - G EV (3 Wheeler)',
+            '8' => 'Taxi - T (4 Wheeler)',
+            '9' => 'Passenger - P (3 Wheeler)',
+            '10' => 'Passenger - P EV (3 Wheeler)',
+            '11' => 'Ambulance (Misc.)',
+        ];
+        
+        $reg_no_type_map = [
+            '1' => 'Regular',
+            '2' => 'BH Series',
+            '3' => 'Special Number',
+        ];
+        
+        $registration_type_map = [
+            '0' => 'Tax Only',
+            '1' => 'TRC + Tax',
+            '2' => 'TRC Only',
+            '3' => 'Exempted',
+        ];
+        
+        $body_type_map = [
+            '1' => 'Complete',
+            '2' => 'CBC',
+        ];
+        
+        $sale_type_map = [
+            '1' => 'Within State',
+            '2' => 'Outside State',
+        ];
+        
+        $deliveryOptions = [
+            1 => 'Payment',
+            2 => 'DO',
+            3 => 'Sanction Letter',
+            4 => 'Mail',
+            5 => 'Whatsapp'
+        ];
+        
+        $financierName = XlFinancier::find($booking->financier)?->name ?? 'N/A';
+        
+        return compact(
+            'booking',
+            'otfData',
+            'quotationData',
+            'finalData',
+            'rto',
+            'finance',
+            'insurance',
+            'receiptLogs',
+            'receiptTotal',
+            'chassisImage',
+            'segment',
+            'model',
+            'variant',
+            'color',
+            'consultants',
+            'dsaList',
+            'permit_map',
+            'reg_no_type_map',
+            'registration_type_map',
+            'body_type_map',
+            'sale_type_map',
+            'deliveryOptions',
+            'financierName'
+        );
     }
 }

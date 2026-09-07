@@ -166,6 +166,7 @@
                         <tr>
                             <th>Date</th>
                             <th>Receipt No.</th>
+                            <th>Mode</th>
                             <th>Amount</th>
                             <th>Image</th>
                             <th>Action</th>
@@ -178,6 +179,7 @@
                         <tr>
                             <td>{{ \Carbon\Carbon::parse($log->date)->format('d-M-Y') }}</td>
                             <td>{{ $log->reciept ?? 'N/A' }}</td>
+                            <td>{{ $log->mode ?? 'N/A' }}</td>
                             <td>{{ number_format($log->amount, 2) }}</td>
                             <td>
                                 @if ($iurl)
@@ -197,13 +199,15 @@
                         </tr>
                         @endforeach
                         <tr class="font-weight-bold">
-                            <td colspan="2" class="text-right">Total:</td>
+                            <td colspan="3" class="text-right">Total:</td>
                             <td>{{ number_format($data['total_amount'], 2) }}</td>
                             <td colspan="2"></td>
                         </tr>
                         @else
                         <tr>
-                            <td colspan="5" class="text-center text-muted py-4">No receipts found.</td>
+                            <td colspan="6" class="text-center text-muted py-4">
+                                No receipts found.
+                            </td>
                         </tr>
                         @endif
                     </tbody>

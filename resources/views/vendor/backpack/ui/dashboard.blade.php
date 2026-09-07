@@ -74,28 +74,23 @@
         <span class="badge bg-success px-3 py-2">Auto Refresh</span>
     </div>
 
-    {{-- METRIC CARDS & CHARTS (unchanged) --}}
+    {{-- BE 6 SPORTEQ BANNER (Full Image - No Crop, No Metric Cards) --}}
     <div class="row g-3 mb-4">
-        <div class="col-xl-3 col-md-6"><div class="stat-card primary"><p>Total Vehicles</p><h3 id="vehicles">129</h3></div></div>
-        <div class="col-xl-3 col-md-6"><div class="stat-card success"><p>Monthly Revenue</p><h3 id="sales">₹ 6.25 L</h3></div></div>
-        <div class="col-xl-3 col-md-6"><div class="stat-card warning"><p>Pending Services</p><h3 id="services">17</h3></div></div>
-        <div class="col-xl-3 col-md-6"><div class="stat-card danger"><p>Insurance Expiry</p><h3 id="insurance">5</h3></div></div>
-    </div>
-
-    <!-- CHARTS remain exactly as in your current blade file -->
-    <div class="row g-3 mb-4">
-        <div class="col-lg-8"><div class="card shadow-sm"><div class="card-header fw-semibold">Revenue Growth</div><div class="card-body"><canvas id="revenueChart" height="120"></canvas></div></div></div>
-        <div class="col-lg-4"><div class="card shadow-sm"><div class="card-header fw-semibold">Vehicle Category</div><div class="card-body"><canvas id="vehicleChart"></canvas></div></div></div>
-    </div>
-
-    <div class="row g-3 mb-4">
-        <div class="col-lg-6"><div class="card shadow-sm"><div class="card-header fw-semibold">Daily Service Load</div><div class="card-body"><canvas id="serviceChart"></canvas></div></div></div>
-        <div class="col-lg-6"><div class="card shadow-sm"><div class="card-header fw-semibold">Sales Channel Split</div><div class="card-body"><canvas id="channelChart"></canvas></div></div></div>
-    </div>
-
-    <div class="row g-3">
-        <div class="col-lg-6"><div class="card shadow-sm"><div class="card-header fw-semibold">Weekly Bookings</div><div class="card-body"><canvas id="bookingChart"></canvas></div></div></div>
-        <div class="col-lg-6"><div class="card shadow-sm"><div class="card-header fw-semibold">Payment Status</div><div class="card-body"><canvas id="paymentChart"></canvas></div></div></div>
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-0">
+                    <div class="banner-container position-relative" style="width: 100%; overflow: hidden; border-radius: 14px;">
+                        <img src="{{ asset('images/be6-sporteq-banner.webp') }}" alt="BE 6 SPORTEQ" class="w-100" style="display: block; height: auto;">
+                        <div class="banner-overlay position-absolute top-0 start-0 w-100 h-100 d-flex align-items-end p-4" style="background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 50%);">
+                            <div class="text-white">
+                                <h2 class="fw-bold mb-1">BE 6 SPORTEQ</h2>
+                                <p class="mb-0 opacity-75">Experience the future of driving</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
 </div>
@@ -103,17 +98,14 @@
 
 @push('after_styles')
 <style>
-    .stat-card { padding:20px; border-radius:14px; color:#fff; box-shadow:0 10px 25px rgba(0,0,0,.1); }
-    .primary  { background:linear-gradient(135deg,#1e3c72,#2a5298); }
-    .success  { background:linear-gradient(135deg,#11998e,#38ef7d); }
-    .warning  { background:linear-gradient(135deg,#f7971e,#ffd200); }
-    .danger   { background:linear-gradient(135deg,#cb2d3e,#ef473a); }
+    .banner-container {
+        box-shadow: 0 10px 25px rgba(0,0,0,.1);
+    }
 </style>
 @endpush
 
 @push('after_scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Your existing chart scripts (unchanged)
+    // No chart scripts needed - charts removed
 </script>
 @endpush

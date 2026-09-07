@@ -64,7 +64,21 @@ $enquiry = $quotation?->enquiry ?? ($data['enquiry'] ?? null);
 
                 <div class="card p-3">
                     <div class="card-body">
-                        <h2 class="mb-3">Payment Details</h2>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h2 class="mb-0">Payment Details</h2>
+
+                            @if ($quotation)
+                                <div class="d-flex align-items-center gap-2">
+                                    <label for="quotation" class="mb-0">Quotation:</label>
+
+                                    <a href="{{ backpack_url('quotation/' . $quotation->quotation_no . '/preview') }}"
+                                        target="_blank"
+                                        class="btn btn-info">
+                                        <i class="ik ik-file-text mr-2"></i> View Quotation PDF
+                                    </a>
+                                </div>
+                            @endif
+                        </div>
                         <div class="row">
                             <div class="col-sm-2">
                                 <div class="form-group">
@@ -124,7 +138,7 @@ $enquiry = $quotation?->enquiry ?? ($data['enquiry'] ?? null);
                                 </div>
                             </div>
 
-                            <div class="col-sm-3">
+                            <div class="col-sm-2">
                                 <div class="form-group">
                                     <label for="bookingamount">Booking Amount <span
                                             class="required-mark">*</span></label>
@@ -133,7 +147,7 @@ $enquiry = $quotation?->enquiry ?? ($data['enquiry'] ?? null);
                                 </div>
                             </div>
 
-                            <div class="col-sm-3">
+                            <div class="col-sm-2">
                                 <div class="form-group" id="receiptvouchergroup">
                                     <label id="receiptvoucherlabel">Receipt No. <span
                                             class="required-mark">*</span></label>
@@ -144,12 +158,28 @@ $enquiry = $quotation?->enquiry ?? ($data['enquiry'] ?? null);
                                 </div>
                             </div>
 
-                            <div class="col-sm-3">
+                            <div class="col-sm-2">
                                 <div class="form-group">
                                     <label for="receiptdate">Receipt Date <span class="required-mark">*</span></label>
                                     <input type="text" name="receiptdate" id="receiptdate"
                                         class="form-control flatpickr" placeholder="dd-mmm-yyyy" required>
                                     <input type="hidden" name="hiddenreceiptdate" id="hiddenreceiptdate">
+                                </div>
+                            </div>
+
+                            <div class="col-sm-2">
+                                <div class="form-group">
+                                    <label for="mode">
+                                        Mode <span class="required-mark">*</span>
+                                    </label>
+
+                                    <select name="mode" id="mode" class="form-control form-select" required>
+                                        <option value="" disabled selected>-- Select Mode --</option>
+                                        <option value="Cash">Cash</option>
+                                        <option value="Cheque">Cheque</option>
+                                        <option value="Bank Transfer">Bank Transfer</option>
+                                        <option value="UPI">UPI</option>
+                                    </select>
                                 </div>
                             </div>
 
@@ -787,21 +817,26 @@ $enquiry = $quotation?->enquiry ?? ($data['enquiry'] ?? null);
                         <div class="form-group">
                             <label for="finmode">Finance Mode <span class="required-mark">*</span></label>
                             <select name="finmode" id="finmode" class="form-control form-select" required>
-                                <option value="" disabled {{ !isset($enquiry->fin_mode) ? 'selected' : '' }}>--
-                                    Select Finance Mode
-                                    --</option>
-                                <option value="In-house" {{ old('finmode', $enquiry->fin_mode ?? '') ==
-                                    'In-house' ? 'selected' : '' }}>
-                                    In-house</option>
-                                <option value="Customer Self" {{ old('finmode', $enquiry->fin_mode ?? '') ==
-                                    'Customer Self' ? 'selected' : '' }}>
-                                    Customer Self</option>
-                                <option value="Cash" {{ old('finmode', $enquiry->fin_mode ?? '') == 'Cash' ?
-                                    'selected' : '' }}>
-                                    Cash</option>
-                                <option value="Yet To Decide" {{ old('finmode', $enquiry->fin_mode ?? '') ==
-                                    'Yet To Decide' ? 'selected' : '' }}>
-                                    Yet To Decide</option>
+                                <option value="" disabled
+                                    {{ empty($q['financier']) && empty($enquiry->fin_mode) ? 'selected' : '' }}>
+                                    -- Select Finance Mode --
+                                </option>
+                                <option value="In-house"
+                                    {{ old('finmode', !empty($q['financier']) ? 'In-house' : ($enquiry->fin_mode ?? '')) == 'In-house' ? 'selected' : '' }}>
+                                    In-house
+                                </option>
+                                <option value="Customer Self"
+                                    {{ old('finmode', !empty($q['financier']) ? 'In-house' : ($enquiry->fin_mode ?? '')) == 'Customer Self' ? 'selected' : '' }}>
+                                    Customer Self
+                                </option>
+                                <option value="Cash"
+                                    {{ old('finmode', !empty($q['financier']) ? 'In-house' : ($enquiry->fin_mode ?? '')) == 'Cash' ? 'selected' : '' }}>
+                                    Cash
+                                </option>
+                                <option value="Yet To Decide"
+                                    {{ old('finmode', !empty($q['financier']) ? 'In-house' : ($enquiry->fin_mode ?? '')) == 'Yet To Decide' ? 'selected' : '' }}>
+                                    Yet To Decide
+                                </option>
                             </select>
                         </div>
                     </div>
@@ -814,8 +849,7 @@ $enquiry = $quotation?->enquiry ?? ($data['enquiry'] ?? null);
                                 <option value="">Select Financier</option>
                                 @foreach ($data['financiers'] ?? [] as $financier)
                                 <option value="{{ $financier->id }}" data-shortname="{{ $financier->short_name ?? '' }}"
-                                    {{ old('financier', $enquiry->financier ?? '') == $financier->id ? 'selected' : ''
-                                    }}>
+                                    {{ old('financier', $q['financier'] ?? ($enquiry->financier ?? '')) == $financier->id ? 'selected' : '' }}>
                                     {{ $financier->name }}
                                 </option>
                                 @endforeach
@@ -851,16 +885,7 @@ $enquiry = $quotation?->enquiry ?? ($data['enquiry'] ?? null);
                         </div>
                     </div>
 
-                    @if ($quotation)
-                    <div class="col-sm-3 d-flex align-items-center">
-                        <div class="form-group w-100">
-                            <a href="{{ backpack_url('quotation/' . $quotation->quotation_no . '/preview') }}"
-                                target="_blank" class="btn btn-info btn-block">
-                                <i class="ik ik-file-text mr-2"></i> View Quotation PDF
-                            </a>
-                        </div>
-                    </div>
-                    @endif
+                    
 
 
                 </div>
@@ -1443,6 +1468,11 @@ $enquiry = $quotation?->enquiry ?? ($data['enquiry'] ?? null);
                                 return $('#coltype').val() === '1' || $('#coltype').val() === '4';
                             }
                         },
+                        mode: {
+                            required: function() {
+                                return $('#coltype').val() === '1' || $('#coltype').val() === '4';
+                            }
+                        },
                         name: {
                             required: true
                         },
@@ -1634,6 +1664,7 @@ $enquiry = $quotation?->enquiry ?? ($data['enquiry'] ?? null);
                         bookingamount: 'Please enter a valid booking amount',
                         receiptno: 'Please enter a valid receipt number',
                         receiptdate: 'Please select receipt date',
+                        mode: 'Please select payment mode',
                         name: 'Please enter customer name',
                         careof: 'Please select care of',
                         careofname: 'Please enter care of name',

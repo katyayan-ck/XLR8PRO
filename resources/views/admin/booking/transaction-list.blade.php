@@ -17,15 +17,6 @@
                 <h2 class="card-title mb-0 fw-bold text-black text-nowrap">
                     {{ $title ?? 'OTF Listings' }}
                 </h2>
-
-                {{-- <div class="d-flex align-items-center gap-3 flex-nowrap">
-                    <span class="badge bg-light text-dark px-3 py-2">
-                        Status: Live (1) &amp; Pending (8)
-                    </span>
-                    <a href="{{ backpack_url('booking/create') }}" class="btn btn-light btn-sm fw-bold shadow-sm">
-                        <i class="la la-plus me-1"></i> Add New Booking
-                    </a>
-                </div> --}}
             </div>
 
             <div class="card-body p-0" style="background:#f8fafc">
@@ -120,22 +111,18 @@
     .ag-theme-quartz .ag-header-group-cell-label {
         justify-content: center !important;
     }
-    .ag-theme-quartz .ag-header-cell {
-        font-weight: 600 !important;
-    }
+    /* Remove parent header styling - make them flat */
     .ag-theme-quartz .ag-header-group-cell {
-        background-color: #d4edda !important;
-        font-weight: 700 !important;
+        display: none !important;
+    }
+    .ag-theme-quartz .ag-header-cell {
+        border-right: 1px solid #dde2e6;
+    }
+    .ag-theme-quartz .ag-header-cell:last-child {
+        border-right: none;
     }
     #columnBubble {
         width: 340px;
-    }
-    .text-right {
-        text-align: right !important;
-        padding-right: 10px !important;
-    }
-    .fw-bold {
-        font-weight: 700 !important;
     }
     .bg-success-light {
         background-color: #d4edda !important;
@@ -158,127 +145,59 @@
 
     let gridApi;
 
-    // Default visible fields for Transaction/OTF listing
+    // ============================================================
+    // DEFAULT VISIBLE FIELDS (as specified by user)
+    // ============================================================
     const DEFAULT_VISIBLE_FIELDS = [
-        'serial_no', 'branch_name', 'customer_name', 'segment', 'model', 'variant',
-        'chassis_no', 'body_type', 'sale_type', 'permit', 'registration_no_type',
-        'votf_no', 'fsc_name', 'dms_otf',
-        'ex_showroom_price', 'insurance_type', 'insurance_amount',
-        'registration_type', 'registration_amount',
-        'accessories', 'accessories_amount',
-        'maxicare', 'vltd_device', 'coating', 'coating_price',
-        'ppf', 'rto_yellow_tape', 'kazam', 'shield', 'shield_price',
-        'rsa', 'rsa_amount', 'cod_charges',
-        'charger_swapping', 'charger_swapping_amount',
-        'tcs', 'total_receivable',
-        'corporate_discount', 'exchange_bonus',
-        'total_discount', 'net_receivable',
-        'financier', 'loan_amount', 'final_balance',
-        'vehicle_delivery_on', 'action'
+        'serial_no', 'votf_no', 'chassis_no', 'invoice_type', 'inv_no', 'inv_date',
+        'customer_name', 'customer_tehsil', 'customer_district',
+        'model', 'variant',
+        'pms_sc_name', 'pms_sc_mile_id',
+        'ex_showroom_price', 'insurance_amount', 'registration_amount',
+        'accessories_amount', 'maxicare', 'vltd_device', 'coating_price',
+        'ppf', 'rto_yellow_tape',
+        'total_receivable', 'total_discount', 'net_receivable',
+        'do_amount', 'receipt_total', 'expected_balance', 'final_balance',
+        'action'
     ];
 
-    // Group definitions
-    const columnGroups = [
-        {
-            headerName: 'Basic Info',
-            headerClass: 'ag-header-center',
-            children: getCols([
-                'serial_no', 'branch_name', 'location_name', 'customer_name',
-                'customer_address', 'customer_tehsil', 'customer_district',
-                'segment', 'model', 'variant', 'chassis_no'
-            ]).map(col => {
-                if (col.field === 'serial_no') {
-                    col.pinned = 'left';
-                }
-                return col;
-            })
-        },
-        {
-            headerName: 'Vehicle Details',
-            headerClass: 'ag-header-center',
-            children: getCols([
-                'body_type', 'sale_type', 'permit', 'registration_no_type', 'registration_category'
-            ])
-        },
-        {
-            headerName: 'OTF / DMS',
-            headerClass: 'ag-header-center',
-            children: getCols([
-                'votf_no', 'fsc_name', 'fsc_mile_id', 'dms_no', 'dms_otf'
-            ])
-        },
-        {
-            headerName: 'Price Details',
-            headerClass: 'ag-header-center',
-            children: getCols([
-                'ex_showroom_price', 'insurance_company', 'insurance_type', 'insurance_covers',
-                'insurance_amount', 'registration_type', 'registration_amount',
-                'accessories', 'accessories_amount',
-                'maxicare', 'vltd_device', 'coating', 'coating_price',
-                'ppf', 'rto_yellow_tape', 'kazam', 'incidental_charges',
-                'shield', 'shield_price', 'rsa', 'rsa_amount',
-                'fastag', 'cod_charges',
-                'charger_swapping', 'charger_swapping_amount', 'charger_swapping_option',
-                'tcs', 'total_receivable'
-            ])
-        },
-        {
-            headerName: 'Discounts',
-            headerClass: 'ag-header-center',
-            children: getCols([
-                'cash_scheme_oem', 'csd_discount', 'fame_subsidy',
-                'dealer_discount', 'accessories_discount', 'shield_scheme',
-                'corporate_discount', 'loyalty_bonus',
-                'exchange_bonus', 'green_bonus', 'welcome_bonus',
-                'accessories_spl_disc', 'ceramic_discount', 'ppf_discount',
-                'charger_swapping_discount', 'charger_swapping_discount_type',
-                'other_cash_discount', 'special_cash_discount',
-                'total_discount', 'net_receivable'
-            ])
-        },
-        {
-            headerName: 'Finance',
-            headerClass: 'ag-header-center',
-            children: getCols([
-                'financier', 'financier_branch',
-                'loan_amount', 'file_charge', 'margin_money', 'financier_subvention',
-                'do_amount', 'receipt_details', 'receipt_total',
-                'do_settlement_difference', 'expected_balance',
-                'discount_through_jv', 'final_balance'
-            ])
-        },
-        {
-            headerName: 'Delivery',
-            headerClass: 'ag-header-center',
-            children: getCols([
-                'financier_verified', 'vehicle_delivery_on',
-                'do_number_delivery', 'do_number_ta',
-                'do_amount_ta', 'do_voucher_date'
-            ])
-        },
-        {
-            headerName: 'Other',
-            headerClass: 'ag-header-center',
-            children: getCols([
-                'brokerage_amount', 'mm_support_receivable',
-                'liquidation_scheme_receivable', 'other_discount_receivable',
-                'registration_service_charge_receivable',
-                'registration_service_charge_received',
-                'gst_slab', 'oem_model_code', 'booking_no'
-            ])
-        },
-        {
-            headerName: 'Actions',
-            headerClass: 'ag-header-center',
-            children: getCols(['action']).map(col => {
-                col.pinned = 'right';
-                return col;
-            })
-        }
+    // ============================================================
+    // ALL FIELDS (for "All Headers" button)
+    // ============================================================
+    const ALL_FIELDS = [
+        'serial_no', 'votf_no', 'chassis_no', 'invoice_type', 'inv_no', 'inv_date',
+        'x8_enq_date', 'x8_booking_no', 'x8_booking_date',
+        'dms_otf', 'dms_no',
+        'customer_name', 'mobile', 'customer_tehsil', 'customer_district',
+        'customer_category', 'retail_category', 'gstn', 'pan_no', 'adhar_no',
+        'segment', 'model', 'variant', 'color',
+        'body_type', 'sale_type', 'registration_type', 'registration_category', 'permit',
+        'fsc_name', 'fsc_mile_id', 'sc_branch', 'sc_location',
+        'pms_sc_name', 'pms_sc_mile_id',
+        'dsa_retail', 'dsa_name', 'dsa_location', 'exchange', 'in_house_rto', 'in_house_insurance',
+        'ex_showroom_price', 'insurance_amount', 'registration_amount', 'accessories_amount',
+        'maxicare', 'vltd_device', 'coating_price', 'ppf', 'rto_yellow_tape',
+        'total_receivable', 'disc_1', 'disc_2', 'total_discount', 'net_receivable',
+        'financier', 'loan_amount', 'file_charge', 'margin_money', 'financier_subvention', 'do_amount',
+        'receipt_no_1', 'receipt_date_1', 'receipt_amount_1',
+        'receipt_no_2', 'receipt_date_2', 'receipt_amount_3',
+        'receipt_total',
+        'expected_balance', 'do_settlement_difference', 'discount_through_jv', 'final_balance',
+        'do_number_delivery', 'do_number_ta', 'do_amount_ta',
+        'brokerage_amount', 'other_discount_receivable', 'mm_support_receivable', 'liquidation_scheme_receivable',
+        'action'
     ];
+
+    // ============================================================
+    // FLAT COLUMN DEFINITIONS (NO PARENT GROUPS)
+    // ============================================================
+    const columnDefs = ALL_FIELDS.map(field => {
+        const col = ALL_COLUMNS.find(c => c.field === field);
+        return col || { field: field, headerName: field.replace(/_/g, ' ').toUpperCase(), width: 150 };
+    });
 
     const gridOptions = {
-        columnDefs: columnGroups,
+        columnDefs: columnDefs,
         rowData: @json($gridConfig['data'] ?? []),
         pagination: true,
         paginationPageSize: 50,
@@ -312,6 +231,9 @@
         }
     };
 
+    // ============================================================
+    // CUSTOMISE HEADERS BUBBLE (Flat list)
+    // ============================================================
     function openColumnBubble() {
         const bubble = document.getElementById('columnBubble');
         const tbody = document.getElementById('columnBubbleBody');
@@ -319,88 +241,51 @@
 
         tbody.innerHTML = '';
 
-        columnGroups.forEach(group => {
-            const groupName = group.headerName;
-            const children = group.children || [];
+        // Get all displayed columns (flat)
+        const displayedColumns = gridApi.getAllDisplayedColumns();
 
-            if (groupName === 'Actions') return;
+        displayedColumns.forEach(col => {
+            const field = col.getColId();
+            const colDef = col.getColDef();
+            const headerName = colDef.headerName || field.replace(/_/g, ' ').toUpperCase();
+            const isVisible = col.isVisible();
 
-            const groupTr = document.createElement('tr');
-            groupTr.style.background = '#f0f0f0';
+            const tr = document.createElement('tr');
 
-            const groupCheckTd = document.createElement('td');
-            groupCheckTd.style.width = '30px';
-            groupCheckTd.className = 'text-center';
+            const tdCheck = document.createElement('td');
+            tdCheck.style.width = '30px';
+            tdCheck.className = 'text-center';
 
-            const groupCheckbox = document.createElement('input');
-            groupCheckbox.type = 'checkbox';
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.checked = isVisible;
 
-            const fields = children.map(c => c.field).filter(Boolean);
-            const visibleCount = fields.filter(f => {
-                const col = gridApi.getColumn(f);
-                return col && col.isVisible();
-            }).length;
-
-            groupCheckbox.checked = visibleCount === fields.length && visibleCount > 0;
-            groupCheckbox.indeterminate = visibleCount > 0 && visibleCount < fields.length;
-
-            if (groupName === 'Basic Info') {
-                groupCheckbox.checked = true;
-                groupCheckbox.disabled = true;
+            // Disable S.No. and Action
+            if (field === 'serial_no' || field === 'action') {
+                checkbox.disabled = true;
+                checkbox.checked = true;
             }
 
-            groupCheckbox.addEventListener('change', () => {
-                gridApi.setColumnsVisible(fields, groupCheckbox.checked);
-                tbody.querySelectorAll(`tr[data-group="${groupName}"] input`)
-                    .forEach(cb => cb.checked = groupCheckbox.checked);
+            checkbox.addEventListener('change', () => {
+                gridApi.setColumnsVisible([field], checkbox.checked);
             });
 
-            groupCheckTd.appendChild(groupCheckbox);
+            tdCheck.appendChild(checkbox);
 
-            const groupLabelTd = document.createElement('td');
-            groupLabelTd.innerHTML = `<strong>${groupName}</strong>`;
+            const tdLabel = document.createElement('td');
+            tdLabel.innerText = headerName;
 
-            groupTr.appendChild(groupCheckTd);
-            groupTr.appendChild(groupLabelTd);
-            tbody.appendChild(groupTr);
-
-            children.forEach(col => {
-                if (!col.field) return;
-
-                const tr = document.createElement('tr');
-                tr.dataset.group = groupName;
-
-                const tdCheck = document.createElement('td');
-                tdCheck.style.paddingLeft = '25px';
-
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-
-                const column = gridApi.getColumn(col.field);
-                checkbox.checked = column ? column.isVisible() : false;
-
-                if (groupName === 'Basic Info') {
-                    checkbox.disabled = true;
-                }
-
-                checkbox.addEventListener('change', () => {
-                    gridApi.setColumnsVisible([col.field], checkbox.checked);
-                });
-
-                tdCheck.appendChild(checkbox);
-
-                const tdLabel = document.createElement('td');
-                tdLabel.innerText = col.headerName;
-
-                tr.appendChild(tdCheck);
-                tr.appendChild(tdLabel);
-                tbody.appendChild(tr);
-            });
+            tr.appendChild(tdCheck);
+            tr.appendChild(tdLabel);
+            tbody.appendChild(tr);
         });
 
         bubble.style.display = 'block';
     }
 
+    // ============================================================
+    // DOM EVENT LISTENERS
+    // ============================================================
     document.addEventListener('DOMContentLoaded', () => {
         const gridDiv = document.querySelector('#myGrid');
         gridApi = agGrid.createGrid(gridDiv, gridOptions);
@@ -438,6 +323,9 @@
             }
         });
 
+        // ============================================================
+        // ALL HEADERS BUTTON
+        // ============================================================
         document.getElementById('btnAllHeaders')?.addEventListener('click', () => {
             const allCols = [];
             gridApi.getAllGridColumns().forEach(col => allCols.push(col.getColId()));
@@ -449,6 +337,9 @@
             }, 200);
         });
 
+        // ============================================================
+        // DEFAULT HEADERS BUTTON
+        // ============================================================
         document.getElementById('btnDefaultHeaders')?.addEventListener('click', () => {
             const allCols = [];
             gridApi.getAllGridColumns().forEach(col => allCols.push(col.getColId()));
@@ -463,6 +354,9 @@
             }, 200);
         });
 
+        // ============================================================
+        // EXPORT CSV
+        // ============================================================
         document.getElementById('exportCsv')?.addEventListener('click', () => {
             const visibleColumns = gridApi.getAllDisplayedColumns()
                 .map(col => col.getColDef())
@@ -483,6 +377,9 @@
             XLSX.writeFile(workbook, `transaction-otf-${new Date().toISOString().slice(0,10)}.xlsx`);
         });
 
+        // ============================================================
+        // EXPORT PDF
+        // ============================================================
         document.getElementById('exportPdf')?.addEventListener('click', () => {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('l', 'pt', 'a4');
