@@ -7,7 +7,7 @@
                 <div
                     class="card-header bg-gradient-primary d-flex justify-content-between align-items-center flex-nowrap flex-md-nowrap flex-wrap gap-3">
                     <h2 class="card-title mb-0 fw-bold text-black text-nowrap">
-                        {{ $title ?? 'Xceler8 Enquiries' }}
+                        {{ isset($title) ? trim(explode('(', $title)[0]) : 'Xceler8 Enquiries' }}
                     </h2>
 
                     <div class="d-flex align-items-center gap-3 flex-nowrap">
@@ -95,10 +95,11 @@
                                         <button id="closeColumnBubble"
                                             class="btn btn-sm btn-link text-danger p-0">✕</button>
                                     </div>
-                                    
-                                    <!-- NEW: Search Input for Columns -->
+
+                                    <!-- Search Input for Columns -->
                                     <div class="p-2 border-bottom">
-                                        <input type="text" id="columnSearch" class="form-control form-control-sm" placeholder="Search headers...">
+                                        <input type="text" id="columnSearch" class="form-control form-control-sm"
+                                            placeholder="Search headers...">
                                     </div>
 
                                     <div style="max-height:260px; overflow:auto;">
@@ -125,8 +126,15 @@
                         </div>
                     </div>
 
-                    {{-- AG-Grid Container --}}
-                    <div id="myGrid" class="ag-theme-quartz" style="height: calc(93vh - 280px); width:100%;"></div>
+                    <!-- GRID CONTAINER WITH LOADER WRAPPER -->
+                    <div style="position: relative;">
+                        <div id="gridLoader" style="display:none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.7); z-index: 1000; justify-content: center; align-items: center;">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                        <div id="myGrid" class="ag-theme-quartz" style="height: calc(93vh - 280px); width:100%;"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -188,6 +196,9 @@
 
         const dataSource = {
             getRows: function(params) {
+                const loader = document.getElementById('gridLoader');
+                if (loader) loader.style.display = 'flex';
+
                 fetch('{{ backpack_url('enquiries/data') }}', {
                         method: 'POST',
                         headers: {
@@ -199,8 +210,7 @@
                             startRow: params.startRow,
                             endRow: params.endRow,
                             sortModel: params.sortModel,
-                            filterModel: params
-                                .filterModel, // Column filters triggered from the header menu
+                            filterModel: params.filterModel,
                             searchText: currentSearchText,
                             highlightFilter: currentHighlightFilter,
                             list_type: LIST_TYPE
@@ -208,9 +218,11 @@
                     })
                     .then(res => res.json())
                     .then(data => {
+                        if (loader) loader.style.display = 'none';
                         params.successCallback(data.rows || [], data.lastRow ?? 0);
                     })
                     .catch(err => {
+                        if (loader) loader.style.display = 'none';
                         console.error('Failed to load enquiries', err);
                         params.failCallback();
                     });
@@ -219,17 +231,17 @@
 
         const gridOptions = {
             columnDefs: columnDefs,
-            rowModelType: 'infinite', // Free Community model working with your backend
+            rowModelType: 'infinite',
             datasource: dataSource,
-            pagination: true, // Enables traditional page-by-page pagination controls at the bottom
-            paginationPageSize: 50, // Number of rows per page
+            pagination: true,
+            paginationPageSize: 50,
             cacheBlockSize: 50,
             rowHeight: 28,
             animateRows: true,
             defaultColDef: {
                 sortable: true,
-                filter: true, // Enables filter icon inside column header menu (No floating filter row)
-                floatingFilter: false, // Explicitly disabled to remove the extra filter header row
+                filter: true,
+                floatingFilter: false,
                 resizable: true,
                 headerClass: 'center-header',
                 cellStyle: {
@@ -251,15 +263,11 @@
         function openColumnBubble() {
             const bubble = document.getElementById('columnBubble');
             const tbody = document.getElementById('columnBubbleBody');
-            
-            // NEW: Grab the search input
             const searchInput = document.getElementById('columnSearch');
-            
+
             if (!gridApi || !bubble || !tbody) return;
 
             tbody.innerHTML = '';
-            
-            // NEW: Clear search value when opening
             if (searchInput) searchInput.value = '';
 
             ALL_COLUMNS.forEach(col => {
@@ -288,10 +296,8 @@
                 tr.append(tdCheck, tdLabel);
                 tbody.appendChild(tr);
             });
-            
-            // NEW: Ensure all generated rows are visible initially
-            document.querySelectorAll('#columnBubbleBody tr').forEach(row => row.style.display = '');
 
+            document.querySelectorAll('#columnBubbleBody tr').forEach(row => row.style.display = '');
             bubble.style.display = 'block';
         }
 
@@ -307,13 +313,17 @@
             const gridDiv = document.querySelector('#myGrid');
             agGrid.createGrid(gridDiv, gridOptions);
 
-            // Smart Global Search Input
             document.getElementById('quickFilter').addEventListener('input', debounce(e => {
                 currentSearchText = e.target.value.trim();
-                gridApi.setGridOption('datasource', dataSource);
+
+                const loader = document.getElementById('gridLoader');
+                if (loader) loader.style.display = 'flex';
+
+                gridApi.setGridOption('datasource', {
+                    ...dataSource
+                });
             }, 400));
 
-            // Highlight Filters
             document.querySelectorAll('.highlight-filter').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const filterValue = this.getAttribute('data-filter');
@@ -328,15 +338,22 @@
                         this.classList.add('active');
                     }
 
-                    gridApi.setGridOption('datasource', dataSource);
+                    document.getElementById('quickFilter').value = '';
+                    currentSearchText = '';
+
+                    const loader = document.getElementById('gridLoader');
+                    if (loader) loader.style.display = 'flex';
+
+                    gridApi.setGridOption('datasource', {
+                        ...dataSource
+                    });
                 });
             });
-            
-            // NEW: Column Search Event Listener
+
             document.getElementById('columnSearch')?.addEventListener('input', function(e) {
                 const searchTerm = e.target.value.toLowerCase();
                 const rows = document.querySelectorAll('#columnBubbleBody tr');
-                
+
                 rows.forEach(row => {
                     const labelTd = row.querySelector('td:nth-child(2)');
                     if (labelTd) {
@@ -346,22 +363,30 @@
                 });
             });
 
-            // Reset All Button
             document.getElementById('resetAll').addEventListener('click', () => {
                 document.getElementById('quickFilter').value = '';
                 currentSearchText = '';
-                currentHighlightFilter = '';
-                document.querySelectorAll('.highlight-filter').forEach(b => b.classList.remove('active'));
+
+                if (currentHighlightFilter !== '') {
+                    currentHighlightFilter = '';
+                    document.querySelectorAll('.highlight-filter').forEach(b => b.classList.remove(
+                        'active'));
+                }
+
+                const loader = document.getElementById('gridLoader');
+                if (loader) loader.style.display = 'flex';
+
                 gridApi.setFilterModel(null);
                 gridApi.applyColumnState({
                     defaultState: {
                         sort: null
                     }
                 });
-                gridApi.setGridOption('datasource', dataSource);
+                gridApi.setGridOption('datasource', {
+                    ...dataSource
+                });
             });
 
-            // Column Header Controls
             document.getElementById('btnCustomiseHeaders').addEventListener('click', e => {
                 e.stopPropagation();
                 openColumnBubble();
@@ -391,7 +416,6 @@
                 setTimeout(() => gridApi.autoSizeAllColumns(), 200);
             });
 
-            // CSV Export
             document.getElementById('exportCsv').addEventListener('click', () => {
                 const params = new URLSearchParams({
                     searchText: currentSearchText,
@@ -401,7 +425,6 @@
                 window.location.href = '{{ backpack_url('enquiries/export') }}?' + params.toString();
             });
 
-            // PDF Export
             document.getElementById('exportPdf').addEventListener('click', () => {
                 const {
                     jsPDF

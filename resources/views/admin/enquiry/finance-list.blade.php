@@ -33,7 +33,10 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header bg-gradient-primary d-flex justify-content-between align-items-center">
-                    <h2 class="card-title mb-0 fw-bold text-black text-nowrap">{{ $title ?? 'Finance List' }}</h2>
+                    <!-- NEW: Removed the count from the heading -->
+                    <h2 class="card-title mb-0 fw-bold text-black text-nowrap">
+                        {{ isset($title) ? trim(explode('(', $title)[0]) : 'Finance List' }}
+                    </h2>
                 </div>
                 <div class="card-body p-0" style="background:#f8fafc">
                     <div
@@ -108,6 +111,7 @@
             }
         ];
 
+        // Restored Server-Side DataSource for Memory Safety
         const dataSource = {
             getRows: function(params) {
                 fetch('{{ backpack_url('enquiries/data') }}', {
@@ -122,7 +126,7 @@
                             endRow: params.endRow,
                             sortModel: params.sortModel,
                             filterModel: params.filterModel,
-                            searchText: currentSearchText,
+                            searchText: currentSearchText, // Sends global search to backend
                             list_type: LIST_TYPE
                         })
                     })
@@ -137,6 +141,7 @@
             }
         };
 
+        // Restored Infinite Row Model
         const gridOptions = {
             columnDefs: columnGroups,
             rowModelType: 'infinite',
@@ -179,9 +184,11 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             gridApi = agGrid.createGrid(document.querySelector('#myGrid'), gridOptions);
+            
+            // Backend Global Search (Forces grid to fetch new matching data)
             document.getElementById('quickFilter')?.addEventListener('input', debounce(e => {
                 currentSearchText = e.target.value.trim();
-                gridApi.setGridOption('datasource', dataSource);
+                gridApi.setGridOption('datasource', { ...dataSource });
             }, 400));
         });
     </script>
