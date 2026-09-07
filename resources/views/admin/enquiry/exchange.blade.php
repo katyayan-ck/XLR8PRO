@@ -33,7 +33,9 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header bg-gradient-primary d-flex justify-content-between align-items-center">
-                    <h2 class="card-title mb-0 fw-bold text-black text-nowrap">{{ $title ?? 'Exchange List' }}</h2>
+                    <h2 class="card-title mb-0 fw-bold text-black text-nowrap">
+                        {{ isset($title) ? trim(explode('(', $title)[0]) : 'Exchange List' }}
+                    </h2>
                 </div>
                 <div class="card-body p-0" style="background:#f8fafc">
                     <div
@@ -43,7 +45,15 @@
                                 placeholder="Smart Search...">
                         </div>
                     </div>
-                    <div id="myGrid" class="ag-theme-quartz" style="height: calc(93vh - 200px); width:100%;"></div>
+                    <!-- GRID CONTAINER WITH LOADER WRAPPER -->
+                    <div style="position: relative;">
+                        <div id="gridLoader" style="display:none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.7); z-index: 1000; justify-content: center; align-items: center;">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                        <div id="myGrid" class="ag-theme-quartz" style="height: calc(93vh - 200px); width:100%;"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -62,7 +72,6 @@
             return ALL_COLUMNS.filter(col => fields.includes(col.field));
         }
 
-        // Naya (Fixed):
         const DEFAULT_VISIBLE_FIELDS = [
             'serial_no',
             'x8_enquiry_no',
@@ -71,9 +80,9 @@
             'mobile',
             'model_name',
             'variant_name',
-            'consid_brand', // Replaced old_car_make
-            'consid_model', // Replaced old_car_model
-            'purchase_type', // Replaced exchange_status
+            'consid_brand', 
+            'consid_model', 
+            'purchase_type', 
             'expected_price',
             'offered_price',
             'exchange_bonus',
@@ -122,6 +131,10 @@
 
         const dataSource = {
             getRows: function(params) {
+                if (gridApi) {
+                    gridApi.showLoadingOverlay();
+                }
+
                 fetch('{{ backpack_url('enquiries/data') }}', {
                         method: 'POST',
                         headers: {
@@ -143,6 +156,9 @@
                         params.successCallback(data.rows || [], data.lastRow ?? 0);
                     })
                     .catch(err => {
+                        if (gridApi) {
+                            gridApi.hideLoadingOverlay();
+                        }
                         console.error('Failed to load exchange enquiries', err);
                         params.failCallback();
                     });
@@ -151,7 +167,7 @@
 
         const gridOptions = {
             columnDefs: columnGroups,
-            rowModelType: 'infinite',
+            rowModelType: 'infinite', 
             datasource: dataSource,
             pagination: true,
             paginationPageSize: 50,
@@ -191,9 +207,13 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             gridApi = agGrid.createGrid(document.querySelector('#myGrid'), gridOptions);
+            
             document.getElementById('quickFilter')?.addEventListener('input', debounce(e => {
                 currentSearchText = e.target.value.trim();
-                gridApi.setGridOption('datasource', dataSource);
+                if (gridApi) {
+                    gridApi.showLoadingOverlay();
+                }
+                gridApi.setGridOption('datasource', { ...dataSource });
             }, 400));
         });
     </script>

@@ -7,7 +7,7 @@
                 <div
                     class="card-header bg-gradient-primary d-flex justify-content-between align-items-center flex-nowrap flex-md-nowrap flex-wrap gap-3">
                     <h2 class="card-title mb-0 fw-bold text-black text-nowrap">
-                        {{ $title ?? 'Enquiry Grid' }}
+                        {{ isset($title) ? trim(explode('(', $title)[0]) : 'Enquiry Grid' }}
                     </h2>
                 </div>
 
@@ -33,10 +33,10 @@
                                         <button id="closeColumnBubble"
                                             class="btn btn-sm btn-link text-danger p-0">✕</button>
                                     </div>
-                                    
-                                    <!-- NEW: Search Input for Columns -->
+
                                     <div class="p-2 border-bottom">
-                                        <input type="text" id="columnSearch" class="form-control form-control-sm" placeholder="Search headers...">
+                                        <input type="text" id="columnSearch" class="form-control form-control-sm"
+                                            placeholder="Search headers...">
                                     </div>
 
                                     <div style="max-height:260px; overflow:auto;">
@@ -50,11 +50,15 @@
                         </div>
 
                         <div class="d-flex gap-2 flex-nowrap">
-                            <button id="exportCsv" class="btn btn-sm text-nowrap d-flex align-items-center gap-2" title="Export Excel">
-                                <img src="{{ asset('images/export-excel.png') }}" alt="Excel" style="height:30px; width:auto;">
+                            <button id="exportCsv" class="btn btn-sm text-nowrap d-flex align-items-center gap-2"
+                                title="Export Excel">
+                                <img src="{{ asset('images/export-excel.png') }}" alt="Excel"
+                                    style="height:30px; width:auto;">
                             </button>
-                            <button id="exportPdf" class="btn btn-sm text-nowrap d-flex align-items-center gap-2" title="Export PDF">
-                                <img src="{{ asset('images/export-pdf.png') }}" alt="PDF" style="height:30px; width:auto;">
+                            <button id="exportPdf" class="btn btn-sm text-nowrap d-flex align-items-center gap-2"
+                                title="Export PDF">
+                                <img src="{{ asset('images/export-pdf.png') }}" alt="PDF"
+                                    style="height:30px; width:auto;">
                             </button>
                         </div>
                     </div>
@@ -85,7 +89,7 @@
         const ALL_COLUMNS = @json($gridConfig['columns'] ?? []);
         const DEFAULT_FIELDS = @json($gridConfig['defaultColumns'] ?? []);
         const LIST_TYPE = @json($gridConfig['list_type'] ?? 'assigned_quick');
-        
+
         let gridApi;
         let currentSearchText = '';
 
@@ -109,30 +113,37 @@
 
         const dataSource = {
             getRows: function(params) {
+                if (gridApi) {
+                    gridApi.showLoadingOverlay();
+                }
+
                 fetch('{{ backpack_url('enquiries/data') }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({
-                        startRow: params.startRow,
-                        endRow: params.endRow,
-                        sortModel: params.sortModel,
-                        filterModel: params.filterModel,
-                        searchText: currentSearchText,
-                        list_type: LIST_TYPE
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({
+                            startRow: params.startRow,
+                            endRow: params.endRow,
+                            sortModel: params.sortModel,
+                            filterModel: params.filterModel,
+                            searchText: currentSearchText,
+                            list_type: LIST_TYPE
+                        })
                     })
-                })
-                .then(res => res.json())
-                .then(data => {
-                    params.successCallback(data.rows || [], data.lastRow ?? 0);
-                })
-                .catch(err => {
-                    console.error('Failed to load enquiries', err);
-                    params.failCallback();
-                });
+                    .then(res => res.json())
+                    .then(data => {
+                        params.successCallback(data.rows || [], data.lastRow ?? 0);
+                    })
+                    .catch(err => {
+                        if (gridApi) {
+                            gridApi.hideLoadingOverlay();
+                        }
+                        console.error('Failed to load enquiries', err);
+                        params.failCallback();
+                    });
             }
         };
 
@@ -150,7 +161,9 @@
                 filter: true,
                 resizable: true,
                 headerClass: 'center-header',
-                cellStyle: { textAlign: 'center' }
+                cellStyle: {
+                    textAlign: 'center'
+                }
             },
             components: {
                 htmlRenderer: params => params.value || ''
@@ -159,10 +172,10 @@
                 gridApi = params.api;
                 const allCols = gridApi.getAllGridColumns().map(col => col.getColId());
                 gridApi.setColumnsVisible(allCols, false);
-                
+
                 const validDefaults = getValidDefaultColumns();
                 gridApi.setColumnsVisible(validDefaults.length ? validDefaults : allCols, true);
-                
+
                 setTimeout(() => gridApi.autoSizeAllColumns(), 300);
             }
         };
@@ -170,15 +183,11 @@
         function openColumnBubble() {
             const bubble = document.getElementById('columnBubble');
             const tbody = document.getElementById('columnBubbleBody');
-            
-            // NEW: Grab the search input
             const searchInput = document.getElementById('columnSearch');
-            
+
             if (!gridApi || !bubble || !tbody) return;
 
             tbody.innerHTML = '';
-            
-            // NEW: Clear search value when opening
             if (searchInput) searchInput.value = '';
 
             ALL_COLUMNS.forEach(col => {
@@ -208,10 +217,8 @@
                 tr.append(tdCheck, tdLabel);
                 tbody.appendChild(tr);
             });
-            
-            // NEW: Ensure all generated rows are visible initially
-            document.querySelectorAll('#columnBubbleBody tr').forEach(row => row.style.display = '');
 
+            document.querySelectorAll('#columnBubbleBody tr').forEach(row => row.style.display = '');
             bubble.style.display = 'block';
         }
 
@@ -229,27 +236,44 @@
 
             document.getElementById('quickFilter').addEventListener('input', debounce(e => {
                 currentSearchText = e.target.value.trim();
-                gridApi.setGridOption('datasource', dataSource);
+
+                if (gridApi) {
+                    gridApi.showLoadingOverlay();
+                }
+
+                gridApi.setGridOption('datasource', {
+                    ...dataSource
+                });
             }, 400));
 
             document.getElementById('resetAll').addEventListener('click', () => {
                 document.getElementById('quickFilter').value = '';
                 currentSearchText = '';
+
+                if (gridApi) {
+                    gridApi.showLoadingOverlay();
+                }
+
                 gridApi.setFilterModel(null);
-                gridApi.applyColumnState({ defaultState: { sort: null } });
-                gridApi.setGridOption('datasource', dataSource);
+                gridApi.applyColumnState({
+                    defaultState: {
+                        sort: null
+                    }
+                });
+                gridApi.setGridOption('datasource', {
+                    ...dataSource
+                });
             });
 
             document.getElementById('btnCustomiseHeaders').addEventListener('click', e => {
                 e.stopPropagation();
                 openColumnBubble();
             });
-            
-            // NEW: Search filter event listener
+
             document.getElementById('columnSearch')?.addEventListener('input', function(e) {
                 const searchTerm = e.target.value.toLowerCase();
                 const rows = document.querySelectorAll('#columnBubbleBody tr');
-                
+
                 rows.forEach(row => {
                     const labelTd = row.querySelector('td:nth-child(2)');
                     if (labelTd) {
@@ -279,10 +303,10 @@
             document.getElementById('btnDefaultHeaders').addEventListener('click', () => {
                 const allCols = gridApi.getAllGridColumns().map(c => c.getColId());
                 gridApi.setColumnsVisible(allCols, false);
-                
+
                 const validDefaults = getValidDefaultColumns();
                 gridApi.setColumnsVisible(validDefaults, true);
-                
+
                 setTimeout(() => gridApi.autoSizeAllColumns(), 200);
             });
 
@@ -295,7 +319,9 @@
             });
 
             document.getElementById('exportPdf').addEventListener('click', () => {
-                const { jsPDF } = window.jspdf;
+                const {
+                    jsPDF
+                } = window.jspdf;
                 const doc = new jsPDF();
 
                 const visibleColumns = gridApi.getAllDisplayedColumns()
@@ -313,8 +339,12 @@
                 doc.autoTable({
                     head: [headers],
                     body: rows,
-                    styles: { fontSize: 8 },
-                    headStyles: { fillColor: [41, 128, 185] },
+                    styles: {
+                        fontSize: 8
+                    },
+                    headStyles: {
+                        fillColor: [41, 128, 185]
+                    },
                 });
 
                 doc.save(`${LIST_TYPE}-enquiries-${new Date().toISOString().slice(0, 10)}.pdf`);

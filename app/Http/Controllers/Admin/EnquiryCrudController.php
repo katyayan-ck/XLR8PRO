@@ -336,10 +336,52 @@ class EnquiryCrudController extends CrudController
         ]);
     }
 
+    // public function data(Request $request)
+    // {
+    //     $startRow = max(0, (int) $request->input('startRow', 0));
+    //     $limit = max(1, (int) $request->input('endRow', $startRow + 100)) - $startRow;
+
+    //     $searchText = trim((string) $request->input('searchText', ''));
+    //     $highlightFilter = trim((string) $request->input('highlightFilter', ''));
+    //     $filterModel = (array) $request->input('filterModel', []);
+    //     $listType = trim((string) $request->input('list_type', 'all'));
+
+    //     $query = $this->getBaseQuery($listType);
+
+    //     if ($listType === 'otf') {
+    //         $this->applyOtfSearch($query, $searchText);
+    //         $this->applyOtfFilter($query, $filterModel);
+    //         $this->applyOtfSort($query, (array) $request->input('sortModel', []));
+    //     } else {
+    //         $this->applyEnquirySearch($query, $searchText);
+    //         $this->applyEnquirySort($query, (array) $request->input('sortModel', []));
+    //         $this->applyEnquiryFilter($query, $filterModel);
+    //         OrgService::applyHighlightFilter($query, $highlightFilter);
+    //     }
+
+    //     $total = (clone $query)->count();
+    //     $mapType = $this->resolveMapType($listType);
+    //     $lookups = $this->getEnquiryLookupMaps();
+
+    //     $pageRows = $query->skip($startRow)->take($limit)->get();
+
+    //     if ($listType !== 'otf') {
+    //         $lookups['creFups'] = $this->getLatestCreFups($pageRows->pluck('id')->all());
+    //     }
+
+    //     $gridData = $pageRows
+    //         ->map(fn($e, $i) => $this->mapData($e, $startRow + $i, $mapType, $lookups))
+    //         ->all();
+
+    //     return response()->json(['rows' => $gridData, 'lastRow' => $total]);
+    // }
     public function data(Request $request)
     {
         $startRow = max(0, (int) $request->input('startRow', 0));
-        $limit = max(1, (int) $request->input('endRow', $startRow + 100)) - $startRow;
+        
+        // NEW: Check if the frontend is actually requesting pagination chunks
+        $hasPagination = $request->has('endRow');
+        $limit = $hasPagination ? (max(1, (int) $request->input('endRow')) - $startRow) : null;
 
         $searchText = trim((string) $request->input('searchText', ''));
         $highlightFilter = trim((string) $request->input('highlightFilter', ''));
@@ -363,7 +405,12 @@ class EnquiryCrudController extends CrudController
         $mapType = $this->resolveMapType($listType);
         $lookups = $this->getEnquiryLookupMaps();
 
-        $pageRows = $query->skip($startRow)->take($limit)->get();
+        // NEW: If no pagination limits are sent (Client-Side Model), fetch everything
+        if ($hasPagination) {
+            $pageRows = $query->skip($startRow)->take($limit)->get();
+        } else {
+            $pageRows = $query->get();
+        }
 
         if ($listType !== 'otf') {
             $lookups['creFups'] = $this->getLatestCreFups($pageRows->pluck('id')->all());
@@ -1241,6 +1288,41 @@ class EnquiryCrudController extends CrudController
         ];
     }
 
+    // private function applyEnquirySearch($query, string $searchText): void
+    // {
+    //     if ($searchText === '') return;
+
+    //     $like = "%{$searchText}%";
+    //     $isXenq = str_starts_with(strtoupper($searchText), 'XENQ-');
+    //     $xenqId = $isXenq ? (int) substr(strtoupper($searchText), 5) : null;
+
+    //     $query->where(function ($q) use ($like, $xenqId, $isXenq, $searchText) {
+    //         if ($isXenq && $xenqId) {
+    //             $q->where('id', $xenqId);
+    //         } else {
+    //             $q->where('id', (int) $searchText)
+    //                 ->orWhere('enquiry_no', 'like', $like)
+    //                 ->orWhere('oem_enquiry_no', 'like', $like)
+    //                 ->orWhere('x8_enquiry_no', 'like', $like)
+    //                 ->orWhere('first_name', 'like', $like)
+    //                 ->orWhere('last_name', 'like', $like)
+    //                 ->orWhere('mobile', 'like', $like)
+    //                 ->orWhere('alternate_mobile', 'like', $like)
+    //                 ->orWhere('email', 'like', $like)
+    //                 ->orWhere('source_code', 'like', $like)
+    //                 ->orWhere('sub_source', 'like', $like)
+    //                 ->orWhere('company_name', 'like', $like)
+    //                 ->orWhere('vehicle_no', 'like', $like)
+    //                 ->orWhere('city', 'like', $like)
+    //                 ->orWhere('pincode', 'like', $like)
+    //                 ->orWhereHas('model', fn($q2) => $q2->where('name', 'like', $like))
+    //                 ->orWhereHas('segment', fn($q2) => $q2->where('name', 'like', $like))
+    //                 ->orWhereHas('color', fn($q2) => $q2->where('name', 'like', $like))
+    //                 ->orWhereHas('variant', fn($q2) => $q2->where('display_name', 'like', $like)->orWhere('custom_name', 'like', $like)->orWhere('oem_name', 'like', $like));
+    //         }
+    //     });
+    // }
+    
     private function applyEnquirySearch($query, string $searchText): void
     {
         if ($searchText === '') return;
@@ -1249,29 +1331,39 @@ class EnquiryCrudController extends CrudController
         $isXenq = str_starts_with(strtoupper($searchText), 'XENQ-');
         $xenqId = $isXenq ? (int) substr(strtoupper($searchText), 5) : null;
 
-        $query->where(function ($q) use ($like, $xenqId, $isXenq, $searchText) {
+        $tableName = $query->getModel()->getTable();
+        
+        // Cache and filter only text/string columns to avoid scanning dates, IDs, and numbers
+        $tableColumns = \Illuminate\Support\Facades\Cache::remember('text_columns_' . $tableName, 3600, function () use ($tableName) {
+            $columns = \Illuminate\Support\Facades\Schema::getColumnListing($tableName);
+            
+            // Exclude IDs, timestamps, and numeric fields that ruin 'LIKE' performance
+            $excluded = ['id', 'created_at', 'updated_at', 'deleted_at', 'cne', 'fup_count', 'test_drive_count'];
+            
+            return array_diff($columns, $excluded);
+        });
+
+        $query->where(function ($q) use ($like, $xenqId, $isXenq, $tableColumns, $tableName) {
             if ($isXenq && $xenqId) {
-                $q->where('id', $xenqId);
+                $q->where($tableName . '.id', $xenqId);
             } else {
-                $q->where('id', (int) $searchText)
-                    ->orWhere('enquiry_no', 'like', $like)
-                    ->orWhere('oem_enquiry_no', 'like', $like)
-                    ->orWhere('x8_enquiry_no', 'like', $like)
-                    ->orWhere('first_name', 'like', $like)
-                    ->orWhere('last_name', 'like', $like)
-                    ->orWhere('mobile', 'like', $like)
-                    ->orWhere('alternate_mobile', 'like', $like)
-                    ->orWhere('email', 'like', $like)
-                    ->orWhere('source_code', 'like', $like)
-                    ->orWhere('sub_source', 'like', $like)
-                    ->orWhere('company_name', 'like', $like)
-                    ->orWhere('vehicle_no', 'like', $like)
-                    ->orWhere('city', 'like', $like)
-                    ->orWhere('pincode', 'like', $like)
-                    ->orWhereHas('model', fn($q2) => $q2->where('name', 'like', $like))
-                    ->orWhereHas('segment', fn($q2) => $q2->where('name', 'like', $like))
-                    ->orWhereHas('color', fn($q2) => $q2->where('name', 'like', $like))
-                    ->orWhereHas('variant', fn($q2) => $q2->where('display_name', 'like', $like)->orWhere('custom_name', 'like', $like)->orWhere('oem_name', 'like', $like));
+                $q->where(function ($sub) use ($tableColumns, $tableName, $like) {
+                    foreach ($tableColumns as $index => $column) {
+                        if ($index === 0) {
+                            $sub->where($tableName . '.' . $column, 'like', $like);
+                        } else {
+                            $sub->orWhere($tableName . '.' . $column, 'like', $like);
+                        }
+                    }
+                });
+
+                // Search relationships
+                $q->orWhereHas('model', fn($q2) => $q2->where('name', 'like', $like))
+                  ->orWhereHas('segment', fn($q2) => $q2->where('name', 'like', $like))
+                  ->orWhereHas('color', fn($q2) => $q2->where('name', 'like', $like))
+                  ->orWhereHas('variant', fn($q2) => $q2->where('display_name', 'like', $like)
+                                                       ->orWhere('custom_name', 'like', $like)
+                                                       ->orWhere('oem_name', 'like', $like));
             }
         });
     }
