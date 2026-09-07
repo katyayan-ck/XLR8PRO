@@ -1,6 +1,5 @@
 @extends(backpack_view('blank'))
 
-
 @section('content')
     <div class="row">
         <div class="col-12">
@@ -34,6 +33,12 @@
                                         <button id="closeColumnBubble"
                                             class="btn btn-sm btn-link text-danger p-0">✕</button>
                                     </div>
+                                    
+                                    <!-- NEW: Search Input for Columns -->
+                                    <div class="p-2 border-bottom">
+                                        <input type="text" id="columnSearch" class="form-control form-control-sm" placeholder="Search headers...">
+                                    </div>
+
                                     <div style="max-height:260px; overflow:auto;">
                                         <table class="table table-sm mb-0">
                                             <tbody id="columnBubbleBody"></tbody>
@@ -82,12 +87,10 @@
         const ALL_COLUMNS = @json($gridConfig['columns'] ?? []);
         const LIST_TYPE = @json($gridConfig['list_type'] ?? 'virtual');
         let gridApi;
-        let currentSearchText = '';
 
         const columnDefs = [
 
             ...ALL_COLUMNS.filter(col => [
-
                 'serial_no',
                 'x8_enquiry_no',
                 'virtual_no',
@@ -105,59 +108,24 @@
                 'x8_sc_branch',
                 'x8_sc_location',
                 'oem_enquiry_no'
-
             ].includes(col.field)),
 
             ...ALL_COLUMNS.filter(col => ['action'].includes(col.field)).map(col => {
-
                 col.pinned = 'right';
                 col.width = 140;
                 col.sortable = false;
                 col.filter = false;
                 col.cellRenderer = 'htmlRenderer';
-
                 return col;
-
             })
 
         ];
 
-        const dataSource = {
-            getRows: function(params) {
-                fetch('{{ backpack_url('enquiries/data') }}', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                        },
-                        body: JSON.stringify({
-                            startRow: params.startRow,
-                            endRow: params.endRow,
-                            sortModel: params.sortModel,
-                            filterModel: params.filterModel,
-                            searchText: currentSearchText,
-                            list_type: LIST_TYPE
-                        })
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        params.successCallback(data.rows || [], data.lastRow ?? 0);
-                    })
-                    .catch(err => {
-                        console.error('Failed to load enquiries', err);
-                        params.failCallback();
-                    });
-            }
-        };
-
         const gridOptions = {
             columnDefs: columnDefs,
-            rowModelType: 'infinite',
-            datasource: dataSource,
+            rowData: [], // Client-Side Model: Start empty, fetch below
             pagination: true,
             paginationPageSize: 50,
-            cacheBlockSize: 50,
             rowHeight: 28,
             animateRows: true,
             defaultColDef: {
@@ -194,21 +162,42 @@
                     'x8_sc_location',
                     'oem_enquiry_no',
                     'action'
-
                 ];
                 const allCols = gridApi.getAllGridColumns().map(col => col.getColId());
                 gridApi.setColumnsVisible(allCols, false);
                 gridApi.setColumnsVisible(defaultFields, true);
                 setTimeout(() => gridApi.autoSizeAllColumns(), 300);
+
+                // Fetch ALL data from the server ONCE when the grid is ready
+                fetch('{{ backpack_url('enquiries/data') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        list_type: LIST_TYPE
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    gridApi.setGridOption('rowData', data.rows || []); 
+                })
+                .catch(err => console.error('Failed to load enquiries', err));
             }
         };
 
         function openColumnBubble() {
             const bubble = document.getElementById('columnBubble');
             const tbody = document.getElementById('columnBubbleBody');
+            const searchInput = document.getElementById('columnSearch'); 
+            
             if (!gridApi || !bubble || !tbody) return;
 
             tbody.innerHTML = '';
+            
+            if(searchInput) searchInput.value = ''; 
 
             const allFlatColumns = ALL_COLUMNS;
 
@@ -240,10 +229,12 @@
                 tbody.appendChild(tr);
             });
 
+            document.querySelectorAll('#columnBubbleBody tr').forEach(row => {
+                row.style.display = '';
+            });
+
             bubble.style.display = 'block';
         }
-
-
 
         document.addEventListener('DOMContentLoaded', () => {
             const gridDiv = document.querySelector('#myGrid');
@@ -257,17 +248,29 @@
                 };
             }
 
-            document.getElementById('quickFilter').addEventListener('input', debounce(e => {
-                currentSearchText = e.target.value.trim();
-                gridApi.setGridOption('datasource', dataSource);
-            }, 400));
+            // Column Customise Header Search Filter Logic
+            document.getElementById('columnSearch')?.addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                const rows = document.querySelectorAll('#columnBubbleBody tr');
+                
+                rows.forEach(row => {
+                    const text = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+                    row.style.display = text.includes(searchTerm) ? '' : 'none';
+                });
+            });
 
-            document.getElementById('resetAll').addEventListener('click', () => {
+            // Instant Frontend Global Search
+            document.getElementById('quickFilter')?.addEventListener('input', debounce(e => {
+                const searchTerm = e.target.value.trim();
+                gridApi.setGridOption('quickFilterText', searchTerm);
+            }, 300));
+
+            // Reset All Button
+            document.getElementById('resetAll')?.addEventListener('click', () => {
                 document.getElementById('quickFilter').value = '';
-                currentSearchText = '';
+                gridApi.setGridOption('quickFilterText', '');
                 gridApi.setFilterModel(null);
                 gridApi.applyColumnState({ defaultState: { sort: null } });
-                gridApi.setGridOption('datasource', dataSource);
             });
 
             document.getElementById('btnCustomiseHeaders').addEventListener('click', e => {
@@ -294,7 +297,6 @@
 
             document.getElementById('btnDefaultHeaders').addEventListener('click', () => {
                 const defaultFields = [
-
                     'serial_no',
                     'x8_enquiry_no',
                     'virtual_no',
@@ -313,7 +315,6 @@
                     'x8_sc_location',
                     'oem_enquiry_no',
                     'action'
-
                 ];
                 const allCols = gridApi.getAllGridColumns().map(c => c.getColId());
 
@@ -322,21 +323,15 @@
                 setTimeout(() => gridApi.autoSizeAllColumns(), 200);
             });
 
-            // Server-side CSV export (covers ALL matching rows, not just the
-            // rows currently cached in the browser — required now that the
-            // grid loads data lazily instead of embedding it up front).
             document.getElementById('exportCsv').addEventListener('click', () => {
+                const searchTerm = document.getElementById('quickFilter').value.trim();
                 const params = new URLSearchParams({
-                    searchText: currentSearchText,
+                    searchText: searchTerm,
                     list_type: LIST_TYPE
                 });
                 window.location.href = '{{ backpack_url('enquiries/export') }}?' + params.toString();
             });
 
-            // PDF export only covers rows the grid has already fetched into
-            // its cache (the visible page(s)), since the full result set is
-            // no longer loaded client-side. Use CSV export above for a
-            // complete export of all matching rows.
             document.getElementById('exportPdf').addEventListener('click', () => {
                 const {
                     jsPDF

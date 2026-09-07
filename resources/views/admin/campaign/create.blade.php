@@ -116,8 +116,22 @@
                                         value="{{ old('end_date', isset($campaign) && $campaign->end_date ? \Carbon\Carbon::parse($campaign->end_date)->format('Y-m-d') : '') }}">
                                 </div>
 
+                                {{-- NEW: Forever Checkbox (Aligned nicely, labelled 'Is Forever') --}}
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label d-block">&nbsp;</label> <!-- Spacer to align with End Date -->
+                                    <div class="form-check d-flex align-items-center">
+                                        <input type="hidden" name="forever" value="0">
+                                        <input class="form-check-input mb-0 me-2" type="checkbox" name="forever" id="forever" value="1" 
+                                            {{ old('forever', $campaign->forever ?? 0) == 1 ? 'checked' : '' }} 
+                                            style="width: 1.5rem; height: 1.5rem; cursor: pointer; margin-top: 0;">
+                                        <label class="form-check-label mb-0" for="forever" style="cursor: pointer; padding-top: 3px;">
+                                            Is Forever ?
+                                        </label>
+                                    </div>
+                                </div>
+
                                 {{-- Dealer Branch --}}
-                                {{-- <div class="col-md-6 mb-3">
+                                <div class="col-md-6 mb-3">
                                     <label class="form-label">
                                         Dealer Branch <span class="text-danger">*</span>
                                     </label>
@@ -129,10 +143,10 @@
                                             </option>
                                         @endforeach
                                     </select>
-                                </div> --}}
+                                </div>
 
                                 {{-- Dealer Location --}}
-                                {{-- <div class="col-md-6 mb-3">
+                                <div class="col-md-6 mb-3">
                                     <label class="form-label">
                                         Dealer Location <span class="text-danger">*</span>
                                     </label>
@@ -144,7 +158,7 @@
                                             </option>
                                         @endforeach
                                     </select>
-                                </div> --}}
+                                </div>
 
                             </div>
                         </div>

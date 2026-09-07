@@ -374,8 +374,10 @@
                                 </select>
                             </div>
                             <div class="col-md-3 mb-3">
-                                <label class="form-label">Planned Campaign <span class="text-danger d-none" id="planned_campaign_asterisk">*</span></label>
-                                <select name="planned_campaign" id="planned_campaign" class="form-control form-select" disabled>
+                                <label class="form-label">Planned Campaign <span class="text-danger d-none"
+                                        id="planned_campaign_asterisk">*</span></label>
+                                <select name="planned_campaign" id="planned_campaign" class="form-control form-select"
+                                    disabled>
                                     <option value="">Select Planned Campaign</option>
                                     @foreach ($campaigns as $name)
                                         <option value="{{ $name }}"
@@ -460,19 +462,21 @@
                     <div class="card-body">
                         <div class="row">
 
-                            {{-- Dynamically show raw DB Model if the actual Model Code is missing --}}
-                            @if (isset($enquiry) && empty($enquiry->model_code) && !empty($enquiry->model))
+                            {{-- Always show raw DB Model if it exists in DB --}}
+                            @if (isset($enquiry) && !empty($enquiry->model))
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Model Family</label>
-                                    <input type="text" class="form-control" value="{{ $enquiry->model }}" readonly style="background-color: #e9ecef;">
+                                    <input type="text" class="form-control" value="{{ $enquiry->model }}" readonly
+                                        style="background-color: #e9ecef;">
                                 </div>
                             @endif
 
-                             {{-- Dynamically show raw DB Variant if the actual Variant Code is missing --}}
-                            @if (isset($enquiry) && empty($enquiry->variant_code) && !empty($enquiry->variant))
+                            {{-- Always show raw DB Variant if it exists in DB --}}
+                            @if (isset($enquiry) && !empty($enquiry->variant))
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Variant Family</label>
-                                    <input type="text" class="form-control" value="{{ $enquiry->variant }}" readonly style="background-color: #e9ecef;">
+                                    <input type="text" class="form-control" value="{{ $enquiry->variant }}" readonly
+                                        style="background-color: #e9ecef;">
                                 </div>
                             @endif
 
@@ -561,7 +565,8 @@
                                     </select>
                                 </div>
                                 <div class="col-md-3 mb-3">
-                                    <label class="form-label">KM Travelled Daily <small class="text-muted"></small></label>
+                                    <label class="form-label">KM Travelled Daily <small
+                                            class="text-muted"></small></label>
                                     <select name="km_travelled_daily" class="form-control form-select">
                                         <option value="">Select KM Travelled Daily</option>
                                         @foreach ($km_travelled_daily as $item)
@@ -711,8 +716,8 @@
                             @if (isset($enquiry))
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Purchase Type (SC Input)</label>
-                                    <input type="text" class="form-control" 
-                                        value="{{ collect($purchase_types ?? [])->firstWhere('code', $enquiry?->purchase_type)['value'] ?? ($enquiry?->purchase_type ?? '—') }}" 
+                                    <input type="text" class="form-control"
+                                        value="{{ collect($purchase_types ?? [])->firstWhere('code', $enquiry?->purchase_type)['value'] ?? ($enquiry?->purchase_type ?? '—') }}"
                                         readonly style="background-color: #e9ecef;">
                                     {{-- Hidden field to retain the value for validation / saving --}}
                                     <input type="hidden" name="purchase_type"
@@ -721,7 +726,8 @@
                             @endif
 
                             <div class="col-md-3 mb-3">
-                                <label class="form-label">Purchase Type (CRE Input) <span class="text-danger">*</span></label>
+                                <label class="form-label">Purchase Type (CRE Input) <span
+                                        class="text-danger">*</span></label>
                                 <select name="purchase_type_crm" id="purchase_type_crm" class="form-control form-select"
                                     required>
                                     <option value="">Select Purchase Type (CRE Input)</option>
@@ -760,7 +766,8 @@
                                 <select name="financier" id="financier" class="form-control form-select">
                                     <option value="">Select Financier</option>
                                     @foreach ($financiers ?? [] as $financier)
-                                        <option value="{{ $financier->id }}" data-shortname="{{ $financier->short_name ?? '' }}"
+                                        <option value="{{ $financier->id }}"
+                                            data-shortname="{{ $financier->short_name ?? '' }}"
                                             {{ (string) old('financier', $enquiry->financier ?? '') === (string) $financier->id ? 'selected' : '' }}>
                                             {{ $financier->name }}</option>
                                     @endforeach
@@ -769,7 +776,8 @@
 
                             <div class="col-md-3 mb-3" id="financiershortnamebox" style="display:none;">
                                 <label class="form-label">Financier Short Name</label>
-                                <input type="text" id="financiershortname" class="form-control" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                <input type="text" id="financiershortname" class="form-control" readonly
+                                    tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
                             </div>
 
                             {{-- NEW: Additional Buy Vehicle Section --}}
@@ -788,15 +796,18 @@
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Existing Model</label>
-                                    <input type="text" name="brand_model" class="form-control" value="{{ old('brand_model', $enquiry->brand_model ?? '') }}">
+                                    <input type="text" name="brand_model" class="form-control"
+                                        value="{{ old('brand_model', $enquiry->brand_model ?? '') }}">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Existing Vehicle No.</label>
-                                    <input type="text" name="vehicle_no" class="form-control" value="{{ old('vehicle_no', $enquiry->vehicle_no ?? '') }}">
+                                    <input type="text" name="vehicle_no" class="form-control"
+                                        value="{{ old('vehicle_no', $enquiry->vehicle_no ?? '') }}">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Existing Make Year</label>
-                                    <input type="number" name="make_year" class="form-control" value="{{ old('make_year', $enquiry->make_year ?? '') }}">
+                                    <input type="number" name="make_year" class="form-control"
+                                        value="{{ old('make_year', $enquiry->make_year ?? '') }}">
                                 </div>
                             </div>
 
@@ -864,10 +875,17 @@
                                 if ($oemScCode && isset($saleconsultants)) {
                                     $matchedSc = collect($saleconsultants)->firstWhere('person_code', $oemScCode);
                                     if ($matchedSc) {
-                                        $oemScDisplay = ($matchedSc['display_name'] ?? '') . ' - ' . ($matchedSc['employee_code'] ?? '');
+                                        $oemScDisplay =
+                                            ($matchedSc['display_name'] ?? '') .
+                                            ' - ' .
+                                            ($matchedSc['employee_code'] ?? '');
                                         $oemScMileId = $matchedSc['employee_code'] ?? '';
-                                        $oemScBranch = \App\Services\OrgService::branchName($matchedSc['primary_branch_code'] ?? '');
-                                        $oemScLocation = \App\Services\OrgService::locationName($matchedSc['primary_loc_code'] ?? '');
+                                        $oemScBranch = \App\Services\OrgService::branchName(
+                                            $matchedSc['primary_branch_code'] ?? '',
+                                        );
+                                        $oemScLocation = \App\Services\OrgService::locationName(
+                                            $matchedSc['primary_loc_code'] ?? '',
+                                        );
                                     }
                                 }
                             @endphp
@@ -875,20 +893,27 @@
                             <div class="row mb-4" style="pointer-events:none;">
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">OEM Assigned SC</label>
-                                    <input type="text" class="form-control" value="{{ $oemScDisplay }}" readonly tabindex="-1" style="background-color: #e9ecef;">
+                                    <input type="text" class="form-control" value="{{ $oemScDisplay }}" readonly
+                                        tabindex="-1" style="background-color: #e9ecef;">
                                     <input type="hidden" name="sc_code" value="{{ $oemScCode }}">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">OEM Assigned SC Mile ID</label>
-                                    <input type="text" id="oem_sc_mile_id" class="form-control" value="{{ $oemScMileId }}" readonly tabindex="-1" style="background-color: #e9ecef;">
+                                    <input type="text" id="oem_sc_mile_id" class="form-control"
+                                        value="{{ $oemScMileId }}" readonly tabindex="-1"
+                                        style="background-color: #e9ecef;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">OEM Assigned SC Branch</label>
-                                    <input type="text" id="oem_sc_branch" class="form-control" value="{{ $oemScBranch }}" readonly tabindex="-1" style="background-color: #e9ecef;">
+                                    <input type="text" id="oem_sc_branch" class="form-control"
+                                        value="{{ $oemScBranch }}" readonly tabindex="-1"
+                                        style="background-color: #e9ecef;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">OEM Assigned SC Location</label>
-                                    <input type="text" id="oem_sc_location" class="form-control" value="{{ $oemScLocation }}" readonly tabindex="-1" style="background-color: #e9ecef;">
+                                    <input type="text" id="oem_sc_location" class="form-control"
+                                        value="{{ $oemScLocation }}" readonly tabindex="-1"
+                                        style="background-color: #e9ecef;">
                                 </div>
                             </div>
                         @endif
@@ -1036,7 +1061,7 @@
                                             'consider_make',
                                             $enquiry->consider_make ??
                                                 'No
-                                                                                                                                                            Consideration',
+                                                                                                                                                                                                                                            Consideration',
                                         ) == 'No Consideration'
                                             ? 'selected'
                                             : '' }}>
@@ -1133,7 +1158,7 @@
                                                     <th class="text-center px-3">Actual Date</th>
                                                     <th class="text-center px-3">Duration</th>
                                                     <th class="text-center px-3">Deviation</th>
-                                                    <th class="text-center px-3">ENQ Status</th>
+                                                    <th class="text-center px-3">Enquiry Status</th>
                                                     <th class="text-center px-3">Remark Type</th>
                                                     <th class="text-center px-3">Comments</th>
                                                 </tr>
@@ -1215,8 +1240,11 @@
                                                         @if ($fupCount > 4 && $index == 0)
                                                             <tr id="toggleFupsRow" style="background-color: #f8f9fa;">
                                                                 <td colspan="10" class="text-center py-2">
-                                                                    <button type="button" class="btn btn-sm btn-outline-secondary fw-bold shadow-sm" id="toggleFupsBtn">
-                                                                        <i class="la la-angle-down"></i> Show {{ $fupCount - 4 }} More FUPs
+                                                                    <button type="button"
+                                                                        class="btn btn-sm btn-outline-secondary fw-bold shadow-sm"
+                                                                        id="toggleFupsBtn">
+                                                                        <i class="la la-angle-down"></i> Show
+                                                                        {{ $fupCount - 4 }} More FUPs
                                                                     </button>
                                                                 </td>
                                                             </tr>
@@ -1245,7 +1273,7 @@
                                     @endphp
                                     <div class="row mb-4" style="opacity: 0.85; pointer-events:none;">
                                         <div class="col-md-3 mb-3">
-                                            <label class="form-label">Enq Status</label>
+                                            <label class="form-label">Enquiry Status</label>
                                             <input type="text" class="form-control"
                                                 value="{{ $enqStageMap[$enquiry?->quick_status ?? ''] ?? ($enquiry?->quick_status ?? ($enquiry?->stage ?? '—')) }}"
                                                 readonly style="background-color: #e9ecef;">
@@ -1359,12 +1387,15 @@
                                         <input type="text" name="dms_enq_no" class="form-control"
                                             value="{{ old('dms_enq_no', $enquiry?->dms_enq_no ?? '') }}">
                                     </div>
-                                    
+
                                     <div class="col-md-3 mb-3">
                                         <label class="form-label">Likely Purchase In Days </label>
-                                        <input type="text" class="form-control" value="{{ collect($likely_purchase_dates ?? [])->firstWhere('code', $enquiry?->likely_purchase_days)['value'] ?? ($enquiry?->likely_purchase_days ?? '—') }}" readonly style="background-color: #e9ecef;">
+                                        <input type="text" class="form-control"
+                                            value="{{ collect($likely_purchase_dates ?? [])->firstWhere('code', $enquiry?->likely_purchase_days)['value'] ?? ($enquiry?->likely_purchase_days ?? '—') }}"
+                                            readonly style="background-color: #e9ecef;">
                                         {{-- Hidden input preserves the value on submit --}}
-                                        <input type="hidden" name="likely_purchase_days" value="{{ old('likely_purchase_days', $enquiry?->likely_purchase_days ?? '') }}">
+                                        <input type="hidden" name="likely_purchase_days"
+                                            value="{{ old('likely_purchase_days', $enquiry?->likely_purchase_days ?? '') }}">
                                     </div>
                                 </div>
                             </div>
@@ -1389,7 +1420,7 @@
                                             <th class="text-center px-3">Planned Date</th>
                                             <th class="text-center px-3">Actual Date</th>
                                             <th class="text-center px-3">Deviation Stage</th>
-                                            <th class="text-center px-3">Enq Stage</th>
+                                            <th class="text-center px-3">Enquiry Stage</th>
                                             <th class="text-center px-3">Customer Stage</th>
                                             <th class="text-center px-3">Remarks</th>
                                         </tr>
@@ -1449,8 +1480,11 @@
                                                 @if ($creFupCount > 4 && $index == 0)
                                                     <tr id="toggleCreFupsRow" style="background-color: #f8f9fa;">
                                                         <td colspan="7" class="text-center py-2">
-                                                            <button type="button" class="btn btn-sm btn-outline-secondary fw-bold shadow-sm" id="toggleCreFupsBtn">
-                                                                <i class="la la-angle-down"></i> Show {{ $creFupCount - 4 }} More FUPs
+                                                            <button type="button"
+                                                                class="btn btn-sm btn-outline-secondary fw-bold shadow-sm"
+                                                                id="toggleCreFupsBtn">
+                                                                <i class="la la-angle-down"></i> Show
+                                                                {{ $creFupCount - 4 }} More FUPs
                                                             </button>
                                                         </td>
                                                     </tr>
@@ -1492,11 +1526,12 @@
                             <div class="row">
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Customer Stage</label>
-                                    <select name="cre_customer_stage" class="form-control form-select">
+                                    <select name="cre_customer_stage" id="cre_customer_stage"
+                                        class="form-control form-select">
                                         <option value="">Select Option</option>
                                         @foreach ($customer_stages as $item)
                                             <option value="{{ $item['code'] }}"
-                                                {{ old('cre_customer_stage') == $item['code'] ? 'selected' : '' }}>
+                                                {{ old('cre_customer_stage', $enquiry->cre_customer_stage ?? '') == $item['code'] ? 'selected' : '' }}>
                                                 {{ $item['value'] }}</option>
                                         @endforeach
                                     </select>
@@ -1504,16 +1539,12 @@
 
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Enquiry Stage</label>
-                                    <select name="cre_enq_stage" class="form-control form-select">
+                                    <select name="cre_enq_stage" id="cre_enq_stage" class="form-control form-select"
+                                        disabled>
                                         <option value="">Select Option</option>
-                                        @foreach ($enquiry_stages as $item)
-                                            <option value="{{ $item['code'] }}"
-                                                {{ old('cre_enq_stage') == $item['code'] ? 'selected' : '' }}>
-                                                {{ $item['value'] }}</option>
-                                        @endforeach
                                     </select>
                                 </div>
-                                
+
                                 <div class="col-md-2 mb-3">
                                     <label class="form-label">Next Fup Date</label>
                                     <input type="text" id="cre_next_fup_date" name="cre_next_fup_date"
@@ -1544,6 +1575,24 @@
                                                 : $creFups->last())
                                             : null;
                                     $creNextDate = $lastCre?->cre_next_fup_date;
+
+                                    // Resolve X8 Assigned SC Name
+                                    $creScCode = $enquiry?->x8_sc_code;
+                                    $creScDisplay = '—';
+                                    if ($creScCode && isset($saleconsultants)) {
+                                        $matchedCreSc = collect($saleconsultants)->firstWhere(
+                                            'person_code',
+                                            $creScCode,
+                                        );
+                                        if ($matchedCreSc) {
+                                            $creScDisplay =
+                                                ($matchedCreSc['display_name'] ?? '') .
+                                                ' - ' .
+                                                ($matchedCreSc['employee_code'] ?? '');
+                                        } else {
+                                            $creScDisplay = $creScCode;
+                                        }
+                                    }
                                 @endphp
 
                                 {{-- Hidden input to tell the backend this comparison table was rendered --}}
@@ -1562,21 +1611,26 @@
                                         </thead>
                                         <tbody>
                                             <tr>
-                                                <td class="fw-bold align-middle table-secondary text-start px-4 py-2 text-dark">
+                                                <td
+                                                    class="fw-bold align-middle table-secondary text-start px-4 py-2 text-dark">
                                                     Enquiry Stage</td>
                                                 <td class="align-middle p-2">
-                                                    <div class="form-control bg-white h-auto border-0 text-nowrap text-center">
+                                                    <div
+                                                        class="form-control bg-white h-auto border-0 text-nowrap text-center">
                                                         {{ $enqStageMap[$lastCre?->cre_enq_stage ?? ''] ?? ($lastCre?->cre_enq_stage ?? '—') }}
                                                     </div>
                                                 </td>
                                                 <td class="align-middle p-2">
-                                                    <div class="form-control bg-white h-auto border-0 text-nowrap text-center">
+                                                    <div
+                                                        class="form-control bg-white h-auto border-0 text-nowrap text-center">
                                                         {{ $enqStageMap[$enquiry?->dms_enquiry_stage ?? ''] ?? ($enquiry?->dms_enquiry_stage ?? ($enquiry?->stage ?? '—')) }}
                                                     </div>
                                                 </td>
                                                 <td class="align-middle p-2">
-                                                    <div class="form-control bg-white h-auto border-0 d-flex justify-content-center align-items-center">
-                                                        <input class="form-check-input border-secondary cursor-pointer m-0"
+                                                    <div
+                                                        class="form-control bg-white h-auto border-0 d-flex justify-content-center align-items-center">
+                                                        <input
+                                                            class="form-check-input border-secondary cursor-pointer m-0"
                                                             type="checkbox" name="mismatch_enq_stage" value="1"
                                                             style="width: 1.2rem; height: 1.2rem;">
                                                         <label class="form-check-label ms-2 mb-0">Mismatch</label>
@@ -1584,21 +1638,26 @@
                                                 </td>
                                             </tr>
                                             <tr>
-                                                <td class="fw-bold align-middle table-secondary text-start px-4 py-2 text-dark">
+                                                <td
+                                                    class="fw-bold align-middle table-secondary text-start px-4 py-2 text-dark">
                                                     Next Fup Date</td>
                                                 <td class="align-middle p-2">
-                                                    <div class="form-control bg-white h-auto border-0 text-nowrap text-center">
-                                                        {{ $creNextDate ? \Carbon\Carbon::parse($creNextDate)->format('d-M-Y') : '—' }}
+                                                    <div
+                                                        class="form-control bg-white h-auto border-0 text-nowrap text-center">
+                                                        {{ $creNextDate ? \Carbon\Carbon::parse($creNextDate)->format('d-M-Y H:i') : '—' }}
                                                     </div>
                                                 </td>
                                                 <td class="align-middle p-2">
-                                                    <div class="form-control bg-white h-auto border-0 text-nowrap text-center">
-                                                        {{ $scNextDate ? \Carbon\Carbon::parse($scNextDate)->format('d-M-Y') : '—' }}
+                                                    <div
+                                                        class="form-control bg-white h-auto border-0 text-nowrap text-center">
+                                                        {{ $scNextDate ? \Carbon\Carbon::parse($scNextDate)->format('d-M-Y H:i') : '—' }}
                                                     </div>
                                                 </td>
                                                 <td class="align-middle p-2">
-                                                    <div class="form-control bg-white h-auto border-0 d-flex justify-content-center align-items-center">
-                                                        <input class="form-check-input border-secondary cursor-pointer m-0"
+                                                    <div
+                                                        class="form-control bg-white h-auto border-0 d-flex justify-content-center align-items-center">
+                                                        <input
+                                                            class="form-check-input border-secondary cursor-pointer m-0"
                                                             type="checkbox" name="mismatch_next_fup" value="1"
                                                             style="width: 1.2rem; height: 1.2rem;">
                                                         <label class="form-check-label ms-2 mb-0">Mismatch</label>
@@ -1606,7 +1665,8 @@
                                                 </td>
                                             </tr>
                                             <tr>
-                                                <td class="fw-bold align-middle table-secondary text-start px-4 py-2 text-dark">
+                                                <td
+                                                    class="fw-bold align-middle table-secondary text-start px-4 py-2 text-dark">
                                                     Latest Fup Remarks</td>
                                                 <td class="align-middle p-2">
                                                     <div class="form-control bg-white h-auto border-0 text-wrap text-center"
@@ -1622,8 +1682,90 @@
                                                 <td class="align-middle p-2">
                                                     <div class="form-control bg-white h-auto border-0 d-flex justify-content-center align-items-center"
                                                         style="height: 100%; min-height: 38px;">
-                                                        <input class="form-check-input border-secondary cursor-pointer m-0"
+                                                        <input
+                                                            class="form-check-input border-secondary cursor-pointer m-0"
                                                             type="checkbox" name="mismatch_fup_remarks" value="1"
+                                                            style="width: 1.2rem; height: 1.2rem;">
+                                                        <label class="form-check-label ms-2 mb-0">Mismatch</label>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td
+                                                    class="fw-bold align-middle table-secondary text-start px-4 py-2 text-dark">
+                                                    Purchase Type</td>
+                                                <td class="align-middle p-2">
+                                                    <div
+                                                        class="form-control bg-white h-auto border-0 text-nowrap text-center">
+                                                        {{ collect($purchase_types ?? [])->firstWhere('code', $enquiry?->purchase_type_crm)['value'] ?? ($enquiry?->purchase_type_crm ?? '—') }}
+                                                    </div>
+                                                </td>
+                                                <td class="align-middle p-2">
+                                                    <div
+                                                        class="form-control bg-white h-auto border-0 text-nowrap text-center">
+                                                        {{ collect($purchase_types ?? [])->firstWhere('code', $enquiry?->purchase_type)['value'] ?? ($enquiry?->purchase_type ?? '—') }}
+                                                    </div>
+                                                </td>
+                                                <td class="align-middle p-2">
+                                                    <div
+                                                        class="form-control bg-white h-auto border-0 d-flex justify-content-center align-items-center">
+                                                        <input
+                                                            class="form-check-input border-secondary cursor-pointer m-0"
+                                                            type="checkbox" name="mismatch_purchase_type"
+                                                            value="1" style="width: 1.2rem; height: 1.2rem;">
+                                                        <label class="form-check-label ms-2 mb-0">Mismatch</label>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td
+                                                    class="fw-bold align-middle table-secondary text-start px-4 py-2 text-dark">
+                                                    Likely Purchase In Days</td>
+                                                <td class="align-middle p-2">
+                                                    <div
+                                                        class="form-control bg-white h-auto border-0 text-nowrap text-center">
+                                                        {{ collect($likely_purchase_dates ?? [])->firstWhere('code', $enquiry?->cre_likely_purchase_days)['value'] ?? ($enquiry?->cre_likely_purchase_days ?? '—') }}
+                                                    </div>
+                                                </td>
+                                                <td class="align-middle p-2">
+                                                    <div
+                                                        class="form-control bg-white h-auto border-0 text-nowrap text-center">
+                                                        {{ collect($likely_purchase_dates ?? [])->firstWhere('code', $enquiry?->likely_purchase_days)['value'] ?? ($enquiry?->likely_purchase_days ?? '—') }}
+                                                    </div>
+                                                </td>
+                                                <td class="align-middle p-2">
+                                                    <div
+                                                        class="form-control bg-white h-auto border-0 d-flex justify-content-center align-items-center">
+                                                        <input
+                                                            class="form-check-input border-secondary cursor-pointer m-0"
+                                                            type="checkbox" name="mismatch_likely_purchase"
+                                                            value="1" style="width: 1.2rem; height: 1.2rem;">
+                                                        <label class="form-check-label ms-2 mb-0">Mismatch</label>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td
+                                                    class="fw-bold align-middle table-secondary text-start px-4 py-2 text-dark">
+                                                    Assigned SC</td>
+                                                <td class="align-middle p-2">
+                                                    <div
+                                                        class="form-control bg-white h-auto border-0 text-nowrap text-center">
+                                                        {{ $creScDisplay }}
+                                                    </div>
+                                                </td>
+                                                <td class="align-middle p-2">
+                                                    <div
+                                                        class="form-control bg-white h-auto border-0 text-nowrap text-center">
+                                                        {{ !empty($oemScDisplay) ? $oemScDisplay : $enquiry?->sc_code ?? '—' }}
+                                                    </div>
+                                                </td>
+                                                <td class="align-middle p-2">
+                                                    <div
+                                                        class="form-control bg-white h-auto border-0 d-flex justify-content-center align-items-center">
+                                                        <input
+                                                            class="form-check-input border-secondary cursor-pointer m-0"
+                                                            type="checkbox" name="mismatch_assigned_sc" value="1"
                                                             style="width: 1.2rem; height: 1.2rem;">
                                                         <label class="form-check-label ms-2 mb-0">Mismatch</label>
                                                     </div>
@@ -1631,21 +1773,26 @@
                                             </tr>
                                             @if (!empty($enquiry?->test_drive_no))
                                                 <tr>
-                                                    <td class="fw-bold align-middle table-secondary text-start px-4 py-2 text-dark">
+                                                    <td
+                                                        class="fw-bold align-middle table-secondary text-start px-4 py-2 text-dark">
                                                         Test Drive Verification</td>
                                                     <td class="align-middle p-2">
-                                                        <div class="form-control bg-white h-auto border-0 text-nowrap text-center">
+                                                        <div
+                                                            class="form-control bg-white h-auto border-0 text-nowrap text-center">
                                                             —</div>
                                                     </td>
                                                     <td class="align-middle p-2">
-                                                        <div class="form-control bg-white h-auto border-0 text-nowrap text-center">
+                                                        <div
+                                                            class="form-control bg-white h-auto border-0 text-nowrap text-center">
                                                             —</div>
                                                     </td>
                                                     <td class="align-middle p-2">
-                                                        <div class="form-control bg-white h-auto border-0 d-flex justify-content-center align-items-center">
-                                                            <input class="form-check-input border-secondary cursor-pointer m-0"
-                                                                type="checkbox" name="mismatch_test_drive" value="1"
-                                                                style="width: 1.2rem; height: 1.2rem;">
+                                                        <div
+                                                            class="form-control bg-white h-auto border-0 d-flex justify-content-center align-items-center">
+                                                            <input
+                                                                class="form-check-input border-secondary cursor-pointer m-0"
+                                                                type="checkbox" name="mismatch_test_drive"
+                                                                value="1" style="width: 1.2rem; height: 1.2rem;">
                                                             <label class="form-check-label ms-2 mb-0">Mismatch</label>
                                                         </div>
                                                     </td>
@@ -1713,10 +1860,15 @@
             input.value = formatted;
         }
 
-        function loadKeywordDropdown(keyword, parent, $target, placeholder = 'Select Option', selected = '') {
+        function loadKeywordDropdown(keyword, parent, $target, placeholder = 'Select Option', selected = '', parentKeyword =
+            '') {
             if (!parent) return $target.html(`<option value="">${placeholder}</option>`).prop('disabled', true);
-            const url = "{{ route('admin.master.keyword-values', ['keyword' => '__K__', 'parent' => '__P__']) }}".replace(
+            let url = "{{ route('admin.master.keyword-values', ['keyword' => '__K__', 'parent' => '__P__']) }}".replace(
                 '__K__', encodeURIComponent(keyword)).replace('__P__', encodeURIComponent(parent));
+            if (parentKeyword) {
+                url += (url.includes('?') ? '&' : '?') + 'parent_keyword=' + encodeURIComponent(parentKeyword);
+            }
+
             $.ajax({
                 url: url,
                 type: "GET",
@@ -1779,7 +1931,8 @@
             tehsil: @json(old('tehsil', $enquiry->tehsil ?? '')),
             district: @json(old('district', $enquiry->district ?? '')),
             city: @json(old('city', $enquiry->city ?? '')),
-            territory: @json(old('territory', $enquiry->territory ?? ''))
+            territory: @json(old('territory', $enquiry->territory ?? '')),
+            creEnqStage: @json(old('cre_enq_stage', $enquiry->cre_enq_stage ?? ''))
         };
 
         $(function() {
@@ -1799,7 +1952,7 @@
 
                 function toggleVirtualForm() {
                     const text = $('#call_nature').find('option:selected').text().trim().toUpperCase();
-                    
+
                     // Changed from includes('SALES') to strict exact match
                     if (text === 'SALES') {
                         $fullForm.removeClass('d-none').addClass('d-flex flex-column');
@@ -1825,18 +1978,18 @@
             const $subSource = $('#sub_source');
             const $plannedCampaign = $('#planned_campaign');
 
-            
+
 
             let maxDob = new Date();
             maxDob.setFullYear(maxDob.getFullYear() - 18);
-            
+
             flatpickr("#dob", {
                 dateFormat: "d-M-Y",
                 maxDate: maxDob,
                 allowInput: true, // Allows clearing the date manually
                 onChange: function(selectedDates, dateStr, instance) {
                     let $ageGroup = $('select[name="age_group"]');
-                    
+
                     if (selectedDates.length > 0) {
                         // 1. Calculate Exact Age
                         const today = new Date();
@@ -1851,18 +2004,18 @@
 
                         // 2. Map exactly to your DB Codes
                         if (age < 30) {
-                            selectedCode = '30_YEARS';     // < 30 Years
+                            selectedCode = '30_YEARS'; // < 30 Years
                         } else if (age >= 30 && age <= 45) {
-                            selectedCode = '30_45_YEARS';  // 30 - 45 Years
+                            selectedCode = '30_45_YEARS'; // 30 - 45 Years
                         } else if (age > 45) {
-                            selectedCode = '45_YEARS';     // > 45 Years
+                            selectedCode = '45_YEARS'; // > 45 Years
                         }
 
                         // 3. Auto-select and Freeze the dropdown (removes arrow)
                         if (selectedCode) {
                             $ageGroup.val(selectedCode).trigger('change');
                             $ageGroup.css({
-                                'pointer-events': 'none', 
+                                'pointer-events': 'none',
                                 'background-color': '#e9ecef',
                                 '-webkit-appearance': 'none',
                                 '-moz-appearance': 'none',
@@ -1880,7 +2033,7 @@
                         // Clear and Unfreeze if date is completely removed (restores arrow)
                         $ageGroup.val('').trigger('change');
                         $ageGroup.css({
-                            'pointer-events': 'auto', 
+                            'pointer-events': 'auto',
                             'background-color': '',
                             '-webkit-appearance': '',
                             '-moz-appearance': '',
@@ -1896,7 +2049,7 @@
             // Page Load Check for Edit Mode (Freezes the dropdown if a DOB was already saved)
             if (($('#dob').val() || '').trim() !== '') {
                 $('select[name="age_group"]').css({
-                    'pointer-events': 'none', 
+                    'pointer-events': 'none',
                     'background-color': '#e9ecef',
                     '-webkit-appearance': 'none',
                     '-moz-appearance': 'none',
@@ -1904,7 +2057,7 @@
                 }).attr('tabindex', '-1');
             } else {
                 $('select[name="age_group"]').css({
-                    'pointer-events': 'auto', 
+                    'pointer-events': 'auto',
                     'background-color': '',
                     '-webkit-appearance': '',
                     '-moz-appearance': '',
@@ -1926,7 +2079,8 @@
                     $(this).html('<i class="la la-angle-up"></i> Hide FUPs');
                 } else {
                     $hiddenRows.addClass('d-none');
-                    $(this).html('<i class="la la-angle-down"></i> Show ' + $hiddenRows.length + ' More FUPs');
+                    $(this).html('<i class="la la-angle-down"></i> Show ' + $hiddenRows.length +
+                        ' More FUPs');
                 }
             });
 
@@ -1938,7 +2092,8 @@
                     $(this).html('<i class="la la-angle-up"></i> Hide FUPs');
                 } else {
                     $hiddenRows.addClass('d-none');
-                    $(this).html('<i class="la la-angle-down"></i> Show ' + $hiddenRows.length + ' More FUPs');
+                    $(this).html('<i class="la la-angle-down"></i> Show ' + $hiddenRows.length +
+                        ' More FUPs');
                 }
             });
 
@@ -1954,7 +2109,6 @@
                         selectedDate.setHours(0, 0, 0, 0);
 
                         const diffTime = selectedDate - today;
-                        // Use Math.max to prevent negative days from breaking the logic if they pick a past date
                         const diffDays = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
 
                         let selectedCode = '';
@@ -1968,30 +2122,54 @@
                             selectedCode = '45_DAYS';
                         }
 
-                        // Auto-select the dropdown and FREEZE IT (Not allowed to change manually)
+                        // Auto-select the dropdown and FREEZE IT
                         $('#cre_likely_purchase_days').val(selectedCode).trigger('change');
-                        $('#cre_likely_purchase_days').css({'pointer-events': 'none', 'background-color': '#e9ecef'}).attr('tabindex', '-1');
+                        $('#cre_likely_purchase_days').css({
+                            'pointer-events': 'none',
+                            'background-color': '#e9ecef'
+                        }).attr('tabindex', '-1');
                     } else {
-                        // Clear if date is removed and UNFREEZE IT (Allowed to change manually)
+                        // Clear if date is removed via calendar and UNFREEZE IT
                         $('#cre_likely_purchase_days').val('').trigger('change');
-                        $('#cre_likely_purchase_days').css({'pointer-events': 'auto', 'background-color': ''}).removeAttr('tabindex');
+                        $('#cre_likely_purchase_days').css({
+                            'pointer-events': 'auto',
+                            'background-color': ''
+                        }).removeAttr('tabindex');
                     }
+                }
+            });
+
+            // NEW: Instantly unfreeze the dropdown if the user manually backspaces/deletes the text
+            $('#cre_likely_purchase_date').on('input blur clear', function() {
+                if ($(this).val().trim() === '') {
+                    $('#cre_likely_purchase_days').css({
+                        'pointer-events': 'auto',
+                        'background-color': ''
+                    }).removeAttr('tabindex');
                 }
             });
 
             // Page Load Check: If a date is already saved/filled, freeze the days dropdown immediately
             if (($('#cre_likely_purchase_date').val() || '').trim() !== '') {
-                $('#cre_likely_purchase_days').css({'pointer-events': 'none', 'background-color': '#e9ecef'}).attr('tabindex', '-1');
+                $('#cre_likely_purchase_days').css({
+                    'pointer-events': 'none',
+                    'background-color': '#e9ecef'
+                }).attr('tabindex', '-1');
             } else {
-                // If no date is saved, ensure the days dropdown is completely fillable
-                $('#cre_likely_purchase_days').css({'pointer-events': 'auto', 'background-color': ''}).removeAttr('tabindex');
+                $('#cre_likely_purchase_days').css({
+                    'pointer-events': 'auto',
+                    'background-color': ''
+                }).removeAttr('tabindex');
             }
 
             // Initialize freeze on page load if a date already exists in the database
             if ($('#cre_likely_purchase_date').val()) {
-                $('#cre_likely_purchase_days').css({'pointer-events': 'none', 'background-color': '#e9ecef'}).attr('tabindex', '-1');
+                $('#cre_likely_purchase_days').css({
+                    'pointer-events': 'none',
+                    'background-color': '#e9ecef'
+                }).attr('tabindex', '-1');
             }
-            
+
             window.marriagePicker = flatpickr("#marriage_date", {
                 dateFormat: "d-M-Y",
                 maxDate: "today",
@@ -2001,7 +2179,7 @@
             // Listen for Marital Status Changes
             $('select[name="marital_status"]').on('change', function() {
                 let statusText = $(this).find('option:selected').text().trim().toUpperCase();
-                
+
                 if (statusText === 'MARRIED') {
                     // Enable Marriage Date
                     $('#marriage_date').prop('disabled', false).css('background-color', '#fff');
@@ -2020,10 +2198,10 @@
             // Safer Finance Mode listener to show Financier dropdowns and prevent clearing on load
             $('#fin_mode').on('change', function() {
                 const isInHouse = $(this).val() === 'In-house';
-                
+
                 // Show or hide both the financier and short name boxes based on the selection
                 $('#financierbox, #financiershortnamebox').toggle(isInHouse);
-                
+
                 // Only clear the values if it is NOT In-house. 
                 if (!isInHouse) {
                     $('#financier').val('');
@@ -2045,7 +2223,7 @@
             // NEW: Purchase Type listener to show/hide Additional Vehicle fields
             $('#purchase_type_crm').on('change', function() {
                 const ptText = $(this).find('option:selected').text().trim().toUpperCase();
-                
+
                 if (ptText.includes('ADDITIONAL')) {
                     $('#additional_vehicle_section').show();
                 } else {
@@ -2054,7 +2232,9 @@
             });
 
             // Trigger on page load so it opens immediately if editing an Additional Buy case
-            setTimeout(() => { $('#purchase_type_crm').trigger('change'); }, 100);
+            setTimeout(() => {
+                $('#purchase_type_crm').trigger('change');
+            }, 100);
 
             // ================= CONSIDERATION SET 1 =================
             $('#consider_make').on('change', function() {
@@ -2122,22 +2302,28 @@
             $('#enquiry_type').on('change', function() {
                 // Safely extract the exact, unmodified value for the DB lookup
                 const rawVal = $(this).val() || '';
-                const typeText = String($(this).find('option:selected').text() || '').trim().toUpperCase().replace(/\s+/g, '');
+                const typeText = String($(this).find('option:selected').text() || '').trim().toUpperCase()
+                    .replace(/\s+/g, '');
 
                 // 1. If empty selection (e.g., user selects "Select Enquiry Type")
                 if (rawVal === '') {
-                    $sourceCode.html('<option value="">Select Enquiry Source</option>').val('').prop('disabled', true).prop('required', false);
+                    $sourceCode.html('<option value="">Select Enquiry Source</option>').val('').prop(
+                        'disabled', true).prop('required', false);
                     $('#source_code_asterisk').addClass('d-none');
-                    $subSource.html('<option value="">Select Enquiry Sub Source</option>').val('').prop('disabled', true).prop('required', false);
+                    $subSource.html('<option value="">Select Enquiry Sub Source</option>').val('').prop(
+                        'disabled', true).prop('required', false);
                     $('#sub_source_asterisk').addClass('d-none');
                     return;
                 }
 
                 // 2. If Walk-In (Bypass sources entirely)
-                if (rawVal.toUpperCase() === 'WALK_IN' || typeText.includes('WALKIN') || typeText.includes('WALK_IN')) {
-                    $sourceCode.html('<option value="">Select Enquiry Source</option>').val('').prop('disabled', true).prop('required', false);
+                if (rawVal.toUpperCase() === 'WALK_IN' || typeText.includes('WALKIN') || typeText.includes(
+                        'WALK_IN')) {
+                    $sourceCode.html('<option value="">Select Enquiry Source</option>').val('').prop(
+                        'disabled', true).prop('required', false);
                     $('#source_code_asterisk').addClass('d-none');
-                    $subSource.html('<option value="">Select Enquiry Sub Source</option>').val('').prop('disabled', true).prop('required', false);
+                    $subSource.html('<option value="">Select Enquiry Sub Source</option>').val('').prop(
+                        'disabled', true).prop('required', false);
                     $('#sub_source_asterisk').addClass('d-none');
                     $sourceCode.trigger('change');
                 } else {
@@ -2146,12 +2332,40 @@
                     $('#source_code_asterisk').removeClass('d-none');
 
                     // Call the AJAX loader using the exact database code (rawVal)
-                    loadKeywordDropdown('ENQ_SOURCE', rawVal, $sourceCode, 'Select Enquiry Source', currentEnquiry.source);
+                    loadKeywordDropdown('ENQ_SOURCE', rawVal, $sourceCode, 'Select Enquiry Source',
+                        currentEnquiry.source);
 
-                    $subSource.html('<option value="">Select Enquiry Sub Source</option>').prop('disabled', true).prop('required', false);
+                    $subSource.html('<option value="">Select Enquiry Sub Source</option>').prop('disabled',
+                        true).prop('required', false);
                     $('#sub_source_asterisk').addClass('d-none');
                 }
             });
+
+            // CONDITIONAL DROPDOWN: Customer Stage -> Enquiry Stage
+            $('#cre_customer_stage').on('change', function() {
+                const rawVal = $(this).val() || '';
+                const $enqStage = $('#cre_enq_stage');
+
+                if (rawVal === '') {
+                    $enqStage.html('<option value="">Select Option</option>').val('').prop('disabled',
+                        true);
+                    return;
+                }
+
+                $enqStage.prop('disabled', false);
+
+                loadKeywordDropdown('ENQUIRY_STAGE', rawVal, $enqStage, 'Select Option', currentEnquiry
+                    .creEnqStage, 'CUSTOMER_STAGE');
+                // Wait slightly for AJAX to populate, then trigger change to fire handleStageRules()
+                setTimeout(() => {
+                    $enqStage.trigger('change');
+                }, 600);
+            });
+
+            // Trigger on page load to pre-fill Edit mode correctly
+            if ($('#cre_customer_stage').val()) {
+                $('#cre_customer_stage').trigger('change');
+            }
 
             // Helper to freeze/unfreeze Next Fup Date based on stage
             function handleStageRules() {
@@ -2167,11 +2381,17 @@
                             $custStage.val($(this).val());
                         }
                     });
-                    $custStage.css({'pointer-events': 'none', 'background-color': '#e9ecef'}).attr('tabindex', '-1');
+                    $custStage.css({
+                        'pointer-events': 'none',
+                        'background-color': '#e9ecef'
+                    }).attr('tabindex', '-1');
                     custStageVal = 'LOST';
                     custStageText = 'LOST';
                 } else {
-                    $custStage.css({'pointer-events': 'auto', 'background-color': ''}).removeAttr('tabindex');
+                    $custStage.css({
+                        'pointer-events': 'auto',
+                        'background-color': ''
+                    }).removeAttr('tabindex');
                 }
 
                 // 2. Freeze Next FUP Date if Customer Stage OR Enquiry Stage is LOST or DROPPED
@@ -2186,10 +2406,16 @@
                 if (isLostOrDropped) {
                     $nextFup.val('')
                         .prop('required', false)
-                        .css({'pointer-events': 'none', 'background-color': '#e9ecef'})
+                        .css({
+                            'pointer-events': 'none',
+                            'background-color': '#e9ecef'
+                        })
                         .attr('tabindex', '-1');
                 } else {
-                    $nextFup.css({'pointer-events': 'auto', 'background-color': ''})
+                    $nextFup.css({
+                            'pointer-events': 'auto',
+                            'background-color': ''
+                        })
                         .removeAttr('tabindex');
                 }
             }
@@ -2258,11 +2484,11 @@
             //     $plannedCampaign.prop('disabled', source !== 'ACTIVATIONS').prop('required', source ===
             //         'ACTIVATIONS').val(source === 'ACTIVATIONS' ? $plannedCampaign.val() : '');
             // }).trigger('change');
-            
+
             $sourceCode.on('change', function() {
                 const source = $(this).val() || '';
                 const sourceText = $(this).find('option:selected').text().trim().toUpperCase();
-                
+
                 // 1. Redirect to Reference Enquiries page on creation
                 if (!currentEnquiry.isEdit && source === 'REFERENCE') {
                     Swal.fire({
@@ -2275,27 +2501,31 @@
                         allowOutsideClick: false
                     }).then((result) => {
                         if (result.isConfirmed) {
-                            window.location.href = "{{ backpack_url('enquiries/reference/add') }}";
+                            window.location.href =
+                                "{{ backpack_url('enquiries/reference/add') }}";
                         } else {
-                            $(this).val('').trigger('change'); // Reset the dropdown if they hit cancel
+                            $(this).val('').trigger(
+                                'change'); // Reset the dropdown if they hit cancel
                         }
                     });
                     return; // Stop execution before toggling fields
                 }
 
                 toggleReferenceFields();
-                
+
                 // 2. STRICT Sub-Source Rule: ONLY allow if Source is HYPERLOCAL
                 if (source === 'HYPERLOCAL') {
                     $subSource.prop('disabled', false).prop('required', true);
                     $('#sub_source_asterisk').removeClass('d-none');
-                    loadKeywordDropdown('ENQUIRY_SUB_SOURCE', source, $subSource, 'Select Enquiry Sub Source', currentEnquiry.subSource);
+                    loadKeywordDropdown('ENQUIRY_SUB_SOURCE', source, $subSource,
+                        'Select Enquiry Sub Source', currentEnquiry.subSource);
                 } else {
                     // Grey out and clear for absolutely every other Source
-                    $subSource.html('<option value="">Select Enquiry Sub Source</option>').val('').prop('disabled', true).prop('required', false);
+                    $subSource.html('<option value="">Select Enquiry Sub Source</option>').val('').prop(
+                        'disabled', true).prop('required', false);
                     $('#sub_source_asterisk').addClass('d-none');
                 }
-                
+
                 // 3. Planned Campaign Rule: ONLY allow if Source is ACTIVATIONS
                 const isActivations = (source === 'ACTIVATIONS' || sourceText === 'ACTIVATIONS');
                 if (isActivations) {
@@ -2311,19 +2541,27 @@
                 // Load the secondary dropdown options via AJAX
                 loadKeywordDropdown('APPLICATION', $(this).val(), $('#application'), 'Select Application',
                     currentEnquiry.application);
-                
+
                 // Freeze the #application dropdown if Personal or Commercial is selected
                 const valText = $(this).find('option:selected').text().trim().toUpperCase();
-                
+
                 if (valText === 'PERSONAL' || valText === 'COMMERCIAL') {
                     // Freeze the child 'application' dropdown
-                    $('#application').css({'pointer-events': 'none', 'background-color': '#e9ecef'}).attr('tabindex', '-1');
-                    
+                    $('#application').css({
+                        'pointer-events': 'none',
+                        'background-color': '#e9ecef'
+                    }).attr('tabindex', '-1');
+
                     // Clear its value after a slight delay to allow the AJAX loadKeywordDropdown to finish
-                    setTimeout(() => { $('#application').val(''); }, 100);
+                    setTimeout(() => {
+                        $('#application').val('');
+                    }, 100);
                 } else {
                     // Unfreeze the child 'application' dropdown
-                    $('#application').css({'pointer-events': 'auto', 'background-color': ''}).removeAttr('tabindex');
+                    $('#application').css({
+                        'pointer-events': 'auto',
+                        'background-color': ''
+                    }).removeAttr('tabindex');
                 }
             }).trigger('change');
 
@@ -2400,7 +2638,7 @@
                 const mobile = $('#mobile').val();
                 const segment = $segmentCode.val();
                 if (mobile.length !== 10 || !segment) return;
-                
+
                 $.get("{{ route('enquiry.check-duplicate') }}", {
                     mobile,
                     segment_code: segment
@@ -2414,7 +2652,8 @@
                             allowOutsideClick: false
                         }).then((result) => {
                             if (result.isConfirmed && response.id) {
-                                window.location.href = "{{ backpack_url('enquiry') }}/" + response.id + "/edit";
+                                window.location.href = "{{ backpack_url('enquiry') }}/" +
+                                    response.id + "/edit";
                             }
                         });
                     }
@@ -2448,7 +2687,7 @@
                 if (distVal === 'OTHER') {
                     distVal = $('#district_input').val();
                 }
-                
+
                 distVal = String(distVal || '').trim().toUpperCase();
 
                 if (distVal) {
@@ -2576,7 +2815,7 @@
 
                             // Trigger the district change to apply territory logic automatically
                             $('#district_select').trigger('change');
-                            
+
                             // Restore existing territory from DB if it was overridden manually before
                             if (currentEnquiry.territory && currentEnquiry.isEdit) {
                                 setTimeout(() => {

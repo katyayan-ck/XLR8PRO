@@ -170,8 +170,7 @@ class EnquiryCrudController extends CrudController
     private function getBaseQuery(string $listType)
     {
         if ($listType === 'otf') {
-            return \App\Models\Module\Booking\Booking::withoutGlobalScope(\Illuminate\Database\Eloquent\SoftDeletingScope::class)
-                ->from('xlr8_crm_booking as crm_booking')
+            return DB::table('xlr8_crm_booking as crm_booking')
                 ->select([
                     'crm_booking.id',
                     'crm_booking.booking_date',
@@ -195,7 +194,6 @@ class EnquiryCrudController extends CrudController
                 ])
                 ->where('crm_booking.is_active', 1);
         }
-
         $query = match ($listType) {
             'reference' => Enquiry::reference(),
             'virtual' => Enquiry::virtual(),
@@ -652,10 +650,19 @@ class EnquiryCrudController extends CrudController
             return $trimmed;
         };
 
-        $resolvedSegment = $cleanVal($e->segment_code ? ($segmentRel?->name ?? $e->segment ?? $e->segment_code) : $e->segment);
-        $resolvedModel   = $cleanVal($e->model_code ? ($modelRel?->name ?? $e->model ?? $e->model_code) : $e->model);
-        $resolvedVariant = $cleanVal($e->variant_code ? ($variantRel?->display_name ?? $variantRel?->custom_name ?? $variantRel?->oem_name ?? $e->variant ?? $e->variant_code) : $e->variant);
-        $resolvedColor   = $cleanVal($e->color_code ? ($colorRel?->name ?? $e->color ?? $e->color_code) : $e->color);
+        $resolvedSegment = $resolvedModel = $resolvedVariant = $resolvedColor = null;
+
+        if ($type !== 'otf') {
+            $segmentRel = $e instanceof \Illuminate\Database\Eloquent\Model && $e->relationLoaded('segment') ? $e->getRelation('segment') : null;
+            $modelRel = $e instanceof \Illuminate\Database\Eloquent\Model && $e->relationLoaded('model') ? $e->getRelation('model') : null;
+            $variantRel = $e instanceof \Illuminate\Database\Eloquent\Model && $e->relationLoaded('variant') ? $e->getRelation('variant') : null;
+            $colorRel = $e instanceof \Illuminate\Database\Eloquent\Model && $e->relationLoaded('color') ? $e->getRelation('color') : null;
+
+            $resolvedSegment = $cleanVal($e->segment_code ? ($segmentRel?->name ?? $e->segment ?? $e->segment_code) : $e->segment);
+            $resolvedModel   = $cleanVal($e->model_code ? ($modelRel?->name ?? $e->model ?? $e->model_code) : $e->model);
+            $resolvedVariant = $cleanVal($e->variant_code ? ($variantRel?->display_name ?? $variantRel?->custom_name ?? $variantRel?->oem_name ?? $e->variant ?? $e->variant_code) : $e->variant);
+            $resolvedColor   = $cleanVal($e->color_code ? ($colorRel?->name ?? $e->color ?? $e->color_code) : $e->color);
+        }
 
         $editUrl = backpack_url("enquiry/{$e->id}/edit");
         $quotUrl = backpack_url("quotation-form/create?id={$e->id}");
@@ -742,7 +749,7 @@ class EnquiryCrudController extends CrudController
         }
 
         $actionBtns = '<a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a>';
-        
+
         // Added globally to ensure Quote shows up in all standard listings
         $actionBtns .= '<a href="' . $quotUrl . '" class="btn btn-success btn-sm">Quote</a>';
 
@@ -1459,7 +1466,7 @@ class EnquiryCrudController extends CrudController
 
             $fupCount = 1;
             // Force IST Timezone
-            $plannedDate = Carbon::now('Asia/Kolkata')->format('Y-m-d H:i:s'); 
+            $plannedDate = Carbon::now('Asia/Kolkata')->format('Y-m-d H:i:s');
 
             if ($openFup) {
                 $fupCount = $openFup->cre_fup_count;
@@ -1476,7 +1483,7 @@ class EnquiryCrudController extends CrudController
             }
 
             // Force IST Timezone
-            $actualDate = Carbon::now('Asia/Kolkata')->format('Y-m-d H:i:s'); 
+            $actualDate = Carbon::now('Asia/Kolkata')->format('Y-m-d H:i:s');
 
             // --- DEVIATION STAGE CALCULATION ---
             $planned = Carbon::parse($plannedDate, 'Asia/Kolkata')->startOfDay();
@@ -1581,7 +1588,7 @@ class EnquiryCrudController extends CrudController
             $this->processEntityRelations($validated);
 
             // Format all possible date fields for MySQL
-        $dateFields = ['virtual_call_date', 'wapp_campaign_date', 'dob', 'marriage_date', 'activity_start_date', 'activity_end_date', 'cre_likely_purchase_date'];
+            $dateFields = ['virtual_call_date', 'wapp_campaign_date', 'dob', 'marriage_date', 'activity_start_date', 'activity_end_date', 'cre_likely_purchase_date'];
             foreach ($dateFields as $field) {
                 if (!empty($validated[$field])) {
                     $validated[$field] = Carbon::parse($validated[$field])->format('Y-m-d H:i:s');
@@ -1738,7 +1745,7 @@ class EnquiryCrudController extends CrudController
         } elseif ($source === 'HYPERLOCAL') {
             return redirect(backpack_url('enquiries/hyperlocal'));
         } elseif ($origin === 'VIRTUAL') {
-            return redirect(backpack_url('enquiries/virtual'));
+            return redirect(backpack_url('enquiries/virtual-number'));
         }
 
         // 3. Default fallback
@@ -2094,7 +2101,12 @@ class EnquiryCrudController extends CrudController
             'locations' => [],
             'saleconsultants' => OrgService::getUsers(desigCode: 'CNS'),
             'branches' => OrgService::branches(),
-            'campaigns' => Campaign::orderBy('name')->pluck('name')->toArray(),
+            // 'campaigns' => Campaign::orderBy('name')->pluck('name')->toArray(),
+            'campaigns' => Campaign::where('forever', 1)
+                ->orWhereDate('end_date', '>=', Carbon::today())
+                ->orderBy('name')
+                ->pluck('name')
+                ->toArray(),
             'likely_purchase_dates' => $kw('LIKELY_PURCHASE_DATE'),
             'enquiry_types' => $kw('ENQUIRY_TYPE'),
             'activity_types' => $kw('ACTIVITY_TYPE'),
@@ -2154,9 +2166,11 @@ class EnquiryCrudController extends CrudController
         return response()->json(OrgService::locations($branchCode));
     }
 
-    public function getKeywordValues($keyword, $parent)
+    public function getKeywordValues($keyword, $parent, Request $request)
     {
-        return response()->json(OrgService::keywordValueByParentCode($keyword, $parent));
+        return response()->json(
+            OrgService::keywordValueByParentCode($keyword, $parent, $request->query('parent_keyword'))
+        );
     }
 
     public function getReferenceUsers(Request $request)
@@ -2179,7 +2193,7 @@ class EnquiryCrudController extends CrudController
     {
         $enquiry = Enquiry::where('mobile', $request->mobile)->where('segment_code', $request->segment_code)->first();
         return response()->json([
-            'exists' => (bool) $enquiry, 
+            'exists' => (bool) $enquiry,
             'enquiry_no' => $enquiry?->enquiry_no,
             'id' => $enquiry?->id
         ]);
