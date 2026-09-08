@@ -215,9 +215,8 @@ class Enquiry extends BaseModel
 
         'enquiry_no' => 'uppercase|trim',
 
-        'first_name' => 'trim|ucwords',
-
-        'last_name' => 'trim|ucwords',
+        'name' => 'trim|ucwords',
+        'care_of' => 'trim|ucwords',
 
         'mobile' => 'trim',
 
@@ -269,8 +268,7 @@ class Enquiry extends BaseModel
     // count as "fully filled" and therefore show up in the plain
     // "Enquiry List" dropdown item, regardless of its origin.
     public const LONG_FORM_SINGLE_FIELDS = [
-        'first_name',            // Customer First Name
-        'last_name',             // Customer Last Name
+        'name',
         'mobile',                // Phone Number
         'email',                 // Email ID
         'gender',                // Gender
@@ -350,8 +348,7 @@ class Enquiry extends BaseModel
             'model_code',
             'variant_code',
             'color_code',
-            'first_name',
-            'last_name',
+            'name',
             'mobile',
             'gender',
             'zipcode', // Pincode
@@ -580,7 +577,7 @@ class Enquiry extends BaseModel
 
     public function getFullNameAttribute(): string
     {
-        return trim($this->first_name . ' ' . ($this->last_name ?? ''));
+        return trim($this->name ?? '');
     }
 
 

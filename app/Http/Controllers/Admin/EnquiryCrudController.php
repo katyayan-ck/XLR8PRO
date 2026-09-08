@@ -722,7 +722,7 @@ class EnquiryCrudController extends CrudController
             return [
                 'serial_no' => $i + 1,
                 'lead_id' => $e->lead_id ?? $e->id ?? '—',
-                'name' => trim(($e->first_name ?? '') . ' ' . ($e->last_name ?? '')) ?: ($e->name ?? '—'),
+                'name' => $e->name ?? '—',
                 'email' => $e->email ?? '—',
                 'phone_number' => $e->mobile ?? $e->phone_number ?? '—',
                 'call_start_time' => $this->formatDate($e->call_start_time ?? $e->created_at, 'd-M-Y H:i:s'),
@@ -864,9 +864,16 @@ class EnquiryCrudController extends CrudController
                 'oem_quick_enquiry_status'     => $e->oem_quick_enquiry_status ?? $e->quick_status ?? '—',
                 'oem_quick_enquiry_assign_date' => $this->formatDate($e->oem_quick_enquiry_assign_date ?? $e->quick_enq_assign_date, 'd-M-Y'),
                 'x8_enq_source'                => $e->x8_enq_source ?? $e->x8_source_code ?? '—',
-                'first_name'                   => $e->first_name ?? '—',
-                'last_name'                    => $e->last_name ?? '—',
-                'full_name'                    => $e->full_name ?? trim(($e->first_name ?? '') . ' ' . ($e->last_name ?? '')),
+                'name'                         => $e->name ?? '—',
+                'care_of_type'                 => match ((int) ($e->care_of_type ?? 0)) {
+                                                      1 => 'Son of',
+                                                      2 => 'Daughter of',
+                                                      3 => 'Married to',
+                                                      4 => 'Guardian Name',
+                                                      5 => 'Owned By',
+                                                      default => $e->care_of_type ?? '—',
+                                                  },
+                'care_of'                      => $e->care_of ?? '—',
                 'email'                        => $e->email ?? '—',
                 'gender'                       => $e->gender ?? '—',
                 'enquiry_type'                 => $enquiryTypeMap[$e->enquiry_type ?? ''] ?? $e->enquiry_type ?? '—',
@@ -958,7 +965,7 @@ class EnquiryCrudController extends CrudController
             $row['referee_name'] = $e->referee_name ?? '—';
             $row['referee_phone'] = $e->referee_phone ?? '—';
             $row['referred_by'] = $e->referred_by ?? '—';
-            $row['first_name'] = trim(($e->first_name ?? '') . ' ' . ($e->last_name ?? '')) ?: '—';
+            $row['name'] = $e->name ?? '—';
         } elseif ($type === 'virtual') {
             $row['virtual_no'] = $e->virtual_no ?? '—';
             $row['call_date_and_time'] = $this->formatDate($e->virtual_call_date, 'd-M-Y H:i');
@@ -971,7 +978,7 @@ class EnquiryCrudController extends CrudController
             $row['campaign_date'] = $this->formatDate($e->wapp_campaign_date, 'd-M-Y');
             $row['campaign_segment'] = $e->wapp_campaign_segment ?? '—';
             $row['campaign_model'] = $e->wapp_campaign_model ?? '—';
-            $row['first_name'] = trim(($e->first_name ?? '') . ' ' . ($e->last_name ?? '')) ?: ($e->name ?? '—');
+            $row['name'] = $e->name ?? '—';
         }
 
         return $row;
@@ -1185,9 +1192,9 @@ class EnquiryCrudController extends CrudController
             ['field' => 'application_type', 'headerName' => 'Application Type'],
             ['field' => 'application', 'headerName' => 'Application'],
             ['field' => 'has_ev', 'headerName' => 'Has EV?'],
-            ['field' => 'first_name', 'headerName' => 'First Name'],
-            ['field' => 'last_name', 'headerName' => 'Last Name'],
-            ['field' => 'full_name', 'headerName' => 'Full Name'],
+            ['field' => 'name', 'headerName' => 'Customer Name'],
+            ['field' => 'care_of_type', 'headerName' => 'Care Of'],
+            ['field' => 'care_of', 'headerName' => 'Care Of Name'],
             ['field' => 'mobile', 'headerName' => 'Contact No.'],
             ['field' => 'alternate_mobile', 'headerName' => 'Alternate Contact No.'],
             ['field' => 'email', 'headerName' => 'Email'],
@@ -1382,7 +1389,7 @@ class EnquiryCrudController extends CrudController
 
     private function applyEnquirySort($query, array $sortModel): void
     {
-        $cols = ['enquiry_no', 'enquiry_type', 'sub_source', 'person_code', 'first_name', 'last_name', 'mobile', 'email', 'occupation_type', 'customer_type', 'company_name', 'gender', 'dob', 'marital_status', 'city', 'district', 'purchase_type', 'created_at'];
+        $cols = ['enquiry_no', 'enquiry_type', 'sub_source', 'person_code', 'name', 'mobile', 'email', 'occupation_type', 'customer_type', 'company_name', 'gender', 'dob', 'marital_status', 'city', 'district', 'purchase_type', 'created_at'];
         $sortApplied = false;
 
         foreach ($sortModel as $sort) {
@@ -1952,7 +1959,7 @@ class EnquiryCrudController extends CrudController
                 // Strictly Mandatory Fields
                 'referee_name' => 'required|max:100',
                 'referee_phone' => 'required|numeric|digits:10',
-                'first_name' => 'required|max:100',
+                'name' => 'required|max:100',
                 'mobile' => 'required|numeric|digits:10',
                 'segment_code' => 'required',
                 'model_code' => 'required',
@@ -2089,8 +2096,9 @@ class EnquiryCrudController extends CrudController
             'activity_location' => 'nullable',
 
             // 1. Customer Primary Details
-            'first_name' => $req . '|max:100',
-            'last_name' => 'nullable',
+            'name' => $req . '|max:100',
+            'care_of_type' => 'nullable|max:100',
+            'care_of' => 'nullable|max:100',
             'mobile' => 'required|max:15',
             'alternate_mobile' => 'nullable|max:15',
             'email' => 'nullable|email|max:150',

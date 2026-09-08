@@ -117,6 +117,80 @@
         $fupTypeMap = collect($follow_up_types ?? [])
             ->pluck('value', 'code')
             ->toArray();
+
+        // ========================================================================
+        // GLOBAL DATA RESOLUTION FOR THE TOP COMPARISON CARD
+        // ========================================================================
+        $oemScCode = old('sc_code', $enquiry->sc_code ?? '');
+        $oemScDisplay = '';
+        $oemScMileId = '';
+        $oemScBranch = '';
+        $oemScLocation = '';
+
+        if ($oemScCode && isset($saleconsultants)) {
+            $matchedSc = collect($saleconsultants)->firstWhere('person_code', $oemScCode);
+            if ($matchedSc) {
+                $oemScDisplay = ($matchedSc['display_name'] ?? '') . ' - ' . ($matchedSc['employee_code'] ?? '');
+                $oemScMileId = $matchedSc['employee_code'] ?? '';
+                $oemScBranch = \App\Services\OrgService::branchName($matchedSc['primary_branch_code'] ?? '');
+                $oemScLocation = \App\Services\OrgService::locationName($matchedSc['primary_loc_code'] ?? '');
+            }
+        }
+
+        $creScCode = $enquiry?->x8_sc_code;
+        $creScDisplay = '—';
+        $creScMileId = '—';
+        $creScBranch = '—';
+        $creScLocation = '—';
+
+        if ($creScCode && isset($saleconsultants)) {
+            $matchedCreSc = collect($saleconsultants)->firstWhere('person_code', $creScCode);
+            if ($matchedCreSc) {
+                $creScDisplay = ($matchedCreSc['display_name'] ?? '') . ' - ' . ($matchedCreSc['employee_code'] ?? '');
+                $creScMileId = $enquiry?->x8_sc_mile_id ?? ($matchedCreSc['employee_code'] ?? '');
+                $creScBranch = \App\Services\OrgService::branchName($matchedCreSc['primary_branch_code'] ?? '');
+                $creScLocation = \App\Services\OrgService::locationName($matchedCreSc['primary_loc_code'] ?? '');
+            } else {
+                $creScDisplay = $creScCode;
+            }
+        }
+
+        $lastCre = isset($creFups) && count($creFups) > 0 ? (is_array($creFups) ? end($creFups) : $creFups->last()) : null;
+        $creNextDate = $lastCre?->cre_next_fup_date;
+        $scNextDate = $enquiry?->next_planned_followup_date;
+
+        $comparisonRows = [];
+        $isQuick = false;
+        
+        if (isset($enquiry) && in_array(strtoupper($enquiry->current_origin ?? ''), ['LONG', 'QUICK'])) {
+            $isQuick = strtoupper($enquiry->current_origin ?? '') === 'QUICK';
+            $fmtDate = fn($d) => !empty($d) ? \Carbon\Carbon::parse($d)->format('d-M-Y') : '—';
+            $fmtDateTime = fn($d) => !empty($d) ? \Carbon\Carbon::parse($d)->format('d-M-Y H:i') : '—';
+
+            $comparisonRows = [
+                ['label' => 'Enquiry No.', 'dump' => $isQuick ? ($enquiry->quick_enquiry_no ?: '—') : ($enquiry->enquiry_no ?: '—'), 'cre' => 'XENQ-'.$enquiry->id],
+                ['label' => 'Enquiry Date', 'dump' => $fmtDate($isQuick ? ($enquiry->quick_enquiry_date ?? '') : ($enquiry->enquiry_date ?? '')), 'cre' => $fmtDateTime($enquiry->created_at)],
+                ['label' => 'Enquiry Assign Date', 'dump' => $fmtDate($isQuick ? ($enquiry->quick_enq_assign_date ?? '') : ($enquiry->enq_assign_date ?? '')), 'cre' => $fmtDate($enquiry->x8_enq_assign_date)],
+                ['label' => 'Booking No.', 'dump' => $enquiry->oem_booking_no ?? '—', 'cre' => $enquiry->x8_booking_no ?? ($enquiry->booking_no ?? '—')],
+                ['label' => 'Booking Date', 'dump' => $fmtDate($enquiry->oem_booking_date ?? ''), 'cre' => $fmtDate($enquiry->x8_booking_date ?? ($enquiry->booking_date ?? ''))],
+                ['label' => 'Booking Cancellation Date', 'dump' => $fmtDate($enquiry->oem_cancellation_date ?? ''), 'cre' => $fmtDate($enquiry->x8_cancellation_date ?? ($enquiry->cancellation_date ?? ''))],
+                ['label' => 'Model', 'dump' => $enquiry->model ?: '—', 'cre' => collect($models ?? [])->firstWhere('code', $enquiry->model_code)['name'] ?? ($enquiry->model_code ?: '—')],
+                ['label' => 'Variant', 'dump' => $enquiry->variant ?: '—', 'cre' => collect($variants ?? [])->firstWhere('code', $enquiry->variant_code)['name'] ?? ($enquiry->variant_code ?: '—')],
+                ['label' => 'Likely Pur in Days', 'dump' => collect($likely_purchase_dates ?? [])->firstWhere('code', $enquiry->likely_purchase_days)['value'] ?? ($enquiry->likely_purchase_days ?: '—'), 'cre' => collect($likely_purchase_dates ?? [])->firstWhere('code', $enquiry->cre_likely_purchase_days)['value'] ?? ($enquiry->cre_likely_purchase_days ?: '—')],
+                ['label' => 'Mobile No.', 'dump' => $enquiry->mobile ?: '—', 'cre' => $enquiry->mobile ?: '—'],
+                ['label' => 'Alternate Mobile No.', 'dump' => $enquiry->alternate_mobile ?: '—', 'cre' => $enquiry->alternate_mobile ?: '—'],
+                ['label' => 'Purchase Type', 'dump' => collect($purchase_types ?? [])->firstWhere('code', $enquiry->purchase_type)['value'] ?? ($enquiry->purchase_type ?: '—'), 'cre' => collect($purchase_types ?? [])->firstWhere('code', $enquiry->purchase_type_crm)['value'] ?? ($enquiry->purchase_type_crm ?: '—')],
+                ['label' => 'SC Name', 'dump' => !empty($oemScDisplay) ? $oemScDisplay : ($enquiry->sc_code ?? '—'), 'cre' => $creScDisplay ?: '—'],
+                ['label' => 'SC Mile ID', 'dump' => !empty($oemScMileId) ? $oemScMileId : '—', 'cre' => $creScMileId ?: '—'],
+                ['label' => 'SC Branch', 'dump' => !empty($oemScBranch) ? $oemScBranch : '—', 'cre' => $creScBranch ?: '—'],
+                ['label' => 'SC Location', 'dump' => !empty($oemScLocation) ? $oemScLocation : '—', 'cre' => $creScLocation ?: '—'],
+                ['label' => 'Next Fup Date', 'dump' => $fmtDateTime($scNextDate), 'cre' => $fmtDateTime($creNextDate)],
+                ['label' => 'Enquiry Stage', 'dump' => $enqStageMap[$enquiry->dms_enquiry_stage ?? ''] ?? ($enquiry->dms_enquiry_stage ?? ($enquiry->stage ?: '—')), 'cre' => $enqStageMap[$lastCre?->cre_enq_stage ?? ''] ?? ($lastCre?->cre_enq_stage ?: '—')],
+                ['label' => 'Booking Cancellation Reason', 'dump' => $enquiry->oem_cancel_reason ?? '—', 'cre' => $enquiry->cancel_reason ?? '—'],
+                ['label' => 'Booking Cancellation Remarks', 'dump' => $enquiry->oem_cancel_remarks ?? '—', 'cre' => $enquiry->cancel_remarks ?? '—'],
+                ['label' => 'Latest Followup Remarks', 'dump' => $remMap[$enquiry->recent_fup_comments ?? ''] ?? ($enquiry->recent_fup_comments ?? ($enquiry->remarks ?: '—')), 'cre' => $lastCre?->cre_fup_remarks ?: '—'],
+            ];
+        }
     @endphp
 
     <div class="container-fluid pb-5">
@@ -207,6 +281,41 @@
             @endif
 
             <div id="full_enquiry_form" class="{{ $isVirtual ? 'd-none' : 'd-flex flex-column' }}">
+
+                {{-- =========================== NEW COMPARISON CARD (TOP) =========================== --}}
+                @if(!empty($comparisonRows))
+                <div class="card enquiry-card" style="order: -1;">
+                    <div class="card-header">
+                        <h4 class="mb-0 fw-bold">Data Overview: CRE vs SC</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered text-center align-middle mb-0" style="background-color: #e9ecef;">
+                                <thead class="table-secondary text-uppercase" style="font-size: 0.85rem;">
+                                    <tr>
+                                        <th class="text-center p-3" style="width: 25%;">Parameters</th>
+                                        <th class="text-center p-3" style="width: 37.5%;">OEM Dump Data ({{ $isQuick ? 'Quick' : 'Long' }})</th>
+                                        <th class="text-center p-3" style="width: 37.5%;">CRE X8 Data</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($comparisonRows as $row)
+                                    <tr>
+                                        <td class="fw-bold align-middle table-secondary text-start px-4 py-2 text-dark">{{ $row['label'] }}</td>
+                                        <td class="align-middle p-2">
+                                            <div class="form-control bg-white h-auto border-0 text-wrap text-center">{{ $row['dump'] }}</div>
+                                        </td>
+                                        <td class="align-middle p-2">
+                                            <div class="form-control bg-white h-auto border-0 text-wrap text-center">{{ $row['cre'] }}</div>
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                @endif
 
                 {{-- =========================== WHATSAPP CAMPAIGN DETAILS =========================== --}}
                 @if ($isWhatsapp)
@@ -612,14 +721,25 @@
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-3 mb-3">
-                                <label class="form-label">Customer First Name <span class="text-danger">*</span></label>
-                                <input type="text" name="first_name" class="form-control"
-                                    value="{{ old('first_name', $enquiry->first_name ?? '') }}" required>
+                                <label class="form-label">Customer Name <span class="text-danger">*</span></label>
+                                <input type="text" name="name" class="form-control"
+                                    value="{{ old('name', $enquiry->name ?? '') }}" required>
                             </div>
                             <div class="col-md-3 mb-3">
-                                <label class="form-label">Customer Last Name <span class="text-danger"></span></label>
-                                <input type="text" name="last_name" class="form-control"
-                                    value="{{ old('last_name', $enquiry->last_name ?? '') }}">
+                                <label class="form-label">Care Of <small class="text-muted"></small></label>
+                                <select name="care_of_type" id="care_of_type" class="form-control form-select">
+                                    <option value="">Please Select...</option>
+                                    <option value="1" {{ old('care_of_type', $enquiry->care_of_type ?? '') == '1' ? 'selected' : '' }}>Son of</option>
+                                    <option value="2" {{ old('care_of_type', $enquiry->care_of_type ?? '') == '2' ? 'selected' : '' }}>Daughter of</option>
+                                    <option value="3" {{ old('care_of_type', $enquiry->care_of_type ?? '') == '3' ? 'selected' : '' }}>Married to</option>
+                                    <option value="4" {{ old('care_of_type', $enquiry->care_of_type ?? '') == '4' ? 'selected' : '' }}>Guardian Name</option>
+                                    <option value="5" id="ownedByOption" style="display: none;" {{ old('care_of_type', $enquiry->care_of_type ?? '') == '5' ? 'selected' : '' }}>Owned By</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Care Of Name <small class="text-muted"></small></label>
+                                <input type="text" name="care_of" id="care_of" class="form-control uppercase"
+                                    value="{{ old('care_of', $enquiry->care_of ?? '') }}">
                             </div>
                             @if (!$isVirtual)
                                 <div class="col-md-3 mb-3">

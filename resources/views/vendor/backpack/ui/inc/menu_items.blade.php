@@ -197,8 +197,8 @@
 
         <x-backpack::menu-dropdown-item title="Campaigns" icon="la la-list" :link="backpack_url('campaign')" />
 
-        <x-backpack::menu-dropdown-item title="Pending Enquiries" icon="la la-exclamation-triangle"
-            :link="backpack_url('enquiries/pending')" />
+        {{-- <x-backpack::menu-dropdown-item title="Pending Enquiries" icon="la la-exclamation-triangle"
+            :link="backpack_url('enquiries/pending')" /> --}}
         <x-backpack::menu-dropdown-item title="Erroneous Entries" icon="la la-bug" :link="backpack_url('enquiries/erroneous')" />
 
     </x-backpack::menu-dropdown>
@@ -308,9 +308,11 @@
         </x-backpack::menu-dropdown>
 
         {{-- Activations --}}
-        <x-backpack::menu-dropdown title="Activations" icon="la la-toggle-on" nested="true">
-            <x-backpack::menu-dropdown-item title="List" icon="la la-list" :link="backpack_url('crm-sales/activations/list')" />
-        </x-backpack::menu-dropdown>
+        <x-backpack::menu-dropdown-item
+            title="Activations"
+            icon="la la-toggle-on"
+            :link="backpack_url('crm-sales/activations/list')"
+        />
 
         {{-- Alerts --}}
         <x-backpack::menu-dropdown title="Alerts" icon="la la-bell" nested="true">

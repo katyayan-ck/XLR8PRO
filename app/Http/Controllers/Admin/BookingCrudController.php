@@ -1737,6 +1737,29 @@ class BookingCrudController extends CrudController
             $enquiry = $quotation->enquiry;
         }
 
+        // ===== MAXIMUM DATA ENRICHMENT & ALIASING FOR PRE-FILL =====
+        if ($enquiry) {
+            // Map alternate mobile correctly
+            $enquiry->alt_mobile = $enquiry->alternate_mobile ?? null;
+            
+            // Prefer CRE inputs over OEM inputs for purchase type
+            $enquiry->purchase_type = $enquiry->purchase_type_crm ?? $enquiry->purchase_type ?? null;
+            
+            // Prefer X8 SC over OEM SC to map into the Sales Consultant dropdown
+            $enquiry->sc_code = $enquiry->x8_sc_code ?? $enquiry->sc_code ?? null;
+            
+            // If dealer branch/location is missing on enquiry, dynamically resolve it from the assigned Sales Consultant
+            if (empty($enquiry->dealer_branch) && !empty($enquiry->sc_code)) {
+                $scUsers = OrgService::getUsers(desigCode: 'CNS');
+                $matchedSc = collect($scUsers)->firstWhere('person_code', $enquiry->sc_code);
+                if ($matchedSc) {
+                    $enquiry->dealer_branch = $matchedSc['primary_branch_code'] ?? null;
+                    $enquiry->dealer_location = $matchedSc['primary_loc_code'] ?? null;
+                }
+            }
+        }
+        // ==========================================================
+
         CRUD::setValidation(BookingRequest::class);
         $this->crud->setCreateView('admin.booking.add');
 
@@ -1759,11 +1782,6 @@ class BookingCrudController extends CrudController
         $data['financiers']     = collect(XlFinancier::select('id', 'name', 'short_name')->get()->toArray())->map(fn($f) => (object) $f);
         $data['salesconsultants'] = OrgService::getUsers(desigCode: 'CNS');
 
-        $data['segments']  = CommonHelper::getVehicleSegments();
-        $data['models']    = [];
-        $data['variants']  = [];
-        $data['colors']    = [];
-        $data['locations'] = [];
         $data['person_id'] = backpack_auth()->id();
 
         $data['dsa_details'] = \App\Models\Module\Booking\XL_DSA_MASTER::all()->map(function ($dsa) {
@@ -1776,42 +1794,40 @@ class BookingCrudController extends CrudController
             ];
         });
 
-        $data['accessories_dropdown'] = Accessory::getAccessories(null, null, null);
-        $data['enum_master']          = OrgService::keywordValueByCode('EXISTING_CAR_OEM');
+        $data['enum_master'] = OrgService::keywordValueByCode('EXISTING_CAR_OEM');
 
         $data['quotation'] = $quotation;
         $data['enquiry']   = $enquiry; // Pass enquiry object to view
 
-        // ========== ADD THIS SECTION ==========
+        // ========== QUOTATION / ENQUIRY DATA ARRAY ==========
         $data['q'] = [];
 
-            if ($quotation) {
-                $quotationData = $quotation->standard_data ?? [];
+        if ($quotation) {
+            $quotationData = $quotation->standard_data ?? [];
 
-                if (is_string($quotationData)) {
-                    $quotationData = json_decode($quotationData, true) ?? [];
-                }
-                
-
-                $data['q'] = is_array($quotationData) ? $quotationData : [];
-
-                // Also set individual fields for the view
-                $data['segment_code'] = $data['q']['segment_code']
-                    ?? $quotation->segment_code
-                    ?? ($enquiry ? $enquiry->segment_code : null);
-
-                $data['model_code'] = $data['q']['model_code']
-                    ?? $quotation->model_code
-                    ?? ($enquiry ? $enquiry->model_code : null);
-
-                $data['variant_code'] = $data['q']['variant_code']
-                    ?? $quotation->variant_code
-                    ?? ($enquiry ? $enquiry->variant_code : null);
-
-                $data['color_code'] = $data['q']['color_code']
-                    ?? $quotation->color_code
-                    ?? ($enquiry ? $enquiry->color_code : null);
+            if (is_string($quotationData)) {
+                $quotationData = json_decode($quotationData, true) ?? [];
             }
+            
+            $data['q'] = is_array($quotationData) ? $quotationData : [];
+
+            // Set individual fields for the view
+            $data['segment_code'] = $data['q']['segment_code']
+                ?? $quotation->segment_code
+                ?? ($enquiry ? $enquiry->segment_code : null);
+
+            $data['model_code'] = $data['q']['model_code']
+                ?? $quotation->model_code
+                ?? ($enquiry ? $enquiry->model_code : null);
+
+            $data['variant_code'] = $data['q']['variant_code']
+                ?? $quotation->variant_code
+                ?? ($enquiry ? $enquiry->variant_code : null);
+
+            $data['color_code'] = $data['q']['color_code']
+                ?? $quotation->color_code
+                ?? ($enquiry ? $enquiry->color_code : null);
+        }
         // ======================================
 
         $this->data['data']    = $data;
