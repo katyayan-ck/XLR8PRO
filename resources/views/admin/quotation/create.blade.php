@@ -1431,6 +1431,7 @@ $viewMode = $viewMode ?? false;
 
         <form method="POST" action="{{ $formAction }}" enctype="multipart/form-data" @if($viewMode)
             onsubmit="return false;" @endif>
+            <input type="hidden" name="booking_id" value="{{ $bookingId ?? '' }}">
             @csrf
             @if(isset($quotation))
             @method('PUT')

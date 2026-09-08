@@ -19,6 +19,7 @@ class Quotation extends BaseModel
     protected $fillable = [
         'quotation_no',
         'enquiry_no',
+        'booking_id',
         'person_code',
         'segment_code',
         'model_code',

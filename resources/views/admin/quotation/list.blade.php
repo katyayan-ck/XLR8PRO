@@ -101,8 +101,34 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    function confirmBookingProcess(id) {
+    function confirmBookingProcess(quotationId, bookingId) {
 
+    // This quotation was created from an existing Booking
+    if (bookingId) {
+
+        Swal.fire({
+            title: 'Booking Already Exists',
+            text: 'This quotation is already associated with Booking #' + bookingId + '.',
+            icon: 'info',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Open Booking',
+            cancelButtonText: 'Close'
+        }).then((result) => {
+
+            if (result.isConfirmed) {
+
+                window.location.href =
+                    "{{ backpack_url('booking/otf-form') }}/" + bookingId;
+            }
+
+        });
+
+        return;
+    }
+
+    // Normal Quotation → Booking flow
     Swal.fire({
         title: 'Convert to Booking?',
         text: 'Are you sure you want to convert this quotation into booking?',
@@ -117,12 +143,10 @@
         if (result.isConfirmed) {
 
             window.location.href =
-                "{{ backpack_url('booking/create') }}?quotation_id=" + id;
-
+                "{{ backpack_url('booking/create') }}?quotation_id=" + quotationId;
         }
 
     });
-
 }
 </script>
 <script>

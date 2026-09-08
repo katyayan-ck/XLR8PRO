@@ -166,6 +166,7 @@
 
 
 @push('after_scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://unpkg.com/ag-grid-community/dist/ag-grid-community.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -1016,5 +1017,81 @@
             doc.save('live-bookings.pdf');
         });
     });
+
+    function openVOTF(bookingId) {
+
+    const url = "{{ url('admin/booking/otf-form') }}/" + bookingId;
+
+    fetch(url, {
+        method: "GET",
+        headers: {
+            "X-Requested-With": "XMLHttpRequest",
+            "Accept": "text/html, application/json"
+        }
+    })
+    .then(async response => {
+
+        const contentType = response.headers.get("content-type") || "";
+
+        // ==========================================
+        // CONTROLLER RETURNED JSON
+        // ==========================================
+        if (contentType.includes("application/json")) {
+
+            const data = await response.json();
+
+            if (data.status === 'quotation_missing') {
+
+                Swal.fire({
+                    title: 'Quotation Required',
+                    text: 'This booking has no quotation. Do you want to create a quotation for this booking?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes',
+                    cancelButtonText: 'No',
+                    confirmButtonColor: '#28a745',
+                    cancelButtonColor: '#d33'
+                }).then((result) => {
+
+                    if (result.isConfirmed) {
+                        window.location.href = data.quotation_url;
+                    }
+
+                });
+
+                return;
+            }
+
+            if (data.status === 'success' && data.redirect_url) {
+                window.location.href = data.redirect_url;
+                return;
+            }
+
+            throw new Error(data.message || 'Unexpected response.');
+        }
+
+        // ==========================================
+        // NORMAL OTF HTML RESPONSE
+        // ==========================================
+        const html = await response.text();
+
+        // Replace current page with existing OTF page
+        document.open();
+        document.write(html);
+        document.close();
+
+    })
+    .catch(error => {
+
+        console.error('VOTF Error:', error);
+
+        Swal.fire({
+            title: 'Error',
+            text: error.message || 'Unable to process this booking.',
+            icon: 'error'
+        });
+
+    });
+}
 </script>
 @endpush
