@@ -499,8 +499,8 @@ class QuotationCrudController extends CrudController
             <button
                 type="button"
                 class="btn btn-sm btn-success"
-                onclick="confirmBookingProcess(' . $quotation->id . ')">
-                Process
+                onclick="confirmBookingProcess(' . $quotation->id . ', ' . ($quotation->booking_id ?? 'null') . ')">
+                Booking
             </button>
 
         </div>',
@@ -601,11 +601,35 @@ class QuotationCrudController extends CrudController
 
         $this->crud->setCreateView('admin.quotation.create');
 
-        $enquiryId = request('id');
+        $bookingId = request('booking_id');
 
-        if (!$enquiryId) {
-            abort(404, 'Enquiry not found.');
-        }
+if ($bookingId) {
+
+    $booking = \App\Models\Module\Booking\Booking::findOrFail($bookingId);
+
+    if (empty($booking->enq_no)) {
+        abort(404, 'Enquiry not associated with this booking.');
+    }
+
+    $enquiry = Enquiry::where(
+        'enquiry_no',
+        $booking->enq_no
+    )->first();
+
+    if (!$enquiry) {
+        abort(404, 'Associated enquiry not found.');
+    }
+
+    $enquiryId = $enquiry->id;
+
+} else {
+
+    $enquiryId = request('id');
+
+    if (!$enquiryId) {
+        abort(404, 'Enquiry not found.');
+    }
+}
 
         $selectedEnquiry = Enquiry::with([
             'segment',
@@ -660,18 +684,13 @@ class QuotationCrudController extends CrudController
 
 
         return view('admin.quotation.create', [
-
             'selectedEnquiry' => $selectedEnquiry,
-
             'insurance_type_map' => $insurance_type_map,
-
             'registration_type_map' => $registration_type_map,
-
             'accessoryList' => $accessoryList,
-
             'financiers' => $financiers,
-
             'permit_map' => $permit_map,
+            'bookingId' => $bookingId,
 
         ]);
     }
@@ -1006,10 +1025,22 @@ class QuotationCrudController extends CrudController
                 $quotationData['financier_history'][] = $initialFinancier;
             }
 
-            $quotation = new Quotation();
+            // Check if this Booking already has a quotation
+            if ($request->filled('booking_id')) {
 
+                $booking = \App\Models\Module\Booking\Booking::findOrFail(
+                    $request->booking_id
+                );
+
+                if (!empty($booking->quotation_id)) {
+                    abort(422, 'This booking already has a quotation.');
+                }
+            }
+
+            $quotation = new Quotation();
             $quotation->quotation_no = 0;
             $quotation->enquiry_no = $request->enquiry_no;
+            $quotation->booking_id = $request->booking_id ?: null;
             $quotation->person_code = $personCode;
             $quotation->model_code = $request->model_code;
             $quotation->variant_code = $request->variant_code;
@@ -1035,6 +1066,14 @@ class QuotationCrudController extends CrudController
 
             $quotation->quotation_no = $quotation->id;
             $quotation->save();
+
+            // Link quotation back to Booking
+            if ($request->filled('booking_id')) {
+
+                $booking->quotation_id = $quotation->id;
+                $booking->save();
+            }
+
 
             $this->saveDiscountFields($quotation, $quotationData);
 

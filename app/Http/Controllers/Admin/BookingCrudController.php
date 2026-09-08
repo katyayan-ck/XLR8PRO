@@ -1414,6 +1414,12 @@ class BookingCrudController extends CrudController
             $editUrl   = backpack_url("booking/{$booking->id}/edit");
             $showUrl   = backpack_url("booking/{$booking->id}/show");
 
+            \Log::info('BOOKING QUOTE DEBUG', [
+                'booking_id' => $booking->id,
+                'enq_no' => $booking->enq_no ?? null,
+                'quotation_id' => $booking->quotation_id ?? null,
+            ]);
+
             $amountUrl = backpack_url("booking/{$booking->id}/add-amount");
 
             if (in_array($booking->col_type, [2, 3])) {
@@ -1425,27 +1431,43 @@ class BookingCrudController extends CrudController
                 }
             }
 
+            // ==========================================
+            // VOTF ACTION
+            // ==========================================
+
+            $quotationAction = '
+                <a href="javascript:void(0);"
+                    onclick="openVOTF(' . $booking->id . ')"
+                    class="btn btn-sm btn-success py-1 px-2"
+                    title="VOTF">
+                        VOTF
+                    </a>';
+
             $mapped->action = '
-                                <div class="d-flex gap-2">
-                                    <a href="' . $showUrl . '"
-                                       class="btn btn-sm btn-primary py-1 px-2"
-                                       title="View">
-                                        View
-                                    </a>
+                <div class="d-flex gap-2">
 
-                                    <a href="' . $amountUrl . '"
-                                       class="btn btn-sm btn-success py-1 px-2"
-                                       title="Add Amount">
-                                        Add ₹
-                                    </a>
-                                    <a href="' . $editUrl . '"
-                                       class="btn btn-sm btn-info py-1 px-2"
-                                       title="Edit">
-                                        Edit
-                                    </a>
+                    <a href="' . $showUrl . '"
+                    class="btn btn-sm btn-primary py-1 px-2"
+                    title="View">
+                        View
+                    </a>
 
-                                </div>
-                                ';
+                    <a href="' . $amountUrl . '"
+                    class="btn btn-sm btn-success py-1 px-2"
+                    title="Add Amount">
+                        Add ₹
+                    </a>
+
+                    <a href="' . $editUrl . '"
+                    class="btn btn-sm btn-info py-1 px-2"
+                    title="Edit">
+                        Edit
+                    </a>
+
+                    ' . $quotationAction . '
+
+                </div>
+            ';
 
             return $mapped;
         })->values();
@@ -11354,16 +11376,44 @@ class BookingCrudController extends CrudController
     {
         $booking = Booking::findOrFail($id);
 
-        $quotation = null;
+    // ==========================================
+    // MANDATORY QUOTATION CHECK
+    // ==========================================
 
-        if (!empty($booking->enquiry_id)) {
-            $quotation = Quotation::where('enquiry_no', $booking->enquiry_id)->latest()->first();
-        }
+    if (empty($booking->quotation_id)) {
 
-        // If not found and we have quotation_no, try that too
-        if (!empty($booking->quotation_id)) {
-            $quotation = Quotation::find($booking->quotation_id);
-        }
+        return response()->json([
+            'status' => 'quotation_missing',
+            'message' => 'This booking has no quotation.',
+            'booking_id' => $booking->id,
+            'enquiry_no' => $booking->enq_no,
+            'quotation_url' => route('quotation.create', [
+                'id' => $booking->enq_no,
+                'booking_id' => $booking->id,
+            ]),
+        ]);
+    }
+
+    // ==========================================
+    // QUOTATION
+    // ==========================================
+
+    $quotation = Quotation::find($booking->quotation_id);
+
+    if (!$quotation) {
+        return response()->json([
+            'status' => 'quotation_missing',
+            'message' => 'Quotation linked to this booking was not found.',
+            'booking_id' => $booking->id,
+            'enquiry_no' => $booking->enq_no,
+            'quotation_url' => route('quotation.create', [
+                'id' => $booking->enq_no,
+                'booking_id' => $booking->id,
+            ]),
+        ]);
+    }
+
+        
 
         $quotationData = $quotation?->standard_data ?? [];
 
