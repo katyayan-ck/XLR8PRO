@@ -132,7 +132,15 @@
                     })
                     .then(res => res.json())
                     .then(data => {
+                        if (loader) loader.style.display = 'none';
                         params.successCallback(data.rows || [], data.lastRow ?? 0);
+
+                        // Auto-size the action column dynamically based on rendered buttons
+                        setTimeout(() => {
+                            if (gridApi) {
+                                gridApi.autoSizeColumns(['action']);
+                            }
+                        }, 100); // 100ms delay gives the browser time to paint the HTML buttons
                     })
                     .catch(err => {
                         console.error('Failed to load finance enquiries', err);
@@ -184,11 +192,13 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             gridApi = agGrid.createGrid(document.querySelector('#myGrid'), gridOptions);
-            
+
             // Backend Global Search (Forces grid to fetch new matching data)
             document.getElementById('quickFilter')?.addEventListener('input', debounce(e => {
                 currentSearchText = e.target.value.trim();
-                gridApi.setGridOption('datasource', { ...dataSource });
+                gridApi.setGridOption('datasource', {
+                    ...dataSource
+                });
             }, 400));
         });
     </script>

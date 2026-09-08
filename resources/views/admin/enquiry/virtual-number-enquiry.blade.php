@@ -33,9 +33,10 @@
                                         <button id="closeColumnBubble"
                                             class="btn btn-sm btn-link text-danger p-0">✕</button>
                                     </div>
-                                    
+
                                     <div class="p-2 border-bottom">
-                                        <input type="text" id="columnSearch" class="form-control form-control-sm" placeholder="Search headers...">
+                                        <input type="text" id="columnSearch" class="form-control form-control-sm"
+                                            placeholder="Search headers...">
                                     </div>
 
                                     <div style="max-height:260px; overflow:auto;">
@@ -62,7 +63,8 @@
 
                     <!-- GRID CONTAINER WITH LOADER WRAPPER -->
                     <div style="position: relative;">
-                        <div id="gridLoader" style="display:none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.7); z-index: 1000; justify-content: center; align-items: center;">
+                        <div id="gridLoader"
+                            style="display:none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.7); z-index: 1000; justify-content: center; align-items: center;">
                             <div class="spinner-border text-primary" role="status">
                                 <span class="visually-hidden">Loading...</span>
                             </div>
@@ -134,39 +136,45 @@
                 if (loader) loader.style.display = 'flex';
 
                 fetch('{{ backpack_url('enquiries/data') }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({
-                        startRow: params.startRow,
-                        endRow: params.endRow,
-                        sortModel: params.sortModel,
-                        filterModel: params.filterModel,
-                        searchText: currentSearchText,
-                        list_type: LIST_TYPE
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({
+                            startRow: params.startRow,
+                            endRow: params.endRow,
+                            sortModel: params.sortModel,
+                            filterModel: params.filterModel,
+                            searchText: currentSearchText,
+                            list_type: LIST_TYPE
+                        })
                     })
-                })
-                .then(res => res.json())
-                .then(data => {
-                    // Hide loader overlay
-                    if (loader) loader.style.display = 'none';
-                    params.successCallback(data.rows || [], data.lastRow ?? 0);
-                })
-                .catch(err => {
-                    // Hide loader overlay on error
-                    if (loader) loader.style.display = 'none';
-                    console.error('Failed to load virtual number enquiries', err);
-                    params.failCallback();
-                });
+                    .then(res => res.json())
+                    .then(data => {
+                        if (loader) loader.style.display = 'none';
+                        params.successCallback(data.rows || [], data.lastRow ?? 0);
+
+                        // Auto-size the action column dynamically based on rendered buttons
+                        setTimeout(() => {
+                            if (gridApi) {
+                                gridApi.autoSizeColumns(['action']);
+                            }
+                        }, 100); // 100ms delay gives the browser time to paint the HTML buttons
+                    })
+                    .catch(err => {
+                        // Hide loader overlay on error
+                        if (loader) loader.style.display = 'none';
+                        console.error('Failed to load virtual number enquiries', err);
+                        params.failCallback();
+                    });
             }
         };
 
         const gridOptions = {
             columnDefs: columnDefs,
-            rowModelType: 'infinite', 
+            rowModelType: 'infinite',
             datasource: dataSource,
             pagination: true,
             paginationPageSize: 50,
@@ -218,13 +226,13 @@
         function openColumnBubble() {
             const bubble = document.getElementById('columnBubble');
             const tbody = document.getElementById('columnBubbleBody');
-            const searchInput = document.getElementById('columnSearch'); 
-            
+            const searchInput = document.getElementById('columnSearch');
+
             if (!gridApi || !bubble || !tbody) return;
 
             tbody.innerHTML = '';
-            
-            if(searchInput) searchInput.value = ''; 
+
+            if (searchInput) searchInput.value = '';
 
             const allFlatColumns = ALL_COLUMNS;
 
@@ -278,7 +286,7 @@
             document.getElementById('columnSearch')?.addEventListener('input', function(e) {
                 const searchTerm = e.target.value.toLowerCase();
                 const rows = document.querySelectorAll('#columnBubbleBody tr');
-                
+
                 rows.forEach(row => {
                     const text = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
                     row.style.display = text.includes(searchTerm) ? '' : 'none';
@@ -290,15 +298,23 @@
                 if (gridApi) {
                     gridApi.showLoadingOverlay();
                 }
-                gridApi.setGridOption('datasource', { ...dataSource });
+                gridApi.setGridOption('datasource', {
+                    ...dataSource
+                });
             }, 400));
 
             document.getElementById('resetAll')?.addEventListener('click', () => {
                 document.getElementById('quickFilter').value = '';
                 currentSearchText = '';
                 gridApi.setFilterModel(null);
-                gridApi.applyColumnState({ defaultState: { sort: null } });
-                gridApi.setGridOption('datasource', { ...dataSource });
+                gridApi.applyColumnState({
+                    defaultState: {
+                        sort: null
+                    }
+                });
+                gridApi.setGridOption('datasource', {
+                    ...dataSource
+                });
             });
 
             document.getElementById('btnCustomiseHeaders').addEventListener('click', e => {

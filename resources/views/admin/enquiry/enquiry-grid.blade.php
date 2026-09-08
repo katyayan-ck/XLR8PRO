@@ -135,11 +135,25 @@
                     })
                     .then(res => res.json())
                     .then(data => {
+                        // 1. Hide the built-in AG Grid loading overlay
+                        if (gridApi) {
+                            gridApi.hideOverlay();
+                        }
+
+                        // 2. Pass data back to the grid
                         params.successCallback(data.rows || [], data.lastRow ?? 0);
+
+                        // 3. Auto-size the action column dynamically after rendering
+                        setTimeout(() => {
+                            if (gridApi) {
+                                gridApi.autoSizeColumns(['action']);
+                            }
+                        }, 100);
                     })
                     .catch(err => {
+                        // Safely hide the overlay on error as well
                         if (gridApi) {
-                            gridApi.hideLoadingOverlay();
+                            gridApi.hideOverlay();
                         }
                         console.error('Failed to load enquiries', err);
                         params.failCallback();
