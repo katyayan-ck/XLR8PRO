@@ -194,6 +194,7 @@ class EnquiryCrudController extends CrudController
                 ])
                 ->where('crm_booking.is_active', 1);
         }
+        
         $query = match ($listType) {
             'reference' => Enquiry::reference(),
             'virtual' => Enquiry::virtual(),
@@ -208,7 +209,9 @@ class EnquiryCrudController extends CrudController
             'exchange_not_interested' => Enquiry::whereIn('purchase_type', ['First Time Buy', 'Additional Buy', 'No Consideration']),
             'finance' => Enquiry::where('fin_mode', 'In-house'),
             'finance_not_interested' => Enquiry::whereIn('fin_mode', ['Cash', 'Customer Self', 'Yet To Decide', 'Purchase Plan Cancelled']),
-            default => Enquiry::query(),
+            
+            // APPLY NEW SCOPE TO THE DEFAULT MAIN LISTING
+            default => Enquiry::mainListing(), 
         };
 
         return $query->with(['segment', 'model', 'variant', 'color', 'campaign']);
@@ -978,16 +981,25 @@ class EnquiryCrudController extends CrudController
     {
         $actionWidth = $this->actionWidth($type);
 
+        // $actionColumn = [
+        //     'field'      => 'action',
+        //     'headerName' => 'Action',
+        //     'width'      => $actionWidth,
+        //     'minWidth'   => $actionWidth,
+        //     'pinned'     => 'right',
+        //     'sortable'   => false,
+        //     'filter'     => false,
+        //     'cellClass'  => 'text-center p-0'
+        // ];
         $actionColumn = [
-            'field'      => 'action',
-            'headerName' => 'Action',
-            'width'      => $actionWidth,
-            'minWidth'   => $actionWidth,
-            'pinned'     => 'right',
-            'sortable'   => false,
-            'filter'     => false,
-            'cellClass'  => 'text-center p-0'
-        ];
+    'field'      => 'action',
+    'headerName' => 'Action',
+    'pinned'     => 'right',
+    'sortable'   => false,
+    'filter'     => false,
+    'suppressSizeToFit' => true, 
+    'cellClass'  => 'text-center p-0 action-cell' 
+];
 
         $commonEnd = [
             $actionColumn

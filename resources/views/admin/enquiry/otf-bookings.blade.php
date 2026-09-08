@@ -56,10 +56,11 @@
                                         <button id="closeColumnBubble"
                                             class="btn btn-sm btn-link text-danger p-0">✕</button>
                                     </div>
-                                    
+
                                     <!-- NEW: Search Input for Columns -->
                                     <div class="p-2 border-bottom">
-                                        <input type="text" id="columnSearch" class="form-control form-control-sm" placeholder="Search headers...">
+                                        <input type="text" id="columnSearch" class="form-control form-control-sm"
+                                            placeholder="Search headers...">
                                     </div>
 
                                     <div style="max-height:260px; overflow:auto;">
@@ -215,7 +216,15 @@
                     })
                     .then(res => res.json())
                     .then(data => {
+                        if (loader) loader.style.display = 'none';
                         params.successCallback(data.rows || [], data.lastRow ?? 0);
+
+                        // Auto-size the action column dynamically based on rendered buttons
+                        setTimeout(() => {
+                            if (gridApi) {
+                                gridApi.autoSizeColumns(['action']);
+                            }
+                        }, 100); // 100ms delay gives the browser time to paint the HTML buttons
                     })
                     .catch(err => {
                         console.error('Failed to load OTF bookings', err);
@@ -270,14 +279,14 @@
         function openColumnBubble() {
             const bubble = document.getElementById('columnBubble');
             const tbody = document.getElementById('columnBubbleBody');
-            
+
             // NEW: Grab the search input
             const searchInput = document.getElementById('columnSearch');
-            
+
             if (!gridApi || !bubble || !tbody) return;
 
             tbody.innerHTML = '';
-            
+
             // NEW: Clear search value when opening
             if (searchInput) searchInput.value = '';
 
@@ -341,7 +350,7 @@
                 tr.appendChild(tdLabel);
                 tbody.appendChild(tr);
             });
-            
+
             // NEW: Ensure all generated rows are visible initially
             document.querySelectorAll('#columnBubbleBody tr').forEach(row => row.style.display = '');
 
@@ -365,7 +374,7 @@
         document.getElementById('columnSearch')?.addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
             const rows = document.querySelectorAll('#columnBubbleBody tr');
-            
+
             rows.forEach(row => {
                 const labelTd = row.querySelector('td:nth-child(2)');
                 if (labelTd) {

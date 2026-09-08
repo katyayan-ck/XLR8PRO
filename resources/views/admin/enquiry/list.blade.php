@@ -128,7 +128,8 @@
 
                     <!-- GRID CONTAINER WITH LOADER WRAPPER -->
                     <div style="position: relative;">
-                        <div id="gridLoader" style="display:none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.7); z-index: 1000; justify-content: center; align-items: center;">
+                        <div id="gridLoader"
+                            style="display:none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.7); z-index: 1000; justify-content: center; align-items: center;">
                             <div class="spinner-border text-primary" role="status">
                                 <span class="visually-hidden">Loading...</span>
                             </div>
@@ -220,6 +221,13 @@
                     .then(data => {
                         if (loader) loader.style.display = 'none';
                         params.successCallback(data.rows || [], data.lastRow ?? 0);
+
+                        // Auto-size the action column dynamically based on rendered buttons
+                        setTimeout(() => {
+                            if (gridApi) {
+                                gridApi.autoSizeColumns(['action']);
+                            }
+                        }, 100); // 100ms delay gives the browser time to paint the HTML buttons
                     })
                     .catch(err => {
                         if (loader) loader.style.display = 'none';

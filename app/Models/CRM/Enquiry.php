@@ -341,6 +341,63 @@ class Enquiry extends BaseModel
         });
     }
 
+    public function scopeMainListing($query)
+    {
+        // 1. All mandatory text/string/id fields from the main table
+        $requiredFields = [
+            'likely_purchase_days',
+            'segment_code',
+            'model_code',
+            'variant_code',
+            'color_code',
+            'first_name',
+            'last_name',
+            'mobile',
+            'gender',
+            'zipcode', // Pincode
+            'territory',
+            'tehsil',
+            'district',
+            'city', // State
+            'purchase_type',
+            'purchase_type_crm',
+            'sc_mile_id',
+            'cre_likely_purchase_days'
+        ];
+
+        foreach ($requiredFields as $field) {
+            $query->whereNotNull($field)->where($field, '!=', '');
+        }
+
+        // 2. OEM Enquiry Assign Date OR OEM Quick Enquiry Assign Date
+        $query->where(function ($q) {
+            $q->whereNotNull('enq_assign_date')
+              ->orWhereNotNull('quick_enq_assign_date');
+        });
+
+        // 3. Status is 1
+        $query->where('is_active', 1);
+
+        // 4. CRE Table Fields (Must exist and be filled in the related xlr8_cre_enquiry_fup table)
+        $query->whereExists(function ($subquery) {
+            $subquery->select(\Illuminate\Support\Facades\DB::raw(1))
+                     ->from('xlr8_cre_enquiry_fup')
+                     ->whereRaw("xlr8_cre_enquiry_fup.x8_enq_no = CONCAT('XENQ-', xlr8_crm_enquiries.id)")
+                     ->whereNotNull('cre_enq_stage')->where('cre_enq_stage', '!=', '')
+                     ->whereNotNull('cre_customer_stage')->where('cre_customer_stage', '!=', '')
+                     ->whereNotNull('cre_fup_remarks')->where('cre_fup_remarks', '!=', '')
+                     ->whereNotNull('cre_next_fup_date');
+        });
+        
+        // 5. Must have either a Long Enquiry No OR a Quick Enquiry No
+        $query->whereNotNull('id')->where(function ($q) {
+            $q->whereNotNull('enquiry_no')->where('enquiry_no', '!=', '')
+              ->orWhereNotNull('quick_enquiry_no')->where('quick_enquiry_no', '!=', '');
+        });
+
+        return $query;
+    }
+
     public const STATUS_NEW = 'new';
     public const STATUS_IN_FOLLOWUP = 'in_followup';
     public const STATUS_QUOTATION_SENT = 'quotation_sent';
