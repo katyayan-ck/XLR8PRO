@@ -97,7 +97,7 @@
 @php
     $enqCounts = \Illuminate\Support\Facades\Cache::remember('menu_enquiry_counts', 60, function () {
         return [
-            'all' => \App\Models\CRM\Enquiry::mainListing()->count(),          
+            'all' => \App\Models\CRM\Enquiry::mainListing()->count(),
             'reference' => \App\Models\CRM\Enquiry::reference()->count(),
             'virtual' => \App\Models\CRM\Enquiry::virtual()->count(),
             'whatsapp' => \App\Models\CRM\Enquiry::whatsapp()->count(),
@@ -120,87 +120,36 @@
     @if (auth()->check() &&
             (auth()->user()->hasPermissionTo('can_view_documents') ||
                 auth()->user()->hasRole('super
-                                        admin')))
+                                                                                                                                                                                                                                                                    admin')))
         <x-backpack::menu-dropdown-item title="Price List" icon="la la-tag" :link="backpack_url('pricing')" />
     @endif
 
     {{-- Enquiries --}}
+    {{-- Enquiries --}}
     <x-backpack::menu-dropdown title="Enquiries" icon="la la-question-circle" nested="true">
-
         <x-backpack::menu-dropdown-item title="Add New Enquiry" icon="la la-plus-circle" :link="backpack_url('enquiries/add')" />
-
-        {{-- Custom HTML items with Light Grey Badges and 0 defaults --}}
-        <a class="dropdown-item d-flex align-items-center justify-content-between"
-            href="{{ backpack_url('enquiries-list') }}">
-            <span><i class="nav-icon la la-list me-2"></i> Enquiry List</span>
-            <span class="badge rounded-pill text-dark"
-                style="background-color: #e9ecef;">{{ $enqCounts['all'] ?? 0 }}</span>
-        </a>
-
-        <a class="dropdown-item d-flex align-items-center justify-content-between"
-            href="{{ backpack_url('enquiries/hyperlocal') }}">
-            <span><i class="nav-icon la la-map-marker me-2"></i> Hyperlocal Enquiries</span>
-            <span class="badge rounded-pill text-dark"
-                style="background-color: #e9ecef;">{{ $enqCounts['hyperlocal'] ?? 0 }}</span>
-        </a>
-
-        <a class="dropdown-item d-flex align-items-center justify-content-between"
-            href="{{ backpack_url('enquiries/reference') }}">
-            <span><i class="nav-icon la la-user-times me-2"></i> Reference Enquiries</span>
-            <span class="badge rounded-pill text-dark"
-                style="background-color: #e9ecef;">{{ $enqCounts['reference'] ?? 0 }}</span>
-        </a>
-
-        <a class="dropdown-item d-flex align-items-center justify-content-between"
-            href="{{ backpack_url('enquiries/virtual-number') }}">
-            <span><i class="nav-icon la la-user-times me-2"></i> Virtual Number Enquiries</span>
-            <span class="badge rounded-pill text-dark"
-                style="background-color: #e9ecef;">{{ $enqCounts['virtual'] ?? 0 }}</span>
-        </a>
-
-        <a class="dropdown-item d-flex align-items-center justify-content-between"
-            href="{{ backpack_url('enquiries/whatsapp-campaign') }}">
-            <span><i class="nav-icon la la-user-times me-2"></i> WhatsApp Campaign Enquiries</span>
-            <span class="badge rounded-pill text-dark"
-                style="background-color: #e9ecef;">{{ $enqCounts['whatsapp'] ?? 0 }}</span>
-        </a>
-
-        <a class="dropdown-item d-flex align-items-center justify-content-between"
-            href="{{ backpack_url('enquiries/unassigned-quick') }}">
-            <span><i class="nav-icon la la-user-times me-2"></i> Unassigned Quick Enquiries</span>
-            <span class="badge rounded-pill text-dark"
-                style="background-color: #e9ecef;">{{ $enqCounts['unassigned_quick'] ?? 0 }}</span>
-        </a>
-
-        <a class="dropdown-item d-flex align-items-center justify-content-between"
-            href="{{ backpack_url('enquiries/assigned-quick') }}">
-            <span><i class="nav-icon la la-user-times me-2"></i> Assigned Quick Enquiries</span>
-            <span class="badge rounded-pill text-dark"
-                style="background-color: #e9ecef;">{{ $enqCounts['assigned_quick'] ?? 0 }}</span>
-        </a>
-
-        <a class="dropdown-item d-flex align-items-center justify-content-between"
-            href="{{ backpack_url('enquiries/unassigned-long') }}">
-            <span><i class="nav-icon la la-user-times me-2"></i> Unassigned Long Enquiries</span>
-            <span class="badge rounded-pill text-dark"
-                style="background-color: #e9ecef;">{{ $enqCounts['unassigned_long'] ?? 0 }}</span>
-        </a>
-
-        <a class="dropdown-item d-flex align-items-center justify-content-between"
-            href="{{ backpack_url('enquiries/assigned-long') }}">
-            <span><i class="nav-icon la la-user-times me-2"></i> Assigned Long Enquiries</span>
-            <span class="badge rounded-pill text-dark"
-                style="background-color: #e9ecef;">{{ $enqCounts['assigned_long'] ?? 0 }}</span>
-        </a>
-
-        <!-- <x-backpack::menu-dropdown-item title="OTF Bookings" icon="la la-file-invoice" :link="backpack_url('enquiries/otf-bookings')" /> -->
-
-        <x-backpack::menu-dropdown-item title="Campaigns" icon="la la-list" :link="backpack_url('campaign')" />
-
-        {{-- <x-backpack::menu-dropdown-item title="Pending Enquiries" icon="la la-exclamation-triangle"
-            :link="backpack_url('enquiries/pending')" /> --}}
+        <x-backpack::menu-dropdown-item title="Master Enquiry List ({{ $enqCounts['all'] ?? 0 }})" icon="la la-list"
+            :link="backpack_url('enquiries-list')" />
+        <x-backpack::menu-dropdown-item title="Xceler8 Enquiry List ({{ $enqCounts['all'] ?? 0 }})" icon="la la-list"
+            :link="backpack_url('enquiries-list')" />
+        <x-backpack::menu-dropdown-item title="Hyperlocal Enquiries ({{ $enqCounts['hyperlocal'] ?? 0 }})"
+            icon="la la-map-marker" :link="backpack_url('enquiries/hyperlocal')" />
+        <x-backpack::menu-dropdown-item title="Reference Enquiries ({{ $enqCounts['reference'] ?? 0 }})"
+            icon="la la-user-times" :link="backpack_url('enquiries/reference')" />
+        <x-backpack::menu-dropdown-item title="Virtual Number Enquiries ({{ $enqCounts['virtual'] ?? 0 }})"
+            icon="la la-user-times" :link="backpack_url('enquiries/virtual-number')" />
+        <x-backpack::menu-dropdown-item title="WhatsApp Campaign Enquiries ({{ $enqCounts['whatsapp'] ?? 0 }})"
+            icon="la la-user-times" :link="backpack_url('enquiries/whatsapp-campaign')" />
+        <x-backpack::menu-dropdown-item title="Unassigned Quick Enquiries ({{ $enqCounts['unassigned_quick'] ?? 0 }})"
+            icon="la la-user-times" :link="backpack_url('enquiries/unassigned-quick')" />
+        <x-backpack::menu-dropdown-item title="Assigned Quick Enquiries ({{ $enqCounts['assigned_quick'] ?? 0 }})"
+            icon="la la-user-times" :link="backpack_url('enquiries/assigned-quick')" />
+        <x-backpack::menu-dropdown-item title="Unassigned Long Enquiries ({{ $enqCounts['unassigned_long'] ?? 0 }})"
+            icon="la la-user-times" :link="backpack_url('enquiries/unassigned-long')" />
+        <x-backpack::menu-dropdown-item title="Assigned Long Enquiries ({{ $enqCounts['assigned_long'] ?? 0 }})"
+            icon="la la-user-times" :link="backpack_url('enquiries/assigned-long')" />
+        <x-backpack::menu-dropdown-item title="Campaign" icon="la la-list" :link="backpack_url('campaign')" />
         <x-backpack::menu-dropdown-item title="Erroneous Entries" icon="la la-bug" :link="backpack_url('enquiries/erroneous')" />
-
     </x-backpack::menu-dropdown>
 
     {{-- Quotation --}}
@@ -234,37 +183,37 @@
             <x-backpack::menu-dropdown-item title="KYC" icon="la la-id-card" :link="backpack_url('booking/pending-kyc')" />
         </x-backpack::menu-dropdown>
         <x-backpack::menu-dropdown-item title="Erroneous Entries" icon="la la-exclamation-circle"
-                :link="backpack_url('booking/erroneous-bookings')" />
+            :link="backpack_url('booking/erroneous-bookings')" />
     </x-backpack::menu-dropdown>
 
-     {{--  Transactions (nested inside Booking) --}}
-        <x-backpack::menu-dropdown title="Transactions" icon="la la-handshake" nested="true">
-            {{-- Transaction List: add Edit + Invoiced-view buttons on the list page itself (not menu-level) --}}
-            <x-backpack::menu-dropdown-item title="Transaction List" icon="la la-list" :link="backpack_url('booking/otf-form')" />
+    {{--  Transactions (nested inside Booking) --}}
+    <x-backpack::menu-dropdown title="Transactions" icon="la la-handshake" nested="true">
+        {{-- Transaction List: add Edit + Invoiced-view buttons on the list page itself (not menu-level) --}}
+        <x-backpack::menu-dropdown-item title="Transaction List" icon="la la-list" :link="backpack_url('booking/otf-form')" />
 
-            <x-backpack::menu-dropdown-item title="Ready To Invoice" icon="la la-file-invoice-dollar"
-                :link="backpack_url('booking/ready-to-invoice')" />
+        <x-backpack::menu-dropdown-item title="Ready To Invoice" icon="la la-file-invoice-dollar"
+            :link="backpack_url('booking/ready-to-invoice')" />
 
-            <x-backpack::menu-dropdown title="Pending" icon="la la-clock" nested="true">
-                <x-backpack::menu-dropdown-item title="Incomplete VOTFs (@sales)" icon="la la-exclamation-triangle"
-                    :link="backpack_url('booking/pending-incomplete-votfs')" />
-                <x-backpack::menu-dropdown-item title="Payment" icon="la la-rupee-sign" :link="backpack_url('booking/pending-payment')" />
-                <x-backpack::menu-dropdown-item title="Invoices" icon="la la-file-invoice" :link="backpack_url('booking/pending-invoices')" />
-                <x-backpack::menu-dropdown-item title="Insurance" icon="la la-shield-alt" :link="backpack_url('booking/pending-insurance')" />
-                <x-backpack::menu-dropdown-item title="RTO" icon="la la-truck" :link="backpack_url('booking/pending-rto')" />
-                <x-backpack::menu-dropdown-item title="Registration Number" icon="la la-hashtag" :link="backpack_url('booking/pending-registration')" />
-                <x-backpack::menu-dropdown-item title="Deliveries" icon="la la-truck" :link="backpack_url('booking/pending-deliveries')" />
-                <x-backpack::menu-dropdown-item title="Financier Delivery Order" icon="la la-file-signature"
-                    :link="backpack_url('bookingr/pending-do')" />
-            </x-backpack::menu-dropdown>
-
-            <x-backpack::menu-dropdown-item title="RTO Agent Tracker" icon="la la-user-tie" :link="backpack_url('booking/rto-agent-tracker')" />
-
-            <x-backpack::menu-dropdown-item title="Brokerage" icon="la la-hand-holding-usd" :link="backpack_url('booking/brokerage')" />
-
-            <x-backpack::menu-dropdown-item title="Erroneous Entries" icon="la la-exclamation-circle"
-                :link="backpack_url('co-dealer/erroneous')" />
+        <x-backpack::menu-dropdown title="Pending" icon="la la-clock" nested="true">
+            <x-backpack::menu-dropdown-item title="Incomplete VOTFs (@sales)" icon="la la-exclamation-triangle"
+                :link="backpack_url('booking/pending-incomplete-votfs')" />
+            <x-backpack::menu-dropdown-item title="Payment" icon="la la-rupee-sign" :link="backpack_url('booking/pending-payment')" />
+            <x-backpack::menu-dropdown-item title="Invoices" icon="la la-file-invoice" :link="backpack_url('booking/pending-invoices')" />
+            <x-backpack::menu-dropdown-item title="Insurance" icon="la la-shield-alt" :link="backpack_url('booking/pending-insurance')" />
+            <x-backpack::menu-dropdown-item title="RTO" icon="la la-truck" :link="backpack_url('booking/pending-rto')" />
+            <x-backpack::menu-dropdown-item title="Registration Number" icon="la la-hashtag" :link="backpack_url('booking/pending-registration')" />
+            <x-backpack::menu-dropdown-item title="Deliveries" icon="la la-truck" :link="backpack_url('booking/pending-deliveries')" />
+            <x-backpack::menu-dropdown-item title="Financier Delivery Order" icon="la la-file-signature"
+                :link="backpack_url('bookingr/pending-do')" />
         </x-backpack::menu-dropdown>
+
+        <x-backpack::menu-dropdown-item title="RTO Agent Tracker" icon="la la-user-tie" :link="backpack_url('booking/rto-agent-tracker')" />
+
+        <x-backpack::menu-dropdown-item title="Brokerage" icon="la la-hand-holding-usd" :link="backpack_url('booking/brokerage')" />
+
+        <x-backpack::menu-dropdown-item title="Erroneous Entries" icon="la la-exclamation-circle"
+            :link="backpack_url('co-dealer/erroneous')" />
+    </x-backpack::menu-dropdown>
 
     {{-- CRM Sales --}}
     <x-backpack::menu-dropdown title="CRM Sales" icon="la la-headset" nested="true">
@@ -278,9 +227,7 @@
             <x-backpack::menu-dropdown-item title="New Vehicle Delivery" icon="la la-key" :link="backpack_url('crm-sales/feedback/new-delivery')" />
         </x-backpack::menu-dropdown>
 
-        {{-- Followup --}}
-        <x-backpack::menu-dropdown title="Followup" icon="la la-phone" nested="true">
-            {{-- Enquiry Sub-items --}}
+        {{-- <x-backpack::menu-dropdown title="Followup" icon="la la-phone" nested="true">
             <x-backpack::menu-dropdown title="Enquiry" icon="la la-clipboard-list" nested="true">
                 <x-backpack::menu-dropdown-item title="Live Enquiries" icon="la la-stream" :link="backpack_url('crm-sales/followup/enquiry/live')" />
                 <x-backpack::menu-dropdown-item title="Int in Exchange" icon="la la-sync" :link="backpack_url('crm-sales/followup/enquiry/int-exchange')" />
@@ -290,7 +237,6 @@
                     :link="backpack_url('crm-sales/followup/enquiry/int-ceramic-ppf')" />
             </x-backpack::menu-dropdown>
 
-            {{-- Booking Sub-items --}}
             <x-backpack::menu-dropdown title="Booking" icon="la la-bookmark" nested="true">
                 <x-backpack::menu-dropdown-item title="Live Bookings" icon="la la-stream" :link="backpack_url('crm-sales/followup/booking/live')" />
                 <x-backpack::menu-dropdown-item title="Int in Exchange" icon="la la-sync" :link="backpack_url('crm-sales/followup/booking/int-exchange')" />
@@ -299,7 +245,7 @@
                 <x-backpack::menu-dropdown-item title="Int in Ceramic/PPF" icon="la la-spray-can"
                     :link="backpack_url('crm-sales/followup/booking/int-ceramic-ppf')" />
             </x-backpack::menu-dropdown>
-        </x-backpack::menu-dropdown>
+        </x-backpack::menu-dropdown> --}}
 
         {{-- Verifications --}}
         <x-backpack::menu-dropdown title="Verifications" icon="la la-check-double" nested="true">
@@ -308,11 +254,7 @@
         </x-backpack::menu-dropdown>
 
         {{-- Activations --}}
-        <x-backpack::menu-dropdown-item
-            title="Activations"
-            icon="la la-toggle-on"
-            :link="backpack_url('crm-sales/activations/list')"
-        />
+        <x-backpack::menu-dropdown-item title="Activations" icon="la la-toggle-on" :link="backpack_url('crm-sales/activations/list')" />
 
         {{-- Alerts --}}
         <x-backpack::menu-dropdown title="Alerts" icon="la la-bell" nested="true">

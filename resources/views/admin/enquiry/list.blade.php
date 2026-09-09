@@ -134,7 +134,8 @@
                                 <span class="visually-hidden">Loading...</span>
                             </div>
                         </div>
-                        <div id="myGrid" class="ag-theme-quartz" style="height: calc(93vh - 280px); width:100%;"></div>
+                        <!-- Note: Keep your specific height calc() for each file if they differ slightly -->
+                        <div id="myGrid" class="ag-theme-quartz" style="height: calc(93vh - 260px); width:100%;"></div>
                     </div>
                 </div>
             </div>
@@ -197,6 +198,7 @@
 
         const dataSource = {
             getRows: function(params) {
+                // 1. Show the custom HTML loader
                 const loader = document.getElementById('gridLoader');
                 if (loader) loader.style.display = 'flex';
 
@@ -213,25 +215,26 @@
                             sortModel: params.sortModel,
                             filterModel: params.filterModel,
                             searchText: currentSearchText,
-                            highlightFilter: currentHighlightFilter,
                             list_type: LIST_TYPE
                         })
                     })
                     .then(res => res.json())
                     .then(data => {
+                        // 2. Hide the custom HTML loader on success
                         if (loader) loader.style.display = 'none';
+
                         params.successCallback(data.rows || [], data.lastRow ?? 0);
 
-                        // Auto-size the action column dynamically based on rendered buttons
                         setTimeout(() => {
                             if (gridApi) {
                                 gridApi.autoSizeColumns(['action']);
                             }
-                        }, 100); // 100ms delay gives the browser time to paint the HTML buttons
+                        }, 100);
                     })
                     .catch(err => {
+                        // 3. Hide the custom HTML loader on error
                         if (loader) loader.style.display = 'none';
-                        console.error('Failed to load enquiries', err);
+                        console.error('Failed to load data', err);
                         params.failCallback();
                     });
             }
