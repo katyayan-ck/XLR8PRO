@@ -360,7 +360,7 @@ class BookingCrudController extends CrudController
                 'bookings.col_type',
                 'bookings.col_by',
                 'bookings.quotation_id',
-                'bookings.final_data',
+                // 'bookings.final_data',
                 'bookings.sap_no',
                 'bookings.dms_no',
                 'bookings.b_source',
@@ -1861,13 +1861,23 @@ class BookingCrudController extends CrudController
             'chassis'               => 'nullable|string|max:255',
             'deliverytype'          => 'required|string|max:255',
             'hiddenexpecteddeldate' => 'nullable|date',
-            'finmode' => $finModeRule,
+            'finmode'               => $finModeRule,
             'financier'             => 'nullable|string|max:255',
             'loanstatus'            => 'nullable|string|max:255',
             'saleconsultant'        => 'required',
             'apackamount'           => 'required',
             'seating'               => 'nullable|integer',
             'details'               => 'nullable|string',
+
+            // Customer Address
+            'pincode'               => 'required|string|max:10',
+            'vpo'                   => 'required|string|max:150',
+            'customer_tehsil'       => 'required|string|max:100',
+            'customer_district'     => 'required|string|max:100',
+            'city'                  => 'required|string|max:100',
+            'territory'             => 'required|string|max:100',
+
+            // Referral
             'referredby'            => 'nullable|string|max:255',
             'refcustomername'       => 'nullable|string|max:255',
             'refmobileno'           => 'nullable|string|max:15',
@@ -2014,9 +2024,8 @@ class BookingCrudController extends CrudController
         $quotation = null;
 
         if ($request->filled('quotation_no')) {
-
             $quotation = Quotation::where(
-                'quotation_no',
+                'id',
                 $request->quotation_no
             )->first();
         }
@@ -12212,18 +12221,27 @@ class BookingCrudController extends CrudController
             }
 
             if ($enquiry) {
-
                 $enquiry->update([
-                    'zipcode' => $request->pincode
+                    'zipcode' => $request->input('pincode')
                         ?? $enquiry->zipcode,
 
-                    'tehsil' => $request->customer_tehsil
+                    'vpo' => $request->input('vpo')
+                        ?? $enquiry->vpo,
+
+                    'tehsil' => $request->input('customer_tehsil')
                         ?? $enquiry->tehsil,
 
-                    'district' => $request->customer_district
+                    'district' => $request->input('customer_district')
                         ?? $enquiry->district,
+
+                    'city' => $request->input('city')
+                        ?? $enquiry->city,
+
+                    'territory' => $request->input('territory')
+                        ?? $enquiry->territory,
                 ]);
             }
+
 
 
             /*

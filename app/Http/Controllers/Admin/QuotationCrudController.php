@@ -297,303 +297,355 @@ class QuotationCrudController extends CrudController
     //     ]);
     // }
     public function index()
-    {
-        $insurance_type_map = [
-            1 => 'Standard',
-            2 => 'Nil Dep',
-            3 => 'Base',
-            4 => 'Higher',
-        ];
+{
+    $insurance_type_map = [
+        1 => 'Standard',
+        2 => 'Nil Dep',
+        3 => 'Base',
+        4 => 'Higher',
+    ];
 
-        $registration_type_map = [
-            '0' => 'Tax Only',
-            '1' => 'TRC + Tax',
-            '2' => 'TRC Only',
-            '3' => 'Exempted',
-        ];
+    $registration_type_map = [
+        '0' => 'Tax Only',
+        '1' => 'TRC + Tax',
+        '2' => 'TRC Only',
+        '3' => 'Exempted',
+    ];
 
-        $reg_no_type_map = [
-            '1' => 'Regular',
-            '2' => 'BH Series',
-            '3' => 'Special Number',
-        ];
+    $reg_no_type_map = [
+        '1' => 'Regular',
+        '2' => 'BH Series',
+        '3' => 'Special Number',
+    ];
 
-        // Mock Enquiries Reference for fallback customer details
-        $mockEnquiries = [
-            "001" => ["name" => "Rajesh Kumar", "mobile" => "9876543210"],
-            "002" => ["name" => "Priya Sharma", "mobile" => "9123456780"],
-            "003" => ["name" => "Suresh Yadav", "mobile" => "9988776655"],
-            "004" => ["name" => "Amit Singh", "mobile" => "9811223344"],
-            "005" => ["name" => "Vikram Mehta", "mobile" => "9765432109"],
-            "006" => ["name" => "Rohan Verma", "mobile" => "9876500006"],
-            "007" => ["name" => "Sneha Gupta", "mobile" => "9876500007"],
-            "008" => ["name" => "Vikas Shah", "mobile" => "9876500008"],
-            "009" => ["name" => "Priya Mehra", "mobile" => "9876500009"],
-            "010" => ["name" => "Karan Joshi", "mobile" => "9876500010"],
-            "011" => ["name" => "Manoj Yadav", "mobile" => "9876500011"],
-            "012" => ["name" => "Deepak Singh", "mobile" => "9876500012"],
-            "013" => ["name" => "Vikram Mehta", "mobile" => "9876500013"],
-            "014" => ["name" => "Ananya Sharma", "mobile" => "9876500014"],
-            "015" => ["name" => "Vivek Patel", "mobile" => "9876500015"],
-            "016" => ["name" => "Kavya Nair", "mobile" => "9876500016"],
-            "017" => ["name" => "Arjun Mehta", "mobile" => "9876500017"],
-            "018" => ["name" => "Priya Singh", "mobile" => "9876500018"],
-            "019" => ["name" => "Dr. Ananya Reddy", "mobile" => "9876500019"],
-            "020" => ["name" => "Mohan Transport", "mobile" => "9876500020"],
-            "021" => ["name" => "Sakshi Enterprises", "mobile" => "9876500021"],
-        ];
+    $this->crud->setListView('admin.quotation.list');
 
-        $this->crud->setListView('admin.quotation.list');
+    $quotations = Quotation::with('enquiry')
+        ->whereNotIn('status', ['booked'])
+        ->latest('id')
+        ->get();
 
-        $quotations = Quotation::with('enquiry')
-            ->whereNotIn('status', ['booked'])
-            ->latest('id')
-            ->get();
+    $gridData = $quotations->map(function ($quotation, $index) use ($insurance_type_map, $registration_type_map, $reg_no_type_map) {
+        
+        $data = $quotation->standard_data ?? [];
+        $enquiry = $quotation->enquiry;
 
-        $gridData = $quotations->map(function ($quotation, $index) use ($insurance_type_map, $registration_type_map, $reg_no_type_map, $mockEnquiries) {
-            $data = $quotation->standard_data ?? [];
-            $enquiry = $quotation->enquiry;
-            $enquiryNo = $data['enquiry_no'] ?? $quotation->enquiry_no ?? '';
+        // If enquiry is null, try to find it by enquiry_no
+        if (!$enquiry) {
+            $enquiry = Enquiry::where('enquiry_no', $quotation->enquiry_no)->first();
+        }
 
-            // ✅ Extract Customer Name
-            $customerName = '';
-            if (!empty($data['customer_name'])) {
-                $customerName = $data['customer_name'];
-            } elseif ($enquiry && !empty(trim($enquiry->first_name . ' ' . $enquiry->last_name))) {
-                $customerName = trim($enquiry->first_name . ' ' . $enquiry->last_name);
-            } elseif (isset($mockEnquiries[$enquiryNo])) {
-                $customerName = $mockEnquiries[$enquiryNo]['name'];
-            } else {
-                $customerName = '-';
+        // ============================================================
+        // FIX: CUSTOMER NAME - Try multiple sources
+        // ============================================================
+        $customerName = '-';
+        $mobile = '-';
+
+        // 1. Try from enquiry first
+        if ($enquiry) {
+            $customerName = trim(
+                ($enquiry->first_name ?? '') . ' ' .
+                ($enquiry->last_name ?? '')
+            );
+            if (empty($customerName)) {
+                $customerName = $enquiry->full_name ?? '';
             }
-
-            // ✅ Extract Mobile
-            $mobile = '';
-            if (!empty($data['customer_mobile'])) {
-                $mobile = $data['customer_mobile'];
-            } elseif (!empty($data['mobile'])) {
-                $mobile = $data['mobile'];
-            } elseif ($enquiry && !empty($enquiry->mobile)) {
-                $mobile = $enquiry->mobile;
-            } elseif (isset($mockEnquiries[$enquiryNo])) {
-                $mobile = $mockEnquiries[$enquiryNo]['mobile'];
-            } else {
-                $mobile = '-';
+            if (empty($customerName)) {
+                $customerName = $enquiry->customer_name ?? '';
             }
+            if (empty($customerName)) {
+                $customerName = $enquiry->name ?? '';
+            }
+            $mobile = $enquiry->mobile ?? $enquiry->phone ?? '-';
+        }
 
-            $segmentCode = $data['segment_code'] ?? $enquiry?->segment_code ?? '';
-            $modelCode = $data['model_code'] ?? $enquiry?->model_code ?? '';
-            $variantCode = $data['variant_code'] ?? $enquiry?->variant_code ?? '';
-            $colorCode = $data['color_code'] ?? $enquiry?->color_code ?? '';
+        // 2. Fallback to standard_data if enquiry not found or name empty
+        if (empty($customerName) || $customerName === '-') {
+            $customerName = $data['customer_name'] ?? $data['customerName'] ?? '-';
+        }
 
-            $segment = DB::table('xlr8_vehicle_segment')->where('code', $segmentCode)->first();
-            $model = DB::table('xlr8_vehicle_model')->where('code', $modelCode)->first();
-            $variant = DB::table('xlr8_vehicle_variant')->where('code', $variantCode)->first();
-            $color = DB::table('xlr8_vehicle_color')->where('code', $colorCode)->first();
+        // 3. Fallback for mobile
+        if (empty($mobile) || $mobile === '-') {
+            $mobile = $data['customer_mobile'] ?? $data['mobile'] ?? '-';
+        }
 
-            return [
-                'serial_no' => $index + 1,
-                'quotation_no' => $quotation->quotation_no,
-                'enquiry_no' => $enquiryNo ?: ($enquiry?->id ?? '-'),
-                'customer_name' => $customerName,
-                'mobile' => $mobile,
-                'care_of_type' => [
-                    1 => 'Son of',
-                    2 => 'Daughter of',
-                    3 => 'Married to',
-                    4 => 'Guardian Name',
-                ][$data['careof'] ?? ''] ?? '-',
-                'care_of_name' => $data['careofname'] ?? '-',
-                'segment' => $segment->name ?? $segmentCode,
-                'model' => $model->name ?? $modelCode,
-                'variant' => $variant->name ?? $variantCode,
-                'color' => $color->name ?? $colorCode,
-                'permit' => $data['permit'] ?? '-',
-                'oem_code' => $data['oem_code'] ?? optional($enquiry)->oem_code ?? '-',
-                'revision' => $quotation->revision,
+        // ============================================================
+        // FIX: VEHICLE DETAILS - Try multiple sources
+        // ============================================================
+        // 1. Try from enquiry first
+        $segmentCode = $enquiry?->segment_code ?? '';
+        $modelCode   = $enquiry?->model_code ?? '';
+        $variantCode = $enquiry?->variant_code ?? '';
+        $colorCode   = $enquiry?->color_code ?? '';
 
-                // Receivables
-                'ex_showroom_price' => $data['ex_showroom_price'] ?? '',
-                'insurance_company' => $data['insurance_company'] ?? '-',
-                'policy_type' => $insurance_type_map[$data['policy_type'] ?? ''] ?? '-',
-                'insurance_amount' => $data['insurance_amount'] ?? '',
-                'registration_no_type' => $reg_no_type_map[$data['registration_no_type'] ?? ''] ?? ($data['registration_no_type'] ?? '-'),
-                'registration_category' => $registration_type_map[$data['registration_category'] ?? ''] ?? ($data['registration_category'] ?? '-'),
-                'in_house_rto' => (isset($data['in_house_rto']) && $data['in_house_rto'] == '1') ? 'Yes' : 'No',
-                'registration_type' => $registration_type_map[$data['registration_type'] ?? ''] ?? '-',
-                'registration_amount' => $data['registration_amount'] ?? '',
+        // 2. Fallback to standard_data
+        if (empty($segmentCode)) {
+            $segmentCode = $data['segment_code'] ?? '';
+        }
+        if (empty($modelCode)) {
+            $modelCode = $data['model_code'] ?? '';
+        }
+        if (empty($variantCode)) {
+            $variantCode = $data['variant_code'] ?? '';
+        }
+        if (empty($colorCode)) {
+            $colorCode = $data['color_code'] ?? '';
+        }
 
-                'accessories' => isset($data['accessories'])
-                    ? (is_array($data['accessories']) ? implode(', ', $data['accessories']) : $data['accessories'])
-                    : '',
-                'accessories_amount' => $data['accessories_amount'] ?? '',
-                'maxicare' => $data['maxicare'] ?? '',
-                'vltd_device' => $data['vltd_device'] ?? '',
-                'coating' => $data['coating'] ?? '',
-                'coating_price' => $data['coating_price'] ?? '',
-                'ppf' => $data['ppf'] ?? '',
-                'rto_yellow_tape' => $data['rto_yellow_tape'] ?? '',
-                'kazam_charging_kit' => $data['kazam_charging_kit'] ?? '',
-                'incidental_charges' => $data['incidental_charges'] ?? '',
-                'shield' => $data['shield'] ?? '',
-                'shield_price' => $data['shield_price'] ?? '',
-                'rsa' => $data['rsa'] ?? '',
-                'rsa_amount' => $data['rsa_amount'] ?? '',
-                'fastag' => $data['fastag'] ?? '',
-                'cod_charges' => $data['cod_charges'] ?? '',
-                'charger_swapping' => $data['charger_swapping'] ?? '',
-                'charger_swapping_amount' => $data['charger_swapping_amount'] ?? '',
-                'tcs' => $data['tcs'] ?? '',
+        // ============================================================
+        // FETCH VEHICLE NAMES FROM MASTER TABLES
+        // ============================================================
+        $segmentName = '-';
+        $modelName = '-';
+        $variantName = '-';
+        $colorName = '-';
 
-                // Totals & Prices
-                'onroad_price' => number_format((float)$quotation->onroad_price, 2),
-                'invoice_price' => number_format((float)$quotation->invoice_price, 2),
-                'total_receivable' => $data['total_receivable'] ?? '',
-                'total_discount' => $data['total_discount'] ?? '',
-                'net_receivable' => $data['net_receivable_summary'] ?? '',
+        if (!empty($segmentCode)) {
+            $segment = DB::table('xlr8_vehicle_segment')
+                ->where('code', $segmentCode)
+                ->first();
+            $segmentName = $segment->name ?? $enquiry?->segment ?? $data['segment'] ?? $segmentCode;
+        }
 
-                // Group A, B, C & Static Discounts
-                'oem_scheme_discount' => $data['cash_scheme_oem'] ?? $data['oem_scheme_discount'] ?? '',
-                'cash_scheme_oem' => $data['cash_scheme_oem'] ?? '',
-                'cash_scheme_oem_type' => $data['cash_scheme_oem_type'] ?? '',
-                'csd_discount' => $data['csd_discount'] ?? '',
-                'fame_subsidy' => $data['fame_subsidy'] ?? '',
-                'exchange_bonus' => $data['exchange_bonus'] ?? '',
-                'green_bonus' => $data['green_bonus'] ?? '',
-                'welcome_bonus' => $data['welcome_bonus'] ?? '',
-                'loyalty_bonus' => $data['loyalty_bonus'] ?? '',
-                'corporate_discount' => $data['corporate_discount'] ?? '',
-                'accessories_discount' => $data['accessories_discount'] ?? '',
-                'accessories_spl_disc' => $data['accessories_spl_disc'] ?? '',
-                'ceramic_discount' => $data['ceramic_discount'] ?? '',
-                'ppf_discount' => $data['ppf_discount'] ?? '',
-                'dealer_discount' => $data['dealer_discount'] ?? '',
-                'charger_swapping_discount' => $data['charger_swapping_discount'] ?? '',
-                'other_cash_discount' => $data['other_cash_discount'] ?? '',
-                'special_cash_discount' => $data['special_cash_discount'] ?? '',
+        if (!empty($modelCode)) {
+            $model = DB::table('xlr8_vehicle_model')
+                ->where('code', $modelCode)
+                ->first();
+            $modelName = $model->name ?? $enquiry?->model ?? $data['model'] ?? $modelCode;
+        }
 
-                'inv_discount' => $data['invoiced_discount_summary'] ?? '',
-                'inv_oe_discount' => $data['inv_oe_discount_summary'] ?? '',
-                'inv_d_discount' => $data['inv_d_discount_summary'] ?? '',
-                'cn_discount' => $data['credit_note_discount_summary'] ?? '',
-                'cn1_discount' => $data['cn1_discount_summary'] ?? '',
-                'cn2_discount' => $data['cn2_discount_summary'] ?? '',
-                'cn3_discount' => $data['cn3_discount_summary'] ?? '',
+        if (!empty($variantCode)) {
+            $variant = DB::table('xlr8_vehicle_variant')
+                ->where('code', $variantCode)
+                ->first();
+            $variantName = $variant->display_name 
+                ?? $variant->custom_name 
+                ?? $variant->oem_name 
+                ?? $enquiry?->variant 
+                ?? $data['variant'] 
+                ?? $variantCode;
+        }
 
-                'status' => ucfirst($quotation->status),
+        if (!empty($colorCode)) {
+            $color = DB::table('xlr8_vehicle_color')
+                ->where('code', $colorCode)
+                ->first();
+            $colorName = $color->name 
+                ?? $enquiry?->color 
+                ?? $data['color'] 
+                ?? $colorCode;
+        }
 
-                // EXACT UNTOUCHED ACTION BUTTONS
-                'action' => '
-        <div class="d-flex gap-2 justify-content-center">
+        // ============================================================
+        // OTHER FIELDS
+        // ============================================================
+        $enquiryNo = $quotation->enquiry_no ?? '-';
 
-            <a href="' . backpack_url('quotation-form/' . $quotation->id . '/edit') . '"
-                class="btn btn-sm btn-primary">
-                Edit
-            </a>
+        return [
+            'serial_no' => $index + 1,
+            'quotation_no' => $quotation->id,
+            'enquiry_no' => $enquiryNo,
 
-            <a href="' . backpack_url('quotation-form/' . $quotation->id . '/history') . '"
-                class="btn btn-sm btn-info">
-                History
-            </a>
+            // ✅ FIXED: Customer from enquiry with fallback
+            'customer_name' => $customerName,
+            'mobile' => $mobile,
 
-            <button
-                type="button"
-                class="btn btn-sm btn-success"
-                onclick="confirmBookingProcess(' . $quotation->id . ', ' . ($quotation->booking_id ?? 'null') . ')">
-                Booking
-            </button>
+            // ✅ FIXED: Vehicle from enquiry with fallback
+            'segment' => $segmentName,
+            'model' => $modelName,
+            'variant' => $variantName,
+            'color' => $colorName,
 
-        </div>',
-            ];
-        })->values();
+            // Other fields from standard_data
+            'care_of_type' => [
+                1 => 'Son of',
+                2 => 'Daughter of',
+                3 => 'Married to',
+                4 => 'Guardian Name',
+            ][$data['careof'] ?? ''] ?? '-',
+            'care_of_name' => $data['careofname'] ?? '-',
+            'permit' => $data['permit'] ?? '-',
+            'oem_code' => $data['oem_code'] ?? $enquiry?->oem_code ?? '-',
+            'revision' => $quotation->revision,
 
-        return view('admin.quotation.list', [
-            'title' => 'Quotation Listing',
-            'gridConfig' => [
-                'columns' => [
-                    ['field' => 'serial_no', 'headerName' => 'S.No.'],
-                    ['field' => 'quotation_no', 'headerName' => 'Quotation No.'],
-                    ['field' => 'enquiry_no', 'headerName' => 'Enquiry No.'],
-                    ['field' => 'customer_name', 'headerName' => 'Customer'],
-                    ['field' => 'mobile', 'headerName' => 'Mobile'],
-                    ['field' => 'care_of_type', 'headerName' => 'Care Of'],
-                    ['field' => 'care_of_name', 'headerName' => 'Care Of Name'],
-                    ['field' => 'segment', 'headerName' => 'Segment'],
-                    ['field' => 'model', 'headerName' => 'Model'],
-                    ['field' => 'variant', 'headerName' => 'Variant'],
-                    ['field' => 'color', 'headerName' => 'Color'],
-                    ['field' => 'permit', 'headerName' => 'Permit'],
-                    ['field' => 'oem_code', 'headerName' => 'OEM Code'],
-                    ['field' => 'revision', 'headerName' => 'Revision'],
+            // Price & Receivables
+            'ex_showroom_price' => $data['ex_showroom_price'] ?? '',
+            'insurance_company' => $data['insurance_company'] ?? '-',
+            'policy_type' => $insurance_type_map[$data['policy_type'] ?? ''] ?? '-',
+            'insurance_amount' => $data['insurance_amount'] ?? '',
+            'registration_no_type' => $reg_no_type_map[$data['registration_no_type'] ?? ''] ?? ($data['registration_no_type'] ?? '-'),
+            'registration_category' => $registration_type_map[$data['registration_category'] ?? ''] ?? ($data['registration_category'] ?? '-'),
+            'in_house_rto' => (isset($data['in_house_rto']) && $data['in_house_rto'] == '1') ? 'Yes' : 'No',
+            'registration_type' => $registration_type_map[$data['registration_type'] ?? ''] ?? '-',
+            'registration_amount' => $data['registration_amount'] ?? '',
 
-                    ['field' => 'ex_showroom_price', 'headerName' => 'Ex Showroom'],
-                    ['field' => 'insurance_company', 'headerName' => 'Insurance Co.'],
-                    ['field' => 'insurance_amount', 'headerName' => 'Insurance Amount'],
-                    ['field' => 'registration_amount', 'headerName' => 'Registration Amount'],
-                    ['field' => 'registration_no_type', 'headerName' => 'Reg Type'],
-                    ['field' => 'registration_category', 'headerName' => 'Reg Category'],
-                    ['field' => 'in_house_rto', 'headerName' => 'In-House RTO'],
-                    ['field' => 'policy_type', 'headerName' => 'Insurance'],
-                    ['field' => 'registration_type', 'headerName' => 'Registration'],
+            // Accessories & Add-ons
+            'accessories' => isset($data['accessories'])
+                ? (is_array($data['accessories']) ? implode(', ', $data['accessories']) : $data['accessories'])
+                : '',
+            'accessories_amount' => $data['accessories_amount'] ?? '',
+            'maxicare' => $data['maxicare'] ?? '',
+            'vltd_device' => $data['vltd_device'] ?? '',
+            'coating' => $data['coating'] ?? '',
+            'coating_price' => $data['coating_price'] ?? '',
+            'ppf' => $data['ppf'] ?? '',
+            'rto_yellow_tape' => $data['rto_yellow_tape'] ?? '',
+            'kazam_charging_kit' => $data['kazam_charging_kit'] ?? '',
+            'incidental_charges' => $data['incidental_charges'] ?? '',
+            'shield' => $data['shield'] ?? '',
+            'shield_price' => $data['shield_price'] ?? '',
+            'rsa' => $data['rsa'] ?? '',
+            'rsa_amount' => $data['rsa_amount'] ?? '',
+            'fastag' => $data['fastag'] ?? '',
+            'cod_charges' => $data['cod_charges'] ?? '',
+            'charger_swapping' => $data['charger_swapping'] ?? '',
+            'charger_swapping_amount' => $data['charger_swapping_amount'] ?? '',
+            'tcs' => $data['tcs'] ?? '',
 
-                    ['field' => 'accessories', 'headerName' => 'Accessories'],
-                    ['field' => 'accessories_amount', 'headerName' => 'Accessories Amount'],
-                    ['field' => 'maxicare', 'headerName' => 'Maxicare'],
-                    ['field' => 'vltd_device', 'headerName' => 'VLTD'],
-                    ['field' => 'coating', 'headerName' => 'Coating'],
-                    ['field' => 'coating_price', 'headerName' => 'Coating Price'],
-                    ['field' => 'ppf', 'headerName' => 'PPF'],
-                    ['field' => 'rto_yellow_tape', 'headerName' => 'Yellow Tape'],
-                    ['field' => 'kazam_charging_kit', 'headerName' => 'Kazam Kit'],
-                    ['field' => 'incidental_charges', 'headerName' => 'Incidental'],
-                    ['field' => 'shield', 'headerName' => 'Shield'],
-                    ['field' => 'shield_price', 'headerName' => 'Shield Price'],
-                    ['field' => 'rsa', 'headerName' => 'RSA'],
-                    ['field' => 'rsa_amount', 'headerName' => 'RSA Amount'],
-                    ['field' => 'fastag', 'headerName' => 'Fastag'],
-                    ['field' => 'cod_charges', 'headerName' => 'COD Charges'],
-                    ['field' => 'charger_swapping', 'headerName' => 'Charger Swapping'],
-                    ['field' => 'charger_swapping_amount', 'headerName' => 'Swapping Amount'],
-                    ['field' => 'tcs', 'headerName' => 'TCS'],
+            // Totals & Prices
+            'onroad_price' => number_format((float)$quotation->onroad_price, 2),
+            'invoice_price' => number_format((float)$quotation->invoice_price, 2),
+            'total_receivable' => $data['total_receivable'] ?? '',
+            'total_discount' => $data['total_discount'] ?? '',
+            'net_receivable' => $data['net_receivable_summary'] ?? '',
 
-                    ['field' => 'onroad_price', 'headerName' => 'On Road Price'],
-                    ['field' => 'oem_scheme_discount', 'headerName' => 'OEM Discount'],
-                    ['field' => 'cash_scheme_oem', 'headerName' => 'Cash OEM Scheme'],
-                    ['field' => 'cash_scheme_oem_type', 'headerName' => 'OEM Scheme Type'],
-                    ['field' => 'csd_discount', 'headerName' => 'CSD Discount'],
-                    ['field' => 'fame_subsidy', 'headerName' => 'Fame Subsidy'],
-                    ['field' => 'exchange_bonus', 'headerName' => 'Exchange Bonus'],
-                    ['field' => 'green_bonus', 'headerName' => 'Green Bonus'],
-                    ['field' => 'welcome_bonus', 'headerName' => 'Welcome Bonus'],
-                    ['field' => 'loyalty_bonus', 'headerName' => 'Loyalty Bonus'],
-                    ['field' => 'corporate_discount', 'headerName' => 'Corporate Discount'],
-                    ['field' => 'accessories_discount', 'headerName' => 'Accessories Discount'],
-                    ['field' => 'accessories_spl_disc', 'headerName' => 'Acc Spl Disc'],
-                    ['field' => 'ceramic_discount', 'headerName' => 'Ceramic Discount'],
-                    ['field' => 'ppf_discount', 'headerName' => 'PPF Discount'],
-                    ['field' => 'dealer_discount', 'headerName' => 'Dealer Discount'],
-                    ['field' => 'charger_swapping_discount', 'headerName' => 'Swapping Discount'],
-                    ['field' => 'other_cash_discount', 'headerName' => 'Other Cash Disc'],
-                    ['field' => 'special_cash_discount', 'headerName' => 'Special Cash Disc'],
+            // Discounts
+            'oem_scheme_discount' => $data['cash_scheme_oem'] ?? $data['oem_scheme_discount'] ?? '',
+            'cash_scheme_oem' => $data['cash_scheme_oem'] ?? '',
+            'cash_scheme_oem_type' => $data['cash_scheme_oem_type'] ?? '',
+            'csd_discount' => $data['csd_discount'] ?? '',
+            'fame_subsidy' => $data['fame_subsidy'] ?? '',
+            'exchange_bonus' => $data['exchange_bonus'] ?? '',
+            'green_bonus' => $data['green_bonus'] ?? '',
+            'welcome_bonus' => $data['welcome_bonus'] ?? '',
+            'loyalty_bonus' => $data['loyalty_bonus'] ?? '',
+            'corporate_discount' => $data['corporate_discount'] ?? '',
+            'accessories_discount' => $data['accessories_discount'] ?? '',
+            'accessories_spl_disc' => $data['accessories_spl_disc'] ?? '',
+            'ceramic_discount' => $data['ceramic_discount'] ?? '',
+            'ppf_discount' => $data['ppf_discount'] ?? '',
+            'dealer_discount' => $data['dealer_discount'] ?? '',
+            'charger_swapping_discount' => $data['charger_swapping_discount'] ?? '',
+            'other_cash_discount' => $data['other_cash_discount'] ?? '',
+            'special_cash_discount' => $data['special_cash_discount'] ?? '',
 
-                    ['field' => 'inv_discount', 'headerName' => 'Total INV'],
-                    ['field' => 'inv_oe_discount', 'headerName' => 'Total INV (OE)'],
-                    ['field' => 'inv_d_discount', 'headerName' => 'Total INV (D)'],
-                    ['field' => 'cn_discount', 'headerName' => 'Total CN'],
-                    ['field' => 'cn1_discount', 'headerName' => 'Total CN1'],
-                    ['field' => 'cn2_discount', 'headerName' => 'Total CN2'],
-                    ['field' => 'cn3_discount', 'headerName' => 'Total CN3'],
-                    ['field' => 'total_discount', 'headerName' => 'Total Discount'],
-                    ['field' => 'net_receivable', 'headerName' => 'Net Receivable'],
-                    ['field' => 'invoice_price', 'headerName' => 'Invoice Price'],
+            'inv_discount' => $data['invoiced_discount_summary'] ?? '',
+            'inv_oe_discount' => $data['inv_oe_discount_summary'] ?? '',
+            'inv_d_discount' => $data['inv_d_discount_summary'] ?? '',
+            'cn_discount' => $data['credit_note_discount_summary'] ?? '',
+            'cn1_discount' => $data['cn1_discount_summary'] ?? '',
+            'cn2_discount' => $data['cn2_discount_summary'] ?? '',
+            'cn3_discount' => $data['cn3_discount_summary'] ?? '',
 
-                    ['field' => 'status', 'headerName' => 'Status'],
-                    ['field' => 'action', 'headerName' => 'Action'],
-                ],
-                'data' => $gridData,
+            'status' => ucfirst($quotation->status),
+
+            'action' => '
+                <div class="d-flex gap-2 justify-content-center">
+                    <a href="' . backpack_url('quotation-form/' . $quotation->id . '/edit') . '"
+                        class="btn btn-sm btn-primary">
+                        Edit
+                    </a>
+                    <a href="' . backpack_url('quotation-form/' . $quotation->id . '/history') . '"
+                        class="btn btn-sm btn-info">
+                        History
+                    </a>
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-success"
+                        onclick="confirmBookingProcess(' . $quotation->id . ', ' . ($quotation->booking_id ?? 'null') . ')">
+                        Booking
+                    </button>
+                </div>',
+        ];
+    })->values();
+
+    return view('admin.quotation.list', [
+        'title' => 'Quotation Listing',
+        'gridConfig' => [
+            'columns' => [
+                ['field' => 'serial_no', 'headerName' => 'S.No.'],
+                ['field' => 'quotation_no', 'headerName' => 'Quotation No.'],
+                ['field' => 'enquiry_no', 'headerName' => 'Enquiry No.'],
+                ['field' => 'customer_name', 'headerName' => 'Customer'],
+                ['field' => 'mobile', 'headerName' => 'Mobile'],
+                ['field' => 'care_of_type', 'headerName' => 'Care Of'],
+                ['field' => 'care_of_name', 'headerName' => 'Care Of Name'],
+                ['field' => 'segment', 'headerName' => 'Segment'],
+                ['field' => 'model', 'headerName' => 'Model'],
+                ['field' => 'variant', 'headerName' => 'Variant'],
+                ['field' => 'color', 'headerName' => 'Color'],
+                ['field' => 'permit', 'headerName' => 'Permit'],
+                ['field' => 'oem_code', 'headerName' => 'OEM Code'],
+                ['field' => 'revision', 'headerName' => 'Revision'],
+
+                ['field' => 'ex_showroom_price', 'headerName' => 'Ex Showroom'],
+                ['field' => 'insurance_company', 'headerName' => 'Insurance Co.'],
+                ['field' => 'insurance_amount', 'headerName' => 'Insurance Amount'],
+                ['field' => 'registration_amount', 'headerName' => 'Registration Amount'],
+                ['field' => 'registration_no_type', 'headerName' => 'Reg Type'],
+                ['field' => 'registration_category', 'headerName' => 'Reg Category'],
+                ['field' => 'in_house_rto', 'headerName' => 'In-House RTO'],
+                ['field' => 'policy_type', 'headerName' => 'Insurance'],
+                ['field' => 'registration_type', 'headerName' => 'Registration'],
+
+                ['field' => 'accessories', 'headerName' => 'Accessories'],
+                ['field' => 'accessories_amount', 'headerName' => 'Accessories Amount'],
+                ['field' => 'maxicare', 'headerName' => 'Maxicare'],
+                ['field' => 'vltd_device', 'headerName' => 'VLTD'],
+                ['field' => 'coating', 'headerName' => 'Coating'],
+                ['field' => 'coating_price', 'headerName' => 'Coating Price'],
+                ['field' => 'ppf', 'headerName' => 'PPF'],
+                ['field' => 'rto_yellow_tape', 'headerName' => 'Yellow Tape'],
+                ['field' => 'kazam_charging_kit', 'headerName' => 'Kazam Kit'],
+                ['field' => 'incidental_charges', 'headerName' => 'Incidental'],
+                ['field' => 'shield', 'headerName' => 'Shield'],
+                ['field' => 'shield_price', 'headerName' => 'Shield Price'],
+                ['field' => 'rsa', 'headerName' => 'RSA'],
+                ['field' => 'rsa_amount', 'headerName' => 'RSA Amount'],
+                ['field' => 'fastag', 'headerName' => 'Fastag'],
+                ['field' => 'cod_charges', 'headerName' => 'COD Charges'],
+                ['field' => 'charger_swapping', 'headerName' => 'Charger Swapping'],
+                ['field' => 'charger_swapping_amount', 'headerName' => 'Swapping Amount'],
+                ['field' => 'tcs', 'headerName' => 'TCS'],
+
+                ['field' => 'onroad_price', 'headerName' => 'On Road Price'],
+                ['field' => 'oem_scheme_discount', 'headerName' => 'OEM Discount'],
+                ['field' => 'cash_scheme_oem', 'headerName' => 'Cash OEM Scheme'],
+                ['field' => 'cash_scheme_oem_type', 'headerName' => 'OEM Scheme Type'],
+                ['field' => 'csd_discount', 'headerName' => 'CSD Discount'],
+                ['field' => 'fame_subsidy', 'headerName' => 'Fame Subsidy'],
+                ['field' => 'exchange_bonus', 'headerName' => 'Exchange Bonus'],
+                ['field' => 'green_bonus', 'headerName' => 'Green Bonus'],
+                ['field' => 'welcome_bonus', 'headerName' => 'Welcome Bonus'],
+                ['field' => 'loyalty_bonus', 'headerName' => 'Loyalty Bonus'],
+                ['field' => 'corporate_discount', 'headerName' => 'Corporate Discount'],
+                ['field' => 'accessories_discount', 'headerName' => 'Accessories Discount'],
+                ['field' => 'accessories_spl_disc', 'headerName' => 'Acc Spl Disc'],
+                ['field' => 'ceramic_discount', 'headerName' => 'Ceramic Discount'],
+                ['field' => 'ppf_discount', 'headerName' => 'PPF Discount'],
+                ['field' => 'dealer_discount', 'headerName' => 'Dealer Discount'],
+                ['field' => 'charger_swapping_discount', 'headerName' => 'Swapping Discount'],
+                ['field' => 'other_cash_discount', 'headerName' => 'Other Cash Disc'],
+                ['field' => 'special_cash_discount', 'headerName' => 'Special Cash Disc'],
+
+                ['field' => 'inv_discount', 'headerName' => 'Total INV'],
+                ['field' => 'inv_oe_discount', 'headerName' => 'Total INV (OE)'],
+                ['field' => 'inv_d_discount', 'headerName' => 'Total INV (D)'],
+                ['field' => 'cn_discount', 'headerName' => 'Total CN'],
+                ['field' => 'cn1_discount', 'headerName' => 'Total CN1'],
+                ['field' => 'cn2_discount', 'headerName' => 'Total CN2'],
+                ['field' => 'cn3_discount', 'headerName' => 'Total CN3'],
+                ['field' => 'total_discount', 'headerName' => 'Total Discount'],
+                ['field' => 'net_receivable', 'headerName' => 'Net Receivable'],
+                ['field' => 'invoice_price', 'headerName' => 'Invoice Price'],
+
+                ['field' => 'status', 'headerName' => 'Status'],
+                ['field' => 'action', 'headerName' => 'Action'],
             ],
-        ]);
-    }
+            'data' => $gridData,
+        ],
+    ]);
+}
 
     public function create()
     {
@@ -603,9 +655,9 @@ class QuotationCrudController extends CrudController
 
         $bookingId = request('booking_id');
 
-if ($bookingId) {
+    if ($bookingId) {
 
-    $booking = \App\Models\Module\Booking\Booking::findOrFail($bookingId);
+        $booking = \App\Models\Module\Booking\Booking::findOrFail($bookingId);
 
     if (empty($booking->enq_no)) {
         abort(404, 'Enquiry not associated with this booking.');
@@ -622,21 +674,46 @@ if ($bookingId) {
 
     $enquiryId = $enquiry->id;
 
-} else {
+    } else {
 
-    $enquiryId = request('id');
+        $enquiryId = request('id');
 
-    if (!$enquiryId) {
-        abort(404, 'Enquiry not found.');
+        if (!$enquiryId) {
+            abort(404, 'Enquiry not found.');
+        }
     }
-}
 
-        $selectedEnquiry = Enquiry::with([
-            'segment',
-            'model',
-            'variant',
-            'color',
-        ])->findOrFail($enquiryId);
+$selectedEnquiry = Enquiry::findOrFail($enquiryId);
+
+$segment = DB::table('xlr8_vehicle_segment')
+    ->where('code', $selectedEnquiry->segment_code)
+    ->first();
+
+$model = DB::table('xlr8_vehicle_model')
+    ->where('code', $selectedEnquiry->model_code)
+    ->first();
+
+$variant = DB::table('xlr8_vehicle_variant')
+    ->where('code', $selectedEnquiry->variant_code)
+    ->first();
+
+$color = DB::table('xlr8_vehicle_color')
+    ->where('model_code', $selectedEnquiry->model_code)
+    ->where('variant_code', $selectedEnquiry->variant_code)
+    ->where('code', $selectedEnquiry->color_code)
+    ->first();
+
+$segmentName = $segment->name ?? $selectedEnquiry->segment_code ?? '';
+
+$modelName = $model->name ?? $selectedEnquiry->model_code ?? '';
+
+$variantName = $variant->display_name
+    ?? $variant->custom_name
+    ?? $variant->oem_name
+    ?? $selectedEnquiry->variant_code
+    ?? '';
+
+$colorName = $color->name ?? $selectedEnquiry->color_code ?? '';
 
         $permit_map = [
     '1'  => 'Private - U/C (4 Wheeler)',
@@ -685,6 +762,10 @@ if ($bookingId) {
 
         return view('admin.quotation.create', [
             'selectedEnquiry' => $selectedEnquiry,
+            'segmentName' => $segmentName,
+            'modelName' => $modelName,
+            'variantName' => $variantName,
+            'colorName' => $colorName,
             'insurance_type_map' => $insurance_type_map,
             'registration_type_map' => $registration_type_map,
             'accessoryList' => $accessoryList,
@@ -904,150 +985,462 @@ if ($bookingId) {
     public function store(Request $request)
     {
         $request->validate([
-            'enquiry_no'   => 'required',
-            'segment_code' => 'required',
-            'model_code'   => 'required',
-            'variant_code' => 'required',
-            'color_code'   => 'required',
+            'enquiry_no' => 'required',
         ]);
 
         DB::beginTransaction();
 
         try {
-            $quotationData = $request->except('_token');
 
-            $quotationData['charger_swapping_option'] = $request->input('charger_swapping_option');
+            /*
+            |--------------------------------------------------------------------------
+            | 1. Fetch Enquiry
+            |--------------------------------------------------------------------------
+            | First try enquiry_no, then ID.
+            |--------------------------------------------------------------------------
+            */
 
-            // Fetch enquiry
-            $enquiry = null;
-            try {
-                $enquiry = Enquiry::findOrFail($request->enquiry_no);
-            } catch (\Exception $e) {
-                \Log::info('Mock enquiry detected: ' . $request->enquiry_no);
+            $enquiry = Enquiry::where('enquiry_no', $request->enquiry_no)
+                ->orWhere('id', $request->enquiry_no)
+                ->first();
+
+            if (!$enquiry) {
+                throw new \Exception(
+                    'Enquiry not found: ' . $request->enquiry_no
+                );
             }
 
-            // ✅ FIX: Use insurance_covers_data instead of insurance_covers
-            if ($request->has('insurance_covers_data') && !empty($request->insurance_covers_data)) {
-                $coversData = json_decode($request->insurance_covers_data, true);
+
+            /*
+            |--------------------------------------------------------------------------
+            | 2. Start quotation data
+            |--------------------------------------------------------------------------
+            */
+
+            $quotationData = $request->except('_token');
+
+            $quotationData['charger_swapping_option'] =
+                $request->input('charger_swapping_option');
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | 3. ALWAYS store enquiry information in standard_data
+            |--------------------------------------------------------------------------
+            */
+
+            $quotationData['enquiry_id'] = $enquiry->id;
+
+            // Display enquiry number
+            $quotationData['enquiry_no'] = $enquiry->enquiry_no;
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | 4. Customer Information
+            |--------------------------------------------------------------------------
+            */
+
+            $customerName = trim(
+                ($enquiry->first_name ?? '') . ' ' .
+                ($enquiry->last_name ?? '')
+            );
+
+            if (empty($customerName)) {
+                $customerName =
+                    $enquiry->full_name
+                    ?? $enquiry->customer_name
+                    ?? '';
+            }
+
+            $customerMobile =
+                $enquiry->mobile
+                ?? $enquiry->phone
+                ?? $enquiry->mobile_no
+                ?? '';
+
+            $quotationData['customer_name'] = $customerName;
+
+            // Keep both keys because different parts of your Blade may use them
+            $quotationData['customer_mobile'] = $customerMobile;
+            $quotationData['mobile'] = $customerMobile;
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | 5. Vehicle Information
+            |--------------------------------------------------------------------------
+            | These MUST come from enquiry.
+            |--------------------------------------------------------------------------
+            */
+
+            $segmentCode = $enquiry->segment_code ?? '';
+            $modelCode   = $enquiry->model_code ?? '';
+            $variantCode = $enquiry->variant_code ?? '';
+            $colorCode   = $enquiry->color_code ?? '';
+
+            $quotationData['segment_code'] = $segmentCode;
+            $quotationData['model_code']   = $modelCode;
+            $quotationData['variant_code'] = $variantCode;
+            $quotationData['color_code']   = $colorCode;
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | 6. Vehicle Names
+            |--------------------------------------------------------------------------
+            */
+
+            $segment = DB::table('xlr8_vehicle_segment')
+                ->where('code', $segmentCode)
+                ->first();
+
+            $model = DB::table('xlr8_vehicle_model')
+                ->where('code', $modelCode)
+                ->first();
+
+            $variant = DB::table('xlr8_vehicle_variant')
+                ->where('code', $variantCode)
+                ->first();
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Color
+            |--------------------------------------------------------------------------
+            |
+            | IMPORTANT:
+            | Do NOT use:
+            |
+            | ->where('model', ...)
+            |
+            | because xlr8_vehicle_color does not have a "model" column.
+            |
+            */
+
+            $color = DB::table('xlr8_vehicle_color')
+                ->where('code', $colorCode)
+                ->first();
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | 7. Resolve Display Names
+            |--------------------------------------------------------------------------
+            */
+
+            $segmentName =
+                $segment->name
+                ?? $segmentCode
+                ?? '';
+
+            $modelName =
+                $model->name
+                ?? $modelCode
+                ?? '';
+
+            $variantName =
+                $variant->display_name
+                ?? $variant->custom_name
+                ?? $variant->oem_name
+                ?? $variantCode
+                ?? '';
+
+            $colorName =
+                $color->name
+                ?? $color->color
+                ?? $colorCode
+                ?? '';
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | 8. Store Vehicle Display Names also
+            |--------------------------------------------------------------------------
+            */
+
+            $quotationData['segment'] = $segmentName;
+            $quotationData['model']   = $modelName;
+            $quotationData['variant'] = $variantName;
+            $quotationData['color']   = $colorName;
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | 9. Insurance Covers
+            |--------------------------------------------------------------------------
+            */
+
+            if (
+                $request->has('insurance_covers_data') &&
+                !empty($request->insurance_covers_data)
+            ) {
+
+                $coversData = json_decode(
+                    $request->insurance_covers_data,
+                    true
+                );
+
                 if (is_array($coversData) && !empty($coversData)) {
                     $quotationData['insurance_covers'] = $coversData;
                 }
-            } else if ($request->has('insurance_covers')) {
-                // Fallback to old method if needed
+
+            } elseif ($request->has('insurance_covers')) {
+
                 $covers = $request->insurance_covers;
+
                 $formattedCovers = [];
+
                 if (is_array($covers)) {
+
                     foreach ($covers as $cover) {
+
                         if (is_string($cover)) {
+
                             $price = 0;
-                            if (preg_match('/\(₹([\d,]+\.?\d*)\)/', $cover, $matches)) {
-                                $price = floatval(str_replace(',', '', $matches[1]));
-                                $name = trim(preg_replace('/\(₹[\d,]+\.?\d*\)/', '', $cover));
+
+                            if (
+                                preg_match(
+                                    '/\(?₹([\d,]+\.?\d*)\)?/',
+                                    $cover,
+                                    $matches
+                                )
+                            ) {
+
+                                $price = floatval(
+                                    str_replace(',', '', $matches[1])
+                                );
+
+                                $name = trim(
+                                    preg_replace(
+                                        '/\(?₹[\d,]+\.?\d*\)?/',
+                                        '',
+                                        $cover
+                                    )
+                                );
+
                             } else {
+
                                 $name = $cover;
                             }
-                            $formattedCovers[] = ['name' => $name, 'price' => $price];
-                        } elseif (is_array($cover)) {
+
                             $formattedCovers[] = [
-                                'name' => $cover['name'] ?? '',
-                                'price' => floatval($cover['price'] ?? 0)
+                                'name'  => $name,
+                                'price' => $price,
+                            ];
+
+                        } elseif (is_array($cover)) {
+
+                            $formattedCovers[] = [
+                                'name' =>
+                                    $cover['name'] ?? '',
+
+                                'price' =>
+                                    floatval(
+                                        $cover['price'] ?? 0
+                                    ),
                             ];
                         }
                     }
-                    $quotationData['insurance_covers'] = $formattedCovers;
+
+                    $quotationData['insurance_covers'] =
+                        $formattedCovers;
                 }
             }
 
-            // ✅ FIX: Insurance amount ko bhi sahi se set karein
-            if ($request->has('insurance_amount') && !empty($request->insurance_amount)) {
-                $quotationData['insurance_amount'] = $request->insurance_amount;
+
+            /*
+            |--------------------------------------------------------------------------
+            | 10. Insurance Amount
+            |--------------------------------------------------------------------------
+            */
+
+            if (
+                $request->has('insurance_amount') &&
+                !empty($request->insurance_amount)
+            ) {
+                $quotationData['insurance_amount'] =
+                    $request->insurance_amount;
             }
 
-            // ✅ SAVE INSURANCE COMPANY
-            if ($request->has('insurance_company') && $request->insurance_company) {
-                $quotationData['insurance_company'] = $request->insurance_company;
+
+            /*
+            |--------------------------------------------------------------------------
+            | 11. Insurance Company
+            |--------------------------------------------------------------------------
+            */
+
+            if (
+                $request->has('insurance_company') &&
+                $request->insurance_company
+            ) {
+                $quotationData['insurance_company'] =
+                    $request->insurance_company;
             }
 
-            // ✅ 2. Ensure Accessories are stored as a clean array of part numbers
-            if (!empty($quotationData['accessories']) && is_array($quotationData['accessories'])) {
-                $quotationData['accessories'] = array_values($quotationData['accessories']);
+
+            /*
+            |--------------------------------------------------------------------------
+            | 12. Accessories
+            |--------------------------------------------------------------------------
+            */
+
+            if (
+                !empty($quotationData['accessories']) &&
+                is_array($quotationData['accessories'])
+            ) {
+                $quotationData['accessories'] =
+                    array_values($quotationData['accessories']);
             }
 
-            // ✅ SAVE ACCESSORIES DATA
-            if (!empty($quotationData['accessories']) && is_array($quotationData['accessories'])) {
-                $quotationData['accessories'] = array_values($quotationData['accessories']);
-            }
             if ($request->has('accessories_amount')) {
-                $quotationData['accessories_amount'] = $request->accessories_amount;
+                $quotationData['accessories_amount'] =
+                    $request->accessories_amount;
             }
 
-            // ✅ SAVE REGISTRATION DETAILS
+
+            /*
+            |--------------------------------------------------------------------------
+            | 13. Registration Details
+            |--------------------------------------------------------------------------
+            */
+
             if ($request->has('registration_no_type')) {
-                $quotationData['registration_no_type'] = $request->registration_no_type;
+                $quotationData['registration_no_type'] =
+                    $request->registration_no_type;
             }
+
             if ($request->has('registration_category')) {
-                $quotationData['registration_category'] = $request->registration_category;
+                $quotationData['registration_category'] =
+                    $request->registration_category;
             }
+
             if ($request->has('in_house_rto')) {
-                $quotationData['in_house_rto'] = $request->in_house_rto;
+                $quotationData['in_house_rto'] =
+                    $request->in_house_rto;
             }
 
-            // Customer details
-            if ($enquiry) {
-                $quotationData['customer_name'] = trim($enquiry->first_name . ' ' . $enquiry->last_name) ?: ($enquiry->full_name ?? '');
-                $quotationData['customer_mobile'] = $enquiry->mobile ?? $enquiry->phone ?? '';
-                $quotationData['enquiry_id'] = $enquiry->id;
-                $personCode = $enquiry->person_code;
-            } else {
-                $quotationData['customer_name'] = $request->customer_name ?? 'Mock Customer';
-                $quotationData['customer_mobile'] = $request->mobile ?? '';
-                $quotationData['enquiry_id'] = $request->enquiry_no;
-                $personCode = null;
-            }
 
-            // Vehicle details
-            $quotationData['segment_code'] = $request->segment_code;
-            $quotationData['model_code'] = $request->model_code;
-            $quotationData['variant_code'] = $request->variant_code;
-            $quotationData['color_code'] = $request->color_code;
+            /*
+            |--------------------------------------------------------------------------
+            | 14. Permit
+            |--------------------------------------------------------------------------
+            */
 
-            // ✅ SAVE PERMIT
             if ($request->has('permit')) {
-                $quotationData['permit'] = $request->permit;
+                $quotationData['permit'] =
+                    $request->permit;
             }
 
 
-            $initialFinancier = $quotationData['financier'] ?? null;
+            /*
+            |--------------------------------------------------------------------------
+            | 15. Financier History
+            |--------------------------------------------------------------------------
+            */
+
+            $initialFinancier =
+                $quotationData['financier'] ?? null;
 
             $quotationData['financier_history'] = [];
 
             if (!empty($initialFinancier)) {
-                $quotationData['financier_history'][] = $initialFinancier;
+
+                $quotationData['financier_history'][] =
+                    $initialFinancier;
             }
 
-            // Check if this Booking already has a quotation
+
+            /*
+            |--------------------------------------------------------------------------
+            | 16. Booking Check
+            |--------------------------------------------------------------------------
+            */
+
+            $booking = null;
+
             if ($request->filled('booking_id')) {
 
-                $booking = \App\Models\Module\Booking\Booking::findOrFail(
-                    $request->booking_id
-                );
+                $booking =
+                    \App\Models\Module\Booking\Booking::findOrFail(
+                        $request->booking_id
+                    );
 
                 if (!empty($booking->quotation_id)) {
-                    abort(422, 'This booking already has a quotation.');
+
+                    abort(
+                        422,
+                        'This booking already has a quotation.'
+                    );
                 }
             }
 
+
+            /*
+            |--------------------------------------------------------------------------
+            | 17. Create Quotation
+            |--------------------------------------------------------------------------
+            */
+
             $quotation = new Quotation();
-            $quotation->quotation_no = 0;
-            $quotation->enquiry_no = $request->enquiry_no;
-            $quotation->booking_id = $request->booking_id ?: null;
-            $quotation->person_code = $personCode;
-            $quotation->model_code = $request->model_code;
-            $quotation->variant_code = $request->variant_code;
-            $quotation->color_code = $request->color_code;
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | IMPORTANT:
+            | Store ACTUAL enquiry ID in quotation.enquiry_no
+            |--------------------------------------------------------------------------
+            */
+
+            $quotation->enquiry_no = $enquiry->id;
+
+            $quotation->booking_no =
+                $request->booking_no ?: null;
 
             $quotation->revision = 0;
-            $quotation->standard_data = $quotationData;
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | 18. DO NOT unset enquiry/customer/vehicle fields
+            |--------------------------------------------------------------------------
+            |
+            | This is the important fix.
+            |
+            | Previously you were doing:
+            |
+            | unset(
+            |     enquiry_no,
+            |     customer_name,
+            |     mobile,
+            |     customer_mobile,
+            |     enquiry_id,
+            |     segment_code,
+            |     model_code,
+            |     variant_code,
+            |     color_code
+            | );
+            |
+            | That was removing the exact data required by edit().
+            |
+            */
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | 19. Save Standard Data
+            |--------------------------------------------------------------------------
+            */
+
+            $quotation->standard_data =
+                $quotationData;
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | 20. Prices
+            |--------------------------------------------------------------------------
+            */
 
             $quotation->onroad_price =
                 $request->net_receivable_summary
@@ -1059,46 +1452,132 @@ if ($bookingId) {
                 ?? $request->net_receivable_summary
                 ?? 0;
 
+
+            /*
+            |--------------------------------------------------------------------------
+            | 21. Status / User
+            |--------------------------------------------------------------------------
+            */
+
             $quotation->status = 'raised';
-            $quotation->created_by = backpack_user()->id;
+
+            $quotation->created_by =
+                backpack_user()->id;
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | 22. Save Quotation
+            |--------------------------------------------------------------------------
+            */
 
             $quotation->save();
 
-            $quotation->quotation_no = $quotation->id;
-            $quotation->save();
 
-            // Link quotation back to Booking
-            if ($request->filled('booking_id')) {
+            /*
+            |--------------------------------------------------------------------------
+            | 23. Link quotation back to Booking
+            |--------------------------------------------------------------------------
+            */
 
-                $booking->quotation_id = $quotation->id;
+            if ($booking) {
+
+                $booking->quotation_id =
+                    $quotation->id;
+
                 $booking->save();
             }
 
 
-            $this->saveDiscountFields($quotation, $quotationData);
+            /*
+            |--------------------------------------------------------------------------
+            | 24. Save Discount Fields
+            |--------------------------------------------------------------------------
+            */
+
+            $this->saveDiscountFields(
+                $quotation,
+                $quotationData
+            );
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | 25. Quote Action
+            |--------------------------------------------------------------------------
+            */
 
             QuoteAction::create([
-                'quotation_no' => $quotation->quotation_no,
-                'action_by'    => backpack_user()->id,
-                'action'       => 'RAISED',
-                'requested'    => $quotationData,
-                'onroad'       => $request->net_receivable_summary
+
+                'quotation_no' =>
+                    $quotation->id,
+
+                'action_by' =>
+                    backpack_user()->id,
+
+                'action' =>
+                    'RAISED',
+
+                'requested' =>
+                    $quotationData,
+
+                'onroad' =>
+                    $request->net_receivable_summary
                     ?? $request->total_receivable
                     ?? 0,
-                'status'       => 'raised',
-                'remarks'      => 'Quotation Created',
-                'created_by'   => backpack_user()->id,
+
+                'status' =>
+                    'raised',
+
+                'remarks' =>
+                    'Quotation Created',
+
+                'created_by' =>
+                    backpack_user()->id,
             ]);
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | 26. Commit
+            |--------------------------------------------------------------------------
+            */
 
             DB::commit();
 
-            \Alert::success('Quotation created successfully.')->flash();
-            return redirect(backpack_url('quotation-form/' . $quotation->id . '/edit') . '?saved=1');
+
+            \Alert::success(
+                'Quotation created successfully.'
+            )->flash();
+
+
+            return redirect(
+                backpack_url(
+                    'quotation-form/' .
+                    $quotation->id .
+                    '/edit'
+                ) . '?saved=1'
+            );
+
+
         } catch (\Exception $e) {
+
             DB::rollBack();
-            \Log::error('Quotation Store Error: ' . $e->getMessage());
-            \Log::error($e->getTraceAsString());
-            \Alert::error('Error saving quotation: ' . $e->getMessage())->flash();
+
+            \Log::error(
+                'Quotation Store Error: ' .
+                $e->getMessage()
+            );
+
+            \Log::error(
+                $e->getTraceAsString()
+            );
+
+            \Alert::error(
+                'Error saving quotation: ' .
+                $e->getMessage()
+            )->flash();
+
             return back()->withInput();
         }
     }
@@ -1239,32 +1718,220 @@ if ($bookingId) {
         $this->crud->setEditView('admin.quotation.create');
 
         /*
-    |--------------------------------------------------------------------------
-    | 1. Load quotation
-    |--------------------------------------------------------------------------
-    */
+        |--------------------------------------------------------------------------
+        | 1. Load quotation
+        |--------------------------------------------------------------------------
+        */
         $quotation = Quotation::findOrFail($id);
 
         /*
-    |--------------------------------------------------------------------------
-    | 2. Load original enquiry
-    |--------------------------------------------------------------------------
-    | We use quotation->enquiry_no first because quotation should open with
-    | the enquiry against which it was originally created.
-    |--------------------------------------------------------------------------
-    */
-        $selectedEnquiry = Enquiry::with([
-            'segment',
-            'model',
-            'variant',
-            'color',
-        ])->find($quotation->enquiry_no);
+        |--------------------------------------------------------------------------
+        | 2. Find original enquiry
+        |--------------------------------------------------------------------------
+        | New quotations store enquiry ID in quotation.enquiry_no.
+        | Old quotations may still contain enquiry_no.
+        |--------------------------------------------------------------------------
+        */
+        $selectedEnquiry = Enquiry::find($quotation->enquiry_no);
 
         /*
-    |--------------------------------------------------------------------------
-    | 3. Dropdown maps
-    |--------------------------------------------------------------------------
-    */
+        |--------------------------------------------------------------------------
+        | Backward compatibility for old quotations
+        |--------------------------------------------------------------------------
+        */
+        if (!$selectedEnquiry) {
+            $selectedEnquiry = Enquiry::where(
+                'enquiry_no',
+                $quotation->enquiry_no
+            )->first();
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | 3. Get saved quotation data
+        |--------------------------------------------------------------------------
+        */
+        $quotationData = $quotation->standard_data ?? [];
+        if (!is_array($quotationData)) {
+            $quotationData = [];
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | 4. FIX: Customer Name - ALWAYS from enquiry first, fallback to standard_data
+        |--------------------------------------------------------------------------
+        */
+        $customerName = '';
+        if ($selectedEnquiry) {
+            $customerName = trim(
+                ($selectedEnquiry->first_name ?? '') . ' ' .
+                ($selectedEnquiry->last_name ?? '')
+            );
+            if (empty($customerName)) {
+                $customerName = $selectedEnquiry->full_name ?? '';
+            }
+            if (empty($customerName)) {
+                $customerName = $selectedEnquiry->customer_name ?? '';
+            }
+            if (empty($customerName)) {
+                $customerName = $selectedEnquiry->name ?? '';
+            }
+        }
+        // Fallback to standard_data if enquiry not found or name is empty
+        if (empty($customerName)) {
+            $customerName = $quotationData['customer_name'] ?? $quotationData['customerName'] ?? '';
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | 5. FIX: Mobile - ALWAYS from enquiry first
+        |--------------------------------------------------------------------------
+        */
+        $customerMobile = '';
+        if ($selectedEnquiry) {
+            $customerMobile = $selectedEnquiry->mobile 
+                ?? $selectedEnquiry->phone 
+                ?? $selectedEnquiry->mobile_no 
+                ?? '';
+        }
+        // Fallback to standard_data
+        if (empty($customerMobile)) {
+            $customerMobile = $quotationData['customer_mobile'] 
+                ?? $quotationData['mobile'] 
+                ?? '';
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | 6. FIX: Vehicle codes - ALWAYS from enquiry first, fallback to standard_data
+        |--------------------------------------------------------------------------
+        */
+        $segmentCode = $selectedEnquiry?->segment_code ?? $quotationData['segment_code'] ?? '';
+        $modelCode   = $selectedEnquiry?->model_code   ?? $quotationData['model_code']   ?? '';
+        $variantCode = $selectedEnquiry?->variant_code ?? $quotationData['variant_code'] ?? '';
+        $colorCode   = $selectedEnquiry?->color_code   ?? $quotationData['color_code']   ?? '';
+
+        /*
+        |--------------------------------------------------------------------------
+        | 7. FIX: Vehicle names with proper fallback
+        |--------------------------------------------------------------------------
+        */
+        $segmentName = '';
+        $modelName   = '';
+        $variantName = '';
+        $colorName   = '';
+
+        if (!empty($segmentCode)) {
+            $segment = DB::table('xlr8_vehicle_segment')
+                ->where('code', $segmentCode)
+                ->first();
+            $segmentName = $segment->name ?? $selectedEnquiry?->segment ?? $quotationData['segment'] ?? $segmentCode;
+        }
+
+        if (!empty($modelCode)) {
+            $model = DB::table('xlr8_vehicle_model')
+                ->where('code', $modelCode)
+                ->first();
+            $modelName = $model->name ?? $selectedEnquiry?->model ?? $quotationData['model'] ?? $modelCode;
+        }
+
+        if (!empty($variantCode)) {
+            $variant = DB::table('xlr8_vehicle_variant')
+                ->where('code', $variantCode)
+                ->first();
+            $variantName = $variant->display_name 
+                ?? $variant->custom_name 
+                ?? $variant->oem_name 
+                ?? $selectedEnquiry?->variant 
+                ?? $quotationData['variant'] 
+                ?? $variantCode;
+        }
+
+        if (!empty($colorCode)) {
+            $color = DB::table('xlr8_vehicle_color')
+                ->where('code', $colorCode)
+                ->first();
+            $colorName = $color->name 
+                ?? $selectedEnquiry?->color 
+                ?? $quotationData['color'] 
+                ?? $colorCode;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | 8. FIX: Ensure quotationData has the updated values
+        |--------------------------------------------------------------------------
+        */
+        $quotationData['customer_name'] = $customerName;
+        $quotationData['customer_mobile'] = $customerMobile;
+        $quotationData['mobile'] = $customerMobile;
+        $quotationData['enquiry_no'] = $quotation->enquiry_no;
+        
+        /*
+        |--------------------------------------------------------------------------
+        | 9. FIX: Ensure vehicle codes and names are in quotationData for the form
+        |--------------------------------------------------------------------------
+        */
+        $quotationData['segment_code'] = $segmentCode;
+        $quotationData['model_code']   = $modelCode;
+        $quotationData['variant_code'] = $variantCode;
+        $quotationData['color_code']   = $colorCode;
+        $quotationData['segment'] = $segmentName;
+        $quotationData['model']   = $modelName;
+        $quotationData['variant'] = $variantName;
+        $quotationData['color']   = $colorName;
+
+        /*
+        |--------------------------------------------------------------------------
+        | 10. OEM Code
+        |--------------------------------------------------------------------------
+        */
+        $quotationData['oem_code'] = $selectedEnquiry?->oem_code 
+            ?? $quotationData['oem_code'] 
+            ?? '';
+
+        /*
+        |--------------------------------------------------------------------------
+        | 11. On Road / Invoice Price
+        |--------------------------------------------------------------------------
+        */
+        $quotationData['onroad_price'] = !empty($quotationData['onroad_price'])
+            ? $quotationData['onroad_price']
+            : $quotation->onroad_price;
+
+        $quotationData['invoice_price'] = !empty($quotationData['invoice_price'])
+            ? $quotationData['invoice_price']
+            : $quotation->invoice_price;
+
+        /*
+        |--------------------------------------------------------------------------
+        | 12. Accessories - Ensure it's an array
+        |--------------------------------------------------------------------------
+        */
+        if (isset($quotationData['accessories']) && !is_array($quotationData['accessories'])) {
+            $quotationData['accessories'] = [$quotationData['accessories']];
+        }
+        if (!isset($quotationData['accessories'])) {
+            $quotationData['accessories'] = [];
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | 13. Insurance Covers - Ensure it's an array
+        |--------------------------------------------------------------------------
+        */
+        if (isset($quotationData['insurance_covers']) && !is_array($quotationData['insurance_covers'])) {
+            $quotationData['insurance_covers'] = [$quotationData['insurance_covers']];
+        }
+        if (!isset($quotationData['insurance_covers'])) {
+            $quotationData['insurance_covers'] = [];
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | 14. Dropdown maps
+        |--------------------------------------------------------------------------
+        */
         $insurance_type_map = [
             1 => 'Nil Dep',
             2 => 'Higher',
@@ -1278,20 +1945,20 @@ if ($bookingId) {
         ];
 
         $permit_map = [
-    '1'  => 'Private - U/C (4 Wheeler)',
-    '2'  => 'Private - BH (4 Wheeler)',
-    '3'  => 'Private - EV (4 Wheeler)',
-    '4'  => 'Goods - G (4 Wheeler)',
-    '5'  => 'Goods - G 3 Ton+ (4 Wheeler)',
-    '6'  => 'Goods - G (3 Wheeler)',
-    '7'  => 'Goods - G EV (3 Wheeler)',
-    '8'  => 'Goods - G EV (4 Wheeler)',
-    '9'  => 'Taxi - T (4 Wheeler)',
-    '10' => 'Taxi - T EV (4 Wheeler)',
-    '11' => 'Passenger - P (3 Wheeler)',
-    '12' => 'Passenger - P EV (3 Wheeler)',
-    '13' => 'Ambulance (Misc.)',
-];
+            '1'  => 'Private - U/C (4 Wheeler)',
+            '2'  => 'Private - BH (4 Wheeler)',
+            '3'  => 'Private - EV (4 Wheeler)',
+            '4'  => 'Goods - G (4 Wheeler)',
+            '5'  => 'Goods - G 3 Ton+ (4 Wheeler)',
+            '6'  => 'Goods - G (3 Wheeler)',
+            '7'  => 'Goods - G EV (3 Wheeler)',
+            '8'  => 'Goods - G EV (4 Wheeler)',
+            '9'  => 'Taxi - T (4 Wheeler)',
+            '10' => 'Taxi - T EV (4 Wheeler)',
+            '11' => 'Passenger - P (3 Wheeler)',
+            '12' => 'Passenger - P EV (3 Wheeler)',
+            '13' => 'Ambulance (Misc.)',
+        ];
 
         $reg_no_type_map = [
             '1' => 'Regular',
@@ -1300,299 +1967,99 @@ if ($bookingId) {
         ];
 
         /*
-    |--------------------------------------------------------------------------
-    | 4. Accessories
-    |--------------------------------------------------------------------------
-    */
+        |--------------------------------------------------------------------------
+        | 15. Accessories List
+        |--------------------------------------------------------------------------
+        */
         $accessoryList = Accessory::where('status', 1)
             ->orderBy('item')
             ->get();
 
-        $financiers = XlFinancier::select('id', 'name', 'short_name')
-            ->get();
+        /*
+        |--------------------------------------------------------------------------
+        | 16. Financiers
+        |--------------------------------------------------------------------------
+        */
+        $financiers = XlFinancier::select('id', 'name', 'short_name')->get();
 
         /*
-    |--------------------------------------------------------------------------
-    | 5. Get saved quotation snapshot
-    |--------------------------------------------------------------------------
-    */
-        $quotationData = $quotation->standard_data ?? [];
-
-        if (!is_array($quotationData)) {
-            $quotationData = [];
-        }
-
-        /*
-    |--------------------------------------------------------------------------
-    | 6. IMPORTANT:
-    | Restore fields from quotation table when standard_data is missing.
-    |--------------------------------------------------------------------------
-    |
-    | Old quotations may have these values in quotation columns but not
-    | inside standard_data.
-    |
-    */
-
-        // Enquiry
-        $quotationData['enquiry_no'] = !empty($quotationData['enquiry_no'])
-            ? $quotationData['enquiry_no']
-            : $quotation->enquiry_no;
-
-        /*
-    |--------------------------------------------------------------------------
-    | Vehicle codes
-    |--------------------------------------------------------------------------
-    */
-
-        $quotationData['segment_code'] = !empty($quotationData['segment_code'])
-            ? $quotationData['segment_code']
-            : ($quotation->segment_code
-                ?? $selectedEnquiry?->segment_code
-                ?? '');
-
-        $quotationData['model_code'] = !empty($quotationData['model_code'])
-            ? $quotationData['model_code']
-            : ($quotation->model_code
-                ?? $selectedEnquiry?->model_code
-                ?? '');
-
-        $quotationData['variant_code'] = !empty($quotationData['variant_code'])
-            ? $quotationData['variant_code']
-            : ($quotation->variant_code
-                ?? $selectedEnquiry?->variant_code
-                ?? '');
-
-        $quotationData['color_code'] = !empty($quotationData['color_code'])
-            ? $quotationData['color_code']
-            : ($quotation->color_code
-                ?? $selectedEnquiry?->color_code
-                ?? '');
-
-        /*
-    |--------------------------------------------------------------------------
-    | Customer
-    |--------------------------------------------------------------------------
-    */
-
-        if (empty($quotationData['customer_name'])) {
-
-            if ($selectedEnquiry) {
-
-                $quotationData['customer_name'] =
-                    trim(
-                        ($selectedEnquiry->first_name ?? '') . ' ' .
-                            ($selectedEnquiry->last_name ?? '')
-                    );
-
-                if (empty($quotationData['customer_name'])) {
-                    $quotationData['customer_name'] =
-                        $selectedEnquiry->full_name ?? '';
-                }
-            } else {
-                $quotationData['customer_name'] = '';
-            }
-        }
-
-        if (empty($quotationData['customer_mobile'])) {
-
-            if ($selectedEnquiry) {
-                $quotationData['customer_mobile'] =
-                    $selectedEnquiry->mobile
-                    ?? $selectedEnquiry->phone
-                    ?? '';
-            } else {
-                $quotationData['customer_mobile'] =
-                    $quotationData['mobile'] ?? '';
-            }
-        }
-
-        /*
-    |--------------------------------------------------------------------------
-    | OEM Code
-    |--------------------------------------------------------------------------
-    */
-
-        $quotationData['oem_code'] = !empty($quotationData['oem_code'])
-            ? $quotationData['oem_code']
-            : ($selectedEnquiry?->oem_code ?? '');
-
-        /*
-    |--------------------------------------------------------------------------
-    | On Road / Invoice
-    |--------------------------------------------------------------------------
-    */
-
-        $quotationData['onroad_price'] = !empty($quotationData['onroad_price'])
-            ? $quotationData['onroad_price']
-            : $quotation->onroad_price;
-
-        $quotationData['invoice_price'] = !empty($quotationData['invoice_price'])
-            ? $quotationData['invoice_price']
-            : $quotation->invoice_price;
-
-        /*
-    |--------------------------------------------------------------------------
-    | Accessories
-    |--------------------------------------------------------------------------
-    */
-
-        if (
-            isset($quotationData['accessories']) &&
-            !is_array($quotationData['accessories'])
-        ) {
-            $quotationData['accessories'] = [
-                $quotationData['accessories']
-            ];
-        }
-
-        if (!isset($quotationData['accessories'])) {
-            $quotationData['accessories'] = [];
-        }
-
-        /*
-    |--------------------------------------------------------------------------
-    | Insurance Covers
-    |--------------------------------------------------------------------------
-    */
-
-        if (
-            isset($quotationData['insurance_covers']) &&
-            !is_array($quotationData['insurance_covers'])
-        ) {
-            $quotationData['insurance_covers'] = [
-                $quotationData['insurance_covers']
-            ];
-        }
-
-        if (!isset($quotationData['insurance_covers'])) {
-            $quotationData['insurance_covers'] = [];
-        }
-
-        /*
-    |--------------------------------------------------------------------------
-    | 7. Determine Group A selection
-    |--------------------------------------------------------------------------
-    */
-
+        |--------------------------------------------------------------------------
+        | 17. Determine Group A
+        |--------------------------------------------------------------------------
+        */
         $groupASelected = 'cash_scheme_oem';
-
-        if (
-            !empty($quotationData['csd_discount']) &&
-            !in_array(
-                $quotationData['csd_discount'],
-                ['0', '0.00', 'N/A']
-            )
-        ) {
+        if (!empty($quotationData['csd_discount']) && !in_array($quotationData['csd_discount'], ['0', '0.00', 'N/A'])) {
             $groupASelected = 'csd_discount';
-        } elseif (
-            !empty($quotationData['fame_subsidy']) &&
-            !in_array(
-                $quotationData['fame_subsidy'],
-                ['0', '0.00', 'N/A']
-            )
-        ) {
+        } elseif (!empty($quotationData['fame_subsidy']) && !in_array($quotationData['fame_subsidy'], ['0', '0.00', 'N/A'])) {
             $groupASelected = 'fame_subsidy';
-        } elseif (
-            !empty($quotationData['cash_scheme_oem']) &&
-            !in_array(
-                $quotationData['cash_scheme_oem'],
-                ['0', '0.00', 'N/A']
-            )
-        ) {
+        } elseif (!empty($quotationData['cash_scheme_oem']) && !in_array($quotationData['cash_scheme_oem'], ['0', '0.00', 'N/A'])) {
             $groupASelected = 'cash_scheme_oem';
         }
 
         /*
-    |--------------------------------------------------------------------------
-    | 8. Group B
-    |--------------------------------------------------------------------------
-    */
-
+        |--------------------------------------------------------------------------
+        | 18. Group B
+        |--------------------------------------------------------------------------
+        */
         $groupBSelected = 'corporate_discount';
 
         /*
-    |--------------------------------------------------------------------------
-    | 9. Group C selection
-    |--------------------------------------------------------------------------
-    */
-
+        |--------------------------------------------------------------------------
+        | 19. Group C
+        |--------------------------------------------------------------------------
+        */
         $groupCSelected = 'exchange_bonus';
-
-        if (
-            !empty($quotationData['loyalty_bonus']) &&
-            !in_array(
-                $quotationData['loyalty_bonus'],
-                ['0', '0.00', 'N/A']
-            )
-        ) {
+        if (!empty($quotationData['loyalty_bonus']) && !in_array($quotationData['loyalty_bonus'], ['0', '0.00', 'N/A'])) {
             $groupCSelected = 'loyalty_bonus';
-        } elseif (
-            !empty($quotationData['green_bonus']) &&
-            !in_array(
-                $quotationData['green_bonus'],
-                ['0', '0.00', 'N/A']
-            )
-        ) {
+        } elseif (!empty($quotationData['green_bonus']) && !in_array($quotationData['green_bonus'], ['0', '0.00', 'N/A'])) {
             $groupCSelected = 'green_bonus';
-        } elseif (
-            !empty($quotationData['welcome_bonus']) &&
-            !in_array(
-                $quotationData['welcome_bonus'],
-                ['0', '0.00', 'N/A']
-            )
-        ) {
+        } elseif (!empty($quotationData['welcome_bonus']) && !in_array($quotationData['welcome_bonus'], ['0', '0.00', 'N/A'])) {
             $groupCSelected = 'welcome_bonus';
-        } elseif (
-            !empty($quotationData['exchange_bonus']) &&
-            !in_array(
-                $quotationData['exchange_bonus'],
-                ['0', '0.00', 'N/A']
-            )
-        ) {
+        } elseif (!empty($quotationData['exchange_bonus']) && !in_array($quotationData['exchange_bonus'], ['0', '0.00', 'N/A'])) {
             $groupCSelected = 'exchange_bonus';
         }
 
         /*
-    |--------------------------------------------------------------------------
-    | 10. Return edit view
-    |--------------------------------------------------------------------------
-    |
-    | VERY IMPORTANT:
-    | viewMode MUST be false for EDIT.
-    |
-    |--------------------------------------------------------------------------
-    */
-
+        |--------------------------------------------------------------------------
+        | 20. Return edit view
+        |--------------------------------------------------------------------------
+        */
         return view('admin.quotation.create', [
-
             'quotation' => $quotation,
-
             'quotationData' => $quotationData,
-
             'selectedEnquiry' => $selectedEnquiry,
 
+            // Vehicle display values
+            'segmentName' => $segmentName,
+            'modelName'   => $modelName,
+            'variantName' => $variantName,
+            'colorName'   => $colorName,
+
+            // Vehicle codes
+            'segmentCode' => $segmentCode,
+            'modelCode'   => $modelCode,
+            'variantCode' => $variantCode,
+            'colorCode'   => $colorCode,
+
+            // Dropdown maps
             'insurance_type_map' => $insurance_type_map,
-
             'registration_type_map' => $registration_type_map,
-
             'permit_map' => $permit_map,
-
             'reg_no_type_map' => $reg_no_type_map,
 
+            // Other data
             'accessoryList' => $accessoryList,
-
             'financiers' => $financiers,
 
+            // Discount groups
             'groupASelected' => $groupASelected,
-
             'groupBSelected' => $groupBSelected,
-
             'groupCSelected' => $groupCSelected,
 
-            // IMPORTANT
             'viewMode' => false,
         ]);
     }
+    
 
     // public function update(Request $request, $id)
     // {
@@ -1725,258 +2192,271 @@ if ($bookingId) {
     //     }
     // }
     public function update(Request $request, $id)
-    {
-        $request->validate([
-            'enquiry_no'   => 'required',
-            'segment_code' => 'required',
-            'model_code'   => 'required',
-            'variant_code' => 'required',
-            'color_code'   => 'required',
+{
+    // ✅ 1. REMOVED: segment_code, model_code, variant_code, color_code validation
+    $request->validate([
+        'enquiry_no' => 'required',
+    ]);
+
+    DB::beginTransaction();
+
+    try {
+        $quotation = Quotation::findOrFail($id);
+        
+        // ✅ 2. UPDATE enquiry lookup to match store() with mock support
+        $enquiry = Enquiry::where('enquiry_no', $request->enquiry_no)
+            ->orWhere('id', $request->enquiry_no)
+            ->first();
+
+        if (!$enquiry) {
+            \Log::info('Mock enquiry detected in update: ' . $request->enquiry_no);
+        }
+
+        $previousProposal = $quotation->standard_data ?? [];
+
+        if (!is_array($previousProposal)) {
+            $previousProposal = [];
+        }
+
+        $quotationData = array_merge(
+            $previousProposal,
+            $request->except(['_token', '_method'])
+        );
+
+        $oldFinancier = $previousProposal['financier'] ?? null;
+        $newFinancier = $quotationData['financier'] ?? null;
+
+        $financierHistory = $previousProposal['financier_history'] ?? [];
+
+        if (!is_array($financierHistory)) {
+            $financierHistory = [];
+        }
+
+        if (
+            !empty($newFinancier) &&
+            (string) $oldFinancier !== (string) $newFinancier &&
+            !in_array($newFinancier, $financierHistory, true)
+        ) {
+            $financierHistory[] = $newFinancier;
+        }
+
+        $quotationData['financier_history'] = $financierHistory;
+
+        $quotationData['charger_swapping_option'] = $request->input('charger_swapping_option');
+
+        // ✅ 3. REMOVED: vehicle code preservation - these come from enquiry now
+        // ❌ DELETE THESE LINES:
+        // $quotationData['segment_code'] = $request->segment_code;
+        // $quotationData['model_code'] = $request->model_code;
+        // $quotationData['variant_code'] = $request->variant_code;
+        // $quotationData['color_code'] = $request->color_code;
+
+        // ✅ FIX: Use insurance_covers_data instead of insurance_covers
+        if ($request->has('insurance_covers_data') && !empty($request->insurance_covers_data)) {
+            $coversData = json_decode($request->insurance_covers_data, true);
+            if (is_array($coversData) && !empty($coversData)) {
+                $quotationData['insurance_covers'] = $coversData;
+            }
+        }
+
+        // ✅ SAVE INSURANCE COMPANY
+        if ($request->has('insurance_company')) {
+            $quotationData['insurance_company'] = $request->insurance_company;
+        }
+
+        // ✅ 1. Normalize Insurance Covers into structured name/price arrays
+        if ($request->has('insurance_covers')) {
+            $covers = $request->insurance_covers;
+            $formattedCovers = [];
+            if (is_array($covers)) {
+                foreach ($covers as $cover) {
+                    if (is_string($cover)) {
+                        $price = 0;
+                        if (preg_match('/\(₹([\d,]+\.?\d*)\)/', $cover, $matches)) {
+                            $price = floatval(str_replace(',', '', $matches[1]));
+                            $name = trim(preg_replace('/\(₹[\d,]+\.?\d*\)/', '', $cover));
+                        } else {
+                            $name = $cover;
+                        }
+                        $formattedCovers[] = ['name' => $name, 'price' => $price];
+                    } elseif (is_array($cover)) {
+                        $formattedCovers[] = [
+                            'name' => $cover['name'] ?? '',
+                            'price' => floatval($cover['price'] ?? 0)
+                        ];
+                    }
+                }
+                $quotationData['insurance_covers'] = $formattedCovers;
+            }
+        }
+
+        // ✅ 2. Ensure Accessories are stored as a clean array of part numbers
+        if (!empty($quotationData['accessories']) && is_array($quotationData['accessories'])) {
+            $quotationData['accessories'] = array_values($quotationData['accessories']);
+        }
+
+        // ✅ SAVE ACCESSORIES
+        if (isset($quotationData['accessories']) && is_array($quotationData['accessories'])) {
+            $quotationData['accessories'] = array_values($quotationData['accessories']);
+        }
+        if ($request->has('accessories_amount')) {
+            $quotationData['accessories_amount'] = $request->accessories_amount;
+        }
+
+        // ✅ SAVE REGISTRATION DETAILS
+        if ($request->has('registration_no_type')) {
+            $quotationData['registration_no_type'] = $request->registration_no_type;
+        }
+        if ($request->has('registration_category')) {
+            $quotationData['registration_category'] = $request->registration_category;
+        }
+        if ($request->has('in_house_rto')) {
+            $quotationData['in_house_rto'] = $request->in_house_rto;
+        }
+
+        // ✅ SAVE PERMIT
+        if ($request->has('permit')) {
+            $quotationData['permit'] = $request->permit;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | SAVE CUSTOMER DETAILS
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->has('customer_name')) {
+            $quotationData['customer_name'] = $request->customer_name;
+        } elseif ($enquiry) {
+            $quotationData['customer_name'] =
+                trim($enquiry->first_name . ' ' . $enquiry->last_name)
+                ?: ($enquiry->full_name ?? '');
+        }
+
+        if ($request->has('customer_mobile')) {
+            $quotationData['customer_mobile'] = $request->customer_mobile;
+        } elseif ($request->has('mobile')) {
+            $quotationData['customer_mobile'] = $request->mobile;
+        } elseif ($enquiry) {
+            $quotationData['customer_mobile'] =
+                $enquiry->mobile ?? $enquiry->phone ?? '';
+        }
+
+        if ($enquiry) {
+            $quotationData['enquiry_id'] = $enquiry->id;
+        }
+
+        // unset(
+        //     $quotationData['enquiry_no'],
+        //     $quotationData['enquiry_id']
+        // );
+        $quotationData['enquiry_id'] = $enquiry->id;
+        $quotationData['enquiry_no'] = $enquiry->enquiry_no;
+        /*
+        |--------------------------------------------------------------------------
+        | Detect actual quotation changes
+        |--------------------------------------------------------------------------
+        | financier IS included because it is now one of the 6 history groups.
+        | financier_history is internal and should not itself count as a change.
+        |--------------------------------------------------------------------------
+        */
+
+        $oldDataForComparison = $previousProposal;
+        $newDataForComparison = $quotationData;
+
+        unset($oldDataForComparison['financier_history']);
+        unset($newDataForComparison['financier_history']);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Remove empty newly-created fields from comparison
+        |--------------------------------------------------------------------------
+        */
+        foreach ($newDataForComparison as $key => $value) {
+            if (
+                !array_key_exists($key, $oldDataForComparison) &&
+                ($value === null ||
+                    $value === '' ||
+                    $value === [] ||
+                    $value === '0' ||
+                    $value === '0.00')
+            ) {
+                unset($newDataForComparison[$key]);
+            }
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Actual quotation change
+        |--------------------------------------------------------------------------
+        */
+        $hasQuotationChanges =
+            $oldDataForComparison != $newDataForComparison;
+
+        /*
+        |--------------------------------------------------------------------------
+        | Every real quotation update gets a new history revision
+        |--------------------------------------------------------------------------
+        */
+        $newRevision = $hasQuotationChanges
+            ? ((int) $quotation->revision) + 1
+            : (int) $quotation->revision;
+
+        // ✅ 5. REMOVED: person_code, model_code, variant_code, color_code from update
+        $quotation->update([
+            'enquiry_no' => $enquiry->id,
+            // ❌ REMOVED: 'person_code'   => $enquiry->person_code,
+            // ❌ REMOVED: 'model_code'    => $request->model_code,
+            // ❌ REMOVED: 'variant_code'  => $request->variant_code,
+            // ❌ REMOVED: 'color_code'    => $request->color_code,
+
+            'revision'      => $newRevision,
+
+            'standard_data' => $quotationData,
+
+            'onroad_price'  => $request->net_receivable_summary
+                ?? $request->total_receivable
+                ?? 0,
+
+            'invoice_price' => $request->invoice_amount
+                ?? $request->net_receivable_summary
+                ?? 0,
+
+            'status'        => 'raised',
+            'updated_by'    => backpack_user()->id,
         ]);
 
-        DB::beginTransaction();
+        // Update discount fields
+        $this->saveDiscountFields($quotation, $quotationData);
 
-        try {
-            $quotation = Quotation::findOrFail($id);
-            $enquiry = Enquiry::findOrFail($request->enquiry_no);
+        if ($hasQuotationChanges) {
 
-            $previousProposal = $quotation->standard_data ?? [];
-
-            if (!is_array($previousProposal)) {
-                $previousProposal = [];
-            }
-
-            $quotationData = array_merge(
-                $previousProposal,
-                $request->except(['_token', '_method'])
-            );
-
-            $oldFinancier = $previousProposal['financier'] ?? null;
-            $newFinancier = $quotationData['financier'] ?? null;
-
-            $financierHistory = $previousProposal['financier_history'] ?? [];
-
-            if (!is_array($financierHistory)) {
-                $financierHistory = [];
-            }
-
-            if (
-                !empty($newFinancier) &&
-                (string) $oldFinancier !== (string) $newFinancier &&
-                !in_array($newFinancier, $financierHistory, true)
-            ) {
-                $financierHistory[] = $newFinancier;
-            }
-
-            $quotationData['financier_history'] = $financierHistory;
-
-            $quotationData['charger_swapping_option'] = $request->input('charger_swapping_option');
-
-            // Preserve frozen fields
-            $quotationData['segment_code'] = $request->segment_code;
-            $quotationData['model_code'] = $request->model_code;
-            $quotationData['variant_code'] = $request->variant_code;
-            $quotationData['color_code'] = $request->color_code;
-
-            // ✅ FIX: Use insurance_covers_data instead of insurance_covers
-            if ($request->has('insurance_covers_data') && !empty($request->insurance_covers_data)) {
-                $coversData = json_decode($request->insurance_covers_data, true);
-                if (is_array($coversData) && !empty($coversData)) {
-                    $quotationData['insurance_covers'] = $coversData;
-                }
-            }
-
-            // ✅ SAVE INSURANCE COMPANY
-            if ($request->has('insurance_company')) {
-                $quotationData['insurance_company'] = $request->insurance_company;
-            }
-
-            // ✅ 1. Normalize Insurance Covers into structured name/price arrays
-            if ($request->has('insurance_covers')) {
-                $covers = $request->insurance_covers;
-                $formattedCovers = [];
-                if (is_array($covers)) {
-                    foreach ($covers as $cover) {
-                        if (is_string($cover)) {
-                            $price = 0;
-                            if (preg_match('/\(₹([\d,]+\.?\d*)\)/', $cover, $matches)) {
-                                $price = floatval(str_replace(',', '', $matches[1]));
-                                $name = trim(preg_replace('/\(₹[\d,]+\.?\d*\)/', '', $cover));
-                            } else {
-                                $name = $cover;
-                            }
-                            $formattedCovers[] = ['name' => $name, 'price' => $price];
-                        } elseif (is_array($cover)) {
-                            $formattedCovers[] = [
-                                'name' => $cover['name'] ?? '',
-                                'price' => floatval($cover['price'] ?? 0)
-                            ];
-                        }
-                    }
-                    $quotationData['insurance_covers'] = $formattedCovers;
-                }
-            }
-
-            // ✅ 2. Ensure Accessories are stored as a clean array of part numbers
-            if (!empty($quotationData['accessories']) && is_array($quotationData['accessories'])) {
-                $quotationData['accessories'] = array_values($quotationData['accessories']);
-            }
-
-            // ✅ SAVE ACCESSORIES
-            if (isset($quotationData['accessories']) && is_array($quotationData['accessories'])) {
-                $quotationData['accessories'] = array_values($quotationData['accessories']);
-            }
-            if ($request->has('accessories_amount')) {
-                $quotationData['accessories_amount'] = $request->accessories_amount;
-            }
-
-            // ✅ SAVE REGISTRATION DETAILS
-            if ($request->has('registration_no_type')) {
-                $quotationData['registration_no_type'] = $request->registration_no_type;
-            }
-            if ($request->has('registration_category')) {
-                $quotationData['registration_category'] = $request->registration_category;
-            }
-            if ($request->has('in_house_rto')) {
-                $quotationData['in_house_rto'] = $request->in_house_rto;
-            }
-
-            // ✅ SAVE PERMIT
-            if ($request->has('permit')) {
-                $quotationData['permit'] = $request->permit;
-            }
-
-            /*
-            |--------------------------------------------------------------------------
-            | SAVE CUSTOMER DETAILS
-            |--------------------------------------------------------------------------
-            */
-
-            if ($request->has('customer_name')) {
-                $quotationData['customer_name'] = $request->customer_name;
-            } else {
-                $quotationData['customer_name'] =
-                    trim($enquiry->first_name . ' ' . $enquiry->last_name)
-                    ?: ($enquiry->full_name ?? '');
-            }
-
-            if ($request->has('customer_mobile')) {
-                $quotationData['customer_mobile'] = $request->customer_mobile;
-            } elseif ($request->has('mobile')) {
-                $quotationData['customer_mobile'] = $request->mobile;
-            } else {
-                $quotationData['customer_mobile'] =
-                    $enquiry->mobile ?? $enquiry->phone ?? '';
-            }
-
-            $quotationData['enquiry_id'] = $enquiry->id;
-
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | Detect actual quotation changes
-            |--------------------------------------------------------------------------
-            | financier IS included because it is now one of the 6 history groups.
-            | financier_history is internal and should not itself count as a change.
-            |--------------------------------------------------------------------------
-            */
-
-            $oldDataForComparison = $previousProposal;
-            $newDataForComparison = $quotationData;
-
-            unset($oldDataForComparison['financier_history']);
-            unset($newDataForComparison['financier_history']);
-
-            /*
-            |--------------------------------------------------------------------------
-            | Remove empty newly-created fields from comparison
-            |--------------------------------------------------------------------------
-            */
-            foreach ($newDataForComparison as $key => $value) {
-                if (
-                    !array_key_exists($key, $oldDataForComparison) &&
-                    ($value === null ||
-                        $value === '' ||
-                        $value === [] ||
-                        $value === '0' ||
-                        $value === '0.00')
-                ) {
-                    unset($newDataForComparison[$key]);
-                }
-            }
-
-            /*
-            |--------------------------------------------------------------------------
-            | Actual quotation change
-            |--------------------------------------------------------------------------
-            */
-            $hasQuotationChanges =
-                $oldDataForComparison != $newDataForComparison;
-
-            /*
-            |--------------------------------------------------------------------------
-            | Every real quotation update gets a new history revision
-            |--------------------------------------------------------------------------
-            */
-            $newRevision = $hasQuotationChanges
-                ? ((int) $quotation->revision) + 1
-                : (int) $quotation->revision;
-
-            $quotation->update([
-                'enquiry_no'    => $request->enquiry_no,
-                'person_code'   => $enquiry->person_code,
-                'model_code'    => $request->model_code,
-                'variant_code'  => $request->variant_code,
-                'color_code'    => $request->color_code,
-
-                'revision'      => $newRevision,
-
-                'standard_data' => $quotationData,
-
-                'onroad_price'  => $request->net_receivable_summary
+            QuoteAction::create([
+                'quotation_no' => $quotation->id,
+                'action_by'    => backpack_user()->id,
+                'action'       => 'REVISED',
+                'requested'    => $quotationData,
+                'onroad'       => $request->net_receivable_summary
                     ?? $request->total_receivable
                     ?? 0,
-
-                'invoice_price' => $request->invoice_amount
-                    ?? $request->net_receivable_summary
-                    ?? 0,
-
-                'status'        => 'raised',
-                'updated_by'    => backpack_user()->id,
+                'status'       => 'raised',
+                'remarks'      => 'Quotation Revised',
+                'created_by'   => backpack_user()->id,
             ]);
-
-            // Update discount fields
-            $this->saveDiscountFields($quotation, $quotationData);
-
-            if ($hasQuotationChanges) {
-
-                QuoteAction::create([
-                    'quotation_no' => $quotation->quotation_no,
-                    'action_by'    => backpack_user()->id,
-                    'action'       => 'REVISED',
-                    'requested'    => $quotationData,
-                    'onroad'       => $request->net_receivable_summary
-                        ?? $request->total_receivable
-                        ?? 0,
-                    'status'       => 'raised',
-                    'remarks'      => 'Quotation Revised',
-                    'created_by'   => backpack_user()->id,
-                ]);
-            }
-
-            DB::commit();
-
-            \Alert::success('Quotation updated successfully.')->flash();
-            return redirect(backpack_url('quotation-form/' . $quotation->id . '/edit') . '?saved=1');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            \Log::error('Quotation Update Error: ' . $e->getMessage());
-            \Log::error($e->getTraceAsString());
-            \Alert::error('Error updating quotation: ' . $e->getMessage())->flash();
-            return back()->withInput();
         }
+
+        DB::commit();
+
+        \Alert::success('Quotation updated successfully.')->flash();
+        return redirect(backpack_url('quotation-form/' . $quotation->id . '/edit') . '?saved=1');
+    } catch (\Exception $e) {
+        DB::rollBack();
+        \Log::error('Quotation Update Error: ' . $e->getMessage());
+        \Log::error($e->getTraceAsString());
+        \Alert::error('Error updating quotation: ' . $e->getMessage())->flash();
+        return back()->withInput();
     }
+}
     public function revise($quotation_no)
     {
         return $this->edit($quotation_no);
@@ -2049,7 +2529,7 @@ if ($bookingId) {
 
         $modelName = $model->name ?? $modelCode ?? '-';
 
-        $actions = QuoteAction::where('quotation_no', $quotation->quotation_no)
+        $actions = QuoteAction::where('quotation_no', $quotation->id)
             ->orderBy('created_at', 'asc')
             ->orderBy('id', 'asc')
             ->get();
@@ -2538,7 +3018,7 @@ if ($bookingId) {
     | etc.
     |--------------------------------------------------------------------------
     */
-        $actions = QuoteAction::where('quotation_no', $quotation->quotation_no)
+        $actions = QuoteAction::where('quotation_no', $quotation->id)
             ->orderBy('created_at', 'asc')
             ->orderBy('id', 'asc')
             ->get();
@@ -2896,10 +3376,10 @@ if ($bookingId) {
     //         'accessoriesPrintData' => json_encode($accessoriesPrintData),
     //     ]);
     // }
-    public function preview($quotation_no)
+    public function preview($id)
     {
         $quotation = Quotation::with('enquiry')
-            ->where('quotation_no', $quotation_no)
+            ->where('id', $id)  // ✅ Use id
             ->firstOrFail();
 
         $selectedEnquiry = Enquiry::with([
