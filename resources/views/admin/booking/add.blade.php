@@ -360,6 +360,116 @@ $enquiry = $quotation?->enquiry ?? ($data['enquiry'] ?? null);
                                 </div>
                             </div>
 
+                            {{-- ================= CUSTOMER ADDRESS DETAILS ================= --}}
+                            <div class="col-md-2 mb-3">
+                                <label class="form-label">
+                                    Pin Code <span class="text-danger">*</span>
+                                </label>
+                                <input type="text"
+                                    id="zipcode"
+                                    name="pincode"
+                                    maxlength="6"
+                                    class="form-control"
+                                    value="{{ old('pincode', $enquiry->zipcode ?? '') }}"
+                                    required>
+                            </div>
+
+                            <div class="col-md-2 mb-3">
+                                <label class="form-label">
+                                    VPO <span class="text-danger">*</span>
+                                </label>
+
+                                <select id="vpo_select"
+                                        class="form-control form-select"
+                                        required>
+                                    <option value="">Select VPO</option>
+                                </select>
+
+                                <input type="text"
+                                    id="vpo_input"
+                                    class="form-control mt-2 d-none"
+                                    placeholder="Enter VPO Manually"
+                                    value="{{ old('vpo', $enquiry->vpo ?? '') }}">
+                            </div>
+
+                            <div class="col-md-2 mb-3">
+                                <label class="form-label">
+                                    Tehsil <span class="text-danger">*</span>
+                                </label>
+
+                                <select id="tehsil_select"
+                                        class="form-control form-select"
+                                        required>
+                                    <option value="">Select Tehsil</option>
+                                </select>
+
+                                <input type="text"
+                                    id="tehsil_input"
+                                    class="form-control mt-2 d-none"
+                                    placeholder="Enter Tehsil Manually"
+                                    value="{{ old('customer_tehsil', $enquiry->tehsil ?? '') }}">
+                            </div>
+
+                            <div class="col-md-2 mb-3">
+                                <label class="form-label">
+                                    District <span class="text-danger">*</span>
+                                </label>
+
+                                <select id="district_select"
+                                        class="form-control form-select"
+                                        required>
+                                    <option value="">Select District</option>
+                                </select>
+
+                                <input type="text"
+                                    id="district_input"
+                                    class="form-control mt-2 d-none"
+                                    placeholder="Enter District Manually"
+                                    value="{{ old('customer_district', $enquiry->district ?? '') }}">
+                            </div>
+
+                            <div class="col-md-2 mb-3">
+                                <label class="form-label">
+                                    State <span class="text-danger">*</span>
+                                </label>
+
+                                <select id="state_select"
+                                        class="form-control form-select"
+                                        required>
+                                    <option value="">Select State</option>
+                                </select>
+
+                                <input type="text"
+                                    id="state_input"
+                                    class="form-control mt-2 d-none"
+                                    placeholder="Enter State Manually"
+                                    value="{{ old('city', $enquiry->city ?? '') }}">
+                            </div>
+
+                            <div class="col-md-2 mb-3">
+                                <label class="form-label">
+                                    Territory <span class="text-danger">*</span>
+                                </label>
+
+                                <select id="territory"
+                                        name="territory"
+                                        class="form-control form-select"
+                                        required>
+                                    <option value="">Select Territory</option>
+
+                                    <option value="OWN TERRITORY"
+                                        {{ old('territory', $enquiry->territory ?? '') == 'OWN TERRITORY' ? 'selected' : '' }}>
+                                        OWN TERRITORY
+                                    </option>
+
+                                    <option value="OTHER TERRITORY"
+                                        {{ old('territory', $enquiry->territory ?? '') == 'OTHER TERRITORY' ? 'selected' : '' }}>
+                                        OTHER TERRITORY
+                                    </option>
+                                </select>
+                            </div>
+
+
                             <div class="col-sm-4">
                                 <div class="form-group">
                                     <label for="branch">Branch <span class="required-mark">*</span></label>
@@ -1136,7 +1246,14 @@ $enquiry = $quotation?->enquiry ?? ($data['enquiry'] ?? null);
             variant: @json($enquiry->variant_code ?? ''),
             color: @json($enquiry->color_code ?? ''),
             branch: @json($enquiry->dealer_branch ?? ''),
-            location: @json($enquiry->dealer_location ?? '')
+            location: @json($enquiry->dealer_location ?? ''),
+            pincode: @json(old('pincode', $enquiry->zipcode ?? '')),
+            vpo: @json(old('vpo', $enquiry->vpo ?? '')),
+            tehsil: @json(old('customer_tehsil', $enquiry->tehsil ?? '')),
+            district: @json(old('customer_district', $enquiry->district ?? '')),
+            city: @json(old('city', $enquiry->city ?? '')),
+            territory: @json(old('territory', $enquiry->territory ?? ''))
+            
         };
 
         function handleProof(input) {
@@ -2576,6 +2693,450 @@ $enquiry = $quotation?->enquiry ?? ($data['enquiry'] ?? null);
             });
 
         });
+        // ============================================================
+        // CUSTOMER ADDRESS / PINCODE LOGIC
+        // Same logic as Enquiry form
+        // ============================================================
+
+        function debounce(func, wait) {
+            let timeout;
+
+            return function (...args) {
+                clearTimeout(timeout);
+
+                timeout = setTimeout(() => {
+                    func.apply(this, args);
+                }, wait);
+            };
+        }
+
+        function setupDynamicLocation(selectId, inputId, inputName) {
+            const $select = $(`#${selectId}`);
+            const $input = $(`#${inputId}`);
+
+            $select.on('change', function () {
+
+                if ($(this).val() === 'OTHER') {
+
+                    $input
+                        .removeClass('d-none')
+                        .attr('name', inputName);
+
+                    if ($select.prop('required')) {
+                        $input.prop('required', true);
+                    }
+
+                    $select.removeAttr('name');
+
+                } else {
+
+                    $input
+                        .addClass('d-none')
+                        .removeAttr('name')
+                        .prop('required', false);
+
+                    $select.attr('name', inputName);
+                }
+            });
+        }
+
+
+        // Bind dynamic fields
+        setupDynamicLocation('vpo_select', 'vpo_input', 'vpo');
+        setupDynamicLocation('tehsil_select', 'tehsil_input', 'customer_tehsil');
+        setupDynamicLocation('district_select', 'district_input', 'customer_district');
+        setupDynamicLocation('state_select', 'state_input', 'city');
+
+
+        // ------------------------------------------------------------
+        // Territory Logic
+        // ------------------------------------------------------------
+        function updateBookingTerritory() {
+
+            let distVal = $('#district_select').val();
+
+            if (distVal === 'OTHER') {
+                distVal = $('#district_input').val();
+            }
+
+            distVal = String(distVal || '').trim().toUpperCase();
+
+            if (distVal) {
+
+                if (['BIKANER', 'CHURU', 'SUJANGARH'].includes(distVal)) {
+                    $('#territory').val('OWN TERRITORY');
+                } else {
+                    $('#territory').val('OTHER TERRITORY');
+                }
+            }
+        }
+
+        $('#district_select').on('change', updateBookingTerritory);
+        $('#district_input').on('input', updateBookingTerritory);
+
+
+        // ------------------------------------------------------------
+        // Pincode → VPO / Tehsil / District / State
+        // ------------------------------------------------------------
+        $('#zipcode').on('input blur', debounce(function () {
+
+            const pincode = ($('#zipcode').val() || '').trim();
+
+            const $vpoSelect = $('#vpo_select');
+            const $tehsilSelect = $('#tehsil_select');
+            const $districtSelect = $('#district_select');
+            const $stateSelect = $('#state_select');
+
+            if (pincode.length !== 6) {
+
+                $vpoSelect.html('<option value="">Select VPO</option>');
+                $tehsilSelect.html('<option value="">Select Tehsil</option>');
+                $districtSelect.html('<option value="">Select District</option>');
+                $stateSelect.html('<option value="">Select State</option>');
+
+                return;
+            }
+
+            $vpoSelect.html('<option value="">Loading...</option>');
+            $tehsilSelect.html('<option value="">Loading...</option>');
+            $districtSelect.html('<option value="">Loading...</option>');
+            $stateSelect.html('<option value="">Loading...</option>');
+
+
+            fetch(`https://api.postalpincode.in/pincode/${pincode}`)
+                .then(response => response.json())
+                .then(data => {
+
+                    if (
+                        data &&
+                        data[0] &&
+                        data[0].Status === 'Success'
+                    ) {
+
+                        const postOffices = data[0].PostOffice || [];
+
+                        let vpos = [];
+                        let tehsils = [];
+                        let districts = [];
+                        let states = [];
+
+
+                        postOffices.forEach(po => {
+
+                            // VPO
+                            if (
+                                po.Name &&
+                                !vpos.includes(po.Name)
+                            ) {
+                                vpos.push(po.Name);
+                            }
+
+
+                            // Tehsil / Block
+                            let block =
+                                (po.Block && po.Block !== 'NA')
+                                    ? po.Block
+                                    : po.District;
+
+                            if (
+                                block &&
+                                !tehsils.includes(block)
+                            ) {
+                                tehsils.push(block);
+                            }
+
+
+                            // District
+                            if (
+                                po.District &&
+                                !districts.includes(po.District)
+                            ) {
+                                districts.push(po.District);
+                            }
+
+
+                            // State
+                            if (
+                                po.State &&
+                                !states.includes(po.State)
+                            ) {
+                                states.push(po.State);
+                            }
+                        });
+
+
+                        // ------------------------------------------------
+                        // Build dropdown options
+                        // ------------------------------------------------
+                        const buildOptions = (
+                            arr,
+                            placeholder,
+                            currentValue
+                        ) => {
+
+                            let html =
+                                `<option value="">${placeholder}</option>`;
+
+                            let valueFound = false;
+                            let matchedValue = null;
+
+                            const safeCurrent =
+                                (currentValue || '')
+                                    .toString()
+                                    .trim()
+                                    .toLowerCase();
+
+
+                            // Exact match
+                            arr.forEach(val => {
+
+                                if (
+                                    val.toString()
+                                        .trim()
+                                        .toLowerCase() === safeCurrent
+                                ) {
+                                    valueFound = true;
+                                    matchedValue = val;
+                                }
+                            });
+
+
+                            // Partial match
+                            if (
+                                !valueFound &&
+                                safeCurrent.length > 0
+                            ) {
+
+                                arr.forEach(val => {
+
+                                    const safeVal =
+                                        val.toString()
+                                            .trim()
+                                            .toLowerCase();
+
+                                    if (
+                                        safeVal.includes(safeCurrent) ||
+                                        safeCurrent.includes(safeVal)
+                                    ) {
+                                        valueFound = true;
+                                        matchedValue = val;
+                                    }
+                                });
+                            }
+
+
+                            // Options
+                            arr.forEach(val => {
+
+                                const selected =
+                                    (
+                                        valueFound &&
+                                        val === matchedValue
+                                    )
+                                        ? 'selected'
+                                        : '';
+
+                                html +=
+                                    `<option value="${val}" ${selected}>${val}</option>`;
+                            });
+
+
+                            // OTHER option
+                            const otherSelected =
+                                (!valueFound && currentValue)
+                                    ? 'selected'
+                                    : '';
+
+                            html +=
+                                `<option value="OTHER" ${otherSelected}>Other</option>`;
+
+
+                            return {
+                                html,
+                                valueFound,
+                                matchedValue:
+                                    valueFound
+                                        ? matchedValue
+                                        : currentValue
+                            };
+                        };
+
+
+                        // ------------------------------------------------
+                        // Render select/input
+                        // ------------------------------------------------
+                        const handleRender = (
+                            selectId,
+                            inputId,
+                            inputName,
+                            optionsArr,
+                            placeholder,
+                            currentValue
+                        ) => {
+
+                            const renderData =
+                                buildOptions(
+                                    optionsArr,
+                                    placeholder,
+                                    currentValue
+                                );
+
+                            $(`#${selectId}`)
+                                .html(renderData.html);
+
+
+                            if (
+                                !renderData.valueFound &&
+                                currentValue
+                            ) {
+
+                                $(`#${inputId}`)
+                                    .val(currentValue)
+                                    .removeClass('d-none')
+                                    .attr('name', inputName);
+
+                                if (
+                                    $(`#${selectId}`).prop('required')
+                                ) {
+                                    $(`#${inputId}`)
+                                        .prop('required', true);
+                                }
+
+                                $(`#${selectId}`)
+                                    .removeAttr('name');
+
+                            } else {
+
+                                $(`#${inputId}`)
+                                    .addClass('d-none')
+                                    .removeAttr('name')
+                                    .prop('required', false);
+
+                                $(`#${selectId}`)
+                                    .attr('name', inputName);
+                            }
+                        };
+
+
+                        // ------------------------------------------------
+                        // Fill fields
+                        // ------------------------------------------------
+                        handleRender(
+                            'vpo_select',
+                            'vpo_input',
+                            'vpo',
+                            vpos,
+                            'Select VPO',
+                            prefillData.vpo
+                        );
+
+                        handleRender(
+                            'tehsil_select',
+                            'tehsil_input',
+                            'customer_tehsil',
+                            tehsils,
+                            'Select Tehsil',
+                            prefillData.tehsil
+                        );
+
+                        handleRender(
+                            'district_select',
+                            'district_input',
+                            'customer_district',
+                            districts,
+                            'Select District',
+                            prefillData.district
+                        );
+
+                        handleRender(
+                            'state_select',
+                            'state_input',
+                            'city',
+                            states,
+                            'Select State',
+                            prefillData.city
+                        );
+
+
+                        // Apply territory
+                        $('#district_select')
+                            .trigger('change');
+
+
+                        // If enquiry already contains territory,
+                        // preserve it.
+                        if (prefillData.territory) {
+
+                            setTimeout(() => {
+
+                                if (!$('#territory').val()) {
+                                    $('#territory')
+                                        .val(prefillData.territory);
+                                }
+
+                            }, 50);
+                        }
+
+
+                    } else {
+
+                        $vpoSelect.html(
+                            '<option value="">No VPO Found</option>'
+                        );
+
+                        $tehsilSelect.html(
+                            '<option value="">No Tehsil Found</option>'
+                        );
+
+                        $districtSelect.html(
+                            '<option value="">No District Found</option>'
+                        );
+
+                        $stateSelect.html(
+                            '<option value="">No State Found</option>'
+                        );
+                    }
+
+                })
+                .catch(error => {
+
+                    console.error(
+                        'Pincode lookup failed:',
+                        error
+                    );
+
+                    $vpoSelect.html(
+                        '<option value="">Select VPO</option>'
+                    );
+
+                    $tehsilSelect.html(
+                        '<option value="">Select Tehsil</option>'
+                    );
+
+                    $districtSelect.html(
+                        '<option value="">Select District</option>'
+                    );
+
+                    $stateSelect.html(
+                        '<option value="">Select State</option>'
+                    );
+                });
+
+        }, 400));
+
+
+        // ------------------------------------------------------------
+        // Initial load when Booking came from Enquiry
+        // ------------------------------------------------------------
+        if (
+            prefillData.pincode &&
+            String(prefillData.pincode).length === 6
+        ) {
+            $('#zipcode')
+                .val(prefillData.pincode)
+                .trigger('blur');
+        }
+
 </script>
 @section('after_scripts')
 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
@@ -2586,6 +3147,7 @@ $enquiry = $quotation?->enquiry ?? ($data['enquiry'] ?? null);
                     width: '100%',
                 });
             });
+            
 </script>
 @endsection
 @endpush
