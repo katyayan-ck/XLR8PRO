@@ -1311,6 +1311,18 @@ use App\Services\OrgService;
 @endpush
 
 @section('content')
+@php
+    // Debug - check if data is available
+    if ($selectedEnquiry) {
+        \Log::info('Quotation Form - Enquiry Data:', [
+            'id' => $selectedEnquiry->id,
+            'segment_code' => $selectedEnquiry->segment_code,
+            'model_code' => $selectedEnquiry->model_code,
+            'variant_code' => $selectedEnquiry->variant_code,
+            'color_code' => $selectedEnquiry->color_code,
+        ]);
+    }
+@endphp
 
 @php
 $viewMode = $viewMode ?? false;
@@ -1477,20 +1489,20 @@ $viewMode = $viewMode ?? false;
                             <td class="title" width="18%">Customer Name</td>
                             <td width="32%">
                                 <input type="text" id="customer_name"
-                                    value="{{ old('customer_name', $quotationData['customer_name'] ?? optional($selectedEnquiry)->full_name ?? '') }}"
+                                    value="{{ old('customer_name', trim(($selectedEnquiry->first_name ?? '') . ' ' . ($selectedEnquiry->last_name ?? '')) ?: ($selectedEnquiry->full_name ?? '')) }}"
                                     readonly>
                                 <input type="hidden" name="customer_name" id="customer_name_hidden"
-                                    value="{{ old('customer_name', $quotationData['customer_name'] ?? optional($selectedEnquiry)->full_name ?? '') }}">
+                                    value="{{ old('customer_name', trim(($selectedEnquiry->first_name ?? '') . ' ' . ($selectedEnquiry->last_name ?? '')) ?: ($selectedEnquiry->full_name ?? '')) }}">
                             </td>
                         </tr>
                         <tr>
                             <td class="title">Mobile No.</td>
                             <td>
                                 <input type="text" id="mobile"
-                                    value="{{ old('customer_mobile', $quotationData['customer_mobile'] ?? $quotationData['mobile'] ?? optional($selectedEnquiry)->mobile ?? '') }}"
+                                    value="{{ old('mobile', $selectedEnquiry->mobile ?? $selectedEnquiry->phone ?? '') }}"
                                     readonly>
                                 <input type="hidden" name="mobile" id="mobile_hidden"
-                                    value="{{ old('customer_mobile', $quotationData['customer_mobile'] ?? $quotationData['mobile'] ?? optional($selectedEnquiry)->mobile ?? '') }}">
+                                    value="{{ old('mobile', $selectedEnquiry->mobile ?? $selectedEnquiry->phone ?? '') }}">
                             </td>
 
                             <!-- CARE OF LABEL CELL -->
@@ -1528,40 +1540,67 @@ $viewMode = $viewMode ?? false;
                                     style="padding-left: 2px; font-weight: 600; color: #000;"></span>
                             </td>
                         </tr>
+                        @php
+                            $segmentCode = $selectedEnquiry?->segment_code ?? '';
+                            $modelCode = $selectedEnquiry?->model_code ?? '';
+                            $variantCode = $selectedEnquiry?->variant_code ?? '';
+                            $colorCode = $selectedEnquiry?->color_code ?? '';
+                        @endphp
+
+                        <!-- Isko ensure karo ki yeh values enquiry se aa rahi hain -->
                         <tr>
-                            <td class="title" width="18%">Segment</td>
-                            <td width="32%">
-                                <input type="text" id="segment"
-                                    value="{{ old('segment_code', $quotationData['segment_code'] ?? optional($selectedEnquiry?->segment)->name ?? $selectedEnquiry?->segment_code ?? '') }}"
+                            <td class="title">Segment</td>
+                            <td>
+                                <input type="text"
+                                    id="segment"
+                                    value="{{ $segmentName }}"
                                     readonly>
-                                <input type="hidden" name="segment_code" id="segment_code"
-                                    value="{{ old('segment_code', $quotationData['segment_code'] ?? $selectedEnquiry?->segment_code ?? '') }}">
+
+                                <input type="hidden"
+                                    name="segment_code"
+                                    id="segment_code"
+                                    value="{{ $segmentCode }}">
                             </td>
-                            <td class="title" width="18%">Model</td>
-                            <td width="32%">
-                                <input type="text" id="model"
-                                    value="{{ old('model_code', $quotationData['model_code'] ?? optional($selectedEnquiry?->model)->name ?? $selectedEnquiry?->model_code ?? '') }}"
+
+                            <td class="title">Model</td>
+                            <td>
+                                <input type="text"
+                                    id="model"
+                                    value="{{ $modelName }}"
                                     readonly>
-                                <input type="hidden" name="model_code" id="model_code"
-                                    value="{{ old('model_code', $quotationData['model_code'] ?? $selectedEnquiry?->model_code ?? '') }}">
+
+                                <input type="hidden"
+                                    name="model_code"
+                                    id="model_code"
+                                    value="{{ $modelCode }}">
                             </td>
                         </tr>
+
                         <tr>
                             <td class="title">Variant</td>
                             <td>
-                                <input type="text" id="variant"
-                                    value="{{ old('variant_code', $quotationData['variant_code'] ?? optional($selectedEnquiry?->variant)->display_name ?? $selectedEnquiry?->variant_code ?? '') }}"
+                                <input type="text"
+                                    id="variant"
+                                    value="{{ $variantName }}"
                                     readonly>
-                                <input type="hidden" name="variant_code" id="variant_code"
-                                    value="{{ old('variant_code', $quotationData['variant_code'] ?? $selectedEnquiry?->variant_code ?? '') }}">
+
+                                <input type="hidden"
+                                    name="variant_code"
+                                    id="variant_code"
+                                    value="{{ $variantCode }}">
                             </td>
+
                             <td class="title">Color</td>
                             <td>
-                                <input type="text" id="color"
-                                    value="{{ old('color_code', $quotationData['color_code'] ?? optional($selectedEnquiry?->color)->name ?? $selectedEnquiry?->color_code ?? '') }}"
+                                <input type="text"
+                                    id="color"
+                                    value="{{ $colorName }}"
                                     readonly>
-                                <input type="hidden" name="color_code" id="color_code"
-                                    value="{{ old('color_code', $quotationData['color_code'] ?? $selectedEnquiry?->color_code ?? '') }}">
+
+                                <input type="hidden"
+                                    name="color_code"
+                                    id="color_code"
+                                    value="{{ $colorCode }}">
                             </td>
                         </tr>
                         <tr>
@@ -2785,7 +2824,7 @@ const ENQUIRIES = {
         },
         pricingKey: "lmmKazam"
     },
-        "014": {
+    "014": {
         enquiry_no: "ENQ0014",
         customer: { name: "Ananya Sharma", mobile: "9876500014", careOf: "2", careOfName: "Rajesh Sharma" },
         vehicle: {
@@ -2799,7 +2838,7 @@ const ENQUIRIES = {
             color_name: "Electric Blue",
             oem_code: "XUV700-AX7L-DIE-AT-BA"
         },
-        pricingKey: "xuv700" // Uses the existing comprehensive XUV700 pricing
+        pricingKey: "xuv700"
     },
     "015": {
         enquiry_no: "ENQ0015",
@@ -5626,32 +5665,20 @@ $('#btnFetchMock').click(function () {
         );
     });
 
-    // ---- Populate Insurance ----
     loadInsuranceByPermit();
 
-    // ---- Populate Customer Details ----
-    $('#customer_name').val(enquiry.customer.name);
-    $('#mobile').val(enquiry.customer.mobile);
-    $('#customer_name_hidden').val(enquiry.customer.name);
-    $('#mobile_hidden').val(enquiry.customer.mobile);
-    $('#careof').val(enquiry.customer.careOf || '').trigger('change');
-    $('#careofname').val(enquiry.customer.careOfName || '');
     $('#enquiry_id').val(enquiry.enquiry_no);
-    // $('#enquiry_no_hidden').val(enquiry.enquiry_no);
     $('#enquiry_no_hidden').val(no);
 
-    // ---- Populate Vehicle Details ----
-    $('#segment').val(enquiry.vehicle.segment_name);
-    $('#model').val(enquiry.vehicle.model_name);
-    $('#variant').val(enquiry.vehicle.variant_name);
-    $('#color').val(enquiry.vehicle.color_name);
-    $('#segment_code').val(enquiry.vehicle.segment_code);
-    $('#model_code').val(enquiry.vehicle.model_code);
-    $('#variant_code').val(enquiry.vehicle.variant_code);
-    $('#color_code').val(enquiry.vehicle.color_code);
+    console.log('Vehicle from Enquiry:', {
+        segment: $('#segment').val(),
+        model: $('#model').val(),
+        variant: $('#variant').val(),
+        color: $('#color').val()
+    });
 
-    $('#oem_code').val(enquiry.vehicle.oem_code);
-    $('#oem_code_hidden').val(enquiry.vehicle.oem_code);
+    // $('#oem_code').val(enquiry.vehicle.oem_code);
+    // $('#oem_code_hidden').val(enquiry.vehicle.oem_code);
     // ---- Populate Receivables ----
     $('#ex_showroom_price').val(pricing.receivables.exShowroom);
     updateRegistrationAmount();
@@ -5888,14 +5915,14 @@ if (groupASelected && groupAAmount) {
 // ---- Reset Mock Data ----
 $('#btnResetMock').click(function () {
     $('#mock_enquiry_no').val('');
-    $('#customer_name').val('');
-    $('#mobile').val('');
+    // $('#customer_name').val('');
+    // $('#mobile').val('');
     $('#careof').val('').trigger('change');
     $('#careofname').val('');
-    $('#segment').val('');
-    $('#model').val('');
-    $('#variant').val('');
-    $('#color').val('');
+    // $('#segment').val('');
+    // $('#model').val('');
+    // $('#variant').val('');
+    // $('#color').val('');
     $('#oem_code').val('');
     $('#oem_code_hidden').val('');
     $('#ex_showroom_price').val('');
@@ -7001,12 +7028,12 @@ $(document).ready(function () {
             });
 
             // Populate Customer Name & Mobile if empty
-            if (!$('#customer_name').val() && enquiry.customer) {
-                $('#customer_name').val(enquiry.customer.name);
-                $('#customer_name_hidden').val(enquiry.customer.name);
-                $('#mobile').val(enquiry.customer.mobile);
-                $('#mobile_hidden').val(enquiry.customer.mobile);
-            }
+            // if (!$('#customer_name').val() && enquiry.customer) {
+            //     $('#customer_name').val(enquiry.customer.name);
+            //     $('#customer_name_hidden').val(enquiry.customer.name);
+            //     $('#mobile').val(enquiry.customer.mobile);
+            //     $('#mobile_hidden').val(enquiry.customer.mobile);
+            // }
 
             // Load Insurance Company & Covers from Pricing definition
             let permitVal = $("#permit").val();
