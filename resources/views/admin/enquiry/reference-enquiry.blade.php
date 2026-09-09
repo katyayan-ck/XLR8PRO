@@ -40,10 +40,11 @@
                                         <button id="closeColumnBubble"
                                             class="btn btn-sm btn-link text-danger p-0">✕</button>
                                     </div>
-                                    
+
                                     <!-- NEW: Search Input for Columns -->
                                     <div class="p-2 border-bottom">
-                                        <input type="text" id="columnSearch" class="form-control form-control-sm" placeholder="Search headers...">
+                                        <input type="text" id="columnSearch" class="form-control form-control-sm"
+                                            placeholder="Search headers...">
                                     </div>
 
                                     <div style="max-height:260px; overflow:auto;">
@@ -68,7 +69,17 @@
                         </div>
                     </div>
 
-                    <div id="myGrid" class="ag-theme-quartz" style="height: calc(93vh - 260px); width:100%;"></div>
+                    <!-- GRID CONTAINER WITH LOADER WRAPPER -->
+                    <div style="position: relative;">
+                        <div id="gridLoader"
+                            style="display:none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.7); z-index: 1000; justify-content: center; align-items: center;">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                        <!-- Note: Keep your specific height calc() for each file if they differ slightly -->
+                        <div id="myGrid" class="ag-theme-quartz" style="height: calc(93vh - 260px); width:100%;"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -179,37 +190,55 @@
                 gridApi.setColumnsVisible(defaultFields, true);
                 setTimeout(() => gridApi.autoSizeAllColumns(), 300);
 
+                // 1. Show the custom HTML loader before fetching
+                const loader = document.getElementById('gridLoader');
+                if (loader) loader.style.display = 'flex';
+
                 // NEW: Fetch ALL data from the server ONCE when the grid is ready
                 fetch('{{ backpack_url('enquiries/data') }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({
-                        list_type: LIST_TYPE
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({
+                            list_type: LIST_TYPE
+                        })
                     })
-                })
-                .then(res => res.json())
-                .then(data => {
-                    gridApi.setGridOption('rowData', data.rows || []); 
-                })
-                .catch(err => console.error('Failed to load enquiries', err));
+                    .then(res => res.json())
+                    .then(data => {
+                        // 2. Hide the custom HTML loader on success
+                        if (loader) loader.style.display = 'none';
+                        
+                        gridApi.setGridOption('rowData', data.rows || []); 
+
+                        // 3. Auto-size the action column dynamically after rendering
+                        setTimeout(() => {
+                            if (gridApi) {
+                                gridApi.autoSizeColumns(['action']);
+                            }
+                        }, 100);
+                    })
+                    .catch(err => {
+                        // 4. Hide the custom HTML loader on error
+                        if (loader) loader.style.display = 'none';
+                        console.error('Failed to load enquiries', err);
+                    });
             }
         };
 
         function openColumnBubble() {
             const bubble = document.getElementById('columnBubble');
             const tbody = document.getElementById('columnBubbleBody');
-            
+
             // NEW: Grab the search input
             const searchInput = document.getElementById('columnSearch');
-            
+
             if (!gridApi || !bubble || !tbody) return;
 
             tbody.innerHTML = '';
-            
+
             // NEW: Clear search value when opening
             if (searchInput) searchInput.value = '';
 
@@ -242,7 +271,7 @@
                 tr.append(tdCheck, tdLabel);
                 tbody.appendChild(tr);
             });
-            
+
             // NEW: Ensure all generated rows are visible initially
             document.querySelectorAll('#columnBubbleBody tr').forEach(row => row.style.display = '');
 
@@ -260,12 +289,12 @@
                     timer = setTimeout(() => fn(...args), delay);
                 };
             }
-            
+
             // NEW: Search filter event listener
             document.getElementById('columnSearch')?.addEventListener('input', function(e) {
                 const searchTerm = e.target.value.toLowerCase();
                 const rows = document.querySelectorAll('#columnBubbleBody tr');
-                
+
                 rows.forEach(row => {
                     const labelTd = row.querySelector('td:nth-child(2)');
                     if (labelTd) {
@@ -286,7 +315,11 @@
                 document.getElementById('quickFilter').value = '';
                 gridApi.setGridOption('quickFilterText', '');
                 gridApi.setFilterModel(null);
-                gridApi.applyColumnState({ defaultState: { sort: null } });
+                gridApi.applyColumnState({
+                    defaultState: {
+                        sort: null
+                    }
+                });
             });
 
             document.getElementById('btnCustomiseHeaders').addEventListener('click', e => {

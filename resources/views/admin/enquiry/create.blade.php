@@ -168,7 +168,7 @@
             $fmtDateTime = fn($d) => !empty($d) ? \Carbon\Carbon::parse($d)->format('d-M-Y H:i') : '—';
 
             $comparisonRows = [
-                ['label' => 'Enquiry No.', 'dump' => $isQuick ? ($enquiry->quick_enquiry_no ?: '—') : ($enquiry->enquiry_no ?: '—'), 'cre' => 'XENQ-'.$enquiry->id],
+                ['label' => 'Enquiry No.', 'dump' => $isQuick ? ($enquiry->quick_enquiry_no ?: '—') : ($enquiry->enquiry_no ?: '—'), 'cre' => 'XENQ-'.$enquiry->id, 'skip_comparison' => true],
                 ['label' => 'Enquiry Date', 'dump' => $fmtDate($isQuick ? ($enquiry->quick_enquiry_date ?? '') : ($enquiry->enquiry_date ?? '')), 'cre' => $fmtDateTime($enquiry->created_at)],
                 ['label' => 'Enquiry Assign Date', 'dump' => $fmtDate($isQuick ? ($enquiry->quick_enq_assign_date ?? '') : ($enquiry->enq_assign_date ?? '')), 'cre' => $fmtDate($enquiry->x8_enq_assign_date)],
                 ['label' => 'Booking No.', 'dump' => $enquiry->oem_booking_no ?? '—', 'cre' => $enquiry->x8_booking_no ?? ($enquiry->booking_no ?? '—')],
@@ -176,20 +176,40 @@
                 ['label' => 'Booking Cancellation Date', 'dump' => $fmtDate($enquiry->oem_cancellation_date ?? ''), 'cre' => $fmtDate($enquiry->x8_cancellation_date ?? ($enquiry->cancellation_date ?? ''))],
                 ['label' => 'Model', 'dump' => $enquiry->model ?: '—', 'cre' => collect($models ?? [])->firstWhere('code', $enquiry->model_code)['name'] ?? ($enquiry->model_code ?: '—')],
                 ['label' => 'Variant', 'dump' => $enquiry->variant ?: '—', 'cre' => collect($variants ?? [])->firstWhere('code', $enquiry->variant_code)['name'] ?? ($enquiry->variant_code ?: '—')],
-                ['label' => 'Likely Pur in Days', 'dump' => collect($likely_purchase_dates ?? [])->firstWhere('code', $enquiry->likely_purchase_days)['value'] ?? ($enquiry->likely_purchase_days ?: '—'), 'cre' => collect($likely_purchase_dates ?? [])->firstWhere('code', $enquiry->cre_likely_purchase_days)['value'] ?? ($enquiry->cre_likely_purchase_days ?: '—')],
+                ['label' => 'Likely Purchase in Days', 'dump' => collect($likely_purchase_dates ?? [])->firstWhere('code', $enquiry->likely_purchase_days)['value'] ?? ($enquiry->likely_purchase_days ?: '—'), 'cre' => collect($likely_purchase_dates ?? [])->firstWhere('code', $enquiry->cre_likely_purchase_days)['value'] ?? ($enquiry->cre_likely_purchase_days ?: '—')],
                 ['label' => 'Mobile No.', 'dump' => $enquiry->mobile ?: '—', 'cre' => $enquiry->mobile ?: '—'],
-                ['label' => 'Alternate Mobile No.', 'dump' => $enquiry->alternate_mobile ?: '—', 'cre' => $enquiry->alternate_mobile ?: '—'],
-                ['label' => 'Purchase Type', 'dump' => collect($purchase_types ?? [])->firstWhere('code', $enquiry->purchase_type)['value'] ?? ($enquiry->purchase_type ?: '—'), 'cre' => collect($purchase_types ?? [])->firstWhere('code', $enquiry->purchase_type_crm)['value'] ?? ($enquiry->purchase_type_crm ?: '—')],
+                ['label' => 'Purchase Type', 'dump' => collect($purchase_types ?? [])->firstWhere('code', $enquiry->purchase_type)['value'] ?? ($enquiry->purchase_type ?: '—'), 'cre' => collect($purchase_types ?? [])->firstWhere('code', $enquiry->purchase_type_crm)['value'] ?? ($enquiry->purchase_type_crm ?: '—'), 'manual_mismatch' => 'mismatch_purchase_type'],
                 ['label' => 'SC Name', 'dump' => !empty($oemScDisplay) ? $oemScDisplay : ($enquiry->sc_code ?? '—'), 'cre' => $creScDisplay ?: '—'],
                 ['label' => 'SC Mile ID', 'dump' => !empty($oemScMileId) ? $oemScMileId : '—', 'cre' => $creScMileId ?: '—'],
-                ['label' => 'SC Branch', 'dump' => !empty($oemScBranch) ? $oemScBranch : '—', 'cre' => $creScBranch ?: '—'],
-                ['label' => 'SC Location', 'dump' => !empty($oemScLocation) ? $oemScLocation : '—', 'cre' => $creScLocation ?: '—'],
-                ['label' => 'Next Fup Date', 'dump' => $fmtDateTime($scNextDate), 'cre' => $fmtDateTime($creNextDate)],
-                ['label' => 'Enquiry Stage', 'dump' => $enqStageMap[$enquiry->dms_enquiry_stage ?? ''] ?? ($enquiry->dms_enquiry_stage ?? ($enquiry->stage ?: '—')), 'cre' => $enqStageMap[$lastCre?->cre_enq_stage ?? ''] ?? ($lastCre?->cre_enq_stage ?: '—')],
+                ['label' => 'Next Fup Date', 'dump' => $fmtDateTime($scNextDate), 'cre' => $fmtDateTime($creNextDate), 'manual_mismatch' => 'mismatch_next_fup'],
+                ['label' => 'Enquiry Stage', 'dump' => $enqStageMap[$enquiry->dms_enquiry_stage ?? ''] ?? ($enquiry->dms_enquiry_stage ?? ($enquiry->stage ?: '—')), 'cre' => $enqStageMap[$lastCre?->cre_enq_stage ?? ''] ?? ($lastCre?->cre_enq_stage ?: '—'), 'manual_mismatch' => 'mismatch_enq_stage'],
                 ['label' => 'Booking Cancellation Reason', 'dump' => $enquiry->oem_cancel_reason ?? '—', 'cre' => $enquiry->cancel_reason ?? '—'],
                 ['label' => 'Booking Cancellation Remarks', 'dump' => $enquiry->oem_cancel_remarks ?? '—', 'cre' => $enquiry->cancel_remarks ?? '—'],
-                ['label' => 'Latest Followup Remarks', 'dump' => $remMap[$enquiry->recent_fup_comments ?? ''] ?? ($enquiry->recent_fup_comments ?? ($enquiry->remarks ?: '—')), 'cre' => $lastCre?->cre_fup_remarks ?: '—'],
+                ['label' => 'Latest Followup Remarks', 'dump' => $remMap[$enquiry->recent_fup_comments ?? ''] ?? ($enquiry->recent_fup_comments ?? ($enquiry->remarks ?: '—')), 'cre' => $lastCre?->cre_fup_remarks ?: '—', 'manual_mismatch' => 'mismatch_fup_remarks'],
             ];
+
+            if (!empty($enquiry->test_drive_no)) {
+                $comparisonRows[] = [
+                    'label' => 'Test Drive Verification',
+                    'dump' => '—',
+                    'cre' => '—',
+                    'manual_mismatch' => 'mismatch_test_drive'
+                ];
+            }
+
+            // HIDE BOOKING RELATED ROWS IF BOTH DATA POINTS ARE EMPTY OR DASH
+            $bookingLabels = ['Booking No.', 'Booking Date', 'Booking Cancellation Date', 'Booking Cancellation Reason', 'Booking Cancellation Remarks'];
+            
+            $comparisonRows = array_filter($comparisonRows, function($row) use ($bookingLabels) {
+                if (in_array($row['label'], $bookingLabels)) {
+                    $d = trim(strip_tags((string)$row['dump']));
+                    $c = trim(strip_tags((string)$row['cre']));
+                    if (in_array($d, ['—', '-', '']) && in_array($c, ['—', '-', ''])) {
+                        return false;
+                    }
+                }
+                return true;
+            });
         }
     @endphp
 
@@ -289,17 +309,31 @@
                         <h4 class="mb-0 fw-bold">Data Overview: CRE vs SC</h4>
                     </div>
                     <div class="card-body">
+                        {{-- Hidden input moved here so the backend still processes mismatches --}}
+                        <input type="hidden" name="comparison_rendered" value="1">
+                        
                         <div class="table-responsive">
                             <table class="table table-bordered text-center align-middle mb-0" style="background-color: #e9ecef;">
                                 <thead class="table-secondary text-uppercase" style="font-size: 0.85rem;">
                                     <tr>
                                         <th class="text-center p-3" style="width: 25%;">Parameters</th>
-                                        <th class="text-center p-3" style="width: 37.5%;">OEM Dump Data ({{ $isQuick ? 'Quick' : 'Long' }})</th>
-                                        <th class="text-center p-3" style="width: 37.5%;">CRE X8 Data</th>
+                                        <th class="text-center p-3" style="width: 30%;">OEM Dump Data ({{ $isQuick ? 'Quick' : 'Long' }})</th>
+                                        <th class="text-center p-3" style="width: 30%;">CRE X8 Data</th>
+                                        <th class="text-center p-3" style="width: 15%;">Status</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach($comparisonRows as $row)
+                                    @php
+                                        // Standardize strings for automatic matching
+                                        $d = trim(strip_tags((string)$row['dump']));
+                                        $c = trim(strip_tags((string)$row['cre']));
+                                        $bothEmpty = in_array($d, ['—', '-', '']) && in_array($c, ['—', '-', '']);
+                                        
+                                        if (in_array($d, ['—', '-', ''])) $d = '';
+                                        if (in_array($c, ['—', '-', ''])) $c = '';
+                                        $isAutoMismatch = ($d !== $c);
+                                    @endphp
                                     <tr>
                                         <td class="fw-bold align-middle table-secondary text-start px-4 py-2 text-dark">{{ $row['label'] }}</td>
                                         <td class="align-middle p-2">
@@ -307,6 +341,29 @@
                                         </td>
                                         <td class="align-middle p-2">
                                             <div class="form-control bg-white h-auto border-0 text-wrap text-center">{{ $row['cre'] }}</div>
+                                        </td>
+                                        <td class="align-middle p-2">
+                                            <div class="form-control bg-white h-auto border-0 d-flex justify-content-center align-items-center" style="min-height: 38px;">
+                                                @if(isset($row['manual_mismatch']))
+                                                    {{-- Manual Checkbox Logic --}}
+                                                    <input class="form-check-input border-secondary cursor-pointer m-0"
+                                                        type="checkbox" name="{{ $row['manual_mismatch'] }}" value="1"
+                                                        style="width: 1.2rem; height: 1.2rem;">
+                                                    <label class="form-check-label ms-2 mb-0">Mismatch</label>
+                                                @elseif(isset($row['skip_comparison']) && $row['skip_comparison'])
+                                                    {{-- Bypass Match/Mismatch completely for Enquiry No --}}
+                                                    <span class="text-secondary fw-bold fs-5">—</span>
+                                                @else
+                                                    {{-- Automatic Comparison Logic --}}
+                                                    @if($bothEmpty)
+                                                        <span class="text-secondary fw-bold fs-5">—</span>
+                                                    @elseif($isAutoMismatch)
+                                                        <span class="text-danger fw-bold"><i class="la la-times-circle"></i> Mismatch</span>
+                                                    @else
+                                                        <span class="text-success fw-bold"><i class="la la-check-circle"></i> Match</span>
+                                                    @endif
+                                                @endif
+                                            </div>
                                         </td>
                                     </tr>
                                     @endforeach

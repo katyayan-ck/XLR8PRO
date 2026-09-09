@@ -98,6 +98,7 @@
     $enqCounts = \Illuminate\Support\Facades\Cache::remember('menu_enquiry_counts', 60, function () {
         return [
             'all' => \App\Models\CRM\Enquiry::mainListing()->count(),
+            'xceler8' => \App\Models\CRM\Enquiry::xceler8()->count(),
             'reference' => \App\Models\CRM\Enquiry::reference()->count(),
             'virtual' => \App\Models\CRM\Enquiry::virtual()->count(),
             'whatsapp' => \App\Models\CRM\Enquiry::whatsapp()->count(),
@@ -130,8 +131,8 @@
         <x-backpack::menu-dropdown-item title="Add New Enquiry" icon="la la-plus-circle" :link="backpack_url('enquiries/add')" />
         <x-backpack::menu-dropdown-item title="Master Enquiry List ({{ $enqCounts['all'] ?? 0 }})" icon="la la-list"
             :link="backpack_url('enquiries-list')" />
-        <x-backpack::menu-dropdown-item title="Xceler8 Enquiry List ({{ $enqCounts['all'] ?? 0 }})" icon="la la-list"
-            :link="backpack_url('enquiries-list')" />
+        <x-backpack::menu-dropdown-item title="Xceler8 Enquiry List ({{ $enqCounts['xceler8'] ?? 0 }})" icon="la la-list"
+            :link="backpack_url('enquiries/xceler8')" />
         <x-backpack::menu-dropdown-item title="Hyperlocal Enquiries ({{ $enqCounts['hyperlocal'] ?? 0 }})"
             icon="la la-map-marker" :link="backpack_url('enquiries/hyperlocal')" />
         <x-backpack::menu-dropdown-item title="Reference Enquiries ({{ $enqCounts['reference'] ?? 0 }})"

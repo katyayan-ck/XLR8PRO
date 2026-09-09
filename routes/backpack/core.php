@@ -124,6 +124,7 @@ Route::group([
     Route::get('enquiry/location-by-pincode', [EnquiryCrudController::class, 'locationByPincode'])->name('enquiry.location-by-pincode');
 
     // Specialized Enquiry Listings
+    Route::get('enquiries/xceler8', [EnquiryCrudController::class, 'xceler8List'])->name('enquiry.xceler8');
     Route::get('enquiries/hyperlocal', [EnquiryCrudController::class, 'hyperlocalList'])->name('enquiry.hyperlocal');
     Route::get('enquiries/reference', [EnquiryCrudController::class, 'referenceList']);
     Route::get('enquiries/virtual-number', [EnquiryCrudController::class, 'virtualNumberList']);
