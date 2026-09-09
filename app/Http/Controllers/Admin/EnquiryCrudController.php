@@ -800,18 +800,16 @@ class EnquiryCrudController extends CrudController
 
         $actionBtns = '<a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a>';
 
-        // Added globally to ensure Quote shows up in all standard listings
+        // Added globally to ensure Quote and Book show up in all standard listings
         $actionBtns .= '<a href="' . $quotUrl . '" class="btn btn-success btn-sm">Quote</a>';
+        $actionBtns .= '<a href="' . $bookUrl . '" class="btn btn-warning btn-sm" title="Convert to Booking">Book</a>';
 
-        if ($type === 'all') {
-            $actionBtns .= '<a href="' . $bookUrl . '" class="btn btn-warning btn-sm" title="Convert to Booking">Book</a>';
-        } elseif (in_array($type, ['exchange', 'scrappage', 'exchange_not_interested'])) {
+        // Add context-specific Process buttons
+        if (in_array($type, ['exchange', 'scrappage', 'exchange_not_interested'])) {
             $exchUrl = backpack_url("exchange/enquiry/{$e->id}/edit");
-            // Appended process instead of overwriting, keeping Edit and Quote accessible
             $actionBtns .= '<a href="' . $exchUrl . '" class="btn btn-sm btn-info">Process</a>';
         } elseif (in_array($type, ['finance', 'finance_not_interested'])) {
             $finUrl = backpack_url("finance/enquiry/{$e->id}/edit");
-            // Appended process instead of overwriting, keeping Edit and Quote accessible
             $actionBtns .= '<a href="' . $finUrl . '" class="btn btn-sm btn-info">Process</a>';
         }
 
