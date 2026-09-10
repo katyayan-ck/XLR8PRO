@@ -40,92 +40,33 @@ class QuotationCrudController extends CrudController
 
 
     public function index()
-{
-    $insurance_type_map = [
-        1 => 'Standard',
-        2 => 'Nil Dep',
-        3 => 'Base',
-        4 => 'Higher',
-    ];
+    {
+        $insurance_type_map = [
+            1 => 'Standard',
+            2 => 'Nil Dep',
+            3 => 'Base',
+            4 => 'Higher',
+        ];
 
-    $registration_type_map = [
-        '0' => 'Tax Only',
-        '1' => 'TRC + Tax',
-        '2' => 'TRC Only',
-        '3' => 'Exempted',
-    ];
+        $registration_type_map = [
+            '0' => 'Tax Only',
+            '1' => 'TRC + Tax',
+            '2' => 'TRC Only',
+            '3' => 'Exempted',
+        ];
 
-    $reg_no_type_map = [
-        '1' => 'Regular',
-        '2' => 'BH Series',
-        '3' => 'Special Number',
-    ];
-
-    $this->crud->setListView('admin.quotation.list');
-
-    $quotations = Quotation::with('enquiry')
-        ->whereNotIn('status', ['booked'])
-        ->latest('id')
-        ->get();
-
-    $gridData = $quotations->map(function ($quotation, $index) use ($insurance_type_map, $registration_type_map, $reg_no_type_map) {
-        
-        $data = $quotation->standard_data ?? [];
-        $enquiry = $quotation->enquiry;
-
-        // If enquiry is null, try to find it by enquiry_no
-        if (!$enquiry) {
-            $enquiry = Enquiry::where('enquiry_no', $quotation->enquiry_no)->first();
-        }
-
-        // ============================================================
-        // FIX: CUSTOMER NAME - Try multiple sources
-        // ============================================================
-        $customerName = '-';
-        $mobile = '-';
-
-        // 1. Try from enquiry first
-        if ($enquiry) {
-            $customerName = trim(
-                ($enquiry->first_name ?? '') . ' ' .
-                ($enquiry->last_name ?? '')
-            );
-            if (empty($customerName)) {
-                $customerName = $enquiry->full_name ?? '';
-            }
-            if (empty($customerName)) {
-                $customerName = $enquiry->customer_name ?? '';
-            }
-            if (empty($customerName)) {
-                $customerName = $enquiry->name ?? '';
-            }
-            $mobile = $enquiry->mobile ?? $enquiry->phone ?? '-';
-        }
+        $reg_no_type_map = [
+            '1' => 'Regular',
+            '2' => 'BH Series',
+            '3' => 'Special Number',
+        ];
 
         $this->crud->setListView('admin.quotation.list');
 
-        // ============================================================
-        // FIX: VEHICLE DETAILS - Try multiple sources
-        // ============================================================
-        // 1. Try from enquiry first
-        $segmentCode = $enquiry?->segment_code ?? '';
-        $modelCode   = $enquiry?->model_code ?? '';
-        $variantCode = $enquiry?->variant_code ?? '';
-        $colorCode   = $enquiry?->color_code ?? '';
-
-        // 2. Fallback to standard_data
-        if (empty($segmentCode)) {
-            $segmentCode = $data['segment_code'] ?? '';
-        }
-        if (empty($modelCode)) {
-            $modelCode = $data['model_code'] ?? '';
-        }
-        if (empty($variantCode)) {
-            $variantCode = $data['variant_code'] ?? '';
-        }
-        if (empty($colorCode)) {
-            $colorCode = $data['color_code'] ?? '';
-        }
+        $quotations = Quotation::with('enquiry')
+            ->whereNotIn('status', ['booked'])
+            ->latest('id')
+            ->get();
 
         $gridData = $quotations->map(function ($quotation, $index) use ($insurance_type_map, $registration_type_map, $reg_no_type_map) {
 
@@ -446,11 +387,176 @@ class QuotationCrudController extends CrudController
                 ],
                 'data' => $gridData,
             ],
-            'data' => $gridData,
-        ],
-    ]);
-}
+        ]);
+    }
 
+    // public function index()
+    // {
+    //     // Fetch quotations along with the related enquiry
+    //     $quotations = Quotation::with('enquiry')->get();
+
+    //     $quotationsData = $quotations->map(function ($quotation) {
+    //         $enquiry = $quotation->enquiry;
+    //         $json = json_decode($quotation->standard_data, true) ?? [];
+
+    //         // Fallback to enquiry database table columns first
+    //         $customerName = $enquiry->name ?? $json['customer_name'] ?? '-';
+    //         $mobile       = $enquiry->mobile ?? $json['mobile'] ?? '-';
+    //         $careOf       = $enquiry->care_of ?? $json['care_of'] ?? '-';
+    //         $segment      = $enquiry->segment ?? $json['segment'] ?? '-';
+    //         $model        = $enquiry->model ?? $json['model'] ?? '-';
+    //         $variant      = $enquiry->variant ?? $json['variant'] ?? '-';
+    //         $address      = $enquiry->customer_address ?? $json['customer_address'] ?? '-';
+
+    //         return [
+    //             'id'            => $quotation->id,
+    //             'enquiry_no'    => $quotation->enquiry_no,
+    //             'customer_name' => $customerName,
+    //             'mobile'        => $mobile,
+    //             'care_of'       => $careOf,
+    //             'segment'       => $segment,
+    //             'model'         => $model,
+    //             'variant'       => $variant,
+    //             'address'       => $address,
+    //             'onroad_price'  => $quotation->onroad_price,
+    //             'status'        => $quotation->status,
+    //             'created_at'    => $quotation->created_at->format('Y-m-d H:i'),
+    //         ];
+    //     });
+
+    //     return view('admin.quotation.list', compact('quotationsData'));
+    // }
+    // public function create()
+    // {
+    //     $this->crud->setCreateView('admin.quotation.create');
+
+    //     $bookingId = request('booking_id');
+
+    //     if ($bookingId) {
+    //         $booking = \App\Models\Module\Booking\Booking::findOrFail($bookingId);
+
+    //         if (empty($booking->enq_no)) {
+    //             abort(404, 'Enquiry not associated with this booking.');
+    //         }
+
+    //         $enquiry = Enquiry::where(
+    //             'enquiry_no',
+    //             $booking->enq_no
+    //         )->first();
+
+    //         if (!$enquiry) {
+    //             abort(404, 'Associated enquiry not found.');
+    //         }
+
+    //         $enquiryId = $enquiry->id;
+    //     } else {
+    //         $enquiryId = request('id');
+
+    //         if (!$enquiryId) {
+    //             abort(404, 'Enquiry not found.');
+    //         }
+    //     }
+
+    //     $selectedEnquiry = Enquiry::findOrFail($enquiryId);
+
+    //     $segment = DB::table('xlr8_vehicle_segment')
+    //         ->where('code', $selectedEnquiry->segment_code)
+    //         ->first();
+
+    //     $model = DB::table('xlr8_vehicle_model')
+    //         ->where('code', $selectedEnquiry->model_code)
+    //         ->first();
+
+    //     $variant = DB::table('xlr8_vehicle_variant')
+    //         ->where('code', $selectedEnquiry->variant_code)
+    //         ->first();
+
+    //     $color = DB::table('xlr8_vehicle_color')
+    //         ->where('model_code', $selectedEnquiry->model_code)
+    //         ->where('variant_code', $selectedEnquiry->variant_code)
+    //         ->where('code', $selectedEnquiry->color_code)
+    //         ->first();
+
+    //     $segmentName = $segment->name ?? $selectedEnquiry->segment_code ?? '';
+
+    //     $modelName = $model->name ?? $selectedEnquiry->model_code ?? '';
+
+    //     $variantName = $variant->display_name
+    //         ?? $variant->custom_name
+    //         ?? $variant->oem_name
+    //         ?? $selectedEnquiry->variant_code
+    //         ?? '';
+
+    //     $colorName = $color->name ?? $selectedEnquiry->color ?? '';
+    //     $rawCareOfType = trim($selectedEnquiry->care_of_type ?? '');
+    //     $careOf = $careOfTypeMap[strtolower($rawCareOfType)]
+    //         ?? (in_array(
+    //             $rawCareOfType,
+    //             [
+    //                 '1',
+    //                 '2',
+    //                 '3',
+    //                 '4'
+    //             ],
+    //             true
+    //         ) ? $rawCareOfType : '');
+    //     $careOfName = $selectedEnquiry->care_of ?? '';
+
+
+    //     $permit_map = [
+    //         '1'  => 'Private - U/C (4 Wheeler)',
+    //         '2'  => 'Private - BH (4 Wheeler)',
+    //         '3'  => 'Private - EV (4 Wheeler)',
+    //         '4'  => 'Goods - G (4 Wheeler)',
+    //         '5'  => 'Goods - G 3 Ton+ (4 Wheeler)',
+    //         '6'  => 'Goods - G (3 Wheeler)',
+    //         '7'  => 'Goods - G EV (3 Wheeler)',
+    //         '8'  => 'Goods - G EV (4 Wheeler)',
+    //         '9'  => 'Taxi - T (4 Wheeler)',
+    //         '10' => 'Taxi - T EV (4 Wheeler)',
+    //         '11' => 'Passenger - P (3 Wheeler)',
+    //         '12' => 'Passenger - P EV (3 Wheeler)',
+    //         '13' => 'Ambulance (Misc.)',
+    //     ];
+
+    //     $insurance_type_map = [
+    //         1 => 'Nil Dep',
+    //         2 => 'Higher',
+    //     ];
+
+    //     $registration_type_map = [
+    //         '0' => 'Tax Only',
+    //         '1' => 'TRC + Tax',
+    //         '2' => 'TRC Only',
+    //         '3' => 'Exempted',
+    //     ];
+
+    //     $accessoryList = Accessory::where('status', 1)
+    //         ->orderBy('item')
+    //         ->get();
+
+    //     $financiers = XlFinancier::select('id', 'name', 'short_name')
+    //         ->get();
+
+    //     $data = [
+    //         'selectedEnquiry'       => $selectedEnquiry,
+    //         'segmentName'           => $segmentName,
+    //         'modelName'             => $modelName,
+    //         'variantName'           => $variantName,
+    //         'colorName'             => $colorName,
+    //         'insurance_type_map'    => $insurance_type_map,
+    //         'registration_type_map' => $registration_type_map,
+    //         'accessoryList'         => $accessoryList,
+    //         'financiers'            => $financiers,
+    //         'permit_map'            => $permit_map,
+    //         'bookingId'             => $bookingId,
+    //     ];
+
+    //     // DD added here before view return
+    //     //dd($data);
+
+    //     return view('admin.quotation.create', $data);
+    // }
     public function create()
     {
         $this->crud->setCreateView('admin.quotation.create');
@@ -515,8 +621,8 @@ class QuotationCrudController extends CrudController
         $colorName = $color->name ?? $selectedEnquiry->color ?? '';
 
 
-        $careOf = $selectedEnquiry?->care_of_type ?? $quotationData['careof'] ?? '';
-        $careOfName = $selectedEnquiry?->care_of ?? $quotationData['careofname'] ?? '';
+        $careOf = $selectedEnquiry->care_of_type ?? '';
+        $careOfName = $selectedEnquiry->care_of ?? '';
 
         $permit_map = [
             '1'  => 'Private - U/C (4 Wheeler)',
@@ -581,7 +687,600 @@ class QuotationCrudController extends CrudController
     }
 
 
+    // public function store(Request $request)
+    // {
+    //     $request->validate([
+    //         'enquiry_no' => 'required',
+    //     ]);
 
+    //     DB::beginTransaction();
+
+    //     try {
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | 1. Fetch Enquiry
+    //         |--------------------------------------------------------------------------
+    //         | First try enquiry_no, then ID.
+    //         |--------------------------------------------------------------------------
+    //         */
+
+    //         $enquiry = Enquiry::where('enquiry_no', $request->enquiry_no)
+    //             ->orWhere('id', $request->enquiry_no)
+    //             ->first();
+
+    //         if (!$enquiry) {
+    //             throw new \Exception(
+    //                 'Enquiry not found: ' . $request->enquiry_no
+    //             );
+    //         }
+
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | 2. Start quotation data
+    //         |--------------------------------------------------------------------------
+    //         */
+
+    //         $quotationData = $request->except('_token');
+
+    //         $quotationData['charger_swapping_option'] =
+    //             $request->input('charger_swapping_option');
+
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | 3. ALWAYS store enquiry information in standard_data
+    //         |--------------------------------------------------------------------------
+    //         */
+
+    //         $quotationData['enquiry_id'] = $enquiry->id;
+
+    //         // Display enquiry number
+    //         $quotationData['enquiry_no'] = $enquiry->enquiry_no;
+
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | 4. Customer Information
+    //         |--------------------------------------------------------------------------
+    //         */
+
+    //         $customerName = trim(
+    //             ($enquiry->first_name ?? '') . ' ' .
+    //                 ($enquiry->last_name ?? '')
+    //         );
+
+    //         if (empty($customerName)) {
+    //             $customerName =
+    //                 $enquiry->full_name
+    //                 ?? $enquiry->customer_name
+    //                 ?? '';
+    //         }
+
+    //         $customerMobile =
+    //             $enquiry->mobile
+    //             ?? $enquiry->phone
+    //             ?? $enquiry->mobile_no
+    //             ?? '';
+
+    //         $quotationData['customer_name'] = $customerName;
+
+    //         // Keep both keys because different parts of your Blade may use them
+    //         $quotationData['customer_mobile'] = $customerMobile;
+    //         $quotationData['mobile'] = $customerMobile;
+
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | 5. Vehicle Information
+    //         |--------------------------------------------------------------------------
+    //         | These MUST come from enquiry.
+    //         |--------------------------------------------------------------------------
+    //         */
+
+    //         $segmentCode = $enquiry->segment_code ?? '';
+    //         $modelCode   = $enquiry->model_code ?? '';
+    //         $variantCode = $enquiry->variant_code ?? '';
+    //         $colorCode   = $enquiry->color_code ?? '';
+
+    //         $quotationData['segment_code'] = $segmentCode;
+    //         $quotationData['model_code']   = $modelCode;
+    //         $quotationData['variant_code'] = $variantCode;
+    //         $quotationData['color_code']   = $colorCode;
+
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | 6. Vehicle Names
+    //         |--------------------------------------------------------------------------
+    //         */
+
+    //         $segment = DB::table('xlr8_vehicle_segment')
+    //             ->where('code', $segmentCode)
+    //             ->first();
+
+    //         $model = DB::table('xlr8_vehicle_model')
+    //             ->where('code', $modelCode)
+    //             ->first();
+
+    //         $variant = DB::table('xlr8_vehicle_variant')
+    //             ->where('code', $variantCode)
+    //             ->first();
+
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | Color
+    //         |--------------------------------------------------------------------------
+    //         |
+    //         | IMPORTANT:
+    //         | Do NOT use:
+    //         |
+    //         | ->where('model', ...)
+    //         |
+    //         | because xlr8_vehicle_color does not have a "model" column.
+    //         |
+    //         */
+
+    //         $color = DB::table('xlr8_vehicle_color')
+    //             ->where('code', $colorCode)
+    //             ->first();
+
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | 7. Resolve Display Names
+    //         |--------------------------------------------------------------------------
+    //         */
+
+    //         $segmentName =
+    //             $segment->name
+    //             ?? $segmentCode
+    //             ?? '';
+
+    //         $modelName =
+    //             $model->name
+    //             ?? $modelCode
+    //             ?? '';
+
+    //         $variantName =
+    //             $variant->display_name
+    //             ?? $variant->custom_name
+    //             ?? $variant->oem_name
+    //             ?? $variantCode
+    //             ?? '';
+
+    //         $colorName =
+    //             $color->name
+    //             ?? $color->color
+    //             ?? $colorCode
+    //             ?? '';
+
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | 8. Store Vehicle Display Names also
+    //         |--------------------------------------------------------------------------
+    //         */
+
+    //         $quotationData['segment'] = $segmentName;
+    //         $quotationData['model']   = $modelName;
+    //         $quotationData['variant'] = $variantName;
+    //         $quotationData['color']   = $colorName;
+
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | 9. Insurance Covers
+    //         |--------------------------------------------------------------------------
+    //         */
+
+    //         if (
+    //             $request->has('insurance_covers_data') &&
+    //             !empty($request->insurance_covers_data)
+    //         ) {
+
+    //             $coversData = json_decode(
+    //                 $request->insurance_covers_data,
+    //                 true
+    //             );
+
+    //             if (is_array($coversData) && !empty($coversData)) {
+    //                 $quotationData['insurance_covers'] = $coversData;
+    //             }
+    //         } elseif ($request->has('insurance_covers')) {
+
+    //             $covers = $request->insurance_covers;
+
+    //             $formattedCovers = [];
+
+    //             if (is_array($covers)) {
+
+    //                 foreach ($covers as $cover) {
+
+    //                     if (is_string($cover)) {
+
+    //                         $price = 0;
+
+    //                         if (
+    //                             preg_match(
+    //                                 '/\(?₹([\d,]+\.?\d*)\)?/',
+    //                                 $cover,
+    //                                 $matches
+    //                             )
+    //                         ) {
+
+    //                             $price = floatval(
+    //                                 str_replace(',', '', $matches[1])
+    //                             );
+
+    //                             $name = trim(
+    //                                 preg_replace(
+    //                                     '/\(?₹[\d,]+\.?\d*\)?/',
+    //                                     '',
+    //                                     $cover
+    //                                 )
+    //                             );
+    //                         } else {
+
+    //                             $name = $cover;
+    //                         }
+
+    //                         $formattedCovers[] = [
+    //                             'name'  => $name,
+    //                             'price' => $price,
+    //                         ];
+    //                     } elseif (is_array($cover)) {
+
+    //                         $formattedCovers[] = [
+    //                             'name' =>
+    //                             $cover['name'] ?? '',
+
+    //                             'price' =>
+    //                             floatval(
+    //                                 $cover['price'] ?? 0
+    //                             ),
+    //                         ];
+    //                     }
+    //                 }
+
+    //                 $quotationData['insurance_covers'] =
+    //                     $formattedCovers;
+    //             }
+    //         }
+
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | 10. Insurance Amount
+    //         |--------------------------------------------------------------------------
+    //         */
+
+    //         if (
+    //             $request->has('insurance_amount') &&
+    //             !empty($request->insurance_amount)
+    //         ) {
+    //             $quotationData['insurance_amount'] =
+    //                 $request->insurance_amount;
+    //         }
+
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | 11. Insurance Company
+    //         |--------------------------------------------------------------------------
+    //         */
+
+    //         if (
+    //             $request->has('insurance_company') &&
+    //             $request->insurance_company
+    //         ) {
+    //             $quotationData['insurance_company'] =
+    //                 $request->insurance_company;
+    //         }
+
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | 12. Accessories
+    //         |--------------------------------------------------------------------------
+    //         */
+
+    //         if (
+    //             !empty($quotationData['accessories']) &&
+    //             is_array($quotationData['accessories'])
+    //         ) {
+    //             $quotationData['accessories'] =
+    //                 array_values($quotationData['accessories']);
+    //         }
+
+    //         if ($request->has('accessories_amount')) {
+    //             $quotationData['accessories_amount'] =
+    //                 $request->accessories_amount;
+    //         }
+
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | 13. Registration Details
+    //         |--------------------------------------------------------------------------
+    //         */
+
+    //         if ($request->has('registration_no_type')) {
+    //             $quotationData['registration_no_type'] =
+    //                 $request->registration_no_type;
+    //         }
+
+    //         if ($request->has('registration_category')) {
+    //             $quotationData['registration_category'] =
+    //                 $request->registration_category;
+    //         }
+
+    //         if ($request->has('in_house_rto')) {
+    //             $quotationData['in_house_rto'] =
+    //                 $request->in_house_rto;
+    //         }
+
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | 14. Permit
+    //         |--------------------------------------------------------------------------
+    //         */
+
+    //         if ($request->has('permit')) {
+    //             $quotationData['permit'] =
+    //                 $request->permit;
+    //         }
+
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | 15. Financier History
+    //         |--------------------------------------------------------------------------
+    //         */
+
+    //         $initialFinancier =
+    //             $quotationData['financier'] ?? null;
+
+    //         $quotationData['financier_history'] = [];
+
+    //         if (!empty($initialFinancier)) {
+
+    //             $quotationData['financier_history'][] =
+    //                 $initialFinancier;
+    //         }
+
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | 16. Booking Check
+    //         |--------------------------------------------------------------------------
+    //         */
+
+    //         $booking = null;
+
+    //         if ($request->filled('booking_id')) {
+
+    //             $booking =
+    //                 \App\Models\Module\Booking\Booking::findOrFail(
+    //                     $request->booking_id
+    //                 );
+
+    //             if (!empty($booking->quotation_id)) {
+
+    //                 abort(
+    //                     422,
+    //                     'This booking already has a quotation.'
+    //                 );
+    //             }
+    //         }
+
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | 17. Create Quotation
+    //         |--------------------------------------------------------------------------
+    //         */
+
+    //         $quotation = new Quotation();
+
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | IMPORTANT:
+    //         | Store ACTUAL enquiry ID in quotation.enquiry_no
+    //         |--------------------------------------------------------------------------
+    //         */
+
+    //         $quotation->enquiry_no = $enquiry->id;
+
+    //         $quotation->booking_no =
+    //             $request->booking_no ?: null;
+
+    //         $quotation->revision = 0;
+
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | 18. DO NOT unset enquiry/customer/vehicle fields
+    //         |--------------------------------------------------------------------------
+    //         |
+    //         | This is the important fix.
+    //         |
+    //         | Previously you were doing:
+    //         |
+    //         | unset(
+    //         |     enquiry_no,
+    //         |     customer_name,
+    //         |     mobile,
+    //         |     customer_mobile,
+    //         |     enquiry_id,
+    //         |     segment_code,
+    //         |     model_code,
+    //         |     variant_code,
+    //         |     color_code
+    //         | );
+    //         |
+    //         | That was removing the exact data required by edit().
+    //         |
+    //         */
+
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | 19. Save Standard Data
+    //         |--------------------------------------------------------------------------
+    //         */
+
+    //         $quotation->standard_data =
+    //             $quotationData;
+
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | 20. Prices
+    //         |--------------------------------------------------------------------------
+    //         */
+
+    //         $quotation->onroad_price =
+    //             $request->net_receivable_summary
+    //             ?? $request->total_receivable
+    //             ?? 0;
+
+    //         $quotation->invoice_price =
+    //             $request->invoice_amount
+    //             ?? $request->net_receivable_summary
+    //             ?? 0;
+
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | 21. Status / User
+    //         |--------------------------------------------------------------------------
+    //         */
+
+    //         $quotation->status = 'raised';
+
+    //         $quotation->created_by =
+    //             backpack_user()->id;
+
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | 22. Save Quotation
+    //         |--------------------------------------------------------------------------
+    //         */
+
+    //         $quotation->save();
+
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | 23. Link quotation back to Booking
+    //         |--------------------------------------------------------------------------
+    //         */
+
+    //         if ($booking) {
+
+    //             $booking->quotation_id =
+    //                 $quotation->id;
+
+    //             $booking->save();
+    //         }
+
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | 24. Save Discount Fields
+    //         |--------------------------------------------------------------------------
+    //         */
+
+    //         $this->saveDiscountFields(
+    //             $quotation,
+    //             $quotationData
+    //         );
+
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | 25. Quote Action
+    //         |--------------------------------------------------------------------------
+    //         */
+
+    //         QuoteAction::create([
+
+    //             'quotation_no' =>
+    //             $quotation->id,
+
+    //             'action_by' =>
+    //             backpack_user()->id,
+
+    //             'action' =>
+    //             'RAISED',
+
+    //             'requested' =>
+    //             $quotationData,
+
+    //             'onroad' =>
+    //             $request->net_receivable_summary
+    //                 ?? $request->total_receivable
+    //                 ?? 0,
+
+    //             'status' =>
+    //             'raised',
+
+    //             'remarks' =>
+    //             'Quotation Created',
+
+    //             'created_by' =>
+    //             backpack_user()->id,
+    //         ]);
+
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | 26. Commit
+    //         |--------------------------------------------------------------------------
+    //         */
+
+    //         DB::commit();
+
+
+    //         \Alert::success(
+    //             'Quotation created successfully.'
+    //         )->flash();
+
+
+    //         return redirect(
+    //             backpack_url(
+    //                 'quotation-form/' .
+    //                     $quotation->id .
+    //                     '/edit'
+    //             ) . '?saved=1'
+    //         );
+    //     } catch (\Exception $e) {
+
+    //         DB::rollBack();
+
+    //         \Log::error(
+    //             'Quotation Store Error: ' .
+    //                 $e->getMessage()
+    //         );
+
+    //         \Log::error(
+    //             $e->getTraceAsString()
+    //         );
+
+    //         \Alert::error(
+    //             'Error saving quotation: ' .
+    //                 $e->getMessage()
+    //         )->flash();
+
+    //         return back()->withInput();
+    //     }
+    // }
     public function store(Request $request)
     {
 
@@ -654,15 +1353,9 @@ class QuotationCrudController extends CrudController
                 'onroad'       => $request->net_receivable_summary
                     ?? $request->total_receivable
                     ?? 0,
-
-                'status' =>
-                    'raised',
-
-                'remarks' =>
-                    'Quotation Created',
-
-                'created_by' =>
-                    backpack_user()->id,
+                'status'       => 'raised',
+                'remarks'      => 'Quotation Created',
+                'created_by'   => backpack_user()->id,
             ]);
 
             /*
@@ -684,7 +1377,6 @@ class QuotationCrudController extends CrudController
                 ) . '?saved=1'
             );
         } catch (\Exception $e) {
-
             DB::rollBack();
 
             \Log::error(
@@ -743,7 +1435,454 @@ class QuotationCrudController extends CrudController
     }
 
 
+    // public function edit($id)
+    // {
+    //     $this->crud->setEditView('admin.quotation.create');
+    //     $quotation = Quotation::findOrFail($id);
 
+    //     // Fetch enquiry safely (fallback for mock data)
+    //     $selectedEnquiry = Enquiry::with(['segment', 'model', 'variant', 'color'])
+    //         ->find($quotation->enquiry_no);
+
+    //     $insurance_type_map = [
+    //         1 => 'Nil Dep',
+    //         2 => 'Higher',
+    //     ];
+
+    //     $registration_type_map = [
+    //         '0' => 'Tax Only',
+    //         '1' => 'TRC + Tax',
+    //         '2' => 'TRC Only',
+    //         '3' => 'Exempted',
+    //     ];
+
+    //     $reg_no_type_map = [
+    //         '1' => 'Regular',
+    //         '2' => 'BH Series',
+    //         '3' => 'Special Number',
+    //     ];
+
+    //     $accessoryList = Accessory::where('status', 1)->orderBy('item')->get();
+    //     $quotationData = $quotation->standard_data ?? [];
+
+    //     $quotationData['enquiry_no'] = !empty($quotationData['enquiry_no'])
+    //         ? $quotationData['enquiry_no']
+    //         : $quotation->enquiry_no;
+
+    //     $quotationData['segment_code'] = !empty($quotationData['segment_code'])
+    //         ? $quotationData['segment_code']
+    //         : $quotation->segment_code;
+
+    //     $quotationData['model_code'] = !empty($quotationData['model_code'])
+    //         ? $quotationData['model_code']
+    //         : $quotation->model_code;
+
+    //     $quotationData['variant_code'] = !empty($quotationData['variant_code'])
+    //         ? $quotationData['variant_code']
+    //         : $quotation->variant_code;
+
+    //     $quotationData['color_code'] = !empty($quotationData['color_code'])
+    //         ? $quotationData['color_code']
+    //         : $quotation->color_code;
+
+    //     $quotationData['onroad_price'] = !empty($quotationData['onroad_price'])
+    //         ? $quotationData['onroad_price']
+    //         : $quotation->onroad_price;
+
+    //     $quotationData['invoice_price'] = !empty($quotationData['invoice_price'])
+    //         ? $quotationData['invoice_price']
+    //         : $quotation->invoice_price;
+
+    //     $groupASelected = 'cash_scheme_oem';
+    //     if (!empty($quotationData['csd_discount']) && !in_array($quotationData['csd_discount'], ['0', '0.00', 'N/A'])) {
+    //         $groupASelected = 'csd_discount';
+    //     } elseif (!empty($quotationData['fame_subsidy']) && !in_array($quotationData['fame_subsidy'], ['0', '0.00', 'N/A'])) {
+    //         $groupASelected = 'fame_subsidy';
+    //     } elseif (!empty($quotationData['cash_scheme_oem']) && !in_array($quotationData['cash_scheme_oem'], ['0', '0.00', 'N/A'])) {
+    //         $groupASelected = 'cash_scheme_oem';
+    //     }
+
+    //     $groupBSelected = 'corporate_discount';
+
+    //     $groupCSelected = 'exchange_bonus';
+    //     if (!empty($quotationData['loyalty_bonus']) && !in_array($quotationData['loyalty_bonus'], ['0', 'N/A', '0.00'])) {
+    //         $groupCSelected = 'loyalty_bonus';
+    //     } elseif (!empty($quotationData['green_bonus']) && !in_array($quotationData['green_bonus'], ['0', 'N/A', '0.00'])) {
+    //         $groupCSelected = 'green_bonus';
+    //     } elseif (!empty($quotationData['welcome_bonus']) && !in_array($quotationData['welcome_bonus'], ['0', 'N/A', '0.00'])) {
+    //         $groupCSelected = 'welcome_bonus';
+    //     } elseif (!empty($quotationData['exchange_bonus']) && !in_array($quotationData['exchange_bonus'], ['0', 'N/A', '0.00'])) {
+    //         $groupCSelected = 'exchange_bonus';
+    //     }
+
+    //     return view('admin.quotation.create', [
+    //         'quotation' => $quotation,
+    //         'quotationData' => $quotationData,
+    //         'selectedEnquiry' => $selectedEnquiry,
+    //         'insurance_type_map' => $insurance_type_map,
+    //         'registration_type_map' => $registration_type_map,
+    //         'reg_no_type_map' => $reg_no_type_map,
+    //         'accessoryList' => $accessoryList,
+    //         'groupASelected' => $groupASelected,
+    //         'groupBSelected' => $groupBSelected,
+    //         'groupCSelected' => $groupCSelected,
+    //     ]);
+    // }
+    // public function edit($id)
+    // {
+    //     $this->crud->setEditView('admin.quotation.create');
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | 1. Load quotation
+    //     |--------------------------------------------------------------------------
+    //     */
+    //     $quotation = Quotation::findOrFail($id);
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | 2. Find original enquiry
+    //     |--------------------------------------------------------------------------
+    //     | New quotations store enquiry ID in quotation.enquiry_no.
+    //     | Old quotations may still contain enquiry_no.
+    //     |--------------------------------------------------------------------------
+    //     */
+    //     $selectedEnquiry = Enquiry::find($quotation->enquiry_no);
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | Backward compatibility for old quotations
+    //     |--------------------------------------------------------------------------
+    //     */
+    //     if (!$selectedEnquiry) {
+    //         $selectedEnquiry = Enquiry::where(
+    //             'enquiry_no',
+    //             $quotation->enquiry_no
+    //         )->first();
+    //     }
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | 3. Get saved quotation data
+    //     |--------------------------------------------------------------------------
+    //     */
+    //     $quotationData = $quotation->standard_data;
+
+    //     // Agar double-encoded JSON string hai to array me convert karo
+    //     if (is_string($quotationData)) {
+    //         $quotationData = json_decode($quotationData, true);
+    //     }
+    //     if (is_string($quotationData)) {
+    //         $quotationData = json_decode($quotationData, true);
+    //     }
+    //     if (!is_array($quotationData)) {
+    //         $quotationData = [];
+    //     }
+
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | 4. FIX: Customer Name - ALWAYS from enquiry first, fallback to standard_data
+    //     |--------------------------------------------------------------------------
+    //     */
+    //     $customerName = '';
+    //     if ($selectedEnquiry) {
+    //         $customerName = trim(
+    //             ($selectedEnquiry->first_name ?? '') . ' ' .
+    //                 ($selectedEnquiry->last_name ?? '')
+    //         );
+    //         if (empty($customerName)) {
+    //             $customerName = $selectedEnquiry->full_name ?? '';
+    //         }
+    //         if (empty($customerName)) {
+    //             $customerName = $selectedEnquiry->customer_name ?? '';
+    //         }
+    //         if (empty($customerName)) {
+    //             $customerName = $selectedEnquiry->name ?? '';
+    //         }
+    //     }
+    //     // Fallback to standard_data if enquiry not found or name is empty
+    //     if (empty($customerName)) {
+    //         $customerName = $quotationData['customer_name'] ?? $quotationData['customerName'] ?? '';
+    //     }
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | 5. FIX: Mobile - ALWAYS from enquiry first
+    //     |--------------------------------------------------------------------------
+    //     */
+    //     $customerMobile = '';
+    //     if ($selectedEnquiry) {
+    //         $customerMobile = $selectedEnquiry->mobile
+    //             ?? $selectedEnquiry->phone
+    //             ?? $selectedEnquiry->mobile_no
+    //             ?? '';
+    //     }
+    //     // Fallback to standard_data
+    //     if (empty($customerMobile)) {
+    //         $customerMobile = $quotationData['customer_mobile']
+    //             ?? $quotationData['mobile']
+    //             ?? '';
+    //     }
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | 6. FIX: Vehicle codes - ALWAYS from enquiry first, fallback to standard_data
+    //     |--------------------------------------------------------------------------
+    //     */
+    //     $segmentCode = $selectedEnquiry?->segment_code ?? $quotationData['segment_code'] ?? '';
+    //     $modelCode   = $selectedEnquiry?->model_code   ?? $quotationData['model_code']   ?? '';
+    //     $variantCode = $selectedEnquiry?->variant_code ?? $quotationData['variant_code'] ?? '';
+    //     $colorCode   = $selectedEnquiry?->color_code   ?? $quotationData['color_code']   ?? '';
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | 7. FIX: Vehicle names with proper fallback
+    //     |--------------------------------------------------------------------------
+    //     */
+    //     $segmentName = '';
+    //     $modelName   = '';
+    //     $variantName = '';
+    //     $colorName   = '';
+
+    //     if (!empty($segmentCode)) {
+    //         $segment = DB::table('xlr8_vehicle_segment')
+    //             ->where('code', $segmentCode)
+    //             ->first();
+    //         $segmentName = $segment->name ?? $selectedEnquiry?->segment ?? $quotationData['segment'] ?? $segmentCode;
+    //     }
+
+    //     if (!empty($modelCode)) {
+    //         $model = DB::table('xlr8_vehicle_model')
+    //             ->where('code', $modelCode)
+    //             ->first();
+    //         $modelName = $model->name ?? $selectedEnquiry?->model ?? $quotationData['model'] ?? $modelCode;
+    //     }
+
+    //     if (!empty($variantCode)) {
+    //         $variant = DB::table('xlr8_vehicle_variant')
+    //             ->where('code', $variantCode)
+    //             ->first();
+    //         $variantName = $variant->display_name
+    //             ?? $variant->custom_name
+    //             ?? $variant->oem_name
+    //             ?? $selectedEnquiry?->variant
+    //             ?? $quotationData['variant']
+    //             ?? $variantCode;
+    //     }
+
+    //     if (!empty($colorCode)) {
+    //         $color = DB::table('xlr8_vehicle_color')
+    //             ->where('code', $colorCode)
+    //             ->first();
+    //         $colorName = $color->name
+    //             ?? $selectedEnquiry?->color
+    //             ?? $quotationData['color']
+    //             ?? $colorCode;
+    //     }
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | 8. FIX: Ensure quotationData has the updated values
+    //     |--------------------------------------------------------------------------
+    //     */
+    //     $quotationData['customer_name'] = $customerName;
+    //     $quotationData['customer_mobile'] = $customerMobile;
+    //     $quotationData['mobile'] = $customerMobile;
+    //     $quotationData['enquiry_no'] = $quotation->enquiry_no;
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | 9. FIX: Ensure vehicle codes and names are in quotationData for the form
+    //     |--------------------------------------------------------------------------
+    //     */
+    //     $quotationData['segment_code'] = $segmentCode;
+    //     $quotationData['model_code']   = $modelCode;
+    //     $quotationData['variant_code'] = $variantCode;
+    //     $quotationData['color_code']   = $colorCode;
+    //     $quotationData['segment'] = $segmentName;
+    //     $quotationData['model']   = $modelName;
+    //     $quotationData['variant'] = $variantName;
+    //     $quotationData['color']   = $colorName;
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | 10. OEM Code
+    //     |--------------------------------------------------------------------------
+    //     */
+    //     $quotationData['oem_code'] = $selectedEnquiry?->oem_code
+    //         ?? $quotationData['oem_code']
+    //         ?? '';
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | 11. On Road / Invoice Price
+    //     |--------------------------------------------------------------------------
+    //     */
+    //     $quotationData['onroad_price'] = !empty($quotationData['onroad_price'])
+    //         ? $quotationData['onroad_price']
+    //         : $quotation->onroad_price;
+
+    //     $quotationData['invoice_price'] = !empty($quotationData['invoice_price'])
+    //         ? $quotationData['invoice_price']
+    //         : $quotation->invoice_price;
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | 12. Accessories - Ensure it's an array
+    //     |--------------------------------------------------------------------------
+    //     */
+    //     if (isset($quotationData['accessories']) && !is_array($quotationData['accessories'])) {
+    //         $quotationData['accessories'] = [$quotationData['accessories']];
+    //     }
+    //     if (!isset($quotationData['accessories'])) {
+    //         $quotationData['accessories'] = [];
+    //     }
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | 13. Insurance Covers - Ensure it's an array
+    //     |--------------------------------------------------------------------------
+    //     */
+    //     if (isset($quotationData['insurance_covers']) && !is_array($quotationData['insurance_covers'])) {
+    //         $quotationData['insurance_covers'] = [$quotationData['insurance_covers']];
+    //     }
+    //     if (!isset($quotationData['insurance_covers'])) {
+    //         $quotationData['insurance_covers'] = [];
+    //     }
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | 14. Dropdown maps
+    //     |--------------------------------------------------------------------------
+    //     */
+    //     $insurance_type_map = [
+    //         1 => 'Nil Dep',
+    //         2 => 'Higher',
+    //     ];
+
+    //     $registration_type_map = [
+    //         '0' => 'Tax Only',
+    //         '1' => 'TRC + Tax',
+    //         '2' => 'TRC Only',
+    //         '3' => 'Exempted',
+    //     ];
+
+    //     $permit_map = [
+    //         '1'  => 'Private - U/C (4 Wheeler)',
+    //         '2'  => 'Private - BH (4 Wheeler)',
+    //         '3'  => 'Private - EV (4 Wheeler)',
+    //         '4'  => 'Goods - G (4 Wheeler)',
+    //         '5'  => 'Goods - G 3 Ton+ (4 Wheeler)',
+    //         '6'  => 'Goods - G (3 Wheeler)',
+    //         '7'  => 'Goods - G EV (3 Wheeler)',
+    //         '8'  => 'Goods - G EV (4 Wheeler)',
+    //         '9'  => 'Taxi - T (4 Wheeler)',
+    //         '10' => 'Taxi - T EV (4 Wheeler)',
+    //         '11' => 'Passenger - P (3 Wheeler)',
+    //         '12' => 'Passenger - P EV (3 Wheeler)',
+    //         '13' => 'Ambulance (Misc.)',
+    //     ];
+
+    //     $reg_no_type_map = [
+    //         '1' => 'Regular',
+    //         '2' => 'BH Series',
+    //         '3' => 'Special Number',
+    //     ];
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | 15. Accessories List
+    //     |--------------------------------------------------------------------------
+    //     */
+    //     $accessoryList = Accessory::where('status', 1)
+    //         ->orderBy('item')
+    //         ->get();
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | 16. Financiers
+    //     |--------------------------------------------------------------------------
+    //     */
+    //     $financiers = XlFinancier::select('id', 'name', 'short_name')->get();
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | 17. Determine Group A
+    //     |--------------------------------------------------------------------------
+    //     */
+    //     $groupASelected = 'cash_scheme_oem';
+    //     if (!empty($quotationData['csd_discount']) && !in_array($quotationData['csd_discount'], ['0', '0.00', 'N/A'])) {
+    //         $groupASelected = 'csd_discount';
+    //     } elseif (!empty($quotationData['fame_subsidy']) && !in_array($quotationData['fame_subsidy'], ['0', '0.00', 'N/A'])) {
+    //         $groupASelected = 'fame_subsidy';
+    //     } elseif (!empty($quotationData['cash_scheme_oem']) && !in_array($quotationData['cash_scheme_oem'], ['0', '0.00', 'N/A'])) {
+    //         $groupASelected = 'cash_scheme_oem';
+    //     }
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | 18. Group B
+    //     |--------------------------------------------------------------------------
+    //     */
+    //     $groupBSelected = 'corporate_discount';
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | 19. Group C
+    //     |--------------------------------------------------------------------------
+    //     */
+    //     $groupCSelected = 'exchange_bonus';
+    //     if (!empty($quotationData['loyalty_bonus']) && !in_array($quotationData['loyalty_bonus'], ['0', '0.00', 'N/A'])) {
+    //         $groupCSelected = 'loyalty_bonus';
+    //     } elseif (!empty($quotationData['green_bonus']) && !in_array($quotationData['green_bonus'], ['0', '0.00', 'N/A'])) {
+    //         $groupCSelected = 'green_bonus';
+    //     } elseif (!empty($quotationData['welcome_bonus']) && !in_array($quotationData['welcome_bonus'], ['0', '0.00', 'N/A'])) {
+    //         $groupCSelected = 'welcome_bonus';
+    //     } elseif (!empty($quotationData['exchange_bonus']) && !in_array($quotationData['exchange_bonus'], ['0', '0.00', 'N/A'])) {
+    //         $groupCSelected = 'exchange_bonus';
+    //     }
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | 20. Return edit view
+    //     |--------------------------------------------------------------------------
+    //     */
+    //     return view('admin.quotation.create', [
+    //         'quotation' => $quotation,
+    //         'quotationData' => $quotationData,
+    //         'selectedEnquiry' => $selectedEnquiry,
+
+    //         // Vehicle display values
+    //         'segmentName' => $segmentName,
+    //         'modelName'   => $modelName,
+    //         'variantName' => $variantName,
+    //         'colorName'   => $colorName,
+
+    //         // Vehicle codes
+    //         'segmentCode' => $segmentCode,
+    //         'modelCode'   => $modelCode,
+    //         'variantCode' => $variantCode,
+    //         'colorCode'   => $colorCode,
+
+    //         // Dropdown maps
+    //         'insurance_type_map' => $insurance_type_map,
+    //         'registration_type_map' => $registration_type_map,
+    //         'permit_map' => $permit_map,
+    //         'reg_no_type_map' => $reg_no_type_map,
+
+    //         // Other data
+    //         'accessoryList' => $accessoryList,
+    //         'financiers' => $financiers,
+
+    //         // Discount groups
+    //         'groupASelected' => $groupASelected,
+    //         'groupBSelected' => $groupBSelected,
+    //         'groupCSelected' => $groupCSelected,
+
+    //         'viewMode' => false,
+    //     ]);
+    // }
 
     public function edit($id)
     {
@@ -1150,9 +2289,138 @@ class QuotationCrudController extends CrudController
             ]
         );
     }
-    
 
 
+    // public function update(Request $request, $id)
+    // {
+
+    //     $request->validate([
+    //         'enquiry_no'   => 'required',
+    //         'segment_code' => 'required',
+    //         'model_code'   => 'required',
+    //         'variant_code' => 'required',
+    //         'color_code'   => 'required',
+    //     ]);
+
+    //     DB::beginTransaction();
+
+    //     try {
+
+    //         $quotation = Quotation::findOrFail($id);
+
+    //         $enquiry = Enquiry::findOrFail($request->enquiry_no);
+
+    //         // Previous quotation snapshot
+    //         $previousProposal = $quotation->standard_data ?? [];
+
+    //         // Current edited quotation
+    //         $quotationData = $request->except([
+    //             '_token',
+    //             '_method'
+    //         ]);
+
+    //         // Preserve frozen fields
+    //         $quotationData['segment_code'] = $request->segment_code;
+    //         $quotationData['model_code']   = $request->model_code;
+    //         $quotationData['variant_code'] = $request->variant_code;
+    //         $quotationData['color_code']   = $request->color_code;
+
+    //         if (isset($quotationData['accessories']) && is_array($quotationData['accessories'])) {
+    //             $quotationData['accessories'] = array_values($quotationData['accessories']);
+    //         }
+
+    //         $quotationData['accessories_amount'] = $request->accessories_amount;
+
+    // $oldDataForComparison = $previousProposal;
+    // $newDataForComparison = $quotationData;
+
+    // $oldFinancier = $oldDataForComparison['financier'] ?? null;
+    // $newFinancier = $newDataForComparison['financier'] ?? null;
+
+    // // Remove financier before comparing
+    // unset($oldDataForComparison['financier']);
+    // unset($newDataForComparison['financier']);
+
+    // $hasNonFinancierChanges = $oldDataForComparison != $newDataForComparison;
+
+    // $newRevision = $hasNonFinancierChanges
+    //     ? ((int) $quotation->revision) + 1
+    //     : (int) $quotation->revision;
+
+    //         $quotation->update([
+
+    //             // Fixed fields
+    //             'enquiry_no'   => $request->enquiry_no,
+    //             'person_code'  => $enquiry->person_code,
+
+    //             // These columns exist in quotation table
+    //             'model_code'   => $request->model_code,
+    //             'variant_code' => $request->variant_code,
+    //             'color_code'   => $request->color_code,
+
+    //             'revision' => $newRevision,
+
+    //             // Keep original quotation untouched
+    //             // standard_data remains same
+
+    //             // Previous proposal becomes requested
+    //             'requested_data' => $previousProposal,
+
+    //             // Current proposal
+    //             'proposed_data' => $quotationData,
+
+    //             'onroad_price' => $request->net_receivable_summary
+    //                 ?? $request->total_receivable
+    //                 ?? 0,
+
+    //             'invoice_price' => $request->invoice_amount
+    //                 ?? $request->net_receivable_summary
+    //                 ?? 0,
+
+    //             'status' => 'raised',
+
+    //             'updated_by' => backpack_user()->id,
+
+    //         ]);
+
+    //         QuoteAction::create([
+
+    //             'quotation_no' => $quotation->quotation_no,
+
+    //             'revision' => $newRevision,
+
+    //             'action' => 'REVISED',
+
+    //             'requested' => $previousProposal,
+
+    //             'onroad' => $request->net_receivable_summary
+    //                 ?? $request->total_receivable
+    //                 ?? 0,
+
+    //             'status' => 'raised',
+
+    //             'remarks' => 'Quotation Revised',
+
+    //             'action_by' => backpack_user()->id,
+
+    //         ]);
+
+    //         DB::commit();
+
+    //         \Alert::success('Quotation updated successfully.')->flash();
+
+    //         return redirect(backpack_url('quotation-form/' . $quotation->id . '/edit') . '?saved=1');
+    //     } catch (\Exception $e) {
+
+    //         DB::rollBack();
+
+    //         \Log::error($e);
+
+    //         \Alert::error($e->getMessage())->flash();
+
+    //         return back()->withInput();
+    //     }
+    // }
     public function update(Request $request, $id)
     {
         // ✅ 1. REMOVED: segment_code, model_code, variant_code, color_code validation
@@ -1160,7 +2428,7 @@ class QuotationCrudController extends CrudController
             'enquiry_id' => 'required',
         ]);
 
-    DB::beginTransaction();
+        DB::beginTransaction();
 
         try {
             $quotation = Quotation::findOrFail($id);
@@ -1174,39 +2442,37 @@ class QuotationCrudController extends CrudController
                 \Log::info('Mock enquiry detected in update: ' . $request->enquiry_id);
             }
 
-        if (!$enquiry) {
-            \Log::info('Mock enquiry detected in update: ' . $request->enquiry_no);
-        }
+            $previousProposal = $quotation->standard_data ?? [];
 
-        $previousProposal = $quotation->standard_data ?? [];
+            if (!is_array($previousProposal)) {
+                $previousProposal = [];
+            }
 
-        if (!is_array($previousProposal)) {
-            $previousProposal = [];
-        }
+            $quotationData = array_merge(
+                $previousProposal,
+                $request->except(['_token', '_method'])
+            );
 
-        $quotationData = array_merge(
-            $previousProposal,
-            $request->except(['_token', '_method'])
-        );
+            $oldFinancier = $previousProposal['financier'] ?? null;
+            $newFinancier = $quotationData['financier'] ?? null;
 
-        $oldFinancier = $previousProposal['financier'] ?? null;
-        $newFinancier = $quotationData['financier'] ?? null;
+            $financierHistory = $previousProposal['financier_history'] ?? [];
 
-        $financierHistory = $previousProposal['financier_history'] ?? [];
+            if (!is_array($financierHistory)) {
+                $financierHistory = [];
+            }
 
-        if (!is_array($financierHistory)) {
-            $financierHistory = [];
-        }
+            if (
+                !empty($newFinancier) &&
+                (string) $oldFinancier !== (string) $newFinancier &&
+                !in_array($newFinancier, $financierHistory, true)
+            ) {
+                $financierHistory[] = $newFinancier;
+            }
 
-        if (
-            !empty($newFinancier) &&
-            (string) $oldFinancier !== (string) $newFinancier &&
-            !in_array($newFinancier, $financierHistory, true)
-        ) {
-            $financierHistory[] = $newFinancier;
-        }
+            $quotationData['financier_history'] = $financierHistory;
 
-        $quotationData['financier_history'] = $financierHistory;
+            $quotationData['charger_swapping_option'] = $request->input('charger_swapping_option');
 
             // ✅ 3. REMOVED: vehicle code preservation - these come from enquiry now
             // ❌ DELETE THESE LINES:
@@ -1215,80 +2481,73 @@ class QuotationCrudController extends CrudController
             // $quotationData['variant_code'] = $request->variant_code;
             // $quotationData['color_code'] = $request->color_code;
 
-        // ✅ 3. REMOVED: vehicle code preservation - these come from enquiry now
-        // ❌ DELETE THESE LINES:
-        // $quotationData['segment_code'] = $request->segment_code;
-        // $quotationData['model_code'] = $request->model_code;
-        // $quotationData['variant_code'] = $request->variant_code;
-        // $quotationData['color_code'] = $request->color_code;
-
-        // ✅ FIX: Use insurance_covers_data instead of insurance_covers
-        if ($request->has('insurance_covers_data') && !empty($request->insurance_covers_data)) {
-            $coversData = json_decode($request->insurance_covers_data, true);
-            if (is_array($coversData) && !empty($coversData)) {
-                $quotationData['insurance_covers'] = $coversData;
-            }
-        }
-
-        // ✅ SAVE INSURANCE COMPANY
-        if ($request->has('insurance_company')) {
-            $quotationData['insurance_company'] = $request->insurance_company;
-        }
-
-        // ✅ 1. Normalize Insurance Covers into structured name/price arrays
-        if ($request->has('insurance_covers')) {
-            $covers = $request->insurance_covers;
-            $formattedCovers = [];
-            if (is_array($covers)) {
-                foreach ($covers as $cover) {
-                    if (is_string($cover)) {
-                        $price = 0;
-                        if (preg_match('/\(₹([\d,]+\.?\d*)\)/', $cover, $matches)) {
-                            $price = floatval(str_replace(',', '', $matches[1]));
-                            $name = trim(preg_replace('/\(₹[\d,]+\.?\d*\)/', '', $cover));
-                        } else {
-                            $name = $cover;
-                        }
-                        $formattedCovers[] = ['name' => $name, 'price' => $price];
-                    } elseif (is_array($cover)) {
-                        $formattedCovers[] = [
-                            'name' => $cover['name'] ?? '',
-                            'price' => floatval($cover['price'] ?? 0)
-                        ];
-                    }
+            // ✅ FIX: Use insurance_covers_data instead of insurance_covers
+            if ($request->has('insurance_covers_data') && !empty($request->insurance_covers_data)) {
+                $coversData = json_decode($request->insurance_covers_data, true);
+                if (is_array($coversData) && !empty($coversData)) {
+                    $quotationData['insurance_covers'] = $coversData;
                 }
-                $quotationData['insurance_covers'] = $formattedCovers;
             }
-        }
 
-        // ✅ 2. Ensure Accessories are stored as a clean array of part numbers
-        if (!empty($quotationData['accessories']) && is_array($quotationData['accessories'])) {
-            $quotationData['accessories'] = array_values($quotationData['accessories']);
-        }
+            // ✅ SAVE INSURANCE COMPANY
+            if ($request->has('insurance_company')) {
+                $quotationData['insurance_company'] = $request->insurance_company;
+            }
 
-        // ✅ SAVE ACCESSORIES
-        if (isset($quotationData['accessories']) && is_array($quotationData['accessories'])) {
-            $quotationData['accessories'] = array_values($quotationData['accessories']);
-        }
-        if ($request->has('accessories_amount')) {
-            $quotationData['accessories_amount'] = $request->accessories_amount;
-        }
+            // ✅ 1. Normalize Insurance Covers into structured name/price arrays
+            if ($request->has('insurance_covers')) {
+                $covers = $request->insurance_covers;
+                $formattedCovers = [];
+                if (is_array($covers)) {
+                    foreach ($covers as $cover) {
+                        if (is_string($cover)) {
+                            $price = 0;
+                            if (preg_match('/\(₹([\d,]+\.?\d*)\)/', $cover, $matches)) {
+                                $price = floatval(str_replace(',', '', $matches[1]));
+                                $name = trim(preg_replace('/\(₹[\d,]+\.?\d*\)/', '', $cover));
+                            } else {
+                                $name = $cover;
+                            }
+                            $formattedCovers[] = ['name' => $name, 'price' => $price];
+                        } elseif (is_array($cover)) {
+                            $formattedCovers[] = [
+                                'name' => $cover['name'] ?? '',
+                                'price' => floatval($cover['price'] ?? 0)
+                            ];
+                        }
+                    }
+                    $quotationData['insurance_covers'] = $formattedCovers;
+                }
+            }
 
-        // ✅ SAVE REGISTRATION DETAILS
-        if ($request->has('registration_no_type')) {
-            $quotationData['registration_no_type'] = $request->registration_no_type;
-        }
-        if ($request->has('registration_category')) {
-            $quotationData['registration_category'] = $request->registration_category;
-        }
-        if ($request->has('in_house_rto')) {
-            $quotationData['in_house_rto'] = $request->in_house_rto;
-        }
+            // ✅ 2. Ensure Accessories are stored as a clean array of part numbers
+            if (!empty($quotationData['accessories']) && is_array($quotationData['accessories'])) {
+                $quotationData['accessories'] = array_values($quotationData['accessories']);
+            }
 
-        // ✅ SAVE PERMIT
-        if ($request->has('permit')) {
-            $quotationData['permit'] = $request->permit;
-        }
+            // ✅ SAVE ACCESSORIES
+            if (isset($quotationData['accessories']) && is_array($quotationData['accessories'])) {
+                $quotationData['accessories'] = array_values($quotationData['accessories']);
+            }
+            if ($request->has('accessories_amount')) {
+                $quotationData['accessories_amount'] = $request->accessories_amount;
+            }
+
+            // ✅ SAVE REGISTRATION DETAILS
+            if ($request->has('registration_no_type')) {
+                $quotationData['registration_no_type'] = $request->registration_no_type;
+            }
+            if ($request->has('registration_category')) {
+                $quotationData['registration_category'] = $request->registration_category;
+            }
+            if ($request->has('in_house_rto')) {
+                $quotationData['in_house_rto'] = $request->in_house_rto;
+            }
+
+            // ✅ SAVE PERMIT
+            if ($request->has('permit')) {
+                $quotationData['permit'] = $request->permit;
+            }
 
             /*
         |--------------------------------------------------------------------------
@@ -1355,7 +2614,6 @@ class QuotationCrudController extends CrudController
                     unset($newDataForComparison[$key]);
                 }
             }
-        }
 
             /*
         |--------------------------------------------------------------------------
@@ -1382,21 +2640,21 @@ class QuotationCrudController extends CrudController
                 // ❌ REMOVED: 'variant_code'  => $request->variant_code,
                 // ❌ REMOVED: 'color_code'    => $request->color_code,
 
-            'revision'      => $newRevision,
+                'revision'      => $newRevision,
 
-            'standard_data' => $quotationData,
+                'standard_data' => $quotationData,
 
-            'onroad_price'  => $request->net_receivable_summary
-                ?? $request->total_receivable
-                ?? 0,
+                'onroad_price'  => $request->net_receivable_summary
+                    ?? $request->total_receivable
+                    ?? 0,
 
-            'invoice_price' => $request->invoice_amount
-                ?? $request->net_receivable_summary
-                ?? 0,
+                'invoice_price' => $request->invoice_amount
+                    ?? $request->net_receivable_summary
+                    ?? 0,
 
-            'status'        => 'raised',
-            'updated_by'    => backpack_user()->id,
-        ]);
+                'status'        => 'raised',
+                'updated_by'    => backpack_user()->id,
+            ]);
 
             // Update discount fields
             $this->saveDiscountFields($quotation, $quotationData);
@@ -1417,34 +2675,18 @@ class QuotationCrudController extends CrudController
                 ]);
             }
 
-        if ($hasQuotationChanges) {
+            DB::commit();
 
-            QuoteAction::create([
-                'quotation_no' => $quotation->id,
-                'action_by'    => backpack_user()->id,
-                'action'       => 'REVISED',
-                'requested'    => $quotationData,
-                'onroad'       => $request->net_receivable_summary
-                    ?? $request->total_receivable
-                    ?? 0,
-                'status'       => 'raised',
-                'remarks'      => 'Quotation Revised',
-                'created_by'   => backpack_user()->id,
-            ]);
+            \Alert::success('Quotation updated successfully.')->flash();
+            return redirect(backpack_url('quotation-form/' . $quotation->id . '/edit') . '?saved=1');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Quotation Update Error: ' . $e->getMessage());
+            \Log::error($e->getTraceAsString());
+            \Alert::error('Error updating quotation: ' . $e->getMessage())->flash();
+            return back()->withInput();
         }
-
-        DB::commit();
-
-        \Alert::success('Quotation updated successfully.')->flash();
-        return redirect(backpack_url('quotation-form/' . $quotation->id . '/edit') . '?saved=1');
-    } catch (\Exception $e) {
-        DB::rollBack();
-        \Log::error('Quotation Update Error: ' . $e->getMessage());
-        \Log::error($e->getTraceAsString());
-        \Alert::error('Error updating quotation: ' . $e->getMessage())->flash();
-        return back()->withInput();
     }
-}
     public function revise($quotation_no)
     {
         return $this->edit($quotation_no);
@@ -2205,7 +3447,165 @@ class QuotationCrudController extends CrudController
         ]);
     }
 
+    // public function preview($quotation_no)
+    // {
+    //     $quotation = Quotation::with('enquiry')
+    //         ->where('quotation_no', $quotation_no)
+    //         ->firstOrFail();
 
+    //     $selectedEnquiry = Enquiry::with([
+    //         'segment',
+    //         'model',
+    //         'variant',
+    //         'color',
+    //     ])->findOrFail($quotation->enquiry_no);
+
+    //     // ✅ Fetch variant with permits
+    //     $variant = null;
+    //     if ($selectedEnquiry->variant_code) {
+    //         $variant = \App\Models\Vehicle\Variant::with(['permit'])
+    //             ->where('code', $selectedEnquiry->variant_code)
+    //             ->first();
+    //     }
+
+    //     $permitOptions = $variant ? $variant->permit->pluck('name')->toArray() : [];
+
+    //     $insurance_type_map = [
+    //         1 => 'Nil Dep',
+    //         2 => 'Higher',
+    //     ];
+
+    //     $registration_type_map = [
+    //         0 => 'Exempted',
+    //         1 => 'TRC Only',
+    //         2 => 'Tax Only',
+    //         3 => 'TRC + Tax',
+    //     ];
+
+    //     $registration_category_map = [
+    //         '1' => 'Exempted',
+    //         '2' => 'Standard',
+    //         '3' => 'Special',
+    //     ];
+
+    //     $accessoryList = Accessory::where('status', 1)
+    //         ->orderBy('item')
+    //         ->get();
+
+    //     $quotationData = $quotation->standard_data ?? [];
+
+    //     // Group selections
+    //     $groupASelected = 'cash_scheme_oem';
+    //     if (!empty($quotationData['csd_discount'])) {
+    //         $groupASelected = 'csd_discount';
+    //     }
+    //     if (!empty($quotationData['fame_subsidy'])) {
+    //         $groupASelected = 'fame_subsidy';
+    //     }
+
+    //     $groupBSelected = 'corporate_discount';
+    //     if (!empty($quotationData['loyalty_bonus'])) {
+    //         $groupBSelected = 'loyalty_bonus';
+    //     }
+
+    //     $groupCSelected = 'exchange_bonus';
+    //     if (!empty($quotationData['green_bonus'])) {
+    //         $groupCSelected = 'green_bonus';
+    //     }
+    //     if (!empty($quotationData['welcome_bonus'])) {
+    //         $groupCSelected = 'welcome_bonus';
+    //     }
+
+    //     $insurancePrintData = [];
+    //     $insuranceCovers = $quotationData['insurance_covers'] ?? [];
+
+    //     // ✅ FIX: Properly handle insurance covers
+    //     if (!empty($insuranceCovers) && is_array($insuranceCovers)) {
+    //         foreach ($insuranceCovers as $cover) {
+    //             // Handle string format
+    //             if (is_string($cover)) {
+    //                 $price = 0;
+    //                 $name = $cover;
+    //                 if (preg_match('/\(₹([\d,]+\.?\d*)\)/', $cover, $matches)) {
+    //                     $price = floatval(str_replace(',', '', $matches[1]));
+    //                     $name = trim(preg_replace('/\(₹[\d,]+\.?\d*\)/', '', $cover));
+    //                 }
+    //                 $insurancePrintData[] = ['name' => $name, 'price' => $price];
+    //             }
+    //             // Handle array format
+    //             elseif (is_array($cover)) {
+    //                 $insurancePrintData[] = [
+    //                     'name' => $cover['name'] ?? '',
+    //                     'price' => floatval($cover['price'] ?? 0)
+    //                 ];
+    //             }
+    //         }
+    //     }
+
+    //     // ✅ FIX: If insurance_covers is empty but insurance_amount exists
+    //     if (empty($insurancePrintData)) {
+    //         $insAmount = floatval($quotationData['insurance_amount'] ?? 0);
+    //         if ($insAmount > 0) {
+    //             // Try to get covers from insurance_covers_display if exists
+    //             $displayCovers = $quotationData['insurance_covers_display'] ?? [];
+    //             if (!empty($displayCovers) && is_array($displayCovers)) {
+    //                 foreach ($displayCovers as $cover) {
+    //                     if (is_array($cover)) {
+    //                         $insurancePrintData[] = [
+    //                             'name' => $cover['name'] ?? '',
+    //                             'price' => floatval($cover['price'] ?? 0)
+    //                         ];
+    //                     }
+    //                 }
+    //             } else {
+    //                 // Fallback: Show just the amount with policy type
+    //                 $policyLabel = $insurance_type_map[$quotationData['policy_type'] ?? ''] ?? '';
+    //                 $insurancePrintData[] = [
+    //                     'name' => $policyLabel ?: 'Insurance',
+    //                     'price' => $insAmount
+    //                 ];
+    //             }
+    //         }
+    //     }
+
+    //     // ✅ DEBUG LOG
+    //     \Log::info('Insurance Print Data Final', [
+    //         'insurancePrintData' => $insurancePrintData,
+    //         'count' => count($insurancePrintData),
+    //     ]);
+
+    //     // ✅ Prepare Accessories Data for Print
+    //     $accessoriesPrintData = [];
+    //     $accessories = $quotationData['accessories'] ?? [];
+
+    //     if (!empty($accessories) && is_array($accessories)) {
+    //         foreach ($accessories as $accCode) {
+    //             $accessory = Accessory::where('part_no', $accCode)->first();
+    //             if ($accessory) {
+    //                 $accessoriesPrintData[] = [
+    //                     'name' => $accessory->item,
+    //                     'price' => floatval($accessory->ndp ?? 0)
+    //                 ];
+    //             }
+    //         }
+    //     }
+
+    //     return view('admin.quotation.preview', [
+    //         'quotation' => $quotation,
+    //         'quotationData' => $quotationData,
+    //         'selectedEnquiry' => $selectedEnquiry,
+    //         'insurance_type_map' => $insurance_type_map,
+    //         'registration_type_map' => $registration_type_map,
+    //         'registration_category_map' => $registration_category_map,
+    //         'accessoryList' => $accessoryList,
+    //         'groupASelected' => $groupASelected,
+    //         'groupBSelected' => $groupBSelected,
+    //         'groupCSelected' => $groupCSelected,
+    //         'permitOptions' => $permitOptions,
+    //         'insurancePrintData' => json_encode($insurancePrintData),
+    //         'accessoriesPrintData' => json_encode($accessoriesPrintData),
+    //     ]);
+    // }
     public function preview($id)
     {
         $quotation = Quotation::with('enquiry')
