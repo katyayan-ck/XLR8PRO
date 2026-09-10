@@ -162,6 +162,7 @@ class EnquiryCrudController extends CrudController
                 'exchange_not_interested',
                 'finance',
                 'finance_not_interested',
+                'xceler8'
             ]) => $listType,
             default => 'all',
         };
@@ -200,6 +201,7 @@ class EnquiryCrudController extends CrudController
             'virtual' => Enquiry::virtual(),
             'whatsapp' => Enquiry::whatsapp(),
             'hyperlocal' => Enquiry::hyperlocal(),
+            'xceler8' => Enquiry::xceler8(),
             'assigned_long' => Enquiry::assignedLong(),
             'unassigned_long' => Enquiry::unassignedLong(),
             'assigned_quick' => Enquiry::assignedQuick(),
@@ -1706,10 +1708,10 @@ class EnquiryCrudController extends CrudController
 
             $validated['created_by'] = backpack_user()->id;
 
-            // Reference leads get REFERENCE immediately, otherwise standard new enquiries get LONG
+            // Reference leads get REFERENCE immediately, otherwise standard new CRM enquiries get NULL
             $isRef = isset($validated['source_code']) && strtoupper($validated['source_code']) === 'REFERENCE';
-            $validated['origin'] = $isRef ? 'REFERENCE' : 'LONG';
-            $validated['current_origin'] = $isRef ? 'REFERENCE' : 'LONG';
+            $validated['origin'] = $isRef ? 'REFERENCE' : null;
+            $validated['current_origin'] = $isRef ? 'REFERENCE' : null;
 
             $validated['cne'] = 1;
             $validated['x8_enq_assign_date'] = now();
@@ -2355,5 +2357,10 @@ class EnquiryCrudController extends CrudController
     public function otfBookingsList()
     {
         return $this->renderGridPage('admin.enquiry.otf-bookings', 'OTF Bookings', 'otf');
+    }
+
+    public function xceler8List()
+    {
+        return $this->renderGridPage('admin.enquiry.list', 'Xceler8 Enquiries', 'xceler8');
     }
 }

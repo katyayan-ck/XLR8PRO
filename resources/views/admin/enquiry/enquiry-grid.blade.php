@@ -63,7 +63,15 @@
                         </div>
                     </div>
 
-                    <div id="myGrid" class="ag-theme-quartz" style="height: calc(93vh - 260px); width:100%;"></div>
+                    <!-- GRID CONTAINER WITH LOADER WRAPPER -->
+<div style="position: relative;">
+    <div id="gridLoader" style="display:none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.7); z-index: 1000; justify-content: center; align-items: center;">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+    <div id="myGrid" class="ag-theme-quartz" style="height: calc(93vh - 260px); width:100%;"></div>
+</div>
                 </div>
             </div>
         </div>
@@ -113,9 +121,9 @@
 
         const dataSource = {
             getRows: function(params) {
-                if (gridApi) {
-                    gridApi.showLoadingOverlay();
-                }
+                // 1. Show the custom HTML loader
+                const loader = document.getElementById('gridLoader');
+                if (loader) loader.style.display = 'flex';
 
                 fetch('{{ backpack_url('enquiries/data') }}', {
                         method: 'POST',
@@ -135,15 +143,11 @@
                     })
                     .then(res => res.json())
                     .then(data => {
-                        // 1. Hide the built-in AG Grid loading overlay
-                        if (gridApi) {
-                            gridApi.hideOverlay();
-                        }
+                        // 2. Hide the custom HTML loader
+                        if (loader) loader.style.display = 'none';
 
-                        // 2. Pass data back to the grid
                         params.successCallback(data.rows || [], data.lastRow ?? 0);
 
-                        // 3. Auto-size the action column dynamically after rendering
                         setTimeout(() => {
                             if (gridApi) {
                                 gridApi.autoSizeColumns(['action']);
@@ -151,10 +155,8 @@
                         }, 100);
                     })
                     .catch(err => {
-                        // Safely hide the overlay on error as well
-                        if (gridApi) {
-                            gridApi.hideOverlay();
-                        }
+                        // 3. Hide the custom HTML loader on error
+                        if (loader) loader.style.display = 'none';
                         console.error('Failed to load enquiries', err);
                         params.failCallback();
                     });
@@ -251,32 +253,36 @@
             document.getElementById('quickFilter').addEventListener('input', debounce(e => {
                 currentSearchText = e.target.value.trim();
 
-                if (gridApi) {
-                    gridApi.showLoadingOverlay();
-                }
+                // Show the custom HTML loader
+                const loader = document.getElementById('gridLoader');
+                if (loader) loader.style.display = 'flex';
 
-                gridApi.setGridOption('datasource', {
-                    ...dataSource
-                });
+                if (gridApi) {
+                    gridApi.setGridOption('datasource', {
+                        ...dataSource
+                    });
+                }
             }, 400));
 
             document.getElementById('resetAll').addEventListener('click', () => {
                 document.getElementById('quickFilter').value = '';
                 currentSearchText = '';
 
-                if (gridApi) {
-                    gridApi.showLoadingOverlay();
-                }
+                // Show the custom HTML loader
+                const loader = document.getElementById('gridLoader');
+                if (loader) loader.style.display = 'flex';
 
-                gridApi.setFilterModel(null);
-                gridApi.applyColumnState({
-                    defaultState: {
-                        sort: null
-                    }
-                });
-                gridApi.setGridOption('datasource', {
-                    ...dataSource
-                });
+                if (gridApi) {
+                    gridApi.setFilterModel(null);
+                    gridApi.applyColumnState({
+                        defaultState: {
+                            sort: null
+                        }
+                    });
+                    gridApi.setGridOption('datasource', {
+                        ...dataSource
+                    });
+                }
             });
 
             document.getElementById('btnCustomiseHeaders').addEventListener('click', e => {

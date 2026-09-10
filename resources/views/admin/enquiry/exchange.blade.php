@@ -134,9 +134,9 @@
 
         const dataSource = {
             getRows: function(params) {
-                if (gridApi) {
-                    gridApi.showLoadingOverlay();
-                }
+                // 1. Show the custom HTML loader
+                const loader = document.getElementById('gridLoader');
+                if (loader) loader.style.display = 'flex';
 
                 fetch('{{ backpack_url('enquiries/data') }}', {
                         method: 'POST',
@@ -156,7 +156,9 @@
                     })
                     .then(res => res.json())
                     .then(data => {
+                        // 2. Hide the custom HTML loader
                         if (loader) loader.style.display = 'none';
+                        
                         params.successCallback(data.rows || [], data.lastRow ?? 0);
 
                         // Auto-size the action column dynamically based on rendered buttons
@@ -164,12 +166,11 @@
                             if (gridApi) {
                                 gridApi.autoSizeColumns(['action']);
                             }
-                        }, 100); // 100ms delay gives the browser time to paint the HTML buttons
+                        }, 100);
                     })
                     .catch(err => {
-                        if (gridApi) {
-                            gridApi.hideLoadingOverlay();
-                        }
+                        // 3. Hide the custom HTML loader on error
+                        if (loader) loader.style.display = 'none';
                         console.error('Failed to load exchange enquiries', err);
                         params.failCallback();
                     });
@@ -221,12 +222,16 @@
 
             document.getElementById('quickFilter')?.addEventListener('input', debounce(e => {
                 currentSearchText = e.target.value.trim();
+                
+                // Show the custom HTML loader
+                const loader = document.getElementById('gridLoader');
+                if (loader) loader.style.display = 'flex';
+                
                 if (gridApi) {
-                    gridApi.showLoadingOverlay();
+                    gridApi.setGridOption('datasource', {
+                        ...dataSource
+                    });
                 }
-                gridApi.setGridOption('datasource', {
-                    ...dataSource
-                });
             }, 400));
         });
     </script>

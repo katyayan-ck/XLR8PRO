@@ -40,33 +40,92 @@ class QuotationCrudController extends CrudController
 
 
     public function index()
-    {
-        $insurance_type_map = [
-            1 => 'Standard',
-            2 => 'Nil Dep',
-            3 => 'Base',
-            4 => 'Higher',
-        ];
+{
+    $insurance_type_map = [
+        1 => 'Standard',
+        2 => 'Nil Dep',
+        3 => 'Base',
+        4 => 'Higher',
+    ];
 
-        $registration_type_map = [
-            '0' => 'Tax Only',
-            '1' => 'TRC + Tax',
-            '2' => 'TRC Only',
-            '3' => 'Exempted',
-        ];
+    $registration_type_map = [
+        '0' => 'Tax Only',
+        '1' => 'TRC + Tax',
+        '2' => 'TRC Only',
+        '3' => 'Exempted',
+    ];
 
-        $reg_no_type_map = [
-            '1' => 'Regular',
-            '2' => 'BH Series',
-            '3' => 'Special Number',
-        ];
+    $reg_no_type_map = [
+        '1' => 'Regular',
+        '2' => 'BH Series',
+        '3' => 'Special Number',
+    ];
+
+    $this->crud->setListView('admin.quotation.list');
+
+    $quotations = Quotation::with('enquiry')
+        ->whereNotIn('status', ['booked'])
+        ->latest('id')
+        ->get();
+
+    $gridData = $quotations->map(function ($quotation, $index) use ($insurance_type_map, $registration_type_map, $reg_no_type_map) {
+        
+        $data = $quotation->standard_data ?? [];
+        $enquiry = $quotation->enquiry;
+
+        // If enquiry is null, try to find it by enquiry_no
+        if (!$enquiry) {
+            $enquiry = Enquiry::where('enquiry_no', $quotation->enquiry_no)->first();
+        }
+
+        // ============================================================
+        // FIX: CUSTOMER NAME - Try multiple sources
+        // ============================================================
+        $customerName = '-';
+        $mobile = '-';
+
+        // 1. Try from enquiry first
+        if ($enquiry) {
+            $customerName = trim(
+                ($enquiry->first_name ?? '') . ' ' .
+                ($enquiry->last_name ?? '')
+            );
+            if (empty($customerName)) {
+                $customerName = $enquiry->full_name ?? '';
+            }
+            if (empty($customerName)) {
+                $customerName = $enquiry->customer_name ?? '';
+            }
+            if (empty($customerName)) {
+                $customerName = $enquiry->name ?? '';
+            }
+            $mobile = $enquiry->mobile ?? $enquiry->phone ?? '-';
+        }
 
         $this->crud->setListView('admin.quotation.list');
 
-        $quotations = Quotation::with('enquiry')
-            ->whereNotIn('status', ['booked'])
-            ->latest('id')
-            ->get();
+        // ============================================================
+        // FIX: VEHICLE DETAILS - Try multiple sources
+        // ============================================================
+        // 1. Try from enquiry first
+        $segmentCode = $enquiry?->segment_code ?? '';
+        $modelCode   = $enquiry?->model_code ?? '';
+        $variantCode = $enquiry?->variant_code ?? '';
+        $colorCode   = $enquiry?->color_code ?? '';
+
+        // 2. Fallback to standard_data
+        if (empty($segmentCode)) {
+            $segmentCode = $data['segment_code'] ?? '';
+        }
+        if (empty($modelCode)) {
+            $modelCode = $data['model_code'] ?? '';
+        }
+        if (empty($variantCode)) {
+            $variantCode = $data['variant_code'] ?? '';
+        }
+        if (empty($colorCode)) {
+            $colorCode = $data['color_code'] ?? '';
+        }
 
         $gridData = $quotations->map(function ($quotation, $index) use ($insurance_type_map, $registration_type_map, $reg_no_type_map) {
 
@@ -387,8 +446,10 @@ class QuotationCrudController extends CrudController
                 ],
                 'data' => $gridData,
             ],
-        ]);
-    }
+            'data' => $gridData,
+        ],
+    ]);
+}
 
     public function create()
     {
@@ -593,9 +654,15 @@ class QuotationCrudController extends CrudController
                 'onroad'       => $request->net_receivable_summary
                     ?? $request->total_receivable
                     ?? 0,
-                'status'       => 'raised',
-                'remarks'      => 'Quotation Created',
-                'created_by'   => backpack_user()->id,
+
+                'status' =>
+                    'raised',
+
+                'remarks' =>
+                    'Quotation Created',
+
+                'created_by' =>
+                    backpack_user()->id,
             ]);
 
             /*
@@ -617,6 +684,7 @@ class QuotationCrudController extends CrudController
                 ) . '?saved=1'
             );
         } catch (\Exception $e) {
+
             DB::rollBack();
 
             \Log::error(
@@ -1082,6 +1150,7 @@ class QuotationCrudController extends CrudController
             ]
         );
     }
+    
 
 
     public function update(Request $request, $id)
@@ -1091,7 +1160,7 @@ class QuotationCrudController extends CrudController
             'enquiry_id' => 'required',
         ]);
 
-        DB::beginTransaction();
+    DB::beginTransaction();
 
         try {
             $quotation = Quotation::findOrFail($id);
@@ -1105,37 +1174,39 @@ class QuotationCrudController extends CrudController
                 \Log::info('Mock enquiry detected in update: ' . $request->enquiry_id);
             }
 
-            $previousProposal = $quotation->standard_data ?? [];
+        if (!$enquiry) {
+            \Log::info('Mock enquiry detected in update: ' . $request->enquiry_no);
+        }
 
-            if (!is_array($previousProposal)) {
-                $previousProposal = [];
-            }
+        $previousProposal = $quotation->standard_data ?? [];
 
-            $quotationData = array_merge(
-                $previousProposal,
-                $request->except(['_token', '_method'])
-            );
+        if (!is_array($previousProposal)) {
+            $previousProposal = [];
+        }
 
-            $oldFinancier = $previousProposal['financier'] ?? null;
-            $newFinancier = $quotationData['financier'] ?? null;
+        $quotationData = array_merge(
+            $previousProposal,
+            $request->except(['_token', '_method'])
+        );
 
-            $financierHistory = $previousProposal['financier_history'] ?? [];
+        $oldFinancier = $previousProposal['financier'] ?? null;
+        $newFinancier = $quotationData['financier'] ?? null;
 
-            if (!is_array($financierHistory)) {
-                $financierHistory = [];
-            }
+        $financierHistory = $previousProposal['financier_history'] ?? [];
 
-            if (
-                !empty($newFinancier) &&
-                (string) $oldFinancier !== (string) $newFinancier &&
-                !in_array($newFinancier, $financierHistory, true)
-            ) {
-                $financierHistory[] = $newFinancier;
-            }
+        if (!is_array($financierHistory)) {
+            $financierHistory = [];
+        }
 
-            $quotationData['financier_history'] = $financierHistory;
+        if (
+            !empty($newFinancier) &&
+            (string) $oldFinancier !== (string) $newFinancier &&
+            !in_array($newFinancier, $financierHistory, true)
+        ) {
+            $financierHistory[] = $newFinancier;
+        }
 
-            $quotationData['charger_swapping_option'] = $request->input('charger_swapping_option');
+        $quotationData['financier_history'] = $financierHistory;
 
             // ✅ 3. REMOVED: vehicle code preservation - these come from enquiry now
             // ❌ DELETE THESE LINES:
@@ -1144,73 +1215,80 @@ class QuotationCrudController extends CrudController
             // $quotationData['variant_code'] = $request->variant_code;
             // $quotationData['color_code'] = $request->color_code;
 
-            // ✅ FIX: Use insurance_covers_data instead of insurance_covers
-            if ($request->has('insurance_covers_data') && !empty($request->insurance_covers_data)) {
-                $coversData = json_decode($request->insurance_covers_data, true);
-                if (is_array($coversData) && !empty($coversData)) {
-                    $quotationData['insurance_covers'] = $coversData;
-                }
-            }
+        // ✅ 3. REMOVED: vehicle code preservation - these come from enquiry now
+        // ❌ DELETE THESE LINES:
+        // $quotationData['segment_code'] = $request->segment_code;
+        // $quotationData['model_code'] = $request->model_code;
+        // $quotationData['variant_code'] = $request->variant_code;
+        // $quotationData['color_code'] = $request->color_code;
 
-            // ✅ SAVE INSURANCE COMPANY
-            if ($request->has('insurance_company')) {
-                $quotationData['insurance_company'] = $request->insurance_company;
+        // ✅ FIX: Use insurance_covers_data instead of insurance_covers
+        if ($request->has('insurance_covers_data') && !empty($request->insurance_covers_data)) {
+            $coversData = json_decode($request->insurance_covers_data, true);
+            if (is_array($coversData) && !empty($coversData)) {
+                $quotationData['insurance_covers'] = $coversData;
             }
+        }
 
-            // ✅ 1. Normalize Insurance Covers into structured name/price arrays
-            if ($request->has('insurance_covers')) {
-                $covers = $request->insurance_covers;
-                $formattedCovers = [];
-                if (is_array($covers)) {
-                    foreach ($covers as $cover) {
-                        if (is_string($cover)) {
-                            $price = 0;
-                            if (preg_match('/\(₹([\d,]+\.?\d*)\)/', $cover, $matches)) {
-                                $price = floatval(str_replace(',', '', $matches[1]));
-                                $name = trim(preg_replace('/\(₹[\d,]+\.?\d*\)/', '', $cover));
-                            } else {
-                                $name = $cover;
-                            }
-                            $formattedCovers[] = ['name' => $name, 'price' => $price];
-                        } elseif (is_array($cover)) {
-                            $formattedCovers[] = [
-                                'name' => $cover['name'] ?? '',
-                                'price' => floatval($cover['price'] ?? 0)
-                            ];
+        // ✅ SAVE INSURANCE COMPANY
+        if ($request->has('insurance_company')) {
+            $quotationData['insurance_company'] = $request->insurance_company;
+        }
+
+        // ✅ 1. Normalize Insurance Covers into structured name/price arrays
+        if ($request->has('insurance_covers')) {
+            $covers = $request->insurance_covers;
+            $formattedCovers = [];
+            if (is_array($covers)) {
+                foreach ($covers as $cover) {
+                    if (is_string($cover)) {
+                        $price = 0;
+                        if (preg_match('/\(₹([\d,]+\.?\d*)\)/', $cover, $matches)) {
+                            $price = floatval(str_replace(',', '', $matches[1]));
+                            $name = trim(preg_replace('/\(₹[\d,]+\.?\d*\)/', '', $cover));
+                        } else {
+                            $name = $cover;
                         }
+                        $formattedCovers[] = ['name' => $name, 'price' => $price];
+                    } elseif (is_array($cover)) {
+                        $formattedCovers[] = [
+                            'name' => $cover['name'] ?? '',
+                            'price' => floatval($cover['price'] ?? 0)
+                        ];
                     }
-                    $quotationData['insurance_covers'] = $formattedCovers;
                 }
+                $quotationData['insurance_covers'] = $formattedCovers;
             }
+        }
 
-            // ✅ 2. Ensure Accessories are stored as a clean array of part numbers
-            if (!empty($quotationData['accessories']) && is_array($quotationData['accessories'])) {
-                $quotationData['accessories'] = array_values($quotationData['accessories']);
-            }
+        // ✅ 2. Ensure Accessories are stored as a clean array of part numbers
+        if (!empty($quotationData['accessories']) && is_array($quotationData['accessories'])) {
+            $quotationData['accessories'] = array_values($quotationData['accessories']);
+        }
 
-            // ✅ SAVE ACCESSORIES
-            if (isset($quotationData['accessories']) && is_array($quotationData['accessories'])) {
-                $quotationData['accessories'] = array_values($quotationData['accessories']);
-            }
-            if ($request->has('accessories_amount')) {
-                $quotationData['accessories_amount'] = $request->accessories_amount;
-            }
+        // ✅ SAVE ACCESSORIES
+        if (isset($quotationData['accessories']) && is_array($quotationData['accessories'])) {
+            $quotationData['accessories'] = array_values($quotationData['accessories']);
+        }
+        if ($request->has('accessories_amount')) {
+            $quotationData['accessories_amount'] = $request->accessories_amount;
+        }
 
-            // ✅ SAVE REGISTRATION DETAILS
-            if ($request->has('registration_no_type')) {
-                $quotationData['registration_no_type'] = $request->registration_no_type;
-            }
-            if ($request->has('registration_category')) {
-                $quotationData['registration_category'] = $request->registration_category;
-            }
-            if ($request->has('in_house_rto')) {
-                $quotationData['in_house_rto'] = $request->in_house_rto;
-            }
+        // ✅ SAVE REGISTRATION DETAILS
+        if ($request->has('registration_no_type')) {
+            $quotationData['registration_no_type'] = $request->registration_no_type;
+        }
+        if ($request->has('registration_category')) {
+            $quotationData['registration_category'] = $request->registration_category;
+        }
+        if ($request->has('in_house_rto')) {
+            $quotationData['in_house_rto'] = $request->in_house_rto;
+        }
 
-            // ✅ SAVE PERMIT
-            if ($request->has('permit')) {
-                $quotationData['permit'] = $request->permit;
-            }
+        // ✅ SAVE PERMIT
+        if ($request->has('permit')) {
+            $quotationData['permit'] = $request->permit;
+        }
 
             /*
         |--------------------------------------------------------------------------
@@ -1277,6 +1355,7 @@ class QuotationCrudController extends CrudController
                     unset($newDataForComparison[$key]);
                 }
             }
+        }
 
             /*
         |--------------------------------------------------------------------------
@@ -1303,21 +1382,21 @@ class QuotationCrudController extends CrudController
                 // ❌ REMOVED: 'variant_code'  => $request->variant_code,
                 // ❌ REMOVED: 'color_code'    => $request->color_code,
 
-                'revision'      => $newRevision,
+            'revision'      => $newRevision,
 
-                'standard_data' => $quotationData,
+            'standard_data' => $quotationData,
 
-                'onroad_price'  => $request->net_receivable_summary
-                    ?? $request->total_receivable
-                    ?? 0,
+            'onroad_price'  => $request->net_receivable_summary
+                ?? $request->total_receivable
+                ?? 0,
 
-                'invoice_price' => $request->invoice_amount
-                    ?? $request->net_receivable_summary
-                    ?? 0,
+            'invoice_price' => $request->invoice_amount
+                ?? $request->net_receivable_summary
+                ?? 0,
 
-                'status'        => 'raised',
-                'updated_by'    => backpack_user()->id,
-            ]);
+            'status'        => 'raised',
+            'updated_by'    => backpack_user()->id,
+        ]);
 
             // Update discount fields
             $this->saveDiscountFields($quotation, $quotationData);
@@ -1338,18 +1417,34 @@ class QuotationCrudController extends CrudController
                 ]);
             }
 
-            DB::commit();
+        if ($hasQuotationChanges) {
 
-            \Alert::success('Quotation updated successfully.')->flash();
-            return redirect(backpack_url('quotation-form/' . $quotation->id . '/edit') . '?saved=1');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            \Log::error('Quotation Update Error: ' . $e->getMessage());
-            \Log::error($e->getTraceAsString());
-            \Alert::error('Error updating quotation: ' . $e->getMessage())->flash();
-            return back()->withInput();
+            QuoteAction::create([
+                'quotation_no' => $quotation->id,
+                'action_by'    => backpack_user()->id,
+                'action'       => 'REVISED',
+                'requested'    => $quotationData,
+                'onroad'       => $request->net_receivable_summary
+                    ?? $request->total_receivable
+                    ?? 0,
+                'status'       => 'raised',
+                'remarks'      => 'Quotation Revised',
+                'created_by'   => backpack_user()->id,
+            ]);
         }
+
+        DB::commit();
+
+        \Alert::success('Quotation updated successfully.')->flash();
+        return redirect(backpack_url('quotation-form/' . $quotation->id . '/edit') . '?saved=1');
+    } catch (\Exception $e) {
+        DB::rollBack();
+        \Log::error('Quotation Update Error: ' . $e->getMessage());
+        \Log::error($e->getTraceAsString());
+        \Alert::error('Error updating quotation: ' . $e->getMessage())->flash();
+        return back()->withInput();
     }
+}
     public function revise($quotation_no)
     {
         return $this->edit($quotation_no);

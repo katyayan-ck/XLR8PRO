@@ -209,6 +209,7 @@
     $enqCounts = \Illuminate\Support\Facades\Cache::remember('menu_enquiry_counts', 60, function () {
         return [
             'all' => \App\Models\CRM\Enquiry::mainListing()->count(),
+            'xceler8' => \App\Models\CRM\Enquiry::xceler8()->count(),
             'reference' => \App\Models\CRM\Enquiry::reference()->count(),
             'virtual' => \App\Models\CRM\Enquiry::virtual()->count(),
             'whatsapp' => \App\Models\CRM\Enquiry::whatsapp()->count(),
@@ -239,6 +240,7 @@
     @endif
 
     {{-- Enquiries --}}
+    {{-- Enquiries --}}
     <x-backpack::menu-dropdown title="Enquiries" icon="la la-question-circle" nested="true">
 
         <a class="dropdown-item d-flex align-items-center justify-content-between"
@@ -252,6 +254,20 @@
             <span class="badge rounded-pill text-dark"
                 style="background-color: #e9ecef;">{{ $enqCounts['all'] ?? 0 }}</span>
         </a>
+       
+        <a class="dropdown-item d-flex align-items-center justify-content-between"
+   href="{{ backpack_url('enquiries/xceler8') }}">
+    <span>
+        <i class="nav-icon la la-list me-2"></i>
+        Xceler8 Enquiry List
+    </span>
+    <span class="badge rounded-pill text-dark"
+          style="background-color: #e9ecef;">
+        {{ $enqCounts['xceler8'] ?? 0 }}
+    </span>
+</a>
+
+
 
         <a class="dropdown-item d-flex align-items-center justify-content-between"
             href="{{ backpack_url('enquiries/hyperlocal') }}">
@@ -481,9 +497,7 @@
             </a>
         </x-backpack::menu-dropdown>
 
-        {{-- Followup --}}
-        <x-backpack::menu-dropdown title="Followup" icon="la la-phone" nested="true">
-            {{-- Enquiry Sub-items --}}
+        {{-- <x-backpack::menu-dropdown title="Followup" icon="la la-phone" nested="true">
             <x-backpack::menu-dropdown title="Enquiry" icon="la la-clipboard-list" nested="true">
                 <a class="dropdown-item d-flex align-items-center justify-content-between"
                     href="{{ backpack_url('crm-sales/followup/enquiry/live') }}">
@@ -503,7 +517,6 @@
                 </a>
             </x-backpack::menu-dropdown>
 
-            {{-- Booking Sub-items --}}
             <x-backpack::menu-dropdown title="Booking" icon="la la-bookmark" nested="true">
                 <a class="dropdown-item d-flex align-items-center justify-content-between"
                     href="{{ backpack_url('crm-sales/followup/booking/live') }}">
@@ -522,7 +535,7 @@
                     <span><i class="la la-spray-can me-2"></i>Int in Ceramic/PPF</span>
                 </a>
             </x-backpack::menu-dropdown>
-        </x-backpack::menu-dropdown>
+        </x-backpack::menu-dropdown> --}}
 
         {{-- Verifications --}}
         <x-backpack::menu-dropdown title="Verifications" icon="la la-check-double" nested="true">

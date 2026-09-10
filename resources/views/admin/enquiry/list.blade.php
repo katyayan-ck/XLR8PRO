@@ -127,16 +127,14 @@
                     </div>
 
                     <!-- GRID CONTAINER WITH LOADER WRAPPER -->
-                    <div style="position: relative;">
-                        <div id="gridLoader"
-                            style="display:none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.7); z-index: 1000; justify-content: center; align-items: center;">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                        </div>
-                        <!-- Note: Keep your specific height calc() for each file if they differ slightly -->
-                        <div id="myGrid" class="ag-theme-quartz" style="height: calc(93vh - 260px); width:100%;"></div>
-                    </div>
+<div style="position: relative;">
+    <div id="gridLoader" style="display:none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.7); z-index: 1000; justify-content: center; align-items: center;">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+    <div id="myGrid" class="ag-theme-quartz" style="height: calc(93vh - 260px); width:100%;"></div>
+</div>
                 </div>
             </div>
         </div>
@@ -220,7 +218,7 @@
                     })
                     .then(res => res.json())
                     .then(data => {
-                        // 2. Hide the custom HTML loader on success
+                        // 2. Hide the custom HTML loader
                         if (loader) loader.style.display = 'none';
 
                         params.successCallback(data.rows || [], data.lastRow ?? 0);
@@ -327,12 +325,15 @@
             document.getElementById('quickFilter').addEventListener('input', debounce(e => {
                 currentSearchText = e.target.value.trim();
 
+                // Show the custom HTML loader
                 const loader = document.getElementById('gridLoader');
                 if (loader) loader.style.display = 'flex';
 
-                gridApi.setGridOption('datasource', {
-                    ...dataSource
-                });
+                if (gridApi) {
+                    gridApi.setGridOption('datasource', {
+                        ...dataSource
+                    });
+                }
             }, 400));
 
             document.querySelectorAll('.highlight-filter').forEach(btn => {
@@ -378,24 +379,21 @@
                 document.getElementById('quickFilter').value = '';
                 currentSearchText = '';
 
-                if (currentHighlightFilter !== '') {
-                    currentHighlightFilter = '';
-                    document.querySelectorAll('.highlight-filter').forEach(b => b.classList.remove(
-                        'active'));
-                }
-
+                // Show the custom HTML loader
                 const loader = document.getElementById('gridLoader');
                 if (loader) loader.style.display = 'flex';
 
-                gridApi.setFilterModel(null);
-                gridApi.applyColumnState({
-                    defaultState: {
-                        sort: null
-                    }
-                });
-                gridApi.setGridOption('datasource', {
-                    ...dataSource
-                });
+                if (gridApi) {
+                    gridApi.setFilterModel(null);
+                    gridApi.applyColumnState({
+                        defaultState: {
+                            sort: null
+                        }
+                    });
+                    gridApi.setGridOption('datasource', {
+                        ...dataSource
+                    });
+                }
             });
 
             document.getElementById('btnCustomiseHeaders').addEventListener('click', e => {
