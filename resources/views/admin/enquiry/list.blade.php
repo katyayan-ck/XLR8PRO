@@ -232,7 +232,7 @@
                     .catch(err => {
                         // 3. Hide the custom HTML loader on error
                         if (loader) loader.style.display = 'none';
-                        console.error('Failed to load enquiries', err);
+                        console.error('Failed to load data', err);
                         params.failCallback();
                     });
             }
