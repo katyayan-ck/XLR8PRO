@@ -373,12 +373,12 @@
         }
 
         /* ================= Quotation Grid (Price / Discount) — now TWO independent
-                                                                               tables/boxes placed side by side. Because each side is its own table with
-                                                                               its own <tbody>, every row (price item or discount item) can be shown or
-                                                                               hidden completely independently. When a field is blank / 0 / N/A, its row
-                                                                               is simply removed from the flow (display:none) while printing, and the
-                                                                               remaining rows in that box naturally move up to close the gap — the two
-                                                                               boxes no longer need to stay row-for-row aligned with each other. ================= */
+                                                                       tables/boxes placed side by side. Because each side is its own table with
+                                                                       its own <tbody>, every row (price item or discount item) can be shown or
+                                                                       hidden completely independently. When a field is blank / 0 / N/A, its row
+                                                                       is simply removed from the flow (display:none) while printing, and the
+                                                                       remaining rows in that box naturally move up to close the gap — the two
+                                                                       boxes no longer need to stay row-for-row aligned with each other. ================= */
 
         .quotation-box {
             margin-bottom: 15px;
@@ -418,10 +418,10 @@
         }
 
         /* Column widths are set on the <thead> cells (not a <colgroup>/<col>) because
-                                                                               with table-layout:fixed the widths of the FIRST ROW's cells define every
-                                                                               column's width for the whole table — this is the spec-defined, most
-                                                                               reliably-supported way across browsers/print engines, unlike overriding
-                                                                               <col> widths which some print renderers ignore. */
+                                                                       with table-layout:fixed the widths of the FIRST ROW's cells define every
+                                                                       column's width for the whole table — this is the spec-defined, most
+                                                                       reliably-supported way across browsers/print engines, unlike overriding
+                                                                       <col> widths which some print renderers ignore. */
         .price-grid th:nth-child(1) {
             width: 32%;
         }
@@ -607,7 +607,7 @@
         @media print {
 
             /* OPTION and TYPE columns are always folded into the label / omitted for print.
-                                                                                   Each table now only has 3 columns of its own, so this is simply column 2. */
+                                                                           Each table now only has 3 columns of its own, so this is simply column 2. */
             .price-grid th:nth-child(2),
             .price-grid td:nth-child(2),
             .discount-grid th:nth-child(2),
@@ -616,11 +616,11 @@
             }
 
             /* Hiding column 2 above would otherwise leave each table using less than
-                                                                                   its full width (blank space on the right), so the box would look
-                                                                                   "shrunk". Re-assign the widths of the 2 remaining columns per table
-                                                                                   (on the <th> cells, since that's what actually drives
-                                                                                   table-layout:fixed column sizing) so they always add up to 100%
-                                                                                   while printing. Price and discount keep their own ratio. */
+                                                                           its full width (blank space on the right), so the box would look
+                                                                           "shrunk". Re-assign the widths of the 2 remaining columns per table
+                                                                           (on the <th> cells, since that's what actually drives
+                                                                           table-layout:fixed column sizing) so they always add up to 100%
+                                                                           while printing. Price and discount keep their own ratio. */
             .price-grid th:nth-child(1) {
                 width: 70% !important;
             }
@@ -638,9 +638,9 @@
             }
 
             /* Every price/discount item is its own independent row now. A row is
-                                                                                   hidden purely on its own value being blank / 0 / N/A — the other box
-                                                                                   is completely unaffected, and its own remaining rows just move up to
-                                                                                   close the gap since it's normal table flow. */
+                                                                           hidden purely on its own value being blank / 0 / N/A — the other box
+                                                                           is completely unaffected, and its own remaining rows just move up to
+                                                                           close the gap since it's normal table flow. */
             .quotation-grid tr.print-hide {
                 display: none !important;
             }
@@ -783,8 +783,8 @@
         }
 
         /* ============================================================
-                                                                           INSURANCE DROPDOWNS
-                                                                           ============================================================ */
+                                                                   INSURANCE DROPDOWNS
+                                                                   ============================================================ */
 
         /* Insurance Company */
         #insurance_company {
@@ -811,12 +811,12 @@
 
 
         /* ============================================================
-                                                                           Insurance Covers - Select2
-                                                                           ============================================================ */
+                                                                   Insurance Covers - Select2
+                                                                   ============================================================ */
 
         /* ============================================================
-                                                                           INSURANCE COVERS - FINAL SELECT2 FIX
-                                                                           ============================================================ */
+                                                                   INSURANCE COVERS - FINAL SELECT2 FIX
+                                                                   ============================================================ */
 
         #insurance_covers+.select2-container {
             width: 100% !important;
@@ -962,9 +962,9 @@
         }
 
         /* ============================================================
-                                                                           ACCESSORIES - SELECT2 FINAL FIX
-                                                                           Same UI as Insurance Covers
-                                                                           ============================================================ */
+                                                                   ACCESSORIES - SELECT2 FINAL FIX
+                                                                   Same UI as Insurance Covers
+                                                                   ============================================================ */
 
         #accessories+.select2-container {
             width: 100% !important;
@@ -1473,21 +1473,14 @@
                                 <td class="title" width="18%">Enquiry No.</td>
                                 <td width="32%">
                                     @php
-                                        // 1. Pehle selectedEnquiry ya quotation se real Enquiry ID lein, fallback to request
-                                        $rawId =
-                                            $selectedEnquiry->id ??
-                                            ($quotation->enquiry_id ??
-                                                (request('enquiry_id') ?? (request('id') ?? '')));
+                                        // 1. Get raw ID directly from URL route/query parameter or object ID
+                                        $rawId = request('id') ?? ($selectedEnquiry->id ?? '');
 
-                                        // 2. Append 'XENQ-' prefix to numeric Enquiry ID
-                                        $formattedEnquiryNo = $rawId
-                                            ? (str_starts_with((string) $rawId, 'XENQ-')
-                                                ? $rawId
-                                                : 'XENQ-' . $rawId)
-                                            : '';
+                                        // 2. Simply append prefix directly to the raw numeric ID
+                                        $formattedEnquiryNo = $rawId ? 'XENQ-' . $rawId : '';
                                     @endphp
 
-                                    <!-- Display Box: Output (e.g. XENQ-34560) -->
+                                    <!-- Display Box: Direct Output (e.g. XENQ-34560) -->
                                     <input type="text" id="enquiry_id" value="{{ $formattedEnquiryNo }}" readonly>
 
                                     <!-- Hidden Input for Form Submission -->
@@ -1705,7 +1698,7 @@
                                                                 @foreach ($reg_no_type_map ?? [
             '1' => 'Regular',
             '2' => 'BH
-                                                                                                                                    Series',
+                                                                                                                            Series',
             '3' => 'Special Number',
         ] as $key => $value)
                                                                     <option value="{{ $key }}"
@@ -4350,13 +4343,7 @@
 
             loadInsuranceByPermit();
 
-            // Mock data (customer/vehicle/pricing) loads as-is from ENQUIRIES,
-            // but the enquiry number shown on screen is always forced into the
-            // "XENQ-<id>" display format (real URL id takes priority; falls
-            // back to the mock number if no real id is present) instead of
-            // the mock's own hardcoded enquiry_no (e.g. "ENQ0019").
-            let displayEnquiryId = cleanId || no;
-            $('#enquiry_id').val(displayEnquiryId ? 'XENQ-' + displayEnquiryId : enquiry.enquiry_no);
+            $('#enquiry_id').val(enquiry.enquiry_no);
             $('#enquiry_no_hidden').val(no);
 
             console.log('Vehicle from Enquiry:', {
