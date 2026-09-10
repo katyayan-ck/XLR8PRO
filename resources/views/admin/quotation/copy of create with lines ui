@@ -1,0 +1,1269 @@
+@extends(backpack_view('blank'))
+
+@php
+use App\Services\OrgService;
+@endphp
+
+@section('title', 'Quotation Form')
+
+@push('after_styles')
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+<style>
+    @media print {
+
+        .no-print {
+            display: none !important;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        .quotation-sheet {
+
+            width: 210mm;
+
+            min-height: 297mm;
+
+            margin: 0;
+
+            padding: 10mm;
+
+            box-shadow: none;
+
+            border: none;
+
+        }
+
+    }
+
+    .quotation-sheet {
+
+        background: #fff;
+
+        border: 2px solid #000;
+
+        padding: 15px;
+
+    }
+
+    .bill-table {
+
+        width: 100%;
+
+        border-collapse: collapse;
+
+    }
+
+
+
+    .bill-table .title {
+
+        background: #f2f2f2;
+
+        font-weight: bold;
+
+    }
+
+
+
+    .bill-table input:focus {
+
+        outline: none;
+
+    }
+
+    .bill-table select {
+
+        border: none;
+
+        width: 100%;
+
+        background: transparent;
+
+    }
+
+    .bill-table select:focus {
+
+        outline: none;
+
+    }
+
+    .bill-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 15px;
+    }
+
+    .bill-table td {
+        border: 1px solid #000;
+        padding: 6px 8px;
+        vertical-align: middle;
+    }
+
+    .bill-table .title {
+        background: #f2f2f2;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .bill-table input {
+        border: none !important;
+        box-shadow: none !important;
+        background: transparent !important;
+        padding: 2px;
+    }
+
+    .bill-table input:focus {
+        outline: none;
+    }
+
+    /* Hide Backpack UI */
+
+    .page-header {
+        display: none !important;
+    }
+
+    .navbar {
+        display: none !important;
+    }
+
+    .main-header {
+        display: none !important;
+    }
+
+    .sidebar {
+        display: none !important;
+    }
+
+    .app-footer {
+        display: none !important;
+    }
+
+    .breadcrumb {
+        display: none !important;
+    }
+
+    .content-header {
+        display: none !important;
+    }
+
+    .wrapper {
+        padding-top: 0 !important;
+    }
+
+    .main-body {
+        margin-top: 0 !important;
+    }
+</style>
+
+@endpush
+
+@section('content')
+
+<div class="quotation-form">
+    <div class="container-fluid">
+        <div class="card shadow-sm mb-3">
+
+            <div class="card-body p-3">
+
+                <div class="row align-items-center">
+
+                    <div class="col-md-2 text-center">
+
+                        <img src="{{ asset('images/bikaner_logo.jpg') }}" style="height:75px;">
+
+                    </div>
+
+                    <div class="col-md-10 text-center">
+
+                        <h2 class="mb-1 fw-bold">
+                            BIKANER MOTORS PRIVATE LIMITED
+                        </h2>
+
+                        <div style="font-size:14px">
+
+                            <strong>Regd. Office :</strong>
+
+                            Sunderi Chhabil Mansion,
+                            NH-11,
+                            Jaipur Road,
+                            P.O. Udasar,
+                            Bikaner-334022
+
+                        </div>
+
+                        <div style="font-size:14px">
+
+                            <strong>Branch Office :</strong>
+
+                            6th KM Stone,
+                            Ratangarh Road,
+                            Churu (Raj.)
+
+                        </div>
+
+                        <h4 class="mt-2 text-uppercase">
+
+                            Vehicle Quotation
+
+                        </h4>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <form method="POST" action="{{ route('quotation.store') }}" enctype="multipart/form-data">
+            @csrf
+            <div class="quotation-sheet">
+
+                <div class="form-section">
+
+                    {{-- ================= Customer Details ================= --}}
+                    <table class="bill-table mb-3">
+
+                        <tr>
+                            <td class="title" width="18%">Enquiry No.</td>
+                            <td width="32%">
+                                <input type="text" class="form-control border-0 shadow-none"
+                                    value="{{ optional($selectedEnquiry)->enquiry_no }}" readonly>
+
+                                <input type="hidden" name="enquiry_no"
+                                    value="{{ optional($selectedEnquiry)->enquiry_no }}">
+                            </td>
+
+                            <td class="title" width="18%">Customer Name</td>
+                            <td width="32%">
+                                <input type="text" id="customer_name" class="form-control border-0 shadow-none"
+                                    value="{{ optional($selectedEnquiry)->full_name }}" readonly>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td class="title">Mobile Number</td>
+                            <td>
+                                <input type="text" id="mobile" class="form-control border-0 shadow-none"
+                                    value="{{ optional($selectedEnquiry)->mobile }}" readonly>
+                            </td>
+
+                            <td class="title">Sales Consultant</td>
+                            <td>
+                                <input type="text" class="form-control border-0 shadow-none"
+                                    value="{{ optional(optional($selectedEnquiry)->salesConsultant)->name }}" readonly>
+                            </td>
+                        </tr>
+
+                    </table>
+
+                    {{-- ================= Vehicle Details ================= --}}
+
+                    <table class="bill-table mb-3">
+
+                        <tr>
+                            <td class="title" width="18%">Segment</td>
+                            <td width="32%">
+                                <input type="text" class="form-control border-0 shadow-none"
+                                    value="{{ optional(optional($selectedEnquiry)->segment)->name }}" readonly>
+
+                                <input type="hidden" name="segment_code"
+                                    value="{{ optional($selectedEnquiry)->segment_code }}">
+                            </td>
+
+                            <td class="title" width="18%">Model</td>
+                            <td width="32%">
+                                <input type="text" class="form-control border-0 shadow-none"
+                                    value="{{ optional(optional($selectedEnquiry)->model)->name }}" readonly>
+
+                                <input type="hidden" name="model_code"
+                                    value="{{ optional($selectedEnquiry)->model_code }}">
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td class="title">Variant</td>
+                            <td>
+                                <input type="text" class="form-control border-0 shadow-none"
+                                    value="{{ optional(optional($selectedEnquiry)->variant)->display_name }}" readonly>
+
+                                <input type="hidden" name="variant_code"
+                                    value="{{ optional($selectedEnquiry)->variant_code }}">
+                            </td>
+
+                            <td class="title">Color</td>
+                            <td>
+                                <input type="text" class="form-control border-0 shadow-none"
+                                    value="{{ optional(optional($selectedEnquiry)->color)->name }}" readonly>
+
+                                <input type="hidden" name="color_code"
+                                    value="{{ optional($selectedEnquiry)->color_code }}">
+                            </td>
+                        </tr>
+
+                    </table>
+
+                    {{-- ================= PRICE DETAILS ================= --}}
+
+                    <table class="bill-table mb-3">
+
+                        <tr>
+                            <th colspan="4" style="background:#d9d9d9;
+               text-align:center;
+               font-size:15px;">
+                                PRICE DETAILS
+                            </th>
+                        </tr>
+
+                        <tr>
+                            <td class="title">Ex Showroom Price</td>
+                            <td>
+                                <input name="ex_showroom_price" id="ex_showroom_price" class="numeric-only"
+                                    placeholder="0.00">
+                            </td>
+
+                            <td class="title">Insurance</td>
+
+                            <td>
+
+                                <select name="policy_type" id="policy_type">
+
+                                    <option value="">Select</option>
+
+                                    @foreach($insurance_type_map as $key=>$value)
+
+                                    <option value="{{ $key }}">
+                                        {{ $value }}
+                                    </option>
+
+                                    @endforeach
+
+                                </select>
+
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <td class="title">
+
+                                Registration
+
+                            </td>
+
+                            <td>
+
+                                <select name="registration_type" id="registration_type">
+
+                                    <option value="">Select</option>
+
+                                    @foreach($registration_type_map as $key=>$value)
+
+                                    <option value="{{ $key }}">
+
+                                        {{ $value }}
+
+                                    </option>
+
+                                    @endforeach
+
+                                </select>
+
+                            </td>
+
+                            <td class="title">
+
+                                Accessories
+
+                            </td>
+
+                            <td>
+
+                                <select name="accessories[]" id="accessories" multiple>
+
+                                    @foreach($accessoryList as $accessory)
+
+                                    <option value="{{ $accessory->part_no }}" data-price="{{ $accessory->ndp }}">
+
+                                        {{ $accessory->item }}
+
+                                        (₹{{ number_format($accessory->ndp,2) }})
+
+                                    </option>
+
+                                    @endforeach
+
+                                </select>
+
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <td class="title">
+
+                                Accessories Amount
+
+                            </td>
+
+                            <td>
+
+                                <input id="accessories_amount" name="accessories_amount" readonly value="0.00">
+
+                            </td>
+
+                            <td class="title">
+
+                                Maxicare
+
+                            </td>
+
+                            <td>
+
+                                <input id="maxicare" name="maxicare" class="numeric-only">
+
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <td class="title">
+
+                                VLTD Device (GPS)
+
+                            </td>
+
+                            <td>
+
+                                <input id="vltd_device" name="vltd_device" class="numeric-only">
+
+                            </td>
+
+                            <td class="title">
+
+                                Coating
+
+                            </td>
+
+                            <td>
+
+                                <select id="coating" name="coating">
+
+                                    <option value="">Select</option>
+
+                                    <option value="Ceramic">
+
+                                        Ceramic
+
+                                    </option>
+
+                                    <option value="Graphene">
+
+                                        Graphene
+
+                                    </option>
+
+                                    <option value="No Coating">
+
+                                        No Coating
+
+                                    </option>
+
+                                </select>
+
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <td class="title">
+
+                                Coating Price
+
+                            </td>
+
+                            <td>
+
+                                <input id="coating_price" name="coating_price" class="numeric-only" disabled>
+
+                            </td>
+
+                            <td class="title">
+
+                                PPF
+
+                            </td>
+
+                            <td>
+
+                                <input id="ppf" name="ppf" class="numeric-only">
+
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <td class="title">
+
+                                RTO Yellow Tape
+
+                            </td>
+
+                            <td>
+
+                                <input id="rto_yellow_tape" name="rto_yellow_tape" class="numeric-only">
+
+                            </td>
+
+                            <td class="title">
+
+                                Kazam Charging Kit
+
+                            </td>
+
+                            <td>
+
+                                <input id="kazam_charging_kit" name="kazam_charging_kit" class="numeric-only">
+
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <td class="title">
+
+                                Incidental Charges
+
+                            </td>
+
+                            <td>
+
+                                <input id="incidental_charges" name="incidental_charges" class="numeric-only">
+
+                            </td>
+
+                            <td class="title">
+
+                                Shield
+
+                            </td>
+
+                            <td>
+
+                                <select id="shield" name="shield">
+
+                                    <option value="">Select</option>
+
+                                    <option value="4th Year">
+
+                                        4th Year
+
+                                    </option>
+
+                                    <option value="4th + 5th Year">
+
+                                        4th + 5th Year
+
+                                    </option>
+
+                                    <option value="No Shield">
+
+                                        No Shield
+
+                                    </option>
+
+                                </select>
+
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <td class="title">
+
+                                Shield Price
+
+                            </td>
+
+                            <td>
+
+                                <input id="shield_price" name="shield_price" class="numeric-only" disabled>
+
+                            </td>
+
+                            <td class="title">
+
+                                RSA
+
+                            </td>
+
+                            <td>
+
+                                <select id="rsa" name="rsa">
+
+                                    <option value="">Select</option>
+
+                                    <option>1 Year</option>
+                                    <option>2 Year</option>
+                                    <option>3 Year</option>
+                                    <option>4 Year</option>
+                                    <option>5 Year</option>
+                                    <option>No RSA</option>
+
+                                </select>
+
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <td class="title">
+
+                                RSA Amount
+
+                            </td>
+
+                            <td>
+
+                                <input id="rsa_amount" name="rsa_amount" class="numeric-only" disabled>
+
+                            </td>
+
+                            <td class="title">
+
+                                Fastag
+
+                            </td>
+
+                            <td>
+
+                                <input id="fastag" name="fastag" class="numeric-only">
+
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <td class="title">
+
+                                COD Charges
+
+                            </td>
+
+                            <td>
+
+                                <input id="cod_charges" name="cod_charges" class="numeric-only">
+
+                            </td>
+
+                            <td class="title">
+
+                                TCS @1%
+
+                            </td>
+
+                            <td>
+
+                                <input id="tcs" name="tcs" class="numeric-only">
+
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <td class="title">
+
+                                Charger Swapping
+
+                            </td>
+
+                            <td>
+
+                                <select id="charger_swapping" name="charger_swapping">
+
+                                    <option value="">Select</option>
+
+                                    <option>Not Applicable</option>
+                                    <option>NCH to 7.2 kW</option>
+                                    <option>NCH to 11.2 kW</option>
+                                    <option>7.2 kW to 11.2 kW</option>
+
+                                </select>
+
+                            </td>
+
+                            <td class="title">
+
+                                Charger Swapping Amount
+
+                            </td>
+
+                            <td>
+
+                                <input id="charger_swapping_amount" name="charger_swapping_amount" class="numeric-only"
+                                    disabled>
+
+                            </td>
+
+                        </tr>
+
+                        <tr style="background:#f8f8f8;
+font-weight:bold;">
+
+                            <td>
+
+                                TOTAL RECEIVABLE
+
+                            </td>
+
+                            <td>
+
+                                <input id="total_receivable" name="total_receivable" readonly>
+
+                            </td>
+
+                            <td></td>
+
+                            <td></td>
+
+                        </tr>
+
+                    </table>
+
+                    {{-- ================= DISCOUNT DETAILS ================= --}}
+
+                    <table class="bill-table mb-3">
+
+                        <tr>
+                            <th colspan="4" style="background:#d9d9d9;
+                   text-align:center;
+                   font-size:15px;">
+                                DISCOUNT DETAILS
+                            </th>
+                        </tr>
+
+                        <tr>
+                            <td class="title">OEM Scheme / CSD Discount</td>
+                            <td>
+                                <input type="text" name="oem_scheme_discount" id="oem_scheme_discount"
+                                    class="numeric-only" placeholder="0.00">
+                            </td>
+
+                            <td class="title">Fame Subsidy (LMM)</td>
+                            <td>
+                                <input type="text" name="fame_subsidy" id="fame_subsidy" class="numeric-only"
+                                    placeholder="0.00">
+                            </td>
+                        </tr>
+
+                        <tr>
+
+                            <td class="title">
+                                Exchange Bonus
+                            </td>
+
+                            <td>
+                                <input type="text" name="exchange_bonus" id="exchange_bonus" class="numeric-only"
+                                    placeholder="0.00">
+                            </td>
+
+                            <td class="title">
+                                Corporate Discount
+                            </td>
+
+                            <td>
+                                <input type="text" name="corporate_discount" id="corporate_discount"
+                                    class="numeric-only" placeholder="0.00">
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <td class="title">
+                                Accessories Discount
+                            </td>
+
+                            <td>
+                                <input type="text" name="accessories_discount" id="accessories_discount"
+                                    class="numeric-only" placeholder="0.00">
+                            </td>
+
+                            <td class="title">
+                                Ceramic Discount
+                            </td>
+
+                            <td>
+                                <input type="text" name="ceramic_discount" id="ceramic_discount" class="numeric-only"
+                                    placeholder="0.00">
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <td class="title">
+                                PPF Discount
+                            </td>
+
+                            <td>
+                                <input type="text" name="ppf_discount" id="ppf_discount" class="numeric-only"
+                                    placeholder="0.00">
+                            </td>
+
+                            <td class="title">
+                                Dealer Discount
+                            </td>
+
+                            <td>
+                                <input type="text" name="dealer_discount" id="dealer_discount" class="numeric-only"
+                                    placeholder="0.00">
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <td class="title">
+                                Charger Swapping Discount
+                            </td>
+
+                            <td>
+                                <input type="text" id="charger_swapping_discount" name="charger_swapping_discount"
+                                    class="numeric-only" placeholder="0.00" disabled>
+                            </td>
+
+                            <td class="title" style="background:#fff;"></td>
+
+                            <td></td>
+
+                        </tr>
+                    </table>
+
+                    <table class="bill-table">
+
+                        <tr>
+
+                            <th colspan="2">
+
+                                SUMMARY
+
+                            </th>
+
+                        </tr>
+
+                        <tr>
+
+                            <td>
+
+                                Total Receivable
+
+                            </td>
+
+                            <td>
+
+                                <input id="total_receivable_display" readonly>
+
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <td>
+
+                                Total Discount
+
+                            </td>
+
+                            <td>
+
+                                <input id="total_discount_display" readonly>
+
+                            </td>
+
+                        </tr>
+
+                        <tr style="
+                            background:#198754;
+                            color:white;
+                            font-size:18px;
+                            font-weight:bold;
+                            ">
+
+                            <td>
+
+                                NET RECEIVABLE
+
+                            </td>
+
+                            <td>
+
+                                <input id="net_receivable_summary" name="net_receivable_summary" readonly style="
+                            background:#198754;
+                            color:white;
+                            font-weight:bold;
+                            ">
+
+                            </td>
+
+                        </tr>
+
+                    </table>
+
+
+
+
+                </div>
+            </div>
+    </div>
+
+    <div class="card-footer text-end mt-3 no-print">
+        <button type="button" class="btn btn-primary no-print" onclick="window.print();">
+
+            <i class="la la-print"></i>
+
+            Print / Save PDF
+
+        </button>
+        <button type="submit" class="btn btn-success">
+            <i class="la la-save"></i> Save Quotation
+        </button>
+
+        <a href="{{ backpack_url('quotation-form') }}" class="btn btn-secondary">
+            Cancel
+        </a>
+    </div>
+    </form>
+</div>
+</div>
+
+@endsection
+
+@push('after_scripts')
+{{--
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"> --}}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+    $(function () {
+
+    $('#accessories').select2({
+        placeholder: 'Select Accessories',
+        width: '100%',
+        closeOnSelect: false
+    });
+
+});
+</script>
+<script>
+    $(document).on('input', '.numeric-only', function () {
+
+    let value = $(this).val();
+
+    // Allow only digits and one decimal
+    value = value.replace(/[^\d.]/g, '');
+    value = value.replace(/(\..*)\./g, '$1');
+
+    $(this).val(value);
+
+});
+    function updateAccessoriesAmount() {
+
+    let total = 0;
+
+    $('#accessories option:selected').each(function () {
+
+        total += parseFloat($(this).data('price')) || 0;
+
+    });
+
+    $('#accessories_amount').val(total.toFixed(2));
+
+    calculateQuotation();
+
+}
+
+$('#accessories').on(
+    'change select2:select select2:unselect',
+    updateAccessoriesAmount
+);
+
+$(document).ready(function () {
+
+    updateAccessoriesAmount();
+
+});
+
+$('#coating').on('change', function () {
+
+    if ($(this).val() === '' || $(this).val() === 'No Coating') {
+
+        $('#coating_price')
+            .val('')
+            .prop('disabled', true);
+
+    } else {
+
+        $('#coating_price')
+            .prop('disabled', false)
+            .focus();
+
+    }
+
+});
+
+// Page load par bhi apply ho jaye
+$('#coating').trigger('change');
+
+$('#shield').on('change', function () {
+
+    if ($(this).val() === '' || $(this).val() === 'No Shield') {
+
+        $('#shield_price')
+            .val('')
+            .prop('disabled', true);
+
+    } else {
+
+        $('#shield_price')
+            .prop('disabled', false)
+            .focus();
+
+    }
+
+});
+
+// Initial state
+$('#shield').trigger('change');
+
+$('#rsa').on('change', function () {
+
+    if ($(this).val() === '' || $(this).val() === 'No RSA') {
+
+        $('#rsa_amount')
+            .val('')
+            .prop('disabled', true);
+
+    } else {
+
+        $('#rsa_amount')
+            .prop('disabled', false)
+            .focus();
+
+    }
+
+});
+
+// Initial state
+$('#rsa').trigger('change');
+
+$('#charger_swapping').on('change', function () {
+
+    if ($(this).val() === '' || $(this).val() === 'Not Applicable') {
+
+        $('#charger_swapping_amount')
+            .val('')
+            .prop('disabled', true);
+
+    } else {
+
+        $('#charger_swapping_amount')
+            .prop('disabled', false)
+            .focus();
+
+    }
+
+});
+
+// Initial state
+$('#charger_swapping').trigger('change');
+$('#charger_swapping').on('change', function () {
+
+    const enabled = $(this).val() !== '' &&
+                    $(this).val() !== 'Not Applicable';
+
+    $('#charger_swapping_amount')
+        .prop('disabled', !enabled);
+
+    $('#charger_swapping_discount')
+        .prop('disabled', !enabled);
+
+    if (!enabled) {
+        $('#charger_swapping_amount').val('');
+        $('#charger_swapping_discount').val('');
+    }
+
+});
+
+$('#charger_swapping').trigger('change');
+
+function num(id) {
+    return parseFloat($('#' + id).val()) || 0;
+}
+
+function calculateQuotation() {
+
+    // Total Receivable
+    let totalReceivable =
+        num('ex_showroom_price') +
+        num('accessories_amount') +
+        num('maxicare') +
+        num('vltd_device') +
+        num('coating_price') +
+        num('ppf') +
+        num('rto_yellow_tape') +
+        num('kazam_charging_kit') +
+        num('incidental_charges') +
+        num('shield_price') +
+        num('rsa_amount') +
+        num('fastag') +
+        num('cod_charges') +
+        num('charger_swapping_amount') +
+        num('tcs');
+
+    $('#total_receivable').val(totalReceivable.toFixed(2));
+$('#total_receivable_display').val(totalReceivable.toFixed(2));
+
+    // Total Discount
+    let totalDiscount =
+        num('oem_scheme_discount') +
+        num('fame_subsidy') +
+        num('exchange_bonus') +
+        num('corporate_discount') +
+        num('accessories_discount') +
+        num('ceramic_discount') +
+        num('ppf_discount') +
+        num('dealer_discount') +
+        num('charger_swapping_discount');
+
+    $('#total_discount').val(totalDiscount.toFixed(2));
+$('#total_discount_display').val(totalDiscount.toFixed(2));
+
+    // Net Receivable
+    let netReceivable = totalReceivable - totalDiscount;
+
+    $('#net_receivable_summary').val(netReceivable.toFixed(2));
+}
+
+// Recalculate whenever any input changes
+$(document).on(
+    'keyup change',
+    '#ex_showroom_price,' +
+    '#accessories_amount,' +
+    '#maxicare,' +
+    '#vltd_device,' +
+    '#coating_price,' +
+    '#ppf,' +
+    '#rto_yellow_tape,' +
+    '#kazam_charging_kit,' +
+    '#incidental_charges,' +
+    '#shield_price,' +
+    '#rsa_amount,' +
+    '#fastag,' +
+    '#cod_charges,' +
+    '#charger_swapping_amount,' +
+    '#tcs,' +
+    '#oem_scheme_discount,' +
+    '#fame_subsidy,' +
+    '#exchange_bonus,' +
+    '#corporate_discount,' +
+    '#accessories_discount,' +
+    '#ceramic_discount,' +
+    '#ppf_discount,' +
+    '#dealer_discount,' +
+    '#charger_swapping_discount',
+    calculateQuotation
+);
+
+// Accessories selection change
+$('#accessories').on('change', function () {
+    updateAccessoriesAmount();
+    calculateQuotation();
+});
+
+// Initial calculation
+$(document).ready(function () {
+    calculateQuotation();
+});
+$(document).ready(function () {
+
+    $('#accessories').select2({
+
+        placeholder: 'Select Accessories',
+
+        width: '100%',
+
+        closeOnSelect: false
+
+    });
+
+});
+
+// Segment -> Model
+
+
+
+// Model -> Variant
+
+
+
+
+
+function toggleLMMFields() {
+
+    let isLMM = "{{ optional($selectedEnquiry)->segment_code }}" === "LMM";
+
+    const fields = [
+        '#kazam_charging_kit',
+        '#incidental_charges',
+        '#charger_swapping',
+        '#fame_subsidy'
+    ];
+
+    fields.forEach(function (field) {
+
+        $(field).prop('disabled', !isLMM);
+
+        if (!isLMM) {
+            $(field).val('');
+        }
+
+    });
+
+    // Charger Swapping Amount
+    if (!isLMM) {
+
+        $('#charger_swapping_amount').val('').prop('disabled', true);
+
+        $('#charger_swapping_discount').val('').prop('disabled', true);
+
+    } else {
+
+        $('#charger_swapping').trigger('change');
+
+    }
+
+    calculateQuotation();
+}
+$(document).ready(function () {
+
+    toggleLMMFields();
+
+});
+
+</script>
+@endpush
