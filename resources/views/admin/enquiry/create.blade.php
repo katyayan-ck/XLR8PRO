@@ -346,21 +346,27 @@
                                             <div class="form-control bg-white h-auto border-0 d-flex justify-content-center align-items-center" style="min-height: 38px;">
                                                 @if(isset($row['manual_mismatch']))
                                                     {{-- Manual Checkbox Logic --}}
-                                                    <input class="form-check-input border-secondary cursor-pointer m-0"
-                                                        type="checkbox" name="{{ $row['manual_mismatch'] }}" value="1"
-                                                        style="width: 1.2rem; height: 1.2rem;">
-                                                    <label class="form-check-label ms-2 mb-0">Mismatch</label>
+                                                    <div class="d-flex align-items-center">
+                                                        <input class="form-check-input border-secondary cursor-pointer m-0"
+                                                            type="checkbox" name="{{ $row['manual_mismatch'] }}" value="1"
+                                                            style="width: 1.1rem; height: 1.1rem;">
+                                                        <label class="form-check-label ms-2 mb-0 fw-bold text-secondary" style="font-size: 0.9rem; cursor: pointer;">Mismatch</label>
+                                                    </div>
                                                 @elseif(isset($row['skip_comparison']) && $row['skip_comparison'])
-                                                    {{-- Bypass Match/Mismatch completely for Enquiry No --}}
-                                                    <span class="text-secondary fw-bold fs-5">—</span>
+                                                    {{-- Bypass Match/Mismatch completely --}}
+                                                    <span class="text-secondary fw-bold" style="font-size: 1rem;">—</span>
                                                 @else
                                                     {{-- Automatic Comparison Logic --}}
                                                     @if($bothEmpty)
-                                                        <span class="text-secondary fw-bold fs-5">—</span>
+                                                        <span class="text-secondary fw-bold" style="font-size: 1rem;">—</span>
                                                     @elseif($isAutoMismatch)
-                                                        <span class="text-danger fw-bold"><i class="la la-times-circle"></i> Mismatch</span>
+                                                        <span class="text-danger fw-bold d-flex align-items-center" style="font-size: 0.9rem;">
+                                                            <i class="la la-times-circle me-1" style="font-size: 1.2rem;"></i> Mismatch
+                                                        </span>
                                                     @else
-                                                        <span class="text-success fw-bold"><i class="la la-check-circle"></i> Match</span>
+                                                        <span class="text-success fw-bold d-flex align-items-center" style="font-size: 0.9rem;">
+                                                            <i class="la la-check-circle me-1" style="font-size: 1.2rem;"></i> Match
+                                                        </span>
                                                     @endif
                                                 @endif
                                             </div>
@@ -551,6 +557,12 @@
                                             {{ $name }}</option>
                                     @endforeach
                                 </select>
+                            </div>
+
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">DMS Enquiry No. <small class="text-muted"></small></label>
+                                <input type="text" name="dms_enq_no" class="form-control"
+                                    value="{{ old('dms_enq_no', $enquiry->dms_enq_no ?? '') }}" placeholder="Enter DMS Enquiry No.">
                             </div>
 
                             <div class="row w-100 m-0 p-0 {{ $isReference ? 'd-flex' : 'd-none' }}" id="referenceFields">
@@ -1549,7 +1561,7 @@
                                             value="{{ isset($enquiry) && ($enquiry->x8_booking_date || $enquiry->booking_date) ? \Carbon\Carbon::parse($enquiry->x8_booking_date ?? $enquiry->booking_date)->format('d-M-Y') : '—' }}"
                                             readonly style="background-color: #e9ecef;"></div>
 
-                                    <div class="col-md-3 mb-3">
+                                    {{-- <div class="col-md-3 mb-3">
                                         <label class="form-label">Booking No.</label>
                                         <input type="text" name="booking_no" class="form-control"
                                             value="{{ old('booking_no', $enquiry?->booking_no ?? '') }}">
@@ -1558,12 +1570,13 @@
                                         <label class="form-label">OTF No.</label>
                                         <input type="text" name="otf_no" class="form-control"
                                             value="{{ old('otf_no', $enquiry?->otf_no ?? ($enquiry?->oem_otf_no ?? '')) }}">
-                                    </div>
-                                    <div class="col-md-3 mb-3">
+                                    </div> --}}
+
+                                    {{-- <div class="col-md-3 mb-3">
                                         <label class="form-label">DMS Enquiry No.</label>
                                         <input type="text" name="dms_enq_no" class="form-control"
                                             value="{{ old('dms_enq_no', $enquiry?->dms_enq_no ?? '') }}">
-                                    </div>
+                                    </div> --}}
 
                                     <div class="col-md-3 mb-3">
                                         <label class="form-label">Likely Purchase In Days </label>
