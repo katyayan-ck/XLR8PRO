@@ -565,6 +565,12 @@
                                     value="{{ old('dms_enq_no', $enquiry->dms_enq_no ?? '') }}" placeholder="Enter DMS Enquiry No.">
                             </div>
 
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Enquiry Origin</label>
+                                <input type="text" class="form-control"
+                                    value="{{ $enquiry->origin ?? 'Xceler8' }}" readonly style="background-color: #e9ecef;">
+                            </div>
+
                             <div class="row w-100 m-0 p-0 {{ $isReference ? 'd-flex' : 'd-none' }}" id="referenceFields">
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Referee Type <span class="text-danger">*</span></label>
@@ -1622,27 +1628,22 @@
                                                 @php
                                                     $isHidden = false;
                                                     if ($creFupCount > 4) {
-                                                        // Show 1st FUP (index 0) and last 3 FUPs. Hide the rest.
                                                         if ($index > 0 && $index < $creFupCount - 3) {
                                                             $isHidden = true;
                                                         }
                                                     }
                                                 @endphp
                                                 <tr class="{{ $isHidden ? 'hidden-cre-fup-row d-none' : '' }}">
-                                                    <td
-                                                        class="fw-bold align-middle table-secondary text-center px-3 text-dark">
-                                                        {{ ['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth'][$index] ?? $index + 1 . 'th' }}
-                                                        Fup
+                                                    <td class="fw-bold align-middle table-secondary text-center px-3 text-dark">
+                                                        {{ ['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth'][$index] ?? $index + 1 . 'th' }} Fup
                                                     </td>
                                                     <td>
-                                                        <div
-                                                            class="form-control bg-white h-auto border-0 text-nowrap text-center">
+                                                        <div class="form-control bg-white h-auto border-0 text-nowrap text-center">
                                                             {{ $cre?->cre_planned_fup_date ? \Carbon\Carbon::parse($cre->cre_planned_fup_date)->format('d-M-Y H:i') : '—' }}
                                                         </div>
                                                     </td>
                                                     <td>
-                                                        <div
-                                                            class="form-control bg-white h-auto border-0 text-nowrap text-center">
+                                                        <div class="form-control bg-white h-auto border-0 text-nowrap text-center">
                                                             {{ $cre?->cre_actual_fup_date ? \Carbon\Carbon::parse($cre->cre_actual_fup_date)->format('d-M-Y H:i') : '—' }}
                                                         </div>
                                                     </td>
@@ -1662,28 +1663,47 @@
                                                         </div>
                                                     </td>
                                                     <td>
-                                                        <div class="form-control bg-white h-auto border-0 text-wrap text-center"
-                                                            style="min-width: 150px;">{{ $cre?->cre_fup_remarks ?: '—' }}
+                                                        <div class="form-control bg-white h-auto border-0 text-wrap text-center" style="min-width: 150px;">
+                                                            {{ $cre?->cre_fup_remarks ?: '—' }}
                                                         </div>
                                                     </td>
                                                 </tr>
                                                 @if ($creFupCount > 4 && $index == 0)
                                                     <tr id="toggleCreFupsRow" style="background-color: #f8f9fa;">
                                                         <td colspan="7" class="text-center py-2">
-                                                            <button type="button"
-                                                                class="btn btn-sm btn-outline-secondary fw-bold shadow-sm"
-                                                                id="toggleCreFupsBtn">
-                                                                <i class="la la-angle-down"></i> Show
-                                                                {{ $creFupCount - 4 }} More FUPs
+                                                            <button type="button" class="btn btn-sm btn-outline-secondary fw-bold shadow-sm" id="toggleCreFupsBtn">
+                                                                <i class="la la-angle-down"></i> Show {{ $creFupCount - 4 }} More FUPs
                                                             </button>
                                                         </td>
                                                     </tr>
                                                 @endif
                                             @endforeach
+                                            
+                                            {{-- NEW DYNAMIC PENDING ROW --}}
+                                            @php
+                                                $lastCreFup = is_array($creFups) ? end($creFups) : $creFups->last();
+                                            @endphp
+                                            @if ($lastCreFup && $lastCreFup->cre_next_fup_date && !in_array(strtoupper($lastCreFup->cre_enq_stage), ['LOST', 'DROPPED']))
+                                                <tr>
+                                                    <td class="fw-bold align-middle table-secondary text-center px-3 text-dark">
+                                                        {{ ['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth'][$creFupCount] ?? ($creFupCount + 1) . 'th' }} Fup
+                                                    </td>
+                                                    <td>
+                                                        <div class="form-control bg-white h-auto border-0 text-nowrap text-center">
+                                                            {{ \Carbon\Carbon::parse($lastCreFup->cre_next_fup_date)->format('d-M-Y H:i') }}
+                                                        </div>
+                                                    </td>
+                                                    <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">—</div></td>
+                                                    <td><div class="form-control bg-white h-auto border-0 text-center text-dark">Open Follow Up</div></td>
+                                                    <td><div class="form-control bg-white h-auto border-0 text-center">—</div></td>
+                                                    <td><div class="form-control bg-white h-auto border-0 text-center">—</div></td>
+                                                    <td><div class="form-control bg-white h-auto border-0 text-center">—</div></td>
+                                                </tr>
+                                            @endif
+
                                         @else
                                             <tr>
-                                                <td colspan="7" class="text-muted py-3 bg-white text-center">No CRE
-                                                    Follow-up Data Found</td>
+                                                <td colspan="7" class="text-muted py-3 bg-white text-center">No CRE Follow-up Data Found</td>
                                             </tr>
                                         @endif
                                     </tbody>

@@ -65,20 +65,12 @@
                             <h3 class="mb-0 ms-3" style="color: #000 !important;">Customer Information</h3>
                             <div class="card-body">
                                 <div class="row">
-                                    <div class="col-md-4 mb-3">
-                                        <label class="form-label">Customer First Name <span
-                                                class="text-danger">*</span></label>
-                                        <input type="text" name="first_name" class="form-control" required>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Customer Name <span class="text-danger">*</span></label>
+                                        <input type="text" name="name" class="form-control" required>
                                     </div>
-                                    <div class="col-md-4 mb-3">
-                                        <label class="form-label">Customer Last Name <small
-                                                class="text-muted"></small></label>
-                                        <input type="text" name="last_name" class="form-control">
-                                    </div>
-                                    <div class="col-md-4 mb-3">
-                                        <label class="form-label">Customer Contact No. <span
-                                                class="text-danger">*</span></label>
-                                        <!-- Changed to text, strictly restricted to 10 numbers -->
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Customer Contact No. <span class="text-danger">*</span></label>
                                         <input type="text" id="mobile" name="mobile" class="form-control"
                                             maxlength="10"
                                             oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);" required>

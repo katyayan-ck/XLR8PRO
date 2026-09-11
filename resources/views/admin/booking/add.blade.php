@@ -1,1240 +1,1239 @@
 @php
 
-$q = $data['quotation']?->standard_data ?? [];
+    $q = $data['quotation']?->standard_data ?? [];
 
-$quotation = $data['quotation'] ?? null;
+    $quotation = $data['quotation'] ?? null;
 
-$enquiry = $quotation?->enquiry ?? ($data['enquiry'] ?? null);
+    $enquiry = $quotation?->enquiry ?? ($data['enquiry'] ?? null);
 
 @endphp
 @extends(backpack_view('blank'))
 
 
 @section('header')
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
-<link rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css">
 
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 @endsection
 
 
 
 @section('content')
-<div class="container-fluid">
-    <div class="page-header">
-        <div class="row align-items-end">
-            <div class="col-lg-6">
-                <div class="page-header-title">
-                    <i class="ik ik-car bg-blue"></i>
-                    <h1 class="fw-bold mb-0">Add New Booking</h1>
+    <div class="container-fluid">
+        <div class="page-header">
+            <div class="row align-items-end">
+                <div class="col-lg-6">
+                    <div class="page-header-title">
+                        <i class="ik ik-car bg-blue"></i>
+                        <h1 class="fw-bold mb-0">Add New Booking</h1>
+                    </div>
+                </div>
+                <div class="col-lg-6 text-end">
+                    <nav class="breadcrumb-container" aria-label="breadcrumb">
+                        <ol class="breadcrumb justify-content-end">
+                            <li class="breadcrumb-item">
+                                <a href="{{ backpack_url('dashboard') }}">
+                                    <i class="ik ik-home"></i> Home
+                                </a>
+                            </li>
+                            <li class="breadcrumb-item active">Add New Booking</li>
+                        </ol>
+                    </nav>
                 </div>
             </div>
-            <div class="col-lg-6 text-end">
-                <nav class="breadcrumb-container" aria-label="breadcrumb">
-                    <ol class="breadcrumb justify-content-end">
-                        <li class="breadcrumb-item">
-                            <a href="{{ backpack_url('dashboard') }}">
-                                <i class="ik ik-home"></i> Home
-                            </a>
-                        </li>
-                        <li class="breadcrumb-item active">Add New Booking</li>
-                    </ol>
-                </nav>
-            </div>
         </div>
-    </div>
 
-    <div class="row">
-        @include(backpack_view('inc.alerts'))
+        <div class="row">
+            @include(backpack_view('inc.alerts'))
 
-        <div class="col-md-12">
-            <form id="bookingForm" class="forms-sample" method="POST" action="{{ backpack_url('booking') }}"
-                enctype="multipart/form-data">
-                @csrf
+            <div class="col-md-12">
+                <form id="bookingForm" class="forms-sample" method="POST" action="{{ backpack_url('booking') }}"
+                    enctype="multipart/form-data">
+                    @csrf
 
-                @if ($quotation)
-                <input type="hidden" name="quotation_no" value="{{ $quotation->quotation_no }}">
-                @endif
+                    @if ($quotation)
+                        <input type="hidden" name="quotation_no" value="{{ $quotation->quotation_no }}">
+                    @endif
 
-                @if ($enquiry)
-                <input type="hidden" name="enquiry_no" value="{{ $enquiry->enquiry_no }}">
-                @endif
+                    @if ($enquiry)
+                        <input type="hidden" name="enquiry_no" value="{{ $enquiry->enquiry_no }}">
+                    @endif
 
-                <div class="card p-3">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h2 class="mb-0">Payment Details</h2>
+                    <div class="card p-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h2 class="mb-0">Payment Details</h2>
 
-                            @if ($quotation)
-                                <div class="d-flex align-items-center gap-2">
-                                    <label for="quotation" class="mb-0">Quotation:</label>
+                                @if ($quotation)
+                                    <div class="d-flex align-items-center gap-2">
+                                        <label for="quotation" class="mb-0">Quotation:</label>
 
-                                    <a href="{{ backpack_url('quotation/' . $quotation->quotation_no . '/preview') }}"
-                                        target="_blank"
-                                        class="btn btn-info">
-                                        <i class="ik ik-file-text mr-2"></i> View Quotation PDF
-                                    </a>
-                                </div>
-                            @endif
-                        </div>
-                        <div class="row">
-                            <div class="col-sm-2">
-                                <div class="form-group">
-                                    <label for="customertype">Customer Type <span class="required-mark">*</span></label>
-                                    <select name="customertype" id="customertype" class="form-control form-select"
-                                        required>
-                                        <option value="Actual" selected>Actual</option>
-                                        <option value="Dummy">Dummy</option>
-                                    </select>
-                                </div>
+                                        <a href="{{ backpack_url('quotation/' . $quotation->quotation_no . '/preview') }}"
+                                            target="_blank" class="btn btn-info">
+                                            <i class="ik ik-file-text mr-2"></i> View Quotation PDF
+                                        </a>
+                                    </div>
+                                @endif
                             </div>
-
-                            <div class="col-sm-2">
-                                <div class="form-group">
-                                    <label for="customercat">Customer Category <span
-                                            class="required-mark">*</span></label>
-                                    <select name="customercat" id="customercat" class="form-control form-select"
-                                        required>
-                                        <option value="Individual" selected>Individual</option>
-                                        <option value="CSD">CSD</option>
-                                        <option value="Firm">Firm</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="col-sm-2">
-                                <div class="form-group">
-                                    <label for="bookingdate">Booking Date <span class="required-mark">*</span></label>
-                                    <input type="text" name="bookingdate" id="bookingdate"
-                                        class="form-control flatpickr" placeholder="dd-mmm-yyyy" required>
-                                    <input type="hidden" name="hiddenbookingdate" id="hiddenbookingdate">
-                                </div>
-                            </div>
-
-                            <div class="col-sm-3">
-                                <div class="form-group">
-                                    <label for="coltype">Collection Type <span class="required-mark">*</span></label>
-                                    <select name="coltype" id="coltype" class="form-control form-select" required>
-                                        <option value="" disabled selected>-- Select Collection Type --</option>
-                                        <option value="1">Receipt</option>
-                                        <option value="2">Field Collection By Sales Team</option>
-                                        <option value="3">Field Collection By DSA</option>
-                                        <option value="4">Used Car Purchase</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="col-12 col-md-6 col-lg-3">
-                                <div class="form-group">
-                                    <label for="user">
-                                        Collected By <span class="required-mark" style="display:none">*</span>
-                                    </label>
-
-                                    <select name="user" id="user" class="form-control form-select w-100" disabled>
-                                        <option value="">Please Select...</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="col-sm-2">
-                                <div class="form-group">
-                                    <label for="bookingamount">Booking Amount <span
-                                            class="required-mark">*</span></label>
-                                    <input type="text" name="bookingamount" id="bookingamount" class="form-control"
-                                        required>
-                                </div>
-                            </div>
-
-                            <div class="col-sm-2">
-                                <div class="form-group" id="receiptvouchergroup">
-                                    <label id="receiptvoucherlabel">Receipt No. <span
-                                            class="required-mark">*</span></label>
-                                    <input type="text" name="receiptvoucherno" id="receiptvoucherinput"
-                                        class="form-control" required placeholder="12345">
-                                    <div id="receiptvoucherwarning" class="text-danger" style="display: none;">Number
-                                        already exists</div>
-                                </div>
-                            </div>
-
-                            <div class="col-sm-2">
-                                <div class="form-group">
-                                    <label for="receiptdate">Receipt Date <span class="required-mark">*</span></label>
-                                    <input type="text" name="receiptdate" id="receiptdate"
-                                        class="form-control flatpickr" placeholder="dd-mmm-yyyy" required>
-                                    <input type="hidden" name="hiddenreceiptdate" id="hiddenreceiptdate">
-                                </div>
-                            </div>
-
-                            <div class="col-sm-2">
-                                <div class="form-group">
-                                    <label for="mode">
-                                        Mode <span class="required-mark">*</span>
-                                    </label>
-
-                                    <select name="mode" id="mode" class="form-control form-select" required>
-                                        <option value="" disabled selected>-- Select Mode --</option>
-                                        <option value="Cash">Cash</option>
-                                        <option value="Cheque">Cheque</option>
-                                        <option value="Bank Transfer">Bank Transfer</option>
-                                        <option value="UPI">UPI</option>
-                                    </select>
-                                </div>
-                            </div>
-
-
-                            <div class="col-sm-3">
-                                <div class="form-group">
-                                    <label for="fdoc">Upload Image or PDF <span class="required-mark">*</span></label>
-                                    <input type="file" name="amountproof" id="proofInput" class="form-control"
-                                        accept=".pdf,.jpg,.jpeg,.png" required>
-
-                                    <div id="proofPreview" class="mt-3"></div>
+                            <div class="row">
+                                <div class="col-sm-2">
+                                    <div class="form-group">
+                                        <label for="customertype">Customer Type <span class="required-mark">*</span></label>
+                                        <select name="customertype" id="customertype" class="form-control form-select"
+                                            required>
+                                            <option value="Actual" selected>Actual</option>
+                                            <option value="Dummy">Dummy</option>
+                                        </select>
+                                    </div>
                                 </div>
 
+                                <div class="col-sm-2">
+                                    <div class="form-group">
+                                        <label for="customercat">Customer Category <span
+                                                class="required-mark">*</span></label>
+                                        <select name="customercat" id="customercat" class="form-control form-select"
+                                            required>
+                                            <option value="Individual" selected>Individual</option>
+                                            <option value="CSD">CSD</option>
+                                            <option value="Firm">Firm</option>
+                                        </select>
+                                    </div>
+                                </div>
 
+                                <div class="col-sm-2">
+                                    <div class="form-group">
+                                        <label for="bookingdate">Booking Date <span class="required-mark">*</span></label>
+                                        <input type="text" name="bookingdate" id="bookingdate"
+                                            class="form-control flatpickr" placeholder="dd-mmm-yyyy" required>
+                                        <input type="hidden" name="hiddenbookingdate" id="hiddenbookingdate">
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-3">
+                                    <div class="form-group">
+                                        <label for="coltype">Collection Type <span class="required-mark">*</span></label>
+                                        <select name="coltype" id="coltype" class="form-control form-select" required>
+                                            <option value="" disabled selected>-- Select Collection Type --</option>
+                                            <option value="1">Receipt</option>
+                                            <option value="2">Field Collection By Sales Team</option>
+                                            <option value="3">Field Collection By DSA</option>
+                                            <option value="4">Used Car Purchase</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-12 col-md-6 col-lg-3">
+                                    <div class="form-group">
+                                        <label for="user">
+                                            Collected By <span class="required-mark" style="display:none">*</span>
+                                        </label>
+
+                                        <select name="user" id="user" class="form-control form-select w-100"
+                                            disabled>
+                                            <option value="">Please Select...</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-2">
+                                    <div class="form-group">
+                                        <label for="bookingamount">Booking Amount <span
+                                                class="required-mark">*</span></label>
+                                        <input type="text" name="bookingamount" id="bookingamount"
+                                            class="form-control" required>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-2">
+                                    <div class="form-group" id="receiptvouchergroup">
+                                        <label id="receiptvoucherlabel">Receipt No. <span
+                                                class="required-mark">*</span></label>
+                                        <input type="text" name="receiptvoucherno" id="receiptvoucherinput"
+                                            class="form-control" required placeholder="12345">
+                                        <div id="receiptvoucherwarning" class="text-danger" style="display: none;">Number
+                                            already exists</div>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-2">
+                                    <div class="form-group">
+                                        <label for="receiptdate">Receipt Date <span class="required-mark">*</span></label>
+                                        <input type="text" name="receiptdate" id="receiptdate"
+                                            class="form-control flatpickr" placeholder="dd-mmm-yyyy" required>
+                                        <input type="hidden" name="hiddenreceiptdate" id="hiddenreceiptdate">
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-2">
+                                    <div class="form-group">
+                                        <label for="mode">
+                                            Mode <span class="required-mark">*</span>
+                                        </label>
+
+                                        <select name="mode" id="mode" class="form-control form-select" required>
+                                            <option value="" disabled selected>-- Select Mode --</option>
+                                            <option value="Cash">Cash</option>
+                                            <option value="Cheque">Cheque</option>
+                                            <option value="Bank Transfer">Bank Transfer</option>
+                                            <option value="UPI">UPI</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+
+                                <div class="col-sm-3">
+                                    <div class="form-group">
+                                        <label for="fdoc">Upload Image or PDF <span
+                                                class="required-mark">*</span></label>
+                                        <input type="file" name="amountproof" id="proofInput" class="form-control"
+                                            accept=".pdf,.jpg,.jpeg,.png" required>
+
+                                        <div id="proofPreview" class="mt-3"></div>
+                                    </div>
+
+
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="card p-3 mt-3">
-                    <div class="card-body">
-                        <h2 class="mb-3">Customer Details</h2>
-                        <div class="row">
-                            <!-- Customer Name -->
-                            <div class="col-sm-3">
-                                <div class="form-group">
-                                    <label id="customernamelabel" for="name">Customer Name <span
-                                            class="required-mark">*</span></label>
-                                    <input type="text" name="name" id="name" class="form-control" required value="{{ old('name', 
-                                        $enquiry ? trim($enquiry->first_name . ' ' . $enquiry->last_name) : 
-                                        ($q['customer_name'] ?? '')
-                                    ) }}">
+                    <div class="card p-3 mt-3">
+                        <div class="card-body">
+                            <h2 class="mb-3">Customer Details</h2>
+                            <div class="row">
+                                <!-- Customer Name -->
+                                <div class="col-sm-3">
+                                    <div class="form-group">
+                                        <label id="customernamelabel" for="name">Customer Name <span
+                                                class="required-mark">*</span></label>
+                                        <input type="text" name="name" id="name" class="form-control"
+                                            required value="{{ old('name', $enquiry->name ?? ($q['name'] ?? '')) }}">
+                                    </div>
                                 </div>
-                            </div>
 
-                            <!-- Care Of -->
-                            <div class="col-sm-3">
-                                <div class="form-group">
-                                    <label for="careof">Care Of <span class="required-mark">*</span></label>
-                                    <select name="careof" id="careof" class="form-control form-select" required>
-                                        <option value="">Please Select...</option>
-                                        <option value="1" {{ (old('careof', $q['careof'] ?? '' )==1) ? 'selected' : ''
-                                            }}>Son of</option>
-                                        <option value="2" {{ (old('careof', $q['careof'] ?? '' )==2) ? 'selected' : ''
-                                            }}>Daughter of</option>
-                                        <option value="3" {{ (old('careof', $q['careof'] ?? '' )==3) ? 'selected' : ''
-                                            }}>Married to</option>
-                                        <option value="4" {{ (old('careof', $q['careof'] ?? '' )==4) ? 'selected' : ''
-                                            }}>Guardian Name</option>
-                                        <option value="5" id="ownedByOption" style="display: none;">Owned By</option>
+                                <!-- Care Of -->
+                                <div class="col-sm-3">
+                                    <div class="form-group">
+                                        <label for="careof">Care Of <span class="required-mark">*</span></label>
+                                        <select name="careof" id="careof" class="form-control form-select" required>
+                                            <option value="">Please Select...</option>
+                                            <option value="1"
+                                                {{ old('careof', $enquiry->care_of_type ?? ($q['care_of_type'] ?? '')) == 1 ? 'selected' : '' }}>
+                                                Son of</option>
+                                            <option value="2"
+                                                {{ old('careof', $enquiry->care_of_type ?? ($q['care_of_type'] ?? '')) == 2 ? 'selected' : '' }}>
+                                                Daughter of</option>
+                                            <option value="3"
+                                                {{ old('careof', $enquiry->care_of_type ?? ($q['care_of_type'] ?? '')) == 3 ? 'selected' : '' }}>
+                                                Married to</option>
+                                            <option value="4"
+                                                {{ old('careof', $enquiry->care_of_type ?? ($q['care_of_type'] ?? '')) == 4 ? 'selected' : '' }}>
+                                                Guardian Name</option>
+                                            <option value="5" id="ownedByOption" style="display: none;">Owned By
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Care Of Name -->
+                                <div class="col-sm-3">
+                                    <div class="form-group">
+                                        <label id="careofnamelabel">Care Of Name <span
+                                                class="required-mark">*</span></label>
+                                        <input type="text" name="careofname" id="careofname"
+                                            class="form-control uppercase"
+                                            value="{{ old('careofname', $enquiry->care_of ?? ($q['care_of'] ?? '')) }}"
+                                            required>
+                                    </div>
+                                </div>
+
+                                <!-- Mobile -->
+                                <div class="col-sm-3">
+                                    <div class="form-group">
+                                        <label for="mobile">Contact No. <span class="required-mark">*</span></label>
+                                        <input type="text" name="mobile" id="mobile" class="form-control"
+                                            required maxlength="10"
+                                            value="{{ old('mobile', $enquiry->mobile ?? ($q['mobile'] ?? '')) }}">
+                                    </div>
+                                </div>
+
+                                <!-- Alternate Mobile -->
+                                <div class="col-sm-4">
+                                    <div class="form-group">
+                                        <label for="altmobile">Alternate Contact No.</label>
+                                        <input type="text" name="altmobile" id="altmobile" class="form-control"
+                                            value="{{ old('altmobile', $enquiry->alternate_mobile ?? ($q['alt_mobile'] ?? '')) }}">
+                                    </div>
+                                </div>
+
+                                <!-- Gender -->
+                                <div class="col-sm-4">
+                                    <div class="form-group">
+                                        <label for="gender">Gender <span class="required-mark">*</span></label>
+                                        <select name="gender" id="gender" class="form-control form-select" required>
+                                            <option value="Male"
+                                                {{ old('gender', $enquiry->gender ?? ($q['gender'] ?? '')) == 'Male' ? 'selected' : '' }}>
+                                                Male</option>
+                                            <option value="Female"
+                                                {{ old('gender', $enquiry->gender ?? ($q['gender'] ?? '')) == 'Female' ? 'selected' : '' }}>
+                                                Female</option>
+                                            <option value="Transgender"
+                                                {{ old('gender', $enquiry->gender ?? ($q['gender'] ?? '')) == 'Transgender' ? 'selected' : '' }}>
+                                                Transgender</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Occupation -->
+                                <div class="col-sm-4">
+                                    <div class="form-group">
+                                        <label for="occupation">Occupation <span class="required-mark">*</span></label>
+                                        <select name="occupation" id="occupation" class="form-control form-select"
+                                            required>
+                                            <option value="" disabled
+                                                {{ empty($enquiry->occupation_type) && empty($q['occ']) ? 'selected' : '' }}>
+                                                -- Select Occupation --</option>
+                                            @php $occ = old('occupation', $enquiry->occupation_type ?? ($q['occ'] ?? '')); @endphp
+                                            <option value="Agriculture" {{ $occ == 'Agriculture' ? 'selected' : '' }}>
+                                                Agriculture</option>
+                                            <option value="Business" {{ $occ == 'Business' ? 'selected' : '' }}>Business
+                                            </option>
+                                            <option value="Salaried (Govt.)"
+                                                {{ $occ == 'Salaried (Govt.)' ? 'selected' : '' }}>Salaried (Govt.)</option>
+                                            <option value="Salaried (Pvt.)"
+                                                {{ $occ == 'Salaried (Pvt.)' ? 'selected' : '' }}>Salaried (Pvt.)</option>
+                                            <option value="Self Employed (Professional)"
+                                                {{ $occ == 'Self Employed (Professional)' ? 'selected' : '' }}>Self Employed
+                                                (Professional)</option>
+                                            <option value="Pensioner" {{ $occ == 'Pensioner' ? 'selected' : '' }}>Pensioner
+                                            </option>
+                                            <option value="Other" {{ $occ == 'Other' ? 'selected' : '' }}>Other</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- PAN No -->
+                                <div class="col-sm-3">
+                                    <div class="form-group">
+                                        <label for="panno">PAN Card No.</label>
+                                        <input type="text" name="panno" id="panno" class="form-control"
+                                            value="{{ old('panno', $enquiry->pan_no ?? ($q['panno'] ?? '')) }}">
+                                    </div>
+                                </div>
+
+                                <!-- Aadhar No -->
+                                <div class="col-sm-3">
+                                    <div class="form-group">
+                                        <label for="adharno">Aadhar No.</label>
+                                        <input type="text" name="adharno" id="adharno" class="form-control"
+                                            value="{{ old('adharno', $enquiry->adhar_no ?? ($q['adharno'] ?? '')) }}">
+                                    </div>
+                                </div>
+
+                                <!-- GSTN -->
+                                <div class="col-sm-2">
+                                    <div class="form-group" id="gstn-group">
+                                        <label for="gstn">GSTN <span class="required-mark"
+                                                style="display: none;">*</span></label>
+                                        <input type="text" name="gstn" id="gstn" class="form-control"
+                                            placeholder="Enter GSTN No." disabled
+                                            value="{{ old('gstn', $enquiry->gstn ?? ($q['gstn'] ?? '')) }}">
+                                        <div class="form-check mt-2">
+                                            <input type="checkbox" id="notrequiredgst" name="notrequiredgst"
+                                                class="form-check-input" checked>
+                                            <label for="notrequiredgst" class="form-check-label">GST Unregistered</label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Customer D.O.B. -->
+                                <div class="col-sm-2">
+                                    <div class="form-group" id="dob-group">
+                                        <label for="customerdob">Customer D.O.B. <span
+                                                class="required-mark">*</span></label>
+                                        @php $dobVal = $enquiry->dob ?? ($q['c_dob'] ?? ''); @endphp
+                                        <input type="text" name="customerdob" id="customerdob" class="form-control"
+                                            placeholder="dd-mmm-yyyy" required
+                                            value="{{ old('customerdob', !empty($dobVal) ? \Carbon\Carbon::parse($dobVal)->format('d-M-Y') : '') }}">
+                                        <input type="hidden" name="hiddencustomerdob" id="hiddencustomerdob"
+                                            value="{{ old('hiddencustomerdob', $dobVal) }}">
+                                    </div>
+                                </div>
+
+                                <!-- Customer Age -->
+                                <div class="col-sm-2">
+                                    <div class="form-group" id="age-group">
+                                        <label for="customerage">Customer Age</label>
+                                        <input type="text" name="customerage" id="customerage" class="form-control"
+                                            readonly>
+                                    </div>
+                                </div>
+
+                                {{-- ================= CUSTOMER ADDRESS DETAILS ================= --}}
+                                <div class="col-md-2 mb-3">
+                                    <label class="form-label">
+                                        Pin Code <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" id="zipcode" name="pincode" maxlength="6"
+                                        class="form-control" value="{{ old('pincode', $enquiry->zipcode ?? '') }}"
+                                        required>
+                                </div>
+
+                                <div class="col-md-2 mb-3">
+                                    <label class="form-label">
+                                        VPO <span class="text-danger">*</span>
+                                    </label>
+
+                                    <select id="vpo_select" class="form-control form-select" required>
+                                        <option value="">Select VPO</option>
+                                    </select>
+
+                                    <input type="text" id="vpo_input" class="form-control mt-2 d-none"
+                                        placeholder="Enter VPO Manually" value="{{ old('vpo', $enquiry->vpo ?? '') }}">
+                                </div>
+
+                                <div class="col-md-2 mb-3">
+                                    <label class="form-label">
+                                        Tehsil <span class="text-danger">*</span>
+                                    </label>
+
+                                    <select id="tehsil_select" class="form-control form-select" required>
+                                        <option value="">Select Tehsil</option>
+                                    </select>
+
+                                    <input type="text" id="tehsil_input" class="form-control mt-2 d-none"
+                                        placeholder="Enter Tehsil Manually"
+                                        value="{{ old('customer_tehsil', $enquiry->tehsil ?? '') }}">
+                                </div>
+
+                                <div class="col-md-2 mb-3">
+                                    <label class="form-label">
+                                        District <span class="text-danger">*</span>
+                                    </label>
+
+                                    <select id="district_select" class="form-control form-select" required>
+                                        <option value="">Select District</option>
+                                    </select>
+
+                                    <input type="text" id="district_input" class="form-control mt-2 d-none"
+                                        placeholder="Enter District Manually"
+                                        value="{{ old('customer_district', $enquiry->district ?? '') }}">
+                                </div>
+
+                                <div class="col-md-2 mb-3">
+                                    <label class="form-label">
+                                        State <span class="text-danger">*</span>
+                                    </label>
+
+                                    <select id="state_select" class="form-control form-select" required>
+                                        <option value="">Select State</option>
+                                    </select>
+
+                                    <input type="text" id="state_input" class="form-control mt-2 d-none"
+                                        placeholder="Enter State Manually"
+                                        value="{{ old('city', $enquiry->city ?? '') }}">
+                                </div>
+
+                                <div class="col-md-2 mb-3">
+                                    <label class="form-label">
+                                        Territory <span class="text-danger">*</span>
+                                    </label>
+
+                                    <select id="territory" name="territory" class="form-control form-select" required>
+                                        <option value="">Select Territory</option>
+
+                                        <option value="OWN TERRITORY"
+                                            {{ old('territory', $enquiry->territory ?? '') == 'OWN TERRITORY' ? 'selected' : '' }}>
+                                            OWN TERRITORY
+                                        </option>
+
+                                        <option value="OTHER TERRITORY"
+                                            {{ old('territory', $enquiry->territory ?? '') == 'OTHER TERRITORY' ? 'selected' : '' }}>
+                                            OTHER TERRITORY
+                                        </option>
                                     </select>
                                 </div>
-                            </div>
 
-                            <!-- Care Of Name -->
-                            <div class="col-sm-3">
-                                <div class="form-group">
-                                    <label id="careofnamelabel">Care Of Name <span
-                                            class="required-mark">*</span></label>
-                                    <input type="text" name="careofname" id="careofname" class="form-control uppercase"
-                                        value="{{ old('careofname', $q['careofname'] ?? '') }}" required>
+
+                                <div class="col-sm-4">
+                                    <div class="form-group">
+                                        <label for="branch">Branch <span class="required-mark">*</span></label>
+                                        <select name="branch" id="branch" class="form-control form-select" required>
+                                            <option value="" disabled
+                                                {{ !isset($enquiry->dealer_branch) ? 'selected' : '' }}>-- Select Branch --
+                                            </option>
+                                            @foreach ($data['branches'] ?? [] as $branch)
+                                                <option value="{{ $branch->code }}"
+                                                    {{ old('branch', $enquiry->dealer_branch ?? '') == $branch->code ? 'selected' : '' }}>
+                                                    {{ $branch->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <!-- Mobile -->
-                            <div class="col-sm-3">
-                                <div class="form-group">
-                                    <label for="mobile">Contact No. <span class="required-mark">*</span></label>
-                                    <input type="text" name="mobile" id="mobile" class="form-control" required
-                                        maxlength="10" value="{{ old('mobile', 
-                                        $enquiry->mobile ?? 
-                                        ($q['customer_mobile'] ?? '')
-                                    ) }}">
+                                <div class="col-sm-4">
+                                    <div class="form-group">
+                                        <label for="location">Location <span class="required-mark">*</span></label>
+                                        <select name="location" id="location" class="form-control form-select" required
+                                            disabled>
+                                            <option value="" disabled selected>-- Select Location --</option>
+                                        </select>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div class="col-sm-4">
-                                <div class="form-group">
-                                    <label for="altmobile">Alternate Contact No.</label>
-                                    <input type="text" name="altmobile" id="altmobile" class="form-control"
-                                        value="{{ old('altmobile', $enquiry->alt_mobile ?? '') }}">
-                                </div>
-                            </div>
-
-                            <div class="col-sm-4">
-                                <div class="form-group">
-                                    <label for="gender">Gender <span class="required-mark">*</span></label>
-                                    <select name="gender" id="gender" class="form-control form-select" required>
-                                        <option value="Male" {{ old('gender', $enquiry->gender ?? '') == 'Male' ?
-                                            'selected' : '' }}>Male
-                                        </option>
-                                        <option value="Female" {{ old('gender', $enquiry->gender ?? '') == 'Female' ?
-                                            'selected' : '' }}>
-                                            Female</option>
-                                        <option value="Transgender" {{ old('gender', $enquiry->gender ?? '') ==
-                                            'Transgender' ? 'selected' : '' }}>
-                                            Transgender</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="col-sm-4">
-                                <div class="form-group">
-                                    <label for="occupation">Occupation <span class="required-mark">*</span></label>
-                                    <select name="occupation" id="occupation" class="form-control form-select" required>
-                                        <option value="" disabled {{ !isset($enquiry->occupation_type) ? 'selected' : ''
-                                            }}>-- Select
-                                            Occupation --</option>
-                                        @php $occ = old('occupation', $enquiry->occupation_type ?? ''); @endphp
-                                        <option value="Agriculture" {{ $occ=='Agriculture' ? 'selected' : '' }}>
-                                            Agriculture</option>
-                                        <option value="Business" {{ $occ=='Business' ? 'selected' : '' }}>Business
-                                        </option>
-                                        <option value="Salaried (Govt.)" {{ $occ=='Salaried (Govt.)' ? 'selected' : ''
-                                            }}>Salaried (Govt.)
-                                        </option>
-                                        <option value="Salaried (Pvt.)" {{ $occ=='Salaried (Pvt.)' ? 'selected' : '' }}>
-                                            Salaried (Pvt.)</option>
-                                        <option value="Self Employed (Professional)" {{
-                                            $occ=='Self Employed (Professional)' ? 'selected' : '' }}>Self
-                                            Employed (Professional)</option>
-                                        <option value="Pensioner" {{ $occ=='Pensioner' ? 'selected' : '' }}>
-                                            Pensioner</option>
-                                        <option value="Other" {{ $occ=='Other' ? 'selected' : '' }}>Other</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="col-sm-3">
-                                <div class="form-group">
-                                    <label for="panno">PAN Card No.</label>
-                                    <input type="text" name="panno" id="panno" class="form-control"
-                                        value="{{ old('panno', $enquiry->pan_no ?? '') }}">
-                                </div>
-                            </div>
-
-                            <div class="col-sm-3">
-                                <div class="form-group">
-                                    <label for="adharno">Aadhar No.</label>
-                                    <input type="text" name="adharno" id="adharno" class="form-control"
-                                        value="{{ old('adharno', $enquiry->adhar_no ?? '') }}">
-                                </div>
-                            </div>
-
-                            <div class="col-sm-2">
-                                <div class="form-group" id="gstn-group">
-                                    <label for="gstn">GSTN <span class="required-mark"
-                                            style="display: none;">*</span></label>
-                                    <input type="text" name="gstn" id="gstn" class="form-control"
-                                        placeholder="Enter GSTN No." disabled
-                                        value="{{ old('gstn', $enquiry->gstn ?? '') }}">
-                                    <div class="form-check mt-2">
-                                        <input type="checkbox" id="notrequiredgst" name="notrequiredgst"
-                                            class="form-check-input" checked>
-                                        <label for="notrequiredgst" class="form-check-label">GST
-                                            Unregistered</label>
+                                <div class="col-sm-4">
+                                    <div class="form-group" id="othloc">
+                                        <label for="locationother">Other Location <span class="required-mark"
+                                                style="display: none;">*</span></label>
+                                        <input type="text" name="locationother" id="locationother"
+                                            class="form-control" disabled>
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
 
-                            <div class="col-sm-2">
-                                <div class="form-group" id="dob-group">
-                                    <label for="customerdob">Customer D.O.B. <span
-                                            class="required-mark">*</span></label>
-                                    <input type="text" name="customerdob" id="customerdob" class="form-control"
-                                        placeholder="dd-mmm-yyyy" required
-                                        value="{{ old('customerdob', isset($enquiry->dob) ? \Carbon\Carbon::parse($enquiry->dob)->format('d-M-Y') : '') }}">
-                                    <input type="hidden" name="hiddencustomerdob" id="hiddencustomerdob"
-                                        value="{{ old('hiddencustomerdob', $enquiry->dob ?? '') }}">
+                    <div class="card p-3 mt-3">
+                        <div class="card-body">
+                            <h2 class="mb-3">Referred By Details</h2>
+                            <div class="row">
+                                <div class="col-sm-1">
+                                    <div class="form-group">
+                                        <label><input type="checkbox" id="referredby" name="referredby"> Referred
+                                            By</label>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-3">
+                                    <div class="form-group">
+                                        <label for="refcustomername">Customer Name <span class="required-mark"
+                                                style="display: none;">*</span></label>
+                                        <input type="text" name="refcustomername" id="refcustomername"
+                                            class="form-control" disabled>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-2">
+                                    <div class="form-group">
+                                        <label for="refmobileno">Mobile No. <span class="required-mark"
+                                                style="display: none;">*</span></label>
+                                        <input type="text" name="refmobileno" id="refmobileno" class="form-control"
+                                            disabled>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-2">
+                                    <div class="form-group">
+                                        <label for="refexistingmodel">Existing Model <span class="required-mark"
+                                                style="display: none;">*</span></label>
+                                        <input type="text" name="refexistingmodel" id="refexistingmodel"
+                                            class="form-control" disabled>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-2">
+                                    <div class="form-group">
+                                        <label for="refvariant">Variant <span class="required-mark"
+                                                style="display: none;">*</span></label>
+                                        <input type="text" name="refvariant" id="refvariant" class="form-control"
+                                            disabled>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-2">
+                                    <div class="form-group">
+                                        <label for="refchassisregno">Chassis No. / Regn. No. <span class="required-mark"
+                                                style="display: none;">*</span></label>
+                                        <input type="text" name="refchassisregno" id="refchassisregno"
+                                            class="form-control" disabled>
+                                    </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
 
-                            <div class="col-sm-2">
-                                <div class="form-group" id="age-group">
-                                    <label for="customerage">Customer Age</label>
-                                    <input type="text" name="customerage" id="customerage" class="form-control"
-                                        readonly>
+                    <div class="card p-3 mt-3">
+                        <div class="card-body">
+                            <h2 class="mb-3">Purchase Type Details</h2>
+                            <div class="row">
+                                <div class="col-sm-2">
+                                    <div class="form-group">
+                                        <label for="buyertype">Purchase Type <span class="required-mark">*</span></label>
+                                        <select name="buyertype" id="buyertype" class="form-control form-select"
+                                            required>
+                                            <option value="" disabled
+                                                {{ !isset($enquiry->purchase_type) ? 'selected' : '' }}>-- Select Purchase
+                                                Type --</option>
+                                            @php $ptype = old('buyertype', $enquiry->purchase_type ?? ''); @endphp
+                                            <option value="First Time Buy"
+                                                {{ in_array($ptype, [
+                                                    'First Time
+                                                                                            Buy',
+                                                    'First Time Buy',
+                                                ])
+                                                    ? 'selected'
+                                                    : '' }}>
+                                                First Time Buyer</option>
+                                            <option value="Additional Buy"
+                                                {{ $ptype == 'Additional Buy' ? 'selected' : '' }}>
+                                                Additional Buy</option>
+                                            <option value="Exchange Buy" {{ $ptype == 'Exchange Buy' ? 'selected' : '' }}>
+                                                Exchange Buy</option>
+                                            <option value="Scrappage" {{ $ptype == 'Scrappage' ? 'selected' : '' }}>
+                                                Scrappage</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-2">
+                                    <div class="form-group">
+                                        <label for="enummaster1">Brand Make 1 <span class="required-mark"
+                                                style="display: none;">*</span></label>
+                                        <select name="enummaster1" id="enummaster1" class="form-control form-select"
+                                            disabled>
+                                            <option value="" disabled selected>-- Select Brand Make 1 --</option>
+                                            @foreach ($data['enum_master'] ?? [] as $enum)
+                                                <option value="{{ $enum->code ?? ($enum['code'] ?? '') }}"
+                                                    {{ old('enummaster1', $enquiry->brand_make ?? '') == ($enum->code ?? ($enum['code'] ?? '')) ? 'selected' : '' }}>
+                                                    {{ $enum->value ?? ($enum['value'] ?? '') }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-sm-3">
+                                    <div class="form-group">
+                                        <label for="vehicledetails">Model Variant 1 <span class="required-mark"
+                                                style="display: none;">*</span></label>
+                                        <input type="text" name="vehicledetails" id="vehicledetails"
+                                            class="form-control" disabled
+                                            value="{{ old('vehicledetails', $enquiry->brand_model ?? '') }}">
+                                    </div>
+                                </div>
+
+
+
+
+                                <div class="col-sm-2">
+                                    <div class="form-group">
+                                        <label for="enummaster2">Brand Make 2</label>
+                                        <select name="enummaster2" id="enummaster2" class="form-control form-select"
+                                            disabled>
+                                            <option value="" disabled selected>-- Select Brand Make 2 --</option>
+                                            @foreach ($data['enum_master'] ?? [] as $enum)
+                                                <option value="{{ $enum->code ?? ($enum['code'] ?? '') }}">
+                                                    {{ $enum->value ?? ($enum['value'] ?? '') }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-3">
+                                    <div class="form-group">
+                                        <label for="vehicledetails2">Model Variant 2</label>
+                                        <input type="text" name="vehicledetails2" id="vehicledetails2"
+                                            class="form-control" disabled>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-4">
+                                    <div class="form-group">
+                                        <label for="registrationno">Vehicle Registration No. <span class="required-mark"
+                                                style="display: none;">*</span></label>
+                                        <input type="text" name="registrationno" id="registrationno"
+                                            class="form-control" disabled
+                                            value="{{ old('registrationno', $enquiry->vehicle_no ?? '') }}">
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-4">
+                                    <div class="form-group">
+                                        <label for="manufacturingyear">Vehicle Manufacturing Year <span
+                                                class="required-mark" style="display: none;">*</span></label>
+                                        <input type="number" name="manufacturingyear" id="manufacturingyear"
+                                            class="form-control" disabled
+                                            value="{{ old('manufacturingyear', $enquiry->make_year ?? '') }}">
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-4">
+                                    <div class="form-group">
+                                        <label for="odometerreading">Vehicle Odometer Reading <span class="required-mark"
+                                                style="display: none;">*</span></label>
+                                        <input type="text" name="odometerreading" id="odometerreading"
+                                            class="form-control" disabled
+                                            value="{{ old('odometerreading', $enquiry->odo_reading ?? '') }}">
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-3">
+                                    <div class="form-group">
+                                        <label for="expectedprice">Used Vehicle Expected Price <span class="required-mark"
+                                                style="display: none;">*</span></label>
+                                        <input type="number" name="expectedprice" id="expectedprice"
+                                            class="form-control" disabled
+                                            value="{{ old('expectedprice', $enquiry->expected_price ?? '') }}">
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-3">
+                                    <div class="form-group">
+                                        <label for="offeredprice">Used Vehicle Offered Price <span class="required-mark"
+                                                style="display: none;">*</span></label>
+                                        <input type="number" name="offeredprice" id="offeredprice" class="form-control"
+                                            disabled value="{{ old('offeredprice', $enquiry->offered_price ?? '') }}">
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-3">
+                                    <div class="form-group">
+                                        <label for="exchangebonus">New Vehicle Exchange Bonus <span class="required-mark"
+                                                style="display: none;">*</span></label>
+                                        <input type="number" name="exchangebonus" id="exchangebonus"
+                                            class="form-control" disabled
+                                            value="{{ old('exchangebonus', $enquiry->exchange_bonus ?? '') }}">
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-3">
+                                    <div class="form-group">
+                                        <label for="difference">Price Gap</label>
+                                        <input type="text" id="difference" class="form-control" disabled
+                                            value="{{ ($enquiry->expected_price ?? 0) - ($enquiry->offered_price ?? 0) - ($enquiry->exchange_bonus ?? 0) }}">
+                                    </div>
                                 </div>
                             </div>
+                        </div>
 
-                            {{-- ================= CUSTOMER ADDRESS DETAILS ================= --}}
-                            <div class="col-md-2 mb-3">
-                                <label class="form-label">
-                                    Pin Code <span class="text-danger">*</span>
-                                </label>
-                                <input type="text"
-                                    id="zipcode"
-                                    name="pincode"
-                                    maxlength="6"
-                                    class="form-control"
-                                    value="{{ old('pincode', $enquiry->zipcode ?? '') }}"
+                    </div>
+            </div>
+
+            <div class="card p-3 mt-3">
+                <div class="card-body">
+                    <h2 class="mb-3">Vehicle Details</h2>
+                    <div class="row">
+                        <!-- Segment -->
+                        <div class="col-sm-3">
+                            <div class="form-group">
+                                <label for="segment">Segment <span class="required-mark">*</span></label>
+                                <select name="segment" id="segment" class="form-control form-select" required>
+                                    <option value="">Please Select Segment...</option>
+                                    @foreach ($data['segments'] ?? [] as $segment)
+                                        <option value="{{ $segment->code }}"
+                                            {{ old('segment', $q['segment_code'] ?? ($enquiry->segment_code ?? '')) == $segment->code ? 'selected' : '' }}>
+                                            {{ $segment->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Model -->
+                        <div class="col-sm-3">
+                            <div class="form-group">
+                                <label for="model">Model <span class="required-mark">*</span></label>
+                                <select name="model" id="model" class="form-control form-select" required>
+                                    <option value="">Please Select Model...</option>
+                                    @foreach ($data['models'] ?? [] as $model)
+                                        <option value="{{ $model->code }}"
+                                            {{ old('model', $q['model_code'] ?? ($enquiry->model_code ?? '')) == $model->code ? 'selected' : '' }}>
+                                            {{ $model->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Variant -->
+                        <div class="col-sm-3">
+                            <div class="form-group">
+                                <label for="variant">Variant <span class="required-mark">*</span></label>
+                                <select name="variant" id="variant" class="form-control form-select" required>
+                                    <option value="">Please Select Variant...</option>
+                                    @foreach ($data['variants'] ?? [] as $variant)
+                                        <option value="{{ $variant->code }}"
+                                            {{ old('variant', $q['variant_code'] ?? ($enquiry->variant_code ?? '')) == $variant->code ? 'selected' : '' }}
+                                            data-seating="{{ $variant->seating_capacity ?? 0 }}">
+                                            {{ $variant->display_name ?? ($variant->name ?? $variant->code) }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Color -->
+                        <div class="col-sm-3">
+                            <div class="form-group">
+                                <label for="color">Color <span class="required-mark">*</span></label>
+                                <select name="color" id="color" class="form-control form-select" required>
+                                    <option value="">Please Select Color...</option>
+                                    @foreach ($data['colors'] ?? [] as $color)
+                                        <option value="{{ $color->code }}"
+                                            {{ old('color', $q['color_code'] ?? ($enquiry->color_code ?? '')) == $color->code ? 'selected' : '' }}>
+                                            {{ $color->name ?? $color->code }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <input type="hidden" id="vhid" name="vhid">
+                            </div>
+                        </div>
+
+                        <!-- Seating -->
+                        <div class="col-sm-2">
+                            <div class="form-group">
+                                <label for="seating">Seating</label>
+                                <input type="text" name="seating" id="seating" class="form-control"
+                                    value="{{ old('seating', $q['seating'] ?? ($quotation?->variant?->seating_capacity ?? ($enquiry->seating ?? 0))) }}">
+                            </div>
+                        </div>
+
+
+
+                        <!-- Accessories -->
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label>Select Accessories</label>
+                                <select name="accessories[]" id="accessories" class="form-select" multiple>
+                                    @php
+                                        $selectedAccessories = $q['accessories'] ?? [];
+                                        if (!is_array($selectedAccessories)) {
+                                            $selectedAccessories = explode(',', $selectedAccessories);
+                                        }
+                                    @endphp
+                                    @foreach ($data['accessories_dropdown'] ?? [] as $accessory)
+                                        <option value="{{ $accessory['part_no'] ?? ($accessory->part_no ?? '') }}"
+                                            data-price="{{ $accessory['ndp'] ?? ($accessory->ndp ?? 0) }}"
+                                            {{ in_array($accessory['part_no'] ?? ($accessory->part_no ?? ''), $selectedAccessories) ? 'selected' : '' }}>
+                                            {{ $accessory['item'] ?? ($accessory->item ?? '') }}
+                                            (₹{{ number_format($accessory['ndp'] ?? ($accessory->ndp ?? 0), 2) }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Accessories Amount -->
+                        <div class="col-sm-2">
+                            <div class="form-group">
+                                <label>Accessories Amount</label>
+                                <input type="text" name="apackamount" id="apackamount" class="form-control"
+                                    value="{{ old('apackamount', $q['accessories_amount'] ?? 0) }}" readonly>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-2">
+                            <div class="form-group">
+                                <label for="chassis">Allotted Chassis No.</label>
+                                <select name="chassis" id="chassis" class="form-control select2" disabled>
+                                    <option value="0">Please Select...</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card p-3 mt-3">
+                <div class="card-body">
+                    <h2 class="mb-3">Booking Type & Source</h2>
+                    <div class="row">
+                        <div class="col-sm-3">
+                            <div class="form-group">
+                                <label for="bookingmode">Booking Mode <span class="required-mark">*</span></label>
+                                <select name="bookingmode" id="bookingmode" class="form-control form-select" required>
+                                    <option value="Dealer" selected>Dealer</option>
+                                    <option value="Online">Online</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-2">
+                            <div class="form-group">
+                                <label for="refrenceno">Online Book Ref No. <span class="required-mark"
+                                        style="display: none;">*</span></label>
+                                <input type="text" name="refrenceno" id="refrenceno" class="form-control" disabled>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-2">
+                            <div class="form-group">
+                                <label for="bookingsource">Booking Source <span class="required-mark">*</span></label>
+                                <select name="bookingsource" id="bookingsource" class="form-control form-select"
                                     required>
-                            </div>
-
-                            <div class="col-md-2 mb-3">
-                                <label class="form-label">
-                                    VPO <span class="text-danger">*</span>
-                                </label>
-
-                                <select id="vpo_select"
-                                        class="form-control form-select"
-                                        required>
-                                    <option value="">Select VPO</option>
+                                    <option value="Dealer" selected>Dealer Sourcing</option>
+                                    <option value="DSA">DSA</option>
                                 </select>
-
-                                <input type="text"
-                                    id="vpo_input"
-                                    class="form-control mt-2 d-none"
-                                    placeholder="Enter VPO Manually"
-                                    value="{{ old('vpo', $enquiry->vpo ?? '') }}">
                             </div>
+                        </div>
 
-                            <div class="col-md-2 mb-3">
-                                <label class="form-label">
-                                    Tehsil <span class="text-danger">*</span>
-                                </label>
-
-                                <select id="tehsil_select"
-                                        class="form-control form-select"
-                                        required>
-                                    <option value="">Select Tehsil</option>
+                        <div class="col-sm-3">
+                            <div class="form-group">
+                                <label for="dsadetails">Select DSA <span class="required-mark"
+                                        style="display: none;">*</span></label>
+                                <select name="dsadetails" id="dsadetails" class="form-control form-select" disabled>
+                                    <option value="" disabled selected>-- Select DSA --</option>
+                                    @foreach ($data['dsa_details'] ?? [] as $dsa)
+                                        <option value="{{ $dsa->id }}">{{ $dsa->name }} -
+                                            {{ $dsa->mobile }}
+                                        </option>
+                                    @endforeach
                                 </select>
-
-                                <input type="text"
-                                    id="tehsil_input"
-                                    class="form-control mt-2 d-none"
-                                    placeholder="Enter Tehsil Manually"
-                                    value="{{ old('customer_tehsil', $enquiry->tehsil ?? '') }}">
                             </div>
+                        </div>
 
-                            <div class="col-md-2 mb-3">
-                                <label class="form-label">
-                                    District <span class="text-danger">*</span>
-                                </label>
-
-                                <select id="district_select"
-                                        class="form-control form-select"
-                                        required>
-                                    <option value="">Select District</option>
+                        <div class="col-sm-2">
+                            <div class="form-group">
+                                <label for="saleconsultant">Sales Consultant <span class="required-mark">*</span></label>
+                                <select name="saleconsultant" id="saleconsultant" class="form-control form-select"
+                                    required>
+                                    <option value="">Please Select...</option>
+                                    @foreach ($data['salesconsultants'] ?? [] as $consultant)
+                                        <option value="{{ $consultant['person_code'] }}"
+                                            {{ old('saleconsultant', $enquiry->sc_code ?? '') == $consultant['person_code'] ? 'selected' : '' }}>
+                                            {{ $consultant['display_name'] }} - {{ $consultant['employee_code'] }}
+                                        </option>
+                                    @endforeach
                                 </select>
-
-                                <input type="text"
-                                    id="district_input"
-                                    class="form-control mt-2 d-none"
-                                    placeholder="Enter District Manually"
-                                    value="{{ old('customer_district', $enquiry->district ?? '') }}">
                             </div>
+                        </div>
 
-                            <div class="col-md-2 mb-3">
-                                <label class="form-label">
-                                    State <span class="text-danger">*</span>
-                                </label>
-
-                                <select id="state_select"
-                                        class="form-control form-select"
-                                        required>
-                                    <option value="">Select State</option>
-                                </select>
-
-                                <input type="text"
-                                    id="state_input"
-                                    class="form-control mt-2 d-none"
-                                    placeholder="Enter State Manually"
-                                    value="{{ old('city', $enquiry->city ?? '') }}">
+                        <div class="col-sm-2">
+                            <div class="form-group">
+                                <label>Delivery Date Type <span class="required-mark">*</span></label>
+                                <div>
+                                    <label><input type="radio" name="deliverytype" value="Expected" checked>
+                                        Expected</label>&nbsp;&nbsp;&nbsp;
+                                    <label><input type="radio" name="deliverytype" value="Confirmed">
+                                        Confirmed</label>
+                                </div>
                             </div>
+                        </div>
 
-                            <div class="col-md-2 mb-3">
-                                <label class="form-label">
-                                    Territory <span class="text-danger">*</span>
-                                </label>
+                        <div class="col-sm-2">
+                            <div class="form-group">
+                                <label for="expecteddeldate">Delivery Date <span class="required-mark">*</span></label>
+                                <input type="text" name="expecteddeldate" id="expecteddeldate" class="form-control"
+                                    placeholder="dd-mmm-yyyy" required>
+                                <input type="hidden" name="hiddenexpecteddeldate" id="hiddenexpecteddeldate">
+                            </div>
+                        </div>
 
-                                <select id="territory"
-                                        name="territory"
-                                        class="form-control form-select"
-                                        required>
-                                    <option value="">Select Territory</option>
-
-                                    <option value="OWN TERRITORY"
-                                        {{ old('territory', $enquiry->territory ?? '') == 'OWN TERRITORY' ? 'selected' : '' }}>
-                                        OWN TERRITORY
+                        <div class="col-sm-2">
+                            <div class="form-group">
+                                <label for="finmode">Finance Mode <span class="required-mark">*</span></label>
+                                <select name="finmode" id="finmode" class="form-control form-select" required>
+                                    <option value="" disabled
+                                        {{ empty($q['financier']) && empty($enquiry->fin_mode) ? 'selected' : '' }}>
+                                        -- Select Finance Mode --
                                     </option>
-
-                                    <option value="OTHER TERRITORY"
-                                        {{ old('territory', $enquiry->territory ?? '') == 'OTHER TERRITORY' ? 'selected' : '' }}>
-                                        OTHER TERRITORY
+                                    <option value="In-house"
+                                        {{ old('finmode', !empty($q['financier']) ? 'In-house' : $enquiry->fin_mode ?? '') == 'In-house' ? 'selected' : '' }}>
+                                        In-house
+                                    </option>
+                                    <option value="Customer Self"
+                                        {{ old('finmode', !empty($q['financier']) ? 'In-house' : $enquiry->fin_mode ?? '') == 'Customer Self' ? 'selected' : '' }}>
+                                        Customer Self
+                                    </option>
+                                    <option value="Cash"
+                                        {{ old('finmode', !empty($q['financier']) ? 'In-house' : $enquiry->fin_mode ?? '') == 'Cash' ? 'selected' : '' }}>
+                                        Cash
+                                    </option>
+                                    <option value="Yet To Decide"
+                                        {{ old('finmode', !empty($q['financier']) ? 'In-house' : $enquiry->fin_mode ?? '') == 'Yet To Decide' ? 'selected' : '' }}>
+                                        Yet To Decide
                                     </option>
                                 </select>
                             </div>
+                        </div>
 
-
-                            <div class="col-sm-4">
-                                <div class="form-group">
-                                    <label for="branch">Branch <span class="required-mark">*</span></label>
-                                    <select name="branch" id="branch" class="form-control form-select" required>
-                                        <option value="" disabled {{ !isset($enquiry->dealer_branch) ? 'selected' : ''
-                                            }}>-- Select Branch --
+                        <div class="col-sm-3">
+                            <div class="form-group" id="financierbox" style="display: none;">
+                                <label for="financier">Financier <span class="required-mark"
+                                        style="display: none;">*</span></label>
+                                <select name="financier" id="financier" class="form-control form-select">
+                                    <option value="">Select Financier</option>
+                                    @foreach ($data['financiers'] ?? [] as $financier)
+                                        <option value="{{ $financier->id }}"
+                                            data-shortname="{{ $financier->short_name ?? '' }}"
+                                            {{ old('financier', $q['financier'] ?? ($enquiry->financier ?? '')) == $financier->id ? 'selected' : '' }}>
+                                            {{ $financier->name }}
                                         </option>
-                                        @foreach ($data['branches'] ?? [] as $branch)
-                                        <option value="{{ $branch->code }}" {{ old('branch', $enquiry->dealer_branch ??
-                                            '') == $branch->code ? 'selected' : '' }}>
-                                            {{ $branch->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="col-sm-4">
-                                <div class="form-group">
-                                    <label for="location">Location <span class="required-mark">*</span></label>
-                                    <select name="location" id="location" class="form-control form-select" required
-                                        disabled>
-                                        <option value="" disabled selected>-- Select Location --</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="col-sm-4">
-                                <div class="form-group" id="othloc">
-                                    <label for="locationother">Other Location <span class="required-mark"
-                                            style="display: none;">*</span></label>
-                                    <input type="text" name="locationother" id="locationother" class="form-control"
-                                        disabled>
-                                </div>
+                                    @endforeach
+                                </select>
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                <div class="card p-3 mt-3">
-                    <div class="card-body">
-                        <h2 class="mb-3">Referred By Details</h2>
-                        <div class="row">
-                            <div class="col-sm-1">
-                                <div class="form-group">
-                                    <label><input type="checkbox" id="referredby" name="referredby"> Referred
-                                        By</label>
-                                </div>
-                            </div>
-
-                            <div class="col-sm-3">
-                                <div class="form-group">
-                                    <label for="refcustomername">Customer Name <span class="required-mark"
-                                            style="display: none;">*</span></label>
-                                    <input type="text" name="refcustomername" id="refcustomername" class="form-control"
-                                        disabled>
-                                </div>
-                            </div>
-
-                            <div class="col-sm-2">
-                                <div class="form-group">
-                                    <label for="refmobileno">Mobile No. <span class="required-mark"
-                                            style="display: none;">*</span></label>
-                                    <input type="text" name="refmobileno" id="refmobileno" class="form-control"
-                                        disabled>
-                                </div>
-                            </div>
-
-                            <div class="col-sm-2">
-                                <div class="form-group">
-                                    <label for="refexistingmodel">Existing Model <span class="required-mark"
-                                            style="display: none;">*</span></label>
-                                    <input type="text" name="refexistingmodel" id="refexistingmodel"
-                                        class="form-control" disabled>
-                                </div>
-                            </div>
-
-                            <div class="col-sm-2">
-                                <div class="form-group">
-                                    <label for="refvariant">Variant <span class="required-mark"
-                                            style="display: none;">*</span></label>
-                                    <input type="text" name="refvariant" id="refvariant" class="form-control" disabled>
-                                </div>
-                            </div>
-
-                            <div class="col-sm-2">
-                                <div class="form-group">
-                                    <label for="refchassisregno">Chassis No. / Regn. No. <span class="required-mark"
-                                            style="display: none;">*</span></label>
-                                    <input type="text" name="refchassisregno" id="refchassisregno" class="form-control"
-                                        disabled>
-                                </div>
+                        <div class="col-sm-3">
+                            <div class="form-group">
+                                <label for="financiershortname">Financier Short Name</label>
+                                <input type="text" name="financiershortname" id="financiershortname"
+                                    class="form-control" readonly>
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                <div class="card p-3 mt-3">
-                    <div class="card-body">
-                        <h2 class="mb-3">Purchase Type Details</h2>
-                        <div class="row">
-                            <div class="col-sm-2">
-                                <div class="form-group">
-                                    <label for="buyertype">Purchase Type <span class="required-mark">*</span></label>
-                                    <select name="buyertype" id="buyertype" class="form-control form-select" required>
-                                        <option value="" disabled {{ !isset($enquiry->purchase_type) ? 'selected' : ''
-                                            }}>-- Select Purchase
-                                            Type --</option>
-                                        @php $ptype = old('buyertype', $enquiry->purchase_type ?? ''); @endphp
-                                        <option value="First Time Buy" {{ in_array($ptype, ['First Time
-                                            Buy', 'First Time Buy' ]) ? 'selected' : '' }}>
-                                            First Time Buyer</option>
-                                        <option value="Additional Buy" {{ $ptype=='Additional Buy' ? 'selected' : '' }}>
-                                            Additional Buy</option>
-                                        <option value="Exchange Buy" {{ $ptype=='Exchange Buy' ? 'selected' : '' }}>
-                                            Exchange Buy</option>
-                                        <option value="Scrappage" {{ $ptype=='Scrappage' ? 'selected' : '' }}>
-                                            Scrappage</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="col-sm-2">
-                                <div class="form-group">
-                                    <label for="enummaster1">Brand Make 1 <span class="required-mark"
-                                            style="display: none;">*</span></label>
-                                    <select name="enummaster1" id="enummaster1" class="form-control form-select"
-                                        disabled>
-                                        <option value="" disabled selected>-- Select Brand Make 1 --</option>
-                                        @foreach ($data['enum_master'] ?? [] as $enum)
-                                        <option value="{{ $enum->code ?? ($enum['code'] ?? '') }}" {{ old('enummaster1',
-                                            $enquiry->brand_make ?? '') == ($enum->code ?? ($enum['code'] ?? '')) ?
-                                            'selected' : '' }}>
-                                            {{ $enum->value ?? ($enum['value'] ?? '') }}
-                                        </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-sm-3">
-                                <div class="form-group">
-                                    <label for="vehicledetails">Model Variant 1 <span class="required-mark"
-                                            style="display: none;">*</span></label>
-                                    <input type="text" name="vehicledetails" id="vehicledetails" class="form-control"
-                                        disabled value="{{ old('vehicledetails', $enquiry->brand_model ?? '') }}">
-                                </div>
-                            </div>
-
-
-
-
-                            <div class="col-sm-2">
-                                <div class="form-group">
-                                    <label for="enummaster2">Brand Make 2</label>
-                                    <select name="enummaster2" id="enummaster2" class="form-control form-select"
-                                        disabled>
-                                        <option value="" disabled selected>-- Select Brand Make 2 --</option>
-                                        @foreach ($data['enum_master'] ?? [] as $enum)
-                                        <option value="{{ $enum->code ?? ($enum['code'] ?? '') }}">
-                                            {{ $enum->value ?? ($enum['value'] ?? '') }}
-                                        </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="col-sm-3">
-                                <div class="form-group">
-                                    <label for="vehicledetails2">Model Variant 2</label>
-                                    <input type="text" name="vehicledetails2" id="vehicledetails2" class="form-control"
-                                        disabled>
-                                </div>
-                            </div>
-
-                            <div class="col-sm-4">
-                                <div class="form-group">
-                                    <label for="registrationno">Vehicle Registration No. <span class="required-mark"
-                                            style="display: none;">*</span></label>
-                                    <input type="text" name="registrationno" id="registrationno" class="form-control"
-                                        disabled value="{{ old('registrationno', $enquiry->vehicle_no ?? '') }}">
-                                </div>
-                            </div>
-
-                            <div class="col-sm-4">
-                                <div class="form-group">
-                                    <label for="manufacturingyear">Vehicle Manufacturing Year <span
-                                            class="required-mark" style="display: none;">*</span></label>
-                                    <input type="number" name="manufacturingyear" id="manufacturingyear"
-                                        class="form-control" disabled
-                                        value="{{ old('manufacturingyear', $enquiry->make_year ?? '') }}">
-                                </div>
-                            </div>
-
-                            <div class="col-sm-4">
-                                <div class="form-group">
-                                    <label for="odometerreading">Vehicle Odometer Reading <span class="required-mark"
-                                            style="display: none;">*</span></label>
-                                    <input type="text" name="odometerreading" id="odometerreading" class="form-control"
-                                        disabled value="{{ old('odometerreading', $enquiry->odo_reading ?? '') }}">
-                                </div>
-                            </div>
-
-                            <div class="col-sm-3">
-                                <div class="form-group">
-                                    <label for="expectedprice">Used Vehicle Expected Price <span class="required-mark"
-                                            style="display: none;">*</span></label>
-                                    <input type="number" name="expectedprice" id="expectedprice" class="form-control"
-                                        disabled value="{{ old('expectedprice', $enquiry->expected_price ?? '') }}">
-                                </div>
-                            </div>
-
-                            <div class="col-sm-3">
-                                <div class="form-group">
-                                    <label for="offeredprice">Used Vehicle Offered Price <span class="required-mark"
-                                            style="display: none;">*</span></label>
-                                    <input type="number" name="offeredprice" id="offeredprice" class="form-control"
-                                        disabled value="{{ old('offeredprice', $enquiry->offered_price ?? '') }}">
-                                </div>
-                            </div>
-
-                            <div class="col-sm-3">
-                                <div class="form-group">
-                                    <label for="exchangebonus">New Vehicle Exchange Bonus <span class="required-mark"
-                                            style="display: none;">*</span></label>
-                                    <input type="number" name="exchangebonus" id="exchangebonus" class="form-control"
-                                        disabled value="{{ old('exchangebonus', $enquiry->exchange_bonus ?? '') }}">
-                                </div>
-                            </div>
-
-                            <div class="col-sm-3">
-                                <div class="form-group">
-                                    <label for="difference">Price Gap</label>
-                                    <input type="text" id="difference" class="form-control" disabled
-                                        value="{{ ($enquiry->expected_price ?? 0) - ($enquiry->offered_price ?? 0) - ($enquiry->exchange_bonus ?? 0) }}">
-                                </div>
+                        <div class="col-sm-3">
+                            <div class="form-group" id="loanstatusbox">
+                                <label for="loanstatus">Loan File Status <span class="required-mark"
+                                        style="display: none;">*</span></label>
+                                <select name="loanstatus" id="loanstatus" class="form-control form-select" disabled
+                                    required>
+                                    <option value="" disabled selected>-- Select Loan File Status --</option>
+                                    <option value="Pending">Pending</option>
+                                    <option value="Complete">Complete</option>
+                                </select>
                             </div>
                         </div>
-                    </div>
-
-                </div>
-        </div>
-
-        <div class="card p-3 mt-3">
-            <div class="card-body">
-                <h2 class="mb-3">Vehicle Details</h2>
-                <div class="row">
-                    <!-- Segment -->
-                    <div class="col-sm-3">
-                        <div class="form-group">
-                            <label for="segment">Segment <span class="required-mark">*</span></label>
-                            <select name="segment" id="segment" class="form-control form-select" required>
-                                <option value="">Please Select Segment...</option>
-                                @foreach ($data['segments'] ?? [] as $segment)
-                                <option value="{{ $segment->code }}" {{ old('segment', $q['segment_code'] ?? ($enquiry->
-                                    segment_code ?? '')) == $segment->code ? 'selected' : '' }}>
-                                    {{ $segment->name }}
-                                </option>
-                                @endforeach
-                            </select>
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label for="details">Remarks</label>
+                                <textarea name="details" id="details" class="form-control" rows="4"
+                                    placeholder="Enter any additional remarks...">{{ old('details', $enquiry->remarks ?? '') }}</textarea>
+                            </div>
                         </div>
-                    </div>
-
-                    <!-- Model -->
-                    <div class="col-sm-3">
-                        <div class="form-group">
-                            <label for="model">Model <span class="required-mark">*</span></label>
-                            <select name="model" id="model" class="form-control form-select" required>
-                                <option value="">Please Select Model...</option>
-                                @foreach ($data['models'] ?? [] as $model)
-                                <option value="{{ $model->code }}" {{ old('model', $q['model_code'] ?? ($enquiry->
-                                    model_code ?? '')) == $model->code ? 'selected' : '' }}>
-                                    {{ $model->name }}
-                                </option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Variant -->
-                    <div class="col-sm-3">
-                        <div class="form-group">
-                            <label for="variant">Variant <span class="required-mark">*</span></label>
-                            <select name="variant" id="variant" class="form-control form-select" required>
-                                <option value="">Please Select Variant...</option>
-                                @foreach ($data['variants'] ?? [] as $variant)
-                                <option value="{{ $variant->code }}" {{ old('variant', $q['variant_code'] ?? ($enquiry->
-                                    variant_code ?? '')) == $variant->code ? 'selected' : '' }}
-                                    data-seating="{{ $variant->seating_capacity ?? 0 }}">
-                                    {{ $variant->display_name ?? $variant->name ?? $variant->code }}
-                                </option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Color -->
-                    <div class="col-sm-3">
-                        <div class="form-group">
-                            <label for="color">Color <span class="required-mark">*</span></label>
-                            <select name="color" id="color" class="form-control form-select" required>
-                                <option value="">Please Select Color...</option>
-                                @foreach ($data['colors'] ?? [] as $color)
-                                <option value="{{ $color->code }}" {{ old('color', $q['color_code'] ?? ($enquiry->
-                                    color_code ?? '')) == $color->code ? 'selected' : '' }}>
-                                    {{ $color->name ?? $color->code }}
-                                </option>
-                                @endforeach
-                            </select>
-                            <input type="hidden" id="vhid" name="vhid">
-                        </div>
-                    </div>
-
-                    <!-- Seating -->
-                    <div class="col-sm-2">
-                        <div class="form-group">
-                            <label for="seating">Seating</label>
-                            <input type="text" name="seating" id="seating" class="form-control" value="{{ old('seating', 
-                                $q['seating'] ?? 
-                                $quotation?->variant?->seating_capacity ?? 
-                                ($enquiry->seating ?? 0)
-                            ) }}">
-                        </div>
-                    </div>
 
 
 
-                    <!-- Accessories -->
-                    <div class="col-sm-6">
-                        <div class="form-group">
-                            <label>Select Accessories</label>
-                            <select name="accessories[]" id="accessories" class="form-select" multiple>
-                                @php
-                                $selectedAccessories = $q['accessories'] ?? [];
-                                if (!is_array($selectedAccessories)) {
-                                $selectedAccessories = explode(',', $selectedAccessories);
-                                }
-                                @endphp
-                                @foreach ($data['accessories_dropdown'] ?? [] as $accessory)
-                                <option value="{{ $accessory['part_no'] ?? $accessory->part_no ?? '' }}"
-                                    data-price="{{ $accessory['ndp'] ?? $accessory->ndp ?? 0 }}" {{
-                                    in_array($accessory['part_no'] ?? $accessory->part_no ?? '', $selectedAccessories) ?
-                                    'selected' : '' }}>
-                                    {{ $accessory['item'] ?? $accessory->item ?? '' }}
-                                    (₹{{ number_format($accessory['ndp'] ?? $accessory->ndp ?? 0, 2) }})
-                                </option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
 
-                    <!-- Accessories Amount -->
-                    <div class="col-sm-2">
-                        <div class="form-group">
-                            <label>Accessories Amount</label>
-                            <input type="text" name="apackamount" id="apackamount" class="form-control"
-                                value="{{ old('apackamount', $q['accessories_amount'] ?? 0) }}" readonly>
-                        </div>
-                    </div>
-
-                    <div class="col-sm-2">
-                        <div class="form-group">
-                            <label for="chassis">Allotted Chassis No.</label>
-                            <select name="chassis" id="chassis" class="form-control select2" disabled>
-                                <option value="0">Please Select...</option>
-                            </select>
-                        </div>
                     </div>
                 </div>
             </div>
+
+
         </div>
 
-        <div class="card p-3 mt-3">
-            <div class="card-body">
-                <h2 class="mb-3">Booking Type & Source</h2>
-                <div class="row">
-                    <div class="col-sm-3">
-                        <div class="form-group">
-                            <label for="bookingmode">Booking Mode <span class="required-mark">*</span></label>
-                            <select name="bookingmode" id="bookingmode" class="form-control form-select" required>
-                                <option value="Dealer" selected>Dealer</option>
-                                <option value="Online">Online</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="col-sm-2">
-                        <div class="form-group">
-                            <label for="refrenceno">Online Book Ref No. <span class="required-mark"
-                                    style="display: none;">*</span></label>
-                            <input type="text" name="refrenceno" id="refrenceno" class="form-control" disabled>
-                        </div>
-                    </div>
-
-                    <div class="col-sm-2">
-                        <div class="form-group">
-                            <label for="bookingsource">Booking Source <span class="required-mark">*</span></label>
-                            <select name="bookingsource" id="bookingsource" class="form-control form-select" required>
-                                <option value="Dealer" selected>Dealer Sourcing</option>
-                                <option value="DSA">DSA</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="col-sm-3">
-                        <div class="form-group">
-                            <label for="dsadetails">Select DSA <span class="required-mark"
-                                    style="display: none;">*</span></label>
-                            <select name="dsadetails" id="dsadetails" class="form-control form-select" disabled>
-                                <option value="" disabled selected>-- Select DSA --</option>
-                                @foreach ($data['dsa_details'] ?? [] as $dsa)
-                                <option value="{{ $dsa->id }}">{{ $dsa->name }} -
-                                    {{ $dsa->mobile }}
-                                </option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="col-sm-2">
-                        <div class="form-group">
-                            <label for="saleconsultant">Sales Consultant <span class="required-mark">*</span></label>
-                            <select name="saleconsultant" id="saleconsultant" class="form-control form-select" required>
-                                <option value="">Please Select...</option>
-                                @foreach ($data['salesconsultants'] ?? [] as $consultant)
-                                <option value="{{ $consultant['person_code'] }}" {{ old('saleconsultant', $enquiry->
-                                    sc_code ?? '') == $consultant['person_code'] ? 'selected' : '' }}>
-                                    {{ $consultant['display_name'] }} - {{ $consultant['employee_code'] }}
-                                </option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="col-sm-2">
-                        <div class="form-group">
-                            <label>Delivery Date Type <span class="required-mark">*</span></label>
-                            <div>
-                                <label><input type="radio" name="deliverytype" value="Expected" checked>
-                                    Expected</label>&nbsp;&nbsp;&nbsp;
-                                <label><input type="radio" name="deliverytype" value="Confirmed">
-                                    Confirmed</label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-sm-2">
-                        <div class="form-group">
-                            <label for="expecteddeldate">Delivery Date <span class="required-mark">*</span></label>
-                            <input type="text" name="expecteddeldate" id="expecteddeldate" class="form-control"
-                                placeholder="dd-mmm-yyyy" required>
-                            <input type="hidden" name="hiddenexpecteddeldate" id="hiddenexpecteddeldate">
-                        </div>
-                    </div>
-
-                    <div class="col-sm-2">
-                        <div class="form-group">
-                            <label for="finmode">Finance Mode <span class="required-mark">*</span></label>
-                            <select name="finmode" id="finmode" class="form-control form-select" required>
-                                <option value="" disabled
-                                    {{ empty($q['financier']) && empty($enquiry->fin_mode) ? 'selected' : '' }}>
-                                    -- Select Finance Mode --
-                                </option>
-                                <option value="In-house"
-                                    {{ old('finmode', !empty($q['financier']) ? 'In-house' : ($enquiry->fin_mode ?? '')) == 'In-house' ? 'selected' : '' }}>
-                                    In-house
-                                </option>
-                                <option value="Customer Self"
-                                    {{ old('finmode', !empty($q['financier']) ? 'In-house' : ($enquiry->fin_mode ?? '')) == 'Customer Self' ? 'selected' : '' }}>
-                                    Customer Self
-                                </option>
-                                <option value="Cash"
-                                    {{ old('finmode', !empty($q['financier']) ? 'In-house' : ($enquiry->fin_mode ?? '')) == 'Cash' ? 'selected' : '' }}>
-                                    Cash
-                                </option>
-                                <option value="Yet To Decide"
-                                    {{ old('finmode', !empty($q['financier']) ? 'In-house' : ($enquiry->fin_mode ?? '')) == 'Yet To Decide' ? 'selected' : '' }}>
-                                    Yet To Decide
-                                </option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="col-sm-3">
-                        <div class="form-group" id="financierbox" style="display: none;">
-                            <label for="financier">Financier <span class="required-mark"
-                                    style="display: none;">*</span></label>
-                            <select name="financier" id="financier" class="form-control form-select">
-                                <option value="">Select Financier</option>
-                                @foreach ($data['financiers'] ?? [] as $financier)
-                                <option value="{{ $financier->id }}" data-shortname="{{ $financier->short_name ?? '' }}"
-                                    {{ old('financier', $q['financier'] ?? ($enquiry->financier ?? '')) == $financier->id ? 'selected' : '' }}>
-                                    {{ $financier->name }}
-                                </option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="col-sm-3">
-                        <div class="form-group">
-                            <label for="financiershortname">Financier Short Name</label>
-                            <input type="text" name="financiershortname" id="financiershortname" class="form-control"
-                                readonly>
-                        </div>
-                    </div>
-
-                    <div class="col-sm-3">
-                        <div class="form-group" id="loanstatusbox">
-                            <label for="loanstatus">Loan File Status <span class="required-mark"
-                                    style="display: none;">*</span></label>
-                            <select name="loanstatus" id="loanstatus" class="form-control form-select" disabled
-                                required>
-                                <option value="" disabled selected>-- Select Loan File Status --</option>
-                                <option value="Pending">Pending</option>
-                                <option value="Complete">Complete</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-sm-6">
-                        <div class="form-group">
-                            <label for="details">Remarks</label>
-                            <textarea name="details" id="details" class="form-control" rows="4"
-                                placeholder="Enter any additional remarks...">{{ old('details', $enquiry->remarks ?? '') }}</textarea>
-                        </div>
-                    </div>
-
-                    
-
-
-                </div>
-            </div>
-        </div>
-
-
-    </div>
-
-    <div class="row mt-4">
-        <div class="col-12 text-center">
-            <button type="submit" id="submitBtn"
-                class="btn btn-success btn-lg px-5 py-3 shadow-lg fw-bold text-uppercase">
-                <i class="ik ik-plus mr-2"></i> Add Booking
-            </button>
-        </div>
-    </div>
-</div>
-</div>
-</div>
-
-<!-- Proof Preview Modal -->
-<div class="modal fade" id="proofModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="proofModalFileName"></h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-
-            <div class="modal-body text-center">
-                <iframe id="proofModalPreview" style="width:100%; height:500px;" frameborder="0"></iframe>
-            </div>
-
-            <div class="modal-footer">
-                <a id="proofModalDownload" class="btn btn-success" download>Download</a>
-
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    Close
+        <div class="row mt-4">
+            <div class="col-12 text-center">
+                <button type="submit" id="submitBtn"
+                    class="btn btn-success btn-lg px-5 py-3 shadow-lg fw-bold text-uppercase">
+                    <i class="ik ik-plus mr-2"></i> Add Booking
                 </button>
             </div>
         </div>
     </div>
-</div>
-</form>
-</div>
+    </div>
+    </div>
 
-</div>
-</div>
+    <!-- Proof Preview Modal -->
+    <div class="modal fade" id="proofModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="proofModalFileName"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
 
+                <div class="modal-body text-center">
+                    <iframe id="proofModalPreview" style="width:100%; height:500px;" frameborder="0"></iframe>
+                </div>
 
-<div class="modal fade" id="errorModal" tabindex="-1" role="dialog" aria-labelledby="errorModalLabel"
-    aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title" id="errorModalLabel">Form Errors</h2>
+                <div class="modal-footer">
+                    <a id="proofModalDownload" class="btn btn-success" download>Download</a>
 
-            </div>
-            <div class="modal-body"></div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Close
+                    </button>
+                </div>
             </div>
         </div>
     </div>
-</div>
+    </form>
+    </div>
 
+    </div>
+    </div>
+
+
+    <div class="modal fade" id="errorModal" tabindex="-1" role="dialog" aria-labelledby="errorModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title" id="errorModalLabel">Form Errors</h2>
+
+                </div>
+                <div class="modal-body"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('after_styles')
-<style>
-    /* --- REMOVE NUMBER ARROWS --- */
-    /* Chrome, Safari, Edge, Opera */
-    input::-webkit-outer-spin-button,
-    input::-webkit-inner-spin-button {
-        -webkit-appearance: none;
-        margin: 0;
-    }
+    <style>
+        /* --- REMOVE NUMBER ARROWS --- */
+        /* Chrome, Safari, Edge, Opera */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
 
-    /* Firefox */
-    input[type=number] {
-        -moz-appearance: textfield;
-    }
-</style>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-<style>
-    .required-mark {
-        color: #dc3545;
-        margin-left: 2px;
-    }
+        /* Firefox */
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <style>
+        .required-mark {
+            color: #dc3545;
+            margin-left: 2px;
+        }
 
-    label .required-mark {
-        display: inline !important;
-    }
+        label .required-mark {
+            display: inline !important;
+        }
 
-    input.numeric-only {
-        -moz-appearance: textfield;
-    }
+        input.numeric-only {
+            -moz-appearance: textfield;
+        }
 
-    input.numeric-only::-webkit-outer-spin-button,
-    input.numeric-only::-webkit-inner-spin-button {
-        -webkit-appearance: none;
-        margin: 0;
-    }
-</style>
-<style>
-    .proof-chip {
-        display: inline-flex;
-        align-items: center;
-        background-color: #f1f3f5;
-        border: 1px solid #ced4da;
-        border-radius: 50px;
-        padding: 6px 14px;
-        margin-right: 12px;
-        font-size: 0.95rem;
-        max-width: 320px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-    }
+        input.numeric-only::-webkit-outer-spin-button,
+        input.numeric-only::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+    </style>
+    <style>
+        .proof-chip {
+            display: inline-flex;
+            align-items: center;
+            background-color: #f1f3f5;
+            border: 1px solid #ced4da;
+            border-radius: 50px;
+            padding: 6px 14px;
+            margin-right: 12px;
+            font-size: 0.95rem;
+            max-width: 320px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
 
-    .proof-chip i {
-        font-size: 1.4rem;
-        margin-right: 10px;
-        color: #6c757d;
-    }
+        .proof-chip i {
+            font-size: 1.4rem;
+            margin-right: 10px;
+            color: #6c757d;
+        }
 
-    .proof-chip .file-name {
-        max-width: 160px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        margin-right: 12px;
-    }
+        .proof-chip .file-name {
+            max-width: 160px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-right: 12px;
+        }
 
-    .proof-chip .btn-action {
-        background: none;
-        border: none;
-        font-size: 1.2rem;
-        padding: 0 6px;
-        cursor: pointer;
-        color: #6c757d;
-    }
+        .proof-chip .btn-action {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            padding: 0 6px;
+            cursor: pointer;
+            color: #6c757d;
+        }
 
-    .proof-chip .btn-download:hover {
-        color: #0d6efd;
-    }
+        .proof-chip .btn-download:hover {
+            color: #0d6efd;
+        }
 
-    .proof-chip .btn-remove:hover {
-        color: #dc3545;
-    }
+        .proof-chip .btn-remove:hover {
+            color: #dc3545;
+        }
 
-    .is-valid {
-        border-color: #28a745 !important;
-        box-shadow: 0 0 5px rgba(40, 167, 69, 0.5);
-    }
+        .is-valid {
+            border-color: #28a745 !important;
+            box-shadow: 0 0 5px rgba(40, 167, 69, 0.5);
+        }
 
-    .is-invalid {
-        border-color: #dc3545 !important;
-        box-shadow: 0 0 5px rgba(220, 53, 69, 0.5);
-    }
+        .is-invalid {
+            border-color: #dc3545 !important;
+            box-shadow: 0 0 5px rgba(220, 53, 69, 0.5);
+        }
 
 
 
-    .proof-chip {
-        transition: all 0.2s ease;
-        user-select: none;
-    }
+        .proof-chip {
+            transition: all 0.2s ease;
+            user-select: none;
+        }
 
-    .proof-chip:hover {
-        background-color: #e9ecef;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-    }
+        .proof-chip:hover {
+            background-color: #e9ecef;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        }
 
-    .proof-chip .btn-action {
-        transition: color 0.2s;
-    }
+        .proof-chip .btn-action {
+            transition: color 0.2s;
+        }
 
-    #modalProofPdf,
-    #modalProofImg {
-        max-height: 100vh;
-        object-fit: contain;
-    }
+        #modalProofPdf,
+        #modalProofImg {
+            max-height: 100vh;
+            object-fit: contain;
+        }
 
-    .select2-container--bootstrap5 .select2-selection--single .select2-selection__arrow,
-    .select2-container--default .select2-selection--single .select2-selection__arrow {
-        display: none !important;
-    }
+        .select2-container--bootstrap5 .select2-selection--single .select2-selection__arrow,
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            display: none !important;
+        }
 
-    .select2-container--bootstrap5 .select2-selection--single,
-    .select2-container .select2-selection--single {
-        height: calc(1.5em + 0.75rem + 2px) !important;
-        padding: 0.375rem 2.25rem 0.375rem 0.75rem !important;
-        font-size: 1rem;
-        font-weight: 400;
-        line-height: 1.5;
-        color: #212529;
-        background-color: #fff;
-        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
-        background-repeat: no-repeat !important;
-        background-position: right 0.75rem center !important;
-        background-size: 16px 12px !important;
-        border: 1px solid #ced4da !important;
-        border-radius: 0.375rem !important;
-        transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
-    }
+        .select2-container--bootstrap5 .select2-selection--single,
+        .select2-container .select2-selection--single {
+            height: calc(1.5em + 0.75rem + 2px) !important;
+            padding: 0.375rem 2.25rem 0.375rem 0.75rem !important;
+            font-size: 1rem;
+            font-weight: 400;
+            line-height: 1.5;
+            color: #212529;
+            background-color: #fff;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+            background-repeat: no-repeat !important;
+            background-position: right 0.75rem center !important;
+            background-size: 16px 12px !important;
+            border: 1px solid #ced4da !important;
+            border-radius: 0.375rem !important;
+            transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+        }
 
-    .select2-container--bootstrap5.select2-container--focus .select2-selection--single,
-    .select2-container.select2-container--focus .select2-selection--single {
-        border-color: #86b7fe !important;
-        outline: 0;
-        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, .25) !important;
-    }
+        .select2-container--bootstrap5.select2-container--focus .select2-selection--single,
+        .select2-container.select2-container--focus .select2-selection--single {
+            border-color: #86b7fe !important;
+            outline: 0;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, .25) !important;
+        }
 
-    .select2-container--bootstrap5 .select2-selection--single:hover,
-    .select2-container .select2-selection--single:hover {
-        border-color: #a8d0ff !important;
-    }
+        .select2-container--bootstrap5 .select2-selection--single:hover,
+        .select2-container .select2-selection--single:hover {
+            border-color: #a8d0ff !important;
+        }
 
-    .select2-container--bootstrap5 .select2-selection--single[aria-disabled=true],
-    .select2-container .select2-selection--single[aria-disabled=true] {
-        background-color: #e9ecef !important;
-        opacity: 1;
-    }
+        .select2-container--bootstrap5 .select2-selection--single[aria-disabled=true],
+        .select2-container .select2-selection--single[aria-disabled=true] {
+            background-color: #e9ecef !important;
+            opacity: 1;
+        }
 
-    .page-header {
-        display: block;
-    }
-</style>
+        .page-header {
+            display: block;
+        }
+    </style>
 @endpush
 
 @push('after_scripts')
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-    let uploadedFile = null;
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        let uploadedFile = null;
         let salesUsers = @json($data['allusers'] ?? []);
         console.log('✅ SLS Users Loaded:', salesUsers.length);
 
@@ -1253,7 +1252,7 @@ $enquiry = $quotation?->enquiry ?? ($data['enquiry'] ?? null);
             district: @json(old('customer_district', $enquiry->district ?? '')),
             city: @json(old('city', $enquiry->city ?? '')),
             territory: @json(old('territory', $enquiry->territory ?? ''))
-            
+
         };
 
         function handleProof(input) {
@@ -1904,10 +1903,10 @@ $enquiry = $quotation?->enquiry ?? ($data['enquiry'] ?? null);
                     } else {
                         $('#careof').html(`
             <option value="">Please Select...</option>
-            <option value="1" {{ ($q['careof'] ?? '') == 1 ? 'selected' : '' }}>Son of</option>
-            <option value="2" {{ ($q['careof'] ?? '') == 2 ? 'selected' : '' }}>Daughter of</option>
-            <option value="3" {{ ($q['careof'] ?? '') == 3 ? 'selected' : '' }}>Married to</option>
-            <option value="4" {{ ($q['careof'] ?? '') == 4 ? 'selected' : '' }}>Guardian Name</option>
+            <option value="1" {{ old('careof', $enquiry->care_of_type ?? ($q['care_of_type'] ?? '')) == 1 ? 'selected' : '' }}>Son of</option>
+            <option value="2" {{ old('careof', $enquiry->care_of_type ?? ($q['care_of_type'] ?? '')) == 2 ? 'selected' : '' }}>Daughter of</option>
+            <option value="3" {{ old('careof', $enquiry->care_of_type ?? ($q['care_of_type'] ?? '')) == 3 ? 'selected' : '' }}>Married to</option>
+            <option value="4" {{ old('careof', $enquiry->care_of_type ?? ($q['care_of_type'] ?? '')) == 4 ? 'selected' : '' }}>Guardian Name</option>
         `);
                         $('#careofname').prop('disabled', false).prop('required', true);
                         toggleRequiredMark($('#careofname'), true);
@@ -1953,7 +1952,7 @@ $enquiry = $quotation?->enquiry ?? ($data['enquiry'] ?? null);
                     toggleRequiredMark(
                         $(
                             '#refcustomername, #refmobileno, #refexistingmodel, #refvariant, #refchassisregno'
-                            ),
+                        ),
                         isChecked
                     );
 
@@ -2701,7 +2700,7 @@ $enquiry = $quotation?->enquiry ?? ($data['enquiry'] ?? null);
         function debounce(func, wait) {
             let timeout;
 
-            return function (...args) {
+            return function(...args) {
                 clearTimeout(timeout);
 
                 timeout = setTimeout(() => {
@@ -2714,7 +2713,7 @@ $enquiry = $quotation?->enquiry ?? ($data['enquiry'] ?? null);
             const $select = $(`#${selectId}`);
             const $input = $(`#${inputId}`);
 
-            $select.on('change', function () {
+            $select.on('change', function() {
 
                 if ($(this).val() === 'OTHER') {
 
@@ -2778,7 +2777,7 @@ $enquiry = $quotation?->enquiry ?? ($data['enquiry'] ?? null);
         // ------------------------------------------------------------
         // Pincode → VPO / Tehsil / District / State
         // ------------------------------------------------------------
-        $('#zipcode').on('input blur', debounce(function () {
+        $('#zipcode').on('input blur', debounce(function() {
 
             const pincode = ($('#zipcode').val() || '').trim();
 
@@ -2834,9 +2833,9 @@ $enquiry = $quotation?->enquiry ?? ($data['enquiry'] ?? null);
 
                             // Tehsil / Block
                             let block =
-                                (po.Block && po.Block !== 'NA')
-                                    ? po.Block
-                                    : po.District;
+                                (po.Block && po.Block !== 'NA') ?
+                                po.Block :
+                                po.District;
 
                             if (
                                 block &&
@@ -2882,9 +2881,9 @@ $enquiry = $quotation?->enquiry ?? ($data['enquiry'] ?? null);
 
                             const safeCurrent =
                                 (currentValue || '')
-                                    .toString()
-                                    .trim()
-                                    .toLowerCase();
+                                .toString()
+                                .trim()
+                                .toLowerCase();
 
 
                             // Exact match
@@ -2892,8 +2891,8 @@ $enquiry = $quotation?->enquiry ?? ($data['enquiry'] ?? null);
 
                                 if (
                                     val.toString()
-                                        .trim()
-                                        .toLowerCase() === safeCurrent
+                                    .trim()
+                                    .toLowerCase() === safeCurrent
                                 ) {
                                     valueFound = true;
                                     matchedValue = val;
@@ -2911,8 +2910,8 @@ $enquiry = $quotation?->enquiry ?? ($data['enquiry'] ?? null);
 
                                     const safeVal =
                                         val.toString()
-                                            .trim()
-                                            .toLowerCase();
+                                        .trim()
+                                        .toLowerCase();
 
                                     if (
                                         safeVal.includes(safeCurrent) ||
@@ -2932,9 +2931,9 @@ $enquiry = $quotation?->enquiry ?? ($data['enquiry'] ?? null);
                                     (
                                         valueFound &&
                                         val === matchedValue
-                                    )
-                                        ? 'selected'
-                                        : '';
+                                    ) ?
+                                    'selected' :
+                                    '';
 
                                 html +=
                                     `<option value="${val}" ${selected}>${val}</option>`;
@@ -2943,9 +2942,9 @@ $enquiry = $quotation?->enquiry ?? ($data['enquiry'] ?? null);
 
                             // OTHER option
                             const otherSelected =
-                                (!valueFound && currentValue)
-                                    ? 'selected'
-                                    : '';
+                                (!valueFound && currentValue) ?
+                                'selected' :
+                                '';
 
                             html +=
                                 `<option value="OTHER" ${otherSelected}>Other</option>`;
@@ -2954,10 +2953,9 @@ $enquiry = $quotation?->enquiry ?? ($data['enquiry'] ?? null);
                             return {
                                 html,
                                 valueFound,
-                                matchedValue:
-                                    valueFound
-                                        ? matchedValue
-                                        : currentValue
+                                matchedValue: valueFound ?
+                                    matchedValue :
+                                    currentValue
                             };
                         };
 
@@ -3136,18 +3134,16 @@ $enquiry = $quotation?->enquiry ?? ($data['enquiry'] ?? null);
                 .val(prefillData.pincode)
                 .trigger('blur');
         }
-
-</script>
-@section('after_scripts')
-<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
-<script>
-    $(document).ready(function() {
+    </script>
+    @section('after_scripts')
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+        <script>
+            $(document).ready(function() {
                 $('.select2').select2({
                     theme: 'bootstrap-5',
                     width: '100%',
                 });
             });
-            
-</script>
-@endsection
+        </script>
+    @endsection
 @endpush
