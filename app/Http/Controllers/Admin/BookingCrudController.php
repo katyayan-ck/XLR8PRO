@@ -395,7 +395,7 @@ class BookingCrudController extends CrudController
                 'bookings.vehicle_oem_code',
                 'bookings.registration_no',
                 'bookings.seating',
-                'bookings.person_id',
+                // 'bookings.person_id',
                 'bookings.name',
                 'bookings.care_of',
                 'bookings.care_of_type',

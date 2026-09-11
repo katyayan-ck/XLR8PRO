@@ -2679,8 +2679,16 @@
                 <div class="d-flex gap-2 justify-content-center mt-2 no-print">
 
                     @if ($viewMode)
+
+                        @if (isset($quotation))
+                            <a href="{{ backpack_url('quotation-form/' . $quotation->id . '/edit') }}"
+                            class="btn btn-warning">
+                                Edit Quotation
+                            </a>
+                        @endif
+
                         <button type="button" class="btn btn-primary" onclick="printQuotation();">
-                            <i class="la la-print"></i> Print Quotation
+                            Print Quotation
                         </button>
 
                         <button type="button" class="btn btn-success" onclick="printBankQuotation()">
@@ -3971,47 +3979,44 @@
         }
 
         function updateInsurancePrintText() {
-
-            // In edit mode, when we have SAVED_INSURANCE_COVERS, ALWAYS prefer
-            // the saved data. This bypasses all price-attribute staleness issues.
-            if (
-                IS_EDIT_MODE &&
-                Array.isArray(SAVED_INSURANCE_COVERS) &&
-                SAVED_INSURANCE_COVERS.length > 0
-            ) {
-                var savedList = [];
-
-                SAVED_INSURANCE_COVERS.forEach(function(cover) {
-                    var name = typeof cover === 'object' && cover !== null
-                        ? String(cover.name || '').trim()
-                        : String(cover || '').trim();
-
-                    var price = typeof cover === 'object' && cover !== null
-                        ? Number(cover.price || 0)
-                        : 0;
-
-                    if (!name) return;
-
-                    savedList.push(
-                        name + ' (₹' + price.toLocaleString('en-IN', {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2
-                        }) + ')'
-                    );
-                });
-
-                if (savedList.length > 0) {
-                    $('#insurance_print').text(savedList.join(', '));
-                    return;
-                }
-            }
-
-            // Fallback — read from DOM
             var list = [];
             $('#insurance_covers option:selected').each(function() {
-                var price = Number($(this).attr('data-price') || 0);
-                list.push($(this).val() + ' (₹' + price.toLocaleString('en-IN') + ')');
+
+                var $option = $(this);
+
+                var name = String(
+                    $option.val() || $option.text() || ''
+                ).trim();
+
+                // Remove already formatted price from text if present
+                name = name.replace(/\s*\(₹.*?\)\s*$/, '').trim();
+
+                // IMPORTANT:
+                // First use data-price from the actual selected option.
+                // This is the same price used by the dropdown and calculation.
+                var price = parseFloat($option.attr('data-price'));
+
+                // Fallback to jQuery data()
+                if (isNaN(price)) {
+                    price = parseFloat($option.data('price'));
+                }
+
+                if (isNaN(price)) {
+                    price = 0;
+                }
+
+                if (!name) {
+                    return;
+                }
+
+                list.push(
+                    name + ' (₹' + price.toLocaleString('en-IN', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    }) + ')'
+                );
             });
+
             $('#insurance_print').text(list.join(', '));
         }
 
@@ -4235,91 +4240,9 @@
                 $('#' + scheme.key + '_type').val(scheme.type);
             });
 
-            // Trigger after everything is set
             $('#group_a_amount').trigger('change');
         }
 
-        // ============================================================
-        // CASH SCHEME OEM TYPE -> LINKED DISCOUNT TYPES
-        // Cash Scheme OEM is the MASTER.
-        // Dealer / Accessories / Shield will show plain text only.
-        // ============================================================
-
-        // function syncCashSchemeLinkedTypes() {
-
-        //     const cashOemType = $('#group_a_type').val();
-
-        //     if (cashOemType !== 'INV' && cashOemType !== 'CN') {
-        //         return;
-        //     }
-
-        //     // --------------------------------------------------------
-        //     // Cash Scheme OEM hidden value
-        //     // --------------------------------------------------------
-        //     $('#cash_scheme_oem_type').val(cashOemType);
-
-
-        //     // --------------------------------------------------------
-        //     // Replace Dealer dropdown with plain input
-        //     // --------------------------------------------------------
-        //     setLinkedSchemeType(
-        //         '#dealer_discount_type',
-        //         'dealer_discount_type',
-        //         cashOemType
-        //     );
-
-
-        //     // --------------------------------------------------------
-        //     // Replace Accessories Scheme dropdown with plain input
-        //     // --------------------------------------------------------
-        //     setLinkedSchemeType(
-        //         '#accessories_discount_type',
-        //         'accessories_discount_type',
-        //         cashOemType
-        //     );
-
-
-        //     // --------------------------------------------------------
-        //     // Replace Shield Scheme dropdown with plain input
-        //     // --------------------------------------------------------
-        //     setLinkedSchemeType(
-        //         '#shield_scheme_type',
-        //         'shield_scheme_type',
-        //         cashOemType
-        //     );
-
-        //     $('#accessories_spl_disc_type').val(cashOemType);
-
-        //     $('#ceramic_discount_type').val(cashOemType);
-
-        //     $('#ppf_discount_type').val(cashOemType);
-
-        //     $('#other_cash_discount_type').val(cashOemType);
-
-
-
-        //     // Recalculate
-        //     calculateQuotation();
-        //     toggleRowVisibility();
-        // }
-
-        // $(document).on('change', '#group_a_type', function () {
-
-        //     if ($('#group_a_select').val() !== 'cash_scheme_oem') {
-        //         return;
-        //     }
-
-        //     syncCashSchemeLinkedTypes();
-        // });
-
-        // ============================================================
-        // GROUP A TYPE -> LINKED DISCOUNT TYPES
-        // Whichever Group A option is selected acts as the MASTER.
-        // Dealer / Accessories / Shield will show plain text only.
-        // ============================================================
-        // ============================================================
-        // 4 SPECIAL DISCOUNTS CONFIGURATION
-        // ============================================================
         const SPECIAL_FOUR_CONFIG = [{
                 id: 'accessories_spl_disc_type',
                 selector: '#accessories_spl_disc_type'
