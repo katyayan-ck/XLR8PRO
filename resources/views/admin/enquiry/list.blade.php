@@ -172,6 +172,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
         const ALL_COLUMNS = @json($gridConfig['columns'] ?? []);
@@ -258,7 +259,11 @@
                 }
             },
             components: {
-                htmlRenderer: params => params.value || ''
+                htmlRenderer: params => {
+                    const div = document.createElement('div');
+                    div.innerHTML = params.value || '';
+                    return div;
+                }
             },
             onGridReady: params => {
                 gridApi = params.api;
@@ -335,6 +340,160 @@
                     });
                 }
             }, 400));
+
+            
+            // ============================================================
+// QUOTE BUTTON - SERVER SIDE VEHICLE VALIDATION
+// Enquiry Color = Optional
+// Quotation Color = Mandatory
+// ============================================================
+
+document.addEventListener('click', async function (e) {
+
+    const link = e.target.closest('.js-quote-link');
+
+    if (!link) {
+        return;
+    }
+
+    // STOP the normal <a href=""> navigation first.
+    e.preventDefault();
+    e.stopPropagation();
+
+    const enquiryId = link.getAttribute('data-enquiry-id');
+
+    if (!enquiryId) {
+        console.error('Quote validation failed: enquiry ID missing.');
+        return;
+    }
+
+    try {
+
+        const validationUrl =
+            `{{ backpack_url('enquiries') }}/${enquiryId}/validate-quotation-vehicle`;
+
+        const response = await fetch(validationUrl, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(
+                `Vehicle validation request failed: ${response.status}`
+            );
+        }
+
+        const result = await response.json();
+
+        console.log('Quotation vehicle validation:', result);
+
+        // ========================================================
+        // ALL REQUIRED VEHICLE DETAILS ARE PRESENT
+        // ========================================================
+
+        if (result.valid === true) {
+
+            window.location.href = link.href;
+            return;
+        }
+
+        // ========================================================
+        // VEHICLE DETAILS ARE MISSING
+        // ========================================================
+
+        const missing = Array.isArray(result.missing)
+            ? result.missing
+            : [];
+
+        Swal.fire({
+
+            icon: 'warning',
+
+            title: 'Vehicle Details Required',
+
+            html: `
+                <div style="text-align:left;">
+
+                    <p style="margin-bottom:12px;">
+                        Please fill the following vehicle details
+                        in the enquiry before moving to quotation:
+                    </p>
+
+                    <ul style="
+                        margin:0 0 12px 20px;
+                        padding:0;
+                    ">
+                        ${missing.map(field => `
+                            <li>
+                                <strong>${field}</strong>
+                            </li>
+                        `).join('')}
+                    </ul>
+
+                    <p style="
+                        margin-top:12px;
+                        margin-bottom:0;
+                        color:#6c757d;
+                        font-size:13px;
+                    ">
+                        Segment, Model, Variant and Color are mandatory
+                        for creating a quotation.
+                    </p>
+
+                </div>
+            `,
+
+            confirmButtonText: 'Go to Edit Enquiry',
+
+            confirmButtonColor: '#3085d6',
+
+            showCancelButton: true,
+
+            cancelButtonText: 'Cancel',
+
+            allowOutsideClick: false
+
+        }).then((result) => {
+
+            if (!result.isConfirmed) {
+                return;
+            }
+
+            // ====================================================
+            // OPEN SAME ENQUIRY EDIT PAGE
+            // ====================================================
+
+            const editUrl =
+                `{{ backpack_url('enquiry') }}/${enquiryId}/edit`;
+
+            window.location.href = editUrl;
+        });
+
+    } catch (error) {
+
+        console.error(
+            'Quotation vehicle validation error:',
+            error
+        );
+
+        Swal.fire({
+
+            icon: 'error',
+
+            title: 'Validation Error',
+
+            text: 'Unable to verify vehicle details. Please try again.',
+
+            confirmButtonText: 'OK'
+
+        });
+
+    }
+
+});
 
             document.querySelectorAll('.highlight-filter').forEach(btn => {
                 btn.addEventListener('click', function() {

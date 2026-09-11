@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Storage;
 use Prologue\Alerts\Facades\Alert;
 use Illuminate\Support\Facades\Log;
 use App\Models\Module\Booking\XlFinancier;
+use App\Models\CRM\Quotation;
 use Throwable;
 
 class EnquiryCrudController extends CrudController
@@ -381,6 +382,7 @@ class EnquiryCrudController extends CrudController
 
         if ($listType !== 'otf') {
             $lookups['creFups'] = $this->getLatestCreFups($pageRows->pluck('id')->all());
+            $lookups['existingQuotations'] = $this->getExistingQuotations($pageRows->pluck('id')->all());
         }
 
         $gridData = $pageRows
@@ -433,6 +435,7 @@ class EnquiryCrudController extends CrudController
             $query->chunk(500, function ($chunk) use ($out, &$serial, $columns, $mapType, $lookups) {
                 if ($mapType !== 'otf') {
                     $lookups['creFups'] = $this->getLatestCreFups($chunk->pluck('id')->all());
+                    $lookups['existingQuotations'] = $this->getExistingQuotations($chunk->pluck('id')->all());
                 }
                 foreach ($chunk as $e) {
                     $rowData = $this->mapData($e, $serial, $mapType, $lookups);
@@ -647,6 +650,7 @@ class EnquiryCrudController extends CrudController
         $ageGroupMap       = $lookups['ageGroupMap'] ?? [];
         $lostSubReasonMap  = $lookups['lostSubReasonMap'] ?? [];
         $deviationStageMap = $lookups['deviationStageMap'] ?? [];
+        $existingQuotations = $lookups['existingQuotations'] ?? [];
 
         $x8AssignedSc = $this->getAssignedSc($e->x8_sc_code ?? null, $e->x8_sc_mile_id ?? null, $scByCode, $scByMileId);
         $oemAssignedSc = $this->getAssignedSc($e->sc_code ?? null, $e->sc_mile_id ?? null, $scByCode, $scByMileId);
@@ -679,7 +683,31 @@ class EnquiryCrudController extends CrudController
         }
 
         $editUrl = backpack_url("enquiry/{$e->id}/edit");
-        $quotUrl = backpack_url("quotation-form/create?id={$e->id}");
+
+        // Extract raw vehicle codes for the pre-quotation validation.
+        // These are checked on the client side before navigation.
+        $segmentVal = trim((string) ($e->segment_code ?? ''));
+        $modelVal   = trim((string) ($e->model_code ?? ''));
+        $variantVal = trim((string) ($e->variant_code ?? ''));
+        $colorVal   = trim((string) ($e->color_code ?? ''));
+
+        if (!empty($existingQuotations[$e->id])) {
+
+            $quotationId = $existingQuotations[$e->id];
+
+            $quotUrl = backpack_url("quotation/{$quotationId}/preview");
+
+            $quotBtnText = 'Quote';
+            $quotBtnClass = 'btn-success';
+
+        } else {
+
+            $quotUrl = backpack_url("quotation-form/create?id={$e->id}");
+
+            $quotBtnText = 'Quote';
+            $quotBtnClass = 'btn-success';
+        }
+
         $bookUrl = backpack_url("booking/create?enquiry_id={$e->id}");
 
         if ($type === 'hyperlocal') {
@@ -766,8 +794,15 @@ class EnquiryCrudController extends CrudController
 
         $actionBtns = '<a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a>';
 
-        // Added globally to ensure Quote and Book show up in all standard listings
-        $actionBtns .= '<a href="' . $quotUrl . '" class="btn btn-success btn-sm">Quote</a>';
+        $actionBtns .= '<a href="' . $quotUrl . '"'
+            . ' class="btn ' . $quotBtnClass . ' btn-sm js-quote-link"'
+            . ' title="' . $quotBtnText . '"'
+            . ' data-enquiry-id="' . $e->id . '"'
+            . ' data-segment="' . e($segmentVal) . '"'
+            . ' data-model="'   . e($modelVal)   . '"'
+            . ' data-variant="' . e($variantVal) . '"'
+            . ' data-color="'   . e($colorVal)   . '"'
+            . '>' . $quotBtnText . '</a>';
         $actionBtns .= '<a href="' . $bookUrl . '" class="btn btn-warning btn-sm" title="Convert to Booking">Book</a>';
 
         // Add context-specific Process buttons
@@ -2185,5 +2220,65 @@ class EnquiryCrudController extends CrudController
     public function xceler8List()
     {
         return $this->renderGridPage('admin.enquiry.list', 'Xceler8 Enquiries', 'xceler8');
+    }
+    /**
+     * Get quotation IDs for a batch of enquiry IDs.
+     * Returns [enquiry_id => quotation_id, ...]
+     */
+    private function getExistingQuotations(array $enquiryIds): array
+    {
+        if (empty($enquiryIds)) {
+            return [];
+        }
+
+        // Fetch the latest quotation per enquiry (most recent revision)
+        $quotations = Quotation::whereIn('enquiry_no', $enquiryIds)
+            ->orderByDesc('id')
+            ->get(['id', 'enquiry_no']);
+
+        $map = [];
+        foreach ($quotations as $q) {
+            // Keep only the first (latest) quotation per enquiry
+            if (!isset($map[$q->enquiry_no])) {
+                $map[$q->enquiry_no] = $q->id;
+            }
+        }
+
+        return $map;
+    }
+
+    public function validateQuotationVehicle($id)
+    {
+        $enquiry = Enquiry::findOrFail($id);
+
+        $missing = [];
+
+        $fields = [
+            'segment_code' => 'Segment',
+            'model_code'   => 'Model',
+            'variant_code' => 'Variant',
+            'color_code'   => 'Color',
+        ];
+
+        foreach ($fields as $column => $label) {
+
+            $value = trim((string) ($enquiry->{$column} ?? ''));
+
+            if (
+                $value === '' ||
+                $value === '0' ||
+                strtoupper($value) === 'NULL' ||
+                strtoupper($value) === 'N/A' ||
+                strtoupper($value) === 'NA' ||
+                $value === '—'
+            ) {
+                $missing[] = $label;
+            }
+        }
+
+        return response()->json([
+            'valid'   => empty($missing),
+            'missing' => $missing,
+        ]);
     }
 }

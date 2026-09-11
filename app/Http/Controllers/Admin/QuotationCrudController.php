@@ -245,9 +245,9 @@ class QuotationCrudController extends CrudController
                 'charger_swapping_amount' => $data['charger_swapping_amount'] ?? '',
                 'tcs' => $data['tcs'] ?? '',
 
-                // Totals & Prices
-                'onroad_price' => number_format((float)$quotation->onroad_price, 2),
-                'invoice_price' => number_format((float)$quotation->invoice_price, 2),
+                'onroad_price' => number_format((float) ($quotation->onroad_price ?: ($data['net_receivable_summary'] ?? $data['total_receivable'] ?? 0)),2),
+
+                'invoice_price' => number_format((float) ($quotation->invoice_price ?: ($data['invoice_amount'] ?? 0)),2),
                 'total_receivable' => $data['total_receivable'] ?? '',
                 'total_discount' => $data['total_discount'] ?? '',
                 'net_receivable' => $data['net_receivable_summary'] ?? '',
@@ -573,9 +573,12 @@ class QuotationCrudController extends CrudController
             $quotation = new Quotation();
 
             $quotation->enquiry_no = $request->input('enquiry_id');
-            $quotation->onroad_price = $request->input('onroad_price');
-            $quotation->invoice_price = $request->input('invoice_price');
-            $quotation->standard_data = $quotationData;      // ← now includes insurance_covers with prices
+
+            $quotation->onroad_price = $request->input('net_receivable_summary') ?? $request->input('total_receivable') ?? 0;
+
+            $quotation->invoice_price = $request->input('invoice_amount')?? 0;
+
+            $quotation->standard_data = $quotationData;
             $quotation->status = 'raised';
             $quotation->created_by = auth()->id();
 

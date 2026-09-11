@@ -484,4 +484,13 @@ Route::group([
         ->name('booking.otf.save');
     Route::get('booking/{id}/download-otf-pdf', [BookingCrudController::class, 'downloadOtfPdf'])
         ->name('booking.download-otf-pdf');
+
+    Route::get(
+        'enquiries/{id}/validate-quotation-vehicle',
+        [\App\Http\Controllers\Admin\EnquiryCrudController::class, 'validateQuotationVehicle']
+    )->name('enquiry.validate.quotation.vehicle');
+
+    Route::crud('enquiry', 'EnquiryCrudController');
+
+    
 });
