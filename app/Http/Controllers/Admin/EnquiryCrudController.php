@@ -46,7 +46,7 @@ class EnquiryCrudController extends CrudController
     private function getEnquiryLookupMaps(): array
     {
         return Cache::remember('enquiry_lookup_maps_v2', now()->addMinutes(10), function () {
-            $lpMap = collect(OrgService::keywordValueByCode('LIKELY_PURCHASE_DATE'))
+            $lpMap = collect(OrgService::keywordValueByCode('LIKELY_PURCHASE_DAY'))
                 ->pluck('value', 'code')
                 ->toArray();
 
@@ -195,7 +195,7 @@ class EnquiryCrudController extends CrudController
                 ])
                 ->where('crm_booking.is_active', 1);
         }
-        
+
         $query = match ($listType) {
             'reference' => Enquiry::reference(),
             'virtual' => Enquiry::virtual(),
@@ -211,9 +211,9 @@ class EnquiryCrudController extends CrudController
             'exchange_not_interested' => Enquiry::whereIn('purchase_type', ['First Time Buy', 'Additional Buy', 'No Consideration']),
             'finance' => Enquiry::where('fin_mode', 'In-house'),
             'finance_not_interested' => Enquiry::whereIn('fin_mode', ['Cash', 'Customer Self', 'Yet To Decide', 'Purchase Plan Cancelled']),
-            
+
             // APPLY NEW SCOPE TO THE DEFAULT MAIN LISTING
-            default => Enquiry::mainListing(), 
+            default => Enquiry::mainListing(),
         };
 
         return $query->with(['segment', 'model', 'variant', 'color', 'campaign']);
@@ -345,7 +345,7 @@ class EnquiryCrudController extends CrudController
     public function data(Request $request)
     {
         $startRow = max(0, (int) $request->input('startRow', 0));
-        
+
         // NEW: Check if the frontend is actually requesting pagination chunks
         $hasPagination = $request->has('endRow');
         $limit = $hasPagination ? (max(1, (int) $request->input('endRow')) - $startRow) : null;
@@ -734,7 +734,7 @@ class EnquiryCrudController extends CrudController
             // Updated to point to the new read-only view route
             $viewUrl = backpack_url("enquiries/otf-bookings/{$e->id}/show");
             $vehicle = $this->resolveVehicleFromOemCode($e->oem_code ?? null);
-            
+
             return [
                 'serial_no'         => $i + 1,
                 'booking_no'        => $e->id ?? '—',
@@ -830,13 +830,13 @@ class EnquiryCrudController extends CrudController
                 'x8_enq_source'                => $e->x8_enq_source ?? $e->x8_source_code ?? '—',
                 'name'                         => $e->name ?? '—',
                 'care_of_type'                 => match ((int) ($e->care_of_type ?? 0)) {
-                                                      1 => 'Son of',
-                                                      2 => 'Daughter of',
-                                                      3 => 'Married to',
-                                                      4 => 'Guardian Name',
-                                                      5 => 'Owned By',
-                                                      default => $e->care_of_type ?? '—',
-                                                  },
+                    1 => 'Son of',
+                    2 => 'Daughter of',
+                    3 => 'Married to',
+                    4 => 'Guardian Name',
+                    5 => 'Owned By',
+                    default => $e->care_of_type ?? '—',
+                },
                 'care_of'                      => $e->care_of ?? '—',
                 'email'                        => $e->email ?? '—',
                 'gender'                       => $e->gender ?? '—',
@@ -950,16 +950,16 @@ class EnquiryCrudController extends CrudController
 
     private function getColumns($type)
     {
-    
+
         $actionColumn = [
-    'field'      => 'action',
-    'headerName' => 'Action',
-    'pinned'     => 'right',
-    'sortable'   => false,
-    'filter'     => false,
-    'suppressSizeToFit' => true, 
-    'cellClass'  => 'text-center p-0 action-cell' 
-];
+            'field'      => 'action',
+            'headerName' => 'Action',
+            'pinned'     => 'right',
+            'sortable'   => false,
+            'filter'     => false,
+            'suppressSizeToFit' => true,
+            'cellClass'  => 'text-center p-0 action-cell'
+        ];
 
         $commonEnd = [
             $actionColumn
@@ -1258,7 +1258,7 @@ class EnquiryCrudController extends CrudController
             'action',
         ];
     }
-    
+
     private function applyEnquirySearch($query, string $searchText): void
     {
         if ($searchText === '') return;
@@ -1268,14 +1268,14 @@ class EnquiryCrudController extends CrudController
         $xenqId = $isXenq ? (int) substr(strtoupper($searchText), 5) : null;
 
         $tableName = $query->getModel()->getTable();
-        
+
         // Cache and filter only text/string columns to avoid scanning dates, IDs, and numbers
         $tableColumns = \Illuminate\Support\Facades\Cache::remember('text_columns_' . $tableName, 3600, function () use ($tableName) {
             $columns = \Illuminate\Support\Facades\Schema::getColumnListing($tableName);
-            
+
             // Exclude IDs, timestamps, and numeric fields that ruin 'LIKE' performance
             $excluded = ['id', 'created_at', 'updated_at', 'deleted_at', 'cne', 'fup_count', 'test_drive_count'];
-            
+
             return array_diff($columns, $excluded);
         });
 
@@ -1295,11 +1295,11 @@ class EnquiryCrudController extends CrudController
 
                 // Search relationships
                 $q->orWhereHas('model', fn($q2) => $q2->where('name', 'like', $like))
-                  ->orWhereHas('segment', fn($q2) => $q2->where('name', 'like', $like))
-                  ->orWhereHas('color', fn($q2) => $q2->where('name', 'like', $like))
-                  ->orWhereHas('variant', fn($q2) => $q2->where('display_name', 'like', $like)
-                                                       ->orWhere('custom_name', 'like', $like)
-                                                       ->orWhere('oem_name', 'like', $like));
+                    ->orWhereHas('segment', fn($q2) => $q2->where('name', 'like', $like))
+                    ->orWhereHas('color', fn($q2) => $q2->where('name', 'like', $like))
+                    ->orWhereHas('variant', fn($q2) => $q2->where('display_name', 'like', $like)
+                        ->orWhere('custom_name', 'like', $like)
+                        ->orWhere('oem_name', 'like', $like));
             }
         });
     }
@@ -1498,10 +1498,10 @@ class EnquiryCrudController extends CrudController
                 ->first();
 
             $fupCount = $lastFup ? $lastFup->cre_fup_count + 1 : 1;
-            $plannedDate = ($lastFup && $lastFup->cre_next_fup_date) 
-                ? $lastFup->cre_next_fup_date 
+            $plannedDate = ($lastFup && $lastFup->cre_next_fup_date)
+                ? $lastFup->cre_next_fup_date
                 : Carbon::now('Asia/Kolkata')->format('Y-m-d H:i:s');
-            
+
             $actualDate = Carbon::now('Asia/Kolkata')->format('Y-m-d H:i:s');
 
             // --- DEVIATION STAGE CALCULATION ---
@@ -1597,7 +1597,7 @@ class EnquiryCrudController extends CrudController
         $validated['updated_by'] = backpack_user()->id;
 
         // Ensure current_origin is absolutely untouched during edits
-        unset($validated['current_origin']); 
+        unset($validated['current_origin']);
 
         if (isset($validated['x8_sc_code']) && $enquiry->x8_sc_code !== $validated['x8_sc_code']) {
             $validated['x8_enq_assign_date'] = now();
@@ -1769,7 +1769,7 @@ class EnquiryCrudController extends CrudController
                 'territory' => 'nullable|string|max:100',
                 'variant_code' => 'nullable',
                 'color_code' => 'nullable',
-                'fuel_type' => 'nullable',
+
                 'usage_area' => 'nullable',
                 'km_travelled_daily' => 'nullable',
                 'application_type' => 'nullable',
@@ -1894,7 +1894,7 @@ class EnquiryCrudController extends CrudController
             'model_code' => $req,
             'variant_code' => $req,
             'color_code' => 'nullable',
-            'fuel_type' => 'nullable', // Fetched automatically
+            // Fetched automatically
             'usage_area' => 'nullable', // Checked dynamically by HTML5 based on segment
             'km_travelled_daily' => 'nullable',
             'application_type' => 'nullable',
@@ -1939,9 +1939,7 @@ class EnquiryCrudController extends CrudController
             'consid_variant2' => 'nullable|max:100',
             'vehicle_no' => 'nullable|max:30',
             'remarks' => 'nullable',
-            'transmission' => 'nullable',
-            'drivetrain' => 'nullable',
-            'seating' => 'nullable',
+
             'place_of_registration' => 'nullable|max:100',
             // 'dealer_branch' => $req,
             // 'dealer_location' => $req,
@@ -1998,7 +1996,7 @@ class EnquiryCrudController extends CrudController
                 ->orderBy('name')
                 ->pluck('name')
                 ->toArray(),
-            'likely_purchase_dates' => $kw('LIKELY_PURCHASE_DATE'),
+            'likely_purchase_dates' => $kw('LIKELY_PURCHASE_DAY'),
             'enquiry_types' => $kw('ENQUIRY_TYPE'),
             'activity_types' => $kw('ACTIVITY_TYPE'),
             'follow_up_types' => $kw('FOLLOW_UP_TYPE'),
@@ -2155,7 +2153,7 @@ class EnquiryCrudController extends CrudController
         $lookups = $this->getEnquiryLookupMaps();
         $scByCode = $lookups['scByCode'] ?? [];
         $scByMileId = $lookups['scByMileId'] ?? [];
-        
+
         $scDisplay = '—';
         $scBranch = '—';
         $scLocation = '—';
