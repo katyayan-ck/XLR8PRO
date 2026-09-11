@@ -1804,34 +1804,40 @@ class BookingCrudController extends CrudController
 
         if ($quotation) {
             $quotationData = $quotation->standard_data ?? [];
-
             if (is_string($quotationData)) {
                 $quotationData = json_decode($quotationData, true) ?? [];
             }
-            
             $data['q'] = is_array($quotationData) ? $quotationData : [];
+        }
 
-            // Set individual fields for the view
-            $data['segment_code'] = $data['q']['segment_code']
-                ?? $quotation->segment_code
-                ?? ($enquiry ? $enquiry->segment_code : null);
-
-            $data['model_code'] = $data['q']['model_code']
-                ?? $quotation->model_code
-                ?? ($enquiry ? $enquiry->model_code : null);
-
-            $data['variant_code'] = $data['q']['variant_code']
-                ?? $quotation->variant_code
-                ?? ($enquiry ? $enquiry->variant_code : null);
-
-            $data['color_code'] = $data['q']['color_code']
-                ?? $quotation->color_code
-                ?? ($enquiry ? $enquiry->color_code : null);
+        // --- NEW: INJECT ALL ENQUIRY DATA SO THE FORM PRE-FILLS CORRECTLY ---
+        $data['segment_code'] = $data['q']['segment_code'] ?? $quotation?->segment_code ?? $enquiry?->segment_code;
+        $data['model_code']   = $data['q']['model_code'] ?? $quotation?->model_code ?? $enquiry?->model_code;
+        $data['variant_code'] = $data['q']['variant_code'] ?? $quotation?->variant_code ?? $enquiry?->variant_code;
+        $data['color_code']   = $data['q']['color_code'] ?? $quotation?->color_code ?? $enquiry?->color_code;
+        
+        if ($enquiry) {
+            $data['q']['name']         = $enquiry->name;
+            $data['q']['care_of_type'] = $enquiry->care_of_type;
+            $data['q']['care_of']      = $enquiry->care_of;
+            $data['q']['email']        = $enquiry->email;
+            $data['q']['mobile']       = $enquiry->mobile;
+            $data['q']['alt_mobile']   = $enquiry->alternate_mobile;
+            $data['q']['gender']       = $enquiry->gender;
+            $data['q']['occ']          = $enquiry->occupation_type;
+            $data['q']['c_dob']        = $enquiry->dob;
+            $data['q']['buyertype']    = $enquiry->purchase_type_crm ?? $enquiry->purchase_type;
+            $data['q']['exist_oem1']   = $enquiry->brand_make;
+            $data['q']['vh1_detail']   = $enquiry->brand_model;
+            $data['q']['exist_oem2']   = $enquiry->consid_brand2;
+            $data['q']['vh2_detail']   = $enquiry->consid_model2;
+            $data['q']['panno']        = $enquiry->pan_no;
+            $data['q']['adharno']      = $enquiry->adhar_no;
         }
         // ======================================
 
         $this->data['data']    = $data;
-        $this->data['enquiry'] = $enquiry; // Explicitly set for standalone variable access in view
+        $this->data['enquiry'] = $enquiry;
     }
 
 
@@ -2062,9 +2068,7 @@ class BookingCrudController extends CrudController
         $booking->b_cat            = $request->input('customercat');
         $booking->b_mode           = $request->input('bookingmode');
         $booking->cpd              = $request->input('hiddencpd');
-        $booking->col_type = $isDummy
-            ? 1
-            : ($request->input('coltype') ?? 1);
+        $booking->col_type         = $isDummy ? 1 : ($request->input('coltype') ?? 1);
         $booking->col_by           = $request->input('user');
         $booking->b_source         = $request->input('bookingsource');
         $booking->dsa_id           = $request->input('dsadetails');
@@ -2072,38 +2076,11 @@ class BookingCrudController extends CrudController
         $booking->booking_date     = $request->input('hiddenbookingdate');
         $booking->receipt_no       = $request->input('receiptno');
         $booking->receipt_date     = $request->input('hiddenreceiptdate');
-        $booking->booking_amount = $isDummy
-            ? 0
-            : $request->input('bookingamount');
-        $booking->branch_code      = $request->input('branch');
-        $booking->location_code    = $request->input('location');
-        $booking->location_other   = $request->input('locationother');
-        $booking->c_dob            = $request->input('hiddencustomerdob');
-        $booking->segment_code     = $request->input('segment');
-        $booking->model_code       = $request->input('model');
-        $booking->variant_code     = $request->input('variant');
-        $booking->color_code       = $request->input('color');
+        $booking->booking_amount   = $isDummy ? 0 : $request->input('bookingamount');
         $booking->order            = $request->input('makeorder');
-        $booking->seating          = $request->input('seating');
         $booking->person_id        = backpack_auth()->id();
-        $booking->name             = $request->input('name');
-        $booking->care_of_type     = $request->input('careof');
-        $booking->care_of          = $request->input('careofname');
-        $booking->mobile           = $request->input('mobile');
-        $booking->alt_mobile       = $request->input('altmobile');
-        $booking->gender           = $request->input('gender');
-        $booking->occ              = $request->input('occupation');
-        $booking->buyer_type       = $request->input('buyertype');
-        $booking->exist_oem1       = $request->input('enummaster1');
-        $booking->exist_oem2       = $request->input('enummaster2');
-        $booking->vh1_detail       = $request->input('vehicledetails');
-        $booking->vh2_detail       = $request->input('vehicledetails2');
-        $booking->registration_no  = $request->input('registrationno');
-        $booking->make_year        = $request->input('manufacturingyear');
-        $booking->odo_reading      = $request->input('odometerreading');
-        $booking->expected_price   = $request->input('expectedprice');
-        $booking->offered_price    = $request->input('offeredprice');
-        $booking->exchange_bonus   = $request->input('exchangebonus');
+        
+        // Native Booking Fields
         $booking->pan_no           = $request->input('panno');
         $booking->adhar_no         = $adhar_no_normalized;
         $booking->gstn             = $request->input('gstn');
@@ -2112,33 +2089,62 @@ class BookingCrudController extends CrudController
         $booking->dms_no           = $request->input('dmsno');
         $booking->otf_date         = $request->input('hiddenotfdate');
         $booking->mapped           = 0;
-        $booking->chassis_no        = $request->input('chassis');
+        $booking->chassis_no       = $request->input('chassis');
         $booking->del_type         = $request->input('deliverytype');
         $booking->del_date         = $request->input('hiddenexpecteddeldate');
-        $booking->fin_mode = $isDummy
-            ? 'Dummy'
-            : $request->input('finmode');
-        $booking->financier = $isDummy
-            ? null
-            : $request->input('financier');
-        $booking->loan_status = $isDummy
-            ? null
-            : $request->input('loanstatus');
 
-        if (!empty($request->accessories)) {
-            $accessories = (array) $request->input('accessories');
-            $booking->accessories = implode(',', $accessories);
-            Log::info('🔧 [BOOKING] Accessories set: ' . $booking->accessories);
+        // NEW: Update the associated Enquiry with all the deleted booking fields
+        if ($booking->enq_no) {
+            $enquiryId = str_replace('XENQ-', '', $booking->enq_no);
+            $linkedEnquiry = \App\Models\CRM\Enquiry::where('id', $enquiryId)
+                ->orWhere('enquiry_no', $booking->enq_no)
+                ->orWhere('quick_enquiry_no', $booking->enq_no)
+                ->first();
+
+            if ($linkedEnquiry) {
+                $accessoriesArray  = $request->has('accessories') && $request->accessories ? (array) $request->accessories : [];
+                
+                $linkedEnquiry->update([
+                    'name'              => $request->input('name'),
+                    'care_of_type'      => $request->input('careof'),
+                    'care_of'           => $request->input('careofname'),
+                    'mobile'            => $request->input('mobile'),
+                    'alternate_mobile'  => $request->input('altmobile'),
+                    'gender'            => $request->input('gender'),
+                    'occupation_type'   => $request->input('occupation'),
+                    'dob'               => $request->input('hiddencustomerdob'),
+                    'dealer_branch'     => $request->input('branch'),
+                    'dealer_location'   => $request->input('location'),
+                    'segment_code'      => $request->input('segment'),
+                    'model_code'        => $request->input('model'),
+                    'variant_code'      => $request->input('variant'),
+                    'color_code'        => $request->input('color'),
+                    'seating'           => $request->input('seating'),
+                    'purchase_type'     => $request->input('buyertype'),
+                    'brand_make'        => $request->input('enummaster1'),
+                    'brand_model'       => $request->input('vehicledetails'),
+                    'consid_brand2'     => $request->input('enummaster2'),
+                    'consid_model2'     => $request->input('vehicledetails2'),
+                    'vehicle_no'        => $request->input('registrationno'),
+                    'make_year'         => $request->input('manufacturingyear'),
+                    'odo_reading'       => $request->input('odometerreading'),
+                    'expected_price'    => $request->input('expectedprice'),
+                    'offered_price'     => $request->input('offeredprice'),
+                    'exchange_bonus'    => $request->input('exchangebonus'),
+                    'fin_mode'          => $isDummy ? 'Dummy' : $request->input('finmode'),
+                    'financier'         => $isDummy ? null : $request->input('financier'),
+                    'loan_status'       => $isDummy ? null : $request->input('loanstatus'),
+                    'x8_sc_code'        => $request->input('saleconsultant'),
+                    'accessories'       => !empty($accessoriesArray) ? implode(',', $accessoriesArray) : null,
+                    'apack_amount'      => $request->input('apackamount'),
+                    'referee_name'      => $request->input('refcustomername'),
+                    'referee_phone'     => $request->input('refmobileno'),
+                    'referred_by'       => $request->input('referredby'),
+                    'remarks'           => $request->input('details'),
+                ]);
+            }
         }
 
-        $booking->apack_amount = $request->input('apackamount');
-        $booking->consultant   = $request->input('saleconsultant');
-        $booking->refferd      = $request->input('referredby');
-        $booking->r_name       = $request->input('refcustomername');
-        $booking->r_mobile     = $request->input('refmobileno');
-        $booking->r_model      = $request->input('refexistingmodel');
-        $booking->r_variant    = $request->input('refvariant');
-        $booking->r_chassis    = $request->input('refchassisregno');
         $booking->pending      = $pending;
         $booking->pending_remark = implode(' , ', $pendingFields);
 
@@ -2457,6 +2463,49 @@ class BookingCrudController extends CrudController
 
         $id = $this->crud->getCurrentEntryId() ?? request()->id;
         $entry = $this->crud->getEntry($id);
+
+        // --- NEW: RECOVER DELETED COLUMNS FROM ENQUIRY FOR EDIT FORM ---
+        if ($entry->enq_no) {
+            $enquiryId = str_replace('XENQ-', '', $entry->enq_no);
+            $linkedEnquiry = \App\Models\CRM\Enquiry::where('id', $enquiryId)
+                ->orWhere('enquiry_no', $entry->enq_no)
+                ->orWhere('quick_enquiry_no', $entry->enq_no)
+                ->first();
+
+            if ($linkedEnquiry) {
+                // Map all deleted fields back onto the $entry object dynamically
+                $entry->name = $linkedEnquiry->name;
+                $entry->care_of_type = $linkedEnquiry->care_of_type;
+                $entry->care_of = $linkedEnquiry->care_of;
+                $entry->mobile = $linkedEnquiry->mobile;
+                $entry->alt_mobile = $linkedEnquiry->alternate_mobile;
+                $entry->email = $linkedEnquiry->email;
+                $entry->gender = $linkedEnquiry->gender;
+                $entry->occ = $linkedEnquiry->occupation_type;
+                $entry->c_dob = $linkedEnquiry->dob;
+                $entry->buyer_type = $linkedEnquiry->purchase_type_crm ?? $linkedEnquiry->purchase_type;
+                $entry->exist_oem1 = $linkedEnquiry->brand_make;
+                $entry->vh1_detail = $linkedEnquiry->brand_model;
+                $entry->exist_oem2 = $linkedEnquiry->consid_brand2;
+                $entry->vh2_detail = $linkedEnquiry->consid_model2;
+                $entry->registration_no = $linkedEnquiry->vehicle_no;
+                $entry->make_year = $linkedEnquiry->make_year;
+                $entry->odo_reading = $linkedEnquiry->odo_reading;
+                $entry->expected_price = $linkedEnquiry->expected_price;
+                $entry->offered_price = $linkedEnquiry->offered_price;
+                $entry->exchange_bonus = $linkedEnquiry->exchange_bonus;
+                $entry->fin_mode = $linkedEnquiry->fin_mode;
+                $entry->financier = $linkedEnquiry->financier;
+                $entry->loan_status = $linkedEnquiry->loan_status;
+                $entry->consultant = $linkedEnquiry->x8_sc_code;
+                $entry->branch_code = $linkedEnquiry->dealer_branch;
+                $entry->location_code = $linkedEnquiry->dealer_location;
+                $entry->details = $linkedEnquiry->remarks;
+                $entry->accessories = $linkedEnquiry->accessories;
+                $entry->apack_amount = $linkedEnquiry->apack_amount;
+            }
+        }
+        // ---------------------------------------------------------------
 
         $data = [];
 
@@ -2933,6 +2982,16 @@ class BookingCrudController extends CrudController
         };
 
         $rem = [];
+        
+        // Fetch Linked Enquiry for updates
+        $linkedEnquiry = null;
+        if ($booking->enq_no) {
+            $enquiryId = str_replace('XENQ-', '', $booking->enq_no);
+            $linkedEnquiry = \App\Models\CRM\Enquiry::where('id', $enquiryId)
+                ->orWhere('enquiry_no', $booking->enq_no)
+                ->orWhere('quick_enquiry_no', $booking->enq_no)
+                ->first();
+        }
 
         if ($booking->b_type != $request->input('customer_type')) {
             $rem[] = "Customer Type Changed from " . ($booking->b_type ?? 'null') . " to " . $request->input('customer_type');
@@ -2986,39 +3045,39 @@ class BookingCrudController extends CrudController
             $rem[] = "Collected By Changed from {$oldUser} to {$newUser}";
         }
 
-        if ($booking->name != $request->input('name')) {
-            $rem[] = "Name Changed from " . $booking->name . " to " . $request->input('name');
-            $booking->name = $request->input('name');
+        if ($linkedEnquiry && $linkedEnquiry->name != $request->input('name')) {
+            $rem[] = "Name Changed from " . $linkedEnquiry->name . " to " . $request->input('name');
+            $linkedEnquiry->name = $request->input('name');
         }
 
-        if ($booking->care_of_type != $request->input('care_of')) {
+        if ($linkedEnquiry && $linkedEnquiry->care_of_type != $request->input('care_of')) {
             $rem[] = "Care Of Type Changed";
-            $booking->care_of_type = $request->input('care_of');
+            $linkedEnquiry->care_of_type = $request->input('care_of');
         }
 
-        if ($booking->care_of != $request->input('care_of_name')) {
-            $rem[] = "Care Of Changed from " . ($booking->care_of ?? 'None') . " to " . ($request->input('care_of_name') ?? 'None');
-            $booking->care_of = $request->input('care_of_name');
+        if ($linkedEnquiry && $linkedEnquiry->care_of != $request->input('care_of_name')) {
+            $rem[] = "Care Of Changed from " . ($linkedEnquiry->care_of ?? 'None') . " to " . ($request->input('care_of_name') ?? 'None');
+            $linkedEnquiry->care_of = $request->input('care_of_name');
         }
 
-        if ($booking->mobile != $request->input('mobile')) {
-            $rem[] = "Mobile Changed from " . $booking->mobile . " to " . $request->input('mobile');
-            $booking->mobile = $request->input('mobile');
+        if ($linkedEnquiry && $linkedEnquiry->mobile != $request->input('mobile')) {
+            $rem[] = "Mobile Changed from " . $linkedEnquiry->mobile . " to " . $request->input('mobile');
+            $linkedEnquiry->mobile = $request->input('mobile');
         }
 
-        if ($booking->alt_mobile != $request->input('alt_mobile')) {
-            $rem[] = "Alt Mobile Changed from " . ($booking->alt_mobile ?? '0') . " to " . $request->input('alt_mobile');
-            $booking->alt_mobile = $request->input('alt_mobile');
+        if ($linkedEnquiry && $linkedEnquiry->alternate_mobile != $request->input('alt_mobile')) {
+            $rem[] = "Alt Mobile Changed from " . ($linkedEnquiry->alternate_mobile ?? '0') . " to " . $request->input('alt_mobile');
+            $linkedEnquiry->alternate_mobile = $request->input('alt_mobile');
         }
 
-        if ($booking->gender != $request->input('gender')) {
-            $rem[] = "Gender Changed from " . ($booking->gender ?? 'null') . " to " . $request->input('gender');
-            $booking->gender = $request->input('gender');
+        if ($linkedEnquiry && $linkedEnquiry->gender != $request->input('gender')) {
+            $rem[] = "Gender Changed from " . ($linkedEnquiry->gender ?? 'null') . " to " . $request->input('gender');
+            $linkedEnquiry->gender = $request->input('gender');
         }
 
-        if ($booking->occ != $request->input('occupation')) {
-            $rem[] = "Occupation Changed from " . ($booking->occ ?? 'null') . " to " . $request->input('occupation');
-            $booking->occ = $request->input('occupation');
+        if ($linkedEnquiry && $linkedEnquiry->occupation_type != $request->input('occupation')) {
+            $rem[] = "Occupation Changed from " . ($linkedEnquiry->occupation_type ?? 'null') . " to " . $request->input('occupation');
+            $linkedEnquiry->occupation_type = $request->input('occupation');
         }
 
         if ($booking->pan_no != $request->input('pan_no')) {
@@ -3037,64 +3096,58 @@ class BookingCrudController extends CrudController
             $booking->gstn = $gstValue;
         }
 
-        if ($booking->c_dob != $request->input('hidden_customer_dob')) {
-            $oldDob = $booking->c_dob ? Carbon::parse($booking->c_dob)->format('d-M-Y') : 'null';
+        if ($linkedEnquiry && $linkedEnquiry->dob != $request->input('hidden_customer_dob')) {
+            $oldDob = $linkedEnquiry->dob ? Carbon::parse($linkedEnquiry->dob)->format('d-M-Y') : 'null';
             $newDob = $request->input('hidden_customer_dob') ? Carbon::parse($request->input('hidden_customer_dob'))->format('d-M-Y') : 'null';
             $rem[] = "Customer D.O.B. Changed from {$oldDob} to {$newDob}";
-            $booking->c_dob = $request->input('hidden_customer_dob');
+            $linkedEnquiry->dob = $request->input('hidden_customer_dob');
         }
 
-        if ($booking->branch_code != $request->input('branch')) {
-            $rem[] = "Branch Changed from " . ($booking->branch_code ?? 'null') . " to " . $request->input('branch');
-            $booking->branch_code = $request->input('branch');
+        if ($linkedEnquiry && $linkedEnquiry->dealer_branch != $request->input('branch')) {
+            $rem[] = "Branch Changed from " . ($linkedEnquiry->dealer_branch ?? 'null') . " to " . $request->input('branch');
+            $linkedEnquiry->dealer_branch = $request->input('branch');
         }
 
-        if ($booking->location_code != $request->input('location_id')) {
-            $rem[] = "Location Changed from " . ($booking->location_code ?? 'null') . " to " . $request->input('location_id');
-            $booking->location_code = $request->input('location_id');
+        if ($linkedEnquiry && $linkedEnquiry->dealer_location != $request->input('location_id')) {
+            $rem[] = "Location Changed from " . ($linkedEnquiry->dealer_location ?? 'null') . " to " . $request->input('location_id');
+            $linkedEnquiry->dealer_location = $request->input('location_id');
         }
 
-        if ($booking->location_other != $request->input('location_other')) {
-            $rem[] = "Location Other Changed from " . ($booking->location_other ?? 'null') . " to " . $request->input('location_other');
-            $booking->location_other = $request->input('location_other');
+        if ($linkedEnquiry && $linkedEnquiry->segment_code != $request->input('segment_id')) {
+            $rem[] = "Segment Changed from " . ($linkedEnquiry->segment_code ?? 'null') . " to " . $request->input('segment_id');
+            $linkedEnquiry->segment_code = $request->input('segment_id');
         }
 
-
-        if ($booking->segment_code != $request->input('segment_id')) {
-            $rem[] = "Segment Changed from " . ($booking->segment_code ?? 'null') . " to " . $request->input('segment_id');
-            $booking->segment_code = $request->input('segment_id');
+        if ($linkedEnquiry && $linkedEnquiry->model_code != $request->input('model')) {
+            $rem[] = "Model Changed from " . ($linkedEnquiry->model_code ?? 'null') . " to " . $request->input('model');
+            $linkedEnquiry->model_code = $request->input('model');
         }
 
-        if ($booking->model_code != $request->input('model')) {
-            $rem[] = "Model Changed from " . ($booking->model_code ?? 'null') . " to " . $request->input('model');
-            $booking->model_code = $request->input('model');
+        if ($linkedEnquiry && $linkedEnquiry->variant_code != $request->input('variant')) {
+            $rem[] = "Variant Changed from " . ($linkedEnquiry->variant_code ?? 'null') . " to " . $request->input('variant');
+            $linkedEnquiry->variant_code = $request->input('variant');
         }
 
-        if ($booking->variant_code != $request->input('variant')) {
-            $rem[] = "Variant Changed from " . ($booking->variant_code ?? 'null') . " to " . $request->input('variant');
-            $booking->variant_code = $request->input('variant');
+        if ($linkedEnquiry && $linkedEnquiry->color_code != $request->input('color')) {
+            $rem[] = "Color Changed from " . ($linkedEnquiry->color_code ?? 'null') . " to " . $request->input('color');
+            $linkedEnquiry->color_code = $request->input('color');
         }
 
-        if ($booking->color_code != $request->input('color')) {
-            $rem[] = "Color Changed from " . ($booking->color_code ?? 'null') . " to " . $request->input('color');
-            $booking->color_code = $request->input('color');
-        }
-
-        if ($booking->seating != $request->input('seating')) {
-            $rem[] = "Seating Changed from " . ($booking->seating ?? '0') . " to " . $request->input('seating');
-            $booking->seating = $request->input('seating');
+        if ($linkedEnquiry && $linkedEnquiry->seating != $request->input('seating')) {
+            $rem[] = "Seating Changed from " . ($linkedEnquiry->seating ?? '0') . " to " . $request->input('seating');
+            $linkedEnquiry->seating = $request->input('seating');
         }
 
         $accessoriesArray  = $request->has('accessories') && $request->accessories ? (array) $request->accessories : [];
         $accessoriesString = !empty($accessoriesArray) ? implode(',', $accessoriesArray) : null;
-        if ($booking->accessories != $accessoriesString) {
+        if ($linkedEnquiry && $linkedEnquiry->accessories != $accessoriesString) {
             $rem[] = "Accessories Changed";
-            $booking->accessories = $accessoriesString;
+            $linkedEnquiry->accessories = $accessoriesString;
         }
 
-        if ($booking->apack_amount != $request->input('apack_amount')) {
-            $rem[] = "Accessories Amount Changed from " . ($booking->apack_amount ?? '0') . " to " . $request->input('apack_amount');
-            $booking->apack_amount = $request->input('apack_amount');
+        if ($linkedEnquiry && $linkedEnquiry->apack_amount != $request->input('apack_amount')) {
+            $rem[] = "Accessories Amount Changed from " . ($linkedEnquiry->apack_amount ?? '0') . " to " . $request->input('apack_amount');
+            $linkedEnquiry->apack_amount = $request->input('apack_amount');
         }
 
         if ($booking->chassis_no != $request->input('chassis')) {
@@ -3102,59 +3155,59 @@ class BookingCrudController extends CrudController
             $booking->chassis_no = $request->input('chassis');
         }
 
-        if ($booking->buyer_type != $request->input('buyer_type')) {
-            $rem[] = "Buyer Type Changed from " . ($booking->buyer_type ?? 'null') . " to " . $request->input('buyer_type');
-            $booking->buyer_type = $request->input('buyer_type');
+        if ($linkedEnquiry && $linkedEnquiry->purchase_type_crm != $request->input('buyer_type')) {
+            $rem[] = "Buyer Type Changed from " . ($linkedEnquiry->purchase_type_crm ?? 'null') . " to " . $request->input('buyer_type');
+            $linkedEnquiry->purchase_type_crm = $request->input('buyer_type');
         }
 
-        if ($booking->exist_oem1 != $request->input('enummaster1')) {
+        if ($linkedEnquiry && $linkedEnquiry->brand_make != $request->input('enummaster1')) {
             $rem[] = "Brand (Make 1) Changed";
-            $booking->exist_oem1 = $request->input('enummaster1');
+            $linkedEnquiry->brand_make = $request->input('enummaster1');
         }
 
-        if ($booking->vh1_detail != $request->input('vehicle_details')) {
+        if ($linkedEnquiry && $linkedEnquiry->brand_model != $request->input('vehicle_details')) {
             $rem[] = "Model & Variant 1 Changed";
-            $booking->vh1_detail = $request->input('vehicle_details');
+            $linkedEnquiry->brand_model = $request->input('vehicle_details');
         }
 
-        if ($booking->exist_oem2 != $request->input('enummaster2')) {
+        if ($linkedEnquiry && $linkedEnquiry->consid_brand2 != $request->input('enummaster2')) {
             $rem[] = "Brand (Make 2) Changed";
-            $booking->exist_oem2 = $request->input('enummaster2');
+            $linkedEnquiry->consid_brand2 = $request->input('enummaster2');
         }
 
-        if ($booking->vh2_detail != $request->input('vehicle_details2')) {
+        if ($linkedEnquiry && $linkedEnquiry->consid_model2 != $request->input('vehicle_details2')) {
             $rem[] = "Model & Variant 2 Changed";
-            $booking->vh2_detail = $request->input('vehicle_details2');
+            $linkedEnquiry->consid_model2 = $request->input('vehicle_details2');
         }
 
-        if ($booking->registration_no != $request->input('registration_no')) {
+        if ($linkedEnquiry && $linkedEnquiry->vehicle_no != $request->input('registration_no')) {
             $rem[] = "Vehicle Registration No. Changed";
-            $booking->registration_no = $request->input('registration_no');
+            $linkedEnquiry->vehicle_no = $request->input('registration_no');
         }
 
-        if ($booking->make_year != $request->input('manufacturing_year')) {
+        if ($linkedEnquiry && $linkedEnquiry->make_year != $request->input('manufacturing_year')) {
             $rem[] = "Manufacturing Year Changed";
-            $booking->make_year = $request->input('manufacturing_year');
+            $linkedEnquiry->make_year = $request->input('manufacturing_year');
         }
 
-        if ($booking->odo_reading != $request->input('odometer_reading')) {
+        if ($linkedEnquiry && $linkedEnquiry->odo_reading != $request->input('odometer_reading')) {
             $rem[] = "Odometer Reading Changed";
-            $booking->odo_reading = $request->input('odometer_reading');
+            $linkedEnquiry->odo_reading = $request->input('odometer_reading');
         }
 
-        if ($booking->expected_price != $request->input('expected_price')) {
+        if ($linkedEnquiry && $linkedEnquiry->expected_price != $request->input('expected_price')) {
             $rem[] = "Expected Price Changed";
-            $booking->expected_price = $request->input('expected_price');
+            $linkedEnquiry->expected_price = $request->input('expected_price');
         }
 
-        if ($booking->offered_price != $request->input('offered_price')) {
+        if ($linkedEnquiry && $linkedEnquiry->offered_price != $request->input('offered_price')) {
             $rem[] = "Offered Price Changed";
-            $booking->offered_price = $request->input('offered_price');
+            $linkedEnquiry->offered_price = $request->input('offered_price');
         }
 
-        if ($booking->exchange_bonus != $request->input('exchange_bonus')) {
+        if ($linkedEnquiry && $linkedEnquiry->exchange_bonus != $request->input('exchange_bonus')) {
             $rem[] = "Exchange Bonus Changed";
-            $booking->exchange_bonus = $request->input('exchange_bonus');
+            $linkedEnquiry->exchange_bonus = $request->input('exchange_bonus');
         }
 
         if ($booking->b_mode != $request->input('booking_mode')) {
@@ -3177,13 +3230,13 @@ class BookingCrudController extends CrudController
             $booking->dsa_id = $request->input('dsa_details');
         }
 
-        if ($booking->consultant != $request->input('saleconsultant')) {
-            $oldC = collect($data['saleconsultants'])->firstWhere('id', $booking->consultant);
+        if ($linkedEnquiry && $linkedEnquiry->x8_sc_code != $request->input('saleconsultant')) {
+            $oldC = collect($data['saleconsultants'])->firstWhere('id', $linkedEnquiry->x8_sc_code);
             $newC = collect($data['saleconsultants'])->firstWhere('id', $request->input('saleconsultant'));
             $oldName = is_array($oldC) ? ($oldC['name'] ?? 'null') : ($oldC->name ?? 'null');
             $newName = is_array($newC) ? ($newC['name'] ?? 'null') : ($newC->name ?? 'null');
             $rem[] = "Sale Consultant Changed from {$oldName} to {$newName}";
-            $booking->consultant = $request->input('saleconsultant');
+            $linkedEnquiry->x8_sc_code = $request->input('saleconsultant');
         }
 
         if ($booking->del_type != $request->input('delivery_type')) {
@@ -3198,19 +3251,19 @@ class BookingCrudController extends CrudController
             $booking->del_date = $request->input('expected_del_date_actual');
         }
 
-        if ($booking->fin_mode != $request->input('fin_mode')) {
-            $rem[] = "Finance Mode Changed from " . ($booking->fin_mode ?? 'null') . " to " . $request->input('fin_mode');
-            $booking->fin_mode = $request->input('fin_mode');
+        if ($linkedEnquiry && $linkedEnquiry->fin_mode != $request->input('fin_mode')) {
+            $rem[] = "Finance Mode Changed from " . ($linkedEnquiry->fin_mode ?? 'null') . " to " . $request->input('fin_mode');
+            $linkedEnquiry->fin_mode = $request->input('fin_mode');
         }
 
-        if ($booking->financier != $request->input('financier')) {
-            $rem[] = "Financier Changed from " . $getFinancierName($booking->financier) . " to " . $getFinancierName($request->input('financier'));
-            $booking->financier = $request->input('financier');
+        if ($linkedEnquiry && $linkedEnquiry->financier != $request->input('financier')) {
+            $rem[] = "Financier Changed from " . $getFinancierName($linkedEnquiry->financier) . " to " . $getFinancierName($request->input('financier'));
+            $linkedEnquiry->financier = $request->input('financier');
         }
 
-        if ($booking->loan_status != $request->input('loan_status')) {
-            $rem[] = "Loan Status Changed from " . ($booking->loan_status ?? 'null') . " to " . ($request->input('loan_status') ?? 'null');
-            $booking->loan_status = $request->input('loan_status');
+        if ($linkedEnquiry && $linkedEnquiry->loan_status != $request->input('loan_status')) {
+            $rem[] = "Loan Status Changed from " . ($linkedEnquiry->loan_status ?? 'null') . " to " . ($request->input('loan_status') ?? 'null');
+            $linkedEnquiry->loan_status = $request->input('loan_status');
         }
 
         $newOrder = $request->input('make_order') ? 1 : 0;
@@ -3219,35 +3272,29 @@ class BookingCrudController extends CrudController
             $booking->order = $newOrder;
         }
 
-        if ($booking->r_name != $request->input('ref_customer_name')) {
+        if ($linkedEnquiry && $linkedEnquiry->referee_name != $request->input('ref_customer_name')) {
             $rem[] = "Referred Name Changed";
-            $booking->r_name = $request->input('ref_customer_name');
+            $linkedEnquiry->referee_name = $request->input('ref_customer_name');
         }
 
-        if ($booking->r_mobile != $request->input('ref_mobile_no')) {
+        if ($linkedEnquiry && $linkedEnquiry->referee_phone != $request->input('ref_mobile_no')) {
             $rem[] = "Referred Mobile Changed";
-            $booking->r_mobile = $request->input('ref_mobile_no');
+            $linkedEnquiry->referee_phone = $request->input('ref_mobile_no');
         }
 
-        if ($booking->r_model != $request->input('ref_existing_model')) {
-            $rem[] = "Referred Model Changed";
-            $booking->r_model = $request->input('ref_existing_model');
+        if ($linkedEnquiry && $linkedEnquiry->remarks != $request->input('details')) {
+            $rem[] = "Remarks Changed";
+            $linkedEnquiry->remarks = $request->input('details');
         }
 
-        if ($booking->r_variant != $request->input('ref_variant')) {
-            $rem[] = "Referred Variant Changed";
-            $booking->r_variant = $request->input('ref_variant');
+        // Save linked enquiry if changes were made
+        if ($linkedEnquiry) {
+            $linkedEnquiry->save();
         }
-
-        if ($booking->r_chassis != $request->input('ref_chassis_reg_no')) {
-            $rem[] = "Referred Chassis Changed";
-            $booking->r_chassis = $request->input('ref_chassis_reg_no');
-        }
-
 
         $booking->col_type = $request->input('col_type');
         $booking->col_by   = $request->input('user');
-
+        
         $booking->pending = $pending;
 
         if (!empty($pendingFields)) {

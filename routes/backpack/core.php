@@ -181,4 +181,5 @@ Route::group([
         ->name('enquiry.hyperlocal');
     Route::get('enquiries/otf-bookings', [EnquiryCrudController::class, 'otfBookingsList'])
         ->name('enquiry.otf-bookings');
+    Route::get('enquiries/otf-bookings/{id}/show', [EnquiryCrudController::class, 'showOtf'])->name('enquiry.otf.show');
 }); // ← This should be the last line
