@@ -376,7 +376,7 @@ class Enquiry extends BaseModel
             })
             
             // CONDITION B: New Enquiries created directly from CRM
-            ->orWhere('cne', 1);
+            ->orWhere('current_origin', 'Xceler8');
         });
     }
 
@@ -386,8 +386,7 @@ class Enquiry extends BaseModel
     public function scopeXceler8($query)
     {
         return $query->where('is_active', 1)
-                     ->where('cne', 1)
-                     ->whereNull('current_origin');
+                     ->where('current_origin', 'Xceler8');
     }
 
     public const STATUS_NEW = 'new';

@@ -277,6 +277,7 @@ class EnquiryCrudController extends CrudController
 
         $rows = DB::table('xlr8_cre_enquiry_fup')
             ->whereIn('x8_enq_no', $x8Nos)
+            ->where('cre_fup_deviation_stage', '!=', 'OPEN_FOLLOW_UP')
             ->orderByDesc('id')
             ->get();
 
@@ -341,45 +342,6 @@ class EnquiryCrudController extends CrudController
         ]);
     }
 
-    // public function data(Request $request)
-    // {
-    //     $startRow = max(0, (int) $request->input('startRow', 0));
-    //     $limit = max(1, (int) $request->input('endRow', $startRow + 100)) - $startRow;
-
-    //     $searchText = trim((string) $request->input('searchText', ''));
-    //     $highlightFilter = trim((string) $request->input('highlightFilter', ''));
-    //     $filterModel = (array) $request->input('filterModel', []);
-    //     $listType = trim((string) $request->input('list_type', 'all'));
-
-    //     $query = $this->getBaseQuery($listType);
-
-    //     if ($listType === 'otf') {
-    //         $this->applyOtfSearch($query, $searchText);
-    //         $this->applyOtfFilter($query, $filterModel);
-    //         $this->applyOtfSort($query, (array) $request->input('sortModel', []));
-    //     } else {
-    //         $this->applyEnquirySearch($query, $searchText);
-    //         $this->applyEnquirySort($query, (array) $request->input('sortModel', []));
-    //         $this->applyEnquiryFilter($query, $filterModel);
-    //         OrgService::applyHighlightFilter($query, $highlightFilter);
-    //     }
-
-    //     $total = (clone $query)->count();
-    //     $mapType = $this->resolveMapType($listType);
-    //     $lookups = $this->getEnquiryLookupMaps();
-
-    //     $pageRows = $query->skip($startRow)->take($limit)->get();
-
-    //     if ($listType !== 'otf') {
-    //         $lookups['creFups'] = $this->getLatestCreFups($pageRows->pluck('id')->all());
-    //     }
-
-    //     $gridData = $pageRows
-    //         ->map(fn($e, $i) => $this->mapData($e, $startRow + $i, $mapType, $lookups))
-    //         ->all();
-
-    //     return response()->json(['rows' => $gridData, 'lastRow' => $total]);
-    // }
     public function data(Request $request)
     {
         $startRow = max(0, (int) $request->input('startRow', 0));
@@ -769,8 +731,10 @@ class EnquiryCrudController extends CrudController
         }
 
         if ($type === 'otf') {
-            $editUrl = backpack_url("booking/{$e->id}/edit");
+            // Updated to point to the new read-only view route
+            $viewUrl = backpack_url("enquiries/otf-bookings/{$e->id}/show");
             $vehicle = $this->resolveVehicleFromOemCode($e->oem_code ?? null);
+            
             return [
                 'serial_no'         => $i + 1,
                 'booking_no'        => $e->id ?? '—',
@@ -796,7 +760,7 @@ class EnquiryCrudController extends CrudController
                 'evaluation_id'     => $e->evaluation_id ?? '—',
                 'so_number'         => $e->so_number ?? '—',
                 'otf_number'        => $e->otf_number ?? '—',
-                'action'            => '<div class="d-flex justify-content-center gap-2"><a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a></div>',
+                'action'            => '<div class="d-flex justify-content-center gap-2"><a href="' . $viewUrl . '" class="btn btn-sm btn-primary">View</a></div>',
             ];
         }
 
@@ -986,18 +950,7 @@ class EnquiryCrudController extends CrudController
 
     private function getColumns($type)
     {
-        $actionWidth = $this->actionWidth($type);
-
-        // $actionColumn = [
-        //     'field'      => 'action',
-        //     'headerName' => 'Action',
-        //     'width'      => $actionWidth,
-        //     'minWidth'   => $actionWidth,
-        //     'pinned'     => 'right',
-        //     'sortable'   => false,
-        //     'filter'     => false,
-        //     'cellClass'  => 'text-center p-0'
-        // ];
+    
         $actionColumn = [
     'field'      => 'action',
     'headerName' => 'Action',
@@ -1019,7 +972,7 @@ class EnquiryCrudController extends CrudController
                 ['field' => 'referred_by', 'headerName' => 'Referee Type'],
                 ['field' => 'referee_name', 'headerName' => 'Referee Name'],
                 ['field' => 'referee_phone', 'headerName' => 'Referee Contact No.'],
-                ['field' => 'first_name', 'headerName' => 'Customer Name'],
+                ['field' => 'name', 'headerName' => 'Customer Name'],
                 ['field' => 'mobile', 'headerName' => 'Customer Contact No.'],
                 ['field' => 'model_name', 'headerName' => 'Model'],
                 ['field' => 'variant_name', 'headerName' => 'Variant'],
@@ -1085,15 +1038,14 @@ class EnquiryCrudController extends CrudController
                 ['field' => 'so_number', 'headerName' => 'SO Number', 'width' => 150],
                 ['field' => 'otf_number', 'headerName' => 'OTF Number', 'width' => 160],
                 [
-                    'field'        => 'action',
-                    'headerName'   => 'Action',
-                    'width'        => $this->actionWidth('otf'),
-                    'minWidth'     => $this->actionWidth('otf'),
-                    'pinned'       => 'right',
-                    'sortable'     => false,
-                    'filter'       => false,
-                    'cellRenderer' => 'htmlRenderer',
-                    'cellClass'    => 'text-center',
+                    'field'             => 'action',
+                    'headerName'        => 'Action',
+                    'pinned'            => 'right',
+                    'sortable'          => false,
+                    'filter'            => false,
+                    'suppressSizeToFit' => true,
+                    'cellRenderer'      => 'htmlRenderer',
+                    'cellClass'         => 'text-center p-0 action-cell',
                 ],
             ];
         }
@@ -1136,7 +1088,7 @@ class EnquiryCrudController extends CrudController
                 ['field' => 'campaign_date', 'headerName' => 'Whatsapp Campaign Date'],
                 ['field' => 'campaign_segment', 'headerName' => 'Whatsapp Campaign Segment'],
                 ['field' => 'campaign_model', 'headerName' => 'Whatsapp Campaign Model'],
-                ['field' => 'first_name', 'headerName' => 'Customer Name'],
+                ['field' => 'name', 'headerName' => 'Customer Name'],
                 ['field' => 'mobile', 'headerName' => 'Customer Contact No.'],
                 ['field' => 'model_name', 'headerName' => 'Model'],
                 ['field' => 'variant_name', 'headerName' => 'Variant'],
@@ -1306,41 +1258,6 @@ class EnquiryCrudController extends CrudController
             'action',
         ];
     }
-
-    // private function applyEnquirySearch($query, string $searchText): void
-    // {
-    //     if ($searchText === '') return;
-
-    //     $like = "%{$searchText}%";
-    //     $isXenq = str_starts_with(strtoupper($searchText), 'XENQ-');
-    //     $xenqId = $isXenq ? (int) substr(strtoupper($searchText), 5) : null;
-
-    //     $query->where(function ($q) use ($like, $xenqId, $isXenq, $searchText) {
-    //         if ($isXenq && $xenqId) {
-    //             $q->where('id', $xenqId);
-    //         } else {
-    //             $q->where('id', (int) $searchText)
-    //                 ->orWhere('enquiry_no', 'like', $like)
-    //                 ->orWhere('oem_enquiry_no', 'like', $like)
-    //                 ->orWhere('x8_enquiry_no', 'like', $like)
-    //                 ->orWhere('first_name', 'like', $like)
-    //                 ->orWhere('last_name', 'like', $like)
-    //                 ->orWhere('mobile', 'like', $like)
-    //                 ->orWhere('alternate_mobile', 'like', $like)
-    //                 ->orWhere('email', 'like', $like)
-    //                 ->orWhere('source_code', 'like', $like)
-    //                 ->orWhere('sub_source', 'like', $like)
-    //                 ->orWhere('company_name', 'like', $like)
-    //                 ->orWhere('vehicle_no', 'like', $like)
-    //                 ->orWhere('city', 'like', $like)
-    //                 ->orWhere('pincode', 'like', $like)
-    //                 ->orWhereHas('model', fn($q2) => $q2->where('name', 'like', $like))
-    //                 ->orWhereHas('segment', fn($q2) => $q2->where('name', 'like', $like))
-    //                 ->orWhereHas('color', fn($q2) => $q2->where('name', 'like', $like))
-    //                 ->orWhereHas('variant', fn($q2) => $q2->where('display_name', 'like', $like)->orWhere('custom_name', 'like', $like)->orWhere('oem_name', 'like', $like));
-    //         }
-    //     });
-    // }
     
     private function applyEnquirySearch($query, string $searchText): void
     {
@@ -1552,6 +1469,7 @@ class EnquiryCrudController extends CrudController
 
         $creFups = DB::table('xlr8_cre_enquiry_fup')
             ->where('x8_enq_no', 'XENQ-' . $enquiry->id)
+            ->where('cre_fup_deviation_stage', '!=', 'OPEN_FOLLOW_UP')
             ->orderBy('id', 'asc')
             ->get();
 
@@ -1565,35 +1483,25 @@ class EnquiryCrudController extends CrudController
     private function saveCreFup($enquiry, $request)
     {
         if ($request->filled('cre_enq_stage') || $request->filled('cre_customer_stage') || $request->filled('cre_fup_remarks')) {
-
             $x8EnqNo = 'XENQ-' . $enquiry->id;
 
-            // 1. Check if there's a pending OPEN_FOLLOW_UP row
-            $openFup = DB::table('xlr8_cre_enquiry_fup')
+            // CLEANUP: Delete any legacy 'OPEN_FOLLOW_UP' pending rows to prevent orphan data
+            DB::table('xlr8_cre_enquiry_fup')
                 ->where('x8_enq_no', $x8EnqNo)
                 ->where('cre_fup_deviation_stage', 'OPEN_FOLLOW_UP')
+                ->delete();
+
+            // 1. Get the actual last completed FUP to determine planned date and count
+            $lastFup = DB::table('xlr8_cre_enquiry_fup')
+                ->where('x8_enq_no', $x8EnqNo)
                 ->orderBy('id', 'desc')
                 ->first();
 
-            $fupCount = 1;
-            // Force IST Timezone
-            $plannedDate = Carbon::now('Asia/Kolkata')->format('Y-m-d H:i:s');
-
-            if ($openFup) {
-                $fupCount = $openFup->cre_fup_count;
-                $plannedDate = $openFup->cre_planned_fup_date;
-            } else {
-                // Determine Fup Count if no Open Fup exists
-                $lastFup = DB::table('xlr8_cre_enquiry_fup')
-                    ->where('x8_enq_no', $x8EnqNo)
-                    ->orderBy('id', 'desc')
-                    ->first();
-                if ($lastFup) {
-                    $fupCount = $lastFup->cre_fup_count + 1;
-                }
-            }
-
-            // Force IST Timezone
+            $fupCount = $lastFup ? $lastFup->cre_fup_count + 1 : 1;
+            $plannedDate = ($lastFup && $lastFup->cre_next_fup_date) 
+                ? $lastFup->cre_next_fup_date 
+                : Carbon::now('Asia/Kolkata')->format('Y-m-d H:i:s');
+            
             $actualDate = Carbon::now('Asia/Kolkata')->format('Y-m-d H:i:s');
 
             // --- DEVIATION STAGE CALCULATION ---
@@ -1612,11 +1520,10 @@ class EnquiryCrudController extends CrudController
                 $deviationCode = 'GREATER_THAN_10_DAYS';
             }
 
-            // Force IST Timezone for user input
             $nextFupDate = $request->cre_next_fup_date ? Carbon::parse($request->cre_next_fup_date, 'Asia/Kolkata')->format('Y-m-d H:i:s') : null;
 
-            // Data for the ACTUAL completed follow up
-            $actualData = [
+            // Insert ONLY the completed follow up row
+            DB::table('xlr8_cre_enquiry_fup')->insert([
                 'enquiry_no' => $enquiry->oem_enquiry_no ?? $enquiry->enquiry_no,
                 'quick_enquiry_no' => $enquiry->quick_enquiry_no ?? $enquiry->oem_quick_enquiry_no,
                 'x8_enq_no' => $x8EnqNo,
@@ -1628,69 +1535,12 @@ class EnquiryCrudController extends CrudController
                 'cre_customer_stage' => $request->cre_customer_stage,
                 'cre_fup_remarks' => $request->cre_fup_remarks,
                 'cre_next_fup_date' => $nextFupDate,
-                'updated_at' => now('Asia/Kolkata'), // Force IST
-            ];
-
-            // Complete the pending row OR insert a new one
-            if ($openFup) {
-                $actualData['updated_by'] = backpack_user()->id;
-                DB::table('xlr8_cre_enquiry_fup')->where('id', $openFup->id)->update($actualData);
-            } else {
-                $actualData['created_by'] = backpack_user()->id;
-                $actualData['created_at'] = now('Asia/Kolkata'); // Force IST
-                DB::table('xlr8_cre_enquiry_fup')->insert($actualData);
-            }
-
-            // 2. Create the NEXT pending row (Only if not LOST/DROPPED and date is provided)
-            if ($nextFupDate && !in_array($request->cre_enq_stage, ['LOST', 'DROPPED'])) {
-                DB::table('xlr8_cre_enquiry_fup')->insert([
-                    'enquiry_no' => $enquiry->oem_enquiry_no ?? $enquiry->enquiry_no,
-                    'quick_enquiry_no' => $enquiry->quick_enquiry_no ?? $enquiry->oem_quick_enquiry_no,
-                    'x8_enq_no' => $x8EnqNo,
-                    'cre_fup_count' => $fupCount + 1,
-                    'cre_planned_fup_date' => $nextFupDate,
-                    'cre_actual_fup_date' => null,
-                    'cre_fup_deviation_stage' => 'OPEN_FOLLOW_UP',
-                    'cre_enq_stage' => null,
-                    'cre_customer_stage' => null,
-                    'cre_fup_remarks' => null,
-                    'cre_next_fup_date' => null,
-                    'created_by' => backpack_user()->id,
-                    'created_at' => now('Asia/Kolkata'), // Force IST
-                    'updated_at' => now('Asia/Kolkata'), // Force IST
-                ]);
-            }
+                'created_by' => backpack_user()->id,
+                'created_at' => now('Asia/Kolkata'),
+                'updated_at' => now('Asia/Kolkata'),
+            ]);
         }
     }
-
-    // public function store(Request $request)
-    // {
-    //     try {
-    //         $validated = $request->validate($this->getValidationRules());
-    //         $this->processEntityRelations($validated);
-    //         $validated['created_by'] = backpack_user()->id;
-
-    //         // Reference leads get REFERENCE immediately, otherwise standard new enquiries get LONG
-    //         $isRef = isset($validated['source_code']) && strtoupper($validated['source_code']) === 'REFERENCE';
-    //         $validated['origin'] = $isRef ? 'REFERENCE' : 'LONG';
-    //         $validated['current_origin'] = $isRef ? 'REFERENCE' : 'LONG';
-
-    //         $validated['cne'] = 1;
-
-    //         $creFields = ['cre_fup_call_duration', 'cre_fup_deviation_stage', 'cre_enq_stage', 'cre_customer_stage', 'cre_fup_remarks', 'cre_next_fup_date'];
-    //         $enquiryData = collect($validated)->except($creFields)->toArray();
-
-    //         $enquiry = Enquiry::create($enquiryData);
-
-    //         $this->saveCreFup($enquiry, $request);
-
-    //         Alert::success('Enquiry created successfully.')->flash();
-    //         return redirect(backpack_url('enquiry'));
-    //     } catch (\Throwable $e) {
-    //         Log::error($e->getMessage());
-    //         throw $e;
-    //     }
-    // }
 
     public function store(Request $request)
     {
@@ -1708,12 +1558,11 @@ class EnquiryCrudController extends CrudController
 
             $validated['created_by'] = backpack_user()->id;
 
-            // Reference leads get REFERENCE immediately, otherwise standard new CRM enquiries get NULL
+            // Reference leads get REFERENCE immediately, otherwise standard new CRM enquiries get Xceler8
             $isRef = isset($validated['source_code']) && strtoupper($validated['source_code']) === 'REFERENCE';
-            $validated['origin'] = $isRef ? 'REFERENCE' : null;
-            $validated['current_origin'] = $isRef ? 'REFERENCE' : null;
+            $validated['origin'] = $isRef ? 'REFERENCE' : 'Xceler8';
+            $validated['current_origin'] = $isRef ? 'REFERENCE' : 'Xceler8';
 
-            $validated['cne'] = 1;
             $validated['x8_enq_assign_date'] = now();
 
             $creFields = ['cre_fup_call_duration', 'cre_fup_deviation_stage', 'cre_enq_stage', 'cre_customer_stage', 'cre_fup_remarks', 'cre_next_fup_date'];
@@ -1731,61 +1580,6 @@ class EnquiryCrudController extends CrudController
         }
     }
 
-    // public function update(Request $request, $id)
-    // {
-    //     $enquiry = Enquiry::findOrFail($id);
-    //     $validated = $request->validate($this->getValidationRules($id));
-    //     $this->processEntityRelations($validated);
-
-    //     // Format all possible date fields for MySQL
-    //     $dateFields = ['virtual_call_date', 'wapp_campaign_date', 'dob', 'marriage_date', 'activity_start_date', 'activity_end_date', 'cre_likely_purchase_date'];
-    //     foreach ($dateFields as $field) {
-    //         if (!empty($validated[$field])) {
-    //             $validated[$field] = Carbon::parse($validated[$field])->format('Y-m-d H:i:s');
-    //         }
-    //     }
-
-    //     $validated['updated_by'] = backpack_user()->id;
-
-    //     // When editing a Reference, force current_origin to LONG and cne to true (1)
-    //     if (isset($validated['source_code']) && strtoupper($validated['source_code']) === 'REFERENCE') {
-    //         $validated['current_origin'] = 'LONG';
-    //         $validated['cne'] = 1;
-    //     }
-
-    //     if (isset($validated['x8_sc_code']) && $enquiry->x8_sc_code !== $validated['x8_sc_code']) {
-    //         $validated['x8_enq_assign_date'] = now();
-    //     }
-
-    //     $creFields = ['cre_fup_call_duration', 'cre_fup_deviation_stage', 'cre_enq_stage', 'cre_customer_stage', 'cre_fup_remarks', 'cre_next_fup_date'];
-    //     $enquiryData = collect($validated)->except($creFields)->toArray();
-
-    //     // --- MISMATCH TRACKING LOGIC ---
-    //     // Only run if the comparison table was actually rendered and submitted
-    //     if ($request->has('comparison_rendered')) {
-    //         // Now checking IF the box IS checked (meaning the user flagged it as unmatched)
-    //         if ($request->has('mismatch_enq_stage')) {
-    //             $enquiryData['enq_stage_mismatch'] = $enquiry->enq_stage_mismatch + 1;
-    //         }
-    //         if ($request->has('mismatch_next_fup')) {
-    //             $enquiryData['next_fup_mismatch'] = $enquiry->next_fup_mismatch + 1;
-    //         }
-    //         if ($request->has('mismatch_fup_remarks')) {
-    //             $enquiryData['latest_fup_remarks_mismatch'] = $enquiry->latest_fup_remarks_mismatch + 1;
-    //         }
-    //         if (!empty($enquiry->test_drive_no) && $request->has('mismatch_test_drive')) {
-    //             $enquiryData['test_drive_mismatch'] = $enquiry->test_drive_mismatch + 1;
-    //         }
-    //     }
-
-    //     $enquiry->update($enquiryData);
-
-    //     $this->saveCreFup($enquiry, $request);
-
-    //     Alert::success('Enquiry updated successfully.')->flash();
-    //     return redirect(backpack_url('enquiry'));
-    // }
-
     public function update(Request $request, $id)
     {
         $enquiry = Enquiry::findOrFail($id);
@@ -1802,11 +1596,8 @@ class EnquiryCrudController extends CrudController
 
         $validated['updated_by'] = backpack_user()->id;
 
-        // When editing a Reference, force current_origin to LONG and cne to true (1)
-        if (isset($validated['source_code']) && strtoupper($validated['source_code']) === 'REFERENCE') {
-            $validated['current_origin'] = 'LONG';
-            $validated['cne'] = 1;
-        }
+        // Ensure current_origin is absolutely untouched during edits
+        unset($validated['current_origin']); 
 
         if (isset($validated['x8_sc_code']) && $enquiry->x8_sc_code !== $validated['x8_sc_code']) {
             $validated['x8_enq_assign_date'] = now();
@@ -1997,7 +1788,7 @@ class EnquiryCrudController extends CrudController
             $validated['created_by']     = backpack_user()->id;
             $validated['origin']         = 'REFERENCE';
             $validated['current_origin'] = 'REFERENCE';
-            $validated['cne']            = 1;
+            // $validated['cne']            = 1;
 
             Enquiry::create($validated);
 
@@ -2008,18 +1799,6 @@ class EnquiryCrudController extends CrudController
             throw $e;
         }
     }
-
-    // private function processEntityRelations(array &$validated)
-    // {
-    //     $validated['segment'] = OrgService::segments()[$validated['segment_code']] ?? null;
-    //     $validated['model'] = OrgService::models($validated['segment_code'])[$validated['model_code']] ?? null;
-    //     if (!empty($validated['variant_code'])) {
-    //         $validated['variant'] = OrgService::variants($validated['model_code'])[$validated['variant_code']]['name'] ?? null;
-    //     }
-    //     if (!empty($validated['color_code'])) {
-    //         $validated['color'] = OrgService::colors($validated['variant_code'])[$validated['color_code']] ?? null;
-    //     }
-    // }
 
     private function processEntityRelations(array &$validated)
     {
@@ -2357,6 +2136,50 @@ class EnquiryCrudController extends CrudController
     public function otfBookingsList()
     {
         return $this->renderGridPage('admin.enquiry.otf-bookings', 'OTF Bookings', 'otf');
+    }
+
+    public function showOtf($id)
+    {
+        $this->crud->hasAccessOrFail('list');
+
+        // Fetch the OTF booking from crm_booking table
+        $otf = DB::table('xlr8_crm_booking')->where('id', $id)->first();
+        if (!$otf) {
+            abort(404, 'OTF Booking not found.');
+        }
+
+        // Resolve vehicle details based on oem_code
+        $vehicle = $this->resolveVehicleFromOemCode($otf->oem_code);
+
+        // Resolve SC details using existing mappings
+        $lookups = $this->getEnquiryLookupMaps();
+        $scByCode = $lookups['scByCode'] ?? [];
+        $scByMileId = $lookups['scByMileId'] ?? [];
+        
+        $scDisplay = '—';
+        $scBranch = '—';
+        $scLocation = '—';
+        $scMileIdStr = $otf->sc_mile_id ?? '—'; // Default fallback
+
+        // If sc_mile_id stores a code, resolve it from scByCode first
+        $matchedSc = null;
+        if (!empty($otf->sc_mile_id)) {
+            if (isset($scByCode[$otf->sc_mile_id])) {
+                $matchedSc = $scByCode[$otf->sc_mile_id];
+            } elseif (isset($scByMileId[$otf->sc_mile_id])) {
+                $matchedSc = $scByMileId[$otf->sc_mile_id];
+            }
+        }
+
+        if ($matchedSc) {
+            $scDisplay = ($matchedSc['display_name'] ?? '') . ' - ' . ($matchedSc['employee_code'] ?? '');
+            // Extract the actual Mile ID/Employee Code
+            $scMileIdStr = $matchedSc['employee_code'] ?? $matchedSc['mile_id'] ?? $otf->sc_mile_id;
+            $scBranch = \App\Services\OrgService::branchName($matchedSc['primary_branch_code'] ?? '');
+            $scLocation = \App\Services\OrgService::locationName($matchedSc['primary_loc_code'] ?? '');
+        }
+
+        return view('admin.enquiry.showOtf', compact('otf', 'vehicle', 'scDisplay', 'scBranch', 'scLocation', 'scMileIdStr'));
     }
 
     public function xceler8List()

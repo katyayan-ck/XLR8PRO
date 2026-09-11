@@ -90,7 +90,16 @@
                         </div>
                     </div>
 
-                    <div id="myGrid" class="ag-theme-quartz" style="height: calc(93vh - 240px); width:100%;"></div>
+                    <!-- GRID CONTAINER WITH LOADER WRAPPER -->
+                    <div style="position: relative;">
+                        <div id="gridLoader"
+                            style="display:none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.7); z-index: 1000; justify-content: center; align-items: center;">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                        <div id="myGrid" class="ag-theme-quartz" style="height: calc(93vh - 240px); width:100%;"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -198,6 +207,10 @@
 
         const dataSource = {
             getRows: function(params) {
+                // 1. Show the custom HTML loader
+                const loader = document.getElementById('gridLoader');
+                if (loader) loader.style.display = 'flex';
+
                 fetch('{{ backpack_url('enquiries/data') }}', {
                         method: 'POST',
                         headers: {
@@ -216,17 +229,19 @@
                     })
                     .then(res => res.json())
                     .then(data => {
+                        // 2. Hide the custom HTML loader
                         if (loader) loader.style.display = 'none';
                         params.successCallback(data.rows || [], data.lastRow ?? 0);
 
-                        // Auto-size the action column dynamically based on rendered buttons
                         setTimeout(() => {
                             if (gridApi) {
                                 gridApi.autoSizeColumns(['action']);
                             }
-                        }, 100); // 100ms delay gives the browser time to paint the HTML buttons
+                        }, 200);
                     })
                     .catch(err => {
+                        // 3. Hide the custom HTML loader on error
+                        if (loader) loader.style.display = 'none';
                         console.error('Failed to load OTF bookings', err);
                         params.failCallback();
                     });
@@ -422,12 +437,22 @@
 
             document.getElementById('quickFilter')?.addEventListener('input', debounce(e => {
                 currentSearchText = e.target.value.trim();
+                
+                // Show the custom HTML loader
+                const loader = document.getElementById('gridLoader');
+                if (loader) loader.style.display = 'flex';
+                
                 gridApi.setGridOption('datasource', dataSource);
             }, 400));
 
             document.getElementById('resetAll')?.addEventListener('click', () => {
                 document.getElementById('quickFilter').value = '';
                 currentSearchText = '';
+                
+                // Show the custom HTML loader
+                const loader = document.getElementById('gridLoader');
+                if (loader) loader.style.display = 'flex';
+                
                 gridApi.setFilterModel(null);
                 gridApi.applyColumnState({
                     defaultState: {
