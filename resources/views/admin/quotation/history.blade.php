@@ -12,7 +12,7 @@
 
         <div style="font-size: 12px; color: #666; margin-top: 5px;">
 
-            <strong>Quotation No.:</strong> {{ $quotation->quotation_no }}
+            <strong>Quotation No.:</strong> {{ $quotation->id }}
 
             &nbsp;&nbsp; | &nbsp;&nbsp;
 
