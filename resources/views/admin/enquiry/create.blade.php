@@ -179,6 +179,7 @@
                     'label' => 'Enquiry Date',
                     'dump' => $fmtDate($isQuick ? $enquiry->quick_enquiry_date ?? '' : $enquiry->enquiry_date ?? ''),
                     'cre' => $fmtDateTime($enquiry->created_at),
+                    'skip_comparison' => true,
                 ],
                 [
                     'label' => 'Enquiry Assign Date',
@@ -186,6 +187,7 @@
                         $isQuick ? $enquiry->quick_enq_assign_date ?? '' : $enquiry->enq_assign_date ?? '',
                     ),
                     'cre' => $fmtDate($enquiry->x8_enq_assign_date),
+                    'skip_comparison' => true,
                 ],
                 [
                     'label' => 'Booking Number',
@@ -291,22 +293,12 @@
                 ];
             }
 
-            // HIDE BOOKING RELATED ROWS IF BOTH DATA POINTS ARE EMPTY OR DASH
-            $bookingLabels = [
-                'Booking Number',
-                'Booking Date',
-                'Booking Cancellation Date',
-                'Booking Cancellation Reason',
-                'Booking Cancellation Remarks',
-            ];
-
-            $comparisonRows = array_filter($comparisonRows, function ($row) use ($bookingLabels) {
-                if (in_array($row['label'], $bookingLabels)) {
-                    $d = trim(strip_tags((string) $row['dump']));
-                    $c = trim(strip_tags((string) $row['cre']));
-                    if (in_array($d, ['—', '-', '']) && in_array($c, ['—', '-', ''])) {
-                        return false;
-                    }
+            // HIDE ANY ROW IF BOTH DATA POINTS ARE EMPTY OR DASH
+            $comparisonRows = array_filter($comparisonRows, function ($row) {
+                $d = trim(strip_tags((string) $row['dump']));
+                $c = trim(strip_tags((string) $row['cre']));
+                if (in_array($d, ['—', '-', '']) && in_array($c, ['—', '-', ''])) {
+                    return false;
                 }
                 return true;
             });
@@ -352,30 +344,30 @@
             @if ($isVirtual)
                 <div class="card enquiry-card">
                     <div class="card-header">
-                        <h4 class="mb-0 fw-bold">Virtual Call Details</h4>
+                        <h3 class="mb-0 fw-bold">Virtual Call Details</h3>
                     </div>
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-2 mb-3">
                                 <label class="form-label">Virtual Number</label>
                                 <input type="text" name="virtual_no" class="form-control"
-                                    value="{{ $enquiry->virtual_no ?? '' }}" readonly>
+                                    value="{{ $enquiry->virtual_no ?? '' }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">Call Date</label>
                                 <input type="text" name="virtual_call_date" class="form-control"
                                     value="{{ !empty($enquiry->virtual_call_date) ? \Carbon\Carbon::parse($enquiry->virtual_call_date)->format('d-M-Y H:i') : '' }}"
-                                    readonly>
+                                    readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
                             </div>
                             <div class="col-md-2 mb-3">
                                 <label class="form-label">Call Duration</label>
                                 <input type="text" name="call_duration" class="form-control"
-                                    value="{{ $enquiry->call_duration ?? '' }}" readonly>
+                                    value="{{ $enquiry->call_duration ?? '' }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
                             </div>
                             <div class="col-md-2 mb-3">
-                                <label class="form-label">Customer Contact Number <span class="text-danger">*</span></label>
-                                <input type="text" id="mobile" name="mobile" maxlength="10" class="form-control"
-                                    value="{{ old('mobile', $enquiry->mobile ?? '') }}" required>
+                                <label class="form-label">Customer Contact Number</label>
+                                <input type="text" id="virtual_mobile" name="virtual_mobile_display" class="form-control"
+                                    value="{{ old('mobile', $enquiry->mobile ?? '') }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">Call Nature <span class="text-danger">*</span></label>
@@ -406,7 +398,7 @@
                 @if (!empty($comparisonRows))
                     <div class="card enquiry-card" style="order: -1;">
                         <div class="card-header">
-                            <h4 class="mb-0 fw-bold">Data Overview: CRE vs SC</h4>
+                            <h3 class="mb-0 fw-bold">Data Overview: CRE vs SC</h3>
                         </div>
                         <div class="card-body">
                             {{-- Hidden input moved here so the backend still processes mismatches --}}
@@ -418,9 +410,9 @@
                                     <thead class="table-secondary text-uppercase" style="font-size: 0.85rem;">
                                         <tr>
                                             <th class="text-center p-3" style="width: 25%;">Parameters</th>
-                                            <th class="text-center p-3" style="width: 30%;">OEM Dump Data
+                                            <th class="text-center p-3" style="width: 30%;">Xceler8 Data</th>
+                                            <th class="text-center p-3" style="width: 30%;">OEM Data
                                                 ({{ $isQuick ? 'Quick' : 'Long' }})</th>
-                                            <th class="text-center p-3" style="width: 30%;">CRE X8 Data</th>
                                             <th class="text-center p-3" style="width: 15%;">Status</th>
                                         </tr>
                                     </thead>
@@ -448,12 +440,12 @@
                                                 <td class="align-middle p-2">
                                                     <div
                                                         class="form-control bg-white h-auto border-0 text-wrap text-center">
-                                                        {{ $row['dump'] }}</div>
+                                                        {{ $row['cre'] }}</div>
                                                 </td>
                                                 <td class="align-middle p-2">
                                                     <div
                                                         class="form-control bg-white h-auto border-0 text-wrap text-center">
-                                                        {{ $row['cre'] }}</div>
+                                                        {{ $row['dump'] }}</div>
                                                 </td>
                                                 <td class="align-middle p-2">
                                                     <div class="form-control bg-white h-auto border-0 d-flex justify-content-center align-items-center"
@@ -508,7 +500,7 @@
                 @if ($isWhatsapp)
                     <div class="card enquiry-card" style="order: {{ $order['whatsapp'] }};">
                         <div class="card-header">
-                            <h4 class="mb-0 fw-bold">WhatsApp Campaign Details</h4>
+                            <h3 class="mb-0 fw-bold">WhatsApp Campaign Details</h3>
                         </div>
                         <div class="card-body">
                             <div class="row">
@@ -550,99 +542,9 @@
                 {{-- =========================== 1. ENQUIRY CREDENTIALS =========================== --}}
                 <div class="card enquiry-card" style="order: {{ $order['credentials'] }};">
                     <div class="card-header">
-                        <h4 class="mb-0 fw-bold">Enquiry Credentials</h4>
+                        <h3 class="mb-0 fw-bold">Enquiry Credentials</h3>
                     </div>
                     <div class="card-body">
-
-                        @if (isset($enquiry) && !$isVirtual)
-                            <div class="table-responsive mb-4">
-                                <table class="table table-bordered text-center align-middle mb-0"
-                                    style="background-color: #e9ecef;">
-                                    <thead class="table-secondary text-uppercase" style="font-size: 0.85rem;">
-                                        <tr>
-                                            <th class="text-center px-3">Enquiry Platform</th>
-                                            <th class="text-center px-3">Enquiry Number</th>
-                                            <th class="text-center px-3">Enquiry Date</th>
-                                            <th class="text-center px-3">Assignment Date</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @if (
-                                            !empty($enquiry->quick_enquiry_no) ||
-                                                !empty($enquiry->quick_enquiry_date) ||
-                                                !empty($enquiry->quick_enq_assign_date))
-                                            <tr>
-                                                <td
-                                                    class="fw-bold align-middle table-secondary text-center px-3 text-dark">
-                                                    OEM Quick</td>
-                                                <td>
-                                                    <div
-                                                        class="form-control bg-white h-auto border-0 text-nowrap text-center">
-                                                        {{ $enquiry->quick_enquiry_no ?: '—' }}</div>
-                                                </td>
-                                                <td>
-                                                    <div
-                                                        class="form-control bg-white h-auto border-0 text-nowrap text-center">
-                                                        {{ $enquiry->quick_enquiry_date ? \Carbon\Carbon::parse($enquiry->quick_enquiry_date)->format('d-M-Y') : '—' }}
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    <div
-                                                        class="form-control bg-white h-auto border-0 text-nowrap text-center">
-                                                        {{ $enquiry->quick_enq_assign_date ? \Carbon\Carbon::parse($enquiry->quick_enq_assign_date)->format('d-M-Y') : '—' }}
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        @endif
-
-                                        @if (!empty($enquiry->enquiry_no) || !empty($enquiry->enquiry_date))
-                                            <tr>
-                                                <td
-                                                    class="fw-bold align-middle table-secondary text-center px-3 text-dark">
-                                                    OEM Long</td>
-                                                <td>
-                                                    <div
-                                                        class="form-control bg-white h-auto border-0 text-nowrap text-center">
-                                                        {{ $enquiry->enquiry_no ?: '—' }}</div>
-                                                </td>
-                                                <td>
-                                                    <div
-                                                        class="form-control bg-white h-auto border-0 text-nowrap text-center">
-                                                        {{ $enquiry->enquiry_date ? \Carbon\Carbon::parse($enquiry->enquiry_date)->format('d-M-Y') : '—' }}
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    <div
-                                                        class="form-control bg-white h-auto border-0 text-nowrap text-center">
-                                                        {{ $enquiry->enq_assign_date ? \Carbon\Carbon::parse($enquiry->enq_assign_date)->format('d-M-Y') : '—' }}
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        @endif
-
-                                        <tr>
-                                            <td class="fw-bold align-middle table-secondary text-center px-3 text-dark">
-                                                Xceler8</td>
-                                            <td>
-                                                <div class="form-control bg-white h-auto border-0 text-nowrap text-center">
-                                                    {{ 'XENQ-' . $enquiry->id }}</div>
-                                            </td>
-                                            <td>
-                                                <div class="form-control bg-white h-auto border-0 text-nowrap text-center">
-                                                    {{ $enquiry->created_at ? \Carbon\Carbon::parse($enquiry->created_at)->format('d-M-Y') : '—' }}
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="form-control bg-white h-auto border-0 text-nowrap text-center">
-                                                    {{ !empty($enquiry->x8_enq_assign_date) ? \Carbon\Carbon::parse($enquiry->x8_enq_assign_date)->format('d-M-Y') : '—' }}
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        @endif
-
                         <div class="row">
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">Enquiry Origin</label>
@@ -673,15 +575,17 @@
                                     value="{{ old('dms_enq_no', $enquiry->dms_enq_no ?? '') }}"
                                     placeholder="Enter DMS Enquiry Number">
                             </div>
-                            <div class="col-md-3 mb-3">
-                                <label class="form-label">Enquiry Sub Source <span class="text-danger d-none"
+
+                            {{-- WRAPPERS ADDED FOR DYNAMIC HIDING --}}
+                            <div class="col-md-3 mb-3 d-none" id="sub_source_wrapper">
+                                <label class="form-label">Enquiry Sub Source <span class="text-danger"
                                         id="sub_source_asterisk">*</span></label>
                                 <select name="sub_source" id="sub_source" class="form-control form-select" disabled>
                                     <option value="">Select Enquiry Sub Source</option>
                                 </select>
                             </div>
-                            <div class="col-md-3 mb-3">
-                                <label class="form-label">Planned Campaign <span class="text-danger d-none"
+                            <div class="col-md-3 mb-3 d-none" id="planned_campaign_wrapper">
+                                <label class="form-label">Planned Campaign <span class="text-danger"
                                         id="planned_campaign_asterisk">*</span></label>
                                 <select name="planned_campaign" id="planned_campaign" class="form-control form-select"
                                     disabled>
@@ -693,10 +597,6 @@
                                     @endforeach
                                 </select>
                             </div>
-
-
-
-
 
                             <div class="row w-100 m-0 p-0 {{ $isReference ? 'd-flex' : 'd-none' }}" id="referenceFields">
                                 <div class="col-md-4 mb-4">
@@ -726,41 +626,6 @@
                                         value="{{ old('referee_name', $enquiry->referee_name ?? '') }}">
                                 </div>
                             </div>
-
-                            {{-- <div class="col-md-3 mb-3">
-                                <label class="form-label">Likely Purchase In Days <span
-                                        class="text-danger">*</span></label>
-                                <select name="likely_purchase_date" class="form-control form-select">
-                                    <option value="">Select Likely Purchase In Days</option>
-                                    @foreach ($likely_purchase_dates as $item)
-                                        <option value="{{ $item['code'] }}"
-                                            {{ old('likely_purchase_date', $enquiry->likely_purchase_date ?? '') == $item['code'] ? 'selected' : '' }}>
-                                            {{ $item['value'] }}</option>
-                                    @endforeach
-                                </select>
-                            </div> --}}
-
-                            {{-- <div class="col-md-3 mb-3">
-                                <label class="form-label">Select Dealer Branch <span class="text-danger">*</span></label>
-                                <select name="dealer_branch" id="dealer_branch" class="form-control form-select"
-                                    required>
-                                    <option value="">Select Dealer Branch</option>
-                                    @foreach ($branches as $code => $name)
-                                        <option value="{{ $code }}"
-                                            {{ old('dealer_branch', $enquiry->dealer_branch ?? '') == $code ? 'selected' : '' }}>
-                                            {{ $name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <div class="col-md-3 mb-3">
-                                <label class="form-label">Select Dealer Location <span
-                                        class="text-danger">*</span></label>
-                                <select name="dealer_location" id="dealer_location" class="form-control form-select"
-                                    required>
-                                    <option value="">Select Dealer Location</option>
-                                </select>
-                            </div> --}}
                         </div>
                     </div>
                 </div>
@@ -768,7 +633,7 @@
                 {{-- =========================== 2. VEHICLE DETAILS =========================== --}}
                 <div class="card enquiry-card" style="order: {{ $order['vehicle'] }};">
                     <div class="card-header">
-                        <h4 class="mb-0 fw-bold">Vehicle Details</h4>
+                        <h3 class="mb-0 fw-bold">Vehicle Details</h3>
                     </div>
                     <div class="card-body">
                         <div class="row">
@@ -833,23 +698,24 @@
                                     <option value="">Select Color</option>
                                 </select>
                             </div>
+                            
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">Fuel Type <span class="text-danger">*</span></label>
-                                <input type="text" id="fuel_type" class="form-control" readonly>
+                                <input type="text" id="fuel_type" class="form-control" readonly tabindex="-1" style="background-color: #e9ecef;">
                                 <input type="hidden" id="fuel_type_id" name="fuel_type">
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">Transmission <span class="text-danger">*</span></label>
                                 <input type="text" id="transmission" name="transmission" class="form-control"
-                                    readonly>
+                                    readonly tabindex="-1" style="background-color: #e9ecef;">
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">Drivetrain <span class="text-danger">*</span></label>
-                                <input type="text" id="drivetrain" name="drivetrain" class="form-control" readonly>
+                                <input type="text" id="drivetrain" name="drivetrain" class="form-control" readonly tabindex="-1" style="background-color: #e9ecef;">
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">Seating <span class="text-danger">*</span></label>
-                                <input type="text" id="seating" name="seating" class="form-control" readonly>
+                                <input type="text" id="seating" name="seating" class="form-control" readonly tabindex="-1" style="background-color: #e9ecef;">
                             </div>
 
                             <div class="row w-100 m-0 p-0" id="bevSection" style="display: none;">
@@ -925,7 +791,7 @@
                 {{-- =========================== 3. CUSTOMER PRIMARY DETAILS =========================== --}}
                 <div class="card enquiry-card" style="order: {{ $order['customer_primary'] }};">
                     <div class="card-header">
-                        <h4 class="mb-0 fw-bold">Customer Primary Details</h4>
+                        <h3 class="mb-0 fw-bold">Customer Primary Details</h3>
                     </div>
                     <div class="card-body">
                         <div class="row">
@@ -957,20 +823,19 @@
                                 <input type="text" name="care_of" id="care_of" class="form-control uppercase"
                                     value="{{ old('care_of', $enquiry->care_of ?? '') }}">
                             </div>
-                            @if (!$isVirtual)
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Contact Number<span class="text-danger">*</span></label>
                                     <input type="text" id="mobile" name="mobile" maxlength="10"
                                         class="form-control" value="{{ old('mobile', $enquiry->mobile ?? '') }}"
                                         required>
                                 </div>
-                            @endif
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">Alternate Contact Number<small
                                         class="text-muted"></small></label>
-                                <input type="text" id="alternate_mobile" name="alternate_mobile" maxlength="15"
+                                <input type="text" id="alternate_mobile" name="alternate_mobile" maxlength="10"
                                     class="form-control"
-                                    value="{{ old('alternate_mobile', $enquiry->alternate_mobile ?? '') }}">
+                                    value="{{ old('alternate_mobile', $enquiry->alternate_mobile ?? '') }}"
+                                    oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);">
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">Email ID <small class="text-muted"></small></label>
@@ -1046,7 +911,7 @@
                 {{-- =========================== 4. EXCHANGE & FINANCE =========================== --}}
                 <div class="card enquiry-card" style="order: {{ $order['exchange'] }};">
                     <div class="card-header">
-                        <h4 class="mb-0 fw-bold">Exchange & Finance</h4>
+                        <h3 class="mb-0 fw-bold">Exchange & Finance</h3>
                     </div>
                     <div class="card-body">
                         <div class="row">
@@ -1197,7 +1062,7 @@
                 {{-- =========================== 5. SALES CONSULTANT DETAIL =========================== --}}
                 <div class="card enquiry-card" style="order: {{ $order['sc_detail'] }};">
                     <div class="card-header">
-                        <h4 class="mb-0 fw-bold">Sales Consultant Details</h4>
+                        <h3 class="mb-0 fw-bold">Sales Consultant Details</h3>
                     </div>
                     <div class="card-body">
 
@@ -1299,7 +1164,7 @@
                 {{-- =========================== 6. CUSTOMER SECONDARY DETAILS =========================== --}}
                 <div class="card enquiry-card" style="order: 6;">
                     <div class="card-header">
-                        <h4 class="mb-0 fw-bold">Customer Secondary Details</h4>
+                        <h3 class="mb-0 fw-bold">Customer Secondary Details</h3>
                     </div>
                     <div class="card-body">
                         <div class="row">
@@ -1382,7 +1247,7 @@
                 {{-- =========================== 7. CONSIDERATION SET =========================== --}}
                 <div class="card enquiry-card" style="order: 7;">
                     <div class="card-header">
-                        <h4 class="mb-0 fw-bold">Consideration Set</h4>
+                        <h3 class="mb-0 fw-bold">Consideration Set</h3>
                     </div>
 
                     <div class="card-body">
@@ -1480,7 +1345,7 @@
                     @if ($currentOrigin === 'LONG' || $currentOrigin === 'QUICK')
                         <div class="card enquiry-card" style="order: 8;">
                             <div class="card-header">
-                                <h4 class="mb-0 fw-bold">SC Follow Up Details</h4>
+                                <h3 class="mb-0 fw-bold">SC Follow Up Details</h3>
                             </div>
                             <div class="card-body">
                                 @if ($currentOrigin === 'LONG')
@@ -1683,6 +1548,7 @@
                             </div>
                         </div>
                         {{-- 9. SC ENQUIRY STAGE --}}
+                        @if (strtoupper($enquiry->current_origin ?? '') !== 'QUICK')
                         <div class="card enquiry-card" style="order: 9;">
                             <div class="card-header">
                                 <h4 class="mb-0 fw-bold">SC Enquiry Stage</h4>
@@ -1710,35 +1576,18 @@
                                             value="{{ isset($enquiry) && ($enquiry->x8_booking_date || $enquiry->booking_date) ? \Carbon\Carbon::parse($enquiry->x8_booking_date ?? $enquiry->booking_date)->format('d-M-Y') : '—' }}"
                                             readonly style="background-color: #e9ecef;"></div>
 
-                                    {{-- <div class="col-md-3 mb-3">
-                                        <label class="form-label">Booking Number</label>
-                                        <input type="text" name="booking_no" class="form-control"
-                                            value="{{ old('booking_no', $enquiry?->booking_no ?? '') }}">
-                                    </div>
-                                    <div class="col-md-3 mb-3">
-                                        <label class="form-label">OTF Number</label>
-                                        <input type="text" name="otf_no" class="form-control"
-                                            value="{{ old('otf_no', $enquiry?->otf_no ?? ($enquiry?->oem_otf_no ?? '')) }}">
-                                    </div> --}}
-
-                                    {{-- <div class="col-md-3 mb-3">
-                                        <label class="form-label">DMS Enquiry Number</label>
-                                        <input type="text" name="dms_enq_no" class="form-control"
-                                            value="{{ old('dms_enq_no', $enquiry?->dms_enq_no ?? '') }}">
-                                    </div> --}}
-
                                     <div class="col-md-3 mb-3">
                                         <label class="form-label">Likely Purchase In Days </label>
                                         <input type="text" class="form-control"
                                             value="{{ collect($likely_purchase_dates ?? [])->firstWhere('code', $enquiry?->likely_purchase_days)['value'] ?? ($enquiry?->likely_purchase_days ?? '—') }}"
                                             readonly style="background-color: #e9ecef;">
-                                        {{-- Hidden input preserves the value on submit --}}
                                         <input type="hidden" name="likely_purchase_days"
                                             value="{{ old('likely_purchase_days', $enquiry?->likely_purchase_days ?? '') }}">
                                     </div>
                                 </div>
                             </div>
                         </div>
+                        @endif
                     @endif
 
 
@@ -1746,7 +1595,7 @@
                     {{-- 10. CRE ENQUIRY STAGE --}}
                     <div class="card enquiry-card" style="order: 10;">
                         <div class="card-header">
-                            <h4 class="mb-0 fw-bold">CRE Enquiry Stage</h4>
+                            <h3 class="mb-0 fw-bold">CRE Enquiry Stage</h3>
                         </div>
                         <div class="card-body">
                             {{-- History Table --}}
@@ -1941,259 +1790,14 @@
                             </div>
                         </div>
                     </div>
-                    @if ($currentOrigin === 'LONG' || $currentOrigin === 'QUICK')
-                        {{-- 11. COMPARISON - SC Vs CRE --}}
-                        <div class="card enquiry-card" style="order: 11;">
-                            <div class="card-header">
-                                <h4 class="mb-0 fw-bold">Comparison - CRE V/s SC</h4>
-                            </div>
-                            <div class="card-body">
-                                @php
-                                    $scNextDate = $enquiry?->next_planned_followup_date;
-
-                                    $lastCre =
-                                        isset($creFups) && count($creFups) > 0
-                                            ? (is_array($creFups)
-                                                ? end($creFups)
-                                                : $creFups->last())
-                                            : null;
-                                    $creNextDate = $lastCre?->cre_next_fup_date;
-
-                                    // Resolve X8 Assigned SC Name
-                                    $creScCode = $enquiry?->x8_sc_code;
-                                    $creScDisplay = '—';
-                                    if ($creScCode && isset($saleconsultants)) {
-                                        $matchedCreSc = collect($saleconsultants)->firstWhere(
-                                            'person_code',
-                                            $creScCode,
-                                        );
-                                        if ($matchedCreSc) {
-                                            $creScDisplay =
-                                                ($matchedCreSc['display_name'] ?? '') .
-                                                ' - ' .
-                                                ($matchedCreSc['employee_code'] ?? '');
-                                        } else {
-                                            $creScDisplay = $creScCode;
-                                        }
-                                    }
-                                @endphp
-
-                                {{-- Hidden input to tell the backend this comparison table was rendered --}}
-                                <input type="hidden" name="comparison_rendered" value="1">
-
-                                <div class="table-responsive mb-4">
-                                    <table class="table table-bordered text-center align-middle mb-0"
-                                        style="background-color: #e9ecef;">
-                                        <thead class="table-secondary text-uppercase" style="font-size: 0.85rem;">
-                                            <tr>
-                                                <th class="text-center p-3">Description</th>
-                                                <th class="text-center p-3" style="width: 25%;">CRE</th>
-                                                <th class="text-center p-3" style="width: 25%;">SC</th>
-                                                <th class="text-center p-3" style="width: 20%;">Status</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td
-                                                    class="fw-bold align-middle table-secondary text-start px-4 py-2 text-dark">
-                                                    Enquiry Stage</td>
-                                                <td class="align-middle p-2">
-                                                    <div
-                                                        class="form-control bg-white h-auto border-0 text-nowrap text-center">
-                                                        {{ $enqStageMap[$lastCre?->cre_enq_stage ?? ''] ?? ($lastCre?->cre_enq_stage ?? '—') }}
-                                                    </div>
-                                                </td>
-                                                <td class="align-middle p-2">
-                                                    <div
-                                                        class="form-control bg-white h-auto border-0 text-nowrap text-center">
-                                                        {{ $enqStageMap[$enquiry?->dms_enquiry_stage ?? ''] ?? ($enquiry?->dms_enquiry_stage ?? ($enquiry?->stage ?? '—')) }}
-                                                    </div>
-                                                </td>
-                                                <td class="align-middle p-2">
-                                                    <div
-                                                        class="form-control bg-white h-auto border-0 d-flex justify-content-center align-items-center">
-                                                        <input
-                                                            class="form-check-input border-secondary cursor-pointer m-0"
-                                                            type="checkbox" name="mismatch_enq_stage" value="1"
-                                                            style="width: 1.2rem; height: 1.2rem;">
-                                                        <label class="form-check-label ms-2 mb-0">Mismatch</label>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td
-                                                    class="fw-bold align-middle table-secondary text-start px-4 py-2 text-dark">
-                                                    Next Fup Date</td>
-                                                <td class="align-middle p-2">
-                                                    <div
-                                                        class="form-control bg-white h-auto border-0 text-nowrap text-center">
-                                                        {{ $creNextDate ? \Carbon\Carbon::parse($creNextDate)->format('d-M-Y H:i') : '—' }}
-                                                    </div>
-                                                </td>
-                                                <td class="align-middle p-2">
-                                                    <div
-                                                        class="form-control bg-white h-auto border-0 text-nowrap text-center">
-                                                        {{ $scNextDate ? \Carbon\Carbon::parse($scNextDate)->format('d-M-Y H:i') : '—' }}
-                                                    </div>
-                                                </td>
-                                                <td class="align-middle p-2">
-                                                    <div
-                                                        class="form-control bg-white h-auto border-0 d-flex justify-content-center align-items-center">
-                                                        <input
-                                                            class="form-check-input border-secondary cursor-pointer m-0"
-                                                            type="checkbox" name="mismatch_next_fup" value="1"
-                                                            style="width: 1.2rem; height: 1.2rem;">
-                                                        <label class="form-check-label ms-2 mb-0">Mismatch</label>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td
-                                                    class="fw-bold align-middle table-secondary text-start px-4 py-2 text-dark">
-                                                    Latest Fup Remarks</td>
-                                                <td class="align-middle p-2">
-                                                    <div class="form-control bg-white h-auto border-0 text-wrap text-center"
-                                                        style="max-height: 50px; overflow-y: auto;">
-                                                        {{ $lastCre?->cre_fup_remarks ?? '—' }}</div>
-                                                </td>
-                                                <td class="align-middle p-2">
-                                                    <div class="form-control bg-white h-auto border-0 text-wrap text-center"
-                                                        style="max-height: 50px; overflow-y: auto;">
-                                                        {{ $remMap[$enquiry?->recent_fup_comments] ?? ($enquiry?->recent_fup_comments ?? ($enquiry?->remarks ?? '—')) }}
-                                                    </div>
-                                                </td>
-                                                <td class="align-middle p-2">
-                                                    <div class="form-control bg-white h-auto border-0 d-flex justify-content-center align-items-center"
-                                                        style="height: 100%; min-height: 38px;">
-                                                        <input
-                                                            class="form-check-input border-secondary cursor-pointer m-0"
-                                                            type="checkbox" name="mismatch_fup_remarks" value="1"
-                                                            style="width: 1.2rem; height: 1.2rem;">
-                                                        <label class="form-check-label ms-2 mb-0">Mismatch</label>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td
-                                                    class="fw-bold align-middle table-secondary text-start px-4 py-2 text-dark">
-                                                    Purchase Type</td>
-                                                <td class="align-middle p-2">
-                                                    <div
-                                                        class="form-control bg-white h-auto border-0 text-nowrap text-center">
-                                                        {{ collect($purchase_types ?? [])->firstWhere('code', $enquiry?->purchase_type_crm)['value'] ?? ($enquiry?->purchase_type_crm ?? '—') }}
-                                                    </div>
-                                                </td>
-                                                <td class="align-middle p-2">
-                                                    <div
-                                                        class="form-control bg-white h-auto border-0 text-nowrap text-center">
-                                                        {{ collect($purchase_types ?? [])->firstWhere('code', $enquiry?->purchase_type)['value'] ?? ($enquiry?->purchase_type ?? '—') }}
-                                                    </div>
-                                                </td>
-                                                <td class="align-middle p-2">
-                                                    <div
-                                                        class="form-control bg-white h-auto border-0 d-flex justify-content-center align-items-center">
-                                                        <input
-                                                            class="form-check-input border-secondary cursor-pointer m-0"
-                                                            type="checkbox" name="mismatch_purchase_type"
-                                                            value="1" style="width: 1.2rem; height: 1.2rem;">
-                                                        <label class="form-check-label ms-2 mb-0">Mismatch</label>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td
-                                                    class="fw-bold align-middle table-secondary text-start px-4 py-2 text-dark">
-                                                    Likely Purchase In Days</td>
-                                                <td class="align-middle p-2">
-                                                    <div
-                                                        class="form-control bg-white h-auto border-0 text-nowrap text-center">
-                                                        {{ collect($likely_purchase_dates ?? [])->firstWhere('code', $enquiry?->cre_likely_purchase_days)['value'] ?? ($enquiry?->cre_likely_purchase_days ?? '—') }}
-                                                    </div>
-                                                </td>
-                                                <td class="align-middle p-2">
-                                                    <div
-                                                        class="form-control bg-white h-auto border-0 text-nowrap text-center">
-                                                        {{ collect($likely_purchase_dates ?? [])->firstWhere('code', $enquiry?->likely_purchase_days)['value'] ?? ($enquiry?->likely_purchase_days ?? '—') }}
-                                                    </div>
-                                                </td>
-                                                <td class="align-middle p-2">
-                                                    <div
-                                                        class="form-control bg-white h-auto border-0 d-flex justify-content-center align-items-center">
-                                                        <input
-                                                            class="form-check-input border-secondary cursor-pointer m-0"
-                                                            type="checkbox" name="mismatch_likely_purchase"
-                                                            value="1" style="width: 1.2rem; height: 1.2rem;">
-                                                        <label class="form-check-label ms-2 mb-0">Mismatch</label>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td
-                                                    class="fw-bold align-middle table-secondary text-start px-4 py-2 text-dark">
-                                                    Assigned SC</td>
-                                                <td class="align-middle p-2">
-                                                    <div
-                                                        class="form-control bg-white h-auto border-0 text-nowrap text-center">
-                                                        {{ $creScDisplay }}
-                                                    </div>
-                                                </td>
-                                                <td class="align-middle p-2">
-                                                    <div
-                                                        class="form-control bg-white h-auto border-0 text-nowrap text-center">
-                                                        {{ !empty($oemScDisplay) ? $oemScDisplay : $enquiry?->sc_code ?? '—' }}
-                                                    </div>
-                                                </td>
-                                                <td class="align-middle p-2">
-                                                    <div
-                                                        class="form-control bg-white h-auto border-0 d-flex justify-content-center align-items-center">
-                                                        <input
-                                                            class="form-check-input border-secondary cursor-pointer m-0"
-                                                            type="checkbox" name="mismatch_assigned_sc" value="1"
-                                                            style="width: 1.2rem; height: 1.2rem;">
-                                                        <label class="form-check-label ms-2 mb-0">Mismatch</label>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                            @if (!empty($enquiry?->test_drive_no))
-                                                <tr>
-                                                    <td
-                                                        class="fw-bold align-middle table-secondary text-start px-4 py-2 text-dark">
-                                                        Test Drive Verification</td>
-                                                    <td class="align-middle p-2">
-                                                        <div
-                                                            class="form-control bg-white h-auto border-0 text-nowrap text-center">
-                                                            —</div>
-                                                    </td>
-                                                    <td class="align-middle p-2">
-                                                        <div
-                                                            class="form-control bg-white h-auto border-0 text-nowrap text-center">
-                                                            —</div>
-                                                    </td>
-                                                    <td class="align-middle p-2">
-                                                        <div
-                                                            class="form-control bg-white h-auto border-0 d-flex justify-content-center align-items-center">
-                                                            <input
-                                                                class="form-check-input border-secondary cursor-pointer m-0"
-                                                                type="checkbox" name="mismatch_test_drive"
-                                                                value="1" style="width: 1.2rem; height: 1.2rem;">
-                                                            <label class="form-check-label ms-2 mb-0">Mismatch</label>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            @endif
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    @endif
+                    
                 @endif
 
                 {{-- =========================== REMARKS =========================== --}}
                 @if (!$isVirtual)
                     <div class="card enquiry-card" style="order: 12;">
                         <div class="card-header">
-                            <h4 class="mb-0 fw-bold">Remarks</h4>
+                            <h3 class="mb-0 fw-bold">Remarks</h3>
                         </div>
                         <div class="card-body">
                             <div class="row">
@@ -2646,81 +2250,27 @@
 
             }).trigger('change');
 
-            // $('#enquiry_type').on('change', function() {
-            //     // Get both the hidden value (code) and the visible text
-            //     const typeVal = String($(this).val()).trim().toUpperCase();
-            //     const typeText = $(this).find('option:selected').text().trim().toUpperCase().replace(/\s+/g,
-            //         '');
-
-            //     // Check for WALK_IN (value), or any text variations like WALKIN, WALK-IN
-            //     if (typeVal === 'WALK_IN' || typeText.includes('WALKIN') || typeText.includes('WALK_IN')) {
-            //         // Disable Source & hide asterisk
-            //         $sourceCode.html('<option value="">Select Enquiry Source</option>').val('').prop(
-            //             'disabled', true).prop('required', false);
-            //         $('#source_code_asterisk').addClass('d-none');
-
-            //         // Disable Sub Source & hide asterisk
-            //         $subSource.html('<option value="">Select Enquiry Sub Source</option>').val('').prop(
-            //             'disabled', true).prop('required', false);
-            //         $('#sub_source_asterisk').addClass('d-none');
-
-            //         // Trigger change to hide any reference fields
-            //         $sourceCode.trigger('change');
-            //     } else {
-            //         // Enable Source & show asterisk
-            //         $sourceCode.prop('disabled', false).prop('required', true);
-            //         $('#source_code_asterisk').removeClass('d-none');
-
-            //         loadKeywordDropdown('ENQ_SOURCE', $(this).val(), $sourceCode, 'Select Enquiry Source',
-            //             currentEnquiry.source);
-
-            //         // Reset Sub Source
-            //         $subSource.html('<option value="">Select Enquiry Sub Source</option>').prop('disabled',
-            //             true).prop('required', false);
-            //         $('#sub_source_asterisk').addClass('d-none');
-
-            //         if (currentEnquiry.isEdit) setTimeout(() => $sourceCode.trigger('change'), 300);
-            //     }
-            // });
             $('#enquiry_type').on('change', function() {
-                // Safely extract the exact, unmodified value for the DB lookup
                 const rawVal = $(this).val() || '';
-                const typeText = String($(this).find('option:selected').text() || '').trim().toUpperCase()
-                    .replace(/\s+/g, '');
+                const typeText = String($(this).find('option:selected').text() || '').trim().toUpperCase().replace(/\s+/g, '');
 
-                // 1. If empty selection (e.g., user selects "Select Enquiry Type")
                 if (rawVal === '') {
-                    $sourceCode.html('<option value="">Select Enquiry Source</option>').val('').prop(
-                        'disabled', true).prop('required', false);
-                    $('#source_code_asterisk').addClass('d-none');
-                    $subSource.html('<option value="">Select Enquiry Sub Source</option>').val('').prop(
-                        'disabled', true).prop('required', false);
-                    $('#sub_source_asterisk').addClass('d-none');
+                    $sourceCode.html('<option value="">Select Enquiry Source</option>').val('').prop('disabled', true).prop('required', false);
+                    $('#sub_source_wrapper, #planned_campaign_wrapper').addClass('d-none');
+                    $subSource.html('<option value="">Select Enquiry Sub Source</option>').val('').prop('disabled', true).prop('required', false);
                     return;
                 }
 
-                // 2. If Walk-In (Bypass sources entirely)
-                if (rawVal.toUpperCase() === 'WALK_IN' || typeText.includes('WALKIN') || typeText.includes(
-                        'WALK_IN')) {
-                    $sourceCode.html('<option value="">Select Enquiry Source</option>').val('').prop(
-                        'disabled', true).prop('required', false);
-                    $('#source_code_asterisk').addClass('d-none');
-                    $subSource.html('<option value="">Select Enquiry Sub Source</option>').val('').prop(
-                        'disabled', true).prop('required', false);
-                    $('#sub_source_asterisk').addClass('d-none');
+                if (rawVal.toUpperCase() === 'WALK_IN' || typeText.includes('WALKIN') || typeText.includes('WALK_IN')) {
+                    $sourceCode.html('<option value="">Select Enquiry Source</option>').val('').prop('disabled', true).prop('required', false);
+                    $('#sub_source_wrapper, #planned_campaign_wrapper').addClass('d-none');
+                    $subSource.html('<option value="">Select Enquiry Sub Source</option>').val('').prop('disabled', true).prop('required', false);
                     $sourceCode.trigger('change');
                 } else {
-                    // 3. Normal Selection (Fetch Sources dynamically via AJAX)
                     $sourceCode.prop('disabled', false).prop('required', true);
-                    $('#source_code_asterisk').removeClass('d-none');
-
-                    // Call the AJAX loader using the exact database code (rawVal)
-                    loadKeywordDropdown('ENQ_SOURCE', rawVal, $sourceCode, 'Select Enquiry Source',
-                        currentEnquiry.source);
-
-                    $subSource.html('<option value="">Select Enquiry Sub Source</option>').prop('disabled',
-                        true).prop('required', false);
-                    $('#sub_source_asterisk').addClass('d-none');
+                    loadKeywordDropdown('ENQ_SOURCE', rawVal, $sourceCode, 'Select Enquiry Source', currentEnquiry.source);
+                    $subSource.html('<option value="">Select Enquiry Sub Source</option>').prop('disabled', true).prop('required', false);
+                    $('#sub_source_wrapper').addClass('d-none');
                 }
             });
 
@@ -2851,28 +2401,10 @@
                 isInitialLoad = false;
             }, 1500);
 
-            // $sourceCode.on('change', function() {
-            //     const source = $(this).val();
-            //     toggleReferenceFields();
-            //     if (source === 'HYPERLOCAL') {
-            //         $subSource.prop('disabled', false).prop('required', true);
-            //         $('#sub_source_asterisk').removeClass('d-none');
-            //         loadKeywordDropdown('ENQUIRY_SUB_SOURCE', source, $subSource,
-            //             'Select Enquiry Sub Source', currentEnquiry.subSource);
-            //     } else {
-            //         $subSource.html('<option value="">Select Enquiry Sub Source</option>').val('').prop(
-            //             'disabled', true).prop('required', false);
-            //         $('#sub_source_asterisk').addClass('d-none');
-            //     }
-            //     $plannedCampaign.prop('disabled', source !== 'ACTIVATIONS').prop('required', source ===
-            //         'ACTIVATIONS').val(source === 'ACTIVATIONS' ? $plannedCampaign.val() : '');
-            // }).trigger('change');
-
             $sourceCode.on('change', function() {
                 const source = $(this).val() || '';
                 const sourceText = $(this).find('option:selected').text().trim().toUpperCase();
 
-                // 1. Redirect to Reference Enquiries page on creation
                 if (!currentEnquiry.isEdit && source === 'REFERENCE') {
                     Swal.fire({
                         title: 'Reference Enquiry',
@@ -2884,39 +2416,34 @@
                         allowOutsideClick: false
                     }).then((result) => {
                         if (result.isConfirmed) {
-                            window.location.href =
-                                "{{ backpack_url('enquiries/reference/add') }}";
+                            window.location.href = "{{ backpack_url('enquiries/reference/add') }}";
                         } else {
-                            $(this).val('').trigger(
-                                'change'); // Reset the dropdown if they hit cancel
+                            $(this).val('').trigger('change');
                         }
                     });
-                    return; // Stop execution before toggling fields
+                    return;
                 }
 
                 toggleReferenceFields();
 
-                // 2. STRICT Sub-Source Rule: ONLY allow if Source is HYPERLOCAL
+                // Show/Hide Sub Source
                 if (source === 'HYPERLOCAL') {
+                    $('#sub_source_wrapper').removeClass('d-none');
                     $subSource.prop('disabled', false).prop('required', true);
-                    $('#sub_source_asterisk').removeClass('d-none');
-                    loadKeywordDropdown('ENQUIRY_SUB_SOURCE', source, $subSource,
-                        'Select Enquiry Sub Source', currentEnquiry.subSource);
+                    loadKeywordDropdown('ENQUIRY_SUB_SOURCE', source, $subSource, 'Select Enquiry Sub Source', currentEnquiry.subSource);
                 } else {
-                    // Grey out and clear for absolutely every other Source
-                    $subSource.html('<option value="">Select Enquiry Sub Source</option>').val('').prop(
-                        'disabled', true).prop('required', false);
-                    $('#sub_source_asterisk').addClass('d-none');
+                    $('#sub_source_wrapper').addClass('d-none');
+                    $subSource.html('<option value="">Select Enquiry Sub Source</option>').val('').prop('disabled', true).prop('required', false);
                 }
 
-                // 3. Planned Campaign Rule: ONLY allow if Source is ACTIVATIONS
+                // Show/Hide Planned Campaign
                 const isActivations = (source === 'ACTIVATIONS' || sourceText === 'ACTIVATIONS');
                 if (isActivations) {
+                    $('#planned_campaign_wrapper').removeClass('d-none');
                     $plannedCampaign.prop('disabled', false).prop('required', true);
-                    $('#planned_campaign_asterisk').removeClass('d-none');
                 } else {
+                    $('#planned_campaign_wrapper').addClass('d-none');
                     $plannedCampaign.val('').prop('disabled', true).prop('required', false);
-                    $('#planned_campaign_asterisk').addClass('d-none');
                 }
             });
 

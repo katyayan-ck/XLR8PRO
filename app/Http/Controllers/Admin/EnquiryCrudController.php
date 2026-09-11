@@ -161,10 +161,10 @@ class EnquiryCrudController extends CrudController
                 'scrappage',
                 'exchange_not_interested',
                 'finance',
-                'finance_not_interested',
-                'xceler8'
+                'finance_not_interested'
             ]) => $listType,
-            default => 'all',
+
+            default => 'all', 
         };
     }
 
@@ -332,7 +332,7 @@ class EnquiryCrudController extends CrudController
         });
 
         return view('admin.enquiry.list', [
-            'title' => 'Xceler8 Enquiries',
+            'title' => 'Master Enquiry List',
             'gridConfig' => [
                 'columns' => $this->getColumns('all'),
                 'defaultColumns' => $this->getDefaultColumns(),
@@ -976,6 +976,7 @@ class EnquiryCrudController extends CrudController
                 ['field' => 'mobile', 'headerName' => 'Customer Contact No.'],
                 ['field' => 'model_name', 'headerName' => 'Model'],
                 ['field' => 'variant_name', 'headerName' => 'Variant'],
+                ['field' => 'color_name', 'headerName' => 'Color'],
                 ['field' => 'pincode', 'headerName' => 'Pin Code'],
                 ['field' => 'vpo', 'headerName' => 'VPO'],
                 ['field' => 'tehsil', 'headerName' => 'Tehsil'],
@@ -2182,6 +2183,6 @@ class EnquiryCrudController extends CrudController
 
     public function xceler8List()
     {
-        return $this->renderGridPage('admin.enquiry.list', 'Xceler8 Enquiries', 'xceler8');
+        return $this->renderGridPage('admin.enquiry.enquiry-grid', 'Xceler8 Enquiries', 'xceler8');
     }
 }
