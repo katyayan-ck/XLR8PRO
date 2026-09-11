@@ -39,7 +39,9 @@ class Quotation extends BaseModel
         'approver_last_remark',
     ];
 
-    protected $casts = [];
+    protected $casts = [
+        'standard_data' => 'array',
+    ];
 
     public function __construct(array $attributes = [])
     {

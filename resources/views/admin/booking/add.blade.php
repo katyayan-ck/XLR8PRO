@@ -71,7 +71,7 @@ $enquiry = $quotation?->enquiry ?? ($data['enquiry'] ?? null);
                                 <div class="d-flex align-items-center gap-2">
                                     <label for="quotation" class="mb-0">Quotation:</label>
 
-                                    <a href="{{ backpack_url('quotation/' . $quotation->quotation_no . '/preview') }}"
+                                    <a href="{{ backpack_url('quotation/' . $quotation->id . '/preview') }}"
                                         target="_blank"
                                         class="btn btn-info">
                                         <i class="ik ik-file-text mr-2"></i> View Quotation PDF

@@ -1473,26 +1473,87 @@
                                 <td class="title" width="18%">Enquiry No.</td>
                                 <td width="32%">
                                     @php
-                                        // 1. Get raw ID directly from URL route/query parameter or object ID
-                                        $rawId = request('id') ?? ($selectedEnquiry->id ?? '');
+                                        /*
+                                        |--------------------------------------------------------------------------
+                                        | ENQUIRY ID
+                                        |--------------------------------------------------------------------------
+                                        | Create page:
+                                        |   request('id') = enquiry ID
+                                        |
+                                        | Edit page:
+                                        |   request('id') = quotation ID
+                                        |
+                                        | Therefore, once an enquiry is loaded, ALWAYS use
+                                        | $selectedEnquiry->id as the real enquiry ID.
+                                        |--------------------------------------------------------------------------
+                                        */
 
-                                        // 2. Simply append prefix directly to the raw numeric ID
-                                        $formattedEnquiryNo = $rawId ? 'XENQ-' . $rawId : '';
+                                        $rawEnquiryId = $selectedEnquiry->id ?? '';
+
+                                        $formattedEnquiryNo = $rawEnquiryId
+                                            ? 'XENQ-' . $rawEnquiryId
+                                            : '';
                                     @endphp
 
-                                    <!-- Display Box: Direct Output (e.g. XENQ-34560) -->
-                                    <input type="text" id="enquiry_id" value="{{ $formattedEnquiryNo }}" readonly>
+                                    <!-- Display Enquiry Number -->
+                                    <input
+                                        type="text"
+                                        id="enquiry_id"
+                                        value="{{ $formattedEnquiryNo }}"
+                                        readonly
+                                    >
 
-                                    <!-- Hidden Input for Form Submission -->
-                                    <input type="hidden" name="enquiry_id" value="{{ $rawId }}">
+                                    <!-- IMPORTANT: Submit ENQUIRY ID, NOT QUOTATION ID -->
+                                    <input type="hidden"
+                                        name="enquiry_id"
+                                        id="enquiry_id_hidden"
+                                        value="{{ $selectedEnquiry->id ?? '' }}">
                                 </td>
                                 <td class="title" width="18%">Customer Name</td>
                                 <td width="32%">
-                                    <input type="text" id="customer_name"
-                                        value="{{ old('customer_name', trim(($selectedEnquiry->first_name ?? '') . ' ' . ($selectedEnquiry->last_name ?? '')) ?: $selectedEnquiry->full_name ?? '') }}"
-                                        readonly>
-                                    <input type="hidden" name="customer_name" id="customer_name_hidden"
-                                        value="{{ old('customer_name', trim(($selectedEnquiry->first_name ?? '') . ' ' . ($selectedEnquiry->last_name ?? '')) ?: $selectedEnquiry->full_name ?? '') }}">
+                                    @php
+    $displayCustomerName = old('customer_name');
+
+    if (empty($displayCustomerName) && $selectedEnquiry) {
+        $displayCustomerName = trim(
+            ($selectedEnquiry->first_name ?? '') . ' ' .
+            ($selectedEnquiry->last_name ?? '')
+        );
+    }
+
+    if (empty($displayCustomerName) && $selectedEnquiry) {
+        $displayCustomerName = trim((string) ($selectedEnquiry->full_name ?? ''));
+    }
+
+    if (empty($displayCustomerName) && $selectedEnquiry) {
+        $displayCustomerName = trim((string) ($selectedEnquiry->customer_name ?? ''));
+    }
+
+    if (empty($displayCustomerName) && $selectedEnquiry) {
+        $displayCustomerName = trim((string) ($selectedEnquiry->name ?? ''));
+    }
+
+    // IMPORTANT: quotation saved data fallback
+    if (empty($displayCustomerName)) {
+        $displayCustomerName = trim(
+            (string) (
+                $quotationData['customer_name']
+                ?? $quotationData['customerName']
+                ?? ''
+            )
+        );
+    }
+@endphp
+
+<input type="text"
+    id="customer_name"
+    value="{{ $displayCustomerName }}"
+    readonly>
+
+<input type="hidden"
+    name="customer_name"
+    id="customer_name_hidden"
+    value="{{ $displayCustomerName }}">
                                 </td>
                             </tr>
                             <tr>
@@ -1667,12 +1728,8 @@
                                                         style="margin-bottom:2px !important;">
                                                         <option value="">Select Company</option>
                                                     </select>
-                                                    <select id="insurance_covers" name="insurance_covers[]"
-                                                        class="form-control" multiple
-                                                        style="height:auto; min-height:30px;">
-                                                        <input type="hidden" id="insurance_covers_data"
-                                                            name="insurance_covers_data" value="">
-                                                    </select>
+                                                    <select id="insurance_covers" name="insurance_covers[]" class="form-control" multiple style="height:auto; min-height:30px;"></select>
+                                                    <input type="hidden" id="insurance_covers_data" name="insurance_covers_data" value="">
                                                 </td>
                                                 <td class="cell-amount">
                                                     <input type="text" id="insurance_amount" name="insurance_amount"
@@ -1765,7 +1822,6 @@
 
                                                         @foreach ($accessoryList as $accessory)
                                                             @php
-                                                                // Pure UPPERCASE ko proper format me convert karein
                                                                 $formattedItemName = ucwords(
                                                                     strtolower($accessory->item),
                                                                 );
@@ -2686,23 +2742,29 @@
                 pricingKey: "bev6Premium"
             }
         };
-        // 1. Get raw ID from URL or input field
-        let rawId = new URLSearchParams(window.location.search).get('id') || $('#enquiry_id').val();
+        let enquiryIdFromServer = @json($selectedEnquiry->id ?? '');
 
-        // Clean ID to get pure numbers
-        let cleanId = rawId ? rawId.toString().replace(/\D/g, '') : '';
+        let cleanId = enquiryIdFromServer
+            ? String(enquiryIdFromServer)
+            : '';
+
         let enquiryData = null;
 
-        // 2. Check if cleanId exists in mock object
+        // Mock enquiry support
         if (cleanId && ENQUIRIES[cleanId]) {
             enquiryData = ENQUIRIES[cleanId];
         }
 
-        // 3. Dynamic format: Agar ENQUIRIES object mein key nahi mili, toh dynamic format 'XENQ-' + cleanId banayein
-        let finalEnquiryNo = enquiryData ? enquiryData.enquiry_no : (cleanId ? 'XENQ-' + cleanId : '');
+        // Always display real enquiry ID
+        let finalEnquiryNo = cleanId
+            ? 'XENQ-' + cleanId
+            : '';
 
-        // Display in Input Box
+        // Display
         $('#enquiry_id').val(finalEnquiryNo);
+
+        // Hidden field used for form submission
+        $('#enquiry_id_hidden').val(cleanId);
         const PRICING = {
             bev6Premium: {
                 permit: [{
@@ -3302,8 +3364,14 @@
         const SAVED_INSURANCE_COVERS =
             @json($quotationData['insurance_covers'] ?? []);
 
+        const SAVED_INSURANCE_AMOUNT =
+            @json($quotationData['insurance_amount'] ?? '');
+
         const SAVED_ACCESSORIES =
             @json($quotationData['accessories'] ?? []);
+
+        const SAVED_ACCESSORIES_AMOUNT =
+            @json($quotationData['accessories_amount'] ?? '');
 
         // ============================================================
         // SAVED QUOTATION VALUES - EDIT MODE
@@ -3363,6 +3431,24 @@
         let currentInsurance = null;
         let currentPricing = null;
         let STARTER_PACK_ACCESSORIES = []; // Lock track karne ke liye
+        let accessoriesRestoreInProgress = false;
+
+        function refreshInsuranceSelect2() {
+
+            const $insurance = $('#insurance_covers');
+
+            if (!$insurance.length) {
+                return;
+            }
+
+            // Select2 already initialized
+            if ($insurance.hasClass('select2-hidden-accessible')) {
+                $insurance.trigger('change.select2');
+            }
+
+            // Sync selected values with Select2
+            $insurance.trigger('change');
+        }
 
         function loadInsurance(company) {
             let total = 0;
@@ -3380,23 +3466,78 @@
                 $("#insurance_covers").append(option);
             });
 
-            $("#insurance_covers option").each(function() {
-                if ($(this).attr("data-mandatory") === "true") $(this).prop("selected", true);
-            });
-
+            // ✅ FIX: Restore saved covers WITH their saved prices
             if (IS_EDIT_MODE && Array.isArray(SAVED_INSURANCE_COVERS) && SAVED_INSURANCE_COVERS.length) {
-                let savedNames = SAVED_INSURANCE_COVERS.map(cover => typeof cover === 'object' && cover !== null ? cover
-                    .name : cover);
+                SAVED_INSURANCE_COVERS.forEach(function(savedCover) {
+                    let savedName = typeof savedCover === 'object' && savedCover !== null 
+                        ? savedCover.name 
+                        : savedCover;
+                    let savedPrice = typeof savedCover === 'object' && savedCover !== null 
+                        ? Number(savedCover.price || 0) 
+                        : null;
+
+                    let matched = false;
+
+                    $("#insurance_covers option").each(function() {
+                        // Match by exact name
+                        if ($(this).val().trim().toLowerCase() === savedName.trim().toLowerCase()) {
+                            $(this).prop("selected", true);
+                            
+                            if (
+                                savedPrice !== null &&
+                                savedPrice > 0 &&
+                                !$(this).prop('disabled')
+                            ) {
+                                $(this).attr('data-price', savedPrice);
+
+                                let optionText = savedName + ' (₹' + savedPrice.toLocaleString('en-IN', {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
+                                }) + ')';
+
+                                $(this).text(optionText);
+                            }
+                            matched = true;
+                        }
+                    });
+
+                    // If not found in mock options, add it with saved price
+                    if (!matched) {
+                        let priceToUse = savedPrice || 0;
+                        let option = new Option(
+                            savedName + ' (₹' + priceToUse + ')',
+                            savedName,
+                            true,
+                            true
+                        );
+                        $(option).attr('data-price', priceToUse);
+                        $('#insurance_covers').append(option);
+                    }
+                });
+            } else {
+                // Only auto-select mandatory if NOT in edit mode with saved covers
                 $("#insurance_covers option").each(function() {
-                    if (savedNames.includes($(this).val())) $(this).prop("selected", true);
+                    if ($(this).attr("data-mandatory") === "true") {
+                        $(this).prop("selected", true);
+                    }
                 });
             }
 
-            // ✅ Move all selected covers to TOP
+            // Move all selected covers to TOP
             let $selectedIns = $('#insurance_covers option:selected');
             $('#insurance_covers').prepend($selectedIns);
 
-            $("#insurance_covers").trigger("change");
+            // IMPORTANT:
+            // Refresh Select2 after dynamically adding/removing options
+            $('#insurance_covers').trigger('change');
+
+            if (IS_EDIT_MODE && SAVED_INSURANCE_AMOUNT !== '') {
+                $('#insurance_amount').val(
+                    Number(SAVED_INSURANCE_AMOUNT).toFixed(2)
+                );
+            }
+
+            $('#insurance_covers').trigger('change.select2');
             updateInsurancePrintText();
         }
 
@@ -3460,6 +3601,85 @@
                 loadInsurance(selectedCompany);
             }
         }
+
+        function restoreSavedInsuranceCoversDirectly() {
+
+    if (!IS_EDIT_MODE) {
+        return;
+    }
+
+    const $insurance = $('#insurance_covers');
+
+    if (!$insurance.length) {
+        return;
+    }
+
+    // Clear existing options
+    $insurance.empty();
+
+    if (
+        !Array.isArray(SAVED_INSURANCE_COVERS) ||
+        SAVED_INSURANCE_COVERS.length === 0
+    ) {
+        return;
+    }
+
+    const selectedValues = [];
+
+    SAVED_INSURANCE_COVERS.forEach(function(savedCover) {
+
+        let name = '';
+        let price = 0;
+
+        if (typeof savedCover === 'object' && savedCover !== null) {
+            name = String(savedCover.name || '').trim();
+            price = Number(savedCover.price || 0);
+        } else {
+            name = String(savedCover || '').trim();
+        }
+
+        if (!name) {
+            return;
+        }
+
+        const option = new Option(
+            name + ' (₹' + price.toLocaleString('en-IN', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }) + ')',
+            name,
+            true,
+            true
+        );
+
+        $(option)
+            .attr('data-price', price)
+            .data('price', price);
+
+        $insurance.append(option);
+
+        selectedValues.push(name);
+    });
+
+    // Set selected values
+    $insurance.val(selectedValues);
+
+    // Refresh Select2
+    $insurance.trigger('change.select2');
+
+    // Trigger normal change so quotation calculations update
+    $insurance.trigger('change');
+
+    // IMPORTANT:
+    // Don't allow the change event to replace the saved amount
+    if (SAVED_INSURANCE_AMOUNT !== '') {
+        $('#insurance_amount').val(
+            Number(SAVED_INSURANCE_AMOUNT).toFixed(2)
+        );
+    }
+
+    updateInsurancePrintText();
+}
         // ============================================================
         // RESTORE SAVED QUOTATION VALUES IN EDIT MODE
         // ============================================================
@@ -3472,140 +3692,128 @@
 
             if (Array.isArray(SAVED_ACCESSORIES) && SAVED_ACCESSORIES.length > 0) {
 
-                let selectedAccessories = [];
+    let selectedAccessories = [];
 
-                // Current mock enquiry pricing
-                let savedEnquiryNo = "{{ $quotationData['enquiry_no'] ?? ($quotation->enquiry_no ?? '') }}";
-                let savedEnquiry = ENQUIRIES[savedEnquiryNo] || null;
-                let savedPricing = savedEnquiry ?
-                    PRICING[savedEnquiry.pricingKey] :
-                    null;
+    let savedEnquiryNo = "{{ $quotationData['enquiry_no'] ?? ($quotation->enquiry_no ?? '') }}";
+    let savedEnquiry = ENQUIRIES[savedEnquiryNo] || null;
+    let savedPricing = savedEnquiry ? PRICING[savedEnquiry.pricingKey] : null;
+    let mockAccessories = savedPricing?.receivables?.accessories || [];
 
-                let mockAccessories =
-                    savedPricing?.receivables?.accessories || [];
+    SAVED_ACCESSORIES.forEach(function(accessory) {
 
-                SAVED_ACCESSORIES.forEach(function(accessory) {
+        let value = typeof accessory === 'object'
+            ? (accessory.part_no ?? accessory.code ?? accessory.value ?? '')
+            : accessory;
 
-                    let value = typeof accessory === 'object' ?
-                        (
-                            accessory.part_no ??
-                            accessory.code ??
-                            accessory.value ??
-                            ''
-                        ) :
-                        accessory;
+        value = String(value).trim();
+        if (!value) return;
 
-                    value = String(value).trim();
+        let found = false;
 
-                    if (!value) {
-                        return;
+        // 1. Try matching a DB option (part_no)
+        $('#accessories option').each(function() {
+            if (String($(this).val()).trim() === value) {
+                $(this).prop('selected', true);
+
+                // ✅ FIX: If saved as object with its own price, override the price
+                if (typeof accessory === 'object' && accessory !== null) {
+                    let savedPrice = Number(accessory.mrp ?? accessory.price ?? 0);
+                    if (savedPrice > 0) {
+                        $(this).attr('data-price', savedPrice);
+                        $(this).data('price', savedPrice);
                     }
+                }
 
-                    let found = false;
-
-                    // ------------------------------------------------
-                    // 1. First try existing DB option
-                    // ------------------------------------------------
-                    $('#accessories option').each(function() {
-
-                        let optionValue = String($(this).val()).trim();
-
-                        if (optionValue === value) {
-
-                            $(this).prop('selected', true);
-
-                            selectedAccessories.push($(this).val());
-
-                            found = true;
-
-                            return false;
-                        }
-                    });
-
-                    if (found) {
-                        return;
-                    }
-
-                    // ------------------------------------------------
-                    // 2. If DB option not found, find it in MOCK data
-                    // ------------------------------------------------
-                    let mockAccessory = mockAccessories.find(function(acc) {
-
-                        return String(acc.code || '').trim() === value;
-
-                    });
-
-                    if (mockAccessory) {
-
-                        let name = mockAccessory.item || value;
-                        let price = Number(mockAccessory.mrp || 0);
-
-                        let option = new Option(
-                            name + ' (₹' + price.toLocaleString('en-IN', {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2
-                            }) + ')',
-                            value,
-                            true,
-                            true
-                        );
-
-                        $(option)
-                            .attr('data-price', price)
-                            .attr('data-mock', 'true');
-
-                        $('#accessories').append(option);
-
-                        selectedAccessories.push(value);
-
-                        return;
-                    }
-
-                    // ------------------------------------------------
-                    // 3. If saved data itself is an object
-                    // ------------------------------------------------
-                    if (typeof accessory === 'object') {
-
-                        let name =
-                            accessory.item ??
-                            accessory.name ??
-                            value;
-
-                        let price =
-                            Number(
-                                accessory.mrp ??
-                                accessory.price ??
-                                0
-                            );
-
-                        let option = new Option(
-                            name + ' (₹' + price.toLocaleString('en-IN', {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2
-                            }) + ')',
-                            value,
-                            true,
-                            true
-                        );
-
-                        $(option).attr('data-price', price);
-
-                        $('#accessories').append(option);
-
-                        selectedAccessories.push(value);
-                    }
-                });
-
-                // ------------------------------------------------
-                // Apply all selected accessories
-                // ------------------------------------------------
-                $('#accessories')
-                    .val(selectedAccessories)
-                    .trigger('change');
-
-                updateAccessoriesAmount();
-                updateAccessoriesPrintText();
+                selectedAccessories.push($(this).val());
+                found = true;
+                return false;
             }
+        });
+
+        if (found) return;
+
+        // 2. Try matching accessory from ALL pricing definitions
+        // This prevents HC-72, HC-112, DC-DUAL etc. from becoming 0.
+
+        let mockAccessory = null;
+
+        Object.keys(PRICING || {}).some(function(pricingKey) {
+
+            let pricingData = PRICING[pricingKey];
+
+            let accessories =
+                pricingData?.receivables?.accessories || [];
+
+            let foundAccessory = accessories.find(function(acc) {
+
+                return String(acc.code || '')
+                    .trim()
+                    .toLowerCase() ===
+                    value.trim().toLowerCase();
+
+            });
+
+            if (foundAccessory) {
+                mockAccessory = foundAccessory;
+                return true;
+            }
+
+            return false;
+        });
+
+        if (mockAccessory) {
+            let name  = mockAccessory.item || value;
+            let price = Number(mockAccessory.mrp || 0);
+            let option = new Option(
+                name + ' (₹' + price.toLocaleString('en-IN', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }) + ')',
+                value, true, true
+            );
+            $(option).attr('data-price', price).data('price', price);
+            $('#accessories').append(option);
+            selectedAccessories.push(value);
+            return;
+        }
+
+        // 3. ✅ FIX: Fallback — always add if not found anywhere
+        let accName  = (typeof accessory === 'object' && accessory !== null)
+            ? (accessory.item ?? accessory.name ?? value)
+            : value;
+        let accPrice = (typeof accessory === 'object' && accessory !== null)
+            ? Number(accessory.mrp ?? accessory.price ?? 0)
+            : 0;
+
+        let option = new Option(
+            accName + ' (₹' + accPrice.toLocaleString('en-IN', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }) + ')',
+            value, true, true
+        );
+        $(option).attr('data-price', accPrice).data('price', accPrice);
+        $('#accessories').append(option);
+        selectedAccessories.push(value);
+    });
+
+    accessoriesRestoreInProgress = true;
+
+    $('#accessories')
+        .val(selectedAccessories)
+        .trigger('change');
+
+    if (IS_EDIT_MODE && SAVED_ACCESSORIES_AMOUNT !== '') {
+        $('#accessories_amount').val(
+            Number(SAVED_ACCESSORIES_AMOUNT).toFixed(2)
+        );
+    } else {
+        updateAccessoriesAmount();
+    }
+
+    updateAccessoriesPrintText();
+    accessoriesRestoreInProgress = false;
+}
 
             // --------------------------------------------------------
             // Charger Swapping
@@ -3763,12 +3971,46 @@
         }
 
         function updateInsurancePrintText() {
+
+            // In edit mode, when we have SAVED_INSURANCE_COVERS, ALWAYS prefer
+            // the saved data. This bypasses all price-attribute staleness issues.
+            if (
+                IS_EDIT_MODE &&
+                Array.isArray(SAVED_INSURANCE_COVERS) &&
+                SAVED_INSURANCE_COVERS.length > 0
+            ) {
+                var savedList = [];
+
+                SAVED_INSURANCE_COVERS.forEach(function(cover) {
+                    var name = typeof cover === 'object' && cover !== null
+                        ? String(cover.name || '').trim()
+                        : String(cover || '').trim();
+
+                    var price = typeof cover === 'object' && cover !== null
+                        ? Number(cover.price || 0)
+                        : 0;
+
+                    if (!name) return;
+
+                    savedList.push(
+                        name + ' (₹' + price.toLocaleString('en-IN', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        }) + ')'
+                    );
+                });
+
+                if (savedList.length > 0) {
+                    $('#insurance_print').text(savedList.join(', '));
+                    return;
+                }
+            }
+
+            // Fallback — read from DOM
             var list = [];
             $('#insurance_covers option:selected').each(function() {
-                var price = Number($(this).data('price') || 0);
-                // Add (M) for mandatory items
-                var mandatory = $(this).prop('disabled') ? '' : '';
-                list.push($(this).val() + mandatory + ' (₹' + price.toLocaleString('en-IN') + ')');
+                var price = Number($(this).attr('data-price') || 0);
+                list.push($(this).val() + ' (₹' + price.toLocaleString('en-IN') + ')');
             });
             $('#insurance_print').text(list.join(', '));
         }
@@ -3777,14 +4019,9 @@
             let list = [];
             $('#accessories option:selected').each(function() {
                 let rawText = $(this).text().trim();
-                let price = parseFloat($(this).data('price') || 0);
+                let price = parseFloat($(this).attr('data-price') || 0);   // ← use attr
                 let itemName = rawText.replace(/\(.*?\)/, '').trim();
-
-                // Convert to proper case (e.g., Ceramic Coating - Thar 3 Door)
-                let formattedName = itemName.toLowerCase().replace(/\b\w/g, function(l) {
-                    return l.toUpperCase();
-                });
-
+                let formattedName = itemName.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
                 list.push(formattedName + ' (₹' + price.toLocaleString('en-IN', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
@@ -3794,12 +4031,34 @@
         }
 
         function updateAccessoriesAmount() {
+
             let total = 0;
+            let hasMissingPrice = false;
+
             $('#accessories option:selected').each(function() {
-                total += parseFloat($(this).data('price')) || 0;
+                let price = parseFloat($(this).attr('data-price'));
+
+                if (isNaN(price)) {
+                    hasMissingPrice = true;
+                    return;
+                }
+
+                total += price;
             });
+
+            // ✅ FIX: In edit mode, if any selected accessory has no price
+            // (mock/DB price missing) OR the calculated total is less than saved,
+            // preserve the ORIGINAL saved accessories amount
+            if (IS_EDIT_MODE && SAVED_ACCESSORIES_AMOUNT !== '') {
+                let savedAmount = parseFloat(SAVED_ACCESSORIES_AMOUNT) || 0;
+
+                if (hasMissingPrice || total < savedAmount || total === 0) {
+                    $('#accessories_amount').val(savedAmount.toFixed(2));
+                    return;
+                }
+            }
+
             $('#accessories_amount').val(total.toFixed(2));
-            calculateQuotation();
         }
 
         // ============================================================
@@ -4711,6 +4970,13 @@
 
         // ---- Accessories change ----
         $('#accessories').on('change', function() {
+            // ✅ FIX: Skip recalculation during the initial restore in edit mode
+            if (accessoriesRestoreInProgress) {
+                updateAccessoriesPrintText();
+                toggleRowVisibility();
+                return;
+            }
+
             updateAccessoriesAmount();
             updateAccessoriesPrintText();
             toggleRowVisibility();
@@ -5562,15 +5828,23 @@
 
         $(document).ready(function() {
             $('form').on('submit', function(e) {
+
                 var covers = [];
+
                 $('#insurance_covers option:selected').each(function() {
-                    var price = Number($(this).data('price') || 0);
+
+                    // IMPORTANT:
+                    // Use attr() because data-price is stored using attr()
+                    var price = Number($(this).attr('data-price') || 0);
+
                     var name = $(this).val();
+
                     covers.push({
                         name: name,
                         price: price
                     });
                 });
+
                 $('#insurance_covers_data').val(JSON.stringify(covers));
             });
         });
@@ -5725,58 +5999,183 @@
                 $('#mock_enquiry_no').val(enquiryNo);
 
                 let savedCompany = @json($quotationData['insurance_company'] ?? '');
+                let savedPermit = @json($quotationData['permit'] ?? '');
+                let savedExShowroom = Number(@json($quotationData['ex_showroom_price'] ?? 0));
 
-                // Fallback options population if mock ENQUIRIES object has this enquiry
+
+                // ========================================================
+                // EDIT MODE - LOAD PRICING FOR REAL ENQUIRY
+                // ========================================================
+
+                let enquiry = null;
+
                 if (typeof ENQUIRIES !== 'undefined' && ENQUIRIES[enquiryNo]) {
-                    let enquiry = ENQUIRIES[enquiryNo];
+                    enquiry = ENQUIRIES[enquiryNo];
+                }
+
+                if (!enquiry) {
+
+                    let pricingKey = Object.keys(PRICING).find(function(key) {
+
+                        let pricing = PRICING[key];
+
+                        return Number(
+                            pricing?.receivables?.exShowroom || 0
+                        ) === savedExShowroom;
+
+                    });
+
+                    if (pricingKey) {
+                        currentPricing = PRICING[pricingKey];
+                    }
+
+                } else {
+
                     currentPricing = PRICING[enquiry.pricingKey];
 
-                    // Populate Permit dropdown
-                    $("#permit").empty();
-                    currentPricing.permit.forEach(function(item) {
-                        let isSel = (item.type === "{{ $quotationData['permit'] ?? '' }}") || item
-                            .default;
-                        $("#permit").append(
-                            `<option value="${item.type}" ${isSel ? 'selected' : ''}>${item.type}</option>`
-                        );
-                    });
-
-                    // Populate Customer Name & Mobile if empty
-                    // if (!$('#customer_name').val() && enquiry.customer) {
-                    //     $('#customer_name').val(enquiry.customer.name);
-                    //     $('#customer_name_hidden').val(enquiry.customer.name);
-                    //     $('#mobile').val(enquiry.customer.mobile);
-                    //     $('#mobile_hidden').val(enquiry.customer.mobile);
-                    // }
-
-                    // Load Insurance Company & Covers from Pricing definition
-                    let permitVal = $("#permit").val();
-                    currentInsurance = currentPricing.receivables.insurance.find(x => x.permit === permitVal) ||
-                        currentPricing.receivables.insurance[0];
-
-                    $("#insurance_company").empty();
-                    currentInsurance.companies.forEach(function(company) {
-                        let isCompSel = (savedCompany && company.insCo.toLowerCase() === savedCompany
-                            .toLowerCase()) || company.default;
-                        $("#insurance_company").append(
-                            `<option value="${company.insCo}" ${isCompSel ? 'selected' : ''}>${company.insCo}</option>`
-                        );
-                    });
-
-                    let activeComp = currentInsurance.companies.find(x => savedCompany && x.insCo.toLowerCase() ===
-                            savedCompany.toLowerCase()) ||
-                        currentInsurance.companies.find(x => x.default) ||
-                        currentInsurance.companies[0];
-
-                    if (activeComp) {
-                        $("#insurance_company").val(activeComp.insCo);
-                        loadInsurance(activeComp);
-                    }
-                } else if (savedCompany) {
-                    // Direct injection if not found in mock array
-                    $("#insurance_company").html(
-                        `<option value="${savedCompany}" selected>${savedCompany}</option>`);
                 }
+
+
+                // ========================================================
+                // LOAD INSURANCE FROM CURRENT PRICING
+                // ========================================================
+
+                if (
+                    currentPricing &&
+                    currentPricing.permit &&
+                    Array.isArray(currentPricing.permit)
+                ) {
+
+                    $("#permit").empty();
+
+                    currentPricing.permit.forEach(function(item) {
+
+                        let isSelected =
+                            String(item.type) === String(savedPermit);
+
+                        if (!savedPermit && item.default) {
+                            isSelected = true;
+                        }
+
+                        $("#permit").append(
+                            `<option value="${item.type}" ${isSelected ? 'selected' : ''}>
+                                ${item.type}
+                            </option>`
+                        );
+
+                    });
+
+
+                    let activePermit =
+                        currentPricing.permit.find(function(item) {
+                            return String(item.type) === String(savedPermit);
+                        }) ||
+
+                        currentPricing.permit.find(function(item) {
+                            return item.default;
+                        }) ||
+
+                        currentPricing.permit[0];
+
+
+                    if (activePermit) {
+
+                        $("#permit").val(activePermit.type);
+
+
+                        currentInsurance =
+                            currentPricing.receivables.insurance.find(function(item) {
+
+                                return String(item.permit) ===
+                                    String(activePermit.type);
+
+                            }) ||
+                            currentPricing.receivables.insurance[0];
+
+
+                        if (
+                            currentInsurance &&
+                            Array.isArray(currentInsurance.companies)
+                        ) {
+
+                            $("#insurance_company").empty();
+
+                            let activeCompany =
+                                currentInsurance.companies.find(function(company) {
+
+                                    return String(company.insCo).toLowerCase() ===
+                                        String(savedCompany).toLowerCase();
+
+                                }) ||
+
+                                currentInsurance.companies.find(function(company) {
+
+                                    return company.default;
+
+                                }) ||
+
+                                currentInsurance.companies[0];
+
+
+                            currentInsurance.companies.forEach(function(company) {
+
+                                let isSelected =
+                                    activeCompany &&
+                                    String(company.insCo).toLowerCase() ===
+                                    String(activeCompany.insCo).toLowerCase();
+
+                                $("#insurance_company").append(
+                                    `<option value="${company.insCo}" ${isSelected ? 'selected' : ''}>
+                                        ${company.insCo}
+                                    </option>`
+                                );
+
+                            });
+
+
+                            if (activeCompany) {
+
+                                $("#insurance_company").val(activeCompany.insCo);
+
+                                loadInsurance(activeCompany);
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+
+                // ========================================================
+                // RESTORE SAVED INSURANCE AMOUNT
+                // ========================================================
+
+                if (SAVED_INSURANCE_AMOUNT !== '') {
+
+                    $("#insurance_amount").val(
+                        Number(SAVED_INSURANCE_AMOUNT).toFixed(2)
+                    );
+
+                }
+
+
+                setTimeout(function() {
+
+                    $('#insurance_covers').trigger('change.select2');
+
+                    if (SAVED_INSURANCE_AMOUNT !== '') {
+
+                        $('#insurance_amount').val(
+                            Number(SAVED_INSURANCE_AMOUNT).toFixed(2)
+                        );
+
+                    }
+
+                    updateInsurancePrintText();
+
+                }, 100);
 
                 // ========================================================
                 // RESTORE CHARGER SWAPPING OPTIONS IN EDIT MODE
@@ -5831,31 +6230,7 @@
                         .prop('disabled', true);
                 }
 
-                // Restore Saved Insurance Covers from proposed_data
-                if (Array.isArray(SAVED_INSURANCE_COVERS) && SAVED_INSURANCE_COVERS.length > 0) {
-                    let selectedValues = [];
-                    SAVED_INSURANCE_COVERS.forEach(function(cover) {
-                        let name = typeof cover === 'object' ? cover.name : cover;
-                        let price = typeof cover === 'object' ? (cover.price || 0) : 0;
-
-                        let exists = false;
-                        $('#insurance_covers option').each(function() {
-                            if ($(this).val().trim().toLowerCase() === name.trim().toLowerCase()) {
-                                $(this).prop('selected', true);
-                                selectedValues.push($(this).val());
-                                exists = true;
-                            }
-                        });
-
-                        if (!exists) {
-                            let option = new Option(name + ' (₹' + price + ')', name, true, true);
-                            $(option).attr('data-price', price);
-                            $('#insurance_covers').append(option);
-                            selectedValues.push(name);
-                        }
-                    });
-                    $('#insurance_covers').val(selectedValues).trigger('change');
-                }
+                
                 restoreSavedQuotationValues();
             @endif
 
