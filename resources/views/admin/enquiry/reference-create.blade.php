@@ -82,28 +82,31 @@
                             <h3 class="mb-0 ms-3" style="color: #000 !important;">Vehicle Details</h3>
                             <div class="card-body">
                                 <div class="row">
-                                    <div class="col-md-4 mb-3">
+                                    <div class="col-md-3 mb-3">
                                         <label class="form-label">Segment <span class="text-danger">*</span></label>
-                                        <select name="segment_code" id="segment_code" class="form-control form-select"
-                                            required>
+                                        <select name="segment_code" id="segment_code" class="form-control form-select" required>
                                             <option value="">Select Segment</option>
                                             @foreach ($segments as $code => $name)
                                                 <option value="{{ $code }}">{{ $name }}</option>
                                             @endforeach
                                         </select>
                                     </div>
-                                    <div class="col-md-4 mb-3">
+                                    <div class="col-md-3 mb-3">
                                         <label class="form-label">Model <span class="text-danger">*</span></label>
-                                        <select name="model_code" id="model_code" class="form-control form-select" required
-                                            disabled>
+                                        <select name="model_code" id="model_code" class="form-control form-select" required disabled>
                                             <option value="">Select Model</option>
                                         </select>
                                     </div>
-                                    <div class="col-md-4 mb-3">
+                                    <div class="col-md-3 mb-3">
                                         <label class="form-label">Variant <small class="text-muted"></small></label>
-                                        <select name="variant_code" id="variant_code" class="form-control form-select"
-                                            disabled>
+                                        <select name="variant_code" id="variant_code" class="form-control form-select" disabled>
                                             <option value="">Select Variant</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label class="form-label">Color <small class="text-muted"></small></label>
+                                        <select name="color_code" id="color_code" class="form-control form-select" disabled>
+                                            <option value="">Select Color</option>
                                         </select>
                                     </div>
                                 </div>
@@ -128,8 +131,7 @@
             // Segment -> Model Logic
             $('#segment_code').on('change', function() {
                 let segmentCode = $(this).val();
-                $('#model_code, #variant_code').html('<option value="">Select Option</option>').prop(
-                    'disabled', true);
+                $('#model_code, #variant_code, #color_code').html('<option value="">Select Option</option>').prop('disabled', true);
 
                 if (segmentCode) {
                     $.get("{{ backpack_url('enquiry/models') }}/" + segmentCode, function(response) {
@@ -145,7 +147,7 @@
             // Model -> Variant Logic
             $('#model_code').on('change', function() {
                 let modelCode = $(this).val();
-                $('#variant_code').html('<option value="">Select Option</option>').prop('disabled', true);
+                $('#variant_code, #color_code').html('<option value="">Select Option</option>').prop('disabled', true);
 
                 if (modelCode) {
                     $.get("{{ backpack_url('enquiry/variants') }}/" + modelCode, function(response) {
@@ -154,6 +156,23 @@
                             html += `<option value="${code}">${item.name}</option>`;
                         });
                         $('#variant_code').html(html).prop('disabled', false);
+                    });
+                }
+            });
+
+            // Variant -> Color Logic
+            $('#variant_code').on('change', function() {
+                let variantCode = $(this).val();
+                $('#color_code').html('<option value="">Select Option</option>').prop('disabled', true);
+
+                if (variantCode) {
+                    $.get("{{ backpack_url('enquiry/colors') }}/" + variantCode, function(response) {
+                        let html = '<option value="">Select Color</option>';
+                        $.each(response, function(code, item) {
+                            let val = typeof item === 'object' ? item.name : item;
+                            html += `<option value="${code}">${val}</option>`;
+                        });
+                        $('#color_code').html(html).prop('disabled', false);
                     });
                 }
             });
