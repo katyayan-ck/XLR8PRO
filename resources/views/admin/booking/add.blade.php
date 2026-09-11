@@ -71,24 +71,13 @@
                                     <div class="d-flex align-items-center gap-2">
                                         <label for="quotation" class="mb-0">Quotation:</label>
 
-                                    <a href="{{ backpack_url('quotation/' . $quotation->id . '/preview') }}"
+                                        <a href="{{ backpack_url('quotation/' . $quotation->id . '/preview') }}"
                                         target="_blank"
                                         class="btn btn-info">
                                         <i class="ik ik-file-text mr-2"></i> View Quotation PDF
-                                    </a>
-                                </div>
-                            @endif
-                        </div>
-                        <div class="row">
-                            <div class="col-sm-2">
-                                <div class="form-group">
-                                    <label for="customertype">Customer Type <span class="required-mark">*</span></label>
-                                    <select name="customertype" id="customertype" class="form-control form-select"
-                                        required>
-                                        <option value="Actual" selected>Actual</option>
-                                        <option value="Dummy">Dummy</option>
-                                    </select>
-                                </div>
+                                        </a>
+                                    </div>
+                                @endif
                             </div>
                             <div class="row">
                                 <div class="col-sm-2">
