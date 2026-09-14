@@ -56,7 +56,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 class BookingCrudController extends CrudController
 {
     use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
+    use \Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation { create as traitCreate; }
     use \Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
@@ -68,6 +68,35 @@ class BookingCrudController extends CrudController
         CRUD::setEntityNameStrings('booking', 'bookings');
     }
 
+    public function create()
+    {
+        if ($enquiryId = request('enquiry_id')) {
+            $enquiry = \App\Models\CRM\Enquiry::find($enquiryId);
+            if ($enquiry) {
+                $existingBooking = Booking::where(function($q) use ($enquiry) {
+                    $q->where('enq_no', $enquiry->id)
+                      ->orWhere('enq_no', 'XENQ-' . $enquiry->id);
+                    if ($enquiry->enquiry_no) $q->orWhere('enq_no', $enquiry->enquiry_no);
+                    if ($enquiry->quick_enquiry_no) $q->orWhere('enq_no', $enquiry->quick_enquiry_no);
+                })->first();
+
+                if ($existingBooking) {
+                    \Alert::warning('Booking already exists with this enquiry.')->flash();
+                    return redirect(backpack_url("booking/{$existingBooking->id}/edit"));
+                }
+            }
+        }
+
+        if ($quotationId = request('quotation_id')) {
+            $existingBooking = Booking::where('quotation_id', $quotationId)->first();
+            if ($existingBooking) {
+                \Alert::warning('Booking already exists with this quotation.')->flash();
+                return redirect(backpack_url("booking/{$existingBooking->id}/edit"));
+            }
+        }
+
+        return $this->traitCreate();
+    }
 
     /**
      * Centralized method to prepare complete booking data for show/edit/invoice views
@@ -76,6 +105,1056 @@ class BookingCrudController extends CrudController
      * @param string $viewName Blade view name suffix (default: 'view')
      * @return \Illuminate\View\View
      */
+
+    public function store(Request $request)
+    {
+
+        Log::info('🚀 [STORE] Booking store() triggered', [
+            'all_inputs' => $request->except(['amountproof']),
+            'has_file' => $request->hasFile('amountproof'),
+            'method' => $request->method(),
+            'url' => $request->fullUrl(),
+        ]);
+
+        $pending = 0;
+        $pendingFields = [];
+
+        Log::info('📋 [VALIDATION-1] Running base validator...');
+        $finModeRule = $request->customertype === 'Dummy'
+            ? 'nullable|string|max:255'
+            : 'required|string|max:255';
+
+
+        $validator = Validator::make($request->all(), [
+            'customertype'          => 'required|string|max:255',
+            'user'                  => 'nullable',
+            'hiddenbookingdate'     => 'nullable|date',
+            'refrenceno'            => 'nullable|string|max:255',
+            'dsadetails'            => 'nullable|string|max:255',
+            'branch'                => 'required|string',
+            'location'              => 'required|string',
+            'segment'               => 'required|string',
+            'model'                 => 'required|string|max:255',
+            'variant'               => 'required|string|max:255',
+            'color'                 => 'required|string|max:255',
+            'sale_type'             => 'required|in:1,2',
+            'name'                  => 'required|string|max:255',
+            'careof'                => 'nullable|string|max:255',
+            'careofname'            => 'nullable|string|max:255',
+            'mobile'                => 'required|string|max:15',
+            'altmobile'             => 'nullable|string|max:15',
+            'panno'                 => 'nullable|string|max:10',
+            'adharno'               => 'nullable|string|max:15',
+            'dmsotf'                => 'nullable|string|max:255',
+            'chassis'               => 'nullable|string|max:255',
+            'deliverytype'          => 'required|string|max:255',
+            'hiddenexpecteddeldate' => 'nullable|date',
+            'finmode'               => $finModeRule,
+            'financier'             => 'nullable|string|max:255',
+            'loanstatus'            => 'nullable|string|max:255',
+            'saleconsultant'        => 'required',
+            'apackamount'           => 'required',
+            'seating'               => 'nullable|integer',
+            'details'               => 'nullable|string',
+
+            // Customer Address
+            'pincode'               => 'required|string|max:10',
+            'vpo'                   => 'required|string|max:150',
+            'customer_tehsil'       => 'required|string|max:100',
+            'customer_district'     => 'required|string|max:100',
+            'city'                  => 'required|string|max:100',
+            'territory'             => 'required|string|max:100',
+
+            // Referral
+            'referredby'            => 'nullable|string|max:255',
+            'refcustomername'       => 'nullable|string|max:255',
+            'refmobileno'           => 'nullable|string|max:15',
+            'refexistingmodel'      => 'nullable|string|max:255',
+            'refvariant'            => 'nullable|string|max:255',
+            'refchassisregno'       => 'nullable|string|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            Log::warning('❌ [VALIDATION-1] Base validation FAILED', [
+                'errors' => $validator->errors()->toArray(),
+            ]);
+        } else {
+            Log::info('✅ [VALIDATION-1] Base validation passed');
+        }
+
+        Log::info('🔀 [BRANCH] customertype = ' . $request->customertype);
+
+        if ($request->customertype != "Dummy") {
+            Log::info('👤 [BRANCH] Actual customer — checking base validator first...');
+
+            if ($validator->fails()) {
+                Log::warning('❌ [BRANCH] Redirecting back — base validator failed for Actual customer', [
+                    'first_error' => $validator->messages()->first(),
+                ]);
+                return redirect()->back()->withInput()->with('error', $validator->messages()->first());
+            }
+
+            Log::info('📋 [VALIDATION-2] Running Actual-only validator (bookingsource, bookingamount etc.)...');
+
+            $validator = Validator::make($request->all(), [
+                'bookingsource'     => 'required|string|max:255',
+                'hiddenbookingdate' => 'required|date',
+                'bookingamount'     => 'required|numeric',
+                'bookingmode'       => 'required|string|max:255',
+                'coltype'           => 'required',
+                'mode'              => 'required|in:Cash,Cheque,Bank Transfer,UPI',
+            ]);
+
+            if ($validator->fails()) {
+                Log::warning('❌ [VALIDATION-2] Actual-only validation FAILED', [
+                    'errors' => $validator->errors()->toArray(),
+                    'first_error' => $validator->messages()->first(),
+                ]);
+                return redirect()->back()->withInput()->with('error', $validator->messages()->first());
+            }
+
+            Log::info('✅ [VALIDATION-2] Actual-only validation passed');
+        } else {
+            Log::info('🤖 [BRANCH] Dummy customer — skipping Actual validators');
+        }
+
+        Log::info('🧾 [VALIDATION-3] coltype = ' . $request->coltype . ' (type: ' . gettype($request->coltype) . ')');
+
+        if ($request->coltype === 1) {
+            Log::info('📋 [VALIDATION-3] coltype is exactly int 1 — running receipt validator...');
+
+            $validator = Validator::make($request->all(), [
+                'receiptno'         => 'required|string|max:255',
+                'hiddenreceiptdate' => 'required|date',
+            ]);
+
+            if ($validator->fails()) {
+                Log::warning('❌ [VALIDATION-3] Receipt validation FAILED', [
+                    'errors' => $validator->errors()->toArray(),
+                ]);
+                return redirect()->back()->withInput()->with('error', $validator->messages()->first());
+            }
+
+            Log::info('✅ [VALIDATION-3] Receipt validation passed');
+        } else {
+            Log::info('⚠️ [VALIDATION-3] coltype is NOT strict int 1 — receipt validation SKIPPED (check if this is intentional, value is: ' . json_encode($request->coltype) . ')');
+        }
+
+        $isDummy = $request->customertype === 'Dummy';
+
+        if (!$isDummy) {
+            Log::info('⏳ [PENDING] Checking pending fields...');
+
+            if (is_null($request->input('receiptno'))) {
+                $pending++;
+                $pendingFields[] = 'Receipt number needs to be updated';
+                Log::info('⏳ [PENDING] receiptno is null');
+            }
+            if (is_null($request->input('hiddenreceiptdate'))) {
+                $pending++;
+                $pendingFields[] = 'Receipt date needs to be updated';
+                Log::info('⏳ [PENDING] hiddenreceiptdate is null');
+            }
+            if ($request->input('bookingmode') === 'Online') {
+                if (is_null($request->input('refrenceno')) || $request->input('refrenceno') === '') {
+                    $pending++;
+                    $pendingFields[] = 'Online booking reference number needs to be updated';
+                    Log::info('⏳ [PENDING] Online mode but refrenceno missing');
+                }
+            }
+            if (is_null($request->input('panno'))) {
+                $pending++;
+                $pendingFields[] = 'PAN number needs to be updated';
+                Log::info('⏳ [PENDING] panno is null');
+            }
+            if (is_null($request->input('adharno'))) {
+                $pending++;
+                $pendingFields[] = 'Aadhar number needs to be updated';
+                Log::info('⏳ [PENDING] adharno is null');
+            }
+            if (is_null($request->input('dmsno'))) {
+                $pending++;
+                $pendingFields[] = 'Sales force number needs to be updated';
+                Log::info('⏳ [PENDING] dmsno is null');
+            }
+            if (is_null($request->input('dmsotf'))) {
+                $pending++;
+                $pendingFields[] = 'DMS OTF needs to be updated';
+                Log::info('⏳ [PENDING] dmsotf is null');
+            }
+            if (is_null($request->input('hiddenotfdate'))) {
+                $pending++;
+                $pendingFields[] = 'DMS OTF Date needs to be updated';
+                Log::info('⏳ [PENDING] hiddenotfdate is null');
+            }
+            if ($request->makeorder == 1) {
+                $pending++;
+                $pendingFields[] = 'DMS SO number needs to be updated';
+                Log::info('⏳ [PENDING] makeorder == 1');
+            }
+        }
+
+        Log::info('⏳ [PENDING] Total pending count: ' . $pending, ['fields' => $pendingFields]);
+
+        Log::info('💾 [BOOKING] Preparing Booking model...');
+
+        $customerTypeInput = $request->input('customertype');
+        $adhar_no_normalized = preg_replace('/[^0-9]/', '', $request->input('adharno', ''));
+        $customerType = ($customerTypeInput === 'Actual' || $customerTypeInput === 'Active') ? 'Active' : $customerTypeInput;
+
+        Log::info('👤 [BOOKING] Customer type resolved', [
+            'input' => $customerTypeInput,
+            'resolved' => $customerType,
+            'adhar_normalized' => $adhar_no_normalized,
+        ]);
+
+        $booking = new Booking();
+        $quotation = null;
+
+        if ($request->filled('quotation_no')) {
+            $quotation = Quotation::where('id', $request->quotation_no)->first();
+        }
+
+        // Store the exact enquiry ID
+        if ($quotation) {
+            $booking->enq_no = $quotation->enquiry_id;
+            $booking->quotation_id = $quotation->id;
+        } elseif ($request->filled('enquiry_id')) {
+            $booking->enq_no = $request->enquiry_id;
+        } else {
+            $booking->enq_no = null;
+        }
+
+        $booking->b_type           = $customerType;
+        $booking->b_cat            = $request->input('customercat');
+        $booking->b_mode           = $request->input('bookingmode');
+        $booking->cpd              = $request->input('hiddencpd');
+        $booking->col_type         = $isDummy ? 1 : ($request->input('coltype') ?? 1);
+        $booking->col_by           = $request->input('user');
+        $booking->b_source         = $request->input('bookingsource');
+        $booking->dsa_id           = $request->input('dsadetails');
+        $booking->online_bk_ref_no = $request->input('refrenceno');
+        $booking->booking_date     = $request->input('hiddenbookingdate');
+        $booking->receipt_no       = $request->input('receiptno');
+        $booking->receipt_date     = $request->input('hiddenreceiptdate');
+        $booking->booking_amount   = $isDummy ? 0 : $request->input('bookingamount');
+        $booking->order            = $request->input('makeorder');
+        
+        // Native Booking Fields
+        $booking->pan_no           = $request->input('panno');
+        $booking->adhar_no         = $adhar_no_normalized;
+        $booking->gstn             = $request->input('gstn');
+        $booking->dms_otf          = $request->input('dmsotf');
+        $booking->dms_so           = $request->input('dms_so');
+        $booking->dms_no           = $request->input('dmsno');
+        $booking->otf_date         = $request->input('hiddenotfdate');
+        $booking->mapped           = 0;
+        $booking->chassis_no       = $request->input('chassis');
+        $booking->del_type         = $request->input('deliverytype');
+        $booking->del_date         = $request->input('hiddenexpecteddeldate');
+
+        // NEW: Update the associated Enquiry with all the deleted booking fields
+        if ($booking->enq_no) {
+            $linkedEnquiry = \App\Models\CRM\Enquiry::where('id', $booking->enq_no)
+                ->orWhere('enquiry_no', $booking->enq_no)
+                ->orWhere('quick_enquiry_no', $booking->enq_no)
+                ->first();
+
+            if ($linkedEnquiry) {
+
+            if ($linkedEnquiry) {
+                $linkedEnquiry->update([
+                    'name'              => $request->input('name'),
+                    'care_of_type'      => $request->input('careof'),
+                    'care_of'           => $request->input('careofname'),
+                    'mobile'            => $request->input('mobile'),
+                    'alternate_mobile'  => $request->input('altmobile'),
+                    'gender'            => $request->input('gender'),
+                    'occupation_type'   => $request->input('occupation'),
+                    'dob'               => $request->input('hiddencustomerdob'),
+                    'dealer_branch'     => $request->input('branch'),
+                    'dealer_location'   => $request->input('location'),
+                    'segment_code'      => $request->input('segment'),
+                    'model_code'        => $request->input('model'),
+                    'variant_code'      => $request->input('variant'),
+                    'color_code'        => $request->input('color'),
+                    'seating'           => $request->input('seating'),
+                    'purchase_type'     => $request->input('buyertype'),
+                    'brand_make'        => $request->input('enummaster1'),
+                    'brand_model'       => $request->input('vehicledetails'),
+                    'consid_brand2'     => $request->input('enummaster2'),
+                    'consid_model2'     => $request->input('vehicledetails2'),
+                    'vehicle_no'        => $request->input('registrationno'),
+                    'make_year'         => $request->input('manufacturingyear'),
+                    'odo_reading'       => $request->input('odometerreading'),
+                    'expected_price'    => $request->input('expectedprice'),
+                    'offered_price'     => $request->input('offeredprice'),
+                    'exchange_bonus'    => $request->input('exchangebonus'),
+                    'fin_mode'          => $isDummy ? 'Dummy' : $request->input('finmode'),
+                    'financier'         => $isDummy ? null : $request->input('financier'),
+                    'x8_sc_code'        => $request->input('saleconsultant'),
+                    'referee_name'      => $request->input('refcustomername'),
+                    'referee_phone'     => $request->input('refmobileno'),
+                    'referred_by'       => $request->input('referredby'),
+                    'remarks'           => $request->input('details'),
+                ]);
+            }
+        }
+
+        $booking->pending      = $pending;
+        $booking->pending_remark = implode(' , ', $pendingFields);
+
+        if (!$isDummy && $pending > 0) {
+            $booking->status = 8;
+            Log::info('⚠️ [BOOKING] Status set to 8 (Pending)');
+        } else {
+            $booking->status = 1;
+        }
+
+        if ($customerType === 'Dummy') {
+            $booking->b_mode   = 'Dealer';
+            $booking->b_source = 'Dealer';
+            Log::info('🤖 [BOOKING] Dummy override applied — b_mode & b_source forced to Dealer');
+        }
+
+        Log::info('💾 [BOOKING] About to call $booking->save()...', [
+            'booking_snapshot' => $booking->toArray(),
+        ]);
+
+        try {
+            $booking->save();
+
+            Log::info('✅ [BOOKING] Booking saved successfully', [
+                'booking_id' => $booking->id
+            ]);
+            /*
+            |--------------------------------------------------------------------------
+            | Quotation -> Booking Conversion
+            |--------------------------------------------------------------------------
+            */
+
+            if ($quotation) {
+
+                /*
+            |-------------------------------------------------------
+            | Update quotation status
+            |-------------------------------------------------------
+            */
+
+                $quotation->status = 'booked';
+                $quotation->save();
+
+                /*
+            |-------------------------------------------------------
+            | Create Quote History
+            |-------------------------------------------------------
+            */
+
+                QuoteAction::create([
+
+                    'quotation_no' => $quotation->quotation_no,
+                    'action_by' => backpack_user()->id,
+                    'action' => 'BOOKED',
+                    'requested' => $quotation->standard_data,
+                    'onroad' => $quotation->onroad_price,
+                    'status' => 'booked',
+                    'remarks' => 'Converted into Booking #' . $booking->id,
+
+                ]);
+
+                /*
+            |-------------------------------------------------------
+            | Insurance
+            |-------------------------------------------------------
+            */
+
+                XlInsurance::updateOrCreate(
+                    ['bid' => $booking->id],
+                    [
+                        'pol_type' => $quotation->standard_data['policy_type'] ?? null,
+                    ]
+                );
+
+                /*
+            |-------------------------------------------------------
+            | RTO
+            |-------------------------------------------------------
+            */
+
+                XlRto::updateOrCreate(
+                    ['bid' => $booking->id],
+                    [
+                        'rgn_type' => $quotationData['registration_type'] ?? null,
+                    ]
+                );
+            }
+
+            try {
+
+                $booking->addHistory(
+                    'commented',
+                    'Booking Created',
+                    'New booking created successfully',
+                    [
+                        'booking_amount' => $booking->booking_amount,
+                        'customer_name'  => $booking->name,
+                        'mobile'         => $booking->mobile,
+                    ],
+                    null,
+                    backpack_user()
+                );
+                if ($isDummy) {
+
+                    $booking->addHistory(
+                        'commented',
+                        'Dummy Entry Created',
+                        'Dummy booking created successfully',
+                        [
+                            'remark' => $request->details,
+                        ],
+                        null,
+                        backpack_user()
+                    );
+                }
+
+
+
+                Log::info('✅ [HISTORY] Booking history created');
+            } catch (\Exception $e) {
+
+                Log::error('💥 [HISTORY] Failed', [
+                    'message' => $e->getMessage(),
+                ]);
+            }
+        } catch (\Exception $e) {
+
+            dd(
+                $e->getMessage(),
+                $e->getFile(),
+                $e->getLine()
+            );
+        }
+
+        Log::info('📁 [FILE] Checking amountproof upload...', [
+            'hasFile'  => $request->hasFile('amountproof'),
+            'has_key'  => $request->has('amountproof'),
+            'file_err' => $request->hasFile('amountproof') ? $request->file('amountproof')->getError() : 'no file',
+        ]);
+
+        $uploadedFilePath = null;
+        $copyPath = null;
+
+        if ($request->hasFile('amountproof') && $request->file('amountproof')->isValid()) {
+            try {
+                $file = $request->file('amountproof');
+                Log::info('📁 [FILE] File is valid', [
+                    'original_name' => $file->getClientOriginalName(),
+                    'mime'          => $file->getMimeType(),
+                    'size'          => $file->getSize(),
+                    'extension'     => $file->extension(),
+                ]);
+
+                $storedName = $file->store('temp', 'public');
+                Log::info('📁 [FILE] store() returned: ' . $storedName);
+
+                $uploadedFilePath = public_path('storage/' . $storedName);
+                Log::info('📁 [FILE] Full path resolved: ' . $uploadedFilePath, [
+                    'exists' => file_exists($uploadedFilePath),
+                ]);
+
+                if (!file_exists($uploadedFilePath)) {
+                    throw new \Exception("Stored file not found at: " . $uploadedFilePath);
+                }
+
+                $extension = $file->extension();
+                $fn2       = 'tf_ap2_' . date('Ymd_His') . '_' . uniqid() . '.' . $extension;
+                $copyPath  = public_path('uploads/temp/' . $fn2);
+                $copyDir   = dirname($copyPath);
+
+                Log::info('📁 [FILE] Copy target path: ' . $copyPath);
+
+                if (!file_exists($copyDir)) {
+                    mkdir($copyDir, 0755, true);
+                    Log::info('📁 [FILE] Created copy directory: ' . $copyDir);
+                }
+
+                if (copy($uploadedFilePath, $copyPath)) {
+                    Log::info('📁 [FILE] File copied successfully to: ' . $copyPath);
+                } else {
+                    Log::warning('📁 [FILE] copy() returned false — ChatHelper may skip file');
+                    $copyPath = null;
+                }
+            } catch (\Exception $e) {
+                Log::error('💥 [FILE] File upload block threw exception', [
+                    'message' => $e->getMessage(),
+                    'file'    => $e->getFile(),
+                    'line'    => $e->getLine(),
+                ]);
+                $uploadedFilePath = null;
+                $copyPath         = null;
+            }
+        } else {
+            Log::warning('⚠️ [FILE] amountproof not present or invalid', [
+                'hasFile'  => $request->hasFile('amountproof'),
+                'has_key'  => $request->has('amountproof'),
+                'error'    => $request->hasFile('amountproof') ? $request->file('amountproof')->getError() : 'N/A',
+            ]);
+        }
+
+        Log::info('💰 [PAYMENT] Checking if payment entry needed...', [
+            'col_type'       => $booking->col_type,
+            'booking_amount' => $booking->booking_amount,
+            'receiptno'      => $request->input('receiptno'),
+            'voucherno'      => $request->input('voucherno'),
+        ]);
+
+        $number = $request->input('receiptno') ?? $request->input('voucherno');
+
+        if (
+            !$isDummy &&
+            in_array($booking->col_type, [1, 4]) &&
+            $booking->booking_amount > 0 &&
+            $number
+        ) {
+            Log::info('💰 [PAYMENT] Conditions met — creating Bookingamount entry...');
+
+            try {
+                $payment          = new Bookingamount();
+                $payment->bid     = $booking->id;
+                $payment->date    = $request->input('hiddenreceiptdate') ?? now();
+                $payment->amount  = $booking->booking_amount;
+                $payment->reciept = $number;
+                $payment->mode    = $request->input('mode');
+                $payment->voucher = ($booking->col_type == 4) ? 1 : 0;
+                $payment->save();
+
+                Log::info('✅ [PAYMENT] Bookingamount saved', ['payment_id' => $payment->id]);
+
+                if ($uploadedFilePath && file_exists($uploadedFilePath)) {
+                    Log::info('📎 [PAYMENT] Attaching media to Bookingamount...');
+                    $payment->addMedia($uploadedFilePath)->toMediaCollection('amount-proof');
+                    Log::info('✅ [PAYMENT] Media attached successfully');
+                } else {
+                    Log::warning('⚠️ [PAYMENT] No valid file to attach — uploadedFilePath: ' . json_encode($uploadedFilePath));
+                }
+            } catch (\Exception $e) {
+                Log::error('💥 [PAYMENT] Bookingamount save/media failed', [
+                    'message' => $e->getMessage(),
+                    'file'    => $e->getFile(),
+                    'line'    => $e->getLine(),
+                ]);
+            }
+        } else {
+            Log::info('⏭️ [PAYMENT] Skipped — conditions not met', [
+                'col_type_in_1_4' => in_array($booking->col_type, [1, 4]),
+                'amount_gt_0'     => $booking->booking_amount > 0,
+                'number_present'  => !empty($number),
+            ]);
+        }
+
+        Log::info('🔄 [EXCHANGE] buyertype = ' . $request->input('buyertype'));
+
+        if (
+            !$isDummy &&
+            $request->has('buyertype') &&
+            $request->input('buyertype') === 'Exchange Buy'
+        ) {
+            Log::info('🔄 [EXCHANGE] Creating XExchange entry...');
+            try {
+                $exchange                     = new XExchange();
+                $exchange->bid                = $booking->id;
+                $exchange->vehicle_oem_code              = $booking->vehicle_oem_code;
+                $exchange->verification_status = 1;
+                $exchange->case_status        = 1;
+                $exchange->purchase_type      = $request->input('buyertype');
+                $exchange->save();
+                Log::info('✅ [EXCHANGE] XExchange saved', ['exchange_id' => $exchange->id]);
+            } catch (\Exception $e) {
+                Log::error('💥 [EXCHANGE] XExchange save failed', ['message' => $e->getMessage()]);
+            }
+        } else {
+            Log::info('⏭️ [EXCHANGE] Skipped');
+        }
+
+        Log::info('🏦 [FINANCE] finmode = ' . $request->input('finmode'));
+
+        if (
+            !$isDummy &&
+            $request->has('finmode') &&
+            $request->input('finmode') === 'In-house'
+        ) {
+            Log::info('🏦 [FINANCE] Creating XFinance entry...');
+            try {
+                $finance                      = new XFinance();
+                $finance->bid                 = $booking->id;
+                $finance->vehicle_oem_code               = $booking->vehicle_oem_code;
+                $finance->verification_status = 1;
+                $finance->case_status         = 1;
+                $finance->save();
+                Log::info('✅ [FINANCE] XFinance saved', ['finance_id' => $finance->id]);
+            } catch (\Exception $e) {
+                Log::error('💥 [FINANCE] XFinance save failed', ['message' => $e->getMessage()]);
+            }
+        } else {
+            Log::info('⏭️ [FINANCE] Skipped');
+        }
+
+
+
+        Log::info('🎉 [STORE] store() completed successfully — redirecting', ['booking_id' => $booking->id]);
+
+        return redirect(backpack_url('booking'))->with('success', 'Booking added successfully!');
+    }
+
+    public function update(Request $request, $id)
+    {
+        $booking = Booking::findOrFail($id);
+
+        $old_col_type = $booking->col_type;
+        $old_col_by   = $booking->col_by;
+
+        $rules = [
+            'name'                     => 'required|string|max:255',
+            'care_of'                  => 'nullable|string|max:255',
+            'care_of_name'             => 'nullable|string|max:255',
+            'mobile'                   => 'required|string|max:15',
+            'alt_mobile'               => 'nullable|string|max:15',
+            'gender'                   => 'required|string',
+            'occupation'               => 'required|string',
+            'pan_no'                   => 'nullable|string|max:10',
+            'adhar_no'                 => 'nullable|string|max:20',
+            'gstn'                     => 'nullable|string|max:20',
+            'hidden_customer_dob'      => 'required|date',
+
+            'branch'                   => 'required|string',
+            'location_id'              => 'required|string',
+            'location_other'           => 'nullable|string|max:255',
+
+            'segment_id'               => 'required|string',
+            'model'                    => 'required|string|max:255',
+            'variant'                  => 'required|string|max:255',
+            'color'                    => 'required|string|max:255',
+            'seating'                  => 'nullable|integer',
+            'accessories'              => 'nullable|array',
+            'accessories.*'            => 'string',
+            'apack_amount'             => 'required|numeric',
+            'chassis'                  => 'nullable|string|max:255',
+
+            'buyer_type'               => 'required|string',
+            'enummaster1'              => 'nullable|string',
+            'vehicle_details'          => 'nullable|string|max:255',
+            'enummaster2'              => 'nullable|string',
+            'vehicle_details2'         => 'nullable|string|max:255',
+            'registration_no'          => 'nullable|string|max:255',
+            'manufacturing_year'       => 'nullable|integer',
+            'odometer_reading'         => 'nullable|string|max:255',
+            'expected_price'           => 'nullable|numeric',
+            'offered_price'            => 'nullable|numeric',
+            'exchange_bonus'           => 'nullable|numeric',
+
+            'booking_mode'             => 'required|string',
+            'refrence_no'              => 'nullable|string|max:255',
+            'booking_source'           => 'required|string',
+            'dsa_details'              => 'nullable|string',
+            'saleconsultant'           => 'required|string',
+            'delivery_type'            => 'required|string|in:Expected,Confirmed',
+            'expected_del_date_actual' => 'nullable|date',
+            'fin_mode'                 => 'required|string',
+            'financier'                => 'nullable|integer',
+            'loan_status'              => 'nullable|string',
+            'make_order'               => 'nullable|integer',
+            'details'                  => 'nullable|string',
+
+            'ref_customer_name'        => 'nullable|string|max:255',
+            'ref_mobile_no'            => 'nullable|string|max:15',
+            'ref_existing_model'       => 'nullable|string|max:255',
+            'ref_variant'              => 'nullable|string|max:255',
+            'ref_chassis_reg_no'       => 'nullable|string|max:255',
+        ];
+
+        $validator = Validator::make($request->all(), $rules);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $pending       = 0;
+        $pendingFields = [];
+
+        if ($request->input('booking_mode') === 'Online' && empty($request->input('refrence_no'))) {
+            $pending++;
+            $pendingFields[] = 'Online booking reference number needs to be updated';
+        }
+        if (empty($request->input('pan_no'))) {
+            $pending++;
+            $pendingFields[] = 'PAN number needs to be updated';
+        }
+        if (empty($request->input('adhar_no'))) {
+            $pending++;
+            $pendingFields[] = 'Aadhar number needs to be updated';
+        }
+
+        $adhar_no_normalized = preg_replace('/[^0-9]/', '', $request->input('adhar_no', ''));
+
+        $data['saleconsultants'] = OrgService::usersByDesignation('CNS') ?? [];
+        $data['allusers']        = OrgService::usersByDepartment('SLS') ?? [];
+        $data['dsa_details']     = XL_DSA_MASTER::all()->map(fn($dsa) => [
+            'id'     => $dsa->id,
+            'name'   => $dsa->name,
+            'mobile' => $dsa->mobile,
+        ])->toArray();
+
+        $getFinancierName = function ($fid) {
+            if (empty($fid)) return 'Null';
+            $f = XlFinancier::find($fid);
+            return $f ? $f->name : 'Unknown';
+        };
+
+        $rem = [];
+        
+        // Fetch Linked Enquiry for updates
+        $linkedEnquiry = null;
+        if ($booking->enq_no) {
+            $linkedEnquiry = \App\Models\CRM\Enquiry::where('id', $booking->enq_no)
+                ->orWhere('enquiry_no', $booking->enq_no)
+                ->orWhere('quick_enquiry_no', $booking->enq_no)
+                ->first();
+        }
+
+        if ($booking->b_type != $request->input('customer_type')) {
+            $rem[] = "Customer Type Changed from " . ($booking->b_type ?? 'null') . " to " . $request->input('customer_type');
+            $booking->b_type = $request->input('customer_type');
+        }
+
+        if ($booking->booking_date != $request->input('booking_date_actual')) {
+            $oldDate = $booking->booking_date ? Carbon::parse($booking->booking_date)->format('d-M-Y') : 'null';
+            $newDate = $request->input('booking_date_actual') ? Carbon::parse($request->input('booking_date_actual'))->format('d-M-Y') : 'null';
+            $rem[] = "Booking Date Changed from {$oldDate} to {$newDate}";
+            $booking->booking_date = $request->input('booking_date_actual');
+        }
+
+        if ($booking->booking_amount != $request->input('booking_amount')) {
+            $rem[] = "Booking Amount Changed from " . ($booking->booking_amount ?? '0') . " to " . $request->input('booking_amount');
+            $booking->booking_amount = $request->input('booking_amount');
+        }
+
+        if ($booking->receipt_no != $request->input('receipt_no')) {
+            $rem[] = "Receipt No. Changed from " . ($booking->receipt_no ?? 'null') . " to " . $request->input('receipt_no');
+            $booking->receipt_no = $request->input('receipt_no');
+        }
+
+        if ($booking->receipt_date != $request->input('receipt_date_actual')) {
+            $rem[] = "Receipt Date Changed";
+            $booking->receipt_date = $request->input('receipt_date_actual');
+        }
+
+        if ($old_col_type != $request->input('col_type')) {
+            $colTypeMap = ['1' => 'Receipt', '2' => 'Field Collection By Sales Team', '3' => 'Field Collection By DSA', '4' => 'Used Car Purchase'];
+            $rem[] = "Collection Type Changed from " . ($colTypeMap[$old_col_type] ?? 'null') . " to " . ($colTypeMap[$request->input('col_type')] ?? 'null');
+        }
+
+        if ($old_col_by != $request->input('user')) {
+            $oldUser = 'null';
+            $newUser = 'null';
+            if ($old_col_type == 2) {
+                $u = collect($data['allusers'])->firstWhere('id', $old_col_by);
+                $oldUser = $u ? ($u['name'] ?? $u->name) . ' - (' . ($u['emp_code'] ?? $u->emp_code ?? '') . ')' : 'null';
+            } elseif ($old_col_type == 3) {
+                $d = collect($data['dsa_details'])->firstWhere('id', $old_col_by);
+                $oldUser = $d ? $d['name'] . ' - ' . $d['mobile'] : 'null';
+            }
+            if ($request->input('col_type') == 2) {
+                $u = collect($data['allusers'])->firstWhere('id', $request->input('user'));
+                $newUser = $u ? ($u['name'] ?? $u->name) . ' - (' . ($u['emp_code'] ?? $u->emp_code ?? '') . ')' : 'null';
+            } elseif ($request->input('col_type') == 3) {
+                $d = collect($data['dsa_details'])->firstWhere('id', $request->input('user'));
+                $newUser = $d ? $d['name'] . ' - ' . $d['mobile'] : 'null';
+            }
+            $rem[] = "Collected By Changed from {$oldUser} to {$newUser}";
+        }
+
+        if ($linkedEnquiry && $linkedEnquiry->name != $request->input('name')) {
+            $rem[] = "Name Changed from " . $linkedEnquiry->name . " to " . $request->input('name');
+            $linkedEnquiry->name = $request->input('name');
+        }
+
+        if ($linkedEnquiry && $linkedEnquiry->care_of_type != $request->input('care_of')) {
+            $rem[] = "Care Of Type Changed";
+            $linkedEnquiry->care_of_type = $request->input('care_of');
+        }
+
+        if ($linkedEnquiry && $linkedEnquiry->care_of != $request->input('care_of_name')) {
+            $rem[] = "Care Of Changed from " . ($linkedEnquiry->care_of ?? 'None') . " to " . ($request->input('care_of_name') ?? 'None');
+            $linkedEnquiry->care_of = $request->input('care_of_name');
+        }
+
+        if ($linkedEnquiry && $linkedEnquiry->mobile != $request->input('mobile')) {
+            $rem[] = "Mobile Changed from " . $linkedEnquiry->mobile . " to " . $request->input('mobile');
+            $linkedEnquiry->mobile = $request->input('mobile');
+        }
+
+        if ($linkedEnquiry && $linkedEnquiry->alternate_mobile != $request->input('alt_mobile')) {
+            $rem[] = "Alt Mobile Changed from " . ($linkedEnquiry->alternate_mobile ?? '0') . " to " . $request->input('alt_mobile');
+            $linkedEnquiry->alternate_mobile = $request->input('alt_mobile');
+        }
+
+        if ($linkedEnquiry && $linkedEnquiry->gender != $request->input('gender')) {
+            $rem[] = "Gender Changed from " . ($linkedEnquiry->gender ?? 'null') . " to " . $request->input('gender');
+            $linkedEnquiry->gender = $request->input('gender');
+        }
+
+        if ($linkedEnquiry && $linkedEnquiry->occupation_type != $request->input('occupation')) {
+            $rem[] = "Occupation Changed from " . ($linkedEnquiry->occupation_type ?? 'null') . " to " . $request->input('occupation');
+            $linkedEnquiry->occupation_type = $request->input('occupation');
+        }
+
+        if ($booking->pan_no != $request->input('pan_no')) {
+            $rem[] = "PAN No. Changed from " . ($booking->pan_no ?? '0') . " to " . $request->input('pan_no');
+            $booking->pan_no = $request->input('pan_no');
+        }
+
+        if ($booking->adhar_no != $adhar_no_normalized) {
+            $rem[] = "Aadhar No. Changed from " . ($booking->adhar_no ?? '0') . " to " . $adhar_no_normalized;
+            $booking->adhar_no = $adhar_no_normalized;
+        }
+
+        $gstValue = $request->has('gst_unregistered') ? '0' : $request->input('gstn');
+        if ($booking->gstn != $gstValue) {
+            $rem[] = "GSTN Changed";
+            $booking->gstn = $gstValue;
+        }
+
+        if ($linkedEnquiry && $linkedEnquiry->dob != $request->input('hidden_customer_dob')) {
+            $oldDob = $linkedEnquiry->dob ? Carbon::parse($linkedEnquiry->dob)->format('d-M-Y') : 'null';
+            $newDob = $request->input('hidden_customer_dob') ? Carbon::parse($request->input('hidden_customer_dob'))->format('d-M-Y') : 'null';
+            $rem[] = "Customer D.O.B. Changed from {$oldDob} to {$newDob}";
+            $linkedEnquiry->dob = $request->input('hidden_customer_dob');
+        }
+
+        if ($linkedEnquiry && $linkedEnquiry->dealer_branch != $request->input('branch')) {
+            $rem[] = "Branch Changed from " . ($linkedEnquiry->dealer_branch ?? 'null') . " to " . $request->input('branch');
+            $linkedEnquiry->dealer_branch = $request->input('branch');
+        }
+
+        if ($linkedEnquiry && $linkedEnquiry->dealer_location != $request->input('location_id')) {
+            $rem[] = "Location Changed from " . ($linkedEnquiry->dealer_location ?? 'null') . " to " . $request->input('location_id');
+            $linkedEnquiry->dealer_location = $request->input('location_id');
+        }
+
+        if ($linkedEnquiry && $linkedEnquiry->segment_code != $request->input('segment_id')) {
+            $rem[] = "Segment Changed from " . ($linkedEnquiry->segment_code ?? 'null') . " to " . $request->input('segment_id');
+            $linkedEnquiry->segment_code = $request->input('segment_id');
+        }
+
+        if ($linkedEnquiry && $linkedEnquiry->model_code != $request->input('model')) {
+            $rem[] = "Model Changed from " . ($linkedEnquiry->model_code ?? 'null') . " to " . $request->input('model');
+            $linkedEnquiry->model_code = $request->input('model');
+        }
+
+        if ($linkedEnquiry && $linkedEnquiry->variant_code != $request->input('variant')) {
+            $rem[] = "Variant Changed from " . ($linkedEnquiry->variant_code ?? 'null') . " to " . $request->input('variant');
+            $linkedEnquiry->variant_code = $request->input('variant');
+        }
+
+        if ($linkedEnquiry && $linkedEnquiry->color_code != $request->input('color')) {
+            $rem[] = "Color Changed from " . ($linkedEnquiry->color_code ?? 'null') . " to " . $request->input('color');
+            $linkedEnquiry->color_code = $request->input('color');
+        }
+
+        if ($linkedEnquiry && $linkedEnquiry->seating != $request->input('seating')) {
+            $rem[] = "Seating Changed from " . ($linkedEnquiry->seating ?? '0') . " to " . $request->input('seating');
+            $linkedEnquiry->seating = $request->input('seating');
+        }
+
+        if ($booking->chassis_no != $request->input('chassis')) {
+            $rem[] = "Chassis No. Changed from " . ($booking->chassis_no ?? 'null') . " to " . ($request->input('chassis') ?? 'null');
+            $booking->chassis_no = $request->input('chassis');
+        }
+
+        if ($linkedEnquiry && $linkedEnquiry->purchase_type_crm != $request->input('buyer_type')) {
+            $rem[] = "Buyer Type Changed from " . ($linkedEnquiry->purchase_type_crm ?? 'null') . " to " . $request->input('buyer_type');
+            $linkedEnquiry->purchase_type_crm = $request->input('buyer_type');
+        }
+
+        if ($linkedEnquiry && $linkedEnquiry->brand_make != $request->input('enummaster1')) {
+            $rem[] = "Brand (Make 1) Changed";
+            $linkedEnquiry->brand_make = $request->input('enummaster1');
+        }
+
+        if ($linkedEnquiry && $linkedEnquiry->brand_model != $request->input('vehicle_details')) {
+            $rem[] = "Model & Variant 1 Changed";
+            $linkedEnquiry->brand_model = $request->input('vehicle_details');
+        }
+
+        if ($linkedEnquiry && $linkedEnquiry->consid_brand2 != $request->input('enummaster2')) {
+            $rem[] = "Brand (Make 2) Changed";
+            $linkedEnquiry->consid_brand2 = $request->input('enummaster2');
+        }
+
+        if ($linkedEnquiry && $linkedEnquiry->consid_model2 != $request->input('vehicle_details2')) {
+            $rem[] = "Model & Variant 2 Changed";
+            $linkedEnquiry->consid_model2 = $request->input('vehicle_details2');
+        }
+
+        if ($linkedEnquiry && $linkedEnquiry->vehicle_no != $request->input('registration_no')) {
+            $rem[] = "Vehicle Registration No. Changed";
+            $linkedEnquiry->vehicle_no = $request->input('registration_no');
+        }
+
+        if ($linkedEnquiry && $linkedEnquiry->make_year != $request->input('manufacturing_year')) {
+            $rem[] = "Manufacturing Year Changed";
+            $linkedEnquiry->make_year = $request->input('manufacturing_year');
+        }
+
+        if ($linkedEnquiry && $linkedEnquiry->odo_reading != $request->input('odometer_reading')) {
+            $rem[] = "Odometer Reading Changed";
+            $linkedEnquiry->odo_reading = $request->input('odometer_reading');
+        }
+
+        if ($linkedEnquiry && $linkedEnquiry->expected_price != $request->input('expected_price')) {
+            $rem[] = "Expected Price Changed";
+            $linkedEnquiry->expected_price = $request->input('expected_price');
+        }
+
+        if ($linkedEnquiry && $linkedEnquiry->offered_price != $request->input('offered_price')) {
+            $rem[] = "Offered Price Changed";
+            $linkedEnquiry->offered_price = $request->input('offered_price');
+        }
+
+        if ($linkedEnquiry && $linkedEnquiry->exchange_bonus != $request->input('exchange_bonus')) {
+            $rem[] = "Exchange Bonus Changed";
+            $linkedEnquiry->exchange_bonus = $request->input('exchange_bonus');
+        }
+
+        if ($booking->b_mode != $request->input('booking_mode')) {
+            $rem[] = "Booking Mode Changed from " . ($booking->b_mode ?? 'null') . " to " . $request->input('booking_mode');
+            $booking->b_mode = $request->input('booking_mode');
+        }
+
+        if ($booking->online_bk_ref_no != $request->input('refrence_no')) {
+            $rem[] = "Online Ref No. Changed from " . ($booking->online_bk_ref_no ?? 'null') . " to " . $request->input('refrence_no');
+            $booking->online_bk_ref_no = $request->input('refrence_no');
+        }
+
+        if ($booking->b_source != $request->input('booking_source')) {
+            $rem[] = "Booking Source Changed from " . ($booking->b_source ?? 'null') . " to " . $request->input('booking_source');
+            $booking->b_source = $request->input('booking_source');
+        }
+
+        if ($booking->dsa_id != $request->input('dsa_details')) {
+            $rem[] = "DSA Changed";
+            $booking->dsa_id = $request->input('dsa_details');
+        }
+
+        if ($linkedEnquiry && $linkedEnquiry->x8_sc_code != $request->input('saleconsultant')) {
+            $oldC = collect($data['saleconsultants'])->firstWhere('id', $linkedEnquiry->x8_sc_code);
+            $newC = collect($data['saleconsultants'])->firstWhere('id', $request->input('saleconsultant'));
+            $oldName = is_array($oldC) ? ($oldC['name'] ?? 'null') : ($oldC->name ?? 'null');
+            $newName = is_array($newC) ? ($newC['name'] ?? 'null') : ($newC->name ?? 'null');
+            $rem[] = "Sale Consultant Changed from {$oldName} to {$newName}";
+            $linkedEnquiry->x8_sc_code = $request->input('saleconsultant');
+        }
+
+        if ($booking->del_type != $request->input('delivery_type')) {
+            $rem[] = "Delivery Type Changed from " . ($booking->del_type ?? 'null') . " to " . $request->input('delivery_type');
+            $booking->del_type = $request->input('delivery_type');
+        }
+
+        if ($booking->del_date != $request->input('expected_del_date_actual')) {
+            $oldDate = $booking->del_date ? Carbon::parse($booking->del_date)->format('d-M-Y') : 'null';
+            $newDate = $request->input('expected_del_date_actual') ? Carbon::parse($request->input('expected_del_date_actual'))->format('d-M-Y') : 'null';
+            $rem[] = "Delivery Date Changed from {$oldDate} to {$newDate}";
+            $booking->del_date = $request->input('expected_del_date_actual');
+        }
+
+        if ($linkedEnquiry && $linkedEnquiry->fin_mode != $request->input('fin_mode')) {
+            $rem[] = "Finance Mode Changed from " . ($linkedEnquiry->fin_mode ?? 'null') . " to " . $request->input('fin_mode');
+            $linkedEnquiry->fin_mode = $request->input('fin_mode');
+        }
+
+        if ($linkedEnquiry && $linkedEnquiry->financier != $request->input('financier')) {
+            $rem[] = "Financier Changed from " . $getFinancierName($linkedEnquiry->financier) . " to " . $getFinancierName($request->input('financier'));
+            $linkedEnquiry->financier = $request->input('financier');
+        }
+
+        $newOrder = $request->input('make_order') ? 1 : 0;
+        if ($booking->order != $newOrder) {
+            $rem[] = $newOrder == 1 ? "Requested to create Sales Order" : "Cancelled request for Sales Order";
+            $booking->order = $newOrder;
+        }
+
+        if ($linkedEnquiry && $linkedEnquiry->referee_name != $request->input('ref_customer_name')) {
+            $rem[] = "Referred Name Changed";
+            $linkedEnquiry->referee_name = $request->input('ref_customer_name');
+        }
+
+        if ($linkedEnquiry && $linkedEnquiry->referee_phone != $request->input('ref_mobile_no')) {
+            $rem[] = "Referred Mobile Changed";
+            $linkedEnquiry->referee_phone = $request->input('ref_mobile_no');
+        }
+
+        if ($linkedEnquiry && $linkedEnquiry->remarks != $request->input('details')) {
+            $rem[] = "Remarks Changed";
+            $linkedEnquiry->remarks = $request->input('details');
+        }
+
+        // Save linked enquiry if changes were made
+        if ($linkedEnquiry) {
+            $linkedEnquiry->save();
+        }
+
+        $booking->col_type = $request->input('col_type');
+        $booking->col_by   = $request->input('user');
+        
+        $booking->pending = $pending;
+
+        if (!empty($pendingFields)) {
+            $booking->pending_remark = implode(' , ', $pendingFields);
+        }
+        if ($pending > 0) {
+            $booking->status = 8;
+        }
+
+        $booking->save();
+
+        if ($request->input('buyer_type') === 'Exchange Buy') {
+            if (!XExchange::where('bid', $booking->id)->exists()) {
+                XExchange::create([
+                    'bid'                 => $booking->id,
+                    'verification_status' => 1,
+                    'case_status'         => 1,
+                    'purchase_type'       => $request->input('buyer_type'),
+                ]);
+                $rem[] = "New exchange entry created";
+            }
+        }
+
+        if ($request->input('fin_mode') === 'In-house') {
+            if (!XFinance::where('bid', $booking->id)->exists()) {
+                XFinance::create([
+                    'bid'                 => $booking->id,
+                    'fin_mode'            => 'In-house',
+                    'verification_status' => 1,
+                    'case_status'         => 1,
+                ]);
+                $rem[] = "New finance entry created";
+            }
+        }
+
+        if (!empty($rem)) {
+            $booking->addHistory(
+                'commented',
+                'Booking Updated',
+                $request->input('details') . ' | ' . implode(' , ', $rem),
+                [],
+                null,
+                backpack_user()
+            );
+        }
+
+        return redirect(backpack_url('booking'))->with('success', 'Booking updated successfully!');
+    }
+
     private function getFullBookingData(int $id, string $viewName = 'view'): \Illuminate\View\View
     {
         Log::info('getFullBookingData STARTED', ['booking_id' => $id, 'view' => $viewName]);
@@ -505,9 +1584,9 @@ class BookingCrudController extends CrudController
     {
         $query = Booking::withoutGlobalScope(SoftDeletingScope::class)
             ->from('xlr8_booking_master as bookings')
-            // FIX 1: Use BINARY for a safe byte-level comparison to completely bypass collation mismatches
             ->leftJoin('xlr8_crm_enquiries as enq', function ($join) {
-                $join->on(DB::raw("BINARY CONCAT('XENQ-', enq.id)"), '=', DB::raw("BINARY bookings.enq_no"))
+                $join->on('enq.id', '=', 'bookings.enq_no')
+                     ->orOn(DB::raw("BINARY CONCAT('XENQ-', enq.id)"), '=', DB::raw("BINARY bookings.enq_no"))
                      ->orOn(DB::raw("BINARY enq.enquiry_no"), '=', DB::raw("BINARY bookings.enq_no"))
                      ->orOn(DB::raw("BINARY enq.quick_enquiry_no"), '=', DB::raw("BINARY bookings.enq_no"));
             })
@@ -707,7 +1786,8 @@ class BookingCrudController extends CrudController
         // FIX 1: Join the Enquiries table to correctly count Live Bookings based on vehicle codes
         $liveCount = DB::table('xlr8_booking_master as b')
             ->join('xlr8_crm_enquiries as e', function ($join) {
-                $join->on(DB::raw("BINARY CONCAT('XENQ-', e.id)"), '=', DB::raw("BINARY b.enq_no"))
+                $join->on('e.id', '=', 'b.enq_no')
+                     ->orOn(DB::raw("BINARY CONCAT('XENQ-', e.id)"), '=', DB::raw("BINARY b.enq_no"))
                      ->orOn(DB::raw("BINARY e.enquiry_no"), '=', DB::raw("BINARY b.enq_no"))
                      ->orOn(DB::raw("BINARY e.quick_enquiry_no"), '=', DB::raw("BINARY b.enq_no"));
             })
@@ -2017,621 +3097,6 @@ class BookingCrudController extends CrudController
     }
 
 
-    public function store(Request $request)
-    {
-
-        Log::info('🚀 [STORE] Booking store() triggered', [
-            'all_inputs' => $request->except(['amountproof']),
-            'has_file' => $request->hasFile('amountproof'),
-            'method' => $request->method(),
-            'url' => $request->fullUrl(),
-        ]);
-
-        $pending = 0;
-        $pendingFields = [];
-
-        Log::info('📋 [VALIDATION-1] Running base validator...');
-        $finModeRule = $request->customertype === 'Dummy'
-            ? 'nullable|string|max:255'
-            : 'required|string|max:255';
-
-
-        $validator = Validator::make($request->all(), [
-            'customertype'          => 'required|string|max:255',
-            'user'                  => 'nullable',
-            'hiddenbookingdate'     => 'nullable|date',
-            'refrenceno'            => 'nullable|string|max:255',
-            'dsadetails'            => 'nullable|string|max:255',
-            'branch'                => 'required|string',
-            'location'              => 'required|string',
-            'segment'               => 'required|string',
-            'model'                 => 'required|string|max:255',
-            'variant'               => 'required|string|max:255',
-            'color'                 => 'required|string|max:255',
-            'sale_type'             => 'required|in:1,2',
-            'name'                  => 'required|string|max:255',
-            'careof'                => 'nullable|string|max:255',
-            'careofname'            => 'nullable|string|max:255',
-            'mobile'                => 'required|string|max:15',
-            'altmobile'             => 'nullable|string|max:15',
-            'panno'                 => 'nullable|string|max:10',
-            'adharno'               => 'nullable|string|max:15',
-            'dmsotf'                => 'nullable|string|max:255',
-            'chassis'               => 'nullable|string|max:255',
-            'deliverytype'          => 'required|string|max:255',
-            'hiddenexpecteddeldate' => 'nullable|date',
-            'finmode'               => $finModeRule,
-            'financier'             => 'nullable|string|max:255',
-            'loanstatus'            => 'nullable|string|max:255',
-            'saleconsultant'        => 'required',
-            'apackamount'           => 'required',
-            'seating'               => 'nullable|integer',
-            'details'               => 'nullable|string',
-
-            // Customer Address
-            'pincode'               => 'required|string|max:10',
-            'vpo'                   => 'required|string|max:150',
-            'customer_tehsil'       => 'required|string|max:100',
-            'customer_district'     => 'required|string|max:100',
-            'city'                  => 'required|string|max:100',
-            'territory'             => 'required|string|max:100',
-
-            // Referral
-            'referredby'            => 'nullable|string|max:255',
-            'refcustomername'       => 'nullable|string|max:255',
-            'refmobileno'           => 'nullable|string|max:15',
-            'refexistingmodel'      => 'nullable|string|max:255',
-            'refvariant'            => 'nullable|string|max:255',
-            'refchassisregno'       => 'nullable|string|max:255',
-        ]);
-
-        if ($validator->fails()) {
-            Log::warning('❌ [VALIDATION-1] Base validation FAILED', [
-                'errors' => $validator->errors()->toArray(),
-            ]);
-        } else {
-            Log::info('✅ [VALIDATION-1] Base validation passed');
-        }
-
-        Log::info('🔀 [BRANCH] customertype = ' . $request->customertype);
-
-        if ($request->customertype != "Dummy") {
-            Log::info('👤 [BRANCH] Actual customer — checking base validator first...');
-
-            if ($validator->fails()) {
-                Log::warning('❌ [BRANCH] Redirecting back — base validator failed for Actual customer', [
-                    'first_error' => $validator->messages()->first(),
-                ]);
-                return redirect()->back()->withInput()->with('error', $validator->messages()->first());
-            }
-
-            Log::info('📋 [VALIDATION-2] Running Actual-only validator (bookingsource, bookingamount etc.)...');
-
-            $validator = Validator::make($request->all(), [
-                'bookingsource'     => 'required|string|max:255',
-                'hiddenbookingdate' => 'required|date',
-                'bookingamount'     => 'required|numeric',
-                'bookingmode'       => 'required|string|max:255',
-                'coltype'           => 'required',
-                'mode'              => 'required|in:Cash,Cheque,Bank Transfer,UPI',
-            ]);
-
-            if ($validator->fails()) {
-                Log::warning('❌ [VALIDATION-2] Actual-only validation FAILED', [
-                    'errors' => $validator->errors()->toArray(),
-                    'first_error' => $validator->messages()->first(),
-                ]);
-                return redirect()->back()->withInput()->with('error', $validator->messages()->first());
-            }
-
-            Log::info('✅ [VALIDATION-2] Actual-only validation passed');
-        } else {
-            Log::info('🤖 [BRANCH] Dummy customer — skipping Actual validators');
-        }
-
-        Log::info('🧾 [VALIDATION-3] coltype = ' . $request->coltype . ' (type: ' . gettype($request->coltype) . ')');
-
-        if ($request->coltype === 1) {
-            Log::info('📋 [VALIDATION-3] coltype is exactly int 1 — running receipt validator...');
-
-            $validator = Validator::make($request->all(), [
-                'receiptno'         => 'required|string|max:255',
-                'hiddenreceiptdate' => 'required|date',
-            ]);
-
-            if ($validator->fails()) {
-                Log::warning('❌ [VALIDATION-3] Receipt validation FAILED', [
-                    'errors' => $validator->errors()->toArray(),
-                ]);
-                return redirect()->back()->withInput()->with('error', $validator->messages()->first());
-            }
-
-            Log::info('✅ [VALIDATION-3] Receipt validation passed');
-        } else {
-            Log::info('⚠️ [VALIDATION-3] coltype is NOT strict int 1 — receipt validation SKIPPED (check if this is intentional, value is: ' . json_encode($request->coltype) . ')');
-        }
-
-        $isDummy = $request->customertype === 'Dummy';
-
-        if (!$isDummy) {
-            Log::info('⏳ [PENDING] Checking pending fields...');
-
-            if (is_null($request->input('receiptno'))) {
-                $pending++;
-                $pendingFields[] = 'Receipt number needs to be updated';
-                Log::info('⏳ [PENDING] receiptno is null');
-            }
-            if (is_null($request->input('hiddenreceiptdate'))) {
-                $pending++;
-                $pendingFields[] = 'Receipt date needs to be updated';
-                Log::info('⏳ [PENDING] hiddenreceiptdate is null');
-            }
-            if ($request->input('bookingmode') === 'Online') {
-                if (is_null($request->input('refrenceno')) || $request->input('refrenceno') === '') {
-                    $pending++;
-                    $pendingFields[] = 'Online booking reference number needs to be updated';
-                    Log::info('⏳ [PENDING] Online mode but refrenceno missing');
-                }
-            }
-            if (is_null($request->input('panno'))) {
-                $pending++;
-                $pendingFields[] = 'PAN number needs to be updated';
-                Log::info('⏳ [PENDING] panno is null');
-            }
-            if (is_null($request->input('adharno'))) {
-                $pending++;
-                $pendingFields[] = 'Aadhar number needs to be updated';
-                Log::info('⏳ [PENDING] adharno is null');
-            }
-            if (is_null($request->input('dmsno'))) {
-                $pending++;
-                $pendingFields[] = 'Sales force number needs to be updated';
-                Log::info('⏳ [PENDING] dmsno is null');
-            }
-            if (is_null($request->input('dmsotf'))) {
-                $pending++;
-                $pendingFields[] = 'DMS OTF needs to be updated';
-                Log::info('⏳ [PENDING] dmsotf is null');
-            }
-            if (is_null($request->input('hiddenotfdate'))) {
-                $pending++;
-                $pendingFields[] = 'DMS OTF Date needs to be updated';
-                Log::info('⏳ [PENDING] hiddenotfdate is null');
-            }
-            if ($request->makeorder == 1) {
-                $pending++;
-                $pendingFields[] = 'DMS SO number needs to be updated';
-                Log::info('⏳ [PENDING] makeorder == 1');
-            }
-        }
-
-        Log::info('⏳ [PENDING] Total pending count: ' . $pending, ['fields' => $pendingFields]);
-
-        Log::info('💾 [BOOKING] Preparing Booking model...');
-
-        $customerTypeInput = $request->input('customertype');
-        $adhar_no_normalized = preg_replace('/[^0-9]/', '', $request->input('adharno', ''));
-        $customerType = ($customerTypeInput === 'Actual' || $customerTypeInput === 'Active') ? 'Active' : $customerTypeInput;
-
-        Log::info('👤 [BOOKING] Customer type resolved', [
-            'input' => $customerTypeInput,
-            'resolved' => $customerType,
-            'adhar_normalized' => $adhar_no_normalized,
-        ]);
-
-        $booking = new Booking();
-        $quotation = null;
-
-        if ($request->filled('quotation_no')) {
-            $quotation = Quotation::where(
-                'id',
-                $request->quotation_no
-            )->first();
-        }
-
-        // ===== ADD THIS CODE RIGHT HERE =====
-        // Store the enquiry ID and quotation number on the booking
-        if ($quotation) {
-            $booking->enq_no = $quotation->enquiry_no;
-            $booking->quotation_id = $quotation->id;
-        } elseif ($request->filled('enquiry_no')) {
-            $booking->enq_no = $request->enquiry_no;
-        } else {
-            // Set to null (now allowed after migration)
-            $booking->enq_no = null;
-        }
-
-        $booking->b_type           = $customerType;
-        $booking->b_cat            = $request->input('customercat');
-        $booking->b_mode           = $request->input('bookingmode');
-        $booking->cpd              = $request->input('hiddencpd');
-        $booking->col_type         = $isDummy ? 1 : ($request->input('coltype') ?? 1);
-        $booking->col_by           = $request->input('user');
-        $booking->b_source         = $request->input('bookingsource');
-        $booking->dsa_id           = $request->input('dsadetails');
-        $booking->online_bk_ref_no = $request->input('refrenceno');
-        $booking->booking_date     = $request->input('hiddenbookingdate');
-        $booking->receipt_no       = $request->input('receiptno');
-        $booking->receipt_date     = $request->input('hiddenreceiptdate');
-        $booking->booking_amount   = $isDummy ? 0 : $request->input('bookingamount');
-        $booking->order            = $request->input('makeorder');
-        // $booking->person_id        = backpack_auth()->id();
-        
-        // Native Booking Fields
-        $booking->pan_no           = $request->input('panno');
-        $booking->adhar_no         = $adhar_no_normalized;
-        $booking->gstn             = $request->input('gstn');
-        $booking->dms_otf          = $request->input('dmsotf');
-        $booking->dms_so           = $request->input('dmss o');
-        $booking->dms_no           = $request->input('dmsno');
-        $booking->otf_date         = $request->input('hiddenotfdate');
-        $booking->mapped           = 0;
-        $booking->chassis_no       = $request->input('chassis');
-        $booking->del_type         = $request->input('deliverytype');
-        $booking->del_date         = $request->input('hiddenexpecteddeldate');
-
-        // NEW: Update the associated Enquiry with all the deleted booking fields
-        if ($booking->enq_no) {
-            $enquiryId = str_replace('XENQ-', '', $booking->enq_no);
-            $linkedEnquiry = \App\Models\CRM\Enquiry::where('id', $enquiryId)
-                ->orWhere('enquiry_no', $booking->enq_no)
-                ->orWhere('quick_enquiry_no', $booking->enq_no)
-                ->first();
-
-            if ($linkedEnquiry) {
-                $accessoriesArray  = $request->has('accessories') && $request->accessories ? (array) $request->accessories : [];
-                
-                $linkedEnquiry->update([
-                    'name'              => $request->input('name'),
-                    'care_of_type'      => $request->input('careof'),
-                    'care_of'           => $request->input('careofname'),
-                    'mobile'            => $request->input('mobile'),
-                    'alternate_mobile'  => $request->input('altmobile'),
-                    'gender'            => $request->input('gender'),
-                    'occupation_type'   => $request->input('occupation'),
-                    'dob'               => $request->input('hiddencustomerdob'),
-                    'dealer_branch'     => $request->input('branch'),
-                    'dealer_location'   => $request->input('location'),
-                    'segment_code'      => $request->input('segment'),
-                    'model_code'        => $request->input('model'),
-                    'variant_code'      => $request->input('variant'),
-                    'color_code'        => $request->input('color'),
-                    'seating'           => $request->input('seating'),
-                    'purchase_type'     => $request->input('buyertype'),
-                    'brand_make'        => $request->input('enummaster1'),
-                    'brand_model'       => $request->input('vehicledetails'),
-                    'consid_brand2'     => $request->input('enummaster2'),
-                    'consid_model2'     => $request->input('vehicledetails2'),
-                    'vehicle_no'        => $request->input('registrationno'),
-                    'make_year'         => $request->input('manufacturingyear'),
-                    'odo_reading'       => $request->input('odometerreading'),
-                    'expected_price'    => $request->input('expectedprice'),
-                    'offered_price'     => $request->input('offeredprice'),
-                    'exchange_bonus'    => $request->input('exchangebonus'),
-                    'fin_mode'          => $isDummy ? 'Dummy' : $request->input('finmode'),
-                    'financier'         => $isDummy ? null : $request->input('financier'),
-                    'loan_status'       => $isDummy ? null : $request->input('loanstatus'),
-                    'x8_sc_code'        => $request->input('saleconsultant'),
-                    'accessories'       => !empty($accessoriesArray) ? implode(',', $accessoriesArray) : null,
-                    'apack_amount'      => $request->input('apackamount'),
-                    'referee_name'      => $request->input('refcustomername'),
-                    'referee_phone'     => $request->input('refmobileno'),
-                    'referred_by'       => $request->input('referredby'),
-                    'remarks'           => $request->input('details'),
-                ]);
-            }
-        }
-
-        $booking->pending      = $pending;
-        $booking->pending_remark = implode(' , ', $pendingFields);
-
-        if (!$isDummy && $pending > 0) {
-            $booking->status = 8;
-            Log::info('⚠️ [BOOKING] Status set to 8 (Pending)');
-        } else {
-            $booking->status = 1;
-        }
-
-        if ($customerType === 'Dummy') {
-            $booking->b_mode   = 'Dealer';
-            $booking->b_source = 'Dealer';
-            Log::info('🤖 [BOOKING] Dummy override applied — b_mode & b_source forced to Dealer');
-        }
-
-        Log::info('💾 [BOOKING] About to call $booking->save()...', [
-            'booking_snapshot' => $booking->toArray(),
-        ]);
-
-        try {
-            $booking->save();
-
-            Log::info('✅ [BOOKING] Booking saved successfully', [
-                'booking_id' => $booking->id
-            ]);
-            /*
-            |--------------------------------------------------------------------------
-            | Quotation -> Booking Conversion
-            |--------------------------------------------------------------------------
-            */
-
-            if ($quotation) {
-
-                /*
-            |-------------------------------------------------------
-            | Update quotation status
-            |-------------------------------------------------------
-            */
-
-                $quotation->status = 'booked';
-                $quotation->save();
-
-                /*
-            |-------------------------------------------------------
-            | Create Quote History
-            |-------------------------------------------------------
-            */
-
-                QuoteAction::create([
-
-                    'quotation_no' => $quotation->quotation_no,
-                    'action_by' => backpack_user()->id,
-                    'action' => 'BOOKED',
-                    'requested' => $quotation->standard_data,
-                    'onroad' => $quotation->onroad_price,
-                    'status' => 'booked',
-                    'remarks' => 'Converted into Booking #' . $booking->id,
-
-                ]);
-
-                /*
-            |-------------------------------------------------------
-            | Insurance
-            |-------------------------------------------------------
-            */
-
-                XlInsurance::updateOrCreate(
-                    ['bid' => $booking->id],
-                    [
-                        'pol_type' => $quotation->standard_data['policy_type'] ?? null,
-                    ]
-                );
-
-                /*
-            |-------------------------------------------------------
-            | RTO
-            |-------------------------------------------------------
-            */
-
-                XlRto::updateOrCreate(
-                    ['bid' => $booking->id],
-                    [
-                        'rgn_type' => $quotationData['registration_type'] ?? null,
-                    ]
-                );
-            }
-
-            try {
-
-                $booking->addHistory(
-                    'commented',
-                    'Booking Created',
-                    'New booking created successfully',
-                    [
-                        'booking_amount' => $booking->booking_amount,
-                        'customer_name'  => $booking->name,
-                        'mobile'         => $booking->mobile,
-                    ],
-                    null,
-                    backpack_user()
-                );
-                if ($isDummy) {
-
-                    $booking->addHistory(
-                        'commented',
-                        'Dummy Entry Created',
-                        'Dummy booking created successfully',
-                        [
-                            'remark' => $request->details,
-                        ],
-                        null,
-                        backpack_user()
-                    );
-                }
-
-
-
-                Log::info('✅ [HISTORY] Booking history created');
-            } catch (\Exception $e) {
-
-                Log::error('💥 [HISTORY] Failed', [
-                    'message' => $e->getMessage(),
-                ]);
-            }
-        } catch (\Exception $e) {
-
-            dd(
-                $e->getMessage(),
-                $e->getFile(),
-                $e->getLine()
-            );
-        }
-
-        Log::info('📁 [FILE] Checking amountproof upload...', [
-            'hasFile'  => $request->hasFile('amountproof'),
-            'has_key'  => $request->has('amountproof'),
-            'file_err' => $request->hasFile('amountproof') ? $request->file('amountproof')->getError() : 'no file',
-        ]);
-
-        $uploadedFilePath = null;
-        $copyPath = null;
-
-        if ($request->hasFile('amountproof') && $request->file('amountproof')->isValid()) {
-            try {
-                $file = $request->file('amountproof');
-                Log::info('📁 [FILE] File is valid', [
-                    'original_name' => $file->getClientOriginalName(),
-                    'mime'          => $file->getMimeType(),
-                    'size'          => $file->getSize(),
-                    'extension'     => $file->extension(),
-                ]);
-
-                $storedName = $file->store('temp', 'public');
-                Log::info('📁 [FILE] store() returned: ' . $storedName);
-
-                $uploadedFilePath = public_path('storage/' . $storedName);
-                Log::info('📁 [FILE] Full path resolved: ' . $uploadedFilePath, [
-                    'exists' => file_exists($uploadedFilePath),
-                ]);
-
-                if (!file_exists($uploadedFilePath)) {
-                    throw new \Exception("Stored file not found at: " . $uploadedFilePath);
-                }
-
-                $extension = $file->extension();
-                $fn2       = 'tf_ap2_' . date('Ymd_His') . '_' . uniqid() . '.' . $extension;
-                $copyPath  = public_path('uploads/temp/' . $fn2);
-                $copyDir   = dirname($copyPath);
-
-                Log::info('📁 [FILE] Copy target path: ' . $copyPath);
-
-                if (!file_exists($copyDir)) {
-                    mkdir($copyDir, 0755, true);
-                    Log::info('📁 [FILE] Created copy directory: ' . $copyDir);
-                }
-
-                if (copy($uploadedFilePath, $copyPath)) {
-                    Log::info('📁 [FILE] File copied successfully to: ' . $copyPath);
-                } else {
-                    Log::warning('📁 [FILE] copy() returned false — ChatHelper may skip file');
-                    $copyPath = null;
-                }
-            } catch (\Exception $e) {
-                Log::error('💥 [FILE] File upload block threw exception', [
-                    'message' => $e->getMessage(),
-                    'file'    => $e->getFile(),
-                    'line'    => $e->getLine(),
-                ]);
-                $uploadedFilePath = null;
-                $copyPath         = null;
-            }
-        } else {
-            Log::warning('⚠️ [FILE] amountproof not present or invalid', [
-                'hasFile'  => $request->hasFile('amountproof'),
-                'has_key'  => $request->has('amountproof'),
-                'error'    => $request->hasFile('amountproof') ? $request->file('amountproof')->getError() : 'N/A',
-            ]);
-        }
-
-        Log::info('💰 [PAYMENT] Checking if payment entry needed...', [
-            'col_type'       => $booking->col_type,
-            'booking_amount' => $booking->booking_amount,
-            'receiptno'      => $request->input('receiptno'),
-            'voucherno'      => $request->input('voucherno'),
-        ]);
-
-        $number = $request->input('receiptno') ?? $request->input('voucherno');
-
-        if (
-            !$isDummy &&
-            in_array($booking->col_type, [1, 4]) &&
-            $booking->booking_amount > 0 &&
-            $number
-        ) {
-            Log::info('💰 [PAYMENT] Conditions met — creating Bookingamount entry...');
-
-            try {
-                $payment          = new Bookingamount();
-                $payment->bid     = $booking->id;
-                $payment->date    = $request->input('hiddenreceiptdate') ?? now();
-                $payment->amount  = $booking->booking_amount;
-                $payment->reciept = $number;
-                $payment->mode    = $request->input('mode');
-                $payment->voucher = ($booking->col_type == 4) ? 1 : 0;
-                $payment->save();
-
-                Log::info('✅ [PAYMENT] Bookingamount saved', ['payment_id' => $payment->id]);
-
-                if ($uploadedFilePath && file_exists($uploadedFilePath)) {
-                    Log::info('📎 [PAYMENT] Attaching media to Bookingamount...');
-                    $payment->addMedia($uploadedFilePath)->toMediaCollection('amount-proof');
-                    Log::info('✅ [PAYMENT] Media attached successfully');
-                } else {
-                    Log::warning('⚠️ [PAYMENT] No valid file to attach — uploadedFilePath: ' . json_encode($uploadedFilePath));
-                }
-            } catch (\Exception $e) {
-                Log::error('💥 [PAYMENT] Bookingamount save/media failed', [
-                    'message' => $e->getMessage(),
-                    'file'    => $e->getFile(),
-                    'line'    => $e->getLine(),
-                ]);
-            }
-        } else {
-            Log::info('⏭️ [PAYMENT] Skipped — conditions not met', [
-                'col_type_in_1_4' => in_array($booking->col_type, [1, 4]),
-                'amount_gt_0'     => $booking->booking_amount > 0,
-                'number_present'  => !empty($number),
-            ]);
-        }
-
-        Log::info('🔄 [EXCHANGE] buyertype = ' . $request->input('buyertype'));
-
-        if (
-            !$isDummy &&
-            $request->has('buyertype') &&
-            $request->input('buyertype') === 'Exchange Buy'
-        ) {
-            Log::info('🔄 [EXCHANGE] Creating XExchange entry...');
-            try {
-                $exchange                     = new XExchange();
-                $exchange->bid                = $booking->id;
-                $exchange->vehicle_oem_code              = $booking->vehicle_oem_code;
-                $exchange->verification_status = 1;
-                $exchange->case_status        = 1;
-                $exchange->purchase_type      = $request->input('buyertype');
-                $exchange->save();
-                Log::info('✅ [EXCHANGE] XExchange saved', ['exchange_id' => $exchange->id]);
-            } catch (\Exception $e) {
-                Log::error('💥 [EXCHANGE] XExchange save failed', ['message' => $e->getMessage()]);
-            }
-        } else {
-            Log::info('⏭️ [EXCHANGE] Skipped');
-        }
-
-        Log::info('🏦 [FINANCE] finmode = ' . $request->input('finmode'));
-
-        if (
-            !$isDummy &&
-            $request->has('finmode') &&
-            $request->input('finmode') === 'In-house'
-        ) {
-            Log::info('🏦 [FINANCE] Creating XFinance entry...');
-            try {
-                $finance                      = new XFinance();
-                $finance->bid                 = $booking->id;
-                $finance->vehicle_oem_code               = $booking->vehicle_oem_code;
-                $finance->verification_status = 1;
-                $finance->case_status         = 1;
-                $finance->save();
-                Log::info('✅ [FINANCE] XFinance saved', ['finance_id' => $finance->id]);
-            } catch (\Exception $e) {
-                Log::error('💥 [FINANCE] XFinance save failed', ['message' => $e->getMessage()]);
-            }
-        } else {
-            Log::info('⏭️ [FINANCE] Skipped');
-        }
-
-
-
-        Log::info('🎉 [STORE] store() completed successfully — redirecting', ['booking_id' => $booking->id]);
-
-        return redirect(backpack_url('booking'))->with('success', 'Booking added successfully!');
-    }
-
-
-
-
-
-
     protected function setupUpdateOperation()
     {
 
@@ -2643,11 +3108,12 @@ class BookingCrudController extends CrudController
 
         // --- NEW: RECOVER DELETED COLUMNS FROM ENQUIRY FOR EDIT FORM ---
         if ($entry->enq_no) {
-            $enquiryId = str_replace('XENQ-', '', $entry->enq_no);
-            $linkedEnquiry = \App\Models\CRM\Enquiry::where('id', $enquiryId)
+            $linkedEnquiry = \App\Models\CRM\Enquiry::where('id', $entry->enq_no)
                 ->orWhere('enquiry_no', $entry->enq_no)
                 ->orWhere('quick_enquiry_no', $entry->enq_no)
                 ->first();
+
+            if ($linkedEnquiry) {
 
             if ($linkedEnquiry) {
                 // Map all deleted fields back onto the $entry object dynamically
@@ -3054,472 +3520,6 @@ class BookingCrudController extends CrudController
         }
     }
 
-    public function update(Request $request, $id)
-    {
-        $booking = Booking::findOrFail($id);
-
-        $old_col_type = $booking->col_type;
-        $old_col_by   = $booking->col_by;
-
-        $rules = [
-            'name'                     => 'required|string|max:255',
-            'care_of'                  => 'nullable|string|max:255',
-            'care_of_name'             => 'nullable|string|max:255',
-            'mobile'                   => 'required|string|max:15',
-            'alt_mobile'               => 'nullable|string|max:15',
-            'gender'                   => 'required|string',
-            'occupation'               => 'required|string',
-            'pan_no'                   => 'nullable|string|max:10',
-            'adhar_no'                 => 'nullable|string|max:20',
-            'gstn'                     => 'nullable|string|max:20',
-            'hidden_customer_dob'      => 'required|date',
-
-            'branch'                   => 'required|string',
-            'location_id'              => 'required|string',
-            'location_other'           => 'nullable|string|max:255',
-
-            'segment_id'               => 'required|string',
-            'model'                    => 'required|string|max:255',
-            'variant'                  => 'required|string|max:255',
-            'color'                    => 'required|string|max:255',
-            'seating'                  => 'nullable|integer',
-            'accessories'              => 'nullable|array',
-            'accessories.*'            => 'string',
-            'apack_amount'             => 'required|numeric',
-            'chassis'                  => 'nullable|string|max:255',
-
-            'buyer_type'               => 'required|string',
-            'enummaster1'              => 'nullable|string',
-            'vehicle_details'          => 'nullable|string|max:255',
-            'enummaster2'              => 'nullable|string',
-            'vehicle_details2'         => 'nullable|string|max:255',
-            'registration_no'          => 'nullable|string|max:255',
-            'manufacturing_year'       => 'nullable|integer',
-            'odometer_reading'         => 'nullable|string|max:255',
-            'expected_price'           => 'nullable|numeric',
-            'offered_price'            => 'nullable|numeric',
-            'exchange_bonus'           => 'nullable|numeric',
-
-            'booking_mode'             => 'required|string',
-            'refrence_no'              => 'nullable|string|max:255',
-            'booking_source'           => 'required|string',
-            'dsa_details'              => 'nullable|string',
-            'saleconsultant'           => 'required|string',
-            'delivery_type'            => 'required|string|in:Expected,Confirmed',
-            'expected_del_date_actual' => 'nullable|date',
-            'fin_mode'                 => 'required|string',
-            'financier'                => 'nullable|integer',
-            'loan_status'              => 'nullable|string',
-            'make_order'               => 'nullable|integer',
-            'details'                  => 'nullable|string',
-
-            'ref_customer_name'        => 'nullable|string|max:255',
-            'ref_mobile_no'            => 'nullable|string|max:15',
-            'ref_existing_model'       => 'nullable|string|max:255',
-            'ref_variant'              => 'nullable|string|max:255',
-            'ref_chassis_reg_no'       => 'nullable|string|max:255',
-        ];
-
-        $validator = Validator::make($request->all(), $rules);
-
-        if ($validator->fails()) {
-            return redirect()->back()->withErrors($validator)->withInput();
-        }
-
-        $pending       = 0;
-        $pendingFields = [];
-
-        if ($request->input('booking_mode') === 'Online' && empty($request->input('refrence_no'))) {
-            $pending++;
-            $pendingFields[] = 'Online booking reference number needs to be updated';
-        }
-        if (empty($request->input('pan_no'))) {
-            $pending++;
-            $pendingFields[] = 'PAN number needs to be updated';
-        }
-        if (empty($request->input('adhar_no'))) {
-            $pending++;
-            $pendingFields[] = 'Aadhar number needs to be updated';
-        }
-
-        $adhar_no_normalized = preg_replace('/[^0-9]/', '', $request->input('adhar_no', ''));
-
-        $data['saleconsultants'] = OrgService::usersByDesignation('CNS') ?? [];
-        $data['allusers']        = OrgService::usersByDepartment('SLS') ?? [];
-        $data['dsa_details']     = XL_DSA_MASTER::all()->map(fn($dsa) => [
-            'id'     => $dsa->id,
-            'name'   => $dsa->name,
-            'mobile' => $dsa->mobile,
-        ])->toArray();
-
-        $getFinancierName = function ($fid) {
-            if (empty($fid)) return 'Null';
-            $f = XlFinancier::find($fid);
-            return $f ? $f->name : 'Unknown';
-        };
-
-        $rem = [];
-        
-        // Fetch Linked Enquiry for updates
-        $linkedEnquiry = null;
-        if ($booking->enq_no) {
-            $enquiryId = str_replace('XENQ-', '', $booking->enq_no);
-            $linkedEnquiry = \App\Models\CRM\Enquiry::where('id', $enquiryId)
-                ->orWhere('enquiry_no', $booking->enq_no)
-                ->orWhere('quick_enquiry_no', $booking->enq_no)
-                ->first();
-        }
-
-        if ($booking->b_type != $request->input('customer_type')) {
-            $rem[] = "Customer Type Changed from " . ($booking->b_type ?? 'null') . " to " . $request->input('customer_type');
-            $booking->b_type = $request->input('customer_type');
-        }
-
-        if ($booking->booking_date != $request->input('booking_date_actual')) {
-            $oldDate = $booking->booking_date ? Carbon::parse($booking->booking_date)->format('d-M-Y') : 'null';
-            $newDate = $request->input('booking_date_actual') ? Carbon::parse($request->input('booking_date_actual'))->format('d-M-Y') : 'null';
-            $rem[] = "Booking Date Changed from {$oldDate} to {$newDate}";
-            $booking->booking_date = $request->input('booking_date_actual');
-        }
-
-        if ($booking->booking_amount != $request->input('booking_amount')) {
-            $rem[] = "Booking Amount Changed from " . ($booking->booking_amount ?? '0') . " to " . $request->input('booking_amount');
-            $booking->booking_amount = $request->input('booking_amount');
-        }
-
-        if ($booking->receipt_no != $request->input('receipt_no')) {
-            $rem[] = "Receipt No. Changed from " . ($booking->receipt_no ?? 'null') . " to " . $request->input('receipt_no');
-            $booking->receipt_no = $request->input('receipt_no');
-        }
-
-        if ($booking->receipt_date != $request->input('receipt_date_actual')) {
-            $rem[] = "Receipt Date Changed";
-            $booking->receipt_date = $request->input('receipt_date_actual');
-        }
-
-        if ($old_col_type != $request->input('col_type')) {
-            $colTypeMap = ['1' => 'Receipt', '2' => 'Field Collection By Sales Team', '3' => 'Field Collection By DSA', '4' => 'Used Car Purchase'];
-            $rem[] = "Collection Type Changed from " . ($colTypeMap[$old_col_type] ?? 'null') . " to " . ($colTypeMap[$request->input('col_type')] ?? 'null');
-        }
-
-        if ($old_col_by != $request->input('user')) {
-            $oldUser = 'null';
-            $newUser = 'null';
-            if ($old_col_type == 2) {
-                $u = collect($data['allusers'])->firstWhere('id', $old_col_by);
-                $oldUser = $u ? ($u['name'] ?? $u->name) . ' - (' . ($u['emp_code'] ?? $u->emp_code ?? '') . ')' : 'null';
-            } elseif ($old_col_type == 3) {
-                $d = collect($data['dsa_details'])->firstWhere('id', $old_col_by);
-                $oldUser = $d ? $d['name'] . ' - ' . $d['mobile'] : 'null';
-            }
-            if ($request->input('col_type') == 2) {
-                $u = collect($data['allusers'])->firstWhere('id', $request->input('user'));
-                $newUser = $u ? ($u['name'] ?? $u->name) . ' - (' . ($u['emp_code'] ?? $u->emp_code ?? '') . ')' : 'null';
-            } elseif ($request->input('col_type') == 3) {
-                $d = collect($data['dsa_details'])->firstWhere('id', $request->input('user'));
-                $newUser = $d ? $d['name'] . ' - ' . $d['mobile'] : 'null';
-            }
-            $rem[] = "Collected By Changed from {$oldUser} to {$newUser}";
-        }
-
-        if ($linkedEnquiry && $linkedEnquiry->name != $request->input('name')) {
-            $rem[] = "Name Changed from " . $linkedEnquiry->name . " to " . $request->input('name');
-            $linkedEnquiry->name = $request->input('name');
-        }
-
-        if ($linkedEnquiry && $linkedEnquiry->care_of_type != $request->input('care_of')) {
-            $rem[] = "Care Of Type Changed";
-            $linkedEnquiry->care_of_type = $request->input('care_of');
-        }
-
-        if ($linkedEnquiry && $linkedEnquiry->care_of != $request->input('care_of_name')) {
-            $rem[] = "Care Of Changed from " . ($linkedEnquiry->care_of ?? 'None') . " to " . ($request->input('care_of_name') ?? 'None');
-            $linkedEnquiry->care_of = $request->input('care_of_name');
-        }
-
-        if ($linkedEnquiry && $linkedEnquiry->mobile != $request->input('mobile')) {
-            $rem[] = "Mobile Changed from " . $linkedEnquiry->mobile . " to " . $request->input('mobile');
-            $linkedEnquiry->mobile = $request->input('mobile');
-        }
-
-        if ($linkedEnquiry && $linkedEnquiry->alternate_mobile != $request->input('alt_mobile')) {
-            $rem[] = "Alt Mobile Changed from " . ($linkedEnquiry->alternate_mobile ?? '0') . " to " . $request->input('alt_mobile');
-            $linkedEnquiry->alternate_mobile = $request->input('alt_mobile');
-        }
-
-        if ($linkedEnquiry && $linkedEnquiry->gender != $request->input('gender')) {
-            $rem[] = "Gender Changed from " . ($linkedEnquiry->gender ?? 'null') . " to " . $request->input('gender');
-            $linkedEnquiry->gender = $request->input('gender');
-        }
-
-        if ($linkedEnquiry && $linkedEnquiry->occupation_type != $request->input('occupation')) {
-            $rem[] = "Occupation Changed from " . ($linkedEnquiry->occupation_type ?? 'null') . " to " . $request->input('occupation');
-            $linkedEnquiry->occupation_type = $request->input('occupation');
-        }
-
-        if ($booking->pan_no != $request->input('pan_no')) {
-            $rem[] = "PAN No. Changed from " . ($booking->pan_no ?? '0') . " to " . $request->input('pan_no');
-            $booking->pan_no = $request->input('pan_no');
-        }
-
-        if ($booking->adhar_no != $adhar_no_normalized) {
-            $rem[] = "Aadhar No. Changed from " . ($booking->adhar_no ?? '0') . " to " . $adhar_no_normalized;
-            $booking->adhar_no = $adhar_no_normalized;
-        }
-
-        $gstValue = $request->has('gst_unregistered') ? '0' : $request->input('gstn');
-        if ($booking->gstn != $gstValue) {
-            $rem[] = "GSTN Changed";
-            $booking->gstn = $gstValue;
-        }
-
-        if ($linkedEnquiry && $linkedEnquiry->dob != $request->input('hidden_customer_dob')) {
-            $oldDob = $linkedEnquiry->dob ? Carbon::parse($linkedEnquiry->dob)->format('d-M-Y') : 'null';
-            $newDob = $request->input('hidden_customer_dob') ? Carbon::parse($request->input('hidden_customer_dob'))->format('d-M-Y') : 'null';
-            $rem[] = "Customer D.O.B. Changed from {$oldDob} to {$newDob}";
-            $linkedEnquiry->dob = $request->input('hidden_customer_dob');
-        }
-
-        if ($linkedEnquiry && $linkedEnquiry->dealer_branch != $request->input('branch')) {
-            $rem[] = "Branch Changed from " . ($linkedEnquiry->dealer_branch ?? 'null') . " to " . $request->input('branch');
-            $linkedEnquiry->dealer_branch = $request->input('branch');
-        }
-
-        if ($linkedEnquiry && $linkedEnquiry->dealer_location != $request->input('location_id')) {
-            $rem[] = "Location Changed from " . ($linkedEnquiry->dealer_location ?? 'null') . " to " . $request->input('location_id');
-            $linkedEnquiry->dealer_location = $request->input('location_id');
-        }
-
-        if ($linkedEnquiry && $linkedEnquiry->segment_code != $request->input('segment_id')) {
-            $rem[] = "Segment Changed from " . ($linkedEnquiry->segment_code ?? 'null') . " to " . $request->input('segment_id');
-            $linkedEnquiry->segment_code = $request->input('segment_id');
-        }
-
-        if ($linkedEnquiry && $linkedEnquiry->model_code != $request->input('model')) {
-            $rem[] = "Model Changed from " . ($linkedEnquiry->model_code ?? 'null') . " to " . $request->input('model');
-            $linkedEnquiry->model_code = $request->input('model');
-        }
-
-        if ($linkedEnquiry && $linkedEnquiry->variant_code != $request->input('variant')) {
-            $rem[] = "Variant Changed from " . ($linkedEnquiry->variant_code ?? 'null') . " to " . $request->input('variant');
-            $linkedEnquiry->variant_code = $request->input('variant');
-        }
-
-        if ($linkedEnquiry && $linkedEnquiry->color_code != $request->input('color')) {
-            $rem[] = "Color Changed from " . ($linkedEnquiry->color_code ?? 'null') . " to " . $request->input('color');
-            $linkedEnquiry->color_code = $request->input('color');
-        }
-
-        if ($linkedEnquiry && $linkedEnquiry->seating != $request->input('seating')) {
-            $rem[] = "Seating Changed from " . ($linkedEnquiry->seating ?? '0') . " to " . $request->input('seating');
-            $linkedEnquiry->seating = $request->input('seating');
-        }
-
-        $accessoriesArray  = $request->has('accessories') && $request->accessories ? (array) $request->accessories : [];
-        $accessoriesString = !empty($accessoriesArray) ? implode(',', $accessoriesArray) : null;
-        if ($linkedEnquiry && $linkedEnquiry->accessories != $accessoriesString) {
-            $rem[] = "Accessories Changed";
-            $linkedEnquiry->accessories = $accessoriesString;
-        }
-
-        if ($linkedEnquiry && $linkedEnquiry->apack_amount != $request->input('apack_amount')) {
-            $rem[] = "Accessories Amount Changed from " . ($linkedEnquiry->apack_amount ?? '0') . " to " . $request->input('apack_amount');
-            $linkedEnquiry->apack_amount = $request->input('apack_amount');
-        }
-
-        if ($booking->chassis_no != $request->input('chassis')) {
-            $rem[] = "Chassis No. Changed from " . ($booking->chassis_no ?? 'null') . " to " . ($request->input('chassis') ?? 'null');
-            $booking->chassis_no = $request->input('chassis');
-        }
-
-        if ($linkedEnquiry && $linkedEnquiry->purchase_type_crm != $request->input('buyer_type')) {
-            $rem[] = "Buyer Type Changed from " . ($linkedEnquiry->purchase_type_crm ?? 'null') . " to " . $request->input('buyer_type');
-            $linkedEnquiry->purchase_type_crm = $request->input('buyer_type');
-        }
-
-        if ($linkedEnquiry && $linkedEnquiry->brand_make != $request->input('enummaster1')) {
-            $rem[] = "Brand (Make 1) Changed";
-            $linkedEnquiry->brand_make = $request->input('enummaster1');
-        }
-
-        if ($linkedEnquiry && $linkedEnquiry->brand_model != $request->input('vehicle_details')) {
-            $rem[] = "Model & Variant 1 Changed";
-            $linkedEnquiry->brand_model = $request->input('vehicle_details');
-        }
-
-        if ($linkedEnquiry && $linkedEnquiry->consid_brand2 != $request->input('enummaster2')) {
-            $rem[] = "Brand (Make 2) Changed";
-            $linkedEnquiry->consid_brand2 = $request->input('enummaster2');
-        }
-
-        if ($linkedEnquiry && $linkedEnquiry->consid_model2 != $request->input('vehicle_details2')) {
-            $rem[] = "Model & Variant 2 Changed";
-            $linkedEnquiry->consid_model2 = $request->input('vehicle_details2');
-        }
-
-        if ($linkedEnquiry && $linkedEnquiry->vehicle_no != $request->input('registration_no')) {
-            $rem[] = "Vehicle Registration No. Changed";
-            $linkedEnquiry->vehicle_no = $request->input('registration_no');
-        }
-
-        if ($linkedEnquiry && $linkedEnquiry->make_year != $request->input('manufacturing_year')) {
-            $rem[] = "Manufacturing Year Changed";
-            $linkedEnquiry->make_year = $request->input('manufacturing_year');
-        }
-
-        if ($linkedEnquiry && $linkedEnquiry->odo_reading != $request->input('odometer_reading')) {
-            $rem[] = "Odometer Reading Changed";
-            $linkedEnquiry->odo_reading = $request->input('odometer_reading');
-        }
-
-        if ($linkedEnquiry && $linkedEnquiry->expected_price != $request->input('expected_price')) {
-            $rem[] = "Expected Price Changed";
-            $linkedEnquiry->expected_price = $request->input('expected_price');
-        }
-
-        if ($linkedEnquiry && $linkedEnquiry->offered_price != $request->input('offered_price')) {
-            $rem[] = "Offered Price Changed";
-            $linkedEnquiry->offered_price = $request->input('offered_price');
-        }
-
-        if ($linkedEnquiry && $linkedEnquiry->exchange_bonus != $request->input('exchange_bonus')) {
-            $rem[] = "Exchange Bonus Changed";
-            $linkedEnquiry->exchange_bonus = $request->input('exchange_bonus');
-        }
-
-        if ($booking->b_mode != $request->input('booking_mode')) {
-            $rem[] = "Booking Mode Changed from " . ($booking->b_mode ?? 'null') . " to " . $request->input('booking_mode');
-            $booking->b_mode = $request->input('booking_mode');
-        }
-
-        if ($booking->online_bk_ref_no != $request->input('refrence_no')) {
-            $rem[] = "Online Ref No. Changed from " . ($booking->online_bk_ref_no ?? 'null') . " to " . $request->input('refrence_no');
-            $booking->online_bk_ref_no = $request->input('refrence_no');
-        }
-
-        if ($booking->b_source != $request->input('booking_source')) {
-            $rem[] = "Booking Source Changed from " . ($booking->b_source ?? 'null') . " to " . $request->input('booking_source');
-            $booking->b_source = $request->input('booking_source');
-        }
-
-        if ($booking->dsa_id != $request->input('dsa_details')) {
-            $rem[] = "DSA Changed";
-            $booking->dsa_id = $request->input('dsa_details');
-        }
-
-        if ($linkedEnquiry && $linkedEnquiry->x8_sc_code != $request->input('saleconsultant')) {
-            $oldC = collect($data['saleconsultants'])->firstWhere('id', $linkedEnquiry->x8_sc_code);
-            $newC = collect($data['saleconsultants'])->firstWhere('id', $request->input('saleconsultant'));
-            $oldName = is_array($oldC) ? ($oldC['name'] ?? 'null') : ($oldC->name ?? 'null');
-            $newName = is_array($newC) ? ($newC['name'] ?? 'null') : ($newC->name ?? 'null');
-            $rem[] = "Sale Consultant Changed from {$oldName} to {$newName}";
-            $linkedEnquiry->x8_sc_code = $request->input('saleconsultant');
-        }
-
-        if ($booking->del_type != $request->input('delivery_type')) {
-            $rem[] = "Delivery Type Changed from " . ($booking->del_type ?? 'null') . " to " . $request->input('delivery_type');
-            $booking->del_type = $request->input('delivery_type');
-        }
-
-        if ($booking->del_date != $request->input('expected_del_date_actual')) {
-            $oldDate = $booking->del_date ? Carbon::parse($booking->del_date)->format('d-M-Y') : 'null';
-            $newDate = $request->input('expected_del_date_actual') ? Carbon::parse($request->input('expected_del_date_actual'))->format('d-M-Y') : 'null';
-            $rem[] = "Delivery Date Changed from {$oldDate} to {$newDate}";
-            $booking->del_date = $request->input('expected_del_date_actual');
-        }
-
-        if ($linkedEnquiry && $linkedEnquiry->fin_mode != $request->input('fin_mode')) {
-            $rem[] = "Finance Mode Changed from " . ($linkedEnquiry->fin_mode ?? 'null') . " to " . $request->input('fin_mode');
-            $linkedEnquiry->fin_mode = $request->input('fin_mode');
-        }
-
-        if ($linkedEnquiry && $linkedEnquiry->financier != $request->input('financier')) {
-            $rem[] = "Financier Changed from " . $getFinancierName($linkedEnquiry->financier) . " to " . $getFinancierName($request->input('financier'));
-            $linkedEnquiry->financier = $request->input('financier');
-        }
-
-        if ($linkedEnquiry && $linkedEnquiry->loan_status != $request->input('loan_status')) {
-            $rem[] = "Loan Status Changed from " . ($linkedEnquiry->loan_status ?? 'null') . " to " . ($request->input('loan_status') ?? 'null');
-            $linkedEnquiry->loan_status = $request->input('loan_status');
-        }
-
-        $newOrder = $request->input('make_order') ? 1 : 0;
-        if ($booking->order != $newOrder) {
-            $rem[] = $newOrder == 1 ? "Requested to create Sales Order" : "Cancelled request for Sales Order";
-            $booking->order = $newOrder;
-        }
-
-        if ($linkedEnquiry && $linkedEnquiry->referee_name != $request->input('ref_customer_name')) {
-            $rem[] = "Referred Name Changed";
-            $linkedEnquiry->referee_name = $request->input('ref_customer_name');
-        }
-
-        if ($linkedEnquiry && $linkedEnquiry->referee_phone != $request->input('ref_mobile_no')) {
-            $rem[] = "Referred Mobile Changed";
-            $linkedEnquiry->referee_phone = $request->input('ref_mobile_no');
-        }
-
-        if ($linkedEnquiry && $linkedEnquiry->remarks != $request->input('details')) {
-            $rem[] = "Remarks Changed";
-            $linkedEnquiry->remarks = $request->input('details');
-        }
-
-        // Save linked enquiry if changes were made
-        if ($linkedEnquiry) {
-            $linkedEnquiry->save();
-        }
-
-        $booking->col_type = $request->input('col_type');
-        $booking->col_by   = $request->input('user');
-        
-        $booking->pending = $pending;
-
-        if (!empty($pendingFields)) {
-            $booking->pending_remark = implode(' , ', $pendingFields);
-        }
-        if ($pending > 0) {
-            $booking->status = 8;
-        }
-
-        $booking->save();
-
-        if ($request->input('buyer_type') === 'Exchange Buy') {
-            if (!XExchange::where('bid', $booking->id)->exists()) {
-                XExchange::create([
-                    'bid'                 => $booking->id,
-                    'verification_status' => 1,
-                    'case_status'         => 1,
-                    'purchase_type'       => $request->input('buyer_type'),
-                ]);
-                $rem[] = "New exchange entry created";
-            }
-        }
-
-        if ($request->input('fin_mode') === 'In-house') {
-            if (!XFinance::where('bid', $booking->id)->exists()) {
-                XFinance::create([
-                    'bid'                 => $booking->id,
-                    'fin_mode'            => 'In-house',
-                    'verification_status' => 1,
-                    'case_status'         => 1,
-                ]);
-                $rem[] = "New finance entry created";
-            }
-        }
-
-        if (!empty($rem)) {
-            $booking->addHistory(
-                'commented',
-                'Booking Updated',
-                $request->input('details') . ' | ' . implode(' , ', $rem),
-                [],
-                null,
-                backpack_user()
-            );
-        }
-
-        return redirect(backpack_url('booking'))->with('success', 'Booking updated successfully!');
-    }
 
     public function storeFollowup(Request $request)
     {
