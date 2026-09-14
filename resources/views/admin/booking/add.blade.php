@@ -1,11 +1,20 @@
 @php
-
+    $entry = $entry ?? null;
+    $isEdit = isset($entry);
+    
     $q = $data['quotation']?->standard_data ?? [];
-
+    if (is_string($q)) {
+        $q = json_decode($q, true) ?? [];
+    }
+    
     $quotation = $data['quotation'] ?? null;
-
     $enquiry = $quotation?->enquiry ?? ($data['enquiry'] ?? null);
 
+    $dobVal = $entry?->c_dob ?? ($enquiry?->dob ?? ($q['c_dob'] ?? ''));
+    
+    // Safely resolve finance mode without throwing undefined array key errors
+    $hasQuotationFinancier = is_array($q) && !empty($q['financier']);
+    $fmode = old($isEdit ? 'fin_mode' : 'finmode', $entry?->fin_mode ?? ($enquiry?->fin_mode ?? ($hasQuotationFinancier ? 'In-house' : '')));
 @endphp
 @extends(backpack_view('blank'))
 
