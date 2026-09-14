@@ -348,19 +348,179 @@ class BookingCrudController extends CrudController
 
 
 
+    // private function getBaseQuery(array $options = [])
+    // {
+    //     $query = Booking::withoutGlobalScope(SoftDeletingScope::class)
+    //         ->from('xlr8_booking_master as bookings')
+    //         ->select([
+    //             'bookings.id',
+    //             'bookings.b_type',
+    //             'bookings.b_cat',
+    //             'bookings.b_mode',
+    //             'bookings.col_type',
+    //             'bookings.col_by',
+    //             'bookings.quotation_id',
+    //             // 'bookings.final_data',
+    //             'bookings.sap_no',
+    //             'bookings.dms_no',
+    //             'bookings.b_source',
+    //             'bookings.dsa_id',
+    //             'bookings.online_bk_ref_no',
+    //             'bookings.booking_date',
+    //             'bookings.receipt_no',
+    //             'bookings.receipt_date',
+    //             'bookings.booking_amount',
+    //             'bookings.apack_amount',
+    //             'bookings.branch_code',
+    //             'bookings.location_code',
+    //             'bookings.location_other',
+    //             'bookings.c_dob',
+    //             'bookings.gender',
+    //             'bookings.occ',
+    //             'bookings.buyer_type',
+    //             'bookings.exist_oem1',
+    //             'bookings.exist_oem2',
+    //             'bookings.vh1_detail',
+    //             'bookings.vh2_detail',
+    //             'bookings.registration_no',
+    //             'bookings.make_year',
+    //             'bookings.odo_reading',
+    //             'bookings.expected_price',
+    //             'bookings.offered_price',
+    //             'bookings.exchange_bonus',
+    //             'bookings.segment_code',
+    //             'bookings.model_code',
+    //             'bookings.variant_code',
+    //             'bookings.color_code',
+    //             'bookings.vehicle_oem_code',
+    //             'bookings.registration_no',
+    //             'bookings.seating',
+    //             // 'bookings.person_id',
+    //             'bookings.name',
+    //             'bookings.care_of',
+    //             'bookings.care_of_type',
+    //             'bookings.mobile',
+    //             'bookings.alt_mobile',
+    //             'bookings.pan_no',
+    //             'bookings.adhar_no',
+    //             'bookings.gstn',
+    //             'bookings.dms_otf',
+    //             'bookings.order',
+    //             'bookings.otf_date',
+    //             'bookings.dms_so',
+    //             'bookings.cpd',
+    //             'bookings.chassis_no',
+    //             'bookings.r_name',
+    //             'bookings.r_mobile',
+    //             'bookings.r_model',
+    //             'bookings.r_variant',
+    //             'bookings.r_chassis',
+    //             'bookings.del_type',
+    //             'bookings.del_date',
+    //             'bookings.fin_mode',
+    //             'bookings.financier',
+    //             'bookings.loan_status',
+    //             'bookings.accessories',
+    //             'bookings.consultant',
+    //             'bookings.inv_no',
+    //             'bookings.inv_date',
+    //             'bookings.dealer_inv_no',
+    //             'bookings.dealer_inv_date',
+    //             'bookings.cancel_date',
+    //             'bookings.refund_request_date',
+    //             'bookings.refund_date',
+    //             'bookings.refund_rejection_date',
+    //             'bookings.dealer_status',
+    //             'bookings.details',
+    //             'bookings.pending',
+    //             'bookings.pending_remark',
+    //             'bookings.retail',
+    //             'bookings.payout',
+    //             'bookings.status',
+    //             'bookings.created_at',
+    //             'bookings.created_by',
+    //             'bookings.updated_at',
+    //             'bookings.updated_by',
+
+
+
+    //         ]);
+    //     $query->leftJoin('xlr8_booking_refund as ref', function ($join) {
+    //         $join->on('bookings.id', '=', DB::raw('CAST(ref.entity_id AS UNSIGNED)'))
+    //             ->where('ref.entity_type', 'booking');
+    //     })->addSelect([
+    //         'ref.amount as refund_amount',
+    //         'ref.status as refund_status',
+    //         'ref.req_date as refund_req_date',
+    //         'ref.ref_date as refund_ref_date',
+    //     ]);
+    //     $query->leftJoin('xlr8_booking_insurance as ins', 'bookings.id', '=', 'ins.bid')
+    //         ->leftJoin('xlr8_booking_rto as rto', 'bookings.id', '=', 'rto.bid')
+    //         ->leftJoin('xlr8_booking_finance as f', 'bookings.id', '=', 'f.bid');
+
+    //     $query->addSelect([
+    //         'ins.source as insurance_source',
+    //         'ins.insurer as insurance_insurer_id',
+    //         'ins.pol_no as policy_no',
+    //         'ins.pol_date as policy_date',
+    //         'ins.pol_type as policy_type',
+
+    //         'rto.sale_type as sale_type',
+    //         'rto.permit as permit',
+    //         'rto.body_type as body_type',
+    //         'rto.rgn_type as registration_type',
+    //         'rto.rgn_no_type as registration_no_type',
+    //         'rto.trc_no as trc_number',
+    //         'rto.trc_payment_no as trc_payment_bank_ref_no',
+    //         'rto.app_no as application_no',
+    //         'rto.tax_payment_bank_ref_no as tax_payment_bank_ref_no',
+    //         'rto.vh_rgn_no as vehicle_registration_no',
+
+    //         'f.instrument_type as instrument_type',
+    //         'f.loan_amount as loan_amount_dealer_entry',
+    //         'f.margin as margin_money',
+    //         'f.file_charge as file_charge',
+    //         'f.fin_loan_amount as net_payment_amount',
+    //         'f.payout_category as payout_category',
+    //         'f.instrument_ref_no as do_number',
+    //         'f.loan_amount',
+    //         'f.expected_payout_pct',
+    //         'f.fin_loan_amount',
+    //         'f.gst_included',
+    //         'f.inv1_prov_gst',
+    //         'f.inv2_prov_gst',
+    //         'f.inv1_no',
+    //         'f.inv1_name',
+    //         'f.inv2_no',
+    //         'f.inv2_name',
+    //         'f.consideration_no_gst',
+    //         'f.difference',
+    //     ]);
+
+
+    //     return $query->orderBy('bookings.id', 'DESC');
+    // }
+
     private function getBaseQuery(array $options = [])
     {
         $query = Booking::withoutGlobalScope(SoftDeletingScope::class)
             ->from('xlr8_booking_master as bookings')
+            // FIX 1: Use BINARY for a safe byte-level comparison to completely bypass collation mismatches
+            ->leftJoin('xlr8_crm_enquiries as enq', function ($join) {
+                $join->on(DB::raw("BINARY CONCAT('XENQ-', enq.id)"), '=', DB::raw("BINARY bookings.enq_no"))
+                     ->orOn(DB::raw("BINARY enq.enquiry_no"), '=', DB::raw("BINARY bookings.enq_no"))
+                     ->orOn(DB::raw("BINARY enq.quick_enquiry_no"), '=', DB::raw("BINARY bookings.enq_no"));
+            })
             ->select([
+                // 1. Native Booking Master Fields
                 'bookings.id',
+                'bookings.enq_no',
                 'bookings.b_type',
                 'bookings.b_cat',
                 'bookings.b_mode',
                 'bookings.col_type',
                 'bookings.col_by',
                 'bookings.quotation_id',
-                // 'bookings.final_data',
                 'bookings.sap_no',
                 'bookings.dms_no',
                 'bookings.b_source',
@@ -370,37 +530,6 @@ class BookingCrudController extends CrudController
                 'bookings.receipt_no',
                 'bookings.receipt_date',
                 'bookings.booking_amount',
-                'bookings.apack_amount',
-                'bookings.branch_code',
-                'bookings.location_code',
-                'bookings.location_other',
-                'bookings.c_dob',
-                'bookings.gender',
-                'bookings.occ',
-                'bookings.buyer_type',
-                'bookings.exist_oem1',
-                'bookings.exist_oem2',
-                'bookings.vh1_detail',
-                'bookings.vh2_detail',
-                'bookings.registration_no',
-                'bookings.make_year',
-                'bookings.odo_reading',
-                'bookings.expected_price',
-                'bookings.offered_price',
-                'bookings.exchange_bonus',
-                'bookings.segment_code',
-                'bookings.model_code',
-                'bookings.variant_code',
-                'bookings.color_code',
-                'bookings.vehicle_oem_code',
-                'bookings.registration_no',
-                'bookings.seating',
-                // 'bookings.person_id',
-                'bookings.name',
-                'bookings.care_of',
-                'bookings.care_of_type',
-                'bookings.mobile',
-                'bookings.alt_mobile',
                 'bookings.pan_no',
                 'bookings.adhar_no',
                 'bookings.gstn',
@@ -409,19 +538,10 @@ class BookingCrudController extends CrudController
                 'bookings.otf_date',
                 'bookings.dms_so',
                 'bookings.cpd',
+                'bookings.mapped',
                 'bookings.chassis_no',
-                'bookings.r_name',
-                'bookings.r_mobile',
-                'bookings.r_model',
-                'bookings.r_variant',
-                'bookings.r_chassis',
                 'bookings.del_type',
                 'bookings.del_date',
-                'bookings.fin_mode',
-                'bookings.financier',
-                'bookings.loan_status',
-                'bookings.accessories',
-                'bookings.consultant',
                 'bookings.inv_no',
                 'bookings.inv_date',
                 'bookings.dealer_inv_no',
@@ -431,7 +551,6 @@ class BookingCrudController extends CrudController
                 'bookings.refund_date',
                 'bookings.refund_rejection_date',
                 'bookings.dealer_status',
-                'bookings.details',
                 'bookings.pending',
                 'bookings.pending_remark',
                 'bookings.retail',
@@ -442,9 +561,48 @@ class BookingCrudController extends CrudController
                 'bookings.updated_at',
                 'bookings.updated_by',
 
-
-
+                // 2. Joined Fields from Enquiry Table
+                'enq.dealer_branch as branch_code',
+                'enq.dealer_location as location_code',
+                'enq.dob as c_dob',
+                'enq.gender',
+                'enq.occupation_type as occ',
+                'enq.purchase_type as buyer_type',
+                'enq.brand_make as exist_oem1',
+                'enq.consid_brand2 as exist_oem2',
+                'enq.brand_model as vh1_detail',
+                'enq.consid_model2 as vh2_detail',
+                'enq.vehicle_no as registration_no',
+                'enq.make_year',
+                'enq.odo_reading',
+                'enq.expected_price',
+                'enq.offered_price',
+                'enq.exchange_bonus',
+                'enq.segment_code',
+                'enq.model_code',
+                'enq.variant_code',
+                'enq.color_code',
+                'enq.seating',
+                'enq.name',
+                'enq.care_of',
+                'enq.care_of_type',
+                'enq.mobile',
+                'enq.alternate_mobile as alt_mobile',
+                'enq.referee_name as r_name',
+                'enq.referee_phone as r_mobile',
+                DB::raw('NULL as accessories'),
+                DB::raw('NULL as apack_amount'),
+                'enq.x8_sc_code as consultant',
+                'enq.remarks as details',
+                
+                // 3. Fallbacks
+                DB::raw('NULL as location_other'),
+                DB::raw('NULL as vehicle_oem_code'),
+                DB::raw('NULL as r_model'),
+                DB::raw('NULL as r_variant'),
+                DB::raw('NULL as r_chassis'),
             ]);
+
         $query->leftJoin('xlr8_booking_refund as ref', function ($join) {
             $join->on('bookings.id', '=', DB::raw('CAST(ref.entity_id AS UNSIGNED)'))
                 ->where('ref.entity_type', 'booking');
@@ -454,6 +612,7 @@ class BookingCrudController extends CrudController
             'ref.req_date as refund_req_date',
             'ref.ref_date as refund_ref_date',
         ]);
+        
         $query->leftJoin('xlr8_booking_insurance as ins', 'bookings.id', '=', 'ins.bid')
             ->leftJoin('xlr8_booking_rto as rto', 'bookings.id', '=', 'rto.bid')
             ->leftJoin('xlr8_booking_finance as f', 'bookings.id', '=', 'f.bid');
@@ -495,8 +654,12 @@ class BookingCrudController extends CrudController
             'f.inv2_name',
             'f.consideration_no_gst',
             'f.difference',
+            
+            // FIX 2: Moved these finance fields here to pull from 'f' (Finance Table)
+            'f.fin_mode',
+            'f.financier',
+            'f.loan_status',
         ]);
-
 
         return $query->orderBy('bookings.id', 'DESC');
     }
@@ -541,16 +704,26 @@ class BookingCrudController extends CrudController
             ->first();
 
         $refundAmount = $refundRecord ? (float) $refundRecord->amount : 0;
-        $liveCount = Booking::where('model_code', $booking->model_code)
-            ->where('variant_code', $booking->variant_code)
-            ->where('color_code', $booking->color_code)
-            ->whereIn('status', [1, 8])
+        // FIX 1: Join the Enquiries table to correctly count Live Bookings based on vehicle codes
+        $liveCount = DB::table('xlr8_booking_master as b')
+            ->join('xlr8_crm_enquiries as e', function ($join) {
+                $join->on(DB::raw("BINARY CONCAT('XENQ-', e.id)"), '=', DB::raw("BINARY b.enq_no"))
+                     ->orOn(DB::raw("BINARY e.enquiry_no"), '=', DB::raw("BINARY b.enq_no"))
+                     ->orOn(DB::raw("BINARY e.quick_enquiry_no"), '=', DB::raw("BINARY b.enq_no"));
+            })
+            ->where('e.model_code', $booking->model_code)
+            ->where('e.variant_code', $booking->variant_code)
+            ->where('e.color_code', $booking->color_code)
+            ->whereIn('b.status', [1, 8])
+            ->whereNull('b.deleted_at')
             ->count();
 
         $accessoriesAmount = $booking->apack_amount ?? 0;
 
-        $stockCount = Stock::where('vehicle_oem_code', $booking->vehicle_oem_code)
-            ->where('status', 'available')
+        // FIX 2: Calculate Stock Count directly against the Stock table 
+        // Bypassing the missing xlr8_vehicle_master table entirely!
+        $stockCount = Stock::where('status', 'available')
+            ->where('model_code', $booking->model_code)
             ->count();
         $insurance_source = match ((int)($booking->insurance_source ?? 0)) {
             1 => 'By Dealer (OEM Portal)',
@@ -2082,7 +2255,7 @@ class BookingCrudController extends CrudController
         $booking->receipt_date     = $request->input('hiddenreceiptdate');
         $booking->booking_amount   = $isDummy ? 0 : $request->input('bookingamount');
         $booking->order            = $request->input('makeorder');
-        $booking->person_id        = backpack_auth()->id();
+        // $booking->person_id        = backpack_auth()->id();
         
         // Native Booking Fields
         $booking->pan_no           = $request->input('panno');
@@ -2463,7 +2636,7 @@ class BookingCrudController extends CrudController
     {
 
         CRUD::setValidation(BookingRequest::class);
-        $this->crud->setEditView('admin.booking.edit');
+        $this->crud->setEditView('admin.booking.add');
 
         $id = $this->crud->getCurrentEntryId() ?? request()->id;
         $entry = $this->crud->getEntry($id);
@@ -3612,9 +3785,9 @@ class BookingCrudController extends CrudController
 
     public function getChassisNumbers($modelCode)
     {
-        $chassisNumbers = DB::table('xlr8_vehicle_stock')
-            ->select('chassis_no', 'id')
+        $chassisNumbers = Stock::select('chassis_no', 'id')
             ->where('model_code', $modelCode)
+            ->where('status', 'available')
             ->get()
             ->toArray();
 
@@ -3851,7 +4024,7 @@ class BookingCrudController extends CrudController
             ->withoutGlobalScope(SoftDeletingScope::class);
 
 
-        $query->whereIn('bookings.segment_code', ['BEV', 'PERSL'])
+        $query->whereIn('enq.segment_code', ['BEV', 'PERSL'])
             ->where(function ($q) {
                 $q->whereNull('bookings.order')
                     ->orWhereIn('bookings.order', [0, 1]);
@@ -4389,7 +4562,7 @@ class BookingCrudController extends CrudController
 
         $query = $this->getBaseQuery();
 
-        $query->where('bookings.buyer_type', 'Exchange Buy');
+        $query->where('enq.purchase_type', 'Exchange Buy'); //DB column is purchase_type
 
         $query->orderBy('bookings.id', 'DESC');
 
@@ -4487,7 +4660,7 @@ class BookingCrudController extends CrudController
 
         $query = $this->getBaseQuery();
 
-        $query->where('bookings.buyer_type', 'Scrappage');
+        $query->where('enq.purchase_type', 'Exchange Buy'); // Note: DB column is purchase_type
 
         $query->orderBy('bookings.id', 'DESC');
 
@@ -4587,7 +4760,7 @@ class BookingCrudController extends CrudController
 
         $query = $this->getBaseQuery();
 
-        $query->whereIn('bookings.buyer_type', ['First Time Buy', 'Additional Buy']);
+        $query->where('enq.purchase_type', 'Exchange Buy'); // Note: DB column is purchase_type
 
         $query->orderBy('bookings.id', 'DESC');
 
@@ -4786,7 +4959,7 @@ class BookingCrudController extends CrudController
 
         $query = $this->getBaseQuery();
 
-        $query->whereIn('bookings.fin_mode', ['Customer Self', 'Cash', 'Yet To Decide']);
+        $query->whereIn('enq.fin_mode', ['Customer Self', 'Cash', 'Yet To Decide']);
 
         $query->orderBy('bookings.id', 'DESC');
 
@@ -4979,13 +5152,13 @@ class BookingCrudController extends CrudController
         $query->where('bookings.payout', 1);
         $query->where('bookings.retail', 1);
         $query->where('bookings.status', 2);
-        $query->where('bookings.fin_mode', 'In-house');
+        $query->where('enq.fin_mode', 'In-house');
         $query->where('f.case_status', 2);
 
         $financierFilter = $request->get('financier');
 
         if (!empty($financierFilter)) {
-            $query->where('bookings.financier', $financierFilter);
+            $query->where('enq.financier', $financierFilter);
         }
 
         $query->orderBy('bookings.id', 'DESC');
@@ -4993,7 +5166,7 @@ class BookingCrudController extends CrudController
         $financierFilter = $request->get('financier');
 
         if (!empty($financierFilter)) {
-            $query->where('bookings.financier', $financierFilter);
+            $query->where('enq.financier', $financierFilter);
         }
 
         $paginatedBookings = $query->paginate(50);
