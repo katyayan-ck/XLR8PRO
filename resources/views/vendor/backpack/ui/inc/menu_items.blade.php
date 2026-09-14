@@ -324,6 +324,10 @@
                 style="background-color: #e9ecef;">{{ $enqCounts['assigned_long'] ?? 0 }}</span>
         </a>
         <a class="dropdown-item d-flex align-items-center justify-content-between"
+            href="#">
+            <span><i class="la la-list"></i>Duplicate Enquiries</span>
+        </a>
+        <a class="dropdown-item d-flex align-items-center justify-content-between"
             href="{{ backpack_url('campaign') }}">
             <span><i class="la la-list"></i>Campaign</span>
 
@@ -384,7 +388,6 @@
             href="{{ route('enquiry.otf-bookings') }}">
             <span><i class="la la-database me-2"></i>DMS OTF Dump</span>
         </a>
-
         <x-backpack::menu-dropdown title="Pending" icon="la la-clock" nested="true">
             <a class="dropdown-item d-flex align-items-center justify-content-between"
                 href="{{ backpack_url('booking/pending-dms') }}">
@@ -758,18 +761,37 @@
         <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">
             <span><i class="la la-boxes me-2"></i>Oem Liquidation Support</span>
         </a>
+        <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">
+            <span><i class="la la-exclamation-circle me-2"></i>Erroneous Entries</span>
+        </a>
+
     </x-backpack::menu-dropdown>
 
     {{-- Sales Cashier --}}
     <x-backpack::menu-dropdown title="Sales Cashier" icon="la la-cash-register" nested="true">
-        <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">
-            <span><i class="la la-receipt me-2"></i>Issue Receipt</span>
+        <a class="dropdown-item d-flex align-items-center justify-content-between"
+        href="{{ backpack_url('receipt') }}">
+        <span>
+            <i class="la la-receipt me-2"></i>Issue Receipt
+        </span>
+        </a>
+        {{-- Special Discount --}}
+        <a class="dropdown-item d-flex align-items-center justify-content-between"
+            href="{{ backpack_url('special-discount') }}">
+            <span>
+                <i class="la la-percent me-2"></i>Special Discount
+            </span>
+        </a>
+
+        {{-- RTO Charges --}}
+        <a class="dropdown-item d-flex align-items-center justify-content-between"
+            href="{{ backpack_url('rto-charges') }}">
+            <span>
+                <i class="la la-registered me-2"></i>RTO Charges
+            </span>
         </a>
         <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">
-            <span><i class="la la-percent me-2"></i>Special Discount</span>
-        </a>
-        <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">
-            <span><i class="la la-registered me-2"></i>Registration Charges</span>
+            <span><i class="la la-exclamation-circle me-2"></i>Erroneous Entries</span>
         </a>
     </x-backpack::menu-dropdown>
 
@@ -848,3 +870,26 @@
         <span><i class="la la-chart-bar me-2"></i>Parts Ordering Report</span>
     </a>
 </x-backpack::menu-dropdown>
+
+{{-- ====================== IMPORTS MODULE ====================== --}}
+<x-backpack::menu-dropdown title="Imports" icon="la la-download">
+
+    <x-backpack::menu-separator title="Import Operations" />
+
+    <a class="dropdown-item d-flex align-items-center justify-content-between"
+        href="{{ backpack_url('imports/sales') }}">
+        <span><i class="la la-shopping-cart me-2"></i>Sales</span>
+    </a>
+
+    <a class="dropdown-item d-flex align-items-center justify-content-between"
+        href="{{ backpack_url('imports/service') }}">
+        <span><i class="la la-wrench me-2"></i>Service</span>
+    </a>
+
+    <a class="dropdown-item d-flex align-items-center justify-content-between"
+        href="{{ backpack_url('imports/spares') }}">
+        <span><i class="la la-tools me-2"></i>Spares</span>
+    </a>
+
+</x-backpack::menu-dropdown>
+

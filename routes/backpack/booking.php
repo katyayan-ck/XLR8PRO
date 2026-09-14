@@ -318,6 +318,39 @@ Route::group([
         ->name('receipt.edit');
     Route::put('booking/{bookingId}/receipt/{receiptId}', 'BookingCrudController@receiptUpdate')
         ->name('receipt.update');
+    Route::get('receipt', function () {
+        return view('admin.sales-cashier.receipt-list', [
+            'gridConfig' => [
+            'columns' => [],
+            'data' => [],
+            ],
+        ]);
+    })->name('receipt.index');
+
+    Route::get('receipt/create', function () {
+        return view('admin.sales-cashier.receipt-create');
+    })->name('receipt.create');
+
+    // ================= SPECIAL DISCOUNT =================
+
+    Route::get('special-discount', function () {
+        return view('admin.sales-cashier.special-discount-list');
+    })->name('special-discount.index');
+
+    Route::get('special-discount/create', function () {
+        return view('admin.sales-cashier.special-discount-create');
+    })->name('special-discount.create');
+
+
+    // ================= RTO CHARGES =================
+
+    Route::get('rto-charges', function () {
+        return view('admin.sales-cashier.rto-charges-list');
+    })->name('rto-charges.index');
+
+    Route::get('rto-charges/create', function () {
+        return view('admin.sales-cashier.rto-charges-create');
+    })->name('rto-charges.create');
 
 
     Route::get('booking/finance', 'BookingCrudController@intInFinance')
