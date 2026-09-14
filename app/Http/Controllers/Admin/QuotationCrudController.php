@@ -458,21 +458,8 @@ class QuotationCrudController extends CrudController
         $careOf = $selectedEnquiry->care_of_type ?? '';
         $careOfName = $selectedEnquiry->care_of ?? '';
 
-        $permit_map = [
-            '1'  => 'Private - U/C (4 Wheeler)',
-            '2'  => 'Private - BH (4 Wheeler)',
-            '3'  => 'Private - EV (4 Wheeler)',
-            '4'  => 'Goods - G (4 Wheeler)',
-            '5'  => 'Goods - G 3 Ton+ (4 Wheeler)',
-            '6'  => 'Goods - G (3 Wheeler)',
-            '7'  => 'Goods - G EV (3 Wheeler)',
-            '8'  => 'Goods - G EV (4 Wheeler)',
-            '9'  => 'Taxi - T (4 Wheeler)',
-            '10' => 'Taxi - T EV (4 Wheeler)',
-            '11' => 'Passenger - P (3 Wheeler)',
-            '12' => 'Passenger - P EV (3 Wheeler)',
-            '13' => 'Ambulance (Misc.)',
-        ];
+        $permit_map = OrgService::getPermitMap();
+        $permit_pricing_map = OrgService::getPermitPricingMap();
 
         $insurance_type_map = [
             1 => 'Nil Dep',
@@ -940,21 +927,8 @@ class QuotationCrudController extends CrudController
             '3' => 'Exempted',
         ];
 
-        $permit_map = [
-            '1'  => 'Private - U/C (4 Wheeler)',
-            '2'  => 'Private - BH (4 Wheeler)',
-            '3'  => 'Private - EV (4 Wheeler)',
-            '4'  => 'Goods - G (4 Wheeler)',
-            '5'  => 'Goods - G 3 Ton+ (4 Wheeler)',
-            '6'  => 'Goods - G (3 Wheeler)',
-            '7'  => 'Goods - G EV (3 Wheeler)',
-            '8'  => 'Goods - G EV (4 Wheeler)',
-            '9'  => 'Taxi - T (4 Wheeler)',
-            '10' => 'Taxi - T EV (4 Wheeler)',
-            '11' => 'Passenger - P (3 Wheeler)',
-            '12' => 'Passenger - P EV (3 Wheeler)',
-            '13' => 'Ambulance (Misc.)',
-        ];
+        $permit_map = OrgService::getPermitMap();
+        $permit_pricing_map = OrgService::getPermitPricingMap();
 
         $reg_no_type_map = [
             '1' => 'Regular',
@@ -2374,21 +2348,8 @@ class QuotationCrudController extends CrudController
             '3' => 'Exempted',
         ];
 
-        $permit_map = [
-            '1'  => 'Private - U/C (4 Wheeler)',
-            '2'  => 'Private - BH (4 Wheeler)',
-            '3'  => 'Private - EV (4 Wheeler)',
-            '4'  => 'Goods - G (4 Wheeler)',
-            '5'  => 'Goods - G 3 Ton+ (4 Wheeler)',
-            '6'  => 'Goods - G (3 Wheeler)',
-            '7'  => 'Goods - G EV (3 Wheeler)',
-            '8'  => 'Goods - G EV (4 Wheeler)',
-            '9'  => 'Taxi - T (4 Wheeler)',
-            '10' => 'Taxi - T EV (4 Wheeler)',
-            '11' => 'Passenger - P (3 Wheeler)',
-            '12' => 'Passenger - P EV (3 Wheeler)',
-            '13' => 'Ambulance (Misc.)',
-        ];
+        $permit_map = OrgService::getPermitMap();
+        $permit_pricing_map = OrgService::getPermitPricingMap();
 
         $reg_no_type_map = [
             '1' => 'Regular',
@@ -2499,7 +2460,7 @@ class QuotationCrudController extends CrudController
             'groupBSelected'     => $groupBSelected,
             'groupCSelected'     => $groupCSelected,
             'permit_map'         => $permit_map,
-
+            'permit_pricing_map' => $permit_pricing_map,
             'viewMode'           => true,
             'revisionPdf'        => true,
             'revisionNumber'     => $version,
@@ -2595,21 +2556,8 @@ class QuotationCrudController extends CrudController
             '3' => 'Exempted',
         ];
 
-        $permit_map = [
-            '1'  => 'Private - U/C (4 Wheeler)',
-            '2'  => 'Private - BH (4 Wheeler)',
-            '3'  => 'Private - EV (4 Wheeler)',
-            '4'  => 'Goods - G (4 Wheeler)',
-            '5'  => 'Goods - G 3 Ton+ (4 Wheeler)',
-            '6'  => 'Goods - G (3 Wheeler)',
-            '7'  => 'Goods - G EV (3 Wheeler)',
-            '8'  => 'Goods - G EV (4 Wheeler)',
-            '9'  => 'Taxi - T (4 Wheeler)',
-            '10' => 'Taxi - T EV (4 Wheeler)',
-            '11' => 'Passenger - P (3 Wheeler)',
-            '12' => 'Passenger - P EV (3 Wheeler)',
-            '13' => 'Ambulance (Misc.)',
-        ];
+        $permit_map = OrgService::getPermitMap();
+        $permit_pricing_map = OrgService::getPermitPricingMap();
 
         $reg_no_type_map = [
             '1' => 'Regular',

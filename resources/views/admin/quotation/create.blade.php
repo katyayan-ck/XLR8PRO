@@ -1307,6 +1307,34 @@
             border: 2px solid #dc3545 !important;
             background-color: #fff8f8 !important;
         }
+
+
+        /* Make frozen amount fields visibly lighter */
+        .quotation-grid input.frozen-field {
+            color: #999 !important;
+            -webkit-text-fill-color: #999 !important;
+            opacity: 0.55 !important;
+            font-weight: 400 !important;
+            background-color: #f8f8f8 !important;
+            cursor: not-allowed !important;
+        }
+
+        /* Slightly lighter placeholder also */
+        .quotation-grid input.frozen-field::placeholder {
+            color: #aaa !important;
+            -webkit-text-fill-color: #aaa !important;
+            opacity: 0.7 !important;
+        }
+
+        /* Frozen field should not look like an active input */
+        .quotation-grid input.frozen-field:disabled {
+            color: #999 !important;
+            -webkit-text-fill-color: #999 !important;
+            opacity: 0.55 !important;
+            background-color: #f8f8f8 !important;
+            box-shadow: none !important;
+            text-decoration: none !important;
+        }
     </style>
 @endpush
 
@@ -2775,415 +2803,235 @@
         $('#enquiry_id_hidden').val(cleanId);
         const PRICING = {
             bev6Premium: {
-                permit: [{
-                        type: "Private",
-                        default: true
-                    },
-                    {
-                        type: "Private - BH",
-                        default: false
-                    }
+                permit: [
+                    { type: "Private",   default: true  },
+                    { type: "Goods",     default: false },
+                    { type: "Passenger", default: false }
                 ],
+
                 receivables: {
                     exShowroom: 2499000,
 
-                    // Insurance with multiple companies and covers
-                    insurance: [{
+                    // Insurance — one entry per permit CATEGORY
+                    insurance: [
+                        {
                             permit: "Private",
                             default: true,
-                            companies: [{
+                            companies: [
+                                {
                                     insCo: "ICICI Lombard",
                                     default: true,
-                                    price: [{
-                                            head: "Basic OD + TP",
-                                            price: 42500,
-                                            Nature: "M"
-                                        },
-                                        {
-                                            head: "Nil Depreciation",
-                                            price: 8500,
-                                            Nature: "M"
-                                        },
-                                        {
-                                            head: "Consumables",
-                                            price: 1800,
-                                            Nature: "M"
-                                        },
-                                        {
-                                            head: "Battery Protect Plus",
-                                            price: 12000,
-                                            Nature: "O"
-                                        },
-                                        {
-                                            head: "RTI",
-                                            price: 6800,
-                                            Nature: "O"
-                                        },
-                                        {
-                                            head: "Engine Protect",
-                                            price: 5500,
-                                            Nature: "O"
-                                        },
-                                        {
-                                            head: "Key Protect",
-                                            price: 1200,
-                                            Nature: "O"
-                                        },
-                                        {
-                                            head: "Tyre Protect",
-                                            price: 3200,
-                                            Nature: "O"
-                                        },
-                                        {
-                                            head: "RSA Premium",
-                                            price: 2800,
-                                            Nature: "O"
-                                        },
-                                        {
-                                            head: "NCB Protect Plus",
-                                            price: 4500,
-                                            Nature: "O"
-                                        }
+                                    price: [
+                                        { head: "Basic OD + TP",       price: 42500, Nature: "M" },
+                                        { head: "Nil Depreciation",    price: 8500,  Nature: "M" },
+                                        { head: "Consumables",         price: 1800,  Nature: "M" },
+                                        { head: "Battery Protect Plus",price: 12000, Nature: "O" },
+                                        { head: "RTI",                 price: 6800,  Nature: "O" },
+                                        { head: "Engine Protect",      price: 5500,  Nature: "O" },
+                                        { head: "Key Protect",         price: 1200,  Nature: "O" },
+                                        { head: "Tyre Protect",        price: 3200,  Nature: "O" },
+                                        { head: "RSA Premium",         price: 2800,  Nature: "O" },
+                                        { head: "NCB Protect Plus",    price: 4500,  Nature: "O" }
                                     ]
                                 },
                                 {
                                     insCo: "Bajaj Allianz",
                                     default: false,
-                                    price: [{
-                                            head: "Basic OD + TP",
-                                            price: 39800,
-                                            Nature: "M"
-                                        },
-                                        {
-                                            head: "Nil Depreciation",
-                                            price: 7800,
-                                            Nature: "M"
-                                        },
-                                        {
-                                            head: "Consumables",
-                                            price: 1600,
-                                            Nature: "M"
-                                        },
-                                        {
-                                            head: "Battery Protect Plus",
-                                            price: 10500,
-                                            Nature: "O"
-                                        },
-                                        {
-                                            head: "RTI",
-                                            price: 6200,
-                                            Nature: "O"
-                                        },
-                                        {
-                                            head: "Key Protect",
-                                            price: 1100,
-                                            Nature: "O"
-                                        },
-                                        {
-                                            head: "Tyre Protect",
-                                            price: 2800,
-                                            Nature: "O"
-                                        }
+                                    price: [
+                                        { head: "Basic OD + TP",        price: 39800, Nature: "M" },
+                                        { head: "Nil Depreciation",     price: 7800,  Nature: "M" },
+                                        { head: "Consumables",          price: 1600,  Nature: "M" },
+                                        { head: "Battery Protect Plus", price: 10500, Nature: "O" },
+                                        { head: "RTI",                  price: 6200,  Nature: "O" },
+                                        { head: "Key Protect",          price: 1100,  Nature: "O" },
+                                        { head: "Tyre Protect",         price: 2800,  Nature: "O" }
                                     ]
                                 },
                                 {
                                     insCo: "United India (USGI)",
                                     default: false,
-                                    price: [{
-                                            head: "Basic OD + TP",
-                                            price: 41500,
-                                            Nature: "M"
-                                        },
-                                        {
-                                            head: "Nil Depreciation",
-                                            price: 8200,
-                                            Nature: "M"
-                                        },
-                                        {
-                                            head: "Consumables",
-                                            price: 1700,
-                                            Nature: "M"
-                                        },
-                                        {
-                                            head: "Battery Protect",
-                                            price: 9800,
-                                            Nature: "O"
-                                        },
-                                        {
-                                            head: "RTI",
-                                            price: 6500,
-                                            Nature: "O"
-                                        },
-                                        {
-                                            head: "Engine Protect",
-                                            price: 5200,
-                                            Nature: "O"
-                                        },
-                                        {
-                                            head: "NCB Protect",
-                                            price: 3500,
-                                            Nature: "O"
-                                        }
+                                    price: [
+                                        { head: "Basic OD + TP",     price: 41500, Nature: "M" },
+                                        { head: "Nil Depreciation",  price: 8200,  Nature: "M" },
+                                        { head: "Consumables",       price: 1700,  Nature: "M" },
+                                        { head: "Battery Protect",   price: 9800,  Nature: "O" },
+                                        { head: "RTI",               price: 6500,  Nature: "O" },
+                                        { head: "Engine Protect",    price: 5200,  Nature: "O" },
+                                        { head: "NCB Protect",       price: 3500,  Nature: "O" }
                                     ]
                                 }
                             ]
                         },
                         {
-                            permit: "Private - BH",
+                            permit: "Goods",
                             default: false,
-                            companies: [{
-                                insCo: "ICICI Lombard",
-                                default: true,
-                                price: [{
-                                        head: "Basic OD + TP",
-                                        price: 45200,
-                                        Nature: "M"
-                                    },
-                                    {
-                                        head: "Nil Depreciation",
-                                        price: 9200,
-                                        Nature: "M"
-                                    },
-                                    {
-                                        head: "Consumables",
-                                        price: 2000,
-                                        Nature: "M"
-                                    },
-                                    {
-                                        head: "Battery Protect Plus",
-                                        price: 13000,
-                                        Nature: "O"
-                                    },
-                                    {
-                                        head: "RTI",
-                                        price: 7200,
-                                        Nature: "O"
-                                    }
-                                ]
-                            }]
+                            companies: [
+                                {
+                                    insCo: "ICICI Lombard",
+                                    default: true,
+                                    price: [
+                                        { head: "Basic OD + TP",       price: 42500, Nature: "M" },
+                                        { head: "Nil Depreciation",    price: 8500,  Nature: "M" },
+                                        { head: "Consumables",         price: 1800,  Nature: "M" },
+                                        { head: "Battery Protect Plus",price: 12000, Nature: "O" },
+                                        { head: "RTI",                 price: 6800,  Nature: "O" },
+                                        { head: "Engine Protect",      price: 5500,  Nature: "O" },
+                                        { head: "Key Protect",         price: 1200,  Nature: "O" },
+                                        { head: "Tyre Protect",        price: 3200,  Nature: "O" },
+                                        { head: "RSA Premium",         price: 2800,  Nature: "O" },
+                                        { head: "NCB Protect Plus",    price: 4500,  Nature: "O" }
+                                    ]
+                                },
+                                {
+                                    insCo: "Bajaj Allianz",
+                                    default: false,
+                                    price: [
+                                        { head: "Basic OD + TP",        price: 39800, Nature: "M" },
+                                        { head: "Nil Depreciation",     price: 7800,  Nature: "M" },
+                                        { head: "Consumables",          price: 1600,  Nature: "M" },
+                                        { head: "Battery Protect Plus", price: 10500, Nature: "O" },
+                                        { head: "RTI",                  price: 6200,  Nature: "O" },
+                                        { head: "Key Protect",          price: 1100,  Nature: "O" },
+                                        { head: "Tyre Protect",         price: 2800,  Nature: "O" }
+                                    ]
+                                },
+                                {
+                                    insCo: "United India (USGI)",
+                                    default: false,
+                                    price: [
+                                        { head: "Basic OD + TP",     price: 41500, Nature: "M" },
+                                        { head: "Nil Depreciation",  price: 8200,  Nature: "M" },
+                                        { head: "Consumables",       price: 1700,  Nature: "M" },
+                                        { head: "Battery Protect",   price: 9800,  Nature: "O" },
+                                        { head: "RTI",               price: 6500,  Nature: "O" },
+                                        { head: "Engine Protect",    price: 5200,  Nature: "O" },
+                                        { head: "NCB Protect",       price: 3500,  Nature: "O" }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            permit: "Passenger",
+                            default: false,
+                            companies: [
+                                {
+                                    insCo: "ICICI Lombard",
+                                    default: true,
+                                    price: [
+                                        { head: "Basic OD + TP",       price: 42500, Nature: "M" },
+                                        { head: "Nil Depreciation",    price: 8500,  Nature: "M" },
+                                        { head: "Consumables",         price: 1800,  Nature: "M" },
+                                        { head: "Battery Protect Plus",price: 12000, Nature: "O" },
+                                        { head: "RTI",                 price: 6800,  Nature: "O" },
+                                        { head: "Engine Protect",      price: 5500,  Nature: "O" },
+                                        { head: "Key Protect",         price: 1200,  Nature: "O" },
+                                        { head: "Tyre Protect",        price: 3200,  Nature: "O" },
+                                        { head: "RSA Premium",         price: 2800,  Nature: "O" },
+                                        { head: "NCB Protect Plus",    price: 4500,  Nature: "O" }
+                                    ]
+                                },
+                                {
+                                    insCo: "Bajaj Allianz",
+                                    default: false,
+                                    price: [
+                                        { head: "Basic OD + TP",        price: 39800, Nature: "M" },
+                                        { head: "Nil Depreciation",     price: 7800,  Nature: "M" },
+                                        { head: "Consumables",          price: 1600,  Nature: "M" },
+                                        { head: "Battery Protect Plus", price: 10500, Nature: "O" },
+                                        { head: "RTI",                  price: 6200,  Nature: "O" },
+                                        { head: "Key Protect",          price: 1100,  Nature: "O" },
+                                        { head: "Tyre Protect",         price: 2800,  Nature: "O" }
+                                    ]
+                                },
+                                {
+                                    insCo: "United India (USGI)",
+                                    default: false,
+                                    price: [
+                                        { head: "Basic OD + TP",     price: 41500, Nature: "M" },
+                                        { head: "Nil Depreciation",  price: 8200,  Nature: "M" },
+                                        { head: "Consumables",       price: 1700,  Nature: "M" },
+                                        { head: "Battery Protect",   price: 9800,  Nature: "O" },
+                                        { head: "RTI",               price: 6500,  Nature: "O" },
+                                        { head: "Engine Protect",    price: 5200,  Nature: "O" },
+                                        { head: "NCB Protect",       price: 3500,  Nature: "O" }
+                                    ]
+                                }
+                            ]
                         }
                     ],
 
-                    // RTO Registration
+                    // RTO Registration — one entry per permit CATEGORY
                     RTO: {
                         TRC: 1800,
-                        TAX: [{
-                                permit: "Private",
-                                default: true,
-                                amount: 245000
-                            },
-                            {
-                                permit: "Private - BH",
-                                default: false,
-                                amount: 280000
-                            }
+                        TAX: [
+                            { permit: "Private",   default: true,  amount: 245000 },
+                            { permit: "Goods",     default: false, amount: 180000 },
+                            { permit: "Passenger", default: false, amount: 220000 }
                         ]
                     },
 
-                    // ✅ FIX: Coating options with correct defaults
-                    coating: [{
-                            title: "Ceramic",
-                            price: 24999,
-                            default: true
-                        },
-                        {
-                            title: "Graphene",
-                            price: 45999,
-                            default: false
-                        },
-                        {
-                            title: "No Coating",
-                            price: 0,
-                            default: false
-                        }
+                    // ─────────────────────────────────────────────
+                    // Nothing below this line has changed
+                    // ─────────────────────────────────────────────
+
+                    coating: [
+                        { title: "Ceramic",     price: 24999, default: true  },
+                        { title: "Graphene",    price: 45999, default: false },
+                        { title: "No Coating",  price: 0,     default: false }
                     ],
 
-                    // ✅ FIX: PPF options with correct defaults
-                    ppf: [{
-                            title: "PPF Ultra",
-                            price: 124999,
-                            default: true
-                        },
-                        {
-                            title: "PPF Premium",
-                            price: 164999,
-                            default: false
-                        },
-                        {
-                            title: "PPF Ultimate",
-                            price: 199999,
-                            default: false
-                        },
-                        {
-                            title: "No PPF",
-                            price: 0,
-                            default: false
-                        }
+                    ppf: [
+                        { title: "PPF Ultra",    price: 124999, default: true  },
+                        { title: "PPF Premium",  price: 164999, default: false },
+                        { title: "PPF Ultimate", price: 199999, default: false },
+                        { title: "No PPF",       price: 0,      default: false }
                     ],
 
-                    // ✅ FIX: Accessories list with actual item names that match dropdown options
-                    accessories: [{
-                            item: "7.2 kW Home Charger",
-                            mrp: 45000,
-                            discount: 5000,
-                            code: "HC-72"
-                        },
-                        {
-                            item: "11.2 kW Home Charger",
-                            mrp: 65000,
-                            discount: 8000,
-                            code: "HC-112"
-                        },
-                        {
-                            item: "Dash Cam Dual Channel",
-                            mrp: 8299,
-                            discount: 1200,
-                            code: "DC-DUAL"
-                        },
-                        {
-                            item: "Parking Assist 360°",
-                            mrp: 15999,
-                            discount: 2500,
-                            code: "PA-360"
-                        },
-                        {
-                            item: "Leather Seat Covers",
-                            mrp: 14990,
-                            discount: 2000,
-                            code: "LSC-7"
-                        },
-                        {
-                            item: "Premium Floor Mats",
-                            mrp: 5899,
-                            discount: 800,
-                            code: "PFM-7"
-                        },
-                        {
-                            item: "Chrome Door Visors",
-                            mrp: 4999,
-                            discount: 500,
-                            code: "CDV"
-                        },
-                        {
-                            item: "Alloy Wheel Locks",
-                            mrp: 2999,
-                            discount: 400,
-                            code: "AWL"
-                        },
-                        {
-                            item: "Scuff Plates LED",
-                            mrp: 3899,
-                            discount: 600,
-                            code: "SP-LED"
-                        },
-                        {
-                            item: "Mud Flaps",
-                            mrp: 1299,
-                            discount: 200,
-                            code: "MF"
-                        },
-                        {
-                            item: "Perfume Dispenser",
-                            mrp: 899,
-                            discount: 0,
-                            code: "PD-001"
-                        },
-                        {
-                            item: "Car Cover Premium",
-                            mrp: 3499,
-                            discount: 500,
-                            code: "CC-PREM"
-                        },
-                        {
-                            item: "Sun Shade Set",
-                            mrp: 2499,
-                            discount: 300,
-                            code: "SS-4"
-                        },
-                        {
-                            item: "USB C Charging Kit",
-                            mrp: 1899,
-                            discount: 200,
-                            code: "USB-C"
-                        },
-                        {
-                            item: "First Aid Kit",
-                            mrp: 999,
-                            discount: 0,
-                            code: "FAK"
-                        }
+                    accessories: [
+                        { item: "7.2 kW Home Charger",    mrp: 45000, discount: 5000, code: "HC-72"   },
+                        { item: "11.2 kW Home Charger",   mrp: 65000, discount: 8000, code: "HC-112"  },
+                        { item: "Dash Cam Dual Channel",  mrp: 8299,  discount: 1200, code: "DC-DUAL" },
+                        { item: "Parking Assist 360°",    mrp: 15999, discount: 2500, code: "PA-360"  },
+                        { item: "Leather Seat Covers",    mrp: 14990, discount: 2000, code: "LSC-7"   },
+                        { item: "Premium Floor Mats",     mrp: 5899,  discount: 800,  code: "PFM-7"   },
+                        { item: "Chrome Door Visors",     mrp: 4999,  discount: 500,  code: "CDV"     },
+                        { item: "Alloy Wheel Locks",      mrp: 2999,  discount: 400,  code: "AWL"     },
+                        { item: "Scuff Plates LED",       mrp: 3899,  discount: 600,  code: "SP-LED"  },
+                        { item: "Mud Flaps",              mrp: 1299,  discount: 200,  code: "MF"      },
+                        { item: "Perfume Dispenser",      mrp: 899,   discount: 0,    code: "PD-001"  },
+                        { item: "Car Cover Premium",      mrp: 3499,  discount: 500,  code: "CC-PREM" },
+                        { item: "Sun Shade Set",          mrp: 2499,  discount: 300,  code: "SS-4"    },
+                        { item: "USB C Charging Kit",     mrp: 1899,  discount: 200,  code: "USB-C"   },
+                        { item: "First Aid Kit",          mrp: 999,   discount: 0,    code: "FAK"     }
                     ],
 
                     maxicare: 34999,
-                    shield: [{
-                            title: "4th Year",
-                            price: 34990,
-                            default: true
-                        },
-                        {
-                            title: "4th + 5th Year",
-                            price: 52990,
-                            default: false
-                        },
-                        {
-                            title: "No Shield",
-                            price: 0,
-                            default: false
-                        }
+
+                    shield: [
+                        { title: "4th Year",        price: 34990, default: true  },
+                        { title: "4th + 5th Year",  price: 52990, default: false },
+                        { title: "No Shield",       price: 0,     default: false }
                     ],
 
-                    rsa: [{
-                            title: "1 Year",
-                            price: 2499,
-                            default: true
-                        },
-                        {
-                            title: "2 Year",
-                            price: 4599,
-                            default: false
-                        },
-                        {
-                            title: "3 Year",
-                            price: 6499,
-                            default: false
-                        },
-                        {
-                            title: "No RSA",
-                            price: 0,
-                            default: false
-                        }
+                    rsa: [
+                        { title: "1 Year",  price: 2499, default: true  },
+                        { title: "2 Year",  price: 4599, default: false },
+                        { title: "3 Year",  price: 6499, default: false },
+                        { title: "No RSA",  price: 0,    default: false }
                     ],
 
-                    vltd: {
-                        permit: "Private",
-                        price: 5499
-                    },
+                    vltd: { permit: "Private", price: 5499 },
                     kazam: 8500,
                     incidental: 5000,
                     "rto-tape": 1999,
                     fastag: 600,
                     COD: 2500,
 
-                    "charger-swapping": [{
-                            title: "No Swapping @ ₹0",
-                            amount: 0,
-                            default: false
-                        },
-                        {
-                            title: "NCH to 7.2 kW @ ₹18,500",
-                            amount: 18500,
-                            default: true
-                        },
-                        {
-                            title: "NCH to 11.2 kW @ ₹28,500",
-                            amount: 28500,
-                            default: false
-                        },
-                        {
-                            title: "7.2 kW to 11.2 kW @ ₹15,000",
-                            amount: 15000,
-                            default: false
-                        }
+                    "charger-swapping": [
+                        { title: "No Swapping @ ₹0",             amount: 0,     default: false },
+                        { title: "NCH to 7.2 kW @ ₹18,500",      amount: 18500, default: true  },
+                        { title: "NCH to 11.2 kW @ ₹28,500",     amount: 28500, default: false },
+                        { title: "7.2 kW to 11.2 kW @ ₹15,000",  amount: 15000, default: false }
                     ],
 
                     tcs: {
@@ -3192,103 +3040,41 @@
                     }
                 },
 
-                // Deductibles / Discounts
+                // Deductibles / Discounts — unchanged
                 deductibles: {
-                    // Group A - OEM Schemes
-                    "oem-schemes": [{
-                            key: "cash_scheme_oem",
-                            label: "Cash Scheme OEM",
-                            amount: 8500,
-                            type: "INV_OE"
-                        },
-                        {
-                            key: "csd_discount",
-                            label: "CSD Discount",
-                            amount: 3500,
-                            type: "INV_OE"
-                        },
-                        {
-                            key: "fame_subsidy",
-                            label: "Fame Subsidy (LMM)",
-                            amount: 1500,
-                            type: "INV_OE"
-                        }
+                    "oem-schemes": [
+                        { key: "cash_scheme_oem", label: "Cash Scheme OEM",   amount: 8500, type: "INV_OE" },
+                        { key: "csd_discount",    label: "CSD Discount",      amount: 3500, type: "INV_OE" },
+                        { key: "fame_subsidy",    label: "Fame Subsidy (LMM)",amount: 1500, type: "INV_OE" }
                     ],
 
-                    "dealer-scheme": {
-                        amount: 25000,
-                        type: "CN1"
-                    },
-                    "accessory-scheme": {
-                        amount: 8000,
-                        type: "INV_OE"
-                    },
-                    "shield-scheme": {
-                        amount: 3500,
-                        type: "CN1"
-                    },
+                    "dealer-scheme":    { amount: 25000, type: "CN1"    },
+                    "accessory-scheme": { amount: 8000,  type: "INV_OE" },
+                    "shield-scheme":    { amount: 3500,  type: "CN1"    },
 
-                    "corp-scheme": [{
-                            name: "Corporate Discount",
-                            amount: 60000,
-                            type: "INV"
-                        },
-                        {
-                            name: "Loyalty Bonus",
-                            amount: 35000,
-                            type: "INV"
-                        }
+                    "corp-scheme": [
+                        { name: "Corporate Discount", amount: 60000, type: "INV" },
+                        { name: "Loyalty Bonus",      amount: 35000, type: "INV" }
                     ],
 
-                    "exchange-scheme": [{
-                            name: "Exchange Bonus",
-                            amount: 45000,
-                            type: "CN2"
-                        },
-                        {
-                            name: "Green Bonus",
-                            amount: 25000,
-                            type: "CN2"
-                        },
-                        {
-                            name: "Welcome Bonus",
-                            amount: 15000,
-                            type: "CN2"
-                        }
+                    "exchange-scheme": [
+                        { name: "Exchange Bonus", amount: 45000, type: "CN2" },
+                        { name: "Green Bonus",    amount: 25000, type: "CN2" },
+                        { name: "Welcome Bonus",  amount: 15000, type: "CN2" }
                     ],
 
-                    "accessories-spl-discount": {
-                        amount: 5000,
-                        type: "INV_D"
-                    },
-                    "coating-spl-discount": {
-                        amount: 3000,
-                        type: "INV_D"
-                    },
-                    "ppf-spl-discount": {
-                        amount: 10000,
-                        type: "CN1"
-                    },
-                    "charger-swapping-discount": {
-                        amount: 7500,
-                        type: "CN3",
-                        option: "7.2 kW to NCH"
-                    },
-                    "other-cash-discount": {
-                        amount: 2000,
-                        type: "CN1"
-                    },
-
-                    // ✅ FIX: Special Cash Discount with actual amount
-                    "special-cash-discount": {
-                        amount: 75000, // ← Added actual amount
-                        type: "INV_D"
-                    }
+                    "accessories-spl-discount": { amount: 5000,  type: "INV_D" },
+                    "coating-spl-discount":     { amount: 3000,  type: "INV_D" },
+                    "ppf-spl-discount":         { amount: 10000, type: "CN1"   },
+                    "charger-swapping-discount":{ amount: 7500,  type: "CN3", option: "7.2 kW to NCH" },
+                    "other-cash-discount":      { amount: 2000,  type: "CN1"   },
+                    "special-cash-discount":    { amount: 75000, type: "INV_D" }
                 },
+
                 conditional_rules: {
                     accessories_scheme: {
                         min_amount: 8000,
-                        discount_percentage: 20, // 20% of accessories amount
+                        discount_percentage: 20,
                         freeze_message: 'Accessories above ₹8,000'
                     },
                     shield_scheme: {
@@ -3552,19 +3338,7 @@
         function loadInsuranceByPermit() {
             let permit = $("#permit").val();
 
-            const permitPricingType = {
-                '1': 'Private',
-                '2': 'Private',
-                '3': 'Private',
-                '4': 'Goods',
-                '5': 'Goods',
-                '6': 'Goods',
-                '7': 'Goods',
-                '8': 'Passenger',
-                '9': 'Passenger',
-                '10': 'Passenger',
-                '11': 'Passenger'
-            };
+            const permitPricingType = @json($permit_pricing_map ?? []);
 
             let pricingPermit = permitPricingType[permit] || permit;
 
@@ -3937,7 +3711,6 @@
                     .prop('disabled', SAVED_COD_CHARGES === 'N/A');
             }
 
-            // Recalculate after restoring saved values
             calculateQuotation();
             updateCoatingDiscountLabel();
             updateAccessoriesPrintText();
@@ -3948,19 +3721,7 @@
         function updateRegistrationAmount() {
             let permit = $("#permit").val();
 
-            const permitPricingType = {
-                '1': 'Private',
-                '2': 'Private',
-                '3': 'Private',
-                '4': 'Goods',
-                '5': 'Goods',
-                '6': 'Goods',
-                '7': 'Goods',
-                '8': 'Passenger',
-                '9': 'Passenger',
-                '10': 'Passenger',
-                '11': 'Passenger'
-            };
+            const permitPricingType = @json($permit_pricing_map ?? []);
 
             let pricingPermit = permitPricingType[permit] || permit;
 
@@ -3991,9 +3752,6 @@
                 // Remove already formatted price from text if present
                 name = name.replace(/\s*\(₹.*?\)\s*$/, '').trim();
 
-                // IMPORTANT:
-                // First use data-price from the actual selected option.
-                // This is the same price used by the dropdown and calculation.
                 var price = parseFloat($option.attr('data-price'));
 
                 // Fallback to jQuery data()
@@ -4036,68 +3794,24 @@
         }
 
         function updateAccessoriesAmount() {
-
             let total = 0;
-            let hasMissingPrice = false;
 
             $('#accessories option:selected').each(function() {
                 let price = parseFloat($(this).attr('data-price'));
 
                 if (isNaN(price)) {
-                    hasMissingPrice = true;
-                    return;
+                    price = parseFloat($(this).data('price'));
                 }
 
-                total += price;
+                if (!isNaN(price)) {
+                    total += price;
+                }
             });
-
-            // ✅ FIX: In edit mode, if any selected accessory has no price
-            // (mock/DB price missing) OR the calculated total is less than saved,
-            // preserve the ORIGINAL saved accessories amount
-            if (IS_EDIT_MODE && SAVED_ACCESSORIES_AMOUNT !== '') {
-                let savedAmount = parseFloat(SAVED_ACCESSORIES_AMOUNT) || 0;
-
-                if (hasMissingPrice || total < savedAmount || total === 0) {
-                    $('#accessories_amount').val(savedAmount.toFixed(2));
-                    return;
-                }
-            }
 
             $('#accessories_amount').val(total.toFixed(2));
         }
 
-        // ============================================================
-        // 3. HIDE/SHOW ROWS BASED ON VALUE
-        // ============================================================
-
-        // function toggleRowVisibility() {
-        //     // Price grid rows - hide if value is N/A, empty, 0, or 0.00
-        //     $('.price-grid tbody tr').each(function() {
-        //         let $row = $(this);
-        //         let $input = $row.find('td.cell-amount input').first();
-        //         let value = $input.length ? $input.val() : '';
-
-        //         // Check if value is N/A or empty or 0
-        //         if (value === 'N/A' || value === '' || value === null || value === '0' || value === '0.00') {
-        //             $row.hide();
-        //         } else {
-        //             $row.show();
-        //         }
-        //     });
-
-        //     // Discount grid rows
-        //     $('.discount-grid tbody tr').each(function() {
-        //         let $row = $(this);
-        //         let $input = $row.find('td.cell-amount input').first();
-        //         let value = $input.length ? $input.val() : '';
-
-        //         if (value === 'N/A' || value === '' || value === null || value === '0' || value === '0.00') {
-        //             $row.hide();
-        //         } else {
-        //             $row.show();
-        //         }
-        //     });
-        // }
+        
 
         function toggleRowVisibility() {
 
@@ -4627,7 +4341,6 @@
                 $('#cod_charges').val('N/A').prop('disabled', true);
             }
 
-            // Charger Swapping
             if (pricing.receivables["charger-swapping"] && pricing.receivables["charger-swapping"].length > 0) {
                 $('#charger_swapping').empty().prop('disabled', false);
                 pricing.receivables["charger-swapping"].forEach(function(item) {
@@ -4652,17 +4365,14 @@
                 $('#charger_swapping_option_print').text('');
             }
 
-            // TCS
             $('#tcs').val('N/A').prop('disabled', true);
 
-            // ---- Populate Accessories ----
             if (pricing.receivables.accessories && pricing.receivables.accessories.length > 0) {
                 populateAccessories(pricing.receivables.accessories);
             } else {
                 $('#accessories').val([]).trigger('change');
             }
 
-            // ---- Populate Dynamic Group A Discounts ----
             renderGroupADiscounts(pricing);
 
             const groupASelected = $('#group_a_select').val();
@@ -4672,9 +4382,6 @@
                 $('#' + groupASelected).val(groupAAmount);
                 $('#' + groupASelected + '_type').val(groupAType);
             }
-
-            // ---- Populate Static Discounts ----
-            // ---- Populate Static Discounts ----
 
             if (pricing.deductibles["dealer-scheme"]) {
                 let val = pricing.deductibles["dealer-scheme"].amount;
@@ -4700,9 +4407,6 @@
                 );
             }
 
-            // IMPORTANT:
-            // Types are NOT taken independently from mock data.
-            // Cash Scheme OEM Type is the master.
             syncGroupALinkedTypes();
             if (pricing.deductibles["corp-scheme"] && pricing.deductibles["corp-scheme"].length > 0) {
                 let corp = pricing.deductibles["corp-scheme"].find(x => x.name === "Corporate Discount") || pricing
@@ -4713,7 +4417,6 @@
                     $('#group_b_amount').val(corp.amount).trigger('keyup');
                 }
 
-                // Agar corp-scheme mein Loyalty Bonus milta hai, to usse Group C mein set karein
                 let loyalty = pricing.deductibles["corp-scheme"].find(x => x.name === "Loyalty Bonus");
                 if (loyalty) {
                     $('#group_c_select').val('loyalty_bonus').trigger('change');
@@ -4753,7 +4456,6 @@
                 $('#other_cash_discount').val(val > 0 ? val : 'N/A');
             }
 
-            // 4 special fields ka common type sync karein (Default: INV)
             let specialType = pricing.deductibles["accessories-spl-discount"]?.type || 'INV';
             syncSpecialFourDiscountTypes(specialType);
 
@@ -4763,19 +4465,12 @@
                 $('#special_cash_discount_type').val('Inv Disc. (D)');
             }
 
-            // ---- Hide rows with N/A or 0 values ----
             toggleRowVisibility();
 
-            // ---- Final Calculation ----
             calculateQuotation();
 
             checkConditionalFields();
 
-            // Swal.fire({
-            //     icon: 'success',
-            //     title: 'Enquiry Loaded',
-            //     text: `Enquiry ${no}: ${enquiry.customer.name} - ${enquiry.vehicle.model_name}`
-            // });
         });
 
         // ---- Reset Mock Data ----
@@ -5585,10 +5280,19 @@
                 let priceValue = amountCells.eq(0).find('input').val();
                 let discountValue = amountCells.length > 1 ? amountCells.eq(1).find('input').first().val() : '';
 
+                // Hide empty / 0 / N/A rows
                 if (isEmptyGridValue(priceValue) && isEmptyGridValue(discountValue)) {
                     $row.addClass('print-hide');
                 } else {
                     $row.removeClass('print-hide');
+                }
+
+                // Hide conditional discounts when they are frozen/not eligible
+                if (
+                    $row.find('#accessories_discount').hasClass('frozen-field') ||
+                    $row.find('#shield_scheme').hasClass('frozen-field')
+                ) {
+                    $row.addClass('print-hide');
                 }
             });
         }
@@ -5635,6 +5339,11 @@
                     $row.addClass('print-hide');
                 } else {
                     $row.removeClass('print-hide');
+                }
+            });
+            $('#accessories_discount, #shield_scheme').each(function() {
+                if ($(this).hasClass('frozen-field')) {
+                    $(this).closest('tr').addClass('print-hide');
                 }
             });
         }
@@ -5963,112 +5672,55 @@
                 // LOAD INSURANCE FROM CURRENT PRICING
                 // ========================================================
 
-                if (
-                    currentPricing &&
-                    currentPricing.permit &&
-                    Array.isArray(currentPricing.permit)
-                ) {
+                if (currentPricing && currentPricing.receivables) {
+                let permitPricingType = @json($permit_pricing_map ?? []);
 
-                    $("#permit").empty();
+                let savedPermitId = String(savedPermit || '');
 
-                    currentPricing.permit.forEach(function(item) {
+                // Resolve insurance: exact permit id first, then category, then first entry
+                currentInsurance =
+                    currentPricing.receivables.insurance.find(function(item) {
+                        return String(item.permit) === savedPermitId;
+                    }) ||
+                    currentPricing.receivables.insurance.find(function(item) {
+                        return String(item.permit) === String(permitPricingType[savedPermitId] || '');
+                    }) ||
+                    currentPricing.receivables.insurance[0];
+
+                if (currentInsurance && Array.isArray(currentInsurance.companies)) {
+
+                    $("#insurance_company").empty();
+
+                    let activeCompany =
+                        currentInsurance.companies.find(function(company) {
+                            return String(company.insCo).toLowerCase() ===
+                                String(savedCompany).toLowerCase();
+                        }) ||
+                        currentInsurance.companies.find(function(company) {
+                            return company.default;
+                        }) ||
+                        currentInsurance.companies[0];
+
+                    currentInsurance.companies.forEach(function(company) {
 
                         let isSelected =
-                            String(item.type) === String(savedPermit);
+                            activeCompany &&
+                            String(company.insCo).toLowerCase() ===
+                            String(activeCompany.insCo).toLowerCase();
 
-                        if (!savedPermit && item.default) {
-                            isSelected = true;
-                        }
-
-                        $("#permit").append(
-                            `<option value="${item.type}" ${isSelected ? 'selected' : ''}>
-                                ${item.type}
+                        $("#insurance_company").append(
+                            `<option value="${company.insCo}" ${isSelected ? 'selected' : ''}>
+                                ${company.insCo}
                             </option>`
                         );
-
                     });
 
-
-                    let activePermit =
-                        currentPricing.permit.find(function(item) {
-                            return String(item.type) === String(savedPermit);
-                        }) ||
-
-                        currentPricing.permit.find(function(item) {
-                            return item.default;
-                        }) ||
-
-                        currentPricing.permit[0];
-
-
-                    if (activePermit) {
-
-                        $("#permit").val(activePermit.type);
-
-
-                        currentInsurance =
-                            currentPricing.receivables.insurance.find(function(item) {
-
-                                return String(item.permit) ===
-                                    String(activePermit.type);
-
-                            }) ||
-                            currentPricing.receivables.insurance[0];
-
-
-                        if (
-                            currentInsurance &&
-                            Array.isArray(currentInsurance.companies)
-                        ) {
-
-                            $("#insurance_company").empty();
-
-                            let activeCompany =
-                                currentInsurance.companies.find(function(company) {
-
-                                    return String(company.insCo).toLowerCase() ===
-                                        String(savedCompany).toLowerCase();
-
-                                }) ||
-
-                                currentInsurance.companies.find(function(company) {
-
-                                    return company.default;
-
-                                }) ||
-
-                                currentInsurance.companies[0];
-
-
-                            currentInsurance.companies.forEach(function(company) {
-
-                                let isSelected =
-                                    activeCompany &&
-                                    String(company.insCo).toLowerCase() ===
-                                    String(activeCompany.insCo).toLowerCase();
-
-                                $("#insurance_company").append(
-                                    `<option value="${company.insCo}" ${isSelected ? 'selected' : ''}>
-                                        ${company.insCo}
-                                    </option>`
-                                );
-
-                            });
-
-
-                            if (activeCompany) {
-
-                                $("#insurance_company").val(activeCompany.insCo);
-
-                                loadInsurance(activeCompany);
-
-                            }
-
-                        }
-
+                    if (activeCompany) {
+                        $("#insurance_company").val(activeCompany.insCo);
+                        loadInsurance(activeCompany);
                     }
-
                 }
+            }
 
 
                 // ========================================================
@@ -6155,6 +5807,7 @@
 
                 
                 restoreSavedQuotationValues();
+                checkConditionalFields();
             @endif
 
             // Initial calculations
@@ -6164,7 +5817,6 @@
             updateInsurancePrintText();
             updateRegistrationPrintText();
 
-            // Auto-load first enquiry for demo (only in create mode and not in view mode)
             @if (!isset($quotation))
                 if (!IS_VIEW_MODE) {
                     $('#mock_enquiry_no').val('019');
@@ -6172,9 +5824,11 @@
                 }
             @endif
 
+            checkConditionalFields();
+
             setTimeout(function() {
                 checkConditionalFields();
-            }, 500);
+            }, 300);
         });
 
         function calculateDiscountBifurcationByType() {
@@ -6337,18 +5991,32 @@
 
             let enquiryNo = $('#mock_enquiry_no').val();
 
-            // In Edit Mode, mock_enquiry_no may be empty.
-            // Use the saved quotation enquiry number instead.
-            if (IS_EDIT_MODE && (!enquiryNo || !ENQUIRIES[enquiryNo])) {
-                enquiryNo = "{{ $quotationData['enquiry_no'] ?? ($quotation->enquiry_no ?? '') }}";
+            // 1. Try the mock key from #mock_enquiry_no (create mode / after btnFetchMock)
+            let pricing = null;
+
+            if (enquiryNo && ENQUIRIES[enquiryNo]) {
+                pricing = PRICING[ENQUIRIES[enquiryNo].pricingKey];
             }
 
-            if (!enquiryNo || !ENQUIRIES[enquiryNo]) {
-                conditionalRules = null;
-                return;
-            }
+            // 2. Edit-mode fallback: match by savedExShowroom against PRICING
+            //    (works even when the real enquiry id is NOT a mock key)
+            if (!pricing && IS_EDIT_MODE) {
 
-            let pricing = PRICING[ENQUIRIES[enquiryNo].pricingKey];
+                let savedExShowroom = Number(@json($quotationData['ex_showroom_price'] ?? 0));
+
+                let pricingKey = Object.keys(PRICING).find(function (key) {
+                    return Number(PRICING[key]?.receivables?.exShowroom || 0) === savedExShowroom;
+                        });
+
+                        if (pricingKey) {
+                            pricing = PRICING[pricingKey];
+                        }
+                    }
+
+            // 3. Last-ditch fallback: if only one pricing exists, use it
+            if (!pricing && Object.keys(PRICING).length === 1) {
+                pricing = PRICING[Object.keys(PRICING)[0]];
+            }
 
             conditionalRules = pricing?.conditional_rules || null;
         }
