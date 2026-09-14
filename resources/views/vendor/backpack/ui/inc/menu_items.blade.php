@@ -66,7 +66,8 @@
         <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ backpack_url('brand') }}">
             <span><i class="la la-trademark me-2"></i>Brand</span>
         </a>
-        <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ backpack_url('segment') }}">
+        <a class="dropdown-item d-flex align-items-center justify-content-between"
+            href="{{ backpack_url('segment') }}">
             <span><i class="la la-rectangle-wide me-2"></i>Segment</span>
         </a>
         <a class="dropdown-item d-flex align-items-center justify-content-between"
@@ -77,7 +78,8 @@
             href="{{ backpack_url('vehicle-model') }}">
             <span><i class="la la-cube me-2"></i>Vehicle Model</span>
         </a>
-        <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ backpack_url('variant') }}">
+        <a class="dropdown-item d-flex align-items-center justify-content-between"
+            href="{{ backpack_url('variant') }}">
             <span><i class="la la-clone me-2"></i>Variant</span>
         </a>
         <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ backpack_url('color') }}">
@@ -169,10 +171,12 @@
 
     {{-- RBAC Section --}}
     <x-backpack::menu-dropdown title="RBAC" icon="la la-lock" nested="true">
-        <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ backpack_url('modules') }}">
+        <a class="dropdown-item d-flex align-items-center justify-content-between"
+            href="{{ backpack_url('modules') }}">
             <span><i class="la la-cube me-2"></i>Modules</span>
         </a>
-        <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ backpack_url('process') }}">
+        <a class="dropdown-item d-flex align-items-center justify-content-between"
+            href="{{ backpack_url('process') }}">
             <span><i class="la la-cogs me-2"></i>Process</span>
         </a>
         <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ backpack_url('role') }}">
@@ -202,20 +206,20 @@
 {{-- FETCH ENQUIRY COUNTS (Cached for 60 seconds to prevent slow page loads) --}}
 {{-- ========================================================================= --}}
 @php
-$enqCounts = \Illuminate\Support\Facades\Cache::remember('menu_enquiry_counts', 60, function () {
-return [
-'all' => \App\Models\CRM\Enquiry::mainListing()->count(),
-'xceler8' => \App\Models\CRM\Enquiry::xceler8()->count(),
-'reference' => \App\Models\CRM\Enquiry::reference()->count(),
-'virtual' => \App\Models\CRM\Enquiry::virtual()->count(),
-'whatsapp' => \App\Models\CRM\Enquiry::whatsapp()->count(),
-'hyperlocal' => \App\Models\CRM\Enquiry::hyperlocal()->count(),
-'unassigned_quick' => \App\Models\CRM\Enquiry::unassignedQuick()->count(),
-'assigned_quick' => \App\Models\CRM\Enquiry::assignedQuick()->count(),
-'unassigned_long' => \App\Models\CRM\Enquiry::unassignedLong()->count(),
-'assigned_long' => \App\Models\CRM\Enquiry::assignedLong()->count(),
-];
-});
+    $enqCounts = \Illuminate\Support\Facades\Cache::remember('menu_enquiry_counts', 60, function () {
+        return [
+            'all' => \App\Models\CRM\Enquiry::mainListing()->count(),
+            'xceler8' => \App\Models\CRM\Enquiry::xceler8()->count(),
+            'reference' => \App\Models\CRM\Enquiry::reference()->count(),
+            'virtual' => \App\Models\CRM\Enquiry::virtual()->count(),
+            'whatsapp' => \App\Models\CRM\Enquiry::whatsapp()->count(),
+            'hyperlocal' => \App\Models\CRM\Enquiry::hyperlocal()->count(),
+            'unassigned_quick' => \App\Models\CRM\Enquiry::unassignedQuick()->count(),
+            'assigned_quick' => \App\Models\CRM\Enquiry::assignedQuick()->count(),
+            'unassigned_long' => \App\Models\CRM\Enquiry::unassignedLong()->count(),
+            'assigned_long' => \App\Models\CRM\Enquiry::assignedLong()->count(),
+        ];
+    });
 @endphp
 
 {{-- SALES MAIN DROPDOWN --}}
@@ -226,12 +230,13 @@ return [
 
     {{-- Price List --}}
     @if (auth()->check() &&
-    (auth()->user()->hasPermissionTo('can_view_documents') ||
-    auth()->user()->hasRole('super
-    admin')))
-    <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ backpack_url('pricing') }}">
-        <span><i class="la la-tag me-2"></i>Price List</span>
-    </a>
+            (auth()->user()->hasPermissionTo('can_view_documents') ||
+                auth()->user()->hasRole('super
+                admin')))
+        <a class="dropdown-item d-flex align-items-center justify-content-between"
+            href="{{ backpack_url('pricing') }}">
+            <span><i class="la la-tag me-2"></i>Price List</span>
+        </a>
     @endif
 
     {{-- Enquiries --}}
@@ -246,15 +251,15 @@ return [
         <a class="dropdown-item d-flex align-items-center justify-content-between"
             href="{{ backpack_url('enquiries-list') }}">
             <span><i class="nav-icon la la-list me-2"></i>Master Enquiry List</span>
-            <span class="badge rounded-pill text-dark" style="background-color: #e9ecef;">{{ $enqCounts['all'] ?? 0
-                }}</span>
+            <span class="badge rounded-pill text-dark"
+                style="background-color: #e9ecef;">{{ $enqCounts['all'] ?? 0 }}</span>
         </a>
 
         <a class="dropdown-item d-flex align-items-center justify-content-between"
             href="{{ backpack_url('enquiries/xceler8') }}">
             <span>
                 <i class="nav-icon la la-list me-2"></i>
-                Xceler8 Fresh Enquiry List
+                Xceler8 Fresh Enquiries
             </span>
             <span class="badge rounded-pill text-dark" style="background-color: #e9ecef;">
                 {{ $enqCounts['xceler8'] ?? 0 }}
@@ -266,57 +271,57 @@ return [
         <a class="dropdown-item d-flex align-items-center justify-content-between"
             href="{{ backpack_url('enquiries/hyperlocal') }}">
             <span><i class="nav-icon la la-map-marker me-2"></i>Hyperlocal Enquiries</span>
-            <span class="badge rounded-pill text-dark" style="background-color: #e9ecef;">{{ $enqCounts['hyperlocal'] ??
-                0 }}</span>
+            <span class="badge rounded-pill text-dark"
+                style="background-color: #e9ecef;">{{ $enqCounts['hyperlocal'] ?? 0 }}</span>
         </a>
 
         <a class="dropdown-item d-flex align-items-center justify-content-between"
             href="{{ backpack_url('enquiries/reference') }}">
             <span><i class="nav-icon la la-user-times me-2"></i>Reference Enquiries</span>
-            <span class="badge rounded-pill text-dark" style="background-color: #e9ecef;">{{ $enqCounts['reference'] ??
-                0 }}</span>
+            <span class="badge rounded-pill text-dark"
+                style="background-color: #e9ecef;">{{ $enqCounts['reference'] ?? 0 }}</span>
         </a>
 
         <a class="dropdown-item d-flex align-items-center justify-content-between"
             href="{{ backpack_url('enquiries/virtual-number') }}">
             <span><i class="nav-icon la la-user-times me-2"></i>Virtual Number Enquiries</span>
-            <span class="badge rounded-pill text-dark" style="background-color: #e9ecef;">{{ $enqCounts['virtual'] ?? 0
-                }}</span>
+            <span class="badge rounded-pill text-dark"
+                style="background-color: #e9ecef;">{{ $enqCounts['virtual'] ?? 0 }}</span>
         </a>
 
         <a class="dropdown-item d-flex align-items-center justify-content-between"
             href="{{ backpack_url('enquiries/whatsapp-campaign') }}">
             <span><i class="nav-icon la la-user-times me-2"></i>WhatsApp Campaign Enquiries</span>
-            <span class="badge rounded-pill text-dark" style="background-color: #e9ecef;">{{ $enqCounts['whatsapp'] ?? 0
-                }}</span>
+            <span class="badge rounded-pill text-dark"
+                style="background-color: #e9ecef;">{{ $enqCounts['whatsapp'] ?? 0 }}</span>
         </a>
 
         <a class="dropdown-item d-flex align-items-center justify-content-between"
             href="{{ backpack_url('enquiries/unassigned-quick') }}">
             <span><i class="nav-icon la la-user-times me-2"></i>Unassigned Quick Enquiries</span>
-            <span class="badge rounded-pill text-dark" style="background-color: #e9ecef;">{{
-                $enqCounts['unassigned_quick'] ?? 0 }}</span>
+            <span class="badge rounded-pill text-dark"
+                style="background-color: #e9ecef;">{{ $enqCounts['unassigned_quick'] ?? 0 }}</span>
         </a>
 
         <a class="dropdown-item d-flex align-items-center justify-content-between"
             href="{{ backpack_url('enquiries/assigned-quick') }}">
             <span><i class="nav-icon la la-user-times me-2"></i>Assigned Quick Enquiries</span>
-            <span class="badge rounded-pill text-dark" style="background-color: #e9ecef;">{{
-                $enqCounts['assigned_quick'] ?? 0 }}</span>
+            <span class="badge rounded-pill text-dark"
+                style="background-color: #e9ecef;">{{ $enqCounts['assigned_quick'] ?? 0 }}</span>
         </a>
 
         <a class="dropdown-item d-flex align-items-center justify-content-between"
             href="{{ backpack_url('enquiries/unassigned-long') }}">
             <span><i class="nav-icon la la-user-times me-2"></i>Unassigned Long Enquiries</span>
-            <span class="badge rounded-pill text-dark" style="background-color: #e9ecef;">{{
-                $enqCounts['unassigned_long'] ?? 0 }}</span>
+            <span class="badge rounded-pill text-dark"
+                style="background-color: #e9ecef;">{{ $enqCounts['unassigned_long'] ?? 0 }}</span>
         </a>
 
         <a class="dropdown-item d-flex align-items-center justify-content-between"
             href="{{ backpack_url('enquiries/assigned-long') }}">
             <span><i class="nav-icon la la-user-times me-2"></i>Assigned Long Enquiries</span>
-            <span class="badge rounded-pill text-dark" style="background-color: #e9ecef;">{{ $enqCounts['assigned_long']
-                ?? 0 }}</span>
+            <span class="badge rounded-pill text-dark"
+                style="background-color: #e9ecef;">{{ $enqCounts['assigned_long'] ?? 0 }}</span>
         </a>
         <a class="dropdown-item d-flex align-items-center justify-content-between"
             href="{{ backpack_url('campaign') }}">
@@ -356,7 +361,8 @@ return [
     <x-backpack::menu-dropdown title="Booking" icon="la la-book-open" nested="true">
         <!-- <x-backpack::menu-dropdown-item title="Add New Booking" icon="la la-plus-circle"
             :link="backpack_url('booking/create')" /> -->
-        <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ backpack_url('booking') }}">
+        <a class="dropdown-item d-flex align-items-center justify-content-between"
+            href="{{ backpack_url('booking') }}">
             <span><i class="la la-list me-2"></i>Xceler8 Booking List</span>
         </a>
 
@@ -775,20 +781,20 @@ return [
 
     {{-- Other (Fees) --}}
     @can(['create_fee_collection', 'verify_fee_collection'])
-    <x-backpack::menu-dropdown title="Other" icon="la la-file-invoice-dollar" nested="true">
-        <x-backpack::menu-dropdown title="Fee Collection" icon="la la-dollar-sign" nested="true">
-            <x-backpack::menu-dropdown title="Registration" icon="la la-registered" nested="true">
-                <a class="dropdown-item d-flex align-items-center justify-content-between"
-                    href="{{ backpack_url('fee-collection/add') }}">
-                    <span><i class="la la-plus-circle me-2"></i>Add Fee</span>
-                </a>
-                <a class="dropdown-item d-flex align-items-center justify-content-between"
-                    href="{{ backpack_url('fee-collection') }}">
-                    <span><i class="la la-list-ul me-2"></i>View List</span>
-                </a>
+        <x-backpack::menu-dropdown title="Other" icon="la la-file-invoice-dollar" nested="true">
+            <x-backpack::menu-dropdown title="Fee Collection" icon="la la-dollar-sign" nested="true">
+                <x-backpack::menu-dropdown title="Registration" icon="la la-registered" nested="true">
+                    <a class="dropdown-item d-flex align-items-center justify-content-between"
+                        href="{{ backpack_url('fee-collection/add') }}">
+                        <span><i class="la la-plus-circle me-2"></i>Add Fee</span>
+                    </a>
+                    <a class="dropdown-item d-flex align-items-center justify-content-between"
+                        href="{{ backpack_url('fee-collection') }}">
+                        <span><i class="la la-list-ul me-2"></i>View List</span>
+                    </a>
+                </x-backpack::menu-dropdown>
             </x-backpack::menu-dropdown>
         </x-backpack::menu-dropdown>
-    </x-backpack::menu-dropdown>
     @endcan
 
     {{-- Reports --}}
