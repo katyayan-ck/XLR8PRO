@@ -152,18 +152,40 @@
                             <div class="col-sm-3 finance-field" id="instrument_type_wrapper" style="display:none;">
                                 <label class="form-label">Instrument Type <span class="text-danger">*</span></label>
                                 <select name="instrument_type" id="instrument_type" class="form-control form-select">
-                                    <option value="">-- Select --</option>
-                                    <option value="1" {{ old('instrument_type', $finance->instrument_type ?? '') == 1 ?
-                                        'selected' : '' }}>Financier Payment</option>
-                                    <option value="2" {{ old('instrument_type', $finance->instrument_type ?? '') == 2 ?
-                                        'selected' : '' }}>Delivery Order</option>
-                                    <option value="3" {{ old('instrument_type', $finance->instrument_type ?? '') == 3 ?
-                                        'selected' : '' }}>Sanction Letter</option>
-                                    <option value="4" {{ old('instrument_type', $finance->instrument_type ?? '') == 4 ?
-                                        'selected' : '' }}>Mail Communication</option>
-                                    <option value="5" {{ old('instrument_type', $finance->instrument_type ?? '') == 5 ?
-                                        'selected' : '' }}>Whatsapp Communication</option>
-                                </select>
+                                <option value="">-- Select --</option>
+                                <option value="1" {{ old('instrument_type', $finance->instrument_type ?? '') == 1
+                                    ? 'selected' : '' }}>
+                                    Financier Payment
+                                </option>
+                                <option value="2" {{ old('instrument_type', $finance->instrument_type ?? '') == 2
+                                    ? 'selected' : '' }}>
+                                    Delivery Order
+                                </option>
+                                <option value="3" {{ old('instrument_type', $finance->instrument_type ?? '') == 3
+                                    ? 'selected' : '' }}>
+                                    Sanction Letter
+                                </option>
+                                <option value="4" {{ old('instrument_type', $finance->instrument_type ?? '') == 4
+                                    ? 'selected' : '' }}>
+                                    Mail Communication
+                                </option>
+                                <option value="5" {{ old('instrument_type', $finance->instrument_type ?? '') == 5
+                                    ? 'selected' : '' }}>
+                                    Whatsapp Communication
+                                </option>
+                                <option value="6" {{ old('instrument_type', $finance->instrument_type ?? '') == 6
+                                    ? 'selected' : '' }}>
+                                    Banker Cheque
+                                </option>
+                                <option value="7" {{ old('instrument_type', $finance->instrument_type ?? '') == 7
+                                    ? 'selected' : '' }}>
+                                    Demand Graph
+                                </option>
+                                <option value="8" {{ old('instrument_type', $finance->instrument_type ?? '') == 8
+                                    ? 'selected' : '' }}>
+                                    Customer Cheque
+                                </option>
+                            </select>
                             </div>
 
                             <!-- Ref No. -->

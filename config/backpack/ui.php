@@ -24,9 +24,9 @@ return [
 
     'breadcrumbs' => true,
 
-    'developer_name' => 'BMPL',
+    'developer_name' => 'Bikaner Motors',
 
-    'developer_link' => 'http://BikanerMotors.com',
+    'developer_link' => 'https://www.bikanermotors.com/',
 
     'show_powered_by' => true,
 

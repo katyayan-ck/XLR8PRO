@@ -205,6 +205,40 @@
                         <div class="card-body">
                             <h2 class="mb-3">Customer Details</h2>
                             <div class="row">
+
+                                <!-- PAN No -->
+                                <div class="col-sm-3">
+                                    <div class="form-group">
+                                        <label for="panno">PAN Card No.</label>
+                                        <input type="text" name="panno" id="panno" class="form-control"
+                                            value="{{ old('panno', $enquiry->pan_no ?? ($q['panno'] ?? '')) }}">
+                                    </div>
+                                </div>
+
+                                <!-- Aadhar No -->
+                                <div class="col-sm-3">
+                                    <div class="form-group">
+                                        <label for="adharno">Aadhar No.</label>
+                                        <input type="text" name="adharno" id="adharno" class="form-control"
+                                            value="{{ old('adharno', $enquiry->adhar_no ?? ($q['adharno'] ?? '')) }}">
+                                    </div>
+                                </div>
+
+                                <!-- GSTN -->
+                                <div class="col-sm-3">
+                                    <div class="form-group" id="gstn-group">
+                                        <label for="gstn">GSTIN <span class="required-mark"
+                                                style="display: none;">*</span></label>
+                                        <input type="text" name="gstn" id="gstn" class="form-control"
+                                            placeholder="Enter GSTN No." disabled
+                                            value="{{ old('gstn', $enquiry->gstn ?? ($q['gstn'] ?? '')) }}">
+                                        <div class="form-check mt-1">
+                                            <input type="checkbox" id="notrequiredgst" name="notrequiredgst"
+                                                class="form-check-input" checked>
+                                            <label for="notrequiredgst" class="form-check-label">GST Unregistered</label>
+                                        </div>
+                                    </div>
+                                </div>
                                 <!-- Customer Name -->
                                 <div class="col-sm-3">
                                     <div class="form-group">
@@ -262,7 +296,7 @@
                                 </div>
 
                                 <!-- Alternate Mobile -->
-                                <div class="col-sm-4">
+                                <div class="col-sm-3">
                                     <div class="form-group">
                                         <label for="altmobile">Alternate Contact No.</label>
                                         <input type="text" name="altmobile" id="altmobile" class="form-control"
@@ -271,7 +305,7 @@
                                 </div>
 
                                 <!-- Gender -->
-                                <div class="col-sm-4">
+                                <div class="col-sm-3">
                                     <div class="form-group">
                                         <label for="gender">Gender <span class="required-mark">*</span></label>
                                         <select name="gender" id="gender" class="form-control form-select" required>
@@ -289,7 +323,7 @@
                                 </div>
 
                                 <!-- Occupation -->
-                                <div class="col-sm-4">
+                                <div class="col-sm-3">
                                     <div class="form-group">
                                         <label for="occupation">Occupation <span class="required-mark">*</span></label>
                                         <select name="occupation" id="occupation" class="form-control form-select"
@@ -316,42 +350,10 @@
                                     </div>
                                 </div>
 
-                                <!-- PAN No -->
-                                <div class="col-sm-3">
-                                    <div class="form-group">
-                                        <label for="panno">PAN Card No.</label>
-                                        <input type="text" name="panno" id="panno" class="form-control"
-                                            value="{{ old('panno', $enquiry->pan_no ?? ($q['panno'] ?? '')) }}">
-                                    </div>
-                                </div>
-
-                                <!-- Aadhar No -->
-                                <div class="col-sm-3">
-                                    <div class="form-group">
-                                        <label for="adharno">Aadhar No.</label>
-                                        <input type="text" name="adharno" id="adharno" class="form-control"
-                                            value="{{ old('adharno', $enquiry->adhar_no ?? ($q['adharno'] ?? '')) }}">
-                                    </div>
-                                </div>
-
-                                <!-- GSTN -->
-                                <div class="col-sm-2">
-                                    <div class="form-group" id="gstn-group">
-                                        <label for="gstn">GSTN <span class="required-mark"
-                                                style="display: none;">*</span></label>
-                                        <input type="text" name="gstn" id="gstn" class="form-control"
-                                            placeholder="Enter GSTN No." disabled
-                                            value="{{ old('gstn', $enquiry->gstn ?? ($q['gstn'] ?? '')) }}">
-                                        <div class="form-check mt-2">
-                                            <input type="checkbox" id="notrequiredgst" name="notrequiredgst"
-                                                class="form-check-input" checked>
-                                            <label for="notrequiredgst" class="form-check-label">GST Unregistered</label>
-                                        </div>
-                                    </div>
-                                </div>
+                                
 
                                 <!-- Customer D.O.B. -->
-                                <div class="col-sm-2">
+                                <div class="col-sm-3">
                                     <div class="form-group" id="dob-group">
                                         <label for="customerdob">Customer D.O.B. <span
                                                 class="required-mark">*</span></label>
@@ -365,7 +367,7 @@
                                 </div>
 
                                 <!-- Customer Age -->
-                                <div class="col-sm-2">
+                                <div class="col-sm-3">
                                     <div class="form-group" id="age-group">
                                         <label for="customerage">Customer Age</label>
                                         <input type="text" name="customerage" id="customerage" class="form-control"
@@ -374,8 +376,8 @@
                                 </div>
 
                                 {{-- ================= CUSTOMER ADDRESS DETAILS ================= --}}
-                                <div class="col-md-2 mb-3">
-                                    <label class="form-label">
+                                <div class="col-sm-2 mb-2">
+                                    <label>
                                         Pin Code <span class="text-danger">*</span>
                                     </label>
                                     <input type="text" id="zipcode" name="pincode" maxlength="6"
@@ -383,8 +385,8 @@
                                         required>
                                 </div>
 
-                                <div class="col-md-2 mb-3">
-                                    <label class="form-label">
+                                <div class="col-sm-2">
+                                    <label>
                                         VPO <span class="text-danger">*</span>
                                     </label>
 
@@ -396,8 +398,8 @@
                                         placeholder="Enter VPO Manually" value="{{ old('vpo', $enquiry->vpo ?? '') }}">
                                 </div>
 
-                                <div class="col-md-2 mb-3">
-                                    <label class="form-label">
+                                <div class="col-sm-2">
+                                    <label>
                                         Tehsil <span class="text-danger">*</span>
                                     </label>
 
@@ -410,8 +412,8 @@
                                         value="{{ old('customer_tehsil', $enquiry->tehsil ?? '') }}">
                                 </div>
 
-                                <div class="col-md-2 mb-3">
-                                    <label class="form-label">
+                                <div class="col-sm-2">
+                                    <label>
                                         District <span class="text-danger">*</span>
                                     </label>
 
@@ -424,8 +426,8 @@
                                         value="{{ old('customer_district', $enquiry->district ?? '') }}">
                                 </div>
 
-                                <div class="col-md-2 mb-3">
-                                    <label class="form-label">
+                                <div class="col-sm-2">
+                                    <label>
                                         State <span class="text-danger">*</span>
                                     </label>
 
@@ -438,8 +440,8 @@
                                         value="{{ old('city', $enquiry->city ?? '') }}">
                                 </div>
 
-                                <div class="col-md-2 mb-3">
-                                    <label class="form-label">
+                                <div class="col-sm-2">
+                                    <label>
                                         Territory <span class="text-danger">*</span>
                                     </label>
 
@@ -458,8 +460,28 @@
                                     </select>
                                 </div>
 
+                                <!-- Sale Type -->
+                                <div class="col-sm-3">
+                                    <label>
+                                        Sale Type <span class="text-danger">*</span>
+                                    </label>
 
-                                <div class="col-sm-4">
+                                    <select id="sale_type" name="sale_type"
+                                            class="form-control form-select" required>
+                                        <option value="">Select Sale Type</option>
+                                        <option value="1"
+                                            {{ old('sale_type', '') == '1' ? 'selected' : '' }}>
+                                            Within State
+                                        </option>
+                                        <option value="2"
+                                            {{ old('sale_type', '') == '2' ? 'selected' : '' }}>
+                                            Outside State
+                                        </option>
+                                    </select>
+                                </div>
+
+
+                                <div class="col-sm-3">
                                     <div class="form-group">
                                         <label for="branch">Branch <span class="required-mark">*</span></label>
                                         <select name="branch" id="branch" class="form-control form-select" required>
@@ -475,7 +497,7 @@
                                     </div>
                                 </div>
 
-                                <div class="col-sm-4">
+                                <div class="col-sm-3">
                                     <div class="form-group">
                                         <label for="location">Location <span class="required-mark">*</span></label>
                                         <select name="location" id="location" class="form-control form-select" required
@@ -485,7 +507,7 @@
                                     </div>
                                 </div>
 
-                                <div class="col-sm-4">
+                                <div class="col-sm-3">
                                     <div class="form-group" id="othloc">
                                         <label for="locationother">Other Location <span class="required-mark"
                                                 style="display: none;">*</span></label>
@@ -877,9 +899,17 @@
                                         style="display: none;">*</span></label>
                                 <select name="dsadetails" id="dsadetails" class="form-control form-select" disabled>
                                     <option value="" disabled selected>-- Select DSA --</option>
+
                                     @foreach ($data['dsa_details'] ?? [] as $dsa)
-                                        <option value="{{ $dsa->id }}">{{ $dsa->name }} -
-                                            {{ $dsa->mobile }}
+                                        <option
+                                            value="{{ $dsa->id }}"
+                                            data-location="{{ $dsa->location ?? '' }}"
+                                        >
+                                            {{ $dsa->name ?? 'N/A' }}
+                                            -
+                                            {{ $dsa->mobile ?? 'N/A' }}
+                                            -
+                                            {{ $dsa->location ?? 'N/A' }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -2293,11 +2323,23 @@
                     userSelect.prop('disabled', false).prop('required', true);
                     userSelect.next('.select2-container').removeClass('select2-disabled-custom');
                 } else if (isFieldDSA) {
-                    @php
-                        foreach ($data['dsa_details'] ?? [] as $dsa) {
-                            echo "userSelect.append('<option value=\\\"" . $dsa->id . "\\\">" . $dsa->name . ' - ' . ($dsa->mobile ?? '') . "</option>');";
-                        }
-                    @endphp
+                    @foreach ($data['dsa_details'] ?? [] as $dsa)
+                        userSelect.append(
+                            $('<option>', {
+                                value: @json($dsa->id),
+                                text: @json(
+                                    ($dsa->name ?? 'N/A') .
+                                    ' - ' .
+                                    ($dsa->mobile ?? 'N/A') .
+                                    ' - ' .
+                                    ($dsa->location ?? 'N/A')
+                                )
+                            }).attr(
+                                'data-location',
+                                @json($dsa->location ?? '')
+                            )
+                        );
+                    @endforeach
                 }
 
                 // userSelect.select2();

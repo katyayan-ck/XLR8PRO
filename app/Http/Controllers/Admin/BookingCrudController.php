@@ -642,6 +642,9 @@ class BookingCrudController extends CrudController
             3 => 'Sanction Letter',
             4 => 'Mail Communication',
             5 => 'Whatsapp Communication',
+            6 => 'Banker Cheque',
+            7 => 'Demand Graph',
+            8 => 'Customer Cheque',
             default => 'N/A'
         };
 
@@ -1872,6 +1875,7 @@ class BookingCrudController extends CrudController
             'model'                 => 'required|string|max:255',
             'variant'               => 'required|string|max:255',
             'color'                 => 'required|string|max:255',
+            'sale_type'             => 'required|in:1,2',
             'name'                  => 'required|string|max:255',
             'careof'                => 'nullable|string|max:255',
             'careofname'            => 'nullable|string|max:255',
@@ -8017,7 +8021,10 @@ class BookingCrudController extends CrudController
             2 => 'Delivery Order',
             3 => 'Sanction Letter',
             4 => 'Mail Communication',
-            5 => 'Whatsapp Communication'
+            5 => 'Whatsapp Communication',
+            6 => 'Banker Cheque',
+            7 => 'Demand Graph',
+            8 => 'Customer Cheque',
         ];
 
         $caseLostReasons = [
