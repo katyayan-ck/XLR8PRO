@@ -52,18 +52,27 @@
 
 @section('content')
     @php
+        $isLong = isset($enquiry) && strtoupper($enquiry->current_origin ?? '') === 'LONG';
+        $isQuick = isset($enquiry) && strtoupper($enquiry->current_origin ?? '') === 'QUICK';
         $isVirtual = isset($enquiry) && strtoupper($enquiry->current_origin ?? '') === 'VIRTUAL';
-        $isReference = isset($enquiry) && strtoupper($enquiry->source_code ?? '') === 'REFERENCE';
-        $isWhatsapp = isset($enquiry) && strtoupper($enquiry->source_code ?? '') === 'WHATSAPP';
+        $isReference = isset($enquiry) && strtoupper($enquiry->current_origin ?? '') === 'REFERENCE';
+        $isWhatsapp = isset($enquiry) && strtoupper($enquiry->current_origin ?? '') === 'WHATSAPP';
+        $isXceler8 = isset($enquiry) && strtoupper($enquiry->current_origin ?? '') === 'XCELER8';
 
         // Dynamic Heading string
         $enqTypeStr = 'Enquiry';
         if ($isReference) {
             $enqTypeStr = 'Reference Enquiry';
         } elseif ($isVirtual) {
-            $enqTypeStr = 'Virtual Enquiry';
+            $enqTypeStr = 'Virtual Number Enquiry';
         } elseif ($isWhatsapp) {
-            $enqTypeStr = 'WhatsApp Campaign Enquiry';
+            $enqTypeStr = 'WhatsApp Enquiry';
+        } elseif ($isLong) {
+            $enqTypeStr = 'Dms Long Enquiry';
+        } elseif ($isQuick) {
+            $enqTypeStr = 'Dms Quick Enquiry';
+        } elseif ($isXceler8) {
+            $enqTypeStr = 'Xceler8 Enquiry';
         }
 
         // Dynamic Flexbox Ordering for the cards
@@ -348,10 +357,24 @@
                     </div>
                     <div class="card-body">
                         <div class="row">
+                            <div class="col-md-6 mb-6">
+                                <label class="form-label">Xceler8 Enquiry Number</label>
+                                <input type="text" name="enq_no" class="form-control"
+                                    value="{{ isset($enquiry->id) ? 'XENQ-' . $enquiry->id : '' }}" readonly tabindex="-1"
+                                    style="background-color: #e9ecef; pointer-events: none;">
+                            </div>
+
+                            <div class="col-md-6 mb-6">
+                                <label class="form-label">Xceler8 Enquiry Date</label>
+                                <input type="text" name="enquiry_date" class="form-control"
+                                    value="{{ $enquiry->created_at ? $enquiry->created_at->format('d-m-Y H:i:s') : '' }}"
+                                    readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                            </div>
                             <div class="col-md-2 mb-3">
                                 <label class="form-label">Virtual Number</label>
                                 <input type="text" name="virtual_no" class="form-control"
-                                    value="{{ $enquiry->virtual_no ?? '' }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                    value="{{ $enquiry->virtual_no ?? '' }}" readonly tabindex="-1"
+                                    style="background-color: #e9ecef; pointer-events: none;">
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">Call Date</label>
@@ -362,12 +385,14 @@
                             <div class="col-md-2 mb-3">
                                 <label class="form-label">Call Duration</label>
                                 <input type="text" name="call_duration" class="form-control"
-                                    value="{{ $enquiry->call_duration ?? '' }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                    value="{{ $enquiry->call_duration ?? '' }}" readonly tabindex="-1"
+                                    style="background-color: #e9ecef; pointer-events: none;">
                             </div>
                             <div class="col-md-2 mb-3">
                                 <label class="form-label">Customer Contact Number</label>
                                 <input type="text" id="virtual_mobile" name="virtual_mobile_display" class="form-control"
-                                    value="{{ old('mobile', $enquiry->mobile ?? '') }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                    value="{{ old('mobile', $enquiry->mobile ?? '') }}" readonly tabindex="-1"
+                                    style="background-color: #e9ecef; pointer-events: none;">
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">Call Nature <span class="text-danger">*</span></label>
@@ -504,6 +529,20 @@
                         </div>
                         <div class="card-body">
                             <div class="row">
+                                <div class="col-md-6 mb-6">
+                                    <label class="form-label">Xceler8 Enquiry Number</label>
+                                    <input type="text" name="enq_no" class="form-control"
+                                        value="{{ isset($enquiry->id) ? 'XENQ-' . $enquiry->id : '' }}" readonly
+                                        tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                </div>
+
+                                <div class="col-md-6 mb-6">
+                                    <label class="form-label">Xceler8 Enquiry Date</label>
+                                    <input type="text" name="enquiry_date" class="form-control"
+                                        value="{{ $enquiry->created_at ? $enquiry->created_at->format('d-m-Y H:i:s') : '' }}"
+                                        readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                </div>
+
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Lead Date & Time</label>
                                     <input type="text" class="form-control"
@@ -545,11 +584,28 @@
                         <h3 class="mb-0 fw-bold">Enquiry Credentials</h3>
                     </div>
                     <div class="card-body">
+
                         <div class="row">
+                            @if ($isReference)
+                                <div class="col-md-6 mb-6">
+                                    <label class="form-label">Xceler8 Enquiry Number</label>
+                                    <input type="text" name="enq_no" class="form-control"
+                                        value="{{ isset($enquiry->id) ? 'XENQ-' . $enquiry->id : '' }}" readonly
+                                        tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                </div>
+
+                                <div class="col-md-6 mb-6">
+                                    <label class="form-label">Xceler8 Enquiry Date</label>
+                                    <input type="text" name="enquiry_date" class="form-control"
+                                        value="{{ $enquiry->created_at ? $enquiry->created_at->format('d-m-Y H:i:s') : '' }}"
+                                        readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                </div>
+                            @endif
+
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">Enquiry Origin</label>
-                                <input type="text" class="form-control" value="{{ $enquiry->origin ?? 'Xceler8' }}"
-                                    readonly style="background-color: #e9ecef;">
+                                <input type="text" class="form-control" value="{{ $enqTypeStr }}" readonly
+                                    style="background-color: #e9ecef;">
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">Enquiry Type <span class="text-danger">*</span></label>
@@ -638,24 +694,19 @@
                     <div class="card-body">
                         <div class="row">
 
-                            {{-- Always show raw DB Model if it exists in DB --}}
-                            @if (isset($enquiry) && !empty($enquiry->model))
+
+                            @if ($isLong && $isQuick)
                                 <div class="col-md-4 mb-4">
                                     <label class="form-label">Model Family</label>
                                     <input type="text" class="form-control" value="{{ $enquiry->model }}" readonly
                                         style="background-color: #e9ecef;">
                                 </div>
-                            @endif
 
-                            {{-- Always show raw DB Variant if it exists in DB --}}
-                            @if (isset($enquiry) && !empty($enquiry->variant))
                                 <div class="col-md-4 mb-4">
                                     <label class="form-label">Variant Family</label>
                                     <input type="text" class="form-control" value="{{ $enquiry->variant }}" readonly
                                         style="background-color: #e9ecef;">
                                 </div>
-                            @endif
-                            @if (isset($enquiry) && !empty($enquiry->variant))
                                 <div class="col-md-4 mb-4">
                                     <label class="form-label">Color Family</label>
                                     <input type="text" class="form-control" value="{{ $enquiry->color }}" readonly
@@ -698,10 +749,11 @@
                                     <option value="">Select Color</option>
                                 </select>
                             </div>
-                            
+
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">Fuel Type <span class="text-danger">*</span></label>
-                                <input type="text" id="fuel_type" class="form-control" readonly tabindex="-1" style="background-color: #e9ecef;">
+                                <input type="text" id="fuel_type" class="form-control" readonly tabindex="-1"
+                                    style="background-color: #e9ecef;">
                                 <input type="hidden" id="fuel_type_id" name="fuel_type">
                             </div>
                             <div class="col-md-3 mb-3">
@@ -711,11 +763,13 @@
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">Drivetrain <span class="text-danger">*</span></label>
-                                <input type="text" id="drivetrain" name="drivetrain" class="form-control" readonly tabindex="-1" style="background-color: #e9ecef;">
+                                <input type="text" id="drivetrain" name="drivetrain" class="form-control" readonly
+                                    tabindex="-1" style="background-color: #e9ecef;">
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">Seating <span class="text-danger">*</span></label>
-                                <input type="text" id="seating" name="seating" class="form-control" readonly tabindex="-1" style="background-color: #e9ecef;">
+                                <input type="text" id="seating" name="seating" class="form-control" readonly
+                                    tabindex="-1" style="background-color: #e9ecef;">
                             </div>
 
                             <div class="row w-100 m-0 p-0" id="bevSection" style="display: none;">
@@ -823,12 +877,11 @@
                                 <input type="text" name="care_of" id="care_of" class="form-control uppercase"
                                     value="{{ old('care_of', $enquiry->care_of ?? '') }}">
                             </div>
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label">Contact Number<span class="text-danger">*</span></label>
-                                    <input type="text" id="mobile" name="mobile" maxlength="10"
-                                        class="form-control" value="{{ old('mobile', $enquiry->mobile ?? '') }}"
-                                        required>
-                                </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Contact Number<span class="text-danger">*</span></label>
+                                <input type="text" id="mobile" name="mobile" maxlength="10" class="form-control"
+                                    value="{{ old('mobile', $enquiry->mobile ?? '') }}" required>
+                            </div>
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">Alternate Contact Number<small
                                         class="text-muted"></small></label>
@@ -1169,6 +1222,39 @@
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-3 mb-3">
+                                <label class="form-label">D.O.B. <small class="text-muted"></small></label>
+                                <input type="text" id="dob" name="dob" class="form-control"
+                                    value="{{ old('dob', $enquiry->dob ?? '') }}" placeholder="Select D.O.B.">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Age Group <small class="text-muted"></small></label>
+                                <select name="age_group" class="form-control form-select">
+                                    <option value="">Select Age Group</option>
+                                    @foreach ($age_groups as $item)
+                                        <option value="{{ $item['code'] }}"
+                                            {{ old('age_group', $enquiry->age_group ?? '') == $item['code'] ? 'selected' : '' }}>
+                                            {{ $item['value'] }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Marital Status</label>
+                                <select name="marital_status" class="form-control form-select">
+                                    <option value="">Select Marital Status</option>
+                                    @foreach ($marital_statuses as $item)
+                                        <option value="{{ $item['code'] }}"
+                                            {{ old('marital_status', $enquiry->marital_status ?? '') == $item['code'] ? 'selected' : '' }}>
+                                            {{ $item['value'] }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Date of Marriage <small class="text-muted"></small></label>
+                                <input type="text" id="marriage_date" name="marriage_date" class="form-control"
+                                    value="{{ old('marriage_date', $enquiry->marriage_date ?? '') }}"
+                                    placeholder="Select Marriage Date">
+                            </div>
+                            <div class="col-md-3 mb-3">
                                 <label class="form-label">Occupation Type</label>
                                 <select name="occupation_type" class="form-control form-select">
                                     <option value="">Select Occupation Type</option>
@@ -1206,39 +1292,7 @@
                                 <input type="text" name="company_name" class="form-control"
                                     value="{{ old('company_name', $enquiry->company_name ?? '') }}">
                             </div>
-                            <div class="col-md-3 mb-3">
-                                <label class="form-label">D.O.B. <small class="text-muted"></small></label>
-                                <input type="text" id="dob" name="dob" class="form-control"
-                                    value="{{ old('dob', $enquiry->dob ?? '') }}" placeholder="Select D.O.B.">
-                            </div>
-                            <div class="col-md-3 mb-3">
-                                <label class="form-label">Age Group <small class="text-muted"></small></label>
-                                <select name="age_group" class="form-control form-select">
-                                    <option value="">Select Age Group</option>
-                                    @foreach ($age_groups as $item)
-                                        <option value="{{ $item['code'] }}"
-                                            {{ old('age_group', $enquiry->age_group ?? '') == $item['code'] ? 'selected' : '' }}>
-                                            {{ $item['value'] }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-3 mb-3">
-                                <label class="form-label">Marital Status</label>
-                                <select name="marital_status" class="form-control form-select">
-                                    <option value="">Select Marital Status</option>
-                                    @foreach ($marital_statuses as $item)
-                                        <option value="{{ $item['code'] }}"
-                                            {{ old('marital_status', $enquiry->marital_status ?? '') == $item['code'] ? 'selected' : '' }}>
-                                            {{ $item['value'] }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-3 mb-3">
-                                <label class="form-label">Date of Marriage <small class="text-muted"></small></label>
-                                <input type="text" id="marriage_date" name="marriage_date" class="form-control"
-                                    value="{{ old('marriage_date', $enquiry->marriage_date ?? '') }}"
-                                    placeholder="Select Marriage Date">
-                            </div>
+
 
                         </div>
                     </div>
@@ -1264,7 +1318,7 @@
                                             'consider_make',
                                             $enquiry->consider_make ??
                                                 'No
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            Consideration',
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            Consideration',
                                         ) == 'No Consideration'
                                             ? 'selected'
                                             : '' }}>
@@ -1549,44 +1603,44 @@
                         </div>
                         {{-- 9. SC ENQUIRY STAGE --}}
                         @if (strtoupper($enquiry->current_origin ?? '') !== 'QUICK')
-                        <div class="card enquiry-card" style="order: 9;">
-                            <div class="card-header">
-                                <h4 class="mb-0 fw-bold">SC Enquiry Stage</h4>
-                            </div>
-                            <div class="card-body">
-                                <div class="row mb-4">
-                                    <div class="col-md-3 mb-3"><label class="form-label">Enquiry Stage</label><input
-                                            type="text" class="form-control"
-                                            value="{{ $enqStageMap[$enquiry?->dms_enquiry_stage ?? ''] ?? ($enquiry?->dms_enquiry_stage ?? ($enquiry?->stage ?? '—')) }}"
-                                            readonly style="background-color: #e9ecef;"></div>
-                                    <div class="col-md-3 mb-3"><label class="form-label">Test Drive Count</label><input
-                                            type="text" class="form-control"
-                                            value="{{ $enquiry?->td_count ?? '0' }}" readonly
-                                            style="background-color: #e9ecef;"></div>
-                                    <div class="col-md-3 mb-3"><label class="form-label">Test Drive Number</label><input
-                                            type="text" class="form-control"
-                                            value="{{ $enquiry?->test_drive_no ?? '—' }}" readonly
-                                            style="background-color: #e9ecef;"></div>
-                                    <div class="col-md-3 mb-3"><label class="form-label">Test Drive Date</label><input
-                                            type="text" class="form-control"
-                                            value="{{ isset($enquiry) && $enquiry->td_date ? \Carbon\Carbon::parse($enquiry->td_date)->format('d-M-Y') : '—' }}"
-                                            readonly style="background-color: #e9ecef;"></div>
-                                    <div class="col-md-3 mb-3"><label class="form-label">Booking Date</label><input
-                                            type="text" class="form-control"
-                                            value="{{ isset($enquiry) && ($enquiry->x8_booking_date || $enquiry->booking_date) ? \Carbon\Carbon::parse($enquiry->x8_booking_date ?? $enquiry->booking_date)->format('d-M-Y') : '—' }}"
-                                            readonly style="background-color: #e9ecef;"></div>
+                            <div class="card enquiry-card" style="order: 9;">
+                                <div class="card-header">
+                                    <h4 class="mb-0 fw-bold">SC Enquiry Stage</h4>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row mb-4">
+                                        <div class="col-md-3 mb-3"><label class="form-label">Enquiry Stage</label><input
+                                                type="text" class="form-control"
+                                                value="{{ $enqStageMap[$enquiry?->dms_enquiry_stage ?? ''] ?? ($enquiry?->dms_enquiry_stage ?? ($enquiry?->stage ?? '—')) }}"
+                                                readonly style="background-color: #e9ecef;"></div>
+                                        <div class="col-md-3 mb-3"><label class="form-label">Test Drive
+                                                Count</label><input type="text" class="form-control"
+                                                value="{{ $enquiry?->td_count ?? '0' }}" readonly
+                                                style="background-color: #e9ecef;"></div>
+                                        <div class="col-md-3 mb-3"><label class="form-label">Test Drive
+                                                Number</label><input type="text" class="form-control"
+                                                value="{{ $enquiry?->test_drive_no ?? '—' }}" readonly
+                                                style="background-color: #e9ecef;"></div>
+                                        <div class="col-md-3 mb-3"><label class="form-label">Test Drive
+                                                Date</label><input type="text" class="form-control"
+                                                value="{{ isset($enquiry) && $enquiry->td_date ? \Carbon\Carbon::parse($enquiry->td_date)->format('d-M-Y') : '—' }}"
+                                                readonly style="background-color: #e9ecef;"></div>
+                                        <div class="col-md-3 mb-3"><label class="form-label">Booking Date</label><input
+                                                type="text" class="form-control"
+                                                value="{{ isset($enquiry) && ($enquiry->x8_booking_date || $enquiry->booking_date) ? \Carbon\Carbon::parse($enquiry->x8_booking_date ?? $enquiry->booking_date)->format('d-M-Y') : '—' }}"
+                                                readonly style="background-color: #e9ecef;"></div>
 
-                                    <div class="col-md-3 mb-3">
-                                        <label class="form-label">Likely Purchase In Days </label>
-                                        <input type="text" class="form-control"
-                                            value="{{ collect($likely_purchase_dates ?? [])->firstWhere('code', $enquiry?->likely_purchase_days)['value'] ?? ($enquiry?->likely_purchase_days ?? '—') }}"
-                                            readonly style="background-color: #e9ecef;">
-                                        <input type="hidden" name="likely_purchase_days"
-                                            value="{{ old('likely_purchase_days', $enquiry?->likely_purchase_days ?? '') }}">
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">Likely Purchase In Days </label>
+                                            <input type="text" class="form-control"
+                                                value="{{ collect($likely_purchase_dates ?? [])->firstWhere('code', $enquiry?->likely_purchase_days)['value'] ?? ($enquiry?->likely_purchase_days ?? '—') }}"
+                                                readonly style="background-color: #e9ecef;">
+                                            <input type="hidden" name="likely_purchase_days"
+                                                value="{{ old('likely_purchase_days', $enquiry?->likely_purchase_days ?? '') }}">
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
                         @endif
                     @endif
 
@@ -1608,8 +1662,9 @@
                                             <th class="text-center px-3">Planned Date</th>
                                             <th class="text-center px-3">Actual Date</th>
                                             <th class="text-center px-3">Deviation Stage</th>
-                                            <th class="text-center px-3">Enquiry Stage</th>
                                             <th class="text-center px-3">Customer Stage</th>
+                                            <th class="text-center px-3">Enquiry Stage</th>
+
                                             <th class="text-center px-3">Remarks</th>
                                         </tr>
                                     </thead>
@@ -1650,14 +1705,15 @@
                                                     </td>
                                                     <td>
                                                         <div class="form-control bg-white h-auto border-0 text-center">
-                                                            {{ $enqStageMap[$cre?->cre_enq_stage ?? ''] ?? ($cre?->cre_enq_stage ?: '—') }}
+                                                            {{ $custStageMap[$cre?->cre_customer_stage ?? ''] ?? ($cre?->cre_customer_stage ?: '—') }}
                                                         </div>
                                                     </td>
                                                     <td>
                                                         <div class="form-control bg-white h-auto border-0 text-center">
-                                                            {{ $custStageMap[$cre?->cre_customer_stage ?? ''] ?? ($cre?->cre_customer_stage ?: '—') }}
+                                                            {{ $enqStageMap[$cre?->cre_enq_stage ?? ''] ?? ($cre?->cre_enq_stage ?: '—') }}
                                                         </div>
                                                     </td>
+
                                                     <td>
                                                         <div class="form-control bg-white h-auto border-0 text-wrap text-center"
                                                             style="min-width: 150px;">
@@ -1790,7 +1846,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                 @endif
 
                 {{-- =========================== REMARKS =========================== --}}
@@ -2252,24 +2308,32 @@
 
             $('#enquiry_type').on('change', function() {
                 const rawVal = $(this).val() || '';
-                const typeText = String($(this).find('option:selected').text() || '').trim().toUpperCase().replace(/\s+/g, '');
+                const typeText = String($(this).find('option:selected').text() || '').trim().toUpperCase()
+                    .replace(/\s+/g, '');
 
                 if (rawVal === '') {
-                    $sourceCode.html('<option value="">Select Enquiry Source</option>').val('').prop('disabled', true).prop('required', false);
+                    $sourceCode.html('<option value="">Select Enquiry Source</option>').val('').prop(
+                        'disabled', true).prop('required', false);
                     $('#sub_source_wrapper, #planned_campaign_wrapper').addClass('d-none');
-                    $subSource.html('<option value="">Select Enquiry Sub Source</option>').val('').prop('disabled', true).prop('required', false);
+                    $subSource.html('<option value="">Select Enquiry Sub Source</option>').val('').prop(
+                        'disabled', true).prop('required', false);
                     return;
                 }
 
-                if (rawVal.toUpperCase() === 'WALK_IN' || typeText.includes('WALKIN') || typeText.includes('WALK_IN')) {
-                    $sourceCode.html('<option value="">Select Enquiry Source</option>').val('').prop('disabled', true).prop('required', false);
+                if (rawVal.toUpperCase() === 'WALK_IN' || typeText.includes('WALKIN') || typeText.includes(
+                        'WALK_IN')) {
+                    $sourceCode.html('<option value="">Select Enquiry Source</option>').val('').prop(
+                        'disabled', true).prop('required', false);
                     $('#sub_source_wrapper, #planned_campaign_wrapper').addClass('d-none');
-                    $subSource.html('<option value="">Select Enquiry Sub Source</option>').val('').prop('disabled', true).prop('required', false);
+                    $subSource.html('<option value="">Select Enquiry Sub Source</option>').val('').prop(
+                        'disabled', true).prop('required', false);
                     $sourceCode.trigger('change');
                 } else {
                     $sourceCode.prop('disabled', false).prop('required', true);
-                    loadKeywordDropdown('ENQ_SOURCE', rawVal, $sourceCode, 'Select Enquiry Source', currentEnquiry.source);
-                    $subSource.html('<option value="">Select Enquiry Sub Source</option>').prop('disabled', true).prop('required', false);
+                    loadKeywordDropdown('ENQ_SOURCE', rawVal, $sourceCode, 'Select Enquiry Source',
+                        currentEnquiry.source);
+                    $subSource.html('<option value="">Select Enquiry Sub Source</option>').prop('disabled',
+                        true).prop('required', false);
                     $('#sub_source_wrapper').addClass('d-none');
                 }
             });
@@ -2416,7 +2480,8 @@
                         allowOutsideClick: false
                     }).then((result) => {
                         if (result.isConfirmed) {
-                            window.location.href = "{{ backpack_url('enquiries/reference/add') }}";
+                            window.location.href =
+                                "{{ backpack_url('enquiries/reference/add') }}";
                         } else {
                             $(this).val('').trigger('change');
                         }
@@ -2430,10 +2495,12 @@
                 if (source === 'HYPERLOCAL') {
                     $('#sub_source_wrapper').removeClass('d-none');
                     $subSource.prop('disabled', false).prop('required', true);
-                    loadKeywordDropdown('ENQUIRY_SUB_SOURCE', source, $subSource, 'Select Enquiry Sub Source', currentEnquiry.subSource);
+                    loadKeywordDropdown('ENQUIRY_SUB_SOURCE', source, $subSource,
+                        'Select Enquiry Sub Source', currentEnquiry.subSource);
                 } else {
                     $('#sub_source_wrapper').addClass('d-none');
-                    $subSource.html('<option value="">Select Enquiry Sub Source</option>').val('').prop('disabled', true).prop('required', false);
+                    $subSource.html('<option value="">Select Enquiry Sub Source</option>').val('').prop(
+                        'disabled', true).prop('required', false);
                 }
 
                 // Show/Hide Planned Campaign
