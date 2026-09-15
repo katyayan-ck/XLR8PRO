@@ -2,38 +2,38 @@
     $gridConfig = [
         'columns' => [
             ['field' => 'serial_no',          'headerName' => 'S.No.'],
-            ['field' => 'receipt_no',          'headerName' => 'Receipt No.'],
-            ['field' => 'receipt_date',        'headerName' => 'Receipt Date'],
-            ['field' => 'customer_name',       'headerName' => 'Customer Name'],
-            ['field' => 'care_of',             'headerName' => 'Care Of'],
-            ['field' => 'address',              'headerName' => 'Address'],
-            ['field' => 'contact_no',           'headerName' => 'Contact No.'],
-            ['field' => 'in_account_of',       'headerName' => 'In A/c Of'],
-            ['field' => 'xceler8_enq_no',      'headerName' => 'Xceler8 Enq No.'],
-            ['field' => 'xceler8_booking_no',  'headerName' => 'Xceler8 Booking No.'],
-            ['field' => 'votf_no',             'headerName' => 'VOTF No.'],
-            ['field' => 'registration_no',     'headerName' => 'Registration No.'],
-            ['field' => 'chassis_no',          'headerName' => 'Chasssis No.'],
-            ['field' => 'mode_of_payment',     'headerName' => 'Mode of Payment'],
-            ['field' => 'amount',              'headerName' => 'Amount'],
-            ['field' => 'transaction_date',    'headerName' => 'Transaction Date'],
-            ['field' => 'instrument_no',       'headerName' => 'Instrument No.'],
-            ['field' => 'transaction_no',      'headerName' => 'Transaction No.'],
-            ['field' => 'bank_name',           'headerName' => 'Bank Name'],
-            ['field' => 'action',              'headerName' => 'Action'],
+            ['field' => 'receipt_no',         'headerName' => 'Receipt No.'],
+            ['field' => 'receipt_date',       'headerName' => 'Receipt Date'],
+            ['field' => 'customer_name',      'headerName' => 'Customer Name'],
+            ['field' => 'care_of',            'headerName' => 'Care Of'],
+            ['field' => 'address',            'headerName' => 'Address'],
+            ['field' => 'contact_no',          'headerName' => 'Contact No.'],
+            ['field' => 'on_account_of',      'headerName' => 'On A/c Of'],
+            ['field' => 'xceler8_enq_no',     'headerName' => 'Xceler8 Enq No.'],
+            ['field' => 'xceler8_booking_no', 'headerName' => 'Xceler8 Booking No.'],
+            ['field' => 'votf_no',            'headerName' => 'VOTF No.'],
+            ['field' => 'registration_no',    'headerName' => 'Registration No.'],
+            ['field' => 'chassis_no',         'headerName' => 'Chassis No.'],
+            ['field' => 'payment_mode',       'headerName' => 'Mode of Payment'],
+            ['field' => 'amount',             'headerName' => 'Amount'],
+            ['field' => 'transaction_date',   'headerName' => 'Transaction Date'],
+            ['field' => 'instrument_no',      'headerName' => 'Instrument No.'],
+            ['field' => 'transaction_no',     'headerName' => 'Transaction No.'],
+            ['field' => 'bank_name',          'headerName' => 'Bank Name'],
+            ['field' => 'action',             'headerName' => 'Action'],
         ],
 
-        'data' => [],
+        'data' => $gridConfig['data'] ?? [],
     ];
 @endphp
+
 @extends(backpack_view('blank'))
 
 @section('content')
     <div class="row">
         <div class="col-12">
             <div class="card">
-                <div
-                    class="card-header bg-gradient-primary d-flex justify-content-between align-items-center flex-nowrap flex-md-nowrap flex-wrap gap-3">
+                <div class="card-header bg-gradient-primary d-flex justify-content-between align-items-center flex-nowrap flex-md-nowrap flex-wrap gap-3">
                     <h2 class="card-title mb-0 fw-bold text-black text-nowrap">
                         {{ $title ?? 'Receipt List' }}
                     </h2>
@@ -46,26 +46,20 @@
                 </div>
 
                 <div class="card-body p-0" style="background:#f8fafc">
-                    <div
-                        class="d-flex justify-content-between align-items-center flex-wrap gap-3 p-3 border-bottom bg-white">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 p-3 border-bottom bg-white">
                         <div class="d-flex align-items-center gap-2 flex-nowrap">
-                            <input type="text" id="quickFilter" class="form-control w-100 w-md-auto"
-                                style="width:360px; min-width:260px;" placeholder="Smart Search...">
+                            <input type="text" id="quickFilter" class="form-control w-100 w-md-auto" style="width:360px; min-width:260px;" placeholder="Smart Search...">
                             <button id="resetAll" class="btn btn-outline-danger btn-sm text-nowrap">Reset</button>
                         </div>
 
                         <div class="d-flex gap-2 flex-nowrap justify-content-center">
-                            <button id="btnDefaultHeaders" class="btn btn-secondary btn-sm text-nowrap">Default
-                                Headers</button>
+                            <button id="btnDefaultHeaders" class="btn btn-secondary btn-sm text-nowrap">Default Headers</button>
                             <div class="position-relative d-inline-block">
-                                <button id="btnCustomiseHeaders" class="btn btn-red btn-sm text-nowrap">Customise
-                                    Headers</button>
-                                <div id="columnBubble"
-                                    style="display:none; position:absolute; top:110%; left:0; width:320px; background:#fff; border:1px solid #ddd; border-radius:6px; box-shadow:0 8px 20px rgba(0,0,0,.15); z-index:9999;">
+                                <button id="btnCustomiseHeaders" class="btn btn-red btn-sm text-nowrap">Customise Headers</button>
+                                <div id="columnBubble" style="display:none; position:absolute; top:110%; left:0; width:320px; background:#fff; border:1px solid #ddd; border-radius:6px; box-shadow:0 8px 20px rgba(0,0,0,.15); z-index:9999;">
                                     <div class="d-flex justify-content-between align-items-center px-2 py-1 border-bottom">
                                         <strong style="font-size:13px;">Customise Headers</strong>
-                                        <button id="closeColumnBubble"
-                                            class="btn btn-sm btn-link text-danger p-0">✕</button>
+                                        <button id="closeColumnBubble" class="btn btn-sm btn-link text-danger p-0">✕</button>
                                     </div>
                                     <div style="max-height:260px; overflow:auto;">
                                         <table class="table table-sm mb-0">
@@ -79,12 +73,10 @@
 
                         <div class="d-flex gap-2 flex-nowrap">
                             <button id="exportCsv" class="btn btn-sm text-nowrap d-flex align-items-center gap-2">
-                                <img src="{{ asset('images/export-excel.png') }}" alt="Excel"
-                                    style="height:30px; width:auto;">
+                                <img src="{{ asset('images/export-excel.png') }}" alt="Excel" style="height:30px; width:auto;">
                             </button>
                             <button id="exportPdf" class="btn btn-sm text-nowrap d-flex align-items-center gap-2">
-                                <img src="{{ asset('images/export-pdf.png') }}" alt="PDF"
-                                    style="height:30px; width:auto;">
+                                <img src="{{ asset('images/export-pdf.png') }}" alt="PDF" style="height:30px; width:auto;">
                             </button>
                         </div>
                     </div>
@@ -115,151 +107,83 @@
         const ALL_COLUMNS = @json($gridConfig['columns'] ?? []);
         let gridApi;
 
-        const columnDefs = [
+        function htmlRenderer(params) {
+            return params.value || '';
+        }
 
-            ...ALL_COLUMNS.filter(col => [
-
-                'serial_no',
-
-                'receipt_no',
-
-                'receipt_date',
-
-                'customer_name',
-
-                'care_of',
-
-                'address',
-
-                'contact_no',
-
-                'in_account_of',
-
-                'xceler8_enq_no',
-
-                'xceler8_booking_no',
-
-                'votf_no',
-
-                'registration_no',
-
-                'chassis_no',
-
-                'mode_of_payment',
-
-                'amount',
-
-                'transaction_date',
-
-                'instrument_no',
-
-                'transaction_no',
-
-                'bank_name',
-
-
-            ].includes(col.field)),
-
-            ...ALL_COLUMNS.filter(col => ['action'].includes(col.field)).map(col => {
-
-                col.pinned = 'right';
-                col.width = 120;
-                col.sortable = false;
-                col.filter = false;
-                col.cellRenderer = 'htmlRenderer';
-
-                return col;
-
-            })
-
-        ];
+        const columnDefs = ALL_COLUMNS.map(col => {
+            if (col.field === 'action') {
+                return {
+                    ...col,
+                    pinned: 'right',
+                    width: 120,
+                    sortable: false,
+                    filter: false,
+                    cellRenderer: htmlRenderer
+                };
+            }
+            return col;
+        });
 
         const gridOptions = {
             columnDefs: columnDefs,
             rowData: @json($gridConfig['data'] ?? []),
             pagination: true,
             paginationPageSize: 50,
-            rowHeight: 28,
+            rowHeight: 32,
             animateRows: true,
             defaultColDef: {
                 sortable: true,
                 filter: true,
                 resizable: true,
                 headerClass: 'center-header',
-                cellStyle: {
-                    textAlign: 'center'
-                }
-            },
-            components: {
-                htmlRenderer: params => params.value || ''
+                cellStyle: { textAlign: 'center' }
             },
             onGridReady: params => {
                 gridApi = params.api;
-
-                const defaultFields = [
-                
-                'serial_no',
-
-                'receipt_no',
-
-                'receipt_date',
-
-                'customer_name',
-
-                'care_of',
-
-                'address',
-
-                'contact_no',
-
-                'in_account_of',
-
-                'xceler8_enq_no',
-
-                'xceler8_booking_no',
-
-                'votf_no',
-
-                'registration_no',
-
-                'chassis_no',
-
-                'mode_of_payment',
-
-                'amount',
-
-                'transaction_date',
-
-                'instrument_no',
-
-                'transaction_no',
-
-                'bank_name',
-
-                'action'
-
-                ];
-
-                const allCols = gridApi.getAllGridColumns().map(col => col.getColId());
-
-                gridApi.setColumnsVisible(allCols, false);
-                gridApi.setColumnsVisible(defaultFields, true);
-
                 setTimeout(() => gridApi.autoSizeAllColumns(), 300);
             }
         };
 
-        // ==================== Customise Headers ====================
+        document.addEventListener('DOMContentLoaded', () => {
+            const gridDiv = document.querySelector('#myGrid');
+            agGrid.createGrid(gridDiv, gridOptions);
+
+            document.getElementById('quickFilter').addEventListener('input', e => {
+                gridApi.setGridOption('quickFilterText', e.target.value);
+            });
+
+            document.getElementById('resetAll').addEventListener('click', () => {
+                gridApi.setFilterModel(null);
+                document.getElementById('quickFilter').value = '';
+                gridApi.setGridOption('quickFilterText', '');
+                gridApi.setSortModel(null);
+            });
+
+            // Column customization logic
+            document.getElementById('btnCustomiseHeaders').addEventListener('click', e => {
+                e.stopPropagation();
+                openColumnBubble();
+            });
+
+            document.getElementById('closeColumnBubble').addEventListener('click', () => {
+                document.getElementById('columnBubble').style.display = 'none';
+            });
+
+            document.getElementById('btnAllHeaders').addEventListener('click', () => {
+                const allCols = gridApi.getAllGridColumns().map(c => c.getColId());
+                gridApi.setColumnsVisible(allCols, true);
+                setTimeout(() => gridApi.autoSizeAllColumns(), 200);
+            });
+        });
+
         function openColumnBubble() {
             const bubble = document.getElementById('columnBubble');
             const tbody = document.getElementById('columnBubbleBody');
             if (!gridApi || !bubble || !tbody) return;
 
             tbody.innerHTML = '';
-
-            const allFlatColumns = ALL_COLUMNS;
-
-            allFlatColumns.forEach(col => {
+            ALL_COLUMNS.forEach(col => {
                 if (!col.field) return;
 
                 const tr = document.createElement('tr');
@@ -289,146 +213,5 @@
 
             bubble.style.display = 'block';
         }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const gridDiv = document.querySelector('#myGrid');
-            agGrid.createGrid(gridDiv, gridOptions);
-
-            document.getElementById('quickFilter').addEventListener('input', e => {
-                gridApi.setGridOption('quickFilterText', e.target.value);
-            });
-
-            document.getElementById('resetAll').addEventListener('click', () => {
-                gridApi.setFilterModel(null);
-                document.getElementById('quickFilter').value = '';
-                gridApi.setGridOption('quickFilterText', '');
-                gridApi.setSortModel(null);
-            });
-
-            document.getElementById('btnCustomiseHeaders').addEventListener('click', e => {
-                e.stopPropagation();
-                openColumnBubble();
-            });
-
-            document.getElementById('closeColumnBubble').addEventListener('click', () => {
-                document.getElementById('columnBubble').style.display = 'none';
-            });
-
-            document.getElementById('columnBubble').addEventListener('click', e => e.stopPropagation());
-
-            document.addEventListener('click', () => {
-                const bubble = document.getElementById('columnBubble');
-                if (bubble?.style.display === 'block') bubble.style.display = 'none';
-            });
-
-            document.getElementById('btnAllHeaders').addEventListener('click', () => {
-                const allCols = gridApi.getAllGridColumns().map(c => c.getColId());
-                gridApi.setColumnsVisible(allCols, true);
-                setTimeout(() => gridApi.autoSizeAllColumns(), 200);
-            });
-
-            document.getElementById('btnDefaultHeaders').addEventListener('click', () => {
-                const defaultFields = [
-
-                'serial_no',
-
-                'receipt_no',
-
-                'receipt_date',
-
-                'customer_name',
-
-                'care_of',
-
-                'address',
-
-                'contact_no',
-
-                'in_account_of',
-
-                'xceler8_enq_no',
-
-                'xceler8_booking_no',
-
-                'votf_no',
-
-                'registration_no',
-
-                'chassis_no',
-
-                'mode_of_payment',
-
-                'amount',
-
-                'transaction_date',
-
-                'instrument_no',
-
-                'transaction_no',
-
-                'bank_name',
-
-                'action'
-
-                ];
-                const allCols = gridApi.getAllGridColumns().map(c => c.getColId());
-
-                gridApi.setColumnsVisible(allCols, false);
-                gridApi.setColumnsVisible(defaultFields, true);
-                setTimeout(() => gridApi.autoSizeAllColumns(), 200);
-            });
-
-            // Export functions
-            document.getElementById('exportCsv').addEventListener('click', () => {
-                const visibleColumns = gridApi.getAllDisplayedColumns()
-                    .map(col => col.getColDef())
-                    .filter(col => col.field && col.field !== 'action');
-
-                const rows = [];
-                gridApi.forEachNodeAfterFilterAndSort(node => {
-                    const row = {};
-                    visibleColumns.forEach(col => {
-                        row[col.headerName] = node.data[col.field] ?? '';
-                    });
-                    rows.push(row);
-                });
-
-                const wb = XLSX.utils.book_new();
-                const ws = XLSX.utils.json_to_sheet(rows);
-                XLSX.utils.book_append_sheet(wb, ws, "Receipt");
-                XLSX.writeFile(wb, `receipt-${new Date().toISOString().slice(0, 10)}.xlsx`);
-            });
-
-            document.getElementById('exportPdf').addEventListener('click', () => {
-                const {
-                    jsPDF
-                } = window.jspdf;
-                const doc = new jsPDF();
-
-                const visibleColumns = gridApi.getAllDisplayedColumns()
-                    .map(col => col.getColDef())
-                    .filter(col => col.field && col.field !== 'action');
-
-                const headers = visibleColumns.map(col => col.headerName);
-                const rows = [];
-
-                gridApi.forEachNodeAfterFilterAndSort(node => {
-                    rows.push(visibleColumns.map(col => node.data[col.field] ?? ''));
-                });
-
-                doc.autoTable({
-                    head: [headers],
-                    body: rows,
-                    styles: {
-                        fontSize: 8
-                    },
-                    headStyles: {
-                        fillColor: [41, 128, 185]
-                    },
-                });
-
-                doc.save(`receipt-${new Date().toISOString().slice(0, 10)}.pdf`);
-            });
-        });
     </script>
 @endpush

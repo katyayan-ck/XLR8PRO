@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\BookingCrudController;
 use App\Http\Controllers\Admin\QuotationCrudController;
+use App\Http\Controllers\Admin\ReceiptCrudController;
 
 
 Route::group([
@@ -318,18 +319,37 @@ Route::group([
         ->name('receipt.edit');
     Route::put('booking/{bookingId}/receipt/{receiptId}', 'BookingCrudController@receiptUpdate')
         ->name('receipt.update');
-    Route::get('receipt', function () {
-        return view('admin.sales-cashier.receipt-list', [
-            'gridConfig' => [
-            'columns' => [],
-            'data' => [],
-            ],
-        ]);
-    })->name('receipt.index');
+    // ================= RECEIPT =================
 
-    Route::get('receipt/create', function () {
-        return view('admin.sales-cashier.receipt-create');
-    })->name('receipt.create');
+    Route::get(
+        'receipt',
+        [ReceiptCrudController::class, 'index']
+    )->name('receipt.index');
+    
+    Route::get(
+        'receipt/create',
+        [ReceiptCrudController::class, 'create']
+    )->name('receipt.create');
+    
+    Route::post(
+        'receipt',
+        [ReceiptCrudController::class, 'store']
+    )->name('receipt.store');
+    
+    Route::get(
+        'receipt/{id}/edit',
+        [ReceiptCrudController::class, 'edit']
+    )->name('standalone.receipt.edit');
+    
+    Route::put(
+        'receipt/{id}',
+        [ReceiptCrudController::class, 'update']
+    )->name('standalone.receipt.update');
+    
+    Route::delete(
+        'receipt/{id}',
+        [ReceiptCrudController::class, 'destroy']
+    )->name('standalone.receipt.destroy');
 
     // ================= SPECIAL DISCOUNT =================
 
