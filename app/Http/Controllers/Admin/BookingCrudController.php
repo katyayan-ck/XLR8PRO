@@ -331,6 +331,7 @@ class BookingCrudController extends CrudController
         $booking->col_type         = $isDummy ? 1 : ($request->input('coltype') ?? 1);
         $booking->col_by           = $request->input('user');
         $booking->b_source         = $request->input('bookingsource');
+        $booking->sale_type = $request->input('sale_type');
         $booking->dsa_id           = $request->input('dsadetails');
         $booking->online_bk_ref_no = $request->input('refrenceno');
         $booking->booking_date     = $request->input('hiddenbookingdate');
@@ -351,28 +352,6 @@ class BookingCrudController extends CrudController
         $booking->chassis_no       = $request->input('chassis');
         $booking->del_type         = $request->input('deliverytype');
         $booking->del_date         = $request->input('hiddenexpecteddeldate');
-                // Vehicle Details
-        $booking->segment_code = $request->input('segment');
-        $booking->model_code   = $request->input('model');
-        $booking->variant_code = $request->input('variant');
-        $booking->color_code   = $request->input('color');
-        $booking->seating      = $request->input('seating');
-
-        // Accessories
-        $booking->accessories = implode(',', $request->input('accessories', []));
-        $booking->apack_amount = $request->input('apackamount', 0);
-
-        // Purchase / Exchange details
-        $booking->exist_oem1      = $request->input('enummaster1');
-        $booking->vh1_detail      = $request->input('vehicledetails');
-        $booking->exist_oem2      = $request->input('enummaster2');
-        $booking->vh2_detail      = $request->input('vehicledetails2');
-        $booking->registration_no = $request->input('registrationno');
-        $booking->make_year       = $request->input('manufacturingyear');
-        $booking->odo_reading     = $request->input('odometerreading');
-        $booking->expected_price  = $request->input('expectedprice');
-        $booking->offered_price   = $request->input('offeredprice');
-        $booking->exchange_bonus  = $request->input('exchangebonus');
 
         // NEW: Update the associated Enquiry with all the deleted booking fields
         if ($booking->enq_no) {
@@ -548,11 +527,11 @@ class BookingCrudController extends CrudController
             }
         } catch (\Exception $e) {
 
-            Log::error('💥 [BOOKING] Booking save failed', [
-                'message' => $e->getMessage(),
-                'file'    => $e->getFile(),
-                'line'    => $e->getLine(),
-            ]);
+            dd(
+                $e->getMessage(),
+                $e->getFile(),
+                $e->getLine()
+            );
         }
 
         Log::info('📁 [FILE] Checking amountproof upload...', [
@@ -632,7 +611,7 @@ class BookingCrudController extends CrudController
 
         if (
             !$isDummy &&
-            in_array((int) $booking->col_type, [1, 2, 3, 4]) &&
+            in_array($booking->col_type, [1, 4]) &&
             $booking->booking_amount > 0 &&
             $number
         ) {
@@ -666,7 +645,7 @@ class BookingCrudController extends CrudController
             }
         } else {
             Log::info('⏭️ [PAYMENT] Skipped — conditions not met', [
-                'col_type_in_1_4' => in_array((int) $booking->col_type, [1, 2, 3, 4]),
+                'col_type_in_1_4' => in_array($booking->col_type, [1, 4]),
                 'amount_gt_0'     => $booking->booking_amount > 0,
                 'number_present'  => !empty($number),
             ]);
@@ -705,11 +684,13 @@ class BookingCrudController extends CrudController
         ) {
             Log::info('🏦 [FINANCE] Creating XFinance entry...');
             try {
-                $finance                      = new XFinance();
-                $finance->bid                 = $booking->id;
-                $finance->vehicle_oem_code               = $booking->vehicle_oem_code;
+                $finance = new XFinance();
+                $finance->bid = $booking->id;
+                $finance->vehicle_oem_code = $booking->vehicle_oem_code;
                 $finance->verification_status = 1;
-                $finance->case_status         = 1;
+                $finance->case_status = 1;
+                $finance->loan_status = $request->input('loanstatus') ?: 'Pending';
+
                 $finance->save();
                 Log::info('✅ [FINANCE] XFinance saved', ['finance_id' => $finance->id]);
             } catch (\Exception $e) {
@@ -728,22 +709,14 @@ class BookingCrudController extends CrudController
 
     public function update(Request $request, $id)
     {
-        $booking = Booking::findOrFail($id);
-        $booking->segment_code = $request->input('segment_id');
-        $booking->model_code   = $request->input('model');
-        $booking->variant_code = $request->input('variant');
-        $booking->color_code   = $request->input('color');
-        $booking->seating      = $request->input('seating');
-
-        // Accessories
-        $booking->accessories  = implode(',', $request->input('accessories', []));
-        $booking->apack_amount = $request->input('apack_amount', 0);
         
+        $booking = Booking::findOrFail($id);
 
         $old_col_type = $booking->col_type;
         $old_col_by   = $booking->col_by;
 
         $rules = [
+            'sale_type' => 'required|in:1,2',
             'name'                     => 'required|string|max:255',
             'care_of'                  => 'nullable|string|max:255',
             'care_of_name'             => 'nullable|string|max:255',
@@ -878,6 +851,20 @@ class BookingCrudController extends CrudController
             $booking->receipt_date = $request->input('receipt_date_actual');
         }
 
+        if ($request->filled('mode')) {
+        $payment = Bookingamount::where('bid', $booking->id)
+            ->latest('id')
+            ->first();
+        if ($payment && $payment->mode != $request->input('mode')) {
+            $rem[] = "Payment Mode Changed from "
+                . ($payment->mode ?? 'null')
+                . " to "
+                . $request->input('mode');
+            $payment->mode = $request->input('mode');
+            $payment->save();
+        }
+    }
+
         if ($old_col_type != $request->input('col_type')) {
             $colTypeMap = ['1' => 'Receipt', '2' => 'Field Collection By Sales Team', '3' => 'Field Collection By DSA', '4' => 'Used Car Purchase'];
             $rem[] = "Collection Type Changed from " . ($colTypeMap[$old_col_type] ?? 'null') . " to " . ($colTypeMap[$request->input('col_type')] ?? 'null');
@@ -952,6 +939,14 @@ class BookingCrudController extends CrudController
         if ($booking->gstn != $gstValue) {
             $rem[] = "GSTN Changed";
             $booking->gstn = $gstValue;
+        }
+        if ($booking->sale_type != $request->input('sale_type')) {
+            $rem[] = "Sale Type Changed from "
+                . ($booking->sale_type ?? 'null')
+                . " to "
+                . $request->input('sale_type');
+
+            $booking->sale_type = $request->input('sale_type');
         }
 
         if ($linkedEnquiry && $linkedEnquiry->dob != $request->input('hidden_customer_dob')) {
@@ -1160,15 +1155,22 @@ class BookingCrudController extends CrudController
         }
 
         if ($request->input('fin_mode') === 'In-house') {
-            if (!XFinance::where('bid', $booking->id)->exists()) {
-                XFinance::create([
-                    'bid'                 => $booking->id,
-                    'fin_mode'            => 'In-house',
-                    'verification_status' => 1,
-                    'case_status'         => 1,
-                ]);
-                $rem[] = "New finance entry created";
+
+            $finance = XFinance::firstOrNew([
+                'bid' => $booking->id
+            ]);
+
+            $finance->fin_mode = 'In-house';
+            $finance->loan_status = $request->input('loan_status');
+
+            if (!$finance->exists) {
+                $finance->verification_status = 1;
+                $finance->case_status = 1;
             }
+
+            $finance->save();
+
+            $rem[] = "Finance details updated";
         }
 
         if (!empty($rem)) {
@@ -3084,6 +3086,12 @@ class BookingCrudController extends CrudController
 
         $data['quotation'] = $quotation;
         $data['enquiry']   = $enquiry; // Pass enquiry object to view
+        $data['care_of_type'] = $enquiry?->care_of_type;
+        $data['care_of']      = $enquiry?->care_of;
+
+        $data['saleconsultant'] = $enquiry?->x8_sc_code
+            ?? $enquiry?->sc_code
+            ?? '';
 
         // ========== QUOTATION / ENQUIRY DATA ARRAY ==========
         $data['q'] = [];
@@ -3127,139 +3135,326 @@ class BookingCrudController extends CrudController
     }
 
 
+    // protected function setupUpdateOperation()
+    // {
+    //     $id = $this->crud->getCurrentEntryId() ?? request()->id;
+    //     $entry = $this->crud->getEntry($id);
+
+    //     // Recover ALL deleted fields from Enquiry
+    //     if ($entry->enq_no) {
+    //         $linkedEnquiry = \App\Models\CRM\Enquiry::where('id', $entry->enq_no)
+    //             ->orWhere('enquiry_no', $entry->enq_no)
+    //             ->orWhere('quick_enquiry_no', $entry->enq_no)
+    //             ->first();
+
+    //         if ($linkedEnquiry) {
+    //             // === CUSTOMER DETAILS ===
+    //             $entry->name = $linkedEnquiry->name;
+    //             $entry->care_of_type = $linkedEnquiry->care_of_type;
+    //             $entry->care_of = $linkedEnquiry->care_of;
+    //             $entry->care_of_name = $linkedEnquiry->care_of;
+    //             $entry->mobile = $linkedEnquiry->mobile;
+    //             $entry->alt_mobile = $linkedEnquiry->alternate_mobile;
+    //             $entry->email = $linkedEnquiry->email;
+    //             $entry->gender = $linkedEnquiry->gender;
+
+    //             // === ADDRESS DETAILS (column name mapping) ===
+    //             $entry->pincode = $linkedEnquiry->zipcode;
+    //             $entry->vpo = $linkedEnquiry->vpo;
+    //             $entry->customer_tehsil = $linkedEnquiry->tehsil;
+    //             $entry->customer_district = $linkedEnquiry->district;
+    //             $entry->city = $linkedEnquiry->city;
+    //             $entry->territory = $linkedEnquiry->territory;
+    //             $entry->address = $linkedEnquiry->customer_address;
+
+    //             // === VEHICLE DETAILS (CRITICAL - was missing) ===
+    //             $entry->segment_code = $linkedEnquiry->segment_code;
+    //             $entry->model_code = $linkedEnquiry->model_code;
+    //             $entry->variant_code = $linkedEnquiry->variant_code;
+    //             $entry->color_code = $linkedEnquiry->color_code;
+    //             $entry->seating = $linkedEnquiry->seating;
+    //             $entry->usage_area = $linkedEnquiry->usage_area;
+    //             $entry->km_travelled_daily = $linkedEnquiry->km_travelled_daily;
+    //             $entry->application_type = $linkedEnquiry->application_type;
+    //             $entry->application = $linkedEnquiry->application;
+
+    //             // === OCCUPATION & DEMOGRAPHICS ===
+    //             $entry->occupation = $linkedEnquiry->occupation_type;
+    //             $entry->customer_type = $linkedEnquiry->customer_type;
+    //             $entry->occupation_sub_type = $linkedEnquiry->occupation_sub_type;
+    //             $entry->company_name = $linkedEnquiry->company_name;
+    //             $entry->hidden_customer_dob = $linkedEnquiry->dob;
+    //             $entry->marital_status = $linkedEnquiry->marital_status;
+    //             $entry->marriage_date = $linkedEnquiry->marriage_date;
+    //             $entry->age_group = $linkedEnquiry->age_group;
+
+    //             // === EXCHANGE DETAILS ===
+    //             $entry->buyer_type = $linkedEnquiry->purchase_type_crm 
+    //                 ?? $linkedEnquiry->purchase_type;
+    //             $entry->exist_oem1 = $linkedEnquiry->brand_make;
+    //             $entry->vh1_detail = $linkedEnquiry->brand_model;
+    //             $entry->exist_oem2 = $linkedEnquiry->consid_brand2;
+    //             $entry->vh2_detail = $linkedEnquiry->consid_model2;
+    //             $entry->consid_variant = $linkedEnquiry->consid_variant;
+    //             $entry->consid_variant2 = $linkedEnquiry->consid_variant2;
+    //             $entry->registration_no = $linkedEnquiry->vehicle_no;
+    //             $entry->make_year = $linkedEnquiry->make_year;
+    //             $entry->odo_reading = $linkedEnquiry->odo_reading;
+    //             $entry->expected_price = $linkedEnquiry->expected_price;
+    //             $entry->offered_price = $linkedEnquiry->offered_price;
+    //             $entry->exchange_bonus = $linkedEnquiry->exchange_bonus;
+
+    //             // === FINANCE DETAILS ===
+    //             $entry->fin_mode = $linkedEnquiry->fin_mode;
+    //             $entry->financier = $linkedEnquiry->financier;
+    //             $entry->loan_status = $linkedEnquiry->loan_status;
+
+    //             // === BOOKING REFERENCE DETAILS ===
+    //             $entry->consultant = $linkedEnquiry->x8_sc_code;
+    //             $entry->branch_code = $linkedEnquiry->dealer_branch;
+    //             $entry->location_code = $linkedEnquiry->dealer_location;
+
+    //             // === REFERENCE / REFERRAL DETAILS ===
+    //             $entry->r_name = $linkedEnquiry->referee_name;
+    //             $entry->r_mobile = $linkedEnquiry->referee_phone;
+
+    //             // === REMARKS ===
+    //             $entry->details = $linkedEnquiry->remarks;
+    //         }
+    //     }
+    //     // dd([
+    //     //     'TYPE' => 'EDIT PAGE LOAD',
+
+    //     //     'BOOKING ID' => $id,
+
+    //     //     'BOOKING DATABASE DATA' => $entry->toArray(),
+
+    //     //     'ENQUIRY DATA' => $linkedEnquiry ? $linkedEnquiry->toArray() : null,
+
+    //     //     'FORM DATA' => [
+    //     //         'segment' => $entry->segment_code ?? null,
+    //     //         'model' => $entry->model_code ?? null,
+    //     //         'variant' => $entry->variant_code ?? null,
+    //     //         'color' => $entry->color_code ?? null,
+    //     //         'accessories' => $entry->accessories ?? null,
+    //     //         'apack_amount' => $entry->apack_amount ?? null,
+    //     //         'chassis' => $entry->chassis_no ?? null,
+    //     //         'registration_no' => $entry->registration_no ?? null,
+    //     //     ],
+    //     // ]);
+    //     CRUD::setValidation(BookingRequest::class);
+    //     $this->crud->setEditView('admin.booking.add');
+
+        
+    //     // ---------------------------------------------------------------
+
+    //     $data = [];
+
+    //     $data['branches']       = collect(CommonHelper::getBranches())->map(fn($b) => (object) $b);
+
+    //     $data['locations']       = collect(CommonHelper::getLocations())->map(fn($l) => (object)$l);
+    //     $data['allusers'] = OrgService::usersByDepartment('SLS');
+    //     $data['financiers']     = collect(XlFinancier::select('id', 'name', 'short_name')->get()->toArray())->map(fn($f) => (object) $f);
+    //     $data['saleconsultants'] = collect(OrgService::usersByDesignation('CNS') ?? [])
+    //         ->map(function ($s) {
+    //             return is_array($s) ? (object)$s : $s;
+    //         });
+
+    //     $data['dsa_details'] = XL_DSA_MASTER::all()->map(fn($dsa) => (object)[
+    //         'id'       => $dsa->id,
+    //         'name'     => $dsa->name,
+    //         'mobile'   => $dsa->mobile,
+    //         'location' => $dsa->dlocation,
+    //     ]);
+
+    //     $data['segments'] = CommonHelper::getVehicleSegments();
+
+    //     $data['models']     = [];
+    //     $data['variants']   = [];
+    //     $data['colors']     = [];
+
+    //     $data['enum_master'] = OrgService::getKeyValuesByCode('EXISTING_CAR_OEM');
+
+
+
+    //     $data['accessories_dropdown'] = Accessory::getAccessories(null, null, null);
+
+
+
+    //     $data['collector_name'] = OrgService::getUserNameByCode(
+    //         $entry->col_by,
+    //         $entry->col_type
+    //     ) ?? 'N/A';
+
+    //     $this->data['entry'] = $entry;
+    //     $this->data['data']  = $data;
+    //     $this->crud->set('data', $data);
+
+    //     return $this->data;
+    // }
+
     protected function setupUpdateOperation()
     {
         $id = $this->crud->getCurrentEntryId() ?? request()->id;
-        $entry = $this->crud->getEntry($id);
 
-        // Recover ALL deleted fields from Enquiry
-        if ($entry->enq_no) {
+        // ==========================================================
+        // 1. GET ACTUAL BOOKING RECORD
+        // ==========================================================
+        $entry = $this->crud->getEntry($id);
+        $latestPayment = Bookingamount::where('bid', $id)
+            ->latest('id')
+            ->first();
+
+        $finance = XFinance::where('bid', $id)->first();
+        $data['finance'] = $finance;
+        $data['loan_status'] = $finance?->loan_status;
+
+        $linkedEnquiry = null;
+
+        if ($entry && $entry->enq_no) {
             $linkedEnquiry = \App\Models\CRM\Enquiry::where('id', $entry->enq_no)
                 ->orWhere('enquiry_no', $entry->enq_no)
                 ->orWhere('quick_enquiry_no', $entry->enq_no)
                 ->first();
-
-            if ($linkedEnquiry) {
-                // === CUSTOMER DETAILS ===
-                $entry->name = $linkedEnquiry->name;
-                $entry->care_of_type = $linkedEnquiry->care_of_type;
-                $entry->care_of = $linkedEnquiry->care_of;
-                $entry->care_of_name = $linkedEnquiry->care_of;
-                $entry->mobile = $linkedEnquiry->mobile;
-                $entry->alt_mobile = $linkedEnquiry->alternate_mobile;
-                $entry->email = $linkedEnquiry->email;
-                $entry->gender = $linkedEnquiry->gender;
-
-                // === ADDRESS DETAILS (column name mapping) ===
-                $entry->pincode = $linkedEnquiry->zipcode;
-                $entry->vpo = $linkedEnquiry->vpo;
-                $entry->customer_tehsil = $linkedEnquiry->tehsil;
-                $entry->customer_district = $linkedEnquiry->district;
-                $entry->city = $linkedEnquiry->city;
-                $entry->territory = $linkedEnquiry->territory;
-                $entry->address = $linkedEnquiry->customer_address;
-
-                // === VEHICLE DETAILS (CRITICAL - was missing) ===
-                $entry->segment_code = $linkedEnquiry->segment_code;
-                $entry->model_code = $linkedEnquiry->model_code;
-                $entry->variant_code = $linkedEnquiry->variant_code;
-                $entry->color_code = $linkedEnquiry->color_code;
-                $entry->seating = $linkedEnquiry->seating;
-                $entry->usage_area = $linkedEnquiry->usage_area;
-                $entry->km_travelled_daily = $linkedEnquiry->km_travelled_daily;
-                $entry->application_type = $linkedEnquiry->application_type;
-                $entry->application = $linkedEnquiry->application;
-
-                // === OCCUPATION & DEMOGRAPHICS ===
-                $entry->occupation = $linkedEnquiry->occupation_type;
-                $entry->customer_type = $linkedEnquiry->customer_type;
-                $entry->occupation_sub_type = $linkedEnquiry->occupation_sub_type;
-                $entry->company_name = $linkedEnquiry->company_name;
-                $entry->hidden_customer_dob = $linkedEnquiry->dob;
-                $entry->marital_status = $linkedEnquiry->marital_status;
-                $entry->marriage_date = $linkedEnquiry->marriage_date;
-                $entry->age_group = $linkedEnquiry->age_group;
-
-                // === EXCHANGE DETAILS ===
-                $entry->buyer_type = $linkedEnquiry->purchase_type_crm 
-                    ?? $linkedEnquiry->purchase_type;
-                $entry->exist_oem1 = $linkedEnquiry->brand_make;
-                $entry->vh1_detail = $linkedEnquiry->brand_model;
-                $entry->exist_oem2 = $linkedEnquiry->consid_brand2;
-                $entry->vh2_detail = $linkedEnquiry->consid_model2;
-                $entry->consid_variant = $linkedEnquiry->consid_variant;
-                $entry->consid_variant2 = $linkedEnquiry->consid_variant2;
-                $entry->registration_no = $linkedEnquiry->vehicle_no;
-                $entry->make_year = $linkedEnquiry->make_year;
-                $entry->odo_reading = $linkedEnquiry->odo_reading;
-                $entry->expected_price = $linkedEnquiry->expected_price;
-                $entry->offered_price = $linkedEnquiry->offered_price;
-                $entry->exchange_bonus = $linkedEnquiry->exchange_bonus;
-
-                // === FINANCE DETAILS ===
-                $entry->fin_mode = $linkedEnquiry->fin_mode;
-                $entry->financier = $linkedEnquiry->financier;
-                $entry->loan_status = $linkedEnquiry->loan_status;
-
-                // === BOOKING REFERENCE DETAILS ===
-                $entry->consultant = $linkedEnquiry->x8_sc_code;
-                $entry->branch_code = $linkedEnquiry->dealer_branch;
-                $entry->location_code = $linkedEnquiry->dealer_location;
-
-                // === REFERENCE / REFERRAL DETAILS ===
-                $entry->r_name = $linkedEnquiry->referee_name;
-                $entry->r_mobile = $linkedEnquiry->referee_phone;
-
-                // === REMARKS ===
-                $entry->details = $linkedEnquiry->remarks;
-            }
         }
+
+        // ==========================================================
+        // IMPORTANT:
+        // DO NOT DO:
+        //
+        // $entry->name = $linkedEnquiry->name;
+        // $entry->mobile = $linkedEnquiry->mobile;
+        // $entry->segment_code = $linkedEnquiry->segment_code;
+        //
+        // Booking data must remain untouched.
+        // ==========================================================
+
         CRUD::setValidation(BookingRequest::class);
         $this->crud->setEditView('admin.booking.add');
 
-        
-        // ---------------------------------------------------------------
-
+        // ==========================================================
+        // 3. DROPDOWN DATA
+        // ==========================================================
         $data = [];
+        $data['payment'] = $latestPayment;
+        $data['payment_mode'] = $latestPayment?->mode;
 
-        $data['branches']       = collect(CommonHelper::getBranches())->map(fn($b) => (object) $b);
+        $data['finance'] = $finance;
+        $data['loan_status'] = $finance?->loan_status;
 
-        $data['locations']       = collect(CommonHelper::getLocations())->map(fn($l) => (object)$l);
+        $data['branches'] = collect(CommonHelper::getBranches())
+            ->map(fn($b) => (object) $b);
+
+        $data['locations'] = collect(CommonHelper::getLocations())
+            ->map(fn($l) => (object) $l);
+
         $data['allusers'] = OrgService::usersByDepartment('SLS');
-        $data['financiers']     = collect(XlFinancier::select('id', 'name', 'short_name')->get()->toArray())->map(fn($f) => (object) $f);
-        $data['saleconsultants'] = collect(OrgService::usersByDesignation('CNS') ?? [])
-            ->map(function ($s) {
-                return is_array($s) ? (object)$s : $s;
-            });
 
-        $data['dsa_details'] = XL_DSA_MASTER::all()->map(fn($dsa) => (object)[
-            'id'       => $dsa->id,
-            'name'     => $dsa->name,
-            'mobile'   => $dsa->mobile,
-            'location' => $dsa->dlocation,
-        ]);
+        $data['financiers'] = collect(
+            XlFinancier::select('id', 'name', 'short_name')
+                ->get()
+                ->toArray()
+        )->map(fn($f) => (object) $f);
 
+        $data['saleconsultants'] = collect(
+            OrgService::usersByDesignation('CNS') ?? []
+        )->map(function ($s) {
+            return is_array($s) ? (object) $s : $s;
+        });
+
+        $data['dsa_details'] = XL_DSA_MASTER::all()
+            ->map(fn($dsa) => (object) [
+                'id'       => $dsa->id,
+                'name'     => $dsa->name,
+                'mobile'   => $dsa->mobile,
+                'location' => $dsa->dlocation,
+            ]);
+
+        // ==========================================================
+        // 4. VEHICLE DROPDOWNS
+        // USE BOOKING VALUES
+        // ==========================================================
         $data['segments'] = CommonHelper::getVehicleSegments();
 
-        $data['models']     = [];
-        $data['variants']   = [];
-        $data['colors']     = [];
+        $data['models'] = CommonHelper::getVehicleModels(
+            $entry->segment_code ?? null
+        ) ?? [];
 
-        $data['enum_master'] = OrgService::getKeyValuesByCode('EXISTING_CAR_OEM');
+        $data['variants'] = CommonHelper::getVehicleVariants(
+            $entry->model_code ?? null
+        ) ?? [];
 
+        $data['colors'] = CommonHelper::getVehicleColors(
+            $entry->variant_code ?? null
+        ) ?? [];
 
+        // ==========================================================
+        // 5. ACCESSORIES
+        // ==========================================================
+        $data['accessories_dropdown'] = Accessory::getAccessories(
+            $entry->segment_code ?? null,
+            $entry->model_code ?? null,
+            $entry->variant_code ?? null
+        );
 
-        $data['accessories_dropdown'] = Accessory::getAccessories(null, null, null);
+        // ==========================================================
+        // 6. EXISTING CAR OEM
+        // ==========================================================
+        $data['enum_master'] =
+            OrgService::getKeyValuesByCode('EXISTING_CAR_OEM');
 
-
-
+        // ==========================================================
+        // 7. COLLECTOR NAME
+        // ==========================================================
         $data['collector_name'] = OrgService::getUserNameByCode(
             $entry->col_by,
             $entry->col_type
         ) ?? 'N/A';
 
+        // ==========================================================
+        // 8. PASS ENQUIRY SEPARATELY
+        // DO NOT MERGE IT INTO $entry
+        // ==========================================================
+        $data['enquiry'] = $linkedEnquiry;
+
+        // ==========================================================
+        // 9. QUOTATION
+        // ==========================================================
+        $quotation = null;
+
+        if (!empty($entry->quotation_id)) {
+            $quotation = Quotation::find($entry->quotation_id);
+        }
+
+        $data['quotation'] = $quotation;
+
+        // ==========================================================
+        // 10. QUOTATION DATA
+        // ONLY FOR OPTIONAL FALLBACK
+        // ==========================================================
+        $data['q'] = [];
+
+        if ($quotation) {
+            $quotationData = $quotation->standard_data ?? [];
+
+            if (is_string($quotationData)) {
+                $quotationData = json_decode($quotationData, true) ?? [];
+            }
+
+            $data['q'] = is_array($quotationData)
+                ? $quotationData
+                : [];
+        }
+
+        // ==========================================================
+        // 11. STORE DATA
+        // ==========================================================
         $this->data['entry'] = $entry;
-        $this->data['data']  = $data;
+        $this->data['data'] = $data;
+
+        // Also expose enquiry to view
+        $this->data['enquiry'] = $linkedEnquiry;
+
         $this->crud->set('data', $data);
 
         return $this->data;
@@ -7982,7 +8177,15 @@ class BookingCrudController extends CrudController
             2 => 'Exchange Done',
             3 => 'Case Lost',
         ];
-        
+        if ($booking->buyer_type != $request->buyer_type) {
+            $tvl = empty($booking->buyer_type) ? 'null' : $booking->buyer_type;
+            $rem[] = "Buyer Type Changed from " . $tvl . " to " . $request->buyer_type;
+            dd([
+                'buyertype' => $request->input('buyertype'),
+                'all' => $request->all()
+            ]);
+            $booking->buyer_type = $request->input('buyer_type');
+        }
 
         if ($booking->exist_oem1 != $request->enum_master1) {
             $tvl = empty($booking->exist_oem1) ? 'null' : $booking->exist_oem1;

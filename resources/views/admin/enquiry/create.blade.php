@@ -214,6 +214,11 @@
                     'cre' => $fmtDate($enquiry->x8_cancellation_date ?? ($enquiry->cancellation_date ?? '')),
                 ],
                 [
+                    'label' => 'Segment',
+                    'dump' => $enquiry->segment ?: '—',
+                    'cre' => $segments[$enquiry->segment_code] ?? ($enquiry->segment_code ?: '—'),
+                ],
+                [
                     'label' => 'Model',
                     'dump' => $enquiry->model ?: '—',
                     'cre' =>
@@ -226,6 +231,13 @@
                     'cre' =>
                         collect($variants ?? [])->firstWhere('code', $enquiry->variant_code)['name'] ??
                         ($enquiry->variant_code ?: '—'),
+                ],
+                [
+                    'label' => 'Color',
+                    'dump' => $enquiry->color ?: '—',
+                    'cre' =>
+                        collect($colors ?? [])->firstWhere('code', $enquiry->color_code)['name'] ??
+                        ($enquiry->color_code ?: '—'),
                 ],
                 [
                     'label' => 'Likely Purchase in Days',
@@ -447,8 +459,9 @@
                                                 // Standardize strings for automatic matching
                                                 $d = trim(strip_tags((string) $row['dump']));
                                                 $c = trim(strip_tags((string) $row['cre']));
-                                                $bothEmpty =
-                                                    in_array($d, ['—', '-', '']) && in_array($c, ['—', '-', '']);
+                                                
+                                                // Check if ANY of the two fields is missing/dash
+                                                $anyEmpty = in_array($d, ['—', '-', '']) || in_array($c, ['—', '-', '']);
 
                                                 if (in_array($d, ['—', '-', ''])) {
                                                     $d = '';
@@ -492,7 +505,7 @@
                                                                 style="font-size: 1rem;">—</span>
                                                         @else
                                                             {{-- Automatic Comparison Logic --}}
-                                                            @if ($bothEmpty)
+                                                            @if ($anyEmpty)
                                                                 <span class="text-secondary fw-bold"
                                                                     style="font-size: 1rem;">—</span>
                                                             @elseif($isAutoMismatch)
@@ -880,7 +893,7 @@
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">Contact Number<span class="text-danger">*</span></label>
                                 <input type="text" id="mobile" name="mobile" maxlength="10" class="form-control"
-                                    value="{{ old('mobile', $enquiry->mobile ?? '') }}" required>
+                                    value="{{ old('mobile', $enquiry->mobile ?? '') }}" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);" required>
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">Alternate Contact Number<small
@@ -1010,29 +1023,7 @@
                                     <option value="Yet To Decide"
                                         {{ old('fin_mode', $enquiry->fin_mode ?? '') == 'Yet To Decide' ? 'selected' : '' }}>
                                         Yet To Decide</option>
-                                    <option value="Purchase Plan Cancelled"
-                                        {{ old('fin_mode', $enquiry->fin_mode ?? '') == 'Purchase Plan Cancelled' ? 'selected' : '' }}>
-                                        Purchase Plan Cancelled</option>
                                 </select>
-                            </div>
-
-                            <div class="col-md-6 mb-6" id="financierbox" style="display:none;">
-                                <label class="form-label">Financier <small class="text-muted"></small></label>
-                                <select name="financier" id="financier" class="form-control form-select">
-                                    <option value="">Select Financier</option>
-                                    @foreach ($financiers ?? [] as $financier)
-                                        <option value="{{ $financier->id }}"
-                                            data-shortname="{{ $financier->short_name ?? '' }}"
-                                            {{ (string) old('financier', $enquiry->financier ?? '') === (string) $financier->id ? 'selected' : '' }}>
-                                            {{ $financier->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <div class="col-md-6 mb-6" id="financiershortnamebox" style="display:none;">
-                                <label class="form-label">Financier Short Name</label>
-                                <input type="text" id="financiershortname" class="form-control" readonly
-                                    tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
                             </div>
 
                             {{-- NEW: Additional Buy Vehicle Section --}}
@@ -2237,31 +2228,6 @@
             setTimeout(() => {
                 $('select[name="marital_status"]').trigger('change');
             }, 100);
-
-            // Safer Finance Mode listener to show Financier dropdowns and prevent clearing on load
-            $('#fin_mode').on('change', function() {
-                const isInHouse = $(this).val() === 'In-house';
-
-                // Show or hide both the financier and short name boxes based on the selection
-                $('#financierbox, #financiershortnamebox').toggle(isInHouse);
-
-                // Only clear the values if it is NOT In-house. 
-                if (!isInHouse) {
-                    $('#financier').val('');
-                    $('#financiershortname').val('');
-                }
-            }).trigger('change');
-
-            // Auto-populate Financier Short Name when a Financier is selected
-            $('#financier').on('change', function() {
-                const shortName = $(this).find(':selected').data('shortname') || '';
-                $('#financiershortname').val(shortName);
-            });
-
-            // Trigger on page load so it pre-fills if editing an existing record
-            if ($('#financier').val()) {
-                $('#financier').trigger('change');
-            }
 
             // NEW: Purchase Type listener to show/hide Additional Vehicle fields
             $('#purchase_type_crm').on('change', function() {

@@ -458,8 +458,15 @@ class QuotationCrudController extends CrudController
         $careOf = $selectedEnquiry->care_of_type ?? '';
         $careOfName = $selectedEnquiry->care_of ?? '';
 
-        $permit_map = OrgService::getPermitMap();
-        $permit_pricing_map = OrgService::getPermitPricingMap();
+        $permit_map = OrgService::getKeyValuesByCode('RTO_PERMIT')
+            ->sortBy('id')
+            ->values()
+            ->mapWithKeys(function ($permit, $index) {
+                return [
+                    (string) ($index + 1) => $permit->value
+                ];
+            })
+            ->toArray();
 
         $insurance_type_map = [
             1 => 'Nil Dep',
@@ -927,8 +934,15 @@ class QuotationCrudController extends CrudController
             '3' => 'Exempted',
         ];
 
-        $permit_map = OrgService::getPermitMap();
-        $permit_pricing_map = OrgService::getPermitPricingMap();
+         $permit_map = OrgService::getKeyValuesByCode('RTO_PERMIT')
+            ->sortBy('id')
+            ->values()
+            ->mapWithKeys(function ($permit, $index) {
+                return [
+                    (string) ($index + 1) => $permit->value
+                ];
+            })
+            ->toArray();
 
         $reg_no_type_map = [
             '1' => 'Regular',
@@ -2348,8 +2362,15 @@ class QuotationCrudController extends CrudController
             '3' => 'Exempted',
         ];
 
-        $permit_map = OrgService::getPermitMap();
-        $permit_pricing_map = OrgService::getPermitPricingMap();
+        $permit_map = OrgService::getKeyValuesByCode('RTO_PERMIT')
+            ->sortBy('id')
+            ->values()
+            ->mapWithKeys(function ($permit, $index) {
+                return [
+                    (string) ($index + 1) => $permit->value
+                ];
+            })
+            ->toArray();
 
         $reg_no_type_map = [
             '1' => 'Regular',
@@ -2460,7 +2481,7 @@ class QuotationCrudController extends CrudController
             'groupBSelected'     => $groupBSelected,
             'groupCSelected'     => $groupCSelected,
             'permit_map'         => $permit_map,
-            'permit_pricing_map' => $permit_pricing_map,
+            
             'viewMode'           => true,
             'revisionPdf'        => true,
             'revisionNumber'     => $version,
@@ -2556,8 +2577,15 @@ class QuotationCrudController extends CrudController
             '3' => 'Exempted',
         ];
 
-        $permit_map = OrgService::getPermitMap();
-        $permit_pricing_map = OrgService::getPermitPricingMap();
+        $permit_map = OrgService::getKeyValuesByCode('RTO_PERMIT')
+            ->sortBy('id')
+            ->values()
+            ->mapWithKeys(function ($permit, $index) {
+                return [
+                    (string) ($index + 1) => $permit->value
+                ];
+            })
+            ->toArray();
 
         $reg_no_type_map = [
             '1' => 'Regular',

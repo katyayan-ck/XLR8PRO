@@ -73,7 +73,7 @@ class EnquiryCrudController extends CrudController
             $subSourceMap = collect(OrgService::keywordValueByCode('ENQUIRY_SUB_SOURCE'))->pluck('value', 'code')->toArray();
 
             // 2. OEM Enquiry Type Map
-            $enquiryTypeMap = collect(OrgService::keywordValueByCode('ENQUIRY_TYPE'))->pluck('value', 'code')->toArray();
+            $enquiryTypeMap = collect(OrgService::keywordValueByCode('ENQ_TYPE'))->pluck('value', 'code')->toArray();
 
             // 3. Demographics: Marital Status & Age Group
             $maritalStatusMap = collect(OrgService::keywordValueByCode('MARITAL_STATUS'))->pluck('value', 'code')->toArray();
@@ -178,7 +178,7 @@ class EnquiryCrudController extends CrudController
                     'crm_booking.booking_date',
                     'crm_booking.status',
                     'crm_booking.cancellation_date',
-                    'crm_booking.sc_mile_id as sc_code',
+                    'crm_booking.sc_mile_id as sc_name',
                     'crm_booking.oem_code',
                     'crm_booking.invoice_no',
                     'crm_booking.evaluation_no',
@@ -491,7 +491,7 @@ class EnquiryCrudController extends CrudController
     private const OTF_FILTER_FIELD_MAP = [
         'booking_no' => 'crm_booking.id',
         'booking_date' => 'crm_booking.booking_date',
-        'sc_code' => 'crm_booking.sc_mile_id',
+        'sc_name' => 'crm_booking.sc_mile_id',
         'booking_status' => 'crm_booking.status',
         'cancellation_date' => 'crm_booking.cancellation_date',
         'customer_code' => 'crm_booking.customer_code',
@@ -653,7 +653,7 @@ class EnquiryCrudController extends CrudController
         $existingQuotations = $lookups['existingQuotations'] ?? [];
 
         $x8AssignedSc = $this->getAssignedSc($e->x8_sc_code ?? null, $e->x8_sc_mile_id ?? null, $scByCode, $scByMileId);
-        $oemAssignedSc = $this->getAssignedSc($e->sc_code ?? null, $e->sc_mile_id ?? null, $scByCode, $scByMileId);
+        $oemAssignedSc = $this->getAssignedSc($e->sc_name ?? null, $e->sc_mile_id ?? null, $scByCode, $scByMileId);
 
         $segmentRel = $e instanceof \Illuminate\Database\Eloquent\Model && $e->relationLoaded('segment') ? $e->getRelation('segment') : null;
         $modelRel = $e instanceof \Illuminate\Database\Eloquent\Model && $e->relationLoaded('model') ? $e->getRelation('model') : null;
@@ -767,7 +767,7 @@ class EnquiryCrudController extends CrudController
                 'serial_no'         => $i + 1,
                 'booking_no'        => $e->id ?? '—',
                 'booking_date'      => $this->formatDate($e->booking_date, 'd-M-Y'),
-                'sc_code'           => $e->sc_code ?? '—',
+                'sc_name'           => $e->sc_name ?? '—',
                 'booking_status'    => $e->status ?? '—',
                 'cancellation_date' => $this->formatDate($e->cancellation_date, 'd-M-Y'),
                 'segment'           => $vehicle['segment'],
@@ -894,7 +894,7 @@ class EnquiryCrudController extends CrudController
                 'x8_sc_mile_id'                => $e->x8_sc_mile_id ?? $x8AssignedSc['mile_id'] ?? '—',
                 'x8_sc_branch'                 => $branchesMap[$x8BranchCode] ?? $x8BranchCode ?? '—',
                 'x8_sc_location'               => $x8AssignedSc['primary_loc_code'] ?? '—',
-                'sc_code'                      => $scNamesByCode[$e->sc_code] ?? $e->sc_code ?? '—',
+                'sc_name'                      => $scNamesByCode[$e->sc_name] ?? $e->sc_name ?? '—',
                 'sc_mile_id'                   => $e->sc_mile_id ?? $oemAssignedSc['mile_id'] ?? '—',
                 'oem_sc_branch'                => $branchesMap[$oemBranchCode] ?? $oemBranchCode ?? '—',
                 'oem_sc_location'              => $oemAssignedSc['primary_loc_code'] ?? '—',
@@ -1052,7 +1052,7 @@ class EnquiryCrudController extends CrudController
                 ['field' => 'serial_no', 'headerName' => 'S.No.', 'width' => 80, 'pinned' => 'left'],
                 ['field' => 'booking_no', 'headerName' => 'Booking Number', 'width' => 150, 'pinned' => 'left'],
                 ['field' => 'booking_date', 'headerName' => 'Booking Date', 'width' => 130],
-                ['field' => 'sc_code', 'headerName' => 'SC Code', 'width' => 120],
+                ['field' => 'sc_name', 'headerName' => 'SC Code', 'width' => 120],
                 ['field' => 'booking_status', 'headerName' => 'Booking Status', 'width' => 130],
                 ['field' => 'cancellation_date', 'headerName' => 'Booking Cancellation Date', 'width' => 160],
                 ['field' => 'segment', 'headerName' => 'Segment', 'width' => 120],
@@ -1205,7 +1205,7 @@ class EnquiryCrudController extends CrudController
             ['field' => 'x8_sc_mile_id', 'headerName' => 'X8 Assigned SC Mile ID'],
             ['field' => 'x8_sc_branch', 'headerName' => 'X8 Assigned SC Branch'],
             ['field' => 'x8_sc_location', 'headerName' => 'X8 Assigned SC Location'],
-            ['field' => 'sc_code', 'headerName' => 'OEM Assigned SC'],
+            ['field' => 'sc_name', 'headerName' => 'OEM Assigned SC'],
             ['field' => 'sc_mile_id', 'headerName' => 'OEM Assigned SC Mile ID'],
             ['field' => 'oem_sc_branch', 'headerName' => 'OEM Assigned SC Branch'],
             ['field' => 'oem_sc_location', 'headerName' => 'OEM Assigned SC Location'],
@@ -1277,7 +1277,7 @@ class EnquiryCrudController extends CrudController
             'price_gap',
             'fin_mode',
             'x8_sc_code',
-            'sc_code',
+            'sc_name',
             'dob',
             'marital_status',
             'consid_brand',
@@ -1979,7 +1979,7 @@ class EnquiryCrudController extends CrudController
             'place_of_registration' => 'nullable|max:100',
             // 'dealer_branch' => $req,
             // 'dealer_location' => $req,
-            'sc_code' => 'nullable',
+            'sc_name' => 'nullable',
             'booking_no' => 'nullable|string|max:50',
             'otf_no' => 'nullable|string|max:50',
             'dms_enq_no' => 'nullable|string|max:50',
@@ -2033,7 +2033,7 @@ class EnquiryCrudController extends CrudController
                 ->pluck('name')
                 ->toArray(),
             'likely_purchase_dates' => $kw('LIKELY_PURCHASE_DAY'),
-            'enquiry_types' => $kw('ENQUIRY_TYPE'),
+            'enquiry_types' => $kw('ENQ_TYPE'),
             'activity_types' => $kw('ACTIVITY_TYPE'),
             'follow_up_types' => $kw('FOLLOW_UP_TYPE'),
             'occupation_types' => $kw('OCCUPATION_TYPE'),
