@@ -63,17 +63,17 @@ class EnquiryCrudController extends CrudController
             $segmentsMap = collect(OrgService::segments())->toArray();
 
             $fupTypesMap = collect(OrgService::keywordValueByCode('FOLLOW_UP_TYPE'))->pluck('value', 'code')->toArray();
-            $enqStageMap = collect(OrgService::keywordValueByCode('ENQUIRY_STAGE'))->pluck('value', 'code')->toArray();
+            $enqStageMap = collect(OrgService::keywordValueByCode('ENQ_STAGE'))->pluck('value', 'code')->toArray();
             $custStageMap = collect(OrgService::keywordValueByCode('CUSTOMER_STAGE'))->pluck('value', 'code')->toArray();
             $purcTypeMap = collect(OrgService::keywordValueByCode('PURCHASE_TYPE'))->pluck('value', 'code')->toArray();
             $lostReasonMap = collect(OrgService::keywordValueByCode('LOST_REASON'))->pluck('value', 'code')->toArray();
 
             // 1. Source & Sub-Source Maps
             $sourcesMap   = collect(OrgService::keywordValueByCode('ENQ_SOURCE'))->pluck('value', 'code')->toArray();
-            $subSourceMap = collect(OrgService::keywordValueByCode('ENQUIRY_SUB_SOURCE'))->pluck('value', 'code')->toArray();
+            $subSourceMap = collect(OrgService::keywordValueByCode('ENQ_SUB_SOURCE'))->pluck('value', 'code')->toArray();
 
             // 2. OEM Enquiry Type Map
-            $enquiryTypeMap = collect(OrgService::keywordValueByCode('ENQUIRY_TYPE'))->pluck('value', 'code')->toArray();
+            $enquiryTypeMap = collect(OrgService::keywordValueByCode('ENQ_TYPE'))->pluck('value', 'code')->toArray();
 
             // 3. Demographics: Marital Status & Age Group
             $maritalStatusMap = collect(OrgService::keywordValueByCode('MARITAL_STATUS'))->pluck('value', 'code')->toArray();
@@ -165,7 +165,7 @@ class EnquiryCrudController extends CrudController
                 'finance_not_interested'
             ]) => $listType,
 
-            default => 'all', 
+            default => 'all',
         };
     }
 
@@ -699,7 +699,6 @@ class EnquiryCrudController extends CrudController
 
             $quotBtnText = 'Quote';
             $quotBtnClass = 'btn-success';
-
         } else {
 
             $quotUrl = backpack_url("quotation-form/create?id={$e->id}");
@@ -2033,7 +2032,7 @@ class EnquiryCrudController extends CrudController
                 ->pluck('name')
                 ->toArray(),
             'likely_purchase_dates' => $kw('LIKELY_PURCHASE_DAY'),
-            'enquiry_types' => $kw('ENQUIRY_TYPE'),
+            'enquiry_types' => $kw('ENQ_TYPE'),
             'activity_types' => $kw('ACTIVITY_TYPE'),
             'follow_up_types' => $kw('FOLLOW_UP_TYPE'),
             'occupation_types' => $kw('OCCUPATION_TYPE'),
@@ -2050,11 +2049,11 @@ class EnquiryCrudController extends CrudController
             'sc_fup_remarks' => $kw('SC_FUP_REMARKS'),
             'sc_fup_remarks_types' => $kw('SC_FUP_REMARKS_TYPE'),
             'deviation_stages' => $kw('DEVIATION_STAGE'),
-            'enquiry_stages' => $kw('ENQUIRY_STAGE'),
+            'enquiry_stages' => $kw('ENQ_STAGE'),
             'customer_stages' => $kw('CUSTOMER_STAGE'),
             'purchase_types' => $kw('PURCHASE_TYPE'),
             'enquiry_sources' => $kw('ENQ_SOURCE'),
-            'enquiry_sub_sources' => $kw('ENQUIRY_SUB_SOURCE'),
+            'enquiry_sub_sources' => $kw('ENQ_SUB_SOURCE'),
             'existing_car_oems' => $kw('EXISTING_CAR_OEM'),
             'existing_car_models' => $kw('EXISTING_CAR_MODEL'),
             'existing_car_variants' => $kw('EXISTING_CAR_VARIANT'),

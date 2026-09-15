@@ -52,6 +52,14 @@ class ImportEnquiriesJob implements ShouldQueue
     private array $keyvalueCache = [];
     private bool $keyvalueCacheLoaded = false;
 
+    private array $vehicleModelCache = [];
+    private bool $vehicleModelCacheLoaded = false;
+
+    private array $vehicleColorCache = [];
+    private bool $vehicleColorCacheLoaded = false;
+
+
+
     private int $processedSoFar = 0;
 
     public function __construct(int $importLogId, string $storedPath)
@@ -102,6 +110,8 @@ class ImportEnquiriesJob implements ShouldQueue
             $this->processedSoFar = 0;
 
             $this->loadKeyvalueCache();
+            $this->loadVehicleModelCache();
+            $this->loadVehicleColorCache();
 
             foreach ($sheetHandlers as $sheetName => $handlerMethod) {
                 $sheet = $spreadsheet->getSheetByName($sheetName);
@@ -264,15 +274,17 @@ class ImportEnquiriesJob implements ShouldQueue
                             continue;
                         }
 
-                        $name = $this->cleanString($this->cell($row, $headerMap, 'Name'), 100);
+                        [$firstName, $lastName] = $this->splitCustomerName($this->cell($row, $headerMap, 'Name'));
                         $mobile = $this->cleanString($this->cell($row, $headerMap, 'Phone-Number'), 15);
 
                         $modelName = $this->cell($row, $headerMap, 'Model');
+                        $modelMatch = $this->resolveVehicleModel($modelName);
 
                         // UPDATED HYPERLOCAL COLUMNS PER YOUR SPECIFICATION
                         $data = $this->stripNulls([
                             'lead_id'           => $this->cleanString($this->cell($row, $headerMap, 'Leads-ID'), 100),
-                            'name'              => $name,
+                            'first_name'        => $this->cleanString($firstName, 100),
+                            'last_name'         => $this->cleanString($lastName, 100),
                             'mobile'            => $mobile,
                             'virtual_call_date' => $this->excelDate($this->cell($row, $headerMap, 'Call-Start-Time'), true),
                             'call_url'          => $this->cleanString($this->cell($row, $headerMap, 'Call-Recording-URL'), 255),
@@ -283,6 +295,8 @@ class ImportEnquiriesJob implements ShouldQueue
                             'lead_status'       => $this->cleanString($this->cell($row, $headerMap, 'Lead-Status'), 50),
                             'client_crm_status' => $clientCrmStatus,
                             'model'             => $this->cleanString($modelName, 100),
+                            'model_code'        => $modelMatch['model_code'],
+                            'segment_code'      => $modelMatch['segment_code'],
                             'dealer_code'       => $this->cleanString($this->cell($row, $headerMap, 'Dealer-Code'), 50),
                         ]);
                         $data['updated_at'] = $now;
@@ -333,23 +347,31 @@ class ImportEnquiriesJob implements ShouldQueue
                         $quickEnquiryNo = $this->cleanString($this->cell($row, $headerMap, 'Quick Enquiry Number'), 50);
                         $longEnquiryNo  = $this->cleanString($this->cell($row, $headerMap, 'Enquiry Number'), 50);
 
-                        $name = $this->cleanString($this->cell($row, $headerMap, 'Customer Name'), 100);
+                        [$firstName, $lastName] = $this->splitCustomerName($this->cell($row, $headerMap, 'Customer Name'));
                         $scMileId = $this->cleanString($this->cell($row, $headerMap, 'SC Mile Id'), 50);
                         $mobile   = $this->cleanString($this->cell($row, $headerMap, 'Mobile Phone'), 15);
 
                         $modelName = $this->cell($row, $headerMap, 'Product Family');
+                        $modelMatch = $this->resolveVehicleModel($modelName);
+                        $colorMatch = $this->resolveVehicleColor($this->cell($row, $headerMap, 'Color'));
 
                         $fupCountRaw = $this->cell($row, $headerMap, 'Completed Followup Count');
 
                         $data = $this->stripNulls([
                             'enquiry_no'                   => $longEnquiryNo, // Use the extracted variable here
-                            'name'                         => $name,
+                            'first_name'                   => $this->cleanString($firstName, 100),
+                            'last_name'                    => $this->cleanString($lastName, 100),
                             'mobile'                       => $mobile,
                             'email'                        => $this->cleanString($this->cell($row, $headerMap, 'Email'), 150),
                             'sc_mile_id'                   => $scMileId,
                             'model'                        => $this->cleanString($modelName, 100),
+                            'model_code'                   => $modelMatch['model_code'],
+                            'segment_code'                 => $modelMatch['segment_code'],
                             'variant'                      => $this->cleanString($this->cell($row, $headerMap, 'Variant Description'), 100),
-                            'color'                        => $this->cleanString($this->cell($row, $headerMap, 'Color'), 100),
+                            'color'                        => $this->cleanString($colorMatch['color'], 100),
+                            'color_code'                   => $colorMatch['color_code'],
+                            'fuel_type'                    => $this->cleanString($this->cell($row, $headerMap, 'Fuel Type'), 50),
+                            'seating'                      => $this->cleanString($this->cell($row, $headerMap, 'Seating Capacity'), 20),
                             'purchase_type'                => $this->resolvePurchaseType($this->cell($row, $headerMap, 'Purchase Type')),
                             'likely_purchase_days'         => $this->resolveKeyValue('LIKELY_PURCHASE_DAY', $this->cell($row, $headerMap, 'Likely Purchase In Days')),
                             'enquiry_type'                 => $this->resolveKeyValue('ENQ_TYPE', $this->cell($row, $headerMap, 'Enquiry Type')),
@@ -423,20 +445,26 @@ class ImportEnquiriesJob implements ShouldQueue
                     try {
                         $enquiryNo = $this->cleanString($this->cell($row, $headerMap, 'Enquiry Number'), 50);
 
-                        $name = $this->cleanString($this->cell($row, $headerMap, 'Customer Name'), 100);
+                        [$firstName, $lastName] = $this->splitCustomerName($this->cell($row, $headerMap, 'Customer Name'));
                         $scMileId = $this->cleanString($this->cell($row, $headerMap, 'SC Mile Id'), 50);
                         $mobile   = $this->cleanString($this->cell($row, $headerMap, 'Customer Phone'), 15);
 
                         $modelName = $this->cell($row, $headerMap, 'Product Family');
+                        $modelMatch = $this->resolveVehicleModel($modelName);
+                        $colorMatch = $this->resolveVehicleColor($this->cell($row, $headerMap, 'Color'));
 
                         $data = $this->stripNulls([
-                            'name'                    => $name,
+                            'first_name'             => $this->cleanString($firstName, 100),
+                            'last_name'               => $this->cleanString($lastName, 100),
                             'mobile'                  => $mobile,
                             'email'                   => $this->cleanString($this->cell($row, $headerMap, 'Customer Email'), 150),
                             'sc_mile_id'              => $scMileId,
                             'model'                   => $this->cleanString($modelName, 100),
+                            'model_code'              => $modelMatch['model_code'],
+                            'segment_code'            => $modelMatch['segment_code'],
                             'variant'                 => $this->cleanString($this->cell($row, $headerMap, 'Variant Description'), 100),
-                            'color'                   => $this->cleanString($this->cell($row, $headerMap, 'Color'), 100),
+                            'color'                   => $this->cleanString($colorMatch['color'], 100),
+                            'color_code'              => $colorMatch['color_code'],
                             'purchase_type'           => $this->resolvePurchaseType($this->cell($row, $headerMap, 'Purchase Type')),
                             'likely_purchase_days'    => $this->resolveKeyValue('LIKELY_PURCHASE_DAY', $this->cell($row, $headerMap, 'Likely Purchase In Days')),
                             'enquiry_type'            => $this->resolveKeyValue('ENQ_TYPE', $this->cell($row, $headerMap, 'Enquiry Type')),
@@ -449,6 +477,8 @@ class ImportEnquiriesJob implements ShouldQueue
                             'tehsil'                  => $this->cleanString($this->cell($row, $headerMap, 'Tehsil'), 100),
                             'district'                => $this->cleanString($this->cell($row, $headerMap, 'District'), 100),
                             'zipcode'                 => $this->cleanString($this->cell($row, $headerMap, 'Postal Code'), 20),
+                            'fuel_type'               => $this->cleanString($this->cell($row, $headerMap, 'Fuel Type'), 50),
+                            'seating'                 => $this->cleanString($this->cell($row, $headerMap, 'Seating Capacity'), 20),
                             'customer_type'           => $this->cleanString($this->cell($row, $headerMap, 'Customer Type'), 50),
                             'interested_in_exchange'  => $this->cleanString($this->cell($row, $headerMap, 'Intrested In Exchange'), 10),
                             'td_count'                => $this->cleanString($this->cell($row, $headerMap, 'TD Count'), 10),
@@ -504,13 +534,14 @@ class ImportEnquiriesJob implements ShouldQueue
                 foreach ($chunk as $i => $row) {
                     $excelRow = $i + 2;
                     try {
-                        $name = $this->cleanString($this->cell($row, $headerMap, 'Customer Name'), 100);
+                        [$firstName, $lastName] = $this->splitCustomerName($this->cell($row, $headerMap, 'Customer Name'));
                         $mobile = $this->cleanString($this->cell($row, $headerMap, 'Customer Phone Number'), 15);
 
                         $model = $this->cleanString($this->cell($row, $headerMap, 'Model'), 100);
 
                         $data = $this->stripNulls([
-                            'name'          => $name,
+                            'first_name'    => $this->cleanString($firstName, 100),
+                            'last_name'     => $this->cleanString($lastName, 100),
                             'mobile'        => $mobile,
                             'model'         => $model,
                             'variant'       => $this->cleanString($this->cell($row, $headerMap, 'Variant (Optional)'), 100),
@@ -565,20 +596,22 @@ class ImportEnquiriesJob implements ShouldQueue
                 foreach ($chunk as $i => $row) {
                     $excelRow = $i + 2;
                     try {
-                        $name = $this->cleanString($this->cell($row, $headerMap, 'Customer Name'), 100);
+                        [$firstName, $lastName] = $this->splitCustomerName($this->cell($row, $headerMap, 'Customer Name'));
                         $mobile = $this->cleanString($this->cell($row, $headerMap, 'Customer Phone Number'), 15);
 
+                        $model = $this->cleanString($this->cell($row, $headerMap, 'Model'), 100);
 
                         $data = $this->stripNulls([
-                            'name'                  => $name,
+                            'first_name'            => $this->cleanString($firstName, 100),
+                            'last_name'             => $this->cleanString($lastName, 100),
                             'mobile'                => $mobile,
-
+                            'model'                 => $model,
                             'variant'               => $this->cleanString($this->cell($row, $headerMap, 'Variant (Optional)'), 100),
                             'lead_datetime'         => $this->excelDate($this->cell($row, $headerMap, 'Lead Date & Time'), true),
                             'wapp_campaign_name'    => $this->cleanString($this->cell($row, $headerMap, 'Wapp Campaign Name'), 100),
                             'wapp_campaign_date'    => $this->excelDate($this->cell($row, $headerMap, 'Wapp Campaign Date')),
-                            'segment'               => $this->cleanString($this->cell($row, $headerMap, 'Wapp Campaign Segment'), 100),
-                            'model'                 => $this->cleanString($this->cell($row, $headerMap, 'Wapp Campaign Model'), 100),
+                            'wapp_campaign_segment' => $this->cleanString($this->cell($row, $headerMap, 'Wapp Campaign Segment'), 100),
+                            'wapp_campaign_model'   => $this->cleanString($this->cell($row, $headerMap, 'Wapp Campaign Model'), 100),
                             'tehsil'                => $this->cleanString($this->cell($row, $headerMap, 'Tehsil'), 100),
                             // Fixed for every Whatsapp row
                             'enquiry_type'          => 'DIGITAL',
@@ -627,6 +660,9 @@ class ImportEnquiriesJob implements ShouldQueue
                 foreach ($chunk as $i => $row) {
                     $excelRow = $i + 2;
                     try {
+                        $modelName = $this->cell($row, $headerMap, 'Model Name');
+                        $modelMatch = $this->resolveVehicleModel($modelName);
+
                         $data = [
                             'enquiry_no'            => $this->cleanString($this->cell($row, $headerMap, 'Enquiry Number'), 50),
                             'sc_code'               => $this->cleanString($this->cell($row, $headerMap, 'Sales Consultant'), 200),
@@ -648,8 +684,15 @@ class ImportEnquiriesJob implements ShouldQueue
                             'deviation_stage'       => $this->resolveKeyValue('DEVIATION_STAGE', $this->cell($row, $headerMap, 'Deviation Stage')),
                             'customer_name'         => $this->cleanString($this->cell($row, $headerMap, 'Customer Name'), 200),
                             'customer_phone'        => $this->cleanString($this->cell($row, $headerMap, 'Customer Phone'), 15),
+                            'model_name'            => $this->cleanString($modelName, 150),
+                            'variant_description'   => $this->cleanString($this->cell($row, $headerMap, 'Variant Description'), 150),
+                            'seating_capacity'     => $this->cleanString($this->cell($row, $headerMap, 'Seating Capacity'), 50),
+                            'fuel_type'            => $this->cleanString($this->cell($row, $headerMap, 'Fuel Type'), 50),
+                            'color'                 => $this->cleanString($this->cell($row, $headerMap, 'Color'), 100),
+                            'dealer_branch'         => $this->cleanString($this->cell($row, $headerMap, 'Dealer Name'), 100),
                             'dealer_location'       => $this->cleanString($this->cell($row, $headerMap, 'Dealer Location'), 100),
-
+                            'segment'               => null,
+                            'segment_code'          => $modelMatch['segment_code'] ?? null,
                         ];
 
                         $query = DB::table('xlr8_crm_enquiries_fup');
@@ -694,6 +737,9 @@ class ImportEnquiriesJob implements ShouldQueue
                 foreach ($chunk as $i => $row) {
                     $excelRow = $i + 2;
                     try {
+                        $modelName = $this->cell($row, $headerMap, 'Product Family');
+                        $modelMatch = $this->resolveVehicleModel($modelName);
+
                         $customerName  = $this->cell($row, $headerMap, 'Customer Name') ?? $this->cell($row, $headerMap, 'Lead Name');
                         $customerPhone = $this->cell($row, $headerMap, 'Customer Phone') ?? $this->cell($row, $headerMap, 'Lead Phone');
 
@@ -709,7 +755,10 @@ class ImportEnquiriesJob implements ShouldQueue
                             'scheduled_td_end_time'   => $this->excelDate($this->cell($row, $headerMap, 'Scheduled TD End Time'), true),
                             'actual_td_start_time'    => $this->excelDate($this->cell($row, $headerMap, 'Actual TD Start Time'), true),
                             'actual_td_end_time'      => $this->excelDate($this->cell($row, $headerMap, 'Actual TD End Time'), true),
-
+                            'model'                   => $this->cleanString($modelName, 150),
+                            'model_code'              => $modelMatch['model_code'] ?? null,
+                            'variant'                 => $this->cleanString($this->cell($row, $headerMap, 'Variant Description'), 150),
+                            'variant_code'            => null,
                             'customer_name'           => $this->cleanString($customerName, 200),
                             'customer_phone'          => $this->cleanString($customerPhone, 15),
                         ];
@@ -894,6 +943,102 @@ class ImportEnquiriesJob implements ShouldQueue
         $this->keyvalueCacheLoaded = true;
     }
 
+    private function loadVehicleModelCache(): void
+    {
+        if ($this->vehicleModelCacheLoaded) {
+            return;
+        }
+
+        $rows = DB::table('xlr8_vehicle_model')
+            ->where('is_active', 1)
+            ->get(['name', 'code', 'segment_code']);
+
+        foreach ($rows as $row) {
+            $normalized = $this->normalizeForMatch($row->name);
+            if ($normalized === '') {
+                continue;
+            }
+            $this->vehicleModelCache[$normalized] = [
+                'model_code'   => $row->code,
+                'segment_code' => $row->segment_code,
+            ];
+        }
+
+        $this->vehicleModelCacheLoaded = true;
+    }
+
+    private function loadVehicleColorCache(): void
+    {
+        if ($this->vehicleColorCacheLoaded) {
+            return;
+        }
+
+        $rows = DB::table('xlr8_vehicle_variant')
+            ->where('is_active', 1)
+            ->whereNotNull('color')
+            ->whereNotNull('color_code')
+            ->where('color', '!=', '')
+            ->where('color_code', '!=', '')
+            ->get(['color', 'color_code']);
+
+        $tempCache = [];
+
+        foreach ($rows as $row) {
+            $normalized = $this->normalizeForMatch($row->color);
+            if ($normalized === '') {
+                continue;
+            }
+
+            if (!isset($tempCache[$normalized])) {
+                $tempCache[$normalized] = [];
+            }
+
+            $tempCache[$normalized][$row->color_code] = [
+                'color'      => $row->color,
+                'color_code' => $row->color_code,
+                'count'      => ($tempCache[$normalized][$row->color_code]['count'] ?? 0) + 1,
+            ];
+        }
+
+        foreach ($tempCache as $normalized => $codes) {
+            uasort($codes, function ($a, $b) {
+                return $b['count'] - $a['count'];
+            });
+
+            $selected = reset($codes);
+            $this->vehicleColorCache[$normalized] = [
+                'color'      => $selected['color'],
+                'color_code' => $selected['color_code'],
+            ];
+        }
+
+        $this->vehicleColorCacheLoaded = true;
+    }
+
+    private function resolveVehicleModel($rawModelName): array
+    {
+        $normalized = $rawModelName !== null ? $this->normalizeForMatch((string) $rawModelName) : '';
+
+        if ($normalized === '' || !isset($this->vehicleModelCache[$normalized])) {
+            return ['model_code' => null, 'segment_code' => null];
+        }
+
+        return $this->vehicleModelCache[$normalized];
+    }
+
+
+    private function resolveVehicleColor($rawColorName): array
+    {
+        $raw = $rawColorName !== null ? trim((string) $rawColorName) : null;
+        $normalized = $raw !== null && $raw !== '' ? $this->normalizeForMatch($raw) : '';
+
+        if ($normalized === '' || !isset($this->vehicleColorCache[$normalized])) {
+            return ['color' => $raw, 'color_code' => null];
+        }
+
+        return $this->vehicleColorCache[$normalized];
+    }
+
     private function resolvePurchaseType($rawValue): ?string
     {
         return $this->resolveKeyValue('PURCHASE_TYPE', $rawValue);
@@ -1028,6 +1173,19 @@ class ImportEnquiriesJob implements ShouldQueue
         }
 
         return ($value === '' || $value === null) ? null : $value;
+    }
+
+    private function splitCustomerName(?string $fullName): array
+    {
+        $fullName = trim((string) $fullName);
+
+        if ($fullName === '') {
+            return [null, null];
+        }
+
+        $parts = preg_split('/\s+/', $fullName, 2);
+
+        return [$parts[0], $parts[1] ?? null];
     }
 
     private function stripNulls(array $data): array
