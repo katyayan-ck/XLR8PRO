@@ -360,7 +360,6 @@ class BookingCrudController extends CrudController
                 ->orWhere('quick_enquiry_no', $booking->enq_no)
                 ->first();
 
-            if ($linkedEnquiry) {
 
             if ($linkedEnquiry) {
                 $linkedEnquiry->update([
@@ -3099,14 +3098,13 @@ class BookingCrudController extends CrudController
 
     protected function setupUpdateOperation()
     {
-
         CRUD::setValidation(BookingRequest::class);
         $this->crud->setEditView('admin.booking.add');
 
         $id = $this->crud->getCurrentEntryId() ?? request()->id;
         $entry = $this->crud->getEntry($id);
 
-        // --- NEW: RECOVER DELETED COLUMNS FROM ENQUIRY FOR EDIT FORM ---
+        // Recover ALL deleted fields from Enquiry
         if ($entry->enq_no) {
             $linkedEnquiry = \App\Models\CRM\Enquiry::where('id', $entry->enq_no)
                 ->orWhere('enquiry_no', $entry->enq_no)
@@ -3114,38 +3112,78 @@ class BookingCrudController extends CrudController
                 ->first();
 
             if ($linkedEnquiry) {
-
-            if ($linkedEnquiry) {
-                // Map all deleted fields back onto the $entry object dynamically
+                // === CUSTOMER DETAILS ===
                 $entry->name = $linkedEnquiry->name;
                 $entry->care_of_type = $linkedEnquiry->care_of_type;
                 $entry->care_of = $linkedEnquiry->care_of;
+                $entry->care_of_name = $linkedEnquiry->care_of;
                 $entry->mobile = $linkedEnquiry->mobile;
                 $entry->alt_mobile = $linkedEnquiry->alternate_mobile;
                 $entry->email = $linkedEnquiry->email;
                 $entry->gender = $linkedEnquiry->gender;
-                $entry->occ = $linkedEnquiry->occupation_type;
-                $entry->c_dob = $linkedEnquiry->dob;
-                $entry->buyer_type = $linkedEnquiry->purchase_type_crm ?? $linkedEnquiry->purchase_type;
+
+                // === ADDRESS DETAILS (column name mapping) ===
+                $entry->pincode = $linkedEnquiry->zipcode;
+                $entry->vpo = $linkedEnquiry->vpo;
+                $entry->customer_tehsil = $linkedEnquiry->tehsil;
+                $entry->customer_district = $linkedEnquiry->district;
+                $entry->city = $linkedEnquiry->city;
+                $entry->territory = $linkedEnquiry->territory;
+                $entry->address = $linkedEnquiry->customer_address;
+
+                // === VEHICLE DETAILS (CRITICAL - was missing) ===
+                $entry->segment_code = $linkedEnquiry->segment_code;
+                $entry->model_code = $linkedEnquiry->model_code;
+                $entry->variant_code = $linkedEnquiry->variant_code;
+                $entry->color_code = $linkedEnquiry->color_code;
+                $entry->seating = $linkedEnquiry->seating;
+                $entry->usage_area = $linkedEnquiry->usage_area;
+                $entry->km_travelled_daily = $linkedEnquiry->km_travelled_daily;
+                $entry->application_type = $linkedEnquiry->application_type;
+                $entry->application = $linkedEnquiry->application;
+
+                // === OCCUPATION & DEMOGRAPHICS ===
+                $entry->occupation = $linkedEnquiry->occupation_type;
+                $entry->customer_type = $linkedEnquiry->customer_type;
+                $entry->occupation_sub_type = $linkedEnquiry->occupation_sub_type;
+                $entry->company_name = $linkedEnquiry->company_name;
+                $entry->hidden_customer_dob = $linkedEnquiry->dob;
+                $entry->marital_status = $linkedEnquiry->marital_status;
+                $entry->marriage_date = $linkedEnquiry->marriage_date;
+                $entry->age_group = $linkedEnquiry->age_group;
+
+                // === EXCHANGE DETAILS ===
+                $entry->buyer_type = $linkedEnquiry->purchase_type_crm 
+                    ?? $linkedEnquiry->purchase_type;
                 $entry->exist_oem1 = $linkedEnquiry->brand_make;
                 $entry->vh1_detail = $linkedEnquiry->brand_model;
                 $entry->exist_oem2 = $linkedEnquiry->consid_brand2;
                 $entry->vh2_detail = $linkedEnquiry->consid_model2;
+                $entry->consid_variant = $linkedEnquiry->consid_variant;
+                $entry->consid_variant2 = $linkedEnquiry->consid_variant2;
                 $entry->registration_no = $linkedEnquiry->vehicle_no;
                 $entry->make_year = $linkedEnquiry->make_year;
                 $entry->odo_reading = $linkedEnquiry->odo_reading;
                 $entry->expected_price = $linkedEnquiry->expected_price;
                 $entry->offered_price = $linkedEnquiry->offered_price;
                 $entry->exchange_bonus = $linkedEnquiry->exchange_bonus;
+
+                // === FINANCE DETAILS ===
                 $entry->fin_mode = $linkedEnquiry->fin_mode;
                 $entry->financier = $linkedEnquiry->financier;
                 $entry->loan_status = $linkedEnquiry->loan_status;
+
+                // === BOOKING REFERENCE DETAILS ===
                 $entry->consultant = $linkedEnquiry->x8_sc_code;
                 $entry->branch_code = $linkedEnquiry->dealer_branch;
                 $entry->location_code = $linkedEnquiry->dealer_location;
+
+                // === REFERENCE / REFERRAL DETAILS ===
+                $entry->r_name = $linkedEnquiry->referee_name;
+                $entry->r_mobile = $linkedEnquiry->referee_phone;
+
+                // === REMARKS ===
                 $entry->details = $linkedEnquiry->remarks;
-                $entry->accessories = $linkedEnquiry->accessories;
-                $entry->apack_amount = $linkedEnquiry->apack_amount;
             }
         }
         // ---------------------------------------------------------------
