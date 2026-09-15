@@ -974,7 +974,7 @@
                     </div>
                 </div>
 
-                {{-- =========================== 4. EXCHANGE & FINANCE =========================== --}}
+                {{-- =========================== 4. EXCHANGE & FINANCE (EDITABLE) =========================== --}}
                 <div class="card enquiry-card" style="order: {{ $order['exchange'] }};">
                     <div class="card-header">
                         <h3 class="mb-0 fw-bold">Exchange & Finance</h3>
@@ -986,18 +986,15 @@
                                     <label class="form-label">Purchase Type (SC Input)</label>
                                     <input type="text" class="form-control"
                                         value="{{ collect($purchase_types ?? [])->firstWhere('code', $enquiry?->purchase_type)['value'] ?? ($enquiry?->purchase_type ?? '—') }}"
-                                        readonly style="background-color: #e9ecef;">
-                                    {{-- Hidden field to retain the value for validation / saving --}}
+                                        readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
                                     <input type="hidden" name="purchase_type"
                                         value="{{ old('purchase_type', $enquiry->purchase_type ?? '') }}">
                                 </div>
                             @endif
 
                             <div class="col-md-4 mb-4">
-                                <label class="form-label">Purchase Type (CRE Input) <span
-                                        class="text-danger">*</span></label>
-                                <select name="purchase_type_crm" id="purchase_type_crm" class="form-control form-select"
-                                    required>
+                                <label class="form-label">Purchase Type (CRE Input) <span class="text-danger">*</span></label>
+                                <select name="purchase_type_crm" id="purchase_type_crm" class="form-control form-select" required>
                                     <option value="">Select Purchase Type (CRE Input)</option>
                                     @foreach ($purchase_types as $item)
                                         <option value="{{ $item['code'] }}"
@@ -1011,22 +1008,14 @@
                                 <label class="form-label">Finance Mode <span class="text-danger">*</span></label>
                                 <select name="fin_mode" id="fin_mode" class="form-control form-select">
                                     <option value="" disabled selected>Select Finance Mode</option>
-                                    <option value="In-house"
-                                        {{ old('fin_mode', $enquiry->fin_mode ?? '') == 'In-house' ? 'selected' : '' }}>
-                                        In-house</option>
-                                    <option value="Customer Self"
-                                        {{ old('fin_mode', $enquiry->fin_mode ?? '') == 'Customer Self' ? 'selected' : '' }}>
-                                        Customer Self</option>
-                                    <option value="Cash"
-                                        {{ old('fin_mode', $enquiry->fin_mode ?? '') == 'Cash' ? 'selected' : '' }}>Cash
-                                    </option>
-                                    <option value="Yet To Decide"
-                                        {{ old('fin_mode', $enquiry->fin_mode ?? '') == 'Yet To Decide' ? 'selected' : '' }}>
-                                        Yet To Decide</option>
+                                    <option value="In-house" {{ old('fin_mode', $enquiry->fin_mode ?? '') == 'In-house' ? 'selected' : '' }}>In-house</option>
+                                    <option value="Customer Self" {{ old('fin_mode', $enquiry->fin_mode ?? '') == 'Customer Self' ? 'selected' : '' }}>Customer Self</option>
+                                    <option value="Cash" {{ old('fin_mode', $enquiry->fin_mode ?? '') == 'Cash' ? 'selected' : '' }}>Cash</option>
+                                    <option value="Yet To Decide" {{ old('fin_mode', $enquiry->fin_mode ?? '') == 'Yet To Decide' ? 'selected' : '' }}>Yet To Decide</option>
                                 </select>
                             </div>
 
-                            {{-- NEW: Additional Buy Vehicle Section --}}
+                            {{-- Additional Buy Vehicle Section --}}
                             <div class="row w-100 m-0 p-0" id="additional_vehicle_section" style="display:none;">
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Existing Brand</label>
@@ -1056,52 +1045,143 @@
                                         value="{{ old('make_year', $enquiry->make_year ?? '') }}">
                                 </div>
                             </div>
-
-                            @if (isset($enquiry) &&
-                                    in_array($enquiry->purchase_type, ['Exchange Buy', 'Scrappage']) &&
-                                    ($enquiry->brand_make || $enquiry->expected_price || $enquiry->lost_reason))
-                                <div class="col-md-12 mt-3">
-                                    <div class="bg-light p-3 rounded border">
-                                        <h6 class="mb-3 text-secondary">Exchange Valuation Details (Processed by Exchange
-                                            Team)</h6>
-                                        <div class="row">
-                                            <div class="col-md-3 mb-3"><label class="form-label">Make:</label> <input
-                                                    class="form-control" disabled value="{{ $enquiry->brand_make }}">
-                                            </div>
-                                            <div class="col-md-3 mb-3"><label class="form-label">Model:</label> <input
-                                                    class="form-control" disabled value="{{ $enquiry->brand_model }}">
-                                            </div>
-                                            <div class="col-md-3 mb-3"><label class="form-label">Reg No:</label> <input
-                                                    class="form-control" disabled value="{{ $enquiry->vehicle_no }}">
-                                            </div>
-                                            <div class="col-md-3 mb-3"><label class="form-label">Mfg Year:</label> <input
-                                                    class="form-control" disabled value="{{ $enquiry->make_year }}">
-                                            </div>
-                                            <div class="col-md-3 mb-3"><label class="form-label">Odometer:</label> <input
-                                                    class="form-control" disabled value="{{ $enquiry->odo_reading }}">
-                                            </div>
-                                            <div class="col-md-3 mb-3"><label class="form-label">Expected Price:</label>
-                                                <input class="form-control" disabled
-                                                    value="{{ $enquiry->expected_price }}">
-                                            </div>
-                                            <div class="col-md-3 mb-3"><label class="form-label">Offered Price:</label>
-                                                <input class="form-control" disabled
-                                                    value="{{ $enquiry->offered_price }}">
-                                            </div>
-                                            <div class="col-md-3 mb-3"><label class="form-label">Exchange Bonus:</label>
-                                                <input class="form-control" disabled
-                                                    value="{{ $enquiry->exchange_bonus }}">
-                                            </div>
-                                            <div class="col-md-3 mb-3"><label class="form-label text-danger">Reason for
-                                                    Case Lost:</label> <input class="form-control" disabled
-                                                    value="{{ $enquiry->lost_reason }}"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endif
                         </div>
                     </div>
                 </div>
+
+                @if(isset($enquiry))
+                    {{-- ================= READ ONLY MODE: Greyed Out Data Cards ================= --}}
+                    @php
+                        // Fetch extended finance data from dedicated modules
+                        $financeData = \App\Models\Module\Finance\XFinance::where('enq_no', $enquiry->enquiry_no)->orWhere('bid', $enquiry->id)->first();
+                        
+                        $financierName = '';
+                        if($financeData && $financeData->financier) {
+                            $fin = collect($financiers ?? [])->firstWhere('id', $financeData->financier);
+                            $financierName = $fin ? $fin->name : '';
+                        } elseif ($enquiry->financier) {
+                            $fin = collect($financiers ?? [])->firstWhere('id', $enquiry->financier);
+                            $financierName = $fin ? $fin->name : '';
+                        }
+
+                        $caseStatusMap = [1 => 'In-Process', 2 => 'Finance Done / Exchange Done', 3 => 'Case Lost'];
+                        $instTypeMap = [1 => 'Financier Payment', 2 => 'Delivery Order', 3 => 'Sanction Letter'];
+                        $caseLostMap = [1 => 'Cash Purchase', 2 => 'Customer Self Finance'];
+                        
+                        $brandMakeName = '';
+                        if($enquiry->brand_make) {
+                            $bm = collect($existing_car_oems ?? [])->firstWhere('code', $enquiry->brand_make);
+                            $brandMakeName = $bm ? $bm['value'] : $enquiry->brand_make;
+                        }
+                    @endphp
+
+                    <div class="card enquiry-card" style="order: {{ $order['exchange'] }}; margin-top: 1.5rem;">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h3 class="mb-0 fw-bold">Exchange & Finance Details (Read-Only)</h3>
+                        </div>
+                        <div class="card-body">
+                            
+                            {{-- Exchange Details --}}
+                            <h4 class="fw-bold mb-3">Exchange / Scrappage Valuation</h4>
+                            <div class="row">
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Purchase Type</label>
+                                    <input type="text" class="form-control" value="{{ collect($purchase_types ?? [])->firstWhere('code', $enquiry->purchase_type_crm ?? $enquiry->purchase_type)['value'] ?? ($enquiry->purchase_type_crm ?? $enquiry->purchase_type ?? '—') }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Brand Make</label>
+                                    <input type="text" class="form-control" value="{{ $brandMakeName }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Brand Model</label>
+                                    <input type="text" class="form-control" value="{{ $enquiry->brand_model }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Vehicle Registration No.</label>
+                                    <input type="text" class="form-control" value="{{ $enquiry->vehicle_no }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Manufacturing Year</label>
+                                    <input type="text" class="form-control" value="{{ $enquiry->make_year }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Odometer Reading</label>
+                                    <input type="text" class="form-control" value="{{ $enquiry->odo_reading }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Expected Price</label>
+                                    <input type="text" class="form-control" value="{{ $enquiry->expected_price ? '₹ '.number_format($enquiry->expected_price) : '' }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Offered Price</label>
+                                    <input type="text" class="form-control" value="{{ $enquiry->offered_price ? '₹ '.number_format($enquiry->offered_price) : '' }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Exchange Bonus</label>
+                                    <input type="text" class="form-control" value="{{ $enquiry->exchange_bonus ? '₹ '.number_format($enquiry->exchange_bonus) : '' }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Price Gap</label>
+                                    @php 
+                                        $diff = ($enquiry->expected_price ?? 0) - ($enquiry->offered_price ?? 0) - ($enquiry->exchange_bonus ?? 0); 
+                                    @endphp
+                                    <input type="text" class="form-control" value="{{ $diff ? '₹ '.number_format($diff) : '' }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Reason for Case Lost (If Dropped)</label>
+                                    <input type="text" class="form-control" value="{{ $enquiry->lost_reason }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                </div>
+                            </div>
+
+                            <hr class="my-4" style="border-color: #e9ecef;">
+
+                            {{-- Finance Details --}}
+                            <h4 class="fw-bold mb-3">Finance & Loan Details</h4>
+                            <div class="row">
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Finance Mode</label>
+                                    <input type="text" class="form-control" value="{{ $financeData->fin_mode ?? $enquiry->fin_mode ?? '' }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Loan Status</label>
+                                    <input type="text" class="form-control" value="{{ $financeData->loan_status ?? $enquiry->loan_status ?? '' }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Financier</label>
+                                    <input type="text" class="form-control" value="{{ $financierName }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Case Status</label>
+                                    <input type="text" class="form-control" value="{{ $caseStatusMap[$financeData->case_status ?? 1] ?? '' }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Case Lost Reason</label>
+                                    <input type="text" class="form-control" value="{{ $caseLostMap[$financeData->case_lost_reason ?? ''] ?? ($financeData->case_lost_reason ?? '') }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Instrument Type</label>
+                                    <input type="text" class="form-control" value="{{ $instTypeMap[$financeData->instrument_type ?? ''] ?? '' }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Reference No.</label>
+                                    <input type="text" class="form-control" value="{{ $financeData->instrument_ref_no ?? '' }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Loan Amount</label>
+                                    <input type="text" class="form-control" value="{{ !empty($financeData->loan_amount) ? '₹ '.number_format($financeData->loan_amount) : '' }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Margin Money</label>
+                                    <input type="text" class="form-control" value="{{ !empty($financeData->margin) ? '₹ '.number_format($financeData->margin) : '' }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">File Charge</label>
+                                    <input type="text" class="form-control" value="{{ !empty($financeData->file_charge) ? '₹ '.number_format($financeData->file_charge) : '' }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endif
 
                 {{-- =========================== 5. SALES CONSULTANT DETAIL =========================== --}}
                 <div class="card enquiry-card" style="order: {{ $order['sc_detail'] }};">

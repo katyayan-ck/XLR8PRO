@@ -27,7 +27,7 @@
                         </div>
                         <div class="col-sm-3">
                             <label class="form-label">Customer Name</label>
-                            <input type="text" class="form-control" value="{{ trim(($enquiry->first_name ?? '').' '.($enquiry->last_name ?? '')) }}" readonly>
+                            <input type="text" class="form-control" value="{{ $enquiry->name ?? 'N/A' }}" readonly>
                         </div>
                         <div class="col-sm-3">
                             <label class="form-label">Model / Variant</label>
@@ -171,6 +171,8 @@
             const caseVal = $('#case_status').val();
 
             $('.finance-field').hide();
+            $('.finance-field input, .finance-field select').prop('required', false); 
+            
             $('#case_lost_reason_wrapper').hide();
 
             $('#financier_wrapper').show();
