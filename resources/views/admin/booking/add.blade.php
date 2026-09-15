@@ -1051,6 +1051,15 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+        @php
+            $rawAccessories = $entry?->accessories ?? ($q['accessories'] ?? []);
+
+            $prefillAccessories = is_array($rawAccessories)
+                ? $rawAccessories
+                : ($rawAccessories
+                    ? array_filter(explode(',', $rawAccessories))
+                    : []);
+        @endphp
         let uploadedFile = null;
         let salesUsers = @json($data['allusers'] ?? []);
         console.log('✅ SLS Users Loaded:', salesUsers.length);
@@ -1062,6 +1071,7 @@
             model: @json(old('model', $entry?->model_code ?? ($enquiry->model_code ?? ''))),
             variant: @json(old('variant', $entry?->variant_code ?? ($enquiry->variant_code ?? ''))),
             color: @json(old('color', $entry?->color_code ?? ($enquiry->color_code ?? ''))),
+            accessories: @json($prefillAccessories),
             branch: @json(old('branch', $entry?->branch_code ?? ($enquiry->dealer_branch ?? ''))),
             location: @json(old($isEdit ? 'location_id' : 'location', $entry?->location_code ?? ($enquiry->dealer_location ?? ''))),
             pincode: @json(old('pincode', $entry?->pincode ?? ($enquiry->zipcode ?? ''))),
@@ -1511,16 +1521,50 @@
 
                     if (segmentName && modelId && variantId) {
                         $.ajax({
-                            url: '../get-accessories/' + $('#segment').val() + '/' + $('#model').val() + '/' + this.value, method: 'GET',
+                            url: '{{ url('admin/get-accessories') }}/'
+                            + encodeURIComponent($('#segment').val())
+                            + '/'
+                            + encodeURIComponent($('#model').val())
+                            + '/'
+                            + encodeURIComponent(this.value), method: 'GET',
                             success: function(data) {
-                                const $accessories = $('#accessories');
-                                $accessories.select2('destroy').prop('disabled', false).empty();
-                                $.each(data, function(i, item) {
-                                    $accessories.append($('<option>', { value: item.part_no, text: item.display_name || item.item }).attr('data-price', item.ndp));
+                            const $accessories = $('#accessories');
+
+                            const preserveSelectedAccessories = !!prefillData.variant;
+                            const selectedAccessories = preserveSelectedAccessories
+                                ? ($accessories.val() || [])
+                                : [];
+
+                            $accessories.select2('destroy')
+                                .prop('disabled', false)
+                                .empty();
+
+                            $.each(data, function(i, item) {
+                                $accessories.append(
+                                    $('<option>', {
+                                        value: item.part_no,
+                                        text: item.display_name || item.item
+                                    }).attr('data-price', item.ndp || 0)
+                                );
+                            });
+
+                            if (preserveSelectedAccessories) {
+                                const availableValues = selectedAccessories.filter(function(value) {
+                                    return $accessories.find("option[value='" + value + "']").length > 0;
                                 });
-                                $accessories.select2({ placeholder: 'Please Select...', allowClear: true });
-                            },
-                            error: handleAjaxError('Error fetching accessories')
+
+                                $accessories.val(availableValues);
+                            }
+
+                            $accessories.select2({
+                                placeholder: 'Please Select...',
+                                allowClear: true
+                            });
+
+                            $accessories.trigger('change');
+
+                            updateAccessoriesAmount();
+                        },error: handleAjaxError('Error fetching accessories')
                         });
                     }
                 });
@@ -1542,9 +1586,8 @@
                     }
                 });
 
-                $('#accessories').on('select2:select select2:unselect', function(e) {
-                    const price = e.params.data.element.dataset.price;
-                    updateAccessoriesAmount(price, e.type === 'select2:select');
+                $('#accessories').on('select2:select select2:unselect', function() {
+                    updateAccessoriesAmount();
                 });
 
                 $('#expectedprice, #offeredprice, #exchangebonus').on('input', calculatePriceGap);
@@ -1762,9 +1805,14 @@
                 $('#accessories').empty().prop('disabled', true); $('#apackamount').val('0');
             }
 
-            function updateAccessoriesAmount(price, isAdd) {
-                const current = parseFloat($('#apackamount').val()) || 0, change = parseFloat(price) || 0;
-                $('#apackamount').val(isAdd ? current + change : current - change);
+            function updateAccessoriesAmount() {
+                let total = 0;
+
+                $('#accessories option:selected').each(function() {
+                    total += parseFloat($(this).data('price')) || 0;
+                });
+
+                $('#apackamount').val(total.toFixed(2));
             }
 
             function attachDuplicateCheck(input, fieldName, type) {
