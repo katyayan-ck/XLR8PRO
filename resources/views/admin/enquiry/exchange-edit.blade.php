@@ -27,7 +27,7 @@
                 <div class="card-body">
                     {{-- Customer & Vehicle Basics (Read-only reference) --}}
                     <div class="row bg-light p-3 rounded border mb-4">
-                        <div class="col-md-3 mb-2"><label>Customer Name:</label> <input class="form-control" disabled value="{{ trim(($enquiry->first_name ?? '').' '.($enquiry->last_name ?? '')) }}"></div>
+                        <div class="col-md-3 mb-2"><label>Customer Name:</label> <input class="form-control" disabled value="{{ $enquiry->name ?? 'N/A' }}"></div>
                         <div class="col-md-3 mb-2"><label>Mobile:</label> <input class="form-control" disabled value="{{ $enquiry->mobile }}"></div>
                         <div class="col-md-3 mb-2"><label>Segment:</label> <input class="form-control" disabled value="{{ $enquiry->segment_code }}"></div>
                         <div class="col-md-3 mb-2"><label>Model:</label> <input class="form-control" disabled value="{{ $enquiry->model_code }}"></div>

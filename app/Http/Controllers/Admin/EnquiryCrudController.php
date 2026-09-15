@@ -207,9 +207,41 @@ class EnquiryCrudController extends CrudController
             'unassigned_long' => Enquiry::unassignedLong(),
             'assigned_quick' => Enquiry::assignedQuick(),
             'unassigned_quick' => Enquiry::unassignedQuick(),
-            'exchange' => Enquiry::where('purchase_type', 'Exchange Buy'),
-            'scrappage' => Enquiry::where('purchase_type', 'Scrappage'),
-            'exchange_not_interested' => Enquiry::whereIn('purchase_type', ['First Time Buy', 'Additional Buy', 'No Consideration']),
+            'exchange' => Enquiry::where(function ($q) {
+                $q->whereIn('purchase_type_crm', ['Exchange Buy', 'EXCHANGE_BUY'])
+                  ->orWhere(function ($sub) {
+                      $sub->where(function ($sub2) {
+                          $sub2->whereNull('purchase_type_crm')->orWhere('purchase_type_crm', '');
+                      })->whereIn('purchase_type', ['Exchange Buy', 'EXCHANGE_BUY']);
+                  });
+            }),
+            
+            'scrappage' => Enquiry::where(function ($q) {
+                $q->whereIn('purchase_type_crm', ['Scrappage', 'SCRAPPAGE'])
+                  ->orWhere(function ($sub) {
+                      $sub->where(function ($sub2) {
+                          $sub2->whereNull('purchase_type_crm')->orWhere('purchase_type_crm', '');
+                      })->whereIn('purchase_type', ['Scrappage', 'SCRAPPAGE']);
+                  });
+            }),
+            
+            'exchange_not_interested' => Enquiry::where(function ($q) {
+                $q->whereIn('purchase_type_crm', [
+                    'First Time Buy', 'FIRST_TIME_BUY', 
+                    'Additional Buy', 'ADDITIONAL_BUY', 
+                    'No Consideration', 'NO_CONSIDERATION'
+                ])
+                  ->orWhere(function ($sub) {
+                      $sub->where(function ($sub2) {
+                          $sub2->whereNull('purchase_type_crm')->orWhere('purchase_type_crm', '');
+                      })->whereIn('purchase_type', [
+                          'First Time Buy', 'FIRST_TIME_BUY', 
+                          'Additional Buy', 'ADDITIONAL_BUY', 
+                          'No Consideration', 'NO_CONSIDERATION'
+                      ]);
+                  });
+            }),
+            
             'finance' => Enquiry::where('fin_mode', 'In-house'),
             'finance_not_interested' => Enquiry::whereIn('fin_mode', ['Cash', 'Customer Self', 'Yet To Decide', 'Purchase Plan Cancelled']),
 
@@ -854,7 +886,8 @@ class EnquiryCrudController extends CrudController
 
             $creFup = $lookups['creFups']['XENQ-' . $e->id] ?? null;
 
-            $row += [
+            // FIX: Using array_merge so it actively overwrites the '—' placeholders from the base array
+            $row = array_merge($row, [
                 'oem_long_enquiry_no'          => $e->oem_long_enquiry_no ?? '—',
                 'oem_long_enquiry_date'        => $this->formatDate($e->oem_long_enquiry_date, 'd-M-Y'),
                 'oem_long_enquiry_assign_date' => $this->formatDate($e->oem_long_enquiry_assign_date, 'd-M-Y'),
@@ -880,10 +913,10 @@ class EnquiryCrudController extends CrudController
                 'sub_source'                   => $subSourceMap[$e->sub_source ?? ''] ?? $e->sub_source ?? '—',
                 'likely_purchase_date'         => $lpMap[$e->likely_purchase_date] ?? $e->likely_purchase_date ?? '—',
                 'x8_quotation_date'            => $this->formatDate($e->x8_quotation_date ?? $e->quotation_date, 'd-M-Y'),
-                'fuel_type'            => $cleanVal($fuelMap[$e->fuel_type] ?? $e->fuel_type),
-                'transmission'         => $cleanVal($e->transmission),
-                'drivetrain'           => $cleanVal($e->drivetrain),
-                'seating'              => $cleanVal($e->seating),
+                'fuel_type'                    => $cleanVal($fuelMap[$e->fuel_type ?? ''] ?? $e->fuel_type ?? $variantRel?->fuel_type),
+                'transmission'                 => $cleanVal($e->transmission ?? $variantRel?->transmission),
+                'drivetrain'                   => $cleanVal($e->drivetrain ?? $variantRel?->drivetrain),
+                'seating'                      => $cleanVal($e->seating ?? $variantRel?->seating_capacity),  
                 'pincode'                      => $e->pincode ?? $e->zipcode ?? '—',
                 'vpo'                          => $e->vpo ?? '—',
                 'tehsil'                       => $e->tehsil ?? '—',
@@ -914,13 +947,14 @@ class EnquiryCrudController extends CrudController
                 'application'                  => $e->application ?? '—',
                 'has_ev'                       => $e->has_ev ?? '—',
                 'purchase_type'                => $purcTypeMap[$e->purchase_type ?? ''] ?? $e->purchase_type ?? '—',
+                'purchase_type_crm'            => $purcTypeMap[$e->purchase_type_crm ?? ''] ?? $e->purchase_type_crm ?? '—',
                 'consid_brand'                 => $e->consid_brand ?? $e->consider_make ?? '—',
                 'consid_model'                 => $e->consid_model ?? $e->consider_model ?? '—',
                 'consid_variant'               => $e->consid_variant ?? $e->consider_variant ?? '—',
                 'expected_price'               => $e->expected_price ?? '—',
                 'offered_price'                => $e->offered_price ?? '—',
                 'exchange_bonus'               => $e->exchange_bonus ?? '—',
-                'price_gap'                    => ($e->expected_price ?? 0) - ($e->offered_price ?? 0) - ($e->exchange_bonus ?? 0),
+                'price_gap'                    => ($e->expected_price || $e->offered_price || $e->exchange_bonus) ? (($e->expected_price ?? 0) - ($e->offered_price ?? 0) - ($e->exchange_bonus ?? 0)) : '—',
                 'fin_mode'                     => $e->fin_mode ?? '—',
                 'financier_name'               => $finMap[$e->financier] ?? $e->financier ?? '—',
                 'loan_status'                  => $e->loan_status ?? '—',
@@ -957,7 +991,7 @@ class EnquiryCrudController extends CrudController
                 'cre_fup_remarks'              => $creFup->cre_fup_remarks ?? '—',
                 // 'cre_next_fup_date'            => $creFup ? $this->formatDate($creFup->cre_next_fup_date, 'd-M-Y') : '—',
                 'cre_next_fup_date'            => $creFup ? $this->formatDate($creFup->cre_next_fup_date, 'd-M-Y H:i') : '—',
-            ];
+            ]);
         }
 
         if ($type === 'reference') {
@@ -1194,6 +1228,7 @@ class EnquiryCrudController extends CrudController
             ['field' => 'city', 'headerName' => 'State'],
             ['field' => 'address', 'headerName' => 'Address'],
             ['field' => 'purchase_type', 'headerName' => 'Purchase Type'],
+            ['field' => 'purchase_type_crm', 'headerName' => 'Purchase Type (CRE)'],
             ['field' => 'expected_price', 'headerName' => 'Expected Price'],
             ['field' => 'offered_price', 'headerName' => 'Offered Price'],
             ['field' => 'exchange_bonus', 'headerName' => 'Exchange Bonus'],
@@ -1273,6 +1308,7 @@ class EnquiryCrudController extends CrudController
             'tehsil',
             'district',
             'purchase_type',
+            'purchase_type_crm',
             'expected_price',
             'price_gap',
             'fin_mode',
@@ -1342,7 +1378,7 @@ class EnquiryCrudController extends CrudController
 
     private function applyEnquirySort($query, array $sortModel): void
     {
-        $cols = ['enquiry_no', 'enquiry_type', 'sub_source', 'person_code', 'name', 'mobile', 'email', 'occupation_type', 'customer_type', 'company_name', 'gender', 'dob', 'marital_status', 'city', 'district', 'purchase_type', 'created_at'];
+        $cols = ['enquiry_no', 'enquiry_type', 'sub_source', 'person_code', 'name', 'mobile', 'email', 'occupation_type', 'customer_type', 'company_name', 'gender', 'dob', 'marital_status', 'city', 'district', 'purchase_type', 'created_at', 'updated_at'];
         $sortApplied = false;
 
         foreach ($sortModel as $sort) {
@@ -1353,7 +1389,7 @@ class EnquiryCrudController extends CrudController
             }
         }
         if (!$sortApplied) {
-            $query->orderByDesc('created_at');
+            $query->orderByDesc('updated_at'); 
         }
     }
 
@@ -1731,11 +1767,9 @@ class EnquiryCrudController extends CrudController
     public function financeEnquiryUpdate(Request $request, $id)
     {
         $enquiry = Enquiry::findOrFail($id);
-
         $enquiry->update([
             'fin_mode' => $request->fin_mode,
             'financier' => $request->financier,
-            'loan_status' => $request->loan_status,
         ]);
 
         $finance = \App\Models\Module\Finance\XFinance::firstOrNew(['enq_no' => $enquiry->enquiry_no]);
