@@ -193,25 +193,60 @@
                                             Mode <span class="required-mark">*</span>
                                         </label>
 
+                                        @php
+                                            $paymentMode = old(
+                                                'mode',
+                                                $data['payment_mode']
+                                                    ?? $data['payment']?->mode
+                                                    ?? ''
+                                            );
+                                        @endphp
+
                                         <select name="mode" id="mode" class="form-control form-select" required>
-                                            <option value="" disabled selected>-- Select Mode --</option>
-                                            <option value="Cash">Cash</option>
-                                            <option value="Cheque">Cheque</option>
-                                            <option value="Bank Transfer">Bank Transfer</option>
-                                            <option value="UPI">UPI</option>
+
+                                            <option value="" disabled {{ $paymentMode === '' ? 'selected' : '' }}>
+                                                -- Select Mode --
+                                            </option>
+
+                                            <option value="Cash" {{ $paymentMode === 'Cash' ? 'selected' : '' }}>
+                                                Cash
+                                            </option>
+
+                                            <option value="Cheque" {{ $paymentMode === 'Cheque' ? 'selected' : '' }}>
+                                                Cheque
+                                            </option>
+
+                                            <option value="Bank Transfer" {{ $paymentMode === 'Bank Transfer' ? 'selected' : '' }}>
+                                                Bank Transfer
+                                            </option>
+
+                                            <option value="UPI" {{ $paymentMode === 'UPI' ? 'selected' : '' }}>
+                                                UPI
+                                            </option>
+
                                         </select>
                                     </div>
                                 </div>
 
+                                @if (!$isEdit)
                                 <div class="col-sm-3">
-                                    <div class="form-group">
-                                        <label for="fdoc">Upload Image or PDF <span
-                                                class="required-mark">*</span></label>
-                                        <input type="file" name="amountproof" id="proofInput" class="form-control"
-                                            accept=".pdf,.jpg,.jpeg,.png" {{ $isEdit ? '' : 'required' }}>
+                                    <div class="form-group" id="proofUploadGroup">
+                                        <label for="fdoc">
+                                            Upload Image or PDF
+                                            <span class="required-mark">*</span>
+                                        </label>
+
+                                        <input type="file"
+                                            name="amountproof"
+                                            id="proofInput"
+                                            class="form-control"
+                                            accept=".pdf,.jpg,.jpeg,.png"
+                                            required>
+
                                         <div id="proofPreview" class="mt-3"></div>
                                     </div>
                                 </div>
+                            @endif
                             </div>
                         </div>
                     </div>
@@ -268,14 +303,44 @@
                                 <div class="col-sm-3">
                                     <div class="form-group">
                                         <label for="careof">Care Of <span class="required-mark">*</span></label>
-                                        <select name="{{ $isEdit ? 'care_of' : 'careof' }}" id="careof" class="form-control form-select" required>
+                                        @php
+                                            $careOfType = old(
+                                                $isEdit ? 'care_of' : 'careof',
+                                                $entry?->care_of_type
+                                                    ?? $enquiry?->care_of_type
+                                                    ?? $q['care_of_type']
+                                                    ?? ''
+                                            );
+                                        @endphp
+
+                                        <select name="{{ $isEdit ? 'care_of' : 'careof' }}"
+                                                id="careof"
+                                                class="form-control form-select"
+                                                required>
+
                                             <option value="">Please Select...</option>
-                                            @php $coType = old($isEdit ? 'care_of' : 'careof', $entry?->care_of_type ?? ($enquiry->care_of_type ?? ($q['care_of_type'] ?? ''))); @endphp
-                                            <option value="1" {{ $coType == 1 ? 'selected' : '' }}>Son of</option>
-                                            <option value="2" {{ $coType == 2 ? 'selected' : '' }}>Daughter of</option>
-                                            <option value="3" {{ $coType == 3 ? 'selected' : '' }}>Married to</option>
-                                            <option value="4" {{ $coType == 4 ? 'selected' : '' }}>Guardian Name</option>
-                                            <option value="5" id="ownedByOption" style="display: none;">Owned By</option>
+
+                                            <option value="1" {{ (string)$careOfType === '1' ? 'selected' : '' }}>
+                                                Son of
+                                            </option>
+
+                                            <option value="2" {{ (string)$careOfType === '2' ? 'selected' : '' }}>
+                                                Daughter of
+                                            </option>
+
+                                            <option value="3" {{ (string)$careOfType === '3' ? 'selected' : '' }}>
+                                                Married to
+                                            </option>
+
+                                            <option value="4" {{ (string)$careOfType === '4' ? 'selected' : '' }}>
+                                                Guardian Name
+                                            </option>
+
+                                            <option value="5" id="ownedByOption"
+                                                style="display: none;"
+                                                {{ (string)$careOfType === '5' ? 'selected' : '' }}>
+                                                Owned By
+                                            </option>
                                         </select>
                                     </div>
                                 </div>
@@ -285,10 +350,21 @@
                                     <div class="form-group">
                                         <label id="careofnamelabel">Care Of Name <span
                                                 class="required-mark">*</span></label>
-                                        <input type="text" name="{{ $isEdit ? 'care_of_name' : 'careofname' }}" id="careofname"
+                                        @php
+                                            $careOfName = old(
+                                                $isEdit ? 'care_of_name' : 'careofname',
+                                                $entry?->care_of
+                                                    ?? $enquiry?->care_of
+                                                    ?? $data['care_of']
+                                                    ?? $q['care_of']
+                                                    ?? ''
+                                            );
+                                        @endphp
+                                        <input type="text"
+                                            name="{{ $isEdit ? 'care_of_name' : 'careofname' }}"
+                                            id="careofname"
                                             class="form-control uppercase"
-                                            value="{{ old($isEdit ? 'care_of_name' : 'careofname', $entry?->care_of ?? ($enquiry->care_of ?? ($q['care_of'] ?? ''))) }}"
-                                            required>
+                                            value="{{ $careOfName }}">
                                     </div>
                                 </div>
 
@@ -422,10 +498,24 @@
                                 <!-- Sale Type -->
                                 <div class="col-sm-3">
                                     <label>Sale Type <span class="text-danger">*</span></label>
-                                    <select id="sale_type" name="sale_type" class="form-control form-select" required>
-                                        <option value="">Select Sale Type</option>
-                                        <option value="1" {{ old('sale_type', $entry?->sale_type ?? '') == '1' ? 'selected' : '' }}>Within State</option>
-                                        <option value="2" {{ old('sale_type', $entry?->sale_type ?? '') == '2' ? 'selected' : '' }}>Outside State</option>
+                                    @php
+                                        $saleType = old('sale_type', $entry?->sale_type ?? '');
+                                    @endphp
+
+                                    <select id="sale_type"
+                                            name="sale_type"
+                                            class="form-control form-select"
+                                            required>
+
+                                        <option value="">Please Select...</option>
+
+                                        <option value="1" {{ (string)$saleType === '1' ? 'selected' : '' }}>
+                                            Within State
+                                        </option>
+
+                                        <option value="2" {{ (string)$saleType === '2' ? 'selected' : '' }}>
+                                            Outside State
+                                        </option>
                                     </select>
                                 </div>
 
@@ -824,15 +914,52 @@
 
                         <div class="col-sm-2">
                             <div class="form-group">
-                                <label for="saleconsultant">Sales Consultant <span class="required-mark">*</span></label>
-                                <select name="saleconsultant" id="saleconsultant" class="form-control form-select" required>
+                                <label for="saleconsultant">
+                                    Sales Consultant
+                                    <span class="required-mark">*</span>
+                                </label>
+
+                                @php
+                                    $selectedSalesConsultant = old(
+                                        'saleconsultant',
+                                        $enquiry?->x8_sc_code
+                                            ?? $enquiry?->sc_code
+                                            ?? $entry?->consultant
+                                            ?? $data['saleconsultant']
+                                            ?? ''
+                                    );
+                                @endphp
+
+                                <select name="saleconsultant"
+                                        id="saleconsultant"
+                                        class="form-control form-select"
+                                        required>
+
                                     <option value="">Please Select...</option>
+
                                     @foreach ($data['salesconsultants'] ?? [] as $consultant)
-                                        @php $conCode = is_object($consultant) ? $consultant->person_code : ($consultant['person_code'] ?? ''); @endphp
+
+                                        @php
+                                            $conCode = is_object($consultant)
+                                                ? $consultant->person_code
+                                                : ($consultant['person_code'] ?? '');
+
+                                            $displayName = is_object($consultant)
+                                                ? ($consultant->display_name ?? '')
+                                                : ($consultant['display_name'] ?? '');
+
+                                            $employeeCode = is_object($consultant)
+                                                ? ($consultant->employee_code ?? '')
+                                                : ($consultant['employee_code'] ?? '');
+                                        @endphp
+
                                         <option value="{{ $conCode }}"
-                                            {{ old('saleconsultant', $entry?->consultant ?? ($enquiry->sc_code ?? '')) == $conCode ? 'selected' : '' }}>
-                                            {{ is_object($consultant) ? $consultant->display_name : ($consultant['display_name'] ?? '') }} - {{ is_object($consultant) ? $consultant->employee_code : ($consultant['employee_code'] ?? '') }}
+                                            {{ (string)$selectedSalesConsultant === (string)$conCode ? 'selected' : '' }}>
+
+                                            {{ $displayName }} - {{ $employeeCode }}
+
                                         </option>
+
                                     @endforeach
                                 </select>
                             </div>
@@ -903,13 +1030,45 @@
 
                         <div class="col-sm-3">
                             <div class="form-group" id="loanstatusbox">
-                                <label for="loanstatus">Loan File Status <span class="required-mark" style="display: none;">*</span></label>
-                                <select name="{{ $isEdit ? 'loan_status' : 'loanstatus' }}" id="loanstatus" class="form-control form-select" disabled required>
-                                    <option value="" disabled selected>-- Select Loan File Status --</option>
-                                    @php $lStatus = old($isEdit ? 'loan_status' : 'loanstatus', $entry?->loan_status ?? ''); @endphp
-                                    <option value="Pending" {{ $lStatus == 'Pending' ? 'selected' : '' }}>Pending</option>
-                                    <option value="Complete" {{ $lStatus == 'Complete' ? 'selected' : '' }}>Complete</option>
+
+                                <label for="loanstatus">
+                                    Loan File Status
+                                    <span class="required-mark" style="display: none;">*</span>
+                                </label>
+
+                                @php
+                                    $lStatus = old(
+                                        $isEdit ? 'loan_status' : 'loanstatus',
+                                        $data['loan_status']
+                                            ?? $entry?->loan_status
+                                            ?? $enquiry?->loan_status
+                                            ?? ''
+                                    );
+                                @endphp
+
+                                <select name="{{ $isEdit ? 'loan_status' : 'loanstatus' }}"
+                                        id="loanstatus"
+                                        class="form-control form-select"
+                                        disabled
+                                        required>
+
+                                    <option value="" disabled
+                                        {{ empty($lStatus) ? 'selected' : '' }}>
+                                        -- Select Loan File Status --
+                                    </option>
+
+                                    <option value="Pending"
+                                        {{ $lStatus === 'Pending' ? 'selected' : '' }}>
+                                        Pending
+                                    </option>
+
+                                    <option value="Complete"
+                                        {{ $lStatus === 'Complete' ? 'selected' : '' }}>
+                                        Complete
+                                    </option>
+
                                 </select>
+
                             </div>
                         </div>
                         <div class="col-sm-6">
@@ -1051,6 +1210,15 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+        @php
+            $rawAccessories = $entry?->accessories ?? ($q['accessories'] ?? []);
+
+            $prefillAccessories = is_array($rawAccessories)
+                ? $rawAccessories
+                : ($rawAccessories
+                    ? array_filter(explode(',', $rawAccessories))
+                    : []);
+        @endphp
         let uploadedFile = null;
         let salesUsers = @json($data['allusers'] ?? []);
         console.log('✅ SLS Users Loaded:', salesUsers.length);
@@ -1062,6 +1230,25 @@
             model: @json(old('model', $entry?->model_code ?? ($enquiry->model_code ?? ''))),
             variant: @json(old('variant', $entry?->variant_code ?? ($enquiry->variant_code ?? ''))),
             color: @json(old('color', $entry?->color_code ?? ($enquiry->color_code ?? ''))),
+            care_of_type: @json(
+                old(
+                    $isEdit ? 'care_of' : 'careof',
+                    $entry?->care_of_type
+                        ?? $enquiry?->care_of_type
+                        ?? $data['care_of_type']
+                        ?? ''
+                )
+            ),
+            care_of: @json(
+                old(
+                    $isEdit ? 'care_of_name' : 'careofname',
+                    $entry?->care_of
+                        ?? $enquiry?->care_of
+                        ?? $data['care_of']
+                        ?? ''
+                )
+            ),
+            accessories: @json($prefillAccessories),
             branch: @json(old('branch', $entry?->branch_code ?? ($enquiry->dealer_branch ?? ''))),
             location: @json(old($isEdit ? 'location_id' : 'location', $entry?->location_code ?? ($enquiry->dealer_location ?? ''))),
             pincode: @json(old('pincode', $entry?->pincode ?? ($enquiry->zipcode ?? ''))),
@@ -1389,14 +1576,20 @@
                         $('#careofname').prop('disabled', false).prop('required', true);
                         toggleRequiredMark($('#careofname'), true);
                     } else {
+                        const careOfType = String(prefillData.care_of_type || '');
+
                         $('#careof').html(`
                             <option value="">Please Select...</option>
-                            <option value="1" {{ old($isEdit ? 'care_of' : 'careof', $entry?->care_of_type ?? ($q['care_of_type'] ?? '')) == 1 ? 'selected' : '' }}>Son of</option>
-                            <option value="2" {{ old($isEdit ? 'care_of' : 'careof', $entry?->care_of_type ?? ($q['care_of_type'] ?? '')) == 2 ? 'selected' : '' }}>Daughter of</option>
-                            <option value="3" {{ old($isEdit ? 'care_of' : 'careof', $entry?->care_of_type ?? ($q['care_of_type'] ?? '')) == 3 ? 'selected' : '' }}>Married to</option>
-                            <option value="4" {{ old($isEdit ? 'care_of' : 'careof', $entry?->care_of_type ?? ($q['care_of_type'] ?? '')) == 4 ? 'selected' : '' }}>Guardian Name</option>
+                            <option value="1" ${careOfType === '1' ? 'selected' : ''}>Son of</option>
+                            <option value="2" ${careOfType === '2' ? 'selected' : ''}>Daughter of</option>
+                            <option value="3" ${careOfType === '3' ? 'selected' : ''}>Married to</option>
+                            <option value="4" ${careOfType === '4' ? 'selected' : ''}>Guardian Name</option>
                         `);
-                        $('#careofname').prop('disabled', false).prop('required', true);
+
+                        $('#careofname')
+                            .prop('disabled', false)
+                            .prop('required', true);
+
                         toggleRequiredMark($('#careofname'), true);
                     }
                     $('#customernamelabel').text(isFirm ? 'Firm Name' : 'Customer Name');
@@ -1511,16 +1704,50 @@
 
                     if (segmentName && modelId && variantId) {
                         $.ajax({
-                            url: '../get-accessories/' + $('#segment').val() + '/' + $('#model').val() + '/' + this.value, method: 'GET',
+                            url: '{{ url('admin/get-accessories') }}/'
+                            + encodeURIComponent($('#segment').val())
+                            + '/'
+                            + encodeURIComponent($('#model').val())
+                            + '/'
+                            + encodeURIComponent(this.value), method: 'GET',
                             success: function(data) {
-                                const $accessories = $('#accessories');
-                                $accessories.select2('destroy').prop('disabled', false).empty();
-                                $.each(data, function(i, item) {
-                                    $accessories.append($('<option>', { value: item.part_no, text: item.display_name || item.item }).attr('data-price', item.ndp));
+                            const $accessories = $('#accessories');
+
+                            const preserveSelectedAccessories = !!prefillData.variant;
+                            const selectedAccessories = preserveSelectedAccessories
+                                ? ($accessories.val() || [])
+                                : [];
+
+                            $accessories.select2('destroy')
+                                .prop('disabled', false)
+                                .empty();
+
+                            $.each(data, function(i, item) {
+                                $accessories.append(
+                                    $('<option>', {
+                                        value: item.part_no,
+                                        text: item.display_name || item.item
+                                    }).attr('data-price', item.ndp || 0)
+                                );
+                            });
+
+                            if (preserveSelectedAccessories) {
+                                const availableValues = selectedAccessories.filter(function(value) {
+                                    return $accessories.find("option[value='" + value + "']").length > 0;
                                 });
-                                $accessories.select2({ placeholder: 'Please Select...', allowClear: true });
-                            },
-                            error: handleAjaxError('Error fetching accessories')
+
+                                $accessories.val(availableValues);
+                            }
+
+                            $accessories.select2({
+                                placeholder: 'Please Select...',
+                                allowClear: true
+                            });
+
+                            $accessories.trigger('change');
+
+                            updateAccessoriesAmount();
+                        },error: handleAjaxError('Error fetching accessories')
                         });
                     }
                 });
@@ -1542,9 +1769,8 @@
                     }
                 });
 
-                $('#accessories').on('select2:select select2:unselect', function(e) {
-                    const price = e.params.data.element.dataset.price;
-                    updateAccessoriesAmount(price, e.type === 'select2:select');
+                $('#accessories').on('select2:select select2:unselect', function() {
+                    updateAccessoriesAmount();
                 });
 
                 $('#expectedprice, #offeredprice, #exchangebonus').on('input', calculatePriceGap);
@@ -1600,7 +1826,7 @@
                 $coltype.prop('disabled', isDummy);
                 if (isDummy) $coltype.val('').trigger('change');
 
-                $('#proofInput').prop('disabled', isDummy);
+                $('#proofInput').prop('disabled', isDummy || {{ $isEdit ? 'true' : 'false' }});
                 if (isDummy) { $('#proofInput').val(''); $('#proofPreview').empty(); }
 
                 const financeFields = ['#finmode', '#financier', '#financiershortname', '#loanstatus'];
@@ -1615,7 +1841,10 @@
                 });
 
                 $('#bookingamount, #receiptvoucherinput, #receiptdate').prop('disabled', isDummy);
-                toggleRequiredMark(['#coltype', '#proofInput', '#finmode', '#financier', '#loanstatus'], !isDummy);
+                toggleRequiredMark(
+                    ['#coltype', '#proofInput', '#finmode', '#financier', '#loanstatus'],
+                    !isDummy && !{{ $isEdit ? 'true' : 'false' }}
+                );
                 $('#bookingForm').validate().settings.rules["{{ $isEdit ? 'col_type' : 'coltype' }}"].required = !isDummy;
                 $('#bookingForm').validate().settings.rules["{{ $isEdit ? 'fin_mode' : 'finmode' }}"].required = !isDummy;
             }
@@ -1762,9 +1991,14 @@
                 $('#accessories').empty().prop('disabled', true); $('#apackamount').val('0');
             }
 
-            function updateAccessoriesAmount(price, isAdd) {
-                const current = parseFloat($('#apackamount').val()) || 0, change = parseFloat(price) || 0;
-                $('#apackamount').val(isAdd ? current + change : current - change);
+            function updateAccessoriesAmount() {
+                let total = 0;
+
+                $('#accessories option:selected').each(function() {
+                    total += parseFloat($(this).data('price')) || 0;
+                });
+
+                $('#apackamount').val(total.toFixed(2));
             }
 
             function attachDuplicateCheck(input, fieldName, type) {
