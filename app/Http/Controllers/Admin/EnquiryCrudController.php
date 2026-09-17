@@ -912,10 +912,10 @@ class EnquiryCrudController extends CrudController
                 'sub_source'                   => $subSourceMap[$e->sub_source ?? ''] ?? $e->sub_source ?? '—',
                 'likely_purchase_date'         => $lpMap[$e->likely_purchase_date] ?? $e->likely_purchase_date ?? '—',
                 'x8_quotation_date'            => $this->formatDate($e->x8_quotation_date ?? $e->quotation_date, 'd-M-Y'),
-                'fuel_type'                    => $cleanVal($fuelMap[$e->fuel_type ?? ''] ?? $e->fuel_type ?? $variantRel?->fuel_type),
-                'transmission'                 => $cleanVal($e->transmission ?? $variantRel?->transmission),
-                'drivetrain'                   => $cleanVal($e->drivetrain ?? $variantRel?->drivetrain),
-                'seating'                      => $cleanVal($e->seating ?? $variantRel?->seating_capacity),  
+                'fuel_type'                    => $cleanVal($fuelMap[$variantRel?->fuel_type_id ?? ''] ?? $fuelMap[$variantRel?->fuel_type ?? ''] ?? $variantRel?->fuel_type),
+                'transmission'                 => $cleanVal($variantRel?->transmission),
+                'drivetrain'                   => $cleanVal($variantRel?->drivetrain),
+                'seating'                      => $cleanVal($variantRel?->seating ?? $variantRel?->seating_capacity),
                 'pincode'                      => $e->pincode ?? $e->zipcode ?? '—',
                 'vpo'                          => $e->vpo ?? '—',
                 'tehsil'                       => $e->tehsil ?? '—',
@@ -1301,7 +1301,11 @@ class EnquiryCrudController extends CrudController
             'model_name',
             'variant_name',
             'color_name',
-            'first_name',
+            'fuel_type',
+            'transmission',
+            'drivetrain',
+            'seating',
+            'name',
             'mobile',
             'alternate_mobile',
             'tehsil',
@@ -1324,6 +1328,7 @@ class EnquiryCrudController extends CrudController
             'td_count',
             'td_date',
             'cre_planned_fup_date',
+            'cre_next_fup_date',
             'cre_enq_stage',
             'cre_customer_stage',
             'action',
@@ -1544,9 +1549,19 @@ class EnquiryCrudController extends CrudController
             ->orderBy('id', 'asc')
             ->get();
 
+        // Fetch the new Finance & Exchange Follow-ups
+        $enqNoFallback = $enquiry->enquiry_no ?? $enquiry->oem_enquiry_no ?? ('XENQ-' . $enquiry->id);
+        $finExchFups = DB::table('xlr8_finexch_fup')
+            ->where('enq_no', $enqNoFallback)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
         $data['enquiry'] = $enquiry;
         $data['fups'] = $fups;
         $data['creFups'] = $creFups;
+        // Split them by remark_type to pass to the view
+        $data['exchangeFups'] = $finExchFups->where('remark_type', 2);
+        $data['financeFups'] = $finExchFups->where('remark_type', 1);
 
         return view('admin.enquiry.create', $data);
     }
@@ -1725,27 +1740,90 @@ class EnquiryCrudController extends CrudController
         return redirect(backpack_url('enquiry'));
     }
 
+    // public function exchangeEnquiryEdit($id)
+    // {
+    //     $enquiry = Enquiry::with(['segment', 'model', 'variant'])->findOrFail($id);
+    //     $existing_car_oems = OrgService::keywordValueByCode('EXISTING_CAR_OEM');
+    //     return view('admin.enquiry.exchange-edit', compact('enquiry', 'existing_car_oems'));
+    // }
+
     public function exchangeEnquiryEdit($id)
     {
         $enquiry = Enquiry::with(['segment', 'model', 'variant'])->findOrFail($id);
         $existing_car_oems = OrgService::keywordValueByCode('EXISTING_CAR_OEM');
-        return view('admin.enquiry.exchange-edit', compact('enquiry', 'existing_car_oems'));
+        
+        // Robust Enquiry Number Fallback
+        $enqNo = $enquiry->enquiry_no ?? $enquiry->oem_enquiry_no ?? ('XENQ-' . $enquiry->id);
+        
+        // Fetch Exchange Follow-ups (Type 2)
+        $fups = DB::table('xlr8_finexch_fup')
+            ->where('enq_no', $enqNo)
+            ->where('remark_type', 2)
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('admin.enquiry.exchange-edit', compact('enquiry', 'existing_car_oems', 'fups'));
     }
+
+    // public function exchangeEnquiryUpdate(Request $request, $id)
+    // {
+    //     $enquiry = Enquiry::findOrFail($id);
+    //     $enquiry->update($request->only([
+    //         'brand_make',
+    //         'brand_model',
+    //         'vehicle_no',
+    //         'lost_reason',
+    //         'make_year',
+    //         'odo_reading',
+    //         'expected_price',
+    //         'offered_price',
+    //         'exchange_bonus'
+    //     ]));
+    //     Alert::success('Exchange Details Updated successfully.')->flash();
+
+    //     if ($enquiry->purchase_type === 'Scrappage') {
+    //         return redirect(backpack_url('exchange/enquiry/int-in-scrappage'));
+    //     }
+    //     return redirect(backpack_url('exchange/enquiry/int-in-exchange'));
+    // }
 
     public function exchangeEnquiryUpdate(Request $request, $id)
     {
         $enquiry = Enquiry::findOrFail($id);
+        
+        // Robust Enquiry Number Fallback
+        $enqNo = $enquiry->enquiry_no ?? $enquiry->oem_enquiry_no ?? ('XENQ-' . $enquiry->id);
+        
         $enquiry->update($request->only([
             'brand_make',
             'brand_model',
             'vehicle_no',
-            'lost_reason',
             'make_year',
             'odo_reading',
             'expected_price',
             'offered_price',
             'exchange_bonus'
         ]));
+
+        // Process New Exchange Follow-up Remark
+        if ($request->filled('remarks')) {
+            $lastFup = DB::table('xlr8_finexch_fup')
+                ->where('enq_no', $enqNo)
+                ->where('remark_type', 2)
+                ->orderByDesc('id')
+                ->first();
+
+            DB::table('xlr8_finexch_fup')->insert([
+                'enq_no'      => $enqNo,
+                'remark_type' => 2,
+                'fup_count'   => $lastFup ? $lastFup->fup_count + 1 : 1,
+                'remarks'     => $request->remarks,
+                'created_by'  => backpack_user()->id,
+                'created_at'  => now('Asia/Kolkata'),
+                'updated_at'  => now('Asia/Kolkata'),
+            ]);
+        }
+
         Alert::success('Exchange Details Updated successfully.')->flash();
 
         if ($enquiry->purchase_type === 'Scrappage') {
@@ -1754,24 +1832,97 @@ class EnquiryCrudController extends CrudController
         return redirect(backpack_url('exchange/enquiry/int-in-exchange'));
     }
 
+    // public function financeEnquiryEdit($id)
+    // {
+    //     $enquiry = Enquiry::with(['segment', 'model', 'variant'])->findOrFail($id);
+    //     $finance = \App\Models\Module\Finance\XFinance::where('enq_no', $enquiry->enquiry_no)->first();
+    //     $financiers = \App\Models\Module\Booking\XlFinancier::select('id', 'name', 'short_name')->get()->toArray();
+
+    //     return view('admin.enquiry.finance-edit', compact('enquiry', 'finance', 'financiers'));
+    // }
+
     public function financeEnquiryEdit($id)
     {
         $enquiry = Enquiry::with(['segment', 'model', 'variant'])->findOrFail($id);
-        $finance = \App\Models\Module\Finance\XFinance::where('enq_no', $enquiry->enquiry_no)->first();
+        
+        // Robust Enquiry Number Fallback
+        $enqNo = $enquiry->enquiry_no ?? $enquiry->oem_enquiry_no ?? ('XENQ-' . $enquiry->id);
+        
+        $finance = \App\Models\Module\Finance\XFinance::where('enq_no', $enqNo)->first();
         $financiers = \App\Models\Module\Booking\XlFinancier::select('id', 'name', 'short_name')->get()->toArray();
+        
+        // Fetch Finance Follow-ups (Type 1)
+        $fups = DB::table('xlr8_finexch_fup')
+            ->where('enq_no', $enqNo)
+            ->where('remark_type', 1)
+            ->orderByDesc('created_at')
+            ->get();
 
-        return view('admin.enquiry.finance-edit', compact('enquiry', 'finance', 'financiers'));
+        return view('admin.enquiry.finance-edit', compact('enquiry', 'finance', 'financiers', 'fups'));
     }
+
+    // public function financeEnquiryUpdate(Request $request, $id)
+    // {
+    //     $enquiry = Enquiry::findOrFail($id);
+    //     $enquiry->update([
+    //         'fin_mode' => $request->fin_mode,
+    //         'financier' => $request->financier,
+    //     ]);
+
+    //     $finance = \App\Models\Module\Finance\XFinance::firstOrNew(['enq_no' => $enquiry->enquiry_no]);
+
+    //     $finance->bid = $enquiry->id;
+    //     $finance->fin_mode = $request->fin_mode;
+    //     $finance->financier = $request->financier;
+    //     $finance->loan_status = $request->loan_status;
+    //     $finance->case_status = $request->case_status ?? 1;
+    //     $finance->verification_status = $request->verification_status ?? 1;
+    //     $finance->case_lost_reason = $request->case_lost_reason;
+
+    //     if (!in_array($request->fin_mode, ['Cash', 'Customer Self', 'Yet To Decide', 'Purchase Plan Cancelled'])) {
+    //         $finance->instrument_type = $request->instrument_type;
+    //         $finance->instrument_ref_no = $request->instrument_ref_no;
+    //         $finance->loan_amount = $request->loan_amount;
+    //         $finance->margin = $request->margin_money;
+    //         $finance->file_charge = $request->file_charge;
+    //     } else {
+    //         $finance->instrument_type = null;
+    //         $finance->instrument_ref_no = null;
+    //         $finance->loan_amount = null;
+    //         $finance->margin = null;
+    //         $finance->file_charge = null;
+    //     }
+
+    //     $finance->updated_by = backpack_auth()->id();
+    //     $finance->status = ($finance->fin_mode === 'In-house' && $finance->case_status == 2) ? 2 : 1;
+    //     $finance->save();
+
+    //     if ($request->hasFile('instrument_proof')) {
+    //         $finance->clearMediaCollection('instrument_proof');
+    //         $finance->addMediaFromRequest('instrument_proof')->toMediaCollection('instrument_proof');
+    //     }
+
+    //     Alert::success('Finance Details Updated successfully.')->flash();
+
+    //     if (in_array($enquiry->fin_mode, ['Cash', 'Customer Self', 'Yet To Decide', 'Purchase Plan Cancelled'])) {
+    //         return redirect(backpack_url('finance/enquiry/not-interested'));
+    //     }
+    //     return redirect(backpack_url('finance/enquiry/int-in-finance'));
+    // }
 
     public function financeEnquiryUpdate(Request $request, $id)
     {
         $enquiry = Enquiry::findOrFail($id);
+        
+        // Robust Enquiry Number Fallback
+        $enqNo = $enquiry->enquiry_no ?? $enquiry->oem_enquiry_no ?? ('XENQ-' . $enquiry->id);
+        
         $enquiry->update([
             'fin_mode' => $request->fin_mode,
             'financier' => $request->financier,
         ]);
 
-        $finance = \App\Models\Module\Finance\XFinance::firstOrNew(['enq_no' => $enquiry->enquiry_no]);
+        $finance = \App\Models\Module\Finance\XFinance::firstOrNew(['enq_no' => $enqNo]);
 
         $finance->bid = $enquiry->id;
         $finance->fin_mode = $request->fin_mode;
@@ -1802,6 +1953,25 @@ class EnquiryCrudController extends CrudController
         if ($request->hasFile('instrument_proof')) {
             $finance->clearMediaCollection('instrument_proof');
             $finance->addMediaFromRequest('instrument_proof')->toMediaCollection('instrument_proof');
+        }
+
+        // Process New Finance Follow-up Remark
+        if ($request->filled('remarks')) {
+            $lastFup = DB::table('xlr8_finexch_fup')
+                ->where('enq_no', $enqNo)
+                ->where('remark_type', 1)
+                ->orderByDesc('id')
+                ->first();
+
+            DB::table('xlr8_finexch_fup')->insert([
+                'enq_no'      => $enqNo,
+                'remark_type' => 1,
+                'fup_count'   => $lastFup ? $lastFup->fup_count + 1 : 1,
+                'remarks'     => $request->remarks,
+                'created_by'  => backpack_user()->id,
+                'created_at'  => now('Asia/Kolkata'),
+                'updated_at'  => now('Asia/Kolkata'),
+            ]);
         }
 
         Alert::success('Finance Details Updated successfully.')->flash();
@@ -2000,9 +2170,9 @@ class EnquiryCrudController extends CrudController
             'age_group' => 'nullable',
             'has_ev' => 'nullable',
             'purchase_type' => 'nullable',
-            'consider_make' => 'nullable|max:100',
-            'consider_model' => 'nullable|max:100',
-            'consider_variant' => 'nullable|max:100',
+            'consid_brand' => 'nullable|max:100',
+            'consid_model' => 'nullable|max:100',
+            'consid_variant' => 'nullable|max:100',
             'consid_brand2' => 'nullable|max:100',
             'consid_model2' => 'nullable|max:100',
             'consid_variant2' => 'nullable|max:100',

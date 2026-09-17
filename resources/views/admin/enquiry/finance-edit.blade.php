@@ -145,14 +145,57 @@
                                 <label class="form-label">File Charge <span class="text-danger">*</span></label>
                                 <input type="number" name="file_charge" id="file_charge" class="form-control calc-field" value="{{ old('file_charge', $finance->file_charge ?? '') }}">
                             </div>
+                            
+                            {{-- NEW FINANCE FOLLOW-UP LOGIC --}}
+                            <div class="col-md-12 mt-4">
+                                <hr class="my-3">
+                                <h4 class="fw-bold mb-3">Finance Follow-ups</h4>
+                            </div>
+
+                            <div class="col-md-12 mb-4">
+                                <label class="form-label">Add New Remark</label>
+                                <textarea name="remarks" class="form-control" rows="2" placeholder="Enter new follow-up remarks..."></textarea>
+                            </div>
+
+                            @if(isset($fups) && $fups->count() > 0)
+                            <div class="col-md-12 mb-2">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-striped text-center align-middle mb-0">
+                                        <thead class="table-secondary">
+                                            <tr>
+                                                <th style="width: 10%;">FUP #</th>
+                                                <th style="width: 45%;">Remarks</th>
+                                                <th style="width: 25%;">Created By</th>
+                                                <th style="width: 20%;">Created At</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach($fups as $fup)
+                                                @php
+                                                    // Resolve user name using OrgService
+                                                    $creator = \App\Models\User::find($fup->created_by);
+                                                    $code = $creator ? ($creator->employee_code ?? $creator->person_code) : null;
+                                                    $creatorName = \App\Services\OrgService::getUserNameByCode($code);
+                                                @endphp
+                                                <tr>
+                                                    <td class="fw-bold">{{ $fup->fup_count }}</td>
+                                                    <td class="text-start">{{ $fup->remarks }}</td>
+                                                    <td>{{ $creatorName }}</td>
+                                                    <td>{{ \Carbon\Carbon::parse($fup->created_at)->format('d-M-Y h:i A') }}</td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            @endif
                         </div>
                     </div>
 
-                    <div class="card-footer bg-white text-end">
-                        <button type="submit" class="btn btn-primary btn-lg">
+                    <div class="card-footer bg-white text-center pb-4 border-0 mt-2">
+                        <button type="submit" class="btn btn-success btn-lg px-5 py-2 shadow-sm fw-bold">
                             <i class="la la-save"></i> Save Enquiry Finance
                         </button>
-                        <a href="{{ url()->previous() }}" class="btn btn-outline-secondary btn-lg ms-2">Back</a>
                     </div>
                 </div>
             </form>
