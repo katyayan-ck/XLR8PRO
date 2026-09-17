@@ -232,7 +232,7 @@
     @if (auth()->check() &&
             (auth()->user()->hasPermissionTo('can_view_documents') ||
                 auth()->user()->hasRole('super
-                admin')))
+                    admin')))
         <a class="dropdown-item d-flex align-items-center justify-content-between"
             href="{{ backpack_url('pricing') }}">
             <span><i class="la la-tag me-2"></i>Price List</span>
@@ -323,8 +323,7 @@
             <span class="badge rounded-pill text-dark"
                 style="background-color: #e9ecef;">{{ $enqCounts['assigned_long'] ?? 0 }}</span>
         </a>
-        <a class="dropdown-item d-flex align-items-center justify-content-between"
-            href="#">
+        <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">
             <span><i class="la la-list"></i>Duplicate Enquiries</span>
         </a>
         <a class="dropdown-item d-flex align-items-center justify-content-between"
@@ -770,10 +769,10 @@
     {{-- Sales Cashier --}}
     <x-backpack::menu-dropdown title="Sales Cashier" icon="la la-cash-register" nested="true">
         <a class="dropdown-item d-flex align-items-center justify-content-between"
-        href="{{ backpack_url('receipt') }}">
-        <span>
-            <i class="la la-receipt me-2"></i>Issue Receipt
-        </span>
+            href="{{ backpack_url('receipt') }}">
+            <span>
+                <i class="la la-receipt me-2"></i>Issue Receipt
+            </span>
         </a>
         {{-- Special Discount --}}
         <a class="dropdown-item d-flex align-items-center justify-content-between"
@@ -855,13 +854,13 @@
     <x-backpack::menu-dropdown title="Manager" icon="la la-user-tie" nested="true">
 
         <a class="dropdown-item d-flex align-items-center justify-content-between"
-            href="{{ backpack_url('accounts/receipt-list') }}"> 
+            href="{{ backpack_url('accounts/receipt-list') }}">
             <span><i class="la la-receipt me-2"></i>Issue Receipt</span>
         </a>
 
         <a class="dropdown-item d-flex align-items-center justify-content-between"
-            href="{{ backpack_url('accounts/manager/journal-voucher') }}">
-            <span><i class="la la-file-invoice me-2"></i>Create Journal Voucher</span>
+            href="{{ backpack_url('accounts/journal-voucher-list') }}">
+            <span><i class="la la-file-invoice me-2"></i> Journal Voucher</span>
         </a>
 
         <a class="dropdown-item d-flex align-items-center justify-content-between"
@@ -984,4 +983,3 @@
     </a>
 
 </x-backpack::menu-dropdown>
-

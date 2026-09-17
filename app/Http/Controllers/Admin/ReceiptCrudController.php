@@ -4,29 +4,19 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Module\Booking\Bookingamount;
+use App\Models\CRM\Enquiry;
 use App\Services\OrgService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Prologue\Alerts\Facades\Alert;
+
 class ReceiptCrudController extends Controller
 {
-    /**
-     * xlr8_booking_amount type:
-     * 1 = Receipt
-     * 2 = Voucher
-     * 3 = Special Discount
-     * 4 = RTO Charges
-     */
     private const TYPE_RECEIPT = 1;
 
-/**
- * Display Receipt list.
- */
-/**
-     * Display Receipt list.
-     */
     public function index()
     {
         $receipts = Bookingamount::query()
@@ -34,48 +24,49 @@ class ReceiptCrudController extends Controller
             ->orderByDesc('id')
             ->get();
 
-        // Collect all unique enquiry IDs referenced by receipts
+        // Collect all unique enquiry IDs referenced by receipts to fetch customer names
         $enquiryIds = $receipts->pluck('enq_id')->filter()->unique();
 
-        // Query xlr8_crm_enquiries table directly
         $enquiries = DB::table('xlr8_crm_enquiries')
             ->whereIn('id', $enquiryIds)
             ->get()
             ->keyBy('id');
 
         $data = $receipts->map(function (Bookingamount $receipt, $index) use ($enquiries) {
-            // Find corresponding enquiry record
             $enquiry = $enquiries->get($receipt->enq_id);
 
             return [
                 'id' => $receipt->id,
                 'serial_no' => $index + 1,
-
                 'receipt_no'   => $receipt->type_number,
                 'receipt_date' => $this->formatDate($receipt->date),
-
-                // Map fields directly from the xlr8_crm_enquiries record
+                
+                // Fallbacks between the snapshot data and the enquiry table
                 'customer_name' => $enquiry->name ?? $enquiry->customer_name ?? $enquiry->first_name ?? '',
-                'care_of'       => $enquiry->care_of ?? '',
-                'address'       => $enquiry->address ?? '',
-                'contact_no'    => $enquiry->mobile ?? $enquiry->contact_no ?? $enquiry->phone ?? '',
-
+                'care_of'       => $receipt->care_of ?? '',
+                'address'       => $receipt->address ?? '',
+                'contact_no'    => $receipt->mobile ?? $enquiry->mobile ?? '',
+                
                 'on_account_of' => $this->keyValueName($receipt->account_of),
                 'payment_mode'  => $this->keyValueName($receipt->mode),
-
+                
                 'amount'           => $receipt->amount,
                 'transaction_date' => $this->formatDate($receipt->trans_date),
                 'instrument_no'    => $receipt->instrument_no,
                 'transaction_no'   => $receipt->trans_no,
                 'bank_name'        => $receipt->bank,
-
-                'xceler8_enq_no'     => $receipt->enq_id,
+                
+                'xceler8_enq_no'     => $receipt->enq_id ? 'XENQ-' . $receipt->enq_id : '',
                 'xceler8_booking_no' => $receipt->bid,
                 'votf_no'            => $receipt->otf_no,
                 'registration_no'    => $receipt->vh_rgn_no,
                 'chassis_no'         => $receipt->chassis_no,
-
-                'action' => '<a href="' . backpack_url('accounts/receipt/' . $receipt->id . '/edit') . '" class="btn btn-sm btn-link"><i class="la la-edit"></i> Edit</a>',
+                
+                // Action Buttons for the Data Grid
+                'action' => '<div class="d-flex gap-2 justify-content-center">' .
+                            '<a href="' . backpack_url('accounts/receipt/' . $receipt->id . '/show') . '" class="btn btn-sm btn-info text-white"><i class="la la-eye"></i> View</a>' .
+                            '<a href="' . backpack_url('accounts/receipt/' . $receipt->id . '/edit') . '" class="btn btn-sm btn-primary text-white"><i class="la la-edit"></i> Edit</a>' .
+                            '</div>',
             ];
         })->values();
 
@@ -87,103 +78,94 @@ class ReceiptCrudController extends Controller
     }
 
     /**
-     * Show Receipt create form.
+     * Display the specified Receipt (Read-Only).
      */
-    public function create()
+    public function show($id)
     {
-        return view('admin.accounts.receipt-create', [
-            'type' => self::TYPE_RECEIPT,
+        $receipt = Bookingamount::query()
+            ->where('type', self::TYPE_RECEIPT)
+            ->findOrFail($id);
+
+        return view('admin.accounts.receipt-show', [
+            'receipt' => $receipt,
             'onAccountOfOptions' => $this->getKeyValueOptions(['ACC_OF', 'ON_ACCOUNT_OF', 'ACCOUNT']),
             'paymentModeOptions' => $this->getKeyValueOptions(['PAYMENT_MODE', 'MODE_OF_PAYMENT', 'PAYMENT', 'MOP']),
         ]);
     }
 
-    /**
-     * Store a Receipt.
-     */
+    public function create()
+    {
+        $user = OrgService::getCurrentUser();
+
+        return view('admin.accounts.receipt-create', [
+            'type' => self::TYPE_RECEIPT,
+            'onAccountOfOptions' => $this->getKeyValueOptions(['ACC_OF', 'ON_ACCOUNT_OF', 'ACCOUNT']),
+            'paymentModeOptions' => $this->getKeyValueOptions(['PAYMENT_MODE', 'MODE_OF_PAYMENT', 'PAYMENT', 'MOP']),
+            'userBranch' => $user['primary_branch_code'] ?? 'UNKNOWN',
+            'userLocation' => $user['primary_loc_code'] ?? 'UNKNOWN',
+        ]);
+    }
+
     public function store(Request $request)
-{
-    $validated = $request->validate($this->validationRules());
+    {
+        $this->performConditionalValidation($request);
 
-    $enqId = $validated['xceler8_enq_no'] ?? null;
+        DB::beginTransaction();
+        try {
+            // 1. Generate Concurrency-Safe Receipt Number (using 'location' input)
+            $receiptNo = $this->generateReceiptNumber($request->on_account_of, $request->location);
 
-    // Build payload using only existing columns in xlr8_crm_enquiries
-    $enquiryData = [];
+            // 2. Save Receipt Record
+            $receipt = new Bookingamount();
+            $receipt->type        = self::TYPE_RECEIPT;
+            $receipt->type_number = $receiptNo; 
+            $receipt->date        = $request->receipt_date;
 
-    if (!empty($validated['customer_name'])) {
-        if (Schema::hasColumn('xlr8_crm_enquiries', 'name')) {
-            $enquiryData['name'] = $validated['customer_name'];
-        } elseif (Schema::hasColumn('xlr8_crm_enquiries', 'first_name')) {
-            $enquiryData['first_name'] = $validated['customer_name'];
-        }
+            $receipt->account_of  = $request->on_account_of;
+            $receipt->mode        = $request->payment_mode;
 
-        if (Schema::hasColumn('xlr8_crm_enquiries', 'care_of')) {
-            $enquiryData['care_of'] = $validated['care_of'] ?? null;
-        }
+            $cleanEnqId = $request->xceler8_enq_no ? (int) str_replace(['XENQ-', 'xenq-'], '', $request->xceler8_enq_no) : null;
+            $receipt->enq_id      = $cleanEnqId;
+            $receipt->bid         = $request->xceler8_booking_no;
+            $receipt->otf_no      = $request->votf_no;
+            $receipt->inv_no      = $request->invoice_no;
+            
+            // Vehicle
+            $receipt->vh_rgn_no   = $request->vehicle_registration_no;
+            $receipt->chassis_no  = $request->vehicle_chassis_no;
 
-        if (Schema::hasColumn('xlr8_crm_enquiries', 'address')) {
-            $enquiryData['address'] = $validated['address'] ?? null;
-        } elseif (Schema::hasColumn('xlr8_crm_enquiries', 'address1')) {
-            $enquiryData['address1'] = $validated['address'] ?? null;
-        }
+            // Financials
+            $receipt->amount        = $request->amount;
+            $receipt->trans_date    = $request->transaction_date;
+            $receipt->instrument_no = $request->instrument_no;
+            $receipt->trans_no      = $request->transaction_no;
+            $receipt->bank          = $request->bank_name;
 
-        if (Schema::hasColumn('xlr8_crm_enquiries', 'mobile')) {
-            $enquiryData['mobile'] = $validated['contact_no'] ?? null;
-        } elseif (Schema::hasColumn('xlr8_crm_enquiries', 'contact_no')) {
-            $enquiryData['contact_no'] = $validated['contact_no'] ?? null;
-        } elseif (Schema::hasColumn('xlr8_crm_enquiries', 'phone')) {
-            $enquiryData['phone'] = $validated['contact_no'] ?? null;
-        }
+            // Snapshot & Locations (MAPPED TO YOUR NEW SQL COLUMNS)
+            $receipt->location         = $request->location;
+            $receipt->care_of_type     = $request->care_of_type;
+            $receipt->care_of          = $request->care_of;
+            $receipt->address          = $request->address;
+            $receipt->mobile           = $request->mobile;
+            $receipt->alternate_mobile = $request->alternate_mobile;
+            // Removed customer_name since it was not in your ALTER TABLE statement
 
-        if (!empty($enquiryData)) {
-            $enquiryData['updated_at'] = now();
+            $receipt->status     = 1;
+            $receipt->created_by = Auth::id() ?: 1;
 
-            if ($enqId) {
-                DB::table('xlr8_crm_enquiries')
-                    ->where('id', $enqId)
-                    ->update($enquiryData);
-            } else {
-                $enquiryData['created_at'] = now();
-                $enqId = DB::table('xlr8_crm_enquiries')->insertGetId($enquiryData);
-            }
+            $receipt->save();
+            DB::commit();
+
+            Alert::success("Receipt {$receiptNo} created successfully.")->flash();
+            return redirect()->route('accounts.receipt.index');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Alert::error('Error creating receipt: ' . $e->getMessage())->flash();
+            return redirect()->back()->withInput();
         }
     }
 
-    // Save Receipt record
-    $receipt = new Bookingamount();
-
-    $receipt->type        = self::TYPE_RECEIPT;
-    $receipt->type_number = $validated['receipt_no'];
-    $receipt->date        = $validated['receipt_date'];
-
-    $receipt->account_of  = $validated['on_account_of'];
-    $receipt->mode        = $validated['payment_mode'];
-
-    $receipt->enq_id      = $enqId;
-    $receipt->bid         = $validated['xceler8_booking_no'] ?? null;
-    $receipt->otf_no      = $validated['votf_no'] ?? null;
-    $receipt->vh_rgn_no   = $validated['vehicle_registration_no']
-        ?? $validated['registration_no']
-        ?? null;
-    $receipt->chassis_no  = $validated['vehicle_chassis_no']
-        ?? $validated['chassis_no']
-        ?? null;
-
-    $receipt->amount        = $validated['amount'];
-    $receipt->trans_date    = $validated['transaction_date'] ?? null;
-    $receipt->instrument_no = $validated['instrument_no'] ?? null;
-    $receipt->trans_no      = $validated['transaction_no'] ?? null;
-    $receipt->bank          = $validated['bank_name'] ?? null;
-
-    $receipt->status     = 1;
-    $receipt->created_by = Auth::id() ?: 1;
-
-    $receipt->save();
-
-    \Alert::success('Receipt created successfully.')->flash();
-
-    return redirect()->route('accounts.receipt.index');
-}
     /**
      * Show Receipt edit form.
      */
@@ -193,12 +175,16 @@ class ReceiptCrudController extends Controller
             ->where('type', self::TYPE_RECEIPT)
             ->findOrFail($id);
 
+        $user = OrgService::getCurrentUser();
+
         return view('admin.accounts.receipt-create', [
             'type' => self::TYPE_RECEIPT,
             'receipt' => $receipt,
             'onAccountOfOptions' => $this->getKeyValueOptions(['ACC_OF', 'ON_ACCOUNT_OF', 'ACCOUNT']),
             'paymentModeOptions' => $this->getKeyValueOptions(['PAYMENT_MODE', 'MODE_OF_PAYMENT', 'PAYMENT', 'MOP']),
             'isEdit' => true,
+            'userBranch' => $user['primary_branch_code'] ?? 'UNKNOWN',
+            'userLocation' => $user['primary_loc_code'] ?? 'UNKNOWN',
         ]);
     }
 
@@ -211,93 +197,199 @@ class ReceiptCrudController extends Controller
             ->where('type', self::TYPE_RECEIPT)
             ->findOrFail($id);
 
-        $validated = $request->validate($this->validationRules());
+        $this->performConditionalValidation($request);
 
-        $receipt->type = self::TYPE_RECEIPT;
-        $receipt->type_number = $validated['receipt_no'];
-        $receipt->date = $validated['receipt_date'];
+        DB::beginTransaction();
+        try {
+            $receipt->date        = $request->receipt_date;
+            $receipt->account_of  = $request->on_account_of;
+            $receipt->mode        = $request->payment_mode;
 
-        $receipt->account_of = $validated['on_account_of'];
-        $receipt->Mode = $validated['payment_mode'];
+            // Xceler8 References
+            $cleanEnqId = $request->xceler8_enq_no ? (int) str_replace(['XENQ-', 'xenq-'], '', $request->xceler8_enq_no) : null;
+            $receipt->enq_id      = $cleanEnqId;
+            $receipt->bid         = $request->xceler8_booking_no;
+            $receipt->otf_no      = $request->votf_no;
+            $receipt->inv_no      = $request->invoice_no;
+            
+            // Vehicle
+            $receipt->vh_rgn_no   = $request->vehicle_registration_no;
+            $receipt->chassis_no  = $request->vehicle_chassis_no;
 
-        $receipt->enq_id = $validated['xceler8_enq_no'] ?? null;
-        $receipt->bid = $validated['xceler8_booking_no'] ?? null;
-        $receipt->otf_no = $validated['votf_no'] ?? null;
-        $receipt->vh_rgn_no = $validated['vehicle_registration_no']
-            ?? $validated['registration_no']
-            ?? null;
-        $receipt->chassis_no = $validated['vehicle_chassis_no']
-            ?? $validated['chassis_no']
-            ?? null;
+            // Financials
+            $receipt->amount        = $request->amount;
+            $receipt->trans_date    = $request->transaction_date;
+            $receipt->instrument_no = $request->instrument_no;
+            $receipt->trans_no      = $request->transaction_no;
+            $receipt->bank          = $request->bank_name;
 
-        $receipt->amount = $validated['amount'];
-        $receipt->trans_date = $validated['transaction_date'] ?? null;
-        $receipt->instrument_no = $validated['instrument_no'] ?? null;
-        $receipt->trans_no = $validated['transaction_no'] ?? null;
-        $receipt->bank = $validated['bank_name'] ?? null;
+            // Snapshot & Locations
+            // We do NOT update type_number (Receipt No) because it should remain unchanged after creation.
+            $receipt->location         = $request->location;
+            $receipt->care_of_type     = $request->care_of_type;
+            $receipt->care_of          = $request->care_of;
+            $receipt->address          = $request->address;
+            $receipt->mobile           = $request->mobile;
+            $receipt->alternate_mobile = $request->alternate_mobile;
+            $receipt->customer_name    = $request->customer_name;
 
-        $receipt->updated_by = Auth::id() ?: 1;
-        $receipt->save();
+            $receipt->updated_by = Auth::id() ?: 1;
+            $receipt->save();
+            DB::commit();
 
-        \Alert::success('Receipt updated successfully.')->flash();
+            Alert::success("Receipt {$receipt->type_number} updated successfully.")->flash();
+            return redirect()->route('accounts.receipt.index');
 
-        return redirect()->route('accounts.receipt.index');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Alert::error('Error updating receipt: ' . $e->getMessage())->flash();
+            return redirect()->back()->withInput();
+        }
     }
 
-    /**
-     * Soft delete Receipt.
-     */
-    public function destroy($id)
+    public function fetchEnquiryDetails(Request $request)
     {
-        $receipt = Bookingamount::query()
-            ->where('type', self::TYPE_RECEIPT)
-            ->findOrFail($id);
+        $enqId = str_replace('XENQ-', '', strtoupper($request->enq_no));
+        $enquiry = DB::table('xlr8_crm_enquiries')->where('id', $enqId)->first();
 
-        $receipt->deleted_by = Auth::id() ?: 1;
-        $receipt->save();
+        if (!$enquiry) {
+            return response()->json(['success' => false]);
+        }
 
-        $receipt->delete();
+        return response()->json([
+            'success'          => true,
+            'customer_name'    => $enquiry->name ?? $enquiry->customer_name ?? $enquiry->first_name ?? '',
+            'care_of_type'     => $enquiry->care_of_type ?? '',
+            'care_of'          => $enquiry->care_of ?? '',
+            'address'          => $enquiry->address ?? $enquiry->address1 ?? '',
+            'mobile'           => $enquiry->mobile ?? $enquiry->contact_no ?? '',
+            'alternate_mobile' => $enquiry->alternate_mobile ?? '',
+            'booking_no'       => $enquiry->booking_no ?? $enquiry->x8_booking_no ?? '',
+            'votf_no'          => $enquiry->oem_otf_no ?? '',
+            'vehicle_registration_no' => $enquiry->vehicle_no ?? '' 
+        ]);
+    }
 
-        \Alert::success('Receipt deleted successfully.')->flash();
+    private function performConditionalValidation(Request $request)
+    {
+        $rules = [
+            'receipt_date'     => 'required|date',
+            'on_account_of'    => 'required',
+            'location'         => 'required', // Updated to match your DB
+            'payment_mode'     => 'required',
+            'amount'           => 'required|numeric|min:1',
+            'customer_name'    => 'required|string|max:150', // Still required on UI
+            'mobile'           => 'required|string|max:15',  // Updated to match your DB
+        ];
 
-        return redirect()->route('accounts.receipt.index');
+        $accountName = strtoupper($this->keyValueName($request->on_account_of));
+        $paymentMode = strtoupper($this->keyValueName($request->payment_mode));
+
+        // 1. Account Specific Logic
+        if (in_array($accountName, ['NEW VEHICLE SALES', 'USED VEHICLE SALES'])) {
+            $rules['xceler8_enq_no'] = 'required';
+        }
+
+        if ($accountName === 'SERVICE' || in_array($accountName, ['RSA', 'SHIELD', 'ACCESSORIES'])) {
+            $rules['vehicle_registration_no'] = 'required_without:vehicle_chassis_no';
+            $rules['vehicle_chassis_no'] = 'required_without:vehicle_registration_no';
+        }
+
+        if ($accountName === 'INSURANCE RENEWAL') {
+            $rules['vehicle_registration_no'] = 'required';
+        }
+
+        if ($accountName === 'ACCIDENTAL REPAIR') {
+            $rules['invoice_no'] = 'required';
+            $rules['vehicle_registration_no'] = 'required_without:vehicle_chassis_no';
+            $rules['vehicle_chassis_no'] = 'required_without:vehicle_registration_no';
+        }
+
+        // 2. Payment Specific Logic
+        if (in_array($paymentMode, ['CHEQUE', 'RTGS', 'NEFT', 'BANK TRANSFER', 'DEMAND DRAFT'])) {
+            $rules['instrument_no'] = 'required';
+            $rules['bank_name'] = 'required';
+            $rules['transaction_date'] = 'required|date';
+        }
+
+        $request->validate($rules);
     }
 
     /**
-     * Get active key/value options mapped as [id => value].
+     * Concurrency-Safe Receipt Number Generation
      */
+    private function generateReceiptNumber($accountId, $locationCode)
+    {
+        // Resolve Prefix based on selected Master Value
+        $accountName = strtoupper($this->keyValueName($accountId));
+        $prefixMap = [
+            'NEW VEHICLE SALES' => 'NVS',
+            'USED VEHICLE SALES' => 'UVS',
+            'SERVICE' => 'SRV',
+            'ACCIDENTAL REPAIR' => 'BSR',
+            'INSURANCE RENEWAL' => 'INS',
+            'RSA' => 'RSA',
+            'SHIELD' => 'SHL',
+            'ACCESSORIES' => 'ACC'
+        ];
+        $prefix = $prefixMap[$accountName] ?? 'GEN';
+
+        // Resolve Financial Year (E.g., F27 for April 2026 - March 2027)
+        $now = Carbon::now('Asia/Kolkata');
+        $fyStartYear = $now->month >= 4 ? $now->year : $now->year - 1;
+        $fyCode = 'F' . substr(($fyStartYear + 1), -2); // E.g., 2026 -> F27
+
+        $pattern = "{$prefix}{$locationCode}{$fyCode}%";
+
+        // Lock table row safely to get the latest sequence for this exact pattern
+        $lastReceipt = DB::table('xlr8_booking_amount')
+            ->where('type_number', 'like', $pattern)
+            ->lockForUpdate()
+            ->orderBy('id', 'desc')
+            ->first();
+
+        if ($lastReceipt) {
+            // Extract the sequence number from the end
+            $lastSequence = (int) str_replace("{$prefix}{$locationCode}{$fyCode}", '', $lastReceipt->type_number);
+            $nextSequence = str_pad($lastSequence + 1, 2, '0', STR_PAD_LEFT);
+        } else {
+            $nextSequence = '01';
+        }
+
+        return "{$prefix}{$locationCode}{$fyCode}{$nextSequence}";
+    }
+
+    private function convertNumberToWords(float $number): string
+    {
+        $f = new \NumberFormatter("en", \NumberFormatter::SPELLOUT);
+        $words = $f->format($number);
+        return 'Rupees ' . ucwords($words) . ' Only';
+    }
+
     private function getKeyValueOptions(array $keywordCodes): array
     {
         foreach ($keywordCodes as $keywordCode) {
             $options = OrgService::getKeyValuesByCode($keywordCode);
-
             if ($options && $options->isNotEmpty()) {
                 return $options->pluck('value', 'id')->toArray();
             }
         }
-
         return [];
     }
 
-    /**
-     * Convert stored ID or CODE to display VALUE.
-     */
     private function keyValueName($value): string
     {
-        if (empty($value)) {
-            return '';
-        }
-
+        if (empty($value)) return '';
         if (is_numeric($value)) {
             $kv = OrgService::getKeyValueById((int) $value);
-            if ($kv) {
-                return $kv->value;
-            }
+            if ($kv) return $kv->value;
         }
-
         return OrgService::getKeyValueByCode((string) $value)?->value ?? (string) $value;
     }
 
+    /**
+     * Format date for display in the grid
+     */
     private function formatDate($date): string
     {
         if (!$date) {
@@ -309,35 +401,5 @@ class ReceiptCrudController extends Controller
         } catch (\Throwable $e) {
             return (string) $date;
         }
-    }
-
-    private function validationRules(): array
-    {
-        return [
-            'receipt_no' => ['required', 'string', 'max:50'],
-            'receipt_date' => ['required', 'date'],
-
-            'customer_name' => ['nullable', 'string', 'max:255'],
-            'care_of' => ['nullable', 'string', 'max:255'],
-            'address' => ['nullable', 'string'],
-            'contact_no' => ['nullable', 'string', 'max:50'],
-
-            'on_account_of' => ['required'],
-            'payment_mode' => ['required'],
-            'amount' => ['required', 'numeric', 'min:0'],
-            'transaction_date' => ['nullable', 'date'],
-            'instrument_no' => ['nullable', 'string', 'max:50'],
-            'transaction_no' => ['nullable', 'string', 'max:50'],
-            'bank_name' => ['nullable', 'string', 'max:50'],
-
-            'xceler8_enq_no' => ['nullable'],
-            'xceler8_booking_no' => ['nullable'],
-            'votf_no' => ['nullable', 'string', 'max:50'],
-            'vehicle_registration_no' => ['nullable', 'string', 'max:50'],
-            'registration_no' => ['nullable', 'string', 'max:50'],
-            'vehicle_chassis_no' => ['nullable', 'string', 'max:50'],
-            'chassis_no' => ['nullable', 'string', 'max:50'],
-            'invoice_no' => ['nullable', 'string', 'max:50'],
-        ];
     }
 }
