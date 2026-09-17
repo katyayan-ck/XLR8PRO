@@ -166,8 +166,7 @@
                             <div class="col-sm-3 form-group">
                                 <label class="form-label">Price Gap</label>
                                 <input type="text" id="difference" class="form-control readonly-field"
-                                    value="{{ ($booking->expected_price ?? 0) - (($booking->offered_price ?? 0) + ($booking->exchange_bonus ?? 0)) }}"
-                                    readonly>
+                                    value="" readonly>
                             </div>
 
                             <div class="col-sm-2 form-group">
@@ -318,7 +317,9 @@
                         <div class="col-sm-3">
                             <label class="form-label">Customer D.O.B.</label>
                             <input type="text" class="form-control"
-                                value="{{ \Carbon\Carbon::parse($booking->c_dob)->format('d-M-Y') ?? 'N/A' }}" readonly>
+                                value="{{ !empty($booking->c_dob)
+                                    ? \Carbon\Carbon::parse($booking->c_dob)->format('d-M-Y')
+                                    : 'N/A' }}" readonly>
                         </div>
                         <div class="col-sm-6">
                             <label class="form-label">{{ __('Branch') }} <span class="text-red">*</span></label>
@@ -377,29 +378,30 @@
                         {{-- Vehicle Details --}}
                         <div class="col-sm-3">
                             <label class="form-label">Segment <span class="text-red">*</span></label>
-                            <input type="text" class="form-control"
-                                value="{{ isset($data['segments'][$booking->segment_id]) ? (is_array($data['segments'][$booking->segment_id]) ? $data['segments'][$booking->segment_id]['name'] ?? 'N/A' : $data['segments'][$booking->segment_id]) : 'N/A' }}"
+                            <input type="text"
+                                class="form-control"
+                                value="{{ $booking->segment_name ?? 'N/A' }}"
                                 readonly>
                         </div>
                         <div class="col-sm-3">
                             <label class="form-label">Model <span class="text-red">*</span></label>
-                            <input type="text" class="form-control" value="{{ $booking->model_code }}" readonly>
+                            <input type="text" class="form-control" value="{{ $booking->model_code ?? 'N/A' }}" readonly>
                         </div>
                         <div class="col-sm-3">
                             <label class="form-label">Variant <span class="text-red">*</span></label>
-                            <input type="text" class="form-control" value="{{ $booking->variant_code }}" readonly>
+                            <input type="text" class="form-control" value="{{ $booking->variant_code ?? 'N/A' }}" readonly>
                         </div>
                         <div class="col-sm-3">
                             <label class="form-label">Color <span class="text-red">*</span></label>
-                            <input type="text" class="form-control" value="{{ $booking->color_code }}" readonly>
+                            <input type="text" class="form-control" value="{{ $booking->color_code ?? 'N/A' }}" readonly>
                         </div>
                         <div class="col-sm-2">
                             <label class="form-label">Seating</label>
-                            <input type="text" class="form-control" value="{{ $booking->seating }}" readonly>
+                            <input type="text" class="form-control" value="{{ $booking->seating ?? 'N/A' }}" readonly>
                         </div>
                         <div class="col-sm-6">
                             <label class="form-label">{{ __('Accessories') }}</label>
-                            <textarea class="form-control" rows="2" readonly>{{ $data['accessories'] }}</textarea>
+                            <textarea class="form-control" rows="2" readonly>{{ $data['accessories'] ?? 'N/A' }}</textarea>
                         </div>
                         <div class="col-sm-2">
                             <label class="form-label">Acces. Pack Amount</label>
@@ -432,7 +434,7 @@
                         <div class="col-sm-3">
                             <label class="form-label">Sales Consultant</label>
                             <input type="text" class="form-control"
-                                value="{{ optional(collect($data['saleconsultants'])->firstWhere('id', $booking->consultant))['name'] }} - {{ optional(collect($data['saleconsultants'])->firstWhere('id', $booking->consultant))['mile_id'] }}"
+                                value="{{ $data['consultant_name'] ?? 'N/A' }} - {{ $data['consultant_mile_id'] ?? 'N/A' }}"
                                 readonly>
                         </div>
                         <div class="col-sm-2">
@@ -478,7 +480,7 @@
                         </div>
                         <div class="col-sm-3" id="financier_box">
                             <label class="form-label">Financier</label>
-                            <input type="text" class="form-control" value="{{ $booking->financier ?? 'N/A' }}"
+                            <input type="text" class="form-control" value="{{ $data['financier_name'] ?? 'N/A' }}"
                                 readonly>
                         </div>
                         <div class="col-sm-3" id="loan_status_box">
@@ -571,7 +573,7 @@
         .readonly-field {
             background-color: #f8f9fa;
             border-color: #ced4da;
-            pointer-events: none;
+            cursor: not-allowed;
         }
 
         .form-control[readonly],
@@ -598,196 +600,137 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        (function($) {
-            'use strict';
+    (function($) {
+        'use strict';
 
-            function initPurchaseTypeForm() {
-                initSelect2();
-                initValidation();
-                setInitialState();
-                bindEventListeners();
+        // ============================================================
+        // PRICE GAP — simple, global, robust
+        // ============================================================
+        window.calculatePriceGap = function() {
+            var buyerType = $('#buyer_type').val();
+            console.log('[PriceGap] buyerType =', buyerType);
+
+            if (buyerType !== 'Exchange Buy' && buyerType !== 'Scrappage') {
+                $('#difference').val('N/A');
+                console.log('[PriceGap] -> N/A');
+                return;
             }
 
-            function initSelect2() {
-                $('.select2').select2();
-                $('#enum_master1').val('{{ $booking->exist_oem1 ?? 0 }}').trigger('change');
-                $('#enum_master2').val('{{ $booking->exist_oem2 ?? 0 }}').trigger('change');
-            }
+            var expected = parseFloat($('#expected_price').val()) || 0;
+            var offered  = parseFloat($('#offered_price').val()) || 0;
+            var bonus    = parseFloat($('#exchange_bonus').val()) || 0;
+            var result   = expected - offered - bonus;
 
-            function initValidation() {
-                $('#purchaseTypeForm').validate({
-                    ignore: ':disabled',
-                    rules: {
-                        buyer_type: {
-                            required: true
-                        },
-                        enum_master1: {
-                            required: function() {
-                                return ['Additional Buy', 'Exchange Buy', 'Scrappage'].includes($(
-                                    '#buyer_type').val());
-                            }
-                        },
-                        vehicle_details: {
-                            required: function() {
-                                return ['Additional Buy', 'Exchange Buy', 'Scrappage'].includes($(
-                                    '#buyer_type').val());
-                            }
-                        },
-                        enum_master2: {
-                            required: function() {
-                                return $('#buyer_type').val() === 'Additional Buy';
-                            }
-                        },
-                        vehicle_details2: {
-                            required: function() {
-                                return $('#buyer_type').val() === 'Additional Buy';
-                            }
-                        },
-                        registration_no: {
-                            required: function() {
-                                return ['Exchange Buy', 'Scrappage'].includes($('#buyer_type').val());
-                            }
-                        },
-                        manufacturing_year: {
-                            required: function() {
-                                return ['Exchange Buy', 'Scrappage'].includes($('#buyer_type').val());
-                            }
-                        },
-                        odometer_reading: {
-                            required: function() {
-                                return $('#buyer_type').val() === 'Exchange Buy';
-                            }
-                        },
-                        expected_price: {
-                            required: function() {
-                                return $('#buyer_type').val() === 'Exchange Buy';
-                            }
-                        },
-                        offered_price: {
-                            required: function() {
-                                return $('#buyer_type').val() === 'Exchange Buy';
-                            }
-                        },
-                        exchange_bonus: {
-                            required: function() {
-                                return $('#buyer_type').val() === 'Exchange Buy';
-                            }
-                        },
-                        update: {
-                            required: true
-                        },
-                        remark: {
-                            required: true
-                        }
-                    },
-                    messages: {
-                        buyer_type: 'Please select purchase type',
-                        enum_master1: 'Please select brand (Make 1)',
-                        vehicle_details: 'Please enter model & variant 1',
-                        enum_master2: 'Please select brand (Make 2)',
-                        vehicle_details2: 'Please enter model & variant 2',
-                        registration_no: 'Please enter vehicle registration number',
-                        manufacturing_year: 'Please enter manufacturing year',
-                        odometer_reading: 'Please enter odometer reading',
-                        expected_price: 'Please enter expected price',
-                        offered_price: 'Please enter offered price',
-                        exchange_bonus: 'Please enter exchange bonus',
-                        update: 'Please select verification status',
-                        remark: 'Please enter remarks'
-                    },
-                    errorElement: 'span',
-                    errorPlacement: function(error, element) {
-                        error.addClass('text-danger');
-                        error.insertAfter(element);
-                    },
-                    highlight: function(element) {
-                        $(element).removeClass('is-valid').addClass('is-invalid');
-                    },
-                    unhighlight: function(element) {
-                        $(element).removeClass('is-invalid').addClass('is-valid');
-                    },
-                    submitHandler: function(form) {
-                        if ($('#purchaseTypeForm').valid()) {
-                            form.submit();
+            console.log('[PriceGap]', expected, '-', offered, '-', bonus, '=', result);
+
+            $('#difference').val(result);
+        };
+
+        // ============================================================
+        // TOGGLE FIELDS
+        // ============================================================
+        window.togglePurchaseFields = function(type, preserveValues) {
+            preserveValues = preserveValues || false;
+
+            var fields = {
+                base:      ['#enum_master1', '#vehicle_details', '#enum_master2', '#vehicle_details2'],
+                exchange:  ['#registration_no', '#manufacturing_year', '#odometer_reading',
+                            '#expected_price', '#offered_price', '#exchange_bonus'],
+                scrappage: ['#registration_no', '#manufacturing_year',
+                            '#expected_price', '#offered_price', '#exchange_bonus']
+            };
+
+            function toggle(enable, ids) {
+                ids.forEach(function(id) {
+                    $(id).prop('disabled', !enable).prop('required', enable);
+                    $(id).siblings('label').find('.required-mark').css('display', enable ? 'inline' : 'none');
+                    if (!enable && !preserveValues) {
+                        if (id === '#enum_master1' || id === '#enum_master2') {
+                            $(id).val('0').trigger('change');
+                        } else {
+                            $(id).val('');
                         }
                     }
                 });
             }
 
-            function setInitialState() {
-                const initialBuyerType = $('#buyer_type').val();
-                togglePurchaseFields(initialBuyerType, true); // Preserve values on initial load
+            toggle(false, fields.base.concat(fields.exchange));
+
+            if (type === 'Additional Buy') {
+                toggle(true, fields.base);
+            } else if (type === 'Exchange Buy') {
+                toggle(true, [fields.base[0], fields.base[1]].concat(fields.exchange));
+            } else if (type === 'Scrappage') {
+                toggle(true, [fields.base[0], fields.base[1]].concat(fields.scrappage));
             }
 
-            function bindEventListeners() {
-                $('#buyer_type').on('change', function() {
-                    togglePurchaseFields($(this).val(), false); // Clear values on change
-                });
-                $('#expected_price, #offered_price, #exchange_bonus').on('input', calculatePriceGap);
-            }
+            setTimeout(window.calculatePriceGap, 50);
+        };
 
-            function togglePurchaseFields(type, preserveValues = false) {
-                const fields = {
-                    base: ['#enum_master1', '#vehicle_details', '#enum_master2', '#vehicle_details2'],
-                    exchange: ['#registration_no', '#manufacturing_year', '#odometer_reading', '#expected_price',
-                        '#offered_price', '#exchange_bonus'
-                    ],
-                    scrappage: ['#registration_no', '#manufacturing_year']
-                };
+        // ============================================================
+        // BIND EVENTS — direct binding (NOT via delegation)
+        // ============================================================
+        $(document).ready(function() {
 
-                function toggleFields(enable, ids) {
-                    ids.forEach(id => {
-                        $(id).prop('disabled', !enable).prop('required', enable);
-                        toggleRequiredMark(id, enable);
-                        if (!enable && !preserveValues) {
-                            if (id === '#enum_master1' || id === '#enum_master2') {
-                                $(id).val('0').trigger('change');
-                            } else {
-                                $(id).val('');
-                            }
+            // Select2 init
+            try {
+                if ($.fn.select2) { $('.select2').select2(); }
+            } catch (e) { console.error('[Select2]', e); }
+
+            // Set OEM values
+            try {
+                var oem1 = '{{ $booking->exist_oem1 ?? 0 }}';
+                var oem2 = '{{ $booking->exist_oem2 ?? 0 }}';
+                if (oem1) $('#enum_master1').val(oem1).trigger('change');
+                if (oem2) $('#enum_master2').val(oem2).trigger('change');
+            } catch (e) { console.error('[OEM]', e); }
+
+            // jQuery Validate
+            try {
+                if ($.fn.validate) {
+                    $('#purchaseTypeForm').validate({
+                        ignore: ':disabled',
+                        rules: {
+                            buyer_type:         { required: true },
+                            enum_master1:       { required: function() { return ['Additional Buy','Exchange Buy','Scrappage'].indexOf($('#buyer_type').val()) > -1; } },
+                            vehicle_details:    { required: function() { return ['Additional Buy','Exchange Buy','Scrappage'].indexOf($('#buyer_type').val()) > -1; } },
+                            registration_no:    { required: function() { return ['Exchange Buy','Scrappage'].indexOf($('#buyer_type').val()) > -1; } },
+                            manufacturing_year: { required: function() { return ['Exchange Buy','Scrappage'].indexOf($('#buyer_type').val()) > -1; } },
+                            update:             { required: true },
+                            remark:             { required: true }
+                        },
+                        errorElement: 'span',
+                        errorPlacement: function(error, element) {
+                            error.addClass('text-danger').insertAfter(element);
                         }
                     });
                 }
-                toggleFields(false, [...fields.base, ...fields.exchange]);
-                if (type === 'Additional Buy') toggleFields(true, fields.base);
-                else if (type === 'Exchange Buy') toggleFields(true, [fields.base[0], fields.base[1], ...fields
-                    .exchange
-                ]);
-                else if (type === 'Scrappage') toggleFields(true, [fields.base[0], fields.base[1], ...fields
-                    .scrappage
-                ]);
-                calculatePriceGap();
-            }
+            } catch (e) { console.error('[Validate]', e); }
 
-            function calculatePriceGap() {
-                const expected = $('#expected_price').val() || 0;
-                const offered = $('#offered_price').val() || 0;
-                const bonus = $('#exchange_bonus').val() || 0;
+            // ---- INITIAL TOGGLE ----
+            window.togglePurchaseFields($('#buyer_type').val(), true);
 
-                $.ajax({
-                    url: '/api/v1/pricing/calculate-exchange',
-                    method: 'POST',
-                    data: {
-                        expected_price: expected,
-                        offered_price: offered,
-                        exchange_bonus: bonus,
-                        _token: $('meta[name="csrf-token"]').attr('content')
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            $('#difference').val(response.difference);
-                        }
-                    },
-                    error: function(xhr) {
-                        console.error("Pricing Engine Error", xhr);
-                    }
+            // ============================================================
+            // ✅ DIRECT EVENT BINDING — this is the critical fix
+            // ============================================================
+            $('#buyer_type').on('change', function() {
+                window.togglePurchaseFields($(this).val(), false);
+            });
+
+            // Bind directly to each price input — NOT via document delegation
+            $('#expected_price, #offered_price, #exchange_bonus')
+                .off('.pricegap')
+                .on('input.pricegap keyup.pricegap change.pricegap paste.pricegap', function() {
+                    console.log('[PriceGap] event on #' + this.id + ' value=' + this.value);
+                    window.calculatePriceGap();
                 });
-            }
 
-            function toggleRequiredMark(selector, show) {
-                $(selector).siblings('label').find('.required-mark').css('display', show ? 'inline' : 'none');
-            }
-            $(document).ready(initPurchaseTypeForm);
-        })(jQuery);
+            // Fire once on load
+            setTimeout(window.calculatePriceGap, 100);
+            setTimeout(window.calculatePriceGap, 500);
+
+        });
+
+    })(jQuery);
     </script>
 @endpush

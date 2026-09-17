@@ -1,5 +1,4 @@
 @extends(backpack_view('blank'))
-<!-- or 'backpack::blank' / 'backpack::layouts.app' depending on your Backpack version -->
 
 @section('header')
 <section class="container-fluid">
@@ -9,13 +8,6 @@
 
 @section('content')
 <div class="row">
-
-
-
-
-
-
-
     <div class="card bg-light border-0 shadow-sm mb-4">
         <div class="card-header">
             <h2 class="mb-0">Invoice Details</h2>
@@ -37,8 +29,14 @@
                 </div>
                 <div class="col-sm-3">
                     <label class="form-label">Financier Name (Primary)</label>
-                    <input type="text" class="form-control"
-                        value="{{ collect($data['financiers'] ?? [])->firstWhere('id', $booking->financier)['name'] ?? 'N/A' }}"
+                    @php
+                        $primaryFinancier = collect($data['financiers'] ?? [])
+                            ->firstWhere('id', $booking->financier);
+                    @endphp
+
+                    <input type="text"
+                        class="form-control"
+                        value="{{ $primaryFinancier['name'] ?? 'N/A' }}"
                         readonly>
                 </div>
             </div>

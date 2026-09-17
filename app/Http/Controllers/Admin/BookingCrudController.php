@@ -5407,7 +5407,7 @@ class BookingCrudController extends CrudController
 
         $query = $this->getBaseQuery();
 
-        $query->where('enq.purchase_type', 'Exchange Buy'); // Note: DB column is purchase_type
+        $query->where('enq.purchase_type', 'Scrappage');
 
         $query->orderBy('bookings.id', 'DESC');
 
@@ -5503,11 +5503,13 @@ class BookingCrudController extends CrudController
         $this->data['crud'] = $this->crud;
         $this->data['title'] = 'Not Interested';
 
-
-
         $query = $this->getBaseQuery();
 
-        $query->where('enq.purchase_type', 'Exchange Buy'); // Note: DB column is purchase_type
+        // Not Interested = First Time Buy + Additional Buy only
+        $query->whereIn('enq.purchase_type', [
+            'First Time Buy',
+            'Additional Buy',
+        ]);
 
         $query->orderBy('bookings.id', 'DESC');
 
@@ -5695,6 +5697,111 @@ class BookingCrudController extends CrudController
         return view('admin.booking.int-in-finance', $this->data);
     }
 
+    // public function finnotInterested(Request $request)
+    // {
+    //     $this->crud->hasAccessOrFail('list');
+
+    //     $this->data['crud'] = $this->crud;
+    //     $this->data['title'] = 'Not Interested';
+
+
+
+    //     $query = $this->getBaseQuery();
+
+    //     $query->whereIn('f.fin_mode', [
+    //         'Customer Self',
+    //         'Cash',
+    //         'Yet To Decide'
+    //     ]);
+
+    //     $query->orderBy('bookings.id', 'DESC');
+
+    //     $paginatedBookings = $query->paginate(50);
+
+
+
+    //     $lookups = $this->getCommonLookups();
+    //     extract($lookups);
+
+    //     $saleConsultants = $lookups['saleConsultants'] ?? [];
+
+
+
+    //     $gridData = $paginatedBookings->map(function ($t, $index) use (
+    //         $paginatedBookings,
+    //         $segments,
+    //         $saleConsultants
+    //     ) {
+    //         $row = $this->mapBookingForGrid($t);
+
+    //         $row->serial_no = ($paginatedBookings->currentPage() - 1) * $paginatedBookings->perPage() + $index + 1;
+
+    //         $price_gap = ($t->used_vehicle_exp_price ?? 0) - ($t->used_vehicle_off_price ?? 0);
+    //         $row->price_gap = number_format($price_gap);
+
+    //         $row->used_vehicle_exp_price = '₹ ' . number_format($t->used_vehicle_exp_price ?? 0);
+    //         $row->used_vehicle_off_price = '₹ ' . number_format($t->used_vehicle_off_price ?? 0);
+    //         $row->new_vehicle_exc_bonus  = '₹ ' . number_format($t->new_vehicle_exc_bonus ?? 0);
+    //         $location = $t->location_code && $t->location_code > 0
+    //             ? (Location::find($t->location_code)->name ?? 'N/A')
+    //             : ($t->location_other ?? 'N/A');
+
+    //         $row->location = $location;
+
+    //         $row->brand_make_1 = $t->brand_make_1 ?? null;
+
+    //         $row->action = '
+    //         <div class="d-flex justify-content-center gap-2">
+    //             <a href="' . route('finance-edit', $t->id) . '"
+    //                class="btn btn-primary btn-sm"
+    //                >
+    //                 Process
+    //             </a>
+    //         </div>';
+
+    //         return $row;
+    //     })->values();
+
+
+
+    //     $columns = $this->getAgGridColumns();
+
+    //     $hasAction = collect($columns)->contains('field', 'action');
+    //     if (!$hasAction) {
+    //         $columns[] = [
+    //             'field'         => 'action',
+    //             'headerName'    => 'Actions',
+    //             'width'         => 150,
+    //             'pinned'        => 'right',
+    //             'sortable'      => false,
+    //             'filter'        => false,
+    //             'cellRenderer'  => 'htmlRenderer',
+    //             'cellClass'     => 'text-center p-0',
+    //             'autoHeight'    => true,
+    //         ];
+    //     }
+
+    //     foreach ($columns as &$col) {
+    //         if (in_array($col['field'], ['used_vehicle_exp_price', 'used_vehicle_off_price', 'new_vehicle_exc_bonus', 'price_gap'])) {
+    //             $col['type'] = 'rightAligned';
+    //             $col['cellClass'] = 'text-right';
+    //         }
+    //     }
+    //     unset($col);
+
+    //     $gridConfig = [
+    //         'columns' => $columns,
+    //         'data'    => $gridData,
+    //     ];
+
+    //     $this->data['gridConfig'] = $gridConfig;
+
+    //     if ($gridData->isEmpty()) {
+    //         session()->flash('info', 'No not-interested finance bookings found.');
+    //     }
+
+    //     return view('admin.booking.finance-not-interested', $this->data);
+    // }
     public function finnotInterested(Request $request)
     {
         $this->crud->hasAccessOrFail('list');
@@ -5702,24 +5809,32 @@ class BookingCrudController extends CrudController
         $this->data['crud'] = $this->crud;
         $this->data['title'] = 'Not Interested';
 
-
-
         $query = $this->getBaseQuery();
 
-        $query->whereIn('enq.fin_mode', ['Customer Self', 'Cash', 'Yet To Decide']);
+        $query->where(function ($q) {
+            $q->whereIn('f.fin_mode', [
+                'Customer Self',
+                'Cash',
+                'Yet To Decide'
+            ])
+            ->orWhere(function ($q2) {
+                $q2->whereNull('f.fin_mode')
+                    ->whereIn('enq.fin_mode', [
+                        'Customer Self',
+                        'Cash',
+                        'Yet To Decide'
+                    ]);
+            });
+        });
 
         $query->orderBy('bookings.id', 'DESC');
 
         $paginatedBookings = $query->paginate(50);
 
-
-
         $lookups = $this->getCommonLookups();
         extract($lookups);
 
         $saleConsultants = $lookups['saleConsultants'] ?? [];
-
-
 
         $gridData = $paginatedBookings->map(function ($t, $index) use (
             $paginatedBookings,
@@ -5728,71 +5843,52 @@ class BookingCrudController extends CrudController
         ) {
             $row = $this->mapBookingForGrid($t);
 
-            $row->serial_no = ($paginatedBookings->currentPage() - 1) * $paginatedBookings->perPage() + $index + 1;
+            $row->serial_no =
+                ($paginatedBookings->currentPage() - 1)
+                * $paginatedBookings->perPage()
+                + $index + 1;
 
-            $price_gap = ($t->used_vehicle_exp_price ?? 0) - ($t->used_vehicle_off_price ?? 0);
-            $row->price_gap = number_format($price_gap);
-
-            $row->used_vehicle_exp_price = '₹ ' . number_format($t->used_vehicle_exp_price ?? 0);
-            $row->used_vehicle_off_price = '₹ ' . number_format($t->used_vehicle_off_price ?? 0);
-            $row->new_vehicle_exc_bonus  = '₹ ' . number_format($t->new_vehicle_exc_bonus ?? 0);
             $location = $t->location_code && $t->location_code > 0
                 ? (Location::find($t->location_code)->name ?? 'N/A')
                 : ($t->location_other ?? 'N/A');
 
             $row->location = $location;
 
-            $row->brand_make_1 = $t->brand_make_1 ?? null;
-
             $row->action = '
-            <div class="d-flex justify-content-center gap-2">
-                <a href="' . route('finance-edit', $t->id) . '"
-                   class="btn btn-primary btn-sm"
-                   >
-                    Process
-                </a>
-            </div>';
+                <div class="d-flex justify-content-center gap-2">
+                    <a href="' . route('finance-edit', $t->id) . '"
+                    class="btn btn-primary btn-sm">
+                        Process
+                    </a>
+                </div>';
 
             return $row;
         })->values();
 
-
-
         $columns = $this->getAgGridColumns();
 
         $hasAction = collect($columns)->contains('field', 'action');
+
         if (!$hasAction) {
             $columns[] = [
-                'field'         => 'action',
-                'headerName'    => 'Actions',
-                'width'         => 150,
-                'pinned'        => 'right',
-                'sortable'      => false,
-                'filter'        => false,
-                'cellRenderer'  => 'htmlRenderer',
-                'cellClass'     => 'text-center p-0',
-                'autoHeight'    => true,
+                'field' => 'action',
+                'headerName' => 'Actions',
+                'width' => 150,
+                'pinned' => 'right',
+                'sortable' => false,
+                'filter' => false,
+                'cellRenderer' => 'htmlRenderer',
+                'cellClass' => 'text-center p-0',
+                'autoHeight' => true,
             ];
         }
 
-        foreach ($columns as &$col) {
-            if (in_array($col['field'], ['used_vehicle_exp_price', 'used_vehicle_off_price', 'new_vehicle_exc_bonus', 'price_gap'])) {
-                $col['type'] = 'rightAligned';
-                $col['cellClass'] = 'text-right';
-            }
-        }
-        unset($col);
-
         $gridConfig = [
             'columns' => $columns,
-            'data'    => $gridData,
+            'data' => $gridData,
         ];
 
         $this->data['gridConfig'] = $gridConfig;
-
-        if ($gridData->isEmpty()) {
-            session()->flash('info', 'No not-interested finance bookings found.');
-        }
 
         return view('admin.booking.finance-not-interested', $this->data);
     }
@@ -5899,14 +5995,8 @@ class BookingCrudController extends CrudController
         $query->where('bookings.payout', 1);
         $query->where('bookings.retail', 1);
         $query->where('bookings.status', 2);
-        $query->where('enq.fin_mode', 'In-house');
+        $query->where('f.fin_mode', 'In-house');
         $query->where('f.case_status', 2);
-
-        $financierFilter = $request->get('financier');
-
-        if (!empty($financierFilter)) {
-            $query->where('enq.financier', $financierFilter);
-        }
 
         $query->orderBy('bookings.id', 'DESC');
 
@@ -9103,32 +9193,140 @@ class BookingCrudController extends CrudController
     {
         $booking = Booking::findOrFail($id);
         $exchange = XExchange::where('bid', $id)->first();
+
+        if ($booking->enq_no) {
+
+            $enquiry = Enquiry::where('id', $booking->enq_no)
+                ->orWhere('enquiry_no', $booking->enq_no)
+                ->orWhere('quick_enquiry_no', $booking->enq_no)
+                ->first();
+
+            if ($enquiry) {
+
+                $booking->name         = $enquiry->name;
+                $booking->care_of      = $enquiry->care_of;
+                $booking->care_of_type = $enquiry->care_of_type;
+                $booking->mobile       = $enquiry->mobile;
+                $booking->alt_mobile   = $enquiry->alternate_mobile;
+                $booking->gender       = $enquiry->gender;
+                $booking->occ          = $enquiry->occupation_type;
+                $booking->c_dob        = $enquiry->dob;
+
+                $booking->branch_code   = $enquiry->dealer_branch;
+                $booking->location_code = $enquiry->dealer_location;
+
+                $booking->segment_code  = $enquiry->segment_code;
+                $booking->model_code    = $enquiry->model_code;
+                $booking->variant_code  = $enquiry->variant_code;
+                $booking->color_code    = $enquiry->color_code;
+
+                $booking->buyer_type     = $enquiry->purchase_type;
+                $booking->exist_oem1     = $enquiry->brand_make;
+                $booking->exist_oem2     = $enquiry->consid_brand2;
+                $booking->vh1_detail     = $enquiry->brand_model;
+                $booking->vh2_detail     = $enquiry->consid_model2;
+
+                $booking->registration_no = $enquiry->vehicle_no;
+                $booking->make_year       = $enquiry->make_year;
+                $booking->odo_reading     = $enquiry->odo_reading;
+
+                $booking->expected_price  = $enquiry->expected_price;
+                $booking->offered_price   = $enquiry->offered_price;
+                $booking->exchange_bonus  = $enquiry->exchange_bonus;
+
+                $booking->r_name          = $enquiry->referee_name;
+                $booking->r_mobile        = $enquiry->referee_phone;
+
+                $booking->consultant = $enquiry->x8_sc_code ?? $enquiry->sc_code;
+
+                $booking->pincode   = $enquiry->zipcode;
+                $booking->vpo       = $enquiry->vpo;
+                $booking->tehsil    = $enquiry->tehsil;
+                $booking->district  = $enquiry->district;
+                $booking->city      = $enquiry->city;
+                $booking->territory = $enquiry->territory;
+            }
+        }
+
+        $financeRecord = XFinance::where('bid', $id)->first();
+
+        if ($financeRecord) {
+            $booking->fin_mode    = $financeRecord->fin_mode;
+            $booking->financier   = $financeRecord->financier;
+            $booking->loan_status = $financeRecord->loan_status;
+        }
+
         $data = array();
 
+        $data['financier_name'] = 'N/A';
+
+        if (!empty($booking->financier)) {
+            $data['financier_name'] = XlFinancier::where('id', $booking->financier)
+                ->value('name')
+                ?? XlFinancier::where('short_name', $booking->financier)
+                ->value('name')
+                ?? $booking->financier;
+        }
         $uid = backpack_user()->id ?? null;
 
-        $data['branch'] = Branch::where('branch_code', $booking->branch_code)
-            ->value('name') ?? 'N/A';
-        $data['location'] = ($booking->location_code)
-            ? (Location::find($booking->location_code)?->name ?? $booking->location_other ?? 'N/A')
-            : ($booking->location_other ?? 'N/A');
-        $acc = explode(',', $booking->accessories);
-        foreach ($acc as $a) {
-            $accessory = Xessories::find($a);
-            $tmp = array();
-            if ($accessory) {
-                $temp[] = $accessory->item;
+        $branchName = null;
+
+        if (!empty($booking->branch_code)) {
+            $branchName = Branch::where('code', $booking->branch_code)
+                ->value('name');
+
+            if (!$branchName) {
+                $branchName = Branch::where('branch_code', $booking->branch_code)
+                    ->value('name');
             }
-            if (!empty($temp))
-                $data['accessories'] = implode(",", $temp);
-            else
-                $data['accessories'] = "N/A";
         }
+
+        $data['branch'] = $branchName ?? 'N/A';
+        $data['location'] = !empty($booking->location_code)
+            ? (
+                Location::where('code', $booking->location_code)->value('name')
+                ?? Location::find($booking->location_code)?->name
+                ?? $booking->location_other
+                ?? 'N/A'
+            )
+            : ($booking->location_other ?? 'N/A');
+        $acc = explode(',', $booking->accessories ?? '');
+        $accessoryNames = [];
+        foreach ($acc as $a) {
+            $a = trim($a);
+            if ($a === '') {
+                continue;
+            }
+            $accessory = Xessories::find($a);
+            if ($accessory) {
+                $accessoryNames[] = $accessory->item;
+            }
+        }
+        $booking->segment_name = 'N/A';
+
+        if ($booking->segment_code) {
+            $booking->segment_name =
+                Segment::where('code', $booking->segment_code)
+                    ->where('is_active', true)
+                    ->value('name')
+                ?? 'N/A';
+        }
+
+        $data['accessories'] = !empty($accessoryNames)
+            ? implode(', ', $accessoryNames)
+            : 'N/A';
         $chassis = Stock::find($booking->chassis_no);
         $data['bchasis'] = $chassis ? $chassis->chassis_no : 'N/A';
         $data['segments'] = CommonHelper::getVehicleSegments();
         $data['remark'] = 0;
         $data['saleconsultants'] = OrgService::usersByDesignation('CNS') ?? [];
+        $consultantCode = trim((string) ($booking->consultant ?? ''));
+        $consultant = DB::table('xlr8_admin_person')
+            ->where('person_code', $consultantCode)
+            ->first();
+
+        $data['consultant_name'] = $consultant?->display_name ?? 'N/A';
+        $data['consultant_mile_id'] = $consultant?->employee_code ?? 'N/A';
         $drec = XL_DSA_MASTER::find($booking->dsa_id);
         $dsaname = $drec ? $drec->name . '-' . $drec->mobile : "N/A";
         $user = backpack_user();
@@ -9186,29 +9384,273 @@ class BookingCrudController extends CrudController
         );
     }
 
+    // public function exchangeUpdate(Request $request, $id)
+    // {
+    //     $booking = Booking::findOrFail($id);
+    //     $validator = Validator::make($request->all(), [
+    //         'buyer_type' => 'required|string|in:First Time Buy,Additional Buy,Exchange Buy,Scrappage',
+    //         'enum_master1' => 'nullable|integer',
+    //         'vehicle_details' => 'nullable|string|max:255',
+    //         'enum_master2' => 'nullable|integer',
+    //         'vehicle_details2' => 'nullable|string|max:255',
+    //         'registration_no' => 'required_if:buyer_type,Exchange Buy,Scrappage|nullable|string|max:255',
+    //         'manufacturing_year' => 'required_if:buyer_type,Exchange Buy,Scrappage'. '|nullable|integer|min:1900|max:' . date('Y'),
+    //         'odometer_reading' => 'required_if:buyer_type,Exchange Buy|nullable|numeric|min:0',
+    //         'expected_price' => 'required_if:buyer_type,Exchange Buy|nullable|numeric|min:0',
+    //         'offered_price' => 'required_if:buyer_type,Exchange Buy|nullable|numeric|min:0',
+    //         'exchange_bonus' => 'required_if:buyer_type,Exchange Buy|nullable|numeric|min:0',
+    //         'update' => 'required|integer|in:1,2,3',
+    //         'case_status' => 'required|integer|in:1,2,3',
+    //         'remark' => 'required|string',
+    //     ]);
+    //     if ($validator->fails()) {
+    //         return redirect()->back()->withInput()->with('error', $validator->messages()->first());
+    //     }
+    //     $rem = [];
+    //     $verificationStatusMap = [
+    //         1 => 'Unverified',
+    //         2 => 'Verified (Data Match)',
+    //         3 => 'Verified (Data Mismatch)',
+    //     ];
+    //     $caseStatusMap = [
+    //         1 => 'In-Process',
+    //         2 => 'Exchange Done',
+    //         3 => 'Case Lost',
+    //     ];
+    //     if ($booking->buyer_type != $request->buyer_type) {
+    //         $tvl = empty($booking->buyer_type) ? 'null' : $booking->buyer_type;
+
+    //         $rem[] = "Buyer Type Changed from " . $tvl . " to " . $request->buyer_type;
+
+    //         $booking->buyer_type = $request->input('buyer_type');
+    //     }
+
+    //     if ($booking->exist_oem1 != $request->enum_master1) {
+    //         $tvl = empty($booking->exist_oem1) ? 'null' : $booking->exist_oem1;
+    //         $rem[] = "Brand (Make 1) Changed from " . $tvl . " to " . $request->enum_master1;
+    //         $booking->exist_oem1 = $request->input('enum_master1');
+    //     }
+    //     if ($booking->vh1_detail != $request->vehicle_details) {
+    //         $tvl = empty($booking->vh1_detail) ? 'null' : $booking->vh1_detail;
+    //         $rem[] = "Model & Variant 1 Changed from " . $tvl . " to " . $request->vehicle_details;
+    //         $booking->vh1_detail = $request->input('vehicle_details');
+    //     }
+    //     if ($booking->exist_oem2 != $request->enum_master2) {
+    //         $tvl = empty($booking->exist_oem2) ? 'null' : $booking->exist_oem2;
+    //         $rem[] = "Brand (Make 2) Changed from " . $tvl . " to " . $request->enum_master2;
+    //         $booking->exist_oem2 = $request->input('enum_master2');
+    //     }
+    //     if ($booking->vh2_detail != $request->vehicle_details2) {
+    //         $tvl = empty($booking->vh2_detail) ? 'null' : $booking->vh2_detail;
+    //         $rem[] = "Model & Variant 2 Changed from " . $tvl . " to " . $request->vehicle_details2;
+    //         $booking->vh2_detail = $request->input('vehicle_details2');
+    //     }
+    //     if ($booking->registration_no != $request->registration_no) {
+    //         $tvl = empty($booking->registration_no) ? 'null' : $booking->registration_no;
+    //         $rem[] = "Vehicle Registration No. Changed from " . $tvl . " to " . $request->registration_no;
+    //         $booking->registration_no = $request->input('registration_no');
+    //     }
+    //     if ($booking->make_year != $request->manufacturing_year) {
+    //         $tvl = empty($booking->make_year) ? 'null' : $booking->make_year;
+    //         $rem[] = "Manufacturing Year Changed from " . $tvl . " to " . $request->manufacturing_year;
+    //         $booking->make_year = $request->input('manufacturing_year');
+    //     }
+    //     if ($booking->odo_reading != $request->odometer_reading) {
+    //         $tvl = empty($booking->odo_reading) ? 'null' : $booking->odo_reading;
+    //         $rem[] = "Odometer Reading Changed from " . $tvl . " to " . $request->odometer_reading;
+    //         $booking->odo_reading = $request->input('odometer_reading');
+    //     }
+    //     if ($booking->expected_price != $request->expected_price) {
+    //         $tvl = empty($booking->expected_price) ? 'null' : $booking->expected_price;
+    //         $rem[] = "Expected Price Changed from " . $tvl . " to " . $request->expected_price;
+    //         $booking->expected_price = $request->input('expected_price');
+    //     }
+    //     if ($booking->offered_price != $request->offered_price) {
+    //         $tvl = empty($booking->offered_price) ? 'null' : $booking->offered_price;
+    //         $rem[] = "Offered Price Changed from " . $tvl . " to " . $request->offered_price;
+    //         $booking->offered_price = $request->input('offered_price');
+    //     }
+    //     if ($booking->exchange_bonus != $request->exchange_bonus) {
+    //         $tvl = empty($booking->exchange_bonus) ? 'null' : $booking->exchange_bonus;
+    //         $rem[] = "Exchange Bonus Changed from " . $tvl . " to " . $request->exchange_bonus;
+    //         $booking->exchange_bonus = $request->input('exchange_bonus');
+    //     }
+    //     if ($request->has('remark')) {
+    //         $booking->pending_remark = $request->input('remark');
+    //         $rem[] = "Remarks updated: " . $request->input('remark');
+    //     }
+    //     $booking->save();
+    //     $verificationStatus = $request->input('update');
+    //     $caseStatus = $request->input('case_status');
+    //     $purchaseType = $request->input('buyer_type');
+    //     $exchangeEntry = XExchange::where('bid', $booking->id)->first();
+    //     if (!$exchangeEntry) {
+
+    //         $defaultVerificationStatus = $verificationStatus ?? 1;
+    //         $defaultCaseStatus = $caseStatus ?? 1;
+    //         $defaultPurchaseType = $purchaseType;
+
+    //         XExchange::create([
+    //             'bid' => $booking->id,
+
+    //             'vh_id' => $request->enum_master1 ?? 0,
+
+    //             'enum_master1' => $request->enum_master1,
+    //             'enum_master2' => $request->enum_master2,
+    //             'vehicle_details' => $request->vehicle_details,
+    //             'vehicle_details2' => $request->vehicle_details2,
+    //             'registration_no' => $request->registration_no,
+    //             'manufacturing_year' => $request->manufacturing_year,
+    //             'odometer_reading' => $request->odometer_reading,
+    //             'expected_price' => $request->expected_price,
+    //             'offered_price' => $request->offered_price,
+    //             'exchange_bonus' => $request->exchange_bonus,
+
+    //             'verification_status' => $defaultVerificationStatus,
+    //             'case_status' => $defaultCaseStatus,
+    //             'purchase_type' => $defaultPurchaseType,
+    //         ]);
+
+
+    //         $rem[] = "New exchange entry created with Verification Status: " . $verificationStatusMap[$defaultVerificationStatus] .
+    //             " and Case Status: " . $caseStatusMap[$defaultCaseStatus];
+    //     } else {
+    //         $changes = [];
+    //         if ($exchangeEntry->verification_status != $verificationStatus) {
+    //             $oldVerification = $verificationStatusMap[$exchangeEntry->verification_status] ?? 'null';
+    //             $newVerification = $verificationStatusMap[$verificationStatus];
+    //             $changes[] = "Verification Status changed from " . $oldVerification . " to " . $newVerification;
+    //         }
+    //         if ($exchangeEntry->case_status != $caseStatus) {
+    //             $oldCase = $caseStatusMap[$exchangeEntry->case_status] ?? 'null';
+    //             $newCase = $caseStatusMap[$caseStatus];
+    //             $changes[] = "Case Status changed from " . $oldCase . " to " . $newCase;
+    //         }
+    //         if (!empty($changes)) {
+    //             $rem = array_merge($rem, $changes);
+    //         }
+    //         $exchangeEntry->update([
+    //             'vh_id'                 => $request->enum_master1 ?? 0,
+    //             'enum_master1'          => $request->enum_master1,
+    //             'enum_master2'          => $request->enum_master2,
+    //             'vehicle_details'      => $request->vehicle_details,
+    //             'vehicle_details2'     => $request->vehicle_details2,
+    //             'registration_no'      => $request->registration_no,
+    //             'manufacturing_year'   => $request->manufacturing_year,
+    //             'odometer_reading'     => $request->odometer_reading,
+    //             'expected_price'       => $request->expected_price,
+    //             'offered_price'        => $request->offered_price,
+    //             'exchange_bonus'       => $request->exchange_bonus,
+    //             'verification_status'  => $verificationStatus,
+    //             'case_status'          => $caseStatus,
+    //             'purchase_type'        => $purchaseType,
+    //         ]);
+    //     }
+
+
+    //     if ($caseStatus == 2) {
+
+    //         $title = $booking->buyer_type === 'Scrappage'
+    //             ? 'Scrappage Completed'
+    //             : 'Exchange Completed';
+
+    //         $message = $booking->buyer_type === 'Scrappage'
+    //             ? 'Scrappage process completed .'
+    //             : 'Exchange process completed .';
+
+    //         $booking->addHistory(
+    //             'commented',
+    //             $title,
+    //             $message,
+    //             [
+    //                 'buyer_type'      => $booking->buyer_type,
+    //                 'registration_no' => $booking->registration_no,
+    //                 'expected_price'  => $booking->expected_price,
+    //                 'offered_price'   => $booking->offered_price,
+    //                 'exchange_bonus'  => $booking->exchange_bonus,
+    //                 'remark'          => $request->remark,
+    //             ],
+    //             null,
+    //             backpack_user()
+    //         );
+    //     }
+
+    //     return redirect()->route('booking.exchange')->with('success', 'Exchange purchase details updated successfully!');
+    // }
     public function exchangeUpdate(Request $request, $id)
     {
         $booking = Booking::findOrFail($id);
-        $validator = Validator::make($request->all(), [
-            'buyer_type' => 'required|string|in:First Time Buy,Additional Buy,Exchange Buy,Scrappage',
-            'enum_master1' => 'nullable|integer',
-            'vehicle_details' => 'nullable|string|max:255',
-            'enum_master2' => 'nullable|integer',
-            'vehicle_details2' => 'nullable|string|max:255',
-            'registration_no' => 'nullable|string|max:255',
-            'manufacturing_year' => 'nullable|integer',
-            'odometer_reading' => 'nullable|string|max:255',
-            'expected_price' => 'nullable|numeric',
-            'offered_price' => 'nullable|numeric',
-            'exchange_bonus' => 'nullable|numeric',
-            'update' => 'required|integer|in:1,2,3',
-            'case_status' => 'required|integer|in:1,2,3',
-            'remark' => 'required|string',
-        ]);
-        if ($validator->fails()) {
-            return redirect()->back()->withInput()->with('error', $validator->messages()->first());
+
+        // ============================================================
+        // 1. FIND LINKED ENQUIRY (fields like buyer_type, prices live here)
+        // ============================================================
+        $linkedEnquiry = null;
+
+        if ($booking->enq_no) {
+            $linkedEnquiry = Enquiry::where('id', $booking->enq_no)
+                ->orWhere('enquiry_no', $booking->enq_no)
+                ->orWhere('quick_enquiry_no', $booking->enq_no)
+                ->first();
         }
-        $rem = [];
+
+        // ============================================================
+        // 2. VALIDATION (fixed required_if using Rule::requiredIf)
+        // ============================================================
+        $isExchange  = $request->buyer_type === 'Exchange Buy';
+        $isScrappage = $request->buyer_type === 'Scrappage';
+        $isExchangeOrScrap = $isExchange || $isScrappage;
+
+        $validator = Validator::make($request->all(), [
+            'buyer_type'      => 'required|string|in:First Time Buy,Additional Buy,Exchange Buy,Scrappage',
+            'enum_master1'    => 'nullable|integer',
+            'vehicle_details' => 'nullable|string|max:255',
+            'enum_master2'    => 'nullable|integer',
+            'vehicle_details2'=> 'nullable|string|max:255',
+
+            'registration_no' => [
+                Rule::requiredIf($isExchangeOrScrap),
+                'nullable', 'string', 'max:255',
+            ],
+            'manufacturing_year' => [
+                Rule::requiredIf($isExchangeOrScrap),
+                'nullable', 'integer', 'min:1900', 'max:' . date('Y'),
+            ],
+            'odometer_reading' => [
+                Rule::requiredIf($isExchange),
+                'nullable', 'numeric', 'min:0',
+            ],
+            'expected_price' => [
+                Rule::requiredIf($isExchange),
+                'nullable', 'numeric', 'min:0',
+            ],
+            'offered_price' => [
+                Rule::requiredIf($isExchange),
+                'nullable', 'numeric', 'min:0',
+            ],
+            'exchange_bonus' => [
+                Rule::requiredIf($isExchange),
+                'nullable', 'numeric', 'min:0',
+            ],
+
+            'update'      => 'required|integer|in:1,2,3',
+            'case_status' => 'required|integer|in:1,2,3',
+            'remark'      => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            \Log::warning('EXCHANGE UPDATE VALIDATION FAILED', [
+                'booking_id' => $id,
+                'errors'     => $validator->errors()->toArray(),
+                'input'      => $request->except(['_token']),
+            ]);
+            return redirect()->back()
+                ->withInput()
+                ->with('error', $validator->messages()->first());
+        }
+
+        // ============================================================
+        // 3. PREPARE STATUS MAPS
+        // ============================================================
         $verificationStatusMap = [
             1 => 'Unverified',
             2 => 'Verified (Data Match)',
@@ -9219,156 +9661,191 @@ class BookingCrudController extends CrudController
             2 => 'Exchange Done',
             3 => 'Case Lost',
         ];
-        if ($booking->buyer_type != $request->buyer_type) {
-            $tvl = empty($booking->buyer_type) ? 'null' : $booking->buyer_type;
-            $rem[] = "Buyer Type Changed from " . $tvl . " to " . $request->buyer_type;
-            dd([
-                'buyertype' => $request->input('buyertype'),
-                'all' => $request->all()
-            ]);
-            $booking->buyer_type = $request->input('buyer_type');
-        }
 
-        if ($booking->exist_oem1 != $request->enum_master1) {
-            $tvl = empty($booking->exist_oem1) ? 'null' : $booking->exist_oem1;
-            $rem[] = "Brand (Make 1) Changed from " . $tvl . " to " . $request->enum_master1;
-            $booking->exist_oem1 = $request->input('enum_master1');
-        }
-        if ($booking->vh1_detail != $request->vehicle_details) {
-            $tvl = empty($booking->vh1_detail) ? 'null' : $booking->vh1_detail;
-            $rem[] = "Model & Variant 1 Changed from " . $tvl . " to " . $request->vehicle_details;
-            $booking->vh1_detail = $request->input('vehicle_details');
-        }
-        if ($booking->exist_oem2 != $request->enum_master2) {
-            $tvl = empty($booking->exist_oem2) ? 'null' : $booking->exist_oem2;
-            $rem[] = "Brand (Make 2) Changed from " . $tvl . " to " . $request->enum_master2;
-            $booking->exist_oem2 = $request->input('enum_master2');
-        }
-        if ($booking->vh2_detail != $request->vehicle_details2) {
-            $tvl = empty($booking->vh2_detail) ? 'null' : $booking->vh2_detail;
-            $rem[] = "Model & Variant 2 Changed from " . $tvl . " to " . $request->vehicle_details2;
-            $booking->vh2_detail = $request->input('vehicle_details2');
-        }
-        if ($booking->registration_no != $request->registration_no) {
-            $tvl = empty($booking->registration_no) ? 'null' : $booking->registration_no;
-            $rem[] = "Vehicle Registration No. Changed from " . $tvl . " to " . $request->registration_no;
-            $booking->registration_no = $request->input('registration_no');
-        }
-        if ($booking->make_year != $request->manufacturing_year) {
-            $tvl = empty($booking->make_year) ? 'null' : $booking->make_year;
-            $rem[] = "Manufacturing Year Changed from " . $tvl . " to " . $request->manufacturing_year;
-            $booking->make_year = $request->input('manufacturing_year');
-        }
-        if ($booking->odo_reading != $request->odometer_reading) {
-            $tvl = empty($booking->odo_reading) ? 'null' : $booking->odo_reading;
-            $rem[] = "Odometer Reading Changed from " . $tvl . " to " . $request->odometer_reading;
-            $booking->odo_reading = $request->input('odometer_reading');
-        }
-        if ($booking->expected_price != $request->expected_price) {
-            $tvl = empty($booking->expected_price) ? 'null' : $booking->expected_price;
-            $rem[] = "Expected Price Changed from " . $tvl . " to " . $request->expected_price;
-            $booking->expected_price = $request->input('expected_price');
-        }
-        if ($booking->offered_price != $request->offered_price) {
-            $tvl = empty($booking->offered_price) ? 'null' : $booking->offered_price;
-            $rem[] = "Offered Price Changed from " . $tvl . " to " . $request->offered_price;
-            $booking->offered_price = $request->input('offered_price');
-        }
-        if ($booking->exchange_bonus != $request->exchange_bonus) {
-            $tvl = empty($booking->exchange_bonus) ? 'null' : $booking->exchange_bonus;
-            $rem[] = "Exchange Bonus Changed from " . $tvl . " to " . $request->exchange_bonus;
-            $booking->exchange_bonus = $request->input('exchange_bonus');
-        }
+        $rem = [];
+
+        // ============================================================
+        // 4. UPDATE BOOKING FIELDS (only those that actually exist)
+        // ============================================================
+        // NOTE: For your schema, buyer_type / prices / reg_no / etc.
+        // live on the ENQUIRY table. We update enquiry below.
+
         if ($request->has('remark')) {
-            $booking->pending_remark = $request->input('remark');
-            $rem[] = "Remarks updated: " . $request->input('remark');
+            $rem[] = "Remarks: " . $request->input('remark');
         }
+
+        // ============================================================
+        // 5. UPDATE LINKED ENQUIRY (this is where buyer_type lives!)
+        // ============================================================
+        if ($linkedEnquiry) {
+            $enquiryChanges = [];
+
+            if ($linkedEnquiry->purchase_type != $request->buyer_type) {
+                $enquiryChanges[] = "Buyer Type: '" . ($linkedEnquiry->purchase_type ?? 'null') . "' → '" . $request->buyer_type . "'";
+                $linkedEnquiry->purchase_type = $request->buyer_type;
+            }
+
+            if ($linkedEnquiry->brand_make != $request->enum_master1) {
+                $enquiryChanges[] = "Brand Make 1: '" . ($linkedEnquiry->brand_make ?? 'null') . "' → '" . $request->enum_master1 . "'";
+                $linkedEnquiry->brand_make = $request->enum_master1;
+            }
+
+            if ($linkedEnquiry->brand_model != $request->vehicle_details) {
+                $enquiryChanges[] = "Model Variant 1: '" . ($linkedEnquiry->brand_model ?? 'null') . "' → '" . $request->vehicle_details . "'";
+                $linkedEnquiry->brand_model = $request->vehicle_details;
+            }
+
+            if ($linkedEnquiry->consid_brand2 != $request->enum_master2) {
+                $enquiryChanges[] = "Brand Make 2: '" . ($linkedEnquiry->consid_brand2 ?? 'null') . "' → '" . $request->enum_master2 . "'";
+                $linkedEnquiry->consid_brand2 = $request->enum_master2;
+            }
+
+            if ($linkedEnquiry->consid_model2 != $request->vehicle_details2) {
+                $enquiryChanges[] = "Model Variant 2: '" . ($linkedEnquiry->consid_model2 ?? 'null') . "' → '" . $request->vehicle_details2 . "'";
+                $linkedEnquiry->consid_model2 = $request->vehicle_details2;
+            }
+
+            if ($linkedEnquiry->vehicle_no != $request->registration_no) {
+                $enquiryChanges[] = "Registration No: '" . ($linkedEnquiry->vehicle_no ?? 'null') . "' → '" . $request->registration_no . "'";
+                $linkedEnquiry->vehicle_no = $request->registration_no;
+            }
+
+            if ($linkedEnquiry->make_year != $request->manufacturing_year) {
+                $enquiryChanges[] = "Manufacturing Year: '" . ($linkedEnquiry->make_year ?? 'null') . "' → '" . $request->manufacturing_year . "'";
+                $linkedEnquiry->make_year = $request->manufacturing_year;
+            }
+
+            if ($linkedEnquiry->odo_reading != $request->odometer_reading) {
+                $enquiryChanges[] = "Odometer: '" . ($linkedEnquiry->odo_reading ?? 'null') . "' → '" . $request->odometer_reading . "'";
+                $linkedEnquiry->odo_reading = $request->odometer_reading;
+            }
+
+            if ($linkedEnquiry->expected_price != $request->expected_price) {
+                $enquiryChanges[] = "Expected Price: '" . ($linkedEnquiry->expected_price ?? 'null') . "' → '" . $request->expected_price . "'";
+                $linkedEnquiry->expected_price = $request->expected_price;
+            }
+
+            if ($linkedEnquiry->offered_price != $request->offered_price) {
+                $enquiryChanges[] = "Offered Price: '" . ($linkedEnquiry->offered_price ?? 'null') . "' → '" . $request->offered_price . "'";
+                $linkedEnquiry->offered_price = $request->offered_price;
+            }
+
+            if ($linkedEnquiry->exchange_bonus != $request->exchange_bonus) {
+                $enquiryChanges[] = "Exchange Bonus: '" . ($linkedEnquiry->exchange_bonus ?? 'null') . "' → '" . $request->exchange_bonus . "'";
+                $linkedEnquiry->exchange_bonus = $request->exchange_bonus;
+            }
+
+            if (!empty($enquiryChanges)) {
+                $linkedEnquiry->save();
+                $rem = array_merge($rem, $enquiryChanges);
+            }
+        }
+
+        // ============================================================
+        // 6. UPDATE BOOKING (only remark if needed)
+        // ============================================================
+        // NOTE: pending_remark was incorrectly being overwritten with
+        // user remarks — that corrupted the pending system. Removed.
+
         $booking->save();
+
+        // ============================================================
+        // 7. UPSERT XExchange RECORD
+        // ============================================================
         $verificationStatus = $request->input('update');
-        $caseStatus = $request->input('case_status');
-        $purchaseType = $request->input('buyer_type');
+        $caseStatus         = $request->input('case_status');
+
         $exchangeEntry = XExchange::where('bid', $booking->id)->first();
+
+        $exchangePayload = [
+            'vh_id'              => $request->enum_master1 ?? 0,
+            'enum_master1'       => $request->enum_master1,
+            'enum_master2'       => $request->enum_master2,
+            'vehicle_details'    => $request->vehicle_details,
+            'vehicle_details2'   => $request->vehicle_details2,
+            'registration_no'    => $request->registration_no,
+            'manufacturing_year' => $request->manufacturing_year,
+            'odometer_reading'   => $request->odometer_reading,
+            'expected_price'     => $request->expected_price,
+            'offered_price'      => $request->offered_price,
+            'exchange_bonus'     => $request->exchange_bonus,
+            'verification_status'=> $verificationStatus,
+            'case_status'        => $caseStatus,
+            'purchase_type'      => $request->buyer_type,
+        ];
+
         if (!$exchangeEntry) {
-
-            $defaultVerificationStatus = $verificationStatus ?? 1;
-            $defaultCaseStatus = $caseStatus ?? 1;
-            $defaultPurchaseType = $purchaseType;
-
-            XExchange::create([
-                'bid' => $booking->id,
-
-                'vh_id' => $request->enum_master1 ?? 0,
-
-                'enum_master1' => $request->enum_master1,
-                'enum_master2' => $request->enum_master2,
-                'vehicle_details' => $request->vehicle_details,
-                'vehicle_details2' => $request->vehicle_details2,
-                'registration_no' => $request->registration_no,
-                'manufacturing_year' => $request->manufacturing_year,
-                'odometer_reading' => $request->odometer_reading,
-                'expected_price' => $request->expected_price,
-                'offered_price' => $request->offered_price,
-                'exchange_bonus' => $request->exchange_bonus,
-
-                'verification_status' => $defaultVerificationStatus,
-                'case_status' => $defaultCaseStatus,
-                'purchase_type' => $defaultPurchaseType,
-            ]);
-
-
-            $rem[] = "New exchange entry created with Verification Status: " . $verificationStatusMap[$defaultVerificationStatus] .
-                " and Case Status: " . $caseStatusMap[$defaultCaseStatus];
+            $exchangePayload['bid'] = $booking->id;
+            XExchange::create($exchangePayload);
+            $rem[] = "New exchange entry created (Verification: " . ($verificationStatusMap[$verificationStatus] ?? 'N/A') . ", Case: " . ($caseStatusMap[$caseStatus] ?? 'N/A') . ")";
         } else {
-            $changes = [];
             if ($exchangeEntry->verification_status != $verificationStatus) {
-                $oldVerification = $verificationStatusMap[$exchangeEntry->verification_status] ?? 'null';
-                $newVerification = $verificationStatusMap[$verificationStatus];
-                $changes[] = "Verification Status changed from " . $oldVerification . " to " . $newVerification;
+                $rem[] = "Verification Status: '" . ($verificationStatusMap[$exchangeEntry->verification_status] ?? 'null') . "' → '" . $verificationStatusMap[$verificationStatus] . "'";
             }
             if ($exchangeEntry->case_status != $caseStatus) {
-                $oldCase = $caseStatusMap[$exchangeEntry->case_status] ?? 'null';
-                $newCase = $caseStatusMap[$caseStatus];
-                $changes[] = "Case Status changed from " . $oldCase . " to " . $newCase;
+                $rem[] = "Case Status: '" . ($caseStatusMap[$exchangeEntry->case_status] ?? 'null') . "' → '" . $caseStatusMap[$caseStatus] . "'";
             }
-            if (!empty($changes)) {
-                $rem = array_merge($rem, $changes);
-            }
-            $exchangeEntry->update([
-                'verification_status' => $verificationStatus,
-                'case_status' => $caseStatus,
-                'purchase_type' => $purchaseType,
-            ]);
+            $exchangeEntry->update($exchangePayload);
         }
 
+        // ============================================================
+        // 8. ALWAYS WRITE HISTORY (not just when caseStatus == 2)
+        // ============================================================
+        $title   = 'Exchange Details Updated';
+        $message = 'Exchange / Scrappage details updated.';
 
         if ($caseStatus == 2) {
-
-            $title = $booking->buyer_type === 'Scrappage'
-                ? 'Scrappage Completed'
-                : 'Exchange Completed';
-
-            $message = $booking->buyer_type === 'Scrappage'
-                ? 'Scrappage process completed .'
-                : 'Exchange process completed .';
-
-            $booking->addHistory(
-                'commented',
-                $title,
-                $message,
-                [
-                    'buyer_type'      => $booking->buyer_type,
-                    'registration_no' => $booking->registration_no,
-                    'expected_price'  => $booking->expected_price,
-                    'offered_price'   => $booking->offered_price,
-                    'exchange_bonus'  => $booking->exchange_bonus,
-                    'remark'          => $request->remark,
-                ],
-                null,
-                backpack_user()
-            );
+            $title   = ($request->buyer_type === 'Scrappage') ? 'Scrappage Completed' : 'Exchange Completed';
+            $message = ($request->buyer_type === 'Scrappage') ? 'Scrappage process completed.' : 'Exchange process completed.';
+        } elseif ($caseStatus == 3) {
+            $title   = 'Exchange Case Lost';
+            $message = 'Exchange case marked as lost.';
         }
 
-        return redirect()->route('booking.exchange')->with('success', 'Exchange purchase details updated successfully!');
+        if (!empty(trim($request->remark ?? ''))) {
+            $message .= " Remarks: " . trim($request->remark);
+        }
+
+        $booking->addHistory(
+            'commented',
+            $title,
+            $message,
+            [
+                'changes'    => $rem,
+                'buyer_type' => $request->buyer_type,
+                'case_status'=> $caseStatus,
+            ],
+            null,
+            backpack_user()
+        );
+
+        \Log::info('EXCHANGE UPDATE SUCCESS', [
+        'booking_id'   => $id,
+        'changes'      => $rem,
+        'case_status'  => $caseStatus,
+        'verify_status'=> $verificationStatus,
+        'buyer_type'   => $request->buyer_type,
+    ]);
+
+    // ============================================================
+    // REDIRECT TO THE CORRECT LISTING BASED ON BUYER TYPE
+    // ============================================================
+    if ($request->buyer_type === 'Scrappage') {
+        return redirect()
+            ->route('booking.scrappage')
+            ->with('success', 'Scrappage details updated successfully!');
+    }
+
+    if ($request->buyer_type === 'Exchange Buy') {
+        return redirect()
+            ->route('booking.exchange')
+            ->with('success', 'Exchange purchase details updated successfully!');
+    }
+
+    // For any other buyer type, go back to the main booking list
+    return redirect()
+        ->route('booking.index')
+        ->with('success', 'Purchase type details updated successfully!');
     }
 
     public function finEdit($id)
@@ -9853,7 +10330,31 @@ class BookingCrudController extends CrudController
 
         $data['oem_ids'] = explode(',', $booking->exist_oem ?? '');
 
+        $enquiry = null;
+        if ($booking->enq_no) {
+            $enquiry = Enquiry::where('id', $booking->enq_no)
+                ->orWhere('enquiry_no', $booking->enq_no)
+                ->orWhere('quick_enquiry_no', $booking->enq_no)
+                ->first();
+        }
+        if ($enquiry) {
+            $booking->name         = $enquiry->name;
+            $booking->model_code   = $enquiry->model_code;
+            $booking->variant_code = $enquiry->variant_code;
+            $booking->color_code   = $enquiry->color_code;
+            $booking->mobile        = $enquiry->mobile;
+            $booking->branch_code   = $enquiry->dealer_branch;
+            $booking->location_code = $enquiry->dealer_location;
+        }
+
+        
         $finance = XFinance::where('bid', $id)->first();
+
+        if ($finance) {
+            $booking->fin_mode    = $finance->fin_mode;
+            $booking->financier   = $finance->financier;
+            $booking->loan_status = $finance->loan_status;
+        }
 
         return view('admin.booking.retail-edit', compact(
             'booking',
@@ -9868,10 +10369,33 @@ class BookingCrudController extends CrudController
     public function PayoutEdit($id)
     {
         $booking = Booking::findOrFail($id);
+        /*
+        |--------------------------------------------------------------------------
+        | Merge Enquiry Customer Details into Booking
+        |--------------------------------------------------------------------------
+        */
+        if ($booking->enq_no) {
 
+            $enquiry = Enquiry::where('id', $booking->enq_no)
+                ->orWhere('enquiry_no', $booking->enq_no)
+                ->orWhere('quick_enquiry_no', $booking->enq_no)
+                ->first();
 
+            if ($enquiry) {
+
+                $booking->name         = $enquiry->name;
+                $booking->model_code   = $enquiry->model_code;
+                $booking->variant_code = $enquiry->variant_code;
+
+                $booking->pincode   = $enquiry->zipcode;
+                $booking->vpo       = $enquiry->vpo;
+                $booking->tehsil    = $enquiry->tehsil;
+                $booking->district  = $enquiry->district;
+                $booking->city      = $enquiry->city;
+                $booking->territory = $enquiry->territory;
+            }
+        }
         $comm = [];
-
         $user = backpack_user();
         $uid  = $user?->id ?? null;
 
@@ -10178,11 +10702,60 @@ class BookingCrudController extends CrudController
     public function financeView($id)
     {
         $booking = Booking::findOrFail($id);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Get Customer Details from Enquiry
+        |--------------------------------------------------------------------------
+        */
+        $enquiry = null;
+
+        if ($booking->enq_no) {
+            $enquiry = Enquiry::where('id', $booking->enq_no)
+                ->orWhere('enquiry_no', $booking->enq_no)
+                ->orWhere('quick_enquiry_no', $booking->enq_no)
+                ->first();
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Merge Enquiry Customer Details into Booking
+        |--------------------------------------------------------------------------
+        */
+        if ($enquiry) {
+
+            $booking->name         = $enquiry->name;
+            $booking->model_code   = $enquiry->model_code;
+            $booking->variant_code = $enquiry->variant_code;
+
+            $booking->pincode  = $enquiry->zipcode;
+            $booking->vpo      = $enquiry->vpo;
+            $booking->tehsil   = $enquiry->tehsil;
+            $booking->district = $enquiry->district;
+            $booking->city     = $enquiry->city;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Get Finance Details
+        |--------------------------------------------------------------------------
+        */
         $finance = XFinance::where('bid', $id)->first();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Get Financiers
+        |--------------------------------------------------------------------------
+        */
+        $data['financiers'] = XlFinancier::select(
+            'id',
+            'name',
+            'short_name'
+        )->get()->toArray();
 
         return view(
             'admin.booking.finance-view',
-            compact('booking', 'finance')
+            compact('booking', 'finance', 'data')
         );
     }
 
