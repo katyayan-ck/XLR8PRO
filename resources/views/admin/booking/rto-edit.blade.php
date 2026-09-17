@@ -123,32 +123,43 @@
             <div class="col-md-2 form-group readonly-field">
                 <label class="readonly-label">Location</label>
                 <div class="readonly-value">
-                    @if($booking->location_code)
-                    {{ $booking->location?->name ?? '—' }}
-                    @else
-                    {{ $booking->location_other ?: '—' }}
-                    @endif
+                    {{ $data['location'] ?? '—' }}
                 </div>
             </div>
 
             <div class="col-md-2 form-group readonly-field">
                 <label class="readonly-label">Model</label>
                 <div class="readonly-value">
-                    {{ $booking->model_code ?? '—' }}
+                    {{
+                        collect($data['models'] ?? [])
+                            ->firstWhere('code', $booking->model_code)['name']
+                        ?? $booking->model_code
+                        ?? '—'
+                    }}
                 </div>
             </div>
 
             <div class="col-md-2 form-group readonly-field">
                 <label class="readonly-label">Variant</label>
                 <div class="readonly-value">
-                    {{ $booking->variant_code ?? '—' }}
+                    {{
+                        collect($data['variants'] ?? [])
+                            ->firstWhere('code', $booking->variant_code)['name']
+                        ?? $booking->variant_code
+                        ?? '—'
+                    }}
                 </div>
             </div>
 
             <div class="col-md-2 form-group readonly-field">
                 <label class="readonly-label">Color</label>
                 <div class="readonly-value">
-                    {{ $booking->color_code ?? '—' }}
+                    {{
+                        collect($data['colors'] ?? [])
+                            ->firstWhere('code', $booking->color_code)['name']
+                        ?? $booking->color_code
+                        ?? '—'
+                    }}
                 </div>
             </div>
 
@@ -221,61 +232,21 @@
 
                 <div class="col-md-3">
                     <label class="form-label">Permit</label>
+
                     <select name="permit" id="permit" class="form-control form-select">
                         <option value="">Select Permit</option>
-                        <option value="1" {{ old('permit', $rto->permit ?? '') == '1' ? 'selected' : '' }}>
-                            Private - U/C (4 Wheeler)
-                        </option>
 
-                        <option value="2" {{ old('permit', $rto->permit ?? '') == '2' ? 'selected' : '' }}>
-                            Private - BH (4 Wheeler)
-                        </option>
-
-                        <option value="3" {{ old('permit', $rto->permit ?? '') == '3' ? 'selected' : '' }}>
-                            Private - EV (4 Wheeler)
-                        </option>
-
-                        <option value="4" {{ old('permit', $rto->permit ?? '') == '4' ? 'selected' : '' }}>
-                            Goods - G (4 Wheeler)
-                        </option>
-
-                        <option value="5" {{ old('permit', $rto->permit ?? '') == '5' ? 'selected' : '' }}>
-                            Goods - G 3 Ton+ (4 Wheeler)
-                        </option>
-
-                        <option value="6" {{ old('permit', $rto->permit ?? '') == '6' ? 'selected' : '' }}>
-                            Goods - G (3 Wheeler)
-                        </option>
-
-                        <option value="7" {{ old('permit', $rto->permit ?? '') == '7' ? 'selected' : '' }}>
-                            Goods - G EV (3 Wheeler)
-                        </option>
-
-                        <option value="8" {{ old('permit', $rto->permit ?? '') == '8' ? 'selected' : '' }}>
-                            Goods - G EV (4 Wheeler)
-                        </option>
-
-                        <option value="9" {{ old('permit', $rto->permit ?? '') == '9' ? 'selected' : '' }}>
-                            Taxi - T (4 Wheeler)
-                        </option>
-
-                        <option value="10" {{ old('permit', $rto->permit ?? '') == '10' ? 'selected' : '' }}>
-                            Taxi - T EV (4 Wheeler)
-                        </option>
-
-                        <option value="11" {{ old('permit', $rto->permit ?? '') == '11' ? 'selected' : '' }}>
-                            Passenger - P (3 Wheeler)
-                        </option>
-
-                        <option value="12" {{ old('permit', $rto->permit ?? '') == '12' ? 'selected' : '' }}>
-                            Passenger - P EV (3 Wheeler)
-                        </option>
-
-                        <option value="13" {{ old('permit', $rto->permit ?? '') == '13' ? 'selected' : '' }}>
-                            Ambulance (Misc.)
-                        </option>
+                        @foreach ($data['permit_map'] ?? [] as $key => $value)
+                            <option value="{{ $key }}"
+                                {{ old('permit', $rto->permit ?? '') == $key ? 'selected' : '' }}>
+                                {{ $value }}
+                            </option>
+                        @endforeach
                     </select>
-                    @error('permit') <span class="text-danger small">{{ $message }}</span> @enderror
+
+                    @error('permit')
+                        <span class="text-danger small">{{ $message }}</span>
+                    @enderror
                 </div>
 
                 <div class="col-md-3">
@@ -443,7 +414,7 @@
 
                 </div>
 
-                <div class="col-md-4" id="vehicle_reg_no_group">
+                <div class="col-md-3" id="vehicle_reg_no_group">
                     <label class="form-label">Vehicle Registration No.</label>
                     <input type="text" name="vehicle_reg_no" id="vehicle_reg_no" class="form-control text-uppercase"
                         value="{{ old('vehicle_reg_no', $rto->vh_rgn_no ?? '') }}">

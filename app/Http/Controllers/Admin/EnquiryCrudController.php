@@ -209,39 +209,45 @@ class EnquiryCrudController extends CrudController
             'unassigned_quick' => Enquiry::unassignedQuick(),
             'exchange' => Enquiry::where(function ($q) {
                 $q->whereIn('purchase_type_crm', ['Exchange Buy', 'EXCHANGE_BUY'])
-                  ->orWhere(function ($sub) {
-                      $sub->where(function ($sub2) {
-                          $sub2->whereNull('purchase_type_crm')->orWhere('purchase_type_crm', '');
-                      })->whereIn('purchase_type', ['Exchange Buy', 'EXCHANGE_BUY']);
-                  });
+                    ->orWhere(function ($sub) {
+                        $sub->where(function ($sub2) {
+                            $sub2->whereNull('purchase_type_crm')->orWhere('purchase_type_crm', '');
+                        })->whereIn('purchase_type', ['Exchange Buy', 'EXCHANGE_BUY']);
+                    });
             }),
-            
+
             'scrappage' => Enquiry::where(function ($q) {
                 $q->whereIn('purchase_type_crm', ['Scrappage', 'SCRAPPAGE'])
-                  ->orWhere(function ($sub) {
-                      $sub->where(function ($sub2) {
-                          $sub2->whereNull('purchase_type_crm')->orWhere('purchase_type_crm', '');
-                      })->whereIn('purchase_type', ['Scrappage', 'SCRAPPAGE']);
-                  });
+                    ->orWhere(function ($sub) {
+                        $sub->where(function ($sub2) {
+                            $sub2->whereNull('purchase_type_crm')->orWhere('purchase_type_crm', '');
+                        })->whereIn('purchase_type', ['Scrappage', 'SCRAPPAGE']);
+                    });
             }),
-            
+
             'exchange_not_interested' => Enquiry::where(function ($q) {
                 $q->whereIn('purchase_type_crm', [
-                    'First Time Buy', 'FIRST_TIME_BUY', 
-                    'Additional Buy', 'ADDITIONAL_BUY', 
-                    'No Consideration', 'NO_CONSIDERATION'
+                    'First Time Buy',
+                    'FIRST_TIME_BUY',
+                    'Additional Buy',
+                    'ADDITIONAL_BUY',
+                    'No Consideration',
+                    'NO_CONSIDERATION'
                 ])
-                  ->orWhere(function ($sub) {
-                      $sub->where(function ($sub2) {
-                          $sub2->whereNull('purchase_type_crm')->orWhere('purchase_type_crm', '');
-                      })->whereIn('purchase_type', [
-                          'First Time Buy', 'FIRST_TIME_BUY', 
-                          'Additional Buy', 'ADDITIONAL_BUY', 
-                          'No Consideration', 'NO_CONSIDERATION'
-                      ]);
-                  });
+                    ->orWhere(function ($sub) {
+                        $sub->where(function ($sub2) {
+                            $sub2->whereNull('purchase_type_crm')->orWhere('purchase_type_crm', '');
+                        })->whereIn('purchase_type', [
+                            'First Time Buy',
+                            'FIRST_TIME_BUY',
+                            'Additional Buy',
+                            'ADDITIONAL_BUY',
+                            'No Consideration',
+                            'NO_CONSIDERATION'
+                        ]);
+                    });
             }),
-            
+
             'finance' => Enquiry::where('fin_mode', 'In-house'),
             'finance_not_interested' => Enquiry::whereIn('fin_mode', ['Cash', 'Customer Self', 'Yet To Decide', 'Purchase Plan Cancelled']),
 
@@ -1393,7 +1399,7 @@ class EnquiryCrudController extends CrudController
             }
         }
         if (!$sortApplied) {
-            $query->orderByDesc('updated_at'); 
+            $query->orderByDesc('updated_at');
         }
     }
 
