@@ -848,6 +848,98 @@
     </x-backpack::menu-dropdown>
 
 </x-backpack::menu-dropdown>
+{{-- ====================== ACCOUNTS MODULE ====================== --}}
+<x-backpack::menu-dropdown title="Accounts" icon="la la-calculator">
+
+    {{-- Manager --}}
+    <x-backpack::menu-dropdown title="Manager" icon="la la-user-tie" nested="true">
+
+        <a class="dropdown-item d-flex align-items-center justify-content-between"
+            href="{{ backpack_url('accounts/receipt-list') }}"> 
+            <span><i class="la la-receipt me-2"></i>Issue Receipt</span>
+        </a>
+
+        <a class="dropdown-item d-flex align-items-center justify-content-between"
+            href="{{ backpack_url('accounts/manager/journal-voucher') }}">
+            <span><i class="la la-file-invoice me-2"></i>Create Journal Voucher</span>
+        </a>
+
+        <a class="dropdown-item d-flex align-items-center justify-content-between"
+            href="{{ backpack_url('accounts/manager/cash-collection-reconciliation') }}">
+            <span><i class="la la-hand-holding-usd me-2"></i>Cash Collection Reconciliation</span>
+        </a>
+
+        <a class="dropdown-item d-flex align-items-center justify-content-between"
+            href="{{ backpack_url('accounts/manager/cash-deposit-reconciliation') }}">
+            <span><i class="la la-university me-2"></i>Cash Deposit Reconciliation</span>
+        </a>
+
+        <a class="dropdown-item d-flex align-items-center justify-content-between"
+            href="{{ backpack_url('accounts/manager/cash-deposit-approval') }}">
+            <span><i class="la la-check-circle me-2"></i>Cash Deposit Approval</span>
+        </a>
+
+        <a class="dropdown-item d-flex align-items-center justify-content-between"
+            href="{{ backpack_url('accounts/manager/sdr') }}">
+            <span><i class="la la-file-alt me-2"></i>SDR</span>
+        </a>
+
+        <a class="dropdown-item d-flex align-items-center justify-content-between"
+            href="{{ backpack_url('accounts/manager/rcr') }}">
+            <span><i class="la la-file-invoice-dollar me-2"></i>RCR</span>
+        </a>
+
+    </x-backpack::menu-dropdown>
+
+
+    {{-- Cashier --}}
+    <x-backpack::menu-dropdown title="Cashier" icon="la la-cash-register" nested="true">
+
+        {{-- Sales --}}
+        <x-backpack::menu-dropdown title="Sales" icon="la la-shopping-cart" nested="true">
+
+            <a class="dropdown-item d-flex align-items-center justify-content-between"
+                href="{{ backpack_url('accounts/cashier/sales/issue-receipt') }}">
+                <span><i class="la la-receipt me-2"></i>Issue Receipt</span>
+            </a>
+
+            <a class="dropdown-item d-flex align-items-center justify-content-between"
+                href="{{ backpack_url('accounts/cashier/sales/sdr') }}">
+                <span><i class="la la-file-alt me-2"></i>SDR</span>
+            </a>
+
+            <a class="dropdown-item d-flex align-items-center justify-content-between"
+                href="{{ backpack_url('accounts/cashier/sales/rcr') }}">
+                <span><i class="la la-file-invoice-dollar me-2"></i>RCR</span>
+            </a>
+
+        </x-backpack::menu-dropdown>
+
+
+        {{-- Service --}}
+        <x-backpack::menu-dropdown title="Service" icon="la la-wrench" nested="true">
+
+            <a class="dropdown-item d-flex align-items-center justify-content-between"
+                href="{{ backpack_url('accounts/cashier/service/issue-receipt') }}">
+                <span><i class="la la-receipt me-2"></i>Issue Receipt</span>
+            </a>
+
+        </x-backpack::menu-dropdown>
+
+    </x-backpack::menu-dropdown>
+
+
+    {{-- Executive --}}
+    <x-backpack::menu-dropdown title="Executive" icon="la la-user" nested="true">
+
+        <a class="dropdown-item d-flex align-items-center justify-content-between"
+            href="{{ backpack_url('accounts/executive/cash-deposit-entry') }}">
+            <span><i class="la la-money-bill me-2"></i>Cash Deposit Entry</span>
+        </a>
+
+    </x-backpack::menu-dropdown>
+
+</x-backpack::menu-dropdown>
 
 {{-- ====================== SPARES MODULE ====================== --}}
 <x-backpack::menu-dropdown title="Spares" icon="la la-tools">
