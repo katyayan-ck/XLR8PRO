@@ -122,6 +122,8 @@ Route::group([
     Route::get('enquiry/reference-users', [EnquiryCrudController::class, 'getReferenceUsers'])->name('enquiry.reference-users');
     Route::get('enquiry/check-duplicate', [EnquiryCrudController::class, 'checkDuplicateEnquiry'])->name('enquiry.check-duplicate');
     Route::get('enquiry/location-by-pincode', [EnquiryCrudController::class, 'locationByPincode'])->name('enquiry.location-by-pincode');
+    Route::get('accounts/receipt/fetch-enquiry', [App\Http\Controllers\Admin\ReceiptCrudController::class, 'fetchEnquiryDetails'])
+        ->name('accounts.receipt.fetch-enquiry');
 
     // Specialized Enquiry Listings
     Route::get('enquiries/xceler8', [EnquiryCrudController::class, 'xceler8List'])->name('enquiry.xceler8');
@@ -182,4 +184,13 @@ Route::group([
     Route::get('enquiries/otf-bookings', [EnquiryCrudController::class, 'otfBookingsList'])
         ->name('enquiry.otf-bookings');
     Route::get('enquiries/otf-bookings/{id}/show', [EnquiryCrudController::class, 'showOtf'])->name('enquiry.otf.show');
+    Route::get('accounts/receipt/{id}/show', [App\Http\Controllers\Admin\ReceiptCrudController::class, 'show'])->name('accounts.receipt.show');
+    Route::get('accounts/receipt/{id}/edit', [App\Http\Controllers\Admin\ReceiptCrudController::class, 'edit'])->name('accounts.receipt.edit');
+    Route::put('accounts/receipt/{id}', [App\Http\Controllers\Admin\ReceiptCrudController::class, 'update'])->name('accounts.receipt.update');
+    Route::get('accounts/journal-voucher-list', [App\Http\Controllers\Admin\JournalVoucherCrudController::class, 'index'])->name('accounts.journal-voucher.index');
+    Route::get('accounts/journal-voucher/create', [App\Http\Controllers\Admin\JournalVoucherCrudController::class, 'create'])->name('accounts.journal-voucher.create');
+    Route::post('accounts/journal-voucher-list', [App\Http\Controllers\Admin\JournalVoucherCrudController::class, 'store'])->name('accounts.journal-voucher.store');
+    Route::get('accounts/journal-voucher/{id}/edit', [App\Http\Controllers\Admin\JournalVoucherCrudController::class, 'edit'])->name('accounts.journal-voucher.edit');
+    Route::put('accounts/journal-voucher/{id}', [App\Http\Controllers\Admin\JournalVoucherCrudController::class, 'update'])->name('accounts.journal-voucher.update');
+    Route::get('accounts/journal-voucher/fetch-enquiry', [App\Http\Controllers\Admin\JournalVoucherCrudController::class, 'fetchEnquiryDetails'])->name('accounts.journal-voucher.fetch-enquiry');
 }); // ← This should be the last line

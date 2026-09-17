@@ -1,0 +1,282 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Models\Module\Booking\Bookingamount;
+use App\Services\OrgService;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Prologue\Alerts\Facades\Alert;
+
+class JournalVoucherCrudController extends Controller
+{
+    private const TYPE_VOUCHER = 2; // Type 2 for Journal Voucher
+
+    public function index()
+    {
+        $vouchers = Bookingamount::query()
+            ->where('type', self::TYPE_VOUCHER)
+            ->orderByDesc('id')
+            ->get();
+
+        $enquiryIds = $vouchers->pluck('enq_id')->filter()->unique();
+        $enquiries = DB::table('xlr8_crm_enquiries')->whereIn('id', $enquiryIds)->get()->keyBy('id');
+
+        $data = $vouchers->map(function (Bookingamount $voucher, $index) use ($enquiries) {
+            $enquiry = $enquiries->get($voucher->enq_id);
+            $jvCatMap = [1 => 'Used Car Purchase', 2 => 'Internal Transfer'];
+
+            return [
+                'id' => $voucher->id,
+                'serial_no' => $index + 1,
+                'voucher_no'   => $voucher->type_number,
+                'voucher_date' => $this->formatDate($voucher->date),
+                
+                'amount'           => $voucher->amount,
+                'on_account_of'    => $this->keyValueName($voucher->account_of),
+                'jv_category'      => $jvCatMap[$voucher->jv_cat] ?? '',
+                
+                'debit_to'         => $voucher->party_name,
+                'credit_to'        => $voucher->name ?? $enquiry->name ?? '',
+                'customer_name' => $receipt->name ?? $enquiry->name ?? $enquiry->customer_name ?? '',
+                'care_of'          => $voucher->care_of ?? '',
+                'address'          => $voucher->address ?? '',
+                'contact_no'       => $voucher->mobile ?? $enquiry->mobile ?? '',
+                'alternate_mobile' => $voucher->alternate_mobile ?? '',
+                
+                'registration_no'    => $voucher->vh_rgn_no,
+                'chassis_no'         => $voucher->chassis_no,
+                'invoice_no'         => $voucher->inv_no,
+                
+                'xceler8_booking_no' => $voucher->bid,
+                'votf_no'            => $voucher->otf_no,
+                
+                'cashier_branch'   => '', // Auto from auth but not in DB
+                'cashier_location' => $voucher->location,
+                'payment_mode'     => $this->keyValueName($voucher->mode) ?: 'Journal Voucher',
+                
+                'action' => '<div class="d-flex gap-2 justify-content-center">' .
+                            '<a href="' . backpack_url('accounts/journal-voucher/' . $voucher->id . '/edit') . '" class="btn btn-sm btn-primary text-white"><i class="la la-edit"></i> Edit</a>' .
+                            '</div>',
+            ];
+        })->values();
+
+        return view('admin.accounts.jv-list', ['gridConfig' => ['data' => $data]]);
+    }
+
+    public function create()
+    {
+        $user = OrgService::getCurrentUser();
+        // Fetch the Journal Voucher MOP ID dynamically if it exists
+        $mopOptions = $this->getKeyValueOptions(['PAYMENT_MODE', 'MODE_OF_PAYMENT', 'PAYMENT', 'MOP']);
+        $jvModeId = array_search('Journal Voucher', $mopOptions) ?: '';
+
+        return view('admin.accounts.jv-create', [
+            'type' => self::TYPE_VOUCHER,
+            'onAccountOfOptions' => $this->getKeyValueOptions(['ACC_OF', 'ON_ACCOUNT_OF', 'ACCOUNT']),
+            'jvModeId' => $jvModeId,
+            'userBranch' => $user['primary_branch_code'] ?? 'UNKNOWN',
+            'userLocation' => $user['primary_loc_code'] ?? 'UNKNOWN',
+        ]);
+    }
+
+    public function store(Request $request)
+    {
+        $this->performValidation($request);
+
+        DB::beginTransaction();
+        try {
+            $voucherNo = $this->generateVoucherNumber($request->location);
+
+            $voucher = new Bookingamount();
+            $this->mapVoucherData($voucher, $request);
+            
+            $voucher->type        = self::TYPE_VOUCHER;
+            $voucher->type_number = $voucherNo; 
+            $voucher->created_by  = Auth::id() ?: 1;
+
+            $voucher->save();
+            DB::commit();
+
+            Alert::success("Voucher {$voucherNo} created successfully.")->flash();
+            return redirect()->route('accounts.journal-voucher.index');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Alert::error('Error creating voucher: ' . $e->getMessage())->flash();
+            return redirect()->back()->withInput();
+        }
+    }
+
+    public function edit($id)
+    {
+        $voucher = Bookingamount::query()->where('type', self::TYPE_VOUCHER)->findOrFail($id);
+        $user = OrgService::getCurrentUser();
+        $mopOptions = $this->getKeyValueOptions(['PAYMENT_MODE', 'MODE_OF_PAYMENT', 'PAYMENT', 'MOP']);
+
+        return view('admin.accounts.jv-create', [
+            'type' => self::TYPE_VOUCHER,
+            'voucher' => $voucher,
+            'onAccountOfOptions' => $this->getKeyValueOptions(['ACC_OF', 'ON_ACCOUNT_OF', 'ACCOUNT']),
+            'jvModeId' => array_search('Journal Voucher', $mopOptions) ?: $voucher->mode,
+            'userLocation' => $user['primary_loc_code'] ?? 'UNKNOWN',
+            'isEdit' => true,
+        ]);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $voucher = Bookingamount::query()->where('type', self::TYPE_VOUCHER)->findOrFail($id);
+        $this->performValidation($request);
+
+        DB::beginTransaction();
+        try {
+            $this->mapVoucherData($voucher, $request);
+            $voucher->updated_by = Auth::id() ?: 1;
+            $voucher->save();
+            DB::commit();
+
+            Alert::success("Voucher {$voucher->type_number} updated successfully.")->flash();
+            return redirect()->route('accounts.journal-voucher.index');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Alert::error('Error updating voucher: ' . $e->getMessage())->flash();
+            return redirect()->back()->withInput();
+        }
+    }
+
+    public function fetchEnquiryDetails(Request $request)
+    {
+        $enqId = str_replace(['XENQ-', 'xenq-'], '', strtoupper($request->enq_no));
+        $enquiry = DB::table('xlr8_crm_enquiries')->where('id', $enqId)->first();
+
+        if (!$enquiry) return response()->json(['success' => false]);
+
+        return response()->json([
+            'success'          => true,
+            'customer_name'    => $enquiry->name ?? $enquiry->customer_name ?? $enquiry->first_name ?? '',
+            'care_of_type'     => $enquiry->care_of_type ?? '',
+            'care_of'          => $enquiry->care_of ?? '',
+            'address'          => $enquiry->address ?? $enquiry->address1 ?? '',
+            'mobile'           => $enquiry->mobile ?? $enquiry->contact_no ?? '',
+            'alternate_mobile' => $enquiry->alternate_mobile ?? '',
+            'booking_no'       => $enquiry->booking_no ?? $enquiry->x8_booking_no ?? '',
+            'votf_no'          => $enquiry->oem_otf_no ?? ''
+        ]);
+    }
+
+    private function mapVoucherData(Bookingamount $voucher, Request $request)
+    {
+        $voucher->date        = $request->voucher_date;
+        $voucher->location    = $request->location;
+        $voucher->account_of  = $request->on_account_of;
+        $voucher->mode        = $request->payment_mode; // Always JV Mode
+        
+        $cleanEnqId = $request->xceler8_enq_no ? (int) str_replace(['XENQ-', 'xenq-'], '', $request->xceler8_enq_no) : null;
+        $voucher->enq_id      = $cleanEnqId;
+        $voucher->bid         = $request->xceler8_booking_no;
+        $voucher->otf_no      = $request->votf_no;
+        
+        // JV Category & Specifics
+        $voucher->jv_cat           = $request->jv_cat;
+        $voucher->used_model       = $request->jv_cat == 1 ? $request->used_model : null;
+        $voucher->used_rgn_no      = $request->jv_cat == 1 ? $request->used_rgn_no : null;
+        $voucher->from_dept        = $request->jv_cat == 2 ? $request->from_dept : null;
+        $voucher->to_dept          = $request->jv_cat == 2 ? $request->to_dept : null;
+        $voucher->exist_receipt_no = $request->jv_cat == 2 ? $request->exist_receipt_no : null;
+
+        $voucher->party_name       = $request->party_name;
+        $voucher->name             = $request->customer_name;
+        $voucher->hypo             = $request->hypo ?? null;
+        $voucher->care_of_type     = $request->care_of_type;
+        $voucher->care_of          = $request->care_of;
+        $voucher->address          = $request->address;
+        $voucher->mobile           = $request->mobile;
+        $voucher->alternate_mobile = $request->alternate_mobile;
+        
+        $voucher->vh_rgn_no        = $request->vehicle_registration_no;
+        $voucher->chassis_no       = $request->vehicle_chassis_no;
+        $voucher->inv_no           = $request->invoice_no;
+        
+        $voucher->amount           = $request->amount;
+        $voucher->remarks          = $request->remarks;
+        $voucher->status           = 1;
+    }
+
+    private function generateVoucherNumber($locationCode)
+    {
+        $now = Carbon::now('Asia/Kolkata');
+        $fyStartYear = $now->month >= 4 ? $now->year : $now->year - 1;
+        $fyCode = 'F' . substr(($fyStartYear + 1), -2); // E.g., F27
+        
+        $pattern = "JV{$locationCode}{$fyCode}%";
+
+        $lastVoucher = DB::table('xlr8_booking_amount')
+            ->where('type_number', 'like', $pattern)
+            ->lockForUpdate()
+            ->orderBy('id', 'desc')
+            ->first();
+
+        if ($lastVoucher) {
+            $lastSequence = (int) str_replace("JV{$locationCode}{$fyCode}", '', $lastVoucher->type_number);
+            $nextSequence = str_pad($lastSequence + 1, 2, '0', STR_PAD_LEFT);
+        } else {
+            $nextSequence = '01';
+        }
+
+        return "JV{$locationCode}{$fyCode}{$nextSequence}";
+    }
+
+    private function performValidation(Request $request)
+    {
+        $rules = [
+            'voucher_date'     => 'required|date',
+            'location'         => 'required',
+            'on_account_of'    => 'required',
+            'jv_cat'           => 'required',
+            'party_name'       => 'required|string|max:100', // Debit To
+            'customer_name'    => 'required|string|max:150', // Credit To
+            'amount'           => 'required|numeric|min:1',
+            'remarks'          => 'required|string|max:150',
+        ];
+
+        if ($request->jv_cat == 1) { // Used Car
+            $rules['used_model'] = 'required|string|max:100';
+            $rules['used_rgn_no'] = 'required|string|max:100';
+        } elseif ($request->jv_cat == 2) { // Internal Transfer
+            $rules['from_dept'] = 'required|string|max:100';
+            $rules['to_dept'] = 'required|string|max:100';
+            $rules['exist_receipt_no'] = 'required|string|max:100';
+        }
+
+        $request->validate($rules);
+    }
+
+    private function getKeyValueOptions(array $keywordCodes): array
+    {
+        foreach ($keywordCodes as $keywordCode) {
+            $options = OrgService::getKeyValuesByCode($keywordCode);
+            if ($options && $options->isNotEmpty()) {
+                return $options->pluck('value', 'id')->toArray();
+            }
+        }
+        return [];
+    }
+
+    private function keyValueName($value): string
+    {
+        if (empty($value)) return '';
+        if (is_numeric($value)) {
+            $kv = OrgService::getKeyValueById((int) $value);
+            if ($kv) return $kv->value;
+        }
+        return OrgService::getKeyValueByCode((string) $value)?->value ?? (string) $value;
+    }
+
+    private function formatDate($date): string
+    {
+        return $date ? Carbon::parse($date)->format('d-m-Y') : '';
+    }
+}
