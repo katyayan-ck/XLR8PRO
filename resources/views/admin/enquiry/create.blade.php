@@ -488,7 +488,10 @@
                                                 <td class="align-middle p-2">
                                                     <div class="form-control bg-white h-auto border-0 d-flex justify-content-center align-items-center"
                                                         style="min-height: 38px;">
-                                                        @if (isset($row['manual_mismatch']))
+                                                        @if ($anyEmpty || (isset($row['skip_comparison']) && $row['skip_comparison']))
+                                                            {{-- If any side is empty or skipped, always show a dash --}}
+                                                            <span class="text-secondary fw-bold" style="font-size: 1rem;">—</span>
+                                                        @elseif (isset($row['manual_mismatch']))
                                                             {{-- Manual Checkbox Logic --}}
                                                             <div class="d-flex align-items-center">
                                                                 <input
@@ -499,16 +502,9 @@
                                                                     class="form-check-label ms-2 mb-0 fw-bold text-secondary"
                                                                     style="font-size: 0.9rem; cursor: pointer;">Mismatch</label>
                                                             </div>
-                                                        @elseif(isset($row['skip_comparison']) && $row['skip_comparison'])
-                                                            {{-- Bypass Match/Mismatch completely --}}
-                                                            <span class="text-secondary fw-bold"
-                                                                style="font-size: 1rem;">—</span>
                                                         @else
                                                             {{-- Automatic Comparison Logic --}}
-                                                            @if ($anyEmpty)
-                                                                <span class="text-secondary fw-bold"
-                                                                    style="font-size: 1rem;">—</span>
-                                                            @elseif($isAutoMismatch)
+                                                            @if($isAutoMismatch)
                                                                 <span class="text-danger fw-bold d-flex align-items-center"
                                                                     style="font-size: 0.9rem;">
                                                                     <i class="la la-times-circle me-1"
@@ -1131,6 +1127,39 @@
                                     <label class="form-label">Reason for Case Lost (If Dropped)</label>
                                     <input type="text" class="form-control" value="{{ $enquiry->lost_reason }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
                                 </div>
+                                {{-- EXCHANGE FOLLOW UPS TABLE --}}
+                                @if(isset($exchangeFups) && $exchangeFups->count() > 0)
+                                <div class="col-md-12 mt-4 mb-2">
+                                    <h5 class="fw-bold mb-3" style="color: #495057;">Exchange Follow-up History</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered text-center align-middle mb-0" style="background-color: #e9ecef;">
+                                            <thead class="table-secondary text-uppercase" style="font-size: 0.85rem;">
+                                                <tr>
+                                                    <th class="text-center px-3" style="width: 10%;">Fup #</th>
+                                                    <th class="text-center px-3" style="width: 45%;">Remarks</th>
+                                                    <th class="text-center px-3" style="width: 25%;">Created By</th>
+                                                    <th class="text-center px-3" style="width: 20%;">Date & Time</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach($exchangeFups as $fup)
+                                                    @php
+                                                        $creator = \App\Models\User::find($fup->created_by);
+                                                        $code = $creator ? ($creator->employee_code ?? $creator->person_code) : null;
+                                                        $creatorName = \App\Services\OrgService::getUserNameByCode($code);
+                                                    @endphp
+                                                    <tr>
+                                                        <td class="fw-bold align-middle table-secondary text-center px-3 text-dark">{{ $fup->fup_count }}</td>
+                                                        <td><div class="form-control bg-white h-auto border-0 text-wrap text-start" style="min-width: 150px;">{{ $fup->remarks }}</div></td>
+                                                        <td><div class="form-control bg-white h-auto border-0 text-center">{{ $creatorName }}</div></td>
+                                                        <td><div class="form-control bg-white h-auto border-0 text-center">{{ \Carbon\Carbon::parse($fup->created_at)->format('d-M-Y h:i A') }}</div></td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                @endif
                             </div>
 
                             <hr class="my-4" style="border-color: #e9ecef;">
@@ -1178,6 +1207,39 @@
                                     <label class="form-label">File Charge</label>
                                     <input type="text" class="form-control" value="{{ !empty($financeData->file_charge) ? '₹ '.number_format($financeData->file_charge) : '' }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
                                 </div>
+                                {{-- FINANCE FOLLOW UPS TABLE --}}
+                                @if(isset($financeFups) && $financeFups->count() > 0)
+                                <div class="col-md-12 mt-4 mb-2">
+                                    <h5 class="fw-bold mb-3" style="color: #495057;">Finance Follow-up History</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered text-center align-middle mb-0" style="background-color: #e9ecef;">
+                                            <thead class="table-secondary text-uppercase" style="font-size: 0.85rem;">
+                                                <tr>
+                                                    <th class="text-center px-3" style="width: 10%;">Fup #</th>
+                                                    <th class="text-center px-3" style="width: 45%;">Remarks</th>
+                                                    <th class="text-center px-3" style="width: 25%;">Created By</th>
+                                                    <th class="text-center px-3" style="width: 20%;">Date & Time</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach($financeFups as $fup)
+                                                    @php
+                                                        $creator = \App\Models\User::find($fup->created_by);
+                                                        $code = $creator ? ($creator->employee_code ?? $creator->person_code) : null;
+                                                        $creatorName = \App\Services\OrgService::getUserNameByCode($code);
+                                                    @endphp
+                                                    <tr>
+                                                        <td class="fw-bold align-middle table-secondary text-center px-3 text-dark">{{ $fup->fup_count }}</td>
+                                                        <td><div class="form-control bg-white h-auto border-0 text-wrap text-start" style="min-width: 150px;">{{ $fup->remarks }}</div></td>
+                                                        <td><div class="form-control bg-white h-auto border-0 text-center">{{ $creatorName }}</div></td>
+                                                        <td><div class="form-control bg-white h-auto border-0 text-center">{{ \Carbon\Carbon::parse($fup->created_at)->format('d-M-Y h:i A') }}</div></td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -1381,76 +1443,46 @@
                         <div class="row">
                             <div class="col-md-4 mb-3">
                                 <label class="form-label">Consideration Set 1 - Brand</label>
-
-                                <select id="consider_make" name="consider_make" class="form-control form-select">
-
-                                    <option value="No Consideration"
-                                        {{ old(
-                                            'consider_make',
-                                            $enquiry->consider_make ??
-                                                'No
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    Consideration',
-                                        ) == 'No Consideration'
-                                            ? 'selected'
-                                            : '' }}>
-                                        No Consideration
-                                    </option>
-
+                                <select id="consider_make" name="consid_brand" class="form-control form-select">
+                                    <option value="No Consideration" {{ old('consid_brand', $enquiry->consid_brand ?? 'No Consideration') == 'No Consideration' ? 'selected' : '' }}>No Consideration</option>
                                     @foreach ($existing_car_oems as $item)
-                                        <option value="{{ $item['code'] }}"
-                                            {{ old('consider_make', $enquiry->consider_make ?? '') == $item['code'] ? 'selected' : '' }}>
-                                            {{ $item['value'] }}
-                                        </option>
+                                        <option value="{{ $item['code'] }}" {{ old('consid_brand', $enquiry->consid_brand ?? '') == $item['code'] ? 'selected' : '' }}>{{ $item['value'] }}</option>
                                     @endforeach
-
                                 </select>
                             </div>
-
                             <div class="col-md-4 mb-3">
                                 <label class="form-label">Consideration Set 1 - Model</label>
-
-                                <input type="text" id="consider_model" name="consider_model" class="form-control"
-                                    value="{{ old('consider_model', $enquiry->consider_model ?? '') }}" readonly>
+                                <input type="text" id="consider_model" name="consid_model" class="form-control" value="{{ old('consid_model', $enquiry->consid_model ?? '') }}" readonly>
                             </div>
-
                             <div class="col-md-4 mb-3">
                                 <label class="form-label">Consideration Set 1 - Variant</label>
-
-                                <input type="text" id="consider_variant" name="consider_variant" class="form-control"
-                                    value="{{ old('consider_variant', $enquiry->consider_variant ?? '') }}" readonly>
+                                <input type="text" id="consider_variant" name="consid_variant" class="form-control" value="{{ old('consid_variant', $enquiry->consid_variant ?? '') }}" readonly>
                             </div>
                         </div>
-
 
                         {{-- ================= SET 2 ================= --}}
                         <div class="row">
                             <div class="col-md-4 mb-3">
                                 <label class="form-label">Consideration Set 2 - Brand</label>
-
                                 <select id="consider_make_2" name="consid_brand2" class="form-control form-select">
-
                                     <option value="">No Consideration</option>
-
                                     @foreach ($existing_car_oems as $item)
                                         <option value="{{ $item['code'] }}"
                                             {{ old('consid_brand2', $enquiry->consid_brand2 ?? '') == $item['code'] ? 'selected' : '' }}>
                                             {{ $item['value'] }}
                                         </option>
                                     @endforeach
-
                                 </select>
                             </div>
 
                             <div class="col-md-4 mb-3">
                                 <label class="form-label">Consideration Set 2 - Model</label>
-
                                 <input type="text" id="consider_model_2" name="consid_model2" class="form-control"
                                     value="{{ old('consid_model2', $enquiry->consid_model2 ?? '') }}" readonly>
                             </div>
 
                             <div class="col-md-4 mb-3">
                                 <label class="form-label">Consideration Set 2 - Variant</label>
-
                                 <input type="text" id="consider_variant_2" name="consid_variant2"
                                     class="form-control"
                                     value="{{ old('consid_variant2', $enquiry->consid_variant2 ?? '') }}" readonly>
@@ -1974,8 +2006,7 @@
             input.value = formatted;
         }
 
-        function loadKeywordDropdown(keyword, parent, $target, placeholder = 'Select Option', selected = '', parentKeyword =
-            '') {
+        function loadKeywordDropdown(keyword, parent, $target, placeholder = 'Select Option', selected = '', parentKeyword = '', callback = null) {
             if (!parent) return $target.html(`<option value="">${placeholder}</option>`).prop('disabled', true);
             let url = "{{ route('admin.master.keyword-values', ['keyword' => '__K__', 'parent' => '__P__']) }}".replace(
                 '__K__', encodeURIComponent(keyword)).replace('__P__', encodeURIComponent(parent));
@@ -1995,6 +2026,7 @@
                         html += `<option value="${item.code}" ${isSelected}>${item.value}</option>`;
                     });
                     $target.html(html).prop('disabled', false);
+                    if (callback) callback(); // Trigger downstream events!
                 },
                 error: () => $target.html(`<option value="">${placeholder}</option>`).prop('disabled', true)
             });
@@ -2327,29 +2359,25 @@
 
             // ================= CONSIDERATION SET 1 =================
             $('#consider_make').on('change', function() {
-
-                const isValid =
-                    $(this).val() &&
-                    $(this).val() !== 'No Consideration';
-
-                $('#consider_model, #consider_variant')
-                    .prop('readonly', !isValid)
-                    .val(isValid ? undefined : '');
-
+                const isValid = $(this).val() && $(this).val() !== 'No Consideration';
+                
+                $('#consider_model, #consider_variant').prop('readonly', !isValid);
+                
+                if (!isValid) {
+                    $('#consider_model, #consider_variant').val('');
+                }
             }).trigger('change');
 
 
             // ================= CONSIDERATION SET 2 =================
             $('#consider_make_2').on('change', function() {
-
-                const isValid =
-                    $(this).val() &&
-                    $(this).val() !== 'No Consideration';
-
-                $('#consider_model_2, #consider_variant_2')
-                    .prop('readonly', !isValid)
-                    .val(isValid ? undefined : '');
-
+                const isValid = $(this).val() && $(this).val() !== 'No Consideration';
+                
+                $('#consider_model_2, #consider_variant_2').prop('readonly', !isValid);
+                
+                if (!isValid) {
+                    $('#consider_model_2, #consider_variant_2').val('');
+                }
             }).trigger('change');
 
             $('#enquiry_type').on('change', function() {
@@ -2377,7 +2405,11 @@
                 } else {
                     $sourceCode.prop('disabled', false).prop('required', true);
                     loadKeywordDropdown('ENQ_SOURCE', rawVal, $sourceCode, 'Select Enquiry Source',
-                        currentEnquiry.source);
+                        currentEnquiry.source, '', function() {
+                            if(currentEnquiry.isEdit) {
+                                $sourceCode.trigger('change');
+                            }
+                        });
                     $subSource.html('<option value="">Select Enquiry Sub Source</option>').prop('disabled',
                         true).prop('required', false);
                     $('#sub_source_wrapper').addClass('d-none');
@@ -2537,16 +2569,31 @@
 
                 toggleReferenceFields();
 
-                // Show/Hide Sub Source
-                if (source === 'HYPERLOCAL') {
-                    $('#sub_source_wrapper').removeClass('d-none');
-                    $subSource.prop('disabled', false).prop('required', true);
-                    loadKeywordDropdown('ENQ_SUB_SOURCE', source, $subSource,
-                        'Select Enquiry Sub Source', currentEnquiry.subSource);
+                // Dynamically Show/Hide Sub Source based on API response
+                if (source) {
+                    $.ajax({
+                        // FIX: Changed from ENQUIRY_SUB_SOURCE to ENQ_SUB_SOURCE
+                        url: "{{ route('admin.master.keyword-values', ['keyword' => 'ENQ_SUB_SOURCE', 'parent' => '__P__']) }}".replace('__P__', encodeURIComponent(source)),
+                        type: "GET",
+                        success: (response) => {
+                            if (response && response.length > 0) {
+                                $('#sub_source_wrapper').removeClass('d-none');
+                                $subSource.prop('disabled', false).prop('required', true);
+                                let html = `<option value="">Select Enquiry Sub Source</option>`;
+                                $.each(response, (_, item) => {
+                                    let isSelected = (String(currentEnquiry.subSource).toUpperCase() === String(item.code).toUpperCase()) ? 'selected' : '';
+                                    html += `<option value="${item.code}" ${isSelected}>${item.value}</option>`;
+                                });
+                                $subSource.html(html);
+                            } else {
+                                $('#sub_source_wrapper').addClass('d-none');
+                                $subSource.html('<option value="">Select Enquiry Sub Source</option>').val('').prop('disabled', true).prop('required', false);
+                            }
+                        }
+                    });
                 } else {
                     $('#sub_source_wrapper').addClass('d-none');
-                    $subSource.html('<option value="">Select Enquiry Sub Source</option>').val('').prop(
-                        'disabled', true).prop('required', false);
+                    $subSource.html('<option value="">Select Enquiry Sub Source</option>').val('').prop('disabled', true).prop('required', false);
                 }
 
                 // Show/Hide Planned Campaign
@@ -2587,12 +2634,6 @@
                     }).removeAttr('tabindex');
                 }
             }).trigger('change');
-
-            // $('#dealer_branch').on('change', function() {
-            //     fetchDropdown("{{ backpack_url('enquiry/locations') }}/" + $(this).val(), $(
-            //             '#dealer_location'), 'Select Dealer Location', currentEnquiry.isEdit ?
-            //         currentEnquiry.dealerLocation : '');
-            // });
 
             $segmentCode.on('change', function() {
                 const segmentCode = $(this).val();

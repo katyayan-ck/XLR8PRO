@@ -35,11 +35,11 @@
             <div class="card">
                 <div class="card-header bg-gradient-primary d-flex justify-content-between align-items-center flex-nowrap flex-md-nowrap flex-wrap gap-3">
                     <h2 class="card-title mb-0 fw-bold text-black text-nowrap">
-                        {{ $title ?? 'Receipt List' }}
+                        {{ $title ?? 'Issue Receipt List' }}
                     </h2>
 
                     <div class="d-flex align-items-center gap-3 flex-nowrap">
-                        <a href="{{ backpack_url('receipt/create') }}" class="btn btn-blue btn-sm fw-bold shadow-sm">
+                        <a href="{{ backpack_url('accounts/receipt/create') }}" class="btn btn-blue btn-sm fw-bold shadow-sm">
                             <i class="la la-plus me-1"></i>Add Receipt
                         </a>
                     </div>

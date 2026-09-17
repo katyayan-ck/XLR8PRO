@@ -23,7 +23,7 @@
                         </h4>
                     </div>
 
-                    <form method="POST" action="{{ isset($isEdit) ? backpack_url('receipt/'.$receipt->id) : backpack_url('receipt') }}">
+                    <form method="POST" action="{{ isset($isEdit) ? backpack_url('accounts/receipt/'.$receipt->id) : backpack_url('accounts/receipt-list') }}">
                         @csrf
                         @if(isset($isEdit))
                             @method('PUT')
@@ -174,7 +174,7 @@
 
                         <div class="card-footer">
                             <button type="submit" class="btn btn-success">Save Receipt</button>
-                            <a href="{{ backpack_url('receipt') }}" class="btn btn-secondary">Cancel</a>
+                            <a href="{{ backpack_url('accounts/receipt-list') }}" class="btn btn-secondary">Cancel</a>
                         </div>
                     </form>
                 </div>

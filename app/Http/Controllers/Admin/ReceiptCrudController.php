@@ -75,7 +75,7 @@ class ReceiptCrudController extends Controller
                 'registration_no'    => $receipt->vh_rgn_no,
                 'chassis_no'         => $receipt->chassis_no,
 
-                'action' => '<a href="' . backpack_url('receipt/' . $receipt->id . '/edit') . '" class="btn btn-sm btn-link"><i class="la la-edit"></i> Edit</a>',
+                'action' => '<a href="' . backpack_url('accounts/receipt/' . $receipt->id . '/edit') . '" class="btn btn-sm btn-link"><i class="la la-edit"></i> Edit</a>',
             ];
         })->values();
 
@@ -83,7 +83,7 @@ class ReceiptCrudController extends Controller
             'data' => $data,
         ];
 
-        return view('admin.sales-cashier.receipt-list', compact('gridConfig'));
+        return view('admin.accounts.receipt-list', compact('gridConfig'));
     }
 
     /**
@@ -91,7 +91,7 @@ class ReceiptCrudController extends Controller
      */
     public function create()
     {
-        return view('admin.sales-cashier.receipt-create', [
+        return view('admin.accounts.receipt-create', [
             'type' => self::TYPE_RECEIPT,
             'onAccountOfOptions' => $this->getKeyValueOptions(['ACC_OF', 'ON_ACCOUNT_OF', 'ACCOUNT']),
             'paymentModeOptions' => $this->getKeyValueOptions(['PAYMENT_MODE', 'MODE_OF_PAYMENT', 'PAYMENT', 'MOP']),
@@ -182,7 +182,7 @@ class ReceiptCrudController extends Controller
 
     \Alert::success('Receipt created successfully.')->flash();
 
-    return redirect()->route('receipt.index');
+    return redirect()->route('accounts.receipt.index');
 }
     /**
      * Show Receipt edit form.
@@ -193,7 +193,7 @@ class ReceiptCrudController extends Controller
             ->where('type', self::TYPE_RECEIPT)
             ->findOrFail($id);
 
-        return view('admin.sales-cashier.receipt-create', [
+        return view('admin.accounts.receipt-create', [
             'type' => self::TYPE_RECEIPT,
             'receipt' => $receipt,
             'onAccountOfOptions' => $this->getKeyValueOptions(['ACC_OF', 'ON_ACCOUNT_OF', 'ACCOUNT']),
@@ -241,7 +241,7 @@ class ReceiptCrudController extends Controller
 
         \Alert::success('Receipt updated successfully.')->flash();
 
-        return redirect()->route('receipt.index');
+        return redirect()->route('accounts.receipt.index');
     }
 
     /**
@@ -260,7 +260,7 @@ class ReceiptCrudController extends Controller
 
         \Alert::success('Receipt deleted successfully.')->flash();
 
-        return redirect()->route('receipt.index');
+        return redirect()->route('accounts.receipt.index');
     }
 
     /**
