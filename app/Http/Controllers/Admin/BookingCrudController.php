@@ -687,15 +687,32 @@ class BookingCrudController extends CrudController
             try {
                 $finance = new XFinance();
                 $finance->bid = $booking->id;
-                $finance->vehicle_oem_code = $booking->vehicle_oem_code;
+                $finance->fin_mode = $request->input('finmode');
+                $finance->financier = $request->input('financier');
+                $finance->loan_status = $request->input('loanstatus') ?: 'Pending';
                 $finance->verification_status = 1;
                 $finance->case_status = 1;
-                $finance->loan_status = $request->input('loanstatus') ?: 'Pending';
-
                 $finance->save();
-                Log::info('✅ [FINANCE] XFinance saved', ['finance_id' => $finance->id]);
+                Log::info('✅ [FINANCE] XFinance saved', [
+                    'finance_id' => $finance->id,
+                    'booking_id' => $booking->id,
+                    'fin_mode' => $finance->fin_mode,
+                    'financier' => $finance->financier,
+                    'loan_status' => $finance->loan_status,
+                ]);
             } catch (\Exception $e) {
-                Log::error('💥 [FINANCE] XFinance save failed', ['message' => $e->getMessage()]);
+                Log::error('💥 [FINANCE] XFinance save failed', [
+                    'booking_id' => $booking->id ?? null,
+                    'finmode' => $request->input('finmode'),
+                    'financier' => $request->input('financier'),
+                    'loanstatus' => $request->input('loanstatus'),
+                    'message' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                    'trace' => $e->getTraceAsString(),
+                ]);
+
+                throw $e;
             }
         } else {
             Log::info('⏭️ [FINANCE] Skipped');
@@ -1330,7 +1347,15 @@ class BookingCrudController extends CrudController
                 $booking->model_code    = $enquiry->model_code;
                 $booking->variant_code  = $enquiry->variant_code;
                 $booking->color_code    = $enquiry->color_code;
-                $booking->buyer_type    = $enquiry->purchase_type_crm ?? $enquiry->purchase_type;
+                $purchaseTypeMap = collect(
+                        OrgService::keywordValueByCode('PURCHASE_TYPE')
+                    )->pluck('value', 'code')->toArray();
+
+                    $booking->buyer_type =
+                        !empty($enquiry->purchase_type_crm)
+                            ? ($purchaseTypeMap[$enquiry->purchase_type_crm]
+                                ?? $enquiry->purchase_type_crm)
+                            : ($enquiry->purchase_type ?? null);
                 $booking->exist_oem1    = $enquiry->brand_make;
                 $booking->exist_oem2    = $enquiry->consid_brand2;
                 $booking->vh1_detail    = $enquiry->brand_model;
@@ -1939,9 +1964,8 @@ class BookingCrudController extends CrudController
             'f.consideration_no_gst',
             'f.difference',
 
-            // FIX 2: Moved these finance fields here to pull from 'f' (Finance Table)
-            'f.fin_mode',
-            'f.financier',
+            DB::raw("COALESCE(f.fin_mode, enq.fin_mode) as fin_mode"),
+            DB::raw("COALESCE(f.financier, enq.financier) as financier"),
             'f.loan_status',
         ]);
 
@@ -3198,19 +3222,68 @@ class BookingCrudController extends CrudController
             // Map alternate mobile correctly
             $enquiry->alt_mobile = $enquiry->alternate_mobile ?? null;
 
-            // Prefer CRE inputs over OEM inputs for purchase type
-            $enquiry->purchase_type = $enquiry->purchase_type_crm ?? $enquiry->purchase_type ?? null;
+            $purchaseTypes = collect(
+                OrgService::keywordValueByCode('PURCHASE_TYPE')
+            );
+
+            $crmPurchaseType = trim((string) ($enquiry->purchase_type_crm ?? ''));
+
+            $matchedPurchaseType = null;
+
+            if ($crmPurchaseType !== '') {
+                $matchedPurchaseType = $purchaseTypes->first(function ($item) use ($crmPurchaseType) {
+                    // Safely extract the code from array or object
+                    $code = '';
+                    if (is_array($item)) {
+                        $code = $item['code'] ?? '';
+                    } elseif (is_object($item)) {
+                        $code = $item->code ?? '';
+                    }
+
+                    // Use a case-insensitive comparison
+                    return strtoupper(trim((string) $code)) === strtoupper($crmPurchaseType);
+                });
+            }
+
+            if ($matchedPurchaseType) {
+                // Safely extract the value
+                if (is_array($matchedPurchaseType)) {
+                    $enquiry->purchase_type = $matchedPurchaseType['value'] ?? null;
+                } elseif (is_object($matchedPurchaseType)) {
+                    $enquiry->purchase_type = $matchedPurchaseType->value ?? null;
+                }
+            } else {
+                // Fallback: If purchase_type_crm is already a text value, use it.
+                // Otherwise, use the standard purchase_type field.
+                $enquiry->purchase_type = $enquiry->purchase_type_crm ?: ($enquiry->purchase_type ?? null);
+            }
+
+            Log::info('🔄 [BOOKING CREATE] Purchase Type resolved', [
+                'enquiry_id'        => $enquiry->id,
+                'purchase_type_crm' => $enquiry->purchase_type_crm,
+                'resolved_type'     => $enquiry->purchase_type,
+            ]);
 
             // Prefer X8 SC over OEM SC to map into the Sales Consultant dropdown
-            $enquiry->sc_code = $enquiry->x8_sc_code ?? $enquiry->sc_code ?? null;
+            $enquiry->sc_code =
+                $enquiry->x8_sc_code
+                ?? $enquiry->sc_code
+                ?? null;
 
-            // If dealer branch/location is missing on enquiry, dynamically resolve it from the assigned Sales Consultant
+            // If dealer branch/location is missing on enquiry,
+            // dynamically resolve it from assigned Sales Consultant
             if (empty($enquiry->dealer_branch) && !empty($enquiry->sc_code)) {
                 $scUsers = OrgService::getUsers(desigCode: 'CNS');
-                $matchedSc = collect($scUsers)->firstWhere('person_code', $enquiry->sc_code);
+
+                $matchedSc = collect($scUsers)
+                    ->firstWhere('person_code', $enquiry->sc_code);
+
                 if ($matchedSc) {
-                    $enquiry->dealer_branch = $matchedSc['primary_branch_code'] ?? null;
-                    $enquiry->dealer_location = $matchedSc['primary_loc_code'] ?? null;
+                    $enquiry->dealer_branch =
+                        $matchedSc['primary_branch_code'] ?? null;
+
+                    $enquiry->dealer_location =
+                        $matchedSc['primary_loc_code'] ?? null;
                 }
             }
         }
@@ -3288,7 +3361,7 @@ class BookingCrudController extends CrudController
             $data['q']['gender']       = $enquiry->gender;
             $data['q']['occ']          = $enquiry->occupation_type;
             $data['q']['c_dob']        = $enquiry->dob;
-            $data['q']['buyertype']    = $enquiry->purchase_type_crm ?? $enquiry->purchase_type;
+            $data['q']['buyertype'] = $enquiry->purchase_type;
             $data['q']['exist_oem1']   = $enquiry->brand_make;
             $data['q']['vh1_detail']   = $enquiry->brand_model;
             $data['q']['exist_oem2']   = $enquiry->consid_brand2;
@@ -3331,10 +3404,41 @@ class BookingCrudController extends CrudController
             // Map alternate mobile correctly
             $linkedEnquiry->alt_mobile = $linkedEnquiry->alternate_mobile ?? null;
 
-            // Prefer CRE inputs over OEM inputs for purchase type
-            $linkedEnquiry->purchase_type = $linkedEnquiry->purchase_type_crm 
-                ?? $linkedEnquiry->purchase_type 
-                ?? null;
+            // ==========================================================
+            // PURCHASE TYPE
+            // CRE Input stores PURCHASE_TYPE CODE.
+            // Booking dropdown expects exact text values.
+            // ==========================================================
+
+            $purchaseTypeMap = [
+                'FIRST_TIME_BUY' => 'First Time Buy',
+                'ADDITIONAL_BUY' => 'Additional Buy',
+                'EXCHANGE_BUY'   => 'Exchange Buy',
+                'SCRAPPAGE'      => 'Scrappage',
+                'NO_CONSIDERATION' => 'No Consideration',
+            ];
+
+            $crmPurchaseType = strtoupper(
+                trim((string) ($linkedEnquiry->purchase_type_crm ?? ''))
+            );
+
+            if (!empty($crmPurchaseType)) {
+
+                $linkedEnquiry->purchase_type =
+                    $purchaseTypeMap[$crmPurchaseType]
+                    ?? $linkedEnquiry->purchase_type_crm;
+
+            } else {
+
+                $linkedEnquiry->purchase_type =
+                    $linkedEnquiry->purchase_type ?? null;
+            }
+
+            Log::info('🔄 [BOOKING EDIT] Purchase Type resolved', [
+                'enquiry_id'        => $linkedEnquiry->id,
+                'purchase_type_crm' => $linkedEnquiry->purchase_type_crm,
+                'resolved_type'     => $linkedEnquiry->purchase_type,
+            ]);
 
             // Prefer X8 SC over OEM SC to map into the Sales Consultant dropdown
             $linkedEnquiry->sc_code = $linkedEnquiry->x8_sc_code 
@@ -9270,6 +9374,28 @@ class BookingCrudController extends CrudController
     public function finEdit($id)
     {
         $booking = Booking::findOrFail($id);
+
+        $linkedEnquiry = null;
+
+        if ($booking->enq_no) {
+            $linkedEnquiry = Enquiry::where('id', $booking->enq_no)
+                ->orWhere('enquiry_no', $booking->enq_no)
+                ->orWhere('quick_enquiry_no', $booking->enq_no)
+                ->first();
+        }
+
+        if ($linkedEnquiry) {
+            $booking->name = $booking->name ?? $linkedEnquiry->name;
+
+            $booking->model_code =
+                $booking->model_code ?? $linkedEnquiry->model_code;
+
+            $booking->variant_code =
+                $booking->variant_code ?? $linkedEnquiry->variant_code;
+
+            $booking->color_code =
+                $booking->color_code ?? $linkedEnquiry->color_code;
+        }
 
 
         $user = backpack_user();

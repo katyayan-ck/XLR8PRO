@@ -611,11 +611,36 @@
                                         <label for="buyertype">Purchase Type <span class="required-mark">*</span></label>
                                         <select name="{{ $isEdit ? 'buyer_type' : 'buyertype' }}" id="buyertype" class="form-control form-select" required>
                                             <option value="" disabled {{ empty($entry?->buyer_type) && empty($enquiry->purchase_type) ? 'selected' : '' }}>-- Select Purchase Type --</option>
-                                            @php $ptype = old($isEdit ? 'buyer_type' : 'buyertype', $entry?->buyer_type ?? ($enquiry->purchase_type ?? '')); @endphp
-                                            <option value="First Time Buy" {{ in_array($ptype, ['First Time Buy']) ? 'selected' : '' }}>First Time Buyer</option>
-                                            <option value="Additional Buy" {{ $ptype == 'Additional Buy' ? 'selected' : '' }}>Additional Buy</option>
-                                            <option value="Exchange Buy" {{ $ptype == 'Exchange Buy' ? 'selected' : '' }}>Exchange Buy</option>
-                                            <option value="Scrappage" {{ $ptype == 'Scrappage' ? 'selected' : '' }}>Scrappage</option>
+                                            @php
+                                                $ptype = old(
+                                                    $isEdit ? 'buyer_type' : 'buyertype',
+                                                    $entry?->buyer_type ?? ($enquiry->purchase_type ?? '')
+                                                );
+
+                                                // Normalize Purchase Type so DB/key-value capitalization
+                                                // does not affect dropdown selection.
+                                                $ptypeNormalized = strtolower(trim((string) $ptype));
+                                            @endphp
+
+                                            <option value="First Time Buy"
+                                                {{ $ptypeNormalized === 'first time buy' ? 'selected' : '' }}>
+                                                First Time Buyer
+                                            </option>
+
+                                            <option value="Additional Buy"
+                                                {{ $ptypeNormalized === 'additional buy' ? 'selected' : '' }}>
+                                                Additional Buy
+                                            </option>
+
+                                            <option value="Exchange Buy"
+                                                {{ $ptypeNormalized === 'exchange buy' ? 'selected' : '' }}>
+                                                Exchange Buy
+                                            </option>
+
+                                            <option value="Scrappage"
+                                                {{ $ptypeNormalized === 'scrappage' ? 'selected' : '' }}>
+                                                Scrappage
+                                            </option>
                                         </select>
                                     </div>
                                 </div>

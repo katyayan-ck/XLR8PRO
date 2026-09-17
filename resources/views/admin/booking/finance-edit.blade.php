@@ -19,28 +19,42 @@
                 <div class="card-header bg-white">
                     <h2 class="mb-0">Booking & Customer Information (Read-only)</h2>
                 </div>
+
                 <div class="card-body">
                     <div class="row g-3">
+
                         <div class="col-sm-3">
                             <label class="form-label">Customer Name</label>
-                            <input type="text" class="form-control" value="{{ $booking->name ?? 'N/A' }}" readonly>
+                            <input type="text"
+                                class="form-control"
+                                value="{{ $booking->name ?? 'N/A' }}"
+                                readonly>
                         </div>
+
                         <div class="col-sm-3">
                             <label class="form-label">Model / Variant</label>
-                            <input type="text" class="form-control"
+                            <input type="text"
+                                class="form-control"
                                 value="{{ $booking->model_code ?? 'N/A' }} / {{ $booking->variant_code ?? 'N/A' }}"
                                 readonly>
                         </div>
+
                         <div class="col-sm-3">
                             <label class="form-label">Finance Mode (Primary)</label>
-                            <input type="text" class="form-control" value="{{ $booking->fin_mode ?? 'N/A' }}" readonly>
-                        </div>
-                        <div class="col-sm-3">
-                            <label class="form-label">Financier (Primary)</label>
-                            <input type="text" class="form-control"
-                                value="{{ collect($data['financiers'] ?? [])->firstWhere('id', $booking->financier)['name'] ?? 'N/A' }}"
+                            <input type="text"
+                                class="form-control"
+                                value="{{ $finance->fin_mode ?? $booking->fin_mode ?? 'N/A' }}"
                                 readonly>
                         </div>
+
+                        <div class="col-sm-3">
+                            <label class="form-label">Financier (Primary)</label>
+                            <input type="text"
+                                class="form-control"
+                                value="{{ collect($data['financiers'] ?? [])->firstWhere('id', $finance->financier ?? $booking->financier)['name'] ?? 'N/A' }}"
+                                readonly>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -472,7 +486,7 @@
     (function($) {
         'use strict';
 
-        const originalFinMode = "{{ $booking->fin_mode ?? '' }}".trim();
+        const originalFinMode = "{{ $finance->fin_mode ?? $booking->fin_mode ?? '' }}".trim();
         let currentMediaUrl   = "{{ $finance && $finance->getFirstMediaUrl('instrument_proof') ? $finance->getFirstMediaUrl('instrument_proof') : '' }}".trim();
         let isExistingFile    = {{ $finance && $finance->getFirstMediaUrl('instrument_proof') ? 'true' : 'false' }};
 
