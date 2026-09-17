@@ -319,38 +319,37 @@ Route::group([
         ->name('receipt.edit');
     Route::put('booking/{bookingId}/receipt/{receiptId}', 'BookingCrudController@receiptUpdate')
         ->name('receipt.update');
-    // ================= RECEIPT =================
+    // ================= ACCOUNTS - ISSUE RECEIPT =================
 
     Route::get(
-        'receipt',
+        'accounts/receipt-list',
         [ReceiptCrudController::class, 'index']
-    )->name('receipt.index');
-    
-    Route::get(
-        'receipt/create',
-        [ReceiptCrudController::class, 'create']
-    )->name('receipt.create');
-    
-    Route::post(
-        'receipt',
-        [ReceiptCrudController::class, 'store']
-    )->name('receipt.store');
-    
-    Route::get(
-        'receipt/{id}/edit',
-        [ReceiptCrudController::class, 'edit']
-    )->name('standalone.receipt.edit');
-    
-    Route::put(
-        'receipt/{id}',
-        [ReceiptCrudController::class, 'update']
-    )->name('standalone.receipt.update');
-    
-    Route::delete(
-        'receipt/{id}',
-        [ReceiptCrudController::class, 'destroy']
-    )->name('standalone.receipt.destroy');
+    )->name('accounts.receipt.index');
 
+    Route::get(
+        'accounts/receipt/create',
+        [ReceiptCrudController::class, 'create']
+    )->name('accounts.receipt.create');
+
+    Route::post(
+        'accounts/receipt-list',
+        [ReceiptCrudController::class, 'store']
+    )->name('accounts.receipt.store');
+
+    Route::get(
+        'accounts/receipt/{id}/edit',
+        [ReceiptCrudController::class, 'edit']
+    )->name('accounts.receipt.edit');
+
+    Route::put(
+        'accounts/receipt/{id}',
+        [ReceiptCrudController::class, 'update']
+    )->name('accounts.receipt.update');
+
+    Route::delete(
+        'accounts/receipt/{id}',
+        [ReceiptCrudController::class, 'destroy']
+    )->name('accounts.receipt.destroy');
     // ================= SPECIAL DISCOUNT =================
 
     Route::get('special-discount', function () {
