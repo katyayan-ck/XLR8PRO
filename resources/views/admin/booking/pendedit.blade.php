@@ -92,7 +92,7 @@
             <div class="col-md-3 form-group readonly-field">
                 <label class="readonly-label">Customer Name</label>
                 <div class="readonly-value">
-                    {{ $booking->name ?? '—' }}
+                    {{ $data['customer_name'] ?? '—' }}
 
                     @if($booking->care_of)
                     @php
@@ -113,14 +113,14 @@
             <div class="col-md-3 form-group readonly-field">
                 <label class="readonly-label">Branch</label>
                 <div class="readonly-value">
-                    {{ $data['branch'] ?? '—' }}
+                    {{ $data['branch_name'] ?? '—' }}
                 </div>
             </div>
 
             <div class="col-md-3 form-group readonly-field">
                 <label class="readonly-label">Location</label>
                 <div class="readonly-value">
-                    {{ $data['location'] ?? '—' }}
+                    {{ $data['location_name'] ?? '—' }}
                 </div>
             </div>
 
@@ -136,21 +136,21 @@
             <div class="col-md-4 form-group readonly-field">
                 <label class="readonly-label">Model</label>
                 <div class="readonly-value">
-                    {{ $booking->model_code ?? '—' }}
+                    {{ $data['model_name'] ?? '—' }}
                 </div>
             </div>
 
             <div class="col-md-4 form-group readonly-field">
                 <label class="readonly-label">Variant</label>
                 <div class="readonly-value">
-                    {{ $booking->variant_code ?? '—' }}
+                    {{ $data['variant_name'] ?? '—' }}
                 </div>
             </div>
 
             <div class="col-md-4 form-group readonly-field">
                 <label class="readonly-label">Color</label>
                 <div class="readonly-value">
-                    {{ $booking->color_code ?? '—' }}
+                    {{ $data['color_name'] ?? '—' }}
                 </div>
             </div>
 
@@ -178,7 +178,7 @@
                         @php $iurl = $log->getFirstMediaUrl('amount-proof') @endphp
                         <tr>
                             <td>{{ \Carbon\Carbon::parse($log->date)->format('d-M-Y') }}</td>
-                            <td>{{ $log->reciept ?? 'N/A' }}</td>
+                            <td>{{ $log->type_number ?? 'N/A' }}</td>
                             <td>{{ $log->mode ?? 'N/A' }}</td>
                             <td>{{ number_format($log->amount, 2) }}</td>
                             <td>
@@ -229,12 +229,12 @@
                 <input type="hidden" name="pending_flag" value="1">
                 @endif
                 <div class="row g-3">
-                    <div class="col-md-6">
+                    <div class="col-md-3">
                         <label class="fw-bold">Booking Amount</label>
                         <input type="text" class="form-control" value="{{ number_format($booking->booking_amount, 2) }}"
                             readonly>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-3">
                         <label class="fw-bold">Pending Amount</label>
                         <input type="text" class="form-control"
                             value="{{ number_format($booking->booking_amount - ($data['total_amount'] ?? 0), 2) }}"
@@ -260,6 +260,18 @@
                         <label>Amount <span class="required-mark">*</span></label>
                         <input type="number" name="amount" id="amount" class="form-control" step="0.01" min="0.01"
                             required>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label>Mode <span class="required-mark">*</span></label>
+
+                        <select name="mode" id="receipt_mode" class="form-control form-select" required>
+                            <option value="">Select Mode</option>
+                            <option value="Cash">Cash</option>
+                            <option value="Cheque">Cheque</option>
+                            <option value="Bank Transfer">Bank Transfer</option>
+                            <option value="UPI">UPI</option>
+                        </select>
                     </div>
 
 
@@ -449,58 +461,14 @@
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script src="{{ asset('plugins/select2/dist/js/select2.min.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/additional-methods.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-            flatpickr(".flatpickr", {
-                dateFormat: "d-M-Y",
-                altInput: true,
-                altFormat: "Y-m-d",
-                allowInput: true,
-                maxDate: "today",
-                onChange: function(selectedDates, dateStr, instance) {
-                    const inputId = instance.element.id;
-                    const hiddenId = 'hidden_' + inputId;
-                    const hiddenInput = document.getElementById(hiddenId);
 
-                    if (hiddenInput) {
-                        if (selectedDates.length > 0) {
-                            hiddenInput.value = flatpickr.formatDate(selectedDates[0], "Y-m-d");
-                        } else {
-                            hiddenInput.value = '';
-                        }
-                    }
-                },
-                onReady: function(selectedDates, dateStr, instance) {
-                    // Pre-fill hidden field if page loads with a value
-                    const inputId = instance.element.id;
-                    const hiddenId = 'hidden_' + inputId;
-                    const hiddenInput = document.getElementById(hiddenId);
-
-                    if (hiddenInput && instance.element.value) {
-                        // Convert visible value to Y-m-d if needed
-                        const parsed = flatpickr.parseDate(instance.element.value, "d-M-Y");
-                        if (parsed) {
-                            hiddenInput.value = flatpickr.formatDate(parsed, "Y-m-d");
-                        }
-                    }
-                }
-            });
-
-            Optional: debug helper - log when any flatpickr changes
-            document.querySelectorAll('.flatpickr').forEach(el => {
-                el._flatpickr.config.onChange.push((...args) => {
-                    console.log('Flatpickr changed for', el.id, '→ hidden value:', document.getElementById('hidden_' + el.id)?.value);
-                });
-            });
-        });
-</script>
 <script>
     (function($) {
         'use strict';
@@ -749,6 +717,49 @@
                     } else {
                         showErrorModal();
                         return false;
+                    }
+                }
+            });
+
+            $('#receipt-form').validate({
+                ignore: [],
+
+                rules: {
+                    reciept_no: {
+                        required: true
+                    },
+                    hidden_receipt_date: {
+                        required: true
+                    },
+                    amount: {
+                        required: true,
+                        number: true,
+                        min: 0.01
+                    },
+                    mode: {
+                        required: true
+                    },
+                    amount_proof: {
+                        required: true
+                    }
+                },
+
+                messages: {
+                    reciept_no: {
+                        required: 'Receipt No. is required'
+                    },
+                    hidden_receipt_date: {
+                        required: 'Receipt Date is required'
+                    },
+                    amount: {
+                        required: 'Amount is required',
+                        min: 'Amount must be greater than 0'
+                    },
+                    mode: {
+                        required: 'Mode is required'
+                    },
+                    amount_proof: {
+                        required: 'Receipt proof is required'
                     }
                 }
             });

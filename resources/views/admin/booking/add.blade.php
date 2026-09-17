@@ -194,12 +194,7 @@
                                         </label>
 
                                         @php
-                                            $paymentMode = old(
-                                                'mode',
-                                                $data['payment_mode']
-                                                    ?? $data['payment']?->mode
-                                                    ?? ''
-                                            );
+                                            $paymentMode = old('mode', $entry?->payment_mode ?? '');
                                         @endphp
 
                                         <select name="mode" id="mode" class="form-control form-select" required>
@@ -914,6 +909,7 @@
 
                         <div class="col-sm-2">
                             <div class="form-group">
+
                                 <label for="saleconsultant">
                                     Sales Consultant
                                     <span class="required-mark">*</span>
@@ -922,11 +918,15 @@
                                 @php
                                     $selectedSalesConsultant = old(
                                         'saleconsultant',
-                                        $enquiry?->x8_sc_code
+                                        $data['saleconsultant']
+                                            ?? $enquiry?->x8_sc_code
                                             ?? $enquiry?->sc_code
                                             ?? $entry?->consultant
-                                            ?? $data['saleconsultant']
                                             ?? ''
+                                    );
+
+                                    $selectedSalesConsultant = strtoupper(
+                                        trim((string) $selectedSalesConsultant)
                                     );
                                 @endphp
 
@@ -941,7 +941,7 @@
 
                                         @php
                                             $conCode = is_object($consultant)
-                                                ? $consultant->person_code
+                                                ? ($consultant->person_code ?? '')
                                                 : ($consultant['person_code'] ?? '');
 
                                             $displayName = is_object($consultant)
@@ -951,17 +951,22 @@
                                             $employeeCode = is_object($consultant)
                                                 ? ($consultant->employee_code ?? '')
                                                 : ($consultant['employee_code'] ?? '');
+
+                                            $isSelected =
+                                                strtoupper(trim((string) $selectedSalesConsultant))
+                                                ===
+                                                strtoupper(trim((string) $conCode));
                                         @endphp
 
                                         <option value="{{ $conCode }}"
-                                            {{ (string)$selectedSalesConsultant === (string)$conCode ? 'selected' : '' }}>
-
+                                            {{ $isSelected ? 'selected' : '' }}>
                                             {{ $displayName }} - {{ $employeeCode }}
-
                                         </option>
 
                                     @endforeach
+
                                 </select>
+
                             </div>
                         </div>
 
@@ -1037,33 +1042,54 @@
                                 </label>
 
                                 @php
-                                    $lStatus = old(
-                                        $isEdit ? 'loan_status' : 'loanstatus',
-                                        $data['loan_status']
-                                            ?? $entry?->loan_status
-                                            ?? $enquiry?->loan_status
-                                            ?? ''
-                                    );
+                                    if ($isEdit) {
+
+                                        // First priority: old submitted value
+                                        $lStatus = old(
+                                            'loan_status',
+                                            $data['finance']?->loan_status
+                                        );
+
+                                        // If finance row does not exist yet, default In-house to Pending
+                                        if (
+                                            (empty($lStatus)) &&
+                                            $fmode === 'In-house'
+                                        ) {
+                                            $lStatus = 'Pending';
+                                        }
+
+                                    } else {
+
+                                        $lStatus = old(
+                                            'loanstatus',
+                                            $enquiry?->loan_status ?? ''
+                                        );
+
+                                    }
+
+                                    $lStatus = trim((string) $lStatus);
                                 @endphp
 
-                                <select name="{{ $isEdit ? 'loan_status' : 'loanstatus' }}"
-                                        id="loanstatus"
-                                        class="form-control form-select"
-                                        disabled
-                                        required>
+                                <select
+                                    name="{{ $isEdit ? 'loan_status' : 'loanstatus' }}"
+                                    id="loanstatus"
+                                    class="form-control form-select"
+                                    disabled
+                                    required
+                                >
 
                                     <option value="" disabled
-                                        {{ empty($lStatus) ? 'selected' : '' }}>
+                                        {{ $lStatus === '' ? 'selected' : '' }}>
                                         -- Select Loan File Status --
                                     </option>
 
                                     <option value="Pending"
-                                        {{ $lStatus === 'Pending' ? 'selected' : '' }}>
+                                        {{ strcasecmp($lStatus, 'Pending') === 0 ? 'selected' : '' }}>
                                         Pending
                                     </option>
 
                                     <option value="Complete"
-                                        {{ $lStatus === 'Complete' ? 'selected' : '' }}>
+                                        {{ strcasecmp($lStatus, 'Complete') === 0 ? 'selected' : '' }}>
                                         Complete
                                     </option>
 
@@ -1548,8 +1574,20 @@
                 togglePurchaseFields($('#buyertype').val(), true);
                 $('#customernamelabel').html('Customer Name <span class="required-mark">*</span>');
 
-                if (prefillData.col_by) {
-                    $('#user').val(prefillData.col_by);
+                if (prefillData.col_by && [2, 3].includes(parseInt($('#coltype').val()))) {
+                    var optionExists = $('#user').find("option[value='" + prefillData.col_by + "']").length > 0;
+                    if (optionExists) {
+                        $('#user').val(prefillData.col_by).trigger('change');
+                    } else {
+                        // Fallback: preserve saved value so it doesn't get silently wiped on save
+                        $('#user').append(new Option(
+                            'Previous Collector (' + prefillData.col_by + ')',
+                            prefillData.col_by,
+                            true,
+                            true
+                        ));
+                        console.warn('Collector ' + prefillData.col_by + ' not in current SLS list — preserved as fallback option.');
+                    }
                 }
             }
 

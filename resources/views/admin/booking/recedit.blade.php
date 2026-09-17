@@ -29,8 +29,12 @@
 
                     <div class="col-sm-3">
                         <label for="reciept_no">Receipt No. <span class="text-danger">*</span></label>
-                        <input type="text" name="reciept" id="reciept_no" class="form-control"
-                            value="{{ old('reciept', $entry->reciept) }}" required>
+                        <input type="text"
+                            name="reciept"
+                            id="reciept_no"
+                            class="form-control"
+                            value="{{ old('reciept', $entry->type_number) }}"
+                            required>
                         <div id="reciept_no_warning" class="text-danger mt-1" style="display:none;">
                             Receipt No. already exists
                         </div>

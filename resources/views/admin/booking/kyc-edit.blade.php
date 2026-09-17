@@ -80,7 +80,7 @@
             <div class="col-md-3 form-group readonly-field">
                 <label class="readonly-label">Customer Name</label>
                 <div class="readonly-value">
-                    {{ $booking->name ?? '—' }}
+                    {{ $data['customer_name'] ?? $booking->name ?? '—' }}
                     @if($booking->care_of)
                     (C/o: {{ $booking->care_of }})
                     @endif
@@ -90,39 +90,35 @@
             <div class="col-md-2 form-group readonly-field">
                 <label class="readonly-label">Branch</label>
                 <div class="readonly-value">
-                    {{ $booking->branch ? ($booking->branch->name ?? $booking->branch->abbr ?? '—') : '—' }}
+                    {{ $data['branch_name'] ?? '—' }}
                 </div>
             </div>
 
             <div class="col-md-3 form-group readonly-field">
                 <label class="readonly-label">Location</label>
                 <div class="readonly-value">
-                    @if($booking->location_code)
-                    {{ $booking->location?->name ?? '—' }}
-                    @else
-                    {{ $booking->location_other ?: '—' }}
-                    @endif
+                    {{ $data['location_name'] ?? '—' }}
                 </div>
             </div>
 
             <div class="col-md-2 form-group readonly-field">
                 <label class="readonly-label">Model</label>
                 <div class="readonly-value">
-                    {{ $booking->model_code ?? '—' }}
+                    {{ $data['model_name'] ?? $booking->model_code ?? '—' }}
                 </div>
             </div>
 
             <div class="col-md-3 form-group readonly-field">
                 <label class="readonly-label">Variant</label>
                 <div class="readonly-value">
-                    {{ $booking->variant_code ?? '—' }}
+                    {{ $data['variant_name'] ?? $booking->variant_code ?? '—' }}
                 </div>
             </div>
 
             <div class="col-md-2 form-group readonly-field">
                 <label class="readonly-label">Color</label>
                 <div class="readonly-value">
-                    {{ $booking->color_code ?? '—' }}
+                    {{ $data['color_name'] ?? $booking->color_code ?? '—' }}
                 </div>
             </div>
 

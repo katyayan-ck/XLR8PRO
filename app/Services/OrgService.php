@@ -853,12 +853,7 @@ class OrgService
 
     public static function checkReceiptX($rn)
     {
-        $list = Bookingamount::where('reciept', $rn)->first();
-        if ($list) {
-            return 1;
-        } else {
-            return 0;
-        }
+        return Bookingamount::where('type_number', $rn)->exists() ? 1 : 0;
     }
 
     public static function getReferenceUsers(string $type, string $mobile): array

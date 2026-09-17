@@ -451,7 +451,7 @@
                 <span><i class="la la-truck me-2"></i>Deliveries</span>
             </a>
             <a class="dropdown-item d-flex align-items-center justify-content-between"
-                href="{{ backpack_url('bookingr/pending-do') }}">
+                href="{{ backpack_url('booking/pending-do') }}">
                 <span><i class="la la-file-signature me-2"></i>Financier Delivery Order</span>
             </a>
         </x-backpack::menu-dropdown>
