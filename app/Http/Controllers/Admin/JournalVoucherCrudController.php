@@ -149,22 +149,17 @@ class JournalVoucherCrudController extends Controller
 
     public function fetchEnquiryDetails(Request $request)
     {
-        $enqId = str_replace(['XENQ-', 'xenq-'], '', strtoupper($request->enq_no));
-        $enquiry = DB::table('xlr8_crm_enquiries')->where('id', $enqId)->first();
+        $data = OrgService::getCustomerByTransactionIds(
+            $request->enq_no,
+            $request->booking_no,
+            $request->votf_no
+        );
 
-        if (!$enquiry) return response()->json(['success' => false]);
+        if (!$data['success']) {
+            return response()->json(['success' => false]);
+        }
 
-        return response()->json([
-            'success'          => true,
-            'customer_name'    => $enquiry->name ?? $enquiry->customer_name ?? $enquiry->first_name ?? '',
-            'care_of_type'     => $enquiry->care_of_type ?? '',
-            'care_of'          => $enquiry->care_of ?? '',
-            'address'          => $enquiry->address ?? $enquiry->address1 ?? '',
-            'mobile'           => $enquiry->mobile ?? $enquiry->contact_no ?? '',
-            'alternate_mobile' => $enquiry->alternate_mobile ?? '',
-            'booking_no'       => $enquiry->booking_no ?? $enquiry->x8_booking_no ?? '',
-            'votf_no'          => $enquiry->oem_otf_no ?? ''
-        ]);
+        return response()->json($data);
     }
 
     private function mapVoucherData(Bookingamount $voucher, Request $request)

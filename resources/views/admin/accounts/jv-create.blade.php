@@ -66,24 +66,30 @@
                             </div>
 
                             <div class="row mt-3">
+                                <div class="col-md-12"><div class="section-title">Transaction Details</div></div>
                                 <div class="col-md-3 mb-3">
-                                    <label class="form-label">Xceler8 Enq No. (Optional)</label>
-                                    <div class="input-group">
-                                        <input type="text" name="xceler8_enq_no" id="xceler8_enq_no" class="form-control" placeholder="XENQ-1234" value="{{ old('xceler8_enq_no', isset($voucher->enq_id) ? 'XENQ-'.$voucher->enq_id : '') }}">
-                                        <button type="button" class="btn btn-primary" id="fetch_enquiry_btn">Fetch</button>
-                                    </div>
+                                    <label class="form-label">Xceler8 Enq No. <span class="text-danger" id="req_enq_asterisk" style="display:none;">*</span></label>
+                                    <input type="text" name="xceler8_enq_no" id="xceler8_enq_no" class="form-control" value="{{ old('xceler8_enq_no', isset($voucher->enq_id) ? 'XENQ-'.$voucher->enq_id : 'XENQ-') }}">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Xceler8 Booking No.</label>
-                                    <input type="text" name="xceler8_booking_no" id="xceler8_booking_no" class="form-control" value="{{ old('xceler8_booking_no', $voucher->bid ?? '') }}">
+                                    @php 
+                                        $bVal = old('xceler8_booking_no', $voucher->bid ?? '');
+                                        $bValWithPrefix = $bVal && !str_starts_with(strtoupper($bVal), 'XB-') ? 'XB-'.$bVal : ($bVal ?: 'XB-');
+                                    @endphp
+                                    <input type="text" name="xceler8_booking_no" id="xceler8_booking_no" class="form-control" value="{{ $bValWithPrefix }}">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">VOTF No.</label>
-                                    <input type="text" name="votf_no" id="votf_no" class="form-control" value="{{ old('votf_no', $voucher->otf_no ?? '') }}">
+                                    <input type="text" name="votf_no" id="votf_no" class="form-control" placeholder="e.g. 27/BKN..." value="{{ old('votf_no', $voucher->otf_no ?? '') }}">
+                                </div>
+                                <div class="col-md-3 mb-3 d-flex align-items-end">
+                                    <button type="button" class="btn btn-primary w-100 shadow-sm" id="fetch_enquiry_btn">
+                                        <i class="la la-search me-1"></i> Fetch Details
+                                    </button>
                                 </div>
                             </div>
 
-                            {{-- JV CATEGORY & SPECIFICS --}}
                             <div class="row mt-3">
                                 <div class="col-md-12"><div class="section-title">JV Category Details</div></div>
                                 <div class="col-md-3 mb-3">
@@ -95,7 +101,6 @@
                                     </select>
                                 </div>
 
-                                {{-- Used Car Conditional --}}
                                 <div class="col-md-9 row m-0 p-0 conditional-section" id="sec_used_car">
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label">Used Car Model <span class="text-danger">*</span></label>
@@ -107,7 +112,6 @@
                                     </div>
                                 </div>
 
-                                {{-- Internal Transfer Conditional --}}
                                 <div class="col-md-9 row m-0 p-0 conditional-section" id="sec_internal_transfer">
                                     <div class="col-md-4 mb-3">
                                         <label class="form-label">From Department <span class="text-danger">*</span></label>
@@ -124,7 +128,6 @@
                                 </div>
                             </div>
 
-                            {{-- FINANCIAL PARTIES --}}
                             <div class="row mt-3">
                                 <div class="col-md-12"><div class="section-title">Party & Customer Information</div></div>
                                 
@@ -134,7 +137,7 @@
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label fw-bold">Credit To (Customer Name) <span class="text-danger">*</span></label>
-                                    <input type="text" name="customer_name" id="customer_name" class="form-control" placeholder="Where to deposit..." value="{{ old('customer_name', $voucher->customer_name ?? '') }}" required>
+                                    <input type="text" name="customer_name" id="customer_name" class="form-control" placeholder="Where to deposit..." value="{{ old('customer_name', $voucher->name ?? $voucher->customer_name ?? '') }}" required>
                                 </div>
 
                                 <div class="col-md-3 mb-3">
@@ -165,7 +168,6 @@
                                 </div>
                             </div>
 
-                            {{-- MANUAL VEHICLE / SERVICE ENTRIES --}}
                             <div class="row mt-3">
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label">Registration No. (Manual)</label>
@@ -181,13 +183,11 @@
                                 </div>
                             </div>
 
-                            {{-- PAYMENT & REMARKS --}}
                             <div class="row mt-3">
                                 <div class="col-md-12"><div class="section-title">Payment & Remarks</div></div>
                                 
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Mode of Payment</label>
-                                    {{-- Passed from controller or explicitly hidden if needed. We use readonly UI --}}
                                     <input type="text" class="form-control" value="Journal Voucher" readonly style="background-color:#e9ecef;">
                                     <input type="hidden" name="payment_mode" value="{{ $jvModeId }}">
                                 </div>
@@ -225,7 +225,47 @@
         $(function () {
             flatpickr("#voucher_date", { dateFormat: "Y-m-d", allowInput: true });
 
-            // JV Category Toggle
+            $('#xceler8_enq_no').on('input', function() {
+                if (!$(this).val().toUpperCase().startsWith('XENQ-')) {
+                    $(this).val('XENQ-');
+                }
+            });
+
+            $('#xceler8_booking_no').on('input', function() {
+                if (!$(this).val().toUpperCase().startsWith('XB-')) {
+                    $(this).val('XB-');
+                }
+            });
+
+            // Smart Formatter for VOTF No. (e.g., 27/BKN0001/0001)
+            $('#votf_no').on('input', function(e) {
+                let isDeleting = e.originalEvent && e.originalEvent.inputType === 'deleteContentBackward';
+                let val = $(this).val().toUpperCase();
+                
+                let raw = val.replace(/[^A-Z0-9/]/g, '');
+                let fy = '';
+                let rest = '';
+                
+                if (raw.indexOf('/') > -1) {
+                    fy = raw.substring(0, raw.indexOf('/')).replace(/[^0-9]/g, '').substring(0, 2);
+                    rest = raw.substring(raw.indexOf('/') + 1);
+                } else {
+                    fy = raw.substring(0, 2).replace(/[^0-9]/g, '');
+                    rest = raw.substring(2);
+                }
+                
+                let formatted = fy;
+                if (fy.length === 2) {
+                    if (!isDeleting || rest.length > 0) {
+                        formatted += '/';
+                    }
+                }
+                if (rest.length > 0) {
+                    formatted += rest;
+                }
+                $(this).val(formatted);
+            });
+
             function handleJVCat() {
                 let cat = $('#jv_cat').val();
                 $('.conditional-section').hide();
@@ -242,17 +282,23 @@
             $('#jv_cat').on('change', handleJVCat);
             handleJVCat();
 
-            // AJAX Fetch Enquiry Data
             function fetchEnquiryData() {
                 let enqNo = $('#xceler8_enq_no').val();
-                if(!enqNo) return;
+                let bookingNo = $('#xceler8_booking_no').val();
+                let votfNo = $('#votf_no').val();
+
+                if((!enqNo || enqNo === 'XENQ-') && (!bookingNo || bookingNo === 'XB-') && !votfNo) return;
 
                 $('#fetch_enquiry_btn').text('...').prop('disabled', true);
                 
                 $.ajax({
                     url: "{{ route('accounts.journal-voucher.fetch-enquiry') }}",
                     type: "GET",
-                    data: { enq_no: enqNo },
+                    data: { 
+                        enq_no: enqNo,
+                        booking_no: bookingNo,
+                        votf_no: votfNo
+                    },
                     success: function(res) {
                         if(res.success) {
                             $('#customer_name').val(res.customer_name);
@@ -261,20 +307,28 @@
                             $('#address').val(res.address);
                             $('#mobile').val(res.mobile);
                             $('#alternate_mobile').val(res.alternate_mobile);
-                            $('#xceler8_booking_no').val(res.booking_no);
-                            $('#votf_no').val(res.votf_no);
+                            
+                            if(res.enq_id && $('#xceler8_enq_no').val() === 'XENQ-') {
+                                $('#xceler8_enq_no').val('XENQ-' + res.enq_id);
+                            }
+                            if(res.booking_no && $('#xceler8_booking_no').val() === 'XB-') {
+                                let bClean = res.booking_no.toString().replace(/XB-/i, '');
+                                $('#xceler8_booking_no').val('XB-' + bClean);
+                            }
+                            if(res.votf_no && !$('#votf_no').val()) {
+                                $('#votf_no').val(res.votf_no);
+                            }
                         }
                     },
                     complete: function() {
-                        $('#fetch_enquiry_btn').text('Fetch').prop('disabled', false);
+                        $('#fetch_enquiry_btn').html('<i class="la la-search me-1"></i> Fetch Details').prop('disabled', false);
                     }
                 });
             }
 
-            $('#xceler8_enq_no').on('blur', fetchEnquiryData);
+            $('#xceler8_enq_no, #xceler8_booking_no, #votf_no').on('blur', fetchEnquiryData);
             $('#fetch_enquiry_btn').on('click', fetchEnquiryData);
 
-            // Amount to Words
             const a = ['', 'One ', 'Two ', 'Three ', 'Four ', 'Five ', 'Six ', 'Seven ', 'Eight ', 'Nine ', 'Ten ', 'Eleven ', 'Twelve ', 'Thirteen ', 'Fourteen ', 'Fifteen ', 'Sixteen ', 'Seventeen ', 'Eighteen ', 'Nineteen '];
             const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
             function inWords(num) {

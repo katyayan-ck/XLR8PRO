@@ -28,7 +28,6 @@
                         @endif
 
                         <div class="card-body">
-                            {{-- ERROR DISPLAY BLOCK --}}
                             @if ($errors->any())
                                 <div class="alert alert-danger rounded-3 shadow-sm pb-0 mb-4">
                                     <ul class="mb-3">
@@ -38,7 +37,6 @@
                             @endif
 
                             <div class="row">
-
                                 @if(isset($isEdit))
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label text-muted">Receipt No.</label>
@@ -46,13 +44,11 @@
                                 </div>
                                 @endif
 
-                                {{-- RECEIPT DATE --}}
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Receipt Date <span class="text-danger">*</span></label>
                                     <input type="text" id="receipt_date" name="receipt_date" class="form-control" value="{{ old('receipt_date', isset($isEdit) ? $receipt->date : date('Y-m-d')) }}" required>
                                 </div>
 
-                                {{-- RECEIPT ISSUED FOR LOCATION --}}
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Receipt Issued For Location <span class="text-danger">*</span></label>
                                     <select name="location" id="location" class="form-control form-select" required>
@@ -62,7 +58,6 @@
                                     </select>
                                 </div>
 
-                                {{-- ON A/C OF --}}
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">On A/c Of <span class="text-danger">*</span></label>
                                     <select name="on_account_of" id="on_account_of" class="form-control form-select" required>
@@ -75,7 +70,6 @@
                                     </select>
                                 </div>
 
-                                {{-- MODE OF PAYMENT --}}
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Mode of Payment <span class="text-danger">*</span></label>
                                     <select name="payment_mode" id="payment_mode" class="form-control form-select" required>
@@ -89,31 +83,34 @@
                                 </div>
                             </div>
 
-                            {{-- DYNAMIC IDENTIFICATION SECTIONS --}}
                             <div class="row">
-                                {{-- Xceler8 Identifiers --}}
                                 <div id="vehicle-sales-section" class="col-md-12 conditional-section">
                                     <div class="section-title">Transaction Details</div>
                                     <div class="row">
-                                        <div class="col-md-4 mb-3">
-                                            <label class="form-label">Xceler8 Enq No. <span class="text-danger" id="req_enq_asterisk">*</span></label>
-                                            <div class="input-group">
-                                                <input type="text" name="xceler8_enq_no" id="xceler8_enq_no" class="form-control" placeholder="e.g. XENQ-1234" value="{{ old('xceler8_enq_no', isset($receipt->enq_id) ? 'XENQ-'.$receipt->enq_id : '') }}">
-                                                <button type="button" class="btn btn-primary" id="fetch_enquiry_btn">Fetch</button>
-                                            </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">Xceler8 Enq No. <span class="text-danger" id="req_enq_asterisk" style="display:none;">*</span></label>
+                                            <input type="text" name="xceler8_enq_no" id="xceler8_enq_no" class="form-control" value="{{ old('xceler8_enq_no', isset($receipt->enq_id) ? 'XENQ-'.$receipt->enq_id : 'XENQ-') }}">
                                         </div>
-                                        <div class="col-md-4 mb-3">
+                                        <div class="col-md-3 mb-3">
                                             <label class="form-label">Xceler8 Booking No.</label>
-                                            <input type="text" name="xceler8_booking_no" id="xceler8_booking_no" class="form-control" value="{{ old('xceler8_booking_no', $receipt->bid ?? '') }}">
+                                            @php 
+                                                $bVal = old('xceler8_booking_no', $receipt->bid ?? '');
+                                                $bValWithPrefix = $bVal && !str_starts_with(strtoupper($bVal), 'XB-') ? 'XB-'.$bVal : ($bVal ?: 'XB-');
+                                            @endphp
+                                            <input type="text" name="xceler8_booking_no" id="xceler8_booking_no" class="form-control" value="{{ $bValWithPrefix }}">
                                         </div>
-                                        <div class="col-md-4 mb-3">
+                                        <div class="col-md-3 mb-3">
                                             <label class="form-label">VOTF No.</label>
-                                            <input type="text" name="votf_no" id="votf_no" class="form-control" value="{{ old('votf_no', $receipt->otf_no ?? '') }}">
+                                            <input type="text" name="votf_no" id="votf_no" class="form-control" placeholder="e.g. 27/BKN..." value="{{ old('votf_no', $receipt->otf_no ?? '') }}">
+                                        </div>
+                                        <div class="col-md-3 mb-3 d-flex align-items-end">
+                                            <button type="button" class="btn btn-primary w-100 shadow-sm" id="fetch_enquiry_btn">
+                                                <i class="la la-search me-1"></i> Fetch Details
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
 
-                                {{-- Vehicle Identifiers --}}
                                 <div id="general-vehicle-section" class="col-md-12 conditional-section">
                                     <div class="section-title">Vehicle & Service Details</div>
                                     <div class="row">
@@ -142,11 +139,10 @@
 
                             <hr>
 
-                            {{-- CUSTOMER DETAILS --}}
                             <div class="row">
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Customer Name <span class="text-danger">*</span></label>
-                                    <input type="text" name="customer_name" id="customer_name" class="form-control" value="{{ old('customer_name', $receipt->customer_name ?? '') }}" required>
+                                    <input type="text" name="customer_name" id="customer_name" class="form-control" value="{{ old('customer_name', $receipt->name ?? $receipt->customer_name ?? '') }}" required>
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Care Of Type</label>
@@ -178,7 +174,6 @@
 
                             <hr>
 
-                            {{-- PAYMENT DETAILS --}}
                             <div class="row">
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label">Amount (In Figures) <span class="text-danger">*</span></label>
@@ -189,7 +184,6 @@
                                     <input type="text" id="amount_in_words" class="form-control" readonly style="background-color:#e9ecef;">
                                 </div>
 
-                                {{-- PAYMENT INSTRUMENT CONDITIONAL --}}
                                 <div class="col-md-4 mb-3 req-instrument" style="display:none;">
                                     <label class="form-label" id="instrument_label">Instrument No. <span class="text-danger">*</span></label>
                                     <input type="text" name="instrument_no" id="instrument_no" class="form-control" value="{{ old('instrument_no', $receipt->instrument_no ?? '') }}">
@@ -229,13 +223,53 @@
             flatpickr("#receipt_date", { dateFormat: "Y-m-d", allowInput: true });
             flatpickr("#transaction_date", { dateFormat: "Y-m-d", allowInput: true, maxDate: "today" });
 
+            // Lock prefixes so they cannot be deleted
+            $('#xceler8_enq_no').on('input', function() {
+                if (!$(this).val().toUpperCase().startsWith('XENQ-')) {
+                    $(this).val('XENQ-');
+                }
+            });
+
+            $('#xceler8_booking_no').on('input', function() {
+                if (!$(this).val().toUpperCase().startsWith('XB-')) {
+                    $(this).val('XB-');
+                }
+            });
+
+            // Smart Formatter for VOTF No. (e.g., 27/BKN0001/0001)
+            $('#votf_no').on('input', function(e) {
+                let isDeleting = e.originalEvent && e.originalEvent.inputType === 'deleteContentBackward';
+                let val = $(this).val().toUpperCase();
+                
+                let raw = val.replace(/[^A-Z0-9/]/g, '');
+                let fy = '';
+                let rest = '';
+                
+                if (raw.indexOf('/') > -1) {
+                    fy = raw.substring(0, raw.indexOf('/')).replace(/[^0-9]/g, '').substring(0, 2);
+                    rest = raw.substring(raw.indexOf('/') + 1);
+                } else {
+                    fy = raw.substring(0, 2).replace(/[^0-9]/g, '');
+                    rest = raw.substring(2);
+                }
+                
+                let formatted = fy;
+                if (fy.length === 2) {
+                    if (!isDeleting || rest.length > 0) {
+                        formatted += '/';
+                    }
+                }
+                if (rest.length > 0) {
+                    formatted += rest;
+                }
+                $(this).val(formatted);
+            });
+
             function handleOnAccountOf() {
                 let selectedText = $('#on_account_of option:selected').data('text') || '';
-
                 $('.conditional-section').hide();
                 $('#invoice-no-section').hide();
                 
-                // Reset required attrs
                 $('#xceler8_enq_no').prop('required', false);
                 $('#invoice_no').prop('required', false); 
                 $('.req-reg-asterisk, .req-chassis-asterisk').hide();
@@ -302,28 +336,31 @@
             }
             $('#payment_mode').on('change', handlePaymentMode);
 
-            // Trigger init states
             handleOnAccountOf();
             handlePaymentMode();
             if ($('#vehicle_unregistered').is(':checked')) {
                 $('#vehicle-chassis-section').show();
             }
 
-            // AJAX Fetch Enquiry Data
-            // AJAX Fetch Enquiry Data
             function fetchEnquiryData() {
                 let enqNo = $('#xceler8_enq_no').val();
-                if(!enqNo) return;
+                let bookingNo = $('#xceler8_booking_no').val();
+                let votfNo = $('#votf_no').val();
 
-                $('#fetch_enquiry_btn').text('Loading...').prop('disabled', true);
+                if((!enqNo || enqNo === 'XENQ-') && (!bookingNo || bookingNo === 'XB-') && !votfNo) return;
+
+                $('#fetch_enquiry_btn').text('...').prop('disabled', true);
                 
                 $.ajax({
-                    url: "{{ route('accounts.receipt.fetch-enquiry') }}",
+                    url: "{{ route('accounts.receipt.fetch-enquiry') }}", 
                     type: "GET",
-                    data: { enq_no: enqNo },
+                    data: { 
+                        enq_no: enqNo,
+                        booking_no: bookingNo,
+                        votf_no: votfNo
+                    },
                     success: function(res) {
                         if(res.success) {
-                            // OVERWRITE the fields directly without checking if they are empty
                             $('#customer_name').val(res.customer_name);
                             $('#care_of_type').val(res.care_of_type);
                             $('#care_of').val(res.care_of);
@@ -331,25 +368,32 @@
                             $('#mobile').val(res.mobile);
                             $('#alternate_mobile').val(res.alternate_mobile);
                             
-                            $('#xceler8_booking_no').val(res.booking_no);
-                            $('#votf_no').val(res.votf_no);
-                            $('#vehicle_registration_no').val(res.vehicle_registration_no);
-                        } else {
-                            console.log("Enquiry not found or missing details.");
-                            alert("Enquiry not found."); // Optional: give the user visual feedback
+                            if(res.enq_id && $('#xceler8_enq_no').val() === 'XENQ-') {
+                                $('#xceler8_enq_no').val('XENQ-' + res.enq_id);
+                            }
+                            if(res.booking_no && $('#xceler8_booking_no').val() === 'XB-') {
+                                let bClean = res.booking_no.toString().replace(/XB-/i, '');
+                                $('#xceler8_booking_no').val('XB-' + bClean);
+                            }
+                            if(res.votf_no && !$('#votf_no').val()) {
+                                $('#votf_no').val(res.votf_no);
+                            }
+                            
+                            if(res.vehicle_registration_no && $('#vehicle_registration_no').length && !$('#vehicle_registration_no').val()) {
+                                $('#vehicle_registration_no').val(res.vehicle_registration_no);
+                            }
                         }
                     },
                     complete: function() {
-                        $('#fetch_enquiry_btn').text('Fetch').prop('disabled', false);
+                        $('#fetch_enquiry_btn').html('<i class="la la-search me-1"></i> Fetch Details').prop('disabled', false);
                     }
                 });
             }
 
-            $('#xceler8_enq_no').on('blur', fetchEnquiryData);
+            $('#xceler8_enq_no, #xceler8_booking_no, #votf_no').on('blur', fetchEnquiryData);
             $('#fetch_enquiry_btn').on('click', fetchEnquiryData);
 
-            // Number to Words Converter
-            const a = ['', 'One ', 'Two ', 'Three ', 'Four ', 'Five ', 'Six ', 'Seven ', 'Eight ', 'Nine ', 'Ten ', 'Eleven ', 'Twelve ', 'Thirteen ', 'Fourteen ', 'Fifteen ', 'Sixteen ', 'Seventeen ', 'Eighteen ', 'Nineteen '];
+           / const a = ['', 'One ', 'Two ', 'Three ', 'Four ', 'Five ', 'Six ', 'Seven ', 'Eight ', 'Nine ', 'Ten ', 'Eleven ', 'Twelve ', 'Thirteen ', 'Fourteen ', 'Fifteen ', 'Sixteen ', 'Seventeen ', 'Eighteen ', 'Nineteen '];
             const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
 
             function inWords (num) {
@@ -373,10 +417,9 @@
                 }
             });
 
-            // Trigger amount in words on page load for Edit mode
             if ($('#amount').val() > 0) {
                 $('#amount').trigger('input');
             }
         });
-    </script>
-@endpush
+    </script>\-*
+@endpush-*9*/-

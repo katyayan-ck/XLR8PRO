@@ -1505,5 +1505,66 @@ class OrgService
         }
     }
 
+    /**
+     * Fetch customer & transaction details dynamically based on priority:
+     * 1. Enquiry ID
+     * 2. Booking ID
+     * 3. VOTF No
+     */
+    public static function getCustomerByTransactionIds($enqNo = null, $bookingId = null, $votfNo = null)
+    {
+        $enquiry = null;
+        $booking = null;
+        $enqNoClean = $enqNo ? str_replace(['XENQ-', 'xenq-'], '', strtoupper($enqNo)) : null;
+
+        if ($enqNoClean) {
+            $enquiry = DB::table('xlr8_crm_enquiries')->where('id', $enqNoClean)->first();
+        }
+
+        if (!$enquiry && $bookingId) {
+            $booking = DB::table('xlr8_booking_master')->where('id', $bookingId)->first();
+            if ($booking && $booking->enq_no) {
+                $cleanRef = str_replace(['XENQ-', 'xenq-'], '', strtoupper($booking->enq_no));
+                $enquiry = DB::table('xlr8_crm_enquiries')->where('id', $cleanRef)->first();
+            }
+        }
+
+        if (!$enquiry && $votfNo) {
+            $booking = DB::table('xlr8_booking_master')->where('votf_no', $votfNo)->first();
+            if ($booking && $booking->enq_no) {
+                $cleanRef = str_replace(['XENQ-', 'xenq-'], '', strtoupper($booking->enq_no));
+                $enquiry = DB::table('xlr8_crm_enquiries')->where('id', $cleanRef)->first();
+            } else {
+                // Fallback: Check enquiry table directly for oem_otf_no
+                $enquiry = DB::table('xlr8_crm_enquiries')->where('oem_otf_no', $votfNo)->first();
+            }
+        }
+
+        if (!$enquiry) {
+            return ['success' => false];
+        }
+
+        if (!$booking) {
+            $booking = DB::table('xlr8_booking_master')
+                ->where('enq_no', 'XENQ-' . $enquiry->id)
+                ->orWhere('enq_no', $enquiry->id)
+                ->first();
+        }
+
+        return [
+            'success'          => true,
+            'enq_id'           => $enquiry->id,
+            'customer_name'    => $enquiry->name ?? $enquiry->customer_name ?? $enquiry->first_name ?? '',
+            'care_of_type'     => $enquiry->care_of_type ?? '',
+            'care_of'          => $enquiry->care_of ?? '',
+            'address'          => $enquiry->address ?? $enquiry->address1 ?? '',
+            'mobile'           => $enquiry->mobile ?? $enquiry->contact_no ?? '',
+            'alternate_mobile' => $enquiry->alternate_mobile ?? '',
+            'booking_no'       => $booking->id ?? $enquiry->booking_no ?? $enquiry->x8_booking_no ?? '',
+            'votf_no'          => $booking->votf_no ?? $enquiry->oem_otf_no ?? '',
+            'vehicle_registration_no' => $enquiry->vehicle_no ?? ''
+        ];
+    }
+
 }
 // changing the demo document
