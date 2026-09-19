@@ -275,13 +275,85 @@ Proposed framing if confirmed: new domain models use explicit `$fillable`; the
 
 ## 3. Summary of options going forward
 
-Nothing has been written to `.ai/rules` yet. Possible next steps, independently choosable:
+~~Nothing has been written to `.ai/rules` yet.~~ **Update: all 25 §1 pattern candidates plus the
+mass-assignment conflict (26 rules total) were recorded via `record-rule` on your approval — see
+§4 below for the full log.** Remaining next steps, independently choosable:
 
-1. **Record the section 1 patterns** via `record-rule` (batch, one call per glob) — these are
-   evidence-backed and don't contradict anything already recorded.
-2. **Decide on the mass-assignment conflict** (`$fillable` vs. `Module/**`'s `$guarded` cluster)
-   — confirm the proposed boundary or reject recording it.
+1. ~~Record the section 1 patterns via `record-rule`~~ — **done, see §4.**
+2. ~~Decide on the mass-assignment conflict~~ — **done: recorded with the proposed boundary
+   (`$fillable` is the convention; `Module/{Booking,Exchange,Finance,Insurance,Rto,Spare}/**`'s
+   `$guarded` pattern is flagged as legacy, not to be copied).**
 3. **Decide on the section 0 doc-vs-reality conflicts** (0.1–0.2 possible real auth gaps; 0.3–0.4
    possible real defects; 0.5–0.7 stale/aspirational docs) — update `.ai/rules`, leave as-is, or
-   investigate as bugs.
-4. **Clean up dead code** noted in 0.8, once confirmed unreachable.
+   investigate as bugs. **Still open — this is the one thing left from the original sweep.**
+4. **Clean up dead code** noted in 0.8, once confirmed unreachable. **Still open.**
+
+---
+
+## 4. Recording log — what was written to `.ai/rules` and where
+
+All 26 rules below were recorded via `mcp__laravel-boost__record-rule` after batch approval.
+`record-rule` routes each rule into a shared area file by glob and auto-updates
+`.ai/rules/index.md`'s glob table — no manual index edit was needed. Three new area files were
+created in the process: `.ai/rules/api.md`, `.ai/rules/admin.md`, `.ai/rules/imports.md`.
+
+**Operational note:** the first attempt fired all 26 `record-rule` calls in parallel. 20 of them
+failed with a Windows `VirtualAlloc()`/paging-file-too-small out-of-memory error (each
+`record-rule` call spawns its own PHP process via Composer's autoloader, and this machine's
+paging file can't sustain 20+ concurrent PHP processes). The 6 that happened to win the race
+succeeded; retrying the other 20 **sequentially, one call at a time**, cleared the memory
+pressure and all 20 succeeded on retry. If a future session needs to fire a large batch of
+`record-rule` (or any other PHP-spawning Boost tool) calls on this machine, prefer sequential
+calls over parallel ones, or raise the Windows paging file size.
+
+| # | Title | Glob | Landed in |
+|---|---|---|---|
+| 1 | Typed input retrieval | `app/Http/Controllers/Api/**` | `.ai/rules/api.md` |
+| 2 | Route model binding | `app/Http/Controllers/Api/**` | `.ai/rules/api.md` |
+| 3 | Authorization call site | `app/Http/Controllers/Api/**` | `.ai/rules/api.md` |
+| 4 | API route handler style | `routes/api.php` | `.ai/rules/architecture.md` |
+| 5 | Base model inheritance | `app/Models/**` | `.ai/rules/database.md` |
+| 6 | Accessors and mutators | `app/Models/**` | `.ai/rules/database.md` |
+| 7 | Custom casts merge with parent | `app/Models/**` | `.ai/rules/database.md` |
+| 8 | Query scopes | `app/Models/**` | `.ai/rules/database.md` |
+| 9 | Model events centralized in BaseModel | `app/Models/**` | `.ai/rules/database.md` |
+| 10 | Job timeout and tries | `app/Jobs/**` | `.ai/rules/services.md` |
+| 11 | Job batching for session fan-out | `app/Jobs/**` | `.ai/rules/services.md` |
+| 12 | Job failure handling | `app/Jobs/**` | `.ai/rules/services.md` |
+| 13 | Job dispatch style | `app/Jobs/**` | `.ai/rules/services.md` |
+| 14 | Import interface family | `app/Imports/**` | `.ai/rules/imports.md` (new) |
+| 15 | Import event handling | `app/Imports/**` | `.ai/rules/imports.md` (new) |
+| 16 | Import error handling | `app/Imports/**` | `.ai/rules/imports.md` (new) |
+| 17 | Backpack operations used | `app/Http/Controllers/Admin/**` | `.ai/rules/admin.md` (new) |
+| 18 | Backpack field/column style | `app/Http/Controllers/Admin/**` | `.ai/rules/admin.md` (new) |
+| 19 | Row-level data scoping in Backpack | `app/Http/Controllers/Admin/**` | `.ai/rules/admin.md` (new) |
+| 20 | Media collection naming | `app/Models/**` | `.ai/rules/database.md` |
+| 21 | Media conversions | `app/Models/**` | `.ai/rules/database.md` |
+| 22 | Media disk | `app/Models/**` | `.ai/rules/database.md` |
+| 23 | Media URL retrieval | `app/Models/**` | `.ai/rules/database.md` |
+| 24 | Media AI tagging stays synchronous | `app/Services/**` | `.ai/rules/database.md`* |
+| 25 | Media deletion | `app/Models/**` | `.ai/rules/database.md` |
+| 26 | Mass assignment (conflict, recorded with boundary) | `app/Models/**` | `.ai/rules/database.md` |
+
+\* Rule 24 was filed under `app/Services/**` glob but `record-rule` routed the note itself into
+`.ai/rules/database.md` alongside the rest of the Media Library rules rather than creating a
+separate services-scoped entry — worth a quick look next time `services.md` or `database.md` is
+opened, to confirm the glob-to-file routing landed where you'd expect for a `DocService`-specific
+rule.
+
+`.ai/rules/index.md` now lists 9 rule files total (up from 6): `admin.md`, `api.md`,
+`architecture.md`, `conventions.md`, `database.md`, `imports.md`, `person-user.md`,
+`rbac-scopes.md`, `services.md`, `vehicle-pricing.md`, `known-pitfalls.md`.
+
+**What's still NOT recorded, on purpose:** everything in §0 above. Those are documentation-vs-
+reality conflicts (validation style, response envelope, CrudController directory layout,
+`SheetHeaderService`/`SynonymService` non-use, `DocService` not being the sole media consumer)
+and possible real defects/gaps (dead `checkPermission` middleware, inconsistent Backpack Admin
+access control, dead code in `HasAuditFields`/`ScopedQuery`/`AfterImportListener`). Recording
+rules over these would just add a second, contradictory statement next to the existing
+`.ai/rules` files that already describe (incorrectly) how those areas work — they're waiting on
+your call from §3 item 3.
+
+**Suggested immediate next action, if you want one:** commit `.ai/rules/` (per the project's own
+golden rule #16 — "offer `php artisan changelog:add` and reminders to commit rule changes") so
+the team and future agent sessions share these 26 newly-recorded conventions.
