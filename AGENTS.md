@@ -192,4 +192,46 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 - Rerun a test after each change to it.
 - Run `vendor/bin/phpunit` to call the test runner directly. It accepts the same file path and `--filter=testName` arguments.
 
+## Mandatory AI change/finding logging (universal — all AI tools, not just Claude)
+
+This rule applies to **every** AI coding assistant working in this repository — Claude Code,
+Continue, Cline, Kilo, Cursor, Aider, or any other. `AGENTS.md` is the cross-tool convention file
+most agent tools read on their own, so this is the canonical copy of the rule (it is also
+duplicated in `CLAUDE.md` so Claude Code always has it).
+
+- Every actual change (code, config, migration, route, etc.) made by an AI assistant MUST be
+  logged in `docs/refactor/ai-changelogs-DD-MM-YYYY.md` (today's date, day-month-year). Append
+  one entry per change: file(s) touched, the previous value/content, the new value/content, and
+  a one-line reason. Create the day's file if it doesn't exist; never overwrite a prior day's file.
+- Every finding, suggestion, or deferred/future action surfaced during investigation — even when
+  no code was changed — MUST be logged in `docs/refactor/ai-findings-DD-MM-YYYY.md` (same date
+  format), so nothing discovered in one session/tool is lost before the next one picks up.
+- `docs/refactor/` is the single shared, cross-tool log location for this project. Do not create
+  a differently-named or differently-located log file for this purpose.
+
+## Mandatory known-bugs tracking (universal — all AI tools, not just Claude)
+
+`docs/refactor/known-bugs-report.md` is a permanent, continuously-updated bug tracker — unlike
+the dated `ai-changelogs-*`/`ai-findings-*` files, this one is edited in place and never rotates.
+Every AI coding assistant working in this repository MUST follow this:
+
+- Before starting work in an area, check `known-bugs-report.md` for existing entries covering it
+  — don't rediscover and re-report something already tracked there.
+- The moment you find a new independent bug (not the specific thing you were asked to fix, but
+  something adjacent noticed along the way), add an entry immediately — don't wait until the end
+  of the task, and don't let it live only in a changelog/findings entry without also landing here.
+- Each entry needs: a `BUG-XXX` id, title, Status (OPEN/FIXED/WON'T FIX), Severity, a `Found`
+  timestamp (`DD-MM-YYYY HH:MM`), a `Modified` timestamp line for every later update to the same
+  entry, a `Fixed` timestamp once resolved (linking to the `ai-changelogs` entry with the actual
+  diff), Where, Description, and Proposed solution. Follow the template already in the file.
+- Never delete an entry, even once fixed — mark it FIXED and keep it, so there's a permanent
+  record. Update the entry in place; append to its history rather than overwriting prior findings.
+- Update the index table at the top of the file whenever an entry is added or its status changes.
+
+**Note:** as of this writing, `AGENTS.md` is significantly behind `CLAUDE.md` (missing the
+Backpack CRUD, Media Library, Laradocs, and XCELR8 project-specific sections that `CLAUDE.md`
+has). Since other AI tools rely on `AGENTS.md` and not `CLAUDE.md`, this drift means they're
+working from an incomplete rule set. Worth a full resync — logged as a finding, not fixed here
+since it wasn't asked for.
+
 </laravel-boost-guidelines>

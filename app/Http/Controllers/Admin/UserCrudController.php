@@ -6,13 +6,14 @@ use App\Http\Requests\UserRequest;
 use App\Models\User;
 use App\Services\AuthService;
 use App\Services\RBACService;
-
-
 use Backpack\CRUD\app\Http\Controllers\CrudController;
-use Backpack\CRUD\app\Library\CrudPanel\CrudPanel;
+use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 
@@ -30,29 +31,30 @@ use Illuminate\Support\Facades\Log;
  * - Data scoping based on user access levels
  *
  * @category Admin Controllers
- * @package App\Http\Controllers\Admin
+ *
  * @author VDMS Development Team
+ *
  * @version 2.0
  */
 class UserCrudController extends CrudController
 {
-    use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
+    use CreateOperation;
+    use DeleteOperation;
+    use ListOperation;
+    use ShowOperation;
+    use UpdateOperation;
 
     /**
      * Service dependencies injected via constructor
      *
-     * @param RBACService $rbacService - Role-based access control service
-     * @param AuthService $authService - Authentication service
-     * @param DataScopeService $dataScopeService - Data scoping service
+     * @param  RBACService  $rbacService  - Role-based access control service
+     * @param  AuthService  $authService  - Authentication service
+     * @param  DataScopeService  $dataScopeService  - Data scoping service
      */
     public function __construct(
         protected RBACService $rbacService,
         protected AuthService $authService,
-        
+
     ) {}
 
     /**
@@ -60,13 +62,11 @@ class UserCrudController extends CrudController
      *
      * Configures the CRUD model, routes, and entity names for the User resource.
      * Sets up operations and basic configuration.
-     *
-     * @return void
      */
     public function setup(): void
     {
         $this->crud->setModel(User::class);
-        $this->crud->setRoute(config('backpack.base.route_prefix') . '/user');
+        $this->crud->setRoute(config('backpack.base.route_prefix').'/user');
         $this->crud->setEntityNameStrings('user', 'users');
 
         $this->crud->setCreateContentClass('col-md-8');
@@ -82,12 +82,10 @@ class UserCrudController extends CrudController
      * Retrieves only users accessible to the current user based on their role/scope.
      *
      * Authorization: 'user.view' permission required
-     *
-     * @return void
      */
     protected function setupListOperation(): void
     {
-        if (!backpack_user()->can('user.view')) {
+        if (! backpack_user()->can('users.view')) {
             abort(403, 'Unauthorized. You do not have permission to view users.');
         }
 
@@ -157,12 +155,10 @@ class UserCrudController extends CrudController
      * Requires 'user.create' permission and validates all input.
      *
      * Authorization: 'user.create' permission required
-     *
-     * @return void
      */
     protected function setupCreateOperation(): void
     {
-        if (!backpack_user()->can('user.create')) {
+        if (! backpack_user()->can('users.create')) {
             abort(403, 'Unauthorized. You do not have permission to create users.');
         }
 
@@ -266,12 +262,10 @@ class UserCrudController extends CrudController
      * Requires 'user.edit' permission. Allows password change (optional).
      *
      * Authorization: 'user.edit' permission required
-     *
-     * @return void
      */
     protected function setupUpdateOperation(): void
     {
-        if (!backpack_user()->can('user.edit')) {
+        if (! backpack_user()->can('users.update')) {
             abort(403, 'Unauthorized. You do not have permission to edit users.');
         }
 
@@ -369,8 +363,8 @@ class UserCrudController extends CrudController
      * - Log creation event
      * - Assign default roles
      *
-     * @param Request $request
-     * @return \Illuminate\Http\RedirectResponse
+     * @param  Request  $request
+     * @return RedirectResponse
      */
     public function store()
     {
@@ -395,7 +389,7 @@ class UserCrudController extends CrudController
 
             return back()
                 ->withInput()
-                ->withError('Failed to create user: ' . $e->getMessage());
+                ->withError('Failed to create user: '.$e->getMessage());
         }
     }
 
@@ -407,8 +401,8 @@ class UserCrudController extends CrudController
      * - Log update event
      * - Track what was changed
      *
-     * @param Request $request
-     * @return \Illuminate\Http\RedirectResponse
+     * @param  Request  $request
+     * @return RedirectResponse
      */
     public function update()
     {
@@ -434,7 +428,7 @@ class UserCrudController extends CrudController
 
             return back()
                 ->withInput()
-                ->withError('Failed to update user: ' . $e->getMessage());
+                ->withError('Failed to update user: '.$e->getMessage());
         }
     }
 
@@ -446,14 +440,14 @@ class UserCrudController extends CrudController
      * - Log deletion event
      * - Soft delete if available
      *
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function destroy()
     {
         try {
             $user = $this->crud->getCurrentEntry();
 
-            if ($user->isSuperAdmin() && User::isSuperAdmin()->count() === 1) {
+            if ($user->isSuperAdmin() && User::role('superadmin')->count() === 1) {
                 return back()->withError('Cannot delete the last super admin user.');
             }
 
@@ -471,7 +465,7 @@ class UserCrudController extends CrudController
                 'deleted_by' => backpack_user()->id,
             ]);
 
-            return back()->withError('Failed to delete user: ' . $e->getMessage());
+            return back()->withError('Failed to delete user: '.$e->getMessage());
         }
     }
 }
