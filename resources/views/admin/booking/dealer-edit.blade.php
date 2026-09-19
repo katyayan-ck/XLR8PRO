@@ -62,46 +62,42 @@
         <div class="col-md-3 form-group readonly-field">
             <label class="readonly-label">Customer Name</label>
             <div class="readonly-value">
-                {{ $booking->name ?? '—' }}
+                {{ $customer_name ?? '—' }}
             </div>
         </div>
 
         <div class="col-md-3 form-group readonly-field">
             <label class="readonly-label">Branch</label>
             <div class="readonly-value">
-                {{ $booking->branch ? ($booking->branch->name ?? $booking->branch->abbr ?? '—') : '—' }}
+                {{ $branch_name ?? '—' }}
             </div>
         </div>
 
         <div class="col-md-3 form-group readonly-field">
             <label class="readonly-label">Location</label>
             <div class="readonly-value">
-                @if($booking->location_code)
-                {{ $booking->location?->name ?? '—' }}
-                @else
-                {{ $booking->location_other ?: '—' }}
-                @endif
+                {{ $location_name ?? '—' }}
             </div>
         </div>
 
         <div class="col-md-3 form-group readonly-field">
             <label class="readonly-label">Model</label>
             <div class="readonly-value">
-                {{ $booking->model_code ?? '—' }}
+                {{ $model_name ?? '—' }}
             </div>
         </div>
 
         <div class="col-md-3 form-group readonly-field">
             <label class="readonly-label">Variant</label>
             <div class="readonly-value">
-                {{ $booking->variant_code ?? '—' }}
+                {{ $variant_name ?? '—' }}
             </div>
         </div>
 
         <div class="col-md-3 form-group readonly-field">
             <label class="readonly-label">Color</label>
             <div class="readonly-value">
-                {{ $booking->color_code ?? '—' }}
+                {{ $color_name ?? '—' }}
             </div>
         </div>
 

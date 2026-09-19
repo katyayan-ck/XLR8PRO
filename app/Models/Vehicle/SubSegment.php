@@ -13,18 +13,15 @@ class SubSegment extends BaseModel
 
     protected $table = 'xlr8_vehicle_subsegment';
 
-    /**
-     * Live DB: segment_code, code, name, is_active, audit.
-     * NO oem_name — use name.
-     */
     protected $fillable = [
         'segment_code',
         'code',
-        'name',
+        'oem_name',
+        'description',
         'is_active',
         'created_by',
         'updated_by',
-        'deleted_by',
+        'deleted_by'
     ];
 
     protected $casts = [
@@ -35,35 +32,72 @@ class SubSegment extends BaseModel
     ];
 
     protected array $columnTransformations = [
-        'segment_code' => ['trim', 'uppercase_alphanumeric_dash_underscore'],
-        'code'         => ['trim', 'uppercase_alphanumeric_dash_underscore'],
-        'name'         => ['strip_tags', 'trim_spaces', 'title_case'],
+
+        'segment_code' => [
+            'trim',
+            'uppercase_alphanumeric_dash_underscore'
+        ],
+
+        'code' => [
+            'trim',
+            'uppercase_alphanumeric_dash_underscore'
+        ],
+
+        'oem_name' => [
+            'strip_tags',
+            'trim_spaces',
+            'title_case'
+        ],
     ];
 
     public function segment()
     {
-        return $this->belongsTo(Segment::class, 'segment_code', 'code');
+        return $this->belongsTo(
+            Segment::class,
+            'segment_code',
+            'code'
+        );
     }
 
     public function vehicleModels()
     {
-        return $this->hasMany(VehicleModel::class, 'sub_segment_code', 'code');
+        return $this->hasMany(
+            VehicleModel::class,
+            'sub_segment_code',
+            'code'
+        );
     }
 
     public function variants()
     {
-        return $this->hasMany(Variant::class, 'sub_segment_code', 'code');
+        return $this->hasMany(
+            Variant::class,
+            'sub_segment_code',
+            'code'
+        );
     }
 
-    public static function generateCode(string $name): string
+    /**
+     * XUV → XUV
+     * NON XUV → NXUV
+     */
+    public static function generateCode(string $oem_name): string
     {
         $map = [
             'XUV'     => 'XUV',
             'NON XUV' => 'NXUV',
             'NON-XUV' => 'NXUV',
         ];
-        $upper = strtoupper(trim($name));
+
+        $upper = strtoupper(trim($oem_name));
+
         return $map[$upper]
-            ?? strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $name), 0, 5));
+            ?? strtoupper(
+                substr(
+                    preg_replace('/[^A-Za-z0-9]/', '', $oem_name),
+                    0,
+                    5
+                )
+            );
     }
 }

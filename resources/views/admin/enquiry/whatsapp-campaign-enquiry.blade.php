@@ -80,38 +80,34 @@
 
     <script>
         const ALL_COLUMNS = @json($gridConfig['columns'] ?? []);
+        const LIST_TYPE = @json($gridConfig['list_type'] ?? 'whatsapp');
         let gridApi;
+        let currentSearchText = '';
 
         const columnDefs = [
 
             ...ALL_COLUMNS.filter(col => [
 
                 'serial_no',
-                //'enq_date_and_time',
+                'x8_enquiry_no',
+                'x8_enquiry_date',
                 'campaign_name',
                 'campaign_date',
-                'x8_enquiry_assign_date',
-                'segment_name',
+                'campaign_segment',
+                'campaign_model',
+                'first_name',
+                'mobile',
                 'model_name',
                 'variant_name',
-                'mobile',
-                'dms_enquiry_stage',
-                'cre_enquiry_stage',
-                'cre_next_fup_date',
-                'cre_next_fup_time',
-                'cre_next_fup_remarks',
-                'quotation_no',
-                'booking_no',
-                'booking_date',
-                'oem_booking_no',
-                'oem_booking_date',
-                'oem_otf_no',
-                // 'campaign_segment',
-                // 'campaign_model',
-                // 'customer_name',
-                // 'customer_phone',
-                // 'tehsil',
-                
+                'pincode',
+                'vpo',
+                'tehsil',
+                'district',
+                'x8_sc_code',
+                'x8_sc_mile_id',
+                'x8_sc_branch',
+                'x8_sc_location',
+                'oem_enquiry_no'
 
             ].includes(col.field)),
 
@@ -129,11 +125,42 @@
 
         ];
 
+        const dataSource = {
+            getRows: function(params) {
+                fetch('{{ backpack_url('enquiries/data') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({
+                            startRow: params.startRow,
+                            endRow: params.endRow,
+                            sortModel: params.sortModel,
+                            filterModel: params.filterModel,
+                            searchText: currentSearchText,
+                            list_type: LIST_TYPE
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        params.successCallback(data.rows || [], data.lastRow ?? 0);
+                    })
+                    .catch(err => {
+                        console.error('Failed to load enquiries', err);
+                        params.failCallback();
+                    });
+            }
+        };
+
         const gridOptions = {
             columnDefs: columnDefs,
-            rowData: @json($gridConfig['data'] ?? []),
+            rowModelType: 'infinite',
+            datasource: dataSource,
             pagination: true,
             paginationPageSize: 50,
+            cacheBlockSize: 50,
             rowHeight: 28,
             animateRows: true,
             defaultColDef: {
@@ -153,16 +180,27 @@
 
                 const defaultFields = [
 
-                'serial_no',
-                //'enq_date_and_time',
-                'campaign_name',
-                'campaign_date',
-                'x8_enquiry_assign_date',
-                'segment_name',
-                'model_name',
-                'variant_name',
-                'mobile',
-                'action'
+                    'serial_no',
+                    'x8_enquiry_no',
+                    'x8_enquiry_date',
+                    'campaign_name',
+                    'campaign_date',
+                    'campaign_segment',
+                    'campaign_model',
+                    'first_name',
+                    'mobile',
+                    'model_name',
+                    'variant_name',
+                    'pincode',
+                    'vpo',
+                    'tehsil',
+                    'district',
+                    'x8_sc_code',
+                    'x8_sc_mile_id',
+                    'x8_sc_branch',
+                    'x8_sc_location',
+                    'oem_enquiry_no',
+                    'action'
 
                 ];
                 const allCols = gridApi.getAllGridColumns().map(col => col.getColId());
@@ -192,7 +230,7 @@
                 checkbox.type = 'checkbox';
                 checkbox.checked = gridApi.getColumn(col.field)?.isVisible() ?? false;
 
-                if (['serial_no', 'campaign_name', 'action'].includes(col.field)) {
+                if (['serial_no', 'action'].includes(col.field)) {
                     checkbox.disabled = true;
                 }
 
@@ -218,15 +256,25 @@
             const gridDiv = document.querySelector('#myGrid');
             agGrid.createGrid(gridDiv, gridOptions);
 
-            document.getElementById('quickFilter').addEventListener('input', e => {
-                gridApi.setGridOption('quickFilterText', e.target.value);
-            });
+            function debounce(fn, delay) {
+                let timer;
+                return (...args) => {
+                    clearTimeout(timer);
+                    timer = setTimeout(() => fn(...args), delay);
+                };
+            }
+
+            document.getElementById('quickFilter').addEventListener('input', debounce(e => {
+                currentSearchText = e.target.value.trim();
+                gridApi.setGridOption('datasource', dataSource);
+            }, 400));
 
             document.getElementById('resetAll').addEventListener('click', () => {
-                gridApi.setFilterModel(null);
                 document.getElementById('quickFilter').value = '';
-                gridApi.setGridOption('quickFilterText', '');
-                gridApi.setSortModel(null);
+                currentSearchText = '';
+                gridApi.setFilterModel(null);
+                gridApi.applyColumnState({ defaultState: { sort: null } });
+                gridApi.setGridOption('datasource', dataSource);
             });
 
             document.getElementById('btnCustomiseHeaders').addEventListener('click', e => {
@@ -254,16 +302,27 @@
             document.getElementById('btnDefaultHeaders').addEventListener('click', () => {
                 const defaultFields = [
 
-                'serial_no',
-                //'enq_date_and_time',
-                'campaign_name',
-                'campaign_date',
-                'x8_enquiry_assign_date',
-                'segment_name',
-                'model_name',
-                'variant_name',
-                'mobile',
-                'action'
+                    'serial_no',
+                    'x8_enquiry_no',
+                    'x8_enquiry_date',
+                    'campaign_name',
+                    'campaign_date',
+                    'campaign_segment',
+                    'campaign_model',
+                    'first_name',
+                    'mobile',
+                    'model_name',
+                    'variant_name',
+                    'pincode',
+                    'vpo',
+                    'tehsil',
+                    'district',
+                    'x8_sc_code',
+                    'x8_sc_mile_id',
+                    'x8_sc_branch',
+                    'x8_sc_location',
+                    'oem_enquiry_no',
+                    'action'
 
                 ];
                 const allCols = gridApi.getAllGridColumns().map(c => c.getColId());
@@ -273,27 +332,21 @@
                 setTimeout(() => gridApi.autoSizeAllColumns(), 200);
             });
 
+            // Server-side CSV export (covers ALL matching rows, not just the
+            // rows currently cached in the browser — required now that the
+            // grid loads data lazily instead of embedding it up front).
             document.getElementById('exportCsv').addEventListener('click', () => {
-                const visibleColumns = gridApi.getAllDisplayedColumns()
-                    .map(col => col.getColDef())
-                    .filter(col => col.field && col.field !== 'action');
-
-                const rows = [];
-                gridApi.forEachNodeAfterFilterAndSort(node => {
-                    const row = {};
-                    visibleColumns.forEach(col => {
-                        row[col.headerName] = node.data[col.field] ?? '';
-                    });
-                    rows.push(row);
+                const params = new URLSearchParams({
+                    searchText: currentSearchText,
+                    list_type: LIST_TYPE
                 });
-
-                const wb = XLSX.utils.book_new();
-                const ws = XLSX.utils.json_to_sheet(rows);
-                XLSX.utils.book_append_sheet(wb, ws, "WhatsApp Campaign Enquiries");
-                XLSX.writeFile(wb,
-                    `whatsApp-campaign-enquiries-${new Date().toISOString().slice(0, 10)}.xlsx`);
+                window.location.href = '{{ backpack_url('enquiries/export') }}?' + params.toString();
             });
 
+            // PDF export only covers rows the grid has already fetched into
+            // its cache (the visible page(s)), since the full result set is
+            // no longer loaded client-side. Use CSV export above for a
+            // complete export of all matching rows.
             document.getElementById('exportPdf').addEventListener('click', () => {
                 const {
                     jsPDF
@@ -308,6 +361,7 @@
                 const rows = [];
 
                 gridApi.forEachNodeAfterFilterAndSort(node => {
+                    if (!node.data) return;
                     rows.push(visibleColumns.map(col => node.data[col.field] ?? ''));
                 });
 
@@ -322,7 +376,7 @@
                     },
                 });
 
-                doc.save(`whatsApp-campaign-enquiries-${new Date().toISOString().slice(0, 10)}.pdf`);
+                doc.save(`whatsapp-campaign-enquiries-${new Date().toISOString().slice(0, 10)}.pdf`);
             });
         });
 

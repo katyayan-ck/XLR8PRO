@@ -113,11 +113,7 @@
             <div class="col-md-2 form-group readonly-field">
                 <label class="readonly-label">Location</label>
                 <div class="readonly-value">
-                    @if($booking->location_code)
-                    {{ $booking->location?->name ?? '—' }}
-                    @else
-                    {{ $booking->location_other ?: '—' }}
-                    @endif
+                    {{ $data['location'] ?? '—' }}
                 </div>
             </div>
 

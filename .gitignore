@@ -1,45 +1,59 @@
 /vendor/
+node_modules/
+npm-debug.log
+yarn-error.log
 
-/node_modules/
+# Laravel 4 specific
+bootstrap/compiled.php
+app/storage/
 
-# Laravel
+# Laravel 5 & Lumen specific
+public/storage
+public/hot
+
+# Laravel 5 & Lumen specific with changed public path
+public_html/storage
+public_html/hot
+
+storage/*.key
+.env
+Homestead.yaml
+Homestead.json
+/.vagrant
+.phpunit.result.cache
+
+/public/build
+/storage/pail
+.env.backup
+.env.production
+.phpactor.json
+auth.json
+
+*.log
+.DS_Store
+.env
+.env.backup
+.env.production
+.phpactor.json
+.phpunit.result.cache
+/.fleet
+/.idea
+/.nova
+/.phpunit.cache
+/.vscode
+/.zed
+/auth.json
+/node_modules
 /public/build
 /public/hot
 /public/storage
 /storage/*.key
 /storage/pail
-
-# Environment / secrets
-.env
-.env.backup
-.env.production
-auth.json
-gscred.json
-gscreds.json
-
-# Laravel / PHPUnit
-.phpunit.result.cache
-.phpunit.cache
-.phpactor.json
-
-# IDEs / editors
-/.fleet
-/.idea
-/.nova
-/.vscode
-/.zed
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Logs
-*.log
-
-# Vagrant / Homestead
-/.vagrant
-Homestead.yaml
-Homestead.json
-
-# Local backups
+/vendor
 /codebackup
+Homestead.json
+Homestead.yaml
+Thumbs.db
+gscred.json
+
+.changes.zip

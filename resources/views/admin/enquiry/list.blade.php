@@ -7,78 +7,78 @@
                 <div
                     class="card-header bg-gradient-primary d-flex justify-content-between align-items-center flex-nowrap flex-md-nowrap flex-wrap gap-3">
                     <h2 class="card-title mb-0 fw-bold text-black text-nowrap">
-                        {{ $title ?? 'Xlr8 Enquiries' }}
+                        {{ isset($title) ? trim(explode('(', $title)[0]) : 'Xceler8 Enquiries' }}
                     </h2>
 
                     <div class="d-flex align-items-center gap-3 flex-nowrap">
-                        <a href="{{ backpack_url('enquiries/add') }}"
-                            class="btn btn-blue btn-sm fw-bold shadow-sm">
-                            <i class="la la-plus me-1"></i> Add New Enquiry
-                        </a>
-
+                        @if (Route::has('enquiry.add') || Route::has('enquiries.create'))
+                            <a href="{{ backpack_url('enquiries/add') }}" class="btn btn-blue btn-sm fw-bold shadow-sm">
+                                <i class="la la-plus me-1"></i> Add New Enquiry
+                            </a>
+                        @endif
                     </div>
                 </div>
 
                 <div class="card-body p-0" style="background:#f8fafc">
-                    <div class="p-3 border-bottom bg-white">
-                        <div class="row align-items-end">
-                            <div class="col-md-8">
-                                <h5 class="mb-2 text-dark">
-                                    <i class="la la-file-excel-o"></i> Import Enquiries from Excel
-                                </h5>
-                                <small class="text-muted">
-                                    Upload Excel file containing enquiry data. First row should contain headers.
-                                </small>
-                            </div>
-                            <div class="col-md-4">
-                                <form action="{{ route('enquiry.import') }}" method="POST" enctype="multipart/form-data"
-                                    class="d-flex gap-2">
-                                    @csrf
-                                    <input type="file" name="excel_file" class="form-control form-control-sm"
-                                        accept=".xlsx,.xls" required>
-                                    <button type="submit" class="btn btn-success btn-sm px-4 text-nowrap">
-                                        <i class="la la-upload"></i> Import
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="p-3 border-bottom bg-white" id="importStatusPanel" style="display:none;">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <strong id="importStatusTitle">Import in progress…</strong>
-                            <span class="text-muted small" id="importStatusPercent">0%</span>
-                        </div>
-                        <div class="progress" style="height: 8px;">
-                            <div class="progress-bar bg-success" id="importProgressBar" role="progressbar"style="width: 0%">
-                            </div>
-                        </div>
-                        <div class="small text-muted mt-2" id="importStatusDetail"></div>
-                    </div>
 
-                    <div class="p-3 border-bottom bg-white">
-                        <h6 class="text-muted mb-2">Recent Imports</h6>
-                        <table class="table table-sm mb-0" id="importHistoryTable">
-                            <thead>
-                                <tr>
-                                    <th>File</th>
-                                    <th>Status</th>
-                                    <th>Progress</th>
-                                    <th>When</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td colspan="4" class="text-muted">Loading…</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                    {{-- Optional Import Section --}}
+                    @if (Route::has('enquiry.import'))
+                        <div class="p-3 border-bottom bg-white">
+                            <div class="row align-items-end">
+                                <div class="col-md-8">
+                                    <h5 class="mb-2 text-dark">
+                                        <i class="la la-file-excel-o"></i> Import Enquiries from Excel
+                                    </h5>
+                                    <small class="text-muted">
+                                        Upload Excel file containing enquiry data. First row should contain headers.
+                                    </small>
+                                </div>
+                                <div class="col-md-4">
+                                    <form action="{{ route('enquiry.import') }}" method="POST"
+                                        enctype="multipart/form-data" class="d-flex gap-2">
+                                        @csrf
+                                        <input type="file" name="excel_file" class="form-control form-control-sm"
+                                            accept=".xlsx,.xls" required>
+                                        <button type="submit" class="btn btn-success btn-sm px-4 text-nowrap">
+                                            <i class="la la-upload"></i> Import
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
 
+                    {{-- HIGHLIGHT FILTERS --}}
+                    @isset($highlightCounts)
+                        <div class="px-3 py-2 border-bottom bg-white d-flex gap-2 flex-wrap align-items-center">
+                            <span class="fw-bold text-muted small me-1">Highlights:</span>
+                            @foreach ([
+                'missed_fup' => 'Missed Follow-up',
+                'today_fup' => "Today's Follow-up",
+                'birthday' => 'Birthday',
+                'anniversary' => 'Anniversary',
+                'exchange' => 'Exchange',
+                'pending_eval' => 'Pending Evaluation',
+                'delayed' => 'Delayed',
+                'wrong_assign' => 'Wrong Assignment',
+                'finance' => 'Finance',
+                'lost_verif' => 'Lost Verifications',
+            ] as $key => $label)
+                                <button class="btn btn-outline-primary btn-sm rounded-pill highlight-filter"
+                                    data-filter="{{ $key }}">
+                                    {{ $label }} <span
+                                        class="badge ms-1 count-badge">{{ $highlightCounts[$key] ?? 0 }}</span>
+                                </button>
+                            @endforeach
+                        </div>
+                    @endisset
+
+                    {{-- Grid Controls Bar --}}
                     <div
                         class="d-flex justify-content-between align-items-center flex-wrap gap-3 p-3 border-bottom bg-white">
                         <div class="d-flex align-items-center gap-2 flex-nowrap">
                             <input type="text" id="quickFilter" class="form-control w-100 w-md-auto"
-                                style="width:360px; min-width:260px;" placeholder="Smart Search...">
+                                style="width:360px; min-width:260px;" placeholder="Smart Global Search...">
                             <button id="resetAll" class="btn btn-outline-danger btn-sm text-nowrap">Reset</button>
                         </div>
 
@@ -95,6 +95,13 @@
                                         <button id="closeColumnBubble"
                                             class="btn btn-sm btn-link text-danger p-0">✕</button>
                                     </div>
+
+                                    <!-- Search Input for Columns -->
+                                    <div class="p-2 border-bottom">
+                                        <input type="text" id="columnSearch" class="form-control form-control-sm"
+                                            placeholder="Search headers...">
+                                    </div>
+
                                     <div style="max-height:260px; overflow:auto;">
                                         <table class="table table-sm mb-0">
                                             <tbody id="columnBubbleBody"></tbody>
@@ -106,18 +113,28 @@
                         </div>
 
                         <div class="d-flex gap-2 flex-nowrap">
-                            <button id="exportCsv" class="btn btn-sm text-nowrap d-flex align-items-center gap-2">
+                            <button id="exportCsv" class="btn btn-sm text-nowrap d-flex align-items-center gap-2"
+                                title="Export Excel">
                                 <img src="{{ asset('images/export-excel.png') }}" alt="Excel"
                                     style="height:30px; width:auto;">
                             </button>
-                            <button id="exportPdf" class="btn btn-sm text-nowrap d-flex align-items-center gap-2">
+                            <button id="exportPdf" class="btn btn-sm text-nowrap d-flex align-items-center gap-2"
+                                title="Export PDF">
                                 <img src="{{ asset('images/export-pdf.png') }}" alt="PDF"
                                     style="height:30px; width:auto;">
                             </button>
                         </div>
                     </div>
 
-                    <div id="myGrid" class="ag-theme-quartz" style="height: calc(93vh - 260px); width:100%;"></div>
+                    <!-- GRID CONTAINER WITH LOADER WRAPPER -->
+<div style="position: relative;">
+    <div id="gridLoader" style="display:none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.7); z-index: 1000; justify-content: center; align-items: center;">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+    <div id="myGrid" class="ag-theme-quartz" style="height: calc(93vh - 260px); width:100%;"></div>
+</div>
                 </div>
             </div>
         </div>
@@ -130,6 +147,23 @@
         .ag-theme-quartz .center-header .ag-header-cell-label {
             justify-content: center !important;
         }
+
+        .highlight-filter.active {
+            background-color: #0d6efd;
+            color: #fff;
+            border-color: #0d6efd;
+        }
+
+        .highlight-filter .count-badge {
+            background-color: rgba(13, 110, 253, 0.1);
+            color: #0d6efd;
+            border-radius: 50rem;
+        }
+
+        .highlight-filter.active .count-badge {
+            background-color: #fff;
+            color: #0d6efd;
+        }
     </style>
 @endpush
 
@@ -138,201 +172,35 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-
-    <script>
-        (function() {
-            const statusUrlBase = "{{ url('/' . config('backpack.base.route_prefix') . '/enquiry/import/status') }}";
-            const historyUrl = "{{ route('enquiry.import.history') }}";
-            let pollTimer = null;
-
-            function renderHistory(rows) {
-                const tbody = document.querySelector('#importHistoryTable tbody');
-                if (!rows.length) {
-                    tbody.innerHTML = '<tr><td colspan="4" class="text-muted">No imports yet</td></tr>';
-                    return;
-                }
-                tbody.innerHTML = rows.map(r => {
-                    const pct = r.total_rows > 0 ? Math.round((r.processed_rows / r.total_rows) * 100) : 0;
-                    const badge = r.status === 'completed' ? 'success' :
-                        r.status === 'failed' ? 'danger' :
-                        'warning';
-                    return `<tr>
-                <td>${r.file_name}</td>
-                <td><span class="badge bg-${badge}">${r.status}</span></td>
-                <td>${r.status === 'processing' ? pct + '%' : '-'}</td>
-                <td>${r.updated_at}</td>
-            </tr>`;
-                }).join('');
-
-                // if the newest one is still processing/queued, start polling it
-                const newest = rows[0];
-                if (newest && (newest.status === 'processing' || newest.status === 'queued')) {
-                    startPolling(newest.id);
-                }
-            }
-
-            function startPolling(id) {
-                const panel = document.getElementById('importStatusPanel');
-                panel.style.display = 'block';
-                if (pollTimer) clearInterval(pollTimer);
-
-                function tick() {
-                    fetch(`${statusUrlBase}/${id}`).then(r => r.json()).then(data => {
-                        document.getElementById('importProgressBar').style.width = data.percent + '%';
-                        document.getElementById('importStatusPercent').innerText = data.percent + '%';
-                        document.getElementById('importStatusDetail').innerText =
-                            `${data.processed_rows} / ${data.total_rows} rows processed`;
-
-                        if (data.status === 'completed') {
-                            document.getElementById('importStatusTitle').innerText = 'Import completed ✅';
-                            clearInterval(pollTimer);
-                            setTimeout(() => location.reload(), 1500);
-                        } else if (data.status === 'failed') {
-                            document.getElementById('importStatusTitle').innerText = 'Import failed ❌';
-                            document.getElementById('importStatusDetail').innerText = data.error_message ||
-                                'Unknown error';
-                            clearInterval(pollTimer);
-                        }
-                    }).catch(() => {});
-                }
-
-                tick();
-                pollTimer = setInterval(tick, 3000);
-            }
-
-            fetch(historyUrl).then(r => r.json()).then(renderHistory);
-        })();
-    </script>
     <script>
         const ALL_COLUMNS = @json($gridConfig['columns'] ?? []);
+        const DEFAULT_COLUMNS = @json($gridConfig['defaultColumns'] ?? []);
+        const LIST_TYPE = @json($listType ?? 'all');
         let gridApi;
 
         const columnDefs = [
-
-            ...ALL_COLUMNS.filter(col => [
-                'serial_no',
-                'x8_enquiry_no',
-                'x8_enquiry_date',
-                'x8_enquiry_assign_date',
-                'oem_enquiry_no',
-                'oem_enquiry_date',
-                'oem_enquiry_assign_date',
-                'oem_quick_enquiry_no',
-                'oem_quick_enquiry_date',
-                'oem_quick_enquiry_assign_date',
-                'oem_long_enquiry_no',
-                'oem_long_enquiry_date',
-                'oem_long_enquiry_assign_date',
-                'segment_name',
-                'model_name',
-                'variant_name',
-                'first_name',
-                'last_name',
-                'full_name',
-                'mobile',
-                'email',
-                'gender',
-                'enquiry_type',
-                'source_name',
-                'sub_source',
-                'likely_purchase_in_days',                
-                'fuel_type',
-                'transmission',
-                'drivetrain',
-                'seating',
-                'color_name',
-                'tehsil',
-                'district',
-                'city',
-                'sc_code',
-                'dealer_branch',
-                'dealer_location',                
-                'followup_type',
-                'followup_date',
-                'followup_time',
-                // 'person_code',
-                // 'reference_details',
-                // 'referred_by',
-                // 'referee_phone',
-                // 'referee_name',
-                // 'planned_campaign_name',
-                
-                // 'activity_type',
-                // 'activity_segment',
-                // 'activity_model',
-                // 'activity_start_date',
-                // 'activity_end_date',
-                // 'activity_branch',
-                // 'activity_location',
-                
-                'occupation_type',
-                'customer_type',
-                'occupation_sub_type',                
-                'company_name',                
-                'dob',
-                'marital_status',
-                'marriage_date',
-                'age_group',
-                'usage_area',
-                'km_travelled_daily',
-                'application_type',
-                'application',
-                'pincode',
-                'address',    
-                'has_ev',
-                'purchase_type',
-                'remarks',
-                //'vehicle_no',
-                
-                'consider_make',
-                'consider_model',
-                'consider_variant',
-                'dms_enquiry_stage',
-                'cre_enquiry_stage',
-                'cre_next_fup_date',
-                'cre_next_fup_time',
-                'cre_next_fup_remarks',
-                'quotation_no',
-                'booking_no',
-                'booking_date',
-                'oem_booking_no',
-                'oem_booking_date',
-                'oem_otf_no',
-                
-                
-                
-                //'place_of_registration',
-                
-            ].includes(col.field)),
-
-            ...ALL_COLUMNS.filter(col => ['action'].includes(col.field)).map(col => {
-
+            ...ALL_COLUMNS.filter(col => col.field !== 'action'),
+            ...ALL_COLUMNS.filter(col => col.field === 'action').map(col => {
                 col.pinned = 'right';
                 col.width = 140;
                 col.sortable = false;
                 col.filter = false;
                 col.cellRenderer = 'htmlRenderer';
-
                 return col;
-
             })
-
         ];
 
-        function debounce(fn, delay) {
-            let timer;
-            return (...args) => {
-                clearTimeout(timer);
-                timer = setTimeout(() => fn(...args), delay);
-            };
-        }
-
         let currentSearchText = '';
-
+        let currentHighlightFilter = '';
 
         const dataSource = {
             getRows: function(params) {
+                // 1. Show the custom HTML loader
+                const loader = document.getElementById('gridLoader');
+                if (loader) loader.style.display = 'flex';
+
                 fetch('{{ backpack_url('enquiries/data') }}', {
                         method: 'POST',
                         headers: {
@@ -344,15 +212,28 @@
                             startRow: params.startRow,
                             endRow: params.endRow,
                             sortModel: params.sortModel,
-                            searchText: currentSearchText
+                            filterModel: params.filterModel,
+                            searchText: currentSearchText,
+                            list_type: LIST_TYPE
                         })
                     })
                     .then(res => res.json())
                     .then(data => {
-                        params.successCallback(data.rows || [], data.lastRow ?? -1);
+                        // 2. Hide the custom HTML loader
+                        if (loader) loader.style.display = 'none';
+
+                        params.successCallback(data.rows || [], data.lastRow ?? 0);
+
+                        setTimeout(() => {
+                            if (gridApi) {
+                                gridApi.autoSizeColumns(['action']);
+                            }
+                        }, 100);
                     })
                     .catch(err => {
-                        console.error('Failed to load enquiries page', err);
+                        // 3. Hide the custom HTML loader on error
+                        if (loader) loader.style.display = 'none';
+                        console.error('Failed to load data', err);
                         params.failCallback();
                     });
             }
@@ -362,15 +243,15 @@
             columnDefs: columnDefs,
             rowModelType: 'infinite',
             datasource: dataSource,
-            cacheBlockSize: 100,
-            maxBlocksInCache: 10,
-            infiniteInitialRowCount: 100,
+            pagination: true,
+            paginationPageSize: 50,
+            cacheBlockSize: 50,
             rowHeight: 28,
             animateRows: true,
             defaultColDef: {
                 sortable: true,
-
-                filter: false,
+                filter: true,
+                floatingFilter: false,
                 resizable: true,
                 headerClass: 'center-header',
                 cellStyle: {
@@ -378,71 +259,17 @@
                 }
             },
             components: {
-                htmlRenderer: params => params.value || ''
+                htmlRenderer: params => {
+                    const div = document.createElement('div');
+                    div.innerHTML = params.value || '';
+                    return div;
+                }
             },
             onGridReady: params => {
                 gridApi = params.api;
-
-                const defaultFields = [
-                'serial_no',
-                'x8_enquiry_no',
-                'x8_enquiry_date',
-                'oem_enquiry_no',
-                'oem_enquiry_date',
-                'oem_quick_enquiry_no',
-                'segment_name',
-                'model_name',
-                'variant_name',
-                'first_name',
-                //'last_name',
-                //'full_name',
-                'mobile',
-               // 'email',
-               // 'gender',
-              
-                'enquiry_type',
-                'source_name',
-                'sub_source',
-                //'likely_purchase_in_days',                
-                //'fuel_type',
-                //'transmission',
-                //'drivetrain',
-                //'seating',
-                //'color_name',
-                'tehsil',
-                'district',
-                'city',
-                'sc_code',
-                'dealer_branch',
-                'dealer_location',                
-                'followup_type',
-                'followup_date',
-                //'followup_time',
-                'customer_type',
-                'occupation_type',    
-                // 'occupation_sub_type',                
-                // 'company_name',                
-                // 'dob',
-                // 'marital_status',
-                // 'marriage_date',
-                // 'age_group',
-                // 'usage_area',
-                // 'km_travelled_daily',
-                // 'application_type',
-                // 'application',
-                // 'pincode',    
-                // 'has_ev',
-                // 'address',
-                // 'purchase_type',
-                // 'remarks',
-                'action'
-                ];
-
                 const allCols = gridApi.getAllGridColumns().map(col => col.getColId());
-
                 gridApi.setColumnsVisible(allCols, false);
-                gridApi.setColumnsVisible(defaultFields, true);
-
+                gridApi.setColumnsVisible(DEFAULT_COLUMNS.length ? DEFAULT_COLUMNS : allCols, true);
                 setTimeout(() => gridApi.autoSizeAllColumns(), 300);
             }
         };
@@ -450,13 +277,14 @@
         function openColumnBubble() {
             const bubble = document.getElementById('columnBubble');
             const tbody = document.getElementById('columnBubbleBody');
+            const searchInput = document.getElementById('columnSearch');
+
             if (!gridApi || !bubble || !tbody) return;
 
             tbody.innerHTML = '';
+            if (searchInput) searchInput.value = '';
 
-            const allFlatColumns = ALL_COLUMNS;
-
-            allFlatColumns.forEach(col => {
+            ALL_COLUMNS.forEach(col => {
                 if (!col.field) return;
 
                 const tr = document.createElement('tr');
@@ -467,7 +295,7 @@
                 checkbox.type = 'checkbox';
                 checkbox.checked = gridApi.getColumn(col.field)?.isVisible() ?? false;
 
-                if (['serial_no', 'enquiry_no', 'full_name', 'action'].includes(col.field)) {
+                if (['serial_no', 'action'].includes(col.field)) {
                     checkbox.disabled = true;
                 }
 
@@ -476,7 +304,6 @@
                 });
 
                 tdCheck.appendChild(checkbox);
-
                 const tdLabel = document.createElement('td');
                 tdLabel.textContent = col.headerName || col.field;
 
@@ -484,7 +311,16 @@
                 tbody.appendChild(tr);
             });
 
+            document.querySelectorAll('#columnBubbleBody tr').forEach(row => row.style.display = '');
             bubble.style.display = 'block';
+        }
+
+        function debounce(fn, delay) {
+            let timer;
+            return (...args) => {
+                clearTimeout(timer);
+                timer = setTimeout(() => fn(...args), delay);
+            };
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -494,18 +330,229 @@
             document.getElementById('quickFilter').addEventListener('input', debounce(e => {
                 currentSearchText = e.target.value.trim();
 
-                gridApi.setGridOption('datasource', dataSource);
+                // Show the custom HTML loader
+                const loader = document.getElementById('gridLoader');
+                if (loader) loader.style.display = 'flex';
+
+                if (gridApi) {
+                    gridApi.setGridOption('datasource', {
+                        ...dataSource
+                    });
+                }
             }, 400));
+
+            
+            // ============================================================
+// QUOTE BUTTON - SERVER SIDE VEHICLE VALIDATION
+// Enquiry Color = Optional
+// Quotation Color = Mandatory
+// ============================================================
+
+document.addEventListener('click', async function (e) {
+
+    const link = e.target.closest('.js-quote-link');
+
+    if (!link) {
+        return;
+    }
+
+    // STOP the normal <a href=""> navigation first.
+    e.preventDefault();
+    e.stopPropagation();
+
+    const enquiryId = link.getAttribute('data-enquiry-id');
+
+    if (!enquiryId) {
+        console.error('Quote validation failed: enquiry ID missing.');
+        return;
+    }
+
+    try {
+
+        const validationUrl =
+            `{{ backpack_url('enquiries') }}/${enquiryId}/validate-quotation-vehicle`;
+
+        const response = await fetch(validationUrl, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(
+                `Vehicle validation request failed: ${response.status}`
+            );
+        }
+
+        const result = await response.json();
+
+        console.log('Quotation vehicle validation:', result);
+
+        // ========================================================
+        // ALL REQUIRED VEHICLE DETAILS ARE PRESENT
+        // ========================================================
+
+        if (result.valid === true) {
+
+            window.location.href = link.href;
+            return;
+        }
+
+        // ========================================================
+        // VEHICLE DETAILS ARE MISSING
+        // ========================================================
+
+        const missing = Array.isArray(result.missing)
+            ? result.missing
+            : [];
+
+        Swal.fire({
+
+            icon: 'warning',
+
+            title: 'Vehicle Details Required',
+
+            html: `
+                <div style="text-align:left;">
+
+                    <p style="margin-bottom:12px;">
+                        Please fill the following vehicle details
+                        in the enquiry before moving to quotation:
+                    </p>
+
+                    <ul style="
+                        margin:0 0 12px 20px;
+                        padding:0;
+                    ">
+                        ${missing.map(field => `
+                            <li>
+                                <strong>${field}</strong>
+                            </li>
+                        `).join('')}
+                    </ul>
+
+                    <p style="
+                        margin-top:12px;
+                        margin-bottom:0;
+                        color:#6c757d;
+                        font-size:13px;
+                    ">
+                        Segment, Model, Variant and Color are mandatory
+                        for creating a quotation.
+                    </p>
+
+                </div>
+            `,
+
+            confirmButtonText: 'Go to Edit Enquiry',
+
+            confirmButtonColor: '#3085d6',
+
+            showCancelButton: true,
+
+            cancelButtonText: 'Cancel',
+
+            allowOutsideClick: false
+
+        }).then((result) => {
+
+            if (!result.isConfirmed) {
+                return;
+            }
+
+            // ====================================================
+            // OPEN SAME ENQUIRY EDIT PAGE
+            // ====================================================
+
+            const editUrl =
+                `{{ backpack_url('enquiry') }}/${enquiryId}/edit`;
+
+            window.location.href = editUrl;
+        });
+
+    } catch (error) {
+
+        console.error(
+            'Quotation vehicle validation error:',
+            error
+        );
+
+        Swal.fire({
+
+            icon: 'error',
+
+            title: 'Validation Error',
+
+            text: 'Unable to verify vehicle details. Please try again.',
+
+            confirmButtonText: 'OK'
+
+        });
+
+    }
+
+});
+
+            document.querySelectorAll('.highlight-filter').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const filterValue = this.getAttribute('data-filter');
+
+                    if (currentHighlightFilter === filterValue) {
+                        currentHighlightFilter = '';
+                        this.classList.remove('active');
+                    } else {
+                        currentHighlightFilter = filterValue;
+                        document.querySelectorAll('.highlight-filter').forEach(b => b.classList
+                            .remove('active'));
+                        this.classList.add('active');
+                    }
+
+                    document.getElementById('quickFilter').value = '';
+                    currentSearchText = '';
+
+                    const loader = document.getElementById('gridLoader');
+                    if (loader) loader.style.display = 'flex';
+
+                    gridApi.setGridOption('datasource', {
+                        ...dataSource
+                    });
+                });
+            });
+
+            document.getElementById('columnSearch')?.addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                const rows = document.querySelectorAll('#columnBubbleBody tr');
+
+                rows.forEach(row => {
+                    const labelTd = row.querySelector('td:nth-child(2)');
+                    if (labelTd) {
+                        const text = labelTd.textContent.toLowerCase();
+                        row.style.display = text.includes(searchTerm) ? '' : 'none';
+                    }
+                });
+            });
 
             document.getElementById('resetAll').addEventListener('click', () => {
                 document.getElementById('quickFilter').value = '';
                 currentSearchText = '';
-                gridApi.applyColumnState({
-                    defaultState: {
-                        sort: null
-                    }
-                });
-                gridApi.setGridOption('datasource', dataSource);
+
+                // Show the custom HTML loader
+                const loader = document.getElementById('gridLoader');
+                if (loader) loader.style.display = 'flex';
+
+                if (gridApi) {
+                    gridApi.setFilterModel(null);
+                    gridApi.applyColumnState({
+                        defaultState: {
+                            sort: null
+                        }
+                    });
+                    gridApi.setGridOption('datasource', {
+                        ...dataSource
+                    });
+                }
             });
 
             document.getElementById('btnCustomiseHeaders').addEventListener('click', e => {
@@ -531,76 +578,20 @@
             });
 
             document.getElementById('btnDefaultHeaders').addEventListener('click', () => {
-                const defaultFields = [
-                'serial_no',
-                'x8_enquiry_no',
-                'x8_enquiry_date',
-                'oem_enquiry_no',
-                'oem_enquiry_date',
-                'oem_quick_enquiry_no',
-                'segment_name',
-                'model_name',
-                'variant_name',
-                'first_name',
-                //'last_name',
-                //'full_name',
-                'mobile',
-               // 'email',
-               // 'gender',
-               
-                'enquiry_type',
-                'source_name',
-                'sub_source',
-                //'likely_purchase_in_days',                
-                //'fuel_type',
-                //'transmission',
-                //'drivetrain',
-                //'seating',
-                //'color_name',
-                'tehsil',
-                'district',
-                'city',
-                'sc_code',
-                'dealer_branch',
-                'dealer_location',                
-                'followup_type',
-                'followup_date',
-                //'followup_time',
-                'customer_type',
-                'occupation_type',
-
-                // 'occupation_sub_type',                
-                // 'company_name',                
-                // 'dob',
-                // 'marital_status',
-                // 'marriage_date',
-                // 'age_group',
-                // 'usage_area',
-                // 'km_travelled_daily',
-                // 'application_type',
-                // 'application',
-                // 'pincode',  
-                // 'address',  
-                // 'has_ev',
-                // 'purchase_type',
-                // 'remarks',
-                'action'
-                ];
                 const allCols = gridApi.getAllGridColumns().map(c => c.getColId());
-
                 gridApi.setColumnsVisible(allCols, false);
-                gridApi.setColumnsVisible(defaultFields, true);
+                gridApi.setColumnsVisible(DEFAULT_COLUMNS, true);
                 setTimeout(() => gridApi.autoSizeAllColumns(), 200);
             });
 
-
             document.getElementById('exportCsv').addEventListener('click', () => {
                 const params = new URLSearchParams({
-                    searchText: currentSearchText
+                    searchText: currentSearchText,
+                    highlightFilter: currentHighlightFilter,
+                    list_type: LIST_TYPE
                 });
                 window.location.href = '{{ backpack_url('enquiries/export') }}?' + params.toString();
             });
-
 
             document.getElementById('exportPdf').addEventListener('click', () => {
                 const {
@@ -632,19 +623,7 @@
                 });
 
                 doc.save(`enquiries-${new Date().toISOString().slice(0, 10)}.pdf`);
-
-                if (rows.length < gridApi.getDisplayedRowCount()) {
-                    alert(
-                        'PDF export includes only the rows currently loaded in the grid (scroll to load more, then export again). For the full list, use the CSV export instead.'
-                    );
-                }
             });
         });
-
-        function redirectToEnquiryList(selectElement) {
-            if (selectElement.value) {
-                window.location.href = selectElement.value;
-            }
-        }
     </script>
 @endpush

@@ -570,7 +570,7 @@
                         <div class="row">
 
                             {{-- Dealer Branch --}}
-                            <div class="col-md-4 mb-3">
+                            {{-- <div class="col-md-4 mb-3">
 
                                 <label class="form-label">
                                     Select Dealer Branch
@@ -590,10 +590,10 @@
 
                                 </select>
 
-                            </div>
+                            </div> --}}
 
                             {{-- Dealer Location --}}
-                            <div class="col-md-4 mb-3">
+                            {{-- <div class="col-md-4 mb-3">
 
                                 <label class="form-label">
                                     Select Dealer Location
@@ -607,7 +607,7 @@
 
                                 </select>
 
-                            </div>
+                            </div> --}}
 
                             {{-- Sales Consultant --}}
                             <div class="col-md-4 mb-3">
@@ -643,14 +643,14 @@
 
                 </div>
 
-                {{-- =========================== SHORT ENQUIRY Follow Up =========================== --}}
+                {{-- =========================== SHORT ENQUIRY Sales Consultant Follow up =========================== --}}
 
                 <div class="card mb-4">
 
                     <div class="card-header bg-light">
 
                         <h5 class="mb-0">
-                            Follow Up
+                            Sales Consultant Follow up
                         </h5>
 
                     </div>
@@ -659,17 +659,17 @@
 
                         <div class="row">
 
-                            {{-- Follow Up Type --}}
+                            {{-- Sales Consultant Follow up Type --}}
                             <div class="col-md-4 mb-3">
 
                                 <label class="form-label">
-                                    Follow Up Type
+                                    Sales Consultant Follow up Type
                                     <span class="text-danger">*</span>
                                 </label>
 
                                 <select name="followup_type" class="form-control form-select">
 
-                                    <option value="">Select Follow Up Type</option>
+                                    <option value="">Select Sales Consultant Follow up Type</option>
 
                                     @foreach ($follow_up_types as $item)
                                         <option value="{{ $item['code'] }}">
@@ -681,11 +681,11 @@
 
                             </div>
 
-                            {{-- Follow Up Date --}}
+                            {{-- Sales Consultant Follow up Date --}}
                             <div class="col-md-4 mb-3">
 
                                 <label class="form-label">
-                                    Follow Up Date
+                                    Sales Consultant Follow up Date
                                     <span class="text-danger">*</span>
                                 </label>
 
@@ -694,11 +694,11 @@
 
                             </div>
 
-                            {{-- Follow Up Time --}}
+                            {{-- Sales Consultant Follow up Time --}}
                             <div class="col-md-4 mb-3">
 
                                 <label class="form-label">
-                                    Follow Up Time
+                                    Sales Consultant Follow up Time
                                     <span class="text-danger">*</span>
                                 </label>
 

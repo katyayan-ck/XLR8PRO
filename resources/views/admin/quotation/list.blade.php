@@ -101,8 +101,34 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    function confirmBookingProcess(id) {
+    function confirmBookingProcess(quotationId, bookingId) {
 
+    // This quotation was created from an existing Booking
+    if (bookingId) {
+
+        Swal.fire({
+            title: 'Booking Already Exists',
+            text: 'This quotation is already associated with Booking #' + bookingId + '.',
+            icon: 'info',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Open Booking',
+            cancelButtonText: 'Close'
+        }).then((result) => {
+
+            if (result.isConfirmed) {
+
+                window.location.href =
+                    "{{ backpack_url('booking/otf-form') }}/" + bookingId;
+            }
+
+        });
+
+        return;
+    }
+
+    // Normal Quotation → Booking flow
     Swal.fire({
         title: 'Convert to Booking?',
         text: 'Are you sure you want to convert this quotation into booking?',
@@ -117,12 +143,10 @@
         if (result.isConfirmed) {
 
             window.location.href =
-                "{{ backpack_url('booking/create') }}?quotation_id=" + id;
-
+                "{{ backpack_url('booking/create') }}?quotation_id=" + quotationId;
         }
 
     });
-
 }
 </script>
 <script>
@@ -167,8 +191,9 @@ const columnDefs = [
         'revision',
 
         'ex_showroom_price',
-        'policy_type',
-        'registration_type',
+            'insurance_amount',        // ✅ ADD THIS
+    'registration_amount',
+        
 
         'accessories',
         'accessories_amount',
@@ -201,6 +226,7 @@ const columnDefs = [
         'onroad_price',
 
         'oem_scheme_discount',
+        'csd_discount',
         'fame_subsidy',
         'exchange_bonus',
         'corporate_discount',
@@ -253,6 +279,16 @@ const columnDefs = [
         },
         onGridReady: params => {
             gridApi = params.api;
+            // ✅ ADD THIS DEBUG CODE
+    const rowData = @json($gridConfig['data'] ?? []);
+    console.log('=== FULL ROW DATA ===');
+    console.log(rowData);
+    console.log('Row Data Length:', rowData.length);
+    if (rowData.length > 0) {
+        console.log('First Row:', rowData[0]);
+        console.log('Customer Name:', rowData[0].customer_name);
+        console.log('Mobile:', rowData[0].mobile);
+    }
             const defaultFields = [
 
     'serial_no',
@@ -346,6 +382,7 @@ const columnDefs = [
     'onroad_price',
 
     'oem_scheme_discount',
+    'csd_discount',
     'fame_subsidy',
     'exchange_bonus',
     'corporate_discount',
@@ -462,6 +499,8 @@ const columnDefs = [
     'color',
 
     'ex_showroom_price',
+        'insurance_amount',     // ✅ ADD THIS
+    'registration_amount',
 
     'onroad_price',
 

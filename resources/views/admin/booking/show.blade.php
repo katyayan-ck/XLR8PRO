@@ -130,10 +130,18 @@
 
                 <h2 class="mb-0 fw-bold">Actions</h2>
 
+                @if($otf_processed)
+                <a href="{{ backpack_url('booking/otf-form/' . $booking->id) }}" class="btn btn-primary">
+                    <i class="la la-file-text"></i>
+                    Booking Process (Resume)
+                </a>
+                @else
                 <a href="{{ backpack_url('booking/otf-form/' . $booking->id) }}" class="btn btn-success">
                     <i class="la la-file-text"></i>
                     Booking Process
                 </a>
+                @endif
+
             </div>
             <div class="card-body">
 
@@ -634,7 +642,7 @@
                                 @php $iurl = $log->getFirstMediaUrl('amount-proof') @endphp
                                 <tr>
                                     <td>{{ \Carbon\Carbon::parse($log->date)->format('d-M-Y') }}</td>
-                                    <td>{{ $log->reciept ?? 'N/A' }}</td>
+                                    <td>{{ $log->type_number ?? 'N/A' }}</td>
                                     <td>{{ number_format($log->amount, 2) }}</td>
                                     <td>
                                         @if($iurl)
@@ -1109,7 +1117,7 @@
             <label class="small fw-bold">Customer D.O.B.</label>
 
             <input type="text" class="form-control"
-                value="{{ $booking->receipt_date ? \Carbon\Carbon::parse($booking->c_dob)->format('d-M-Y') : 'N/A' }}"
+                value="{{ $booking->c_dob ? \Carbon\Carbon::parse($booking->c_dob)->format('d-M-Y') : 'N/A' }}"
                 readonly>
         </div>
 
@@ -1283,7 +1291,7 @@
         <div class="col-sm-3">
             <label class="small fw-bold">Expected Delivery Date</label>
             <input type="text" class="form-control"
-                value="{{ $booking->receipt_date ? \Carbon\Carbon::parse($booking->del_date)->format('d-M-Y') : 'N/A' }}"
+                value="{{ $booking->del_date ? \Carbon\Carbon::parse($booking->del_date)->format('d-M-Y') : 'N/A' }}"
                 readonly>
 
         </div>

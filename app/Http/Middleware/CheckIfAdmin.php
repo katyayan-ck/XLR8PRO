@@ -30,7 +30,6 @@ class CheckIfAdmin
         return true;
     }
 
-
     /**
      * Answer to unauthorized access request.
      *

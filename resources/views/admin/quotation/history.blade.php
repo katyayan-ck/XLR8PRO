@@ -4,11 +4,25 @@
 
 <div class="card">
 
-    <div class="card-header">
+    <div class="card-header" style="display: block;">
 
-        <h3 class="mb-0">
+        <h3 class="mb-1">
             Quotation History
         </h3>
+
+        <div style="font-size: 12px; color: #666; margin-top: 5px;">
+
+            <strong>Quotation No.:</strong> {{ $quotation->id }}
+
+            &nbsp;&nbsp; | &nbsp;&nbsp;
+
+            <strong>Customer Name:</strong> {{ $customerName ?? '-' }}
+
+            &nbsp;&nbsp; | &nbsp;&nbsp;
+
+            <strong>Model:</strong> {{ $modelName ?? '-' }}
+
+        </div>
 
     </div>
 
@@ -20,19 +34,21 @@
 
                 <tr>
 
-                    <th width="6%">Rev</th>
+                    <th width="6%">Version</th>
 
                     <th width="10%">Action</th>
 
                     <th width="10%">Status</th>
 
-                    <th width="10%">On Road</th>
+                    
 
                     <th width="10%">User</th>
 
                     <th width="15%">Date</th>
-
-                    <th width="39%">Changes</th>
+                    <th width="10%">On Road</th>
+                    <th width="24%">Financier</th>
+                    <th width="15%">Changes</th>
+                    <th width="5%">View</th>
 
                 </tr>
 
@@ -45,7 +61,7 @@
                 <tr>
 
                     <td>
-                        <strong>{{ $row->revision }}</strong>
+                        <strong>V{{ $row->version }}</strong>
                     </td>
 
                     <td>
@@ -56,11 +72,7 @@
                         {{ ucfirst($row->status) }}
                     </td>
 
-                    <td>
-
-                        ₹ {{ number_format($row->onroad,2) }}
-
-                    </td>
+                    
 
                     <td>
 
@@ -73,75 +85,25 @@
                         {{ $row->created_at->format('d M Y h:i A') }}
 
                     </td>
-
                     <td>
 
-                        @if(count($row->changes))
+                        ₹ {{ number_format($row->onroad,2) }}
 
-                        <table class="table table-sm table-bordered mb-0">
+                    </td>
 
-                            <thead>
-
-                                <tr>
-
-                                    <th>Field</th>
-
-                                    <th>Old Value</th>
-
-                                    <th>New Value</th>
-
-                                </tr>
-
-                            </thead>
-
-                            <tbody>
-
-                                @foreach($row->changes as $change)
-
-                                <tr>
-
-                                    <td>
-
-                                        <strong>
-
-                                            {{ $change['field'] }}
-
-                                        </strong>
-
-                                    </td>
-
-                                    <td class="text-danger">
-
-                                        {{ is_array($change['old']) ? implode(', ', $change['old']) : ($change['old'] ?:
-                                        '-') }}
-
-                                    </td>
-
-                                    <td class="text-success">
-
-                                        {{ is_array($change['new']) ? implode(', ', $change['new']) : ($change['new'] ?:
-                                        '-') }}
-
-                                    </td>
-
-                                </tr>
-
-                                @endforeach
-
-                            </tbody>
-
-                        </table>
-
-                        @else
-
-                        <span class="text-muted">
-
-                            No Changes
-
-                        </span>
-
-                        @endif
-
+                    <td>
+                        {{ $row->financier_display ?: '-' }}
+                    </td>
+                    <td>
+                        {{ $row->change_groups ?: '' }}
+                    </td>
+                    <td class="text-center">
+                        <a href="{{ backpack_url('quotation-form/' . $quotation->id . '/history/' . $row->version . '/pdf') }}"
+                        target="_blank"
+                        title="View PDF"
+                        class="btn btn-sm btn-outline-danger">
+                            <i class="la la-file-pdf"></i>
+                        </a>
                     </td>
 
                 </tr>

@@ -3,8 +3,8 @@
 namespace App\Models\Vehicle;
 
 use App\Models\BaseModel;
+use App\Helpers\KeywordHelper;
 use App\Models\Utilities\KeyValue\Keyvalue;
-use App\Services\KeywordValueService;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use App\Models\Traits\HasColumnTransformations;
 
@@ -25,10 +25,6 @@ class Variant extends BaseModel
         'custom_name',
         'display_name',
 
-        // colour lives on the variant row (one row per colour)
-        'color',
-        'color_code',
-
         'permit_id',
         'taxi_price',
         'fuel_type_id',
@@ -46,7 +42,6 @@ class Variant extends BaseModel
 
         'is_csd',
         'csd_index',
-        'shield_pack',
 
         'status_id',
         'is_active',
@@ -71,79 +66,63 @@ class Variant extends BaseModel
 
         'segment_code' => [
             'trim',
-            'uppercase_alphanumeric_dash_underscore',
+            'uppercase_alphanumeric_dash_underscore'
         ],
 
         'sub_segment_code' => [
             'trim',
-            'uppercase_alphanumeric_dash_underscore',
+            'uppercase_alphanumeric_dash_underscore'
         ],
 
         'model_code' => [
             'trim',
-            'uppercase_alphanumeric_dash_underscore',
+            'uppercase_alphanumeric_dash_underscore'
         ],
 
         'code' => [
             'trim',
-            'uppercase_alphanumeric_dash_underscore',
+            'uppercase_alphanumeric_dash_underscore'
         ],
 
         'oem_name' => [
             'strip_tags',
             'trim_spaces',
-            'title_case',
+            'title_case'
         ],
 
         'custom_name' => [
             'strip_tags',
             'trim_spaces',
-            'title_case',
+            'title_case'
         ],
 
         'display_name' => [
             'strip_tags',
             'trim_spaces',
-            'title_case',
-        ],
-
-        'color' => [
-            'strip_tags',
-            'trim_spaces',
-            'title_case',
-        ],
-
-        'color_code' => [
-            'trim',
-            'uppercase',
+            'title_case'
         ],
 
         'taxi_price' => [
-            'trim',
+            'trim'
         ],
 
         'cc_capacity' => [
-            'trim',
+            'trim'
         ],
 
         'transmission' => [
             'strip_tags',
             'trim_spaces',
-            'title_case',
+            'title_case'
         ],
 
         'drivetrain' => [
             'trim',
-            'uppercase',
+            'uppercase'
         ],
 
         'csd_index' => [
-            'trim',
-        ],
-
-        'shield_pack' => [
-            'strip_tags',
-            'trim_spaces',
+            'trim'
         ],
     ];
 
@@ -218,69 +197,55 @@ class Variant extends BaseModel
         );
     }
 
-    // ── Options (KeywordValueService — no KeywordHelper) ─────────
+    // ── Color relationships ──────────────────────────────────────
 
-    /**
-     * id => value map for FK selects (permit_id, fuel_type_id, …).
-     */
-    protected static function kkvOptions(string $keywordCode): array
+    public function colors()
     {
-        $keywordCode = strtoupper(trim($keywordCode));
-
-        // Prefer id => value for FK form selects
-        $rows = Keyvalue::query()
-            ->where('keyword_code', $keywordCode)
-            ->where('is_active', true)
-            ->orderBy('value')
-            ->get(['id', 'code', 'value']);
-
-        if ($rows->isNotEmpty()) {
-            return $rows->pluck('value', 'id')->toArray();
-        }
-
-        // Fallback: code => value from cached enum
-        return KeywordValueService::getEnum($keywordCode, true);
+        return $this->belongsToMany(
+            Color::class,
+            'variant_colors'
+        );
     }
+
+    // ── Accessors ────────────────────────────────────────────────
 
     public static function getPermitOptions(): array
     {
-        return self::kkvOptions('PERMIT');
+        return KeywordHelper::options('permit');
     }
 
     public static function getFuelTypeOptions(): array
     {
-        return self::kkvOptions('FUEL_TYPE');
+        return KeywordHelper::options('fuel_type');
     }
 
     public static function getBodyTypeOptions(): array
     {
-        return self::kkvOptions('BODY_TYPE');
+        return KeywordHelper::options('body_type');
     }
 
     public static function getBodyMakeOptions(): array
     {
-        return self::kkvOptions('BODY_MAKE');
+        return KeywordHelper::options('body_make');
     }
 
     public static function getStatusOptions(): array
     {
-        return self::kkvOptions('VEHICLE_STATUS');
+        return KeywordHelper::options('vehicle_status');
     }
 
     /**
-     * Base variant code (without colour suffix) from full Model Code.
+     * Derive variant.code from vehicle_info.model_code
      * BM12AH515MB01D00JD → BM12AH515MB01D00
      */
-    public static function codeFromModelCode(string $vehicleInfoModelCode): string
+    public static function codeFromModelCode(
+        string $vehicleInfoModelCode
+    ): string
     {
-        return substr(strtoupper(trim($vehicleInfoModelCode)), 0, -2);
-    }
-
-    /**
-     * Colour code = last 2 chars of full Model Code.
-     */
-    public static function colorCodeFromModelCode(string $vehicleInfoModelCode): string
-    {
-        return substr(strtoupper(trim($vehicleInfoModelCode)), -2);
+        return substr(
+            strtoupper(trim($vehicleInfoModelCode)),
+            0,
+            -2
+        );
     }
 }

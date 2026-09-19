@@ -330,7 +330,7 @@ function importWithGid() {
         }
     };
 
-     – grouped + parent/child sync
+    //   grouped + parent/child sync
     function openColumnBubble() {
         const bubble = document.getElementById('columnBubble');
         const tbody  = document.getElementById('columnBubbleBody');

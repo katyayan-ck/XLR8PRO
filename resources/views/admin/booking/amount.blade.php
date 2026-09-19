@@ -92,6 +92,22 @@
 
                             <div class="col-md-3">
                                 <div class="form-group">
+                                    <label for="mode" class="form-label">
+                                        Mode <span class="text-danger">*</span>
+                                    </label>
+
+                                    <select name="mode" id="mode" class="form-control form-select" required>
+                                        <option value="">Select Mode</option>
+                                        <option value="Cash" {{ old('mode') == 'Cash' ? 'selected' : '' }}>Cash</option>
+                                        <option value="Cheque" {{ old('mode') == 'Cheque' ? 'selected' : '' }}>Cheque</option>
+                                        <option value="Bank Transfer" {{ old('mode') == 'Bank Transfer' ? 'selected' : '' }}>Bank Transfer</option>
+                                        <option value="UPI" {{ old('mode') == 'UPI' ? 'selected' : '' }}>UPI</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-md-3">
+                                <div class="form-group">
                                     <label for="amount" class="form-label">Received Amount <span
                                             class="text-danger">*</span></label>
                                     <input type="number" id="amount" name="amount" step="0.01" min="0.01"

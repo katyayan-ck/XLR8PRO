@@ -130,15 +130,15 @@ class CampaignCrudController extends CrudController
                         'headerName' => 'End Date'
                     ],
 
-                    [
-                        'field' => 'branch_name',
-                        'headerName' => 'Dealer Branch'
-                    ],
+                    // [
+                    //     'field' => 'branch_name',
+                    //     'headerName' => 'Dealer Branch'
+                    // ],
 
-                    [
-                        'field' => 'location_name',
-                        'headerName' => 'Dealer Location'
-                    ],
+                    // [
+                    //     'field' => 'location_name',
+                    //     'headerName' => 'Dealer Location'
+                    // ],
 
                     [
                         'field' => 'action',
@@ -184,27 +184,21 @@ class CampaignCrudController extends CrudController
         $campaign = new Campaign();
 
         $request->validate([
-
             'name' => 'required',
-
             'segment_code' => 'required',
-
             'model_code' => 'required',
-
             'activity_code' => 'required',
-
             'start_date' => 'required|date',
-
             'end_date' => 'required|date',
-
+            'forever' => 'nullable|boolean',
             'branch_code' => 'required',
-
             'location_code' => 'required',
-
         ]);
 
         $campaign->fill($request->all());
-
+        
+        // Explicitly assign the forever value to bypass $fillable array restrictions
+        $campaign->forever = $request->input('forever', 0);
         $campaign->created_by = backpack_user()->id;
 
         $campaign->save();
@@ -219,27 +213,21 @@ class CampaignCrudController extends CrudController
         $campaign = Campaign::findOrFail($id);
 
         $request->validate([
-
             'name' => 'required',
-
             'segment_code' => 'required',
-
             'model_code' => 'required',
-
             'activity_code' => 'required',
-
             'start_date' => 'required|date',
-
             'end_date' => 'required|date',
-
+            'forever' => 'nullable|boolean',
             'branch_code' => 'required',
-
             'location_code' => 'required',
-
         ]);
 
         $campaign->fill($request->all());
-
+        
+        // Explicitly assign the forever value to bypass $fillable array restrictions
+        $campaign->forever = $request->input('forever', 0);
         $campaign->updated_by = backpack_user()->id;
 
         $campaign->save();

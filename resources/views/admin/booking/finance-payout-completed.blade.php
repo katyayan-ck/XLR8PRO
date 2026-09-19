@@ -264,7 +264,6 @@
         }
     };
 
-     Bubble
     function openColumnBubble() {
         const bubble = document.getElementById('columnBubble');
         const tbody = document.getElementById('columnBubbleBody');

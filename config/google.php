@@ -17,9 +17,9 @@ return [
     | https://developers.google.com/console
     |
     */
-	'client_id' => env('GOOGLE_CLIENT_ID'),
-'client_secret' => env('GOOGLE_CLIENT_SECRET'),
-    'redirect_uri' => env('GOOGLE_REDIRECT'),
+    'client_id' => env('GOOGLE_CLIENT_ID', '179150806445-df3n459ca2094ggdbtboomgmfo47871j.apps.googleusercontent.com'),
+    'client_secret' => env('GOOGLE_CLIENT_SECRET', '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'),
+    'redirect_uri' => env('GOOGLE_REDIRECT', 'https://xceler-f8190.firebaseapp.com/__/auth/handler'),
     'access_type' => 'online',
     'prompt' => 'auto',
 	'scopes'           => [\Google_Service_Sheets::DRIVE, \Google_Service_Sheets::SPREADSHEETS],

@@ -14,6 +14,8 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use App\Models\Admin\PinCodes;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class OrgService
 {
@@ -269,33 +271,37 @@ class OrgService
         });
     }
 
-    public static function colors(?string $variantCode = null): array
-    {
-        $key = $variantCode
-            ? "org.colors.{$variantCode}"
-            : 'org.colors.all';
+   public static function colors(?string $variantCode = null): array
+{
+    $key = $variantCode
+        ? "org.colors.{$variantCode}"
+        : 'org.colors.all';
 
-        return Cache::remember(
-            $key,
-            self::CACHE_TTL,
-            function () use ($variantCode) {
+    return Cache::remember(
+        $key,
+        self::CACHE_TTL,
+        function () use ($variantCode) {
 
-                return Color::where('is_active', true)
+            return DB::table('xlr8_vehicle_variant')
+                ->where('is_active', 1)
+                ->whereNotNull('color_code')
+                ->where('color_code', '!=', '')
 
-                    ->when(
-                        $variantCode,
-                        fn($q) => $q->where('variant_code', $variantCode)
-                    )
+                ->when(
+                    $variantCode,
+                    fn($q) => $q->where('code', $variantCode)
+                )
 
-                    ->orderBy('name')
-
-                    ->pluck('name', 'code')
-
-                    ->toArray();
-            }
-        );
-    }
-
+                ->distinct()
+                ->orderBy('color')
+                ->get(['color', 'color_code'])
+                ->mapWithKeys(fn($row) => [
+                    $row->color_code => $row->color ?: 'UNNAMED',
+                ])
+                ->toArray();
+        }
+    );
+}
     // ── User Query Helpers ───────────────────────────────────────────────
     public static function usersByPost(string $postCode, string $branchCode = 'ALL', string $locationCode = 'ALL'): array
     {
@@ -520,7 +526,7 @@ class OrgService
         string $variantCode = 'ALL',
         ?string $userType = null,
         bool $primaryOnly = false
-    ): array {
+        ): array {
         // Base query with relations
         $query = User::with(['person', 'scopes', 'employee'])
             ->whereHas('employee');
@@ -848,12 +854,7 @@ class OrgService
 
     public static function checkReceiptX($rn)
     {
-        $list = Bookingamount::where('reciept', $rn)->first();
-        if ($list) {
-            return 1;
-        } else {
-            return 0;
-        }
+        return Bookingamount::where('type_number', $rn)->exists() ? 1 : 0;
     }
 
     public static function getReferenceUsers(string $type, string $mobile): array
@@ -1078,9 +1079,9 @@ class OrgService
             'active' => $query->where('is_active', true)
                 ->whereHas('employee', fn($e) => $e->whereNull('separation_date')),
             'inactive' => $query->where(function ($q) {
-                    $q->where('is_active', false)
+                $q->where('is_active', false)
                     ->orWhereHas('employee', fn($e) => $e->whereNotNull('separation_date'));
-                }),
+            }),
             default => $query, // 'all'
         };
     }
@@ -1404,6 +1405,165 @@ class OrgService
                 'profile_image' => $row['profile_image'],
             ];
         })->toArray();
+    }
+
+    /**
+     * Applies the UI Highlight Filters to the given Enquiry query.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param string|null $filter
+     * @return void
+     */
+    public static function applyHighlightFilter($query, ?string $filter): void
+    {
+        if (empty($filter)) {
+            return;
+        }
+
+        $today = now()->toDateString();
+
+        switch ($filter) {
+
+            case 'missed_fup':
+                // first_planned_followup_date is filled AND
+                // first_actual_followup_date is blank OR came before the planned date.
+                $query->whereNotNull('first_planned_followup_date')
+                    ->where('first_planned_followup_date', '!=', '')
+                    ->where(function ($q) {
+                        $q->whereNull('first_actual_followup_date')
+                            ->orWhere('first_actual_followup_date', '')
+                            ->orWhereColumn('first_actual_followup_date', '<', 'first_planned_followup_date');
+                    });
+                break;
+
+            case 'today_fup':
+                // first_planned_followup_date is today AND
+                // first_actual_followup_date is not today (blank, earlier, or otherwise different).
+                $query->whereDate('first_planned_followup_date', $today)
+                    ->where(function ($q) use ($today) {
+                        $q->whereNull('first_actual_followup_date')
+                            ->orWhere('first_actual_followup_date', '')
+                            ->orWhereDate('first_actual_followup_date', '!=', $today);
+                    });
+                break;
+
+            case 'birthday':
+                // dob's month & day match today's month & day
+                $query->whereNotNull('dob')
+                    ->whereMonth('dob', now()->month)
+                    ->whereDay('dob', now()->day);
+                break;
+
+            case 'anniversary':
+                // marriage_date's month & day match today's month & day
+                $query->whereNotNull('marriage_date')
+                    ->whereMonth('marriage_date', now()->month)
+                    ->whereDay('marriage_date', now()->day);
+                break;
+
+            case 'exchange':
+                // purchase_type is Exchange Buy
+                $query->where('purchase_type', 'Exchange Buy');
+                break;
+
+            case 'pending_eval':
+                // Exchange Buy entries whose exchange_bonus hasn't been evaluated yet (blank).
+                $query->where('purchase_type', 'Exchange Buy')
+                    ->where(function ($q) {
+                        $q->whereNull('exchange_bonus')
+                            ->orWhere('exchange_bonus', '');
+                    });
+                break;
+
+            case 'delayed':
+                // Any entry with a non-zero delayed count
+                $query->where('delayed', '>', 0);
+                break;
+
+            case 'wrong_assign':
+                // wrong_assign count is exactly 1
+                $query->where('wrong_assign', 1);
+                break;
+
+            case 'finance':
+                // fin_mode is In-house
+                $query->where('fin_mode', 'In-house');
+                break;
+
+            case 'stage_mismatch':
+                // DMS stage and CRE stage do not match
+                // $query->whereNotNull('dms_enquiry_stage')
+                //     ->whereNotNull('cre_enquiry_stage')
+                //     ->whereColumn('dms_enquiry_stage', '!=', 'cre_enquiry_stage');
+                break;
+
+            case 'lost_verif':
+                // stage is Lost but the entry is still marked active
+                $query->where('stage', 'Lost')
+                    ->where('is_active', 1);
+                break;
+        }
+    }
+
+    /**
+     * Fetch customer & transaction details dynamically based on priority:
+     * 1. Enquiry ID
+     * 2. Booking ID
+     * 3. VOTF No
+     */
+    public static function getCustomerByTransactionIds($enqNo = null, $bookingId = null, $votfNo = null)
+    {
+        $enquiry = null;
+        $booking = null;
+        $enqNoClean = $enqNo ? str_replace(['XENQ-', 'xenq-'], '', strtoupper($enqNo)) : null;
+
+        if ($enqNoClean) {
+            $enquiry = DB::table('xlr8_crm_enquiries')->where('id', $enqNoClean)->first();
+        }
+
+        if (!$enquiry && $bookingId) {
+            $booking = DB::table('xlr8_booking_master')->where('id', $bookingId)->first();
+            if ($booking && $booking->enq_no) {
+                $cleanRef = str_replace(['XENQ-', 'xenq-'], '', strtoupper($booking->enq_no));
+                $enquiry = DB::table('xlr8_crm_enquiries')->where('id', $cleanRef)->first();
+            }
+        }
+
+        if (!$enquiry && $votfNo) {
+            $booking = DB::table('xlr8_booking_master')->where('votf_no', $votfNo)->first();
+            if ($booking && $booking->enq_no) {
+                $cleanRef = str_replace(['XENQ-', 'xenq-'], '', strtoupper($booking->enq_no));
+                $enquiry = DB::table('xlr8_crm_enquiries')->where('id', $cleanRef)->first();
+            } else {
+                // Fallback: Check enquiry table directly for oem_otf_no
+                $enquiry = DB::table('xlr8_crm_enquiries')->where('oem_otf_no', $votfNo)->first();
+            }
+        }
+
+        if (!$enquiry) {
+            return ['success' => false];
+        }
+
+        if (!$booking) {
+            $booking = DB::table('xlr8_booking_master')
+                ->where('enq_no', 'XENQ-' . $enquiry->id)
+                ->orWhere('enq_no', $enquiry->id)
+                ->first();
+        }
+
+        return [
+            'success'          => true,
+            'enq_id'           => $enquiry->id,
+            'customer_name'    => $enquiry->name ?? $enquiry->customer_name ?? $enquiry->first_name ?? '',
+            'care_of_type'     => $enquiry->care_of_type ?? '',
+            'care_of'          => $enquiry->care_of ?? '',
+            'address'          => $enquiry->address ?? $enquiry->address1 ?? '',
+            'mobile'           => $enquiry->mobile ?? $enquiry->contact_no ?? '',
+            'alternate_mobile' => $enquiry->alternate_mobile ?? '',
+            'booking_no'       => $booking->id ?? $enquiry->booking_no ?? $enquiry->x8_booking_no ?? '',
+            'votf_no'          => $booking->votf_no ?? $enquiry->oem_otf_no ?? '',
+            'vehicle_registration_no' => $enquiry->vehicle_no ?? ''
+        ];
     }
 
 }
