@@ -3,11 +3,15 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class ModulesRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
+     *
+     * Permission-level authorization (rbac.manage) is enforced explicitly in
+     * ModulesCrudController, matching this app's established convention.
      *
      * @return bool
      */
@@ -19,12 +23,28 @@ class ModulesRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
+     * Shared between store() and update() — the route's {id} is the module's
+     * numeric id, used to exclude the current row from the unique check on
+     * update.
+     *
      * @return array
      */
     public function rules()
     {
+        $currentId = $this->route('id');
+
         return [
-            // 'name' => 'required|min:5|max:255'
+            'code' => [
+                'required',
+                'string',
+                'max:50',
+                Rule::unique('xlr8_iam_module', 'code')->ignore($currentId),
+            ],
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'is_active' => $this->isMethod('PUT') || $this->isMethod('PATCH')
+                ? 'boolean'
+                : 'nullable|boolean',
         ];
     }
 

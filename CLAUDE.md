@@ -543,4 +543,40 @@ Before any task, also read:
 - Never run migrations or seeders against a non-local database.
 - Never `git commit` or `git push` without being explicitly asked to in that turn.
 
+## Mandatory AI change/finding logging (universal — all AI tools, not just Claude)
+
+This rule applies to every AI coding assistant working in this repository: Claude Code,
+Continue, Cline, Kilo, Cursor, Aider, or any other. The canonical copy of this rule lives in
+`AGENTS.md` (the cross-tool convention file every agent should read); it is duplicated here so
+Claude Code always has it even if `AGENTS.md` isn't in context.
+
+- Every actual change (code, config, migration, route, etc.) made by an AI assistant MUST be
+  logged in `docs/refactor/ai-changelogs-DD-MM-YYYY.md` (today's date). Append one entry per
+  change: file(s) touched, the previous value/content, the new value/content, and a one-line
+  reason. Create the day's file if it doesn't exist; never overwrite a prior day's file.
+- Every finding, suggestion, or deferred/future action surfaced during investigation — even when
+  no code was changed — MUST be logged in `docs/refactor/ai-findings-DD-MM-YYYY.md` (same date
+  format), so nothing discovered in one session/tool is lost before the next.
+- `docs/refactor/` is the single shared, cross-tool log location for this project. Do not
+  create a differently-named or differently-located log file for this purpose.
+
+## Mandatory known-bugs tracking (universal — all AI tools, not just Claude)
+
+`docs/refactor/known-bugs-report.md` is a permanent, continuously-updated bug tracker — unlike
+the dated `ai-changelogs-*`/`ai-findings-*` files, this one is edited in place and never rotates.
+Every AI coding assistant working in this repository MUST follow this:
+
+- Before starting work in an area, check `known-bugs-report.md` for existing entries covering it
+  — don't rediscover and re-report something already tracked there.
+- The moment you find a new independent bug (not the specific thing you were asked to fix, but
+  something adjacent noticed along the way), add an entry immediately — don't wait until the end
+  of the task, and don't let it live only in a changelog/findings entry without also landing here.
+- Each entry needs: a `BUG-XXX` id, title, Status (OPEN/FIXED/WON'T FIX), Severity, a `Found`
+  timestamp (`DD-MM-YYYY HH:MM`), a `Modified` timestamp line for every later update to the same
+  entry, a `Fixed` timestamp once resolved (linking to the `ai-changelogs` entry with the actual
+  diff), Where, Description, and Proposed solution. Follow the template already in the file.
+- Never delete an entry, even once fixed — mark it FIXED and keep it, so there's a permanent
+  record. Update the entry in place; append to its history rather than overwriting prior findings.
+- Update the index table at the top of the file whenever an entry is added or its status changes.
+
 </laravel-boost-guidelines>

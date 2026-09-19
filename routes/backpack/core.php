@@ -1,17 +1,40 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Admin\CampaignCrudController;
 use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Admin\SubSegmentCrudController;
-use App\Http\Controllers\Admin\VehicleModelCrudController;
-use App\Http\Controllers\Admin\VehicleAccessoryCrudController;
-use App\Http\Controllers\Admin\VariantCrudController;
-use App\Http\Controllers\Admin\ColorCrudController;
-use App\Http\Controllers\Admin\PermissionCrudController;
+use App\Http\Controllers\Admin\EnquiryCrudController;
+use App\Http\Controllers\Admin\FinanceCrudController;
+use App\Http\Controllers\Admin\Iam\Modules\ModulesCrudController;
+use App\Http\Controllers\Admin\Iam\Permission\PermissionCrudController;
+use App\Http\Controllers\Admin\Iam\Process\ProcessCrudController;
+use App\Http\Controllers\Admin\Iam\Role\RoleCrudController;
+use App\Http\Controllers\Admin\InsuranceCrudController;
+use App\Http\Controllers\Admin\JournalVoucherCrudController;
 use App\Http\Controllers\Admin\LeadCrudController;
 use App\Http\Controllers\Admin\LeadSourceCrudController;
-use App\Http\Controllers\Admin\EnquiryCrudController;
-use App\Http\Controllers\Admin\CampaignCrudController;
+use App\Http\Controllers\Admin\Org\Branch\BranchCrudController;
+use App\Http\Controllers\Admin\Org\Department\DepartmentCrudController;
+use App\Http\Controllers\Admin\Org\Designation\DesignationCrudController;
+use App\Http\Controllers\Admin\Org\Division\DivisionCrudController;
+use App\Http\Controllers\Admin\Org\Employee\EmployeeCrudController;
+use App\Http\Controllers\Admin\Org\Location\LocationCrudController;
+use App\Http\Controllers\Admin\Org\Person\PersonCrudController;
+use App\Http\Controllers\Admin\Org\PersonAddress\PersonAddressCrudController;
+use App\Http\Controllers\Admin\Org\PersonBankingDetail\PersonBankingDetailCrudController;
+use App\Http\Controllers\Admin\Org\PersonContact\PersonContactCrudController;
+use App\Http\Controllers\Admin\Org\Vertical\VerticalCrudController;
+use App\Http\Controllers\Admin\OrgDemoController;
+use App\Http\Controllers\Admin\ReceiptCrudController;
+use App\Http\Controllers\Admin\RtoCrudController;
+use App\Http\Controllers\Admin\Utils\SystemSetting\SystemSettingCrudController;
+use App\Http\Controllers\Admin\Vehicle\Brand\BrandCrudController;
+use App\Http\Controllers\Admin\Vehicle\Color\ColorCrudController;
+use App\Http\Controllers\Admin\Vehicle\Model\VehicleModelCrudController;
+use App\Http\Controllers\Admin\Vehicle\Segment\SegmentCrudController;
+use App\Http\Controllers\Admin\Vehicle\SubSegment\SubSegmentCrudController;
+use App\Http\Controllers\Admin\Vehicle\Variant\VariantCrudController;
+use App\Http\Controllers\Admin\VehicleAccessoryCrudController;
+use Illuminate\Support\Facades\Route;
 
 Route::group([
     'prefix' => config('backpack.base.route_prefix', 'admin'),
@@ -22,12 +45,12 @@ Route::group([
     'namespace' => 'App\Http\Controllers\Admin',
 ], function () {
 
-    Route::get('org-demo', [App\Http\Controllers\Admin\OrgDemoController::class, 'index'])->name('backpack.org.demo');
+    Route::get('org-demo', [OrgDemoController::class, 'index'])->name('backpack.org.demo');
 
-    Route::get('finance/import', [App\Http\Controllers\Admin\FinanceCrudController::class, 'import'])->name('finance.import');
-    Route::get('insurance/import', [App\Http\Controllers\Admin\InsuranceCrudController::class, 'import'])->name('insurance.import');
-    Route::get('rto/import', [App\Http\Controllers\Admin\RtoCrudController::class, 'import'])->name('rto.import');
-    Route::post('segment/import', [App\Http\Controllers\Admin\SegmentCrudController::class, 'import'])->name('segment.import');
+    Route::get('finance/import', [FinanceCrudController::class, 'import'])->name('finance.import');
+    Route::get('insurance/import', [InsuranceCrudController::class, 'import'])->name('insurance.import');
+    Route::get('rto/import', [RtoCrudController::class, 'import'])->name('rto.import');
+    Route::post('segment/import', [SegmentCrudController::class, 'import'])->name('segment.import');
 
     Route::get('home', [DashboardController::class, 'index'])->name('backpack.dashboard.home');
     Route::get('dashboard', [DashboardController::class, 'index'])->name('backpack.dashboard');
@@ -51,31 +74,31 @@ Route::group([
     Route::get('permission/processes/{moduleCode}', [PermissionCrudController::class, 'getProcesses']);
 
     // ==================== STANDARD CRUD ROUTES ====================
-    Route::crud('modules', 'ModulesCrudController');
-    Route::crud('permission', 'PermissionCrudController');
+    Route::crud('modules', ModulesCrudController::class);
+    Route::crud('permission', PermissionCrudController::class);
     Route::crud('lead', 'LeadCrudController');
-    Route::crud('role', 'RoleCrudController');
-    Route::crud('process', 'ProcessCrudController');
+    Route::crud('role', RoleCrudController::class);
+    Route::crud('process', ProcessCrudController::class);
     Route::crud('vehicle-accessory', VehicleAccessoryCrudController::class);
-    Route::crud('system-settings', 'SystemSettingCrudController');
-    Route::crud('branch', 'BranchCrudController');
-    Route::crud('brand', 'BrandCrudController');
-    Route::crud('color', 'ColorCrudController');
-    Route::crud('department', 'DepartmentCrudController');
-    Route::crud('designation', 'DesignationCrudController');
-    Route::crud('division', 'DivisionCrudController');
-    Route::crud('employee', 'EmployeeCrudController');
+    Route::crud('system-settings', SystemSettingCrudController::class);
+    Route::crud('branch', BranchCrudController::class);
+    Route::crud('brand', BrandCrudController::class);
+    Route::crud('color', ColorCrudController::class);
+    Route::crud('department', DepartmentCrudController::class);
+    Route::crud('designation', DesignationCrudController::class);
+    Route::crud('division', DivisionCrudController::class);
+    Route::crud('employee', EmployeeCrudController::class);
     Route::crud('keyvalue', 'KeyvalueCrudController');
     Route::crud('keyword-master', 'KeywordMasterCrudController');
-    Route::crud('location', 'LocationCrudController');
-    Route::crud('person-address', 'PersonAddressCrudController');
-    Route::crud('person-banking-detail', 'PersonBankingDetailCrudController');
-    Route::crud('person-contact', 'PersonContactCrudController');
-    Route::crud('person', 'PersonCrudController');
-    Route::crud('segment', 'SegmentCrudController');
-    Route::crud('sub-segment', 'SubSegmentCrudController');
-    Route::crud('variant', 'VariantCrudController');
-    Route::crud('vertical', 'VerticalCrudController');
+    Route::crud('location', LocationCrudController::class);
+    Route::crud('person-address', PersonAddressCrudController::class);
+    Route::crud('person-banking-detail', PersonBankingDetailCrudController::class);
+    Route::crud('person-contact', PersonContactCrudController::class);
+    Route::crud('person', PersonCrudController::class);
+    Route::crud('segment', SegmentCrudController::class);
+    Route::crud('sub-segment', SubSegmentCrudController::class);
+    Route::crud('variant', VariantCrudController::class);
+    Route::crud('vertical', VerticalCrudController::class);
     Route::crud('user', 'UserCrudController');
     Route::crud('spare-request', 'SpareRequestCrudController');
 
@@ -122,7 +145,7 @@ Route::group([
     Route::get('enquiry/reference-users', [EnquiryCrudController::class, 'getReferenceUsers'])->name('enquiry.reference-users');
     Route::get('enquiry/check-duplicate', [EnquiryCrudController::class, 'checkDuplicateEnquiry'])->name('enquiry.check-duplicate');
     Route::get('enquiry/location-by-pincode', [EnquiryCrudController::class, 'locationByPincode'])->name('enquiry.location-by-pincode');
-    Route::get('accounts/receipt/fetch-enquiry', [App\Http\Controllers\Admin\ReceiptCrudController::class, 'fetchEnquiryDetails'])
+    Route::get('accounts/receipt/fetch-enquiry', [ReceiptCrudController::class, 'fetchEnquiryDetails'])
         ->name('accounts.receipt.fetch-enquiry');
 
     // Specialized Enquiry Listings
@@ -164,7 +187,6 @@ Route::group([
     Route::get('finance/enquiry/{id}/edit', [EnquiryCrudController::class, 'financeEnquiryEdit']);
     Route::put('finance/enquiry/{id}/update', [EnquiryCrudController::class, 'financeEnquiryUpdate'])->name('enquiry.finance.update');
 
-
     // =========== CAMPAIGN ========================
     Route::crud('campaign', 'CampaignCrudController');
     Route::get('campaign', [CampaignCrudController::class, 'index'])->name('campaign.index');
@@ -177,20 +199,20 @@ Route::group([
     Route::get('campaign/locations/{branchCode}', [CampaignCrudController::class, 'getLocations']);
 
     // =========== TEST DRIVE =====================
-    //Route::crud('testdrive', 'TestDriveCrudController');
+    // Route::crud('testdrive', 'TestDriveCrudController');
     // =========== HYPERLOCAL ENQUIRIES ===========
     Route::get('enquiries/hyperlocal', [EnquiryCrudController::class, 'hyperlocalList'])
         ->name('enquiry.hyperlocal');
     Route::get('enquiries/otf-bookings', [EnquiryCrudController::class, 'otfBookingsList'])
         ->name('enquiry.otf-bookings');
     Route::get('enquiries/otf-bookings/{id}/show', [EnquiryCrudController::class, 'showOtf'])->name('enquiry.otf.show');
-    Route::get('accounts/receipt/{id}/show', [App\Http\Controllers\Admin\ReceiptCrudController::class, 'show'])->name('accounts.receipt.show');
-    Route::get('accounts/receipt/{id}/edit', [App\Http\Controllers\Admin\ReceiptCrudController::class, 'edit'])->name('accounts.receipt.edit');
-    Route::put('accounts/receipt/{id}', [App\Http\Controllers\Admin\ReceiptCrudController::class, 'update'])->name('accounts.receipt.update');
-    Route::get('accounts/journal-voucher-list', [App\Http\Controllers\Admin\JournalVoucherCrudController::class, 'index'])->name('accounts.journal-voucher.index');
-    Route::get('accounts/journal-voucher/create', [App\Http\Controllers\Admin\JournalVoucherCrudController::class, 'create'])->name('accounts.journal-voucher.create');
-    Route::post('accounts/journal-voucher-list', [App\Http\Controllers\Admin\JournalVoucherCrudController::class, 'store'])->name('accounts.journal-voucher.store');
-    Route::get('accounts/journal-voucher/{id}/edit', [App\Http\Controllers\Admin\JournalVoucherCrudController::class, 'edit'])->name('accounts.journal-voucher.edit');
-    Route::put('accounts/journal-voucher/{id}', [App\Http\Controllers\Admin\JournalVoucherCrudController::class, 'update'])->name('accounts.journal-voucher.update');
-    Route::get('accounts/journal-voucher/fetch-enquiry', [App\Http\Controllers\Admin\JournalVoucherCrudController::class, 'fetchEnquiryDetails'])->name('accounts.journal-voucher.fetch-enquiry');
+    Route::get('accounts/receipt/{id}/show', [ReceiptCrudController::class, 'show'])->name('accounts.receipt.show');
+    Route::get('accounts/receipt/{id}/edit', [ReceiptCrudController::class, 'edit'])->name('accounts.receipt.edit');
+    Route::put('accounts/receipt/{id}', [ReceiptCrudController::class, 'update'])->name('accounts.receipt.update');
+    Route::get('accounts/journal-voucher-list', [JournalVoucherCrudController::class, 'index'])->name('accounts.journal-voucher.index');
+    Route::get('accounts/journal-voucher/create', [JournalVoucherCrudController::class, 'create'])->name('accounts.journal-voucher.create');
+    Route::post('accounts/journal-voucher-list', [JournalVoucherCrudController::class, 'store'])->name('accounts.journal-voucher.store');
+    Route::get('accounts/journal-voucher/{id}/edit', [JournalVoucherCrudController::class, 'edit'])->name('accounts.journal-voucher.edit');
+    Route::put('accounts/journal-voucher/{id}', [JournalVoucherCrudController::class, 'update'])->name('accounts.journal-voucher.update');
+    Route::get('accounts/journal-voucher/fetch-enquiry', [JournalVoucherCrudController::class, 'fetchEnquiryDetails'])->name('accounts.journal-voucher.fetch-enquiry');
 }); // ← This should be the last line

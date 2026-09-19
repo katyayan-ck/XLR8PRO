@@ -5,41 +5,38 @@ namespace App\Http\Controllers;
 use App\Services\Importers\UserImporter;
 use Exception;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Font;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class UserImportExportController extends Controller
 {
-   
     public function showImportForm()
     {
         return view('admin.users.import');
     }
 
-   
     public function import(Request $request)
     {
         try {
             $request->validate([
-                'file' => 'required|file|mimes:xlsx,xls,csv|max:10240', 
+                'file' => 'required|file|mimes:xlsx,xls,csv|max:10240',
             ]);
 
-           
             $file = $request->file('file');
-            $filename = 'import_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
+            $filename = 'import_'.Str::random(10).'.'.$file->getClientOriginalExtension();
             $path = $file->storeAs('imports', $filename, 'local');
-            $fullPath = storage_path('app/' . $path);
+            $fullPath = storage_path('app/'.$path);
 
-            
             $importer = new UserImporter($fullPath);
             $result = $importer->execute();
 
-           
             if (file_exists($fullPath)) {
                 unlink($fullPath);
             }
 
-          
             if ($result['success']) {
                 return response()->json([
                     'success' => true,
@@ -56,7 +53,7 @@ class UserImportExportController extends Controller
         } catch (Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Import failed: ' . $e->getMessage(),
+                'message' => 'Import failed: '.$e->getMessage(),
                 'error' => $e->getMessage(),
             ], 500);
         }
@@ -67,7 +64,6 @@ class UserImportExportController extends Controller
         return view('admin.users.export');
     }
 
-    
     public function export(Request $request)
     {
         try {
@@ -92,42 +88,38 @@ class UserImportExportController extends Controller
                 $filters['is_active'] = ($request->status === 'active');
             }
 
-            
-            $exporter = new UserExporter();
+            $exporter = new UserExporter;
             $exporter->withFilters($filters);
             $result = $exporter->execute();
 
             if ($result['success']) {
                 return response()->download($result['path'], $result['filename']);
             } else {
-                return back()->with('error', 'Export failed: ' . $result['message']);
+                return back()->with('error', 'Export failed: '.$result['message']);
             }
         } catch (Exception $e) {
-            return back()->with('error', 'Export failed: ' . $e->getMessage());
+            return back()->with('error', 'Export failed: '.$e->getMessage());
         }
     }
 
-    
     public function downloadTemplate()
     {
         $filename = 'user_import_template.xlsx';
-        $path = resource_path('templates/' . $filename);
+        $path = resource_path('templates/'.$filename);
 
-        if (!file_exists($path)) {
+        if (! file_exists($path)) {
             $this->generateTemplate($path);
         }
 
         return response()->download($path, 'vdms_user_import_template.xlsx');
     }
 
-   
     private function generateTemplate($path)
     {
-        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Users');
 
-        
         $headers = [
             'Person Code',
             'First Name',
@@ -161,19 +153,18 @@ class UserImportExportController extends Controller
         foreach ($headers as $col => $header) {
             $cell = $sheet->getCellByColumnAndRow($col + 1, 1);
             $cell->setValue($header);
-            $cell->getStyle()->setFont(new \PhpOffice\PhpSpreadsheet\Style\Font([
+            $cell->getStyle()->setFont(new Font([
                 'bold' => true,
-                'color' => 'FFFFFF'
+                'color' => 'FFFFFF',
             ]));
-            $cell->getStyle()->setFill(new \PhpOffice\PhpSpreadsheet\Style\Fill([
+            $cell->getStyle()->setFill(new Fill([
                 'fillType' => 'solid',
-                'startColor' => '366092'
+                'startColor' => '366092',
             ]));
         }
 
-        /
-        $sheet->setCellValue('A' . 3, 'INSTRUCTIONS:');
-        $sheet->getStyle('A3')->setFont(new \PhpOffice\PhpSpreadsheet\Style\Font(['bold' => true, 'italic' => true]));
+        $sheet->setCellValue('A'. 3, 'INSTRUCTIONS:');
+        $sheet->getStyle('A3')->setFont(new Font(['bold' => true, 'italic' => true]));
 
         $instructions = [
             '- Person Code: Auto-generated if left blank',
@@ -190,7 +181,7 @@ class UserImportExportController extends Controller
         ];
 
         foreach ($instructions as $idx => $instruction) {
-            $sheet->setCellValue('A' . (4 + $idx), $instruction);
+            $sheet->setCellValue('A'.(4 + $idx), $instruction);
         }
 
         foreach (range(1, count($headers)) as $col) {
@@ -198,11 +189,11 @@ class UserImportExportController extends Controller
         }
 
         @mkdir(dirname($path), 0755, true);
-        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $writer = new Xlsx($spreadsheet);
         $writer->save($path);
     }
 
-        public function importHistory()
+    public function importHistory()
     {
         $imports = \DB::table('import_logs')
             ->orderBy('created_at', 'desc')
@@ -211,7 +202,6 @@ class UserImportExportController extends Controller
         return view('admin.users.import-history', compact('imports'));
     }
 
-    
     public function exportHistory()
     {
         $exports = \DB::table('export_logs')
