@@ -1,0 +1,59 @@
+name: Shared cPanel Auto-Publish Pipeline
+
+on:
+  push:
+    branches:
+      - stage
+      - uat
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Determine Environment Variables
+        id: env-setup
+        run: |
+          if [ "${{ github.ref_name }}" = "stage" ]; then
+            echo "dir=/home/${{ secrets.SSH_USER }}/dev.xceler8.in" >> $GITHUB_OUTPUT
+            echo "env_name=Development Staging (dev.xceler8.in)" >> $GITHUB_OUTPUT
+          elif [ "${{ github.ref_name }}" = "uat" ]; then
+            echo "dir=/home/${{ secrets.SSH_USER }}/uat.xceler8.in" >> $GITHUB_OUTPUT
+            echo "env_name=UAT/Staging (uat.xceler8.in)" >> $GITHUB_OUTPUT
+          elif [ "${{ github.ref_name }}" = "main" ]; then
+            echo "dir=/home/${{ secrets.SSH_USER }}/crm.xceler8.in" >> $GITHUB_OUTPUT
+            echo "env_name=Production CRM (crm.xceler8.in)" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Execute Remote SSH Deployment Hooks
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script_stop: true # Fails pipeline instantly if any step returns an error code
+          script: |
+            echo "Starting deployment loop for target: ${{ steps.env-setup.outputs.env_name }}"
+            
+            # Navigate to the environment directory
+            cd ${{ steps.env-setup.outputs.dir }}
+            
+            # Step A: Enter Maintenance Mode safely to prevent active user traffic errors
+            php artisan down || true
+            
+            # Step B: Sync directory working tree hard against matching GitHub branch
+            git fetch origin
+            git reset --hard origin/${{ github.ref_name }}
+            
+            # Step C: Dynamic Composer Updates and Dependency Realignment
+            composer install --no-interaction --prefer-dist --optimize-autoloader
+            composer dump-autoload
+            
+            # Step D: Run Database Alterations and Clear Compilation Cache Footprints
+            php artisan migrate --force
+            php artisan optimize:clear
+            
+            # Step E: Bring Application back online smoothly
+            php artisan up
+            echo "Deployment successfully executed!"

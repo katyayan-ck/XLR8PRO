@@ -475,5 +475,47 @@
         "asset_disk_path": "basset/backpack/crud/fields/range-field.js",
         "asset_attributes": [],
         "asset_content_hash": "\n<script>\n    function bpFieldInitRangeElement($element) {\n        const input = $element[0];\n        const bubble = input.nextElementSibling;\n        if (!bubble || !bubble.classList.contains('bp-range-bubble')) return;\n\n        // native range thumb is ~16px wide; offset the bubble so it tracks the thumb center\n        const THUMB_WIDTH = 16;\n\n        function positionBubble() {\n            bubble.textContent = input.value;\n            const min = parseFloat(input.min) || 0;\n            const max = parseFloat(input.max) || 100;\n            const val = parseFloat(input.value) || 0;\n            const ratio = max === min ? 0 : (val - min) / (max - min);\n            const offset = ratio * (input.offsetWidth - THUMB_WIDTH) + THUMB_WIDTH / 2;\n            bubble.style.left = offset + 'px';\n        }\n\n        input.addEventListener('input', positionBubble);\n        window.addEventListener('resize', positionBubble);\n        // defer to next frame so layout is settled (e.g. inside tabs/modals)\n        requestAnimationFrame(positionBubble);\n    }\n</script>\n"
+    },
+    "D:\\laragon\\www\\xlrm\\vendor/backpack/crud/src/resources/assets/img/spinner.svg": {
+        "asset_name": "D:\\laragon\\www\\xlrm\\vendor/backpack/crud/src/resources/assets/img/spinner.svg",
+        "asset_path": "D:\\laragon\\www\\xlrm\\vendor/backpack/crud/src/resources/assets/img/spinner.svg",
+        "asset_disk_path": "basset/vendor/backpack/crud/src/resources/assets/img/spinner.svg",
+        "asset_attributes": []
+    },
+    "D:\\laragon\\www\\xlrm\\vendor/backpack/crud/src/resources/assets/libs/jquery.mjs.nestedSortable2.js": {
+        "asset_name": "D:\\laragon\\www\\xlrm\\vendor/backpack/crud/src/resources/assets/libs/jquery.mjs.nestedSortable2.js",
+        "asset_path": "D:\\laragon\\www\\xlrm\\vendor/backpack/crud/src/resources/assets/libs/jquery.mjs.nestedSortable2.js",
+        "asset_disk_path": "basset/vendor/backpack/crud/src/resources/assets/libs/jquery.mjs.nestedSortable2.js",
+        "asset_attributes": []
+    },
+    "D:\\laragon\\www\\xlrm\\vendor/backpack/theme-tabler/resources/assets/js/tabler.js": {
+        "asset_name": "D:\\laragon\\www\\xlrm\\vendor/backpack/theme-tabler/resources/assets/js/tabler.js",
+        "asset_path": "D:\\laragon\\www\\xlrm\\vendor/backpack/theme-tabler/resources/assets/js/tabler.js",
+        "asset_disk_path": "basset/vendor/backpack/theme-tabler/resources/assets/js/tabler.js",
+        "asset_attributes": []
+    },
+    "D:\\laragon\\www\\xlrm\\vendor/backpack/theme-tabler/resources/assets/css/style.css": {
+        "asset_name": "D:\\laragon\\www\\xlrm\\vendor/backpack/theme-tabler/resources/assets/css/style.css",
+        "asset_path": "D:\\laragon\\www\\xlrm\\vendor/backpack/theme-tabler/resources/assets/css/style.css",
+        "asset_disk_path": "basset/vendor/backpack/theme-tabler/resources/assets/css/style.css",
+        "asset_attributes": []
+    },
+    "D:\\laragon\\www\\xlrm\\vendor/backpack/theme-tabler/resources/assets/css/color-adjustments.css": {
+        "asset_name": "D:\\laragon\\www\\xlrm\\vendor/backpack/theme-tabler/resources/assets/css/color-adjustments.css",
+        "asset_path": "D:\\laragon\\www\\xlrm\\vendor/backpack/theme-tabler/resources/assets/css/color-adjustments.css",
+        "asset_disk_path": "basset/vendor/backpack/theme-tabler/resources/assets/css/color-adjustments.css",
+        "asset_attributes": []
+    },
+    "D:\\laragon\\www\\xlrm\\vendor/backpack/crud/src/resources/assets/js/common.js": {
+        "asset_name": "D:\\laragon\\www\\xlrm\\vendor/backpack/crud/src/resources/assets/js/common.js",
+        "asset_path": "D:\\laragon\\www\\xlrm\\vendor/backpack/crud/src/resources/assets/js/common.js",
+        "asset_disk_path": "basset/vendor/backpack/crud/src/resources/assets/js/common.js",
+        "asset_attributes": []
+    },
+    "D:\\laragon\\www\\xlrm\\vendor/backpack/crud/src/resources/assets/css/common.css": {
+        "asset_name": "D:\\laragon\\www\\xlrm\\vendor/backpack/crud/src/resources/assets/css/common.css",
+        "asset_path": "D:\\laragon\\www\\xlrm\\vendor/backpack/crud/src/resources/assets/css/common.css",
+        "asset_disk_path": "basset/vendor/backpack/crud/src/resources/assets/css/common.css",
+        "asset_attributes": []
     }
 }
