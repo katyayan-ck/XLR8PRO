@@ -112,32 +112,28 @@
             <div class="col-md-2 form-group readonly-field">
                 <label class="readonly-label">Location</label>
                 <div class="readonly-value">
-                    @if($booking->location_code)
-                    {{ $booking->location?->name ?? '—' }}
-                    @else
-                    {{ $booking->location_other ?: '—' }}
-                    @endif
+                    {{ $data['location'] ?? '—' }}
                 </div>
             </div>
 
             <div class="col-md-2 form-group readonly-field">
                 <label class="readonly-label">Model</label>
                 <div class="readonly-value">
-                    {{ $booking->model_code ?? '—' }}
+                    {{ collect($data['models'] ?? [])->firstWhere('code', $booking->model_code)['name'] ?? $booking->model_code ?? '—' }}
                 </div>
             </div>
 
             <div class="col-md-2 form-group readonly-field">
                 <label class="readonly-label">Variant</label>
                 <div class="readonly-value">
-                    {{ $booking->variant_code ?? '—' }}
+                    {{ collect($data['variants'] ?? [])->firstWhere('code', $booking->variant_code)['name'] ?? $booking->variant_code ?? '—' }}
                 </div>
             </div>
 
             <div class="col-md-2 form-group readonly-field">
                 <label class="readonly-label">Color</label>
                 <div class="readonly-value">
-                    {{ $booking->color_code ?? '—' }}
+                    {{ collect($data['colors'] ?? [])->firstWhere('code', $booking->color_code)['name'] ?? $booking->color_code ?? '—' }}
                 </div>
             </div>
 

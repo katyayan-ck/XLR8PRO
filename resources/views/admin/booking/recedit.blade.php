@@ -27,10 +27,14 @@
 
                 <div class="row g-3">
 
-                    <div class="col-sm-4">
+                    <div class="col-sm-3">
                         <label for="reciept_no">Receipt No. <span class="text-danger">*</span></label>
-                        <input type="text" name="reciept" id="reciept_no" class="form-control"
-                            value="{{ old('reciept', $entry->reciept) }}" required>
+                        <input type="text"
+                            name="reciept"
+                            id="reciept_no"
+                            class="form-control"
+                            value="{{ old('reciept', $entry->type_number) }}"
+                            required>
                         <div id="reciept_no_warning" class="text-danger mt-1" style="display:none;">
                             Receipt No. already exists
                         </div>
@@ -38,13 +42,32 @@
                         <input type="hidden" name="receipt_id" value="{{ $entry->id }}">
                     </div>
 
-                    <div class="col-sm-4">
+                    <div class="col-sm-3">
                         <label for="date_picker">Date <span class="text-danger">*</span></label>
                         <input type="text" name="date" id="date_picker" class="form-control flatpickr"
                             value="{{ old('date', \Carbon\Carbon::parse($entry->date)->format('d-M-Y')) }}" required>
                     </div>
 
-                    <div class="col-sm-4">
+                    <div class="col-sm-3">
+                        <label for="mode">Mode <span class="text-danger">*</span></label>
+                        <select name="mode" id="mode" class="form-control form-select" required>
+                            <option value="">Select Mode</option>
+                            <option value="Cash" {{ old('mode', $entry->mode) == 'Cash' ? 'selected' : '' }}>
+                                Cash
+                            </option>
+                            <option value="Cheque" {{ old('mode', $entry->mode) == 'Cheque' ? 'selected' : '' }}>
+                                Cheque
+                            </option>
+                            <option value="Bank Transfer" {{ old('mode', $entry->mode) == 'Bank Transfer' ? 'selected' : '' }}>
+                                Bank Transfer
+                            </option>
+                            <option value="UPI" {{ old('mode', $entry->mode) == 'UPI' ? 'selected' : '' }}>
+                                UPI
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="col-sm-3">
                         <label for="amount">Amount <span class="text-danger">*</span></label>
                         <input type="number" name="amount" id="amount" class="form-control"
                             value="{{ old('amount', $entry->amount) }}" step="0.01" required>

@@ -19,6 +19,7 @@ class Quotation extends BaseModel
     protected $fillable = [
         'quotation_no',
         'enquiry_no',
+        'booking_id',
         'person_code',
         'segment_code',
         'model_code',
@@ -28,8 +29,8 @@ class Quotation extends BaseModel
         'assigned_to',
         'revision',
         'standard_data',
-        'requested_data',
-        'proposed_data',
+        // 'requested_data',
+        // 'proposed_data',
         'final_data',
         'onroad_price',
         'invoice_price',
@@ -38,7 +39,9 @@ class Quotation extends BaseModel
         'approver_last_remark',
     ];
 
-    protected $casts = [];
+    protected $casts = [
+        'standard_data' => 'array',
+    ];
 
     public function __construct(array $attributes = [])
     {
@@ -46,8 +49,8 @@ class Quotation extends BaseModel
 
         $this->casts = array_merge($this->casts, [
             'standard_data'  => 'array',
-            'requested_data' => 'array',
-            'proposed_data'  => 'array',
+            // 'requested_data' => 'array',
+            // 'proposed_data'  => 'array',
             'onroad_price'   => 'decimal:2',
             'invoice_price'  => 'decimal:2',
             'revision'       => 'integer',
@@ -71,7 +74,7 @@ class Quotation extends BaseModel
     // ==================== CODE-BASED RELATIONSHIPS ====================
     public function enquiry()
     {
-        return $this->belongsTo(Enquiry::class, 'enquiry_no', 'enquiry_no');
+        return $this->belongsTo(Enquiry::class, 'enquiry_no', 'id');
     }
 
     public function person()

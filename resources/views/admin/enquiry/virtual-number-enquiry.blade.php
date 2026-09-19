@@ -1,6 +1,5 @@
 @extends(backpack_view('blank'))
 
-
 @section('content')
     <div class="row">
         <div class="col-12">
@@ -8,7 +7,7 @@
                 <div
                     class="card-header bg-gradient-primary d-flex justify-content-between align-items-center flex-nowrap flex-md-nowrap flex-wrap gap-3">
                     <h2 class="card-title mb-0 fw-bold text-black text-nowrap">
-                        {{ $title ?? 'Virtual Number Enquiries' }}
+                        {{ isset($title) ? trim(explode('(', $title)[0]) : 'Virtual Number Enquiries' }}
                     </h2>
                 </div>
 
@@ -34,6 +33,12 @@
                                         <button id="closeColumnBubble"
                                             class="btn btn-sm btn-link text-danger p-0">✕</button>
                                     </div>
+
+                                    <div class="p-2 border-bottom">
+                                        <input type="text" id="columnSearch" class="form-control form-control-sm"
+                                            placeholder="Search headers...">
+                                    </div>
+
                                     <div style="max-height:260px; overflow:auto;">
                                         <table class="table table-sm mb-0">
                                             <tbody id="columnBubbleBody"></tbody>
@@ -56,7 +61,16 @@
                         </div>
                     </div>
 
-                    <div id="myGrid" class="ag-theme-quartz" style="height: calc(93vh - 260px); width:100%;"></div>
+                    <!-- GRID CONTAINER WITH LOADER WRAPPER -->
+                    <div style="position: relative;">
+                        <div id="gridLoader"
+                            style="display:none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.7); z-index: 1000; justify-content: center; align-items: center;">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                        <div id="myGrid" class="ag-theme-quartz" style="height: calc(93vh - 260px); width:100%;"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -80,55 +94,91 @@
 
     <script>
         const ALL_COLUMNS = @json($gridConfig['columns'] ?? []);
+        const LIST_TYPE = @json($gridConfig['list_type'] ?? 'virtual');
         let gridApi;
+        let currentSearchText = '';
 
         const columnDefs = [
-
             ...ALL_COLUMNS.filter(col => [
-
                 'serial_no',
+                'x8_enquiry_no',
                 'virtual_no',
-                'call_date_and_time',
+                'call_date',
+                'call_duration',
                 'call_nature',
-                'x8_enquiry_assign_date',
                 'mobile',
-                'remarks',
-                'dms_enquiry_stage',
-                'cre_enquiry_stage',
-                'cre_next_fup_date',
-                'cre_next_fup_time',
-                'cre_next_fup_remarks',
-                'quotation_no',
-                'booking_no',
-                'booking_date',
-                'oem_booking_no',
-                'oem_booking_date',
-                'oem_otf_no',
-                //'call_duration',
-                //'call_status',
-                
-
+                'alternate_mobile',
+                'pincode',
+                'vpo',
+                'tehsil',
+                'district',
+                'x8_sc_code',
+                'x8_sc_mile_id',
+                'x8_sc_branch',
+                'x8_sc_location',
+                'oem_enquiry_no'
             ].includes(col.field)),
 
             ...ALL_COLUMNS.filter(col => ['action'].includes(col.field)).map(col => {
-
                 col.pinned = 'right';
                 col.width = 140;
                 col.sortable = false;
                 col.filter = false;
                 col.cellRenderer = 'htmlRenderer';
-
                 return col;
-
             })
-
         ];
+
+        const dataSource = {
+            getRows: function(params) {
+                // Show grid loader overlay
+                const loader = document.getElementById('gridLoader');
+                if (loader) loader.style.display = 'flex';
+
+                fetch('{{ backpack_url('enquiries/data') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({
+                            startRow: params.startRow,
+                            endRow: params.endRow,
+                            sortModel: params.sortModel,
+                            filterModel: params.filterModel,
+                            searchText: currentSearchText,
+                            list_type: LIST_TYPE
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (loader) loader.style.display = 'none';
+                        params.successCallback(data.rows || [], data.lastRow ?? 0);
+
+                        // Auto-size the action column dynamically based on rendered buttons
+                        setTimeout(() => {
+                            if (gridApi) {
+                                gridApi.autoSizeColumns(['action']);
+                            }
+                        }, 100); // 100ms delay gives the browser time to paint the HTML buttons
+                    })
+                    .catch(err => {
+                        // Hide loader overlay on error
+                        if (loader) loader.style.display = 'none';
+                        console.error('Failed to load virtual number enquiries', err);
+                        params.failCallback();
+                    });
+            }
+        };
 
         const gridOptions = {
             columnDefs: columnDefs,
-            rowData: @json($gridConfig['data'] ?? []),
+            rowModelType: 'infinite',
+            datasource: dataSource,
             pagination: true,
             paginationPageSize: 50,
+            cacheBlockSize: 50,
             rowHeight: 28,
             animateRows: true,
             defaultColDef: {
@@ -148,14 +198,23 @@
 
                 const defaultFields = [
                     'serial_no',
+                    'x8_enquiry_no',
                     'virtual_no',
-                    'call_date_and_time',
+                    'call_date',
+                    'call_duration',
                     'call_nature',
-                    'x8_enquiry_assign_date',
                     'mobile',
-                    'remarks',
+                    'alternate_mobile',
+                    'pincode',
+                    'vpo',
+                    'tehsil',
+                    'district',
+                    'x8_sc_code',
+                    'x8_sc_mile_id',
+                    'x8_sc_branch',
+                    'x8_sc_location',
+                    'oem_enquiry_no',
                     'action'
-
                 ];
                 const allCols = gridApi.getAllGridColumns().map(col => col.getColId());
                 gridApi.setColumnsVisible(allCols, false);
@@ -167,9 +226,13 @@
         function openColumnBubble() {
             const bubble = document.getElementById('columnBubble');
             const tbody = document.getElementById('columnBubbleBody');
+            const searchInput = document.getElementById('columnSearch');
+
             if (!gridApi || !bubble || !tbody) return;
 
             tbody.innerHTML = '';
+
+            if (searchInput) searchInput.value = '';
 
             const allFlatColumns = ALL_COLUMNS;
 
@@ -201,24 +264,57 @@
                 tbody.appendChild(tr);
             });
 
+            document.querySelectorAll('#columnBubbleBody tr').forEach(row => {
+                row.style.display = '';
+            });
+
             bubble.style.display = 'block';
         }
-
-
 
         document.addEventListener('DOMContentLoaded', () => {
             const gridDiv = document.querySelector('#myGrid');
             agGrid.createGrid(gridDiv, gridOptions);
 
-            document.getElementById('quickFilter').addEventListener('input', e => {
-                gridApi.setGridOption('quickFilterText', e.target.value);
+            function debounce(fn, delay) {
+                let timer;
+                return (...args) => {
+                    clearTimeout(timer);
+                    timer = setTimeout(() => fn(...args), delay);
+                };
+            }
+
+            document.getElementById('columnSearch')?.addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                const rows = document.querySelectorAll('#columnBubbleBody tr');
+
+                rows.forEach(row => {
+                    const text = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+                    row.style.display = text.includes(searchTerm) ? '' : 'none';
+                });
             });
 
-            document.getElementById('resetAll').addEventListener('click', () => {
-                gridApi.setFilterModel(null);
+            document.getElementById('quickFilter')?.addEventListener('input', debounce(e => {
+                currentSearchText = e.target.value.trim();
+                if (gridApi) {
+                    gridApi.showLoadingOverlay();
+                }
+                gridApi.setGridOption('datasource', {
+                    ...dataSource
+                });
+            }, 400));
+
+            document.getElementById('resetAll')?.addEventListener('click', () => {
                 document.getElementById('quickFilter').value = '';
-                gridApi.setGridOption('quickFilterText', '');
-                gridApi.setSortModel(null);
+                currentSearchText = '';
+                gridApi.setFilterModel(null);
+                gridApi.applyColumnState({
+                    defaultState: {
+                        sort: null
+                    }
+                });
+                gridApi.setGridOption('datasource', {
+                    ...dataSource
+                });
             });
 
             document.getElementById('btnCustomiseHeaders').addEventListener('click', e => {
@@ -245,16 +341,24 @@
 
             document.getElementById('btnDefaultHeaders').addEventListener('click', () => {
                 const defaultFields = [
-
                     'serial_no',
+                    'x8_enquiry_no',
                     'virtual_no',
-                    'call_date_and_time',
+                    'call_date',
+                    'call_duration',
                     'call_nature',
-                    'x8_enquiry_assign_date',
                     'mobile',
-                    'remarks',
+                    'alternate_mobile',
+                    'pincode',
+                    'vpo',
+                    'tehsil',
+                    'district',
+                    'x8_sc_code',
+                    'x8_sc_mile_id',
+                    'x8_sc_branch',
+                    'x8_sc_location',
+                    'oem_enquiry_no',
                     'action'
-
                 ];
                 const allCols = gridApi.getAllGridColumns().map(c => c.getColId());
 
@@ -264,24 +368,11 @@
             });
 
             document.getElementById('exportCsv').addEventListener('click', () => {
-                const visibleColumns = gridApi.getAllDisplayedColumns()
-                    .map(col => col.getColDef())
-                    .filter(col => col.field && col.field !== 'action');
-
-                const rows = [];
-                gridApi.forEachNodeAfterFilterAndSort(node => {
-                    const row = {};
-                    visibleColumns.forEach(col => {
-                        row[col.headerName] = node.data[col.field] ?? '';
-                    });
-                    rows.push(row);
+                const params = new URLSearchParams({
+                    searchText: currentSearchText,
+                    list_type: LIST_TYPE
                 });
-
-                const wb = XLSX.utils.book_new();
-                const ws = XLSX.utils.json_to_sheet(rows);
-                XLSX.utils.book_append_sheet(wb, ws, "Virtual Number Enquiries");
-                XLSX.writeFile(wb,
-                    `virtual-number-enquiries-${new Date().toISOString().slice(0, 10)}.xlsx`);
+                window.location.href = '{{ backpack_url('enquiries/export') }}?' + params.toString();
             });
 
             document.getElementById('exportPdf').addEventListener('click', () => {
@@ -298,6 +389,7 @@
                 const rows = [];
 
                 gridApi.forEachNodeAfterFilterAndSort(node => {
+                    if (!node.data) return;
                     rows.push(visibleColumns.map(col => node.data[col.field] ?? ''));
                 });
 

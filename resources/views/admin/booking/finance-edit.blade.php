@@ -19,28 +19,42 @@
                 <div class="card-header bg-white">
                     <h2 class="mb-0">Booking & Customer Information (Read-only)</h2>
                 </div>
+
                 <div class="card-body">
                     <div class="row g-3">
+
                         <div class="col-sm-3">
                             <label class="form-label">Customer Name</label>
-                            <input type="text" class="form-control" value="{{ $booking->name ?? 'N/A' }}" readonly>
+                            <input type="text"
+                                class="form-control"
+                                value="{{ $booking->name ?? 'N/A' }}"
+                                readonly>
                         </div>
+
                         <div class="col-sm-3">
                             <label class="form-label">Model / Variant</label>
-                            <input type="text" class="form-control"
+                            <input type="text"
+                                class="form-control"
                                 value="{{ $booking->model_code ?? 'N/A' }} / {{ $booking->variant_code ?? 'N/A' }}"
                                 readonly>
                         </div>
+
                         <div class="col-sm-3">
                             <label class="form-label">Finance Mode (Primary)</label>
-                            <input type="text" class="form-control" value="{{ $booking->fin_mode ?? 'N/A' }}" readonly>
-                        </div>
-                        <div class="col-sm-3">
-                            <label class="form-label">Financier (Primary)</label>
-                            <input type="text" class="form-control"
-                                value="{{ collect($data['financiers'] ?? [])->firstWhere('id', $booking->financier)['name'] ?? 'N/A' }}"
+                            <input type="text"
+                                class="form-control"
+                                value="{{ $finance->fin_mode ?? $booking->fin_mode ?? 'N/A' }}"
                                 readonly>
                         </div>
+
+                        <div class="col-sm-3">
+                            <label class="form-label">Financier (Primary)</label>
+                            <input type="text"
+                                class="form-control"
+                                value="{{ collect($data['financiers'] ?? [])->firstWhere('id', $finance->financier ?? $booking->financier)['name'] ?? 'N/A' }}"
+                                readonly>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -152,18 +166,40 @@
                             <div class="col-sm-3 finance-field" id="instrument_type_wrapper" style="display:none;">
                                 <label class="form-label">Instrument Type <span class="text-danger">*</span></label>
                                 <select name="instrument_type" id="instrument_type" class="form-control form-select">
-                                    <option value="">-- Select --</option>
-                                    <option value="1" {{ old('instrument_type', $finance->instrument_type ?? '') == 1 ?
-                                        'selected' : '' }}>Financier Payment</option>
-                                    <option value="2" {{ old('instrument_type', $finance->instrument_type ?? '') == 2 ?
-                                        'selected' : '' }}>Delivery Order</option>
-                                    <option value="3" {{ old('instrument_type', $finance->instrument_type ?? '') == 3 ?
-                                        'selected' : '' }}>Sanction Letter</option>
-                                    <option value="4" {{ old('instrument_type', $finance->instrument_type ?? '') == 4 ?
-                                        'selected' : '' }}>Mail Communication</option>
-                                    <option value="5" {{ old('instrument_type', $finance->instrument_type ?? '') == 5 ?
-                                        'selected' : '' }}>Whatsapp Communication</option>
-                                </select>
+                                <option value="">-- Select --</option>
+                                <option value="1" {{ old('instrument_type', $finance->instrument_type ?? '') == 1
+                                    ? 'selected' : '' }}>
+                                    Financier Payment
+                                </option>
+                                <option value="2" {{ old('instrument_type', $finance->instrument_type ?? '') == 2
+                                    ? 'selected' : '' }}>
+                                    Delivery Order
+                                </option>
+                                <option value="3" {{ old('instrument_type', $finance->instrument_type ?? '') == 3
+                                    ? 'selected' : '' }}>
+                                    Sanction Letter
+                                </option>
+                                <option value="4" {{ old('instrument_type', $finance->instrument_type ?? '') == 4
+                                    ? 'selected' : '' }}>
+                                    Mail Communication
+                                </option>
+                                <option value="5" {{ old('instrument_type', $finance->instrument_type ?? '') == 5
+                                    ? 'selected' : '' }}>
+                                    Whatsapp Communication
+                                </option>
+                                <option value="6" {{ old('instrument_type', $finance->instrument_type ?? '') == 6
+                                    ? 'selected' : '' }}>
+                                    Banker Cheque
+                                </option>
+                                <option value="7" {{ old('instrument_type', $finance->instrument_type ?? '') == 7
+                                    ? 'selected' : '' }}>
+                                    Demand Graph
+                                </option>
+                                <option value="8" {{ old('instrument_type', $finance->instrument_type ?? '') == 8
+                                    ? 'selected' : '' }}>
+                                    Customer Cheque
+                                </option>
+                            </select>
                             </div>
 
                             <!-- Ref No. -->
@@ -216,6 +252,13 @@
                                         class="text-danger">*</span></label>
                                 <input type="number" name="file_charge" id="file_charge" class="form-control calc-field"
                                     value="{{ old('file_charge', $finance->file_charge ?? '') }}">
+                            </div>
+
+                            <div class="col-sm-3 finance-field" id="subvention_wrapper" style="display:none;">
+                                <label class="form-label">Financier Subvention</label>
+                                <input type="number" name="financier_subvention" id="financier_subvention"
+                                    class="form-control calc-field" min="0" step="0.01"
+                                    value="{{ old('financier_subvention', $finance->subvention_amount ?? '') }}">
                             </div>
 
                             <div class="col-sm-3 finance-field" id="payment_amount_wrapper" style="display:none;">
@@ -443,7 +486,7 @@
     (function($) {
         'use strict';
 
-        const originalFinMode = "{{ $booking->fin_mode ?? '' }}".trim();
+        const originalFinMode = "{{ $finance->fin_mode ?? $booking->fin_mode ?? '' }}".trim();
         let currentMediaUrl   = "{{ $finance && $finance->getFirstMediaUrl('instrument_proof') ? $finance->getFirstMediaUrl('instrument_proof') : '' }}".trim();
         let isExistingFile    = {{ $finance && $finance->getFirstMediaUrl('instrument_proof') ? 'true' : 'false' }};
 
@@ -621,8 +664,9 @@
 
         function showFinanceFields() {
 
-    $('#instrument_type_wrapper, #instrument_ref_no_wrapper, #instrument_proof_wrapper, ' +
-      '#loan_amount_wrapper, #margin_money_wrapper, #file_charge_wrapper, #payment_amount_wrapper').show();
+        $('#instrument_type_wrapper, #instrument_ref_no_wrapper, #instrument_proof_wrapper, ' +
+        '#loan_amount_wrapper, #margin_money_wrapper, #file_charge_wrapper, ' +
+        '#subvention_wrapper, #payment_amount_wrapper').show();
 
     const mode = $('#fin_mode').val();
     const caseStatus = $('#case_status').val();
@@ -662,10 +706,20 @@
         }
 
         function calculatePayment() {
-            const l = parseFloat($('#loan_amount').val()) || 0;
-            const m = parseFloat($('#margin_money').val()) || 0;
-            const c = parseFloat($('#file_charge').val()) || 0;
-            $('#payment_amount').val((l + m - c).toFixed(2));
+            const loanAmount = parseFloat($('#loan_amount').val()) || 0;
+            const marginMoney = parseFloat($('#margin_money').val()) || 0;
+            const fileCharge = parseFloat($('#file_charge').val()) || 0;
+            const subvention = parseFloat($('#financier_subvention').val()) || 0;
+
+            // Same logic as OTF:
+            // Loan Amount - File Charge + Payment Made to Financier - Financier Subvention
+            const doAmount =
+                loanAmount
+                - fileCharge
+                + marginMoney
+                - subvention;
+
+            $('#payment_amount').val(doAmount.toFixed(2));
         }
 
         function checkPayoutEligibility() {

@@ -167,6 +167,7 @@
         if (confirm('Import data from Google Sheet with GID: ' + gid + '?')) {
             window.location.href = url;
         }
+    }
     
     const ALL_COLUMNS = @json($gridConfig['columns'] ?? []);
 
@@ -302,7 +303,7 @@
         }
     };
 
-     – grouped + selection sync
+    //   grouped + selection sync
     function openColumnBubble() {
         const bubble = document.getElementById('columnBubble');
         const tbody  = document.getElementById('columnBubbleBody');
@@ -469,7 +470,7 @@
             window.location = url;
         });
 
-         – visible columns only
+         //   visible columns only
         document.getElementById('exportCsv')?.addEventListener('click', () => {
             const visibleColumns = gridApi.getAllDisplayedColumns()
                 .map(col => col.getColDef())
@@ -490,7 +491,7 @@
             XLSX.writeFile(workbook, `pending-rto-${new Date().toISOString().slice(0,10)}.xlsx`);
         });
 
-         – visible columns only
+        //   visible columns only
         document.getElementById('exportPdf')?.addEventListener('click', () => {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('l', 'pt', 'a4');

@@ -35,16 +35,4 @@ return [
         ],
     ],
 
-    'xcelr8_gateway' => [
-        'base_url'   => env('XCELR8_GATEWAY_BASE_URL'),
-        'master_key' => env('XCELR8_GATEWAY_MASTER_KEY'),
-        'models' => [
-            'fast'       => env('AI_MODEL_FAST'),
-            'multimodal' => env('AI_MODEL_MULTIMODAL'),
-            'enterprise' => env('AI_MODEL_ENTERPRISE'),
-            'router'     => env('AI_MODEL_ROUTER'),
-            'edge'       => env('AI_MODEL_EDGE'),
-        ],
-    ],
-
 ];

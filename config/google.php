@@ -17,8 +17,8 @@ return [
     | https://developers.google.com/console
     |
     */
-	'client_id' => env('GOOGLE_CLIENT_ID'),
-'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+    'client_id' => env('GOOGLE_CLIENT_ID'),
+    'client_secret' => env('GOOGLE_CLIENT_SECRET'),
     'redirect_uri' => env('GOOGLE_REDIRECT'),
     'access_type' => 'online',
     'prompt' => 'auto',
@@ -37,7 +37,7 @@ return [
     | a Server key, and not a Browser key.
     |
     */
-    'developer_key' => env('GOOGLE_DEVELOPER_KEY', 'AIzaSyC67o5ui2b_94dtXOKsVfr5PEF_yhxiKmI'),
+    'developer_key' => env('GOOGLE_DEVELOPER_KEY'),
 
     /*
     |----------------------------------------------------------------------------
@@ -58,7 +58,7 @@ return [
          * Path to service account json file. You can also pass the credentials as an array
          * instead of a file path.
          */
-        'file' => base_path(env('GOOGLE_SERVICE_ACCOUNT_JSON_LOCATION', 'gscreds.json')),
+        'file' => base_path(env('GOOGLE_SERVICE_ACCOUNT_JSON_LOCATION')),
     ],
 
     /*

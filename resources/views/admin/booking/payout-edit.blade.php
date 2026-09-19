@@ -66,61 +66,85 @@ $isViewMode = request()->routeIs('finance.view');
             <h2 style="margin-top: 12px;margin-left: 15px;">Customer Details</h2>
 
             <div class="card-body">
+
                 <div class="row">
-                    <div class="col-sm-3 form-group">
+
+                    <div class="col-sm-2 form-group">
                         <label>Customer Name</label>
-                        <input type="text" class="form-control readonly-field" value="{{ $booking->name ?? 'N/A' }}"
+                        <input type="text"
+                            class="form-control readonly-field"
+                            value="{{ $booking->name ?? 'N/A' }}"
                             readonly>
                     </div>
 
-                    <div class="col-sm-3 form-group">
+                    <div class="col-sm-2 form-group">
                         <label>Model</label>
-                        <input type="text" class="form-control readonly-field"
-                            value="{{ $booking->model_code ?? 'N/A' }}" readonly>
-                    </div>
-
-                    <div class="col-sm-3 form-group">
-                        <label>Variant</label>
-                        <input type="text" class="form-control readonly-field"
-                            value="{{ $booking->variant_code ?? 'N/A' }}" readonly>
-                    </div>
-
-                    <div class="col-sm-3 form-group">
-                        <label>Invoice Date</label>
-                        <input type="text" class="form-control readonly-field"
-                            value="{{ $booking->inv_date ? \Carbon\Carbon::parse($booking->inv_date)->format('d-m-Y') : ($booking->dealer_inv_date ? \Carbon\Carbon::parse($booking->dealer_inv_date)->format('d-m-Y') : 'N/A') }}"
+                        <input type="text"
+                            class="form-control readonly-field"
+                            value="{{ $booking->model_code ?? 'N/A' }}"
                             readonly>
                     </div>
-                </div>
 
-                <div class="row mt-3">
-                    <div class="col-sm-3 form-group">
+                    <div class="col-sm-2 form-group">
+                        <label>Variant</label>
+                        <input type="text"
+                            class="form-control readonly-field"
+                            value="{{ $booking->variant_code ?? 'N/A' }}"
+                            readonly>
+                    </div>
+
+                    <div class="col-sm-2 form-group">
+                        <label>Invoice Date</label>
+                        <input type="text"
+                            class="form-control readonly-field"
+                            value="{{ $booking->inv_date
+                                    ? \Carbon\Carbon::parse($booking->inv_date)->format('d-m-Y')
+                                    : ($booking->dealer_inv_date
+                                        ? \Carbon\Carbon::parse($booking->dealer_inv_date)->format('d-m-Y')
+                                        : 'N/A') }}"
+                            readonly>
+                    </div>
+                    <div class="col-sm-2 form-group">
                         <label>Address</label>
-                        <input type="text" class="form-control readonly-field" value="N/A" readonly>
+                        <input type="text"
+                            class="form-control readonly-field"
+                            value="{{ $booking->vpo ?? 'N/A' }}"
+                            readonly>
                     </div>
 
-                    <div class="col-sm-3 form-group">
+                    <div class="col-sm-2 form-group">
                         <label>City</label>
-                        <input type="text" class="form-control readonly-field" value="N/A" readonly>
+                        <input type="text"
+                            class="form-control readonly-field"
+                            value="{{ $booking->city ?? 'N/A' }}"
+                            readonly>
                     </div>
 
-                    <div class="col-sm-3 form-group">
+                    <div class="col-sm-2 form-group">
                         <label>Tehsil</label>
-                        <input type="text" class="form-control readonly-field" value="N/A" readonly>
+                        <input type="text"
+                            class="form-control readonly-field"
+                            value="{{ $booking->tehsil ?? 'N/A' }}"
+                            readonly>
                     </div>
 
-                    <div class="col-sm-3 form-group">
+                    <div class="col-sm-2 form-group">
                         <label>District</label>
-                        <input type="text" class="form-control readonly-field" value="N/A" readonly>
+                        <input type="text"
+                            class="form-control readonly-field"
+                            value="{{ $booking->district ?? 'N/A' }}"
+                            readonly>
                     </div>
+                    <div class="col-sm-2 form-group">
+                        <label>Pin Code</label>
+                        <input type="text"
+                            class="form-control readonly-field"
+                            value="{{ $booking->pincode ?? 'N/A' }}"
+                            readonly>
+                    </div>
+
                 </div>
 
-                <div class="row mt-3">
-                    <div class="col-sm-3 form-group">
-                        <label>Pin Code</label>
-                        <input type="text" class="form-control readonly-field" value="N/A" readonly>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
@@ -266,7 +290,7 @@ $isViewMode = request()->routeIs('finance.view');
             </div>
 
             <div class="col-sm-12 form-group d-flex align-items-end justify-content-end">
-                <a href="{{ route('finance.retailedit', $booking->id) }}?from=payout" class="btn btn-primary btn-sm"
+                <a href="{{ route('finance.retailedit', $booking->id) }}?from=payout" class="btn btn-primary"
                     title="Edit Finance Details">
                     <i class="ik ik-edit mr-1"></i> Edit Finance Details
                 </a>

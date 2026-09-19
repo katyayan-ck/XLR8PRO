@@ -20,117 +20,129 @@ class Enquiry extends BaseModel
 
     protected $table = 'xlr8_crm_enquiries';
 
-    protected $fillable = [
+    // This tells Laravel: "Do not guard any columns, let me mass-assign everything."
+    protected $guarded = [];
 
-        'origin',
-        'current_origin',
-        'cne',
+    // protected $fillable = [
 
-        'enquiry_no',
-        'enquiry_type',
-        'source_code',
-        'sub_source',
+    //     'origin',
+    //     'current_origin',
+    //     'cne',
 
-        'person_code',
+    //     'enquiry_no',
+    //     'enquiry_type',
+    //     'source_code',
+    //     'sub_source',
 
-        'reference_details',
-        'referred_by',
-        'referee_phone',
-        'referee_name',
+    //     'person_code',
 
-        'planned_campaign',
+    //     'reference_details',
+    //     'referred_by',
+    //     'referee_phone',
+    //     'referee_name',
 
-        'likely_purchase_date',
+    //     'planned_campaign',
 
-        'activity_type',
-        'activity_segment',
-        'activity_model',
-        'activity_start_date',
-        'activity_end_date',
-        'activity_branch',
-        'activity_location',
+    //     'likely_purchase_date',
 
-        'first_name',
-        'last_name',
-        'mobile',
-        'email',
+    //     'activity_type',
+    //     'activity_segment',
+    //     'activity_model',
+    //     'activity_start_date',
+    //     'activity_end_date',
+    //     'activity_branch',
+    //     'activity_location',
 
-        'occupation_type',
-        'occupation_sub_type',
+    //     'first_name',
+    //     'last_name',
+    //     'mobile',
+    //     'email',
 
-        'customer_type',
+    //     'occupation_type',
+    //     'occupation_sub_type',
 
-        'company_name',
+    //     'customer_type',
 
-        'gender',
+    //     'company_name',
 
-        'dob',
+    //     'gender',
 
-        'marital_status',
-        'marriage_date',
+    //     'dob',
 
-        'age_group',
+    //     'marital_status',
+    //     'marriage_date',
 
-        'zipcode',
-        'tehsil',
-        'district',
-        'city',
+    //     'age_group',
 
-        'has_ev',
+    //     'zipcode',
+    //     'tehsil',
+    //     'district',
+    //     'city',
 
-        'purchase_type',
+    //     'has_ev',
 
-        'exchange_make',
-        'exchange_model',
-        'vehicle_no',
+    //     'purchase_type',
 
-        'remarks',
+    //     'exchange_make',
+    //     'exchange_model',
+    //     'vehicle_no',
 
-        'segment_code',
-        'model_code',
-        'variant_code',
-        'color_code',
+    //     'remarks',
 
-        'fuel_type',
-        'transmission',
-        'drivetrain',
-        'seating',
+    //     'segment_code',
+    //     'model_code',
+    //     'variant_code',
+    //     'color_code',
 
-        'usage_area',
-        'km_travelled_daily',
+    //     'fuel_type',
+    //     'transmission',
+    //     'drivetrain',
+    //     'seating',
 
-        'application_type',
-        'application',
+    //     'usage_area',
+    //     'km_travelled_daily',
 
-        'place_of_registration',
+    //     'application_type',
+    //     'application',
 
-        'dealer_branch',
-        'dealer_location',
+    //     'place_of_registration',
 
-        'sc_code',
+    //     'dealer_branch',
+    //     'dealer_location',
 
-        'consider_make',
-        'consider_model',
-        'consider_variant',
+    //     'sc_name',
 
-        'followup_type',
-        'followup_date',
-        'followup_time',
+    //     'consider_make',
+    //     'consider_model',
+    //     'consider_variant',
+
+    //     'followup_type',
+    //     'followup_date',
+    //     'followup_time',
+
+    //     'manufacturing_year',
+    //     'odometer_reading',
+    //     'expected_price',
+    //     'offered_price',
+    //     'exchange_bonus',
+    //     'difference',
+    //     'finance_mode',
+    //     'financier',
 
 
 
-        'created_by',
-        'updated_by',
-        'deleted_by',
+    //     'created_by',
+    //     'updated_by',
+    //     'deleted_by',
 
-    ];
+    // ];
 
     // Redirect exchange_make to brand_make
     protected function exchangeMake(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->brand_make,
-            set: fn ($value) => ['brand_make' => $value],
+            get: fn() => $this->brand_make,
+            set: fn($value) => ['brand_make' => $value],
         );
     }
 
@@ -138,8 +150,8 @@ class Enquiry extends BaseModel
     protected function exchangeModel(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->brand_model,
-            set: fn ($value) => ['brand_model' => $value],
+            get: fn() => $this->brand_model,
+            set: fn($value) => ['brand_model' => $value],
         );
     }
 
@@ -147,8 +159,8 @@ class Enquiry extends BaseModel
     protected function considerMake(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->consid_brand,
-            set: fn ($value) => ['consid_brand' => $value],
+            get: fn() => $this->consid_brand,
+            set: fn($value) => ['consid_brand' => $value],
         );
     }
 
@@ -156,8 +168,8 @@ class Enquiry extends BaseModel
     protected function considerModel(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->consid_model,
-            set: fn ($value) => ['consid_model' => $value],
+            get: fn() => $this->consid_model,
+            set: fn($value) => ['consid_model' => $value],
         );
     }
 
@@ -165,8 +177,8 @@ class Enquiry extends BaseModel
     protected function considerVariant(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->consid_variant,
-            set: fn ($value) => ['consid_variant' => $value],
+            get: fn() => $this->consid_variant,
+            set: fn($value) => ['consid_variant' => $value],
         );
     }
 
@@ -203,9 +215,8 @@ class Enquiry extends BaseModel
 
         'enquiry_no' => 'uppercase|trim',
 
-        'first_name' => 'trim|ucwords',
-
-        'last_name' => 'trim|ucwords',
+        'name' => 'trim|ucwords',
+        'care_of' => 'trim|ucwords',
 
         'mobile' => 'trim',
 
@@ -249,7 +260,7 @@ class Enquiry extends BaseModel
     // counts as that item being "answered".
     public const LONG_FORM_PAIRED_FIELDS = [
         'segment_code' => 'segment',   // Segment
-        'model_code'   => 'model',     // Model
+        'model_code' => 'model',     // Model
         'variant_code' => 'variant',   // Variant
     ];
 
@@ -257,8 +268,7 @@ class Enquiry extends BaseModel
     // count as "fully filled" and therefore show up in the plain
     // "Enquiry List" dropdown item, regardless of its origin.
     public const LONG_FORM_SINGLE_FIELDS = [
-        'first_name',            // Customer First Name
-        'last_name',             // Customer Last Name
+        'name',
         'mobile',                // Phone Number
         'email',                 // Email ID
         'gender',                // Gender
@@ -273,7 +283,7 @@ class Enquiry extends BaseModel
         'tehsil',                // Customer Tehsil
         'district',              // Customer District
         'city',                  // Customer City
-        'sc_code',                // Sales Consultant
+        'sc_name',                // Sales Consultant
         'dealer_branch',          // Dealer Branch
         'dealer_location',        // Dealer Location
     ];
@@ -329,6 +339,70 @@ class Enquiry extends BaseModel
         });
     }
 
+    public function scopeMainListing($query)
+    {
+        return $query->where('is_active', 1)->where(function ($q) {
+
+            // CONDITION A: OEM Dump Enquiries (Requires specific OEM fields to be filled)
+            $q->where(function ($oemQuery) {
+                $requiredFields = [
+                    'likely_purchase_days',
+                    'segment_code',
+                    'model_code',
+                    'variant_code',
+                    'color_code',
+                    'name',
+                    'mobile',
+                    'gender',
+                    'zipcode',
+                    'territory',
+                    'tehsil',
+                    'district',
+                    'city',
+                    'purchase_type',
+                    'purchase_type_crm',
+                    'sc_mile_id',
+                    'cre_likely_purchase_days'
+                ];
+
+                foreach ($requiredFields as $field) {
+                    $oemQuery->whereNotNull($field)->where($field, '!=', '');
+                }
+
+                $oemQuery->where(function ($sub) {
+                    $sub->whereNotNull('enq_assign_date')->orWhereNotNull('quick_enq_assign_date');
+                });
+
+                $oemQuery->whereExists(function ($subquery) {
+                    $subquery->select(\Illuminate\Support\Facades\DB::raw(1))
+                        ->from('xlr8_cre_enquiry_fup')
+                        ->whereRaw("xlr8_cre_enquiry_fup.x8_enq_no = CONCAT('XENQ-', xlr8_crm_enquiries.id)")
+                        ->whereNotNull('cre_enq_stage')->where('cre_enq_stage', '!=', '')
+                        ->whereNotNull('cre_customer_stage')->where('cre_customer_stage', '!=', '')
+                        ->whereNotNull('cre_fup_remarks')->where('cre_fup_remarks', '!=', '')
+                        ->whereNotNull('cre_next_fup_date');
+                });
+
+                $oemQuery->whereNotNull('id')->where(function ($sub) {
+                    $sub->whereNotNull('enquiry_no')->where('enquiry_no', '!=', '')
+                        ->orWhereNotNull('quick_enquiry_no')->where('quick_enquiry_no', '!=', '');
+                });
+            })
+
+                // CONDITION B: New Enquiries created directly from CRM
+                ->orWhere('current_origin', 'Xceler8');
+        });
+    }
+
+    /**
+     * Scope for Xceler8 Enquiries created manually via CRM
+     */
+    public function scopeXceler8($query)
+    {
+        return $query->where('is_active', 1)
+            ->where('current_origin', 'Xceler8');
+    }
+
     public const STATUS_NEW = 'new';
     public const STATUS_IN_FOLLOWUP = 'in_followup';
     public const STATUS_QUOTATION_SENT = 'quotation_sent';
@@ -352,7 +426,7 @@ class Enquiry extends BaseModel
 
     public function salesConsultant()
     {
-        return $this->belongsTo(User::class, 'sc_code');
+        return $this->belongsTo(User::class, 'sc_name');
     }
 
     public function vehicleModel()
@@ -410,9 +484,20 @@ class Enquiry extends BaseModel
 
     public function scopeForConsultant($query, int $userId)
     {
-        return $query->where('sc_code', $userId);
+        return $query->where('sc_name', $userId);
     }
 
+
+    /**
+     * Scope a query to only include Hyperlocal enquiries
+     */
+    public function scopeHyperlocal($query)
+    {
+        return $query->where('source_code', 'HYPERLOCAL')
+            ->orWhere('source_code', 'hyperlocal')
+            ->orWhere('sub_source', 'Hyperlocal')
+            ->orWhere('sub_source', 'hyperlocal');
+    }
 
 
 
@@ -447,14 +532,14 @@ class Enquiry extends BaseModel
     }
 
     // ==================== ASSIGNED / UNASSIGNED SCOPES ====================
-    // Assigned  = sc_code OR sc_mile_id has a value
-    // Unassigned = both sc_code AND sc_mile_id are blank
+    // Assigned  = sc_name OR sc_mile_id has a value
+    // Unassigned = both sc_name AND sc_mile_id are blank
 
     public function scopeAssigned($query)
     {
         return $query->where(function ($q) {
             $q->where(function ($q2) {
-                $q2->whereNotNull('sc_code')->where('sc_code', '!=', '');
+                $q2->whereNotNull('sc_name')->where('sc_name', '!=', '');
             })->orWhere(function ($q2) {
                 $q2->whereNotNull('sc_mile_id')->where('sc_mile_id', '!=', '');
             });
@@ -465,7 +550,7 @@ class Enquiry extends BaseModel
     {
         return $query->where(function ($q) {
             $q->where(function ($q2) {
-                $q2->whereNull('sc_code')->orWhere('sc_code', '');
+                $q2->whereNull('sc_name')->orWhere('sc_name', '');
             })->where(function ($q2) {
                 $q2->whereNull('sc_mile_id')->orWhere('sc_mile_id', '');
             });
@@ -497,7 +582,7 @@ class Enquiry extends BaseModel
 
     public function getFullNameAttribute(): string
     {
-        return trim($this->first_name . ' ' . ($this->last_name ?? ''));
+        return trim($this->name ?? '');
     }
 
 

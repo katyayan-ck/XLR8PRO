@@ -1,13 +1,9 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\PerformanceController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\UserImportExportController;
-use Illuminate\Support\Facades\Route;
-
-
-
-
 
 Route::get('/', function () {
     return view('welcome');

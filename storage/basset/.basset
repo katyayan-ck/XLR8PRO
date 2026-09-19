@@ -13,12 +13,61 @@
         "asset_attributes": [],
         "asset_content_hash": "\r\n<script>\r\n    // Make sure window.crud exists before we try to use it\r\n    window.crud = window.crud || {};\r\n    window.crud.tableConfigs = window.crud.tableConfigs || {};\r\n    \r\n    // Intercept changes to crud.checkedItems to sync with tableConfigs\r\n    if (!Object.getOwnPropertyDescriptor(window.crud, 'checkedItems')?.get) {\r\n        let _checkedItems = window.crud.checkedItems || [];\r\n        \r\n        Object.defineProperty(window.crud, 'checkedItems', {\r\n            get: function() {\r\n                return _checkedItems;\r\n            },\r\n            set: function(value) {\r\n                _checkedItems = value;\r\n                \r\n                // Sync with the main table config if it exists\r\n                // This handles the case where legacy bulk buttons clear crud.checkedItems\r\n                if (window.crud.table && window.crud.table.table && window.crud.table.table().node) {\r\n                    let tableId = window.crud.table.table().node().id;\r\n                    if (window.crud.tableConfigs[tableId]) {\r\n                         if (Array.isArray(value) && value.length === 0) {\r\n                             window.crud.tableConfigs[tableId].checkedItems = [];\r\n                         }\r\n                    }\r\n                }\r\n            },\r\n            configurable: true\r\n        });\r\n    }\r\n\r\nif (typeof window.crud.addOrRemoveCrudCheckedItem !== 'function') {\r\n    window.crud.addOrRemoveCrudCheckedItem = function(element, tableId) {        \r\n        const tableConfig = window.crud.tableConfigs[tableId] || window.crud;\r\n        \r\n        tableConfig.checkedItems = Array.isArray(tableConfig.checkedItems) ? tableConfig.checkedItems : [];\r\n        tableConfig.lastCheckedItem = tableConfig.lastCheckedItem || false;\r\n        \r\n        document.querySelectorAll(`#${tableId} input.crud_bulk_actions_line_checkbox`).forEach(checkbox => {\r\n            // check if there is a dtr-control element in the row, in case it does, add a mt-2 class to the checkbox\r\n            const row = checkbox.closest('tr');\r\n            const dtrControl = row.querySelector('.dtr-control');\r\n            if (dtrControl && ! dtrControl.classList.contains('d-none')) {\r\n                checkbox.classList.add('mt-2');\r\n            } else {\r\n                checkbox.classList.remove('mt-2');\r\n            }\r\n\r\n            const newCheckbox = checkbox.cloneNode(true);\r\n            checkbox.parentNode.replaceChild(newCheckbox, checkbox);\r\n            \r\n            newCheckbox.addEventListener('click', function(e) {\r\n                e.stopPropagation();\r\n                \r\n                const checked = this.checked;\r\n                const primaryKeyValue = this.dataset.primaryKeyValue;\r\n                \r\n                if (checked) {\r\n                    // add item to checkedItems if not already there\r\n                    if (tableConfig.checkedItems.indexOf(primaryKeyValue) === -1) {\r\n                        tableConfig.checkedItems.push(primaryKeyValue);\r\n                    }\r\n                    \r\n                    // if shift has been pressed, also select all elements\r\n                    // between the last checked item and this one\r\n                    if (tableConfig.lastCheckedItem && e.shiftKey) {\r\n                        let getNodeindex = elm => [...elm.parentNode.children].indexOf(elm);\r\n                        let first = document.querySelector(`#${tableId} input.crud_bulk_actions_line_checkbox[data-primary-key-value=\"${tableConfig.lastCheckedItem}\"]`).closest('tr');\r\n                        let last = document.querySelector(`#${tableId} input.crud_bulk_actions_line_checkbox[data-primary-key-value=\"${primaryKeyValue}\"]`).closest('tr');\r\n                        let firstIndex = getNodeindex(first);\r\n                        let lastIndex = getNodeindex(last);\r\n                        \r\n                        while (first !== last) {\r\n                            first = firstIndex < lastIndex ? first.nextElementSibling : first.previousElementSibling;\r\n                            first.querySelector('input.crud_bulk_actions_line_checkbox:not(:checked)')?.click();\r\n                        }\r\n                    }\r\n                    \r\n                    // remember that this one was the last checked item\r\n                    tableConfig.lastCheckedItem = primaryKeyValue;\r\n                } else {\r\n                    // remove item from checkedItems\r\n                    let index = tableConfig.checkedItems.indexOf(primaryKeyValue);\r\n                    if (index > -1) tableConfig.checkedItems.splice(index, 1);\r\n                }\r\n                            \r\n                window.crud.enableOrDisableBulkButtons(tableId);\r\n            });\r\n        });\r\n    }\r\n}\r\n\r\nif (typeof window.crud.markCheckboxAsCheckedIfPreviouslySelected !== 'function') {\r\n    window.crud.markCheckboxAsCheckedIfPreviouslySelected = function(tableId = 'crudTable') {\r\n        const tableConfig = window.crud.tableConfigs[tableId] || window.crud;\r\n        \r\n        // Ensure checkedItems is always an array\r\n        tableConfig.checkedItems = Array.isArray(tableConfig.checkedItems) ? tableConfig.checkedItems : [];\r\n        \r\n        let checkedItems = tableConfig.checkedItems;\r\n        let pageChanged = localStorage.getItem('page_changed') ?? false;\r\n        let tableUrl = window.crud.tables[tableId]?.ajax.url() || '';\r\n        let hasFilterApplied = false;\r\n\r\n        if (tableUrl.indexOf('?') > -1) {\r\n            if (tableUrl.substring(tableUrl.indexOf('?') + 1).length > 0) {\r\n                hasFilterApplied = true;\r\n            }\r\n        }\r\n\r\n        // if it was not a page change, we check if datatables have any search, or the url have any parameters.\r\n        // if you have filtered entries, and then remove the filters we are sure the entries are in the table.\r\n        // we don't remove them in that case.\r\n        if (!pageChanged && (window.crud.tables[tableId]?.search().length !== 0 || hasFilterApplied)) {\r\n            tableConfig.checkedItems = [];\r\n        }\r\n        \r\n        document\r\n            .querySelectorAll(`#${tableId} input.crud_bulk_actions_line_checkbox[data-primary-key-value]`)\r\n            .forEach(function(elem) {\r\n                let checked = checkedItems.length && checkedItems.indexOf(elem.dataset.primaryKeyValue) > -1;\r\n                elem.checked = checked;\r\n                if (checked && tableConfig.checkedItems.indexOf(elem.dataset.primaryKeyValue) === -1) {\r\n                    tableConfig.checkedItems.push(elem.dataset.primaryKeyValue);\r\n                }\r\n            });\r\n        \r\n        localStorage.removeItem('page_changed');\r\n    }\r\n}\r\n\r\nwindow.crud.addBulkActionMainCheckboxesFunctionality = function(tableId = 'crudTable') {    \r\n    const tableConfig = window.crud.tableConfigs[tableId] || window.crud;\r\n    \r\n    let mainCheckboxes = Array.from(document.querySelectorAll(`#${tableId} input.crud_bulk_actions_general_checkbox`));\r\n    \r\n    mainCheckboxes.forEach(checkbox => {\r\n        const getRowCheckboxes = () => Array.from(document.querySelectorAll(`#${tableId} input.crud_bulk_actions_line_checkbox`));\r\n        \r\n        // set initial checked status - recalculate based on current visible checkboxes\r\n        const updateMainCheckboxState = () => {\r\n            const rowCheckboxes = getRowCheckboxes();\r\n            checkbox.checked = rowCheckboxes.length > 0 && \r\n                document.querySelectorAll(`#${tableId} input.crud_bulk_actions_line_checkbox:not(:checked)`).length === 0;\r\n        };\r\n        \r\n        // Initial state\r\n        updateMainCheckboxState();\r\n\r\n        // when the crud_bulk_actions_general_checkbox is selected, toggle all visible checkboxes\r\n        checkbox.onclick = event => {            \r\n            // Get fresh list of row checkboxes that are currently visible\r\n            const currentRowCheckboxes = getRowCheckboxes();            \r\n            // Only toggle checkboxes that need to change state\r\n            currentRowCheckboxes\r\n                .filter(elem => checkbox.checked !== elem.checked)\r\n                .forEach(elem => {\r\n                    elem.click();\r\n                });\r\n            \r\n            // make sure all other main checkboxes have the same checked status\r\n            mainCheckboxes.forEach(elem => elem.checked = checkbox.checked);\r\n\r\n            // Ensure buttons are updated after mass checkbox changes\r\n            window.crud.enableOrDisableBulkButtons(tableId);\r\n\r\n            event.stopPropagation();\r\n        };\r\n    });\r\n};\r\n\r\nif (typeof window.crud.enableOrDisableBulkButtons !== 'function') {\r\n    window.crud.enableOrDisableBulkButtons = function(tableId) {        \r\n        // Get the correct table configuration\r\n        const tableConfig = window.crud.tableConfigs[tableId] || window.crud;\r\n        \r\n        // Initialize checkedItems array if it doesn't exist\r\n        tableConfig.checkedItems = Array.isArray(tableConfig.checkedItems) ? tableConfig.checkedItems : [];\r\n        \r\n        // Check if any items are selected\r\n        const hasSelectedItems = tableConfig.checkedItems.length > 0;\r\n        \r\n        // Find the table element\r\n        const tableElement = document.getElementById(tableId);\r\n        if (!tableElement) {\r\n            console.error(`Table element not found: ${tableId}`);\r\n            return;\r\n        }\r\n        \r\n        // Check if this table is configured for bulk actions\r\n        const hasBulkActions = tableElement.getAttribute('data-has-bulk-actions') === 'true' || \r\n                          tableElement.getAttribute('data-has-bulk-actions') === '1';\r\n        \r\n        // Find all bulk buttons - search in table-specific locations first\r\n        let bulkButtons = [];\r\n        \r\n        const tableSpecificContainers = [\r\n            document.querySelector(`#bottom_buttons_${tableId}`),\r\n            document.querySelector(`#datatable_button_stack_${tableId}`),\r\n            document.querySelector(`.top_buttons_${tableId}`)\r\n        ];\r\n        \r\n        for (const container of tableSpecificContainers) {\r\n            if (container) {\r\n                const containerButtons = container.querySelectorAll('.bulk-button');\r\n                if (containerButtons.length > 0) {\r\n                    bulkButtons = containerButtons;\r\n                    break;\r\n                }\r\n            }\r\n        }\r\n        \r\n        if (bulkButtons.length === 0) {\r\n            const tableWrapper = document.getElementById(`${tableId}_wrapper`);\r\n            if (tableWrapper) {\r\n                bulkButtons = tableWrapper.querySelectorAll('.bulk-button');\r\n            }\r\n        }\r\n        \r\n        // Update all buttons based on selection state\r\n        bulkButtons.forEach(btn => {\r\n            if (hasSelectedItems) {\r\n                btn.classList.remove('disabled');\r\n                btn.removeAttribute('disabled');\r\n\r\n                if (btn.hasAttribute('onclick') && !btn._onclickReplaced) {\r\n                    const originalOnclick = btn.getAttribute('onclick');\r\n                    \r\n                    // Remove the original onclick attribute\r\n                    btn.removeAttribute('onclick');\r\n                    \r\n                    // Add a click event listener that synchronizes first, then calls the original handler\r\n                    btn.addEventListener('click', function(e) {\r\n                        // Synchronize checked items with global crud object\r\n                        window.crud.synchronizeCheckedItems(tableId);\r\n                        \r\n                        // Then execute the original handler\r\n                        try {\r\n                            // If it's a simple function call\r\n                            if (originalOnclick.includes('(')) {\r\n                                const funcName = originalOnclick.split('(')[0];\r\n                                if (window[funcName]) {\r\n                                    window[funcName](btn);\r\n                                }\r\n                            } else {\r\n                                // Just evaluate it\r\n                                eval(originalOnclick);\r\n                            }\r\n                        } catch (err) {\r\n                            console.error('Error executing bulk action:', err);\r\n                        }\r\n                    });\r\n                    \r\n                    // Mark this button as having its onclick replaced\r\n                    btn._onclickReplaced = true;\r\n                }\r\n            } else {\r\n                btn.classList.add('disabled');\r\n                btn.setAttribute('disabled', 'disabled');\r\n            }\r\n        });\r\n    }\r\n}\r\n\r\nif (typeof window.crud.synchronizeCheckedItems !== 'function') {\r\n    window.crud.synchronizeCheckedItems = function(tableId = 'crudTable') {\r\n        const tableConfig = window.crud.tableConfigs[tableId] || window.crud;\r\n        \r\n        // Make sure both are arrays\r\n        tableConfig.checkedItems = Array.isArray(tableConfig.checkedItems) ? tableConfig.checkedItems : [];\r\n        window.crud.checkedItems = Array.isArray(window.crud.checkedItems) ? window.crud.checkedItems : [];\r\n        \r\n        // Copy items from tableConfig to global crud object\r\n        window.crud.checkedItems = [...tableConfig.checkedItems];\r\n    }\r\n}\r\n\r\n// Define a function that initializes bulk actions for a specific table\r\nwindow.registerBulkActionsCheckboxes = function(tableId) {    \r\n    // Make sure we have access to crud functions\r\n    if (typeof window.crud !== 'object') {\r\n        console.error('window.crud not available yet');\r\n        return;\r\n    }\r\n    \r\n    // Initialize the tableConfigs object for this table if it doesn't exist\r\n    if (!window.crud.tableConfigs[tableId]) {\r\n        window.crud.tableConfigs[tableId] = {\r\n            checkedItems: [],\r\n            lastCheckedItem: false\r\n        };\r\n    }\r\n    \r\n    // Check if the table element exists and has bulk actions enabled\r\n    const tableElement = document.getElementById(tableId);\r\n    if (!tableElement) {\r\n        console.error(`Table element #${tableId} not found`);\r\n        return;\r\n    }\r\n    \r\n    const hasBulkActions = tableElement.getAttribute('data-has-bulk-actions') === 'true' || \r\n                        tableElement.getAttribute('data-has-bulk-actions') === '1';\r\n    \r\n    if (!hasBulkActions) return;\r\n    \r\n    // Call the required functions for setting up bulk actions\r\n    window.crud.addOrRemoveCrudCheckedItem(null, tableId);\r\n    window.crud.markCheckboxAsCheckedIfPreviouslySelected(tableId);\r\n    window.crud.addBulkActionMainCheckboxesFunctionality(tableId);\r\n    window.crud.enableOrDisableBulkButtons(tableId);\r\n};\r\n\r\n// Initialize all existing tables on page load\r\ndocument.addEventListener('DOMContentLoaded', function() {\r\n    document.querySelectorAll('.bulk-button').forEach(btn => {\r\n        btn.classList.add('disabled');\r\n    });\r\n});\r\n\r\n// Add event listener for DataTables initialization\r\nwindow.addEventListener('backpack:table:initialized', function(e) {\r\n    const tableId = e.detail.tableId;\r\n    \r\n    // Check if the table has bulk actions\r\n    const tableElement = document.getElementById(tableId);\r\n    if (!tableElement) {\r\n        console.error(`Table element #${tableId} not found`);\r\n        return;\r\n    }\r\n    \r\n    const hasBulkActions = tableElement.getAttribute('data-has-bulk-actions') === 'true' || \r\n                        tableElement.getAttribute('data-has-bulk-actions') === '1';\r\n    \r\n    if (hasBulkActions) {        \r\n        // Make sure the function is called on each draw event\r\n        if (window.crud.tables[tableId]) {\r\n            window.crud.tables[tableId].on('draw.dt', function() {\r\n                window.registerBulkActionsCheckboxes(tableId);\r\n            });\r\n        }\r\n    }\r\n});\r\n</script>\r\n"
     },
+    "https://cdn.datatables.net/2.1.8/js/dataTables.min.js": {
+        "asset_name": "https://cdn.datatables.net/2.1.8/js/dataTables.min.js",
+        "asset_path": "https://cdn.datatables.net/2.1.8/js/dataTables.min.js",
+        "asset_disk_path": "basset/cdn.datatables.net/2.1.8/js/dataTables.min.js",
+        "asset_attributes": [],
+        "asset_content_hash": ""
+    },
+    "https://cdn.datatables.net/2.1.8/js/dataTables.bootstrap5.min.js": {
+        "asset_name": "https://cdn.datatables.net/2.1.8/js/dataTables.bootstrap5.min.js",
+        "asset_path": "https://cdn.datatables.net/2.1.8/js/dataTables.bootstrap5.min.js",
+        "asset_disk_path": "basset/cdn.datatables.net/2.1.8/js/dataTables.bootstrap5.min.js",
+        "asset_attributes": [],
+        "asset_content_hash": ""
+    },
+    "https://cdn.datatables.net/responsive/3.0.3/js/dataTables.responsive.min.js": {
+        "asset_name": "https://cdn.datatables.net/responsive/3.0.3/js/dataTables.responsive.min.js",
+        "asset_path": "https://cdn.datatables.net/responsive/3.0.3/js/dataTables.responsive.min.js",
+        "asset_disk_path": "basset/cdn.datatables.net/responsive/3.0.3/js/dataTables.responsive.min.js",
+        "asset_attributes": [],
+        "asset_content_hash": ""
+    },
+    "https://cdn.datatables.net/fixedheader/4.0.1/js/dataTables.fixedHeader.min.js": {
+        "asset_name": "https://cdn.datatables.net/fixedheader/4.0.1/js/dataTables.fixedHeader.min.js",
+        "asset_path": "https://cdn.datatables.net/fixedheader/4.0.1/js/dataTables.fixedHeader.min.js",
+        "asset_disk_path": "basset/cdn.datatables.net/fixedheader/4.0.1/js/dataTables.fixedHeader.min.js",
+        "asset_attributes": [],
+        "asset_content_hash": ""
+    },
     "E:\\laragon\\www\\xlr8\\vendor/backpack/crud/src/resources/assets/img/spinner.svg": {
         "asset_name": "E:\\laragon\\www\\xlr8\\vendor/backpack/crud/src/resources/assets/img/spinner.svg",
         "asset_path": "E:\\laragon\\www\\xlr8\\vendor/backpack/crud/src/resources/assets/img/spinner.svg",
         "asset_disk_path": "basset/vendor/backpack/crud/src/resources/assets/img/spinner.svg",
         "asset_attributes": [],
         "asset_content_hash": "0a6bee92"
+    },
+    "https://cdn.datatables.net/2.1.8/css/dataTables.bootstrap5.min.css": {
+        "asset_name": "https://cdn.datatables.net/2.1.8/css/dataTables.bootstrap5.min.css",
+        "asset_path": "https://cdn.datatables.net/2.1.8/css/dataTables.bootstrap5.min.css",
+        "asset_disk_path": "basset/cdn.datatables.net/2.1.8/css/dataTables.bootstrap5.min.css",
+        "asset_attributes": [],
+        "asset_content_hash": ""
+    },
+    "https://cdn.datatables.net/responsive/3.0.3/css/responsive.dataTables.min.css": {
+        "asset_name": "https://cdn.datatables.net/responsive/3.0.3/css/responsive.dataTables.min.css",
+        "asset_path": "https://cdn.datatables.net/responsive/3.0.3/css/responsive.dataTables.min.css",
+        "asset_disk_path": "basset/cdn.datatables.net/responsive/3.0.3/css/responsive.dataTables.min.css",
+        "asset_attributes": [],
+        "asset_content_hash": ""
+    },
+    "https://cdn.datatables.net/fixedheader/4.0.1/css/fixedHeader.dataTables.min.css": {
+        "asset_name": "https://cdn.datatables.net/fixedheader/4.0.1/css/fixedHeader.dataTables.min.css",
+        "asset_path": "https://cdn.datatables.net/fixedheader/4.0.1/css/fixedHeader.dataTables.min.css",
+        "asset_disk_path": "basset/cdn.datatables.net/fixedheader/4.0.1/css/fixedHeader.dataTables.min.css",
+        "asset_attributes": [],
+        "asset_content_hash": ""
     },
     "backpack/crud/fields/checkbox-field.js": {
         "asset_name": "backpack/crud/fields/checkbox-field.js",
@@ -61,6 +110,27 @@
         "asset_disk_path": "basset/backpack/crud/fields/radio-field.js",
         "asset_attributes": [],
         "asset_content_hash": "\r\n    <script>\r\n        function bpFieldInitRadioElement(element) {\r\n            var hiddenInput = element.find('input[type=hidden]');\r\n            var value = hiddenInput.val();\r\n            var id = 'radio_'+Math.floor(Math.random() * 1000000);\r\n\r\n            // set unique IDs so that labels are correlated with inputs\r\n            element.find('.form-check input[type=radio]').each(function(index, item) {\r\n                $(this).attr('id', id+index);\r\n                $(this).siblings('label').attr('for', id+index);\r\n            });\r\n\r\n            hiddenInput.on('CrudField:disable', function(e) {\r\n                element.find('.form-check input[type=radio]').each(function(index, item) {\r\n                    $(this).prop('disabled', true);\r\n                });\r\n            });\r\n\r\n            hiddenInput.on('CrudField:enable', function(e) {\r\n                element.find('.form-check input[type=radio]').each(function(index, item) {\r\n                    $(this).removeAttr('disabled');\r\n                });\r\n            });\r\n\r\n            // when one radio input is selected\r\n            element.find('input[type=radio]').change(function(event) {\r\n                // the value gets updated in the hidden input and the 'change' event is fired\r\n                hiddenInput.val($(this).val()).change();\r\n                // all other radios get unchecked\r\n                element.find('input[type=radio]').not(this).prop('checked', false);\r\n            });\r\n\r\n            // select the right radios\r\n            element.find('input[type=radio]').filter(function() {\r\n                return $(this).val() === value;\r\n            }).prop('checked', true);\r\n        }\r\n    </script>\r\n    "
+    },
+    "https://cdn.jsdelivr.net/npm/summernote@0.9.1/dist/summernote-lite.min.css": {
+        "asset_name": "https://cdn.jsdelivr.net/npm/summernote@0.9.1/dist/summernote-lite.min.css",
+        "asset_path": "https://cdn.jsdelivr.net/npm/summernote@0.9.1/dist/summernote-lite.min.css",
+        "asset_disk_path": "basset/cdn.jsdelivr.net/npm/summernote@0.9.1/dist/summernote-lite.min.css",
+        "asset_attributes": [],
+        "asset_content_hash": ""
+    },
+    "https://cdn.jsdelivr.net/npm/summernote@0.9.1/dist/font/summernote.woff2": {
+        "asset_name": "https://cdn.jsdelivr.net/npm/summernote@0.9.1/dist/font/summernote.woff2",
+        "asset_path": "https://cdn.jsdelivr.net/npm/summernote@0.9.1/dist/font/summernote.woff2",
+        "asset_disk_path": "basset/cdn.jsdelivr.net/npm/summernote@0.9.1/dist/font/summernote.woff2",
+        "asset_attributes": [],
+        "asset_content_hash": ""
+    },
+    "https://cdn.jsdelivr.net/npm/summernote@0.9.1/dist/summernote-lite.min.js": {
+        "asset_name": "https://cdn.jsdelivr.net/npm/summernote@0.9.1/dist/summernote-lite.min.js",
+        "asset_path": "https://cdn.jsdelivr.net/npm/summernote@0.9.1/dist/summernote-lite.min.js",
+        "asset_disk_path": "basset/cdn.jsdelivr.net/npm/summernote@0.9.1/dist/summernote-lite.min.js",
+        "asset_attributes": [],
+        "asset_content_hash": ""
     },
     "backpack/crud/fields/summernote-field.css": {
         "asset_name": "backpack/crud/fields/summernote-field.css",
@@ -118,6 +188,83 @@
         "asset_attributes": [],
         "asset_content_hash": "\r\n        <script>\r\n        \tfunction bpFieldInitUploadMultipleElement(element) {\r\n        \t\tvar fieldName = element.attr('data-field-name');\r\n        \t\tvar clearFileButton = element.find(\".file-clear-button\");\r\n        \t\tvar fileInput = element.find(\"input[type=file]\");\r\n        \t\tvar inputLabel = element.find(\"label.backstrap-file-label\");\r\n\t\t\t\tlet existingFiles = fileInput.parent().siblings('.existing-file');\r\n\r\n\t\t\t\tif(fileInput.attr('data-row-number')) {\r\n\t\t\t\t\tlet selectedFiles = [];\r\n\t\t\t\t\texistingFiles.find('a.file-clear-button').each(function(item) {\r\n\t\t\t\t\t\tselectedFiles.push($(this).data('filename'));\r\n\t\t\t\t\t});\r\n\r\n\t\t\t\t\t$('<input type=\"hidden\" class=\"order-uploads\" name=\"_order_'+fieldName+'\" value=\"'+selectedFiles+'\">').insertAfter(fileInput);\r\n\r\n\t\t\t\t\tvar observer = new MutationObserver(function(mutations) {\r\n\t\t\t\t\t\tmutations.forEach(function(mutation) {\r\n\t\t\t\t\t\t\tif(mutation.attributeName == 'data-row-number') {\r\n\t\t\t\t\t\t\t\tlet field = $(mutation.target);\r\n\r\n\t\t\t\t\t\t\t\tfieldOrder = field.siblings('input[name=\"'+mutation.target.getAttribute('name').slice(0,-2)+'\"]')\r\n\t\t\t\t\t\t\t\tfieldOrder.attr('name', '_order_'+mutation.target.getAttribute('name').slice(0,-2));\r\n\t\t\t\t\t\t\t\tlet selectedFiles = [];\r\n\t\t\t\t\t\t\t\tfieldOrder.parent().siblings('.existing-file').find('a.file-clear-button').each(function(item) {\r\n\t\t\t\t\t\t\t\t\tselectedFiles.push($(this).data('filename'));\r\n\t\t\t\t\t\t\t\t});\r\n\t\t\t\t\t\t\t\tfieldOrder.val(selectedFiles);\r\n\r\n\t\t\t\t\t\t\t\tfieldClear = field.siblings('.clear-files');\r\n\t\t\t\t\t\t\t\tfieldClear.attr('name', 'clear_'+mutation.target.getAttribute('name'));\r\n\t\t\t\t\t\t\t}\r\n\t\t\t\t\t\t});\r\n\t\t\t\t\t});\r\n\r\n\t\t\t\t\tobserver.observe(fileInput[0], {\r\n\t\t\t\t\t\tattributes: true,\r\n\t\t\t\t\t});\r\n\t\t\t\t}\r\n\r\n\t\t        clearFileButton.click(function(e) {\r\n\t\t        \te.preventDefault();\r\n\t\t        \tvar container = $(this).parent().parent();\r\n\t\t        \tvar parent = $(this).parent();\r\n\t\t        \t// remove the filename and button\r\n\t\t        \tparent.remove();\r\n\r\n\t\t\t\t\tif(fileInput.attr('data-row-number')) {\r\n\t\t\t\t\t\tlet selectedFiles = [];\r\n\t\t\t\t\t\tfileInput.parent().siblings('.existing-file').find('a.file-clear-button').each(function(item) {\r\n\t\t\t\t\t\t\tselectedFiles.push($(this).data('filename'));\r\n\t\t\t\t\t\t});\r\n\t\t\t\t\t\tif(selectedFiles.length > 0) {\r\n\t\t\t\t\t\t\tfileInput.siblings('.order-uploads').val(selectedFiles);\r\n\t\t\t\t\t\t} else {\r\n\t\t\t\t\t\t\tfileInput.siblings('.order-uploads').remove();\r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t}\r\n\t\t        \t// if the file container is empty, remove it\r\n\t\t        \tif ($.trim(container.html())=='') {\r\n\t\t        \t\tcontainer.remove();\r\n\t\t        \t}\r\n\t\t        \t$(\"<input type='hidden' class='clear-files' name='clear_\"+fieldName+\"[]' value='\"+$(this).data('filename')+\"'>\").insertAfter(fileInput);\r\n\t\t        });\r\n\r\n\t\t        fileInput.change(function() {\r\n\t\t\t\t\tlet selectedFiles = [];\r\n\t\t\t\t\tlet existingFiles = fileInput.parent().siblings('.existing-file');\r\n\r\n\t\t\t\t\tArray.from($(this)[0].files).forEach(file => {\r\n\t\t\t\t\t\tselectedFiles.push({name: file.name, type: file.type})\r\n\t\t\t\t\t});\r\n\r\n\t\t\t\t\telement.find('input').first().val(JSON.stringify(selectedFiles)).trigger('change');\r\n\r\n\t\t\t\t\t// create a bunch of span elements with the selected files names to display in the label\r\n\t\t\t\t\tlet files = '';\r\n\t\t\t\t\tselectedFiles.forEach(file => {\r\n\t\t\t\t\t\tfiles += '<span class=\"badge mt-1 mb-1 text-bg-secondary badge-primary\">'+file.name+'</span> ';\r\n\t\t\t\t\t});\r\n\t\t\t\t\t\r\n\t\t\t\t\t// if existing files is not on the page, create a new div a prepend it to the fileInput\r\n\t\t\t\t\tif(existingFiles.length === 0) {\r\n\t\t\t\t\t\texistingFiles = $('<div class=\"well well-sm existing-file mb-2\"></div>');\r\n\t\t\t\t\t\texistingFiles.insertBefore(element.find('input[type=hidden]').first());\r\n\t\t\t\t\t\texistingFiles.html(files);\r\n\t\t\t\t\t}else {\r\n\t\t\t\t\t\t// if existing files is on page show the added files after the uploaded ones\r\n\t\t\t\t\t\texistingFiles.append(files);\r\n\t\t\t\t\t}\r\n\r\n\t\t        \t// remove the hidden input, so that the setXAttribute method is no longer triggered\r\n\t\t\t\t\t$(this).next(\"input[type=hidden]:not([name='clear_\"+fieldName+\"[]']):not([name='_order_\"+fieldName+\"'])\").remove();\r\n\t\t        });\r\n\r\n\t\t\t\telement.find('input').on('CrudField:disable', function(e) {\r\n\t\t\t\t\telement.children('.backstrap-file').find('input').prop('disabled', 'disabled');\r\n\t\t\t\t\telement.children('.existing-file').find('.file-preview').each(function(i, el) {\r\n\r\n\t\t\t\t\t\tlet $deleteButton = $(el).find('a.file-clear-button');\r\n\r\n\t\t\t\t\t\tif(deleteButton.length > 0) {\r\n\t\t\t\t\t\t\t$deleteButton.on('click.prevent', function(e) {\r\n\t\t\t\t\t\t\t\te.stopImmediatePropagation();\r\n\t\t\t\t\t\t\t\treturn false;\r\n\t\t\t\t\t\t\t});\r\n\t\t\t\t\t\t\t// make the event we just registered, the first to be triggered\r\n\t\t\t\t\t\t\t$._data($deleteButton.get(0), \"events\").click.reverse();\r\n\t\t\t\t\t\t}\r\n\t\t\t\t\t});\r\n\t\t\t\t});\r\n\r\n\t\t\t\telement.on('CrudField:enable', function(e) {\r\n\t\t\t\t\telement.children('.backstrap-file').find('input').removeAttr('disabled');\r\n\t\t\t\t\telement.children('.existing-file').find('.file-preview').each(function(i, el) {\r\n\t\t\t\t\t\t$(el).find('a.file-clear-button').unbind('click.prevent');\r\n\t\t\t\t\t});\r\n\t\t\t\t});\r\n        \t}\r\n        </script>\r\n        "
     },
+    "https://cdn.datatables.net/buttons/3.2.0/js/dataTables.buttons.min.js": {
+        "asset_name": "https://cdn.datatables.net/buttons/3.2.0/js/dataTables.buttons.min.js",
+        "asset_path": "https://cdn.datatables.net/buttons/3.2.0/js/dataTables.buttons.min.js",
+        "asset_disk_path": "basset/cdn.datatables.net/buttons/3.2.0/js/dataTables.buttons.min.js",
+        "asset_attributes": [],
+        "asset_content_hash": ""
+    },
+    "https://cdn.datatables.net/buttons/3.2.0/js/buttons.bootstrap5.min.js": {
+        "asset_name": "https://cdn.datatables.net/buttons/3.2.0/js/buttons.bootstrap5.min.js",
+        "asset_path": "https://cdn.datatables.net/buttons/3.2.0/js/buttons.bootstrap5.min.js",
+        "asset_disk_path": "basset/cdn.datatables.net/buttons/3.2.0/js/buttons.bootstrap5.min.js",
+        "asset_attributes": [],
+        "asset_content_hash": ""
+    },
+    "https://cdnjs.cloudflare.com/ajax/libs/jszip/2.5.0/jszip.min.js": {
+        "asset_name": "https://cdnjs.cloudflare.com/ajax/libs/jszip/2.5.0/jszip.min.js",
+        "asset_path": "https://cdnjs.cloudflare.com/ajax/libs/jszip/2.5.0/jszip.min.js",
+        "asset_disk_path": "basset/cdnjs.cloudflare.com/ajax/libs/jszip/2.5.0/jszip.min.js",
+        "asset_attributes": [],
+        "asset_content_hash": ""
+    },
+    "https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.18/pdfmake.min.js": {
+        "asset_name": "https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.18/pdfmake.min.js",
+        "asset_path": "https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.18/pdfmake.min.js",
+        "asset_disk_path": "basset/cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.18/pdfmake.min.js",
+        "asset_attributes": [],
+        "asset_content_hash": ""
+    },
+    "https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.18/vfs_fonts.js": {
+        "asset_name": "https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.18/vfs_fonts.js",
+        "asset_path": "https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.18/vfs_fonts.js",
+        "asset_disk_path": "basset/cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.18/vfs_fonts.js",
+        "asset_attributes": [],
+        "asset_content_hash": ""
+    },
+    "https://cdn.datatables.net/buttons/3.2.0/js/buttons.html5.min.js": {
+        "asset_name": "https://cdn.datatables.net/buttons/3.2.0/js/buttons.html5.min.js",
+        "asset_path": "https://cdn.datatables.net/buttons/3.2.0/js/buttons.html5.min.js",
+        "asset_disk_path": "basset/cdn.datatables.net/buttons/3.2.0/js/buttons.html5.min.js",
+        "asset_attributes": [],
+        "asset_content_hash": ""
+    },
+    "https://cdn.datatables.net/buttons/3.2.0/js/buttons.print.min.js": {
+        "asset_name": "https://cdn.datatables.net/buttons/3.2.0/js/buttons.print.min.js",
+        "asset_path": "https://cdn.datatables.net/buttons/3.2.0/js/buttons.print.min.js",
+        "asset_disk_path": "basset/cdn.datatables.net/buttons/3.2.0/js/buttons.print.min.js",
+        "asset_attributes": [],
+        "asset_content_hash": ""
+    },
+    "https://cdn.datatables.net/buttons/3.2.0/js/buttons.colVis.min.js": {
+        "asset_name": "https://cdn.datatables.net/buttons/3.2.0/js/buttons.colVis.min.js",
+        "asset_path": "https://cdn.datatables.net/buttons/3.2.0/js/buttons.colVis.min.js",
+        "asset_disk_path": "basset/cdn.datatables.net/buttons/3.2.0/js/buttons.colVis.min.js",
+        "asset_attributes": [],
+        "asset_content_hash": ""
+    },
+    "https://cdn.datatables.net/buttons/3.2.0/css/buttons.bootstrap5.min.css": {
+        "asset_name": "https://cdn.datatables.net/buttons/3.2.0/css/buttons.bootstrap5.min.css",
+        "asset_path": "https://cdn.datatables.net/buttons/3.2.0/css/buttons.bootstrap5.min.css",
+        "asset_disk_path": "basset/cdn.datatables.net/buttons/3.2.0/css/buttons.bootstrap5.min.css",
+        "asset_attributes": [],
+        "asset_content_hash": ""
+    },
+    "https://cdn.jsdelivr.net/npm/urijs@1.19.11/src/URI.min.js": {
+        "asset_name": "https://cdn.jsdelivr.net/npm/urijs@1.19.11/src/URI.min.js",
+        "asset_path": "https://cdn.jsdelivr.net/npm/urijs@1.19.11/src/URI.min.js",
+        "asset_disk_path": "basset/cdn.jsdelivr.net/npm/urijs@1.19.11/src/URI.min.js",
+        "asset_attributes": [],
+        "asset_content_hash": ""
+    },
+    "https://cdn.jsdelivr.net/npm/jquery-ui@1.13.2/dist/jquery-ui.min.js": {
+        "asset_name": "https://cdn.jsdelivr.net/npm/jquery-ui@1.13.2/dist/jquery-ui.min.js",
+        "asset_path": "https://cdn.jsdelivr.net/npm/jquery-ui@1.13.2/dist/jquery-ui.min.js",
+        "asset_disk_path": "basset/cdn.jsdelivr.net/npm/jquery-ui@1.13.2/dist/jquery-ui.min.js",
+        "asset_attributes": [],
+        "asset_content_hash": ""
+    },
     "E:\\laragon\\www\\xlr8\\vendor/backpack/crud/src/resources/assets/libs/jquery.mjs.nestedSortable2.js": {
         "asset_name": "E:\\laragon\\www\\xlr8\\vendor/backpack/crud/src/resources/assets/libs/jquery.mjs.nestedSortable2.js",
         "asset_path": "E:\\laragon\\www\\xlr8\\vendor/backpack/crud/src/resources/assets/libs/jquery.mjs.nestedSortable2.js",
@@ -132,11 +279,31 @@
         "asset_attributes": [],
         "asset_content_hash": "\r\n<script type=\"text/javascript\">\r\n    document.addEventListener(\"DOMContentLoaded\", function() {\r\n        [...document.querySelectorAll('aside .dropdown-toggle.active')].forEach(el => { \r\n            let bsDropdown = tabler.bootstrap.Dropdown.getInstance(el);\r\n            if(typeof bsDropdown !== 'undefined' && bsDropdown !== null) {\r\n                bsDropdown.show();\r\n                el.blur();                 \r\n            }\r\n        });\r\n\r\n        // this is used to close only \"main menus\" when navigating in the sidebar. \r\n        // in topbar we can use `click outside` to close the menu, but here we don't want\r\n        // the menu closing while we interact with the page, only when another main menu is clicked\r\n        [...document.querySelectorAll('aside .nav-item.dropdown')].forEach(el => {\r\n        let bsDropdown = tabler.bootstrap.Dropdown.getInstance(el.firstElementChild);\r\n        if(typeof bsDropdown !== 'undefined' && bsDropdown !== null) {\r\n            bsDropdown._config.autoClose = false;\r\n            bsDropdown.update();\r\n            \r\n            bsDropdown._element.addEventListener('show.bs.dropdown', function(e) {\r\n                let openDropdownInstance = document.querySelector('aside .nav-link.dropdown-toggle.show');\r\n                if(openDropdownInstance !== null) {\r\n                    let openDropdown = tabler.bootstrap.Dropdown.getInstance(openDropdownInstance);\r\n                    openDropdown.hide();\r\n                }\r\n            });\r\n            \r\n        }\r\n        });\r\n\r\n        [...document.querySelectorAll('header.top .dropdown-toggle, aside .dropdown-toggle')].forEach(el => {\r\n            let bsDropdown = tabler.bootstrap.Dropdown.getInstance(el);\r\n            if(typeof bsDropdown !== 'undefined' && bsDropdown !== null) {\r\n                if(!bsDropdown._element.classList.contains('nav-link')) {\r\n                    bsDropdown._element.addEventListener('show.bs.dropdown', function(e) {\r\n                        // whenever a dropdown is shown, we close all other nested dropdowns\r\n                        let targetParent = e.target.parentElement.classList.contains('dropend') ? e.target.parentElement.parentElement : e.target.parentElement.parentElement.parentElement;\r\n                        let openDropdownInstances = targetParent.querySelectorAll('.dropdown-toggle.show');\r\n                        if(openDropdownInstances !== null) {\r\n                           openDropdownInstances.forEach(function(openDropdownInstance) {\r\n                                let openDropdown = tabler.bootstrap.Dropdown.getInstance(openDropdownInstance);\r\n                                openDropdown.hide();\r\n                            });\r\n                        }\r\n                    });\r\n                }else{\r\n                    // when nav-link is active we re-open the complete active menu\r\n                    bsDropdown._element.addEventListener('show.bs.dropdown', function(e) {\r\n                        if(e.target.parentElement.classList.contains('active') || e.target.classList.contains('active')) {\r\n                            e.target.parentElement.querySelectorAll('.dropdown-toggle.active').forEach(function(openDropdownInstance) {\r\n                                if(openDropdownInstance !== e.target) {\r\n                                    let openDropdown = tabler.bootstrap.Dropdown.getInstance(openDropdownInstance);\r\n                                    openDropdown.show();\r\n                                }\r\n                            });\r\n                        }\r\n                    });\r\n                }\r\n                \r\n            }\r\n                         \r\n        });\r\n\r\n        // closes the main dropdown when clicking outside\r\n        [...document.querySelectorAll('header.top .nav-item.dropdown')].forEach(el => {\r\n            let bsDropdown = tabler.bootstrap.Dropdown.getInstance(el.firstElementChild);\r\n            if(typeof bsDropdown !== 'undefined' && bsDropdown !== null) {\r\n                bsDropdown._config.autoClose = 'outside';\r\n                bsDropdown.update();\r\n            }\r\n                \r\n        });\r\n    });\r\n</script>\r\n"
     },
+    "https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/js/tabler.min.js": {
+        "asset_name": "https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/js/tabler.min.js",
+        "asset_path": "https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/js/tabler.min.js",
+        "asset_disk_path": "basset/cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/js/tabler.min.js",
+        "asset_attributes": {
+            "integrity": "sha256-tgx2Fg6XYkV027jPEKvmrummSTtgCW/fwV3R3SvZnrk=",
+            "crossorigin": "anonymous"
+        },
+        "asset_content_hash": ""
+    },
     "E:\\laragon\\www\\xlr8\\vendor/backpack/theme-tabler/resources/assets/js/tabler.js": {
         "asset_name": "E:\\laragon\\www\\xlr8\\vendor/backpack/theme-tabler/resources/assets/js/tabler.js",
         "asset_path": "E:\\laragon\\www\\xlr8\\vendor/backpack/theme-tabler/resources/assets/js/tabler.js",
         "asset_disk_path": "basset/vendor/backpack/theme-tabler/resources/assets/js/tabler.js",
         "asset_attributes": []
+    },
+    "https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/css/tabler.min.css": {
+        "asset_name": "https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/css/tabler.min.css",
+        "asset_path": "https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/css/tabler.min.css",
+        "asset_disk_path": "basset/cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/css/tabler.min.css",
+        "asset_attributes": {
+            "integrity": "sha256-fvdQvRBUamldCxJ2etgEi9jz7F3n2u+xBn+dDao9HJo=",
+            "crossorigin": "anonymous"
+        },
+        "asset_content_hash": ""
     },
     "E:\\laragon\\www\\xlr8\\vendor/backpack/theme-tabler/resources/assets/css/style.css": {
         "asset_name": "E:\\laragon\\www\\xlr8\\vendor/backpack/theme-tabler/resources/assets/css/style.css",
@@ -150,11 +317,137 @@
         "asset_disk_path": "basset/vendor/backpack/theme-tabler/resources/assets/css/color-adjustments.css",
         "asset_attributes": []
     },
+    "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/styles/base16/dracula.min.css": {
+        "asset_name": "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/styles/base16/dracula.min.css",
+        "asset_path": "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/styles/base16/dracula.min.css",
+        "asset_disk_path": "basset/cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/styles/base16/dracula.min.css",
+        "asset_attributes": [],
+        "asset_content_hash": ""
+    },
+    "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/highlight.min.js": {
+        "asset_name": "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/highlight.min.js",
+        "asset_path": "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/highlight.min.js",
+        "asset_disk_path": "basset/cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/highlight.min.js",
+        "asset_attributes": [],
+        "asset_content_hash": ""
+    },
+    "https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js": {
+        "asset_name": "https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js",
+        "asset_path": "https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js",
+        "asset_disk_path": "basset/cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js",
+        "asset_attributes": [],
+        "asset_content_hash": ""
+    },
+    "https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js": {
+        "asset_name": "https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js",
+        "asset_path": "https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js",
+        "asset_disk_path": "basset/cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js",
+        "asset_attributes": [],
+        "asset_content_hash": ""
+    },
+    "https://cdn.jsdelivr.net/npm/noty@3.2.0-beta-deprecated/lib/noty.min.js": {
+        "asset_name": "https://cdn.jsdelivr.net/npm/noty@3.2.0-beta-deprecated/lib/noty.min.js",
+        "asset_path": "https://cdn.jsdelivr.net/npm/noty@3.2.0-beta-deprecated/lib/noty.min.js",
+        "asset_disk_path": "basset/cdn.jsdelivr.net/npm/noty@3.2.0-beta-deprecated/lib/noty.min.js",
+        "asset_attributes": [],
+        "asset_content_hash": ""
+    },
+    "https://cdn.jsdelivr.net/npm/sweetalert@2.1.2/dist/sweetalert.min.js": {
+        "asset_name": "https://cdn.jsdelivr.net/npm/sweetalert@2.1.2/dist/sweetalert.min.js",
+        "asset_path": "https://cdn.jsdelivr.net/npm/sweetalert@2.1.2/dist/sweetalert.min.js",
+        "asset_disk_path": "basset/cdn.jsdelivr.net/npm/sweetalert@2.1.2/dist/sweetalert.min.js",
+        "asset_attributes": [],
+        "asset_content_hash": ""
+    },
     "E:\\laragon\\www\\xlr8\\vendor/backpack/crud/src/resources/assets/js/common.js": {
         "asset_name": "E:\\laragon\\www\\xlr8\\vendor/backpack/crud/src/resources/assets/js/common.js",
         "asset_path": "E:\\laragon\\www\\xlr8\\vendor/backpack/crud/src/resources/assets/js/common.js",
         "asset_disk_path": "basset/vendor/backpack/crud/src/resources/assets/js/common.js",
         "asset_attributes": []
+    },
+    "https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.compat.css": {
+        "asset_name": "https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.compat.css",
+        "asset_path": "https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.compat.css",
+        "asset_disk_path": "basset/cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.compat.css",
+        "asset_attributes": [],
+        "asset_content_hash": ""
+    },
+    "https://cdn.jsdelivr.net/npm/noty@3.2.0-beta-deprecated/lib/noty.css": {
+        "asset_name": "https://cdn.jsdelivr.net/npm/noty@3.2.0-beta-deprecated/lib/noty.css",
+        "asset_path": "https://cdn.jsdelivr.net/npm/noty@3.2.0-beta-deprecated/lib/noty.css",
+        "asset_disk_path": "basset/cdn.jsdelivr.net/npm/noty@3.2.0-beta-deprecated/lib/noty.css",
+        "asset_attributes": [],
+        "asset_content_hash": ""
+    },
+    "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/css/line-awesome.min.css": {
+        "asset_name": "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/css/line-awesome.min.css",
+        "asset_path": "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/css/line-awesome.min.css",
+        "asset_disk_path": "basset/cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/css/line-awesome.min.css",
+        "asset_attributes": [],
+        "asset_content_hash": ""
+    },
+    "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-regular-400.woff2": {
+        "asset_name": "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-regular-400.woff2",
+        "asset_path": "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-regular-400.woff2",
+        "asset_disk_path": "basset/cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-regular-400.woff2",
+        "asset_attributes": [],
+        "asset_content_hash": ""
+    },
+    "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-solid-900.woff2": {
+        "asset_name": "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-solid-900.woff2",
+        "asset_path": "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-solid-900.woff2",
+        "asset_disk_path": "basset/cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-solid-900.woff2",
+        "asset_attributes": [],
+        "asset_content_hash": ""
+    },
+    "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-brands-400.woff2": {
+        "asset_name": "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-brands-400.woff2",
+        "asset_path": "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-brands-400.woff2",
+        "asset_disk_path": "basset/cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-brands-400.woff2",
+        "asset_attributes": [],
+        "asset_content_hash": ""
+    },
+    "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-regular-400.woff": {
+        "asset_name": "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-regular-400.woff",
+        "asset_path": "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-regular-400.woff",
+        "asset_disk_path": "basset/cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-regular-400.woff",
+        "asset_attributes": [],
+        "asset_content_hash": ""
+    },
+    "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-solid-900.woff": {
+        "asset_name": "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-solid-900.woff",
+        "asset_path": "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-solid-900.woff",
+        "asset_disk_path": "basset/cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-solid-900.woff",
+        "asset_attributes": [],
+        "asset_content_hash": ""
+    },
+    "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-brands-400.woff": {
+        "asset_name": "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-brands-400.woff",
+        "asset_path": "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-brands-400.woff",
+        "asset_disk_path": "basset/cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-brands-400.woff",
+        "asset_attributes": [],
+        "asset_content_hash": ""
+    },
+    "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-regular-400.ttf": {
+        "asset_name": "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-regular-400.ttf",
+        "asset_path": "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-regular-400.ttf",
+        "asset_disk_path": "basset/cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-regular-400.ttf",
+        "asset_attributes": [],
+        "asset_content_hash": ""
+    },
+    "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-solid-900.ttf": {
+        "asset_name": "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-solid-900.ttf",
+        "asset_path": "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-solid-900.ttf",
+        "asset_disk_path": "basset/cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-solid-900.ttf",
+        "asset_attributes": [],
+        "asset_content_hash": ""
+    },
+    "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-brands-400.ttf": {
+        "asset_name": "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-brands-400.ttf",
+        "asset_path": "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-brands-400.ttf",
+        "asset_disk_path": "basset/cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-brands-400.ttf",
+        "asset_attributes": [],
+        "asset_content_hash": ""
     },
     "E:\\laragon\\www\\xlr8\\vendor/backpack/crud/src/resources/assets/css/common.css": {
         "asset_name": "E:\\laragon\\www\\xlr8\\vendor/backpack/crud/src/resources/assets/css/common.css",
@@ -182,287 +475,5 @@
         "asset_disk_path": "basset/backpack/crud/fields/range-field.js",
         "asset_attributes": [],
         "asset_content_hash": "\n<script>\n    function bpFieldInitRangeElement($element) {\n        const input = $element[0];\n        const bubble = input.nextElementSibling;\n        if (!bubble || !bubble.classList.contains('bp-range-bubble')) return;\n\n        // native range thumb is ~16px wide; offset the bubble so it tracks the thumb center\n        const THUMB_WIDTH = 16;\n\n        function positionBubble() {\n            bubble.textContent = input.value;\n            const min = parseFloat(input.min) || 0;\n            const max = parseFloat(input.max) || 100;\n            const val = parseFloat(input.value) || 0;\n            const ratio = max === min ? 0 : (val - min) / (max - min);\n            const offset = ratio * (input.offsetWidth - THUMB_WIDTH) + THUMB_WIDTH / 2;\n            bubble.style.left = offset + 'px';\n        }\n\n        input.addEventListener('input', positionBubble);\n        window.addEventListener('resize', positionBubble);\n        // defer to next frame so layout is settled (e.g. inside tabs/modals)\n        requestAnimationFrame(positionBubble);\n    }\n</script>\n"
-    },
-    "https://cdn.datatables.net/2.1.8/js/dataTables.min.js": {
-        "asset_name": "https://cdn.datatables.net/2.1.8/js/dataTables.min.js",
-        "asset_path": "https://cdn.datatables.net/2.1.8/js/dataTables.min.js",
-        "asset_disk_path": "basset/cdn.datatables.net/2.1.8/js/dataTables.min.js",
-        "asset_attributes": []
-    },
-    "https://cdn.datatables.net/2.1.8/js/dataTables.bootstrap5.min.js": {
-        "asset_name": "https://cdn.datatables.net/2.1.8/js/dataTables.bootstrap5.min.js",
-        "asset_path": "https://cdn.datatables.net/2.1.8/js/dataTables.bootstrap5.min.js",
-        "asset_disk_path": "basset/cdn.datatables.net/2.1.8/js/dataTables.bootstrap5.min.js",
-        "asset_attributes": []
-    },
-    "https://cdn.datatables.net/responsive/3.0.3/js/dataTables.responsive.min.js": {
-        "asset_name": "https://cdn.datatables.net/responsive/3.0.3/js/dataTables.responsive.min.js",
-        "asset_path": "https://cdn.datatables.net/responsive/3.0.3/js/dataTables.responsive.min.js",
-        "asset_disk_path": "basset/cdn.datatables.net/responsive/3.0.3/js/dataTables.responsive.min.js",
-        "asset_attributes": []
-    },
-    "https://cdn.datatables.net/fixedheader/4.0.1/js/dataTables.fixedHeader.min.js": {
-        "asset_name": "https://cdn.datatables.net/fixedheader/4.0.1/js/dataTables.fixedHeader.min.js",
-        "asset_path": "https://cdn.datatables.net/fixedheader/4.0.1/js/dataTables.fixedHeader.min.js",
-        "asset_disk_path": "basset/cdn.datatables.net/fixedheader/4.0.1/js/dataTables.fixedHeader.min.js",
-        "asset_attributes": []
-    },
-    "https://cdn.datatables.net/2.1.8/css/dataTables.bootstrap5.min.css": {
-        "asset_name": "https://cdn.datatables.net/2.1.8/css/dataTables.bootstrap5.min.css",
-        "asset_path": "https://cdn.datatables.net/2.1.8/css/dataTables.bootstrap5.min.css",
-        "asset_disk_path": "basset/cdn.datatables.net/2.1.8/css/dataTables.bootstrap5.min.css",
-        "asset_attributes": []
-    },
-    "https://cdn.datatables.net/responsive/3.0.3/css/responsive.dataTables.min.css": {
-        "asset_name": "https://cdn.datatables.net/responsive/3.0.3/css/responsive.dataTables.min.css",
-        "asset_path": "https://cdn.datatables.net/responsive/3.0.3/css/responsive.dataTables.min.css",
-        "asset_disk_path": "basset/cdn.datatables.net/responsive/3.0.3/css/responsive.dataTables.min.css",
-        "asset_attributes": []
-    },
-    "https://cdn.datatables.net/fixedheader/4.0.1/css/fixedHeader.dataTables.min.css": {
-        "asset_name": "https://cdn.datatables.net/fixedheader/4.0.1/css/fixedHeader.dataTables.min.css",
-        "asset_path": "https://cdn.datatables.net/fixedheader/4.0.1/css/fixedHeader.dataTables.min.css",
-        "asset_disk_path": "basset/cdn.datatables.net/fixedheader/4.0.1/css/fixedHeader.dataTables.min.css",
-        "asset_attributes": []
-    },
-    "https://cdn.jsdelivr.net/npm/summernote@0.9.1/dist/summernote-lite.min.css": {
-        "asset_name": "https://cdn.jsdelivr.net/npm/summernote@0.9.1/dist/summernote-lite.min.css",
-        "asset_path": "https://cdn.jsdelivr.net/npm/summernote@0.9.1/dist/summernote-lite.min.css",
-        "asset_disk_path": "basset/cdn.jsdelivr.net/npm/summernote@0.9.1/dist/summernote-lite.min.css",
-        "asset_attributes": []
-    },
-    "https://cdn.jsdelivr.net/npm/summernote@0.9.1/dist/font/summernote.woff2": {
-        "asset_name": "https://cdn.jsdelivr.net/npm/summernote@0.9.1/dist/font/summernote.woff2",
-        "asset_path": "https://cdn.jsdelivr.net/npm/summernote@0.9.1/dist/font/summernote.woff2",
-        "asset_disk_path": "basset/cdn.jsdelivr.net/npm/summernote@0.9.1/dist/font/summernote.woff2",
-        "asset_attributes": []
-    },
-    "https://cdn.jsdelivr.net/npm/summernote@0.9.1/dist/summernote-lite.min.js": {
-        "asset_name": "https://cdn.jsdelivr.net/npm/summernote@0.9.1/dist/summernote-lite.min.js",
-        "asset_path": "https://cdn.jsdelivr.net/npm/summernote@0.9.1/dist/summernote-lite.min.js",
-        "asset_disk_path": "basset/cdn.jsdelivr.net/npm/summernote@0.9.1/dist/summernote-lite.min.js",
-        "asset_attributes": []
-    },
-    "https://cdn.datatables.net/buttons/3.2.0/js/dataTables.buttons.min.js": {
-        "asset_name": "https://cdn.datatables.net/buttons/3.2.0/js/dataTables.buttons.min.js",
-        "asset_path": "https://cdn.datatables.net/buttons/3.2.0/js/dataTables.buttons.min.js",
-        "asset_disk_path": "basset/cdn.datatables.net/buttons/3.2.0/js/dataTables.buttons.min.js",
-        "asset_attributes": []
-    },
-    "https://cdn.datatables.net/buttons/3.2.0/js/buttons.bootstrap5.min.js": {
-        "asset_name": "https://cdn.datatables.net/buttons/3.2.0/js/buttons.bootstrap5.min.js",
-        "asset_path": "https://cdn.datatables.net/buttons/3.2.0/js/buttons.bootstrap5.min.js",
-        "asset_disk_path": "basset/cdn.datatables.net/buttons/3.2.0/js/buttons.bootstrap5.min.js",
-        "asset_attributes": []
-    },
-    "https://cdnjs.cloudflare.com/ajax/libs/jszip/2.5.0/jszip.min.js": {
-        "asset_name": "https://cdnjs.cloudflare.com/ajax/libs/jszip/2.5.0/jszip.min.js",
-        "asset_path": "https://cdnjs.cloudflare.com/ajax/libs/jszip/2.5.0/jszip.min.js",
-        "asset_disk_path": "basset/cdnjs.cloudflare.com/ajax/libs/jszip/2.5.0/jszip.min.js",
-        "asset_attributes": []
-    },
-    "https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.18/pdfmake.min.js": {
-        "asset_name": "https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.18/pdfmake.min.js",
-        "asset_path": "https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.18/pdfmake.min.js",
-        "asset_disk_path": "basset/cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.18/pdfmake.min.js",
-        "asset_attributes": []
-    },
-    "https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.18/vfs_fonts.js": {
-        "asset_name": "https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.18/vfs_fonts.js",
-        "asset_path": "https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.18/vfs_fonts.js",
-        "asset_disk_path": "basset/cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.18/vfs_fonts.js",
-        "asset_attributes": []
-    },
-    "https://cdn.datatables.net/buttons/3.2.0/js/buttons.html5.min.js": {
-        "asset_name": "https://cdn.datatables.net/buttons/3.2.0/js/buttons.html5.min.js",
-        "asset_path": "https://cdn.datatables.net/buttons/3.2.0/js/buttons.html5.min.js",
-        "asset_disk_path": "basset/cdn.datatables.net/buttons/3.2.0/js/buttons.html5.min.js",
-        "asset_attributes": []
-    },
-    "https://cdn.datatables.net/buttons/3.2.0/js/buttons.print.min.js": {
-        "asset_name": "https://cdn.datatables.net/buttons/3.2.0/js/buttons.print.min.js",
-        "asset_path": "https://cdn.datatables.net/buttons/3.2.0/js/buttons.print.min.js",
-        "asset_disk_path": "basset/cdn.datatables.net/buttons/3.2.0/js/buttons.print.min.js",
-        "asset_attributes": []
-    },
-    "https://cdn.datatables.net/buttons/3.2.0/js/buttons.colVis.min.js": {
-        "asset_name": "https://cdn.datatables.net/buttons/3.2.0/js/buttons.colVis.min.js",
-        "asset_path": "https://cdn.datatables.net/buttons/3.2.0/js/buttons.colVis.min.js",
-        "asset_disk_path": "basset/cdn.datatables.net/buttons/3.2.0/js/buttons.colVis.min.js",
-        "asset_attributes": []
-    },
-    "https://cdn.datatables.net/buttons/3.2.0/css/buttons.bootstrap5.min.css": {
-        "asset_name": "https://cdn.datatables.net/buttons/3.2.0/css/buttons.bootstrap5.min.css",
-        "asset_path": "https://cdn.datatables.net/buttons/3.2.0/css/buttons.bootstrap5.min.css",
-        "asset_disk_path": "basset/cdn.datatables.net/buttons/3.2.0/css/buttons.bootstrap5.min.css",
-        "asset_attributes": []
-    },
-    "https://cdn.jsdelivr.net/npm/urijs@1.19.11/src/URI.min.js": {
-        "asset_name": "https://cdn.jsdelivr.net/npm/urijs@1.19.11/src/URI.min.js",
-        "asset_path": "https://cdn.jsdelivr.net/npm/urijs@1.19.11/src/URI.min.js",
-        "asset_disk_path": "basset/cdn.jsdelivr.net/npm/urijs@1.19.11/src/URI.min.js",
-        "asset_attributes": []
-    },
-    "https://cdn.jsdelivr.net/npm/jquery-ui@1.13.2/dist/jquery-ui.min.js": {
-        "asset_name": "https://cdn.jsdelivr.net/npm/jquery-ui@1.13.2/dist/jquery-ui.min.js",
-        "asset_path": "https://cdn.jsdelivr.net/npm/jquery-ui@1.13.2/dist/jquery-ui.min.js",
-        "asset_disk_path": "basset/cdn.jsdelivr.net/npm/jquery-ui@1.13.2/dist/jquery-ui.min.js",
-        "asset_attributes": []
-    },
-    "https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/js/tabler.min.js": {
-        "asset_name": "https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/js/tabler.min.js",
-        "asset_path": "https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/js/tabler.min.js",
-        "asset_disk_path": "basset/cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/js/tabler.min.js",
-        "asset_attributes": {
-            "integrity": "sha256-tgx2Fg6XYkV027jPEKvmrummSTtgCW/fwV3R3SvZnrk=",
-            "crossorigin": "anonymous"
-        }
-    },
-    "https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/css/tabler.min.css": {
-        "asset_name": "https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/css/tabler.min.css",
-        "asset_path": "https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/css/tabler.min.css",
-        "asset_disk_path": "basset/cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/css/tabler.min.css",
-        "asset_attributes": {
-            "integrity": "sha256-fvdQvRBUamldCxJ2etgEi9jz7F3n2u+xBn+dDao9HJo=",
-            "crossorigin": "anonymous"
-        }
-    },
-    "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/styles/base16/dracula.min.css": {
-        "asset_name": "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/styles/base16/dracula.min.css",
-        "asset_path": "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/styles/base16/dracula.min.css",
-        "asset_disk_path": "basset/cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/styles/base16/dracula.min.css",
-        "asset_attributes": []
-    },
-    "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/highlight.min.js": {
-        "asset_name": "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/highlight.min.js",
-        "asset_path": "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/highlight.min.js",
-        "asset_disk_path": "basset/cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/highlight.min.js",
-        "asset_attributes": []
-    },
-    "https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js": {
-        "asset_name": "https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js",
-        "asset_path": "https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js",
-        "asset_disk_path": "basset/cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js",
-        "asset_attributes": []
-    },
-    "https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js": {
-        "asset_name": "https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js",
-        "asset_path": "https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js",
-        "asset_disk_path": "basset/cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js",
-        "asset_attributes": []
-    },
-    "https://cdn.jsdelivr.net/npm/noty@3.2.0-beta-deprecated/lib/noty.min.js": {
-        "asset_name": "https://cdn.jsdelivr.net/npm/noty@3.2.0-beta-deprecated/lib/noty.min.js",
-        "asset_path": "https://cdn.jsdelivr.net/npm/noty@3.2.0-beta-deprecated/lib/noty.min.js",
-        "asset_disk_path": "basset/cdn.jsdelivr.net/npm/noty@3.2.0-beta-deprecated/lib/noty.min.js",
-        "asset_attributes": []
-    },
-    "https://cdn.jsdelivr.net/npm/sweetalert@2.1.2/dist/sweetalert.min.js": {
-        "asset_name": "https://cdn.jsdelivr.net/npm/sweetalert@2.1.2/dist/sweetalert.min.js",
-        "asset_path": "https://cdn.jsdelivr.net/npm/sweetalert@2.1.2/dist/sweetalert.min.js",
-        "asset_disk_path": "basset/cdn.jsdelivr.net/npm/sweetalert@2.1.2/dist/sweetalert.min.js",
-        "asset_attributes": []
-    },
-    "https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.compat.css": {
-        "asset_name": "https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.compat.css",
-        "asset_path": "https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.compat.css",
-        "asset_disk_path": "basset/cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.compat.css",
-        "asset_attributes": []
-    },
-    "https://cdn.jsdelivr.net/npm/noty@3.2.0-beta-deprecated/lib/noty.css": {
-        "asset_name": "https://cdn.jsdelivr.net/npm/noty@3.2.0-beta-deprecated/lib/noty.css",
-        "asset_path": "https://cdn.jsdelivr.net/npm/noty@3.2.0-beta-deprecated/lib/noty.css",
-        "asset_disk_path": "basset/cdn.jsdelivr.net/npm/noty@3.2.0-beta-deprecated/lib/noty.css",
-        "asset_attributes": []
-    },
-    "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/css/line-awesome.min.css": {
-        "asset_name": "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/css/line-awesome.min.css",
-        "asset_path": "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/css/line-awesome.min.css",
-        "asset_disk_path": "basset/cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/css/line-awesome.min.css",
-        "asset_attributes": []
-    },
-    "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-regular-400.woff2": {
-        "asset_name": "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-regular-400.woff2",
-        "asset_path": "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-regular-400.woff2",
-        "asset_disk_path": "basset/cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-regular-400.woff2",
-        "asset_attributes": []
-    },
-    "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-solid-900.woff2": {
-        "asset_name": "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-solid-900.woff2",
-        "asset_path": "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-solid-900.woff2",
-        "asset_disk_path": "basset/cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-solid-900.woff2",
-        "asset_attributes": []
-    },
-    "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-brands-400.woff2": {
-        "asset_name": "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-brands-400.woff2",
-        "asset_path": "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-brands-400.woff2",
-        "asset_disk_path": "basset/cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-brands-400.woff2",
-        "asset_attributes": []
-    },
-    "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-regular-400.woff": {
-        "asset_name": "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-regular-400.woff",
-        "asset_path": "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-regular-400.woff",
-        "asset_disk_path": "basset/cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-regular-400.woff",
-        "asset_attributes": []
-    },
-    "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-solid-900.woff": {
-        "asset_name": "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-solid-900.woff",
-        "asset_path": "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-solid-900.woff",
-        "asset_disk_path": "basset/cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-solid-900.woff",
-        "asset_attributes": []
-    },
-    "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-brands-400.woff": {
-        "asset_name": "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-brands-400.woff",
-        "asset_path": "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-brands-400.woff",
-        "asset_disk_path": "basset/cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-brands-400.woff",
-        "asset_attributes": []
-    },
-    "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-regular-400.ttf": {
-        "asset_name": "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-regular-400.ttf",
-        "asset_path": "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-regular-400.ttf",
-        "asset_disk_path": "basset/cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-regular-400.ttf",
-        "asset_attributes": []
-    },
-    "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-solid-900.ttf": {
-        "asset_name": "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-solid-900.ttf",
-        "asset_path": "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-solid-900.ttf",
-        "asset_disk_path": "basset/cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-solid-900.ttf",
-        "asset_attributes": []
-    },
-    "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-brands-400.ttf": {
-        "asset_name": "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-brands-400.ttf",
-        "asset_path": "https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-brands-400.ttf",
-        "asset_disk_path": "basset/cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/fonts/la-brands-400.ttf",
-        "asset_attributes": []
-    },
-    "D:\\laragon\\www\\xlrm\\vendor/backpack/theme-tabler/resources/assets/css/style.css": {
-        "asset_name": "D:\\laragon\\www\\xlrm\\vendor/backpack/theme-tabler/resources/assets/css/style.css",
-        "asset_path": "D:\\laragon\\www\\xlrm\\vendor/backpack/theme-tabler/resources/assets/css/style.css",
-        "asset_disk_path": "basset/vendor/backpack/theme-tabler/resources/assets/css/style.css",
-        "asset_attributes": []
-    },
-    "D:\\laragon\\www\\xlrm\\vendor/backpack/theme-tabler/resources/assets/css/color-adjustments.css": {
-        "asset_name": "D:\\laragon\\www\\xlrm\\vendor/backpack/theme-tabler/resources/assets/css/color-adjustments.css",
-        "asset_path": "D:\\laragon\\www\\xlrm\\vendor/backpack/theme-tabler/resources/assets/css/color-adjustments.css",
-        "asset_disk_path": "basset/vendor/backpack/theme-tabler/resources/assets/css/color-adjustments.css",
-        "asset_attributes": []
-    },
-    "D:\\laragon\\www\\xlrm\\vendor/backpack/crud/src/resources/assets/css/common.css": {
-        "asset_name": "D:\\laragon\\www\\xlrm\\vendor/backpack/crud/src/resources/assets/css/common.css",
-        "asset_path": "D:\\laragon\\www\\xlrm\\vendor/backpack/crud/src/resources/assets/css/common.css",
-        "asset_disk_path": "basset/vendor/backpack/crud/src/resources/assets/css/common.css",
-        "asset_attributes": []
-    },
-    "D:\\laragon\\www\\xlrm\\vendor/backpack/crud/src/resources/assets/js/common.js": {
-        "asset_name": "D:\\laragon\\www\\xlrm\\vendor/backpack/crud/src/resources/assets/js/common.js",
-        "asset_path": "D:\\laragon\\www\\xlrm\\vendor/backpack/crud/src/resources/assets/js/common.js",
-        "asset_disk_path": "basset/vendor/backpack/crud/src/resources/assets/js/common.js",
-        "asset_attributes": []
-    },
-    "D:\\laragon\\www\\xlrm\\vendor/backpack/theme-tabler/resources/assets/js/tabler.js": {
-        "asset_name": "D:\\laragon\\www\\xlrm\\vendor/backpack/theme-tabler/resources/assets/js/tabler.js",
-        "asset_path": "D:\\laragon\\www\\xlrm\\vendor/backpack/theme-tabler/resources/assets/js/tabler.js",
-        "asset_disk_path": "basset/vendor/backpack/theme-tabler/resources/assets/js/tabler.js",
-        "asset_attributes": []
     }
 }

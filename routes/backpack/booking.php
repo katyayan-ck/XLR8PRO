@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\BookingCrudController;
 use App\Http\Controllers\Admin\QuotationCrudController;
+use App\Http\Controllers\Admin\ReceiptCrudController;
 
 
 Route::group([
@@ -59,6 +60,11 @@ Route::group([
         [BookingCrudController::class, 'getDOAmount']
     )->name('booking.get-do-amount');
 
+    Route::get(
+        'booking/get-ta-statement',
+        [BookingCrudController::class, 'getTAStatement']
+    )->name('booking.get-ta-statement');
+
     // Route::get(
     //     'quotation-form',
     //     [BookingCrudController::class, 'quotationForm']
@@ -72,6 +78,9 @@ Route::group([
         'quotation-form',
         [QuotationCrudController::class, 'index']
     )->name('quotation.index');
+
+    Route::get('quotation-form/pending', [QuotationCrudController::class, 'pendingQuotations'])
+        ->name('quotation.pending');
 
     Route::get(
         'quotation-form/create',
@@ -93,6 +102,8 @@ Route::group([
         [QuotationCrudController::class, 'update']
     )->name('quotation.update');
 
+
+
     Route::get('quotation/{quotation_no}/preview', [QuotationCrudController::class, 'preview'])->name('quotation.preview');
 
 
@@ -100,6 +111,12 @@ Route::group([
         'quotation-form/{id}/history',
         [QuotationCrudController::class, 'history']
     )->name('quotation.history');
+
+    Route::get(
+        'quotation-form/{id}/history/{version}/pdf',
+        [QuotationCrudController::class, 'historyPdf']
+    )->name('quotation.history.pdf');
+
     Route::get(
         'booking-process/{id}/preview',
         'BookingCrudController@preview'
@@ -205,6 +222,11 @@ Route::group([
 
     // AJAX / HELPER ROUTES
 
+    Route::get(
+        'booking/{id}/generate-votf',
+        [BookingCrudController::class, 'generateVotfNumber']
+    )->name('booking.generate-votf');
+
     Route::get('/branchlocations/{bid}', 'BookingCrudController@getBranchLocation')
         ->name('get.branch');
 
@@ -297,6 +319,57 @@ Route::group([
         ->name('receipt.edit');
     Route::put('booking/{bookingId}/receipt/{receiptId}', 'BookingCrudController@receiptUpdate')
         ->name('receipt.update');
+    // ================= ACCOUNTS - ISSUE RECEIPT =================
+
+    Route::get(
+        'accounts/receipt-list',
+        [ReceiptCrudController::class, 'index']
+    )->name('accounts.receipt.index');
+
+    Route::get(
+        'accounts/receipt/create',
+        [ReceiptCrudController::class, 'create']
+    )->name('accounts.receipt.create');
+
+    Route::post(
+        'accounts/receipt-list',
+        [ReceiptCrudController::class, 'store']
+    )->name('accounts.receipt.store');
+
+    Route::get(
+        'accounts/receipt/{id}/edit',
+        [ReceiptCrudController::class, 'edit']
+    )->name('accounts.receipt.edit');
+
+    Route::put(
+        'accounts/receipt/{id}',
+        [ReceiptCrudController::class, 'update']
+    )->name('accounts.receipt.update');
+
+    Route::delete(
+        'accounts/receipt/{id}',
+        [ReceiptCrudController::class, 'destroy']
+    )->name('accounts.receipt.destroy');
+    // ================= SPECIAL DISCOUNT =================
+
+    Route::get('special-discount', function () {
+        return view('admin.sales-cashier.special-discount-list');
+    })->name('special-discount.index');
+
+    Route::get('special-discount/create', function () {
+        return view('admin.sales-cashier.special-discount-create');
+    })->name('special-discount.create');
+
+
+    // ================= RTO CHARGES =================
+
+    Route::get('rto-charges', function () {
+        return view('admin.sales-cashier.rto-charges-list');
+    })->name('rto-charges.index');
+
+    Route::get('rto-charges/create', function () {
+        return view('admin.sales-cashier.rto-charges-create');
+    })->name('rto-charges.create');
 
 
     Route::get('booking/finance', 'BookingCrudController@intInFinance')
@@ -459,6 +532,17 @@ Route::group([
 
     Route::get('booking/{id}/check-field-payment', 'BookingCrudController@checkFieldPayment')
         ->name('booking.check-field-payment');
-    Route::post('booking/otf/{id}/save', 'BookingCrudController@otfSave')
+    Route::post('booking/{id}/otf-save', 'BookingCrudController@otfSave')
         ->name('booking.otf.save');
+    Route::get('booking/{id}/download-otf-pdf', [BookingCrudController::class, 'downloadOtfPdf'])
+        ->name('booking.download-otf-pdf');
+
+    Route::get(
+        'enquiries/{id}/validate-quotation-vehicle',
+        [\App\Http\Controllers\Admin\EnquiryCrudController::class, 'validateQuotationVehicle']
+    )->name('enquiry.validate.quotation.vehicle');
+
+    Route::crud('enquiry', 'EnquiryCrudController');
+
+    
 });
