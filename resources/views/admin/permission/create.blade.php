@@ -40,7 +40,7 @@
 
                     <div class="card-body">
 
-                        <form method="POST" action="{{ backpack_url('permission') }}">
+                        <form method="POST" action="{{ backpack_url('iam/permission') }}">
 
                             @csrf
 
@@ -136,7 +136,7 @@
 
                                 </button>
 
-                                <a href="{{ backpack_url('permission') }}" class="btn btn-secondary btn-lg">
+                                <a href="{{ backpack_url('iam/permission') }}" class="btn btn-secondary btn-lg">
 
                                     Cancel
 
@@ -171,7 +171,7 @@
             );
 
             $.get(
-                "{{ backpack_url('permission/processes') }}/" +
+                "{{ backpack_url('iam/permission/processes') }}/" +
                 moduleCode,
 
                 function (response) {

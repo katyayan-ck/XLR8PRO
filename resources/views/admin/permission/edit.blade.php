@@ -48,7 +48,7 @@
 
                     <form
                         method="POST"
-                        action="{{ backpack_url('permission/' . $permission->id) }}">
+                        action="{{ backpack_url('iam/permission/' . $permission->id) }}">
 
                         @csrf
                         @method('PUT')
@@ -221,7 +221,7 @@
                             </button>
 
                             <a
-                                href="{{ backpack_url('permission') }}"
+                                href="{{ backpack_url('iam/permission') }}"
                                 class="btn btn-secondary btn-lg">
 
                                 Cancel
@@ -257,7 +257,7 @@ $('#module_code').on('change', function () {
     );
 
     $.get(
-        "{{ backpack_url('permission/processes') }}/" +
+        "{{ backpack_url('iam/permission/processes') }}/" +
         moduleCode,
 
         function(response) {

@@ -32,8 +32,8 @@
                     <div class="d-flex align-items-center gap-2">
                         <label class="text-black mb-0 text-nowrap">Payout Status:</label>
                         <select id="payout_type" class="form-control form-select" style="min-width: 220px;">
-                            <option value="{{ route('finance.payout') }}">Pending Payout</option>
-                            <option value="{{ route('finance.payout.completed') }}" selected>Completed Payout</option>
+                            <option value="{{ route('sales.booking.finance.payout') }}">Pending Payout</option>
+                            <option value="{{ route('sales.booking.finance.payout.completed') }}" selected>Completed Payout</option>
                         </select>
                     </div>
 

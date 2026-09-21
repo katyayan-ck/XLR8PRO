@@ -92,7 +92,7 @@
 
             <div class="col-md-12">
                 <form id="bookingForm" class="forms-sample" method="POST"
-                    action="{{ $isEdit ? backpack_url('booking/' . $entry->id) : backpack_url('booking') }}"
+                    action="{{ $isEdit ? backpack_url('sales/booking/' . $entry->id) : backpack_url('sales/booking') }}"
                     enctype="multipart/form-data">
                     @csrf
                     @if ($isEdit)

@@ -11,6 +11,8 @@ use Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use PhpOffice\PhpSpreadsheet\Reader\Xlsx;
 
 class BrandCrudController extends CrudController
 {
@@ -22,13 +24,13 @@ class BrandCrudController extends CrudController
     public function setup()
     {
         CRUD::setModel(Brand::class);
-        CRUD::setRoute(config('backpack.base.route_prefix').'/brand');
+        CRUD::setRoute(config('backpack.base.route_prefix').'/vehicle/brand');
         CRUD::setEntityNameStrings('brand', 'brands');
     }
 
     protected function setupListOperation()
     {
-        if (! backpack_user()->can('brand.view')) {
+        if (! backpack_user()->can('VEH_BRND_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view brands.');
         }
 
@@ -37,7 +39,7 @@ class BrandCrudController extends CrudController
 
     public function index()
     {
-        if (! backpack_user()->can('brand.view')) {
+        if (! backpack_user()->can('VEH_BRND_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view brands.');
         }
 
@@ -55,7 +57,7 @@ class BrandCrudController extends CrudController
             $mapped['serial_no'] = $index + 1;
             $mapped['is_active'] = $brand->is_active ? 'Active' : 'Inactive';
 
-            $editUrl = backpack_url("brand/{$brand->id}/edit");
+            $editUrl = backpack_url("vehicle/brand/{$brand->id}/edit");
 
             $mapped['action'] = '
                 <div class="d-flex gap-2 justify-content-center">
@@ -87,7 +89,7 @@ class BrandCrudController extends CrudController
 
     public function edit($id)
     {
-        if (! backpack_user()->can('brand.edit')) {
+        if (! backpack_user()->can('VEH_BRND_EDIT')) {
             abort(403, 'Unauthorized. You do not have permission to edit brands.');
         }
 
@@ -103,7 +105,7 @@ class BrandCrudController extends CrudController
 
     public function update(BrandRequest $request, $id)
     {
-        if (! backpack_user()->can('brand.edit')) {
+        if (! backpack_user()->can('VEH_BRND_EDIT')) {
             abort(403, 'Unauthorized. You do not have permission to edit brands.');
         }
 
@@ -115,12 +117,12 @@ class BrandCrudController extends CrudController
 
         \Alert::success('Brand updated successfully!')->flash();
 
-        return redirect(backpack_url('brand'));
+        return redirect(backpack_url('vehicle/brand'));
     }
 
     public function create()
     {
-        if (! backpack_user()->can('brand.create')) {
+        if (! backpack_user()->can('VEH_BRND_CREATE')) {
             abort(403, 'Unauthorized. You do not have permission to create brands.');
         }
 
@@ -138,14 +140,14 @@ class BrandCrudController extends CrudController
      */
     protected function setupCreateOperation()
     {
-        if (! backpack_user()->can('brand.create')) {
+        if (! backpack_user()->can('VEH_BRND_CREATE')) {
             abort(403, 'Unauthorized. You do not have permission to create brands.');
         }
     }
 
     public function destroy($id)
     {
-        if (! backpack_user()->can('brand.delete')) {
+        if (! backpack_user()->can('VEH_BRND_DELETE')) {
             abort(403, 'Unauthorized. You do not have permission to delete brands.');
         }
 
@@ -176,7 +178,7 @@ class BrandCrudController extends CrudController
         }
 
         try {
-            $reader = new \PhpOffice\PhpSpreadsheet\Reader\Xlsx();
+            $reader = new Xlsx;
             $spreadsheet = $reader->load($file->getPathname());
             $rows = $spreadsheet->getActiveSheet()->toArray(null, true, true, false);
 
@@ -533,7 +535,7 @@ class BrandCrudController extends CrudController
         return redirect()->back();
     }
 
-    private function buildKeyMap(\Illuminate\Support\Collection $rows): array
+    private function buildKeyMap(Collection $rows): array
     {
         $map = [];
         foreach ($rows as $kv) {

@@ -49,7 +49,7 @@ $isViewMode = request()->routeIs('finance.view');
             <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a href="{{ backpack_url('dashboard') }}"><i class="ik ik-home"></i>
                         Dashboard</a></li>
-                <li class="breadcrumb-item"><a href="{{ backpack_url('finance') }}">Finance</a></li>
+                <li class="breadcrumb-item"><a href="{{ backpack_url('sales/booking/finance') }}">Finance</a></li>
                 <li class="breadcrumb-item active">
                     {{ $isViewMode ? 'Payout View' : 'Payout Edit' }}
                 </li>
@@ -291,7 +291,7 @@ $isViewMode = request()->routeIs('finance.view');
             </div>
 
             <div class="col-sm-12 form-group d-flex align-items-end justify-content-end">
-                <a href="{{ route('finance.retailedit', $booking->id) }}?from=payout" class="btn btn-primary btn-sm"
+                <a href="{{ route('sales.booking.finance.retail-edit', $booking->id) }}?from=payout" class="btn btn-primary btn-sm"
                     title="Edit Finance Details">
                     <i class="ik ik-edit mr-1"></i> Edit Finance Details
                 </a>
@@ -308,7 +308,7 @@ $isViewMode = request()->routeIs('finance.view');
 
 
         <div class="card-body">
-            <form id="payoutForm" method="POST" action="{{ route('payout.update', $booking->id) }}"
+            <form id="payoutForm" method="POST" action="{{ route('sales.booking.finance.payout-update', $booking->id) }}"
                 enctype="multipart/form-data">
                 @csrf
                 <input type="hidden" name="_method" value="PUT">

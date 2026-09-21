@@ -9,24 +9,26 @@ class OrgDemoController extends CrudController
 {
     public function index()
     {
-        return view('vendor.backpack.ui.org-demo', [
-            'branches'     => OrgService::branches(),
-            'locations'    => OrgService::locations(),
-            'departments'  => OrgService::departments(),
-            'divisions'    => OrgService::divisions(),
-            'verticals'    => OrgService::verticals(),
-            'segments'     => OrgService::segments(),
-            'subSegments'  => OrgService::subSegments(),
-            'models'       => OrgService::models(),
-            'variants'     => OrgService::variants(),
+        if (! backpack_user()->can('admin.manage')) {
+            abort(403, 'Unauthorized. You do not have permission to view this page.');
+        }
 
-          
+        return view('vendor.backpack.ui.org-demo', [
+            'branches' => OrgService::branches(),
+            'locations' => OrgService::locations(),
+            'departments' => OrgService::departments(),
+            'divisions' => OrgService::divisions(),
+            'verticals' => OrgService::verticals(),
+            'segments' => OrgService::segments(),
+            'subSegments' => OrgService::subSegments(),
+            'models' => OrgService::models(),
+            'variants' => OrgService::variants(),
+
             'churuLocations' => OrgService::locations('CHR'),
             'salesDivisions' => OrgService::divisions('SLS'),
 
-            
-            'usersByPost'    => OrgService::usersByPost('SLS_CNS_CHR_003', 'CHR'),
-            'usersByDesig'   => OrgService::usersByDesignation('CNS', 'CHR'),
+            'usersByPost' => OrgService::usersByPost('SLS_CNS_CHR_003', 'CHR'),
+            'usersByDesig' => OrgService::usersByDesignation('CNS', 'CHR'),
         ]);
     }
 }

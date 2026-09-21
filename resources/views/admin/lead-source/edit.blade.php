@@ -26,7 +26,7 @@
                 </div>
                 <div class="card-body">
 
-                    <form method="POST" action="{{ backpack_url('lead-source/' . $leadSource->id) }}"
+                    <form method="POST" action="{{ backpack_url('sales/lead-source/' . $leadSource->id) }}"
                         enctype="multipart/form-data">
                         @csrf
                         @method('PUT')
@@ -75,7 +75,7 @@
                             <button type="submit" class="btn btn-success btn-lg px-5">
                                 <i class="la la-save"></i> Update Lead Source
                             </button>
-                            <a href="{{ backpack_url('lead-source') }}" class="btn btn-secondary btn-lg">Cancel</a>
+                            <a href="{{ backpack_url('sales/lead-source') }}" class="btn btn-secondary btn-lg">Cancel</a>
                         </div>
                     </form>
                 </div>
@@ -114,7 +114,7 @@ codeInput.addEventListener('keyup', function () {
     codeInput.classList.remove('is-invalid');
 
     // Check duplicate code
-    fetch(`{{ route('lead-source.check-code') }}?code=${encodeURIComponent(code)}`)
+    fetch(`{{ route('sales.lead-source.check-code') }}?code=${encodeURIComponent(code)}`)
         .then(response => response.json())
         .then(data => {
 

@@ -191,7 +191,7 @@
                                 @endif
                             </td>
                             <td>
-                                <a href="{{ route('receipt.edit', ['id' => $booking->id, 'receipt_id' => $log->id]) }}"
+                                <a href="{{ route('sales.booking.receipt.edit', ['id' => $booking->id, 'receipt_id' => $log->id]) }}"
                                     title="Edit Receipt" class="text-success">
                                     <i class="la la-edit fs-5"></i> Edit
                                 </a>
@@ -221,7 +221,7 @@
     <div class="card card-body shadow-sm mb-4" id="receipt-card" style="border-radius: 12px">
         <h2 class="mb-3">Add New Receipt</h2>
         <div class="card-body">
-            <form id="receipt-form" method="POST" action="{{ route('booking.add-receipt.store', $booking->id) }}"
+            <form id="receipt-form" method="POST" action="{{ route('sales.booking.add-receipt.store', $booking->id) }}"
                 enctype="multipart/form-data">
                 @csrf
                 <input type="hidden" name="bid" value="{{ $booking->id }}">
@@ -306,7 +306,7 @@
     <div class="card card-body shadow-sm mb-4" id="pending-data-card" style="border-radius: 12px">
         <h2 class="mb-3">Pending Data</h2>
         <div class="card-body">
-            <form id="pending-form" method="POST" action="{{ route('booking.pending-update', $booking->id) }}"
+            <form id="pending-form" method="POST" action="{{ route('sales.booking.pending-update', $booking->id) }}"
                 enctype="multipart/form-data">
                 @csrf
 

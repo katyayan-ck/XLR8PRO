@@ -26,7 +26,7 @@
                         <h2 class="mb-0">Add Reference Enquiry</h2>
                     </div>
                     <div class="card-body">
-                        <form method="POST" action="{{ route('enquiry.reference.store') }}" enctype="multipart/form-data">
+                        <form method="POST" action="{{ route('sales.enquiry.reference.store') }}" enctype="multipart/form-data">
                             @csrf
 
                             {{-- =========================== REQUESTED VISIBLE FIELDS =========================== --}}
@@ -134,7 +134,7 @@
                 $('#model_code, #variant_code, #color_code').html('<option value="">Select Option</option>').prop('disabled', true);
 
                 if (segmentCode) {
-                    $.get("{{ backpack_url('enquiry/models') }}/" + segmentCode, function(response) {
+                    $.get("{{ backpack_url('sales/enquiry/models') }}/" + segmentCode, function(response) {
                         let html = '<option value="">Select Model</option>';
                         $.each(response, function(code, value) {
                             html += `<option value="${code}">${value}</option>`;
@@ -150,7 +150,7 @@
                 $('#variant_code, #color_code').html('<option value="">Select Option</option>').prop('disabled', true);
 
                 if (modelCode) {
-                    $.get("{{ backpack_url('enquiry/variants') }}/" + modelCode, function(response) {
+                    $.get("{{ backpack_url('sales/enquiry/variants') }}/" + modelCode, function(response) {
                         let html = '<option value="">Select Variant</option>';
                         $.each(response, function(code, item) {
                             html += `<option value="${code}">${item.name}</option>`;
@@ -166,7 +166,7 @@
                 $('#color_code').html('<option value="">Select Option</option>').prop('disabled', true);
 
                 if (variantCode) {
-                    $.get("{{ backpack_url('enquiry/colors') }}/" + variantCode, function(response) {
+                    $.get("{{ backpack_url('sales/enquiry/colors') }}/" + variantCode, function(response) {
                         let html = '<option value="">Select Color</option>';
                         $.each(response, function(code, item) {
                             let val = typeof item === 'object' ? item.name : item;

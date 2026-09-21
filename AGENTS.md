@@ -228,6 +228,16 @@ Every AI coding assistant working in this repository MUST follow this:
   record. Update the entry in place; append to its history rather than overwriting prior findings.
 - Update the index table at the top of the file whenever an entry is added or its status changes.
 
+## Development Workflow (universal — all AI tools, not just Claude)
+
+This applies to every AI coding assistant working in this repository, same as the logging and
+known-bugs rules above:
+
+1. Use Boost MCP tools for exploration and code generation.
+2. Run Larastan (`./vendor/bin/phpstan analyse`) to validate changes.
+3. Test with Pest/PHPUnit (`php artisan test`).
+4. Commit only when Larastan passes.
+
 **Note:** as of this writing, `AGENTS.md` is significantly behind `CLAUDE.md` (missing the
 Backpack CRUD, Media Library, Laradocs, and XCELR8 project-specific sections that `CLAUDE.md`
 has). Since other AI tools rely on `AGENTS.md` and not `CLAUDE.md`, this drift means they're

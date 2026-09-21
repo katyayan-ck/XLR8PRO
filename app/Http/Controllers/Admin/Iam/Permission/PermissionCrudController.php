@@ -23,13 +23,13 @@ class PermissionCrudController extends CrudController
     public function setup()
     {
         CRUD::setModel(Permission::class);
-        CRUD::setRoute(config('backpack.base.route_prefix').'/permission');
+        CRUD::setRoute(config('backpack.base.route_prefix').'/iam/permission');
         CRUD::setEntityNameStrings('permission', 'permissions');
     }
 
     protected function setupListOperation()
     {
-        if (! backpack_user()->can('rbac.view')) {
+        if (! backpack_user()->can('IAM_RBAC_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view permissions.');
         }
 
@@ -38,7 +38,7 @@ class PermissionCrudController extends CrudController
 
     public function index()
     {
-        if (! backpack_user()->can('rbac.view')) {
+        if (! backpack_user()->can('IAM_RBAC_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view permissions.');
         }
 
@@ -66,7 +66,7 @@ class PermissionCrudController extends CrudController
 
             $editUrl =
                 backpack_url(
-                    "permission/{$permission->id}/edit"
+                    "iam/permission/{$permission->id}/edit"
                 );
 
             $mapped['action'] = '
@@ -131,7 +131,7 @@ class PermissionCrudController extends CrudController
 
     public function create()
     {
-        if (! backpack_user()->can('rbac.manage')) {
+        if (! backpack_user()->can('IAM_RBAC_MANAGE')) {
             abort(403, 'Unauthorized. You do not have permission to create permissions.');
         }
 
@@ -140,20 +140,19 @@ class PermissionCrudController extends CrudController
             [
                 'title' => 'Add Permission',
 
-                'modules' =>
-                    Module::where(
-                        'is_active',
-                        1
-                    )
-                        ->orderBy('name')
-                        ->get(),
+                'modules' => Module::where(
+                    'is_active',
+                    1
+                )
+                    ->orderBy('name')
+                    ->get(),
             ]
         );
     }
 
     public function store(PermissionRequest $request)
     {
-        if (! backpack_user()->can('rbac.manage')) {
+        if (! backpack_user()->can('IAM_RBAC_MANAGE')) {
             abort(403, 'Unauthorized. You do not have permission to create permissions.');
         }
 
@@ -168,13 +167,13 @@ class PermissionCrudController extends CrudController
         )->flash();
 
         return redirect(
-            backpack_url('permission')
+            backpack_url('iam/permission')
         );
     }
 
     public function edit($id)
     {
-        if (! backpack_user()->can('rbac.manage')) {
+        if (! backpack_user()->can('IAM_RBAC_MANAGE')) {
             abort(403, 'Unauthorized. You do not have permission to edit permissions.');
         }
 
@@ -200,41 +199,36 @@ class PermissionCrudController extends CrudController
             'admin.permission.edit',
             [
 
-                'title' =>
-                    'Edit Permission',
+                'title' => 'Edit Permission',
 
-                'permission' =>
-                    $permission,
+                'permission' => $permission,
 
-                'modules' =>
-                    Module::where(
+                'modules' => Module::where(
+                    'is_active',
+                    1
+                )
+                    ->orderBy('name')
+                    ->get(),
+
+                'processes' => Process::where(
+                    'module_code',
+                    $permission->module_code
+                )
+                    ->where(
                         'is_active',
                         1
                     )
-                        ->orderBy('name')
-                        ->get(),
+                    ->orderBy('name')
+                    ->get(),
 
-                'processes' =>
-                    Process::where(
-                        'module_code',
-                        $permission->module_code
-                    )
-                        ->where(
-                            'is_active',
-                            1
-                        )
-                        ->orderBy('name')
-                        ->get(),
-
-                'suffix' =>
-                    $suffix,
+                'suffix' => $suffix,
             ]
         );
     }
 
     public function update(PermissionRequest $request, $id)
     {
-        if (! backpack_user()->can('rbac.manage')) {
+        if (! backpack_user()->can('IAM_RBAC_MANAGE')) {
             abort(403, 'Unauthorized. You do not have permission to edit permissions.');
         }
 
@@ -254,13 +248,13 @@ class PermissionCrudController extends CrudController
         )->flash();
 
         return redirect(
-            backpack_url('permission')
+            backpack_url('iam/permission')
         );
     }
 
     public function destroy($id)
     {
-        if (! backpack_user()->can('rbac.manage')) {
+        if (! backpack_user()->can('IAM_RBAC_MANAGE')) {
             abort(403, 'Unauthorized. You do not have permission to delete permissions.');
         }
 

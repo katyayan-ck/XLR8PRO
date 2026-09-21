@@ -15,7 +15,7 @@
                 </h2>
 
                 <div class="d-flex align-items-center gap-3 flex-nowrap">
-                    <a href="{{ backpack_url('branch/create') }}" class="btn btn-blue btn-sm fw-bold shadow-sm">
+                    <a href="{{ backpack_url('org/branch/create') }}" class="btn btn-blue btn-sm fw-bold shadow-sm">
                         <i class="la la-plus me-1"></i> Add New Branch
                     </a>
                 </div>
@@ -111,6 +111,13 @@
     let gridApi;
 
         const columnDefs = [
+    ...getCols(['image']).map(col => {
+        col.sortable = false;
+        col.filter = false;
+        col.cellRenderer = 'htmlRenderer';
+        return col;
+    }),
+
     ...getCols([
     'serial_no',
     'code',
@@ -192,6 +199,7 @@
             gridApi = params.api;
             const defaultFields = [
     'serial_no',
+    'image',
     'code',
     'branch_code',
     'name',
@@ -228,7 +236,7 @@
 
         
         const allFlatColumns = [
-            ...getCols(['serial_no', 'code', 'name', 'short_name']),
+            ...getCols(['serial_no', 'image', 'code', 'name', 'short_name']),
 
             ...getCols(['description']),  
 
@@ -329,6 +337,7 @@
         document.getElementById('btnDefaultHeaders').addEventListener('click', () => {
             const defaultFields = [
     'serial_no',
+    'image',
     'code',
     'branch_code',
     'name',

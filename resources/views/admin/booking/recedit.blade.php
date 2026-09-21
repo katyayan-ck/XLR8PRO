@@ -20,7 +20,7 @@
         </div>
 
         <div class="card-body">
-            <form action="{{ route('receipt.update', ['bookingId' => $booking_id, 'receiptId' => $receipt_id]) }}"
+            <form action="{{ route('sales.booking.receipt.update', ['bookingId' => $booking_id, 'receiptId' => $receipt_id]) }}"
                 method="POST" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')

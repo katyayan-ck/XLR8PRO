@@ -25,7 +25,17 @@
                     <h2 class="mb-0">Add New Department</h2>
                 </div>
                 <div class="card-body">
-                    <form method="POST" action="{{ backpack_url('department') }}" enctype="multipart/form-data">
+                    @if ($errors->any())
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
+                    <form method="POST" action="{{ backpack_url('org/department') }}" enctype="multipart/form-data">
                         @csrf
 
                         <div class="row">
@@ -49,25 +59,6 @@
                                     rows="3">{{ old('description') }}</textarea>
                             </div>
 
-                            <div class="col-md-4 mb-3">
-
-                                <label>Department Image</label>
-
-                                <input type="file" name="department_image" id="department_image" class="form-control"
-                                    accept=".jpg,.jpeg,.png,.webp">
-
-                            </div>
-
-                            <div class="col-md-4 mb-3">
-
-                                <img id="imagePreview" src="" style="display:none;max-height:120px;"
-                                    class="img-thumbnail">
-
-                            </div>
-
-
-
-
 
 
 
@@ -81,11 +72,13 @@
                             </div>
                         </div>
 
+                        @include('admin.org.partials.media-fields', ['imageCollection' => 'department_image', 'model' => null])
+
                         <div class="mt-4">
                             <button type="submit" class="btn btn-success btn-lg px-5">
                                 <i class="la la-save"></i> Create Department
                             </button>
-                            <a href="{{ backpack_url('department') }}" class="btn btn-secondary btn-lg">Cancel</a>
+                            <a href="{{ backpack_url('org/department') }}" class="btn btn-secondary btn-lg">Cancel</a>
                         </div>
                     </form>
                 </div>
@@ -97,28 +90,7 @@
 @push('after_scripts')
 
 <script>
-    document.getElementById('department_image')
-.addEventListener('change', function(e){
-
-    const file = e.target.files[0];
-
-    if(!file) return;
-
-    const reader = new FileReader();
-
-    reader.onload = function(ev){
-
-        const img =
-            document.getElementById('imagePreview');
-
-        img.src = ev.target.result;
-        img.style.display = 'block';
-    };
-
-    reader.readAsDataURL(file);
-});
-
-$('input[name="code"]').on('input', function () {
+    $('input[name="code"]').on('input', function () {
 
     this.value = this.value
         .replace(/[^A-Za-z0-9]/g, '')
@@ -143,24 +115,6 @@ $('form').on('submit', function (e) {
         e.preventDefault();
 
         $('#codeError').text('Code must be at least 3 characters');
-
-        Swal.fire({
-            icon: 'error',
-            title: 'Validation Error',
-            text: 'Department Code must be at least 3 characters.'
-        });
-
-        return false;
-    }
-});
-
-$('form').on('submit', function (e) {
-
-    const code = $('input[name="code"]').val().trim();
-
-    if (code.length < 3) {
-
-        e.preventDefault();
 
         Swal.fire({
             icon: 'error',

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\Org\Location;
 use App\Http\Requests\LocationRequest;
 use App\Models\Admin\Branch;
 use App\Models\Admin\Location;
+use App\Services\Org\LocationService;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
@@ -16,60 +17,81 @@ class LocationCrudController extends CrudController
 {
     use CreateOperation;
     use DeleteOperation;
-    use ListOperation;
+    use ListOperation {
+        search as traitSearch;
+        showDetailsRow as traitShowDetailsRow;
+    }
     use UpdateOperation;
+
+    public function __construct(private LocationService $locations)
+    {
+        parent::__construct();
+    }
+
+    public function search()
+    {
+        $this->authorizeManage();
+
+        return $this->traitSearch();
+    }
+
+    public function showDetailsRow($id)
+    {
+        $this->authorizeManage();
+
+        return $this->traitShowDetailsRow($id);
+    }
 
     public function setup()
     {
         CRUD::setModel(Location::class);
-        CRUD::setRoute(config('backpack.base.route_prefix').'/location');
+        CRUD::setRoute(config('backpack.base.route_prefix').'/org/location');
         CRUD::setEntityNameStrings('location', 'locations');
     }
 
     protected function setupListOperation()
     {
-        if (! backpack_user()->can('location.view')) {
-            abort(403, 'Unauthorized. You do not have permission to view locations.');
-        }
+        $this->authorizeManage();
 
         $this->crud->setListView('admin.location.list');
     }
 
     public function index()
     {
-        if (! backpack_user()->can('location.view')) {
-            abort(403, 'Unauthorized. You do not have permission to view locations.');
-        }
+        $this->authorizeManage();
 
         $this->crud->setListView('admin.location.list');
 
-        $locations = Location::with('branch')
-            ->select([
-                'id',
-                'branch_code',
-                'code',
-                'name',
-                'description',
-                'phone',
-                'email',
-                'address',
-                'city',
-                'pincode',
-                'latitude',
-                'longitude',
-                'is_active',
-                'is_sales_location',
-                'is_workshop',
-                'is_parts_location',
-                'is_stock_location',
-                'is_office_only',
-                'is_mwh',
-                'is_lmmws',
-            ])
+        $locations = Location::select([
+            'id',
+            'branch_code',
+            'code',
+            'name',
+            'description',
+            'phone',
+            'email',
+            'address',
+            'city',
+            'pincode',
+            'latitude',
+            'longitude',
+            'is_active',
+            'is_sales_location',
+            'is_workshop',
+            'is_parts_location',
+            'is_stock_location',
+            'is_office_only',
+            'is_mwh',
+            'is_lmmws',
+        ])
             ->orderBy('id', 'desc')
             ->get();
 
-        $gridData = $locations->map(function ($loc, $index) {
+        // Location::branch() joins on Branch.branch_code, which is never populated (see
+        // BUG-082/084) — look Branches up by `code` directly instead of via the relation.
+        $branchNamesByCode = Branch::pluck('name', 'code');
+
+        $gridData = $locations->map(function ($loc, $index) use ($branchNamesByCode) {
             $mapped = $loc->toArray();
             $mapped['serial_no'] = $index + 1;
             $mapped['is_active'] = $loc->is_active ? 'Active' : 'Inactive';
@@ -81,9 +103,14 @@ class LocationCrudController extends CrudController
             $mapped['is_mwh'] = $loc->is_mwh ? 'Yes' : 'No';
             $mapped['is_lmmws'] = $loc->is_lmmws ? 'Yes' : 'No';
 
-            $mapped['branch'] = $loc->branch?->name ?? $loc->branch_code ?? '—';
+            $mapped['branch'] = $branchNamesByCode->get($loc->branch_code) ?? $loc->branch_code ?? '—';
 
-            $editUrl = backpack_url("location/{$loc->id}/edit");
+            $imageUrl = $loc->getFirstMediaUrl('location_image');
+            $mapped['image'] = $imageUrl
+                ? '<img src="'.$imageUrl.'" style="height:36px;width:36px;object-fit:cover;border-radius:6px;">'
+                : '<span class="text-muted">—</span>';
+
+            $editUrl = backpack_url("org/location/{$loc->id}/edit");
 
             $mapped['action'] = '
                 <div class="d-flex gap-2 justify-content-center">
@@ -99,6 +126,7 @@ class LocationCrudController extends CrudController
             'gridConfig' => [
                 'columns' => [
                     ['field' => 'serial_no', 'headerName' => 'S.No.'],
+                    ['field' => 'image',      'headerName' => 'Image'],
                     ['field' => 'branch',      'headerName' => 'Branch Code'],
                     ['field' => 'code',      'headerName' => 'Code'],
                     ['field' => 'name',      'headerName' => 'Name'],
@@ -127,9 +155,7 @@ class LocationCrudController extends CrudController
 
     public function create()
     {
-        if (! backpack_user()->can('location.create')) {
-            abort(403, 'Unauthorized. You do not have permission to create locations.');
-        }
+        $this->authorizeManage();
 
         $this->crud->setCreateView('admin.location.create');
 
@@ -141,30 +167,18 @@ class LocationCrudController extends CrudController
 
     public function store(LocationRequest $request)
     {
-        if (! backpack_user()->can('location.create')) {
-            abort(403, 'Unauthorized. You do not have permission to create locations.');
-        }
+        $this->authorizeManage();
 
-        $validated = $request->validated();
-
-        $location = Location::create($validated);
-
-        if ($request->hasFile('location_image')) {
-            $location
-                ->addMediaFromRequest('location_image')
-                ->toMediaCollection('location_image');
-        }
+        $this->locations->create($request->validated(), $request);
 
         \Alert::success('Location created successfully!')->flash();
 
-        return redirect(backpack_url('location'));
+        return redirect(backpack_url('org/location'));
     }
 
     public function edit($id)
     {
-        if (! backpack_user()->can('location.edit')) {
-            abort(403, 'Unauthorized. You do not have permission to edit locations.');
-        }
+        $this->authorizeManage();
 
         $this->crud->setEditView('admin.location.edit');
 
@@ -181,32 +195,34 @@ class LocationCrudController extends CrudController
 
     public function update(LocationRequest $request, $id)
     {
-        if (! backpack_user()->can('location.edit')) {
-            abort(403, 'Unauthorized. You do not have permission to edit locations.');
-        }
+        $this->authorizeManage();
 
         $location = Location::findOrFail($id);
 
-        $validated = $request->validated();
+        $result = $this->locations->update($location, $request->validated(), $request);
 
-        $location->update($validated);
-        if ($request->hasFile('location_image')) {
-            $location
-                ->addMediaFromRequest('location_image')
-                ->toMediaCollection('location_image');
+        if (! $result['ok']) {
+            return back()->withInput()->withErrors([
+                'is_active' => 'Cannot disable this location — it still has '.implode(' and ', $result['blockers']).'. Disable those first.',
+            ]);
         }
 
         \Alert::success('Location updated successfully!')->flash();
 
-        return redirect(backpack_url('location'));
+        return redirect(backpack_url('org/location'));
     }
 
     public function destroy($id)
     {
-        if (! backpack_user()->can('location.delete')) {
-            abort(403, 'Unauthorized. You do not have permission to delete locations.');
-        }
+        $this->authorizeManage();
 
         return $this->crud->delete($id);
+    }
+
+    private function authorizeManage(): void
+    {
+        if (! backpack_user()->can('ORG_ENTITY_MANAGE')) {
+            abort(403, 'Unauthorized. You do not have permission to manage org entities.');
+        }
     }
 }

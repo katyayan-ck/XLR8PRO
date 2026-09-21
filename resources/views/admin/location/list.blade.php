@@ -15,7 +15,7 @@
                 </h2>
 
                 <div class="d-flex align-items-center gap-3 flex-nowrap">
-                    <a href="{{ backpack_url('location/create') }}" class="btn btn-blue btn-sm fw-bold shadow-sm">
+                    <a href="{{ backpack_url('org/location/create') }}" class="btn btn-blue btn-sm fw-bold shadow-sm">
                         <i class="la la-plus me-1"></i> Add New Location
                     </a>
                 </div>
@@ -95,6 +95,13 @@
     let gridApi;
 
     const columnDefs = [
+        ...ALL_COLUMNS.filter(col => ['image'].includes(col.field)).map(col => {
+            col.sortable = false;
+            col.filter = false;
+            col.cellRenderer = 'htmlRenderer';
+            return col;
+        }),
+
         ...ALL_COLUMNS.filter(col => ['serial_no','branch', 'code', 'name', 'description'].includes(col.field))
             .map(col => {
                 if (['serial_no', 'code'].includes(col.field)) {
@@ -138,7 +145,7 @@
             gridApi = params.api;
 
             const defaultFields = [
-                'serial_no', 'branch',
+                'serial_no', 'image', 'branch',
         'code',
         'name',
         'description',
@@ -177,7 +184,7 @@
         tbody.innerHTML = '';
 
         const allFlatColumns = [
-            ...ALL_COLUMNS.filter(col => ['serial_no', 'code', 'name', 'branch'].includes(col.field)),
+            ...ALL_COLUMNS.filter(col => ['serial_no', 'image', 'code', 'name', 'branch'].includes(col.field)),
             ...ALL_COLUMNS.filter(col => ['phone', 'email', 'city', 'state', 'pincode', 'latitude', 'longitude'].includes(col.field)),
             ...ALL_COLUMNS.filter(col => ['is_active', 'is_sales_location', 'is_workshop', 'is_parts_location', 'is_stock_location', 'is_office_only', 'is_mwh', 'is_lmmws'].includes(col.field)),
             ...ALL_COLUMNS.filter(col => ['action'].includes(col.field))
@@ -262,7 +269,7 @@
         
         document.getElementById('btnDefaultHeaders').addEventListener('click', () => {
             const defaultFields = [
-                'serial_no', 'code', 'name', 'branch',
+                'serial_no', 'image', 'code', 'name', 'branch',
                 'city', 'state', 'pincode',
                 'action'
             ];

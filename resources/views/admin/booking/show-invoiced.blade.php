@@ -737,7 +737,7 @@
                     <span class="toggle" onclick="toggleCard(this)">−</span>
                 </div>
                 <div class="card-body">
-                    <form method="POST" action="{{ backpack_url('booking/followup') }}" enctype="multipart/form-data">
+                    <form method="POST" action="{{ backpack_url('sales/booking/followup') }}" enctype="multipart/form-data">
                         @csrf
                         <input type="hidden" name="id" value="{{ $booking->id }}">
                         <div class="row g-3">
@@ -764,7 +764,7 @@
             </div>
 
             <div class="text-center mt-5">
-                <a href="{{ backpack_url('booking/invoiced') }}" class="btn btn-secondary btn-lg px-5">
+                <a href="{{ backpack_url('sales/booking/invoiced') }}" class="btn btn-secondary btn-lg px-5">
                     <i class="la la-arrow-left me-2"></i> Back to Invoiced Bookings
                 </a>
             </div>

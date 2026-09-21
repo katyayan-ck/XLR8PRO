@@ -190,7 +190,7 @@
     <div class="card card-body shadow-sm mb-4" style="border-radius: 12px">
         <h2 class="mb-3">RTO / Registration Details</h2>
 
-        <form id="rtoForm" method="POST" action="{{ route('booking.rto.update', $booking->id) }}"
+        <form id="rtoForm" method="POST" action="{{ route('sales.booking.rto.update', $booking->id) }}"
             enctype="multipart/form-data">
             @csrf
 
@@ -425,7 +425,7 @@
                     <button type="submit" class="btn btn-success btn-lg px-5">
                         <i class="la la-save"></i> Save RTO Details
                     </button>
-                    <a href="{{ route('booking.pending-rto') }}" class="btn btn-secondary btn-lg px-5 ms-3">
+                    <a href="{{ route('sales.booking.pending-rto') }}" class="btn btn-secondary btn-lg px-5 ms-3">
                         Cancel
                     </a>
                 </div>

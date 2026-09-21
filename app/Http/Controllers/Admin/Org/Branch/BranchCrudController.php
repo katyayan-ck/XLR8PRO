@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\Org\Branch;
 use App\Http\Controllers\Admin\Traits\ScopedCrud;
 use App\Http\Requests\BranchRequest;
 use App\Models\Admin\Branch;
+use App\Services\Org\BranchService;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
@@ -16,9 +17,31 @@ class BranchCrudController extends CrudController
 {
     use CreateOperation;
     use DeleteOperation;
-    use ListOperation;
+    use ListOperation {
+        search as traitSearch;
+        showDetailsRow as traitShowDetailsRow;
+    }
     use ScopedCrud;
     use UpdateOperation;
+
+    public function __construct(private BranchService $branches)
+    {
+        parent::__construct();
+    }
+
+    public function search()
+    {
+        $this->authorizeManage();
+
+        return $this->traitSearch();
+    }
+
+    public function showDetailsRow($id)
+    {
+        $this->authorizeManage();
+
+        return $this->traitShowDetailsRow($id);
+    }
 
     protected function getScopeType(): string
     {
@@ -28,24 +51,20 @@ class BranchCrudController extends CrudController
     public function setup()
     {
         CRUD::setModel(Branch::class);
-        CRUD::setRoute(config('backpack.base.route_prefix').'/branch');
+        CRUD::setRoute(config('backpack.base.route_prefix').'/org/branch');
         CRUD::setEntityNameStrings('branch', 'branches');
     }
 
     protected function setupListOperation()
     {
-        if (! backpack_user()->can('branch.view')) {
-            abort(403, 'Unauthorized. You do not have permission to view branches.');
-        }
+        $this->authorizeManage();
 
         $this->crud->setListView('admin.branch.list');
     }
 
     public function index()
     {
-        if (! backpack_user()->can('branch.view')) {
-            abort(403, 'Unauthorized. You do not have permission to view branches.');
-        }
+        $this->authorizeManage();
 
         $this->crud->setListView('admin.branch.list');
 
@@ -72,7 +91,12 @@ class BranchCrudController extends CrudController
             $mapped['is_active'] = $branch->is_active ? 'Active' : 'Inactive';
             $mapped['is_head_office'] = $branch->is_head_office ? 'Yes' : 'No';
 
-            $editUrl = backpack_url("branch/{$branch->code}/edit");
+            $imageUrl = $branch->getFirstMediaUrl('branch_image');
+            $mapped['image'] = $imageUrl
+                ? '<img src="'.$imageUrl.'" style="height:36px;width:36px;object-fit:cover;border-radius:6px;">'
+                : '<span class="text-muted">—</span>';
+
+            $editUrl = backpack_url("org/branch/{$branch->code}/edit");
 
             $mapped['action'] = '
             <div class="d-flex gap-2 justify-content-center">
@@ -87,6 +111,7 @@ class BranchCrudController extends CrudController
             'gridConfig' => [
                 'columns' => [
                     ['field' => 'serial_no', 'headerName' => 'S.No.'],
+                    ['field' => 'image', 'headerName' => 'Image'],
                     ['field' => 'code', 'headerName' => 'Code'],
                     ['field' => 'name', 'headerName' => 'Branch Name'],
                     ['field' => 'description', 'headerName' => 'Description'],
@@ -108,9 +133,7 @@ class BranchCrudController extends CrudController
 
     public function edit($code)
     {
-        if (! backpack_user()->can('branch.edit')) {
-            abort(403, 'Unauthorized. You do not have permission to edit branches.');
-        }
+        $this->authorizeManage();
 
         $this->crud->setEditView('admin.branch.edit');
 
@@ -125,41 +148,28 @@ class BranchCrudController extends CrudController
 
     public function update(BranchRequest $request, $code)
     {
-        if (! backpack_user()->can('branch.edit')) {
-            abort(403, 'Unauthorized. You do not have permission to edit branches.');
-        }
+        $this->authorizeManage();
 
         $branch = Branch::where('code', $code)->firstOrFail();
 
-        $validated = $request->validated();
+        $result = $this->branches->update($branch, $request->validated(), $request);
 
-        if ($request->is_head_office) {
-            Branch::where('id', '!=', $branch->id)
-                ->where('is_head_office', true)
-                ->update([
-                    'is_head_office' => false,
-                ]);
-        }
-        $branch->update($validated);
-        if ($request->hasFile('branch_image')) {
-            $branch
-                ->addMediaFromRequest('branch_image')
-                ->toMediaCollection('branch_image');
+        if (! $result['ok']) {
+            return back()->withInput()->withErrors([
+                'is_active' => 'Cannot disable this branch — it still has '.implode(' and ', $result['blockers']).'. Disable those first.',
+            ]);
         }
 
         \Alert::success('Branch updated successfully!')->flash();
 
-        return redirect(backpack_url('branch'));
+        return redirect(backpack_url('org/branch'));
     }
 
     public function create()
     {
-        if (! backpack_user()->can('branch.create')) {
-            abort(403, 'Unauthorized. You do not have permission to create branches.');
-        }
+        $this->authorizeManage();
 
-        $headOffice = Branch::where('is_head_office', true)
-            ->first();
+        $headOffice = Branch::where('is_head_office', true)->first();
 
         return view('admin.branch.create', [
             'title' => 'Add New Branch',
@@ -169,72 +179,26 @@ class BranchCrudController extends CrudController
 
     public function store(BranchRequest $request)
     {
-        if (! backpack_user()->can('branch.create')) {
-            abort(403, 'Unauthorized. You do not have permission to create branches.');
-        }
+        $this->authorizeManage();
 
-        $validated = $request->validated();
-
-        if ($request->is_head_office) {
-            Branch::where('is_head_office', true)
-                ->update([
-                    'is_head_office' => false,
-                ]);
-        }
-
-        $branch = Branch::create($validated);
-
-        if ($request->hasFile('branch_image')) {
-            $branch
-                ->addMediaFromRequest('branch_image')
-                ->toMediaCollection('branch_image');
-        }
+        $this->branches->create($request->validated(), $request);
 
         \Alert::success('Branch created successfully!')->flash();
 
-        return redirect(backpack_url('branch'));
+        return redirect(backpack_url('org/branch'));
     }
 
     public function destroy($id)
     {
-        if (! backpack_user()->can('branch.delete')) {
-            abort(403, 'Unauthorized. You do not have permission to delete branches.');
-        }
+        $this->authorizeManage();
 
         return $this->crud->delete($id);
     }
 
-    protected function setupCreateOperation()
+    private function authorizeManage(): void
     {
-        if (! backpack_user()->can('branch.create')) {
-            abort(403, 'Unauthorized. You do not have permission to create branches.');
+        if (! backpack_user()->can('ORG_ENTITY_MANAGE')) {
+            abort(403, 'Unauthorized. You do not have permission to manage org entities.');
         }
-
-        $this->defineFields();
-    }
-
-    protected function setupUpdateOperation()
-    {
-        if (! backpack_user()->can('branch.edit')) {
-            abort(403, 'Unauthorized. You do not have permission to edit branches.');
-        }
-
-        $this->defineFields();
-    }
-
-    protected function defineFields(): void
-    {
-        CRUD::field('code');
-        CRUD::field('name');
-        CRUD::field('description')->type('textarea');
-        CRUD::field('phone');
-        CRUD::field('email');
-        CRUD::field('address')->type('textarea');
-        CRUD::field('city');
-        CRUD::field('pincode');
-        CRUD::field('latitude');
-        CRUD::field('longitude');
-        CRUD::field('is_head_office')->type('checkbox');
-        CRUD::field('is_active')->type('checkbox');
     }
 }

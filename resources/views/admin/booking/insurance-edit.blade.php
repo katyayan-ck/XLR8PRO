@@ -164,7 +164,7 @@
     <div class="card card-body shadow-sm mb-4" style="border-radius:12px">
         <h2 class="mb-3">Insurance Details</h2>
 
-        <form method="POST" action="{{ route('booking.insurance.update', $booking->id) }}"
+        <form method="POST" action="{{ route('sales.booking.insurance.update', $booking->id) }}"
             enctype="multipart/form-data">
             @csrf
             @method('PUT')
@@ -285,7 +285,7 @@
                     <button type="submit" class="btn btn-success btn-lg px-5">
                         <i class="la la-save"></i> Save Insurance
                     </button>
-                    <a href="{{ route('booking.pending-insurance') }}" class="btn btn-secondary btn-lg px-5 ms-3">
+                    <a href="{{ route('sales.booking.pending-insurance') }}" class="btn btn-secondary btn-lg px-5 ms-3">
                         Cancel
                     </a>
                 </div>

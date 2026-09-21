@@ -27,7 +27,7 @@
                     </div>
                     <div class="card-body">
 
-                        <form method="POST" action="{{ backpack_url('color') }}">
+                        <form method="POST" action="{{ backpack_url('vehicle/color') }}">
                             @csrf
 
                             <div class="row">
@@ -161,7 +161,7 @@
                                 <button type="submit" class="btn btn-success btn-lg px-5">
                                     <i class="la la-save"></i> Create Color
                                 </button>
-                                <a href="{{ backpack_url('color') }}" class="btn btn-secondary btn-lg">Cancel</a>
+                                <a href="{{ backpack_url('vehicle/color') }}" class="btn btn-secondary btn-lg">Cancel</a>
                             </div>
                         </form>
                     </div>
@@ -193,7 +193,7 @@ $(document).ready(function () {
         );
 
         $.get(
-            "{{ backpack_url('color/subsegments') }}",
+            "{{ backpack_url('vehicle/color/subsegments') }}",
             {
                 segment_code: segmentCode
             },
@@ -231,7 +231,7 @@ $(document).ready(function () {
         );
 
         $.get(
-            "{{ backpack_url('color/models') }}",
+            "{{ backpack_url('vehicle/color/models') }}",
             {
                 sub_segment_code: subSegmentCode
             },
@@ -265,7 +265,7 @@ $(document).ready(function () {
         );
 
         $.get(
-            "{{ backpack_url('color/variants') }}",
+            "{{ backpack_url('vehicle/color/variants') }}",
             {
                 model_code: modelCode
             },

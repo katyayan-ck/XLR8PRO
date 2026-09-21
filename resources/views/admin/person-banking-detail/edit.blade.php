@@ -36,7 +36,7 @@
                 </div>
                 <div class="card-body">
 
-                    <form method="POST" action="{{ backpack_url('person-banking-detail/' . $banking->id) }}">
+                    <form method="POST" action="{{ backpack_url('org/person-banking-detail/' . $banking->id) }}">
                         @csrf
                         @method('PUT')
 
@@ -144,7 +144,7 @@
                             <button type="submit" class="btn btn-success btn-lg px-5">
                                 <i class="la la-save"></i> Update Banking Detail
                             </button>
-                            <a href="{{ backpack_url('person-banking-detail') }}"
+                            <a href="{{ backpack_url('org/person-banking-detail') }}"
                                 class="btn btn-secondary btn-lg">Cancel</a>
                         </div>
                     </form>

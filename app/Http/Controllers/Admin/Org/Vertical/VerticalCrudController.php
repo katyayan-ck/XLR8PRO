@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Org\Vertical;
 
 use App\Http\Requests\VerticalRequest;
 use App\Models\Admin\Vertical;
+use App\Services\Org\VerticalService;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
@@ -15,35 +16,48 @@ class VerticalCrudController extends CrudController
 {
     use CreateOperation;
     use DeleteOperation;
-    use ListOperation;
+    use ListOperation {
+        search as traitSearch;
+        showDetailsRow as traitShowDetailsRow;
+    }
     use UpdateOperation;
 
-    /**
-     * No dedicated "vertical.*" permission exists in xlr8_iam_permissions —
-     * reuses "division.*", the closest sibling org-hierarchy concept, same
-     * reasoning as SubSegmentCrudController reusing "segment.*".
-     */
+    public function __construct(private VerticalService $verticals)
+    {
+        parent::__construct();
+    }
+
+    public function search()
+    {
+        $this->authorizeManage();
+
+        return $this->traitSearch();
+    }
+
+    public function showDetailsRow($id)
+    {
+        $this->authorizeManage();
+
+        return $this->traitShowDetailsRow($id);
+    }
+
     public function setup()
     {
         CRUD::setModel(Vertical::class);
-        CRUD::setRoute(config('backpack.base.route_prefix').'/vertical');
+        CRUD::setRoute(config('backpack.base.route_prefix').'/org/vertical');
         CRUD::setEntityNameStrings('vertical', 'verticals');
     }
 
     protected function setupListOperation()
     {
-        if (! backpack_user()->can('division.view')) {
-            abort(403, 'Unauthorized. You do not have permission to view verticals.');
-        }
+        $this->authorizeManage();
 
         $this->crud->setListView('admin.vertical.list');
     }
 
     public function index()
     {
-        if (! backpack_user()->can('division.view')) {
-            abort(403, 'Unauthorized. You do not have permission to view verticals.');
-        }
+        $this->authorizeManage();
 
         $this->crud->setListView('admin.vertical.list');
 
@@ -61,7 +75,12 @@ class VerticalCrudController extends CrudController
             $mapped['serial_no'] = $index + 1;
             $mapped['is_active'] = $vertical->is_active ? 'Active' : 'Inactive';
 
-            $editUrl = backpack_url("vertical/{$vertical->id}/edit");
+            $imageUrl = $vertical->getFirstMediaUrl('vertical_image');
+            $mapped['image'] = $imageUrl
+                ? '<img src="'.$imageUrl.'" style="height:36px;width:36px;object-fit:cover;border-radius:6px;">'
+                : '<span class="text-muted">—</span>';
+
+            $editUrl = backpack_url("org/vertical/{$vertical->id}/edit");
 
             $mapped['action'] = '
                 <div class="d-flex gap-2 justify-content-center">
@@ -81,6 +100,7 @@ class VerticalCrudController extends CrudController
             'gridConfig' => [
                 'columns' => [
                     ['field' => 'serial_no',    'headerName' => 'S.No.'],
+                    ['field' => 'image',        'headerName' => 'Image'],
                     ['field' => 'code',         'headerName' => 'Code'],
                     ['field' => 'vert_code',    'headerName' => 'Vertical Code'],
                     ['field' => 'name',         'headerName' => 'Vertical Name'],
@@ -95,9 +115,7 @@ class VerticalCrudController extends CrudController
 
     public function create()
     {
-        if (! backpack_user()->can('division.create')) {
-            abort(403, 'Unauthorized. You do not have permission to create verticals.');
-        }
+        $this->authorizeManage();
 
         $this->crud->setCreateView('admin.vertical.create');
 
@@ -108,32 +126,18 @@ class VerticalCrudController extends CrudController
 
     public function store(VerticalRequest $request)
     {
-        if (! backpack_user()->can('division.create')) {
-            abort(403, 'Unauthorized. You do not have permission to create verticals.');
-        }
+        $this->authorizeManage();
 
-        $validated = $request->validated();
-
-        $validated['vert_code'] = $validated['code'];
-
-        $vertical = Vertical::create($validated);
-
-        if ($request->hasFile('vertical_image')) {
-            $vertical
-                ->addMediaFromRequest('vertical_image')
-                ->toMediaCollection('vertical_image');
-        }
+        $this->verticals->create($request->validated(), $request);
 
         \Alert::success('Vertical created successfully!')->flash();
 
-        return redirect(backpack_url('vertical'));
+        return redirect(backpack_url('org/vertical'));
     }
 
     public function edit($id)
     {
-        if (! backpack_user()->can('division.edit')) {
-            abort(403, 'Unauthorized. You do not have permission to edit verticals.');
-        }
+        $this->authorizeManage();
 
         $this->crud->setEditView('admin.vertical.edit');
 
@@ -147,35 +151,34 @@ class VerticalCrudController extends CrudController
 
     public function update(VerticalRequest $request, $id)
     {
-        if (! backpack_user()->can('division.edit')) {
-            abort(403, 'Unauthorized. You do not have permission to edit verticals.');
-        }
+        $this->authorizeManage();
 
         $vertical = Vertical::findOrFail($id);
 
-        $validated = $request->validated();
+        $result = $this->verticals->update($vertical, $request->validated(), $request);
 
-        $validated['vert_code'] = $validated['code'];
-
-        $vertical->update($validated);
-
-        if ($request->hasFile('vertical_image')) {
-            $vertical
-                ->addMediaFromRequest('vertical_image')
-                ->toMediaCollection('vertical_image');
+        if (! $result['ok']) {
+            return back()->withInput()->withErrors([
+                'is_active' => 'Cannot disable this vertical — it still has '.implode(' and ', $result['blockers']).'. Disable those first.',
+            ]);
         }
 
         \Alert::success('Vertical updated successfully!')->flash();
 
-        return redirect(backpack_url('vertical'));
+        return redirect(backpack_url('org/vertical'));
     }
 
     public function destroy($id)
     {
-        if (! backpack_user()->can('division.delete')) {
-            abort(403, 'Unauthorized. You do not have permission to delete verticals.');
-        }
+        $this->authorizeManage();
 
         return $this->crud->delete($id);
+    }
+
+    private function authorizeManage(): void
+    {
+        if (! backpack_user()->can('ORG_ENTITY_MANAGE')) {
+            abort(403, 'Unauthorized. You do not have permission to manage org entities.');
+        }
     }
 }

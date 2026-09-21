@@ -50,7 +50,7 @@
                         @endif
 
                         <form method="POST"
-                              action="{{ backpack_url('variant') }}">
+                              action="{{ backpack_url('vehicle/variant') }}">
 
                             @csrf
 
@@ -483,7 +483,7 @@
 
                                 </button>
 
-                                <a href="{{ backpack_url('variant') }}"
+                                <a href="{{ backpack_url('vehicle/variant') }}"
                                    class="btn btn-secondary btn-lg">
 
                                     Cancel
@@ -526,7 +526,7 @@
 
         $.ajax({
 
-            url: "{{ backpack_url('variant/subsegments') }}",
+            url: "{{ backpack_url('vehicle/variant/subsegments') }}",
 
             type: "GET",
 
@@ -574,7 +574,7 @@
 
     $.ajax({
 
-        url: "{{ backpack_url('variant/models') }}",
+        url: "{{ backpack_url('vehicle/variant/models') }}",
 
         type: "GET",
 

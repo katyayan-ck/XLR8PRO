@@ -83,7 +83,7 @@ $loanAmount > 0
             <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a href="{{ backpack_url('dashboard') }}"><i class="ik ik-home"></i>
                         Dashboard</a></li>
-                <li class="breadcrumb-item"><a href="{{ backpack_url('finance') }}">Finance</a></li>
+                <li class="breadcrumb-item"><a href="{{ backpack_url('sales/booking/finance') }}">Finance</a></li>
                 <li class="breadcrumb-item active">Payout Edit</li>
             </ol>
         </nav>
@@ -299,7 +299,7 @@ $loanAmount > 0
             </div>
 
             <div class="col-sm-12 form-group d-flex align-items-end justify-content-end">
-                <a href="{{ route('finance.retailedit', $booking->id) }}?from=payout" class="btn btn-primary btn-sm"
+                <a href="{{ route('sales.booking.finance.retail-edit', $booking->id) }}?from=payout" class="btn btn-primary btn-sm"
                     title="Edit Finance Details">
                     <i class="ik ik-edit mr-1"></i> Edit Finance Details
                 </a>
@@ -316,7 +316,7 @@ $loanAmount > 0
 
 
         <div class="card-body">
-            <div id="payoutView" method="POST" action="{{ route('payout.update', $booking->id) }}"
+            <div id="payoutView" method="POST" action="{{ route('sales.booking.finance.payout-update', $booking->id) }}"
                 enctype="multipart/form-data">
                 @csrf
                 <!-- FIXED: Manual _method field -->

@@ -30,26 +30,26 @@
                 <div class="d-flex align-items-center gap-3 flex-nowrap">
 
                     <!-- 1. Add New Booking button (left position) -->
-                    <a href="{{ backpack_url('booking/create') }}" class="btn btn-light btn-sm fw-bold shadow-sm">
+                    <a href="{{ backpack_url('sales/booking/create') }}" class="btn btn-light btn-sm fw-bold shadow-sm">
                         <i class="la la-plus me-1"></i> Add New Booking
                     </a>
 
                     <!-- 2. Status dropdown (right of button) -->
                     <select id="statusFilter" class="form-select form-select-sm bg-white text-dark border-0 shadow-sm"
                         style="min-width: 200px; max-width: 260px;">
-                        <option value="{{ backpack_url('booking') }}" {{ Route::currentRouteName()==='booking.index'
+                        <option value="{{ backpack_url('sales/booking') }}" {{ Route::currentRouteName()==='booking.index'
                             ? 'selected' : '' }}>
                             All Live Bookings
                         </option>
-                        <option value="{{ backpack_url('booking/hold') }}" {{ Route::currentRouteName()==='booking.hold'
+                        <option value="{{ backpack_url('sales/booking/hold') }}" {{ Route::currentRouteName()==='booking.hold'
                             ? 'selected' : '' }}>
                             On-Hold Bookings
                         </option>
-                        <option value="{{ backpack_url('booking/invoiced') }}" {{
+                        <option value="{{ backpack_url('sales/booking/invoiced') }}" {{
                             Route::currentRouteName()==='booking.invoiced' ? 'selected' : '' }}>
                             Invoiced Bookings
                         </option>
-                        <option value="{{ backpack_url('booking/cancelled') }}" {{
+                        <option value="{{ backpack_url('sales/booking/cancelled') }}" {{
                             Route::currentRouteName()==='booking.cancelled' ? 'selected' : '' }}>
                             Cancelled Bookings
                         </option>

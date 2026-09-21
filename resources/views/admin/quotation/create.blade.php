@@ -1399,7 +1399,7 @@
             </div>
 
             @php
-                $formAction = isset($quotation) ? route('quotation.update', $quotation->id) : route('quotation.store');
+                $formAction = isset($quotation) ? route('sales.quotation.update', $quotation->id) : route('sales.quotation.store');
 
                 $formMethod = isset($quotation) ? 'PUT' : 'POST';
 
@@ -2709,7 +2709,7 @@
                     @if ($viewMode)
 
                         @if (isset($quotation))
-                            <a href="{{ backpack_url('quotation-form/' . $quotation->id . '/edit') }}"
+                            <a href="{{ backpack_url('sales/quotation/' . $quotation->id . '/edit') }}"
                             class="btn btn-warning">
                                 Edit Quotation
                             </a>
@@ -2723,7 +2723,7 @@
                             Print Quotation without Credit Note
                         </button>
 
-                        <a href="{{ backpack_url('quotation-form') }}" class="btn btn-secondary">
+                        <a href="{{ backpack_url('sales/quotation') }}" class="btn btn-secondary">
                             Back
                         </a>
                     @else
@@ -2732,7 +2732,7 @@
                             {{ isset($quotation) ? 'Update Quotation' : 'Save Quotation' }}
                         </button>
 
-                        <a href="{{ backpack_url('quotation-form') }}" class="btn btn-secondary">
+                        <a href="{{ backpack_url('sales/quotation') }}" class="btn btn-secondary">
                             Cancel
                         </a>
                     @endif
@@ -6279,7 +6279,7 @@
                         }, 300);
                     }
                     if (result.isDismissed) {
-                        window.location.href = "{{ backpack_url('quotation-form') }}";
+                        window.location.href = "{{ backpack_url('sales/quotation') }}";
                     }
 
                 });

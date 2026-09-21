@@ -17,7 +17,7 @@
                 <div class="card">
                     <div class="card-header bg-gradient-primary d-flex justify-content-between align-items-center">
                         <h4 class="card-title mb-0 text-black">View Receipt: {{ $receipt->type_number }}</h4>
-                        <a href="{{ backpack_url('accounts/receipt-list') }}" class="btn btn-secondary btn-sm">
+                        <a href="{{ backpack_url('accounts/receipt') }}" class="btn btn-secondary btn-sm">
                             <i class="la la-arrow-left"></i> Back to List
                         </a>
                     </div>

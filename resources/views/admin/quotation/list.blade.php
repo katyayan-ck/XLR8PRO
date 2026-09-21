@@ -15,7 +15,7 @@
                 </h2>
 
                 {{-- <div class="d-flex align-items-center gap-3 flex-nowrap">
-                    <a href="{{ backpack_url('quotation-form/create') }}" class="btn btn-blue btn-sm fw-bold shadow-sm">
+                    <a href="{{ backpack_url('sales/quotation/create') }}" class="btn btn-blue btn-sm fw-bold shadow-sm">
                         <i class="la la-plus me-1"></i> Add New Quotation
                     </a>
                 </div> --}}
@@ -120,7 +120,7 @@
             if (result.isConfirmed) {
 
                 window.location.href =
-                    "{{ backpack_url('booking/otf-form') }}/" + bookingId;
+                    "{{ backpack_url('sales/booking/otf-form') }}/" + bookingId;
             }
 
         });
@@ -143,7 +143,7 @@
         if (result.isConfirmed) {
 
             window.location.href =
-                "{{ backpack_url('booking/create') }}?quotation_id=" + quotationId;
+                "{{ backpack_url('sales/booking/create') }}?quotation_id=" + quotationId;
         }
 
     });

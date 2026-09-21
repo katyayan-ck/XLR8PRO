@@ -2,10 +2,17 @@
 
 namespace App\Models\Admin;
 
-use App\Models\BaseModel;
-use App\Models\User;
+use Illuminate\Database\Eloquent\Model;
 
-class EmployeeHistory extends BaseModel
+/**
+ * Does NOT extend BaseModel — BaseModel forces the SoftDeletes trait, but
+ * xlr8_admin_employee_history has no `deleted_at` column (confirmed via
+ * Schema::getColumnListing), which made every query on this model fatal with
+ * "Unknown column 'deleted_at'" the instant it was actually used (found while
+ * building the Employment History feature — this model had 0 rows and had
+ * evidently never been queried before).
+ */
+class EmployeeHistory extends Model
 {
     protected $table = 'xlr8_admin_employee_history';
 
@@ -30,9 +37,9 @@ class EmployeeHistory extends BaseModel
     ];
 
     protected $casts = [
-        'scopes'         => 'array',
+        'scopes' => 'array',
         'effective_from' => 'date',
-        'effective_to'   => 'date',
+        'effective_to' => 'date',
     ];
 
     public function employee()
@@ -43,9 +50,9 @@ class EmployeeHistory extends BaseModel
     public function scopeActiveOn($query, $date)
     {
         return $query->where('effective_from', '<=', $date)
-                     ->where(function ($q) use ($date) {
-                         $q->whereNull('effective_to')
-                           ->orWhere('effective_to', '>=', $date);
-                     });
+            ->where(function ($q) use ($date) {
+                $q->whereNull('effective_to')
+                    ->orWhere('effective_to', '>=', $date);
+            });
     }
 }

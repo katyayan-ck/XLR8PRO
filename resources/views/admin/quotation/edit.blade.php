@@ -581,7 +581,7 @@ use App\Services\OrgService;
             </div>
         </div>
 
-        <form method="POST" action="{{ route('quotation.update', $quotation->id) }}">
+        <form method="POST" action="{{ route('sales.quotation.update', $quotation->id) }}">
             @csrf
             @method('PUT')
             <div class="quotation-sheet">
@@ -1703,7 +1703,7 @@ use App\Services\OrgService;
         <i class="la la-save"></i> Save Quotation
     </button>
 
-    <a href="{{ backpack_url('quotation-form') }}" class="btn btn-secondary">
+    <a href="{{ backpack_url('sales/quotation') }}" class="btn btn-secondary">
         Cancel
     </a>
 </div>

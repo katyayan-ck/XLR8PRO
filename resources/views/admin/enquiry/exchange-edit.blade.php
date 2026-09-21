@@ -33,7 +33,7 @@
                         <div class="col-md-3 mb-2"><label>Model:</label> <input class="form-control" disabled value="{{ $enquiry->model_code }}"></div>
                     </div>
 
-                    <form method="POST" action="{{ backpack_url('enquiry/'.$enquiry->id.'/exchange-update') }}">
+                    <form method="POST" action="{{ backpack_url('sales/enquiry/'.$enquiry->id.'/exchange-update') }}">
                         @csrf
                         <div class="row">
                             <div class="col-md-4 mb-3">

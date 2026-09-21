@@ -23,7 +23,7 @@ class SubSegmentCrudController extends CrudController
     public function setup()
     {
         CRUD::setModel(SubSegment::class);
-        CRUD::setRoute(config('backpack.base.route_prefix').'/sub-segment');
+        CRUD::setRoute(config('backpack.base.route_prefix').'/vehicle/sub-segment');
         CRUD::setEntityNameStrings('sub segment', 'sub segments');
     }
 
@@ -35,7 +35,7 @@ class SubSegmentCrudController extends CrudController
      */
     protected function setupListOperation()
     {
-        if (! backpack_user()->can('segment.view')) {
+        if (! backpack_user()->can('VEH_SEG_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view sub segments.');
         }
 
@@ -44,7 +44,7 @@ class SubSegmentCrudController extends CrudController
 
     public function index()
     {
-        if (! backpack_user()->can('segment.view')) {
+        if (! backpack_user()->can('VEH_SEG_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view sub segments.');
         }
 
@@ -57,7 +57,7 @@ class SubSegmentCrudController extends CrudController
             $mapped['serial_no'] = $index + 1;
             $mapped['segment'] = $item->segment?->name ?? '—';
 
-            $editUrl = backpack_url("sub-segment/{$item->id}/edit");
+            $editUrl = backpack_url("vehicle/sub-segment/{$item->id}/edit");
 
             $mapped['action'] = '
                 <div class="d-flex gap-2 justify-content-center">
@@ -93,7 +93,7 @@ class SubSegmentCrudController extends CrudController
 
     public function edit($id)
     {
-        if (! backpack_user()->can('segment.edit')) {
+        if (! backpack_user()->can('VEH_SEG_EDIT')) {
             abort(403, 'Unauthorized. You do not have permission to edit sub segments.');
         }
 
@@ -119,7 +119,7 @@ class SubSegmentCrudController extends CrudController
 
     public function update(SubSegmentRequest $request, $id)
     {
-        if (! backpack_user()->can('segment.edit')) {
+        if (! backpack_user()->can('VEH_SEG_EDIT')) {
             abort(403, 'Unauthorized. You do not have permission to edit sub segments.');
         }
 
@@ -158,12 +158,12 @@ class SubSegmentCrudController extends CrudController
             'Sub Segment updated successfully!'
         )->flash();
 
-        return redirect(backpack_url('sub-segment'));
+        return redirect(backpack_url('vehicle/sub-segment'));
     }
 
     public function create()
     {
-        if (! backpack_user()->can('segment.create')) {
+        if (! backpack_user()->can('VEH_SEG_CREATE')) {
             abort(403, 'Unauthorized. You do not have permission to create sub segments.');
         }
 
@@ -180,14 +180,14 @@ class SubSegmentCrudController extends CrudController
      */
     protected function setupCreateOperation()
     {
-        if (! backpack_user()->can('segment.create')) {
+        if (! backpack_user()->can('VEH_SEG_CREATE')) {
             abort(403, 'Unauthorized. You do not have permission to create sub segments.');
         }
     }
 
     public function destroy($id)
     {
-        if (! backpack_user()->can('segment.delete')) {
+        if (! backpack_user()->can('VEH_SEG_DELETE')) {
             abort(403, 'Unauthorized. You do not have permission to delete sub segments.');
         }
 

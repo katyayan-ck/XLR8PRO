@@ -36,7 +36,7 @@
                         </h4>
                     </div>
 
-                    <form method="POST" action="{{ isset($campaign) ? backpack_url('campaign/' . $campaign->id) : backpack_url('campaign') }}">
+                    <form method="POST" action="{{ isset($campaign) ? backpack_url('sales/campaign/' . $campaign->id) : backpack_url('sales/campaign') }}">
                         @csrf
                         @if (isset($campaign))
                             @method('PUT')
@@ -167,7 +167,7 @@
                             <button type="submit" class="btn btn-success">
                                 Save Campaign
                             </button>
-                            <a href="{{ backpack_url('campaign') }}" class="btn btn-secondary">
+                            <a href="{{ backpack_url('sales/campaign') }}" class="btn btn-secondary">
                                 Cancel
                             </a>
                         </div>
@@ -246,7 +246,7 @@
                     return;
                 }
                 fetchDropdownData(
-                    "{{ backpack_url('campaign/models') }}/" + segment, 
+                    "{{ backpack_url('sales/campaign/models') }}/" + segment, 
                     '#model_code', 
                     'Select Model', 
                     pendingModelCode, 
@@ -266,7 +266,7 @@
                     return;
                 }
                 fetchDropdownData(
-                    "{{ backpack_url('campaign/locations') }}/" + branch, 
+                    "{{ backpack_url('sales/campaign/locations') }}/" + branch, 
                     '#location_code', 
                     'Select Dealer Location', 
                     pendingLocationCode, 

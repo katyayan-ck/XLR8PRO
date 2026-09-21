@@ -131,12 +131,12 @@
                 <h2 class="mb-0 fw-bold">Actions</h2>
 
                 @if($otf_processed)
-                <a href="{{ backpack_url('booking/otf-form/' . $booking->id) }}" class="btn btn-primary">
+                <a href="{{ backpack_url('sales/booking/otf-form/' . $booking->id) }}" class="btn btn-primary">
                     <i class="la la-file-text"></i>
                     Booking Process (Resume)
                 </a>
                 @else
-                <a href="{{ backpack_url('booking/otf-form/' . $booking->id) }}" class="btn btn-success">
+                <a href="{{ backpack_url('sales/booking/otf-form/' . $booking->id) }}" class="btn btn-success">
                     <i class="la la-file-text"></i>
                     Booking Process
                 </a>
@@ -145,7 +145,7 @@
             </div>
             <div class="card-body">
 
-                <form class="forms-sample" method="POST" action="{{ route('booking.followup.store', $booking->id) }}"
+                <form class="forms-sample" method="POST" action="{{ route('sales.booking.followup.store', $booking->id) }}"
                     enctype="multipart/form-data">
                     @csrf
 
@@ -248,7 +248,7 @@
             </div>
             <div class="card-body">
 
-                <form method="POST" action="{{ route('request-refund', $booking->id) }}" enctype="multipart/form-data"
+                <form method="POST" action="{{ route('sales.booking.request-refund', $booking->id) }}" enctype="multipart/form-data"
                     id="refundRequestForm">
                     @csrf
 
@@ -374,7 +374,7 @@
                     </div>
                 </form>
 
-                <form id="activateForm" method="POST" action="{{ route('statusave', $booking->id) }}"
+                <form id="activateForm" method="POST" action="{{ route('sales.booking.statusave', $booking->id) }}"
                     style="display:none;">
                     @csrf
                     <input type="hidden" name="status" value="{{ $booking->pending == 0 ? 1 : 8 }}">
@@ -479,7 +479,7 @@
                     </div>
                     @endforeach
                     <div class="col-sm-12 text-center mt-4">
-                        <form id="restoreForm" method="POST" action="{{ route('statusave', $booking->id) }}">
+                        <form id="restoreForm" method="POST" action="{{ route('sales.booking.statusave', $booking->id) }}">
                             @csrf
                             <input type="hidden" name="status" value="3">
                             <button type="button" class="btn btn-success btn-lg px-5" id="restoreBookingButton">
@@ -496,7 +496,7 @@
                 <h2 class="mb-0">{{ __('Refund Details') }}</h2>
             </div>
             <div class="card-body">
-                <form class="forms-sample" method="POST" action="{{ route('update-refund', $booking->id) }}"
+                <form class="forms-sample" method="POST" action="{{ route('sales.booking.refund-update', $booking->id) }}"
                     enctype="multipart/form-data">
                     @method('PUT')
                     @csrf
@@ -573,7 +573,7 @@
                 <h2 class="mb-0">{{ __('Reject Refund Request') }}</h2>
             </div>
             <div class="card-body">
-                <form method="POST" action="{{ route('statusave', $booking->id) }}" enctype="multipart/form-data">
+                <form method="POST" action="{{ route('sales.booking.statusave', $booking->id) }}" enctype="multipart/form-data">
                     @csrf
                     <input type="hidden" name="status" value="7">
 
@@ -655,7 +655,7 @@
                                     </td>
 
                                     <td class="text-center">
-                                        <a href="{{ route('receipt.edit', ['id' => $booking->id, 'receipt_id' => $log->id]) }}"
+                                        <a href="{{ route('sales.booking.receipt.edit', ['id' => $booking->id, 'receipt_id' => $log->id]) }}"
                                             class="btn btn-sm btn-outline-success">
                                             <i class="la la-edit"></i> Edit
                                         </a>
@@ -677,7 +677,7 @@
             </div>
         </div>
 
-        <form action="{{ route('editRefund', $booking->id) }}" method="POST" id="refundForm"
+        <form action="{{ route('sales.booking.refund.edit', $booking->id) }}" method="POST" id="refundForm"
             enctype="multipart/form-data">
             @csrf
             <div class="card mt-4" id="refund-details-card" style="border-radius: 12px">
@@ -808,7 +808,7 @@
                 </button>
             </div>
             <div class="card-body">
-                <form method="POST" action="{{ route('booking.followup.store') }}" enctype="multipart/form-data">
+                <form method="POST" action="{{ route('sales.booking.followup.store') }}" enctype="multipart/form-data">
                     @csrf
                     <div class="row g-3">
                         <div class="col-sm-9">
@@ -844,7 +844,7 @@
             <div class="col-12">
                 <div class="d-flex justify-content-center gap-4 flex-wrap">
                     <!-- Request Refund Again -->
-                    <form id="activateForm" method="POST" action="{{ route('statusave', $booking->id) }}"
+                    <form id="activateForm" method="POST" action="{{ route('sales.booking.statusave', $booking->id) }}"
                         class="d-inline-block">
                         @csrf
                         <input type="hidden" name="status" value="4">
@@ -854,7 +854,7 @@
                     </form>
 
                     <!-- Back to List -->
-                    <a href="{{ backpack_url('booking') }}" class="btn btn-secondary btn-lg px-5 shadow">
+                    <a href="{{ backpack_url('sales/booking') }}" class="btn btn-secondary btn-lg px-5 shadow">
                         <i class="la la-arrow-left me-2"></i> {{ __('Back to List') }}
                     </a>
                 </div>
@@ -875,7 +875,7 @@
                 </button>
             </div>
             <div class="card-body">
-                <form id="refund-details-form" method="POST" action="{{ route('update-refunded', $booking->id) }}"
+                <form id="refund-details-form" method="POST" action="{{ route('sales.booking.refunded-update', $booking->id) }}"
                     enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
@@ -1411,7 +1411,7 @@
 <!-- Back Button -->
 {{-- <div class="row mt-5">
     <div class="col-12 text-center">
-        <a href="{{ backpack_url('booking') }}" class="btn btn-secondary btn-lg px-5 shadow">
+        <a href="{{ backpack_url('sales/booking') }}" class="btn btn-secondary btn-lg px-5 shadow">
             <i class="la la-arrow-left me-2"></i> Back to List
         </a>
     </div>
@@ -2035,7 +2035,7 @@ document.getElementById('proofPreviewModal')?.addEventListener('hidden.bs.modal'
                 if ([2, 3].includes(parseInt(colType))) {
                     statusSelect.disabled = true;
                 
-                    fetch("{{ route('booking.check-field-payment', $booking->id) }}", {
+                    fetch("{{ route('sales.booking.check-field-payment', $booking->id) }}", {
                         method: 'GET',
                         headers: {
                             'Accept': 'application/json',
@@ -2068,7 +2068,7 @@ document.getElementById('proofPreviewModal')?.addEventListener('hidden.bs.modal'
                                 allowOutsideClick: false
                             }).then((result) => {
                                 if (result.isConfirmed) {
-                                    window.location.href = "{{ route('booking.pending-edit', $booking->id) }}" + "#pending";
+                                    window.location.href = "{{ route('sales.booking.pending-edit', $booking->id) }}" + "#pending";
                                 } else {
                                     statusSelect.value = "0";
                                 }
@@ -2104,7 +2104,7 @@ document.getElementById('proofPreviewModal')?.addEventListener('hidden.bs.modal'
                         confirmButtonText: "Add Receipt"
                     }).then(result => {
                         if (result.isConfirmed) {
-                            window.location.href = "{{ backpack_url('booking/:id/add-amount') }}".replace(':id', {{ $booking->id }});
+                            window.location.href = "{{ backpack_url('sales/booking/:id/add-amount') }}".replace(':id', {{ $booking->id }});
                         } else {
                             document.getElementById('status').value = "0";
                         }
@@ -2121,7 +2121,7 @@ document.getElementById('proofPreviewModal')?.addEventListener('hidden.bs.modal'
                         confirmButtonText: "Go to Pending"
                     }).then(result => {
                         if (result.isConfirmed) {
-                            window.location.href = "{{ backpack_url('booking/:id/pending-edit') }}".replace(':id', {{ $booking->id }}) + "?pending_flag=1";
+                            window.location.href = "{{ backpack_url('sales/booking/:id/pending-edit') }}".replace(':id', {{ $booking->id }}) + "?pending_flag=1";
                         } else {
                             document.getElementById('status').value = "0";
                         }

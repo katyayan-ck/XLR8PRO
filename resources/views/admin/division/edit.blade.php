@@ -35,8 +35,17 @@
                     <h2 class="mb-0">Edit Division Information</h2>
                 </div>
                 <div class="card-body">
+                    @if ($errors->any())
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
 
-                    <form method="POST" action="{{ backpack_url('division/' . $division->id) }}"
+                    <form method="POST" action="{{ backpack_url('org/division/' . $division->id) }}"
                         enctype="multipart/form-data">
                         @csrf
                         @method('PUT')
@@ -61,12 +70,9 @@
 
 
                             <div class="col-md-4 mb-3">
-                                <label>Division Code (Min 3 Char)<span class="text-danger">*</span></label>
-                                <input type="text" name="code" class="form-control"
-                                    value="{{ old('code', $division->code) }}" maxlength="10" minlength="3" required>
-
-                                <div id="codeError" class="text-danger mt-1"></div>
-
+                                <label>Division Code</label>
+                                <input type="text" class="form-control" value="{{ $division->code }}" readonly disabled>
+                                <div class="form-text">Code cannot be changed after creation — every relation in the app points at it.</div>
                             </div>
 
                             <div class="col-md-4 mb-3">
@@ -80,35 +86,6 @@
                                 <textarea name="description" class="form-control"
                                     rows="3">{{ old('description', $division->description) }}</textarea>
                             </div>
-
-                            <div class="col-md-4 mb-3">
-
-                                <label>Division Image</label>
-
-                                <input type="file" name="division_image" id="division_image" class="form-control"
-                                    accept=".jpg,.jpeg,.png,.webp">
-
-                            </div>
-
-                            <div class="col-md-4 mb-3">
-
-                                <img id="imagePreview" src="{{ $division->getFirstMediaUrl('division_image') }}" style="max-height:120px;
-         {{ $division->getFirstMediaUrl('division_image') ? '' : 'display:none;' }}" class="img-thumbnail">
-
-                                @if($division->getFirstMedia('division_image'))
-                                <div id="currentFileBlock" class="mt-2 text-muted">
-                                    Current File:
-                                    <strong>
-                                        {{ $division->getFirstMedia('division_image')->file_name }}
-                                    </strong>
-                                </div>
-                                @endif
-
-                                <div id="selectedFileName" class="mt-2 text-primary"></div>
-
-                            </div>
-
-
 
                             @php
                             $selectedDepartment = $departments->firstWhere(
@@ -140,11 +117,13 @@
 
                         </div>
 
+                        @include('admin.org.partials.media-fields', ['imageCollection' => 'division_image', 'model' => $division])
+
                         <div class="mt-4">
                             <button type="submit" class="btn btn-success btn-lg px-5">
                                 <i class="la la-save"></i> Update Division
                             </button>
-                            <a href="{{ backpack_url('division') }}" class="btn btn-secondary btn-lg">Cancel</a>
+                            <a href="{{ backpack_url('org/division') }}" class="btn btn-secondary btn-lg">Cancel</a>
                         </div>
                     </form>
                 </div>
@@ -156,76 +135,6 @@
 
     @push('after_scripts')
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-    <script>
-        document.getElementById('division_image')
-?.addEventListener('change', function(e){
-
-    const file = e.target.files[0];
-
-    if(!file) return;
-
-    const currentFileBlock =
-        document.getElementById('currentFileBlock');
-
-    if(currentFileBlock){
-        currentFileBlock.style.display = 'none';
-    }
-
-    document.getElementById('selectedFileName').innerText =
-        'Selected: ' + file.name;
-
-    const reader = new FileReader();
-
-    reader.onload = function(ev){
-
-        const img =
-            document.getElementById('imagePreview');
-
-        img.src = ev.target.result;
-        img.style.display = 'block';
-    };
-
-    reader.readAsDataURL(file);
-});
-
-$('input[name="code"]').on('input', function () {
-
-    this.value = this.value
-        .replace(/[^A-Za-z0-9]/g, '')
-        .toUpperCase()
-        .slice(0, 10);
-
-    let code = this.value.trim();
-    let error = $('#codeError');
-
-    if(code.length > 0 && code.length < 3){
-        error.text('Division Code must be at least 3 characters.');
-    } else {
-        error.text('');
-    }
-});
-
-$('form').on('submit', function (e) {
-
-    const code =
-        $('input[name="code"]').val().trim();
-
-    if (code.length < 3) {
-
-        e.preventDefault();
-
-        Swal.fire({
-            icon: 'error',
-            title: 'Validation Error',
-            text: 'Division Code must be at least 3 characters.'
-        });
-
-        return false;
-    }
-});
-
-    </script>
 
     @if($isDepartmentInactive)
     <script>

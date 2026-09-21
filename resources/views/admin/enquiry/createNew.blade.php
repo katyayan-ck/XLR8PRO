@@ -34,7 +34,7 @@
                     <h2 class="mb-0">Add Hot Enquiry</h2>
                 </div>
                 <div class="card-body">
-                    <form method="POST" action="{{ backpack_url('enquiry') }}" enctype="multipart/form-data">
+                    <form method="POST" action="{{ backpack_url('sales/enquiry') }}" enctype="multipart/form-data">
                         @csrf
 
 
@@ -1116,7 +1116,7 @@
 
         $.ajax({
 
-            url: "{{ route('admin.master.keyword-values', ['keyword' => '__KEYWORD__', 'parent' => '__PARENT__']) }}"
+            url: "{{ route('sales.enquiry.master-keyword-values', ['keyword' => '__KEYWORD__', 'parent' => '__PARENT__']) }}"
                 .replace('__KEYWORD__', encodeURIComponent(keyword))
                 .replace('__PARENT__', encodeURIComponent(parent)),
 
@@ -1421,7 +1421,7 @@
             }
 
             $.get(
-                "{{ backpack_url('enquiry/models') }}/" + segmentCode,
+                "{{ backpack_url('sales/enquiry/models') }}/" + segmentCode,
                 function(response) {
 
                     let html = '<option value="">Select Model</option>';
@@ -1472,7 +1472,7 @@
             }
 
             $.get(
-                "{{ backpack_url('enquiry/variants') }}/" + modelCode,
+                "{{ backpack_url('sales/enquiry/variants') }}/" + modelCode,
 
                 function(response) {
 
@@ -1534,7 +1534,7 @@
             }
 
             $.get(
-                "{{ backpack_url('enquiry/colors') }}/" + variantCode,
+                "{{ backpack_url('sales/enquiry/colors') }}/" + variantCode,
 
                 function(response) {
 
@@ -1565,7 +1565,7 @@
             $('#dealer_location').html('<option>Loading...</option>');
 
             $.get(
-                "{{ backpack_url('enquiry/locations') }}/" + branchCode,
+                "{{ backpack_url('sales/enquiry/locations') }}/" + branchCode,
                 function(response) {
 
                     console.log(response);
@@ -1624,7 +1624,7 @@
             }
 
             $.get(
-                "{{ route('enquiry.reference-users') }}", {
+                "{{ route('sales.enquiry.reference-users') }}", {
                     type: type,
                     mobile: mobile
                 },
@@ -1688,7 +1688,7 @@
 
             // console.log("Checking...", mobile, segment);
 
-            $.get("{{ route('enquiry.check-duplicate') }}", {
+            $.get("{{ route('sales.enquiry.check-duplicate') }}", {
                 mobile: mobile,
                 segment_code: segment
             }, function(response) {
@@ -1732,7 +1732,7 @@
             }
 
             $.get(
-                "{{ route('enquiry.location-by-pincode') }}", {
+                "{{ route('sales.enquiry.location-by-pincode') }}", {
                     pincode: pincode
                 },
                 function(response) {

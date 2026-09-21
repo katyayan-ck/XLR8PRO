@@ -118,7 +118,7 @@
         gridApi = agGrid.createGrid(gridDiv, gridOptions);
 
         // Load data
-        fetch("{{ route('booking.invoiced.list') }}")
+        fetch("{{ route('sales.booking.invoiced.list') }}")
             .then(res => res.json())
             .then(res => {
                 gridApi.setGridOption('rowData', res.data);

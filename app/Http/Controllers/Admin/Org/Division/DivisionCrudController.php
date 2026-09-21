@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\Org\Division;
 use App\Http\Requests\DivisionRequest;
 use App\Models\Admin\Department;
 use App\Models\Admin\Division;
+use App\Services\Org\DivisionService;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
@@ -16,30 +17,48 @@ class DivisionCrudController extends CrudController
 {
     use CreateOperation;
     use DeleteOperation;
-    use ListOperation;
+    use ListOperation {
+        search as traitSearch;
+        showDetailsRow as traitShowDetailsRow;
+    }
     use UpdateOperation;
+
+    public function __construct(private DivisionService $divisions)
+    {
+        parent::__construct();
+    }
+
+    public function search()
+    {
+        $this->authorizeManage();
+
+        return $this->traitSearch();
+    }
+
+    public function showDetailsRow($id)
+    {
+        $this->authorizeManage();
+
+        return $this->traitShowDetailsRow($id);
+    }
 
     public function setup()
     {
         CRUD::setModel(Division::class);
-        CRUD::setRoute(config('backpack.base.route_prefix').'/division');
+        CRUD::setRoute(config('backpack.base.route_prefix').'/org/division');
         CRUD::setEntityNameStrings('division', 'divisions');
     }
 
     protected function setupListOperation()
     {
-        if (! backpack_user()->can('division.view')) {
-            abort(403, 'Unauthorized. You do not have permission to view divisions.');
-        }
+        $this->authorizeManage();
 
         $this->crud->setListView('admin.division.list');
     }
 
     public function index()
     {
-        if (! backpack_user()->can('division.view')) {
-            abort(403, 'Unauthorized. You do not have permission to view divisions.');
-        }
+        $this->authorizeManage();
 
         $this->crud->setListView('admin.division.list');
 
@@ -62,7 +81,12 @@ class DivisionCrudController extends CrudController
 
             $mapped['department'] = $division->department?->name ?? '—';
 
-            $editUrl = backpack_url("division/{$division->id}/edit");
+            $imageUrl = $division->getFirstMediaUrl('division_image');
+            $mapped['image'] = $imageUrl
+                ? '<img src="'.$imageUrl.'" style="height:36px;width:36px;object-fit:cover;border-radius:6px;">'
+                : '<span class="text-muted">—</span>';
+
+            $editUrl = backpack_url("org/division/{$division->id}/edit");
 
             $mapped['action'] = '
                 <div class="d-flex gap-2 justify-content-center">
@@ -82,6 +106,7 @@ class DivisionCrudController extends CrudController
             'gridConfig' => [
                 'columns' => [
                     ['field' => 'serial_no',     'headerName' => 'S.No.'],
+                    ['field' => 'image',         'headerName' => 'Image'],
                     ['field' => 'dept_code',    'headerName' => 'Department'],
                     ['field' => 'code',          'headerName' => 'Code'],
                     ['field' => 'name',          'headerName' => 'Division Name'],
@@ -96,9 +121,7 @@ class DivisionCrudController extends CrudController
 
     public function create()
     {
-        if (! backpack_user()->can('division.create')) {
-            abort(403, 'Unauthorized. You do not have permission to create divisions.');
-        }
+        $this->authorizeManage();
 
         $this->crud->setCreateView('admin.division.create');
 
@@ -112,30 +135,18 @@ class DivisionCrudController extends CrudController
 
     public function store(DivisionRequest $request)
     {
-        if (! backpack_user()->can('division.create')) {
-            abort(403, 'Unauthorized. You do not have permission to create divisions.');
-        }
+        $this->authorizeManage();
 
-        $validated = $request->validated();
-
-        $division = Division::create($validated);
-
-        if ($request->hasFile('division_image')) {
-            $division
-                ->addMediaFromRequest('division_image')
-                ->toMediaCollection('division_image');
-        }
+        $this->divisions->create($request->validated(), $request);
 
         \Alert::success('Division created successfully!')->flash();
 
-        return redirect(backpack_url('division'));
+        return redirect(backpack_url('org/division'));
     }
 
     public function edit($id)
     {
-        if (! backpack_user()->can('division.edit')) {
-            abort(403, 'Unauthorized. You do not have permission to edit divisions.');
-        }
+        $this->authorizeManage();
 
         $this->crud->setEditView('admin.division.edit');
 
@@ -155,49 +166,34 @@ class DivisionCrudController extends CrudController
 
     public function update(DivisionRequest $request, $id)
     {
-        if (! backpack_user()->can('division.edit')) {
-            abort(403, 'Unauthorized. You do not have permission to edit divisions.');
-        }
+        $this->authorizeManage();
 
         $division = Division::findOrFail($id);
 
-        $validated = $request->validated();
+        $result = $this->divisions->update($division, $request->validated(), $request);
 
-        $department = Department::where(
-            'code',
-            $validated['dept_code']
-        )->first();
-
-        if (
-            $department &&
-            ! $department->is_active &&
-            ($validated['is_active'] ?? 0) == 1
-        ) {
-            return back()
-                ->withInput()
-                ->withErrors([
-                    'is_active' => 'Division cannot be activated because its Department is inactive.',
-                ]);
-        }
-
-        $division->update($validated);
-        if ($request->hasFile('division_image')) {
-            $division
-                ->addMediaFromRequest('division_image')
-                ->toMediaCollection('division_image');
+        if (! $result['ok']) {
+            return back()->withInput()->withErrors([
+                'is_active' => 'Cannot disable this division — it still has '.implode(' and ', $result['blockers']).'. Disable those first.',
+            ]);
         }
 
         \Alert::success('Division updated successfully!')->flash();
 
-        return redirect(backpack_url('division'));
+        return redirect(backpack_url('org/division'));
     }
 
     public function destroy($id)
     {
-        if (! backpack_user()->can('division.delete')) {
-            abort(403, 'Unauthorized. You do not have permission to delete divisions.');
-        }
+        $this->authorizeManage();
 
         return $this->crud->delete($id);
+    }
+
+    private function authorizeManage(): void
+    {
+        if (! backpack_user()->can('ORG_ENTITY_MANAGE')) {
+            abort(403, 'Unauthorized. You do not have permission to manage org entities.');
+        }
     }
 }

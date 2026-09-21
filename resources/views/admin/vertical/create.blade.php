@@ -25,7 +25,17 @@
                     <h2 class="mb-0">Add New Vertical</h2>
                 </div>
                 <div class="card-body">
-                    <form method="POST" action="{{ backpack_url('vertical') }}" enctype="multipart/form-data"> @csrf
+                    @if ($errors->any())
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
+                    <form method="POST" action="{{ backpack_url('org/vertical') }}" enctype="multipart/form-data"> @csrf
 
                         <div class="row">
 
@@ -60,25 +70,15 @@
                                 </div>
                             </div>
 
-                            <div class="col-md-3 mb-3">
-                                <label>Vertical Image</label>
-
-                                <input type="file" name="vertical_image" id="vertical_image" class="form-control"
-                                    accept=".jpg,.jpeg,.png,.webp">
-                            </div>
-                            <div class="col-md-3 mb-3">
-                                <img id="imagePreview" src="" style="display:none;max-height:120px;"
-                                    class="img-thumbnail">
-                            </div>
-
-
                         </div>
+
+                        @include('admin.org.partials.media-fields', ['imageCollection' => 'vertical_image', 'model' => null])
 
                         <div class="mt-4">
                             <button type="submit" class="btn btn-success btn-lg px-5">
                                 <i class="la la-save"></i> Create Vertical
                             </button>
-                            <a href="{{ backpack_url('vertical') }}" class="btn btn-secondary btn-lg">Cancel</a>
+                            <a href="{{ backpack_url('org/vertical') }}" class="btn btn-secondary btn-lg">Cancel</a>
                         </div>
                     </form>
                 </div>
@@ -90,27 +90,7 @@
 @push('after_scripts')
 
 <script>
-    document.getElementById('vertical_image')
-?.addEventListener('change', function(e){
-
-    const file = e.target.files[0];
-
-    if(!file) return;
-
-    const reader = new FileReader();
-
-    reader.onload = function(ev){
-
-        const img =
-            document.getElementById('imagePreview');
-
-        img.src = ev.target.result;
-        img.style.display = 'block';
-    };
-
-    reader.readAsDataURL(file);
-});
-document.querySelector('input[name="code"]').addEventListener('input', function () {
+    document.querySelector('input[name="code"]').addEventListener('input', function () {
 
     let value = this.value.trim();
     let error = document.getElementById('codeError');
@@ -124,8 +104,6 @@ document.querySelector('input[name="code"]').addEventListener('input', function 
     }
 
 });
-
-
 </script>
 
 @endpush

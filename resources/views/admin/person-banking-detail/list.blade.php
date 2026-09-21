@@ -278,7 +278,7 @@
                 </h2>
 
                 <div class="d-flex align-items-center gap-3 flex-nowrap">
-                    <a href="{{ backpack_url('person-banking-detail/create') }}"
+                    <a href="{{ backpack_url('org/person-banking-detail/create') }}"
                         class="btn btn-blue btn-sm fw-bold shadow-sm">
                         <i class="la la-plus me-1"></i> Add New Banking Detail
                     </a>

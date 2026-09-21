@@ -533,6 +533,13 @@ Before any task, also read:
 2. The specific rule file relevant to the task (see index.md's table)
 3. `.ai/skills/` — load the matching XCELR8 skill if the task fits one
 
+## Development Workflow
+
+1. Use Boost MCP tools for exploration and code generation.
+2. Run Larastan (`./vendor/bin/phpstan analyse`) to validate changes.
+3. Test with Pest/PHPUnit (`php artisan test`).
+4. Commit only when Larastan passes.
+
 ## Non-negotiable for the standardization refactor
 - Never work directly on `main`. Always a `refactor/*` branch.
 - Never touch Approval Engine code (locked spec, not started).

@@ -50,16 +50,16 @@ class Employee extends BaseModel
     ];
 
     protected $casts = [
-        'is_active'         => 'boolean',
-        'pf_eligible'       => 'boolean',
-        'esi_eligible'      => 'boolean',
-        'lwf_eligible'      => 'boolean',
-        'joining_date'      => 'date',
+        'is_active' => 'boolean',
+        'pf_eligible' => 'boolean',
+        'esi_eligible' => 'boolean',
+        'lwf_eligible' => 'boolean',
+        'joining_date' => 'date',
         'confirmation_date' => 'date',
-        'separation_date'   => 'date',
-        'created_at'        => 'datetime',
-        'updated_at'        => 'datetime',
-        'deleted_at'        => 'datetime',
+        'separation_date' => 'date',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'deleted_at' => 'datetime',
     ];
 
     // RELATIONSHIPS
@@ -119,18 +119,16 @@ class Employee extends BaseModel
             ->whereNull('xlr8_admin_emp_division_pivot.deleted_at');
     }
 
-    
-
     // ACCESSORS / HELPERS
 
-   public function getDesignationCodeAttribute(): ?string
+    public function getDesignationCodeAttribute(): ?string
     {
-        return $this->attributes['designation_code ?? $this->desig_code'] ?? null;
+        return $this->attributes['designation_code'] ?? $this->attributes['desig_code'] ?? null;
     }
 
     public function getDesignationNameAttribute(): ?string
     {
-        return $this->attributes['designation?->name ?? $this->designationLegacy?->name'] ?? null;
+        return $this->designation?->name ?? $this->designationLegacy?->name ?? null;
     }
 
     public function getPrimaryBranchCodeAttribute(): ?string
@@ -168,11 +166,11 @@ class Employee extends BaseModel
 
         static::saving(function (self $employee) {
             // Keep legacy and new column in sync during transition period
-            if (empty($employee->designation_code) && !empty($employee->desig_code)) {
+            if (empty($employee->designation_code) && ! empty($employee->desig_code)) {
                 $employee->designation_code = strtoupper(trim($employee->desig_code));
             }
 
-            if (empty($employee->desig_code) && !empty($employee->designation_code)) {
+            if (empty($employee->desig_code) && ! empty($employee->designation_code)) {
                 $employee->desig_code = strtoupper(trim($employee->designation_code));
             }
 

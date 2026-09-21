@@ -138,7 +138,7 @@
                 const loader = document.getElementById('gridLoader');
                 if (loader) loader.style.display = 'flex';
 
-                fetch('{{ backpack_url('enquiries/data') }}', {
+                fetch('{{ backpack_url('sales/enquiry/grid-data') }}', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',

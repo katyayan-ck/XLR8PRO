@@ -34,7 +34,7 @@
 
                     <div class="card-body">
 
-                        <form method="POST" action="{{ backpack_url('modules') }}">
+                        <form method="POST" action="{{ backpack_url('iam/module') }}">
 
                             @csrf
 
@@ -105,7 +105,7 @@
 
                                 </button>
 
-                                <a href="{{ backpack_url('modules') }}" class="btn btn-secondary btn-lg">
+                                <a href="{{ backpack_url('iam/module') }}" class="btn btn-secondary btn-lg">
 
                                     Cancel
 

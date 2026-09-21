@@ -44,7 +44,7 @@
 
                     <div class="card-body">
 
-                        <form method="POST" action="{{ backpack_url('lead') }}">
+                        <form method="POST" action="{{ backpack_url('sales/lead') }}">
 
                             @csrf
 
@@ -323,7 +323,7 @@
 
                                     </button>
 
-                                    <a href="{{ backpack_url('lead') }}" class="btn btn-secondary btn-lg">
+                                    <a href="{{ backpack_url('sales/lead') }}" class="btn btn-secondary btn-lg">
 
                                         Cancel
 
@@ -382,7 +382,7 @@
 
             $.ajax({
 
-                url: "{{ backpack_url('lead/models') }}/" + encodeURIComponent(segmentCode),
+                url: "{{ backpack_url('sales/lead/models') }}/" + encodeURIComponent(segmentCode),
 
                 type: "GET",
 
@@ -439,7 +439,7 @@
             $.ajax({
 
                 url:
-                    "{{ backpack_url('lead/variants') }}/" +
+                    "{{ backpack_url('sales/lead/variants') }}/" +
                     encodeURIComponent(modelCode),
 
                 type: "GET",
@@ -499,7 +499,7 @@
             $.ajax({
 
                 url:
-                    "{{ backpack_url('lead/colors') }}/" +
+                    "{{ backpack_url('sales/lead/colors') }}/" +
                     encodeURIComponent(variantCode),
 
                 type: "GET",

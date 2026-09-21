@@ -18,7 +18,7 @@
             </div>
 
             <div class="card-body">
-                <form method="POST" action="{{ route('booking.delivery-photos.update', $booking->id) }}"
+                <form method="POST" action="{{ route('sales.booking.delivery-photos.update', $booking->id) }}"
                     enctype="multipart/form-data" id="photoUploadForm">
                     @csrf
                     @method('PUT')

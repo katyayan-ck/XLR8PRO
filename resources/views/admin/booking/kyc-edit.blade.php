@@ -125,7 +125,7 @@
         </div>
     </div>
 
-    <form id="kyc-form" method="POST" action="{{ route('kyc.update', $booking->id) }}" enctype="multipart/form-data">
+    <form id="kyc-form" method="POST" action="{{ route('sales.booking.kyc.update', $booking->id) }}" enctype="multipart/form-data">
         @csrf
         @method('PUT')
         <input type="hidden" name="pending_flag" value="1">

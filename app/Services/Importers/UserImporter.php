@@ -2,18 +2,18 @@
 
 namespace App\Services\Importers;
 
-use App\Models\Admin\Person;
-use App\Models\Core\Employee;
-use App\Models\User;
-use App\Models\UserDataScope;
 use App\Models\Admin\Branch;
-use App\Models\Core\Department;
+use App\Models\Admin\Department;
 use App\Models\Admin\Designation;
 use App\Models\Admin\Division;
-use App\Models\Core\Location;
-use App\Models\Core\Post;
-use App\Models\Core\Vertical;
-use App\Models\Core\UserType;
+use App\Models\Admin\Employee;
+use App\Models\Admin\Location;
+use App\Models\Admin\Person;
+use App\Models\Admin\UserType;
+use App\Models\Admin\Vertical;
+use App\Models\IAM\Role;
+use App\Models\User;
+use App\Models\UserDataScope;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -22,7 +22,7 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 
 /**
  * UserImporter Service
- * 
+ *
  * Handles bulk import of users from Excel files
  * Creates Person → Employee → User hierarchy with all assignments
  * Supports data scoping, pivot assignments, and permission management
@@ -30,21 +30,32 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 class UserImporter
 {
     private $filePath;
+
     private $sheetName = 'Users';
+
     private $errors = [];
+
     private $warnings = [];
+
     private $imported = 0;
+
     private $skipped = 0;
+
     private $startRow = 2; // Skip header row
 
     // Caches for performance
     private $designationCache = [];
+
     private $departmentCache = [];
+
     private $branchCache = [];
+
     private $locationCache = [];
+
     private $divisionCache = [];
+
     private $verticalCache = [];
-    private $postCache = [];
+
     private $userTypeCache = [];
 
     public function __construct($filePath)
@@ -71,6 +82,7 @@ class UserImporter
 
                     if (empty(array_filter($rowData))) {
                         $this->skipped++;
+
                         continue;
                     }
 
@@ -79,7 +91,7 @@ class UserImporter
                 } catch (Exception $e) {
                     $this->errors[] = [
                         'row' => $row->getRowIndex(),
-                        'error' => $e->getMessage()
+                        'error' => $e->getMessage(),
                     ];
                     $this->skipped++;
                 }
@@ -88,7 +100,7 @@ class UserImporter
             return $this->getResult();
         } catch (Exception $e) {
             Log::error('User Import Failed', ['error' => $e->getMessage()]);
-            throw new Exception("Import failed: " . $e->getMessage());
+            throw new Exception('Import failed: '.$e->getMessage());
         }
     }
 
@@ -103,6 +115,7 @@ class UserImporter
                 $headers[] = trim($cell->getValue());
             }
         }
+
         return $headers;
     }
 
@@ -125,7 +138,7 @@ class UserImporter
                     $value = $value->format('Y-m-d');
                 }
 
-                $data[$key] = trim((string)$value);
+                $data[$key] = trim((string) $value);
             }
             $colIndex++;
         }
@@ -205,7 +218,7 @@ class UserImporter
             'firstname' => $rowData['First Name'],
             'middlename' => $rowData['Middle Name'] ?? null,
             'lastname' => $rowData['Last Name'],
-            'displayname' => trim($rowData['First Name'] . ' ' . ($rowData['Last Name'] ?? '')),
+            'displayname' => trim($rowData['First Name'].' '.($rowData['Last Name'] ?? '')),
             'gender' => strtolower($rowData['Gender'] ?? 'other'),
             'dob' => $this->parseDate($rowData['D.O.B.'] ?? null),
             'maritalstatus' => $rowData['Marital Status'] ?? null,
@@ -216,7 +229,7 @@ class UserImporter
         // Find by email or code, or create new
         $person = Person::where('emailprimary', $email)->first();
 
-        if (!$person) {
+        if (! $person) {
             $personData['code'] = $code ?? Person::generateCode();
             $person = Person::create($personData);
         } else {
@@ -249,7 +262,7 @@ class UserImporter
 
         $employee = Employee::where('code', $empCode)->first();
 
-        if (!$employee) {
+        if (! $employee) {
             $employeeData['code'] = $empCode;
             $employee = Employee::create($employeeData);
         } else {
@@ -280,9 +293,9 @@ class UserImporter
 
         $user = User::where('email', $email)->first();
 
-        if (!$user) {
+        if (! $user) {
             // Generate temporary password
-            $userData['password'] = bcrypt('TempPass@' . date('YmdHis'));
+            $userData['password'] = bcrypt('TempPass@'.date('YmdHis'));
             $user = User::create($userData);
         } else {
             // Don't update password if user exists
@@ -301,30 +314,30 @@ class UserImporter
         $fromDate = $this->parseDate($rowData['Date of Joining']);
 
         // Branch Assignment
-        if (!empty($rowData['Branch'])) {
+        if (! empty($rowData['Branch'])) {
             $branch = $this->lookupBranch($rowData['Branch']);
             $employee->branches()->syncWithoutDetaching([
                 $branch->id => [
                     'fromdate' => $fromDate,
                     'isprimary' => true,
                     'iscurrent' => true,
-                ]
+                ],
             ]);
         }
 
         // Department Assignment
-        if (!empty($rowData['Department'])) {
+        if (! empty($rowData['Department'])) {
             $dept = $this->lookupDepartment($rowData['Department']);
             $employee->departments()->syncWithoutDetaching([
                 $dept->id => [
                     'fromdate' => $fromDate,
                     'iscurrent' => true,
-                ]
+                ],
             ]);
         }
 
         // Location Assignment
-        if (!empty($rowData['Location'])) {
+        if (! empty($rowData['Location'])) {
             $location = $this->lookupLocation($rowData['Location']);
             $branch = $this->lookupBranch($rowData['Branch']);
             $employee->locations()->syncWithoutDetaching([
@@ -332,41 +345,42 @@ class UserImporter
                     'branchid' => $branch->id,
                     'fromdate' => $fromDate,
                     'iscurrent' => true,
-                ]
+                ],
             ]);
         }
 
         // Division Assignment
-        if (!empty($rowData['Division'])) {
+        if (! empty($rowData['Division'])) {
             $division = $this->lookupDivision($rowData['Division']);
             $employee->divisions()->syncWithoutDetaching([
                 $division->id => [
                     'fromdate' => $fromDate,
                     'iscurrent' => true,
-                ]
+                ],
             ]);
         }
 
         // Vertical Assignment
-        if (!empty($rowData['Vertical'])) {
+        if (! empty($rowData['Vertical'])) {
             $vertical = $this->lookupVertical($rowData['Vertical']);
             $employee->verticals()->syncWithoutDetaching([
                 $vertical->id => [
                     'fromdate' => $fromDate,
                     'iscurrent' => true,
-                ]
+                ],
             ]);
         }
 
-        // Post Assignment
-        if (!empty($rowData['Post'])) {
-            $post = $this->lookupPost($rowData['Post']);
-            $employee->posts()->syncWithoutDetaching([
-                $post->id => [
-                    'fromdate' => $fromDate,
-                    'assignmentorder' => 1,
-                    'iscurrent' => true,
-                ]
+        // Post Assignment — deliberately not implemented. "Post" as a standalone concept has no
+        // real model backing it (no App\Models\*\Post class exists) and Employee has no posts()
+        // relation; the Post/EmpPostAssignment/PostReporting cluster is confirmed dead code
+        // (known-bugs-report.md BUG-015/024, entirely unreachable controllers) — Designation
+        // replaced Post as this app's real org-hierarchy concept. Log and skip rather than
+        // resurrecting a dead subsystem here.
+        if (! empty($rowData['Post'])) {
+            Log::info('UserImporter: skipping Post assignment (Post is a dead concept in this app)', [
+                'employee_code' => $employee->code,
+                'requested_post' => $rowData['Post'],
             ]);
         }
     }
@@ -379,7 +393,7 @@ class UserImporter
         $scopes = [];
 
         // Branch scope
-        if (!empty($rowData['Accessible Branches'])) {
+        if (! empty($rowData['Accessible Branches'])) {
             $branches = array_map('trim', explode(',', $rowData['Accessible Branches']));
             foreach ($branches as $branchCode) {
                 $branch = Branch::where('code', $branchCode)->first();
@@ -395,7 +409,7 @@ class UserImporter
         }
 
         // Department scope
-        if (!empty($rowData['Accessible Departments'])) {
+        if (! empty($rowData['Accessible Departments'])) {
             $departments = array_map('trim', explode(',', $rowData['Accessible Departments']));
             foreach ($departments as $deptCode) {
                 $dept = Department::where('code', $deptCode)->first();
@@ -411,7 +425,7 @@ class UserImporter
         }
 
         // Location scope
-        if (!empty($rowData['Accessible Locations'])) {
+        if (! empty($rowData['Accessible Locations'])) {
             $locations = array_map('trim', explode(',', $rowData['Accessible Locations']));
             foreach ($locations as $locCode) {
                 $location = Location::where('code', $locCode)->first();
@@ -426,28 +440,37 @@ class UserImporter
             }
         }
 
-        if (!empty($scopes)) {
+        if (! empty($scopes)) {
             UserDataScope::insert($scopes);
         }
     }
 
     /**
-     * Assign roles and permissions based on post/designation
+     * Assign roles and permissions based on the employee's Designation.
+     *
+     * The Designation IS the Spatie role in this app (config/permission.php maps
+     * the 'roles' table to xlr8_admin_designation) — previously this hardcoded a
+     * stale slug map ('superadmin', 'foundationmanager', etc.) that predates that
+     * switch and never matched any real designation, so assignRole() always threw
+     * RoleDoesNotExist and rolled back the entire row's import. See
+     * known-bugs-report.md BUG-071.
      */
     private function assignRolesAndPermissions($user, $employee, $rowData)
     {
-        // Assign role based on User Type
-        $userType = $rowData['User Type'] ?? 'Standard User';
-        $roleMap = [
-            'Super Admin' => 'superadmin',
-            'Foundation Manager' => 'foundationmanager',
-            'User Manager' => 'usermanager',
-            'Vehicle Manager' => 'vehiclemanager',
-            'Standard User' => 'user',
-        ];
+        $designation = $this->lookupDesignation($rowData['Designation']);
 
-        $role = $roleMap[$userType] ?? 'user';
-        $user->assignRole($role);
+        $role = Role::where('code', $designation->code)->where('guard_name', 'web')->first();
+
+        if (! $role) {
+            Log::warning('UserImporter: no role found for designation code', [
+                'designation_code' => $designation->code,
+                'user_id' => $user->id,
+            ]);
+
+            return;
+        }
+
+        $user->syncRoles([$role]);
 
         // Assign role-based permissions automatically (via Spatie)
         // The role will automatically have its associated permissions
@@ -458,98 +481,96 @@ class UserImporter
      */
     private function lookupDesignation($code)
     {
-        if (!isset($this->designationCache[$code])) {
+        if (! isset($this->designationCache[$code])) {
             $designation = Designation::where('code', $code)->first();
-            if (!$designation) {
+            if (! $designation) {
                 throw new Exception("Designation not found: $code");
             }
             $this->designationCache[$code] = $designation;
         }
+
         return $this->designationCache[$code];
     }
 
     private function lookupDepartment($code)
     {
-        if (!isset($this->departmentCache[$code])) {
+        if (! isset($this->departmentCache[$code])) {
             $dept = Department::where('code', $code)->first();
-            if (!$dept) {
+            if (! $dept) {
                 throw new Exception("Department not found: $code");
             }
             $this->departmentCache[$code] = $dept;
         }
+
         return $this->departmentCache[$code];
     }
 
     private function lookupBranch($code)
     {
-        if (!isset($this->branchCache[$code])) {
+        if (! isset($this->branchCache[$code])) {
             $branch = Branch::where('code', $code)->first();
-            if (!$branch) {
+            if (! $branch) {
                 throw new Exception("Branch not found: $code");
             }
             $this->branchCache[$code] = $branch;
         }
+
         return $this->branchCache[$code];
     }
 
     private function lookupLocation($code)
     {
-        if (!isset($this->locationCache[$code])) {
+        if (! isset($this->locationCache[$code])) {
             $location = Location::where('code', $code)->first();
-            if (!$location) {
+            if (! $location) {
                 throw new Exception("Location not found: $code");
             }
             $this->locationCache[$code] = $location;
         }
+
         return $this->locationCache[$code];
     }
 
     private function lookupDivision($code)
     {
-        if (!isset($this->divisionCache[$code])) {
+        if (! isset($this->divisionCache[$code])) {
             $division = Division::where('code', $code)->first();
-            if (!$division) {
+            if (! $division) {
                 throw new Exception("Division not found: $code");
             }
             $this->divisionCache[$code] = $division;
         }
+
         return $this->divisionCache[$code];
     }
 
     private function lookupVertical($code)
     {
-        if (!isset($this->verticalCache[$code])) {
+        if (! isset($this->verticalCache[$code])) {
             $vertical = Vertical::where('code', $code)->first();
-            if (!$vertical) {
+            if (! $vertical) {
                 throw new Exception("Vertical not found: $code");
             }
             $this->verticalCache[$code] = $vertical;
         }
-        return $this->verticalCache[$code];
-    }
 
-    private function lookupPost($code)
-    {
-        if (!isset($this->postCache[$code])) {
-            $post = Post::where('code', $code)->first();
-            if (!$post) {
-                throw new Exception("Post not found: $code");
-            }
-            $this->postCache[$code] = $post;
-        }
-        return $this->postCache[$code];
+        return $this->verticalCache[$code];
     }
 
     private function lookupUserType($name)
     {
-        if (!isset($this->userTypeCache[$name])) {
-            $userType = UserType::where('name', $name)->first();
-            if (!$userType) {
+        if (! isset($this->userTypeCache[$name])) {
+            $userType = UserType::where('display_name', $name)->first();
+            if (! $userType) {
                 // Create default if not exists
-                $userType = UserType::create(['name' => $name]);
+                $userType = UserType::create([
+                    'code' => strtoupper(str_replace(' ', '_', $name)),
+                    'display_name' => $name,
+                ]);
             }
             $this->userTypeCache[$name] = $userType;
         }
+
         return $this->userTypeCache[$name];
     }
 
@@ -579,6 +600,7 @@ class UserImporter
     private function parseBoolean($value)
     {
         $truthy = ['yes', 'true', '1', 'active', 'on'];
+
         return in_array(strtolower($value), $truthy);
     }
 

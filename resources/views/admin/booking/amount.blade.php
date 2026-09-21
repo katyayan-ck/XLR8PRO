@@ -64,7 +64,7 @@
 
                 <div class="card-body">
                     <form class="forms-sample" method="POST"
-                        action="{{ route('booking.add-amount.store', $booking->id) }}" enctype="multipart/form-data">
+                        action="{{ route('sales.booking.add-amount.store', $booking->id) }}" enctype="multipart/form-data">
                         @csrf
                         <input type="hidden" name="bid" value="{{ $booking->id }}">
 
@@ -136,7 +136,7 @@
                                 <button type="submit" class="btn btn-success btn-lg px-5" id="submitBtn">
                                     <i class="la la-save me-2"></i> Add Amount
                                 </button>
-                                <a href="{{ backpack_url('booking') }}"
+                                <a href="{{ backpack_url('sales/booking') }}"
                                     class="btn btn-secondary btn-lg px-5 ms-3">Cancel</a>
                             </div>
                         </div>

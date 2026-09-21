@@ -108,7 +108,7 @@
 
             const loadData = () => {
                 const filter = document.getElementById('status_filter')?.value || 'all';
-                fetch(`{{ route('booking.delivered.list') }}?status_filter=${filter}`)
+                fetch(`{{ route('sales.booking.delivered.list') }}?status_filter=${filter}`)
                     .then(response => {
                         if (!response.ok) throw new Error('Server error ' + response.status);
                         return response.json();

@@ -24,23 +24,44 @@ class PersonBankingDetailCrudController extends CrudController
 {
     use CreateOperation;
     use DeleteOperation;
-    use ListOperation;
+    use ListOperation {
+        search as traitSearch;
+        showDetailsRow as traitShowDetailsRow;
+    }
     use UpdateOperation;
 
+    public function search()
+    {
+        if (! backpack_user()->can('ORG_PRSN_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view person banking details.');
+        }
+
+        return $this->traitSearch();
+    }
+
+    public function showDetailsRow($id)
+    {
+        if (! backpack_user()->can('ORG_PRSN_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view person banking details.');
+        }
+
+        return $this->traitShowDetailsRow($id);
+    }
+
     /**
-     * No dedicated "person_banking_detail.*" permission exists — reuses
-     * "person.*" since this is a sub-resource of Person.
+     * No dedicated "ORG_PBNK_*" permission exists — reuses "ORG_PRSN_*"
+     * since this is a sub-resource of Person.
      */
     public function setup()
     {
         CRUD::setModel(PersonBankingDetail::class);
-        CRUD::setRoute(config('backpack.base.route_prefix').'/person-banking-detail');
+        CRUD::setRoute(config('backpack.base.route_prefix').'/org/person-banking-detail');
         CRUD::setEntityNameStrings('person banking detail', 'person banking details');
     }
 
     protected function setupListOperation()
     {
-        if (! backpack_user()->can('person.view')) {
+        if (! backpack_user()->can('ORG_PRSN_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view person banking details.');
         }
 
@@ -49,7 +70,7 @@ class PersonBankingDetailCrudController extends CrudController
 
     public function index()
     {
-        if (! backpack_user()->can('person.view')) {
+        if (! backpack_user()->can('ORG_PRSN_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view person banking details.');
         }
 
@@ -81,7 +102,7 @@ class PersonBankingDetailCrudController extends CrudController
                 ? $banking->person->first_name.' '.$banking->person->last_name
                 : '—';
 
-            $editUrl = backpack_url("person-banking-detail/{$banking->id}/edit");
+            $editUrl = backpack_url("org/person-banking-detail/{$banking->id}/edit");
 
             $mapped['action'] = '
                 <div class="d-flex gap-2 justify-content-center">
@@ -116,7 +137,7 @@ class PersonBankingDetailCrudController extends CrudController
 
     public function create()
     {
-        if (! backpack_user()->can('person.create')) {
+        if (! backpack_user()->can('ORG_PRSN_CREATE')) {
             abort(403, 'Unauthorized. You do not have permission to create person banking details.');
         }
 
@@ -132,7 +153,7 @@ class PersonBankingDetailCrudController extends CrudController
 
     public function store(PersonBankingDetailRequest $request)
     {
-        if (! backpack_user()->can('person.create')) {
+        if (! backpack_user()->can('ORG_PRSN_CREATE')) {
             abort(403, 'Unauthorized. You do not have permission to create person banking details.');
         }
 
@@ -142,12 +163,12 @@ class PersonBankingDetailCrudController extends CrudController
 
         \Alert::success('Banking Detail created successfully!')->flash();
 
-        return redirect(backpack_url('person-banking-detail'));
+        return redirect(backpack_url('org/person-banking-detail'));
     }
 
     public function edit($id)
     {
-        if (! backpack_user()->can('person.edit')) {
+        if (! backpack_user()->can('ORG_PRSN_EDIT')) {
             abort(403, 'Unauthorized. You do not have permission to edit person banking details.');
         }
 
@@ -166,7 +187,7 @@ class PersonBankingDetailCrudController extends CrudController
 
     public function update(PersonBankingDetailRequest $request, $id)
     {
-        if (! backpack_user()->can('person.edit')) {
+        if (! backpack_user()->can('ORG_PRSN_EDIT')) {
             abort(403, 'Unauthorized. You do not have permission to edit person banking details.');
         }
 
@@ -178,12 +199,12 @@ class PersonBankingDetailCrudController extends CrudController
 
         \Alert::success('Banking Detail updated successfully!')->flash();
 
-        return redirect(backpack_url('person-banking-detail'));
+        return redirect(backpack_url('org/person-banking-detail'));
     }
 
     public function destroy($id)
     {
-        if (! backpack_user()->can('person.delete')) {
+        if (! backpack_user()->can('ORG_PRSN_DELETE')) {
             abort(403, 'Unauthorized. You do not have permission to delete person banking details.');
         }
 

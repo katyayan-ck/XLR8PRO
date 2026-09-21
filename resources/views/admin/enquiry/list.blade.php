@@ -12,7 +12,7 @@
 
                     <div class="d-flex align-items-center gap-3 flex-nowrap">
                         @if (Route::has('enquiry.add') || Route::has('enquiries.create'))
-                            <a href="{{ backpack_url('enquiries/add') }}" class="btn btn-blue btn-sm fw-bold shadow-sm">
+                            <a href="{{ backpack_url('sales/enquiry/create') }}" class="btn btn-blue btn-sm fw-bold shadow-sm">
                                 <i class="la la-plus me-1"></i> Add New Enquiry
                             </a>
                         @endif
@@ -34,7 +34,7 @@
                                     </small>
                                 </div>
                                 <div class="col-md-4">
-                                    <form action="{{ route('enquiry.import') }}" method="POST"
+                                    <form action="{{ route('sales.enquiry.import') }}" method="POST"
                                         enctype="multipart/form-data" class="d-flex gap-2">
                                         @csrf
                                         <input type="file" name="excel_file" class="form-control form-control-sm"
@@ -201,7 +201,7 @@
                 const loader = document.getElementById('gridLoader');
                 if (loader) loader.style.display = 'flex';
 
-                fetch('{{ backpack_url('enquiries/data') }}', {
+                fetch('{{ backpack_url('sales/enquiry/grid-data') }}', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -370,7 +370,7 @@ document.addEventListener('click', async function (e) {
     try {
 
         const validationUrl =
-            `{{ backpack_url('enquiries') }}/${enquiryId}/validate-quotation-vehicle`;
+            `{{ backpack_url('sales/enquiry') }}/${enquiryId}/validate-quotation-vehicle`;
 
         const response = await fetch(validationUrl, {
             method: 'GET',
@@ -467,7 +467,7 @@ document.addEventListener('click', async function (e) {
             // ====================================================
 
             const editUrl =
-                `{{ backpack_url('enquiry') }}/${enquiryId}/edit`;
+                `{{ backpack_url('sales/enquiry') }}/${enquiryId}/edit`;
 
             window.location.href = editUrl;
         });
@@ -590,7 +590,7 @@ document.addEventListener('click', async function (e) {
                     highlightFilter: currentHighlightFilter,
                     list_type: LIST_TYPE
                 });
-                window.location.href = '{{ backpack_url('enquiries/export') }}?' + params.toString();
+                window.location.href = '{{ backpack_url('sales/enquiry/export-legacy') }}?' + params.toString();
             });
 
             document.getElementById('exportPdf').addEventListener('click', () => {

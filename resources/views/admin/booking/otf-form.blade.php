@@ -483,7 +483,7 @@ use App\Services\OrgService;
             </div>
         </div>
 
-        <form method="POST" action="{{ route('booking.otf.save', $booking->id) }}" enctype="multipart/form-data">
+        <form method="POST" action="{{ route('sales.booking.otf.save', $booking->id) }}" enctype="multipart/form-data">
             @csrf
             <div class="quotation-sheet">
                 <div class="quotation-sheet">
@@ -2497,7 +2497,7 @@ use App\Services\OrgService;
 
 <div class="card-footer text-end mt-3 no-print">
     {{-- DOWNLOAD PDF BUTTON --}}
-    <a href="{{ route('booking.download-otf-pdf', $booking->id) }}" 
+    <a href="{{ route('sales.booking.download-otf-pdf', $booking->id) }}" 
        class="btn btn-primary no-print" 
        target="_blank">
         <i class="la la-file-pdf"></i> Download PDF
@@ -2512,7 +2512,7 @@ use App\Services\OrgService;
         <i class="la la-save"></i> Save Transaction Form
     </button>
     
-    <a href="{{ backpack_url('quotation-form') }}" class="btn btn-secondary">Cancel</a>
+    <a href="{{ backpack_url('sales/quotation') }}" class="btn btn-secondary">Cancel</a>
 </div>
 </form>
 
@@ -2541,7 +2541,7 @@ use App\Services\OrgService;
         generateButton.disabled = true;
         generateButton.innerText = 'Generating...';
 
-        fetch("{{ route('booking.generate-votf', $booking->id) }}", {
+        fetch("{{ route('sales.booking.generate-votf', $booking->id) }}", {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',

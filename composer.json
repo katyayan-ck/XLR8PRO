@@ -33,6 +33,7 @@
     "require-dev": {
         "backpack/generators": "^4.1",
         "fakerphp/faker": "^1.23",
+        "larastan/larastan": "^3.0",
         "laravel/boost": "^2.9",
         "laravel/pail": "^1.2.2",
         "laravel/pint": "^1.24",
@@ -56,6 +57,7 @@
         }
     },
     "scripts": {
+		"analyse": "phpstan analyse --memory-limit=2G",
         "setup": [
             "composer install",
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",

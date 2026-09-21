@@ -55,7 +55,7 @@
                     </div>
                 </div>
 
-                <form id="financeForm" method="POST" action="{{ route('finance.update', $booking->id) }}"
+                <form id="financeForm" method="POST" action="{{ route('sales.booking.finance.update', $booking->id) }}"
                     enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
