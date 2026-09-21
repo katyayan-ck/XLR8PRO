@@ -19,13 +19,13 @@ class VehicleModelCrudController extends CrudController
     public function setup()
     {
         $this->crud->setModel(VehicleModel::class);
-        $this->crud->setRoute(config('backpack.base.route_prefix').'/vehicle-model');
+        $this->crud->setRoute(config('backpack.base.route_prefix').'/vehicle/model');
         $this->crud->setEntityNameStrings('vehicle model', 'vehicle models');
     }
 
     protected function setupListOperation()
     {
-        if (! backpack_user()->can('model.view')) {
+        if (! backpack_user()->can('VEH_MDL_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view vehicle models.');
         }
 
@@ -34,7 +34,7 @@ class VehicleModelCrudController extends CrudController
 
     public function index()
     {
-        if (! backpack_user()->can('model.view')) {
+        if (! backpack_user()->can('VEH_MDL_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view vehicle models.');
         }
 
@@ -50,7 +50,7 @@ class VehicleModelCrudController extends CrudController
             $mapped['segment'] = $model->segment?->name ?? '—';
             $mapped['sub_segment'] = $model->subSegment?->name ?? '—';
 
-            $editUrl = backpack_url("vehicle-model/{$model->id}/edit");
+            $editUrl = backpack_url("vehicle/model/{$model->id}/edit");
 
             $mapped['action'] = '
                 <div class="d-flex gap-2 justify-content-center">
@@ -84,7 +84,7 @@ class VehicleModelCrudController extends CrudController
 
     public function create()
     {
-        if (! backpack_user()->can('model.create')) {
+        if (! backpack_user()->can('VEH_MDL_CREATE')) {
             abort(403, 'Unauthorized. You do not have permission to create vehicle models.');
         }
 
@@ -96,7 +96,7 @@ class VehicleModelCrudController extends CrudController
 
     public function store(VehicleModelRequest $request)
     {
-        if (! backpack_user()->can('model.create')) {
+        if (! backpack_user()->can('VEH_MDL_CREATE')) {
             abort(403, 'Unauthorized. You do not have permission to create vehicle models.');
         }
 
@@ -111,12 +111,12 @@ class VehicleModelCrudController extends CrudController
 
         \Alert::success('Vehicle Model created successfully!')->flash();
 
-        return redirect(backpack_url('vehicle-model'));
+        return redirect(backpack_url('vehicle/model'));
     }
 
     public function edit($id)
     {
-        if (! backpack_user()->can('model.edit')) {
+        if (! backpack_user()->can('VEH_MDL_EDIT')) {
             abort(403, 'Unauthorized. You do not have permission to edit vehicle models.');
         }
 
@@ -143,7 +143,7 @@ class VehicleModelCrudController extends CrudController
 
     public function update(VehicleModelRequest $request, $id)
     {
-        if (! backpack_user()->can('model.edit')) {
+        if (! backpack_user()->can('VEH_MDL_EDIT')) {
             abort(403, 'Unauthorized. You do not have permission to edit vehicle models.');
         }
 
@@ -192,11 +192,12 @@ class VehicleModelCrudController extends CrudController
             'Vehicle Model updated successfully!'
         )->flash();
 
-        return redirect(backpack_url('vehicle-model'));
+        return redirect(backpack_url('vehicle/model'));
     }
 
     /**
      * NOTE: routes/backpack/core.php registers a DELETE route pointing at
+     *
      * @destroy, but no destroy() method has ever existed on this controller
      * (confirmed in the file before this session touched it) — that route
      * would throw "method does not exist" if hit. Not added here; this batch

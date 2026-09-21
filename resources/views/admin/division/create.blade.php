@@ -25,7 +25,17 @@
                     <h2 class="mb-0">Add New Division</h2>
                 </div>
                 <div class="card-body">
-                    <form method="POST" action="{{ backpack_url('division') }}" enctype="multipart/form-data">
+                    @if ($errors->any())
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
+                    <form method="POST" action="{{ backpack_url('org/division') }}" enctype="multipart/form-data">
                         @csrf
 
                         <div class="row">
@@ -61,24 +71,6 @@
                                     rows="3">{{ old('description') }}</textarea>
                             </div>
 
-                            <div class="col-md-4 mb-3">
-
-                                <label>Division Image</label>
-
-                                <input type="file" name="division_image" id="division_image" class="form-control"
-                                    accept=".jpg,.jpeg,.png,.webp">
-
-                            </div>
-
-                            <div class="col-md-4 mb-3">
-
-                                <img id="imagePreview" src="" style="display:none;max-height:120px;"
-                                    class="img-thumbnail">
-
-                            </div>
-
-
-
                             <div class="col-md-1 mb-3">
                                 <label class="form-label">Is Active?</label>
                                 <div class="form-check form-switch">
@@ -89,11 +81,13 @@
                             </div>
                         </div>
 
+                        @include('admin.org.partials.media-fields', ['imageCollection' => 'division_image', 'model' => null])
+
                         <div class="mt-4">
                             <button type="submit" class="btn btn-success btn-lg px-5">
                                 <i class="la la-save"></i> Create Division
                             </button>
-                            <a href="{{ backpack_url('division') }}" class="btn btn-secondary btn-lg">Cancel</a>
+                            <a href="{{ backpack_url('org/division') }}" class="btn btn-secondary btn-lg">Cancel</a>
                         </div>
                     </form>
                 </div>
@@ -106,28 +100,7 @@
 @push('after_scripts')
 
 <script>
-    document.getElementById('division_image')
-?.addEventListener('change', function(e){
-
-    const file = e.target.files[0];
-
-    if(!file) return;
-
-    const reader = new FileReader();
-
-    reader.onload = function(ev){
-
-        const img =
-            document.getElementById('imagePreview');
-
-        img.src = ev.target.result;
-        img.style.display = 'block';
-    };
-
-    reader.readAsDataURL(file);
-});
-
-$('input[name="code"]').on('input', function () {
+    $('input[name="code"]').on('input', function () {
 
     this.value = this.value
         .replace(/[^A-Za-z0-9]/g, '')

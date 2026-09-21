@@ -22,30 +22,34 @@ class PersonRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * Identical between store() and update() in the original controller — no
-     * unique/id-dependent rule exists on this model's fields.
+     * Minimum viable person is just a name and one primary mobile (POST/create
+     * only — mobile is managed via the Contacts card afterwards, not this form,
+     * on PUT/update). Everything else is optional and can be filled in later
+     * from the integrated person edit screen.
      *
      * @return array
      */
     public function rules()
     {
+        $isCreate = $this->isMethod('POST');
+
         return [
-            'entity_type' => 'required|in:individual,legal_entity',
+            'display_name' => 'required|string|max:255',
+            'mobile' => $isCreate ? ['required', 'digits:10'] : ['sometimes', 'nullable', 'digits:10'],
+            'entity_type' => 'nullable|in:individual,legal_entity',
             'salutation' => 'nullable|in:Mr,Mrs,Ms,Dr',
-            'first_name' => 'required|string|max:100',
+            'first_name' => 'nullable|string|max:100',
             'middle_name' => 'nullable|string|max:100',
             'last_name' => 'nullable|string|max:100',
-            'display_name' => 'nullable|string|max:255',
             'gender' => 'nullable|in:Male,Female,Other,Prefer not to say',
             'dob' => 'nullable|date',
             'marital_status' => 'nullable|in:Single,Married,Divorced,Widowed',
-            'spouse_name' => 'nullable|string',
-            'occupation' => 'nullable|string',
-            'aadhaar_no' => 'nullable|string|max:12',
-            'pan_no' => 'nullable|string|max:10',
+            'spouse_name' => 'nullable|string|max:255',
+            'occupation' => 'nullable|string|max:255',
+            'aadhaar_no' => 'nullable|digits:12',
+            'pan_no' => 'nullable|regex:/^[A-Za-z]{5}[0-9]{4}[A-Za-z]$/',
             'tan_no' => 'nullable|string|max:15',
             'gst_no' => 'nullable|string|max:20',
-            'extra_data' => 'nullable|json',
         ];
     }
 
@@ -57,7 +61,7 @@ class PersonRequest extends FormRequest
     public function attributes()
     {
         return [
-            //
+            'display_name' => 'name',
         ];
     }
 
@@ -69,7 +73,8 @@ class PersonRequest extends FormRequest
     public function messages()
     {
         return [
-            //
+            'mobile.required' => 'A primary mobile number is required.',
+            'mobile.digits' => 'The mobile number must be exactly 10 digits.',
         ];
     }
 }

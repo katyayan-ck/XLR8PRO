@@ -19,208 +19,107 @@
 @section('content')
 <div class="container-fluid">
     <div class="row">
-        <div class="col-12">
+        <div class="col-lg-8 offset-lg-2">
             <div class="card">
                 <div class="card-header text-black">
                     <h2 class="mb-0">Add New Person</h2>
+                    <p class="mb-0 text-muted">Only a name and one primary mobile number are required to get
+                        started — everything else (identity numbers, addresses, banking, additional contacts)
+                        can be added on the next screen. The person code is generated automatically (from Aadhaar,
+                        then PAN, then a system-generated code) and can never be changed afterwards.</p>
                 </div>
                 <div class="card-body">
+                    @if ($errors->any())
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
 
-                    <form method="POST" action="{{ backpack_url('person') }}">
+                    <form method="POST" action="{{ backpack_url('org/person') }}">
                         @csrf
 
                         <div class="row">
-
-
-                            {{-- Entity Type --}}
-                            <div class="col-md-3 mb-3">
-                                <label>Entity Type <span class="text-danger">*</span></label>
-                                <select name="entity_type" class="form-control form-select" required>
-                                    <option value="">Select</option>
-
-                                    <option value="individual" {{ old('entity_type')=='individual' ? 'selected' : '' }}>
-                                        Individual
-                                    </option>
-
-                                    <option value="legal_entity" {{ old('entity_type')=='legal_entity' ? 'selected' : ''
-                                        }}>
-                                        Legal Entity
-                                    </option>
-                                </select>
-                            </div>
-
-                            <div class="col-md-3 mb-3">
-                                <label>Salutation</label>
-                                <select name="salutation" class="form-control form-select">
-                                    <option value="">Select</option>
-                                    <option value="Mr" {{ old('salutation')=='Mr' ? 'selected' : '' }}>Mr</option>
-                                    <option value="Mrs" {{ old('salutation')=='Mrs' ? 'selected' : '' }}>Mrs</option>
-                                    <option value="Ms" {{ old('salutation')=='Ms' ? 'selected' : '' }}>Ms</option>
-                                    <option value="Dr" {{ old('salutation')=='Dr' ? 'selected' : '' }}>Dr</option>
-                                </select>
-                            </div>
-
-                            <div class="col-md-3 mb-3">
-                                <label>First Name <span class="text-danger">*</span></label>
-                                <input type="text" name="first_name" class="form-control"
-                                    value="{{ old('first_name') }}" required>
-                            </div>
-
-                            <div class="col-md-3 mb-3">
-                                <label>Middle Name</label>
-                                <input type="text" name="middle_name" class="form-control"
-                                    value="{{ old('middle_name') }}">
-                            </div>
-
-                            <div class="col-md-3 mb-3">
-                                <label>Last Name</label>
-                                <input type="text" name="last_name" class="form-control" value="{{ old('last_name') }}">
-                            </div>
-
-                            <div class="col-md-3 mb-3">
-                                <label>Display Name</label>
+                            <div class="col-md-6 mb-3">
+                                <label>Name <span class="text-danger">*</span></label>
                                 <input type="text" name="display_name" class="form-control"
-                                    value="{{ old('display_name') }}">
+                                    value="{{ old('display_name') }}" required autofocus>
                             </div>
 
-
-                            <div class="col-md-3 mb-3">
-                                <label>Gender</label>
-                                <select name="gender" class="form-control form-select">
-                                    <option value="">Select</option>
-
-                                    <option value="Male" {{ old('gender')=='Male' ? 'selected' : '' }}>
-                                        Male
-                                    </option>
-
-                                    <option value="Female" {{ old('gender')=='Female' ? 'selected' : '' }}>
-                                        Female
-                                    </option>
-
-                                    <option value="Other" {{ old('gender')=='Other' ? 'selected' : '' }}>
-                                        Other
-                                    </option>
-
-                                    <option value="Prefer not to say" {{ old('gender')=='Prefer not to say' ? 'selected'
-                                        : '' }}>
-                                        Prefer not to say
-                                    </option>
-                                </select>
+                            <div class="col-md-6 mb-3">
+                                <label>Primary Mobile <span class="text-danger">*</span></label>
+                                <input type="text" name="mobile" class="form-control" value="{{ old('mobile') }}"
+                                    maxlength="10" pattern="[0-9]{10}" inputmode="numeric" required>
+                                <div id="mobileError" class="text-danger mt-1"></div>
                             </div>
-
-                            <div class="col-md-3 mb-3">
-                                <label>D.O.B.</label>
-                                <input type="date" name="dob" class="form-control" value="{{ old('dob') }}">
-                            </div>
-
-                            {{-- marital status --}}
-                            <div class="col-md-3 mb-3">
-                                <label>Marital Status</label>
-                                <select name="marital_status" class="form-control form-select">
-                                    <option value="">Select</option>
-
-                                    <option value="Single" {{ old('marital_status')=='Single' ? 'selected' : '' }}>
-                                        Single
-                                    </option>
-
-                                    <option value="Married" {{ old('marital_status')=='Married' ? 'selected' : '' }}>
-                                        Married
-                                    </option>
-
-                                    <option value="Divorced" {{ old('marital_status')=='Divorced' ? 'selected' : '' }}>
-                                        Divorced
-                                    </option>
-
-                                    <option value="Widowed" {{ old('marital_status')=='Widowed' ? 'selected' : '' }}>
-                                        Widowed
-                                    </option>
-                                </select>
-                            </div>
-
-                            {{-- spouse name --}}
-                            <div class="col-md-3 mb-3">
-                                <label>Spouse Name</label>
-                                <input type="text" name="spouse_name" class="form-control"
-                                    value="{{ old('spouse_name') }}">
-                            </div>
-
-                            <div class="col-md-3 mb-3">
-                                <label>Occupation <span class="text-danger">*</span></label>
-                                <select name="occupation" class="form-control form-select" required>
-                                    <option value="">-- Select Occupation --</option>
-
-                                    <option value="Agriculture" {{ old('occupation')=='Agriculture' ? 'selected' : ''
-                                        }}>
-                                        Agriculture
-                                    </option>
-
-                                    <option value="Business" {{ old('occupation')=='Business' ? 'selected' : '' }}>
-                                        Business
-                                    </option>
-
-                                    <option value="Salaried (Govt.)" {{ old('occupation')=='Salaried (Govt.)'
-                                        ? 'selected' : '' }}>
-                                        Salaried (Govt.)
-                                    </option>
-
-                                    <option value="Salaried (Pvt.)" {{ old('occupation')=='Salaried (Pvt.)' ? 'selected'
-                                        : '' }}>
-                                        Salaried (Pvt.)
-                                    </option>
-
-                                    <option value="Self Employed (Professional)" {{
-                                        old('occupation')=='Self Employed (Professional)' ? 'selected' : '' }}>
-                                        Self Employed (Professional)
-                                    </option>
-
-                                    <option value="Pensioner" {{ old('occupation')=='Pensioner' ? 'selected' : '' }}>
-                                        Pensioner
-                                    </option>
-
-                                    <option value="Other" {{ old('occupation')=='Other' ? 'selected' : '' }}>
-                                        Other
-                                    </option>
-                                </select>
-                            </div>
-
-                            <div class="col-md-4 mb-3">
-                                <label>Aadhaar No.</label>
-                                <input type="text" name="aadhaar_no" class="form-control"
-                                    value="{{ old('aadhaar_no') }}" maxlength="12">
-                            </div>
-
-                            <div class="col-md-4 mb-3">
-                                <label>PAN No.</label>
-                                <input type="text" name="pan_no" class="form-control" value="{{ old('pan_no') }}"
-                                    maxlength="10">
-                            </div>
-
-                            <div class="col-md-4 mb-3">
-                                <label>TAN No.</label>
-                                <input type="text" name="tan_no" class="form-control" value="{{ old('tan_no') }}"
-                                    maxlength="10">
-                            </div>
-
-                            <div class="col-md-4 mb-3">
-                                <label>GST No.</label>
-                                <input type="text" name="gst_no" class="form-control" value="{{ old('gst_no') }}"
-                                    maxlength="15">
-                            </div>
-
-                            <div class="col-md-4 mb-3">
-                                <label>Extra Data (JSON)</label>
-                                <textarea name="extra_data" class="form-control"
-                                    rows="3">{{ old('extra_data') }}</textarea>
-                            </div>
-
-
                         </div>
+
+                        <details class="mb-3">
+                            <summary class="text-primary" style="cursor:pointer;">More details (optional)</summary>
+
+                            <div class="row mt-3">
+                                <div class="col-md-3 mb-3">
+                                    <label>Entity Type</label>
+                                    <select name="entity_type" class="form-control form-select">
+                                        <option value="individual" {{ old('entity_type', 'individual') == 'individual' ? 'selected' : '' }}>Individual</option>
+                                        <option value="legal_entity" {{ old('entity_type') == 'legal_entity' ? 'selected' : '' }}>Legal Entity</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-3 mb-3">
+                                    <label>Salutation</label>
+                                    <select name="salutation" class="form-control form-select">
+                                        <option value="">Select</option>
+                                        @foreach (['Mr', 'Mrs', 'Ms', 'Dr'] as $sal)
+                                            <option value="{{ $sal }}" {{ old('salutation') == $sal ? 'selected' : '' }}>{{ $sal }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <div class="col-md-3 mb-3">
+                                    <label>Gender</label>
+                                    <select name="gender" class="form-control form-select">
+                                        <option value="">Select</option>
+                                        @foreach (['Male', 'Female', 'Other', 'Prefer not to say'] as $g)
+                                            <option value="{{ $g }}" {{ old('gender') == $g ? 'selected' : '' }}>{{ $g }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <div class="col-md-3 mb-3">
+                                    <label>D.O.B.</label>
+                                    <input type="date" name="dob" class="form-control" value="{{ old('dob') }}">
+                                </div>
+
+                                <div class="col-md-4 mb-3">
+                                    <label>Aadhaar No.</label>
+                                    <input type="text" name="aadhaar_no" class="form-control"
+                                        value="{{ old('aadhaar_no') }}" maxlength="12">
+                                    <div class="form-text">Used as the person code if present — takes priority over PAN.</div>
+                                </div>
+
+                                <div class="col-md-4 mb-3">
+                                    <label>PAN No.</label>
+                                    <input type="text" name="pan_no" class="form-control" value="{{ old('pan_no') }}"
+                                        maxlength="10">
+                                    <div class="form-text">Used as the person code when Aadhaar isn't given.</div>
+                                </div>
+
+                                <div class="col-md-4 mb-3">
+                                    <label>Occupation</label>
+                                    <input type="text" name="occupation" class="form-control" value="{{ old('occupation') }}">
+                                </div>
+                            </div>
+                        </details>
 
                         <div class="mt-4">
                             <button type="submit" class="btn btn-success btn-lg px-5">
                                 <i class="la la-save"></i> Create Person
                             </button>
-                            <a href="{{ backpack_url('person') }}" class="btn btn-secondary btn-lg">Cancel</a>
+                            <a href="{{ backpack_url('org/person') }}" class="btn btn-secondary btn-lg">Cancel</a>
                         </div>
                     </form>
                 </div>
@@ -229,3 +128,21 @@
     </div>
 </div>
 @endsection
+
+@push('after_scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    $('input[name="mobile"]').on('input', function () {
+        this.value = this.value.replace(/\D/g, '').slice(0, 10);
+    });
+
+    $('form').on('submit', function (e) {
+        const mobile = $('input[name="mobile"]').val().trim();
+        if (mobile.length !== 10) {
+            e.preventDefault();
+            $('#mobileError').text('Mobile number must be exactly 10 digits.');
+            Swal.fire({ icon: 'error', title: 'Validation Error', text: 'Mobile number must be exactly 10 digits.' });
+        }
+    });
+</script>
+@endpush

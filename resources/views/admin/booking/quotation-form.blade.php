@@ -28,7 +28,7 @@ use App\Services\OrgService;
             </div>
         </div>
 
-        <form method="POST" action="{{ route('quotation.store') }}" enctype="multipart/form-data">
+        <form method="POST" action="{{ route('sales.quotation.store') }}" enctype="multipart/form-data">
             @csrf
             <div class="card">
 
@@ -737,7 +737,7 @@ $('#segment_code').on('change', function () {
         return;
     }
 
-    $.get("{{ backpack_url('get-models') }}/" + segment, function(res){
+    $.get("{{ backpack_url('sales/booking/models') }}/" + segment, function(res){
 
     let option = '<option value="">Select Model</option>';
 
@@ -768,7 +768,7 @@ $('#model_code').on('change', function () {
         return;
     }
 
-    $.get("{{ backpack_url('get-variants') }}/" + model, function(res){
+    $.get("{{ backpack_url('sales/booking/variants') }}/" + model, function(res){
 
     let option = '<option value="">Select Variant</option>';
 
@@ -798,7 +798,7 @@ $('#variant_code').on('change', function () {
         return;
     }
 
-    $.get("{{ backpack_url('get-colors') }}/" + variant, function(res){
+    $.get("{{ backpack_url('sales/booking/colors') }}/" + variant, function(res){
 
     let option = '<option value="">Select Color</option>';
 

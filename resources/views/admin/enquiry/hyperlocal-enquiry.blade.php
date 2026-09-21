@@ -188,7 +188,7 @@
                 const loader = document.getElementById('gridLoader');
                 if (loader) loader.style.display = 'flex';
 
-                fetch('{{ backpack_url('enquiries/data') }}', {
+                fetch('{{ backpack_url('sales/enquiry/grid-data') }}', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -406,7 +406,7 @@
                     searchText: searchTerm,
                     list_type: LIST_TYPE
                 });
-                window.location.href = '{{ backpack_url('enquiries/export') }}?' + params.toString();
+                window.location.href = '{{ backpack_url('sales/enquiry/export-legacy') }}?' + params.toString();
             });
 
             document.getElementById('exportPdf')?.addEventListener('click', () => {

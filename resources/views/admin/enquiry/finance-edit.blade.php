@@ -41,7 +41,7 @@
                 </div>
             </div>
 
-            <form id="financeForm" method="POST" action="{{ route('enquiry.finance.update', $enquiry->id) }}" enctype="multipart/form-data">
+            <form id="financeForm" method="POST" action="{{ route('sales.enquiry.finance.update', $enquiry->id) }}" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
 

@@ -45,8 +45,17 @@
                 </div>
 
                 <div class="card-body">
+                    @if ($errors->any())
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
 
-                    <form method="POST" action="{{ backpack_url('branch/' . $branch->code) }}"
+                    <form method="POST" action="{{ backpack_url('org/branch/' . $branch->code) }}"
                         enctype="multipart/form-data">
 
                         @csrf
@@ -91,17 +100,9 @@
 
                             {{-- CODE --}}
                             <div class="col-md-2 mb-3">
-
-                                <label>
-                                    Code (Min 3 Char)
-                                    <span class="text-danger">*</span>
-                                </label>
-
-                                <input type="text" name="code" class="form-control"
-                                    value="{{ old('code', $branch->code) }}" maxlength="10" minlength="3" required>
-
-                                <div id="codeError" class="text-danger mt-1"></div>
-
+                                <label>Code</label>
+                                <input type="text" class="form-control" value="{{ $branch->code }}" readonly disabled>
+                                <div class="form-text">Code cannot be changed after creation — every relation in the app points at it.</div>
                             </div>
 
 
@@ -217,33 +218,6 @@
                                     value="{{ old('longitude', $branch->longitude) }}">
                             </div>
 
-                            <div class="col-md-4 mb-3">
-
-                                <label>Branch Image</label>
-
-                                <input type="file" name="branch_image" id="branch_image" class="form-control"
-                                    accept=".jpg,.jpeg,.png,.webp">
-
-                            </div>
-
-                            <div class="col-md-4 mb-3">
-
-                                <img id="imagePreview" src="{{ $branch->getFirstMediaUrl('branch_image') }}" style="max-height:120px;
-         {{ $branch->getFirstMediaUrl('branch_image') ? '' : 'display:none;' }}" class="img-thumbnail">
-
-                                @if($branch->getFirstMedia('branch_image'))
-                                <div id="currentFileBlock" class="mt-2 text-muted">
-                                    Current File:
-                                    <strong>
-                                        {{ $branch->getFirstMedia('branch_image')->file_name }}
-                                    </strong>
-                                </div>
-                                @endif
-
-                                <div id="selectedFileName" class="mt-2 text-primary"></div>
-
-                            </div>
-
                             {{-- HEAD OFFICE --}}
                             <div class="col-md-1 mb-3">
 
@@ -286,6 +260,8 @@
 
                         </div>
 
+                        @include('admin.org.partials.media-fields', ['imageCollection' => 'branch_image', 'model' => $branch])
+
                         <div class="mt-4">
 
                             <button type="submit" class="btn btn-success btn-lg px-5">
@@ -293,7 +269,7 @@
                                 Update Branch
                             </button>
 
-                            <a href="{{ backpack_url('branch') }}" class="btn btn-secondary btn-lg">
+                            <a href="{{ backpack_url('org/branch') }}" class="btn btn-secondary btn-lg">
                                 Cancel
                             </a>
 
@@ -313,50 +289,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-    document.getElementById('branch_image')
-.addEventListener('change', function(e){
-
-    const file = e.target.files[0];
-
-    if(!file) return;
-
-    const currentFileBlock = document.getElementById('currentFileBlock');
-    if(currentFileBlock){
-        currentFileBlock.style.display = 'none';
-    }
-
-    document.getElementById('selectedFileName').innerText =
-        'Selected: ' + file.name;
-
-    const reader = new FileReader();
-
-    reader.onload = function(ev){
-
-        const img = document.getElementById('imagePreview');
-
-        img.src = ev.target.result;
-        img.style.display = 'block';
-    };
-
-    reader.readAsDataURL(file);
-});
-
-$('input[name="code"]').on('input', function () {
-
-    let value = this.value.trim();
-    let error = $('#codeError');
-
-    if (value.length > 0 && value.length < 3) {
-        error.text('Code must be at least 3 characters');
-    } else if (value.length > 10) {
-        error.text('Code cannot exceed 10 characters');
-    } else {
-        error.text('');
-    }
-
-});
-
-$('input[name="phone"]').on('input', function () {
+    $('input[name="phone"]').on('input', function () {
     this.value = this.value.replace(/\D/g, '').slice(0, 10);
 });
 
@@ -392,18 +325,6 @@ $('#is_head_office').on('change', function () {
         });
     }
 });
-
-$('form').on('submit', function(e){
-
-    let code = $('input[name="code"]').val().trim();
-
-    if(code.length < 3 || code.length > 10){
-        e.preventDefault();
-        $('#codeError').text('Code must be between 3 and 10 characters');
-    }
-
-});
-
 </script>
 
 @endpush

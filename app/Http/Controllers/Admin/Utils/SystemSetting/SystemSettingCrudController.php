@@ -4,28 +4,53 @@ namespace App\Http\Controllers\Admin\Utils\SystemSetting;
 
 use App\Models\SystemSetting;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
+use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
 use Backpack\CRUD\app\Http\Requests\CrudRequest;
 
 class SystemSettingCrudController extends CrudController
 {
-    use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
+    use CreateOperation;
+    use DeleteOperation;
+    use ListOperation;
+    use ShowOperation;
+    use UpdateOperation;
 
     public function setup()
     {
         $this->crud->setModel(\App\Models\Utilities\Settings\SystemSetting::class);
-        $this->crud->setRoute(config('backpack.base.route_prefix') . '/system-settings');
+        $this->crud->setRoute(config('backpack.base.route_prefix').'/utils/system-setting');
         $this->crud->setEntityNameStrings('system setting', 'system settings');
 
         $this->crud->allowAccess(['list', 'create', 'update', 'show']);
     }
 
+    /**
+     * Overrides DeleteOperation's default destroy() to add a permission gate.
+     * See known-bugs-report.md BUG-063: the trait default was unguarded — setup()'s
+     * allowAccess(['list', 'create', 'update', 'show']) deliberately omits 'delete', but
+     * DeleteOperation::setupDeleteDefaults() calls $this->crud->allowAccess('delete')
+     * unconditionally in its own bootstrap, re-granting it regardless.
+     */
+    public function destroy($id)
+    {
+        if (! backpack_user()->can('UTL_SETTINGS_MANAGE')) {
+            abort(403, 'Unauthorized. You do not have permission to delete system settings.');
+        }
+
+        $this->crud->hasAccessOrFail('delete');
+
+        $id = $this->crud->getCurrentEntryId() ?? $id;
+
+        return $this->crud->delete($id);
+    }
+
     protected function setupListOperation()
     {
-        if (! backpack_user()->can('settings.view')) {
+        if (! backpack_user()->can('UTL_SETTINGS_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view system settings.');
         }
 
@@ -101,7 +126,7 @@ class SystemSettingCrudController extends CrudController
 
     protected function setupCreateOperation()
     {
-        if (! backpack_user()->can('settings.manage')) {
+        if (! backpack_user()->can('UTL_SETTINGS_MANAGE')) {
             abort(403, 'Unauthorized. You do not have permission to create system settings.');
         }
 
@@ -121,12 +146,12 @@ class SystemSettingCrudController extends CrudController
 
     protected function setupUpdateOperation()
     {
-        if (! backpack_user()->can('settings.manage')) {
+        if (! backpack_user()->can('UTL_SETTINGS_MANAGE')) {
             abort(403, 'Unauthorized. You do not have permission to edit system settings.');
         }
 
         $this->crud->setValidation([
-            'key' => 'required|unique:systemsettings,key,' . $this->crud->getCurrentEntryId(),
+            'key' => 'required|unique:systemsettings,key,'.$this->crud->getCurrentEntryId(),
             'label' => 'required|string|max:255',
             'value' => 'required',
             'topic' => 'required|string',

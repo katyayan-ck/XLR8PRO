@@ -29,7 +29,7 @@
                         Spare Orders
                     </h2>
                     <div class="d-flex align-items-center gap-3">
-                        <a href="{{ backpack_url('spare-request/create') }}"
+                        <a href="{{ backpack_url('spares/spare-request/create') }}"
                             class="btn btn-primary btn-sm fw-bold shadow-sm">
                             <i class="fa fa-plus"></i> Add New Request
                         </a>
@@ -101,8 +101,8 @@
             filter: false,
             cellRenderer: params => `
                 <div class="d-flex gap-2">
-                    <a href="${backpack_url('spare-request/' + params.data.id)}" class="btn btn-sm btn-info py-1 px-2">View</a>
-                    <a href="${backpack_url('spare-request/' + params.data.id + '/edit')}" class="btn btn-sm btn-primary py-1 px-2">Edit</a>
+                    <a href="${backpack_url('spares/spare-request/' + params.data.id)}" class="btn btn-sm btn-info py-1 px-2">View</a>
+                    <a href="${backpack_url('spares/spare-request/' + params.data.id + '/edit')}" class="btn btn-sm btn-primary py-1 px-2">Edit</a>
                 </div>
             `
         }

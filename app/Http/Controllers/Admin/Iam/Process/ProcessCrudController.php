@@ -30,7 +30,7 @@ class ProcessCrudController extends CrudController
 
         CRUD::setRoute(
             config('backpack.base.route_prefix')
-            .'/process'
+            .'/iam/process'
         );
 
         CRUD::setEntityNameStrings(
@@ -41,7 +41,7 @@ class ProcessCrudController extends CrudController
 
     protected function setupListOperation()
     {
-        if (! backpack_user()->can('rbac.view')) {
+        if (! backpack_user()->can('IAM_RBAC_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view processes.');
         }
 
@@ -52,7 +52,7 @@ class ProcessCrudController extends CrudController
 
     public function index()
     {
-        if (! backpack_user()->can('rbac.view')) {
+        if (! backpack_user()->can('IAM_RBAC_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view processes.');
         }
 
@@ -81,7 +81,7 @@ class ProcessCrudController extends CrudController
 
             $editUrl =
                 backpack_url(
-                    "process/{$process->id}/edit"
+                    "iam/process/{$process->id}/edit"
                 );
 
             $mapped['action'] = '
@@ -150,7 +150,7 @@ class ProcessCrudController extends CrudController
 
     public function create()
     {
-        if (! backpack_user()->can('rbac.manage')) {
+        if (! backpack_user()->can('IAM_RBAC_MANAGE')) {
             abort(403, 'Unauthorized. You do not have permission to create processes.');
         }
 
@@ -175,7 +175,7 @@ class ProcessCrudController extends CrudController
 
     public function store(ProcessRequest $request)
     {
-        if (! backpack_user()->can('rbac.manage')) {
+        if (! backpack_user()->can('IAM_RBAC_MANAGE')) {
             abort(403, 'Unauthorized. You do not have permission to create processes.');
         }
 
@@ -195,13 +195,13 @@ class ProcessCrudController extends CrudController
         )->flash();
 
         return redirect(
-            backpack_url('process')
+            backpack_url('iam/process')
         );
     }
 
     public function edit($id)
     {
-        if (! backpack_user()->can('rbac.manage')) {
+        if (! backpack_user()->can('IAM_RBAC_MANAGE')) {
             abort(403, 'Unauthorized. You do not have permission to edit processes.');
         }
 
@@ -224,23 +224,19 @@ class ProcessCrudController extends CrudController
             'admin.process.edit',
             [
 
-                'title' =>
-                    'Edit Process - '
+                'title' => 'Edit Process - '
                     .$process->name,
 
-                'process' =>
-                    $process,
+                'process' => $process,
 
-                'modules' =>
-                    Module::where(
-                        'is_active',
-                        1
-                    )
-                        ->orderBy('name')
-                        ->get(),
+                'modules' => Module::where(
+                    'is_active',
+                    1
+                )
+                    ->orderBy('name')
+                    ->get(),
 
-                'activePermissions' =>
-                    $permissions,
+                'activePermissions' => $permissions,
             ]
         );
     }
@@ -249,7 +245,7 @@ class ProcessCrudController extends CrudController
         ProcessRequest $request,
         $id
     ) {
-        if (! backpack_user()->can('rbac.manage')) {
+        if (! backpack_user()->can('IAM_RBAC_MANAGE')) {
             abort(403, 'Unauthorized. You do not have permission to edit processes.');
         }
 
@@ -296,13 +292,13 @@ class ProcessCrudController extends CrudController
         )->flash();
 
         return redirect(
-            backpack_url('process')
+            backpack_url('iam/process')
         );
     }
 
     public function destroy($id)
     {
-        if (! backpack_user()->can('rbac.manage')) {
+        if (! backpack_user()->can('IAM_RBAC_MANAGE')) {
             abort(403, 'Unauthorized. You do not have permission to delete processes.');
         }
 

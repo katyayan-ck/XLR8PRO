@@ -41,8 +41,17 @@
                 </div>
 
                 <div class="card-body">
+                    @if ($errors->any())
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
 
-                    <form method="POST" action="{{ backpack_url('branch') }}" enctype="multipart/form-data">
+                    <form method="POST" action="{{ backpack_url('org/branch') }}" enctype="multipart/form-data">
 
                         @csrf
 
@@ -160,24 +169,6 @@
                                 <input type="text" name="longitude" class="form-control" value="{{ old('longitude') }}">
                             </div>
 
-                            <div class="col-md-4 mb-3">
-
-                                <label>
-                                    Branch Image
-                                </label>
-
-                                <input type="file" name="branch_image" id="branch_image" class="form-control"
-                                    accept=".jpg,.jpeg,.png,.webp">
-
-                            </div>
-
-                            <div class="col-md-4 mb-3">
-
-                                <img id="imagePreview" src="" style="display:none;max-height:120px;"
-                                    class="img-thumbnail">
-
-                            </div>
-
                             {{-- HEAD OFFICE --}}
                             <div class="col-md-1 mb-3">
 
@@ -212,6 +203,8 @@
 
                         </div>
 
+                        @include('admin.org.partials.media-fields', ['imageCollection' => 'branch_image', 'model' => null])
+
                         <div class="mt-4">
 
                             <button type="submit" class="btn btn-success btn-lg px-5">
@@ -219,7 +212,7 @@
                                 Create Branch
                             </button>
 
-                            <a href="{{ backpack_url('branch') }}" class="btn btn-secondary btn-lg">
+                            <a href="{{ backpack_url('org/branch') }}" class="btn btn-secondary btn-lg">
                                 Cancel
                             </a>
 
@@ -239,29 +232,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-    document
-.getElementById('branch_image')
-.addEventListener('change', function(e){
-
-    const file = e.target.files[0];
-
-    if(!file) return;
-
-    const reader = new FileReader();
-
-    reader.onload = function(ev){
-
-        const img =
-            document.getElementById('imagePreview');
-
-        img.src = ev.target.result;
-        img.style.display = 'block';
-    };
-
-    reader.readAsDataURL(file);
-});
-
-$('input[name="code"]').on('input', function () {
+    $('input[name="code"]').on('input', function () {
 
     let value = this.value.trim();
     let error = $('#codeError');

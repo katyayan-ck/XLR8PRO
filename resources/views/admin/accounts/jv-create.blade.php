@@ -21,7 +21,7 @@
                         <h4 class="card-title mb-0">{{ isset($isEdit) ? 'Edit Journal Voucher' : 'Add Journal Voucher' }}</h4>
                     </div>
 
-                    <form method="POST" action="{{ isset($isEdit) ? backpack_url('accounts/journal-voucher/'.$voucher->id) : backpack_url('accounts/journal-voucher-list') }}">
+                    <form method="POST" action="{{ isset($isEdit) ? backpack_url('accounts/journal-voucher/'.$voucher->id) : backpack_url('accounts/journal-voucher') }}">
                         @csrf
                         @if(isset($isEdit)) @method('PUT') @endif
 

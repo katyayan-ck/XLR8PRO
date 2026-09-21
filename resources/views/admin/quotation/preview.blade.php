@@ -1628,14 +1628,14 @@ use App\Services\OrgService;
         <i class="la la-print"></i> Print / Save PDF
     </button>
     @if($quotation->status != 'booked')
-    <a href="{{ backpack_url('quotation-form/' . $quotation->id . '/edit') }}" class="btn btn-warning">
+    <a href="{{ backpack_url('sales/quotation/' . $quotation->id . '/edit') }}" class="btn btn-warning">
         <i class="la la-edit"></i> Edit Quotation
     </a>
     <button type="button" class="btn btn-success" onclick="processBooking({{ $quotation->id }})">
         <i class="la la-check-circle"></i> Process to Booking
     </button>
     @endif
-    <a href="{{ backpack_url('quotation-form') }}" class="btn btn-secondary">
+    <a href="{{ backpack_url('sales/quotation') }}" class="btn btn-secondary">
         <i class="la la-arrow-left"></i> Back to List
     </a>
 </div>
@@ -1944,7 +1944,7 @@ function processBooking(quotationId) {
                 }
             });
 
-            window.location.href = '{{ backpack_url("booking/create") }}?quotation_id=' + quotationId;
+            window.location.href = '{{ backpack_url("sales/booking/create") }}?quotation_id=' + quotationId;
         }
     });
 }

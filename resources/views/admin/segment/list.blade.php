@@ -257,7 +257,7 @@
                     </h2>
 
                     <div class="d-flex align-items-center gap-3 flex-nowrap">
-                        <a href="{{ backpack_url('segment/create') }}" class="btn btn-blue btn-sm fw-bold shadow-sm">
+                        <a href="{{ backpack_url('vehicle/segment/create') }}" class="btn btn-blue btn-sm fw-bold shadow-sm">
                             <i class="la la-plus me-1"></i> Add New Segment
                         </a>
                     </div>
@@ -267,7 +267,7 @@
                 <div class="card-body p-0" style="background:#f8fafc">
                     <div class="p-3 border-bottom bg-white">
                         <div class="row align-items-end">
-                            <form action="{{ backpack_url('segment/import') }}" method="POST"
+                            <form action="{{ backpack_url('vehicle/segment/import') }}" method="POST"
                                 onsubmit="return confirm('Are you sure you want to import latest data from Google Sheet?')"
                                 class="d-inline">
                                 @csrf

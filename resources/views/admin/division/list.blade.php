@@ -14,7 +14,7 @@
                 </h2>
 
                 <div class="d-flex align-items-center gap-3 flex-nowrap">
-                    <a href="{{ backpack_url('division/create') }}" class="btn btn-blue btn-sm fw-bold shadow-sm">
+                    <a href="{{ backpack_url('org/division/create') }}" class="btn btn-blue btn-sm fw-bold shadow-sm">
                         <i class="la la-plus me-1"></i> Add New Division
                     </a>
                 </div>
@@ -90,7 +90,16 @@
     let gridApi;
 
     const columnDefs = [
-        ...ALL_COLUMNS.filter(col => ['serial_no', 'dept_code', 'code', 'name'].includes(col.field)),
+        ...ALL_COLUMNS.filter(col => ['serial_no'].includes(col.field)),
+
+        ...ALL_COLUMNS.filter(col => ['image'].includes(col.field)).map(col => {
+            col.sortable = false;
+            col.filter = false;
+            col.cellRenderer = 'htmlRenderer';
+            return col;
+        }),
+
+        ...ALL_COLUMNS.filter(col => ['dept_code', 'code', 'name'].includes(col.field)),
 
         ...ALL_COLUMNS.filter(col => ['description', 'head_code'].includes(col.field)),
 
@@ -130,7 +139,7 @@
         onGridReady: params => {
             gridApi = params.api;
 
-            const defaultFields = ['serial_no', 'dept_code', 'code', 'name', 'description', 'head_code', 'action'];
+            const defaultFields = ['serial_no', 'image', 'dept_code', 'code', 'name', 'description', 'head_code', 'action'];
 
             const allCols = gridApi.getAllGridColumns().map(col => col.getColId());
 
@@ -154,7 +163,7 @@
         tbody.innerHTML = '';
 
         const allFlatColumns = [
-            ...ALL_COLUMNS.filter(col => ['serial_no', 'dept_code', 'code', 'name'].includes(col.field)),
+            ...ALL_COLUMNS.filter(col => ['serial_no', 'image', 'dept_code', 'code', 'name'].includes(col.field)),
             ...ALL_COLUMNS.filter(col => ['description', 'head_code'].includes(col.field)),
             ...ALL_COLUMNS.filter(col => ['is_active'].includes(col.field)),
             ...ALL_COLUMNS.filter(col => ['action'].includes(col.field))
@@ -239,7 +248,7 @@
 
         
         document.getElementById('btnDefaultHeaders').addEventListener('click', () => {
-            const defaultFields = ['serial_no', 'dept_code', 'code', 'name', 'description', 'head_code', 'action'];
+            const defaultFields = ['serial_no', 'image', 'dept_code', 'code', 'name', 'description', 'head_code', 'action'];
             const allCols = gridApi.getAllGridColumns().map(c => c.getColId());
 
             allCols.forEach(col => {

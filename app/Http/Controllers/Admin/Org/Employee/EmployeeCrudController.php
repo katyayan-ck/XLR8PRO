@@ -19,19 +19,40 @@ class EmployeeCrudController extends CrudController
 {
     use CreateOperation;
     use DeleteOperation;
-    use ListOperation;
+    use ListOperation {
+        search as traitSearch;
+        showDetailsRow as traitShowDetailsRow;
+    }
     use UpdateOperation;
+
+    public function search()
+    {
+        if (! backpack_user()->can('ORG_EMPL_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view employees.');
+        }
+
+        return $this->traitSearch();
+    }
+
+    public function showDetailsRow($id)
+    {
+        if (! backpack_user()->can('ORG_EMPL_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view employees.');
+        }
+
+        return $this->traitShowDetailsRow($id);
+    }
 
     public function setup()
     {
         CRUD::setModel(Employee::class);
-        CRUD::setRoute(config('backpack.base.route_prefix').'/employee');
+        CRUD::setRoute(config('backpack.base.route_prefix').'/org/employee');
         CRUD::setEntityNameStrings('employee', 'employees');
     }
 
     protected function setupListOperation()
     {
-        if (! backpack_user()->can('employee.view')) {
+        if (! backpack_user()->can('ORG_EMPL_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view employees.');
         }
 
@@ -40,7 +61,7 @@ class EmployeeCrudController extends CrudController
 
     public function index()
     {
-        if (! backpack_user()->can('employee.view')) {
+        if (! backpack_user()->can('ORG_EMPL_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view employees.');
         }
 
@@ -72,7 +93,7 @@ class EmployeeCrudController extends CrudController
             $mapped['branch_name'] = $emp->primaryBranch?->name ?? '—';
             $mapped['department_name'] = $emp->primaryDepartment?->name ?? '—';
 
-            $editUrl = backpack_url("employee/{$emp->id}/edit");
+            $editUrl = backpack_url("org/employee/{$emp->id}/edit");
 
             $mapped['action'] = '
                 <div class="d-flex gap-2 justify-content-center">
@@ -104,7 +125,7 @@ class EmployeeCrudController extends CrudController
 
     public function create()
     {
-        if (! backpack_user()->can('employee.create')) {
+        if (! backpack_user()->can('ORG_EMPL_CREATE')) {
             abort(403, 'Unauthorized. You do not have permission to create employees.');
         }
 
@@ -121,7 +142,7 @@ class EmployeeCrudController extends CrudController
 
     public function store(EmployeeRequest $request)
     {
-        if (! backpack_user()->can('employee.create')) {
+        if (! backpack_user()->can('ORG_EMPL_CREATE')) {
             abort(403, 'Unauthorized. You do not have permission to create employees.');
         }
 
@@ -131,12 +152,12 @@ class EmployeeCrudController extends CrudController
 
         \Alert::success('Employee created successfully!')->flash();
 
-        return redirect(backpack_url('employee'));
+        return redirect(backpack_url('org/employee'));
     }
 
     public function edit($id)
     {
-        if (! backpack_user()->can('employee.edit')) {
+        if (! backpack_user()->can('ORG_EMPL_EDIT')) {
             abort(403, 'Unauthorized. You do not have permission to edit employees.');
         }
 
@@ -156,7 +177,7 @@ class EmployeeCrudController extends CrudController
 
     public function update(EmployeeRequest $request, $id)
     {
-        if (! backpack_user()->can('employee.edit')) {
+        if (! backpack_user()->can('ORG_EMPL_EDIT')) {
             abort(403, 'Unauthorized. You do not have permission to edit employees.');
         }
 
@@ -168,12 +189,12 @@ class EmployeeCrudController extends CrudController
 
         \Alert::success('Employee updated successfully!')->flash();
 
-        return redirect(backpack_url('employee'));
+        return redirect(backpack_url('org/employee'));
     }
 
     public function destroy($id)
     {
-        if (! backpack_user()->can('employee.delete')) {
+        if (! backpack_user()->can('ORG_EMPL_DELETE')) {
             abort(403, 'Unauthorized. You do not have permission to delete employees.');
         }
 

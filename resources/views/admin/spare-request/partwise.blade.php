@@ -29,7 +29,7 @@
                         Spare Parts Allotment
                     </h2>
                     <div class="d-flex align-items-center gap-3 flex-nowrap">
-                        <a href="{{ backpack_url('spare-request') }}"
+                        <a href="{{ backpack_url('spares/spare-request') }}"
                             class="btn btn-secondary btn-sm fw-bold shadow-sm">
                             ← Back to Spare Requests
                         </a>

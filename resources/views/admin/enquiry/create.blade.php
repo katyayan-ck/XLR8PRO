@@ -335,7 +335,7 @@
         </div>
 
         <form method="POST" id="enquiryForm"
-            action="{{ isset($enquiry) ? backpack_url('enquiry/' . $enquiry->id) : backpack_url('enquiry') }}"
+            action="{{ isset($enquiry) ? backpack_url('sales/enquiry/' . $enquiry->id) : backpack_url('sales/enquiry') }}"
             enctype="multipart/form-data">
             @csrf
             @if (isset($enquiry))
@@ -2008,7 +2008,7 @@
 
         function loadKeywordDropdown(keyword, parent, $target, placeholder = 'Select Option', selected = '', parentKeyword = '', callback = null) {
             if (!parent) return $target.html(`<option value="">${placeholder}</option>`).prop('disabled', true);
-            let url = "{{ route('admin.master.keyword-values', ['keyword' => '__K__', 'parent' => '__P__']) }}".replace(
+            let url = "{{ route('sales.enquiry.master-keyword-values', ['keyword' => '__K__', 'parent' => '__P__']) }}".replace(
                 '__K__', encodeURIComponent(keyword)).replace('__P__', encodeURIComponent(parent));
             if (parentKeyword) {
                 url += (url.includes('?') ? '&' : '?') + 'parent_keyword=' + encodeURIComponent(parentKeyword);
@@ -2559,7 +2559,7 @@
                     }).then((result) => {
                         if (result.isConfirmed) {
                             window.location.href =
-                                "{{ backpack_url('enquiries/reference/add') }}";
+                                "{{ backpack_url('sales/enquiry/reference/create') }}";
                         } else {
                             $(this).val('').trigger('change');
                         }
@@ -2573,7 +2573,7 @@
                 if (source) {
                     $.ajax({
                         // FIX: Changed from ENQUIRY_SUB_SOURCE to ENQ_SUB_SOURCE
-                        url: "{{ route('admin.master.keyword-values', ['keyword' => 'ENQ_SUB_SOURCE', 'parent' => '__P__']) }}".replace('__P__', encodeURIComponent(source)),
+                        url: "{{ route('sales.enquiry.master-keyword-values', ['keyword' => 'ENQ_SUB_SOURCE', 'parent' => '__P__']) }}".replace('__P__', encodeURIComponent(source)),
                         type: "GET",
                         success: (response) => {
                             if (response && response.length > 0) {
@@ -2660,7 +2660,7 @@
                     .prop('disabled', true);
                 $('#fuel_type, #fuel_type_id, #transmission, #drivetrain, #seating').val('');
                 if (segmentCode) {
-                    fetchDropdown("{{ backpack_url('enquiry/models') }}/" + segmentCode, $modelCode,
+                    fetchDropdown("{{ backpack_url('sales/enquiry/models') }}/" + segmentCode, $modelCode,
                         'Select Model', currentEnquiry.isEdit ? currentEnquiry.model : '', () => {
                             if (currentEnquiry.isEdit && currentEnquiry.model) $modelCode.trigger(
                                 'change');
@@ -2674,7 +2674,7 @@
                     'disabled', true);
                 $('#fuel_type, #fuel_type_id, #transmission, #drivetrain, #seating').val('');
                 if (modelCode) {
-                    fetchDropdown("{{ backpack_url('enquiry/variants') }}/" + modelCode, $variantCode,
+                    fetchDropdown("{{ backpack_url('sales/enquiry/variants') }}/" + modelCode, $variantCode,
                         'Select Variant', currentEnquiry.isEdit ? currentEnquiry.variant : '', () => {
                             if (currentEnquiry.isEdit && currentEnquiry.variant) $variantCode.trigger(
                                 'change');
@@ -2692,7 +2692,7 @@
                 $('#seating').val($selected.data('seating') || '');
                 $colorCode.html('<option value="">Loading...</option>').prop('disabled', true);
                 if (variantCode) {
-                    fetchDropdown("{{ backpack_url('enquiry/colors') }}/" + variantCode, $colorCode,
+                    fetchDropdown("{{ backpack_url('sales/enquiry/colors') }}/" + variantCode, $colorCode,
                         'Select Color', currentEnquiry.isEdit ? currentEnquiry.color : '');
                 }
             });
@@ -2703,7 +2703,7 @@
                 const segment = $segmentCode.val();
                 if (mobile.length !== 10 || !segment) return;
 
-                $.get("{{ route('enquiry.check-duplicate') }}", {
+                $.get("{{ route('sales.enquiry.check-duplicate') }}", {
                     mobile,
                     segment_code: segment
                 }, function(response) {
@@ -2716,7 +2716,7 @@
                             allowOutsideClick: false
                         }).then((result) => {
                             if (result.isConfirmed && response.id) {
-                                window.location.href = "{{ backpack_url('enquiry') }}/" +
+                                window.location.href = "{{ backpack_url('sales/enquiry') }}/" +
                                     response.id + "/edit";
                             }
                         });

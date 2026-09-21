@@ -5,6 +5,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 | Applies to | Rule file |
 | --- | --- |
 | app/Http/Controllers/Admin/** | .ai/rules/admin.md |
+| app/Http/Controllers/Admin/**, app/Services/**, app/Models/**, routes/backpack/**, resources/views/vendor/backpack/ui/inc/menu_items.blade.php | .ai/rules/module-structure.md |
 | app/Http/Controllers/Api/** | .ai/rules/api.md |
 | app/**, routes/**, config/**, routes/api.php | .ai/rules/architecture.md |
 | app/**, routes/**, resources/** | .ai/rules/conventions.md |

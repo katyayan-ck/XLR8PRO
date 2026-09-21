@@ -179,7 +179,7 @@
     <div class="card card-body shadow-sm mb-4" style="border-radius: 12px">
         <h2 class="mb-3">Upload Delivery Photos</h2>
 
-        <form method="POST" action="{{ route('booking.delivery-photos.update', $booking->id ?? '') }}"
+        <form method="POST" action="{{ route('sales.booking.delivery-photos.update', $booking->id ?? '') }}"
             enctype="multipart/form-data" id="deliveryUploadForm">
             @csrf
             @method('PUT')

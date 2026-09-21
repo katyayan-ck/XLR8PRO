@@ -33,7 +33,7 @@
 
                 <div class="card-body">
 
-                    <form method="POST" action="{{ backpack_url('keyword-master/' . $keywordMaster->id) }}">
+                    <form method="POST" action="{{ backpack_url('utils/keyword-master/' . $keywordMaster->id) }}">
 
                         @csrf
                         @method('PUT')
@@ -150,7 +150,7 @@
 
                             </button>
 
-                            <a href="{{ backpack_url('keyword-master') }}" class="btn btn-secondary btn-lg">
+                            <a href="{{ backpack_url('utils/keyword-master') }}" class="btn btn-secondary btn-lg">
 
                                 Cancel
 

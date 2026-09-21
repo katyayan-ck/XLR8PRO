@@ -38,7 +38,7 @@
 
                         <div class="card-body">
 
-                            <form method="POST" action="{{ backpack_url('variant/' . $variant->id) }}">
+                            <form method="POST" action="{{ backpack_url('vehicle/variant/' . $variant->id) }}">
                                 @if ($errors->any())
 
                                     <div class="alert alert-danger">
@@ -388,7 +388,7 @@
 
     </button>
 
-    <a href="{{ backpack_url('variant') }}" class="btn btn-secondary">
+    <a href="{{ backpack_url('vehicle/variant') }}" class="btn btn-secondary">
 
         Cancel
 
@@ -424,7 +424,7 @@
 
                 $.ajax({
 
-                    url: "{{ backpack_url('variant/subsegments') }}",
+                    url: "{{ backpack_url('vehicle/variant/subsegments') }}",
 
                     type: "GET",
 
@@ -472,7 +472,7 @@
 
             $.ajax({
 
-                url: "{{ backpack_url('variant/models') }}",
+                url: "{{ backpack_url('vehicle/variant/models') }}",
 
                 type: "GET",
 

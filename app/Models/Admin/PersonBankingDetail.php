@@ -3,8 +3,9 @@
 namespace App\Models\Admin;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 class PersonBankingDetail extends Model
 {
@@ -22,7 +23,8 @@ class PersonBankingDetail extends Model
     |--------------------------------------------------------------------------
     */
 
-    const ACCOUNT_TYPES  = ['Primary', 'Secondary', 'Joint', 'Trust'];
+    const ACCOUNT_TYPES = ['Primary', 'Secondary', 'Joint', 'Trust'];
+
     const ACCOUNT_NATURES = ['Savings', 'Current', 'Salary', 'NRO', 'NRE'];
 
     protected $fillable = [
@@ -46,9 +48,9 @@ class PersonBankingDetail extends Model
     protected $casts = [
         'is_verified' => 'boolean',
         'verified_at' => 'datetime',
-        'created_at'  => 'datetime',
-        'updated_at'  => 'datetime',
-        'deleted_at'  => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'deleted_at' => 'datetime',
     ];
 
     // ── Boot ──────────────────────────────────────────────────────────────────
@@ -78,7 +80,7 @@ class PersonBankingDetail extends Model
         });
 
         static::deleting(function (PersonBankingDetail $b) {
-            if (!$b->isForceDeleting() && auth()->check()) {
+            if (! $b->isForceDeleting() && auth()->check()) {
                 $b->deleted_by = auth()->id();
                 $b->saveQuietly();
             }
@@ -96,17 +98,42 @@ class PersonBankingDetail extends Model
 
     /**
      * Make this account the Primary. Demotes current Primary to Secondary.
+     *
+     * account_type is a fixed DB ENUM with a unique index on (person_code,
+     * account_type) — see PersonContact::makesPrimary()'s docblock for why a
+     * naive demote-then-promote can collide when this row is already the
+     * 'Secondary' slot the old Primary is about to be demoted into.
      */
     public function makePrimary(): void
     {
-        static::where('person_code',   $this->person_code)
-              ->where('account_type',  'Primary')
-              ->where('id', '!=',      $this->id)
-              ->whereNull('deleted_at')
-              ->update(['account_type' => 'Secondary', 'updated_by' => auth()->id()]);
+        DB::transaction(function () {
+            $oldPrimary = static::where('person_code', $this->person_code)
+                ->where('account_type', 'Primary')
+                ->where('id', '!=', $this->id)
+                ->whereNull('deleted_at')
+                ->first();
 
-        $this->account_type = 'Primary';
-        $this->save();
+            if ($oldPrimary) {
+                if ($this->account_type === 'Secondary') {
+                    $usedTypes = static::where('person_code', $this->person_code)
+                        ->whereNull('deleted_at')
+                        ->pluck('account_type')
+                        ->all();
+
+                    $freeType = collect(self::ACCOUNT_TYPES)->first(fn ($t) => ! in_array($t, $usedTypes, true));
+
+                    if ($freeType) {
+                        $this->account_type = $freeType;
+                        $this->save();
+                    }
+                }
+
+                $oldPrimary->update(['account_type' => 'Secondary', 'updated_by' => auth()->id()]);
+            }
+
+            $this->account_type = 'Primary';
+            $this->save();
+        });
     }
 
     public function markVerified(): void
@@ -122,14 +149,24 @@ class PersonBankingDetail extends Model
 
     public function getMaskedAccountAttribute(): string
     {
-        if (strlen($this->account_number) <= 6) return str_repeat('*', strlen($this->account_number));
+        if (strlen($this->account_number) <= 6) {
+            return str_repeat('*', strlen($this->account_number));
+        }
+
         return substr($this->account_number, 0, 2)
-            . str_repeat('*', strlen($this->account_number) - 6)
-            . substr($this->account_number, -4);
+            .str_repeat('*', strlen($this->account_number) - 6)
+            .substr($this->account_number, -4);
     }
 
     // ── Scopes ────────────────────────────────────────────────────────────────
 
-    public function scopePrimary($q)  { return $q->where('account_type', 'Primary'); }
-    public function scopeVerified($q) { return $q->where('is_verified', true); }
+    public function scopePrimary($q)
+    {
+        return $q->where('account_type', 'Primary');
+    }
+
+    public function scopeVerified($q)
+    {
+        return $q->where('is_verified', true);
+    }
 }

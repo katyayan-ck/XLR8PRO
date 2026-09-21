@@ -23,6 +23,31 @@
         display: flex;
         align-items: center;
     }
+
+    /* Permission tree (Module -> Process -> Permission), same pattern as demo/roles */
+    .rbac-tree { background: #fff; border: 1px solid #dee2e6; border-radius: .5rem; overflow: hidden; }
+    .rbac-module { border-bottom: 1px solid #eee; }
+    .rbac-module:last-child { border-bottom: none; }
+    .rbac-row { display: flex; align-items: center; gap: .5rem; padding: .5rem .9rem; }
+    .rbac-row-module { background: #f8f9fb; font-size: .95rem; }
+    .rbac-row-process { background: #fcfcfd; padding-left: 2.2rem; font-size: .875rem; border-top: 1px solid #f1f1f1; }
+    .rbac-row-perm { padding-left: 4.4rem; font-size: .825rem; border-top: 1px dashed #f3f3f3; }
+    .rbac-row-perm:hover { background: #fafbff; }
+    .rbac-caret { border: none; background: none; padding: 0 .25rem; color: #6c757d; cursor: pointer; width: 1.2rem; }
+    .rbac-caret i { transition: transform .15s ease; display: inline-block; }
+    .rbac-module.collapsed > .rbac-module-body { display: none; }
+    .rbac-module.collapsed > .rbac-row-module .rbac-caret i { transform: rotate(-90deg); }
+    .rbac-process.collapsed > .rbac-process-body { display: none; }
+    .rbac-process.collapsed > .rbac-row-process .rbac-caret i { transform: rotate(-90deg); }
+    .rbac-label { flex: 1; margin: 0; cursor: pointer; }
+    .rbac-label-module { font-weight: 600; }
+    .rbac-label-process { font-weight: 500; color: #333; }
+    .rbac-perm-code { margin-left: .5rem; font-size: .7rem; color: #adb5bd; }
+    .rbac-count { font-weight: 500; }
+    .rbac-row-actions { display: flex; gap: .25rem; }
+    .rbac-row-actions .btn-link { text-decoration: none; padding: 0 .35rem; font-size: .75rem; }
+    .rbac-check { width: 1.05rem; height: 1.05rem; cursor: pointer; flex-shrink: 0; }
+    .rbac-state-badge { font-size: .68rem; font-weight: 600; padding: .05rem .4rem; border-radius: .75rem; display: none; }
 </style>
 @endpush
 
@@ -35,19 +60,26 @@
                     <h2 class="mb-0">Edit Designation Information</h2>
                 </div>
                 <div class="card-body">
+                    @if ($errors->any())
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
 
-                    <form method="POST" action="{{ backpack_url('designation/' . $designation->id) }}"
+                    <form method="POST" action="{{ backpack_url('org/designation/' . $designation->id) }}"
                         enctype="multipart/form-data"> @csrf
                         @method('PUT')
 
                         <div class="row">
 
                             <div class="col-md-3 mb-3">
-                                <label>Designation Code (Min 3 Char)<span class="text-danger">*</span></label>
-                                <input type="text" name="code" class="form-control"
-                                    value="{{ old('code', $designation->code) }}" maxlength="10" minlength="3" required>
-
-                                <div id="codeError" class="text-danger mt-1"></div>
+                                <label>Designation Code</label>
+                                <input type="text" class="form-control" value="{{ $designation->code }}" readonly >
+                                <div class="form-text">Code cannot be changed after creation — every relation in the app points at it.</div>
                             </div>
 
                             <div class="col-md-3 mb-3">
@@ -98,16 +130,17 @@
 
                                     @foreach($designations->where('id', '!=', $designation->id) as $desig)
 
-                                    <option value="{{ $desig->code }}" {{ old('parent_desig_code', $designation->
+                                    <option value="{{ $desig->code }}" data-rank="{{ $desig->rank }}" {{ old('parent_desig_code', $designation->
                                         parent_desig_code) == $desig->code ? 'selected' : '' }}>
 
-                                        {{ $desig->name }} ({{ $desig->code }})
+                                        {{ $desig->name }} ({{ $desig->code }}) — Rank {{ $desig->rank_label }}
 
                                     </option>
 
                                     @endforeach
 
                                 </select>
+                                <div class="form-text">Can only report to a designation of the same or higher rank (A is highest, E is lowest).</div>
 
                             </div>
 
@@ -135,60 +168,45 @@
 
 
 
-                            <div class="col-md-3 mb-3">
-
-                                <label>Designation Image</label>
-
-                                <input type="file" name="designation_image" id="designation_image" class="form-control"
-                                    accept=".jpg,.jpeg,.png,.webp">
-
-                            </div>
-                            <div class="col-md-4 mb-3">
-
-                                <img id="imagePreview" src="{{ $designation->getFirstMediaUrl('designation_image') }}"
-                                    style="max-height:120px;
-        {{ $designation->getFirstMediaUrl('designation_image') ? '' : 'display:none;' }}" class="img-thumbnail">
-
-                                @if($designation->getFirstMedia('designation_image'))
-                                <div id="currentFileBlock" class="mt-2 text-muted">
-                                    Current File:
-                                    <strong>
-                                        {{ $designation->getFirstMedia('designation_image')->file_name }}
-                                    </strong>
-                                </div>
-                                @endif
-
-                                <div id="selectedFileName" class="mt-2 text-primary"></div>
-
-                            </div>
-
-                            <div class="col-md-3 mb-3">
+                            <div class="col-md-6 mb-3">
                                 <label>Description</label>
                                 <textarea name="description" class="form-control"
                                     rows="4">{{ old('description', $designation->description) }}</textarea>
                             </div>
 
-
-
-
-
-
-
-
-
-                            {{-- is top management --}}
-
-
-
                         </div>
+
+                        @include('admin.org.partials.media-fields', ['imageCollection' => 'designation_image', 'model' => $designation])
 
                         <div class="mt-4">
                             <button type="submit" class="btn btn-success btn-lg px-5">
                                 <i class="la la-save"></i> Update Designation
                             </button>
-                            <a href="{{ backpack_url('designation') }}" class="btn btn-secondary btn-lg">Cancel</a>
+                            <a href="{{ backpack_url('org/designation') }}" class="btn btn-secondary btn-lg">Cancel</a>
                         </div>
                     </form>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header text-black d-flex flex-wrap align-items-center justify-content-between gap-2">
+                    <h2 class="mb-0">Permissions — {{ $designation->name }}</h2>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge text-bg-primary fs-6" id="totalCountBadge">0 / 0 permissions</span>
+                        <button type="button" class="btn btn-success btn-sm" id="savePermissionsBtn">
+                            <i class="la la-save"></i> Save permissions
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="expandAllBtn"><i class="la la-expand"></i> Expand all</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="collapseAllBtn"><i class="la la-compress"></i> Collapse all</button>
+                        <div class="vr d-none d-md-block"></div>
+                        <button type="button" class="btn btn-outline-success btn-sm" id="checkAllBtn">Select all</button>
+                        <button type="button" class="btn btn-outline-danger btn-sm" id="uncheckAllBtn">Clear all</button>
+                    </div>
+                    @include('demo.partials.tree', ['tree' => $permissionTree])
                 </div>
             </div>
         </div>
@@ -196,72 +214,59 @@
 </div>
 @endsection
 @push('after_scripts')
+<script src="{{ asset('js/demo-rbac.js') }}"></script>
 
 <script>
-    document.getElementById('designation_image')
-?.addEventListener('change', function(e){
+    document.getElementById('name')?.focus();
 
-    const file = e.target.files[0];
+    // ---- Permission tree (Module -> Process -> Permission) ----
+    const tree = RbacTree.init(document.getElementById('rbacTree'), { mode: 'role' });
+    const ASSIGNED_PERMISSIONS = @json($assignedPermissions);
 
-    if(!file) return;
-
-    const currentFileBlock =
-        document.getElementById('currentFileBlock');
-
-    if(currentFileBlock){
-        currentFileBlock.style.display = 'none';
+    function updateTotalBadge() {
+        const total = document.querySelectorAll('.rbac-check-perm').length;
+        const checked = tree.getCheckedCodes().length;
+        document.getElementById('totalCountBadge').textContent = `${checked} / ${total} permissions`;
     }
 
-    document.getElementById('selectedFileName').innerText =
-        'Selected: ' + file.name;
+    tree.onChange = updateTotalBadge;
+    tree.applyPermissionSet(ASSIGNED_PERMISSIONS);
+    updateTotalBadge();
 
-    const reader = new FileReader();
+    document.getElementById('expandAllBtn').addEventListener('click', () => tree.expandAll(true));
+    document.getElementById('collapseAllBtn').addEventListener('click', () => tree.expandAll(false));
+    document.getElementById('checkAllBtn').addEventListener('click', () => {
+        const allCodes = Array.from(document.querySelectorAll('.rbac-check-perm')).map(cb => cb.dataset.code);
+        tree.applyPermissionSet(allCodes);
+        updateTotalBadge();
+    });
+    document.getElementById('uncheckAllBtn').addEventListener('click', () => {
+        tree.applyPermissionSet([]);
+        updateTotalBadge();
+    });
 
-    reader.onload = function(ev){
+    document.getElementById('savePermissionsBtn').addEventListener('click', function () {
+        const btn = this;
+        const payload = { permissions: tree.getCheckedCodes() };
 
-        const img = document.getElementById('imagePreview');
-
-        img.src = ev.target.result;
-        img.style.display = 'block';
-    };
-
-    reader.readAsDataURL(file);
-});
-
-$('input[name="code"]').on('input', function () {
-
-    this.value = this.value
-        .replace(/[^A-Za-z0-9]/g, '')
-        .toUpperCase()
-        .slice(0, 10);
-
-    let code = this.value.trim();
-    let error = $('#codeError');
-
-    if (code.length > 0 && code.length < 3) {
-        error.text('Designation Code must be at least 3 characters.');
-    } else {
-        error.text('');
-    }
-});
-
-$('form').on('submit', function (e) {
-
-    const code = $('input[name="code"]').val().trim();
-
-    if (code.length < 3) {
-
-        e.preventDefault();
-
-        Swal.fire({
-            icon: 'error',
-            title: 'Validation Error',
-            text: 'Designation Code must be at least 3 characters.'
-        });
-
-        return false;
-    }
-});
+        btn.disabled = true;
+        fetch(@json(route('org.designation.permissions', $designation->id)), {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': @json(csrf_token()),
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify(payload),
+        })
+            .then(res => res.json().then(data => ({ ok: res.ok, data })))
+            .then(({ ok, data }) => {
+                if (!ok) throw new Error(data.message || 'Failed to save permissions.');
+                Swal.fire({ icon: 'success', title: 'Saved', text: data.message, timer: 1800, showConfirmButton: false });
+            })
+            .catch(err => Swal.fire({ icon: 'error', title: 'Error', text: err.message }))
+            .finally(() => { btn.disabled = false; });
+    });
 </script>
 
 @endpush

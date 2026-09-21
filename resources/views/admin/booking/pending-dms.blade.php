@@ -18,7 +18,7 @@
                     Pending DMS Dashboard
                 </h2>
 
-                <form method="GET" action="{{ route('booking.pending-dms') }}" class="d-flex align-items-center gap-2">
+                <form method="GET" action="{{ route('sales.booking.pending-dms') }}" class="d-flex align-items-center gap-2">
                     <label class="text-black mb-0 text-nowrap">Status:</label>
                     <select name="status_filter" id="status_filter" class="form-control form-select w-100 w-md-auto"
                         style="min-width:200px;" onchange="this.form.submit()">

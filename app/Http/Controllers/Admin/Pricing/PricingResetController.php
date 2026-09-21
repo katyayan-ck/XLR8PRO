@@ -22,6 +22,10 @@ class PricingResetController extends Controller
 
     public function __invoke(Request $request): Response
     {
+        if (! backpack_user()->can('PRC_RESET_MANAGE')) {
+            abort(403, 'Unauthorized. You do not have permission to run a pricing reset.');
+        }
+
         $after = $request->query('after', '2026-08-20');
         if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $after)) {
             return response("ERROR: after must be YYYY-MM-DD (got {$after})\n", 422)
@@ -37,7 +41,7 @@ class PricingResetController extends Controller
                 'Will DELETE: xlr8_vehicle_variant + orphan xlr8_vehicle_model created on/after cutoff',
                 '',
                 'Re-run with confirm=1 to execute:',
-                url()->current() . '?after=' . $after . '&confirm=1',
+                url()->current().'?after='.$after.'&confirm=1',
                 '',
             ]);
 
@@ -46,7 +50,7 @@ class PricingResetController extends Controller
 
         $lines = $this->reset->run($after, $request->boolean('flush_queue', true));
 
-        return response(implode("\n", $lines) . "\n", 200)
+        return response(implode("\n", $lines)."\n", 200)
             ->header('Content-Type', 'text/plain; charset=UTF-8');
     }
 }

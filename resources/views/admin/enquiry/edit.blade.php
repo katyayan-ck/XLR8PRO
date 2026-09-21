@@ -38,7 +38,7 @@
                     <div class="card-body">
 
                         <form method="POST"
-                            action="{{ isset($enquiry) ? backpack_url('enquiry/' . $enquiry->id) : backpack_url('enquiry') }}"
+                            action="{{ isset($enquiry) ? backpack_url('sales/enquiry/' . $enquiry->id) : backpack_url('sales/enquiry') }}"
                             enctype="multipart/form-data">
 
                             @csrf
@@ -1135,7 +1135,7 @@
 
             $.ajax({
 
-                url: "{{ route('admin.master.keyword-values', ['keyword' => '__KEYWORD__', 'parent' => '__PARENT__']) }}"
+                url: "{{ route('sales.enquiry.master-keyword-values', ['keyword' => '__KEYWORD__', 'parent' => '__PARENT__']) }}"
                     .replace('__KEYWORD__', encodeURIComponent(keyword))
                     .replace('__PARENT__', encodeURIComponent(parent)),
 
@@ -1360,7 +1360,7 @@
                 }
 
                 $.get(
-                    "{{ backpack_url('enquiry/models') }}/" + segmentCode,
+                    "{{ backpack_url('sales/enquiry/models') }}/" + segmentCode,
                     function(response) {
 
                         let html = '<option value="">Select Model</option>';
@@ -1411,7 +1411,7 @@
                 }
 
                 $.get(
-                    "{{ backpack_url('enquiry/variants') }}/" + modelCode,
+                    "{{ backpack_url('sales/enquiry/variants') }}/" + modelCode,
 
                     function(response) {
 
@@ -1473,7 +1473,7 @@
                 }
 
                 $.get(
-                    "{{ backpack_url('enquiry/colors') }}/" + variantCode,
+                    "{{ backpack_url('sales/enquiry/colors') }}/" + variantCode,
 
                     function(response) {
 
@@ -1504,7 +1504,7 @@
                 $('#dealer_location').html('<option>Loading...</option>');
 
                 $.get(
-                    "{{ backpack_url('enquiry/locations') }}/" + branchCode,
+                    "{{ backpack_url('sales/enquiry/locations') }}/" + branchCode,
                     function(response) {
 
                         console.log(response);

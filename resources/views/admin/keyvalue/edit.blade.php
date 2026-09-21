@@ -36,7 +36,7 @@
 
                 <div class="card-body">
 
-                    <form method="POST" action="{{ backpack_url('keyvalue/' . $keyValue->id) }}">
+                    <form method="POST" action="{{ backpack_url('utils/key-value/' . $keyValue->id) }}">
 
                         @csrf
                         @method('PUT')
@@ -222,7 +222,7 @@
 
                             </button>
 
-                            <a href="{{ backpack_url('keyvalue') }}" class="btn btn-secondary btn-lg">
+                            <a href="{{ backpack_url('utils/key-value') }}" class="btn btn-secondary btn-lg">
 
                                 Cancel
 

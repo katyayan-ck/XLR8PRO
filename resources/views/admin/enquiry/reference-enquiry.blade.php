@@ -12,7 +12,7 @@
 
                     <!-- Add New Reference Button -->
                     <div class="d-flex align-items-center gap-3 flex-nowrap">
-                        <a href="{{ backpack_url('enquiries/reference/add') }}" class="btn btn-blue btn-sm fw-bold shadow-sm">
+                        <a href="{{ backpack_url('sales/enquiry/reference/create') }}" class="btn btn-blue btn-sm fw-bold shadow-sm">
                             <i class="la la-plus me-1"></i> Add New Reference
                         </a>
                     </div>
@@ -197,7 +197,7 @@
                 if (loader) loader.style.display = 'flex';
 
                 // NEW: Fetch ALL data from the server ONCE when the grid is ready
-                fetch('{{ backpack_url('enquiries/data') }}', {
+                fetch('{{ backpack_url('sales/enquiry/grid-data') }}', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -384,7 +384,7 @@
                     searchText: searchTerm,
                     list_type: LIST_TYPE
                 });
-                window.location.href = '{{ backpack_url('enquiries/export') }}?' + params.toString();
+                window.location.href = '{{ backpack_url('sales/enquiry/export-legacy') }}?' + params.toString();
             });
 
             // PDF export 

@@ -111,7 +111,7 @@
 
     document.getElementById('status_filter')?.addEventListener('change', e => {
         const value = e.target.value;
-        window.location.href = `{{ route('finance.booking.retailed') }}?status_filter=${value}`;
+        window.location.href = `{{ route('sales.booking.finance.retailed') }}?status_filter=${value}`;
     });
 
     document.getElementById('exportCsv')?.addEventListener('click', () => {

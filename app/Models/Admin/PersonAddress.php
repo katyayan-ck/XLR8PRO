@@ -6,10 +6,11 @@ use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 class PersonAddress extends Model
 {
-    use SoftDeletes, CrudTrait;
+    use CrudTrait, SoftDeletes;
 
     protected $table = 'xlr8_admin_person_addresses';
 
@@ -46,8 +47,8 @@ class PersonAddress extends Model
     ];
 
     protected $casts = [
-        'latitude'   => 'float',
-        'longitude'  => 'float',
+        'latitude' => 'float',
+        'longitude' => 'float',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
@@ -80,7 +81,7 @@ class PersonAddress extends Model
         });
 
         static::deleting(function (PersonAddress $a) {
-            if (!$a->isForceDeleting() && auth()->check()) {
+            if (! $a->isForceDeleting() && auth()->check()) {
                 $a->deleted_by = auth()->id();
                 $a->saveQuietly();
             }
@@ -98,17 +99,42 @@ class PersonAddress extends Model
 
     /**
      * Make this address the Primary. Demotes current Primary to Alternate.
+     *
+     * address_type is a fixed DB ENUM with a unique index on (person_code,
+     * address_type) — see PersonContact::makesPrimary()'s docblock for why a
+     * naive demote-then-promote can collide when this row is already the
+     * 'Alternate' slot the old Primary is about to be demoted into.
      */
     public function makePrimary(): void
     {
-        static::where('person_code',  $this->person_code)
-            ->where('address_type', 'Primary')
-            ->where('id', '!=',     $this->id)
-            ->whereNull('deleted_at')
-            ->update(['address_type' => 'Alternate', 'updated_by' => auth()->id()]);
+        DB::transaction(function () {
+            $oldPrimary = static::where('person_code', $this->person_code)
+                ->where('address_type', 'Primary')
+                ->where('id', '!=', $this->id)
+                ->whereNull('deleted_at')
+                ->first();
 
-        $this->address_type = 'Primary';
-        $this->save();
+            if ($oldPrimary) {
+                if ($this->address_type === 'Alternate') {
+                    $usedTypes = static::where('person_code', $this->person_code)
+                        ->whereNull('deleted_at')
+                        ->pluck('address_type')
+                        ->all();
+
+                    $freeType = collect(self::ADDRESS_TYPES)->first(fn ($t) => ! in_array($t, $usedTypes, true));
+
+                    if ($freeType) {
+                        $this->address_type = $freeType;
+                        $this->save();
+                    }
+                }
+
+                $oldPrimary->update(['address_type' => 'Alternate', 'updated_by' => auth()->id()]);
+            }
+
+            $this->address_type = 'Primary';
+            $this->save();
+        });
     }
 
     // ── Accessors ─────────────────────────────────────────────────────────────
@@ -132,6 +158,7 @@ class PersonAddress extends Model
     {
         return $q->where('address_type', 'Primary');
     }
+
     public function scopeByType($q, string $t)
     {
         return $q->where('address_type', $t);

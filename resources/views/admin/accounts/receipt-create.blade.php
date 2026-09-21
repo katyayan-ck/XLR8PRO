@@ -21,7 +21,7 @@
                         <h4 class="card-title mb-0">{{ isset($isEdit) ? 'Edit Receipt' : 'Add Receipt' }}</h4>
                     </div>
 
-                    <form method="POST" action="{{ isset($isEdit) ? backpack_url('accounts/receipt/'.$receipt->id) : backpack_url('accounts/receipt-list') }}">
+                    <form method="POST" action="{{ isset($isEdit) ? backpack_url('accounts/receipt/'.$receipt->id) : backpack_url('accounts/receipt') }}">
                         @csrf
                         @if(isset($isEdit))
                             @method('PUT')

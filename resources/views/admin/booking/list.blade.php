@@ -54,7 +54,7 @@
 
                 <div class="d-flex align-items-center gap-3 flex-nowrap">
 
-                    <a href="{{ backpack_url('booking/create') }}" class="btn btn-blue btn-sm fw-bold shadow-sm">
+                    <a href="{{ backpack_url('sales/booking/create') }}" class="btn btn-blue btn-sm fw-bold shadow-sm">
                         <i class="la la-plus me-1"></i> Add New Booking
                     </a>
 
@@ -62,16 +62,16 @@
                             class="form-select form-select-sm bg-white text-dark border-0 shadow-sm"
                             style="min-width: 200px; max-width: 260px;"
                             aria-label="Switch booking status view">
-                        <option value="{{ backpack_url('booking') }}" {{ Route::currentRouteName() === 'booking.index' ? 'selected' : '' }}>
+                        <option value="{{ backpack_url('sales/booking') }}" {{ Route::currentRouteName() === 'booking.index' ? 'selected' : '' }}>
                             All Live Bookings
                         </option>
-                        <option value="{{ backpack_url('booking/hold') }}" {{ Route::currentRouteName() === 'booking.hold' ? 'selected' : '' }}>
+                        <option value="{{ backpack_url('sales/booking/hold') }}" {{ Route::currentRouteName() === 'booking.hold' ? 'selected' : '' }}>
                             On-Hold Bookings
                         </option>
-                        <option value="{{ backpack_url('booking/invoiced') }}" {{ Route::currentRouteName() === 'booking.invoiced' ? 'selected' : '' }}>
+                        <option value="{{ backpack_url('sales/booking/invoiced') }}" {{ Route::currentRouteName() === 'booking.invoiced' ? 'selected' : '' }}>
                             Invoiced Bookings
                         </option>
-                        <option value="{{ backpack_url('booking/cancelled') }}" {{ Route::currentRouteName() === 'booking.cancelled' ? 'selected' : '' }}>
+                        <option value="{{ backpack_url('sales/booking/cancelled') }}" {{ Route::currentRouteName() === 'booking.cancelled' ? 'selected' : '' }}>
                             Cancelled Bookings
                         </option>
                     </select>

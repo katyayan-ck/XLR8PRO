@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin\Org\Department;
 
 use App\Http\Requests\DepartmentRequest;
 use App\Models\Admin\Department;
-use App\Models\Admin\Division;
+use App\Services\Org\DepartmentService;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
@@ -16,30 +16,48 @@ class DepartmentCrudController extends CrudController
 {
     use CreateOperation;
     use DeleteOperation;
-    use ListOperation;
+    use ListOperation {
+        search as traitSearch;
+        showDetailsRow as traitShowDetailsRow;
+    }
     use UpdateOperation;
+
+    public function __construct(private DepartmentService $departments)
+    {
+        parent::__construct();
+    }
+
+    public function search()
+    {
+        $this->authorizeManage();
+
+        return $this->traitSearch();
+    }
+
+    public function showDetailsRow($id)
+    {
+        $this->authorizeManage();
+
+        return $this->traitShowDetailsRow($id);
+    }
 
     public function setup()
     {
         CRUD::setModel(Department::class);
-        CRUD::setRoute(config('backpack.base.route_prefix').'/department');
+        CRUD::setRoute(config('backpack.base.route_prefix').'/org/department');
         CRUD::setEntityNameStrings('department', 'xlr8_admin_department');
     }
 
     protected function setupListOperation()
     {
-        if (! backpack_user()->can('department.view')) {
-            abort(403, 'Unauthorized. You do not have permission to view departments.');
-        }
+        $this->authorizeManage();
 
         $this->crud->setListView('admin.department.list');
     }
 
     public function index()
     {
-        if (! backpack_user()->can('department.view')) {
-            abort(403, 'Unauthorized. You do not have permission to view departments.');
-        }
+        $this->authorizeManage();
 
         $this->crud->setListView('admin.department.list');
 
@@ -58,7 +76,12 @@ class DepartmentCrudController extends CrudController
             $mapped['serial_no'] = $index + 1;
             $mapped['is_active'] = $dept->is_active ? 'Active' : 'Inactive';
 
-            $editUrl = backpack_url("department/{$dept->id}/edit");
+            $imageUrl = $dept->getFirstMediaUrl('department_image');
+            $mapped['image'] = $imageUrl
+                ? '<img src="'.$imageUrl.'" style="height:36px;width:36px;object-fit:cover;border-radius:6px;">'
+                : '<span class="text-muted">—</span>';
+
+            $editUrl = backpack_url("org/department/{$dept->id}/edit");
 
             $mapped['action'] = '
                 <div class="d-flex gap-2 justify-content-center">
@@ -78,6 +101,7 @@ class DepartmentCrudController extends CrudController
             'gridConfig' => [
                 'columns' => [
                     ['field' => 'serial_no',    'headerName' => 'S.No.'],
+                    ['field' => 'image',        'headerName' => 'Image'],
                     ['field' => 'code',         'headerName' => 'Code'],
                     ['field' => 'name',         'headerName' => 'Department Name'],
                     ['field' => 'description',  'headerName' => 'Description'],
@@ -91,9 +115,7 @@ class DepartmentCrudController extends CrudController
 
     public function create()
     {
-        if (! backpack_user()->can('department.create')) {
-            abort(403, 'Unauthorized. You do not have permission to create departments.');
-        }
+        $this->authorizeManage();
 
         return view('admin.department.create', [
             'title' => 'Add New Department',
@@ -102,127 +124,59 @@ class DepartmentCrudController extends CrudController
 
     public function store(DepartmentRequest $request)
     {
-        if (! backpack_user()->can('department.create')) {
-            abort(403, 'Unauthorized. You do not have permission to create departments.');
-        }
+        $this->authorizeManage();
 
-        $validated = $request->validated();
-
-        $department = Department::create($validated);
-
-        if ($request->hasFile('department_image')) {
-            $department
-                ->addMediaFromRequest('department_image')
-                ->toMediaCollection('department_image');
-        }
-
-        Division::create([
-            'dept_code' => $department->code,
-            'code' => $department->code,
-            'name' => $department->name,
-            'is_active' => true,
-        ]);
+        $this->departments->create($request->validated(), $request);
 
         \Alert::success('Department created successfully!')->flash();
 
-        return redirect(backpack_url('department'));
+        return redirect(backpack_url('org/department'));
     }
 
     public function edit($id)
     {
-        if (! backpack_user()->can('department.edit')) {
-            abort(403, 'Unauthorized. You do not have permission to edit departments.');
-        }
+        $this->authorizeManage();
 
         $this->crud->setEditView('admin.department.edit');
 
         $department = Department::findOrFail($id);
 
-        $activeDivisions = Division::where('dept_code', $department->code)
-            ->where('is_active', 1)
-            ->pluck('name')
-            ->toArray();
-
         return view('admin.department.edit', [
             'title' => 'Edit Department - '.$department->name,
             'department' => $department,
-            'activeDivisions' => $activeDivisions,
         ]);
     }
 
     public function update(DepartmentRequest $request, $id)
     {
-        if (! backpack_user()->can('department.edit')) {
-            abort(403, 'Unauthorized. You do not have permission to edit departments.');
-        }
+        $this->authorizeManage();
 
         $department = Department::findOrFail($id);
 
-        $oldCode = $department->code;
+        $result = $this->departments->update($department, $request->validated(), $request);
 
-        $validated = $request->validated();
-
-        $activeDivisions = Division::where(
-            'dept_code',
-            $department->code
-        )
-            ->where('is_active', 1)
-            ->pluck('name')
-            ->toArray();
-
-        if (
-            $department->is_active == 1 &&
-            ($validated['is_active'] ?? 0) == 0 &&
-            count($activeDivisions) > 0
-        ) {
-            return redirect()
-                ->back()
-                ->withInput()
-                ->with('division_blocked', $activeDivisions);
-        }
-        $oldStatus = $department->is_active;
-
-        $department->update($validated);
-
-        if (
-            $oldStatus == 0 &&
-            ($validated['is_active'] ?? 0) == 1
-        ) {
-            Division::where('dept_code', $oldCode)
-                ->update([
-                    'is_active' => 1,
-                ]);
-        }
-
-        Division::where('dept_code', $oldCode)
-            ->update([
-                'dept_code' => $validated['code'],
+        if (! $result['ok']) {
+            return back()->withInput()->withErrors([
+                'is_active' => 'Cannot disable this department — it still has '.implode(' and ', $result['blockers']).'. Disable those first.',
             ]);
-
-        Division::where('dept_code', $validated['code'])
-            ->where('code', $oldCode)
-            ->update([
-                'code' => $validated['code'],
-                'name' => $validated['name'],
-            ]);
-
-        if ($request->hasFile('department_image')) {
-            $department
-                ->addMediaFromRequest('department_image')
-                ->toMediaCollection('department_image');
         }
 
         \Alert::success('Department updated successfully!')->flash();
 
-        return redirect(backpack_url('department'));
+        return redirect(backpack_url('org/department'));
     }
 
     public function destroy($id)
     {
-        if (! backpack_user()->can('department.delete')) {
-            abort(403, 'Unauthorized. You do not have permission to delete departments.');
-        }
+        $this->authorizeManage();
 
         return $this->crud->delete($id);
+    }
+
+    private function authorizeManage(): void
+    {
+        if (! backpack_user()->can('ORG_ENTITY_MANAGE')) {
+            abort(403, 'Unauthorized. You do not have permission to manage org entities.');
+        }
     }
 }

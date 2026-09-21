@@ -26,13 +26,13 @@ class VariantCrudController extends CrudController
     public function setup()
     {
         CRUD::setModel(Variant::class);
-        CRUD::setRoute(config('backpack.base.route_prefix').'/variant');
+        CRUD::setRoute(config('backpack.base.route_prefix').'/vehicle/variant');
         CRUD::setEntityNameStrings('variant', 'variants');
     }
 
     protected function setupListOperation()
     {
-        if (! backpack_user()->can('variant.view')) {
+        if (! backpack_user()->can('VEH_VAR_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view variants.');
         }
 
@@ -41,7 +41,7 @@ class VariantCrudController extends CrudController
 
     public function index()
     {
-        if (! backpack_user()->can('variant.view')) {
+        if (! backpack_user()->can('VEH_VAR_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view variants.');
         }
 
@@ -83,7 +83,7 @@ class VariantCrudController extends CrudController
             $mapped['is_csd'] = $item->is_csd ? 'Yes' : 'No';
             $mapped['is_active'] = $item->is_active ? 'Active' : 'Inactive';
 
-            $editUrl = backpack_url("variant/{$item->id}/edit");
+            $editUrl = backpack_url("vehicle/variant/{$item->id}/edit");
 
             $mapped['action'] = '
             <div class="d-flex gap-2 justify-content-center">
@@ -146,7 +146,7 @@ class VariantCrudController extends CrudController
 
     public function store(VariantRequest $request)
     {
-        if (! backpack_user()->can('variant.create')) {
+        if (! backpack_user()->can('VEH_VAR_CREATE')) {
             abort(403, 'Unauthorized. You do not have permission to create variants.');
         }
 
@@ -159,12 +159,12 @@ class VariantCrudController extends CrudController
 
         \Alert::success('Variant created successfully!')->flash();
 
-        return redirect(backpack_url('variant'));
+        return redirect(backpack_url('vehicle/variant'));
     }
 
     public function edit($id)
     {
-        if (! backpack_user()->can('variant.edit')) {
+        if (! backpack_user()->can('VEH_VAR_EDIT')) {
             abort(403, 'Unauthorized. You do not have permission to edit variants.');
         }
 
@@ -210,26 +210,21 @@ class VariantCrudController extends CrudController
 
             'models' => $models,
 
-            'permits' =>
-                OrgService::getKeyValuesByCode('PERMIT'),
+            'permits' => OrgService::getKeyValuesByCode('PERMIT'),
 
-            'fuelTypes' =>
-                OrgService::getKeyValuesByCode('FUEL_TYPE'),
+            'fuelTypes' => OrgService::getKeyValuesByCode('FUEL_TYPE'),
 
-            'bodyTypes' =>
-                OrgService::getKeyValuesByCode('BODY_TYPE'),
+            'bodyTypes' => OrgService::getKeyValuesByCode('BODY_TYPE'),
 
-            'bodyMakes' =>
-                OrgService::getKeyValuesByCode('BODY_MAKE'),
+            'bodyMakes' => OrgService::getKeyValuesByCode('BODY_MAKE'),
 
-            'statuses' =>
-                OrgService::getKeyValuesByCode('VEHICLE_STATUS'),
+            'statuses' => OrgService::getKeyValuesByCode('VEHICLE_STATUS'),
         ]);
     }
 
     public function update(VariantRequest $request, $id)
     {
-        if (! backpack_user()->can('variant.edit')) {
+        if (! backpack_user()->can('VEH_VAR_EDIT')) {
             abort(403, 'Unauthorized. You do not have permission to edit variants.');
         }
 
@@ -271,12 +266,12 @@ class VariantCrudController extends CrudController
             'Variant updated successfully!'
         )->flash();
 
-        return redirect(backpack_url('variant'));
+        return redirect(backpack_url('vehicle/variant'));
     }
 
     public function create()
     {
-        if (! backpack_user()->can('variant.create')) {
+        if (! backpack_user()->can('VEH_VAR_CREATE')) {
             abort(403, 'Unauthorized. You do not have permission to create variants.');
         }
 
@@ -288,26 +283,21 @@ class VariantCrudController extends CrudController
 
             'segments' => OrgService::segments(),
 
-            'permits' =>
-                OrgService::getKeyValuesByCode('PERMIT'),
+            'permits' => OrgService::getKeyValuesByCode('PERMIT'),
 
-            'fuelTypes' =>
-                OrgService::getKeyValuesByCode('FUEL_TYPE'),
+            'fuelTypes' => OrgService::getKeyValuesByCode('FUEL_TYPE'),
 
-            'bodyTypes' =>
-                OrgService::getKeyValuesByCode('BODY_TYPE'),
+            'bodyTypes' => OrgService::getKeyValuesByCode('BODY_TYPE'),
 
-            'bodyMakes' =>
-                OrgService::getKeyValuesByCode('BODY_MAKE'),
+            'bodyMakes' => OrgService::getKeyValuesByCode('BODY_MAKE'),
 
-            'statuses' =>
-                OrgService::getKeyValuesByCode('VEHICLE_STATUS'),
+            'statuses' => OrgService::getKeyValuesByCode('VEHICLE_STATUS'),
         ]);
     }
 
     public function destroy($id)
     {
-        if (! backpack_user()->can('variant.delete')) {
+        if (! backpack_user()->can('VEH_VAR_DELETE')) {
             abort(403, 'Unauthorized. You do not have permission to delete variants.');
         }
 

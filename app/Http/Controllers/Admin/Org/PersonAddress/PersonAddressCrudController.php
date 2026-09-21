@@ -16,23 +16,44 @@ class PersonAddressCrudController extends CrudController
 {
     use CreateOperation;
     use DeleteOperation;
-    use ListOperation;
+    use ListOperation {
+        search as traitSearch;
+        showDetailsRow as traitShowDetailsRow;
+    }
     use UpdateOperation;
 
+    public function search()
+    {
+        if (! backpack_user()->can('ORG_PRSN_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view person addresses.');
+        }
+
+        return $this->traitSearch();
+    }
+
+    public function showDetailsRow($id)
+    {
+        if (! backpack_user()->can('ORG_PRSN_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view person addresses.');
+        }
+
+        return $this->traitShowDetailsRow($id);
+    }
+
     /**
-     * No dedicated "person_address.*" permission exists — reuses "person.*"
+     * No dedicated "ORG_PADR_*" permission exists — reuses "ORG_PRSN_*"
      * since this is a sub-resource of Person.
      */
     public function setup()
     {
         CRUD::setModel(PersonAddress::class);
-        CRUD::setRoute(config('backpack.base.route_prefix').'/person-address');
+        CRUD::setRoute(config('backpack.base.route_prefix').'/org/person-address');
         CRUD::setEntityNameStrings('person address', 'person addresses');
     }
 
     protected function setupListOperation()
     {
-        if (! backpack_user()->can('person.view')) {
+        if (! backpack_user()->can('ORG_PRSN_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view person addresses.');
         }
 
@@ -41,7 +62,7 @@ class PersonAddressCrudController extends CrudController
 
     public function index()
     {
-        if (! backpack_user()->can('person.view')) {
+        if (! backpack_user()->can('ORG_PRSN_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view person addresses.');
         }
 
@@ -71,7 +92,7 @@ class PersonAddressCrudController extends CrudController
                 ? $address->person->first_name.' '.$address->person->last_name
                 : '—';
 
-            $editUrl = backpack_url("person-address/{$address->id}/edit");
+            $editUrl = backpack_url("org/person-address/{$address->id}/edit");
 
             $mapped['action'] = '
                 <div class="d-flex gap-2 justify-content-center">
@@ -104,7 +125,7 @@ class PersonAddressCrudController extends CrudController
 
     public function create()
     {
-        if (! backpack_user()->can('person.create')) {
+        if (! backpack_user()->can('ORG_PRSN_CREATE')) {
             abort(403, 'Unauthorized. You do not have permission to create person addresses.');
         }
 
@@ -120,7 +141,7 @@ class PersonAddressCrudController extends CrudController
 
     public function store(PersonAddressRequest $request)
     {
-        if (! backpack_user()->can('person.create')) {
+        if (! backpack_user()->can('ORG_PRSN_CREATE')) {
             abort(403, 'Unauthorized. You do not have permission to create person addresses.');
         }
 
@@ -130,12 +151,12 @@ class PersonAddressCrudController extends CrudController
 
         \Alert::success('Person Address created successfully!')->flash();
 
-        return redirect(backpack_url('person-address'));
+        return redirect(backpack_url('org/person-address'));
     }
 
     public function edit($id)
     {
-        if (! backpack_user()->can('person.edit')) {
+        if (! backpack_user()->can('ORG_PRSN_EDIT')) {
             abort(403, 'Unauthorized. You do not have permission to edit person addresses.');
         }
 
@@ -154,7 +175,7 @@ class PersonAddressCrudController extends CrudController
 
     public function update(PersonAddressRequest $request, $id)
     {
-        if (! backpack_user()->can('person.edit')) {
+        if (! backpack_user()->can('ORG_PRSN_EDIT')) {
             abort(403, 'Unauthorized. You do not have permission to edit person addresses.');
         }
 
@@ -166,12 +187,12 @@ class PersonAddressCrudController extends CrudController
 
         \Alert::success('Person Address updated successfully!')->flash();
 
-        return redirect(backpack_url('person-address'));
+        return redirect(backpack_url('org/person-address'));
     }
 
     public function destroy($id)
     {
-        if (! backpack_user()->can('person.delete')) {
+        if (! backpack_user()->can('ORG_PRSN_DELETE')) {
             abort(403, 'Unauthorized. You do not have permission to delete person addresses.');
         }
 

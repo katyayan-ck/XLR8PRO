@@ -26,7 +26,7 @@
                 </div>
                 <div class="card-body">
 
-                    <form id="contactForm" method="POST" action="{{ backpack_url('person-contact') }}">
+                    <form id="contactForm" method="POST" action="{{ backpack_url('org/person-contact') }}">
                         @csrf
 
                         <div class="row">
@@ -96,7 +96,7 @@
                             <button type="submit" class="btn btn-success btn-lg px-5">
                                 <i class="la la-save"></i> Create Contact
                             </button>
-                            <a href="{{ backpack_url('person-contact') }}" class="btn btn-secondary btn-lg">Cancel</a>
+                            <a href="{{ backpack_url('org/person-contact') }}" class="btn btn-secondary btn-lg">Cancel</a>
                         </div>
                     </form>
                 </div>

@@ -49,7 +49,7 @@
                         <ol class="breadcrumb justify-content-end">
                             <li class="breadcrumb-item"><a href="{{ backpack_url('dashboard') }}"><i class="ik ik-home"></i>
                                     Home</a></li>
-                            <li class="breadcrumb-item"><a href="{{ backpack_url('booking') }}">Bookings</a></li>
+                            <li class="breadcrumb-item"><a href="{{ backpack_url('sales/booking') }}">Bookings</a></li>
                             <li class="breadcrumb-item active">Edit</li>
                         </ol>
                     </nav>
@@ -61,7 +61,7 @@
             @include(backpack_view('inc.alerts'))
 
             <div class="col-md-12">
-                <form id="bookingForm" method="POST" action="{{ backpack_url('booking/' . $entry->id) }}"
+                <form id="bookingForm" method="POST" action="{{ backpack_url('sales/booking/' . $entry->id) }}"
                     enctype="multipart/form-data" class="forms-sample">
                     @csrf
                     @method('PUT')
@@ -764,7 +764,7 @@
                         </div>
                     </div>
                     <div class="mt-4 text-end">
-                        <a href="{{ backpack_url('booking') }}" class="btn btn-secondary">Cancel</a>
+                        <a href="{{ backpack_url('sales/booking') }}" class="btn btn-secondary">Cancel</a>
                         <button type="submit" id="submitBtn" class="btn btn-primary ms-2">Update Booking</button>
                     </div>
                 </form>
@@ -898,7 +898,7 @@
                     return;
                 }
 
-                const url = '{{ route('get.models', ':segment_id') }}'.replace(':segment_id', segmentId);
+                const url = '{{ route('sales.booking.get-models', ':segment_id') }}'.replace(':segment_id', segmentId);
                 console.log('📡 [SEGMENT-CHANGE] Fetching models from:', url);
                 $.get(url)
                     .done(function(data) {
@@ -924,7 +924,7 @@
 
                 if (!model) return;
 
-                const url = '{{ route('get.variants', ':model') }}'.replace(':model', encodeURIComponent(
+                const url = '{{ route('sales.booking.get-variants', ':model') }}'.replace(':model', encodeURIComponent(
                     model));
                 $.get(url).done(function(data) {
                     populateSelect2('#variant', data, 'code', 'name', {
@@ -948,7 +948,7 @@
 
                 if (!variant) return;
 
-                const colorUrl = '{{ route('get.colors', ':variant') }}'.replace(':variant',
+                const colorUrl = '{{ route('sales.booking.get-colors', ':variant') }}'.replace(':variant',
                     encodeURIComponent(variant));
                 $.get(colorUrl).done(function(data) {
                     populateSelect2('#color', data, 'code', 'name', {
@@ -959,7 +959,7 @@
                 });
 
                 if (segmentId && modelVal) {
-                    const accUrl = '{{ route('get.accessories', [':segment', ':model', ':variant']) }}'
+                    const accUrl = '{{ route('sales.booking.get-accessories', [':segment', ':model', ':variant']) }}'
                         .replace(':segment', encodeURIComponent(segmentId))
                         .replace(':model', encodeURIComponent(modelVal))
                         .replace(':variant', encodeURIComponent(variant));
@@ -986,7 +986,7 @@
 
                 if (!code) return;
 
-                const url = '{{ route('get.chasis', ':modelCode') }}'.replace(':modelCode',
+                const url = '{{ route('sales.booking.get-chassis-numbers', ':modelCode') }}'.replace(':modelCode',
                     encodeURIComponent(code));
                 $.get(url).done(function(data) {
                     populateSelect2('#chassis', data, 'chassis_no', 'chassis_no');
@@ -1029,7 +1029,7 @@
                     console.log('✅ [RESTORE-STEP1] Segment matched — no force needed');
                 }
 
-                const modelsUrl = '{{ route('get.models', ':segment_id') }}'.replace(':segment_id', saved
+                const modelsUrl = '{{ route('sales.booking.get-models', ':segment_id') }}'.replace(':segment_id', saved
                     .segment);
                 console.log('📡 [RESTORE-STEP2] GET', modelsUrl);
                 await $.get(modelsUrl)
@@ -1063,7 +1063,7 @@
                     return;
                 }
 
-                const variantsUrl = '{{ route('get.variants', ':model') }}'.replace(':model',
+                const variantsUrl = '{{ route('sales.booking.get-variants', ':model') }}'.replace(':model',
                     encodeURIComponent(saved.model));
                 console.log('📡 [RESTORE-STEP3] GET', variantsUrl);
                 await $.get(variantsUrl)
@@ -1092,7 +1092,7 @@
                     return;
                 }
 
-                const colorsUrl = '{{ route('get.colors', ':variant') }}'.replace(':variant',
+                const colorsUrl = '{{ route('sales.booking.get-colors', ':variant') }}'.replace(':variant',
                     encodeURIComponent(saved.variant));
                 console.log('📡 [RESTORE-STEP4] GET', colorsUrl);
                 await $.get(colorsUrl)
@@ -1117,7 +1117,7 @@
                     });
 
                 if (saved.segment && saved.model && saved.variant) {
-                    const accUrl = '{{ route('get.accessories', [':segment', ':model', ':variant']) }}'
+                    const accUrl = '{{ route('sales.booking.get-accessories', [':segment', ':model', ':variant']) }}'
                         .replace(':segment', encodeURIComponent(saved.segment))
                         .replace(':model', encodeURIComponent(saved.model))
                         .replace(':variant', encodeURIComponent(saved.variant));

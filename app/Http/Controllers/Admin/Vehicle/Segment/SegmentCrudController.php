@@ -11,6 +11,7 @@ use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
+use Illuminate\Support\Collection;
 use Revolution\Google\Sheets\Facades\Sheets;
 
 class SegmentCrudController extends CrudController
@@ -23,13 +24,13 @@ class SegmentCrudController extends CrudController
     public function setup()
     {
         CRUD::setModel(Segment::class);
-        CRUD::setRoute(config('backpack.base.route_prefix').'/segment');
+        CRUD::setRoute(config('backpack.base.route_prefix').'/vehicle/segment');
         CRUD::setEntityNameStrings('segment', 'segments');
     }
 
     protected function setupListOperation()
     {
-        if (! backpack_user()->can('segment.view')) {
+        if (! backpack_user()->can('VEH_SEG_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view segments.');
         }
 
@@ -38,7 +39,7 @@ class SegmentCrudController extends CrudController
 
     public function index()
     {
-        if (! backpack_user()->can('segment.view')) {
+        if (! backpack_user()->can('VEH_SEG_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view segments.');
         }
 
@@ -50,7 +51,7 @@ class SegmentCrudController extends CrudController
             $mapped = $segment->toArray();
             $mapped['serial_no'] = $index + 1;
 
-            $editUrl = backpack_url("segment/{$segment->id}/edit");
+            $editUrl = backpack_url("vehicle/segment/{$segment->id}/edit");
 
             $mapped['action'] = '
                 <div class="d-flex gap-2 justify-content-center">
@@ -84,7 +85,7 @@ class SegmentCrudController extends CrudController
 
     public function edit($id)
     {
-        if (! backpack_user()->can('segment.edit')) {
+        if (! backpack_user()->can('VEH_SEG_EDIT')) {
             abort(403, 'Unauthorized. You do not have permission to edit segments.');
         }
 
@@ -109,7 +110,7 @@ class SegmentCrudController extends CrudController
 
     public function update(SegmentRequest $request, $id)
     {
-        if (! backpack_user()->can('segment.edit')) {
+        if (! backpack_user()->can('VEH_SEG_EDIT')) {
             abort(403, 'Unauthorized. You do not have permission to edit segments.');
         }
 
@@ -147,12 +148,12 @@ class SegmentCrudController extends CrudController
             'Segment updated successfully!'
         )->flash();
 
-        return redirect(backpack_url('segment'));
+        return redirect(backpack_url('vehicle/segment'));
     }
 
     public function create()
     {
-        if (! backpack_user()->can('segment.create')) {
+        if (! backpack_user()->can('VEH_SEG_CREATE')) {
             abort(403, 'Unauthorized. You do not have permission to create segments.');
         }
 
@@ -170,14 +171,14 @@ class SegmentCrudController extends CrudController
      */
     protected function setupCreateOperation()
     {
-        if (! backpack_user()->can('segment.create')) {
+        if (! backpack_user()->can('VEH_SEG_CREATE')) {
             abort(403, 'Unauthorized. You do not have permission to create segments.');
         }
     }
 
     public function destroy($id)
     {
-        if (! backpack_user()->can('segment.delete')) {
+        if (! backpack_user()->can('VEH_SEG_DELETE')) {
             abort(403, 'Unauthorized. You do not have permission to delete segments.');
         }
 
@@ -194,7 +195,7 @@ class SegmentCrudController extends CrudController
      */
     public function import()
     {
-        if (! backpack_user()->can('segment.create')) {
+        if (! backpack_user()->can('VEH_SEG_CREATE')) {
             abort(403, 'Unauthorized. You do not have permission to run this import.');
         }
 
@@ -505,7 +506,7 @@ class SegmentCrudController extends CrudController
         return redirect()->back();
     }
 
-    private function buildKeyMap(\Illuminate\Support\Collection $rows): array
+    private function buildKeyMap(Collection $rows): array
     {
         $map = [];
         foreach ($rows as $kv) {

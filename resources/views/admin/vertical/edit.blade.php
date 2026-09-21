@@ -35,22 +35,27 @@
                     <h2 class="mb-0">Edit Vertical Information</h2>
                 </div>
                 <div class="card-body">
+                    @if ($errors->any())
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
 
-                    <form method="POST" action="{{ backpack_url('vertical/' . $vertical->id) }}"
+                    <form method="POST" action="{{ backpack_url('org/vertical/' . $vertical->id) }}"
                         enctype="multipart/form-data">
                         @csrf
                         @method('PUT')
 
                         <div class="row">
 
-
                             <div class="col-md-3 mb-3">
-                                <label>Vertical Code (Min 3 Char)<span class="text-danger">*</span></label>
-                                <input type="text" name="code" class="form-control"
-                                    value="{{ old('code', $vertical->code) }}" minlength="3" maxlength="10" required>
-
-
-                                <div id="codeError" class="text-danger mt-1"></div>
+                                <label>Vertical Code</label>
+                                <input type="text" class="form-control" value="{{ $vertical->code }}" readonly disabled>
+                                <div class="form-text">Code cannot be changed after creation — every relation in the app points at it.</div>
                             </div>
 
                             <div class="col-md-3 mb-3">
@@ -74,40 +79,15 @@
                                 </div>
                             </div>
 
-                            <div class="col-md-3 mb-3">
-
-                                <label>Vertical Image</label>
-
-                                <input type="file" name="vertical_image" id="vertical_image" class="form-control"
-                                    accept=".jpg,.jpeg,.png,.webp">
-
-                            </div>
-
-                            <div class="col-md-3 mb-3">
-
-                                <img id="imagePreview" src="{{ $vertical->getFirstMediaUrl('vertical_image') }}" style="max-height:120px;
-         {{ $vertical->getFirstMediaUrl('vertical_image') ? '' : 'display:none;' }}" class="img-thumbnail">
-
-                                @if($vertical->getFirstMedia('vertical_image'))
-                                <div id="currentFileBlock" class="mt-2 text-muted">
-                                    Current File:
-                                    <strong>
-                                        {{ $vertical->getFirstMedia('vertical_image')->file_name }}
-                                    </strong>
-                                </div>
-                                @endif
-                                <div id="selectedFileName" class="mt-2 text-primary"></div>
-
-                            </div>
-
-
                         </div>
+
+                        @include('admin.org.partials.media-fields', ['imageCollection' => 'vertical_image', 'model' => $vertical])
 
                         <div class="mt-4">
                             <button type="submit" class="btn btn-success btn-lg px-5">
                                 <i class="la la-save"></i> Update Vertical
                             </button>
-                            <a href="{{ backpack_url('vertical') }}" class="btn btn-secondary btn-lg">Cancel</a>
+                            <a href="{{ backpack_url('org/vertical') }}" class="btn btn-secondary btn-lg">Cancel</a>
                         </div>
                     </form>
                 </div>
@@ -116,54 +96,3 @@
     </div>
 </div>
 @endsection
-@push('after_scripts')
-
-<script>
-    document.getElementById('vertical_image')
-?.addEventListener('change', function(e){
-
-    const file = e.target.files[0];
-
-    if(!file) return;
-
-    const currentFileBlock = document.getElementById('currentFileBlock');
-    if(currentFileBlock){
-        currentFileBlock.style.display = 'none';
-    }
-
-    document.getElementById('selectedFileName').innerText =
-        'Selected: ' + file.name;
-
-    const reader = new FileReader();
-
-    reader.onload = function(ev){
-
-        const img = document.getElementById('imagePreview');
-
-        img.src = ev.target.result;
-        img.style.display = 'block';
-    };
-
-    reader.readAsDataURL(file);
-});
-
-document.querySelector('input[name="code"]').addEventListener('input', function () {
-
-    let value = this.value.trim();
-    let error = document.getElementById('codeError');
-
-    if (value.length > 0 && value.length < 3) {
-        error.innerText = 'Code must be at least 3 characters';
-    } else if (value.length > 10) {
-        error.innerText = 'Code cannot exceed 10 characters';
-    } else {
-        error.innerText = '';
-    }
-
-});
-
-
-
-</script>
-
-@endpush

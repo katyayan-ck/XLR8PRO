@@ -22,13 +22,13 @@ class RoleCrudController extends CrudController
     public function setup()
     {
         CRUD::setModel(Role::class);
-        CRUD::setRoute(config('backpack.base.route_prefix').'/role');
+        CRUD::setRoute(config('backpack.base.route_prefix').'/iam/role');
         CRUD::setEntityNameStrings('role', 'roles');
     }
 
     protected function setupListOperation()
     {
-        if (! backpack_user()->can('rbac.view')) {
+        if (! backpack_user()->can('IAM_RBAC_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view roles.');
         }
 
@@ -38,7 +38,7 @@ class RoleCrudController extends CrudController
 
     public function index()
     {
-        if (! backpack_user()->can('rbac.view')) {
+        if (! backpack_user()->can('IAM_RBAC_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view roles.');
         }
 
@@ -60,7 +60,7 @@ class RoleCrudController extends CrudController
             $mapped['serial_no'] = $index + 1;
             $mapped['permissions_count'] = $role->permissions_count.' permissions';
 
-            $editUrl = backpack_url("role/{$role->id}/edit");
+            $editUrl = backpack_url("iam/role/{$role->id}/edit");
 
             $mapped['action'] = '
                 <div class="d-flex gap-2 justify-content-center">
@@ -89,7 +89,7 @@ class RoleCrudController extends CrudController
 
     public function create()
     {
-        if (! backpack_user()->can('rbac.manage')) {
+        if (! backpack_user()->can('IAM_RBAC_MANAGE')) {
             abort(403, 'Unauthorized. You do not have permission to create roles.');
         }
 
@@ -103,7 +103,7 @@ class RoleCrudController extends CrudController
 
     public function store(RoleRequest $request)
     {
-        if (! backpack_user()->can('rbac.manage')) {
+        if (! backpack_user()->can('IAM_RBAC_MANAGE')) {
             abort(403, 'Unauthorized. You do not have permission to create roles.');
         }
 
@@ -120,12 +120,12 @@ class RoleCrudController extends CrudController
 
         \Alert::success('Role created successfully!')->flash();
 
-        return redirect(backpack_url('role'));
+        return redirect(backpack_url('iam/role'));
     }
 
     public function edit($id)
     {
-        if (! backpack_user()->can('rbac.manage')) {
+        if (! backpack_user()->can('IAM_RBAC_MANAGE')) {
             abort(403, 'Unauthorized. You do not have permission to edit roles.');
         }
 
@@ -142,7 +142,7 @@ class RoleCrudController extends CrudController
 
     public function update(RoleRequest $request, $id)
     {
-        if (! backpack_user()->can('rbac.manage')) {
+        if (! backpack_user()->can('IAM_RBAC_MANAGE')) {
             abort(403, 'Unauthorized. You do not have permission to edit roles.');
         }
 
@@ -159,12 +159,12 @@ class RoleCrudController extends CrudController
 
         \Alert::success('Role updated successfully!')->flash();
 
-        return redirect(backpack_url('role'));
+        return redirect(backpack_url('iam/role'));
     }
 
     public function destroy($id)
     {
-        if (! backpack_user()->can('rbac.manage')) {
+        if (! backpack_user()->can('IAM_RBAC_MANAGE')) {
             abort(403, 'Unauthorized. You do not have permission to delete roles.');
         }
 

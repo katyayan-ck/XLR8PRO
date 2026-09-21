@@ -25,7 +25,7 @@
                     </div>
                     <div class="card-body">
 
-                        <form method="POST" action="{{ backpack_url('vehicle-model') }}">
+                        <form method="POST" action="{{ backpack_url('vehicle/model') }}">
                             @csrf
 
                             <div class="row">
@@ -82,7 +82,7 @@
                                 <button type="submit" class="btn btn-success btn-lg px-5">
                                     <i class="la la-save"></i> Create Vehicle Model
                                 </button>
-                                <a href="{{ backpack_url('vehicle-model') }}" class="btn btn-secondary btn-lg">Cancel</a>
+                                <a href="{{ backpack_url('vehicle/model') }}" class="btn btn-secondary btn-lg">Cancel</a>
                             </div>
                         </form>
                     </div>

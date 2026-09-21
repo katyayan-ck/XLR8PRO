@@ -19,7 +19,7 @@
 
                 <div class="d-flex align-items-center gap-3 flex-nowrap">
 
-                    <a href="{{ backpack_url('keyvalue/create') }}" class="btn btn-blue btn-sm fw-bold shadow-sm">
+                    <a href="{{ backpack_url('utils/key-value/create') }}" class="btn btn-blue btn-sm fw-bold shadow-sm">
 
                         <i class="la la-plus me-1"></i>
                         Add New Key Value

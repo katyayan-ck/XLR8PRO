@@ -30,7 +30,7 @@ class ModulesCrudController extends CrudController
         CRUD::setModel(Module::class);
 
         CRUD::setRoute(
-            config('backpack.base.route_prefix').'/modules'
+            config('backpack.base.route_prefix').'/iam/module'
         );
 
         CRUD::setEntityNameStrings(
@@ -41,7 +41,7 @@ class ModulesCrudController extends CrudController
 
     protected function setupListOperation()
     {
-        if (! backpack_user()->can('rbac.view')) {
+        if (! backpack_user()->can('IAM_RBAC_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view modules.');
         }
 
@@ -52,7 +52,7 @@ class ModulesCrudController extends CrudController
 
     public function index()
     {
-        if (! backpack_user()->can('rbac.view')) {
+        if (! backpack_user()->can('IAM_RBAC_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view modules.');
         }
 
@@ -77,7 +77,7 @@ class ModulesCrudController extends CrudController
 
             $editUrl =
                 backpack_url(
-                    "modules/{$module->id}/edit"
+                    "iam/module/{$module->id}/edit"
                 );
 
             $mapped['action'] = '
@@ -141,7 +141,7 @@ class ModulesCrudController extends CrudController
 
     public function create()
     {
-        if (! backpack_user()->can('rbac.manage')) {
+        if (! backpack_user()->can('IAM_RBAC_MANAGE')) {
             abort(403, 'Unauthorized. You do not have permission to create modules.');
         }
 
@@ -159,7 +159,7 @@ class ModulesCrudController extends CrudController
 
     public function store(ModulesRequest $request)
     {
-        if (! backpack_user()->can('rbac.manage')) {
+        if (! backpack_user()->can('IAM_RBAC_MANAGE')) {
             abort(403, 'Unauthorized. You do not have permission to create modules.');
         }
 
@@ -177,13 +177,13 @@ class ModulesCrudController extends CrudController
         )->flash();
 
         return redirect(
-            backpack_url('modules')
+            backpack_url('iam/module')
         );
     }
 
     public function edit($id)
     {
-        if (! backpack_user()->can('rbac.manage')) {
+        if (! backpack_user()->can('IAM_RBAC_MANAGE')) {
             abort(403, 'Unauthorized. You do not have permission to edit modules.');
         }
 
@@ -209,15 +209,12 @@ class ModulesCrudController extends CrudController
             'admin.modules.edit',
             [
 
-                'title' =>
-                    'Edit Module - '
+                'title' => 'Edit Module - '
                     .$module->name,
 
-                'module' =>
-                    $module,
+                'module' => $module,
 
-                'activeProcesses' =>
-                    $activeProcesses,
+                'activeProcesses' => $activeProcesses,
             ]
         );
     }
@@ -226,7 +223,7 @@ class ModulesCrudController extends CrudController
         ModulesRequest $request,
         $id
     ) {
-        if (! backpack_user()->can('rbac.manage')) {
+        if (! backpack_user()->can('IAM_RBAC_MANAGE')) {
             abort(403, 'Unauthorized. You do not have permission to edit modules.');
         }
 
@@ -282,13 +279,13 @@ class ModulesCrudController extends CrudController
         )->flash();
 
         return redirect(
-            backpack_url('modules')
+            backpack_url('iam/module')
         );
     }
 
     public function destroy($id)
     {
-        if (! backpack_user()->can('rbac.manage')) {
+        if (! backpack_user()->can('IAM_RBAC_MANAGE')) {
             abort(403, 'Unauthorized. You do not have permission to delete modules.');
         }
 

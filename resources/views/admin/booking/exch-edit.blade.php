@@ -12,7 +12,7 @@
 
 
             <form id="purchaseTypeForm" class="forms-sample" method="POST"
-                action="{{ route('exchange.update', $booking->id) }}" enctype="multipart/form-data">
+                action="{{ route('sales.booking.exchange.update', $booking->id) }}" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
 

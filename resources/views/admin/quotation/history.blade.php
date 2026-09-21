@@ -98,7 +98,7 @@
                         {{ $row->change_groups ?: '' }}
                     </td>
                     <td class="text-center">
-                        <a href="{{ backpack_url('quotation-form/' . $quotation->id . '/history/' . $row->version . '/pdf') }}"
+                        <a href="{{ backpack_url('sales/quotation/' . $quotation->id . '/history/' . $row->version . '/pdf') }}"
                         target="_blank"
                         title="View PDF"
                         class="btn btn-sm btn-outline-danger">

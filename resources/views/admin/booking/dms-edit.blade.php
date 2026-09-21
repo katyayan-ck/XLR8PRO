@@ -126,7 +126,7 @@
 </div>
 
 
-<form id="dms-form" method="POST" action="{{ route('dms.update', $booking->id) }}">
+<form id="dms-form" method="POST" action="{{ route('sales.booking.dms-update', $booking->id) }}">
     @csrf
     @method('PUT')
     <div class="card card-body shadow-sm" style="border-radius:12px">

@@ -27,7 +27,7 @@
                     </div>
                     <div class="card-body">
 
-                        <form method="POST" action="{{ backpack_url('sub-segment') }}">
+                        <form method="POST" action="{{ backpack_url('vehicle/sub-segment') }}">
                             @csrf
 
                             <div class="row">
@@ -89,7 +89,7 @@
                                 <button type="submit" class="btn btn-success btn-lg px-5">
                                     <i class="la la-save"></i> Create Sub Segment
                                 </button>
-                                <a href="{{ backpack_url('sub-segment') }}" class="btn btn-secondary btn-lg">Cancel</a>
+                                <a href="{{ backpack_url('vehicle/sub-segment') }}" class="btn btn-secondary btn-lg">Cancel</a>
                             </div>
                         </form>
                     </div>

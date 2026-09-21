@@ -36,7 +36,7 @@
 
                     <form
                         method="POST"
-                        action="{{ backpack_url('process/' . $process->id) }}">
+                        action="{{ backpack_url('iam/process/' . $process->id) }}">
 
                         @csrf
                         @method('PUT')
@@ -174,7 +174,7 @@
                             </button>
 
                             <a
-                                href="{{ backpack_url('process') }}"
+                                href="{{ backpack_url('iam/process') }}"
                                 class="btn btn-secondary btn-lg">
 
                                 Cancel

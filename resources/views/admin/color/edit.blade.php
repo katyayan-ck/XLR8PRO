@@ -37,7 +37,7 @@
                     </div>
                     <div class="card-body">
 
-                        <form method="POST" action="{{ backpack_url('color/' . $color->id) }}">
+                        <form method="POST" action="{{ backpack_url('vehicle/color/' . $color->id) }}">
                             @csrf
                             @method('PUT')
 
@@ -117,7 +117,7 @@
                                 <button type="submit" class="btn btn-success btn-lg px-5">
                                     <i class="la la-save"></i> Update Color
                                 </button>
-                                <a href="{{ backpack_url('color') }}" class="btn btn-secondary btn-lg">Cancel</a>
+                                <a href="{{ backpack_url('vehicle/color') }}" class="btn btn-secondary btn-lg">Cancel</a>
                             </div>
                         </form>
                     </div>
@@ -147,7 +147,7 @@
 
                 function loadSubSegments(segmentCode, selected = null) {
                     $.get(
-                        "{{ backpack_url('color/subsegments') }}",
+                        "{{ backpack_url('vehicle/color/subsegments') }}",
                         {
                             segment_code: segmentCode
                         },
@@ -178,7 +178,7 @@
 
                 function loadModels(subSegmentCode, selected = null) {
                     $.get(
-                        "{{ backpack_url('color/models') }}",
+                        "{{ backpack_url('vehicle/color/models') }}",
                         {
                             sub_segment_code: subSegmentCode
                         },
@@ -209,7 +209,7 @@
 
                 function loadVariants(modelCode, selected = null) {
                     $.get(
-                        "{{ backpack_url('color/variants') }}",
+                        "{{ backpack_url('vehicle/color/variants') }}",
                         {
                             model_code: modelCode
                         },

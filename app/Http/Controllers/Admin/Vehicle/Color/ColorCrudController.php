@@ -26,13 +26,13 @@ class ColorCrudController extends CrudController
     public function setup()
     {
         CRUD::setModel(Color::class);
-        CRUD::setRoute(config('backpack.base.route_prefix').'/color');
+        CRUD::setRoute(config('backpack.base.route_prefix').'/vehicle/color');
         CRUD::setEntityNameStrings('color', 'colors');
     }
 
     protected function setupListOperation()
     {
-        if (! backpack_user()->can('color.view')) {
+        if (! backpack_user()->can('VEH_CLR_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view colors.');
         }
 
@@ -41,7 +41,7 @@ class ColorCrudController extends CrudController
 
     public function index()
     {
-        if (! backpack_user()->can('color.view')) {
+        if (! backpack_user()->can('VEH_CLR_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view colors.');
         }
 
@@ -78,7 +78,7 @@ class ColorCrudController extends CrudController
                 $color->is_active ? 'Active' : 'Inactive';
 
             $editUrl =
-                backpack_url("color/{$color->id}/edit");
+                backpack_url("vehicle/color/{$color->id}/edit");
 
             $mapped['action'] = '
             <div class="d-flex gap-2 justify-content-center">
@@ -124,7 +124,7 @@ class ColorCrudController extends CrudController
 
     public function store(ColorRequest $request)
     {
-        if (! backpack_user()->can('color.create')) {
+        if (! backpack_user()->can('VEH_CLR_CREATE')) {
             abort(403, 'Unauthorized. You do not have permission to create colors.');
         }
 
@@ -142,13 +142,13 @@ class ColorCrudController extends CrudController
         )->flash();
 
         return redirect(
-            backpack_url('color')
+            backpack_url('vehicle/color')
         );
     }
 
     public function edit($id)
     {
-        if (! backpack_user()->can('color.edit')) {
+        if (! backpack_user()->can('VEH_CLR_EDIT')) {
             abort(403, 'Unauthorized. You do not have permission to edit colors.');
         }
 
@@ -165,7 +165,7 @@ class ColorCrudController extends CrudController
 
     public function update(ColorRequest $request, $id)
     {
-        if (! backpack_user()->can('color.edit')) {
+        if (! backpack_user()->can('VEH_CLR_EDIT')) {
             abort(403, 'Unauthorized. You do not have permission to edit colors.');
         }
 
@@ -181,12 +181,12 @@ class ColorCrudController extends CrudController
         \Alert::success('Color updated successfully!')
             ->flash();
 
-        return redirect(backpack_url('color'));
+        return redirect(backpack_url('vehicle/color'));
     }
 
     public function create()
     {
-        if (! backpack_user()->can('color.create')) {
+        if (! backpack_user()->can('VEH_CLR_CREATE')) {
             abort(403, 'Unauthorized. You do not have permission to create colors.');
         }
 
@@ -200,7 +200,7 @@ class ColorCrudController extends CrudController
 
     public function destroy($id)
     {
-        if (! backpack_user()->can('color.delete')) {
+        if (! backpack_user()->can('VEH_CLR_DELETE')) {
             abort(403, 'Unauthorized. You do not have permission to delete colors.');
         }
 

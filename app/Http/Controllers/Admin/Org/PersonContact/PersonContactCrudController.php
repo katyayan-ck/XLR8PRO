@@ -16,23 +16,44 @@ class PersonContactCrudController extends CrudController
 {
     use CreateOperation;
     use DeleteOperation;
-    use ListOperation;
+    use ListOperation {
+        search as traitSearch;
+        showDetailsRow as traitShowDetailsRow;
+    }
     use UpdateOperation;
 
+    public function search()
+    {
+        if (! backpack_user()->can('ORG_PRSN_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view person contacts.');
+        }
+
+        return $this->traitSearch();
+    }
+
+    public function showDetailsRow($id)
+    {
+        if (! backpack_user()->can('ORG_PRSN_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view person contacts.');
+        }
+
+        return $this->traitShowDetailsRow($id);
+    }
+
     /**
-     * No dedicated "person_contact.*" permission exists — reuses "person.*"
+     * No dedicated "ORG_PCNT_*" permission exists — reuses "ORG_PRSN_*"
      * since this is a sub-resource of Person.
      */
     public function setup()
     {
         CRUD::setModel(PersonContact::class);
-        CRUD::setRoute(config('backpack.base.route_prefix').'/person-contact');
+        CRUD::setRoute(config('backpack.base.route_prefix').'/org/person-contact');
         CRUD::setEntityNameStrings('person contact', 'person contacts');
     }
 
     protected function setupListOperation()
     {
-        if (! backpack_user()->can('person.view')) {
+        if (! backpack_user()->can('ORG_PRSN_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view person contacts.');
         }
 
@@ -41,7 +62,7 @@ class PersonContactCrudController extends CrudController
 
     public function index()
     {
-        if (! backpack_user()->can('person.view')) {
+        if (! backpack_user()->can('ORG_PRSN_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view person contacts.');
         }
 
@@ -67,7 +88,7 @@ class PersonContactCrudController extends CrudController
                 ?? $contact->person_code;
 
             $mapped['person_code'] = $contact->person_code;
-            $editUrl = backpack_url("person-contact/{$contact->id}/edit");
+            $editUrl = backpack_url("org/person-contact/{$contact->id}/edit");
 
             $mapped['action'] = '
                 <div class="d-flex gap-2 justify-content-center">
@@ -97,7 +118,7 @@ class PersonContactCrudController extends CrudController
 
     public function create()
     {
-        if (! backpack_user()->can('person.create')) {
+        if (! backpack_user()->can('ORG_PRSN_CREATE')) {
             abort(403, 'Unauthorized. You do not have permission to create person contacts.');
         }
 
@@ -118,7 +139,7 @@ class PersonContactCrudController extends CrudController
 
     public function store(PersonContactRequest $request)
     {
-        if (! backpack_user()->can('person.create')) {
+        if (! backpack_user()->can('ORG_PRSN_CREATE')) {
             abort(403, 'Unauthorized. You do not have permission to create person contacts.');
         }
 
@@ -128,12 +149,12 @@ class PersonContactCrudController extends CrudController
 
         \Alert::success('Person Contact created successfully!')->flash();
 
-        return redirect(backpack_url('person-contact'));
+        return redirect(backpack_url('org/person-contact'));
     }
 
     public function edit($id)
     {
-        if (! backpack_user()->can('person.edit')) {
+        if (! backpack_user()->can('ORG_PRSN_EDIT')) {
             abort(403, 'Unauthorized. You do not have permission to edit person contacts.');
         }
 
@@ -157,7 +178,7 @@ class PersonContactCrudController extends CrudController
 
     public function update(PersonContactRequest $request, $id)
     {
-        if (! backpack_user()->can('person.edit')) {
+        if (! backpack_user()->can('ORG_PRSN_EDIT')) {
             abort(403, 'Unauthorized. You do not have permission to edit person contacts.');
         }
 
@@ -169,12 +190,12 @@ class PersonContactCrudController extends CrudController
 
         \Alert::success('Person Contact updated successfully!')->flash();
 
-        return redirect(backpack_url('person-contact'));
+        return redirect(backpack_url('org/person-contact'));
     }
 
     public function destroy($id)
     {
-        if (! backpack_user()->can('person.delete')) {
+        if (! backpack_user()->can('ORG_PRSN_DELETE')) {
             abort(403, 'Unauthorized. You do not have permission to delete person contacts.');
         }
 
