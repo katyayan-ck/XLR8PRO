@@ -381,7 +381,63 @@ class BookingCrudController extends CrudController
             'ref_chassis_reg_no' => 'nullable|string|max:255',
         ];
 
-        $validator = Validator::make($request->all(), $rules);
+        // Friendly field names for validation messages, sourced from the same
+        // centralized label registry the Blade form uses (resources/lang/en/booking.php)
+        // - see .ai/rules/conventions.md section 13.
+        $customAttributes = [
+            'sale_type' => __('booking.fields.sale_type'),
+            'name' => __('booking.fields.customer_name'),
+            'care_of' => __('booking.fields.care_of_type'),
+            'care_of_name' => __('booking.fields.care_of_name'),
+            'mobile' => __('booking.fields.mobile'),
+            'alt_mobile' => __('booking.fields.alt_mobile'),
+            'gender' => __('booking.fields.gender'),
+            'occupation' => __('booking.fields.occupation'),
+            'pan_no' => __('booking.fields.pan_number'),
+            'adhar_no' => __('booking.fields.aadhaar_number'),
+            'gstn' => __('booking.fields.gstin'),
+            'hidden_customer_dob' => __('booking.fields.customer_dob'),
+            'branch' => __('booking.fields.branch'),
+            'location_id' => __('booking.fields.location'),
+            'location_other' => __('booking.fields.location_other'),
+            'segment_id' => __('booking.fields.segment'),
+            'model' => __('booking.fields.model'),
+            'variant' => __('booking.fields.variant'),
+            'color' => __('booking.fields.color'),
+            'accessories' => __('booking.fields.accessories'),
+            'apack_amount' => __('booking.fields.apack_amount'),
+            'chassis' => __('booking.fields.chassis_number'),
+            'buyer_type' => __('booking.fields.buyer_type'),
+            'enummaster1' => __('booking.fields.existing_make_1'),
+            'vehicle_details' => __('booking.fields.existing_model_1'),
+            'enummaster2' => __('booking.fields.existing_make_2'),
+            'vehicle_details2' => __('booking.fields.existing_model_2'),
+            'registration_no' => __('booking.fields.registration_number'),
+            'manufacturing_year' => __('booking.fields.manufacturing_year'),
+            'odometer_reading' => __('booking.fields.odometer_reading'),
+            'expected_price' => __('booking.fields.expected_price'),
+            'offered_price' => __('booking.fields.offered_price'),
+            'exchange_bonus' => __('booking.fields.exchange_bonus'),
+            'booking_mode' => __('booking.fields.booking_mode'),
+            'refrence_no' => __('booking.fields.online_reference_number'),
+            'booking_source' => __('booking.fields.booking_source'),
+            'dsa_details' => __('booking.fields.dsa'),
+            'saleconsultant' => __('booking.fields.sales_consultant'),
+            'delivery_type' => __('booking.fields.delivery_type'),
+            'expected_del_date_actual' => __('booking.fields.expected_delivery_date'),
+            'fin_mode' => __('booking.fields.finance_mode'),
+            'financier' => __('booking.fields.financier'),
+            'loan_status' => __('booking.fields.loan_status'),
+            'make_order' => __('booking.fields.make_sales_order'),
+            'details' => __('booking.fields.remarks'),
+            'ref_customer_name' => __('booking.fields.referee_name'),
+            'ref_mobile_no' => __('booking.fields.referee_mobile'),
+            'ref_existing_model' => __('booking.fields.referee_existing_model'),
+            'ref_variant' => __('booking.fields.referee_variant'),
+            'ref_chassis_reg_no' => __('booking.fields.referee_chassis_reg_no'),
+        ];
+
+        $validator = Validator::make($request->all(), $rules, [], $customAttributes);
 
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();

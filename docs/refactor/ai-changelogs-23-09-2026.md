@@ -746,3 +746,63 @@ line and the one dead `oldpendedit.blade.php` file, explicitly and permanently d
 deliberately left alone). The `@sitedate()`/`site_date()`/`SITE_DATE_FORMAT` pattern established
 here is the template for rolling this out to other modules (Quotation, Enquiry, etc.) in future
 sessions.
+
+## Phase 5, fourth checkpoint: centralized label/validation registry (first slice)
+
+Per `.ai/rules/conventions.md` section 13's "every field's label and validation message must be
+defined once, in a centralized, per-project location... wired for future multi-language support"
+requirement. Built as real Laravel i18n infrastructure (`lang_path()` resolves to `resources/lang`
+in this app), not a shortcut.
+
+**New: `resources/lang/en/booking.php`** - a `'fields' => [...]` array keyed by a stable, semantic
+field name (e.g. `mobile`, `pan_number`, `customer_dob`) rather than by each form's raw input name.
+This is deliberate: the same concept is submitted under *different* input names across screens
+(`store()` reads `panno`, `update()` reads `pan_no` - a pre-existing inconsistency already
+documented during the Phase 3 investigation and explicitly left alone, since renaming form inputs
+touches JS across every screen). The lang file decouples "what the user sees" (label text - now
+unified) from "what the form submits" (input names - untouched).
+
+**Wired into `update()`'s validator** via Laravel's built-in `$customAttributes` 4th argument to
+`Validator::make()` - the idiomatic way to get auto-generated validation messages ("The :attribute
+field is required") to use the friendly label instead of the raw snake_case input name, without
+needing custom per-rule messages. Verified live: `Validator::make([], ['mobile' => 'required'], [],
+['mobile' => __('booking.fields.mobile')])` now produces "The Mobile Number field is required."
+instead of "The mobile field is required."
+
+**Applied the same labels to `add.blade.php`'s `<label>` tags** (10 fields: mobile, alt_mobile,
+gender, occupation, pan_no, adhar_no, gstn, customer_dob, branch, location, location_other) -
+**found and corrected a targeting mistake mid-checkpoint**: initially converted
+`edit.blade.php`'s labels, then a live HTTP round trip showed none of them rendering. Traced this to
+BUG-107 (new, documented in full in `known-bugs-report.md`): `edit.blade.php` is completely
+orphaned - `BookingCrudController::edit()` delegates to Backpack's `UpdateOperation` trait, which is
+configured via `CRUD::setEditView('admin.booking.add')` to use `add.blade.php` for both create AND
+edit. Re-applied the label conversion to the actually-live file instead. This is the third orphaned
+Booking view found this session (alongside BUG-106's `delivered-view` and the dead `oldpendedit`),
+suggesting a broader cleanup opportunity flagged but not pursued here.
+
+### Verification
+
+- `php -l` clean on the new lang file and controller; `vendor/bin/pint --dirty --format agent` →
+  clean (single-quote style fix on the lang file).
+- **New: `tests/Unit/Lang/BookingLangTest.php`** (3 tests, 57 assertions) - the lang file returns
+  the expected shape, the validator correctly uses a centralized label in a real failing-validation
+  message, and a guard test that greps the controller for every `booking.fields.*` reference and
+  asserts each one exists in the registry (catches a typo'd lang key silently falling back to the
+  raw input name - caught 57 live references across `update()`'s 51-field `$customAttributes` map
+  plus the 10 Blade label conversions in one pass).
+- Live HTTP round trips: `GET sales/booking/{id}/edit` (the real, `add.blade.php`-backed edit form)
+  and `GET sales/booking/create` both 200, confirmed all 3 spot-checked labels ("Mobile Number",
+  "Aadhaar Number", "PAN Number") render correctly. `update()`'s custom-attributes path itself
+  couldn't be round-tripped over HTTP (CSRF blocks `PUT` `Request::create()` calls in this test
+  harness, the same established limitation noted throughout this session) - verified via a direct,
+  isolated `Validator::make()` call instead, matching the established methodology for this class of
+  limitation.
+- Full suite re-run (`tests/Unit/Services/` + `tests/Unit/Lang/`) → 73 passed, 198 assertions; same
+  8 pre-existing unrelated failures as every checkpoint this phase.
+
+**This is a first slice, not the full registry.** `update()`'s 51 fields and `add.blade.php`'s 10
+converted labels establish the pattern; `store()`'s validator (a different field-name set),
+`otfSave()`, `requestRefund()`, and every other Booking form's validators/labels are not yet wired
+to this registry, left for follow-up checkpoints. The lang file itself already has more label keys
+defined than are currently wired up (booking_amount, segment, model, variant, etc.), ready for the
+next slice to consume.

@@ -332,7 +332,7 @@
                                     <!-- PAN No -->
                                     <div class="col-sm-3">
                                         <div class="form-group">
-                                            <label for="panno">PAN Card No.</label>
+                                            <label for="panno">{{ __('booking.fields.pan_number') }}</label>
                                             <input type="text" name="{{ $isEdit ? 'pan_no' : 'panno' }}" id="panno" class="form-control"
                                                 value="{{ old($isEdit ? 'pan_no' : 'panno', $entry?->pan_no ?? ($enquiry->pan_no ?? ($q['panno'] ?? ''))) }}">
                                         </div>
@@ -341,7 +341,7 @@
                                     <!-- Aadhar No -->
                                     <div class="col-sm-3">
                                         <div class="form-group">
-                                            <label for="adharno">Aadhar No.</label>
+                                            <label for="adharno">{{ __('booking.fields.aadhaar_number') }}</label>
                                             <input type="text" name="{{ $isEdit ? 'adhar_no' : 'adharno' }}" id="adharno" class="form-control"
                                                 value="{{ old($isEdit ? 'adhar_no' : 'adharno', $entry?->adhar_no ?? ($enquiry->adhar_no ?? ($q['adharno'] ?? ''))) }}">
                                         </div>
@@ -350,7 +350,7 @@
                                     <!-- GSTN -->
                                     <div class="col-sm-3">
                                         <div class="form-group" id="gstn-group">
-                                            <label for="gstn">GSTIN <span class="required-mark"
+                                            <label for="gstn">{{ __('booking.fields.gstin') }} <span class="required-mark"
                                                     style="display: none;">*</span></label>
                                             <input type="text" name="gstn" id="gstn" class="form-control"
                                                 placeholder="Enter GSTN No." disabled
@@ -444,7 +444,7 @@
                                     <!-- Mobile -->
                                     <div class="col-sm-3">
                                         <div class="form-group">
-                                            <label for="mobile">Contact No. <span class="required-mark">*</span></label>
+                                            <label for="mobile">{{ __('booking.fields.mobile') }} <span class="required-mark">*</span></label>
                                             <input type="text" name="mobile" id="mobile" class="form-control"
                                                 required maxlength="10"
                                                 value="{{ old('mobile', $entry?->mobile ?? ($enquiry->mobile ?? ($q['mobile'] ?? ''))) }}">
@@ -454,7 +454,7 @@
                                     <!-- Alternate Mobile -->
                                     <div class="col-sm-3">
                                         <div class="form-group">
-                                            <label for="altmobile">Alternate Contact No.</label>
+                                            <label for="altmobile">{{ __('booking.fields.alt_mobile') }}</label>
                                             <input type="text" name="{{ $isEdit ? 'alt_mobile' : 'altmobile' }}" id="altmobile" class="form-control"
                                                 value="{{ old($isEdit ? 'alt_mobile' : 'altmobile', $entry?->alt_mobile ?? ($enquiry->alternate_mobile ?? ($q['alt_mobile'] ?? ''))) }}">
                                         </div>
@@ -463,7 +463,7 @@
                                     <!-- Gender -->
                                     <div class="col-sm-3">
                                         <div class="form-group">
-                                            <label for="gender">Gender <span class="required-mark">*</span></label>
+                                            <label for="gender">{{ __('booking.fields.gender') }} <span class="required-mark">*</span></label>
                                             <select name="gender" id="gender" class="form-control form-select" required>
                                                 @php $gndr = old('gender', $entry?->gender ?? ($enquiry->gender ?? ($q['gender'] ?? ''))); @endphp
                                                 <option value="Male" {{ $gndr == 'Male' ? 'selected' : '' }}>Male</option>
@@ -476,7 +476,7 @@
                                     <!-- Occupation -->
                                     <div class="col-sm-3">
                                         <div class="form-group">
-                                            <label for="occupation">Occupation <span class="required-mark">*</span></label>
+                                            <label for="occupation">{{ __('booking.fields.occupation') }} <span class="required-mark">*</span></label>
                                             <select name="occupation" id="occupation" class="form-control form-select" required>
                                                 @php $occ = old('occupation', $entry?->occ ?? ($enquiry->occupation_type ?? ($q['occ'] ?? ''))); @endphp
                                                 <option value="" disabled {{ empty($occ) ? 'selected' : '' }}>-- Select Occupation --</option>
@@ -494,7 +494,7 @@
                                     <!-- Customer D.O.B. -->
                                     <div class="col-sm-3">
                                         <div class="form-group" id="dob-group">
-                                            <label for="customerdob">Customer D.O.B. <span class="required-mark">*</span></label>
+                                            <label for="customerdob">{{ __('booking.fields.customer_dob') }} <span class="required-mark">*</span></label>
                                             @php $dobVal = $entry?->c_dob ?? ($enquiry->dob ?? ($q['c_dob'] ?? '')); @endphp
                                             <input type="text" name="customerdob" id="customerdob" class="form-control"
                                                 placeholder="dd-mmm-yyyy" required
@@ -594,7 +594,7 @@
 
                                     <div class="col-sm-3">
                                         <div class="form-group">
-                                            <label for="branch">Branch <span class="required-mark">*</span></label>
+                                            <label for="branch">{{ __('booking.fields.branch') }} <span class="required-mark">*</span></label>
                                             <select name="branch" id="branch" class="form-control form-select" required>
                                                 <option value="" disabled {{ empty($entry?->branch_code) && empty($enquiry->dealer_branch) ? 'selected' : '' }}>-- Select Branch --</option>
                                                 @foreach ($data['branches'] ?? [] as $branch)
@@ -609,7 +609,7 @@
 
                                     <div class="col-sm-3">
                                         <div class="form-group">
-                                            <label for="location">Location <span class="required-mark">*</span></label>
+                                            <label for="location">{{ __('booking.fields.location') }} <span class="required-mark">*</span></label>
                                             <select name="{{ $isEdit ? 'location_id' : 'location' }}" id="location" class="form-control form-select" required disabled>
                                                 <option value="" disabled selected>-- Select Location --</option>
                                             </select>
@@ -618,7 +618,7 @@
 
                                     <div class="col-sm-3">
                                         <div class="form-group" id="othloc">
-                                            <label for="locationother">Other Location <span class="required-mark" style="display: none;">*</span></label>
+                                            <label for="locationother">{{ __('booking.fields.location_other') }} <span class="required-mark" style="display: none;">*</span></label>
                                             <input type="text" name="{{ $isEdit ? 'location_other' : 'locationother' }}" id="locationother"
                                                 class="form-control" disabled value="{{ old($isEdit ? 'location_other' : 'locationother', $entry?->location_other ?? '') }}">
                                         </div>
