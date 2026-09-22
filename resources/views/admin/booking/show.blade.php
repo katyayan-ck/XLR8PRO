@@ -641,7 +641,7 @@
                                 @foreach ($receiptLogs as $log)
                                 @php $iurl = $log->getFirstMediaUrl('amount-proof') @endphp
                                 <tr>
-                                    <td>{{ \Carbon\Carbon::parse($log->date)->format('d-M-Y') }}</td>
+                                    <td>@sitedate($log->date)</td>
                                     <td>{{ $log->type_number ?? 'N/A' }}</td>
                                     <td>{{ number_format($log->amount, 2) }}</td>
                                     <td>
@@ -963,7 +963,7 @@
                 <div class="col-sm-3">
                     <label class="small fw-bold">Booking Date</label>
                     <input type="text" class="form-control"
-                        value="{{ $booking->booking_date ? \Carbon\Carbon::parse($booking->booking_date)->format('d-M-Y') : 'N/A' }}"
+                        value="@sitedate($booking->booking_date)"
                         readonly>
                 </div>
                 <div class="col-sm-3">
@@ -994,7 +994,7 @@
                 <div class="col-sm-3">
                     <label class="small fw-bold">Receipt/Voucher Date</label>
                     <input type="text" class="form-control"
-                        value="{{ $booking->receipt_date ? \Carbon\Carbon::parse($booking->receipt_date)->format('d-M-Y') : 'N/A' }}"
+                        value="@sitedate($booking->receipt_date)"
                         readonly>
                 </div>
 
@@ -1117,7 +1117,7 @@
             <label class="small fw-bold">Customer D.O.B.</label>
 
             <input type="text" class="form-control"
-                value="{{ $booking->c_dob ? \Carbon\Carbon::parse($booking->c_dob)->format('d-M-Y') : 'N/A' }}"
+                value="@sitedate($booking->c_dob)"
                 readonly>
         </div>
 
@@ -1291,7 +1291,7 @@
         <div class="col-sm-3">
             <label class="small fw-bold">Expected Delivery Date</label>
             <input type="text" class="form-control"
-                value="{{ $booking->del_date ? \Carbon\Carbon::parse($booking->del_date)->format('d-M-Y') : 'N/A' }}"
+                value="@sitedate($booking->del_date)"
                 readonly>
 
         </div>
@@ -1341,7 +1341,7 @@
             </label>
 
             <input type="text" class="form-control"
-                value="{{ $booking->otf_date ? \Carbon\Carbon::parse($booking->otf_date)->format('d-M-Y') : 'N/A' }}"
+                value="@sitedate($booking->otf_date)"
                 readonly>
 
         </div>
