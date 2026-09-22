@@ -838,3 +838,82 @@ fields, mostly overlapping with `update()`'s set under different input names) + 
 Blade `<label>` tags. Still not wired up: `otfSave()`, `requestRefund()`, and the dedicated
 sub-domain edit screens (KYC/DMS/Insurance/RTO/Delivery/Finance/Exchange/Refund/OTF), each of which
 has its own smaller validator in `BookingCrudController`. Left for further follow-up checkpoints.
+
+## Phase 5, sixth checkpoint: label registry extended to 8 more validators
+
+Continues the mechanical label-registry rollout to the remaining `Validator::make()` calls in
+`BookingCrudController` that lacked custom attribute names. Added ~35 new field keys to
+`resources/lang/en/booking.php` covering refund, payout, finance, exchange, DMS, pending-update, and
+receipt/amount fields.
+
+**Wired into 8 more validators**: `requestRefund()`, `refundUpdate()`, `refundedUpdate()`,
+`PayoutUpdate()`, `finUpdate()`, `exchangeUpdate()`, `addAmount()`, `addReceipt()`,
+`storeFollowup()`, `dmsupdate()`, `pendingUpdate()`.
+
+**Deliberately skipped `dealerInvoiceUpdate()`**: every rule in that validator already has an
+explicit custom message covering every possible failure case (`dms_invoice_number.required`,
+`.regex`, etc.) - Laravel's custom per-rule messages take precedence over `:attribute`
+substitution, so adding custom attributes there would have zero visible effect. Not wired, to avoid
+dead code.
+
+**`dmsupdate()`/`exchangeUpdate()`** had a mix of fields with explicit custom messages (kept as-is)
+and fields without (now get the centralized label via `:attribute` substitution) - both custom
+messages and custom attributes were passed together where applicable, matching
+`Validator::make($data, $rules, $messages, $customAttributes)`'s actual 4-argument signature.
+
+### Verification
+
+- `php -l` clean; `vendor/bin/pint --dirty --format agent` → clean.
+- The existing guard test in `BookingLangTest` automatically verified all new references - 128
+  assertions total, up from 73, zero test changes needed.
+- Live spot-checks: IFSC Code and DMS Number required-field messages both render correctly with
+  their centralized labels.
+- Live HTTP round trips: `create`, `{id}/edit`, and `exchange/{id}/edit` all 200 (confirms none of
+  the 8 validator edits broke their controller methods' surrounding code).
+- Full suite re-run (`tests/Unit/Services/` + `tests/Unit/Lang/`) → 73 passed, 269 assertions; same
+  8 pre-existing unrelated failures as every checkpoint this phase.
+
+**Label registry now covers 15 of ~18 `Validator::make()` call sites** in `BookingCrudController`
+(the 3 remaining are the sub-domain screens' own smaller validators - KYC, Insurance, RTO - each
+already has some custom messages and would need the same field-by-field review as this checkpoint).
+This is very close to full coverage of the controller's validation surface.
+
+## Phase 5, seventh checkpoint: label registry completed for all remaining validators
+
+Completes the mechanical label-registry rollout to every remaining validation call site in
+`BookingCrudController`, including the sub-domain screens' own `$request->validate()` calls
+(different from `Validator::make()`, but the same 3rd/4th-argument `$messages`/`$customAttributes`
+signature applies). Added ~20 more lang keys (insurance, RTO, trade/registration fields).
+
+**Wired into 6 more validators**: `kycUpdate()`, `insUpdate()`, `rtoUpdate()`,
+`PendDeliveryUpdate()`, `doUpdate()`, `receiptUpdate()`.
+
+**`PendDeliveryUpdate()`'s 17 dynamically-generated photo-collection rules** (`photos.{collection}`
+for each of `BookingDeliveryService::PHOTO_COLLECTIONS`) get their labels generated programmatically
+(`ucwords(str_replace('_', ' ', $collection))`) rather than 17 more hand-maintained lang file
+entries - the collection names are already readable snake_case (`windshield_glass` →
+"Windshield Glass"), so a mechanical transform is more maintainable than duplicating the same
+strings in two places.
+
+**Caught and fixed one duplicate lang key** (`instrument_ref_no`, added once for `finUpdate()`
+earlier in this phase, then accidentally re-added for `doUpdate()` in this checkpoint) via a
+post-edit duplicate-key scan before committing.
+
+### Verification
+
+- `php -l` clean on all changed files.
+- Duplicate-key scan (`preg_match_all` over the raw lang file source) confirms all 142 defined keys
+  are unique.
+- The guard test in `BookingLangTest` automatically verified all new references - 146 assertions
+  total, up from 128, zero test changes needed.
+- `vendor/bin/pint --dirty --format agent` → clean.
+- Live HTTP round trip: `GET sales/booking/insurance/{id}/edit` → 200 (confirms `insUpdate()`'s
+  validator change didn't affect its edit-screen sibling `insedit()`/`insEdit()`).
+- Full suite re-run (`tests/Unit/Services/` + `tests/Unit/Lang/`) → 73 passed, 287 assertions; same
+  8 pre-existing unrelated failures as every checkpoint this phase.
+
+**Every `Validator::make()`/`$request->validate()` call site in `BookingCrudController` now has
+centralized labels wired in, except `dealerInvoiceUpdate()`** (deliberately skipped - every one of
+its rules already has an explicit custom message, so custom attributes would have zero visible
+effect there). This completes the label/validation-message registry piece of Phase 5's original
+scope for the Booking module.
