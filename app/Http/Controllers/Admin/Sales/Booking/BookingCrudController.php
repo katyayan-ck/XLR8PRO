@@ -41,6 +41,7 @@ use App\Rules\PanNumber;
 use App\Services\EnquiryReferenceService;
 use App\Services\IdentifierService;
 use App\Services\OrgService;
+use App\Services\Sales\Booking\BookingDmsService;
 use App\Services\Sales\Booking\BookingKycService;
 use App\Services\SystemSettingService;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
@@ -88,6 +89,7 @@ class BookingCrudController extends CrudController
         protected IdentifierService $identifiers,
         protected EnquiryReferenceService $enquiryRef,
         protected BookingKycService $kycService,
+        protected BookingDmsService $dmsService,
     ) {
         parent::__construct();
     }
@@ -4439,96 +4441,10 @@ class BookingCrudController extends CrudController
         }
 
         $booking = Booking::findOrFail($id);
-
-        $enquiry = null;
-
-        if (! empty($booking->enq_no)) {
-            $enquiry = Enquiry::resolveByAnyReference($booking->enq_no);
-        }
-
-        $branchCode = $booking->branch_code
-            ?? $enquiry?->dealer_branch;
-
-        $locationCode = $booking->location_code
-            ?? $enquiry?->dealer_location;
-
-        $segmentCode = $booking->segment_code
-            ?? $enquiry?->segment_code;
-
-        $modelCode = $booking->model_code
-            ?? $enquiry?->model_code;
-
-        $variantCode = $booking->variant_code
-            ?? $enquiry?->variant_code;
-
-        $colorCode = $booking->color_code
-            ?? $enquiry?->color_code;
-
-        $branchName = 'N/A';
-
-        if (! empty($branchCode)) {
-            $branchName = Branch::where('code', $branchCode)
-                ->value('name');
-
-            if (! $branchName) {
-                $branchName = Branch::where('branch_code', $branchCode)
-                    ->value('name');
-            }
-        }
-
-        $branchName = $branchName ?: 'N/A';
-
-        $locationName = 'N/A';
-
-        if (! empty($locationCode)) {
-            $locationName = Location::where('code', $locationCode)
-                ->value('name');
-        }
-
-        if (! $locationName) {
-            $locationName = $booking->location_other
-                ?? 'N/A';
-        }
-
-        $collectorName = $booking->col_by
-            ? (User::find($booking->col_by)->name ?? 'N/A')
-            : 'N/A';
-
-        $booking->booking_date = $booking->booking_date
-            ?? $enquiry?->created_at;
-
-        $booking->name = $booking->name
-            ?? $enquiry?->name;
-
-        $booking->branch_code = $branchCode;
-        $booking->location_code = $locationCode;
-        $booking->segment_code = $segmentCode;
-        $booking->model_code = $modelCode;
-        $booking->variant_code = $variantCode;
-        $booking->color_code = $colorCode;
-
         $fromPending = $request->query('from') === 'pending';
+        $data = $this->dmsService->resolveEditData($booking, $fromPending);
 
-        $isBevOrPersonal = in_array(
-            (int) ($segmentCode ?? 0),
-            [753, 21589]
-        );
-
-        $data = [
-            'branch' => $branchName,
-            'location' => $locationName,
-            'collector_name' => $collectorName,
-            'accessories' => $booking->accessories ?? 'N/A',
-            'total_amount' => $booking->total_amount ?? 0,
-            'is_bev_or_personal' => $isBevOrPersonal,
-            'from_pending' => $fromPending,
-            'so_required' => $fromPending && $isBevOrPersonal,
-        ];
-
-        return view(
-            'admin.booking.dms-edit',
-            compact('booking', 'data')
-        );
+        return view('admin.booking.dms-edit', compact('booking', 'data'));
     }
 
     public function dmsupdate(Request $request, $id)
@@ -4585,119 +4501,15 @@ class BookingCrudController extends CrudController
                 ->withInput();
         }
 
-        $remarks = [];
-
-        if ($booking->dms_no !== $request->dms_no) {
-            $remarks[] = "DMS Booking No. updated to {$request->dms_no}";
-        }
-        if ($booking->dms_otf !== $request->dms_otf) {
-            $remarks[] = "DMS OTF updated to {$request->dms_otf}";
-        }
-        if ($booking->otf_date !== $request->hidden_otf_date) {
-            $remarks[] = "DMS OTF Date updated to {$request->hidden_otf_date}";
-        }
-        if ($booking->order == 2 && $booking->dms_so !== $request->dms_so) {
-            $remarks[] = "DMS SO Number updated to {$request->dms_so}";
-        }
-
-        $updateData = [
+        $booking = $this->dmsService->apply($booking, [
             'dms_no' => $request->dms_no,
             'dms_otf' => $request->dms_otf,
             'otf_date' => $request->hidden_otf_date,
-        ];
-
-        if ($booking->order == 2) {
-            $updateData['dms_so'] = $request->dms_so;
-        }
-
-        $booking->update($updateData);
-        $booking->refresh();
-
-        $existingPending = collect(explode(',', $booking->pending_remark ?? ''))
-            ->map(fn ($item) => trim($item))
-            ->filter()
-            ->toArray();
-
-        $dmsPendingItems = [
-            'DMS Booking no needs to be updated',
-            'DMS OTF needs to be updated',
-            'DMS OTF Date needs to be updated',
-            'DMS SO number needs to be updated',
-        ];
-
-        $remainingPending = array_diff($existingPending, $dmsPendingItems);
-
-        $newPending = [];
-        if (empty($booking->dms_no)) {
-            $newPending[] = 'DMS Booking no needs to be updated';
-        }
-        if (empty($booking->dms_otf)) {
-            $newPending[] = 'DMS OTF needs to be updated';
-        }
-        if (empty($booking->otf_date)) {
-            $newPending[] = 'DMS OTF Date needs to be updated';
-        }
-        if ($booking->order == 2 && empty($booking->dms_so)) {
-            $newPending[] = 'DMS SO number needs to be updated';
-        }
-
-        $finalPending = array_merge($remainingPending, $newPending);
-        $finalPending = array_unique(array_filter($finalPending));
-
-        $booking->pending_remark = ! empty($finalPending)
-            ? implode(' , ', array_map('trim', $finalPending))
-            : null;
-
-        $booking->pending = count($finalPending);
-
-        if ($booking->pending === 0) {
-            $booking->status = 1;
-            Log::info('Booking status set to 1 (no pending fields left)', ['booking_id' => $id]);
-        }
-
-        $isPersonalOrBev = in_array($booking->segment_code ?? 0, [753, 21589]);
-        $booking->order = 2;
-        if ($isPersonalOrBev) {
-            if (empty(trim($request->input('dms_so', '')))) {
-                $booking->order = 3;
-                Log::info('Order set to 3 - Personal/BEV from pending DMS, SO missing in this submit', [
-                    'booking_id' => $id,
-                    'segment_code' => $booking->segment_code ?? 'N/A',
-                ]);
-            } else {
-                Log::info('Order remains 2 - Personal/BEV but SO provided in this submit', ['booking_id' => $id]);
-            }
-        }
-
-        if ($booking->pending === 0) {
-            $booking->status = 1;
-            Log::info('Booking status set to 1 (no pending fields left)', ['booking_id' => $id]);
-        }
-
-        $booking->saveQuietly();
-
-        $booking->addHistory(
-            'commented',
-            'Pending Order Processed',
-            'DMS / SO details processed successfully',
-            [
-                'module' => 'Pending Order Verification',
-                'dms_no' => $booking->dms_no,
-                'dms_otf' => $booking->dms_otf,
-                'dms_so' => $booking->dms_so,
-                'status' => $booking->status,
-                'order_status' => $booking->order,
-            ],
-            null,
-            backpack_user()
-        );
-
-        $message = 'DMS details updated successfully!';
+            'dms_so' => $request->input('dms_so', ''),
+        ], $booking->order == 2);
 
         $message = 'DMS details updated successfully!';
         $fromPending = $request->input('from') === 'pending';
-
-        $message = 'DMS details updated successfully!';
 
         if ($fromPending) {
             return redirect()->route('sales.booking.pending-order')

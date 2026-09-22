@@ -15,6 +15,7 @@ use App\Services\IdentifierService;
 use App\Services\NotificationService;
 use App\Services\OtpNotificationService;
 use App\Services\RBACService;
+use App\Services\Sales\Booking\BookingDmsService;
 use App\Services\Sales\Booking\BookingKycService;
 use Illuminate\Cache\CacheManager;
 use Illuminate\Contracts\Auth\Access\Gate as GateContract;
@@ -71,6 +72,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(BookingKycService::class, function ($app) {
             return new BookingKycService($app->make(IdentifierService::class));
         });
+        $this->app->singleton(BookingDmsService::class);
 
         // SuperAdmin wildcard bypass + user-level permission denial check — registered here in
         // register() (not boot()), and via afterResolving rather than the Gate facade, so this
