@@ -9,8 +9,7 @@
 
             <div class="col-md-3">
                 <strong>Booking Date</strong>
-                <p class="mb-0">{{ $booking->booking_date ?
-                    \Carbon\Carbon::parse($booking->booking_date)->format('d-M-Y') : 'N/A' }}</p>
+                <p class="mb-0">@sitedate($booking->booking_date)</p>
             </div>
 
             <div class="col-md-3">

@@ -197,7 +197,7 @@
                             <div class="col-sm-3 form-group">
                                 <label>Invoice Date</label>
                                 <input type="text" class="form-control"
-                                    value="{{ $booking->inv_date ? \Carbon\Carbon::parse($booking->inv_date)->format('d-M-Y') : 'N/A' }}"
+                                    value="@sitedate($booking->inv_date)"
                                     readonly>
                             </div>
                             <div class="col-sm-3 form-group">
@@ -208,7 +208,7 @@
                             <div class="col-sm-3 form-group">
                                 <label>Dealer Invoice Date</label>
                                 <input type="text" class="form-control"
-                                    value="{{ $booking->dealer_inv_date ? \Carbon\Carbon::parse($booking->dealer_inv_date)->format('d-M-Y') : 'N/A' }}"
+                                    value="@sitedate($booking->dealer_inv_date)"
                                     readonly>
                             </div>
                         </div>

@@ -40,6 +40,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        require_once app_path('Helpers/date-format.php');
+
         // // Register services as singletons for performance
         $this->app->singleton(RBACService::class, function ($app) {
             return new RBACService;
