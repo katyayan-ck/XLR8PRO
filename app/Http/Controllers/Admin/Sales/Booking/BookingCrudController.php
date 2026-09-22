@@ -217,6 +217,61 @@ class BookingCrudController extends CrudController
             ? 'nullable|string|max:255'
             : 'required|string|max:255';
 
+        // Friendly field names for validation messages, sourced from the same
+        // centralized label registry the Blade form uses (resources/lang/en/booking.php)
+        // - see .ai/rules/conventions.md section 13. Shared across all 3 validator calls
+        // below; Validator::make() ignores any key not present in that call's own $rules.
+        $customAttributes = [
+            'customertype' => __('booking.fields.customer_type'),
+            'user' => __('booking.fields.collected_by'),
+            'hiddenbookingdate' => __('booking.fields.booking_date'),
+            'refrenceno' => __('booking.fields.online_reference_number'),
+            'dsadetails' => __('booking.fields.dsa'),
+            'branch' => __('booking.fields.branch'),
+            'location' => __('booking.fields.location'),
+            'segment' => __('booking.fields.segment'),
+            'model' => __('booking.fields.model'),
+            'variant' => __('booking.fields.variant'),
+            'color' => __('booking.fields.color'),
+            'sale_type' => __('booking.fields.sale_type'),
+            'name' => __('booking.fields.customer_name'),
+            'careof' => __('booking.fields.care_of_type'),
+            'careofname' => __('booking.fields.care_of_name'),
+            'mobile' => __('booking.fields.mobile'),
+            'altmobile' => __('booking.fields.alt_mobile'),
+            'panno' => __('booking.fields.pan_number'),
+            'adharno' => __('booking.fields.aadhaar_number'),
+            'dmsotf' => __('booking.fields.dms_otf'),
+            'chassis' => __('booking.fields.chassis_number'),
+            'deliverytype' => __('booking.fields.delivery_type'),
+            'hiddenexpecteddeldate' => __('booking.fields.expected_delivery_date'),
+            'finmode' => __('booking.fields.finance_mode'),
+            'financier' => __('booking.fields.financier'),
+            'loanstatus' => __('booking.fields.loan_status'),
+            'saleconsultant' => __('booking.fields.sales_consultant'),
+            'apackamount' => __('booking.fields.apack_amount'),
+            'details' => __('booking.fields.remarks'),
+            'pincode' => __('booking.fields.pincode'),
+            'vpo' => __('booking.fields.vpo'),
+            'customer_tehsil' => __('booking.fields.tehsil'),
+            'customer_district' => __('booking.fields.district'),
+            'city' => __('booking.fields.city'),
+            'territory' => __('booking.fields.territory'),
+            'referredby' => __('booking.fields.referred_by'),
+            'refcustomername' => __('booking.fields.referee_name'),
+            'refmobileno' => __('booking.fields.referee_mobile'),
+            'refexistingmodel' => __('booking.fields.referee_existing_model'),
+            'refvariant' => __('booking.fields.referee_variant'),
+            'refchassisregno' => __('booking.fields.referee_chassis_reg_no'),
+            'bookingsource' => __('booking.fields.booking_source'),
+            'bookingamount' => __('booking.fields.booking_amount'),
+            'bookingmode' => __('booking.fields.booking_mode'),
+            'coltype' => __('booking.fields.collection_type'),
+            'mode' => __('booking.fields.payment_mode'),
+            'receiptno' => __('booking.fields.receipt_number'),
+            'hiddenreceiptdate' => __('booking.fields.receipt_date'),
+        ];
+
         $validator = Validator::make($request->all(), [
             'customertype' => 'required|string|max:255',
             'user' => 'nullable',
@@ -263,7 +318,7 @@ class BookingCrudController extends CrudController
             'refexistingmodel' => 'nullable|string|max:255',
             'refvariant' => 'nullable|string|max:255',
             'refchassisregno' => 'nullable|string|max:255',
-        ]);
+        ], [], $customAttributes);
 
         if ($validator->fails()) {
             Log::warning('[STORE] Base validation failed', [
@@ -283,7 +338,7 @@ class BookingCrudController extends CrudController
                 'bookingmode' => 'required|string|max:255',
                 'coltype' => 'required',
                 'mode' => 'required|in:Cash,Cheque,Bank Transfer,UPI',
-            ]);
+            ], [], $customAttributes);
 
             if ($validator->fails()) {
                 Log::warning('[STORE] Actual-only validation failed', [
@@ -298,7 +353,7 @@ class BookingCrudController extends CrudController
             $validator = Validator::make($request->all(), [
                 'receiptno' => 'required|string|max:255',
                 'hiddenreceiptdate' => 'required|date',
-            ]);
+            ], [], $customAttributes);
 
             if ($validator->fails()) {
                 Log::warning('[STORE] Receipt validation failed', [
