@@ -44,6 +44,7 @@ use App\Services\OrgService;
 use App\Services\Sales\Booking\BookingDmsService;
 use App\Services\Sales\Booking\BookingInsuranceService;
 use App\Services\Sales\Booking\BookingKycService;
+use App\Services\Sales\Booking\BookingRtoService;
 use App\Services\SystemSettingService;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
@@ -92,6 +93,7 @@ class BookingCrudController extends CrudController
         protected BookingKycService $kycService,
         protected BookingDmsService $dmsService,
         protected BookingInsuranceService $insuranceService,
+        protected BookingRtoService $rtoService,
     ) {
         parent::__construct();
     }
@@ -7524,130 +7526,12 @@ class BookingCrudController extends CrudController
         }
 
         $booking = Booking::findOrFail($id);
-        $rto = XlRto::where('bid', $id)->first();
-        if ($booking->enq_no) {
-
-            $enquiry = Enquiry::resolveByAnyReference($booking->enq_no);
-            if ($enquiry) {
-                $booking->name = $enquiry->name;
-                $booking->care_of = $enquiry->care_of;
-                $booking->care_of_type = $enquiry->care_of_type;
-                $booking->mobile = $enquiry->mobile;
-                $booking->branch_code = $enquiry->dealer_branch;
-                $booking->location_code = $enquiry->dealer_location;
-                $booking->segment_code = $enquiry->segment_code;
-                $booking->model_code = $enquiry->model_code;
-                $booking->variant_code = $enquiry->variant_code;
-                $booking->color_code = $enquiry->color_code;
-                $booking->location_other = $enquiry->dealer_location_other
-                    ?? $booking->location_other;
-            }
-        }
-        $data = [];
-        $data['permit_map'] = OrgService::getKeyValuesByCode('RTO_PERMIT')
-            ->sortBy('id')
-            ->values()
-            ->mapWithKeys(function ($permit, $index) {
-                return [
-                    (string) ($index + 1) => $permit->value,
-                ];
-            })
-            ->toArray();
-        $data['segments'] = CommonHelper::getVehicleSegments() ?? [];
-        $data['models'] = CommonHelper::getVehicleModels(
-            $booking->segment_code ?? null
-        ) ?? [];
-
-        $data['variants'] = CommonHelper::getVehicleVariants(
-            $booking->model_code ?? null
-        ) ?? [];
-
-        $data['colors'] = CommonHelper::getVehicleColors(
-            $booking->variant_code ?? null
-        ) ?? [];
-
-        $data['branch'] = Branch::where('code', $booking->branch_code)
-            ->value('name') ?? 'N/A';
-
-        $data['location'] = $booking->location_code
-            ? (Location::where('code', $booking->location_code)->value('name') ?? 'N/A')
-            : ($booking->location_other ?? 'N/A');
-
-        $data['fbranch'] = $data['branch'];
-        $data['flocation'] = $data['location'];
-
-        $data['rto_rules'] = XlRtoRules::select(
-            'sale_type',
-            'permit',
-            'body_type',
-            'reg_no_type',
-            'trc_number',
-            'trc_pay',
-            'trc_copy',
-            'app_no',
-            'tax_pay',
-            'veh_reg',
-            'tax_copy'
-        )->get()->toArray();
-
-        $data['allusers'] = OrgService::usersByDepartment('SLS');
-
-        $data['saleconsultants'] = OrgService::usersByDesignation('CNS');
-
-        $stock = Stock::find($booking->chassis_no);
-
-        if ($stock) {
-
-            $data['bchasis'] = $stock->chassis_no;
-
-            $data['chassis'] = Stock::where(
-                'model_code',
-                $stock->model_code
-            )
-                ->select('chassis_no', 'id')
-                ->get()
-                ->toArray();
-        } else {
-
-            $data['bchasis'] = 'Not Available';
-            $data['chassis'] = [];
-        }
-
-        $data['dsa_details'] = XL_DSA_MASTER::all()
-            ->map(fn ($dsa) => [
-                'id' => $dsa->id,
-                'name' => $dsa->name,
-                'mobile' => $dsa->mobile,
-                'email' => $dsa->email,
-                'location' => $dsa->dlocation,
-            ])->toArray();
-
-        $collector = User::find($booking->col_by);
-
-        $data['collector_name'] = $collector
-            ? $collector->name.' - ('.($collector->emp_code ?? 'N/A').')'
-            : 'N/A';
-
-        $drec = XL_DSA_MASTER::find($booking->dsa_id);
-
-        $dsaname = $drec
-            ? $drec->name.' - '.$drec->mobile
-            : 'N/A';
-
-        $data['make1'] = $booking->exist_oem1 ?? 'N/A';
-        $data['make2'] = $booking->exist_oem2 ?? 'N/A';
-
+        ['rto' => $rto, 'data' => $data, 'dsaname' => $dsaname] = $this->rtoService->resolveEditData($booking);
         $uid = backpack_auth()->id();
 
         return view(
             'admin.booking.rto-edit',
-            compact(
-                'booking',
-                'rto',
-                'data',
-                'dsaname',
-                'uid'
-            )
+            compact('booking', 'rto', 'data', 'dsaname', 'uid')
         );
     }
 
@@ -7855,228 +7739,40 @@ class BookingCrudController extends CrudController
     //     }
     // }
 
-    private function hasExistingRtoMedia($id, $collection)
-    {
-        $rto = XlRto::where('bid', $id)->first();
-
-        if (! $rto) {
-            return false;
-        }
-
-        return $rto->getFirstMedia($collection) !== null;
-    }
-
     public function rtoUpdate(Request $request, $id)
     {
         if (! backpack_user()->can('SLS_BKNG_RTO')) {
             abort(403, 'Unauthorized. You do not have permission to perform this action.');
         }
 
-        $permit_map = OrgService::getKeyValuesByCode('RTO_PERMIT')
-            ->sortBy('id')
-            ->values()
-            ->mapWithKeys(function ($permit, $index) {
-                return [
-                    (string) ($index + 1) => $permit->value,
-                ];
-            })
-            ->toArray();
+        $permitMap = $this->rtoService->permitMap();
 
         $validated = $request->validate([
             'trade_used' => 'required|in:1,2,3,4,5,6',
-
             'sale_type' => 'required|in:1,2',
-
-            'permit' => [
-                'required',
-                Rule::in(array_keys($permit_map)),
-            ],
-
+            'permit' => ['required', Rule::in(array_keys($permitMap))],
             'body_type' => 'required|in:1,2',
-
-            // IMPORTANT: 0 is valid
-            'registration_type' => 'required|in:0,1,2,3',
-
+            'registration_type' => 'required|in:0,1,2,3', // IMPORTANT: 0 is valid
             'reg_no_type' => 'required|in:1,2,3',
-
             'trc_number' => 'nullable|string|max:15|regex:/^[A-Z0-9]{10,15}$/',
             'bank_ref_no' => 'nullable|string|max:20|regex:/^[A-Z0-9]{10,20}$/',
-
             'trc_copy' => 'nullable|file|mimes:pdf|max:5120',
-
             'application_no' => 'nullable|string|max:15|regex:/^[A-Z0-9]{10,15}$/',
-
             'tax_payment_ref_no' => 'nullable|string|max:20|regex:/^[A-Z0-9]{10,20}$/',
-
             'vehicle_reg_no' => 'nullable|string',
-
             'tax_receipt_copy' => 'nullable|file|mimes:pdf|max:5120',
         ]);
 
         try {
-            $rto_rules = XlRtoRules::select(
-                'sale_type',
-                'permit',
-                'body_type',
-                'reg_no_type',
-                'trc_number',
-                'trc_pay',
-                'trc_copy',
-                'app_no',
-                'tax_pay',
-                'veh_reg',
-                'tax_copy'
-            )->get()->toArray();
+            $trcCopy = $request->hasFile('trc_copy') ? $request->file('trc_copy') : null;
+            $taxReceiptCopy = $request->hasFile('tax_receipt_copy') ? $request->file('tax_receipt_copy') : null;
 
-            $saleTypeMap = [
-                '1' => 'Within State',
-                '2' => 'Outside State',
-            ];
-
-            $bodyTypeMap = [
-                '1' => 'Complete',
-                '2' => 'CBC',
-            ];
-
-            $regNoTypeMap = [
-                '1' => 'Regular',
-                '2' => 'BH',
-                '3' => 'Special',
-            ];
-
-            $saleText = $saleTypeMap[$request->sale_type] ?? '';
-
-            // IMPORTANT: use $permit_map, not $permitMap
-            $permitText = $permit_map[$request->permit] ?? '';
-
-            $bodyText = $bodyTypeMap[$request->body_type] ?? '';
-
-            $regNoTypeText = $regNoTypeMap[$request->reg_no_type] ?? '';
-
-            $matchingRule = null;
-
-            foreach ($rto_rules as $rule) {
-                if (
-                    trim(strtoupper($rule['sale_type'])) === trim(strtoupper($saleText)) &&
-                    trim(strtoupper($rule['permit'])) === trim(strtoupper($permitText)) &&
-                    trim(strtoupper($rule['body_type'])) === trim(strtoupper($bodyText)) &&
-                    trim(strtoupper($rule['reg_no_type'])) === trim(strtoupper($regNoTypeText))
-                ) {
-                    $matchingRule = $rule;
-                    break;
-                }
-            }
-
-            $allRequiredFilled = true;
-
-            if ($matchingRule) {
-                $fieldMap = [
-                    'trc_number' => 'trc_number',
-                    'bank_ref_no' => 'trc_pay',
-                    'trc_copy' => 'trc_copy',
-                    'application_no' => 'app_no',
-                    'tax_payment_ref_no' => 'tax_pay',
-                    'vehicle_reg_no' => 'veh_reg',
-                    'tax_receipt_copy' => 'tax_copy',
-                ];
-
-                foreach ($fieldMap as $formField => $ruleKey) {
-
-                    if (($matchingRule[$ruleKey] ?? '') === 'Yes') {
-
-                        if (in_array($formField, ['trc_copy', 'tax_receipt_copy'])) {
-
-                            // Existing file can satisfy requirement
-                            $hasExistingFile = false;
-
-                            if ($formField === 'trc_copy') {
-                                $hasExistingFile = $this->hasExistingRtoMedia(
-                                    $id,
-                                    'trc_copy'
-                                );
-                            }
-
-                            if ($formField === 'tax_receipt_copy') {
-                                $hasExistingFile = $this->hasExistingRtoMedia(
-                                    $id,
-                                    'tax_receipt_copy'
-                                );
-                            }
-
-                            if (
-                                ! $hasExistingFile &&
-                                (! $request->hasFile($formField) ||
-                                    ! $request->file($formField)->isValid())
-                            ) {
-                                $allRequiredFilled = false;
-                                break;
-                            }
-
-                        } else {
-
-                            if (! $request->filled($formField)) {
-                                $allRequiredFilled = false;
-                                break;
-                            }
-                        }
-                    }
-                }
-            } else {
-                $allRequiredFilled = false;
-            }
-
-            $data = [
-                'bid' => $id,
-                'trade_used' => $request->trade_used,
-                'sale_type' => $request->sale_type,
-                'permit' => $request->permit,
-                'body_type' => $request->body_type,
-                'rgn_type' => $request->registration_type,
-                'rgn_no_type' => $request->reg_no_type,
-                'trc_no' => $request->trc_number,
-                'trc_payment_no' => $request->bank_ref_no,
-                'app_no' => $request->application_no,
-                'tax_payment_bank_ref_no' => $request->tax_payment_ref_no,
-                'vh_rgn_no' => $request->vehicle_reg_no,
-                'status' => $allRequiredFilled ? 2 : 1,
-                'updated_by' => backpack_auth()->id() ?? 1,
-            ];
-
-            $rto = XlRto::updateOrCreate(
-                ['bid' => $id],
-                $data
-            );
-
-            if (
-                $request->hasFile('trc_copy') &&
-                $request->file('trc_copy')->isValid()
-            ) {
-                $rto->clearMediaCollection('trc_copy');
-
-                $rto->addMediaFromRequest('trc_copy')
-                    ->toMediaCollection('trc_copy');
-            }
-
-            // Upload Tax receipt copy
-            if (
-                $request->hasFile('tax_receipt_copy') &&
-                $request->file('tax_receipt_copy')->isValid()
-            ) {
-                $rto->clearMediaCollection('tax_receipt_copy');
-
-                $rto->addMediaFromRequest('tax_receipt_copy')
-                    ->toMediaCollection('tax_receipt_copy');
-            }
+            $this->rtoService->apply((int) $id, $validated, $trcCopy, $taxReceiptCopy);
 
             return redirect()
                 ->route('sales.booking.pending-rto')
-                ->with(
-                    'success',
-                    'RTO data saved successfully for Booking #'.$id
-                );
-
+                ->with('success', 'RTO data saved successfully for Booking #'.$id);
         } catch (Exception $e) {
-
             \Log::error('RTO Update Failed', [
                 'booking_id' => $id,
                 'error' => $e->getMessage(),

@@ -214,3 +214,37 @@ diagnostic value for genuine failures, were kept).
 - Live HTTP round trip: `sales/booking/insurance/{id}/edit` → 200.
 - Full suite re-run (`BookingKycServiceTest` + `BookingDmsServiceTest` +
   `BookingInsuranceServiceTest` + `PersonCrudTest`) → 23 passed, 53 assertions, zero regressions.
+
+## Phase 4, fourth sub-domain: BookingRtoService — caught a real bug before it shipped
+
+Continuing Phase 4's sequence (KYC, DMS, Insurance done; RTO next).
+
+**New: `App\Services\Sales\Booking\BookingRtoService`** (singleton). `resolveEditData()`/`apply()`
+mirror `BookingInsuranceService`'s shape, but `apply()` is meaningfully more complex: it matches the
+submitted sale/permit/body/reg-no-type combination against `XlRtoRules` (76 real rows) to determine
+which optional fields are actually required for *this* combination, where an existing uploaded file
+can satisfy a file requirement without a new upload, before deciding `status = 2` vs `1`. Extracted
+`hasExistingRtoMedia()` (private controller helper) into the service as `hasExistingMedia()`, and
+`permitMap()` (previously duplicated inline in both `rtoEdit()` and `rtoUpdate()`) is now a single
+public method the controller and service both call.
+
+**Caught and fixed a real behavior discrepancy before committing**: the original per-field
+completeness check used Laravel's `Request::filled($field)`, which only excludes `null`, `''`, and
+`[]`. My first draft used PHP's native `empty()` instead, which *also* treats the literal string
+`"0"` as "not filled" — a real difference for `vehicle_reg_no` (the only one of these fields with no
+format-regex constraint, so a literal `"0"` could genuinely reach this check; the other fields all
+require 10+ alphanumeric characters via regex, so `"0"` alone could never pass their validation).
+Added a small `isFilled()` helper replicating `filled()`'s exact semantics instead, with a
+regression test (`test_apply_saves_a_literal_zero_vehicle_reg_no_correctly`) locking it in.
+
+### Verification
+
+- `php -l` clean; `vendor/bin/pint --dirty --format agent` → passed.
+- **New: `tests/Unit/Services/Sales/BookingRtoServiceTest.php`** (6 tests, 8 assertions) — the
+  `"0"`-vehicle-reg-no regression guard, no-matching-rule (status 1), matching-rule-with-missing-file
+  (status 1), matching-rule-fully-satisfied (status 2, real file attach verified), and the
+  existing-file-satisfies-a-later-submission-without-a-new-upload behavior — tested against the
+  real 76-row `XlRtoRules` table, not a mock.
+- Live HTTP round trip: `sales/booking/rto/{id}/edit` → 200.
+- Full suite re-run (`tests/Unit/Services/Sales/` + `PersonCrudTest`) → 29 passed, 61 assertions,
+  zero regressions.
