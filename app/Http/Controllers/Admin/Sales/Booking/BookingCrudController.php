@@ -47,6 +47,7 @@ use App\Services\Sales\Booking\BookingExchangeService;
 use App\Services\Sales\Booking\BookingFinanceService;
 use App\Services\Sales\Booking\BookingInsuranceService;
 use App\Services\Sales\Booking\BookingKycService;
+use App\Services\Sales\Booking\BookingRefundService;
 use App\Services\Sales\Booking\BookingRtoService;
 use App\Services\SystemSettingService;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
@@ -99,6 +100,7 @@ class BookingCrudController extends CrudController
         protected BookingDeliveryService $deliveryService,
         protected BookingFinanceService $financeService,
         protected BookingExchangeService $exchangeService,
+        protected BookingRefundService $refundService,
     ) {
         parent::__construct();
     }
@@ -6724,15 +6726,6 @@ class BookingCrudController extends CrudController
         }
 
         $userId = backpack_auth()->id() ?? 'unknown';
-        $userName = backpack_auth()->user()?->name ?? 'system';
-
-        Log::info('REFUND_REQUEST_START', [
-            'user_id' => $userId,
-            'user_name' => $userName,
-            'booking_id' => $id,
-            'ip' => $request->ip(),
-            'input_keys' => array_keys($request->all()),
-        ]);
 
         $booking = Booking::find($id);
 
@@ -6744,13 +6737,6 @@ class BookingCrudController extends CrudController
 
             return redirect()->back()->with('error', 'Booking not found.');
         }
-
-        Log::info('REFUND_BOOKING_FOUND', [
-            'booking_id' => $booking->id,
-            'current_status' => $booking->status,
-            'booking_amount' => $booking->booking_amount ?? 'MISSING_FIELD',
-            'user_id' => $userId,
-        ]);
 
         $validator = Validator::make($request->all(), [
             'deduction' => 'required|numeric|min:0|lte:booking_amount',
@@ -6804,18 +6790,8 @@ class BookingCrudController extends CrudController
                 ->withInput();
         }
 
-        Log::info('REFUND_VALIDATION_PASSED', ['booking_id' => $id]);
-
         $calculated = (float) ($booking->booking_amount ?? 0) - (float) ($request->deduction ?? 0);
         $submitted = (float) ($request->remaining_amount ?? 0);
-
-        Log::debug('REFUND_AMOUNT_CALCULATION', [
-            'booking_amount' => $booking->booking_amount ?? 'null',
-            'deduction' => $request->deduction,
-            'calculated' => $calculated,
-            'submitted' => $submitted,
-            'difference' => abs($calculated - $submitted),
-        ]);
 
         if (abs($calculated - $submitted) > 0.01) {
             Log::warning('REFUND_AMOUNT_MISMATCH', [
@@ -6832,118 +6808,13 @@ class BookingCrudController extends CrudController
         }
 
         try {
-            Log::info('REFUND_CREATE_START', [
-                'booking_id' => $id,
-                'amount' => $submitted,
-            ]);
-
-            $refund = Xl_Refunds::create([
-                'entity_type' => 'booking',
-                'entity_id' => $booking->id,
-                'bank_name' => strtoupper(trim($request->bank_name ?? '')),
-                'branch_name' => strtoupper(trim($request->branch_name ?? '')),
-                'account_type' => $request->account_type,
-                'account_number' => trim($request->account_number ?? ''),
-                'holder_name' => trim($request->holder_name ?? ''),
-                'ifsc_code' => strtoupper(trim($request->ifsc_code ?? '')),
-                'req_date' => now()->format('Y-m-d'),
-                'req_by' => $userId,
-                'amount' => $submitted,
-                'details' => trim($request->deduction_reason ?? ''),
-            ]);
-
-            Log::notice('REFUND_RECORD_CREATED', [
-                'refund_id' => $refund->id,
-                'booking_id' => $booking->id,
-                'amount' => $refund->amount,
-                'req_by' => $userId,
-            ]);
-
-            $mediaCollectionMap = [
-                'acc_proof' => 'acc-proof',
-                'aadhar' => 'aadhar',
-                'pan' => 'pan',
-            ];
-
-            foreach ($mediaCollectionMap as $field => $collection) {
-                if ($request->hasFile($field) && $request->file($field)->isValid()) {
-                    try {
-
-                        $media = $refund->addMediaFromRequest($field)
-                            ->withCustomProperties([
-                                'document_type' => $field,
-                            ])
-                            ->toMediaCollection($collection, 'public');
-                        Log::info('REFUND_MEDIA_ADDED', [
-                            'refund_id' => $refund->id,
-                            'field' => $field,
-                            'collection' => $collection,
-                            'media_id' => $media->id ?? 'unknown',
-                            'file_name' => $media->file_name ?? 'unknown',
-                        ]);
-                    } catch (Exception $mediaEx) {
-                        Log::error('REFUND_MEDIA_UPLOAD_FAILED', [
-                            'refund_id' => $refund->id,
-                            'field' => $field,
-                            'collection' => $collection,
-                            'message' => $mediaEx->getMessage(),
-                        ]);
-                    }
-                }
-            }
-
-            $oldStatus = $booking->status;
-
-            $booking->update([
-                'status' => 4,
-                'refund_request_date' => now(),
-            ]);
-
-            if ($booking->status == 7) {
-
-                $booking->addHistory(
-                    'commented',
-                    'Refund Requested Again',
-                    'Refund requested again after rejection.',
-                    [
-                        'old_status' => 'Refund Rejected',
-                        'new_status' => 'Refund Queued',
-                    ],
-                    null,
-                    backpack_user()
-                );
-            }
-
-            $booking->addHistory(
-                'commented',
-                'Refund Requested',
-                'Customer refund request has been submitted .',
-                [
-                    'refund_amount' => $refund->amount ?? 0,
-                    'booking_amount' => $booking->booking_amount ?? 0,
-                    'deduction_amount' => $request->deduction ?? 0,
-                    'bank_name' => $request->bank_name ?? 'N/A',
-                    'account_holder' => $request->holder_name ?? 'N/A',
-                    'account_number' => $request->account_number ?? 'N/A',
-                    'ifsc_code' => $request->ifsc_code ?? 'N/A',
-                    'deduction_reason' => $request->deduction_reason ?? 'N/A',
-                    'status' => 'refund_requested',
-                ],
-                null,
-                backpack_user()
-            );
-
-            Log::notice('REFUND_BOOKING_STATUS_UPDATED', [
-                'booking_id' => $booking->id,
-                'old_status' => $oldStatus,
-                'new_status' => $booking->status,
-                'refund_id' => $refund->id,
-                'user_id' => $userId,
-            ]);
-
-            Log::info('REFUND_REQUEST_COMPLETED_SUCCESS', [
-                'booking_id' => $booking->id,
-                'refund_id' => $refund->id,
+            $this->refundService->apply($booking, $request->only([
+                'bank_name', 'branch_name', 'account_type', 'account_number', 'holder_name',
+                'ifsc_code', 'deduction_reason', 'deduction', 'remaining_amount',
+            ]), [
+                'acc_proof' => $request->file('acc_proof'),
+                'aadhar' => $request->file('aadhar'),
+                'pan' => $request->file('pan'),
             ]);
 
             return redirect(backpack_url('sales/booking/cancelled'))
@@ -8555,59 +8426,32 @@ class BookingCrudController extends CrudController
 
         $booking = Booking::findOrFail($id);
 
-        $refund = Xl_Refunds::where('entity_type', 'booking')
-            ->where('entity_id', $id)
-            ->latest('id')
-            ->first();
+        [
+            'refund' => $refund,
+            'amount' => $amount,
+            'deduction' => $deduction,
+            'accProof' => $accProof,
+            'aadhar' => $aadhar,
+            'pan' => $pan,
+            'payProof' => $payProof,
+            'refundDetails' => $refundDetails,
+        ] = $this->refundService->resolveRefundDisplayData($booking);
 
         $data = [
             'booking' => $booking,
-            'refund' => null,
-            'amount' => $booking->booking_amount ?? 0,
-            'deduction' => 0,
-            'acc_proof' => '',
-            'aadhar' => '',
-            'pan' => '',
-            'pay_proof' => '',
+            'refund' => $refundDetails,
+            'amount' => $amount,
+            'deduction' => $deduction,
+            'acc_proof' => $accProof,
+            'aadhar' => $aadhar,
+            'pan' => $pan,
+            'pay_proof' => $payProof,
             'receiptLogs' => Bookingamount::where('bid', $id)
                 ->select('id', 'date', 'type_number', 'mode', 'amount')
                 ->orderBy('date', 'desc')
                 ->get(),
         ];
 
-        if ($refund) {
-            $data['deduction'] = ($booking->booking_amount ?? 0) - ($refund->amount ?? 0);
-
-            $data['acc_proof'] = $refund->getFirstMediaUrl('acc-proof')
-                ?: $refund->getFirstMediaUrl('acc_proof')
-                ?: '';
-
-            $data['aadhar'] = $refund->getFirstMediaUrl('aadhar')
-                ?: $refund->getFirstMediaUrl('aadhaar')
-                ?: '';
-
-            $data['pan'] = $refund->getFirstMediaUrl('pan') ?: '';
-
-            $data['pay_proof'] = $refund->getFirstMediaUrl('pay-proof')
-                ?: $refund->getFirstMediaUrl('pay_proof')
-                ?: '';
-
-            $data['refund'] = [
-                'remaining_amount' => $refund->amount ?? 0,
-                'bank_name' => $refund->bank_name ?? 'N/A',
-                'branch_name' => $refund->branch_name ?? 'N/A',
-                'account_type' => $refund->account_type ?? 'N/A',
-                'account_number' => $refund->account_number ?? 'N/A',
-                'holder_name' => $refund->holder_name ?? 'N/A',
-                'ifsc_code' => $refund->ifsc_code ?? 'N/A',
-                'details' => $refund->details ?? 'N/A',
-                'req_date' => $refund->req_date ? Carbon::parse($refund->req_date)->format('d-M-Y') : 'N/A',
-                'ref_date' => $refund->ref_date ? Carbon::parse($refund->ref_date)->format('d-M-Y') : 'N/A',
-                'mode' => $refund->mode ?? 'N/A',
-                'transaction_details' => $refund->transaction_details ?? 'N/A',
-                'remark' => $refund->remark ?? 'N/A',
-            ];
-        }
         $bookingHistory = $booking->commMaster()
             ->with([
                 'rootThreads' => function ($q) {
@@ -8727,69 +8571,16 @@ class BookingCrudController extends CrudController
 
         $data = $view->getData()['data'] ?? [];
 
-        $refund = Xl_Refunds::where('entity_type', 'booking')
-            ->where('entity_id', $id)
-            ->latest('id')
-            ->first();
+        $refundData = $this->refundService->resolveRefundDisplayData($booking);
 
-        if ($refund) {
-
-            $data['acc_proof'] =
-                optional($refund->getFirstMedia('acc-proof'))->getUrl()
-                ?: optional($refund->getFirstMedia('acc_proof'))->getUrl()
-                ?: '';
-
-            $data['aadhar'] =
-                optional($refund->getFirstMedia('aadhar'))->getUrl()
-                ?: optional($refund->getFirstMedia('aadhaar'))->getUrl()
-                ?: '';
-
-            $data['pan'] =
-                optional($refund->getFirstMedia('pan'))->getUrl()
-                ?: '';
-
-            $data['pay_proof'] =
-                optional($refund->getFirstMedia('pay-proof'))->getUrl()
-                ?: optional($refund->getFirstMedia('pay_proof'))->getUrl()
-                ?: '';
-
-            $data['amount'] = $booking->booking_amount ?? 0;
-
-            $data['deduction'] =
-                ($booking->booking_amount ?? 0)
-                - ($refund->amount ?? 0);
-
-            $data['refund'] = [
-                'remaining_amount' => $refund->amount ?? 0,
-
-                'bank_name' => $refund->bank_name ?? 'N/A',
-
-                'branch_name' => $refund->branch_name ?? 'N/A',
-
-                'account_type' => $refund->account_type ?? 'N/A',
-
-                'account_number' => $refund->account_number ?? 'N/A',
-
-                'holder_name' => $refund->holder_name ?? 'N/A',
-
-                'ifsc_code' => $refund->ifsc_code ?? 'N/A',
-
-                'details' => $refund->details ?? 'N/A',
-
-                'req_date' => $refund->req_date
-                    ? Carbon::parse($refund->req_date)->format('d-M-Y')
-                    : 'N/A',
-
-                'ref_date' => $refund->ref_date
-                    ? Carbon::parse($refund->ref_date)->format('d-M-Y')
-                    : 'N/A',
-
-                'mode' => $refund->mode ?? 'N/A',
-
-                'transaction_details' => $refund->transaction_details ?? 'N/A',
-
-                'remark' => $refund->remark ?? 'N/A',
-            ];
+        if ($refundData['refund']) {
+            $data['acc_proof'] = $refundData['accProof'];
+            $data['aadhar'] = $refundData['aadhar'];
+            $data['pan'] = $refundData['pan'];
+            $data['pay_proof'] = $refundData['payProof'];
+            $data['amount'] = $refundData['amount'];
+            $data['deduction'] = $refundData['deduction'];
+            $data['refund'] = $refundData['refundDetails'];
         }
 
         $receiptLogs = Bookingamount::where('bid', $booking->id)
@@ -8837,62 +8628,9 @@ class BookingCrudController extends CrudController
             return redirect()->back()->with('error', 'Refund record not found for this booking.');
         }
 
-        $refund->update([
-            'ref_date' => $request->hidden_ref ?? $request->ref_date,
-            'ref_by' => backpack_auth()->id(),
-            'mode' => $request->mode,
-            'transaction_details' => $request->transaction_details,
-            'remark' => $request->remark,
-        ]);
-
-        if ($request->hasFile('pay_proof') && $request->file('pay_proof')->isValid()) {
-            $refund->clearMediaCollection('pay-proof');
-            $refund->addMedia($request->file('pay_proof'))
-                ->toMediaCollection('pay-proof');
-        }
-
-        $oldStatus = $booking->status;
-        $newStatus = 5;
-
-        $statusNames = [
-            1 => 'Live',
-            2 => 'Invoiced',
-            3 => 'Cancelled',
-            4 => 'Refund Queued',
-            5 => 'Refunded',
-            6 => 'On Hold',
-            7 => 'Refund Rejected',
-            8 => 'Pending',
-        ];
-
-        $oldName = $statusNames[$oldStatus] ?? 'Unknown';
-        $newName = $statusNames[$newStatus] ?? 'Unknown';
-
-        $statusRemark = ($oldStatus != $newStatus)
-            ? "Booking status changed from {$oldName} to {$newName}"
-            : null;
-
-        $adminRemark = trim($request->remark) ?: 'Refund processed';
-
-        $booking->update([
-            'status' => $newStatus,
-            'refund_date' => now()->format('Y-m-d'),
-        ]);
-        $booking->addHistory(
-            'commented',
-            'Refund Completed',
-            'Refund processed successfully.',
-            [
-                'old_status' => $oldName,
-                'new_status' => $newName,
-                'refund_date' => $request->hidden_ref ?? $request->ref_date,
-                'mode' => $request->mode,
-                'transaction_details' => $request->transaction_details,
-                'remark' => $request->remark,
-            ],
-            null,
-            backpack_user()
-        );
+        $this->refundService->applyRefundUpdate($booking, $refund, $request->only([
+            'hidden_ref', 'ref_date', 'mode', 'transaction_details', 'remark',
+        ]), $request->file('pay_proof'));
 
         return redirect()->route('sales.booking.refund.requested')
             ->with('success', 'Refund details updated successfully and booking marked as Refunded.');
@@ -9024,53 +8762,9 @@ class BookingCrudController extends CrudController
             return redirect()->back()->with('error', 'Refund record not found for this booking.');
         }
 
-        $changes = [];
-
-        $newRefDate = $request->hidden_ref ?? $request->ref_date;
-        if ($refund->ref_date != $newRefDate) {
-            $changes[] = 'Refund Date changed from '.
-                ($refund->ref_date ? Carbon::parse($refund->ref_date)->format('d-M-Y') : 'N/A').
-                ' to '.Carbon::parse($newRefDate)->format('d-M-Y');
-            $refund->ref_date = $newRefDate;
-        }
-
-        if ($refund->mode != $request->mode) {
-            $changes[] = "Mode of Payment changed from {$refund->mode} to {$request->mode}";
-            $refund->mode = $request->mode;
-        }
-
-        if ($refund->transaction_details != $request->transaction_details) {
-            $changes[] = 'Transaction Details updated';
-            $refund->transaction_details = $request->transaction_details;
-        }
-
-        if ($refund->remark != $request->remark) {
-            $changes[] = 'Remarks updated';
-            $refund->remark = $request->remark;
-        }
-
-        if ($request->hasFile('pay_proof') && $request->file('pay_proof')->isValid()) {
-            $refund->clearMediaCollection('pay-proof');
-
-            $refund->addMedia($request->file('pay_proof'))
-                ->toMediaCollection('pay-proof');
-
-            $changes[] = 'Payment Proof updated';
-        }
-
-        $refund->ref_by = backpack_auth()->id();
-
-        $refund->save();
-        $booking->addHistory(
-            'commented',
-            'Refund Details Updated',
-            'Refund details modified .',
-            [
-                'changes' => $changes,
-            ],
-            null,
-            backpack_user()
-        );
+        $this->refundService->applyRefundedUpdate($booking, $refund, $request->only([
+            'hidden_ref', 'ref_date', 'mode', 'transaction_details', 'remark',
+        ]), $request->file('pay_proof'));
 
         return redirect()->route('sales.booking.refunded')
             ->with('success', 'Refund details updated successfully!');
