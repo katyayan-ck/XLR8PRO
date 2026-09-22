@@ -48,7 +48,7 @@
         <div class="col-md-3 form-group readonly-field">
             <label class="readonly-label">Booking Date</label>
             <div class="readonly-value">
-                {{ $booking->booking_date ? \Carbon\Carbon::parse($booking->booking_date)->format('d-m-Y') : '—' }}
+                @sitedate($booking->booking_date, '—')
             </div>
         </div>
 
@@ -118,9 +118,7 @@
         <div class="col-md-3 form-group readonly-field">
             <label class="readonly-label">Dealer Invoice Date</label>
             <div class="readonly-value">
-                {{ $booking->dealer_inv_date
-                ? \Carbon\Carbon::parse($booking->dealer_inv_date)->format('d-m-Y')
-                : '—' }}
+                @sitedate($booking->dealer_inv_date, '—')
             </div>
         </div>
     </div>
@@ -193,8 +191,7 @@
             <div class="col-md-3 form-group readonly-field">
                 <label class="readonly-label">Dealer Invoice Date</label>
                 <div class="readonly-value">
-                    {{ $booking->dealer_inv_date ? \Carbon\Carbon::parse($booking->dealer_inv_date)->format('d-M-Y') :
-                    'N/A' }}
+                    @sitedate($booking->dealer_inv_date)
                 </div>
             </div>
 
@@ -215,12 +212,15 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
+    // Site-wide date display format (see .ai/rules/conventions.md section 13) - flatpickr's
+    // token syntax matches PHP's date() tokens, so the PHP-side format string is reused as-is.
+    const SITE_DATE_FORMAT = '@php echo app(\App\Services\DateFormatService::class)->phpFormat(); @endphp';
     (function($) {
     'use strict';
 
     function initDealerInvoiceForm() {
         flatpickr("#dms_invoice_date", {
-            dateFormat: "d-M-Y",
+            dateFormat: SITE_DATE_FORMAT,
             maxDate: "today",
             allowInput: false,
             onChange: function(selectedDates, dateStr, instance) {

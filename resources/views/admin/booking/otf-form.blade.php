@@ -855,7 +855,7 @@ use App\Services\OrgService;
                                 <tr>
                                     <td class="title">Date of Birth</td>
                                     <td><input type="text" name="dob" id="dob" class="date-picker"
-                                        value="{{ old('dob', $booking->c_dob ? \Carbon\Carbon::parse($booking->c_dob)->format('d-M-Y') : '') }}"></td>
+                                        value="{{ old('dob', site_date($booking->c_dob, '')) }}"></td>
                                 </tr>
                                 <tr>
                                     <td class="title">Marital Status</td>
@@ -1035,8 +1035,7 @@ use App\Services\OrgService;
                                     <td class="title">Invoice Date</td>
                                     <td>
                                         <input type="text" name="invoice_date_display" id="invoice_date"
-                                            class="flatpickr" placeholder="dd-MMM-yyyy" value="{{ old('invoice_date_display',
-                                $booking->inv_date ? \Carbon\Carbon::parse($booking->inv_date)->format('d-M-Y') : '') }}">
+                                            class="flatpickr" placeholder="dd-MMM-yyyy" value="{{ old('invoice_date_display', site_date($booking->inv_date, '')) }}">
 
                                         <input type="hidden" name="inv_date" id="hidden_invoice_date"
                                             value="{{ old('inv_date', $booking->inv_date) }}">
@@ -2258,7 +2257,7 @@ use App\Services\OrgService;
                                                         </td>
                                                         <td
                                                             style="padding: 5px 8px; vertical-align: middle; font-size: 10px; color: #495057;">
-                                                            {{ \Carbon\Carbon::parse($receipt->date)->format('d M Y') }}
+                                                            @sitedate($receipt->date)
                                                         </td>
                                                         <td style="padding: 5px 8px; vertical-align: middle; font-size: 10px; color: #495057;">
                                                             {{ $receipt->mode ?? '' }}
@@ -2527,6 +2526,9 @@ use App\Services\OrgService;
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
 <script>
+    // Site-wide date display format (see .ai/rules/conventions.md section 13) - flatpickr's
+    // token syntax matches PHP's date() tokens, so the PHP-side format string is reused as-is.
+    const SITE_DATE_FORMAT = '@php echo app(\App\Services\DateFormatService::class)->phpFormat(); @endphp';
     document.addEventListener('DOMContentLoaded', function () {
 
     const generateButton = document.getElementById('generate_votf');
@@ -3128,7 +3130,7 @@ $(document).ready(function () {
 document.addEventListener("DOMContentLoaded", function () {
     // Configure Flatpickr with d-M-Y format (12-Aug-2026)
     const dateConfig = {
-        dateFormat: "d-M-Y",
+        dateFormat: SITE_DATE_FORMAT,
         allowInput: false,
         clickOpens: true,
         altInput: true,
@@ -3144,7 +3146,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Handle invoice date with hidden field
     const invoicePicker = flatpickr("#invoice_date", {
-        dateFormat: "d-M-Y",
+        dateFormat: SITE_DATE_FORMAT,
         allowInput: false,
         clickOpens: true,
         altInput: true,
@@ -3161,7 +3163,7 @@ document.addEventListener("DOMContentLoaded", function () {
     
     // Handle DO Voucher Date
     flatpickr("#do_voucher_date", {
-        dateFormat: "d-M-Y",
+        dateFormat: SITE_DATE_FORMAT,
         allowInput: false,
         clickOpens: true,
         altInput: true,

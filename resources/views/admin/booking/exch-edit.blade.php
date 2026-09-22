@@ -253,7 +253,7 @@
                         <div class="col-sm-2">
                             <label class="form-label">Booking Date <span class="text-red">*</span></label>
                             <input type="text" class="form-control"
-                                value="{{ \Carbon\Carbon::parse($booking->booking_date)->format('d-M-Y') }}" readonly>
+                                value="@sitedate($booking->booking_date)" readonly>
                         </div>
                         <div class="col-sm-2">
                             <label class="form-label">Collection Type <span class="text-red">*</span></label>
@@ -317,9 +317,7 @@
                         <div class="col-sm-3">
                             <label class="form-label">Customer D.O.B.</label>
                             <input type="text" class="form-control"
-                                value="{{ !empty($booking->c_dob)
-                                    ? \Carbon\Carbon::parse($booking->c_dob)->format('d-M-Y')
-                                    : 'N/A' }}" readonly>
+                                value="@sitedate($booking->c_dob)" readonly>
                         </div>
                         <div class="col-sm-6">
                             <label class="form-label">{{ __('Branch') }} <span class="text-red">*</span></label>
@@ -453,7 +451,7 @@
                         <div class="col-sm-2">
                             <label class="form-label">Date <span class="text-red">*</span></label>
                             <input type="text" class="form-control"
-                                value="{{ \Carbon\Carbon::parse($booking->del_date)->format('d-M-Y') }}" readonly>
+                                value="@sitedate($booking->del_date)" readonly>
                         </div>
                         <div class="col-sm-2">
                             <label class="form-label">Booking Amount <span class="text-red">*</span></label>
@@ -468,7 +466,7 @@
                         <div class="col-sm-3">
                             <label class="form-label">Receipt Date <span class="text-red">*</span></label>
                             <input type="text" class="form-control"
-                                value="{{ \Carbon\Carbon::parse($booking->receipt_date)->format('d-M-Y') }}" readonly>
+                                value="@sitedate($booking->receipt_date)" readonly>
                         </div>
                         <div class="col-sm-3">
                             <label class="form-label">CPD Date <span class="text-red">*</span></label>
@@ -496,7 +494,7 @@
                             <div class="col-sm-3">
                                 <label class="form-label">Invoice Date <span class="text-red">*</span></label>
                                 <input type="text" class="form-control"
-                                    value="{{ \Carbon\Carbon::parse($booking->inv_date)->format('d-M-Y') }}" readonly>
+                                    value="@sitedate($booking->inv_date)" readonly>
                             </div>
                         @endif
                         @if ($booking->status == 8)
