@@ -43,6 +43,7 @@ use App\Services\IdentifierService;
 use App\Services\OrgService;
 use App\Services\Sales\Booking\BookingDeliveryService;
 use App\Services\Sales\Booking\BookingDmsService;
+use App\Services\Sales\Booking\BookingExchangeService;
 use App\Services\Sales\Booking\BookingFinanceService;
 use App\Services\Sales\Booking\BookingInsuranceService;
 use App\Services\Sales\Booking\BookingKycService;
@@ -97,6 +98,7 @@ class BookingCrudController extends CrudController
         protected BookingRtoService $rtoService,
         protected BookingDeliveryService $deliveryService,
         protected BookingFinanceService $financeService,
+        protected BookingExchangeService $exchangeService,
     ) {
         parent::__construct();
     }
@@ -7916,182 +7918,14 @@ class BookingCrudController extends CrudController
         }
 
         $booking = Booking::findOrFail($id);
-        $exchange = XExchange::where('bid', $id)->first();
 
-        if ($booking->enq_no) {
-
-            $enquiry = Enquiry::resolveByAnyReference($booking->enq_no);
-
-            if ($enquiry) {
-
-                $booking->name = $enquiry->name;
-                $booking->care_of = $enquiry->care_of;
-                $booking->care_of_type = $enquiry->care_of_type;
-                $booking->mobile = $enquiry->mobile;
-                $booking->alt_mobile = $enquiry->alternate_mobile;
-                $booking->gender = $enquiry->gender;
-                $booking->occ = $enquiry->occupation_type;
-                $booking->c_dob = $enquiry->dob;
-
-                $booking->branch_code = $enquiry->dealer_branch;
-                $booking->location_code = $enquiry->dealer_location;
-
-                $booking->segment_code = $enquiry->segment_code;
-                $booking->model_code = $enquiry->model_code;
-                $booking->variant_code = $enquiry->variant_code;
-                $booking->color_code = $enquiry->color_code;
-
-                $booking->buyer_type = $enquiry->purchase_type;
-                $booking->exist_oem1 = $enquiry->brand_make;
-                $booking->exist_oem2 = $enquiry->consid_brand2;
-                $booking->vh1_detail = $enquiry->brand_model;
-                $booking->vh2_detail = $enquiry->consid_model2;
-
-                $booking->registration_no = $enquiry->vehicle_no;
-                $booking->make_year = $enquiry->make_year;
-                $booking->odo_reading = $enquiry->odo_reading;
-
-                $booking->expected_price = $enquiry->expected_price;
-                $booking->offered_price = $enquiry->offered_price;
-                $booking->exchange_bonus = $enquiry->exchange_bonus;
-
-                $booking->r_name = $enquiry->referee_name;
-                $booking->r_mobile = $enquiry->referee_phone;
-
-                $booking->consultant = $enquiry->x8_sc_code ?? $enquiry->sc_code;
-
-                $booking->pincode = $enquiry->zipcode;
-                $booking->vpo = $enquiry->vpo;
-                $booking->tehsil = $enquiry->tehsil;
-                $booking->district = $enquiry->district;
-                $booking->city = $enquiry->city;
-                $booking->territory = $enquiry->territory;
-            }
-        }
-
-        $financeRecord = XFinance::where('bid', $id)->first();
-
-        if ($financeRecord) {
-            $booking->fin_mode = $financeRecord->fin_mode;
-            $booking->financier = $financeRecord->financier;
-            $booking->loan_status = $financeRecord->loan_status;
-        }
-
-        $data = [];
-
-        $data['financier_name'] = 'N/A';
-
-        if (! empty($booking->financier)) {
-            $data['financier_name'] = XlFinancier::where('id', $booking->financier)
-                ->value('name')
-                ?? XlFinancier::where('short_name', $booking->financier)
-                    ->value('name')
-                ?? $booking->financier;
-        }
-        $uid = backpack_user()->id ?? null;
-
-        $branchName = null;
-
-        if (! empty($booking->branch_code)) {
-            $branchName = Branch::where('code', $booking->branch_code)
-                ->value('name');
-
-            if (! $branchName) {
-                $branchName = Branch::where('branch_code', $booking->branch_code)
-                    ->value('name');
-            }
-        }
-
-        $data['branch'] = $branchName ?? 'N/A';
-        $data['location'] = ! empty($booking->location_code)
-            ? (
-                Location::where('code', $booking->location_code)->value('name')
-                ?? Location::find($booking->location_code)?->name
-                ?? $booking->location_other
-                ?? 'N/A'
-            )
-            : ($booking->location_other ?? 'N/A');
-        $acc = explode(',', $booking->accessories ?? '');
-        $accessoryNames = [];
-        foreach ($acc as $a) {
-            $a = trim($a);
-            if ($a === '') {
-                continue;
-            }
-            $accessory = Xessories::find($a);
-            if ($accessory) {
-                $accessoryNames[] = $accessory->item;
-            }
-        }
-        $booking->segment_name = 'N/A';
-
-        if ($booking->segment_code) {
-            $booking->segment_name =
-                Segment::where('code', $booking->segment_code)
-                    ->where('is_active', true)
-                    ->value('name')
-                ?? 'N/A';
-        }
-
-        $data['accessories'] = ! empty($accessoryNames)
-            ? implode(', ', $accessoryNames)
-            : 'N/A';
-        $chassis = Stock::find($booking->chassis_no);
-        $data['bchasis'] = $chassis ? $chassis->chassis_no : 'N/A';
-        $data['segments'] = CommonHelper::getVehicleSegments();
-        $data['remark'] = 0;
-        $data['saleconsultants'] = OrgService::usersByDesignation('CNS') ?? [];
-        $consultantCode = trim((string) ($booking->consultant ?? ''));
-        $consultant = DB::table('xlr8_admin_person')
-            ->where('person_code', $consultantCode)
-            ->first();
-
-        $data['consultant_name'] = $consultant?->display_name ?? 'N/A';
-        $data['consultant_mile_id'] = $consultant?->employee_code ?? 'N/A';
-        $drec = XL_DSA_MASTER::find($booking->dsa_id);
-        $dsaname = $drec ? $drec->name.'-'.$drec->mobile : 'N/A';
-        $user = backpack_user();
-        $collector = User::find($booking->col_by);
-        if ($collector) {
-            $data['collector_name'] = $collector->name.' - '.$collector->emp_code;
-        } else {
-            $data['collector_name'] = 'N/A';
-        }
-        $depts = explode(',', $user->department);
-        foreach ($depts as $dept) {
-
-            $deptValue = OrgService::getKeyValueById((int) $dept)?->value;
-
-            if ($deptValue == 'SALES') {
-                $data['remark'] = 1;
-            }
-
-            if ($deptValue == 'ACCOUNTS') {
-                $data['remark'] = 2;
-            }
-        }
-        $data['make1'] = $booking->exist_oem1 ?? 'N/A';
-        $data['make2'] = $booking->exist_oem2 ?? 'N/A';
-        $data['enum_master'] = OrgService::getKeyValuesByCode('EXISTING_CAR_OEM') ?? collect();
-        $enumMasterIds = explode(',', $booking->exist_oem);
-        $data['oem_ids'] = $enumMasterIds;
-        $bookingHistory = $booking->commMaster()
-            ->with([
-                'rootThreads' => function ($q) {
-                    $q->orderByDesc('created_at')
-                        ->with([
-                            'children' => function ($child) {
-                                $child->orderByDesc('created_at');
-                            },
-                            'children.actor',
-                            'children.action',
-                            'actor',
-                            'action',
-                            'media',
-                        ]);
-                },
-            ])
-            ->first()?->rootThreads ?? collect();
+        [
+            'exchange' => $exchange,
+            'data' => $data,
+            'dsaname' => $dsaname,
+            'uid' => $uid,
+            'bookingHistory' => $bookingHistory,
+        ] = $this->exchangeService->resolveEditData($booking);
 
         return view(
             'admin.booking.exch-edit',
@@ -8306,16 +8140,7 @@ class BookingCrudController extends CrudController
         $booking = Booking::findOrFail($id);
 
         // ============================================================
-        // 1. FIND LINKED ENQUIRY (fields like buyer_type, prices live here)
-        // ============================================================
-        $linkedEnquiry = null;
-
-        if ($booking->enq_no) {
-            $linkedEnquiry = Enquiry::resolveByAnyReference($booking->enq_no);
-        }
-
-        // ============================================================
-        // 2. VALIDATION (fixed required_if using Rule::requiredIf)
+        // VALIDATION (fixed required_if using Rule::requiredIf)
         // ============================================================
         $isExchange = $request->buyer_type === 'Exchange Buy';
         $isScrappage = $request->buyer_type === 'Scrappage';
@@ -8370,182 +8195,17 @@ class BookingCrudController extends CrudController
                 ->with('error', $validator->messages()->first());
         }
 
-        // ============================================================
-        // 3. PREPARE STATUS MAPS
-        // ============================================================
-        $verificationStatusMap = [
-            1 => 'Unverified',
-            2 => 'Verified (Data Match)',
-            3 => 'Verified (Data Mismatch)',
-        ];
-        $caseStatusMap = [
-            1 => 'In-Process',
-            2 => 'Exchange Done',
-            3 => 'Case Lost',
-        ];
-
-        $rem = [];
-
-        // ============================================================
-        // 4. UPDATE BOOKING FIELDS (only those that actually exist)
-        // ============================================================
-        // NOTE: For your schema, buyer_type / prices / reg_no / etc.
-        // live on the ENQUIRY table. We update enquiry below.
-
-        if ($request->has('remark')) {
-            $rem[] = 'Remarks: '.$request->input('remark');
-        }
-
-        // ============================================================
-        // 5. UPDATE LINKED ENQUIRY (this is where buyer_type lives!)
-        // ============================================================
-        if ($linkedEnquiry) {
-            $enquiryChanges = [];
-
-            if ($linkedEnquiry->purchase_type != $request->buyer_type) {
-                $enquiryChanges[] = "Buyer Type: '".($linkedEnquiry->purchase_type ?? 'null')."' → '".$request->buyer_type."'";
-                $linkedEnquiry->purchase_type = $request->buyer_type;
-            }
-
-            if ($linkedEnquiry->brand_make != $request->enum_master1) {
-                $enquiryChanges[] = "Brand Make 1: '".($linkedEnquiry->brand_make ?? 'null')."' → '".$request->enum_master1."'";
-                $linkedEnquiry->brand_make = $request->enum_master1;
-            }
-
-            if ($linkedEnquiry->brand_model != $request->vehicle_details) {
-                $enquiryChanges[] = "Model Variant 1: '".($linkedEnquiry->brand_model ?? 'null')."' → '".$request->vehicle_details."'";
-                $linkedEnquiry->brand_model = $request->vehicle_details;
-            }
-
-            if ($linkedEnquiry->consid_brand2 != $request->enum_master2) {
-                $enquiryChanges[] = "Brand Make 2: '".($linkedEnquiry->consid_brand2 ?? 'null')."' → '".$request->enum_master2."'";
-                $linkedEnquiry->consid_brand2 = $request->enum_master2;
-            }
-
-            if ($linkedEnquiry->consid_model2 != $request->vehicle_details2) {
-                $enquiryChanges[] = "Model Variant 2: '".($linkedEnquiry->consid_model2 ?? 'null')."' → '".$request->vehicle_details2."'";
-                $linkedEnquiry->consid_model2 = $request->vehicle_details2;
-            }
-
-            if ($linkedEnquiry->vehicle_no != $request->registration_no) {
-                $enquiryChanges[] = "Registration No: '".($linkedEnquiry->vehicle_no ?? 'null')."' → '".$request->registration_no."'";
-                $linkedEnquiry->vehicle_no = $request->registration_no;
-            }
-
-            if ($linkedEnquiry->make_year != $request->manufacturing_year) {
-                $enquiryChanges[] = "Manufacturing Year: '".($linkedEnquiry->make_year ?? 'null')."' → '".$request->manufacturing_year."'";
-                $linkedEnquiry->make_year = $request->manufacturing_year;
-            }
-
-            if ($linkedEnquiry->odo_reading != $request->odometer_reading) {
-                $enquiryChanges[] = "Odometer: '".($linkedEnquiry->odo_reading ?? 'null')."' → '".$request->odometer_reading."'";
-                $linkedEnquiry->odo_reading = $request->odometer_reading;
-            }
-
-            if ($linkedEnquiry->expected_price != $request->expected_price) {
-                $enquiryChanges[] = "Expected Price: '".($linkedEnquiry->expected_price ?? 'null')."' → '".$request->expected_price."'";
-                $linkedEnquiry->expected_price = $request->expected_price;
-            }
-
-            if ($linkedEnquiry->offered_price != $request->offered_price) {
-                $enquiryChanges[] = "Offered Price: '".($linkedEnquiry->offered_price ?? 'null')."' → '".$request->offered_price."'";
-                $linkedEnquiry->offered_price = $request->offered_price;
-            }
-
-            if ($linkedEnquiry->exchange_bonus != $request->exchange_bonus) {
-                $enquiryChanges[] = "Exchange Bonus: '".($linkedEnquiry->exchange_bonus ?? 'null')."' → '".$request->exchange_bonus."'";
-                $linkedEnquiry->exchange_bonus = $request->exchange_bonus;
-            }
-
-            if (! empty($enquiryChanges)) {
-                $linkedEnquiry->save();
-                $rem = array_merge($rem, $enquiryChanges);
-            }
-        }
-
-        // ============================================================
-        // 6. UPDATE BOOKING (only remark if needed)
-        // ============================================================
-        // NOTE: pending_remark was incorrectly being overwritten with
-        // user remarks — that corrupted the pending system. Removed.
-
-        $booking->save();
-
-        // ============================================================
-        // 7. UPSERT XExchange RECORD
-        // ============================================================
-        $verificationStatus = $request->input('update');
-        $caseStatus = $request->input('case_status');
-
-        $exchangeEntry = XExchange::where('bid', $booking->id)->first();
-
-        $exchangePayload = [
-            'vh_id' => $request->enum_master1 ?? 0,
-            'enum_master1' => $request->enum_master1,
-            'enum_master2' => $request->enum_master2,
-            'vehicle_details' => $request->vehicle_details,
-            'vehicle_details2' => $request->vehicle_details2,
-            'registration_no' => $request->registration_no,
-            'manufacturing_year' => $request->manufacturing_year,
-            'odometer_reading' => $request->odometer_reading,
-            'expected_price' => $request->expected_price,
-            'offered_price' => $request->offered_price,
-            'exchange_bonus' => $request->exchange_bonus,
-            'verification_status' => $verificationStatus,
-            'case_status' => $caseStatus,
-            'purchase_type' => $request->buyer_type,
-        ];
-
-        if (! $exchangeEntry) {
-            $exchangePayload['bid'] = $booking->id;
-            XExchange::create($exchangePayload);
-            $rem[] = 'New exchange entry created (Verification: '.($verificationStatusMap[$verificationStatus] ?? 'N/A').', Case: '.($caseStatusMap[$caseStatus] ?? 'N/A').')';
-        } else {
-            if ($exchangeEntry->verification_status != $verificationStatus) {
-                $rem[] = "Verification Status: '".($verificationStatusMap[$exchangeEntry->verification_status] ?? 'null')."' → '".$verificationStatusMap[$verificationStatus]."'";
-            }
-            if ($exchangeEntry->case_status != $caseStatus) {
-                $rem[] = "Case Status: '".($caseStatusMap[$exchangeEntry->case_status] ?? 'null')."' → '".$caseStatusMap[$caseStatus]."'";
-            }
-            $exchangeEntry->update($exchangePayload);
-        }
-
-        // ============================================================
-        // 8. ALWAYS WRITE HISTORY (not just when caseStatus == 2)
-        // ============================================================
-        $title = 'Exchange Details Updated';
-        $message = 'Exchange / Scrappage details updated.';
-
-        if ($caseStatus == 2) {
-            $title = ($request->buyer_type === 'Scrappage') ? 'Scrappage Completed' : 'Exchange Completed';
-            $message = ($request->buyer_type === 'Scrappage') ? 'Scrappage process completed.' : 'Exchange process completed.';
-        } elseif ($caseStatus == 3) {
-            $title = 'Exchange Case Lost';
-            $message = 'Exchange case marked as lost.';
-        }
-
-        if (! empty(trim($request->remark ?? ''))) {
-            $message .= ' Remarks: '.trim($request->remark);
-        }
-
-        $booking->addHistory(
-            'commented',
-            $title,
-            $message,
-            [
-                'changes' => $rem,
-                'buyer_type' => $request->buyer_type,
-                'case_status' => $caseStatus,
-            ],
-            null,
-            backpack_user()
-        );
+        ['changes' => $rem] = $this->exchangeService->apply($booking, $request->only([
+            'buyer_type', 'enum_master1', 'vehicle_details', 'enum_master2', 'vehicle_details2',
+            'registration_no', 'manufacturing_year', 'odometer_reading', 'expected_price',
+            'offered_price', 'exchange_bonus', 'update', 'case_status', 'remark',
+        ]));
 
         \Log::info('EXCHANGE UPDATE SUCCESS', [
             'booking_id' => $id,
             'changes' => $rem,
-            'case_status' => $caseStatus,
-            'verify_status' => $verificationStatus,
+            'case_status' => $request->case_status,
+            'verify_status' => $request->update,
             'buyer_type' => $request->buyer_type,
         ]);
 
