@@ -42,6 +42,7 @@ use App\Services\EnquiryReferenceService;
 use App\Services\IdentifierService;
 use App\Services\OrgService;
 use App\Services\Sales\Booking\BookingDmsService;
+use App\Services\Sales\Booking\BookingInsuranceService;
 use App\Services\Sales\Booking\BookingKycService;
 use App\Services\SystemSettingService;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
@@ -90,6 +91,7 @@ class BookingCrudController extends CrudController
         protected EnquiryReferenceService $enquiryRef,
         protected BookingKycService $kycService,
         protected BookingDmsService $dmsService,
+        protected BookingInsuranceService $insuranceService,
     ) {
         parent::__construct();
     }
@@ -7456,104 +7458,7 @@ class BookingCrudController extends CrudController
         }
 
         $booking = Booking::findOrFail($id);
-
-        $insurance = XlInsurance::where('bid', $id)->first();
-        if ($booking->enq_no) {
-            $enquiry = Enquiry::resolveByAnyReference($booking->enq_no);
-            if ($enquiry) {
-                $booking->name = $enquiry->name;
-                $booking->care_of = $enquiry->care_of;
-                $booking->care_of_type = $enquiry->care_of_type;
-                $booking->mobile = $enquiry->mobile;
-                $booking->alt_mobile = $enquiry->alternate_mobile;
-                $booking->gender = $enquiry->gender;
-                $booking->branch_code = $enquiry->dealer_branch;
-                $booking->location_code = $enquiry->dealer_location;
-                $booking->segment_code = $enquiry->segment_code;
-                $booking->model_code = $enquiry->model_code;
-                $booking->variant_code = $enquiry->variant_code;
-                $booking->color_code = $enquiry->color_code;
-                $booking->location_other = $enquiry->dealer_location_other
-                    ?? $booking->location_other;
-            }
-        }
-        $data = [];
-        $data['segments'] = CommonHelper::getVehicleSegments() ?? [];
-        $data['models'] = CommonHelper::getVehicleModels(
-            $booking->segment_code ?? null
-        ) ?? [];
-        $data['variants'] = CommonHelper::getVehicleVariants(
-            $booking->model_code ?? null
-        ) ?? [];
-        $data['colors'] = CommonHelper::getVehicleColors(
-            $booking->variant_code ?? null
-        ) ?? [];
-        $data['branches'] = CommonHelper::getBranches() ?? [];
-        $locations = CommonHelper::getLocations(
-            $booking->branch_code
-        ) ?? [];
-        usort($locations, fn ($a, $b) => strcmp(
-            ($a['name'] ?? '').' - '.($a['code'] ?? ''),
-            ($b['name'] ?? '').' - '.($b['code'] ?? '')
-        ));
-        $data['locations'] = $locations;
-        $data['branch'] = Branch::where(
-            'code',
-            $booking->branch_code
-        )->value('name') ?? 'N/A';
-        $data['location'] = $booking->location_code
-            ? Location::where('code', $booking->location_code)->value('name')
-            : ($booking->location_other ?? 'N/A');
-        $data['fbranch'] = $data['branch'];
-        $data['flocation'] = $data['location'];
-        $data['insurances'] = XlInsurer::select(
-            'id',
-            'name',
-            'short_name'
-        )->get()->toArray();
-        $data['insurers'] = $data['insurances'];
-        $data['allusers'] = OrgService::getUsers(deptCode: 'SLS');
-        $data['saleconsultants'] = OrgService::salesConsultants();
-        $stock = Stock::find($booking->chassis_no);
-        if ($stock) {
-            $data['bchasis'] = $stock->chassis_no;
-            $data['chassis'] = Stock::where(
-                'model_code',
-                $stock->model_code
-            )
-                ->select('chassis_no', 'id')
-                ->get()
-                ->toArray();
-        } else {
-            $data['bchasis'] = 'Not Available';
-            $data['chassis'] = [];
-        }
-        $data['dsa_details'] = XL_DSA_MASTER::all()
-            ->map(fn ($dsa) => [
-                'id' => $dsa->id,
-                'name' => $dsa->name,
-                'mobile' => $dsa->mobile,
-                'email' => $dsa->email,
-                'location' => $dsa->dlocation,
-            ])->toArray();
-        $collector = User::find($booking->col_by);
-        $data['collector_name'] = $collector
-            ? $collector->name.' - ('.($collector->emp_code ?? 'N/A').')'
-            : 'N/A';
-        $drec = XL_DSA_MASTER::find($booking->dsa_id);
-        $dsaname = $drec
-            ? $drec->name.' - '.$drec->mobile
-            : 'N/A';
-        $data['make1'] = $booking->exist_oem1 ?? 'N/A';
-        $data['make2'] = $booking->exist_oem2 ?? 'N/A';
-        $data['accessories_dropdown'] = Accessory::getAccessories(
-            $booking->segment_code ?? '',
-            $booking->model_code ?? '',
-            $booking->variant_code ?? ''
-        );
-        $data['enum_master'] = OrgService::getKeyValuesByCode(
-            'EXISTING_CAR_OEM'
-        );
+        ['insurance' => $insurance, 'data' => $data, 'dsaname' => $dsaname] = $this->insuranceService->resolveEditData($booking);
         $uid = backpack_auth()->id();
 
         return view('admin.booking.insurance-edit', compact(
@@ -7571,13 +7476,6 @@ class BookingCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to perform this action.');
         }
 
-        Log::info('insUpdate called', [
-            'booking_id' => $request->booking_id ?? 'missing',
-            'user_id' => backpack_auth()->id() ?? 'guest',
-            'ip' => $request->ip(),
-            'all_input' => $request->except(['policy_copy']),
-        ]);
-
         try {
             $validated = $request->validate([
                 'booking_id' => 'required',
@@ -7589,91 +7487,9 @@ class BookingCrudController extends CrudController
                 'policy_copy' => 'nullable|file|mimes:pdf|max:5120',
             ]);
 
-            Log::info('Validation passed successfully', [
-                'booking_id' => $request->booking_id,
-                'policy_no' => $request->policy_no,
-            ]);
+            $policyCopy = $request->hasFile('policy_copy') ? $request->file('policy_copy') : null;
 
-            $data = [
-                'bid' => $request->booking_id,
-                'source' => $request->insurance_category,
-                'insurer' => $request->insurance_company,
-                'pol_no' => strtoupper($request->policy_no),
-                'pol_date' => $request->hidden_policy_date,
-                'pol_type' => $request->policy_type,
-                'status' => 1,
-                'updated_by' => backpack_auth()->id() ?? 1,
-            ];
-
-            $allFieldsFilled = $request->filled([
-                'booking_id',
-                'insurance_category',
-                'insurance_company',
-                'policy_no',
-                'hidden_policy_date',
-                'policy_type',
-            ]) && $request->hasFile('policy_copy');
-
-            if ($allFieldsFilled) {
-                $data['status'] = 2;
-                Log::info('All required fields filled + file uploaded → status set to 2');
-            } else {
-                Log::info('Status remains 1 - missing some required field or file');
-            }
-
-            Log::info('Attempting to update/create insurance record', ['bid' => $request->booking_id]);
-
-            $insurance = XlInsurance::updateOrCreate(
-                ['bid' => $request->booking_id],
-                $data
-            );
-            $booking = Booking::find($request->booking_id);
-
-            if ($booking) {
-
-                $booking->addHistory(
-                    'commented',
-                    'Insurance Process Completed',
-                    'Insurance details updated successfully',
-                    [
-                        'module' => 'Insurance',
-                        'insurance_type' => $request->insurance_category,
-                        'insurance_company' => $request->insurance_company,
-                        'policy_no' => strtoupper($request->policy_no),
-                        'policy_date' => $request->hidden_policy_date,
-                        'policy_type' => $request->policy_type,
-                        'status' => $data['status'],
-                    ],
-                    null,
-                    backpack_user()
-                );
-            }
-
-            Log::info('Insurance record saved/updated', [
-                'insurance_id' => $insurance->id,
-                'bid' => $insurance->bid,
-                'status' => $insurance->status,
-            ]);
-
-            if ($request->hasFile('policy_copy') && $request->file('policy_copy')->isValid()) {
-                Log::info('Policy copy file detected', [
-                    'original_name' => $request->file('policy_copy')->getClientOriginalName(),
-                    'size' => $request->file('policy_copy')->getSize().' bytes',
-                ]);
-
-                $insurance->clearMediaCollection('policy_copy');
-                Log::info('Cleared old policy_copy media collection');
-
-                $insurance->addMediaFromRequest('policy_copy')
-                    ->usingFileName("policy_{$request->booking_id}_".time().'.pdf')
-                    ->toMediaCollection('policy_copy');
-
-                Log::info('New policy copy file uploaded successfully');
-            } else {
-                Log::info('No valid policy_copy file uploaded or file invalid');
-            }
-
-            Log::info('insUpdate completed successfully', ['booking_id' => $request->booking_id]);
+            $this->insuranceService->apply((int) $validated['booking_id'], $validated, $policyCopy);
 
             return redirect()->route('sales.booking.pending-insurance')
                 ->with('success', 'Insurance details saved successfully for Booking #'.$request->booking_id);

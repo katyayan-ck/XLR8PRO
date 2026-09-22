@@ -184,3 +184,33 @@ twice in a row with no state change in between).
   `sales/booking/pending-dms` → all 200.
 - Full suite re-run: `BookingDmsServiceTest` + `BookingKycServiceTest` + `PersonCrudTest` → 19
   passed, 43 assertions, zero regressions.
+
+## Phase 4, third sub-domain: BookingInsuranceService
+
+Continuing Phase 4's sequence (KYC, DMS done; Insurance next per the plan).
+
+**New: `App\Services\Sales\Booking\BookingInsuranceService`** (singleton, no constructor deps).
+`resolveEditData(Booking $booking): array{insurance, data, dsaname}` — the full Enquiry-driven
+customer/vehicle context resolution plus the large segment/model/variant/color/branch/location/
+insurer/DSA/chassis/accessory dropdown-data build previously inline in `insEdit()` (~115 lines).
+`apply(int $bookingId, array $validated, ?UploadedFile $policyCopy): XlInsurance` — creates/updates
+the `XlInsurance` row (status=2 only when a policy-copy file is present in this submission, matching
+the original's `$allFieldsFilled` logic — which reduces to just the file-presence check once
+validation has already enforced every other field is present), records the `"Insurance Process
+Completed"` history entry, and attaches the policy-copy file via Spatie Media Library.
+
+`insEdit()`/`insUpdate()` are now thin — `insUpdate()` keeps its `try/catch(ValidationException |
+Exception)` structure in the controller (HTTP-flow-specific, not business logic) and removed the
+extensive `Log::info()` play-by-play that was purely narrating what the extracted service now does
+directly (the two `Log::warning`/`Log::error` calls in the catch blocks, which carry real
+diagnostic value for genuine failures, were kept).
+
+### Verification
+
+- `php -l` clean; `vendor/bin/pint --dirty --format agent` → passed.
+- **New: `tests/Unit/Services/Sales/BookingInsuranceServiceTest.php`** (4 tests, 10 assertions) —
+  status=1 vs status=2 (file-present) branching, update-in-place on a second call, the media
+  attachment actually landing (`getMedia('policy_copy')->isNotEmpty()`), and the edit-data shape.
+- Live HTTP round trip: `sales/booking/insurance/{id}/edit` → 200.
+- Full suite re-run (`BookingKycServiceTest` + `BookingDmsServiceTest` +
+  `BookingInsuranceServiceTest` + `PersonCrudTest`) → 23 passed, 53 assertions, zero regressions.
