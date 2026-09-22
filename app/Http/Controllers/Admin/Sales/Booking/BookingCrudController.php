@@ -41,6 +41,7 @@ use App\Rules\PanNumber;
 use App\Services\EnquiryReferenceService;
 use App\Services\IdentifierService;
 use App\Services\OrgService;
+use App\Services\Sales\Booking\BookingDeliveryService;
 use App\Services\Sales\Booking\BookingDmsService;
 use App\Services\Sales\Booking\BookingInsuranceService;
 use App\Services\Sales\Booking\BookingKycService;
@@ -60,7 +61,6 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -94,6 +94,7 @@ class BookingCrudController extends CrudController
         protected BookingDmsService $dmsService,
         protected BookingInsuranceService $insuranceService,
         protected BookingRtoService $rtoService,
+        protected BookingDeliveryService $deliveryService,
     ) {
         parent::__construct();
     }
@@ -7826,86 +7827,11 @@ class BookingCrudController extends CrudController
         }
 
         $booking = Booking::findOrFail($id);
-
-        $linkedEnquiry = null;
-
-        if ($booking->enq_no) {
-            $linkedEnquiry = Enquiry::resolveByAnyReference($booking->enq_no);
-        }
-        if ($linkedEnquiry) {
-            $booking->name = $linkedEnquiry->name;
-            $booking->care_of = $linkedEnquiry->care_of;
-
-            $booking->branch_code =
-                $linkedEnquiry->dealer_branch ?? $booking->branch_code;
-
-            $booking->location_code =
-                $linkedEnquiry->dealer_location ?? $booking->location_code;
-
-            $booking->location_other =
-                $linkedEnquiry->dealer_location_other ?? $booking->location_other;
-
-            $booking->model_code =
-                $linkedEnquiry->model_code ?? $booking->model_code;
-
-            $booking->variant_code =
-                $linkedEnquiry->variant_code ?? $booking->variant_code;
-
-            $booking->color_code =
-                $linkedEnquiry->color_code ?? $booking->color_code;
-        }
-        $segments = OrgService::segments() ?? [];
-
-        $saleconsultants = OrgService::salesConsultants();
-
-        $branch = 'N/A';
-
-        if (! empty($booking->branch_code)) {
-            $branch = Branch::where('code', $booking->branch_code)
-                ->value('name');
-
-            if (! $branch) {
-                $branch = Branch::where('branch_code', $booking->branch_code)
-                    ->value('name');
-            }
-        }
-
-        $branch = $branch ?: 'N/A';
-
-        $location = $booking->location_code
-            ? (
-                Location::where('code', $booking->location_code)->value('name')
-                ?? Location::find($booking->location_code)?->name
-                ?? $booking->location_other
-                ?? 'N/A'
-            )
-            : ($booking->location_other ?? 'N/A');
-
-        $financier = XlFinancier::find($booking->financier)?->name ?? 'N/A';
-
-        $insurance = XlInsurance::where('bid', $id)->first();
-
-        $rto = XlRto::where('bid', $id)->first();
-
-        $bchasis = $booking->chassis_no ?? 'N/A';
-
-        $data = [
-            'segments' => $segments,
-            'saleconsultants' => $saleconsultants,
-            'branch' => $branch,
-            'location' => $location,
-            'financier' => $financier,
-            'bchasis' => $bchasis,
-        ];
+        ['insurance' => $insurance, 'rto' => $rto, 'data' => $data] = $this->deliveryService->resolveEditData($booking);
 
         return view(
             'admin.booking.delivery-edit',
-            compact(
-                'booking',
-                'data',
-                'insurance',
-                'rto'
-            )
+            compact('booking', 'data', 'insurance', 'rto')
         );
     }
 
@@ -7915,55 +7841,19 @@ class BookingCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to perform this action.');
         }
 
-        \Log::debug('PendDeliveryUpdate started', [
-            'booking_id' => $id,
-            'user_id' => backpack_auth()->id() ?? 'unknown',
-            'ip' => $request->ip(),
-        ]);
-
-        \Log::debug('Request input (non-file)', $request->except(['photos']));
-
-        $filesInfo = [];
-        $photos = $request->file('photos') ?? [];
-        foreach ($photos as $key => $file) {
-            if ($file instanceof UploadedFile) {
-                $filesInfo[$key] = [
-                    'original_name' => $file->getClientOriginalName(),
-                    'size_kb' => round($file->getSize() / 1024, 2),
-                    'mime' => $file->getMimeType(),
-                    'error' => $file->getError(),
-                ];
-            } else {
-                $filesInfo[$key] = 'invalid-file-object';
-            }
-        }
-        \Log::debug('Uploaded photos (nested structure)', $filesInfo);
-
         $rules = [
             'remarks' => 'required|string|max:1000',
-            'photos.delivery_ceremony_with_customer' => 'required|image|mimes:jpeg,png,jpg|max:5120',
-            'photos.bonnet' => 'required|image|mimes:jpeg,png,jpg|max:5120',
-            'photos.windshield_glass' => 'required|image|mimes:jpeg,png,jpg|max:5120',
-            'photos.vehicle_driver_side' => 'required|image|mimes:jpeg,png,jpg|max:5120',
-            'photos.vehicle_co_driver_side' => 'required|image|mimes:jpeg,png,jpg|max:5120',
-            'photos.vehicle_rear_side' => 'required|image|mimes:jpeg,png,jpg|max:5120',
-            'photos.tire_front_driver_side' => 'required|image|mimes:jpeg,png,jpg|max:5120',
-            'photos.tire_front_co_driver_side' => 'required|image|mimes:jpeg,png,jpg|max:5120',
-            'photos.tire_rear_driver_side' => 'required|image|mimes:jpeg,png,jpg|max:5120',
-            'photos.tire_rear_co_driver_side' => 'required|image|mimes:jpeg,png,jpg|max:5120',
-            'photos.stepney' => 'required|image|mimes:jpeg,png,jpg|max:5120',
-            'photos.foot_rest_driver_side' => 'required|image|mimes:jpeg,png,jpg|max:5120',
-            'photos.foot_rest_co_driver_side' => 'required|image|mimes:jpeg,png,jpg|max:5120',
-            'photos.tool_kit' => 'required|image|mimes:jpeg,png,jpg|max:5120',
-            'photos.vehicle_chassis_no_photo' => 'required|image|mimes:jpeg,png,jpg|max:5120',
-            'photos.chassis_no_screenshot_invoice' => 'required|image|mimes:jpeg,png,jpg|max:5120',
-            'photos.chassis_no_screenshot_insurance' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
             'chassis_no_verified' => 'nullable|boolean',
         ];
 
+        foreach (BookingDeliveryService::PHOTO_COLLECTIONS as $collection) {
+            $rules["photos.{$collection}"] = $collection === 'chassis_no_screenshot_insurance'
+                ? 'nullable|image|mimes:jpeg,png,jpg|max:5120'
+                : 'required|image|mimes:jpeg,png,jpg|max:5120';
+        }
+
         try {
-            $validated = $request->validate($rules);
-            \Log::info('Validation passed', ['booking_id' => $id]);
+            $request->validate($rules);
         } catch (ValidationException $e) {
             \Log::warning('Validation failed', [
                 'booking_id' => $id,
@@ -7976,88 +7866,19 @@ class BookingCrudController extends CrudController
         }
 
         try {
+            $photos = [];
 
-            $delivery = XlDelivery::updateOrCreate(
-                ['bid' => $id],
-                [
-                    'remarks' => $request->remarks,
-                    'verification' => $request->boolean('chassis_no_verified', false),
-                    'status' => 1,
-                    'created_by' => backpack_auth()->id() ?? 1,
-                    'updated_by' => backpack_auth()->id() ?? 1,
-                ]
-            );
-
-            $booking = Booking::find($id);
-
-            if ($booking) {
-
-                $history = $booking->addHistory(
-                    'commented',
-                    'Delivery Process Completed',
-                    'Vehicle delivery verification completed successfully',
-                    [
-                        'module' => 'Delivery',
-                        'remarks' => $request->remarks,
-                        'verification' => $request->boolean('chassis_no_verified', false),
-                        'delivery_status' => 1,
-                    ],
-                    null,
-                    backpack_user()
-                );
-            }
-
-            \Log::info('Delivery record updated/created', [
-                'delivery_id' => $delivery->id,
-                'bid' => $id,
-            ]);
-
-            $collections = [
-                'delivery_ceremony_with_customer',
-                'bonnet',
-                'windshield_glass',
-                'vehicle_driver_side',
-                'vehicle_co_driver_side',
-                'vehicle_rear_side',
-                'tire_front_driver_side',
-                'tire_front_co_driver_side',
-                'tire_rear_driver_side',
-                'tire_rear_co_driver_side',
-                'stepney',
-                'foot_rest_driver_side',
-                'foot_rest_co_driver_side',
-                'tool_kit',
-                'vehicle_chassis_no_photo',
-                'chassis_no_screenshot_invoice',
-                'chassis_no_screenshot_insurance',
-            ];
-
-            foreach ($collections as $collection) {
+            foreach (BookingDeliveryService::PHOTO_COLLECTIONS as $collection) {
                 $photoKey = "photos.{$collection}";
-
-                if ($request->hasFile($photoKey) && $request->file($photoKey)->isValid()) {
-                    $file = $request->file($photoKey);
-
-                    \Log::info("Processing photo: {$collection}", [
-                        'original_name' => $file->getClientOriginalName(),
-                        'size_kb' => round($file->getSize() / 1024, 2),
-                    ]);
-
-                    $delivery->clearMediaCollection($collection);
-                    \Log::debug("Cleared old media: {$collection}");
-
-                    $media = $delivery->addMedia($file)
-                        ->toMediaCollection($collection, 'public');
-
-                    \Log::info('Media added', [
-                        'collection' => $collection,
-                        'media_id' => $media->id,
-                        'filename' => $media->file_name,
-                    ]);
-                } else {
-                    \Log::debug("No valid file for: {$collection} (key: {$photoKey})");
-                }
+                $photos[$collection] = $request->hasFile($photoKey) ? $request->file($photoKey) : null;
             }
+
+            $this->deliveryService->apply(
+                (int) $id,
+                $request->remarks,
+                $request->boolean('chassis_no_verified', false),
+                $photos
+            );
 
             return redirect()
                 ->route('sales.booking.pending-deliveries')
