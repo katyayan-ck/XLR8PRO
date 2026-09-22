@@ -2719,6 +2719,12 @@ class BookingCrudController extends CrudController
                 'amount' => 'required|numeric|min:0.01',
                 'amount_proof' => 'required|file|mimes:jpeg,png,jpg,pdf|max:2048',
                 'mode' => 'required|in:Cash,Cheque,Bank Transfer,UPI',
+            ], [], [
+                'receipt_date' => __('booking.fields.receipt_date'),
+                'reciept_no' => __('booking.fields.receipt_number'),
+                'amount' => __('booking.fields.amount'),
+                'amount_proof' => __('booking.fields.amount_proof'),
+                'mode' => __('booking.fields.payment_mode'),
             ]);
 
             if ($validator->fails()) {
@@ -2897,6 +2903,12 @@ class BookingCrudController extends CrudController
             'amount' => 'required|numeric|min:0.01',
             'amount_proof' => 'required|file|mimes:jpeg,png,jpg,pdf|max:2048',
             'mode' => 'required|in:Cash,Cheque,Bank Transfer,UPI',
+        ], [], [
+            'hidden_receipt_date' => __('booking.fields.receipt_date'),
+            'reciept_no' => __('booking.fields.receipt_number'),
+            'amount' => __('booking.fields.amount'),
+            'amount_proof' => __('booking.fields.amount_proof'),
+            'mode' => __('booking.fields.payment_mode'),
         ]);
 
         if ($validator->fails()) {
@@ -3041,6 +3053,11 @@ class BookingCrudController extends CrudController
             'status' => 'nullable|in:0,1,2,3,4,5,6,7,8',
             'fdoc' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
             'dept' => 'nullable|string|max:50',
+        ], [], [
+            'remark' => __('booking.fields.followup_remark'),
+            'status' => __('booking.fields.followup_status'),
+            'fdoc' => __('booking.fields.followup_document'),
+            'dept' => __('booking.fields.followup_department'),
         ]);
 
         if ($validator->fails()) {
@@ -3738,7 +3755,12 @@ class BookingCrudController extends CrudController
             'dms_so.regex' => 'Please enter a valid SO number (exactly 10 digits).',
         ];
 
-        $validator = Validator::make($request->all(), $rules, $messages);
+        $validator = Validator::make($request->all(), $rules, $messages, [
+            'dms_no' => __('booking.fields.dms_number'),
+            'dms_otf' => __('booking.fields.dms_otf'),
+            'otf_date' => __('booking.fields.otf_date'),
+            'hidden_otf_date' => __('booking.fields.otf_date'),
+        ]);
 
         if ($validator->fails()) {
             Log::warning('Validation failed in dmsupdate', [
@@ -3885,6 +3907,10 @@ class BookingCrudController extends CrudController
             'pan_no' => ['required', 'string', new PanNumber],
             'adhar_no' => ['required', 'string', new AadhaarNumber],
             'gst_no' => ['nullable', 'string', new Gstin],
+        ], [], [
+            'pan_no' => __('booking.fields.pan_number'),
+            'adhar_no' => __('booking.fields.aadhaar_number'),
+            'gst_no' => __('booking.fields.gstin'),
         ]);
 
         $gstNotRequired = $request->has('gst_not_required') && $request->gst_not_required;
@@ -5505,6 +5531,8 @@ class BookingCrudController extends CrudController
 
         $request->validate([
             'instrument_ref_no' => 'required|string|max:50|min:3',
+        ], [], [
+            'instrument_ref_no' => __('booking.fields.instrument_ref_no'),
         ]);
 
         $finance = XFinance::where('bid', $id)->firstOrFail();
@@ -5817,6 +5845,16 @@ class BookingCrudController extends CrudController
             'chassis' => [$request->has('pending_flag') ? 'required' : 'nullable', new ChassisNumber],
             'invoice_number' => ['nullable', new InvoiceNumber],
             'dealer_invoice_number' => ['nullable', new DealerInvoiceNumber],
+        ], [], [
+            'pan_no' => __('booking.fields.pan_number'),
+            'adhar_no' => __('booking.fields.aadhaar_number'),
+            'dms_no' => __('booking.fields.dms_number'),
+            'dms_otf' => __('booking.fields.dms_otf'),
+            'hidden_otf_date' => __('booking.fields.otf_date'),
+            'online_bk_ref_no' => __('booking.fields.online_reference_number'),
+            'chassis' => __('booking.fields.chassis_number'),
+            'invoice_number' => __('booking.fields.invoice_number'),
+            'dealer_invoice_number' => __('booking.fields.dealer_invoice_number'),
         ]);
 
         if ($request->has('pending_flag')) {
@@ -6014,6 +6052,19 @@ class BookingCrudController extends CrudController
 
             'aadhar.required' => 'Aadhaar document is mandatory.',
             'pan.required' => 'PAN document is mandatory.',
+        ], [
+            'deduction' => __('booking.fields.refund_deduction'),
+            'remaining_amount' => __('booking.fields.refund_remaining_amount'),
+            'bank_name' => __('booking.fields.refund_bank_name'),
+            'branch_name' => __('booking.fields.refund_branch_name'),
+            'account_type' => __('booking.fields.refund_account_type'),
+            'account_number' => __('booking.fields.refund_account_number'),
+            'holder_name' => __('booking.fields.refund_holder_name'),
+            'ifsc_code' => __('booking.fields.refund_ifsc_code'),
+            'deduction_reason' => __('booking.fields.refund_deduction_reason'),
+            'acc_proof' => __('booking.fields.refund_account_proof'),
+            'aadhar' => __('booking.fields.refund_aadhaar_proof'),
+            'pan' => __('booking.fields.refund_pan_proof'),
         ]);
 
         if ($validator->fails()) {
@@ -6290,6 +6341,12 @@ class BookingCrudController extends CrudController
             'date' => 'required|date_format:d-M-Y',
             'amount' => 'required|numeric|min:0',
             'amount_proof' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+        ], [], [
+            'reciept' => __('booking.fields.receipt_number'),
+            'mode' => __('booking.fields.payment_mode'),
+            'date' => __('booking.fields.receipt_date'),
+            'amount' => __('booking.fields.amount'),
+            'amount_proof' => __('booking.fields.amount_proof'),
         ]);
 
         $receipt->type_number = $request->reciept;
@@ -6602,6 +6659,13 @@ class BookingCrudController extends CrudController
                 'hidden_policy_date' => 'required|date_format:Y-m-d',
                 'policy_type' => 'required|integer|in:1,2,3,4',
                 'policy_copy' => 'nullable|file|mimes:pdf|max:5120',
+            ], [], [
+                'insurance_category' => __('booking.fields.insurance_category'),
+                'insurance_company' => __('booking.fields.insurance_company'),
+                'policy_no' => __('booking.fields.policy_number'),
+                'hidden_policy_date' => __('booking.fields.policy_date'),
+                'policy_type' => __('booking.fields.policy_type'),
+                'policy_copy' => __('booking.fields.policy_copy'),
             ]);
 
             $policyCopy = $request->hasFile('policy_copy') ? $request->file('policy_copy') : null;
@@ -6876,6 +6940,20 @@ class BookingCrudController extends CrudController
             'tax_payment_ref_no' => 'nullable|string|max:20|regex:/^[A-Z0-9]{10,20}$/',
             'vehicle_reg_no' => 'nullable|string',
             'tax_receipt_copy' => 'nullable|file|mimes:pdf|max:5120',
+        ], [], [
+            'trade_used' => __('booking.fields.trade_used'),
+            'sale_type' => __('booking.fields.sale_type'),
+            'permit' => __('booking.fields.permit'),
+            'body_type' => __('booking.fields.body_type'),
+            'registration_type' => __('booking.fields.registration_type'),
+            'reg_no_type' => __('booking.fields.reg_no_type'),
+            'trc_number' => __('booking.fields.trc_number'),
+            'bank_ref_no' => __('booking.fields.trc_bank_ref_no'),
+            'trc_copy' => __('booking.fields.trc_copy'),
+            'application_no' => __('booking.fields.application_number'),
+            'tax_payment_ref_no' => __('booking.fields.tax_payment_ref_no'),
+            'vehicle_reg_no' => __('booking.fields.vehicle_reg_no'),
+            'tax_receipt_copy' => __('booking.fields.tax_receipt_copy'),
         ]);
 
         try {
@@ -6960,14 +7038,24 @@ class BookingCrudController extends CrudController
             'chassis_no_verified' => 'nullable|boolean',
         ];
 
+        $deliveryAttributes = [
+            'remarks' => __('booking.fields.remarks'),
+            'chassis_no_verified' => __('booking.fields.chassis_number'),
+        ];
+
         foreach (BookingDeliveryService::PHOTO_COLLECTIONS as $collection) {
             $rules["photos.{$collection}"] = $collection === 'chassis_no_screenshot_insurance'
                 ? 'nullable|image|mimes:jpeg,png,jpg|max:5120'
                 : 'required|image|mimes:jpeg,png,jpg|max:5120';
+
+            // Photo collection names are already readable snake_case (e.g. 'windshield_glass') -
+            // title-cased directly rather than hand-maintaining 17 more lang file entries for
+            // what's effectively the collection name with underscores replaced by spaces.
+            $deliveryAttributes["photos.{$collection}"] = ucwords(str_replace('_', ' ', $collection));
         }
 
         try {
-            $request->validate($rules);
+            $request->validate($rules, [], $deliveryAttributes);
         } catch (ValidationException $e) {
             \Log::warning('Validation failed', [
                 'booking_id' => $id,
@@ -7291,6 +7379,21 @@ class BookingCrudController extends CrudController
             'update' => 'required|integer|in:1,2,3',
             'case_status' => 'required|integer|in:1,2,3',
             'remark' => 'required|string',
+        ], [], [
+            'buyer_type' => __('booking.fields.buyer_type'),
+            'enum_master1' => __('booking.fields.existing_make_1'),
+            'vehicle_details' => __('booking.fields.existing_model_1'),
+            'enum_master2' => __('booking.fields.existing_make_2'),
+            'vehicle_details2' => __('booking.fields.existing_model_2'),
+            'registration_no' => __('booking.fields.registration_number'),
+            'manufacturing_year' => __('booking.fields.manufacturing_year'),
+            'odometer_reading' => __('booking.fields.odometer_reading'),
+            'expected_price' => __('booking.fields.expected_price'),
+            'offered_price' => __('booking.fields.offered_price'),
+            'exchange_bonus' => __('booking.fields.exchange_bonus'),
+            'update' => __('booking.fields.exchange_verification_status'),
+            'case_status' => __('booking.fields.case_status'),
+            'remark' => __('booking.fields.exchange_remark'),
         ]);
 
         if ($validator->fails()) {
@@ -7406,7 +7509,22 @@ class BookingCrudController extends CrudController
             'bid' => 'required|integer',
         ];
 
-        $validator = Validator::make($request->all(), $rules);
+        $validator = Validator::make($request->all(), $rules, [], [
+            'fin_mode' => __('booking.fields.finance_mode'),
+            'loan_status' => __('booking.fields.loan_status'),
+            'case_status' => __('booking.fields.case_status'),
+            'instrument_type' => __('booking.fields.instrument_type'),
+            'instrument_ref_no' => __('booking.fields.instrument_ref_no'),
+            'loan_amount' => __('booking.fields.loan_amount'),
+            'margin_money' => __('booking.fields.margin_money'),
+            'file_charge' => __('booking.fields.file_charge'),
+            'financier_subvention' => __('booking.fields.financier_subvention'),
+            'remark' => __('booking.fields.finance_remark'),
+            'verification_status' => __('booking.fields.verification_status'),
+            'case_lost_reason' => __('booking.fields.case_lost_reason'),
+            'instrument_proof' => __('booking.fields.instrument_proof'),
+            'retail' => __('booking.fields.retail'),
+        ]);
         if ($validator->fails()) {
             return redirect()->back()
                 ->withInput()
@@ -7536,7 +7654,23 @@ class BookingCrudController extends CrudController
             }
         }
 
-        $validator = Validator::make($request->all(), $rules);
+        $validator = Validator::make($request->all(), $rules, [], [
+            'loan_amount' => __('booking.fields.loan_amount'),
+            'do_number' => __('booking.fields.do_number'),
+            'expected_payout_pct' => __('booking.fields.expected_payout_pct'),
+            'gst_included' => __('booking.fields.gst_included'),
+            'inv1_no' => __('booking.fields.invoice1_number'),
+            'inv1_name' => __('booking.fields.invoice1_name'),
+            'inv1_prov_gst' => __('booking.fields.invoice1_provisioning_gst'),
+            'inv2_no' => __('booking.fields.invoice2_number'),
+            'inv2_name' => __('booking.fields.invoice2_name'),
+            'inv2_prov_gst' => __('booking.fields.invoice2_provisioning_gst'),
+            'consideration_no_gst' => __('booking.fields.consideration_no_gst'),
+            'difference_no_gst' => __('booking.fields.difference_no_gst'),
+            'payout_remarks' => __('booking.fields.payout_remarks'),
+            'payout_category' => __('booking.fields.payout_category'),
+            'no_payout_reason' => __('booking.fields.refund_no_payout_reason'),
+        ]);
         if ($validator->fails()) {
             return redirect()->back()
                 ->withInput()
@@ -7850,6 +7984,12 @@ class BookingCrudController extends CrudController
             'transaction_details' => 'required|string',
             'remark' => 'required|string',
             'pay_proof' => 'required|file|mimes:jpeg,png,jpg,pdf|max:2048',
+        ], [], [
+            'ref_date' => __('booking.fields.refund_date'),
+            'mode' => __('booking.fields.refund_mode'),
+            'transaction_details' => __('booking.fields.refund_transaction_details'),
+            'remark' => __('booking.fields.refund_remark'),
+            'pay_proof' => __('booking.fields.refund_pay_proof'),
         ]);
 
         if ($validator->fails()) {
@@ -7984,6 +8124,12 @@ class BookingCrudController extends CrudController
             'remark' => 'nullable|string|max:1000',
             'pay_proof' => 'nullable|file|mimes:jpeg,png,jpg,pdf|max:2048',
             'booking_id' => 'required|integer|exists:xlr8_booking_master,id',
+        ], [], [
+            'ref_date' => __('booking.fields.refund_date'),
+            'mode' => __('booking.fields.refund_mode'),
+            'transaction_details' => __('booking.fields.refund_transaction_details'),
+            'remark' => __('booking.fields.refund_remark'),
+            'pay_proof' => __('booking.fields.refund_pay_proof'),
         ]);
 
         if ($validator->fails()) {
