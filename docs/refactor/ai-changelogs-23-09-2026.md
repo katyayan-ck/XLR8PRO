@@ -438,3 +438,60 @@ diagnostic value for genuine failures. Also dropped `refundUpdate()`'s `$statusR
 - `php artisan tinker --execute 'app(BookingCrudController::class);'` → resolves cleanly.
 - Full suite re-run (`tests/Unit/Services/Sales/`) → **46 passed, 106 assertions, zero
   regressions** across all 8 Phase 4 services landed so far.
+
+## Phase 4, ninth sub-domain: BookingOtfService extracted — CRITICAL bug found (BUG-104)
+
+Per the plan's sequencing (KYC → DMS → Insurance → RTO → Delivery → Finance → Exchange/Scrappage →
+Refund → **OTF/VOTF** → Core CRUD, last). Covers `otfProcess()` (the largest read-only view-data
+prep of any Phase 4 sub-domain, ~430 lines) → `otfSave()`, and `generateVotfNumber()`.
+`downloadOtfPdf()`/`getOtfPdfData()` deliberately left untouched — investigated and found to be a
+near- but not exact-duplicate of `otfProcess()`'s data prep (different quotation-lookup fallback
+order, no mandatory-quotation gate), so forcing it into the same service method risked altering PDF
+output; same precedent as the Phase 3 XlInsurance/XlRto/XFinance investigation.
+
+**New: `App\Services\Sales\Booking\BookingOtfService`**:
+
+- `resolveOtfFormData(Booking $booking): ?array` — returns `null` when the linked quotation can't be
+  found (the "no quotation at all" mandatory-gate check on `quotation_id` itself stays in the
+  controller, since it decides between two differently-worded JSON error responses before ever
+  calling the service). Otherwise returns the full ~35-key display-data array unchanged in shape/
+  content from the original.
+- `apply(Booking $booking, array $formData, ?UploadedFile $chassisImage): Booking` — the `otfSave()`
+  write logic: merges submitted form data over existing `final_data` over quotation data (in that
+  priority order), retains "important" price/detail fields when a field is absent from a resubmission
+  (so disabled/hidden inputs don't null out previously-saved values), updates the booking's own KYC/
+  DMS/exchange/chassis/invoice fields, syncs the linked Enquiry's address fields, and upserts RTO/
+  Finance/Insurance records from the same submission.
+- `generateVotfNumber(Booking $booking): string` — the VOTF sequence generator, unchanged logic;
+  throws `InvalidArgumentException` instead of returning a 422 JSON response directly (HTTP response
+  shaping stays in the controller). BUG-097 (no locking, already documented) is unaffected by this
+  extraction.
+
+**CRITICAL new bug found: BUG-104.** `otfSave()` (now `apply()`) sets `$booking->final_data =
+json_encode(...)` unconditionally, then `$booking->save()`. `SHOW COLUMNS FROM xlr8_booking_master`
+confirms this database's booking table has **no `final_data` column** (also missing: `consultant`,
+`buyer_type`, `accessories`, `branch_code`, `segment_code`, and many other fields the wider
+controller reads throughout). Reading a missing field silently returns `null` (why this went
+unnoticed across 8 prior read-heavy Phase 4 extractions), but `otfSave()` is the only write path in
+this controller that both sets one of these non-existent fields *and* calls `save()` — reproduced
+against both a test fixture and a real, pre-existing booking row (id 1), ruling out a test-only
+artifact. Every OTF form submission throws an uncaught `QueryException`. Documented in full detail
+in `known-bugs-report.md`, including an open question for the user: does this local database's
+schema reflect production (live critical bug) or is it a stale local copy missing columns
+production already has (environment artifact, not yet a confirmed live bug)? Flagged explicitly to
+the user in this session's chat, not just buried in the tracker, given the severity.
+
+### Verification
+
+- `php -l` clean on all 3 changed/new files (controller splice done via a precise line-range script
+  after `git diff` confirmed only the intended ~460+~530 lines were replaced — Edit tool's exact-
+  match requirement made a single call impractical at this size); `vendor/bin/pint --dirty --format
+  agent` → clean (auto-removed 2 now-unused imports).
+- **New: `tests/Unit/Services/Sales/BookingOtfServiceTest.php`** (4 tests, 7 assertions) —
+  quotation-not-found returns null, the quotation/final_data merge-priority logic (verified via a
+  direct unsaved in-memory attribute, since `final_data` can't be persisted through normal booking
+  creation either), and two tests that lock in BUG-104's documented crash behavior rather than
+  asserting an impossible success path (matching the BUG-100 precedent from the DMS extraction).
+- `php artisan tinker --execute 'app(BookingCrudController::class);'` → resolves cleanly.
+- Full suite re-run (`tests/Unit/Services/Sales/`) → **50 passed, 113 assertions, zero
+  regressions** across all 9 Phase 4 services landed so far.

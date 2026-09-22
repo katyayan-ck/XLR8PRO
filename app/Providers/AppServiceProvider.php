@@ -21,6 +21,7 @@ use App\Services\Sales\Booking\BookingExchangeService;
 use App\Services\Sales\Booking\BookingFinanceService;
 use App\Services\Sales\Booking\BookingInsuranceService;
 use App\Services\Sales\Booking\BookingKycService;
+use App\Services\Sales\Booking\BookingOtfService;
 use App\Services\Sales\Booking\BookingRefundService;
 use App\Services\Sales\Booking\BookingRtoService;
 use Illuminate\Cache\CacheManager;
@@ -85,6 +86,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(BookingFinanceService::class);
         $this->app->singleton(BookingExchangeService::class);
         $this->app->singleton(BookingRefundService::class);
+        $this->app->singleton(BookingOtfService::class);
 
         // SuperAdmin wildcard bypass + user-level permission denial check — registered here in
         // register() (not boot()), and via afterResolving rather than the Gate facade, so this
