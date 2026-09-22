@@ -626,13 +626,7 @@ class BookingCrudController extends CrudController
             $request->input('buyertype') === 'Exchange Buy'
         ) {
             try {
-                $exchange = new XExchange;
-                $exchange->bid = $booking->id;
-                $exchange->vehicle_oem_code = $booking->vehicle_oem_code;
-                $exchange->verification_status = 1;
-                $exchange->case_status = 1;
-                $exchange->purchase_type = $request->input('buyertype');
-                $exchange->save();
+                XExchange::seedForBooking($booking->id, $request->input('buyertype'));
             } catch (Exception $e) {
                 Log::error('[STORE] XExchange save failed', ['booking_id' => $booking->id, 'message' => $e->getMessage()]);
             }
@@ -1101,12 +1095,7 @@ class BookingCrudController extends CrudController
 
         if ($request->input('buyer_type') === 'Exchange Buy') {
             if (! XExchange::where('bid', $booking->id)->exists()) {
-                XExchange::create([
-                    'bid' => $booking->id,
-                    'verification_status' => 1,
-                    'case_status' => 1,
-                    'purchase_type' => $request->input('buyer_type'),
-                ]);
+                XExchange::seedForBooking($booking->id, $request->input('buyer_type'));
                 $rem[] = 'New exchange entry created';
             }
         }
