@@ -41,6 +41,7 @@ use App\Rules\PanNumber;
 use App\Services\EnquiryReferenceService;
 use App\Services\IdentifierService;
 use App\Services\OrgService;
+use App\Services\Sales\Booking\BookingKycService;
 use App\Services\SystemSettingService;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
@@ -86,6 +87,7 @@ class BookingCrudController extends CrudController
     public function __construct(
         protected IdentifierService $identifiers,
         protected EnquiryReferenceService $enquiryRef,
+        protected BookingKycService $kycService,
     ) {
         parent::__construct();
     }
@@ -4804,132 +4806,9 @@ class BookingCrudController extends CrudController
         $this->crud->hasAccessOrFail('update');
 
         $booking = Booking::findOrFail($id);
+        $data = $this->kycService->resolveEditData($booking);
 
-        $enquiry = null;
-
-        if (! empty($booking->enq_no)) {
-            $enquiry = Enquiry::resolveByAnyReference($booking->enq_no);
-        }
-
-        $branchCode = $booking->branch_code
-            ?? $enquiry?->dealer_branch;
-
-        $locationCode = $booking->location_code
-            ?? $enquiry?->dealer_location;
-
-        $segmentCode = $booking->segment_code
-            ?? $enquiry?->segment_code;
-
-        $modelCode = $booking->model_code
-            ?? $enquiry?->model_code;
-
-        $variantCode = $booking->variant_code
-            ?? $enquiry?->variant_code;
-
-        $colorCode = $booking->color_code
-            ?? $enquiry?->color_code;
-
-        $customerName = $booking->name
-            ?? $enquiry?->name
-            ?? '—';
-
-        $branchName = '—';
-
-        if (! empty($branchCode)) {
-            $branchName = Branch::where('code', $branchCode)
-                ->value('name');
-
-            if (! $branchName) {
-                $branchName = Branch::where('branch_code', $branchCode)
-                    ->value('name');
-            }
-        }
-
-        $branchName = $branchName ?: '—';
-
-        $locationName = '—';
-
-        if (! empty($locationCode)) {
-            $locationName = Location::where('code', $locationCode)
-                ->value('name');
-        }
-
-        $locationName = $locationName
-            ?: ($booking->location_other ?? '—');
-
-        $modelName = '—';
-
-        if (! empty($modelCode)) {
-            $modelName = VehicleModel::where('code', $modelCode)
-                ->value('name');
-        }
-
-        $modelName = $modelName ?: ($modelCode ?: '—');
-
-        $variantName = '—';
-        $colorName = '—';
-
-        if (! empty($variantCode)) {
-
-            $variantRows = DB::table('xlr8_vehicle_variant')
-                ->where('code', $variantCode)
-                ->get([
-                    'custom_name',
-                    'color',
-                    'color_code',
-                ]);
-
-            if ($variantRows->isNotEmpty()) {
-
-                // Variant name
-                $variantName = $variantRows->first()->custom_name ?? '—';
-
-                // Find color using color_code
-                if (! empty($colorCode)) {
-                    $colorRow = $variantRows->first(function ($row) use ($colorCode) {
-                        return strtoupper((string) $row->color_code) === strtoupper((string) $colorCode);
-                    });
-
-                    if ($colorRow) {
-                        $colorName = $colorRow->color ?? '—';
-                    }
-                }
-
-                // Fallback to first row's color
-                if ($colorName === '—') {
-                    $colorName = $variantRows->first()->color ?? '—';
-                }
-            }
-        }
-
-        $variantName = $variantName ?: ($variantCode ?: '—');
-        $colorName = $colorName ?: ($colorCode ?: '—');
-
-        $booking->name = $booking->name ?? $enquiry?->name;
-        $booking->branch_code = $branchCode;
-        $booking->location_code = $locationCode;
-        $booking->segment_code = $segmentCode;
-        $booking->model_code = $modelCode;
-        $booking->variant_code = $variantCode;
-        $booking->color_code = $colorCode;
-
-        $data = [
-            'branches' => Branch::pluck('name', 'id')->toArray(),
-            'locations' => Location::pluck('name', 'id')->toArray(),
-            'segments' => CommonHelper::getVehicleSegments(),
-            'saleConsultants' => OrgService::usersByDesignation('CNS') ?? [],
-            'customer_name' => $customerName,
-            'branch_name' => $branchName,
-            'location_name' => $locationName,
-            'model_name' => $modelName,
-            'variant_name' => $variantName,
-            'color_name' => $colorName,
-        ];
-
-        return view(
-            'admin.booking.kyc-edit',
-            compact('booking', 'data')
-        );
+        return view('admin.booking.kyc-edit', compact('booking', 'data'));
     }
 
     public function kycUpdate(Request $request, $id)
@@ -4946,35 +4825,9 @@ class BookingCrudController extends CrudController
             'gst_no' => ['nullable', 'string', new Gstin],
         ]);
 
-        $panNo = $this->identifiers->normalizePan($validated['pan_no']);
-        $adharNo = $this->identifiers->normalizeAadhaar($validated['adhar_no']);
+        $gstNotRequired = $request->has('gst_not_required') && $request->gst_not_required;
 
-        $gstValue = $request->has('gst_not_required') && $request->gst_not_required
-            ? '0'
-            : ($this->identifiers->normalizeGstin($validated['gst_no'] ?? null) ?? $booking->gstn ?? '0');
-
-        $booking->update([
-            'pan_no' => $panNo,
-            'adhar_no' => $adharNo,
-            'gstn' => $gstValue,
-
-        ]);
-
-        $booking->refresh();
-
-        $booking->addHistory(
-            'commented',
-            'KYC Completed',
-            'Customer KYC details updated successfully',
-            [
-                'module' => 'Pending KYC',
-                'pan_no' => $panNo,
-                'adhar_no' => $adharNo,
-                'gstn' => $gstValue,
-            ],
-            null,
-            backpack_user()
-        );
+        $booking = $this->kycService->apply($booking, $validated, $gstNotRequired);
 
         return redirect()
             ->route('sales.booking.pending-kyc')
