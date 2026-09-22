@@ -30,3 +30,28 @@ improves instead of every future scoped run repeating the same pre-existing nois
 **Recommendation for future sessions**: don't attempt a full `vendor/bin/phpstan analyse` with no
 path argument in this environment — always scope it to the touched directory/files and pass
 `--memory-limit=2G` (or higher) explicitly.
+
+## Major architectural finding: Sales controllers violate the new DRY/SSOT Model-Service-Controller rule
+
+Per the user's newly-recorded rule (`.ai/rules/architecture.md`, "DRY/SSOT layering: data ops in
+Models, business logic in Services, thin Controllers"), checked how the three Sales controllers
+audited today against the FRS actually stack up:
+
+- `BookingCrudController.php` — **14,645 lines**
+- `EnquiryCrudController.php` — **2,743 lines**
+- `QuotationCrudController.php` — **2,673 lines**
+- Total: **20,061 lines**, almost entirely inline in the controllers — validation, pricing/discount
+  math, status-transition logic, history writes, cross-model orchestration (Quotation↔Booking↔
+  Enquiry↔XFinance↔XlInsurance↔XlRto), grid-building, and PDF assembly all live directly in
+  controller methods.
+- The only Service-layer presence for this whole domain is `app/Services/BookingStateService.php`
+  (60 lines, one method — `transitionTo()`).
+
+This is a large, pre-existing violation of the newly-recorded rule, not something introduced today.
+**Not attempted as part of today's audit** — extracting 20k lines of revenue-critical Sales logic
+into proper Model/Service layers is a multi-session architectural refactor in its own right, not a
+"clean up while you're in there" change, and the repo's own non-negotiable rules require a dedicated
+`refactor/*` branch, full-file changes one module at a time, and explicit sign-off before large
+changes to code this size and this critical. Flagging here so it's on record rather than silently
+skipped, and so a future session can pick it up as its own scoped effort (Booking first, since it's
+by far the largest) if/when the user wants to prioritize it.

@@ -533,3 +533,169 @@ Rewrote `create()`/`store()`/`edit()`/`update()` and `UserRequest` entirely; `in
   org-change-requires-reason rejection, a real transfer (branch change) correctly recorded via
   `EmployeeJourneyService`, and a permission-only edit correctly recorded as its own history entry
   without requiring a reason/effective date.
+
+## Fix: Booking Add/Edit rendering blank after route restructuring (BUG-091)
+
+User-reported regression: "After your cleanup the booking Add/edit stopped working" — the Edit
+Booking screen rendered with no visible fields (just a Cancel button).
+
+- **`routes/backpack/booking.php`** — the core Booking CRUD routes (`index`, `store`, `create`,
+  `edit`, `update`, `destroy`, `search`, `showDetailsRow`, `show`) were changed FROM plain-tuple
+  `Route::get(path, [Controller::class, 'method'])->name(...)` TO the keyed-array style already
+  used throughout `routes/backpack/core.php`
+  (`['uses' => Controller::class.'@method', 'as' => 'name', 'operation' => 'list'|'create'|'update'|'delete'|'show']`).
+  Every other route in the file (the 90+ custom Booking actions — `addAmount`, `receiptEdit`,
+  `otfSave`, etc.) was deliberately left untouched: those call fully custom controller methods that
+  don't dispatch through Backpack's `setupXOperation()` hooks, so an `'operation'` key would be a
+  no-op for them.
+- **Root cause**: `BookingCrudController::edit()`/`create()`/`search()`/`showDetailsRow()` all
+  delegate to Backpack's own trait methods (`$this->traitEdit($id)`, `$this->traitCreate()`, etc.).
+  Those trait methods only call the controller's custom `setupUpdateOperation()` /
+  `setupCreateOperation()` / `setupListOperation()` when Backpack's route-dispatch mechanism sees an
+  `'operation'` key on the matched route (see `CreateOperation.php`/`UpdateOperation.php`/
+  `ListOperation.php`/`ShowOperation.php` `setupXRoutes()` — each registers its routes with this key
+  baked in). Commit `ec768c9` ("refactor: restructure admin permissions form requests and document
+  changes", today) replaced the old `Route::crud('booking', 'BookingCrudController')` macro call —
+  which auto-registers every operation route WITH the correct `'operation'` key via
+  `CrudRouter::setupControllerRoutes()` — with 100+ hand-written `Route::get/post/put/delete(...)`
+  calls, and the `'operation'` key was dropped in the process. Confirmed via
+  `git show ec768c9 -- routes/backpack/booking.php`. Without it, `setupUpdateOperation()` never ran,
+  so `$this->crud->setEditView('admin.booking.add')` and the entire local `$data` array it builds
+  (payment/finance/branches/locations/dropdowns/etc.) never executed — Backpack fell back to
+  rendering its own generic single-hidden-field template instead of `admin.booking.add.blade.php`,
+  matching the user's screenshot exactly. Confirmed identical mechanism for `search()` (list) and
+  `showDetailsRow()` (list).
+- Verified via HTTP round trip (`app()->handle()` against `/admin/sales/booking/{id}/edit`): before
+  the fix, response body was Backpack's generic fallback (144KB, only a hidden `id` field, no
+  `bp-field-wrapper`-free custom markup); after the fix, response is 500KB and contains the real
+  `admin.booking.add` form content, no generic-fallback markup present.
+- Investigated the second reported symptom ("N/A for booking vehicle details in booking list")
+  separately — **not caused by this same bug or by today's restructuring**. `index()` (and every
+  other list-rendering method) is fully custom and never depended on `setupListOperation()`/the
+  Backpack trait dispatch at all — confirmed unaffected before and after the fix (list page returns
+  200 both ways). Traced instead to `getBaseQuery()`/`mapBookingForGrid()`: the Segment/Model/
+  Variant/Color grid columns are sourced only via `enq.segment_code`/`enq.model_code`/
+  `enq.variant_code`/`enq.color_code` from a `leftJoin` to `xlr8_crm_enquiries` on `bookings.enq_no`
+  — `xlr8_booking_master` has no vehicle-detail columns of its own. 42 of the 43 bookings in the
+  database have an empty `enq_no` (oldest checked: 2026-06-03, long before today's restructuring),
+  so the join resolves to nulls for them regardless of routing. This is a pre-existing data/design
+  gap, not a regression from today's work — logged as BUG-092, not fixed here (needs a product
+  decision: backfill `enq_no` on legacy bookings, or have Booking store its own vehicle codes
+  directly instead of depending on the enquiry join).
+- `vendor/bin/pint --dirty --format agent` → fixed a `line_ending` issue in the edited file, clean
+  after. No PHP files besides the route file were touched, so no Larastan/test run was needed beyond
+  the manual HTTP round trips above (no pre-existing Booking test suite exists to run).
+
+## FRS-driven audit of the Sales process (Enquiry → Quotation → Booking → Transaction/OTF)
+
+User provided `docs/reference/Sales-Combined_FRS.md` (a consolidated Functional Requirements
+Specification for the Enquiry/Quotation/Booking/Transaction-OTF process) and asked to (1) make it
+part of the skill set for this and future agents, and (2) audit the live process against it and
+fix issues found.
+
+- **New: `.ai/skills/xcelr8-sales-process/SKILL.md`** — activation triggers for Enquiry/Quotation/
+  Booking/OTF work, a code↔FRS module map, the FRS's key cross-module business rules condensed for
+  quick reference, and its explicitly-flagged conflicts/gaps (TCS reconciliation, Quotation
+  acceptance status, multi-quotation cardinality) so future work doesn't silently invent behavior
+  the FRS itself marks unresolved.
+- **Fix (BUG-093): 19 stale `route('booking.*')`/`route('quotation.create')` calls inside
+  `BookingCrudController.php`** — left over from the module-structure migration (batch 30-32
+  renamed these routes to `sales.booking.*`/`sales.quotation.*`, but the controller's own internal
+  `route()` calls were never updated to match, the exact failure mode already described in
+  `.ai/rules/module-structure.md` §6/BUG-066). Every one of these was a live `RouteNotFoundException`
+  waiting to fire: `booking.pending-edit`, `booking.pending-order/dms/kyc/do/payment/invoices/
+  insurance/rto/deliveries`, `booking.kyc.edit`, `booking.rto.edit` (×2), `booking.index`,
+  `booking.show`, `booking.exchange` (×2, one live), `booking.scrappage`, `booking.finance`,
+  `booking.refund.requested`, and — most significant for the FRS's documented "Missing Quotation at
+  OTF" alternate flow (§14, E2E-FR-008) — `quotation.create` inside `otfProcess()`'s mandatory-
+  quotation-check branch. Any booking without a linked Quotation hitting VOTF/OTF was fataling
+  instead of returning the documented `quotation_missing` JSON prompt. Fixed via a scoped
+  `sed -E "s/route\((['\"])(booking\.|quotation\.)/route(\1sales.\2/g"` over the one file (verified
+  the diff by hand — only touched `route('booking....`/`route('quotation....` string literals, left
+  every already-correct `sales.booking.*` call untouched). Swept the rest of the app
+  (`app/`, `resources/views/`, `routes/`) for the same stale-name pattern: the only remaining hits
+  are 2 clearly-stray non-live backup files (`resources/views/admin/booking/otf-form.blade copy.php`,
+  `resources/views/admin/quotation/copy of create with lines ui` — space-in-filename, one lacks even
+  a `.blade.php` extension, neither resolvable as a real Laravel view) — left untouched, flagged only.
+- **Fix (BUG-094): same missing-`'operation'`-route-key bug as BUG-091, on `EnquiryCrudController`'s
+  `search()`/`showDetailsRow()`** — both delegate to Backpack's own `ListOperation` trait methods
+  (`traitSearch()`/`traitShowDetailsRow()`), which only call `setupListOperation()` (and therefore
+  only pick up `setListView('admin.enquiry.list')`) when the matched route carries the `'operation'`
+  key. `routes/backpack/core.php`'s `sales/enquiry/search` and `sales/enquiry/{id}/details` routes
+  didn't have it. Fixed by converting both to the keyed-array form with `'operation' => 'list'`.
+  Confirmed `EnquiryCrudController`'s `index`/`create`/`store`/`edit`/`update`/`destroy` are all
+  fully custom overrides (no trait delegation), so they don't need this. Confirmed
+  `QuotationCrudController` has no registered routes at all for its own
+  `search`/`showDetailsRow`/`destroy` trait defaults (matches batch 27's documented finding — not a
+  live gap, nothing to fix).
+- Verified live: `otfProcess()` on a booking with no `quotation_id` now returns
+  `{"status":"quotation_missing",...,"quotation_url":"http://.../admin/sales/quotation/create?..."}`
+  (200) instead of fataling. `sales/enquiry/{id}/details` returns 200 after the operation-key fix.
+- `vendor/bin/pint --dirty --format agent` → clean (one `line_ending` auto-fix on `core.php`).
+- Did **not** attempt a line-by-line rewrite of the ~14k-line `BookingCrudController` or the
+  Quotation/Enquiry controllers against every FRS clause — out of proportion for one pass and
+  several FRS items are explicitly marked by the FRS itself as "Requires Business Confirmation"
+  (TCS reconciliation, invalidated-Quotation status representation, OTF cancellation status field).
+  Spot-checked the FRS's core E2E business rules (BR-001 through BR-017) against the code:
+  duplicate-Booking-by-Enquiry/Quotation guards (`BookingCrudController::create()`), Quotation
+  `status = booked` + `QuoteAction::create(['status' => 'booked', ...])` on conversion, and the OTF
+  mandatory-Quotation gate are all present and functioning as documented (the last one was broken by
+  BUG-093 above, now fixed). Did not re-verify every calculation (Expected Balance formula, TCS
+  thresholds) or every status transition line-by-line — flagged as a further-audit candidate, not
+  claimed as verified.
+
+## Sales-process audit, continued: second wave of stale routes + new routing-structure rule
+
+- User asked to add a permanent rule: Backpack routes must be grouped into per-module files rather
+  than accumulating in `core.php` — recorded via `record-rule` into `.ai/rules/module-structure.md`
+  ("Group Backpack routes into per-module route files").
+- Continuing the BUG-093 audit: a broader sweep of `BookingCrudController.php`
+  (`grep -noP "route\(['\"]\K[a-z][a-z0-9_.\-]*"` over every `route()` call, not just the ones
+  starting with `booking.`/`quotation.`) found **14 more** stale route names using an even older
+  naming scheme that predates even the `booking.*` convention: `admin.booking.orderupdate` (Order
+  Verification accept/reject/hold/resume action buttons, ×4), `dms-edit` (×2), `exchange-edit`
+  (×3), `finance-edit` (×3), `finance.retailedit`, `finance.payoutedit` (×2), `finance.view`,
+  `insurance.edit`, `finance.do.edit`, `finance.retail`, `finance.payout`, `rejected.view`,
+  `bookings.refunded`. Mapped each to its confirmed-current `sales.booking.*` name (checked against
+  `php artisan route:list` first, not guessed) and fixed via scoped `sed` substitutions — 33 total
+  stale `route()` calls fixed in this one file across this and the earlier pass. Folded into the
+  existing BUG-093 entry (same root cause) rather than opening a new bug ID.
+- Re-swept the whole app for both the original and this second naming pattern — confirmed the only
+  remaining hits anywhere are the same 2 non-live stray backup files already flagged (not real
+  Blade views, left untouched).
+- Verified all 33 fixed route names resolve to real URLs via direct `route($name, $params)` calls
+  in tinker (e.g. `sales.booking.order-update` → `.../admin/sales/booking/order-update/1/2`), and
+  that the pages whose grids build these links (`order-verification`, `pending-dms`, `exchange`,
+  `finance`, `insurance/erroneous`, `rejected`, `pending-do`) all return 200.
+- `vendor/bin/pint --dirty --format agent` → clean.
+
+## Sales-process audit, continued: recorded DRY/SSOT layering rule + Quotation status-regression fix
+
+- Recorded a new standing rule per explicit user request: `.ai/rules/architecture.md` now states
+  the Model/Service/Controller split explicitly (data ops in Models, business logic in Services,
+  thin Controllers, never duplicate logic already covered by `.ai/rules/services.md`'s SSOT
+  catalog) plus the standing process expectations (test every change, reconcile the day's changelog
+  at commit time, keep `known-bugs-report.md` current).
+- Checked the three Sales controllers against this new rule: `BookingCrudController.php` (14,645
+  lines) + `EnquiryCrudController.php` (2,743) + `QuotationCrudController.php` (2,673) = 20,061
+  lines, almost entirely inline business/data logic, against a single 60-line `BookingStateService`.
+  **Not refactored** — logged as a major architectural finding in
+  `docs/refactor/ai-findings-22-09-2026.md` instead of attempted inline; extracting 20k lines of
+  revenue-critical Sales logic is a dedicated multi-session effort requiring its own branch and
+  explicit sign-off, not something to fold into an audit pass.
+- **Fix (BUG-096):** `QuotationCrudController::update()` unconditionally set `status = 'raised'` on
+  every save (both on the `Quotation` row and the paired `QuoteAction` history row), with no check
+  of the quotation's current status and no guard in `edit()` preventing a `booked` quotation from
+  being reopened. Any edit to an already-converted quotation silently reverted it to `raised`, which
+  then reappeared in the main quotation list (`index()` excludes `booked` via
+  `whereNotIn('status', ['booked'])`) even though it was still linked to a real Booking — a direct
+  violation of the FRS's documented `booked` lifecycle (E2E-BR-005). Fixed with
+  `$statusAfterUpdate = $quotation->status === 'booked' ? 'booked' : 'raised';`, used in both write
+  sites. Confirmed the revision-increment logic itself (`$hasQuotationChanges`, E2E-BR-016) was
+  already correct and untouched by this fix.
+- `php -l` clean; `vendor/bin/pint --dirty --format agent` → fixed formatting on the touched file
+  (no other lines changed beyond the intended 2-line diff — verified via `git diff`). Could not run
+  a live HTTP round trip for this one: `xlr8_crm_quotations` has 0 rows in this environment, so
+  there's no real quotation to convert to `booked` and re-edit through the actual flow. Logged as a
+  code-review-verified fix, not a live-tested one — flagged explicitly rather than claimed as fully
+  verified.

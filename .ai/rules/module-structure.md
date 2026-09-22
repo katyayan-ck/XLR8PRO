@@ -193,3 +193,6 @@ this rule. Test every route rename and permission gate via the established HTTP-
 rolled-back-transaction methodology (see any batch 25-29 changelog entry for the exact pattern) —
 `php artisan test` cannot be relied on in this environment (BUG-053: `phpunit.xml` points at a
 nonexistent database).
+
+## Group Backpack routes into per-module route files
+Routes must be split across multiple files under `routes/backpack/`, grouped by the same Module/Process structure as `.ai/rules/module-structure.md` (e.g. `booking.php` for Sales/Booking+Quotation, a dedicated file per module rather than dumping everything into `core.php`). When adding a new module/process, add or extend its own route file instead of appending to `core.php`. All files are auto-loaded via `AppServiceProvider::boot()`'s glob — no manual registration needed for a new file.

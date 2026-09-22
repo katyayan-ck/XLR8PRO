@@ -3752,7 +3752,7 @@ class BookingCrudController extends CrudController
                     backpack_user()
                 );
 
-                $redirectUrl = route('booking.pending-edit', $booking->id);
+                $redirectUrl = route('sales.booking.pending-edit', $booking->id);
 
                 if ($request->boolean('pending_flag') || $request->has('pending_flag')) {
                     $redirectUrl .= '?pending_flag=1';
@@ -4203,15 +4203,15 @@ class BookingCrudController extends CrudController
             if (in_array($user->id, $allowedUsers)) {
                 $action = '<div style="display:flex;gap:8px;justify-content:center;">';
                 if ($t->order == 1) {
-                    $action .= '<a href="'.route('admin.booking.orderupdate', ['id' => $t->id, 'status' => 2]).'"
+                    $action .= '<a href="'.route('sales.booking.order-update', ['id' => $t->id, 'status' => 2]).'"
                             class="btn btn-success btn-sm">Accept</a>';
-                    $action .= '<a href="'.route('admin.booking.orderupdate', ['id' => $t->id, 'status' => 0]).'"
+                    $action .= '<a href="'.route('sales.booking.order-update', ['id' => $t->id, 'status' => 0]).'"
                             class="btn btn-danger btn-sm">Reject</a>';
                 } elseif ($t->order == 2) {
-                    $action .= '<a href="'.route('admin.booking.orderupdate', ['id' => $t->id, 'status' => 0]).'"
+                    $action .= '<a href="'.route('sales.booking.order-update', ['id' => $t->id, 'status' => 0]).'"
                             class="btn btn-danger btn-sm">Reject</a>';
                 } elseif ($t->order == 0) {
-                    $action .= '<a href="'.route('admin.booking.orderupdate', ['id' => $t->id, 'status' => 2]).'"
+                    $action .= '<a href="'.route('sales.booking.order-update', ['id' => $t->id, 'status' => 2]).'"
                             class="btn btn-success btn-sm">Accept</a>';
                 }
                 $action .= '</div>';
@@ -4367,7 +4367,7 @@ class BookingCrudController extends CrudController
 
             if (in_array($user->id, $allowedUsers)) {
                 $row->action = '<div class="d-flex justify-content-center gap-2">
-                    <a class="btn btn-sm btn-primary" href="'.route('dms-edit', $t->id).'?from=pending" title="Edit DMS / SO">
+                    <a class="btn btn-sm btn-primary" href="'.route('sales.booking.dms-edit', $t->id).'?from=pending" title="Edit DMS / SO">
                         Process
                     </a>
                 </div>';
@@ -4704,11 +4704,11 @@ class BookingCrudController extends CrudController
         $message = 'DMS details updated successfully!';
 
         if ($fromPending) {
-            return redirect()->route('booking.pending-order')
+            return redirect()->route('sales.booking.pending-order')
                 ->with('success', $message);
         }
 
-        return redirect()->route('booking.pending-dms')
+        return redirect()->route('sales.booking.pending-dms')
             ->with('success', $message);
     }
 
@@ -4745,7 +4745,7 @@ class BookingCrudController extends CrudController
 
             $row->action = '
             <div class="d-flex justify-content-center gap-2">
-            <a href="'.route('booking.kyc.edit', $t->id).'"
+            <a href="'.route('sales.booking.kyc.edit', $t->id).'"
                         class="btn btn-sm btn-primary" title="Complete KYC">
                             Process
                        </a>
@@ -4996,7 +4996,7 @@ class BookingCrudController extends CrudController
         );
 
         return redirect()
-            ->route('booking.pending-kyc')
+            ->route('sales.booking.pending-kyc')
             ->with('success', "Booking #{$booking->id} की KYC successfully complete हो गई है!");
     }
 
@@ -5061,15 +5061,15 @@ class BookingCrudController extends CrudController
 
             if ($t->order == 1) {
                 $actionHtml .= '
-                <a href="'.route('admin.booking.orderupdate', ['id' => $t->id, 'status' => 0]).'"
+                <a href="'.route('sales.booking.order-update', ['id' => $t->id, 'status' => 0]).'"
                    class="btn btn-sm btn-success">Resume</a>';
             } else {
                 $actionHtml .= '
-                <a href="'.route('admin.booking.orderupdate', ['id' => $t->id, 'status' => 1]).'"
+                <a href="'.route('sales.booking.order-update', ['id' => $t->id, 'status' => 1]).'"
                    class="btn btn-sm btn-danger">Hold</a>';
 
                 $actionHtml .= '
-                <a href="'.route('dms-edit', $t->id).'"
+                <a href="'.route('sales.booking.dms-edit', $t->id).'"
                    class="btn btn-sm btn-primary py-1 px-2">Process</a>';
             }
 
@@ -5148,7 +5148,7 @@ class BookingCrudController extends CrudController
             $row->location = $location;
 
             $row->action = '<div class="d-flex justify-content-center gap-2">
-            <a href="'.route('exchange-edit', $t->id).'#exch"
+            <a href="'.route('sales.booking.exchange.edit', $t->id).'#exch"
                class="btn btn-primary btn-sm">
                 Process
             </a>
@@ -5243,7 +5243,7 @@ class BookingCrudController extends CrudController
 
             $row->action = '
             <div class="d-flex justify-content-center gap-2">
-                <a href="'.route('exchange-edit', $t->id).'#scrappage"
+                <a href="'.route('sales.booking.exchange.edit', $t->id).'#scrappage"
                    class="btn btn-primary btn-sm"
                    >
                     Process
@@ -5341,7 +5341,7 @@ class BookingCrudController extends CrudController
 
             $row->action = '
                 <div class="d-flex justify-content-center gap-2">
-                    <a href="'.route('exchange-edit', $t->id).'#exch"
+                    <a href="'.route('sales.booking.exchange.edit', $t->id).'#exch"
                     class="btn btn-primary btn-sm"
                     >
                         Process
@@ -5438,7 +5438,7 @@ class BookingCrudController extends CrudController
 
             $row->action = '
             <div class="d-flex justify-content-center gap-2">
-                <a href="'.route('finance-edit', $t->id).'"
+                <a href="'.route('sales.booking.finance.edit', $t->id).'"
                 class="btn btn-primary btn-sm">
                     Update
                 </a>
@@ -5523,7 +5523,7 @@ class BookingCrudController extends CrudController
 
     //         $row->action = '
     //         <div class="d-flex justify-content-center gap-2">
-    //             <a href="' . route('finance-edit', $t->id) . '"
+    //             <a href="' . route('sales.booking.finance.edit', $t->id) . '"
     //                class="btn btn-primary btn-sm"
     //                >
     //                 Process
@@ -5628,7 +5628,7 @@ class BookingCrudController extends CrudController
 
             $row->action = '
                 <div class="d-flex justify-content-center gap-2">
-                    <a href="'.route('finance-edit', $t->id).'"
+                    <a href="'.route('sales.booking.finance.edit', $t->id).'"
                     class="btn btn-primary btn-sm">
                         Process
                     </a>
@@ -5707,7 +5707,7 @@ class BookingCrudController extends CrudController
 
             $row->action = '
             <div class="d-flex justify-content-center gap-2">
-                <a href="'.route('finance.retailedit', $t->id).'"
+                <a href="'.route('sales.booking.finance.retail-edit', $t->id).'"
                    class="btn btn-primary btn-sm"
                     >
                     Process
@@ -5795,7 +5795,7 @@ class BookingCrudController extends CrudController
 
             $row->action = '
             <div class="d-flex justify-content-center gap-2">
-                <a href="'.route('finance.payoutedit', $t->id).'"
+                <a href="'.route('sales.booking.finance.payout-edit', $t->id).'"
                    class="btn btn-primary btn-sm"
                    >
                     Process
@@ -5887,7 +5887,7 @@ class BookingCrudController extends CrudController
 
             $row->action = '
             <div class="d-flex justify-content-center gap-2">
-                <a href="'.route('finance.view', $t->id).'"
+                <a href="'.route('sales.booking.finance.view', $t->id).'"
                    class="btn btn-info btn-sm"
                    title="View Finance">
                     <i class="fas fa-eye"></i> View
@@ -6126,7 +6126,7 @@ class BookingCrudController extends CrudController
 
             $row->action = '
             <div class="d-flex justify-content-center gap-2">
-            <a href="'.route('booking.pending-edit', $t->id).'#pending"
+            <a href="'.route('sales.booking.pending-edit', $t->id).'#pending"
                             class="btn btn-primary btn-sm" title="Add/Edit Payment">
                                 Process
                         </a>
@@ -6210,7 +6210,7 @@ class BookingCrudController extends CrudController
 
             $row->action = '
             <div class="d-flex justify-content-center gap-2">
-                <a href="'.route('insurance.edit', $t->id).'"
+                <a href="'.route('sales.booking.insurance.edit', $t->id).'"
                    class="btn btn-primary btn-sm"
                    >
                     Process
@@ -6300,7 +6300,7 @@ class BookingCrudController extends CrudController
 
             $row->action = '
             <div class="d-flex justify-content-center gap-2">
-                <a href="'.route('booking.rto.edit', $t->id).'"
+                <a href="'.route('sales.booking.rto.edit', $t->id).'"
                    class="btn btn-primary btn-sm"
                    >
                     Process
@@ -6450,7 +6450,7 @@ class BookingCrudController extends CrudController
 
             $row->action = '
         <div class="d-flex justify-content-center gap-2">
-            <a href="'.route('booking.rto.edit', $t->id).'"
+            <a href="'.route('sales.booking.rto.edit', $t->id).'"
                class="btn btn-primary btn-sm">
                 Process
             </a>
@@ -6511,7 +6511,7 @@ class BookingCrudController extends CrudController
             $row->serial_no = ($paginatedBookings->currentPage() - 1) * $paginatedBookings->perPage() + $index + 1;
 
             $row->action = '<div class="d-flex justify-content-center gap-2">
-            <a href="'.route('finance.do.edit', $booking->id).'"
+            <a href="'.route('sales.booking.do.edit', $booking->id).'"
                class="btn btn-primary btn-sm">
                 </i> Process
             </a>
@@ -6605,7 +6605,7 @@ class BookingCrudController extends CrudController
             backpack_user()
         );
 
-        return redirect()->route('booking.pending-do')
+        return redirect()->route('sales.booking.pending-do')
             ->with('success', "Delivery Order #{$request->instrument_ref_no} saved successfully!");
     }
 
@@ -7011,7 +7011,7 @@ class BookingCrudController extends CrudController
             'message' => $msg,
         ]);
 
-        return redirect()->route('booking.pending-payment')->with('success', $msg);
+        return redirect()->route('sales.booking.pending-payment')->with('success', $msg);
     }
 
     private function logChange($model, $field, $newValue, &$changes)
@@ -7766,7 +7766,7 @@ class BookingCrudController extends CrudController
                 'status' => 'success',
             ]);
 
-            return redirect()->route('booking.pending-invoices')
+            return redirect()->route('sales.booking.pending-invoices')
                 ->with('success', 'Dealer invoice details updated successfully for Booking #'.$booking->id);
         } catch (Exception $e) {
             Log::error('Dealer Invoice Update Failed', [
@@ -8011,7 +8011,7 @@ class BookingCrudController extends CrudController
 
             Log::info('insUpdate completed successfully', ['booking_id' => $request->booking_id]);
 
-            return redirect()->route('booking.pending-insurance')
+            return redirect()->route('sales.booking.pending-insurance')
                 ->with('success', 'Insurance details saved successfully for Booking #'.$request->booking_id);
         } catch (ValidationException $e) {
             Log::warning('Validation failed in insUpdate', [
@@ -8359,7 +8359,7 @@ class BookingCrudController extends CrudController
     //         }
 
     //         return redirect()
-    //             ->route('booking.pending-rto')
+    //             ->route('sales.booking.pending-rto')
     //             ->with('success', 'RTO data saved successfully for Booking #' . $id);
     //     } catch (\Illuminate\Validation\ValidationException $e) {
     //         return redirect()->back()
@@ -8592,7 +8592,7 @@ class BookingCrudController extends CrudController
             }
 
             return redirect()
-                ->route('booking.pending-rto')
+                ->route('sales.booking.pending-rto')
                 ->with(
                     'success',
                     'RTO data saved successfully for Booking #'.$id
@@ -8890,7 +8890,7 @@ class BookingCrudController extends CrudController
             }
 
             return redirect()
-                ->route('booking.pending-deliveries')
+                ->route('sales.booking.pending-deliveries')
                 ->with('success', 'Delivery updated successfully with photos! Booking #'.$id);
         } catch (FileCannotBeAdded $e) {
             \Log::error('Media upload error', [
@@ -9305,7 +9305,7 @@ class BookingCrudController extends CrudController
     //         );
     //     }
 
-    //     return redirect()->route('booking.exchange')->with('success', 'Exchange purchase details updated successfully!');
+    //     return redirect()->route('sales.booking.exchange')->with('success', 'Exchange purchase details updated successfully!');
     // }
     public function exchangeUpdate(Request $request, $id)
     {
@@ -9567,19 +9567,19 @@ class BookingCrudController extends CrudController
         // ============================================================
         if ($request->buyer_type === 'Scrappage') {
             return redirect()
-                ->route('booking.scrappage')
+                ->route('sales.booking.scrappage')
                 ->with('success', 'Scrappage details updated successfully!');
         }
 
         if ($request->buyer_type === 'Exchange Buy') {
             return redirect()
-                ->route('booking.exchange')
+                ->route('sales.booking.exchange')
                 ->with('success', 'Exchange purchase details updated successfully!');
         }
 
         // For any other buyer type, go back to the main booking list
         return redirect()
-            ->route('booking.index')
+            ->route('sales.booking.index')
             ->with('success', 'Purchase type details updated successfully!');
     }
 
@@ -9981,18 +9981,18 @@ class BookingCrudController extends CrudController
 
         if ($request->query('from') === 'payout' || $request->input('from') === 'payout') {
             return redirect()
-                ->route('finance.payoutedit', $id)
+                ->route('sales.booking.finance.payout-edit', $id)
                 ->with('success', $successMessage);
         }
 
         if ($request->filled('retail') && $request->retail == 1) {
             return redirect()
-                ->route('finance.retail')
+                ->route('sales.booking.finance.retail')
                 ->with('success', $successMessage);
         }
 
         return redirect()
-            ->route('booking.finance')
+            ->route('sales.booking.finance')
             ->with('success', $successMessage);
     }
 
@@ -10434,7 +10434,7 @@ class BookingCrudController extends CrudController
         }
 
         return redirect()
-            ->route('finance.payout')
+            ->route('sales.booking.finance.payout')
             ->with('success', 'Payout details saved successfully!');
     }
 
@@ -10710,7 +10710,7 @@ class BookingCrudController extends CrudController
 
             $row->action = '
             <div class="d-flex justify-content-center gap-2">
-                <a href="'.route('rejected.view', $t->id).'"
+                <a href="'.route('sales.booking.rejected-view', $t->id).'"
                    class="btn btn-primary btn-sm"
                    >
                     <i class="fas fa-eye"></i> Process
@@ -10930,7 +10930,7 @@ class BookingCrudController extends CrudController
             backpack_user()
         );
 
-        return redirect()->route('booking.refund.requested')
+        return redirect()->route('sales.booking.refund.requested')
             ->with('success', 'Refund details updated successfully and booking marked as Refunded.');
     }
 
@@ -10981,7 +10981,7 @@ class BookingCrudController extends CrudController
 
             $row->action = '
             <div class="d-flex justify-content-center gap-2">
-                <a href="'.route('booking.show', $t->id).'"
+                <a href="'.route('sales.booking.show', $t->id).'"
                    class="btn btn-primary btn-sm"
                    >
                     Process
@@ -11106,7 +11106,7 @@ class BookingCrudController extends CrudController
             backpack_user()
         );
 
-        return redirect()->route('bookings.refunded')
+        return redirect()->route('sales.booking.refunded')
             ->with('success', 'Refund details updated successfully!');
     }
 
@@ -13341,7 +13341,7 @@ class BookingCrudController extends CrudController
                 'message' => 'This booking has no quotation.',
                 'booking_id' => $booking->id,
                 'enquiry_no' => $booking->enq_no,
-                'quotation_url' => route('quotation.create', [
+                'quotation_url' => route('sales.quotation.create', [
                     'id' => $booking->enq_no,
                     'booking_id' => $booking->id,
                 ]),
@@ -13360,7 +13360,7 @@ class BookingCrudController extends CrudController
                 'message' => 'Quotation linked to this booking was not found.',
                 'booking_id' => $booking->id,
                 'enquiry_no' => $booking->enq_no,
-                'quotation_url' => route('quotation.create', [
+                'quotation_url' => route('sales.quotation.create', [
                     'id' => $booking->enq_no,
                     'booking_id' => $booking->id,
                 ]),

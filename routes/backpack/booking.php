@@ -18,15 +18,22 @@ Route::group([
     // Core CRUD (previously via Route::crud('booking', ...), registered explicitly — see
     // .ai/rules/module-structure.md; Route::crud() can't produce a slash-separated URL alongside a
     // dot-separated route name from a single $name argument, confirmed during batch 30).
-    Route::get('sales/booking', [BookingCrudController::class, 'index'])->name('sales.booking.index');
-    Route::post('sales/booking', [BookingCrudController::class, 'store'])->name('sales.booking.store');
-    Route::get('sales/booking/create', [BookingCrudController::class, 'create'])->name('sales.booking.create');
-    Route::get('sales/booking/{id}/edit', [BookingCrudController::class, 'edit'])->name('sales.booking.edit');
-    Route::put('sales/booking/{id}', [BookingCrudController::class, 'update'])->name('sales.booking.update');
-    Route::delete('sales/booking/{id}', [BookingCrudController::class, 'destroy'])->name('sales.booking.destroy');
-    Route::post('sales/booking/search', [BookingCrudController::class, 'search'])->name('sales.booking.search');
-    Route::get('sales/booking/{id}/details', [BookingCrudController::class, 'showDetailsRow'])->name('sales.booking.details');
-    Route::get('sales/booking/{id}/show', [BookingCrudController::class, 'show'])->name('sales.booking.show');
+    //
+    // BUG-091: the explicit re-registration below dropped the 'operation' route-meta key that
+    // Route::crud() used to set automatically. Without it, Backpack never calls
+    // setupListOperation()/setupCreateOperation()/setupUpdateOperation() on the controller, so it
+    // falls back to fully-generic rendering (an empty edit form, no custom list columns — see
+    // known-bugs-report.md). Restored here using the same ['uses'=>..,'as'=>..,'operation'=>..]
+    // style already used throughout routes/backpack/core.php.
+    Route::get('sales/booking', ['uses' => BookingCrudController::class.'@index', 'as' => 'sales.booking.index', 'operation' => 'list']);
+    Route::post('sales/booking', ['uses' => BookingCrudController::class.'@store', 'as' => 'sales.booking.store', 'operation' => 'create']);
+    Route::get('sales/booking/create', ['uses' => BookingCrudController::class.'@create', 'as' => 'sales.booking.create', 'operation' => 'create']);
+    Route::get('sales/booking/{id}/edit', ['uses' => BookingCrudController::class.'@edit', 'as' => 'sales.booking.edit', 'operation' => 'update']);
+    Route::put('sales/booking/{id}', ['uses' => BookingCrudController::class.'@update', 'as' => 'sales.booking.update', 'operation' => 'update']);
+    Route::delete('sales/booking/{id}', ['uses' => BookingCrudController::class.'@destroy', 'as' => 'sales.booking.destroy', 'operation' => 'delete']);
+    Route::post('sales/booking/search', ['uses' => BookingCrudController::class.'@search', 'as' => 'sales.booking.search', 'operation' => 'list']);
+    Route::get('sales/booking/{id}/details', ['uses' => BookingCrudController::class.'@showDetailsRow', 'as' => 'sales.booking.details', 'operation' => 'list']);
+    Route::get('sales/booking/{id}/show', ['uses' => BookingCrudController::class.'@show', 'as' => 'sales.booking.show', 'operation' => 'show']);
     Route::get('sales/booking/{id}/preview', [BookingCrudController::class, 'preview'])->name('sales.booking.preview');
 
     // BUG-050's confirmed-broken methods (no real implementation) — kept registered under the new
