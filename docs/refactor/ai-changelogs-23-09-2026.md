@@ -282,3 +282,61 @@ failures.
 - Live HTTP round trip: `sales/booking/{id}/delivery-edit` → 200.
 - Full suite re-run (`tests/Unit/Services/Sales/` + `PersonCrudTest`) → 34 passed, 76 assertions,
   zero regressions.
+
+## Phase 4, sixth sub-domain: BookingFinanceService extracted
+
+Per the plan's sequencing (KYC → DMS → Insurance → RTO → Delivery → **Finance** → Exchange/
+Scrappage → Refund → OTF/VOTF → Core CRUD). Finance was flagged back in the Phase 3 investigation
+as having real conditional business rules (the `XFinance::update()` "only default
+verification_status/case_status on a brand-new record" logic) — confirmed and preserved exactly.
+
+**New: `App\Services\Sales\Booking\BookingFinanceService`** — the largest sub-domain yet, covering
+4 read screens and 2 write actions that all read/write the same `XFinance` row:
+
+- `resolveFinEditData()` / `resolveRetailEditData()` / `resolvePayoutEditData()` /
+  `resolveFinanceViewData()` — four separate methods, **not** merged into one shared
+  `resolveEditData()`, because investigation showed real per-screen differences that a shared method
+  would either paper over or silently break: `finEdit()` resolves the department-based `remark` flag
+  via `OrgService::getKeyValueById()` (keyword lookup) while `RetailEdit()`/`PayoutEdit()` use
+  `OrgService::departments()->firstWhere('code', ...)` — a genuinely different lookup path, not a
+  copy-paste accident (both still work today, so left as two branches of a private helper rather
+  than unified). `PayoutEdit()` also uses `CommonHelper::getVehicleSegments()` +
+  `OrgService::usersByDesignation('CNS')` where the other three use `OrgService::segments()` +
+  `OrgService::salesConsultants()`. Each screen merges a different subset of Enquiry fields onto the
+  booking. The truly identical parts (branch/location/accessories/chassis/financiers/collector/
+  make1/make2/oem_ids resolution) were extracted into one private `baseDisplayData()` helper shared
+  by all four — safe because those blocks were byte-for-byte identical in the original.
+- `apply()` — the `finUpdate()` business logic: mode-dependent field clearing (Cash/Customer Self
+  vs. financed), the new+retail auto-verification shortcut (including the "default the remark text
+  when retail and the field was left blank" side effect, moved into the service since it's tied to
+  the same `$isNew` state the service already computes), instrument_proof upload/removal, and the
+  finance-completed/retail-completed history entries.
+- `applyPayout()` — the `PayoutUpdate()` logic: payout-category-dependent field nulling, the
+  case_status/fin_mode-gated `status` transition, and the "Payout Completed" history entry.
+
+**Dead code removed during extraction** (confirmed via `grep` that neither is read anywhere after
+being built, same pattern as DMS's unused `$remarks[]`): `finUpdate()`'s entire `$changes`/`$labels`/
+`$format` audit-trail block (built a human-readable diff string, never passed to `addHistory()`, a
+session, or logged — pure dead computation) and `PayoutUpdate()`'s `$logMessage` (built, never
+returned or logged). Also collapsed `finUpdate()`'s literally-duplicated
+`if ($request->retail == 1) { ... }` block (lines both set `booking->retail = 1` and `save()`;
+only the second copy also wrote history — the first was a complete no-op duplicate of the second's
+prefix, confirmed via diff that removing it changes no persisted value or side effect).
+
+### Verification
+
+- `php -l` clean on all 3 changed/new files; `vendor/bin/pint --dirty --format agent` → clean after
+  one auto-fix pass on the new service file (import ordering/spacing only).
+- Scoped `phpstan analyse` on the new service + `AppServiceProvider`: only pre-existing
+  dynamic-Eloquent-property noise (`property.notFound` on `Booking`/`XFinance`/etc. — the same class
+  of finding every prior Phase 4 service has triggered against these same un-typed `BaseModel`
+  subclasses; not new to this file, not actionable without a project-wide model-annotation pass out
+  of scope here).
+- **New: `tests/Unit/Services/Sales/BookingFinanceServiceTest.php`** (8 tests, 19 assertions) —
+  new-record creation, Cash-mode field clearing, new+retail auto-verification with default remark,
+  update-in-place preserving `created_by`, payout category 1 (full payout) and category 2 (no
+  payout) paths, and both view-data shape checks.
+- `php artisan tinker --execute 'app(BookingCrudController::class);'` → resolves cleanly (confirms
+  the new constructor param + singleton registration wire up correctly).
+- Full suite re-run (`tests/Unit/Services/Sales/`) → **42 passed, 92 assertions, zero regressions**
+  across all 6 Phase 4 services landed so far.
