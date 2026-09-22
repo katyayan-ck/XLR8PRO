@@ -164,19 +164,19 @@
                                 </div>
 
                                 <div class="col-sm-3 form-group">
-                                    <label for="mobile">Contact No. <span class="required-mark">*</span></label>
+                                    <label for="mobile">{{ __('booking.fields.mobile') }} <span class="required-mark">*</span></label>
                                     <input type="text" name="mobile" id="mobile" class="form-control"
                                         value="{{ $entry->mobile }}" required>
                                 </div>
 
                                 <div class="col-sm-3 form-group">
-                                    <label for="alt_mobile">Alternate Contact No.</label>
+                                    <label for="alt_mobile">{{ __('booking.fields.alt_mobile') }}</label>
                                     <input type="text" name="alt_mobile" id="alt_mobile" class="form-control"
                                         value="{{ $entry->alt_mobile }}">
                                 </div>
 
                                 <div class="col-sm-3 form-group">
-                                    <label for="gender">Gender <span class="required-mark">*</span></label>
+                                    <label for="gender">{{ __('booking.fields.gender') }} <span class="required-mark">*</span></label>
                                     <select name="gender" id="gender" class="form-control form-select" required>
                                         <option value="Male" {{ $entry->gender == 'Male' ? 'selected' : '' }}>Male
                                         </option>
@@ -188,7 +188,7 @@
                                 </div>
 
                                 <div class="col-sm-3 form-group">
-                                    <label for="occupation">Occupation <span class="required-mark">*</span></label>
+                                    <label for="occupation">{{ __('booking.fields.occupation') }} <span class="required-mark">*</span></label>
                                     <select name="occupation" id="occupation" class="form-control form-select" required>
                                         <option value="">Please Select...</option>
 
@@ -217,19 +217,19 @@
                                 </div>
 
                                 <div class="col-sm-3 form-group">
-                                    <label for="pan_no">PAN Card No.</label>
+                                    <label for="pan_no">{{ __('booking.fields.pan_number') }}</label>
                                     <input type="text" name="pan_no" id="pan_no" class="form-control uppercase"
                                         value="{{ $entry->pan_no }}">
                                 </div>
 
                                 <div class="col-sm-3 form-group">
-                                    <label for="adhar_no">Aadhar No.</label>
+                                    <label for="adhar_no">{{ __('booking.fields.aadhaar_number') }}</label>
                                     <input type="text" name="adhar_no" id="adhar_no" class="form-control"
                                         value="{{ $entry->adhar_no }}">
                                 </div>
 
                                 <div class="col-sm-3 form-group" id="gstn-group">
-                                    <label for="gstn">GSTN
+                                    <label for="gstn">{{ __('booking.fields.gstin') }}
                                         <span class="required-mark" id="gstn-required"
                                             style="display: {{ $entry->gstn == '0' || $entry->gstn === null ? 'none' : 'inline' }};">*</span>
                                     </label>
@@ -246,7 +246,7 @@
                                 </div>
 
                                 <div class="col-sm-3 form-group">
-                                    <label for="customer_dob">Customer D.O.B. <span class="required-mark">*</span></label>
+                                    <label for="customer_dob">{{ __('booking.fields.customer_dob') }} <span class="required-mark">*</span></label>
                                     <input type="text" name="customer_dob" id="customer_dob"
                                         class="form-control flatpickr"
                                         value="{{ site_date($entry->c_dob, '') }}"
@@ -263,7 +263,7 @@
                                 </div>
 
                                 <div class="col-sm-3 form-group">
-                                    <label for="branch">Branch <span class="required-mark">*</span></label>
+                                    <label for="branch">{{ __('booking.fields.branch') }} <span class="required-mark">*</span></label>
                                     <select name="branch" id="branch" class="form-select" required>
                                         <option value="">Please Select...</option>
                                         @foreach ($data['branches'] as $branch)
@@ -276,7 +276,7 @@
                                 </div>
 
                                 <div class="col-sm-3 form-group">
-                                    <label for="location">Location <span class="required-mark">*</span></label>
+                                    <label for="location">{{ __('booking.fields.location') }} <span class="required-mark">*</span></label>
                                     <select name="location_id" id="location" class="form-select" required>
                                         <option value="">Please Select...</option>
                                         @foreach ($data['locations'] as $location)
@@ -293,7 +293,7 @@
 
                                 <div class="col-sm-3 form-group" id="location_other_group"
                                     style="{{ $entry->location_code == 0 ? '' : 'display:none;' }}">
-                                    <label for="location_other">Other Location</label>
+                                    <label for="location_other">{{ __('booking.fields.location_other') }}</label>
                                     <input type="text" name="location_other" id="location_other"
                                         class="form-control uppercase" value="{{ $entry->location_other }}"
                                         {{ $entry->location_code == 0 ? '' : 'disabled' }}>
