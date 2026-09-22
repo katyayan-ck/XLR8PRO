@@ -18,6 +18,7 @@ use App\Services\RBACService;
 use App\Services\Sales\Booking\BookingDmsService;
 use App\Services\Sales\Booking\BookingInsuranceService;
 use App\Services\Sales\Booking\BookingKycService;
+use App\Services\Sales\Booking\BookingRtoService;
 use Illuminate\Cache\CacheManager;
 use Illuminate\Contracts\Auth\Access\Gate as GateContract;
 use Illuminate\Http\Request;
@@ -75,6 +76,7 @@ class AppServiceProvider extends ServiceProvider
         });
         $this->app->singleton(BookingDmsService::class);
         $this->app->singleton(BookingInsuranceService::class);
+        $this->app->singleton(BookingRtoService::class);
 
         // SuperAdmin wildcard bypass + user-level permission denial check — registered here in
         // register() (not boot()), and via afterResolving rather than the Gate facade, so this
