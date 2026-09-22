@@ -6232,12 +6232,14 @@ class BookingCrudController extends CrudController
 
         $saleConsultants = $lookups['saleConsultants'] ?? [];
         $financiers = $lookups['financiers'] ?? [];
+        $gridLookups = $this->preloadGridLookups($paginatedBookings->getCollection());
 
         $gridData = $paginatedBookings->map(function ($t, $index) use (
-            $paginatedBookings
+            $paginatedBookings,
+            $gridLookups
 
         ) {
-            $row = $this->mapBookingForGrid($t);
+            $row = $this->mapBookingForGrid($t, $gridLookups);
 
             $row->serial_no = ($paginatedBookings->currentPage() - 1) * $paginatedBookings->perPage() + $index + 1;
 
@@ -6322,12 +6324,14 @@ class BookingCrudController extends CrudController
 
         $saleConsultants = $lookups['saleConsultants'] ?? [];
         $financiers = $lookups['financiers'] ?? [];
+        $gridLookups = $this->preloadGridLookups($paginatedBookings->getCollection());
 
         $gridData = $paginatedBookings->map(function ($t, $index) use (
-            $paginatedBookings
+            $paginatedBookings,
+            $gridLookups
 
         ) {
-            $row = $this->mapBookingForGrid($t);
+            $row = $this->mapBookingForGrid($t, $gridLookups);
 
             $row->serial_no = ($paginatedBookings->currentPage() - 1) * $paginatedBookings->perPage() + $index + 1;
 
@@ -6399,12 +6403,14 @@ class BookingCrudController extends CrudController
 
         $saleConsultants = $lookups['saleConsultants'] ?? [];
         $financiers = $lookups['financiers'] ?? [];
+        $gridLookups = $this->preloadGridLookups($paginatedBookings->getCollection());
 
         $gridData = $paginatedBookings->map(function ($t, $index) use (
-            $paginatedBookings
+            $paginatedBookings,
+            $gridLookups
 
         ) {
-            $row = $this->mapBookingForGrid($t);
+            $row = $this->mapBookingForGrid($t, $gridLookups);
 
             $row->serial_no = ($paginatedBookings->currentPage() - 1) * $paginatedBookings->perPage() + $index + 1;
 
@@ -6539,9 +6545,10 @@ class BookingCrudController extends CrudController
 
         $paginatedBookings = $query->orderBy('bookings.booking_date', 'DESC')
             ->paginate(50);
+        $gridLookups = $this->preloadGridLookups($paginatedBookings->getCollection());
 
-        $gridData = $paginatedBookings->map(function ($booking, $index) use ($paginatedBookings) {
-            $row = $this->mapBookingForGrid($booking);
+        $gridData = $paginatedBookings->map(function ($booking, $index) use ($paginatedBookings, $gridLookups) {
+            $row = $this->mapBookingForGrid($booking, $gridLookups);
             $row->serial_no = ($paginatedBookings->currentPage() - 1) * $paginatedBookings->perPage() + $index + 1;
 
             $row->action = '<div class="d-flex justify-content-center gap-2">
@@ -6669,12 +6676,14 @@ class BookingCrudController extends CrudController
 
         $saleConsultants = $lookups['saleConsultants'] ?? [];
         $financiers = $lookups['financiers'] ?? [];
+        $gridLookups = $this->preloadGridLookups($paginatedBookings->getCollection());
 
         $gridData = $paginatedBookings->map(function ($t, $index) use (
-            $paginatedBookings
+            $paginatedBookings,
+            $gridLookups
 
         ) {
-            $row = $this->mapBookingForGrid($t);
+            $row = $this->mapBookingForGrid($t, $gridLookups);
 
             $row->serial_no = ($paginatedBookings->currentPage() - 1) * $paginatedBookings->perPage() + $index + 1;
 
@@ -10563,12 +10572,14 @@ class BookingCrudController extends CrudController
         extract($lookups);
 
         $saleConsultants = $lookups['saleConsultants'] ?? [];
+        $gridLookups = $this->preloadGridLookups($paginatedBookings->getCollection());
 
         $gridData = $paginatedBookings->map(function ($t, $index) use (
-            $paginatedBookings
+            $paginatedBookings,
+            $gridLookups
 
         ) {
-            $row = $this->mapBookingForGrid($t);
+            $row = $this->mapBookingForGrid($t, $gridLookups);
 
             $row->serial_no = ($paginatedBookings->currentPage() - 1) * $paginatedBookings->perPage() + $index + 1;
 
@@ -10724,12 +10735,14 @@ class BookingCrudController extends CrudController
         extract($lookups);
 
         $saleConsultants = $lookups['saleConsultants'] ?? [];
+        $gridLookups = $this->preloadGridLookups($paginatedBookings->getCollection());
 
         $gridData = $paginatedBookings->map(function ($t, $index) use (
-            $paginatedBookings
+            $paginatedBookings,
+            $gridLookups
 
         ) {
-            $row = $this->mapBookingForGrid($t);
+            $row = $this->mapBookingForGrid($t, $gridLookups);
 
             $row->serial_no = ($paginatedBookings->currentPage() - 1) * $paginatedBookings->perPage() + $index + 1;
 
@@ -10995,12 +11008,14 @@ class BookingCrudController extends CrudController
         extract($lookups);
 
         $saleConsultants = $lookups['saleConsultants'] ?? [];
+        $gridLookups = $this->preloadGridLookups($paginatedBookings->getCollection());
 
         $gridData = $paginatedBookings->map(function ($t, $index) use (
-            $paginatedBookings
+            $paginatedBookings,
+            $gridLookups
 
         ) {
-            $row = $this->mapBookingForGrid($t);
+            $row = $this->mapBookingForGrid($t, $gridLookups);
 
             $row->serial_no = ($paginatedBookings->currentPage() - 1) * $paginatedBookings->perPage() + $index + 1;
 

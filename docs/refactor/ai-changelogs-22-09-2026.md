@@ -866,3 +866,26 @@ assuming the naming was free.
 - `tests/Feature/Admin/Org/{UserOnboardingTest,PersonCrudTest}.php` → 14 passed, 45 assertions,
   confirming no cross-cutting regression from the `AppServiceProvider`/constructor changes these
   edits sit alongside.
+
+## Phase 2b of Sales-system refactor: N+1 query fix on Booking listing screens (batch 2 of 2)
+
+Continuing the batch-1 N+1 fix (`preloadGridLookups()` + `$gridLookups` passed into
+`mapBookingForGrid()`) across the remaining pending-* / refund-* listing methods.
+
+**Fixed in this batch** (8 methods): `pendingInsurance()`, `pendingRto()`, `pendingDeliveries()`,
+`pendingDO()`, `pendingInvoices()`, `refundRequested()`, `rejected()`, `refunded()`. Same pattern as
+batch 1 — pure optimization, zero output change.
+
+**Still not converted** (4 methods, all in the "erroneous data" report group plus one large report
+method, left for a possible future pass — lower traffic admin-only screens, lower priority):
+`erroneousBookings()`, `erroneousFinance()`, `erroneousInsurance()`, `erroneousRTO()`,
+`liveNotInvoiced()`. This completes the two originally-scoped batches (22 of 26 total N+1 sites
+fixed); the remaining 5 are documented here rather than rushed.
+
+### Verification
+
+- `php -l` clean after every edit; `vendor/bin/pint --dirty --format agent` → fixed minor spacing,
+  reviewed diff (`git diff | grep '^-'`) to confirm only the intended lines were removed.
+- Live HTTP round trip on all 8 converted pages (`pending-insurance`, `pending-rto`,
+  `pending-deliveries`, `pending-do`, `pending-invoices`, `refund/requested`, `rejected`,
+  `refunded`) → all 200, no errors.
