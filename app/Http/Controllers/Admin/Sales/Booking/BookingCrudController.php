@@ -2802,7 +2802,7 @@ class BookingCrudController extends CrudController
         $amountUrl = backpack_url("sales/booking/{$booking->id}/add-amount");
 
         if (in_array($booking->col_type, [2, 3])) {
-            $totalPaid = Bookingamount::where('bid', $booking->id)->sum('amount') ?? 0;
+            $totalPaid = $booking->totalReceivedAmount();
 
             if ($booking->booking_amount > $totalPaid) {
                 $amountUrl = backpack_url("sales/booking/{$booking->id}/pending-edit");
@@ -3705,9 +3705,7 @@ class BookingCrudController extends CrudController
                 $booking->receipt_no = $receiptNo;
                 $booking->receipt_date = $receiptDate;
 
-                $totalReceived = Bookingamount::where('bid', $booking->id)
-                    ->whereNull('deleted_at')
-                    ->sum('amount');
+                $totalReceived = $booking->totalReceivedAmount();
 
                 if ($totalReceived >= ($booking->booking_amount ?? 0) && $booking->booking_amount > 0) {
                     if (strtolower($booking->b_type) === 'dummy') {
@@ -3747,9 +3745,7 @@ class BookingCrudController extends CrudController
 
                 $booking->save();
 
-                $oldTotalReceived = Bookingamount::where('bid', $booking->id)
-                    ->whereNull('deleted_at')
-                    ->sum('amount');
+                $oldTotalReceived = $booking->totalReceivedAmount();
 
                 $totalReceived = $oldTotalReceived + $amount;
                 $history = $booking->addHistory(
@@ -6149,7 +6145,7 @@ class BookingCrudController extends CrudController
 
             $row->serial_no = ($paginatedBookings->currentPage() - 1) * $paginatedBookings->perPage() + $index + 1;
 
-            $paid = Bookingamount::where('bid', $t->id)->sum('amount') ?? 0;
+            $paid = $t->totalReceivedAmount();
             $balance = $t->booking_amount - $paid;
 
             $row->booking_amount = number_format($t->booking_amount ?? 0);
@@ -6761,8 +6757,7 @@ class BookingCrudController extends CrudController
 
         $booking = Booking::findOrFail($id);
 
-        $totalPaid = Bookingamount::where('bid', $booking->id)
-            ->sum('amount') ?? 0;
+        $totalPaid = $booking->totalReceivedAmount();
 
         $receiptLogs = Bookingamount::where('bid', $booking->id)
             ->orderBy('date', 'desc')
@@ -12807,7 +12802,7 @@ class BookingCrudController extends CrudController
             return response()->json(['success' => true]);
         }
 
-        $totalPaid = Bookingamount::where('bid', $booking->id)->sum('amount') ?? 0;
+        $totalPaid = $booking->totalReceivedAmount();
 
         if ($booking->booking_amount > $totalPaid) {
             return response()->json([
