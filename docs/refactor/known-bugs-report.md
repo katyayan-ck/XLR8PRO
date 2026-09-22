@@ -133,6 +133,8 @@ Entry format:
 | BUG-095 | 3 hardcoded user-ID whitelists (`[5, 23, 123]`, one also adds `$user->id`) gate Order Verification / Pending DMS action buttons in `BookingCrudController.php`, bypassing the app's normal `SLS_BKNG_*` Spatie-permission gating | Medium | OPEN (documented only — looks intentional but undocumented; needs a decision, not a guess) | 22-09-2026 | — |
 | BUG-096 | `QuotationCrudController::update()` unconditionally set `status = 'raised'` on every save, silently reverting an already-`booked` Quotation back to `raised` and re-exposing it in the main (non-booked) Quotation list | Medium | FIXED | 22-09-2026 | 22-09-2026 (ai-changelogs-22-09-2026.md) |
 | BUG-097 | VOTF generation (`generateVotfNumber`) and persistence (`otfSave`) are two separate HTTP requests with no shared lock/reservation — a preview endpoint computes the "next" number, and the later save just trusts whatever the client sends back, so two concurrent OTF saves can collide on the same VOTF number | Medium | OPEN (documented only — needs a design decision, not a mechanical fix) | 22-09-2026 | — |
+| BUG-098 | `BookingCrudController::store()`'s `XExchange` creation set a `vehicle_oem_code` field that doesn't exist on `xlr8_booking_exchange` — every "Exchange Buy" booking creation silently failed to create the exchange row (caught by its own try/catch, logged only) | Medium | FIXED | 22-09-2026 | 23-09-2026 (ai-changelogs-22-09-2026.md) |
+| BUG-099 | Neither `store()` nor `update()`'s `XExchange` creation set `vh_id` (`NOT NULL`, no DB default) — `store()` silently failed the same way as BUG-098; `update()`'s copy has no try/catch, so editing a booking to "Exchange Buy" for the first time threw a hard 500 | High | FIXED | 22-09-2026 | 23-09-2026 (ai-changelogs-22-09-2026.md) |
 
 Not a bug (false positive, listed for reference): the original `infer-conventions` sweep flagged
 "`SheetHeaderService`/`SynonymService` not used by importers" — re-investigation on 19-09-2026
@@ -1089,3 +1091,26 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 - **Where:** `app/Http/Controllers/Admin/Sales/Booking/BookingCrudController.php::generateVotfNumber()` (scans every Booking's `final_data` JSON to compute the next branch/global sequence, returns it as JSON — no DB write) and `::otfSave()` (persists whatever `votf_no` value the client submitted, with no independent recomputation or uniqueness check).
 - **Description:** unlike Receipt number generation (compute-and-write happen in one atomic action, correctly guarded with `lockForUpdate()`), VOTF generation is a **preview** AJAX call from one HTTP request, and the actual save happens in a **later, separate** request when the user submits the OTF form. A `lockForUpdate()` added to the preview endpoint alone would not close this race — the lock is released the instant that request finishes, long before the save request arrives. Two concurrent users generating a VOTF preview at nearly the same moment could both receive the same "next" number and both successfully save it.
 - **Proposed solution:** needs a design decision, not a guess: (a) reserve the number at generate-time by writing a placeholder/pending row inside a transaction+lock, so a second concurrent generate can't compute the same "next" value, or (b) re-verify uniqueness of the submitted `votf_no` inside `otfSave()`'s own transaction before committing, rejecting (and prompting regeneration) on conflict. Not implemented here — flagging for the app owner to choose the approach before it's built.
+
+### BUG-098 — `store()`'s XExchange creation set a nonexistent `vehicle_oem_code` column
+
+- **Status:** FIXED
+- **Severity:** Medium — silently failed rather than crashing (caught by an existing try/catch and logged), but meant every "Exchange Buy" booking created through the main Booking form never actually got its `XExchange` row, breaking downstream exchange-verification workflows for those bookings with no visible error to the user.
+- **Found:** 23-09-2026, during the Sales-system-refactor Phase 3 pass (extracting `XExchange`'s duplicated "seed a new exchange entry" logic into a model method) — reproduced live in tinker before writing the shared method, confirmed `SQLSTATE[42S22]: Unknown column 'vehicle_oem_code'`.
+- **Modified:** —
+- **Fixed:** 23-09-2026 — see `docs/refactor/ai-changelogs-22-09-2026.md`.
+- **Where:** `app/Http/Controllers/Admin/Sales/Booking/BookingCrudController.php::store()` (the `XExchange` creation block for `buyertype === 'Exchange Buy'`).
+- **Description:** the code did `$exchange->vehicle_oem_code = $booking->vehicle_oem_code;` before `save()` — `xlr8_booking_exchange` has no such column (confirmed via `Schema::getColumnListing`). Eloquent includes every set attribute in the generated INSERT regardless of whether a matching column exists, so the query itself failed at the database — caught by the surrounding `try/catch`, which logged the error and continued, leaving no `XExchange` row behind and no user-visible failure.
+- **Fix applied:** extracted the correct field set into `XExchange::seedForBooking()` (see BUG-099 for the model method's full fix), dropping the invalid field entirely.
+
+### BUG-099 — Neither `store()` nor `update()`'s XExchange creation set the required `vh_id` column
+
+- **Status:** FIXED
+- **Severity:** High — `update()`'s copy has no try/catch around it, so editing an existing booking to `buyer_type = 'Exchange Buy'` for the first time (no `XExchange` row yet) threw an uncaught `SQLSTATE[HY000]: General error: 1364 Field 'vh_id' doesn't have a default value`, a hard 500 on a core booking-edit action.
+- **Found:** 23-09-2026, same investigation as BUG-098 — reproduced live in tinker.
+- **Modified:** —
+- **Fixed:** 23-09-2026 — see `docs/refactor/ai-changelogs-22-09-2026.md`.
+- **Where:** `app/Http/Controllers/Admin/Sales/Booking/BookingCrudController.php::store()` and `::update()` (both `XExchange` creation blocks), and the new `app/Models/Module/Booking/XExchange.php::seedForBooking()`.
+- **Description:** `xlr8_booking_exchange.vh_id` is `int NOT NULL` with no database default. Neither call site set it. `store()`'s failure was masked by its try/catch (same silent-failure shape as BUG-098); `update()`'s identical omission had no such guard and would throw straight through to a 500 response.
+- **Fix applied:** `XExchange::seedForBooking()` now explicitly sets `'vh_id' => 0`, matching the sentinel value the codebase already uses elsewhere for "no vehicle chosen yet" on this exact column (`exchangeUpdate()`'s `'vh_id' => $request->enum_master1 ?? 0`). Both call sites now go through this one method.
+- **Verification:** reproduced the original failure live in tinker (`SQLSTATE[HY000]: 1364 Field 'vh_id' doesn't have a default value`), confirmed the fix resolves it (`seedForBooking()` now succeeds and returns a real row with `vh_id = 0`).
