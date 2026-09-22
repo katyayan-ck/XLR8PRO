@@ -383,3 +383,58 @@ behavior rather than asserting the (incorrect) expected-to-persist behavior.
 - `php artisan tinker --execute 'app(BookingCrudController::class);'` → resolves cleanly.
 - Full suite re-run (`tests/Unit/Services/Sales/`) → **40 passed, 88 assertions, zero regressions**
   across all 7 Phase 4 services landed so far.
+
+## Phase 4, eighth sub-domain: BookingRefundService extracted
+
+Per the plan's sequencing (KYC → DMS → Insurance → RTO → Delivery → Finance → Exchange/Scrappage →
+**Refund** → OTF/VOTF → Core CRUD). Covers `requestRefund()`, `refundView()`/`refundUpdate()`,
+`refundedUpdate()`, and `rejectedView()`'s shared refund-detail lookup.
+
+**New: `App\Services\Sales\Booking\BookingRefundService`**:
+
+- `resolveRefundDisplayData()` — unifies `refundView()`'s and `rejectedView()`'s "look up the
+  latest refund and build its display array" logic, which was byte-for-byte identical between the
+  two screens (differing only in which Media Library accessor style each used to reach the same
+  URL - `getFirstMediaUrl()` vs. `optional($refund->getFirstMedia())->getUrl()`). `rejectedView()`
+  only merges these fields into its `$data` array when a refund actually exists (unlike
+  `refundView()`, which always sets defaults) - preserved that exact conditional-merge difference
+  in the controller rather than papering over it in the service.
+- `apply()` — the `requestRefund()` creation flow: creates the `Xl_Refunds` row, attaches whichever
+  of acc_proof/aadhar/pan were uploaded (a failed individual upload is caught, logged, and skipped -
+  not fatal to the whole request, preserving the original's inner try/catch), moves the booking to
+  status 4, and records history.
+- `applyRefundUpdate()` / `applyRefundedUpdate()` — kept as two separate methods (not merged), since
+  they're genuinely different operations: the former transitions a Queued booking to Refunded
+  (status 4 → 5) via `refundUpdate()`; the latter edits an already-Refunded booking's refund record
+  in place via `refundedUpdate()`, with its own diff-based change log, and never touches booking
+  status.
+
+**New bug found and documented, not fixed: BUG-103.** `requestRefund()` captures `$oldStatus`
+before calling `$booking->update(['status' => 4, ...])`, then checks `if ($booking->status == 7)`
+to decide whether to log a "Refund Requested Again" history entry — but by that point
+`$booking->status` has already been overwritten to `4` by the update, so the check always reads
+`4 == 7` and the branch never fires (almost certainly meant to check the already-captured
+`$oldStatus` instead). Low severity — the refund request itself still succeeds correctly, only the
+more-specific "requested again after rejection" history note is silently skipped. Preserved
+exactly, with a regression test that locks in the current (documented) behavior.
+
+Dropped the extensive `Log::info/debug` narration that only restated what the extracted service
+does directly (REFUND_REQUEST_START, REFUND_BOOKING_FOUND, REFUND_VALIDATION_PASSED,
+REFUND_AMOUNT_CALCULATION, REFUND_CREATE_START, REFUND_RECORD_CREATED, REFUND_MEDIA_ADDED,
+REFUND_BOOKING_STATUS_UPDATED, REFUND_REQUEST_COMPLETED_SUCCESS) — same precedent as every prior
+Phase 4 sub-domain. Kept every `Log::warning/error/critical` call (validation failures, amount
+mismatch, media upload failure, DB errors, unexpected exceptions), since those carry real
+diagnostic value for genuine failures. Also dropped `refundUpdate()`'s `$statusRemark`/
+`$adminRemark` locals - confirmed via `grep` that neither is read anywhere after being computed.
+
+### Verification
+
+- `php -l` clean; `vendor/bin/pint --dirty --format agent` → clean.
+- **New: `tests/Unit/Services/Sales/BookingRefundServiceTest.php`** (6 tests, 18 assertions) —
+  refund creation + booking status transition, selective document attachment, the BUG-103
+  regression guard (asserts the branch does NOT fire, documenting current behavior), display-data
+  defaults when no refund exists, and both update flows (`applyRefundUpdate` transitioning
+  4→5, `applyRefundedUpdate` editing in place without touching status).
+- `php artisan tinker --execute 'app(BookingCrudController::class);'` → resolves cleanly.
+- Full suite re-run (`tests/Unit/Services/Sales/`) → **46 passed, 106 assertions, zero
+  regressions** across all 8 Phase 4 services landed so far.
