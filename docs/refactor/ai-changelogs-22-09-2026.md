@@ -889,3 +889,22 @@ fixed); the remaining 5 are documented here rather than rushed.
 - Live HTTP round trip on all 8 converted pages (`pending-insurance`, `pending-rto`,
   `pending-deliveries`, `pending-do`, `pending-invoices`, `refund/requested`, `rejected`,
   `refunded`) → all 200, no errors.
+
+## Phase 2c of Sales-system refactor: N+1 query fix, final batch — all 26 sites now done
+
+Completed the N+1 query fix started in checkpoints 2a/2b. **Fixed the remaining 4**:
+`erroneousFinance()`, `erroneousInsurance()`, `erroneousRTO()`, `liveNotInvoiced()` — same pattern
+(`preloadGridLookups()` computed once, passed as `$gridLookups` into `mapBookingForGrid()`).
+`erroneousBookings()` was checked and confirmed to not call `mapBookingForGrid()` at all (builds its
+rows independently), so needed no change.
+
+**This completes Phase 2's revised scope: all 26 real call sites across the Booking listing methods
+now batch-preload grid lookups instead of querying per row.** The 2 commented-out/dead call sites
+(inside already-disabled legacy code blocks) were left untouched, as before.
+
+### Verification
+
+- `php -l` clean, `vendor/bin/pint --dirty --format agent` → passed with no changes needed.
+- Live HTTP round trip on the 4 newly-converted pages (`finance/erroneous`, `insurance/erroneous`,
+  `rto/erroneous`, `otf-form` i.e. `liveNotInvoiced`) → all 200, no errors.
+- `tests/Feature/Admin/Org/PersonCrudTest.php` → 8 passed, 22 assertions, zero regressions.
