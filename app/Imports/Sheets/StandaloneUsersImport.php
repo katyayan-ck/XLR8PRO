@@ -2,8 +2,10 @@
 
 namespace App\Imports\Sheets;
 
+use App\Models\Admin\Person;
 use App\Models\IAM\Role;
 use App\Models\User;
+use App\Services\IdentifierService;
 use App\Services\OrgScopeService;
 use App\Services\PersonService;
 use Carbon\Carbon;
@@ -618,22 +620,25 @@ class StandaloneUsersImport implements ToCollection, WithHeadingRow
     // PERSON CODE + HELPERS
     // ─────────────────────────────────────────────────────────────
 
+    /**
+     * Delegates to Person::deriveCode() - the model-level SSOT (Aadhaar-first,
+     * PAN-second, PERS-###### fallback) - instead of reimplementing the
+     * priority order and fallback shape independently. See BUG-088 in
+     * known-bugs-report.md: this file previously used its own PAN-first order
+     * and a non-durable in-memory PRSN##### fallback that disagreed with the
+     * model and could collide across separate import runs.
+     */
     private function derivePersonCode(array $row): string
     {
         $pan = $this->n($this->getValue($row, ['pan_no', 'PAN No.']));
         $aadhaar = $this->n($this->getValue($row, ['aadhaar_no', 'Aadhaar No']));
 
-        if ($pan) {
-            return strtoupper($pan);
-        }
-        if ($aadhaar) {
-            return strtoupper($aadhaar);
-        }
+        $person = new Person([
+            'aadhaar_no' => $aadhaar,
+            'pan_no' => $pan,
+        ]);
 
-        // Fallback sequence (PersonService will also generate PERS-xxxxxx if needed)
-        static $seq = 0;
-
-        return 'PRSN'.str_pad(++$seq, 5, '0', STR_PAD_LEFT);
+        return Person::deriveCode($person);
     }
 
     private function getValue(array $row, array $keys): ?string
@@ -683,22 +688,7 @@ class StandaloneUsersImport implements ToCollection, WithHeadingRow
 
     private function cleanPhone(?string $v): ?string
     {
-        if (! $v) {
-            return null;
-        }
-
-        $v = preg_replace('/\D/', '', $v);
-
-        // 12-digit Indian → strip 91
-        if (strlen($v) === 12 && str_starts_with($v, '91')) {
-            $v = substr($v, 2);
-        }
-        // 11-digit leading 0
-        if (strlen($v) === 11 && str_starts_with($v, '0')) {
-            $v = substr($v, 1);
-        }
-
-        return strlen($v) === 10 ? $v : null;
+        return app(IdentifierService::class)->cleanMobile($v);
     }
 
     private function logRow(int $rowIndex, string $status, string $msg = ''): void

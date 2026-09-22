@@ -10,6 +10,7 @@ use App\Models\CRM\LeadSource;
 use App\Models\CRM\Quotation;
 use App\Models\Module\Booking\XlFinancier;
 use App\Models\Module\Finance\XFinance;
+use App\Services\EnquiryReferenceService;
 use App\Services\OrgService;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
@@ -33,6 +34,11 @@ class EnquiryCrudController extends CrudController
     use CreateOperation, DeleteOperation, ListOperation, UpdateOperation {
         ListOperation::search as protected traitSearch;
         ListOperation::showDetailsRow as protected traitShowDetailsRow;
+    }
+
+    public function __construct(protected EnquiryReferenceService $enquiryRef)
+    {
+        parent::__construct();
     }
 
     public function setup()
@@ -362,7 +368,7 @@ class EnquiryCrudController extends CrudController
             return [];
         }
 
-        $x8Nos = array_map(fn ($id) => 'XENQ-'.$id, $enquiryIds);
+        $x8Nos = array_map(fn ($id) => $this->enquiryRef->toReference($id), $enquiryIds);
 
         $rows = DB::table('xlr8_cre_enquiry_fup')
             ->whereIn('x8_enq_no', $x8Nos)
@@ -975,7 +981,7 @@ class EnquiryCrudController extends CrudController
 
         $row = [
             'serial_no' => $i + 1,
-            'x8_enquiry_no' => 'XENQ-'.$e->id,
+            'x8_enquiry_no' => $this->enquiryRef->toReference($e->id),
             'x8_enquiry_date' => $this->formatDate($e->created_at, 'd-M-Y H:i'),
             'x8_enquiry_assign_date' => $this->formatDate($e->x8_enquiry_assign_date ?? $e->enq_assign_date, 'd-M-Y'),
             'oem_enquiry_no' => $e->x8_enquiry_no ?? $e->enquiry_no ?? $e->oem_enquiry_no ?? '—',
@@ -1011,7 +1017,7 @@ class EnquiryCrudController extends CrudController
             $x8BranchCode = $x8AssignedSc['primary_branch_code'] ?? null;
             $oemBranchCode = $oemAssignedSc['primary_branch_code'] ?? null;
 
-            $creFup = $lookups['creFups']['XENQ-'.$e->id] ?? null;
+            $creFup = $lookups['creFups'][$this->enquiryRef->toReference($e->id)] ?? null;
 
             // FIX: Using array_merge so it actively overwrites the '—' placeholders from the base array
             $row = array_merge($row, [
@@ -1470,8 +1476,8 @@ class EnquiryCrudController extends CrudController
         }
 
         $like = "%{$searchText}%";
-        $isXenq = str_starts_with(strtoupper($searchText), 'XENQ-');
-        $xenqId = $isXenq ? (int) substr(strtoupper($searchText), 5) : null;
+        $xenqId = $this->enquiryRef->fromReference($searchText);
+        $isXenq = $xenqId !== null && str_starts_with(strtoupper(trim($searchText)), 'XENQ-');
 
         $tableName = $query->getModel()->getTable();
 
@@ -1694,13 +1700,13 @@ class EnquiryCrudController extends CrudController
         }
 
         $creFups = DB::table('xlr8_cre_enquiry_fup')
-            ->where('x8_enq_no', 'XENQ-'.$enquiry->id)
+            ->where('x8_enq_no', $this->enquiryRef->toReference($enquiry->id))
             ->where('cre_fup_deviation_stage', '!=', 'OPEN_FOLLOW_UP')
             ->orderBy('id', 'asc')
             ->get();
 
         // Fetch the new Finance & Exchange Follow-ups
-        $enqNoFallback = $enquiry->enquiry_no ?? $enquiry->oem_enquiry_no ?? ('XENQ-'.$enquiry->id);
+        $enqNoFallback = $enquiry->enquiry_no ?? $enquiry->oem_enquiry_no ?? $this->enquiryRef->toReference($enquiry->id);
         $finExchFups = DB::table('xlr8_finexch_fup')
             ->where('enq_no', $enqNoFallback)
             ->orderBy('created_at', 'desc')
@@ -1719,7 +1725,7 @@ class EnquiryCrudController extends CrudController
     private function saveCreFup($enquiry, $request)
     {
         if ($request->filled('cre_enq_stage') || $request->filled('cre_customer_stage') || $request->filled('cre_fup_remarks')) {
-            $x8EnqNo = 'XENQ-'.$enquiry->id;
+            $x8EnqNo = $this->enquiryRef->toReference($enquiry->id);
 
             // CLEANUP: Delete any legacy 'OPEN_FOLLOW_UP' pending rows to prevent orphan data
             DB::table('xlr8_cre_enquiry_fup')
@@ -1916,7 +1922,7 @@ class EnquiryCrudController extends CrudController
         $existing_car_oems = OrgService::keywordValueByCode('EXISTING_CAR_OEM');
 
         // Robust Enquiry Number Fallback
-        $enqNo = $enquiry->enquiry_no ?? $enquiry->oem_enquiry_no ?? ('XENQ-'.$enquiry->id);
+        $enqNo = $enquiry->enquiry_no ?? $enquiry->oem_enquiry_no ?? $this->enquiryRef->toReference($enquiry->id);
 
         // Fetch Exchange Follow-ups (Type 2)
         $fups = DB::table('xlr8_finexch_fup')
@@ -1959,7 +1965,7 @@ class EnquiryCrudController extends CrudController
         $enquiry = Enquiry::findOrFail($id);
 
         // Robust Enquiry Number Fallback
-        $enqNo = $enquiry->enquiry_no ?? $enquiry->oem_enquiry_no ?? ('XENQ-'.$enquiry->id);
+        $enqNo = $enquiry->enquiry_no ?? $enquiry->oem_enquiry_no ?? $this->enquiryRef->toReference($enquiry->id);
 
         $enquiry->update($request->only([
             'brand_make',
@@ -2018,7 +2024,7 @@ class EnquiryCrudController extends CrudController
         $enquiry = Enquiry::with(['segment', 'model', 'variant'])->findOrFail($id);
 
         // Robust Enquiry Number Fallback
-        $enqNo = $enquiry->enquiry_no ?? $enquiry->oem_enquiry_no ?? ('XENQ-'.$enquiry->id);
+        $enqNo = $enquiry->enquiry_no ?? $enquiry->oem_enquiry_no ?? $this->enquiryRef->toReference($enquiry->id);
 
         $finance = XFinance::where('enq_no', $enqNo)->first();
         $financiers = XlFinancier::select('id', 'name', 'short_name')->get()->toArray();
@@ -2091,7 +2097,7 @@ class EnquiryCrudController extends CrudController
         $enquiry = Enquiry::findOrFail($id);
 
         // Robust Enquiry Number Fallback
-        $enqNo = $enquiry->enquiry_no ?? $enquiry->oem_enquiry_no ?? ('XENQ-'.$enquiry->id);
+        $enqNo = $enquiry->enquiry_no ?? $enquiry->oem_enquiry_no ?? $this->enquiryRef->toReference($enquiry->id);
 
         $enquiry->update([
             'fin_mode' => $request->fin_mode,

@@ -2,20 +2,28 @@
 
 namespace App\Services;
 
-
+use App\Models\Admin\Branch;
+use App\Models\Admin\Department;
+use App\Models\Admin\Division;
+use App\Models\Admin\Location;
+use App\Models\Admin\Person;
+use App\Models\Admin\PinCodes;
+use App\Models\Admin\Vertical;
 use App\Models\Module\Booking\Bookingamount;
 use App\Models\Module\Booking\XL_DSA_MASTER;
 use App\Models\User;
-use App\Models\Admin\{Branch, Location, Department, Division, Vertical};
-use App\Models\Vehicle\{Segment, SubSegment, VehicleModel, Variant, Color};
-use App\Models\Utilities\KeyValue\{Keyvalue, KeywordMaster};
-use App\Models\Admin\Person;
+use App\Models\Utilities\KeyValue\Keyvalue;
+use App\Models\Utilities\KeyValue\KeywordMaster;
+use App\Models\Vehicle\Segment;
+use App\Models\Vehicle\SubSegment;
+use App\Models\Vehicle\Variant;
+use App\Models\Vehicle\VehicleModel;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
-use App\Models\Admin\PinCodes;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class OrgService
 {
@@ -26,19 +34,19 @@ class OrgService
         return User::query()
             ->when(
                 $filters['dept_code'] ?? null,
-                fn($q, $v) => $q->whereHas('employee', fn($e) => $e->where('primary_dept_code', $v))
+                fn ($q, $v) => $q->whereHas('employee', fn ($e) => $e->where('primary_dept_code', $v))
             )
             ->when(
                 $filters['div_code'] ?? null,
-                fn($q, $v) => $q->whereHas('employee', fn($e) => $e->where('primary_div_code', $v))
+                fn ($q, $v) => $q->whereHas('employee', fn ($e) => $e->where('primary_div_code', $v))
             )
             ->when(
                 $filters['desig_code'] ?? null,
-                fn($q, $v) => $q->whereHas('employee', fn($e) => $e->where('designation_code', $v))
+                fn ($q, $v) => $q->whereHas('employee', fn ($e) => $e->where('designation_code', $v))
             )
             ->when(
                 isset($filters['branch_code']) && $filters['branch_code'] !== 'ALL',
-                fn($q) => $q->whereHas('branches', fn($b) => $b->where('code', $filters['branch_code']))
+                fn ($q) => $q->whereHas('branches', fn ($b) => $b->where('code', $filters['branch_code']))
             )
             ->select('id', 'username', 'employee_code')
             ->get();
@@ -46,7 +54,7 @@ class OrgService
 
     private static function formatUsers($users): array
     {
-        return $users->mapWithKeys(fn($u) => [
+        return $users->mapWithKeys(fn ($u) => [
             $u->id => $u->employee_code
                 ? "{$u->username} ({$u->employee_code})"
                 : $u->username,
@@ -61,7 +69,7 @@ class OrgService
         return Cache::remember(
             'org.branches',
             self::CACHE_TTL,
-            fn() => Branch::where('is_active', true)
+            fn () => Branch::where('is_active', true)
                 ->select('code', 'name')
                 ->orderBy('name')
                 ->pluck('name', 'code')
@@ -76,8 +84,8 @@ class OrgService
         return Cache::remember(
             $key,
             self::CACHE_TTL,
-            fn() => Location::where('is_active', true)
-                ->when($branchCode, fn($q) => $q->where('branch_code', $branchCode))
+            fn () => Location::where('is_active', true)
+                ->when($branchCode, fn ($q) => $q->where('branch_code', $branchCode))
                 ->select('code', 'name')
                 ->orderBy('name')
                 ->pluck('name', 'code')
@@ -90,7 +98,7 @@ class OrgService
         return Cache::remember(
             'org.departments',
             self::CACHE_TTL,
-            fn() => Department::where('is_active', true)
+            fn () => Department::where('is_active', true)
                 ->select('code', 'name')
                 ->orderBy('name')
                 ->pluck('name', 'code')
@@ -105,8 +113,8 @@ class OrgService
         return Cache::remember(
             $key,
             self::CACHE_TTL,
-            fn() => Division::where('is_active', true)
-                ->when($deptCode, fn($q) => $q->where('dept_code', $deptCode))
+            fn () => Division::where('is_active', true)
+                ->when($deptCode, fn ($q) => $q->where('dept_code', $deptCode))
                 ->select('code', 'name')
                 ->orderBy('name')
                 ->pluck('name', 'code')
@@ -119,7 +127,7 @@ class OrgService
         return Cache::remember(
             'org.verticals',
             self::CACHE_TTL,
-            fn() => Vertical::where('is_active', true)
+            fn () => Vertical::where('is_active', true)
                 ->select('code', 'name')
                 ->orderBy('name')
                 ->pluck('name', 'code')
@@ -132,7 +140,7 @@ class OrgService
         return Cache::remember(
             'org.segments',
             self::CACHE_TTL,
-            fn() => Segment::where('is_active', true)
+            fn () => Segment::where('is_active', true)
                 ->select('code', 'name')
                 ->orderBy('name')
                 ->pluck('name', 'code')
@@ -147,8 +155,8 @@ class OrgService
         return Cache::remember(
             $key,
             self::CACHE_TTL,
-            fn() => SubSegment::where('is_active', true)
-                ->when($segmentCode, fn($q) => $q->where('segment_code', $segmentCode))
+            fn () => SubSegment::where('is_active', true)
+                ->when($segmentCode, fn ($q) => $q->where('segment_code', $segmentCode))
                 ->select('code', 'name')
                 ->orderBy('name')
                 ->pluck('name', 'code')
@@ -163,8 +171,8 @@ class OrgService
         return Cache::remember(
             $key,
             self::CACHE_TTL,
-            fn() => VehicleModel::where('is_active', true)
-                ->when($segmentCode, fn($q) => $q->where('segment_code', $segmentCode))
+            fn () => VehicleModel::where('is_active', true)
+                ->when($segmentCode, fn ($q) => $q->where('segment_code', $segmentCode))
                 ->select('code', 'name')
                 ->orderBy('name')
                 ->pluck('name', 'code')
@@ -238,7 +246,7 @@ class OrgService
         return Cache::remember($key, self::CACHE_TTL, function () use ($modelCode) {
 
             return Variant::where('is_active', true)
-                ->when($modelCode, fn($q) => $q->where('model_code', $modelCode))
+                ->when($modelCode, fn ($q) => $q->where('model_code', $modelCode))
                 ->orderBy('display_name')
                 ->get()
                 ->mapWithKeys(function ($variant) {
@@ -263,7 +271,7 @@ class OrgService
                             'drivetrain' => $variant->drivetrain,
                             'seating' => $variant->seating_capacity,
 
-                        ]
+                        ],
 
                     ];
                 })
@@ -271,45 +279,46 @@ class OrgService
         });
     }
 
-   public static function colors(?string $variantCode = null): array
-{
-    $key = $variantCode
-        ? "org.colors.{$variantCode}"
-        : 'org.colors.all';
+    public static function colors(?string $variantCode = null): array
+    {
+        $key = $variantCode
+            ? "org.colors.{$variantCode}"
+            : 'org.colors.all';
 
-    return Cache::remember(
-        $key,
-        self::CACHE_TTL,
-        function () use ($variantCode) {
+        return Cache::remember(
+            $key,
+            self::CACHE_TTL,
+            function () use ($variantCode) {
 
-            return DB::table('xlr8_vehicle_variant')
-                ->where('is_active', 1)
-                ->whereNotNull('color_code')
-                ->where('color_code', '!=', '')
+                return DB::table('xlr8_vehicle_variant')
+                    ->where('is_active', 1)
+                    ->whereNotNull('color_code')
+                    ->where('color_code', '!=', '')
 
-                ->when(
-                    $variantCode,
-                    fn($q) => $q->where('code', $variantCode)
-                )
+                    ->when(
+                        $variantCode,
+                        fn ($q) => $q->where('code', $variantCode)
+                    )
 
-                ->distinct()
-                ->orderBy('color')
-                ->get(['color', 'color_code'])
-                ->mapWithKeys(fn($row) => [
-                    $row->color_code => $row->color ?: 'UNNAMED',
-                ])
-                ->toArray();
-        }
-    );
-}
+                    ->distinct()
+                    ->orderBy('color')
+                    ->get(['color', 'color_code'])
+                    ->mapWithKeys(fn ($row) => [
+                        $row->color_code => $row->color ?: 'UNNAMED',
+                    ])
+                    ->toArray();
+            }
+        );
+    }
+
     // ── User Query Helpers ───────────────────────────────────────────────
     public static function usersByPost(string $postCode, string $branchCode = 'ALL', string $locationCode = 'ALL'): array
     {
         return User::whereHas('posts', function ($q) use ($postCode) {
             $q->where('xlr8_iam_roles.post_code', $postCode);   // ← qualified
         })
-            ->when($branchCode !== 'ALL', fn($q) => $q->whereHas('branches', fn($b) => $b->where('code', $branchCode)))
-            ->when($locationCode !== 'ALL', fn($q) => $q->whereHas('locations', fn($l) => $l->where('code', $locationCode)))
+            ->when($branchCode !== 'ALL', fn ($q) => $q->whereHas('branches', fn ($b) => $b->where('code', $branchCode)))
+            ->when($locationCode !== 'ALL', fn ($q) => $q->whereHas('locations', fn ($l) => $l->where('code', $locationCode)))
             ->select('id', 'username', 'employee_code')
             ->get()
             ->toArray();
@@ -372,11 +381,11 @@ class OrgService
 
         return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($keywordCode, $parentValueCode, $parentKeywordCode) {
             $parentId = Keyvalue::where('code', $parentValueCode)
-                ->when($parentKeywordCode, fn($q) => $q->where('keyword_code', $parentKeywordCode))
+                ->when($parentKeywordCode, fn ($q) => $q->where('keyword_code', $parentKeywordCode))
                 ->where('is_active', true)
                 ->value('id');
 
-            if (!$parentId) {
+            if (! $parentId) {
                 return [];
             }
 
@@ -526,7 +535,7 @@ class OrgService
         string $variantCode = 'ALL',
         ?string $userType = null,
         bool $primaryOnly = false
-        ): array {
+    ): array {
         // Base query with relations
         $query = User::with(['person', 'scopes', 'employee'])
             ->whereHas('employee');
@@ -585,7 +594,7 @@ class OrgService
                 }
 
                 // If NOT primary-only, also match flexible user_scopes
-                if (!$primaryOnly) {
+                if (! $primaryOnly) {
                     $q->orWhereHas('scopes', function ($s) use ($type, $code) {
                         $s->where('scope_type', $type)
                             ->where('scope_code', $code)
@@ -668,12 +677,11 @@ class OrgService
         })->toArray();
     }
 
-
     public static function getCurrentUser(): ?array
     {
         $user = Auth::user();
 
-        if (!$user) {
+        if (! $user) {
             return null;
         }
 
@@ -720,7 +728,7 @@ class OrgService
                 // $q->where('desig_code', $desigCode);      // ← Use this only if still using legacy column
             })
             ->when($branchCode !== 'ALL', function ($q) use ($branchCode) {
-                $q->whereHas('branches', fn($b) => $b->where('code', $branchCode));
+                $q->whereHas('branches', fn ($b) => $b->where('code', $branchCode));
             })
             ->select('id', 'username', 'employee_code', 'person_code')
             ->get();
@@ -798,13 +806,13 @@ class OrgService
     //         ->first();
     // }
 
-    public static function getKeyValueById(int|string|null $id): ?KeyValue
+    public static function getKeyValueById(int|string|null $id): ?Keyvalue
     {
         if (empty($id)) {
             return null;
         }
 
-        return KeyValue::where('id', (int) $id)
+        return Keyvalue::where('id', (int) $id)
             ->where('is_active', true)
             ->first();
     }
@@ -880,7 +888,7 @@ class OrgService
                     ->get()
                     ->mapWithKeys(function ($user) {
                         return [
-                            $user->person_code => $user->display_name . ' (' . $user->employee_code . ')'
+                            $user->person_code => $user->display_name.' ('.$user->employee_code.')',
                         ];
                     })
                     ->toArray();
@@ -916,7 +924,7 @@ class OrgService
             ->where('pincode', $pincode)
             ->first();
 
-        if (!$postOffice) {
+        if (! $postOffice) {
             return [];
         }
 
@@ -934,10 +942,8 @@ class OrgService
     // ── HIERARCHY: UPLINE / DOWNLINE (with status & bypass controls) ─────
 
     /**
-     * @param string $username
-     * @param int    $maxDepth
-     * @param string $status  'active' | 'inactive' | 'all' — filters employees by is_active/separation status
-     * @param bool   $excludeBypassUsers  if true, skips users flagged bypass_data_scoping=1
+     * @param  string  $status  'active' | 'inactive' | 'all' — filters employees by is_active/separation status
+     * @param  bool  $excludeBypassUsers  if true, skips users flagged bypass_data_scoping=1
      */
     public static function getUpline(
         string $username,
@@ -947,8 +953,9 @@ class OrgService
     ): array {
         $current = self::findUserByCode($username, $status);
 
-        if (!$current) {
+        if (! $current) {
             Log::warning('OrgService::getUpline — root user not found', ['username' => $username, 'status' => $status]);
+
             return [];
         }
 
@@ -970,7 +977,7 @@ class OrgService
 
             $manager = self::findUserByCode($managerCode, $status);
 
-            if (!$manager) {
+            if (! $manager) {
                 Log::warning('OrgService::getUpline — broken chain or manager filtered out by status', [
                     'root_username' => $username,
                     'broken_at_employee' => $current->employee_code,
@@ -985,6 +992,7 @@ class OrgService
                 $current = $manager; // keep walking past them, just don't add to result
                 $visited[] = $managerCode;
                 $depth++;
+
                 continue;
             }
 
@@ -1001,8 +1009,7 @@ class OrgService
     }
 
     /**
-     * @param string $status  'active' | 'inactive' | 'all'
-     * @param bool   $excludeBypassUsers
+     * @param  string  $status  'active' | 'inactive' | 'all'
      */
     public static function getDownline(
         string $username,
@@ -1011,8 +1018,9 @@ class OrgService
         bool $excludeBypassUsers = false
     ): array {
         $root = self::findUserByCode($username, 'all'); // root itself always resolved regardless of status
-        if (!$root) {
+        if (! $root) {
             Log::warning('OrgService::getDownline — root user not found', ['username' => $username]);
+
             return [];
         }
 
@@ -1037,19 +1045,20 @@ class OrgService
         bool $excludeBypassUsers = false
     ): array {
         $root = self::findUserByCode($username, 'all');
-        if (!$root)
+        if (! $root) {
             return [];
+        }
 
         $rootCode = strtoupper($root->employee_code ?? '');
 
         return self::applyStatusFilter(
             User::with(['employee', 'person'])
-                ->whereHas('employee', fn($e) => $e->whereRaw('UPPER(reporting_manager_code) = ?', [$rootCode])),
+                ->whereHas('employee', fn ($e) => $e->whereRaw('UPPER(reporting_manager_code) = ?', [$rootCode])),
             $status
         )
-            ->when($excludeBypassUsers, fn($q) => $q->where('bypass_data_scoping', false))
+            ->when($excludeBypassUsers, fn ($q) => $q->where('bypass_data_scoping', false))
             ->get()
-            ->map(fn($u) => self::formatHierarchyNode($u, 1))
+            ->map(fn ($u) => self::formatHierarchyNode($u, 1))
             ->values()
             ->toArray();
     }
@@ -1077,10 +1086,10 @@ class OrgService
 
         return match ($status) {
             'active' => $query->where('is_active', true)
-                ->whereHas('employee', fn($e) => $e->whereNull('separation_date')),
+                ->whereHas('employee', fn ($e) => $e->whereNull('separation_date')),
             'inactive' => $query->where(function ($q) {
                 $q->where('is_active', false)
-                    ->orWhereHas('employee', fn($e) => $e->whereNotNull('separation_date'));
+                    ->orWhereHas('employee', fn ($e) => $e->whereNotNull('separation_date'));
             }),
             default => $query, // 'all'
         };
@@ -1089,6 +1098,7 @@ class OrgService
     private static function formatHierarchyNode(User $user, int $depth = 0): array
     {
         $emp = $user->employee;
+
         return [
             'username' => $user->username,
             'employee_code' => $user->employee_code,
@@ -1115,10 +1125,10 @@ class OrgService
         bool $excludeBypassUsers
     ): array {
         $query = User::with(['employee', 'person'])
-            ->whereHas('employee', fn($e) => $e->whereRaw('UPPER(reporting_manager_code) = ?', [$managerCode]));
+            ->whereHas('employee', fn ($e) => $e->whereRaw('UPPER(reporting_manager_code) = ?', [$managerCode]));
 
         $reports = self::applyStatusFilter($query, $status)
-            ->when($excludeBypassUsers, fn($q) => $q->where('bypass_data_scoping', false))
+            ->when($excludeBypassUsers, fn ($q) => $q->where('bypass_data_scoping', false))
             ->get();
 
         $nodes = [];
@@ -1132,6 +1142,7 @@ class OrgService
                     'repeated_code' => $empCode,
                     'chain' => $visited,
                 ]);
+
                 continue;
             }
 
@@ -1158,7 +1169,7 @@ class OrgService
         callable $nameResolver,
         string $format = 'code'
     ): ?string {
-        if (!$code) {
+        if (! $code) {
             return null;
         }
 
@@ -1217,7 +1228,7 @@ class OrgService
     ): ?string {
         return self::formatCodeWithName(
             $code,
-            fn($c) => self::getUserNameByCode($c, null, 'N/A'),
+            fn ($c) => self::getUserNameByCode($c, null, 'N/A'),
             $format
         );
     }
@@ -1267,99 +1278,99 @@ class OrgService
             // Primary org
             $primaryBranch = self::formatCodeWithName(
                 $row['primary_branch_code'],
-                fn($c) => self::branchName($c),
+                fn ($c) => self::branchName($c),
                 $orgFormat
             );
 
             $primaryLocation = self::formatCodeWithName(
                 $row['primary_loc_code'],
-                fn($c) => self::locationName($c),
+                fn ($c) => self::locationName($c),
                 $orgFormat
             );
 
             $primaryDept = self::formatCodeWithName(
                 $row['primary_dept_code'],
-                fn($c) => self::departmentName($c),
+                fn ($c) => self::departmentName($c),
                 $orgFormat
             );
 
             $primaryDiv = self::formatCodeWithName(
                 $row['primary_div_code'],
-                fn($c) => self::divisionName($c),
+                fn ($c) => self::divisionName($c),
                 $orgFormat
             );
 
             $primaryVertical = self::formatCodeWithName(
                 $row['vertical_code'],
-                fn($c) => self::verticalName($c),
+                fn ($c) => self::verticalName($c),
                 $orgFormat
             );
 
             $primarySegment = self::formatCodeWithName(
                 $row['segment_code'],
-                fn($c) => self::segmentName($c),
+                fn ($c) => self::segmentName($c),
                 $vehFormat
             );
 
             $primarySubSegment = self::formatCodeWithName(
                 $row['sub_segment_code'],
-                fn($c) => self::subSegmentName($c),
+                fn ($c) => self::subSegmentName($c),
                 $vehFormat
             );
 
             // Addon org scopes
             $addonBranches = self::formatCodeList(
                 $row['branches'],
-                fn($c) => self::branchName($c),
+                fn ($c) => self::branchName($c),
                 $orgFormat
             );
 
             $addonLocations = self::formatCodeList(
                 $row['locations'],
-                fn($c) => self::locationName($c),
+                fn ($c) => self::locationName($c),
                 $orgFormat
             );
 
             $addonDepts = self::formatCodeList(
                 $row['departments'],
-                fn($c) => self::departmentName($c),
+                fn ($c) => self::departmentName($c),
                 $orgFormat
             );
 
             $addonDivs = self::formatCodeList(
                 $row['divisions'],
-                fn($c) => self::divisionName($c),
+                fn ($c) => self::divisionName($c),
                 $orgFormat
             );
 
             $addonVerticals = self::formatCodeList(
                 $row['verticals'],
-                fn($c) => self::verticalName($c),
+                fn ($c) => self::verticalName($c),
                 $orgFormat
             );
 
             $addonSegments = self::formatCodeList(
                 $row['segments'],
-                fn($c) => self::segmentName($c),
+                fn ($c) => self::segmentName($c),
                 $vehFormat
             );
 
             $addonSubSegments = self::formatCodeList(
                 $row['sub_segments'],
-                fn($c) => self::subSegmentName($c),
+                fn ($c) => self::subSegmentName($c),
                 $vehFormat
             );
 
             // Models and variants in scope
             $modelsFormatted = self::formatCodeList(
                 $row['models'],
-                fn($c) => self::modelName($c),
+                fn ($c) => self::modelName($c),
                 $vehFormat
             );
 
             $variantsFormatted = self::formatCodeList(
                 $row['variants'],
-                fn($c) => self::variantName($c),
+                fn ($c) => self::variantName($c),
                 $vehFormat
             );
 
@@ -1410,9 +1421,7 @@ class OrgService
     /**
      * Applies the UI Highlight Filters to the given Enquiry query.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string|null $filter
-     * @return void
+     * @param  Builder  $query
      */
     public static function applyHighlightFilter($query, ?string $filter): void
     {
@@ -1515,24 +1524,24 @@ class OrgService
     {
         $enquiry = null;
         $booking = null;
-        $enqNoClean = $enqNo ? str_replace(['XENQ-', 'xenq-'], '', strtoupper($enqNo)) : null;
+        $enqNoClean = $enqNo ? app(EnquiryReferenceService::class)->fromReference($enqNo) : null;
 
         if ($enqNoClean) {
             $enquiry = DB::table('xlr8_crm_enquiries')->where('id', $enqNoClean)->first();
         }
 
-        if (!$enquiry && $bookingId) {
+        if (! $enquiry && $bookingId) {
             $booking = DB::table('xlr8_booking_master')->where('id', $bookingId)->first();
             if ($booking && $booking->enq_no) {
-                $cleanRef = str_replace(['XENQ-', 'xenq-'], '', strtoupper($booking->enq_no));
+                $cleanRef = app(EnquiryReferenceService::class)->fromReference($booking->enq_no);
                 $enquiry = DB::table('xlr8_crm_enquiries')->where('id', $cleanRef)->first();
             }
         }
 
-        if (!$enquiry && $votfNo) {
+        if (! $enquiry && $votfNo) {
             $booking = DB::table('xlr8_booking_master')->where('votf_no', $votfNo)->first();
             if ($booking && $booking->enq_no) {
-                $cleanRef = str_replace(['XENQ-', 'xenq-'], '', strtoupper($booking->enq_no));
+                $cleanRef = app(EnquiryReferenceService::class)->fromReference($booking->enq_no);
                 $enquiry = DB::table('xlr8_crm_enquiries')->where('id', $cleanRef)->first();
             } else {
                 // Fallback: Check enquiry table directly for oem_otf_no
@@ -1540,31 +1549,30 @@ class OrgService
             }
         }
 
-        if (!$enquiry) {
+        if (! $enquiry) {
             return ['success' => false];
         }
 
-        if (!$booking) {
+        if (! $booking) {
             $booking = DB::table('xlr8_booking_master')
-                ->where('enq_no', 'XENQ-' . $enquiry->id)
+                ->where('enq_no', app(EnquiryReferenceService::class)->toReference($enquiry->id))
                 ->orWhere('enq_no', $enquiry->id)
                 ->first();
         }
 
         return [
-            'success'          => true,
-            'enq_id'           => $enquiry->id,
-            'customer_name'    => $enquiry->name ?? $enquiry->customer_name ?? $enquiry->first_name ?? '',
-            'care_of_type'     => $enquiry->care_of_type ?? '',
-            'care_of'          => $enquiry->care_of ?? '',
-            'address'          => $enquiry->address ?? $enquiry->address1 ?? '',
-            'mobile'           => $enquiry->mobile ?? $enquiry->contact_no ?? '',
+            'success' => true,
+            'enq_id' => $enquiry->id,
+            'customer_name' => $enquiry->name ?? $enquiry->customer_name ?? $enquiry->first_name ?? '',
+            'care_of_type' => $enquiry->care_of_type ?? '',
+            'care_of' => $enquiry->care_of ?? '',
+            'address' => $enquiry->address ?? $enquiry->address1 ?? '',
+            'mobile' => $enquiry->mobile ?? $enquiry->contact_no ?? '',
             'alternate_mobile' => $enquiry->alternate_mobile ?? '',
-            'booking_no'       => $booking->id ?? $enquiry->booking_no ?? $enquiry->x8_booking_no ?? '',
-            'votf_no'          => $booking->votf_no ?? $enquiry->oem_otf_no ?? '',
-            'vehicle_registration_no' => $enquiry->vehicle_no ?? ''
+            'booking_no' => $booking->id ?? $enquiry->booking_no ?? $enquiry->x8_booking_no ?? '',
+            'votf_no' => $booking->votf_no ?? $enquiry->oem_otf_no ?? '',
+            'vehicle_registration_no' => $enquiry->vehicle_no ?? '',
         ];
     }
-
 }
 // changing the demo document

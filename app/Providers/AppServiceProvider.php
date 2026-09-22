@@ -4,12 +4,14 @@ namespace App\Providers;
 
 use App\Services\ApprovalService;
 use App\Services\AuthService;
-use App\Services\FirebaseService;
+use App\Services\EnquiryReferenceService;
 // use App\Services\DataScopeService;
+use App\Services\FirebaseService;
 use App\Services\HR\EmployeeJourneyService;
 use App\Services\HR\HRJourneyService;
 use App\Services\IAM\PostService;
 use App\Services\IAM\ReportingService;
+use App\Services\IdentifierService;
 use App\Services\NotificationService;
 use App\Services\OtpNotificationService;
 use App\Services\RBACService;
@@ -62,6 +64,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(ReportingService::class);
         $this->app->singleton(HRJourneyService::class);
         $this->app->singleton(EmployeeJourneyService::class);
+        $this->app->singleton(IdentifierService::class);
+        $this->app->singleton(EnquiryReferenceService::class);
 
         // SuperAdmin wildcard bypass + user-level permission denial check — registered here in
         // register() (not boot()), and via afterResolving rather than the Gate facade, so this

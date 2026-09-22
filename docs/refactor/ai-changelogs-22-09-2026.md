@@ -699,3 +699,125 @@ fix issues found.
   there's no real quotation to convert to `booked` and re-edit through the actual flow. Logged as a
   code-review-verified fix, not a live-tested one — flagged explicitly rather than claimed as fully
   verified.
+
+## Phase 1 of Sales-system refactor: Identifier & Reference Registry
+
+Per user request to centralize business-identifier format/validation/normalization rules "one
+time/at one place" instead of rewriting them per form/import/export, and to begin bringing
+Booking/Quotation/Enquiry in line with the newly-recorded DRY/SSOT Model-Service-Controller rule.
+Full plan at the session's plan file (Sales-System Refactor: Identifier Registry +
+Booking/Quotation/Enquiry Layering) — this entry covers Phase 1 only; Phases 2+ (the Booking
+listing-infrastructure DRY pass and Model/Service extraction) are a separate, future-approved
+sequence of passes, not attempted here.
+
+**Canonical formats locked in** (government/industry standard first, else current project
+convention, else common sense, per explicit user instruction):
+
+| Identifier | Standard used | Canonical rule |
+|---|---|---|
+| Aadhaar | UIDAI (12 digits, never starts 0/1) | `^[2-9]\d{3}[ -]?\d{4}[ -]?\d{4}$` |
+| PAN | Income Tax Dept (CBDT) | `^[A-Z]{5}[0-9]{4}[A-Z]$` (case-insensitive at input) |
+| TAN | Income Tax Dept (CBDT) | `^[A-Z]{4}[0-9]{5}[A-Z]$` (case-insensitive at input) |
+| Mobile | TRAI numbering plan | `^[6-9]\d{9}$`, pre-cleaned via IdentifierService::cleanMobile() |
+| GSTIN | CBIC/GST law | `^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$` (structural, no checksum) |
+| Chassis No. | none (internal OEM/stock code) — derived from real X_Vh_Stock data | `^[SR][A-Z0-9]{4,10}$` |
+| Employee Code | none (internal) — kept generator's existing shape | `^BMPL-\d{4}$` |
+| person_code fallback | none — kept the already-decided model SSOT | `Person::deriveCode()`'s `PERS-######` |
+| OTF/DMS/Invoice/Dealer-Invoice numbers | none — kept existing project format | unchanged, just centralized |
+| Enquiry reference | none (internal display format) | `XENQ-{id}`, one build/parse pair |
+
+**New: `app/Rules/`** (didn't exist before) — `AadhaarNumber`, `PanNumber`, `TanNumber`,
+`IndianMobileNumber`, `Gstin`, `ChassisNumber`, `EmployeeCode`, `OtfNumber`, `DmsNumber`,
+`InvoiceNumber`, `DealerInvoiceNumber`. Each is a Laravel 12 `ValidationRule` class encoding
+exactly the regex above — validation only, no normalization (kept separate so normalization is
+never silently applied where a caller didn't explicitly ask for it).
+
+**New: `app/Services/IdentifierService.php`** — `cleanMobile()`, `normalizePan()`,
+`normalizeAadhaar()`, `normalizeTan()`, `normalizeGstin()`, `normalizeChassis()`. Follows this
+session's established current service convention (instance methods, no constructor deps,
+shorthand singleton in `AppServiceProvider`, injected via constructor property promotion) rather
+than the older static `OrgService`/`PersonService` style. `cleanMobile()` is the single correct
+implementation of a function that previously existed independently (and divergently) 5 times —
+ported from `PersonService::cleanPhone()`'s already-fixed logic. Two of those five previous copies
+(`EmployeeSheetImport`, `UsersImportSheet`) used `ltrim($v, '91')`/`ltrim($v, '+91')`, which treats
+the second argument as a character mask, not a prefix — it silently strips leading `9`/`1`/`+`
+characters from ANY number that happens to start with them (e.g. a real 10-digit mobile number
+`9198765432` would have been mangled), not just a genuine country-code prefix. Both are now fixed
+by delegating to this service.
+
+**New: `app/Services/EnquiryReferenceService.php`** — `toReference()`/`fromReference()` for the
+`XENQ-{id}` format, replacing 5 independent build/parse implementations across
+`EnquiryCrudController` (11 build sites + 1 detection site), `OrgService` (3 parse + 1 build),
+`ReceiptCrudController` (1 build + 2 parse), `JournalVoucherCrudController` (1 parse),
+`BookingCrudController` (1 parse), and a raw-SQL `CONCAT()` in `Enquiry.php` and 2 more in
+`BookingCrudController` (documented with a comment instead, since a PHP service can't be called
+from inside a `whereRaw()`/`orOn()` raw string).
+
+**Wired into:**
+- `PersonRequest`: Aadhaar/PAN/TAN/GST/Mobile now use the Rule classes (previously `digits:12`,
+  a bare PAN regex, no GST rule at all, and `digits:10` with no leading-digit check for mobile).
+- `EmployeeRequest`: added `EmployeeCode` to the `code` field — previously had zero format
+  validation.
+- `BookingCrudController::kycUpdate()`: replaced its own (already-correct, coincidentally matching
+  the new canonical) Aadhaar/PAN/GST regexes with the Rule classes and `IdentifierService`
+  normalization calls.
+- `BookingCrudController::pendingUpdate()`: replaced 7 inline regexes that disagreed with
+  `kycUpdate()`'s — notably its Aadhaar rule required literal dashes only
+  (`\d{4}-\d{4}-\d{4}`, rejecting plain-digit or space-separated input `kycUpdate()` accepted) and
+  its Chassis rule required a literal `S` prefix (`^S\d[A-Z]\d{5}$`), which would reject 16 of 895
+  real chassis records that legitimately start with `R` (confirmed against live `X_Vh_Stock` data
+  before locking in the canonical rule). Both flows now share one rule.
+- 4 importer files (`StandaloneUsersImport`, `UsersImportSheet`, `EmployeeSheetImport`,
+  `EmployeeRowDTO`) — replaced 4 independent `derivePersonCode()`/`resolvePersonCode()`
+  implementations (3 different priority orders/fallback shapes) with calls to
+  `Person::deriveCode()`, the already-established model-level SSOT (see BUG-088). This is the
+  direct fix for BUG-088 plus the 3 additional divergent implementations this audit found beyond
+  the one BUG-088 already documented. Also replaced all 5 `cleanPhone()`/`cleanMobile()`
+  reimplementations with `IdentifierService::cleanMobile()` (`EmployeeRowDTO` keeps its
+  Excel-specific float/scientific-notation pre-processing, since that's genuinely different
+  Excel-import-only logic, then delegates the shared digit-cleaning step).
+- Added a new `BookingCrudController::__construct()`/`EnquiryCrudController::__construct()`
+  (neither had one before) injecting `IdentifierService`/`EnquiryReferenceService` via constructor
+  property promotion, matching the established pattern from `UserCrudController`.
+
+**Deliberately left unchanged** (documented, not an oversight): `BookingCrudController`'s general
+`store()`/`update()` inline Aadhaar/PAN/GST/mobile validation (`adhar_no`/`adharno` max:15-20 with
+no regex, `mobile` max:15 with no digit check, `gstn` max:20) — these paths never had format
+enforcement, and retrofitting strict validation onto a general booking save (not the dedicated KYC
+screen) risks rejecting previously-accepted real production data with no cleanup step first.
+
+**Not attempted**: adding `lockForUpdate()` to `BookingCrudController::generateVotfNumber()` to
+match `ReceiptCrudController::generateReceiptNumber()`'s concurrency safety, as originally scoped
+in the plan. Investigation found VOTF generation and persistence are two separate HTTP requests
+(a preview AJAX call, then a later form submit that trusts whatever value the client sends back in
+`otfSave()`) — a lock in the preview endpoint alone would be cosmetic and wouldn't close the actual
+race window, which spans both requests. A real fix needs either an atomic reserve-at-generate-time
+design or a uniqueness re-check inside `otfSave()`'s own transaction; logged as BUG-097 instead of
+a fix that would look like a fix but isn't.
+
+### Verification
+
+- `php -l` clean on all 17 new/changed PHP files.
+- `vendor/bin/pint --dirty --format agent` → fixed formatting across all touched files, no
+  behavioral changes (verified via `git diff` on each).
+- Scoped `vendor/bin/phpstan analyse` (BookingCrudController.php excluded — too large for this
+  environment's memory ceiling, per BUG-085; verified via `php -l` and manual diff review instead)
+  on every other new/changed file → all remaining findings are pre-existing docblock/dynamic-
+  property noise unrelated to the touched lines (verified line-by-line that none of the reported
+  errors fall on lines this change actually touched).
+- New tests: `tests/Unit/Rules/` (11 files, one per Rule class, valid+invalid cases per the
+  canonical table — including the real edge cases the audit found: Aadhaar starting 0/1 must fail,
+  chassis starting `R` must now pass) + `tests/Unit/Services/IdentifierServiceTest.php` (8 tests,
+  specifically covers the mobile-cleaning bug fix with the exact input shape that broke the old
+  `ltrim()`-based implementations) + `tests/Unit/Services/EnquiryReferenceServiceTest.php` (5
+  tests) → 46 passed, 61 assertions.
+- `tests/Feature/Admin/Org/PersonCrudTest.php` → 1 pre-existing test used an Aadhaar fixture
+  (`123456789012`) that started with `1` — never a realistic UIDAI number, and now correctly
+  rejected by the new rule. Updated the fixture to a valid Aadhaar (`234567890123`); all 8 tests
+  pass.
+- Full `tests/Feature/Admin/Org/*.php` run individually (batching the whole directory in one
+  process OOMs in this environment) → 46 passed across all 8 files, zero regressions.
+- `tests/Unit/StandaloneUsersImportTest.php` fails with a pre-existing, unrelated
+  `FileNotFoundException` (missing `storage/user_data.xlsx` fixture) — confirmed unrelated to this
+  change (the failure is in file loading, before any of the touched `derivePersonCode()`/
+  `cleanPhone()` code would execute).

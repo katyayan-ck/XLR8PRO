@@ -76,6 +76,28 @@ check `php artisan route:list --path=sales` before assuming a route's location.
 
 Also read `.ai/rules/module-structure.md` (route/permission structure — Booking/Quotation/Enquiry are
 already migrated, `SLS_BKNG_*`/`SLS_QUOT_*`/`SLS_ENQR_*` permissions) and
-`docs/refactor/known-bugs-report.md` (search for BUG-091, BUG-092, BUG-050, BUG-059 through BUG-062 —
-all Booking/Quotation-specific findings already on record; don't re-discover them) before starting
-work in this area.
+`docs/refactor/known-bugs-report.md` (search for BUG-091, BUG-092, BUG-050, BUG-059 through BUG-062,
+BUG-093 through BUG-097 — all Booking/Quotation-specific findings already on record; don't
+re-discover them) before starting work in this area.
+
+## Identifier format/validation registry (Aadhaar, PAN, mobile, GSTIN, chassis, etc.)
+
+Business-identifier format validation and normalization is centralized — never write a new regex
+for Aadhaar/PAN/TAN/mobile/GSTIN/chassis/employee-code/OTF/DMS/invoice numbers inline in a
+FormRequest, controller, or importer. Use:
+
+- `App\Rules\*` (`AadhaarNumber`, `PanNumber`, `TanNumber`, `IndianMobileNumber`, `Gstin`,
+  `ChassisNumber`, `EmployeeCode`, `OtfNumber`, `DmsNumber`, `InvoiceNumber`,
+  `DealerInvoiceNumber`) for validation — pass as `new AadhaarNumber` etc. in a `rules()` array.
+- `App\Services\IdentifierService` (singleton, inject via constructor property promotion) for
+  normalization — `cleanMobile()`, `normalizePan()`, `normalizeAadhaar()`, `normalizeTan()`,
+  `normalizeGstin()`, `normalizeChassis()`.
+- `App\Services\EnquiryReferenceService` (singleton) for the `XENQ-{id}` enquiry reference format
+  — `toReference()`/`fromReference()`, never rebuild/parse the prefix manually.
+- `Person::deriveCode()` (model static method) is the SSOT for `person_code` derivation
+  (Aadhaar-first, PAN-second, `PERS-######` fallback) — never reimplement this in an importer.
+
+Canonical formats and the government-standard-vs-project-convention rationale for each are recorded
+in `docs/refactor/ai-changelogs-22-09-2026.md` ("Phase 1 of Sales-system refactor: Identifier &
+Reference Registry"). See BUG-097 (open) for a known VOTF-generation race-condition gap this
+registry didn't fix.

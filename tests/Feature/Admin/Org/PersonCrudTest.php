@@ -73,13 +73,16 @@ class PersonCrudTest extends TestCase
         $this->actingAsBackpackUser($user)->post(backpack_url('org/person'), [
             'display_name' => 'Aadhaar Priority Person',
             'mobile' => '9876500002',
-            'aadhaar_no' => '123456789012',
+            // UIDAI never issues an Aadhaar starting 0/1 (see App\Rules\AadhaarNumber,
+            // added as part of the identifier-registry consolidation) - '1234...' was
+            // never a realistic value, updated to a valid one.
+            'aadhaar_no' => '234567890123',
             'pan_no' => 'ABCDE1234F',
         ]);
 
         $person = Person::where('display_name', 'Aadhaar Priority Person')->first();
 
-        $this->assertSame('123456789012', $person->person_code);
+        $this->assertSame('234567890123', $person->person_code);
     }
 
     public function test_updating_a_person_cannot_change_its_person_code(): void
