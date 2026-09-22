@@ -1491,6 +1491,13 @@ class QuotationCrudController extends CrudController
                 : (int) $quotation->revision;
 
             // ✅ 5. REMOVED: person_code, model_code, variant_code, color_code from update
+            // BUG-096: status must not regress once a Quotation has been converted to a Booking
+            // (`booked`) — the FRS documents `booked` as the post-conversion state, and the main
+            // quotation listing (index(), whereNotIn('status', ['booked'])) relies on it staying
+            // `booked` to stop showing already-converted quotations as pending. Preserve it here
+            // instead of unconditionally overwriting with `raised` on every edit.
+            $statusAfterUpdate = $quotation->status === 'booked' ? 'booked' : 'raised';
+
             $quotation->update([
                 'enquiry_no' => $enquiry ? $enquiry->id : $request->enquiry_id,
                 'revision' => $newRevision,
@@ -1505,7 +1512,7 @@ class QuotationCrudController extends CrudController
                     ?? $request->net_receivable_summary
                     ?? 0,
 
-                'status' => 'raised',
+                'status' => $statusAfterUpdate,
                 'updated_by' => backpack_user()->id,
             ]);
 
@@ -1521,7 +1528,7 @@ class QuotationCrudController extends CrudController
                     'onroad' => $request->net_receivable_summary
                         ?? $request->total_receivable
                         ?? 0,
-                    'status' => 'raised',
+                    'status' => $statusAfterUpdate,
                     'remarks' => 'Quotation Revised',
                     'created_by' => backpack_user()->id,
                 ]);

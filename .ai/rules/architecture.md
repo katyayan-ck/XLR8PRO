@@ -189,3 +189,15 @@ OTP: 6/10 min expiry; 5 req/15 min rate limit; 5 fails → 30 min lock; **device
 
 ## API route handler style
 Use [Controller::class, 'method'] array syntax for API routes; reserve closures for one-off web/backpack routes.
+
+## DRY/SSOT layering: data ops in Models, business logic in Services, thin Controllers
+Every change must follow DRY and Single Source of Truth:
+- **Models** own data-access operations on their own table/relations — scopes, accessors/mutators, relationship methods, simple per-row queries. A model should not reach into unrelated domains' business rules.
+- **Services** own business logic, cross-model orchestration, and anything touching more than one model/table together (see `.ai/rules/services.md`'s SSOT service catalog — extend an existing service before writing a new one, never duplicate logic already covered there).
+- **Controllers** stay thin: validate input (FormRequest), call one Service (or Model scope for a trivial read), shape the response. No calculations, no multi-step orchestration, no raw cross-model queries inline in a controller method.
+- Never re-implement logic that already exists in a Model method or Service — grep for it first.
+
+Also standing process (should already be followed every task, not just when explicitly asked):
+- Double-check and test every change before considering it done (Larastan + the narrowest relevant test/HTTP round trip — see CLAUDE.md's Development Workflow).
+- Log every change in `docs/refactor/ai-changelogs-DD-MM-YYYY.md` as you go; when the user asks to commit, first reconcile that day's changelog so its final entries actually match what's being committed (not stale mid-task notes) before writing the commit message.
+- Keep `docs/refactor/known-bugs-report.md` current — check it before starting in an area, add entries the moment a new bug is found, never lose a finding by only mentioning it in chat.
