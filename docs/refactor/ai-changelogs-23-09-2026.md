@@ -248,3 +248,37 @@ regression test (`test_apply_saves_a_literal_zero_vehicle_reg_no_correctly`) loc
 - Live HTTP round trip: `sales/booking/rto/{id}/edit` → 200.
 - Full suite re-run (`tests/Unit/Services/Sales/` + `PersonCrudTest`) → 29 passed, 61 assertions,
   zero regressions.
+
+## Phase 4, fifth sub-domain: BookingDeliveryService
+
+Continuing Phase 4's sequence (KYC, DMS, Insurance, RTO done; Delivery next).
+
+**New: `App\Services\Sales\Booking\BookingDeliveryService`** (singleton). `resolveEditData()`
+mirrors the established shape (Enquiry-driven context resolution with the same load-bearing
+`$booking` mutation, insurer/RTO/financier lookups). `apply(int $bookingId, string $remarks, bool
+$chassisNoVerified, array $photos): XlDelivery` creates/updates the `XlDelivery` row, records the
+`"Delivery Process Completed"` history entry, and attaches each of the 17 verification-photo media
+collections (`PHOTO_COLLECTIONS` constant, now a single source of truth shared by both the
+controller's validation-rule loop and the service's attach loop — previously the same 17-item list
+was hand-typed twice, once per `required|image` validation rule and once in the attach loop).
+
+`PendDeliveryEdit()`/`PendDeliveryUpdate()` are now thin. Dropped the extensive `Log::debug/info`
+play-by-play (including a whole block that inspected every uploaded file just to log its name/size/
+mime before validation ever ran) that only narrated what the extracted service does directly; kept
+the `Log::warning`/`Log::error`/`Log::critical` calls in the three catch blocks (`ValidationException`,
+`FileCannotBeAdded`, generic `Exception`) since those carry real diagnostic value for genuine
+failures.
+
+### Verification
+
+- `php -l` clean; `vendor/bin/pint --dirty --format agent` → removed the now-genuinely-unused
+  `Illuminate\Http\UploadedFile` import (it was only referenced by the removed debug-logging loop's
+  `instanceof` check — confirmed via `git diff` that nothing else in the 14k-line file used the bare
+  type hint).
+- **New: `tests/Unit/Services/Sales/BookingDeliveryServiceTest.php`** (5 tests, 15 assertions) —
+  record creation, selective photo attachment (only provided collections get media, others stay
+  empty), update-in-place on a second call, and replacing an existing photo in the same collection
+  (`clearMediaCollection()` correctly swaps rather than accumulates).
+- Live HTTP round trip: `sales/booking/{id}/delivery-edit` → 200.
+- Full suite re-run (`tests/Unit/Services/Sales/` + `PersonCrudTest`) → 34 passed, 76 assertions,
+  zero regressions.
