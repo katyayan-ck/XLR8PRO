@@ -806,3 +806,35 @@ converted labels establish the pattern; `store()`'s validator (a different field
 to this registry, left for follow-up checkpoints. The lang file itself already has more label keys
 defined than are currently wired up (booking_amount, segment, model, variant, etc.), ready for the
 next slice to consume.
+
+## Phase 5, fifth checkpoint: label registry extended to store()'s 3 validators
+
+Continues the centralized label/validation registry rollout. Added 10 new field keys to
+`resources/lang/en/booking.php` (`customer_type`, `customer_category`, `collected_by`,
+`collection_type`, `pincode`, `vpo`, `tehsil`, `district`, `city`, `territory`) needed by `store()`'s
+field set but not yet covered by the `update()`-focused first slice.
+
+Wired one shared `$customAttributes` array (built once, covering the union of all 3 of `store()`'s
+sequential `Validator::make()` calls - base validation, "Actual"-customer-only validation, and
+receipt-collection validation) into all 3 calls via the `$customAttributes` 4th argument.
+`Validator::make()` harmlessly ignores any key not present in that particular call's own `$rules`
+array, so one shared map is safe to pass to all three without needing three separate maps.
+
+### Verification
+
+- `php -l` clean; `vendor/bin/pint --dirty --format agent` → clean.
+- `tests/Unit/Lang/BookingLangTest.php`'s existing guard test automatically picked up the 51 new
+  `booking.fields.*` references in `store()` (73 assertions total, up from 57) and confirmed every
+  one resolves to a real registry key - no test changes needed, the guard was written generically.
+- Live spot-checks: `Validator::make([], ['mobile' => 'required', 'pincode' => 'required'], [],
+  [...])` → "The Mobile Number field is required." / "The Pin Code field is required."
+- Live HTTP round trip: `GET sales/booking/create` → 200 (confirms the controller change didn't
+  break the form render).
+- Full suite re-run (`tests/Unit/Services/` + `tests/Unit/Lang/`) → 73 passed, 214 assertions; same
+  8 pre-existing unrelated failures as every checkpoint this phase.
+
+**Label registry coverage so far**: `update()` (51 fields) + `store()` (all 3 validators, ~46 unique
+fields, mostly overlapping with `update()`'s set under different input names) + `add.blade.php`'s 10
+Blade `<label>` tags. Still not wired up: `otfSave()`, `requestRefund()`, and the dedicated
+sub-domain edit screens (KYC/DMS/Insurance/RTO/Delivery/Finance/Exchange/Refund/OTF), each of which
+has its own smaller validator in `BookingCrudController`. Left for further follow-up checkpoints.

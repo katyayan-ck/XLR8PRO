@@ -19,6 +19,10 @@ return [
 
     'fields' => [
         'sale_type' => 'Sale Type',
+        'customer_type' => 'Customer Type',
+        'customer_category' => 'Customer Category',
+        'collected_by' => 'Collected By',
+        'collection_type' => 'Collection Type',
         'customer_name' => 'Customer Name',
         'care_of_type' => 'Care Of',
         'care_of_name' => 'Care Of Name',
@@ -54,6 +58,13 @@ return [
         'expected_price' => 'Expected Price',
         'offered_price' => 'Offered Price',
         'exchange_bonus' => 'Exchange Bonus',
+
+        'pincode' => 'Pin Code',
+        'vpo' => 'VPO',
+        'tehsil' => 'Tehsil',
+        'district' => 'District',
+        'city' => 'City',
+        'territory' => 'Territory',
 
         'booking_mode' => 'Booking Mode',
         'online_reference_number' => 'Online Booking Reference Number',
