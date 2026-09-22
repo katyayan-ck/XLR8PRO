@@ -43,6 +43,7 @@ use App\Services\IdentifierService;
 use App\Services\OrgService;
 use App\Services\Sales\Booking\BookingDeliveryService;
 use App\Services\Sales\Booking\BookingDmsService;
+use App\Services\Sales\Booking\BookingFinanceService;
 use App\Services\Sales\Booking\BookingInsuranceService;
 use App\Services\Sales\Booking\BookingKycService;
 use App\Services\Sales\Booking\BookingRtoService;
@@ -95,6 +96,7 @@ class BookingCrudController extends CrudController
         protected BookingInsuranceService $insuranceService,
         protected BookingRtoService $rtoService,
         protected BookingDeliveryService $deliveryService,
+        protected BookingFinanceService $financeService,
     ) {
         parent::__construct();
     }
@@ -8575,90 +8577,11 @@ class BookingCrudController extends CrudController
         }
 
         $booking = Booking::findOrFail($id);
-
-        $linkedEnquiry = null;
-
-        if ($booking->enq_no) {
-            $linkedEnquiry = Enquiry::resolveByAnyReference($booking->enq_no);
-        }
-
-        if ($linkedEnquiry) {
-            $booking->name = $booking->name ?? $linkedEnquiry->name;
-
-            $booking->model_code =
-                $booking->model_code ?? $linkedEnquiry->model_code;
-
-            $booking->variant_code =
-                $booking->variant_code ?? $linkedEnquiry->variant_code;
-
-            $booking->color_code =
-                $booking->color_code ?? $linkedEnquiry->color_code;
-        }
-
         $user = backpack_user();
         $uid = $user?->id ?? null;
 
-        $data = [];
-
-        $data['branch'] = Branch::where('branch_code', $booking->branch_code)
-            ->value('name') ?? 'N/A';
-        $data['location'] = $booking->location_code > 0
-            ? (Location::find($booking->location_code)?->name ?? 'N/A')
-            : ($booking->location_other ?? 'N/A');
-
-        $acc = explode(',', $booking->accessories ?? '');
-        $accessoryNames = [];
-        foreach ($acc as $a) {
-            if ($a = trim($a)) {
-                $accessory = Xessories::find($a);
-                if ($accessory) {
-                    $accessoryNames[] = $accessory->item;
-                }
-            }
-        }
-        $data['accessories'] = $accessoryNames ? implode(', ', $accessoryNames) : 'N/A';
-
-        $chassis = Stock::find($booking->chassis_no);
-        $data['bchasis'] = $chassis?->chassis_no ?? 'N/A';
-
-        $data['segments'] = OrgService::segments();
-
-        $data['saleconsultants'] = OrgService::salesConsultants();
-        $data['financiers'] = XlFinancier::select('id', 'name', 'short_name')->get()->toArray();
-        $data['enum_master'] = OrgService::keywordValueByCode('EXISTING_CAR_OEM');
-
-        $drec = XL_DSA_MASTER::find($booking->dsa_id);
-        $dsaname = $drec ? $drec->name.' - '.$drec->mobile : 'N/A';
-
-        $collector = User::find($booking->col_by);
-        $data['collector_name'] = $collector
-            ? $collector->name.' - '.$collector->emp_code
-            : 'N/A';
-
-        $data['remark'] = 0;
-        $depts = explode(',', $user->department ?? '');
-
-        foreach ($depts as $deptId) {
-
-            $dept = OrgService::getKeyValueById((int) trim($deptId));
-
-            $deptName = $dept?->value;
-
-            if ($deptName === 'SALES') {
-                $data['remark'] = 1;
-            }
-
-            if ($deptName === 'ACCOUNTS') {
-                $data['remark'] = 2;
-            }
-        }
-
-        $data['make1'] = $booking->exist_oem1 ?? 'N/A';
-        $data['make2'] = $booking->exist_oem2 ?? 'N/A';
-
-        $data['oem_ids'] = explode(',', $booking->exist_oem ?? '');
-
-        $finance = XFinance::where('bid', $id)->first();
+        ['finance' => $finance, 'data' => $data, 'dsaname' => $dsaname] =
+            $this->financeService->resolveFinEditData($booking);
 
         $bookingHistory = $booking->commMaster()
             ->with([
@@ -8723,241 +8646,18 @@ class BookingCrudController extends CrudController
 
         $booking = Booking::findOrFail($id);
 
-        $finance = XFinance::firstOrNew(['bid' => $id]);
-        $isNew = ! $finance->exists;
-
-        $old = $finance->toArray();
-        $changes = [];
-
-        $labels = [
-            'fin_mode' => 'Finance Mode',
-            'loan_status' => 'Loan Status',
-            'case_status' => 'Case Status',
-            'instrument_type' => 'Instrument Type',
-            'instrument_ref_no' => 'Reference No.',
-            'loan_amount' => 'Loan Amount',
-            'margin' => 'Margin Money',
-            'file_charge' => 'File Charge',
-            'case_lost_reason' => 'Case Lost Reason',
-            'verification_status' => 'Verification Status',
-            'remark' => 'Remarks',
-        ];
-
-        $instrumentTypes = [
-            1 => 'Financier Payment',
-            2 => 'Delivery Order',
-            3 => 'Sanction Letter',
-            4 => 'Mail Communication',
-            5 => 'Whatsapp Communication',
-            6 => 'Banker Cheque',
-            7 => 'Demand Graph',
-            8 => 'Customer Cheque',
-        ];
-
-        $caseLostReasons = [
-            1 => 'Cash Purchase',
-            2 => 'Customer Self Finance',
-        ];
-
-        $verifyLabels = [
-            1 => 'Not Selected',
-            2 => 'Verified (Match)',
-            3 => 'Verified (Mismatch)',
-            4 => 'Plan Cancelled',
-        ];
-
-        $format = function ($val, $field) use ($instrumentTypes, $caseLostReasons, $verifyLabels) {
-            if (is_null($val)) {
-                return 'N/A';
-            }
-            if ($field === 'instrument_type') {
-                return $instrumentTypes[$val] ?? $val;
-            }
-            if ($field === 'case_lost_reason') {
-                return $caseLostReasons[$val] ?? 'Unknown';
-            }
-            if ($field === 'verification_status') {
-                return $verifyLabels[$val] ?? $val;
-            }
-            if (in_array($field, ['loan_amount', 'margin', 'file_charge'])) {
-                return 'Rs. '.number_format($val);
-            }
-
-            return $val;
-        };
-
-        $fields = [
-            'fin_mode',
-            'loan_status',
-            'case_status',
-            'instrument_type',
-            'instrument_ref_no',
-            'loan_amount',
-            'margin',
-            'file_charge',
-            'case_lost_reason',
-            'verification_status',
-        ];
-
-        foreach ($fields as $field) {
-            $oldVal = $old[$field] ?? null;
-            $inputKey = $field === 'margin' ? 'margin_money' : $field;
-            $newVal = $request->input($inputKey);
-            $oldVal = $oldVal === '' ? null : $oldVal;
-            $newVal = $newVal === '' ? null : $newVal;
-
-            if ($oldVal != $newVal) {
-                $label = $labels[$field] ?? ucfirst(str_replace('_', ' ', $field));
-                $changes[] = "$label: '{$format($oldVal, $field)}' to '{$format($newVal, $field)}'";
-            }
-        }
-
-        if ($isNew) {
-            $changes[] = "New Finance Record Created for Booking ID {$id}";
-        }
-
-        if ($request->hasFile('instrument_proof')) {
-            $finance->clearMediaCollection('instrument_proof');
-
-            $finance->addMediaFromRequest('instrument_proof')
-                ->usingFileName('instrument_proof_'.$id.'_'.time().'.'.$request->file('instrument_proof')->extension())
-                ->toMediaCollection('instrument_proof');
-
-            $changes[] = 'Instrument Proof: New file uploaded (replaced previous if any)';
-        }
-
-        if ($request->has('delete_instrument_proof') && $request->delete_instrument_proof == '1') {
-            $finance->clearMediaCollection('instrument_proof');
-            $changes[] = 'Instrument Proof: File removed';
-        }
-
-        $finance->fin_mode = $request->fin_mode;
-        $finance->loan_status = $request->loan_status;
-        $finance->financier = $request->financier;
-        $finance->verification_status = $request->verification_status;
-        $finance->case_status = $request->case_status;
-
-        if (in_array($request->fin_mode, ['Cash', 'Customer Self'])) {
-
-            $finance->instrument_type = null;
-            $finance->instrument_ref_no = null;
-            $finance->loan_amount = null;
-            $finance->margin = null;
-            $finance->file_charge = null;
-            $finance->case_lost_reason = $request->fin_mode === 'Cash' ? 1 : 2;
-        } else {
-
-            $finance->instrument_type = $request->instrument_type;
-            $finance->instrument_ref_no = $request->instrument_ref_no;
-            $finance->loan_amount = $request->loan_amount;
-            $finance->margin = $request->margin_money;
-            $finance->file_charge = $request->file_charge;
-            $finance->subvention_amount = $request->financier_subvention;
-            $finance->case_lost_reason = $request->case_lost_reason;
-        }
-
-        if ($isNew && $request->retail == 1) {
-            $finance->verification_status = 2;
-            $finance->case_status = 2;
-
-            if (trim($request->remark ?? '') === '') {
-                $request->merge(['remark' => 'Retail booking finance auto-completed']);
-            }
-        }
-
-        if ($isNew) {
-            $finance->bid = $id;
-            $finance->created_by = backpack_auth()->id();
-
-            if (empty($finance->verification_status)) {
-                $finance->verification_status = 2;
-            }
-        }
-
-        $finance->updated_by = backpack_auth()->id();
-        $finance->status = ($finance->fin_mode === 'In-house' && $finance->case_status == 2) ? 2 : 1;
-        $finance->vh_id = $booking->vh_id
-            ?? $booking->vehicle_oem_code
-            ?? $booking->variant_code
-            ?? 1;
-
-        $finance->save();
-
-        if (
-            ($finance->fin_mode === 'In-house' && $finance->case_status == 2)
-            ||
-            in_array($finance->fin_mode, [
-                'Customer Self',
-                'Cash',
-                'Yet To Decide',
-                'Purchase Plan Cancelled',
-            ])
-        ) {
-
-            $title = in_array($finance->fin_mode, [
-                'Customer Self',
-                'Cash',
-                'Yet To Decide',
-            ])
-                ? 'Finance Not Interested Process Completed'
-                : 'Finance Process Completed';
-
-            $message = in_array($finance->fin_mode, [
-                'Customer Self',
-                'Cash',
-                'Yet To Decide',
-            ])
-                ? 'Finance not interested case processed .'
-                : 'Finance process completed .';
-
-            if (! empty(trim($request->remark))) {
-                $message .= "\n\n,Remarks: ".$request->remark;
-            }
-
-            $booking->addHistory(
-                'commented',
-                $title,
-                $message,
-                [
-                    'finance_mode' => $finance->fin_mode,
-                    'financier' => $finance->financier,
-                    'loan_amount' => $finance->loan_amount,
-                ],
-                null,
-                backpack_user()
-            );
-        }
-
-        if ($request->retail == 1) {
-            $booking->retail = 1;
-            $booking->save();
-            $changes[] = 'Booking Retailed';
-        }
-
-        if ($request->retail == 1) {
-
-            $booking->retail = 1;
-            $booking->save();
-
-            $changes[] = 'Booking Retailed';
-
-            $booking->addHistory(
-                'commented',
-                'Retail Process Completed',
-                'Finance retail process completed .',
-                [
-                    'finance_mode' => $finance->fin_mode,
-                    'remark' => $request->remark,
-                ],
-                null,
-                backpack_user()
-            );
-        }
-
-        if ($request->payout == 1) {
-            $booking->payout = 1;
-            $booking->save();
-        }
+        $this->financeService->apply($booking, [
+            ...$request->only([
+                'fin_mode', 'loan_status', 'financier', 'verification_status', 'case_status',
+                'instrument_type', 'instrument_ref_no', 'loan_amount', 'margin_money',
+                'file_charge', 'financier_subvention', 'case_lost_reason', 'remark',
+                'retail', 'payout',
+            ]),
+            'instrument_proof_file' => $request->file('instrument_proof'),
+        ],
+            hasInstrumentProofFile: $request->hasFile('instrument_proof'),
+            deleteInstrumentProof: $request->has('delete_instrument_proof') && $request->delete_instrument_proof == '1'
+        );
 
         $successMessage = 'Finance details updated successfully!';
 
@@ -8985,95 +8685,11 @@ class BookingCrudController extends CrudController
         }
 
         $booking = Booking::findOrFail($id);
-
         $user = backpack_user();
         $uid = $user?->id ?? null;
 
-        $data = [];
-
-        $data['branch'] = Branch::where('branch_code', $booking->branch_code)
-            ->value('name') ?? 'N/A';
-        $data['location'] = $booking->location_code > 0
-            ? (Location::find($booking->location_code)?->name ?? 'N/A')
-            : ($booking->location_other ?? 'N/A');
-
-        $acc = explode(',', $booking->accessories ?? '');
-        $accessoryNames = [];
-        foreach ($acc as $a) {
-            if ($a = trim($a)) {
-                $accessory = Xessories::find($a);
-                if ($accessory) {
-                    $accessoryNames[] = $accessory->item;
-                }
-            }
-        }
-        $data['accessories'] = $accessoryNames ? implode(', ', $accessoryNames) : 'N/A';
-
-        $chassis = Stock::find($booking->chassis_no);
-        $data['bchasis'] = $chassis?->chassis_no ?? 'N/A';
-
-        $data['segments'] = OrgService::segments();
-        $data['saleconsultants'] = OrgService::salesConsultants();
-        $data['financiers'] = XlFinancier::select('id', 'name', 'short_name')->get()->toArray();
-        $data['enum_master'] = OrgService::keywordValueByCode('EXISTING_CAR_OEM');
-
-        $drec = XL_DSA_MASTER::find($booking->dsa_id);
-        $dsaname = $drec ? $drec->name.' - '.$drec->mobile : 'N/A';
-
-        $collector = User::find($booking->col_by);
-        $data['collector_name'] = $collector
-            ? $collector->name.' - '.$collector->emp_code
-            : 'N/A';
-
-        $data['remark'] = 0;
-
-        $departments = OrgService::departments();
-
-        $depts = explode(',', $user->department ?? '');
-
-        foreach ($depts as $deptId) {
-
-            $deptId = trim($deptId);
-
-            $dept = collect($departments)->firstWhere('code', $deptId);
-
-            $deptName = strtoupper($dept['name'] ?? '');
-
-            if ($deptName == 'SALES') {
-                $data['remark'] = 1;
-            }
-
-            if ($deptName == 'ACCOUNTS') {
-                $data['remark'] = 2;
-            }
-        }
-
-        $data['make1'] = $booking->exist_oem1 ?? 'N/A';
-        $data['make2'] = $booking->exist_oem2 ?? 'N/A';
-
-        $data['oem_ids'] = explode(',', $booking->exist_oem ?? '');
-
-        $enquiry = null;
-        if ($booking->enq_no) {
-            $enquiry = Enquiry::resolveByAnyReference($booking->enq_no);
-        }
-        if ($enquiry) {
-            $booking->name = $enquiry->name;
-            $booking->model_code = $enquiry->model_code;
-            $booking->variant_code = $enquiry->variant_code;
-            $booking->color_code = $enquiry->color_code;
-            $booking->mobile = $enquiry->mobile;
-            $booking->branch_code = $enquiry->dealer_branch;
-            $booking->location_code = $enquiry->dealer_location;
-        }
-
-        $finance = XFinance::where('bid', $id)->first();
-
-        if ($finance) {
-            $booking->fin_mode = $finance->fin_mode;
-            $booking->financier = $finance->financier;
-            $booking->loan_status = $finance->loan_status;
-        }
+        ['finance' => $finance, 'data' => $data, 'dsaname' => $dsaname] =
+            $this->financeService->resolveRetailEditData($booking);
 
         return view('admin.booking.retail-edit', compact(
             'booking',
@@ -9092,112 +8708,15 @@ class BookingCrudController extends CrudController
         }
 
         $booking = Booking::findOrFail($id);
-        /*
-        |--------------------------------------------------------------------------
-        | Merge Enquiry Customer Details into Booking
-        |--------------------------------------------------------------------------
-        */
-        if ($booking->enq_no) {
-
-            $enquiry = Enquiry::resolveByAnyReference($booking->enq_no);
-
-            if ($enquiry) {
-
-                $booking->name = $enquiry->name;
-                $booking->model_code = $enquiry->model_code;
-                $booking->variant_code = $enquiry->variant_code;
-
-                $booking->pincode = $enquiry->zipcode;
-                $booking->vpo = $enquiry->vpo;
-                $booking->tehsil = $enquiry->tehsil;
-                $booking->district = $enquiry->district;
-                $booking->city = $enquiry->city;
-                $booking->territory = $enquiry->territory;
-            }
-        }
-        $comm = [];
         $user = backpack_user();
         $uid = $user?->id ?? null;
 
-        $data = [];
-
-        $data['branch'] = Branch::where('branch_code', $booking->branch_code)
-            ->value('name') ?? 'N/A';
-        $data['location'] = $booking->location_code > 0
-            ? (Location::find($booking->location_code)?->name ?? 'N/A')
-            : ($booking->location_other ?? 'N/A');
-
-        $acc = explode(',', $booking->accessories ?? '');
-        $accessoryNames = [];
-        foreach ($acc as $a) {
-            if ($a = trim($a)) {
-                $accessory = Xessories::find($a);
-                if ($accessory) {
-                    $accessoryNames[] = $accessory->item;
-                }
-            }
-        }
-        $data['accessories'] = $accessoryNames ? implode(', ', $accessoryNames) : 'N/A';
-
-        $chassis = Stock::find($booking->chassis_no);
-        $data['bchasis'] = $chassis?->chassis_no ?? 'N/A';
-
-        $data['segments'] = CommonHelper::getVehicleSegments();
-        $data['saleconsultants'] = OrgService::usersByDesignation('CNS') ?? [];
-        $data['financiers'] = XlFinancier::select('id', 'name', 'short_name')->get()->toArray();
-        $data['enum_master'] = OrgService::keywordValueByCode('EXISTING_CAR_OEM');
-
-        $drec = XL_DSA_MASTER::find($booking->dsa_id);
-        $dsaname = $drec ? $drec->name.' - '.$drec->mobile : 'N/A';
-
-        $collector = User::find($booking->col_by);
-        $data['collector_name'] = $collector
-            ? $collector->name.' - '.$collector->emp_code
-            : 'N/A';
-
-        $data['remark'] = 0;
-
-        $departments = OrgService::departments();
-
-        $depts = explode(',', $user->department ?? '');
-
-        foreach ($depts as $deptId) {
-
-            $deptId = trim($deptId);
-
-            $dept = collect($departments)->firstWhere('code', $deptId);
-
-            $deptName = strtoupper($dept['name'] ?? '');
-
-            if ($deptName == 'SALES') {
-                $data['remark'] = 1;
-            }
-
-            if ($deptName == 'ACCOUNTS') {
-                $data['remark'] = 2;
-            }
-        }
-
-        $data['make1'] = $booking->exist_oem1 ?? 'N/A';
-        $data['make2'] = $booking->exist_oem2 ?? 'N/A';
-
-        $data['oem_ids'] = explode(',', $booking->exist_oem ?? '');
-
-        $finance = XFinance::where('bid', $id)->first();
-
-        $bookingHistory = $booking->commMaster()
-            ->with([
-                'rootThreads' => function ($q) {
-                    $q->with([
-                        'children.actor',
-                        'children.action',
-                        'actor',
-                        'action',
-                        'media',
-                    ]);
-                },
-            ])
-            ->first()?->rootThreads ?? collect();
+        [
+            'finance' => $finance,
+            'data' => $data,
+            'dsaname' => $dsaname,
+            'bookingHistory' => $bookingHistory,
+        ] = $this->financeService->resolvePayoutEditData($booking);
 
         return view('admin.booking.payout-edit', compact(
             'booking',
@@ -9219,13 +8738,9 @@ class BookingCrudController extends CrudController
         $finance = XFinance::where('bid', $id)->firstOrFail();
         $booking = Booking::findOrFail($id);
 
-        $old = $finance->toArray();
-        $changes = [];
+        $payoutCategory = $request->payout_category;
 
-        $rules = [];
-        $payout_category = $request->payout_category;
-
-        if ($payout_category == 1) {
+        if ($payoutCategory == 1) {
             $rules = [
                 'loan_amount' => 'required|numeric|min:0',
                 'do_number' => 'nullable|string|max:50',
@@ -9246,7 +8761,7 @@ class BookingCrudController extends CrudController
                 'payout_category' => 'required|in:2,4',
                 'payout_remarks' => 'required|string',
             ];
-            if ($payout_category == 2) {
+            if ($payoutCategory == 2) {
                 $rules['no_payout_reason'] = 'required|in:1,2,3,4,5,6';
             }
         }
@@ -9259,155 +8774,12 @@ class BookingCrudController extends CrudController
                 ->with('error', $validator->messages()->first());
         }
 
-        $payoutFields = [
-            'instrument_ref_no',
-            'loan_amount',
-            'expected_payout_pct',
-            'gst_included',
-            'inv1_no',
-            'inv1_name',
-            'inv1_prov_gst',
-            'inv2_no',
-            'inv2_name',
-            'inv2_prov_gst',
-            'consideration_no_gst',
-            'difference',
-        ];
-
-        if ($payout_category != 1) {
-            foreach ($payoutFields as $field) {
-                $finance->$field = null;
-            }
-            if ($payout_category == 4) {
-                $finance->nopayout_reason = null;
-            }
-        }
-
-        $finance->payout_category = $payout_category;
-
-        if ($payout_category == 1) {
-            $finance->loan_amount = $request->loan_amount;
-            $finance->instrument_ref_no = $request->do_number;
-            $finance->expected_payout_pct = $request->expected_payout_pct;
-            $finance->gst_included = $request->gst_included;
-            $finance->inv1_no = $request->inv1_no;
-            $finance->inv1_name = $request->inv1_name;
-            $finance->inv1_prov_gst = $request->inv1_prov_gst;
-            $finance->inv2_no = $request->inv2_no;
-            $finance->inv2_name = $request->inv2_name;
-            $finance->inv2_prov_gst = $request->inv2_prov_gst;
-            $finance->consideration_no_gst = $request->consideration_no_gst;
-            $finance->difference = $request->difference_no_gst;
-
-            $booking->payout = 2;
-            $booking->save();
-        } else {
-            $finance->nopayout_reason = $request->no_payout_reason;
-        }
-
-        $finance->updated_by = backpack_auth()->id();
-
-        if (in_array($finance->fin_mode, ['In-house', 'Customer_self']) && $finance->case_status == 2) {
-            $finance->status = ($payout_category == 1) ? 3 : 2;
-        }
-
-        $finance->save();
-
-        $booking->addHistory(
-            'commented',
-            'Payout Completed',
-            'Finance payout process completed .',
-            [
-                'payout_category' => $request->payout_category,
-                'loan_amount' => $request->loan_amount,
-                'do_number' => $request->do_number,
-                'expected_payout' => $request->expected_payout_pct,
-                'difference' => $request->difference_no_gst,
-                'remarks' => $request->payout_remarks,
-            ],
-            null,
-            backpack_user()
-        );
-
-        $fieldsToLog = [
-            'payout_category',
-            'nopayout_reason',
-            'loan_amount',
-            'instrument_ref_no',
-            'expected_payout_pct',
-            'gst_included',
-            'inv1_no',
-            'inv1_name',
-            'inv1_prov_gst',
-            'inv2_no',
-            'inv2_name',
-            'inv2_prov_gst',
-            'consideration_no_gst',
-            'difference',
-        ];
-
-        $labels = [
-            'payout_category' => 'Payout Category',
-            'nopayout_reason' => 'No Payout Reason',
-            'loan_amount' => 'Loan Amount',
-            'instrument_ref_no' => 'DO Number',
-            'expected_payout_pct' => 'Expected Payout %',
-            'gst_included' => 'GST Included',
-            'inv1_no' => '1st Invoice No.',
-            'inv1_name' => '1st Invoice Name',
-            'inv1_prov_gst' => '1st Provisioning (GST)',
-            'inv2_no' => '2nd Invoice No.',
-            'inv2_name' => '2nd Invoice Name',
-            'inv2_prov_gst' => '2nd Provisioning (GST)',
-            'consideration_no_gst' => 'Consideration (w/o GST)',
-            'difference' => 'Difference (w/o GST)',
-            'payout_remarks' => 'Payout Remarks',
-        ];
-
-        $payoutCats = [1 => 'Payout', 2 => 'No Payout', 4 => 'Cash'];
-        $noPayoutReasons = [
-            1 => 'Low Interest Rate',
-            2 => 'Low Tenure Funding',
-            3 => 'Nil Payout Model',
-            4 => 'Out Of Territory',
-            5 => 'Financier Sourcing',
-            6 => 'Other',
-        ];
-        $gstOpts = [0 => '0%', 0.5 => '50%', 1 => '100%'];
-
-        $formatValue = function ($value, $field) use ($payoutCats, $noPayoutReasons, $gstOpts) {
-            if (is_null($value)) {
-                return 'N/A';
-            }
-
-            return match ($field) {
-                'payout_category' => $payoutCats[$value] ?? $value,
-                'no_payout_reason' => $noPayoutReasons[$value] ?? $value,
-                'gst_included' => $gstOpts[$value] ?? $value,
-                'expected_payout_pct' => number_format($value, 4).'%',
-                'loan_amount_payout',
-                'inv1_prov_gst',
-                'inv2_prov_gst',
-                'consideration_no_gst',
-                'difference_no_gst' => '₹'.number_format($value, 2),
-                default => $value,
-            };
-        };
-
-        foreach ($fieldsToLog as $field) {
-            $oldVal = $old[$field] ?? null;
-            $newVal = $finance->$field;
-
-            if ($oldVal != $newVal) {
-                $label = $labels[$field] ?? ucfirst(str_replace('_', ' ', $field));
-                $changes[] = "$label: '{$formatValue($oldVal, $field)}' to '{$formatValue($newVal, $field)}'";
-            }
-        }
-
-        $logMessage = $request->payout_remarks ?: 'Payout updated';
-        if (! empty($changes)) {
-            $logMessage .= "\n\nChanges:\n".implode("\n", $changes);
-        }
+        $this->financeService->applyPayout($booking, $finance, $request->only([
+            'payout_category', 'do_number', 'loan_amount', 'expected_payout_pct',
+            'gst_included', 'inv1_no', 'inv1_name', 'inv1_prov_gst', 'inv2_no',
+            'inv2_name', 'inv2_prov_gst', 'consideration_no_gst', 'difference_no_gst',
+            'payout_remarks', 'no_payout_reason',
+        ]));
 
         return redirect()
             ->route('sales.booking.finance.payout')
@@ -9422,52 +8794,7 @@ class BookingCrudController extends CrudController
 
         $booking = Booking::findOrFail($id);
 
-        /*
-        |--------------------------------------------------------------------------
-        | Get Customer Details from Enquiry
-        |--------------------------------------------------------------------------
-        */
-        $enquiry = null;
-
-        if ($booking->enq_no) {
-            $enquiry = Enquiry::resolveByAnyReference($booking->enq_no);
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Merge Enquiry Customer Details into Booking
-        |--------------------------------------------------------------------------
-        */
-        if ($enquiry) {
-
-            $booking->name = $enquiry->name;
-            $booking->model_code = $enquiry->model_code;
-            $booking->variant_code = $enquiry->variant_code;
-
-            $booking->pincode = $enquiry->zipcode;
-            $booking->vpo = $enquiry->vpo;
-            $booking->tehsil = $enquiry->tehsil;
-            $booking->district = $enquiry->district;
-            $booking->city = $enquiry->city;
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Get Finance Details
-        |--------------------------------------------------------------------------
-        */
-        $finance = XFinance::where('bid', $id)->first();
-
-        /*
-        |--------------------------------------------------------------------------
-        | Get Financiers
-        |--------------------------------------------------------------------------
-        */
-        $data['financiers'] = XlFinancier::select(
-            'id',
-            'name',
-            'short_name'
-        )->get()->toArray();
+        ['finance' => $finance, 'data' => $data] = $this->financeService->resolveFinanceViewData($booking);
 
         return view(
             'admin.booking.finance-view',
