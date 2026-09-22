@@ -54,3 +54,33 @@ itself was deduplicated.
 - Live HTTP round trip: `sales/booking` (list) and `sales/booking/create` (the form that exercises
   `store()`'s path) → both 200.
 - `tests/Feature/Admin/Org/PersonCrudTest.php` → 8 passed, 22 assertions, zero regressions.
+
+## Phase 3 conclusion: XlInsurance/XlRto/XFinance investigated, no extraction attempted
+
+Investigated all remaining write sites for the last 3 Phase 3 targets before writing any code
+(learned from the XExchange work that this class of change needs real per-site investigation, not
+just a coarse "these look similar" read of the structural map).
+
+- **`XlInsurance`** (3 write sites: `store()`'s 1-field quotation seed, `insUpdate()`'s ~6-field
+  form update with file upload and conditional status logic, `otfSave()`'s 5-field partial merge
+  with its own "keep existing value if request field absent" semantics) — all three genuinely
+  different operations.
+- **`XlRto`** — same shape: `store()`'s 1-field seed vs. `otfSave()`'s multi-field
+  `$existingFinalData`-merge update, vs. `rtoUpdate()`'s full form.
+- **`XFinance`** (5 write sites) — `store()`'s `new XFinance` block (5 hardcoded-default fields,
+  always creates) vs. `update()`'s `firstOrNew` block, which has real conditional business rules
+  `store()` doesn't share at all: only defaults `verification_status`/`case_status` when the record
+  is brand new, and explicitly avoids overwriting `loan_status` with `null` when the browser
+  disabled that field rather than the user clearing it.
+
+**Conclusion**: unlike `XExchange` (checkpoint 3c), none of these three have a genuinely identical
+duplicate pair the way `XExchange`'s `store()`/`update()` did. Every write site carries its own real
+field set and business rules. Forcing any of them into one shared method would be either a pointless
+wrapper (no real deduplication) or a genuine risk of altering conditional logic that exists for a
+reason. **No code changed for these three entities** — this is a documented investigation outcome,
+not a deferred task; there is no safe mechanical extraction available here, unlike the earlier
+Phase-2-scope revision where a smaller, safer slice was found instead.
+
+**Phase 3 is now complete**, with the 3 extractions that were actually safe and valuable:
+`Booking::totalReceivedAmount()`, `Enquiry::resolveByAnyReference()`, `XExchange::seedForBooking()`
+(the last of which also fixed 2 real bugs — BUG-098/099).
