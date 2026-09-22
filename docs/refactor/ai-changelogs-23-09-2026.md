@@ -495,3 +495,74 @@ the user in this session's chat, not just buried in the tracker, given the sever
 - `php artisan tinker --execute 'app(BookingCrudController::class);'` → resolves cleanly.
 - Full suite re-run (`tests/Unit/Services/Sales/`) → **50 passed, 113 assertions, zero
   regressions** across all 9 Phase 4 services landed so far.
+
+## Phase 4, tenth and final sub-domain: BookingCoreService extracted — Phase 4 complete
+
+Per the plan's sequencing, Core CRUD (`store()`/`update()`) was deliberately done last since every
+other Phase 4 sub-domain's write path also touches pieces of what these two methods do inline. Mid-
+investigation, the user flagged the actual size (store() ~475 lines, update() ~583 lines - initially
+mis-scoped as ~2,065 lines for update() alone due to a grep boundary miscount; `getFullBookingData()`,
+a separate ~1,480-line private read-only view-data builder used by other screens, sits directly after
+update() and was mistaken for part of it) and asked how to proceed; chose full extraction now with
+the same discipline as the other 9 sub-domains.
+
+**New: `App\Services\Sales\Booking\BookingCoreService`**:
+
+- `store(array $input, ?UploadedFile $amountProof): Booking` — creates the Booking row, converts a
+  linked Quotation (status, `QuoteAction` history, seeded Insurance/RTO rows), syncs the linked/new
+  Enquiry, records history, handles the optional amount-proof upload (copies to a temp path, attaches
+  to the created `Bookingamount` receipt row), and seeds `XExchange`/`XFinance` when applicable.
+  Preserves the original's nested try/catch structure exactly, including the outer `dd()` debug-halt
+  on a booking-creation failure (not a normal exception - see Verification) and the inner per-step
+  catches that log-and-continue (file upload, payment save) vs. the finance block's catch-and-rethrow.
+- `update(Booking $booking, array $input): Booking` — the diff-based update logic: compares every
+  field against its current value to build a human-readable change log (`$rem[]`), updates the
+  Booking's own columns and the linked Enquiry's fields, seeds `XExchange` on first transition to
+  "Exchange Buy", and upserts Finance with the same "don't null out a disabled field" conditional
+  logic documented in the Phase 3 investigation.
+- `getFullBookingData()` deliberately NOT covered - shared read-only display infrastructure used by
+  multiple screens, not store/update business logic, out of scope for this specific sub-domain.
+
+**BUG-105 fixed as part of extraction**: `store()`'s RTO seed on quotation conversion read an
+undefined `$quotationData` variable instead of `$quotation->standard_data` (the adjacent, correct
+Insurance seed 3 lines above it uses the right pattern) - silently produced `rgn_type = null` on
+every quotation-converted booking. Fixed to match the Insurance seed's pattern exactly, since it's
+an unambiguous copy-paste inconsistency with a clearly-correct adjacent example, same class of fix
+as BUG-098/099.
+
+**BUG-104 broadened**: while building `BookingCoreService`, confirmed the same "writes a non-
+existent Booking column then saves" crash pattern first found in OTF Save also affects `sale_type` in
+both `store()` (INSERT) and `update()` (UPDATE) - `sale_type` is a `required`-validated field on both
+forms, so this is not a theoretical edge case: **every real booking-create and booking-edit
+submission hits it**. Updated the existing BUG-104 entry (not a new bug number - same root cause) to
+reflect this much wider confirmed scope, reproduced live against booking id `1` for both paths.
+
+### Verification
+
+- `php -l` clean on all 3 changed/new files; controller splice done via a precise line-range script
+  (same approach as the OTF checkpoint) after `git diff` confirmed only the intended ~880 lines were
+  replaced; `vendor/bin/pint --dirty --format agent` → clean.
+- **New: `tests/Unit/Services/Sales/BookingCoreServiceTest.php`** (1 test, 2 assertions) —
+  `update()`'s BUG-104 crash is a normal, catchable `QueryException` and is covered directly.
+  `store()`'s equivalent crash is **not** covered by an automated test: the original code wraps
+  `$booking->save()` in a try/catch that calls `dd($e->getMessage(), ...)` on failure (preserved
+  exactly) - `dd()` halts the PHP process outright rather than throwing, which was confirmed to kill
+  the PHPUnit test runner itself when attempted (`expectException()` never got the chance to catch
+  anything; the raw `dd()` dump became the entire test-run output). Documented in a code comment
+  instead of a broken test.
+- `php artisan tinker --execute 'app(BookingCrudController::class);'` → resolves cleanly.
+- Full suite re-run (`tests/Unit/Services/Sales/`) → **51 passed, 115 assertions, zero
+  regressions** across all 10 Phase 4 services (9 sub-domains + Core CRUD).
+
+## Phase 4 is now complete
+
+All 9 planned sub-domains (KYC, DMS, Insurance, RTO, Delivery, Finance, Exchange/Scrappage, Refund,
+OTF/VOTF) plus Core CRUD (store/update) have been extracted into dedicated
+`App\Services\Sales\Booking\*` services, each following the same `resolveEditData()`/`apply()`
+convention, each with its own unit test suite, each registered as a singleton and injected via
+constructor property promotion. `BookingCrudController.php` has shrunk substantially across this
+session's 10 checkpoints while behavior has been preserved exactly (validation/HTTP-shaping stays in
+the controller; business logic and persistence moved to services). Two real, previously-undiscovered
+CRITICAL bugs (BUG-104's full scope: OTF Save, booking create, and booking edit all crash in this
+database's current schema) and one Medium bug (BUG-105, fixed) were found and documented along the
+way, on top of the BUG-098/099/100/101/102/103 findings from earlier Phase 4 checkpoints.
