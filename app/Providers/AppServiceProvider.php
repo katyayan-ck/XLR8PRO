@@ -15,6 +15,7 @@ use App\Services\IdentifierService;
 use App\Services\NotificationService;
 use App\Services\OtpNotificationService;
 use App\Services\RBACService;
+use App\Services\Sales\Booking\BookingCoreService;
 use App\Services\Sales\Booking\BookingDeliveryService;
 use App\Services\Sales\Booking\BookingDmsService;
 use App\Services\Sales\Booking\BookingExchangeService;
@@ -87,6 +88,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(BookingExchangeService::class);
         $this->app->singleton(BookingRefundService::class);
         $this->app->singleton(BookingOtfService::class);
+        $this->app->singleton(BookingCoreService::class);
 
         // SuperAdmin wildcard bypass + user-level permission denial check — registered here in
         // register() (not boot()), and via afterResolving rather than the Gate facade, so this
