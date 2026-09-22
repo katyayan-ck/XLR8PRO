@@ -908,3 +908,36 @@ now batch-preload grid lookups instead of querying per row.** The 2 commented-ou
 - Live HTTP round trip on the 4 newly-converted pages (`finance/erroneous`, `insurance/erroneous`,
   `rto/erroneous`, `otf-form` i.e. `liveNotInvoiced`) → all 200, no errors.
 - `tests/Feature/Admin/Org/PersonCrudTest.php` → 8 passed, 22 assertions, zero regressions.
+
+## Phase 3, first extraction: Booking::totalReceivedAmount() as SSOT for total-paid calculation
+
+Per the DRY/SSOT rule ("data operations belong in Models") and the plan's Phase 3 target list.
+
+**Discovered mid-edit and corrected**: initially added a new `Booking::totalPaid()` method without
+first checking for an existing equivalent — `Booking::totalReceivedAmount()` already existed
+(`$this->bookingAmounts()->sum('amount')`) but was **never called anywhere in the live app**
+(confirmed via `grep -rn "totalReceivedAmount" app/`— zero call sites besides the dead
+`app/Models_backup/` mirror). Removed the newly-added duplicate and instead: (1) hardened the
+existing method with `(float)` cast + `?? 0` null-safety and a return type, (2) pointed all 6
+controller call sites at it.
+
+**Fixed 6 call sites** in `BookingCrudController.php` — `buildBookingRowActions()`, `addReceipt()`,
+(the `$oldTotalReceived` calculation inside what is likely `addAmount()`), `pendingPayment()`'s grid
+mapper, `pendingEdit()`, `addAmountForm()`. Each was `Bookingamount::where('bid', $booking->id)->sum('amount') ?? 0`
+(one variant also had a redundant `->whereNull('deleted_at')` — `Bookingamount` already uses
+`SoftDeletes`, so the global scope excludes deleted rows automatically; confirmed via the model's
+own trait declaration) — all replaced with `$booking->totalReceivedAmount()`.
+
+**Deliberately not touched**: a 7th similar-looking site inside a raw `DB::table('xlr8_booking_amount')`
+report-building closure additionally filters `->where('status', 1)` — a genuinely different
+calculation (only counts amount rows in a specific status), not a duplicate of the other 6. Left
+as-is rather than force-converting it to the new method and silently changing its filter.
+
+### Verification
+
+- `php -l` clean, `vendor/bin/pint --dirty --format agent` → passed.
+- Verified `$booking->totalReceivedAmount()` matches an independent raw-SQL equivalent query in
+  tinker (`DB::table('xlr8_booking_amount')->where('bid',...)->whereNull('deleted_at')->sum('amount')`).
+- Live HTTP round trip on `sales/booking` (list), `sales/booking/pending-payment`, and
+  `sales/booking/{id}/add-amount` (the form that reads this value) → all 200.
+- `tests/Feature/Admin/Org/PersonCrudTest.php` → 8 passed, 22 assertions, zero regressions.

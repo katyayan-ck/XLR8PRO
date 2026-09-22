@@ -2,42 +2,40 @@
 
 namespace App\Models\Module\Booking;
 
-use \App\Models\Traits\ScopedQuery;
-
+use App\Models\Admin\Branch;
+use App\Models\BaseModel;
+use App\Models\EnumMaster;
+use App\Models\Traits\HasCommunications;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
-use App\Helpers\XCommonHelper;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
-use App\Models\Traits\HasHashedMediaTrait;
-use Spatie\MediaLibrary\MediaCollections\Models\Media;
-use App\Models\BaseModel;
-use App\Models\Traits\HasCommunications;
 
-
-class Booking extends BaseModel  implements HasMedia
+class Booking extends BaseModel implements HasMedia
 {
     use CrudTrait;
-    use SoftDeletes;
-    use InteractsWithMedia;
     use HasCommunications;
-    //protected Carpdates = ['booking_date'];
+    use InteractsWithMedia;
+    use SoftDeletes;
+
+    // protected Carpdates = ['booking_date'];
     protected $table = 'xlr8_booking_master';
+
     protected $fillable = [];
+
     protected $guarded = ['id'];
 
-    public string $scopeType   = 'branch';
+    public string $scopeType = 'branch';
+
     public string $scopeColumn = 'branchid';   // existing column name on xlr8_booking_master
-    public string $scopeGroup  = 'org';
 
-
+    public string $scopeGroup = 'org';
 
     public function segment()
     {
-        return $this->belongsTo(\App\Models\EnumMaster::class, 'segment_id', 'id');
+        return $this->belongsTo(EnumMaster::class, 'segment_id', 'id');
     }
-
 
     /**
      * Relationships
@@ -47,16 +45,15 @@ class Booking extends BaseModel  implements HasMedia
         return $this->hasMany(Bookingamount::class, 'bid', 'id');
     }
 
-
-
     public function location()
     {
         return $this->belongsTo(\App\Models\Admin\Location::class, 'location_code', 'code');
         // or 'code' depending on your foreign key logic
     }
+
     public function branch()
     {
-        return $this->belongsTo(\App\Models\Admin\Branch::class, 'branch_code', 'code');
+        return $this->belongsTo(Branch::class, 'branch_code', 'code');
         // or 'code' depending on your foreign key logic
     }
 
@@ -77,11 +74,15 @@ class Booking extends BaseModel  implements HasMedia
     }
 
     /**
-     * Calculate total received amount
+     * Sum of all (non-soft-deleted) Bookingamount rows for this booking.
+     * Already existed but was never called anywhere in the app - now the
+     * SSOT for a calculation that was independently duplicated inline via
+     * Bookingamount::where('bid', ...)->sum('amount') at 6 call sites in
+     * BookingCrudController - see docs/refactor/ai-changelogs-22-09-2026.md.
      */
-    public function totalReceivedAmount()
+    public function totalReceivedAmount(): float
     {
-        return $this->bookingAmounts()->sum('amount');
+        return (float) ($this->bookingAmounts()->sum('amount') ?? 0);
     }
 
     /**
@@ -184,7 +185,6 @@ class Booking extends BaseModel  implements HasMedia
         return $query->whereRaw('DATEDIFF(CURDATE(), booking_date) > ?', [$days]);
     }
 
-
     /**
      * Scope for Pending KYC
      */
@@ -201,6 +201,7 @@ class Booking extends BaseModel  implements HasMedia
                 });
             });
     }
+
     public function scopependingDO($query)
     {
         return $query
@@ -294,7 +295,6 @@ class Booking extends BaseModel  implements HasMedia
         });
     }
 
-
     /**
      * Dynamic Aggregation Methods
      */
@@ -332,7 +332,7 @@ class Booking extends BaseModel  implements HasMedia
             DB::raw('COUNT(DISTINCT CASE WHEN xcelr8_booking_master.location_id IS NULL OR xcelr8_booking_master.location_id = 0 THEN xcelr8_booking_master.id END) as bookings_other'),
             DB::raw('MAX(DATEDIFF(CURDATE(), xcelr8_booking_master.booking_date)) as tst_max_age'),
             ...$branchColumns,
-            ...$locationColumns
+            ...$locationColumns,
         ])
             ->join('xcelr8_vehicle_master', function ($join) {
                 $join->on('xcelr8_vehicle_master.id', '=', 'xcelr8_booking_master.vh_id')
@@ -347,7 +347,7 @@ class Booking extends BaseModel  implements HasMedia
         $query = self::query()->whereHas('vehicle', function ($q) {
             $q->whereNull('deleted_at')->where('status', 1);
         })->whereNull('deleted_at')
-            ->whereHas('finances', function ($q) use ($type) {
+            ->whereHas('finances', function ($q) {
                 $q->where('verification_status', 1)->where('status', 2);
             })
             ->where('finance', $type);
@@ -363,8 +363,8 @@ class Booking extends BaseModel  implements HasMedia
             'xcelr8_vehicle_master.custom_model as model',
             'xcelr8_vehicle_master.custom_variant as variant',
             'xcelr8_vehicle_master.color',
-            DB::raw("COUNT(DISTINCT xcelr8_finance.id) as finance_" . strtolower(str_replace(' ', '_', $type))),
-            DB::raw("(COUNT(DISTINCT xcelr8_finance.id) / NULLIF(COUNT(DISTINCT CASE WHEN xcelr8_booking_master.status = 2 AND xcelr8_booking_master.finance NOT IN ('Cash OOT', 'Customer self OOT') THEN xcelr8_booking_master.id END), 0)) * 100 as finance_" . strtolower(str_replace(' ', '_', $type)) . "_percent")
+            DB::raw('COUNT(DISTINCT xcelr8_finance.id) as finance_'.strtolower(str_replace(' ', '_', $type))),
+            DB::raw("(COUNT(DISTINCT xcelr8_finance.id) / NULLIF(COUNT(DISTINCT CASE WHEN xcelr8_booking_master.status = 2 AND xcelr8_booking_master.finance NOT IN ('Cash OOT', 'Customer self OOT') THEN xcelr8_booking_master.id END), 0)) * 100 as finance_".strtolower(str_replace(' ', '_', $type)).'_percent'),
         ])
             ->join('xcelr8_vehicle_master', function ($join) {
                 $join->on('xcelr8_vehicle_master.id', '=', 'xcelr8_booking_master.vh_id')
@@ -380,7 +380,7 @@ class Booking extends BaseModel  implements HasMedia
         $query = self::query()->whereHas('vehicle', function ($q) {
             $q->whereNull('deleted_at')->where('status', 1);
         })->whereNull('deleted_at')
-            ->whereHas('finances', function ($q) use ($type) {
+            ->whereHas('finances', function ($q) {
                 $q->where('verification_status', 1)->where('status', 2);
             })
             ->where('finance', $type)
@@ -391,7 +391,7 @@ class Booking extends BaseModel  implements HasMedia
             'xcelr8_vehicle_master.custom_model as model',
             'xcelr8_vehicle_master.custom_variant as variant',
             'xcelr8_vehicle_master.color',
-            DB::raw("(COUNT(DISTINCT xcelr8_finance.id) / NULLIF(COUNT(DISTINCT CASE WHEN xcelr8_booking_master.status = 2 AND xcelr8_booking_master.finance NOT IN ('Cash OOT', 'Customer self OOT') AND xcelr8_booking_master.booking_date >= CURDATE() - INTERVAL 30 DAY THEN xcelr8_booking_master.id END), 0)) * 100 as finance_" . strtolower(str_replace(' ', '_', $type)) . "_mtd_percent")
+            DB::raw("(COUNT(DISTINCT xcelr8_finance.id) / NULLIF(COUNT(DISTINCT CASE WHEN xcelr8_booking_master.status = 2 AND xcelr8_booking_master.finance NOT IN ('Cash OOT', 'Customer self OOT') AND xcelr8_booking_master.booking_date >= CURDATE() - INTERVAL 30 DAY THEN xcelr8_booking_master.id END), 0)) * 100 as finance_".strtolower(str_replace(' ', '_', $type)).'_mtd_percent'),
         ])
             ->join('xcelr8_vehicle_master', function ($join) {
                 $join->on('xcelr8_vehicle_master.id', '=', 'xcelr8_booking_master.vh_id')
@@ -407,7 +407,7 @@ class Booking extends BaseModel  implements HasMedia
         $query = self::query()->whereHas('vehicle', function ($q) {
             $q->whereNull('deleted_at')->where('status', 1);
         })->whereNull('deleted_at')
-            ->whereHas('finances', function ($q) use ($type) {
+            ->whereHas('finances', function ($q) {
                 $q->where('verification_status', 1)->where('status', 2);
             })
             ->where('finance', $type)
@@ -418,7 +418,7 @@ class Booking extends BaseModel  implements HasMedia
             'xcelr8_vehicle_master.custom_model as model',
             'xcelr8_vehicle_master.custom_variant as variant',
             'xcelr8_vehicle_master.color',
-            DB::raw("(COUNT(DISTINCT xcelr8_finance.id) / NULLIF(COUNT(DISTINCT CASE WHEN xcelr8_booking_master.status = 2 AND xcelr8_booking_master.finance NOT IN ('Cash OOT', 'Customer self OOT') AND xcelr8_booking_master.booking_date >= CURDATE() - INTERVAL 365 DAY THEN xcelr8_booking_master.id END), 0)) * 100 as finance_" . strtolower(str_replace(' ', '_', $type)) . "_ytd_percent")
+            DB::raw("(COUNT(DISTINCT xcelr8_finance.id) / NULLIF(COUNT(DISTINCT CASE WHEN xcelr8_booking_master.status = 2 AND xcelr8_booking_master.finance NOT IN ('Cash OOT', 'Customer self OOT') AND xcelr8_booking_master.booking_date >= CURDATE() - INTERVAL 365 DAY THEN xcelr8_booking_master.id END), 0)) * 100 as finance_".strtolower(str_replace(' ', '_', $type)).'_ytd_percent'),
         ])
             ->join('xcelr8_vehicle_master', function ($join) {
                 $join->on('xcelr8_vehicle_master.id', '=', 'xcelr8_booking_master.vh_id')
@@ -449,8 +449,8 @@ class Booking extends BaseModel  implements HasMedia
             'xcelr8_vehicle_master.custom_model as model',
             'xcelr8_vehicle_master.custom_variant as variant',
             'xcelr8_vehicle_master.color',
-            DB::raw("COUNT(DISTINCT xcelr8_exchange.id) as " . strtolower(str_replace(' ', '_', $type)) . "_inhouse"),
-            DB::raw("(COUNT(DISTINCT xcelr8_exchange.id) / NULLIF(COUNT(DISTINCT CASE WHEN xcelr8_booking_master.status = 2 AND xcelr8_booking_master.finance NOT IN ('Cash OOT', 'Customer self OOT') THEN xcelr8_booking_master.id END), 0)) * 100 as " . strtolower(str_replace(' ', '_', $type)) . "_inhouse_percent")
+            DB::raw('COUNT(DISTINCT xcelr8_exchange.id) as '.strtolower(str_replace(' ', '_', $type)).'_inhouse'),
+            DB::raw("(COUNT(DISTINCT xcelr8_exchange.id) / NULLIF(COUNT(DISTINCT CASE WHEN xcelr8_booking_master.status = 2 AND xcelr8_booking_master.finance NOT IN ('Cash OOT', 'Customer self OOT') THEN xcelr8_booking_master.id END), 0)) * 100 as ".strtolower(str_replace(' ', '_', $type)).'_inhouse_percent'),
         ])
             ->join('xcelr8_vehicle_master', function ($join) {
                 $join->on('xcelr8_vehicle_master.id', '=', 'xcelr8_booking_master.vh_id')
@@ -476,7 +476,7 @@ class Booking extends BaseModel  implements HasMedia
             'xcelr8_vehicle_master.custom_model as model',
             'xcelr8_vehicle_master.custom_variant as variant',
             'xcelr8_vehicle_master.color',
-            DB::raw("(COUNT(DISTINCT xcelr8_exchange.id) / NULLIF(COUNT(DISTINCT CASE WHEN xcelr8_booking_master.status = 2 AND xcelr8_booking_master.finance NOT IN ('Cash OOT', 'Customer self OOT') AND xcelr8_booking_master.booking_date >= CURDATE() - INTERVAL 30 DAY THEN xcelr8_booking_master.id END), 0)) * 100 as " . strtolower(str_replace(' ', '_', $type)) . "_mtd_percent")
+            DB::raw("(COUNT(DISTINCT xcelr8_exchange.id) / NULLIF(COUNT(DISTINCT CASE WHEN xcelr8_booking_master.status = 2 AND xcelr8_booking_master.finance NOT IN ('Cash OOT', 'Customer self OOT') AND xcelr8_booking_master.booking_date >= CURDATE() - INTERVAL 30 DAY THEN xcelr8_booking_master.id END), 0)) * 100 as ".strtolower(str_replace(' ', '_', $type)).'_mtd_percent'),
         ])
             ->join('xcelr8_vehicle_master', function ($join) {
                 $join->on('xcelr8_vehicle_master.id', '=', 'xcelr8_booking_master.vh_id')
@@ -502,7 +502,7 @@ class Booking extends BaseModel  implements HasMedia
             'xcelr8_vehicle_master.custom_model as model',
             'xcelr8_vehicle_master.custom_variant as variant',
             'xcelr8_vehicle_master.color',
-            DB::raw("(COUNT(DISTINCT xcelr8_exchange.id) / NULLIF(COUNT(DISTINCT CASE WHEN xcelr8_booking_master.status = 2 AND xcelr8_booking_master.finance NOT IN ('Cash OOT', 'Customer self OOT') AND xcelr8_booking_master.booking_date >= CURDATE() - INTERVAL 365 DAY THEN xcelr8_booking_master.id END), 0)) * 100 as " . strtolower(str_replace(' ', '_', $type)) . "_ytd_percent")
+            DB::raw("(COUNT(DISTINCT xcelr8_exchange.id) / NULLIF(COUNT(DISTINCT CASE WHEN xcelr8_booking_master.status = 2 AND xcelr8_booking_master.finance NOT IN ('Cash OOT', 'Customer self OOT') AND xcelr8_booking_master.booking_date >= CURDATE() - INTERVAL 365 DAY THEN xcelr8_booking_master.id END), 0)) * 100 as ".strtolower(str_replace(' ', '_', $type)).'_ytd_percent'),
         ])
             ->join('xcelr8_vehicle_master', function ($join) {
                 $join->on('xcelr8_vehicle_master.id', '=', 'xcelr8_booking_master.vh_id')
@@ -526,7 +526,7 @@ class Booking extends BaseModel  implements HasMedia
                 'xcelr8_vehicle_master.custom_model as model',
                 'xcelr8_vehicle_master.custom_variant as variant',
                 'xcelr8_vehicle_master.color',
-                DB::raw('MAX(DATEDIFF(CURDATE(), xcelr8_booking_master.booking_date)) as tst_max_age')
+                DB::raw('MAX(DATEDIFF(CURDATE(), xcelr8_booking_master.booking_date)) as tst_max_age'),
             ])
             ->join('xcelr8_vehicle_master', function ($join) {
                 $join->on('xcelr8_vehicle_master.id', '=', 'xcelr8_booking_master.vh_id')
@@ -547,7 +547,7 @@ class Booking extends BaseModel  implements HasMedia
                 'xcelr8_vehicle_master.custom_model as model',
                 'xcelr8_vehicle_master.custom_variant as variant',
                 'xcelr8_vehicle_master.color',
-                DB::raw('COUNT(DISTINCT xcelr8_booking_master.id) as bookings_older_than_' . $days . '_days')
+                DB::raw('COUNT(DISTINCT xcelr8_booking_master.id) as bookings_older_than_'.$days.'_days'),
             ])
             ->join('xcelr8_vehicle_master', function ($join) {
                 $join->on('xcelr8_vehicle_master.id', '=', 'xcelr8_booking_master.vh_id')
