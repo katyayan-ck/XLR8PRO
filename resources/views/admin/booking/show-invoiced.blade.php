@@ -40,7 +40,7 @@
                         <div class="col-md-3">
                             <label class="fw-bold  ">Booking Date</label>
                             <input type="text" class="form-control"
-                                value="{{ $booking->booking_date ? \Carbon\Carbon::parse($booking->booking_date)->format('d-M-Y') : 'N/A' }}"
+                                value="@sitedate($booking->booking_date)"
                                 readonly>
                         </div>
                         <div class="col-md-3">
@@ -74,7 +74,7 @@
                             <label class="fw-bold  ">{{ $booking->col_type == 4 ? 'Voucher Date' : 'Receipt Date'
                                 }}</label>
                             <input type="text" class="form-control"
-                                value="{{ $booking->receipt_date ? \Carbon\Carbon::parse($booking->receipt_date)->format('d-M-Y') : 'N/A' }}"
+                                value="@sitedate($booking->receipt_date)"
                                 readonly>
                         </div>
                     </div>
@@ -323,7 +323,7 @@
                         <div class="col-md-3">
                             <label class="fw-bold  ">Expected Delivery Date</label>
                             <input type="text" class="form-control"
-                                value="{{ $booking->del_date ? \Carbon\Carbon::parse($booking->del_date)->format('d-M-Y') : 'N/A' }}"
+                                value="@sitedate($booking->del_date)"
                                 readonly>
                         </div>
                         <div class="col-md-3">
@@ -362,7 +362,7 @@
                         <div class="col-md-3">
                             <label class="fw-bold  ">OEM Invoice Date</label>
                             <input type="text" class="form-control"
-                                value="{{ $booking->inv_date ? \Carbon\Carbon::parse($booking->inv_date)->format('d-M-Y') : 'N/A' }}"
+                                value="@sitedate($booking->inv_date)"
                                 readonly>
                         </div>
                         <div class="col-md-3">
@@ -373,7 +373,7 @@
                         <div class="col-md-3">
                             <label class="fw-bold  ">Dealer Invoice Date</label>
                             <input type="text" class="form-control"
-                                value="{{ $booking->dealer_inv_date ? \Carbon\Carbon::parse($booking->dealer_inv_date)->format('d-M-Y') : 'N/A' }}"
+                                value="@sitedate($booking->dealer_inv_date)"
                                 readonly>
                         </div>
                         <div class="col-md-3">
@@ -391,7 +391,7 @@
                         <div class="col-md-3">
                             <label class="fw-bold  ">DMS OTF Date</label>
                             <input type="text" class="form-control"
-                                value="{{ $booking->otf_date ? \Carbon\Carbon::parse($booking->otf_date)->format('d-M-Y') : 'N/A' }}"
+                                value="@sitedate($booking->otf_date)"
                                 readonly>
                         </div>
                         <div class="col-md-3">
@@ -434,7 +434,7 @@
                         <div class="col-md-3">
                             <label class="fw-bold  ">Policy Date</label>
                             <input type="text" class="form-control"
-                                value="{{ $insurance?->pol_date ? \Carbon\Carbon::parse($insurance->pol_date)->format('d-M-Y') : 'N/A' }}"
+                                value="@sitedate($insurance?->pol_date)"
                                 readonly>
                         </div>
                         <div class="col-md-3">
