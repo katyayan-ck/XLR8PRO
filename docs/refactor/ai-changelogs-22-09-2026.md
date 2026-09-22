@@ -941,3 +941,35 @@ as-is rather than force-converting it to the new method and silently changing it
 - Live HTTP round trip on `sales/booking` (list), `sales/booking/pending-payment`, and
   `sales/booking/{id}/add-amount` (the form that reads this value) → all 200.
 - `tests/Feature/Admin/Org/PersonCrudTest.php` → 8 passed, 22 assertions, zero regressions.
+
+## Phase 3, second extraction: Enquiry::resolveByAnyReference() as SSOT
+
+Continuing Phase 3's Model-level data-op extraction.
+
+**New: `Enquiry::resolveByAnyReference(mixed $reference): ?Enquiry`** — resolves an Enquiry from a
+value that may be the numeric primary key, `enquiry_no`, or `quick_enquiry_no` (Booking rows store
+their linked enquiry reference in any of these three shapes depending on how/when the Booking was
+created). Guards against null/empty input, returning `null` immediately rather than running a
+query.
+
+**Replaced 17 identical inline occurrences** in `BookingCrudController.php` of
+`Enquiry::where('id', $X->enq_no)->orWhere('enquiry_no', $X->enq_no)->orWhere('quick_enquiry_no', $X->enq_no)->first();`
+(4 lines each, ~68 lines of duplicated logic total) with
+`Enquiry::resolveByAnyReference($X->enq_no);` (1 line). Every site was already guarded by an outer
+`if ($booking->enq_no)`/`if (!empty($booking->enq_no))` check before the query, so the method's own
+null-guard is pure defense-in-depth, not a behavior change — confirmed via `git diff` that no line
+outside the intended 4-line blocks was touched.
+
+Checked for a pre-existing equivalent before adding this one (learned from the earlier
+`Booking::totalPaid()` mistake in the same phase) — no `resolveByAnyReference`/similar method
+existed on `Enquiry` already.
+
+### Verification
+
+- `php -l` clean, `vendor/bin/pint --dirty --format agent` → passed.
+- Tinker comparison: `Enquiry::resolveByAnyReference($booking->enq_no)` returns the identical
+  record (`id` match) as the original 4-line chain run independently against real data; `null`/`''`
+  input both correctly return `null`.
+- Live HTTP round trip on `sales/booking` (list), `sales/booking/{id}/edit`,
+  `sales/booking/{id}/kyc-edit` (the two edit flows that read the linked Enquiry) → all 200.
+- `tests/Feature/Admin/Org/PersonCrudTest.php` → 8 passed, 22 assertions, zero regressions.

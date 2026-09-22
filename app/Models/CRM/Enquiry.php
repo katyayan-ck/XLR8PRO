@@ -422,6 +422,26 @@ class Enquiry extends BaseModel
     public const STATUS_CANCELLED = 'cancelled';
 
     // ==================== CODE-BASED RELATIONSHIPS ====================
+    /**
+     * Resolves an Enquiry from a reference value that may be the numeric
+     * primary key, the enquiry_no, or the quick_enquiry_no - Booking rows
+     * store their linked enquiry (enq_no) in any of these three shapes
+     * depending on how/when the Booking was created. SSOT for a lookup
+     * previously duplicated inline 17 times in BookingCrudController - see
+     * docs/refactor/ai-changelogs-22-09-2026.md.
+     */
+    public static function resolveByAnyReference(mixed $reference): ?self
+    {
+        if ($reference === null || $reference === '') {
+            return null;
+        }
+
+        return static::where('id', $reference)
+            ->orWhere('enquiry_no', $reference)
+            ->orWhere('quick_enquiry_no', $reference)
+            ->first();
+    }
+
     public function lead()
     {
         return $this->belongsTo(Lead::class, 'lead_no', 'lead_no');

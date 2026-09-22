@@ -390,10 +390,7 @@ class BookingCrudController extends CrudController
 
         // NEW: Update the associated Enquiry with all the deleted booking fields
         if ($booking->enq_no) {
-            $linkedEnquiry = Enquiry::where('id', $booking->enq_no)
-                ->orWhere('enquiry_no', $booking->enq_no)
-                ->orWhere('quick_enquiry_no', $booking->enq_no)
-                ->first();
+            $linkedEnquiry = Enquiry::resolveByAnyReference($booking->enq_no);
 
             if ($linkedEnquiry) {
                 $linkedEnquiry->update([
@@ -789,10 +786,7 @@ class BookingCrudController extends CrudController
         // Fetch Linked Enquiry for updates
         $linkedEnquiry = null;
         if ($booking->enq_no) {
-            $linkedEnquiry = Enquiry::where('id', $booking->enq_no)
-                ->orWhere('enquiry_no', $booking->enq_no)
-                ->orWhere('quick_enquiry_no', $booking->enq_no)
-                ->first();
+            $linkedEnquiry = Enquiry::resolveByAnyReference($booking->enq_no);
         }
 
         if ($booking->b_type != $request->input('customer_type')) {
@@ -1279,10 +1273,7 @@ class BookingCrudController extends CrudController
         |  live in xlr8_crm_enquiries. Without this, Blade shows N/A.)
         ============================================================ */
         if ($booking->enq_no) {
-            $enquiry = Enquiry::where('id', $booking->enq_no)
-                ->orWhere('enquiry_no', $booking->enq_no)
-                ->orWhere('quick_enquiry_no', $booking->enq_no)
-                ->first();
+            $enquiry = Enquiry::resolveByAnyReference($booking->enq_no);
 
             if ($enquiry) {
                 $booking->name = $enquiry->name;
@@ -3169,10 +3160,7 @@ class BookingCrudController extends CrudController
         $linkedEnquiry = null;
 
         if ($entry && $entry->enq_no) {
-            $linkedEnquiry = Enquiry::where('id', $entry->enq_no)
-                ->orWhere('enquiry_no', $entry->enq_no)
-                ->orWhere('quick_enquiry_no', $entry->enq_no)
-                ->first();
+            $linkedEnquiry = Enquiry::resolveByAnyReference($entry->enq_no);
         }
 
         if ($linkedEnquiry) {
@@ -4464,10 +4452,7 @@ class BookingCrudController extends CrudController
         $enquiry = null;
 
         if (! empty($booking->enq_no)) {
-            $enquiry = Enquiry::where('id', $booking->enq_no)
-                ->orWhere('enquiry_no', $booking->enq_no)
-                ->orWhere('quick_enquiry_no', $booking->enq_no)
-                ->first();
+            $enquiry = Enquiry::resolveByAnyReference($booking->enq_no);
         }
 
         $branchCode = $booking->branch_code
@@ -4834,10 +4819,7 @@ class BookingCrudController extends CrudController
         $enquiry = null;
 
         if (! empty($booking->enq_no)) {
-            $enquiry = Enquiry::where('id', $booking->enq_no)
-                ->orWhere('enquiry_no', $booking->enq_no)
-                ->orWhere('quick_enquiry_no', $booking->enq_no)
-                ->first();
+            $enquiry = Enquiry::resolveByAnyReference($booking->enq_no);
         }
 
         $branchCode = $booking->branch_code
@@ -6766,10 +6748,7 @@ class BookingCrudController extends CrudController
         $enquiry = null;
 
         if ($booking->enq_no) {
-            $enquiry = Enquiry::where('id', $booking->enq_no)
-                ->orWhere('enquiry_no', $booking->enq_no)
-                ->orWhere('quick_enquiry_no', $booking->enq_no)
-                ->first();
+            $enquiry = Enquiry::resolveByAnyReference($booking->enq_no);
         }
 
         $customerName = $booking->name
@@ -7622,10 +7601,7 @@ class BookingCrudController extends CrudController
         $enquiry = null;
 
         if ($booking->enq_no) {
-            $enquiry = Enquiry::where('id', $booking->enq_no)
-                ->orWhere('enquiry_no', $booking->enq_no)
-                ->orWhere('quick_enquiry_no', $booking->enq_no)
-                ->first();
+            $enquiry = Enquiry::resolveByAnyReference($booking->enq_no);
         }
 
         $customerName = $booking->name
@@ -7829,10 +7805,7 @@ class BookingCrudController extends CrudController
 
         $insurance = XlInsurance::where('bid', $id)->first();
         if ($booking->enq_no) {
-            $enquiry = Enquiry::where('id', $booking->enq_no)
-                ->orWhere('enquiry_no', $booking->enq_no)
-                ->orWhere('quick_enquiry_no', $booking->enq_no)
-                ->first();
+            $enquiry = Enquiry::resolveByAnyReference($booking->enq_no);
             if ($enquiry) {
                 $booking->name = $enquiry->name;
                 $booking->care_of = $enquiry->care_of;
@@ -8084,10 +8057,7 @@ class BookingCrudController extends CrudController
         $rto = XlRto::where('bid', $id)->first();
         if ($booking->enq_no) {
 
-            $enquiry = Enquiry::where('id', $booking->enq_no)
-                ->orWhere('enquiry_no', $booking->enq_no)
-                ->orWhere('quick_enquiry_no', $booking->enq_no)
-                ->first();
+            $enquiry = Enquiry::resolveByAnyReference($booking->enq_no);
             if ($enquiry) {
                 $booking->name = $enquiry->name;
                 $booking->care_of = $enquiry->care_of;
@@ -8694,10 +8664,7 @@ class BookingCrudController extends CrudController
         $linkedEnquiry = null;
 
         if ($booking->enq_no) {
-            $linkedEnquiry = Enquiry::where('id', $booking->enq_no)
-                ->orWhere('enquiry_no', $booking->enq_no)
-                ->orWhere('quick_enquiry_no', $booking->enq_no)
-                ->first();
+            $linkedEnquiry = Enquiry::resolveByAnyReference($booking->enq_no);
         }
         if ($linkedEnquiry) {
             $booking->name = $linkedEnquiry->name;
@@ -8964,10 +8931,7 @@ class BookingCrudController extends CrudController
 
         if ($booking->enq_no) {
 
-            $enquiry = Enquiry::where('id', $booking->enq_no)
-                ->orWhere('enquiry_no', $booking->enq_no)
-                ->orWhere('quick_enquiry_no', $booking->enq_no)
-                ->first();
+            $enquiry = Enquiry::resolveByAnyReference($booking->enq_no);
 
             if ($enquiry) {
 
@@ -9358,10 +9322,7 @@ class BookingCrudController extends CrudController
         $linkedEnquiry = null;
 
         if ($booking->enq_no) {
-            $linkedEnquiry = Enquiry::where('id', $booking->enq_no)
-                ->orWhere('enquiry_no', $booking->enq_no)
-                ->orWhere('quick_enquiry_no', $booking->enq_no)
-                ->first();
+            $linkedEnquiry = Enquiry::resolveByAnyReference($booking->enq_no);
         }
 
         // ============================================================
@@ -9631,10 +9592,7 @@ class BookingCrudController extends CrudController
         $linkedEnquiry = null;
 
         if ($booking->enq_no) {
-            $linkedEnquiry = Enquiry::where('id', $booking->enq_no)
-                ->orWhere('enquiry_no', $booking->enq_no)
-                ->orWhere('quick_enquiry_no', $booking->enq_no)
-                ->first();
+            $linkedEnquiry = Enquiry::resolveByAnyReference($booking->enq_no);
         }
 
         if ($linkedEnquiry) {
@@ -10110,10 +10068,7 @@ class BookingCrudController extends CrudController
 
         $enquiry = null;
         if ($booking->enq_no) {
-            $enquiry = Enquiry::where('id', $booking->enq_no)
-                ->orWhere('enquiry_no', $booking->enq_no)
-                ->orWhere('quick_enquiry_no', $booking->enq_no)
-                ->first();
+            $enquiry = Enquiry::resolveByAnyReference($booking->enq_no);
         }
         if ($enquiry) {
             $booking->name = $enquiry->name;
@@ -10157,10 +10112,7 @@ class BookingCrudController extends CrudController
         */
         if ($booking->enq_no) {
 
-            $enquiry = Enquiry::where('id', $booking->enq_no)
-                ->orWhere('enquiry_no', $booking->enq_no)
-                ->orWhere('quick_enquiry_no', $booking->enq_no)
-                ->first();
+            $enquiry = Enquiry::resolveByAnyReference($booking->enq_no);
 
             if ($enquiry) {
 
@@ -10491,10 +10443,7 @@ class BookingCrudController extends CrudController
         $enquiry = null;
 
         if ($booking->enq_no) {
-            $enquiry = Enquiry::where('id', $booking->enq_no)
-                ->orWhere('enquiry_no', $booking->enq_no)
-                ->orWhere('quick_enquiry_no', $booking->enq_no)
-                ->first();
+            $enquiry = Enquiry::resolveByAnyReference($booking->enq_no);
         }
 
         /*
