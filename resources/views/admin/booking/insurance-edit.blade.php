@@ -81,7 +81,7 @@
             <div class="col-md-2 form-group readonly-field">
                 <label class="readonly-label">Booking Date</label>
                 <div class="readonly-value">
-                    {{ $booking->booking_date ? \Carbon\Carbon::parse($booking->booking_date)->format('d M Y') : '—' }}
+                    @sitedate($booking->booking_date, '—')
                 </div>
             </div>
 
@@ -154,7 +154,7 @@
             <div class="col-md-2 form-group readonly-field">
                 <label class="readonly-label">Invoice Date</label>
                 <div class="readonly-value">
-                    {{ $booking->inv_date ? \Carbon\Carbon::parse($booking->inv_date)->format('d M Y') : '—' }}
+                    @sitedate($booking->inv_date, '—')
                 </div>
             </div>
 
@@ -233,7 +233,7 @@
                         <span class="required-mark">*</span>
                     </label>
                     <input type="text" name="policy_date" id="policy_date" class="form-control flatpickr"
-                        value="{{ old('policy_date', $insurance?->pol_date ? \Carbon\Carbon::parse($insurance->pol_date)->format('d-M-Y') : '') }}"
+                        value="{{ old('policy_date', site_date($insurance?->pol_date, '')) }}"
                         required>
                     <input type="hidden" name="hidden_policy_date" id="hidden_policy_date"
                         value="{{ old('hidden_policy_date', $insurance?->pol_date ?? '') }}">
@@ -318,10 +318,13 @@
 @push('after_scripts')
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
+    // Site-wide date display format (see .ai/rules/conventions.md section 13) - flatpickr's
+    // token syntax matches PHP's date() tokens, so the PHP-side format string is reused as-is.
+    const SITE_DATE_FORMAT = '@php echo app(\App\Services\DateFormatService::class)->phpFormat(); @endphp';
     document.addEventListener('DOMContentLoaded', function () {
 
     flatpickr('#policy_date', {
-        dateFormat: "d-M-Y",
+        dateFormat: SITE_DATE_FORMAT,
         maxDate: "today",
         onChange: function(selectedDates) {
             const hidden = document.getElementById('hidden_policy_date');

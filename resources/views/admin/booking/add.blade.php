@@ -185,7 +185,7 @@
                                             @php $bkDate = $entry?->booking_date ?? ''; @endphp
                                             <input type="text" name="bookingdate" id="bookingdate"
                                                 class="form-control flatpickr" placeholder="dd-mmm-yyyy" required
-                                                value="{{ old('bookingdate', $bkDate ? \Carbon\Carbon::parse($bkDate)->format('d-M-Y') : '') }}">
+                                                value="{{ old('bookingdate', site_date($bkDate, '')) }}">
                                             <input type="hidden" name="{{ $isEdit ? 'booking_date_actual' : 'hiddenbookingdate' }}" id="hiddenbookingdate"
                                                 value="{{ old($isEdit ? 'booking_date_actual' : 'hiddenbookingdate', $bkDate) }}">
                                         </div>
@@ -245,7 +245,7 @@
                                             @php $rcDate = $entry?->receipt_date ?? ''; @endphp
                                             <input type="text" name="receiptdate" id="receiptdate"
                                                 class="form-control flatpickr" placeholder="dd-mmm-yyyy" required
-                                                value="{{ old('receiptdate', $rcDate ? \Carbon\Carbon::parse($rcDate)->format('d-M-Y') : '') }}">
+                                                value="{{ old('receiptdate', site_date($rcDate, '')) }}">
                                             <input type="hidden" name="{{ $isEdit ? 'receipt_date_actual' : 'hiddenreceiptdate' }}" id="hiddenreceiptdate"
                                                 value="{{ old($isEdit ? 'receipt_date_actual' : 'hiddenreceiptdate', $rcDate) }}">
                                         </div>
@@ -498,7 +498,7 @@
                                             @php $dobVal = $entry?->c_dob ?? ($enquiry->dob ?? ($q['c_dob'] ?? '')); @endphp
                                             <input type="text" name="customerdob" id="customerdob" class="form-control"
                                                 placeholder="dd-mmm-yyyy" required
-                                                value="{{ old('customerdob', !empty($dobVal) ? \Carbon\Carbon::parse($dobVal)->format('d-M-Y') : '') }}">
+                                                value="{{ old('customerdob', site_date($dobVal, '')) }}">
                                             <input type="hidden" name="{{ $isEdit ? 'hidden_customer_dob' : 'hiddencustomerdob' }}" id="hiddencustomerdob"
                                                 value="{{ old($isEdit ? 'hidden_customer_dob' : 'hiddencustomerdob', $dobVal) }}">
                                         </div>
@@ -1150,7 +1150,7 @@
                                             <label for="expecteddeldate">Delivery Date <span class="required-mark">*</span></label>
                                             @php $delDate = $entry?->del_date ?? ''; @endphp
                                             <input type="text" name="expecteddeldate" id="expecteddeldate" class="form-control"
-                                                placeholder="dd-mmm-yyyy" required value="{{ old('expecteddeldate', $delDate ? \Carbon\Carbon::parse($delDate)->format('d-M-Y') : '') }}">
+                                                placeholder="dd-mmm-yyyy" required value="{{ old('expecteddeldate', site_date($delDate, '')) }}">
                                             <input type="hidden" name="{{ $isEdit ? 'expected_del_date_actual' : 'hiddenexpecteddeldate' }}" id="hiddenexpecteddeldate"
                                                 value="{{ old($isEdit ? 'expected_del_date_actual' : 'hiddenexpecteddeldate', $delDate) }}">
                                         </div>
@@ -1427,6 +1427,9 @@
     {{-- SortableJS powers the new drag-to-reorder form cards. --}}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
     <script>
+        // Site-wide date display format (see .ai/rules/conventions.md section 13) - flatpickr's
+        // token syntax matches PHP's date() tokens, so the PHP-side format string is reused as-is.
+        const SITE_DATE_FORMAT = '@php echo app(\App\Services\DateFormatService::class)->phpFormat(); @endphp';
         @php
             $rawAccessories = $entry?->accessories ?? ($q['accessories'] ?? []);
 
@@ -1681,7 +1684,7 @@
 
             function initFlatpickr() {
                 flatpickr('#customerdob', {
-                    dateFormat: 'd-M-Y', maxDate: 'today', allowInput: false,
+                    dateFormat: SITE_DATE_FORMAT, maxDate: 'today', allowInput: false,
                     onChange: function(selectedDates, dateStr, instance) {
                         const dob = selectedDates[0];
                         if (dob) {
@@ -1713,7 +1716,7 @@
                 }
 
                 const bookingPicker = flatpickr('#bookingdate', {
-                    dateFormat: 'd-M-Y', maxDate: 'today', allowInput: false,
+                    dateFormat: SITE_DATE_FORMAT, maxDate: 'today', allowInput: false,
                     onChange: function(selectedDates, dateStr, instance) {
                         const bookingDate = selectedDates[0];
                         $('#hiddenbookingdate').val(instance.formatDate(bookingDate, 'Y-m-d'));
@@ -1729,14 +1732,14 @@
                 });
 
                 window.deliveryPicker = flatpickr('#expecteddeldate', {
-                    dateFormat: 'd-M-Y', allowInput: false, minDate: 'today',
+                    dateFormat: SITE_DATE_FORMAT, allowInput: false, minDate: 'today',
                     onChange: function(selectedDates, dateStr, instance) {
                         $('#hiddenexpecteddeldate').val(instance.formatDate(selectedDates[0], 'Y-m-d'));
                     }
                 });
 
                 flatpickr('#receiptdate', {
-                    dateFormat: 'd-M-Y', maxDate: 'today', allowInput: false,
+                    dateFormat: SITE_DATE_FORMAT, maxDate: 'today', allowInput: false,
                     onChange: function(selectedDates, dateStr, instance) {
                         $('#hiddenreceiptdate').val(instance.formatDate(selectedDates[0], 'Y-m-d'));
                     }

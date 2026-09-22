@@ -19,7 +19,7 @@
                         <div class="col-sm-3">
                             <label class="small fw-bold">Booking Date</label>
                             <input type="text" class="form-control"
-                                value="{{ $booking->booking_date ? \Carbon\Carbon::parse($booking->booking_date)->format('d-M-Y') : 'N/A' }}"
+                                value="@sitedate($booking->booking_date)"
                                 readonly>
                         </div>
                         <div class="col-sm-3">
@@ -170,9 +170,12 @@
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
 <script>
+    // Site-wide date display format (see .ai/rules/conventions.md section 13) - flatpickr's
+    // token syntax matches PHP's date() tokens, so the PHP-side format string is reused as-is.
+    const SITE_DATE_FORMAT = '@php echo app(\App\Services\DateFormatService::class)->phpFormat(); @endphp';
     document.addEventListener('DOMContentLoaded', function () {
         flatpickr("#receipt_date", {
-            dateFormat: "d-M-Y",
+            dateFormat: SITE_DATE_FORMAT,
             maxDate: "today",
             allowInput: false,
             onChange: function(selectedDates) {

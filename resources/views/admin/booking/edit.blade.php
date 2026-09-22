@@ -83,7 +83,7 @@
                                 <div class="col-sm-2 form-group">
                                     <label>Booking Date</label>
                                     <input type="text" class="form-control"
-                                        value="{{ \Carbon\Carbon::parse($entry->booking_date)->format('d-M-Y') }}" readonly>
+                                        value="@sitedate($entry->booking_date)" readonly>
                                     <input type="hidden" name="booking_date_actual" value="{{ $entry->booking_date }}">
                                 </div>
                                 <div class="col-sm-2 form-group">
@@ -112,7 +112,7 @@
                                 <div class="col-sm-4 form-group">
                                     <label>Receipt/Voucher Date</label>
                                     <input type="text" class="form-control"
-                                        value="{{ $entry->receipt_date ? \Carbon\Carbon::parse($entry->receipt_date)->format('d-M-Y') : '' }}"
+                                        value="{{ site_date($entry->receipt_date, '') }}"
                                         readonly>
                                     <input type="hidden" name="receipt_date_actual" value="{{ $entry->receipt_date }}">
                                 </div>
@@ -249,7 +249,7 @@
                                     <label for="customer_dob">Customer D.O.B. <span class="required-mark">*</span></label>
                                     <input type="text" name="customer_dob" id="customer_dob"
                                         class="form-control flatpickr"
-                                        value="{{ $entry->c_dob ? \Carbon\Carbon::parse($entry->c_dob)->format('d-M-Y') : '' }}"
+                                        value="{{ site_date($entry->c_dob, '') }}"
                                         placeholder="dd-mmm-yyyy" required>
                                     <input type="hidden" name="hidden_customer_dob" id="hidden_customer_dob"
                                         value="{{ $entry->c_dob }}">
@@ -669,7 +669,7 @@
                                             class="required-mark">*</span></label>
                                     <input type="text" name="expected_del_date" id="expected_del_date"
                                         class="form-control flatpickr"
-                                        value="{{ $entry->del_date ? \Carbon\Carbon::parse($entry->del_date)->format('d-M-Y') : '' }}"
+                                        value="{{ site_date($entry->del_date, '') }}"
                                         placeholder="dd-mmm-yyyy" required>
                                     <input type="hidden" name="expected_del_date_actual" id="hidden_expected_del_date"
                                         value="{{ $entry->del_date }}">
@@ -782,6 +782,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/additional-methods.min.js"></script>
 
     <script>
+        // Site-wide date display format (see .ai/rules/conventions.md section 13) - flatpickr's
+        // token syntax matches PHP's date() tokens, so the PHP-side format string is reused as-is.
+        const SITE_DATE_FORMAT = '@php echo app(\App\Services\DateFormatService::class)->phpFormat(); @endphp';
         $(document).ready(function() {
             console.log('🚀 [EDIT-INIT] Document ready — initializing Select2');
             $('.select2').select2({
@@ -1300,7 +1303,7 @@
             }).trigger('change');
 
             flatpickr('#expected_del_date', {
-                dateFormat: "d-M-Y",
+                dateFormat: SITE_DATE_FORMAT,
                 allowInput: true,
                 onChange: function(selectedDates, dateStr, instance) {
                     if (selectedDates[0]) {
@@ -1392,7 +1395,7 @@
             }
 
             flatpickr('#customer_dob', {
-                dateFormat: "d-M-Y",
+                dateFormat: SITE_DATE_FORMAT,
                 allowInput: true,
                 maxDate: "today",
                 onChange: function(selectedDates, dateStr, instance) {
@@ -1412,6 +1415,10 @@
             });
 
             @if ($entry->c_dob)
+                // NOTE: intentionally left hardcoded, not @sitedate()/SITE_DATE_FORMAT - this uses
+                // moment.js, a third format-token dialect (PHP/Carbon 'd-M-Y' vs moment 'DD-MMM-YYYY'
+                // happen to coincide today, but moment tokens aren't translatable from a PHP format
+                // string without a dedicated mapping. Needs its own follow-up, not a blind swap.
                 const initialDob = moment('{{ \Carbon\Carbon::parse($entry->c_dob)->format('d-M-Y') }}',
                     'DD-MMM-YYYY');
                 $('#customer_age').val(calculateAge(initialDob.toDate()));

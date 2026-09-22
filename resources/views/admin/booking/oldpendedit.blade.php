@@ -52,7 +52,7 @@
                         @foreach ($receiptLogs as $log)
                         @php $iurl = $log->getFirstMediaUrl('amount-proof') @endphp
                         <tr>
-                            <td>{{ \Carbon\Carbon::parse($log->date)->format('d-M-Y') }}</td>
+                            <td>@sitedate($log->date)</td>
                             <td>{{ $log->reciept ?? 'N/A' }}</td>
                             <td>{{ number_format($log->amount, 2) }}</td>
                             <td>
@@ -291,6 +291,9 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
+    // Site-wide date display format (see .ai/rules/conventions.md section 13) - flatpickr's
+    // token syntax matches PHP's date() tokens, so the PHP-side format string is reused as-is.
+    const SITE_DATE_FORMAT = '@php echo app(\App\Services\DateFormatService::class)->phpFormat(); @endphp';
     (function($) {
         'use strict';
 
@@ -304,7 +307,7 @@
 
         function initFlatpickr() {
             flatpickr('#receipt_date', {
-                dateFormat: 'd-M-Y',
+                dateFormat: SITE_DATE_FORMAT,
                 maxDate: 'today',
                 allowInput: false,
                 onChange: function(selectedDates, dateStr, instance) {
@@ -314,7 +317,7 @@
                 }
             });
             flatpickr('.flatpickr:not(#receipt_date)', {
-                dateFormat: 'd-M-Y',
+                dateFormat: SITE_DATE_FORMAT,
                 maxDate: 'today',
                 allowInput: false,
                 onChange: function(selectedDates, dateStr, instance) {

@@ -45,7 +45,7 @@
                     <div class="col-sm-3">
                         <label for="date_picker">Date <span class="text-danger">*</span></label>
                         <input type="text" name="date" id="date_picker" class="form-control flatpickr"
-                            value="{{ old('date', \Carbon\Carbon::parse($entry->date)->format('d-M-Y')) }}" required>
+                            value="{{ old('date', site_date($entry->date, '')) }}" required>
                     </div>
 
                     <div class="col-sm-3">
@@ -177,6 +177,9 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
+    // Site-wide date display format (see .ai/rules/conventions.md section 13) - flatpickr's
+    // token syntax matches PHP's date() tokens, so the PHP-side format string is reused as-is.
+    const SITE_DATE_FORMAT = '@php echo app(\App\Services\DateFormatService::class)->phpFormat(); @endphp';
     function openPaymentProof(url, fileName = 'Proof File') {
     const modal = document.getElementById('proofPreviewModal');
     if (!modal) return;
@@ -295,7 +298,7 @@ function openProofPreview(url,type,fileName)
 
     
     flatpickr("#date_picker", {
-        dateFormat: "d-M-Y",
+        dateFormat: SITE_DATE_FORMAT,
         maxDate: "today",
         allowInput: true
     });
