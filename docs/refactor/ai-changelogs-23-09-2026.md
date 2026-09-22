@@ -128,3 +128,59 @@ bug (matches original behavior exactly), but worth noting for whoever next touch
   tests plus isolated tinker calls instead, since the controller's own validate()/redirect() glue
   around the service call is unchanged Laravel boilerplate, not new logic to verify.
 - `tests/Feature/Admin/Org/PersonCrudTest.php` → 8 passed, 22 assertions, zero regressions.
+
+## Phase 4, second sub-domain: BookingDmsService — extracted, and 2 pre-existing bugs surfaced
+
+Continuing Phase 4's sub-domain extraction sequence (KYC done in checkpoint 4a; DMS next per the
+plan's sequencing).
+
+**New: `App\Services\Sales\Booking\BookingDmsService`** (registered as a singleton, no constructor
+dependencies). `resolveEditData(Booking $booking, bool $fromPending): array` mirrors
+`BookingKycService`'s pattern — branch/location resolution with Enquiry fallback, mutating
+`$booking` in place (same load-bearing side effect, preserved exactly). `apply(Booking $booking,
+array $validated, bool $dmsSoApplies): Booking` performs the pending-items diff/recompute,
+status/order transition, save, and `"Pending Order Processed"` history entry.
+
+**Caught and fixed a real correctness risk while extracting** (before committing, not after): the
+original `dmsupdate()` uses the raw `$request->input('dms_so', '')` value for the order=2/3
+transition check *unconditionally*, regardless of whether `dms_so` is actually a required/saved
+field for this booking (`order == 2`) — that gating only applies to what gets persisted to the
+`Booking` row and to the pending-items list, not to the transition check itself. My first draft of
+the controller call site incorrectly nulled out `dms_so` before passing it to the service whenever
+`!$dmsSoApplies`, which would have broken the order-transition logic for that case. Corrected to
+always pass the raw submitted value through, with the service's own `$dmsSoApplies` parameter
+governing only what's saved/checked-as-pending, matching the original method's exact two-different-
+uses-of-the-same-input shape.
+
+**Two real, pre-existing bugs found while writing tests** (both reproduced, both logged as OPEN
+findings — not silently fixed, since each needs a product decision):
+
+- **BUG-100** (High): `dmsupdate()` crashes with an uncaught `QueryException` whenever a DMS update
+  clears every remaining pending item — `pending_remark` is `NOT NULL` with no database default,
+  but the code sets it to `null` in that case. Confirmed via `git`-equivalent history that this
+  ternary predates today's work — the extraction faithfully preserved the bug, didn't introduce it.
+- **BUG-101** (Low): the "BEV/Personal segment + missing SO → order 3" branch has been dead code —
+  `xlr8_booking_master` has no `segment_code` column; `dmsedit()` resolves it from the linked
+  Enquiry purely for that request's own view, a mutation that never persists to the next
+  (separate) `dmsupdate()` request, which never re-resolves it.
+
+Also removed one small piece of genuinely dead code found during the extraction: an unused
+`$remarks[]` array that was built (4 conditional pushes) but never read anywhere afterward, and 3
+redundant duplicate assignments of the same `$message` string plus a duplicate
+`if ($booking->pending === 0) { $booking->status = 1; ...}` block (identical condition checked
+twice in a row with no state change in between).
+
+### Verification
+
+- `php -l` clean on all 4 changed/new files; `vendor/bin/pint --dirty --format agent` → fixed minor
+  import ordering in the new test file.
+- **New: `tests/Unit/Services/Sales/BookingDmsServiceTest.php`** (6 tests, 13 assertions) — DMS
+  field persistence, the `dmsSoApplies` gating (both directions), pending-items diff/recompute
+  correctness, the BEV/Personal dead-branch behavior (documented, not silently dropped), and a
+  dedicated reproduction of BUG-100 via `expectException` so the known bug stays covered rather
+  than silently regressing further or accidentally getting "fixed" by an unrelated future change
+  without anyone noticing.
+- Live HTTP round trip on `sales/booking/{id}/dms-edit`, `sales/booking/{id}/kyc-edit`,
+  `sales/booking/pending-dms` → all 200.
+- Full suite re-run: `BookingDmsServiceTest` + `BookingKycServiceTest` + `PersonCrudTest` → 19
+  passed, 43 assertions, zero regressions.
