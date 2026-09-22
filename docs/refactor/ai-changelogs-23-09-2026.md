@@ -84,3 +84,47 @@ Phase-2-scope revision where a smaller, safer slice was found instead.
 **Phase 3 is now complete**, with the 3 extractions that were actually safe and valuable:
 `Booking::totalReceivedAmount()`, `Enquiry::resolveByAnyReference()`, `XExchange::seedForBooking()`
 (the last of which also fixed 2 real bugs — BUG-098/099).
+
+## Phase 4, first sub-domain: BookingKycService (business logic out of the controller)
+
+Per the DRY/SSOT rule's Controller half ("thin: validate input, call one Service, shape the
+response") and the plan's Phase 4 sequencing (KYC first — smallest, most self-contained sub-domain).
+
+**New: `App\Services\Sales\Booking\BookingKycService`** (registered as a singleton in
+`AppServiceProvider` with an explicit closure, since it has a constructor dependency on
+`IdentifierService`, matching the established `NotificationService` pattern). Two methods:
+
+- `resolveEditData(Booking $booking): array` — the full branch/location/segment/model/variant/color
+  name-resolution logic previously inline in `kycEdit()` (falls back to the linked Enquiry wherever
+  the Booking's own columns are empty). Preserves the original code's side effect of mutating
+  `$booking`'s own attributes in place with the resolved fallback values (the edit form's fields
+  read directly off `$booking`, so this mutation is load-bearing, not incidental — kept exactly as
+  it was, not "cleaned up" into a pure function).
+- `apply(Booking $booking, array $validated, bool $gstNotRequired): Booking` — normalizes PAN/
+  Aadhaar/GST via `IdentifierService`, saves, and records the `"KYC Completed"` history entry.
+
+**`BookingCrudController::kycEdit()`/`kycUpdate()`** now: validate/authorize (unchanged), call the
+service, shape the response (unchanged `view()`/`redirect()` calls). Went from ~185 combined lines
+of inline logic to ~30.
+
+**Interesting finding during verification**: `xlr8_booking_master` has no `name` column at all
+(confirmed via `Schema::getColumnListing`) — `$booking->name` was always `null` in the original
+code too, so `customer_name` only ever resolves via the linked Enquiry or the `'—'` fallback. Not a
+bug (matches original behavior exactly), but worth noting for whoever next touches this form.
+
+### Verification
+
+- `php -l` clean on all 3 changed/new files; `vendor/bin/pint --dirty --format agent` → passed.
+- **New: `tests/Unit/Services/Sales/BookingKycServiceTest.php`** (5 tests) — directly exercises both
+  service methods against a real `Booking` row (no factory exists for `Booking`, created directly
+  matching this session's established fixture pattern): PAN/Aadhaar/GST normalization, the
+  `gst_not_required` short-circuit, the "keep existing GST when nothing new submitted" branch, and
+  the edit-data shape/fallback behavior. All 5 pass, 8 assertions.
+- Live HTTP round trip on `sales/booking/{id}/kyc-edit` (GET) → 200, confirmed the rendered page
+  contains the expected form fields.
+- Full HTTP round trip on the `PUT kyc-update` route hit a pre-existing CSRF-token limitation of
+  this environment's `Request::create()`-based test harness (a 419, not a real bug — same class of
+  limitation noted elsewhere this session); verified the underlying logic directly via the new unit
+  tests plus isolated tinker calls instead, since the controller's own validate()/redirect() glue
+  around the service call is unchanged Laravel boilerplate, not new logic to verify.
+- `tests/Feature/Admin/Org/PersonCrudTest.php` → 8 passed, 22 assertions, zero regressions.
