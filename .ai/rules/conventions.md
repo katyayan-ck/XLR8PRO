@@ -280,3 +280,33 @@ php artisan changelog:unreleased
 # Release
 php artisan changelog:release
 ```
+
+---
+
+## 13. Frontend / UI-UX Standards (recorded 23-09-2026, per explicit user instruction)
+
+Applies whenever a Blade view, its CSS, or its JS is touched — not just new views.
+
+- **Design system**: minimalistic, high-data-density layout in the Tabler admin theme style.
+  Prefer free/OSS jQuery-ecosystem libraries already available in this stack over introducing new
+  paid or heavyweight dependencies; get approval before adding a new frontend package
+  (`package.json` changes require approval per the root CLAUDE.md dependency rule).
+- **Uniform components**: cards, page shells, and AG-Grid tables must use one shared style across
+  every module — don't hand-roll a one-off card/grid style per screen. When a screen's markup
+  diverges from the established shared pattern, converge it during that screen's own change, don't
+  leave it as accumulating drift.
+- **Labels & validation messages — single source of truth**: every field's label and validation
+  message must be defined once, in a centralized, per-project location (Laravel lang files under
+  `resources/lang/`, wired for future multi-language support), and referenced from every
+  form/screen/import/export that uses that field — never re-typed per view. This mirrors the
+  Identifier & Reference Registry pattern already established for value formats
+  (`App\Rules\*`/`IdentifierService`) — labels and messages get the same one-place treatment.
+- **Date format**: all frontend date display and date-picker input must use `dd-MMM-YYYY`
+  (e.g. `23-Sep-2026`) by default, sourced from a site-settings-backed config value (not
+  hardcoded per view) so it can be changed project-wide from one place.
+- **Performance**: apply query caching and other standard optimizations (eager loading, pagination,
+  avoiding N+1 — see the Booking-listing N+1 fix precedent in `docs/refactor/ai-changelogs-*.md`)
+  when touching a data-rendering screen, not just backend service code.
+- **Before shipping any UI/UX change**: re-verify the screen's existing validation, AJAX calls, and
+  JS logic still function correctly — a visual/style pass must not silently change or break
+  functional behavior. Treat this the same as the backend "preserve current functioning" rule.
