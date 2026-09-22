@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Services\ApprovalService;
 use App\Services\AuthService;
+use App\Services\DateFormatService;
 use App\Services\EnquiryReferenceService;
 // use App\Services\DataScopeService;
 use App\Services\FirebaseService;
@@ -25,9 +26,11 @@ use App\Services\Sales\Booking\BookingKycService;
 use App\Services\Sales\Booking\BookingOtfService;
 use App\Services\Sales\Booking\BookingRefundService;
 use App\Services\Sales\Booking\BookingRtoService;
+use App\Services\SystemSettingService;
 use Illuminate\Cache\CacheManager;
 use Illuminate\Contracts\Auth\Access\Gate as GateContract;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -76,6 +79,10 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(EmployeeJourneyService::class);
         $this->app->singleton(IdentifierService::class);
         $this->app->singleton(EnquiryReferenceService::class);
+        $this->app->singleton(SystemSettingService::class);
+        $this->app->singleton(DateFormatService::class, function ($app) {
+            return new DateFormatService($app->make(SystemSettingService::class));
+        });
 
         $this->app->singleton(BookingKycService::class, function ($app) {
             return new BookingKycService($app->make(IdentifierService::class));
@@ -128,5 +135,11 @@ class AppServiceProvider extends ServiceProvider
         foreach (glob(base_path('routes/backpack/*.php')) as $file) {
             require $file;
         }
+
+        // {{-- @sitedate($booking->booking_date) --}} - one source of truth for
+        // frontend date display, per .ai/rules/conventions.md section 13.
+        Blade::directive('sitedate', function ($expression) {
+            return "<?php echo app(\App\Services\DateFormatService::class)->format({$expression}); ?>";
+        });
     }
 }

@@ -566,3 +566,74 @@ the controller; business logic and persistence moved to services). Two real, pre
 CRITICAL bugs (BUG-104's full scope: OTF Save, booking create, and booking edit all crash in this
 database's current schema) and one Medium bug (BUG-105, fixed) were found and documented along the
 way, on top of the BUG-098/099/100/101/102/103 findings from earlier Phase 4 checkpoints.
+
+## Phase 5, first checkpoint: site-settings-driven date format infrastructure
+
+Per the user's UI/UX/i18n/date-format initiative (deferred until Booking's Phase 4 backend
+extraction finished, per their own earlier explicit sequencing decision) and the recorded rule in
+`.ai/rules/conventions.md` section 13 ("uniform dd-MMM-YYYY date format, sourced from a
+site-settings-backed config value... so it can be changed project-wide from one place"). Scoped
+tightly for this first checkpoint: build the real infrastructure, prove it end-to-end on one real
+view, rather than attempting a project-wide rollout in a single pass.
+
+**Found and fixed 2 bugs in the pre-existing settings subsystem while building on it**:
+
+- **`SystemSetting` model/DB column mismatch** (`app/Models/Utilities/Settings/SystemSetting.php`):
+  `$fillable`/`$casts`/`scopeVisible()`/`getAllAsArray()` all referenced `isvisible` (no underscore),
+  but `SHOW COLUMNS FROM xlr8_utils_system_setting` confirms the real column is `is_visible` (with
+  underscore) - `SystemSettingService`'s own admin-UI queries (`getForAdmin()`, `getTopics()`)
+  already correctly used `is_visible`, but `SystemSetting::ensure()` (used to create every setting)
+  passed `'is_visible' => true` into a mass-assignment call the model's mismatched `$fillable`
+  silently dropped - reproduced live: every setting ever created via `ensure()` had `is_visible =
+  NULL`, meaning it would never appear in the admin settings UI or topics list. Fixed by aligning
+  the model to the real column name throughout (4 call sites) - confirmed via a live before/after
+  tinker probe that `ensure()` now correctly persists `is_visible = true`.
+- **`SystemSettingSeeder` referenced a nonexistent class**: `use App\Models\Core\SystemSetting;` -
+  that namespace doesn't exist anywhere in the codebase (the real model is
+  `App\Models\Utilities\Settings\SystemSetting`). This seeder would have fatally errored the moment
+  anyone ran it. Fixed the import and ran the seeder locally (`php artisan db:seed
+  --class=SystemSettingSeeder`) to populate the existing site/dealership/pricing/feature settings
+  for the first time in this local database, plus the new date-format setting below.
+
+**New: `App\Services\DateFormatService`** (singleton, depends on the now-working
+`SystemSettingService`):
+
+- `format(mixed $date, string $fallback = 'N/A'): string` - formats any Carbon-parseable value (or
+  `Carbon` instance) using the site's configured `display.date_format` setting (seeded default
+  `d-M-Y`, i.e. `23-Sep-2026`), returning `$fallback` for empty or unparseable input rather than
+  throwing, since this is a display helper called directly from Blade.
+- `phpFormat(): string` - the raw configured format token, for any caller that needs it directly
+  (e.g. a future JS date-picker format-token translation).
+- New Blade directive `@sitedate($value)` registered in `AppServiceProvider::boot()`, delegating to
+  the service - the single call site every view should use going forward instead of hand-rolling
+  `Carbon::parse($x)->format('d-M-Y')` per view.
+
+**First real rollout**: `resources/views/admin/booking/show.blade.php` - replaced 6 occurrences of
+the hand-rolled `$x ? Carbon::parse($x)->format('d-M-Y') : 'N/A'` pattern (receipt log dates,
+booking date, receipt date, customer DOB, expected delivery date, OTF date) with `@sitedate($x)`.
+Chosen as the first target because it's the main booking detail page and had the clearest, most
+repeated instance of the exact pattern this infrastructure replaces. The other ~15 Booking views
+with the same hardcoded pattern (`add`, `amount`, `edit`, `exch-edit`, `insurance-edit`, `otf-form`,
+`pendedit`, `recedit`, `show-invoiced`, etc.) are deliberately left for follow-up checkpoints -
+applying this project-wide in one pass was assessed as too large/risky for a single change-set,
+consistent with the checkpoint discipline used throughout Phase 1-4.
+
+### Verification
+
+- `php -l` clean on all changed/new files; `vendor/bin/pint --dirty --format agent` → clean.
+- **New: `tests/Unit/Services/DateFormatServiceTest.php`** (6 tests, 8 assertions) - configured
+  format is used, falls back to the hardcoded default when the setting row is missing, respects a
+  changed setting, returns the fallback for empty/unparseable input, accepts a `Carbon` instance
+  directly.
+- Live tinker verification: `SystemSetting::ensure()` now correctly persists `is_visible = true`
+  (was `NULL` before the fix); `DateFormatService::format()` produces `23-Sep-2026` for
+  `'2026-09-23'`, `'N/A'` for `null`/unparseable input.
+- `php artisan view:clear` + `Blade::compileString()` on `show.blade.php` → compiles cleanly (no
+  directive-syntax errors).
+- **Live HTTP round trip**: `GET admin/sales/booking/{id}/show` → 200, page renders with the new
+  directive in place (confirmed via content containing the expected `N/A` fallback text for a test
+  booking's empty date fields).
+- Full suite re-run (`tests/Unit/Services/`) → 70 passed, 141 assertions; 8 pre-existing failures in
+  `PostServiceTest`/`ReportingServiceTest` (both reference `App\Services\IAM\PostService`/
+  `ReportingService`, classes already flagged as "Undefined type" by IDE diagnostics from the very
+  start of this session, before any of today's changes) - confirmed unrelated, not a regression.
