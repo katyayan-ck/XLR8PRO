@@ -9,10 +9,11 @@ use App\Models\Vehicle\Color;
 use App\Models\Vehicle\Segment;
 use App\Models\Vehicle\Variant;
 use App\Models\Vehicle\VehicleModel;
-use Illuminate\Database\Eloquent\Casts\Attribute;
-use App\Traits\HasCommunications;
 use App\Traits\HasColumnTransformations;
+use App\Traits\HasCommunications;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class Enquiry extends BaseModel
 {
@@ -129,8 +130,6 @@ class Enquiry extends BaseModel
     //     'finance_mode',
     //     'financier',
 
-
-
     //     'created_by',
     //     'updated_by',
     //     'deleted_by',
@@ -141,8 +140,8 @@ class Enquiry extends BaseModel
     protected function exchangeMake(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->brand_make,
-            set: fn($value) => ['brand_make' => $value],
+            get: fn () => $this->brand_make,
+            set: fn ($value) => ['brand_make' => $value],
         );
     }
 
@@ -150,8 +149,8 @@ class Enquiry extends BaseModel
     protected function exchangeModel(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->brand_model,
-            set: fn($value) => ['brand_model' => $value],
+            get: fn () => $this->brand_model,
+            set: fn ($value) => ['brand_model' => $value],
         );
     }
 
@@ -159,8 +158,8 @@ class Enquiry extends BaseModel
     protected function considerMake(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->consid_brand,
-            set: fn($value) => ['consid_brand' => $value],
+            get: fn () => $this->consid_brand,
+            set: fn ($value) => ['consid_brand' => $value],
         );
     }
 
@@ -168,8 +167,8 @@ class Enquiry extends BaseModel
     protected function considerModel(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->consid_model,
-            set: fn($value) => ['consid_model' => $value],
+            get: fn () => $this->consid_model,
+            set: fn ($value) => ['consid_model' => $value],
         );
     }
 
@@ -177,8 +176,8 @@ class Enquiry extends BaseModel
     protected function considerVariant(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->consid_variant,
-            set: fn($value) => ['consid_variant' => $value],
+            get: fn () => $this->consid_variant,
+            set: fn ($value) => ['consid_variant' => $value],
         );
     }
 
@@ -362,7 +361,7 @@ class Enquiry extends BaseModel
                     'purchase_type',
                     'purchase_type_crm',
                     'sc_mile_id',
-                    'cre_likely_purchase_days'
+                    'cre_likely_purchase_days',
                 ];
 
                 foreach ($requiredFields as $field) {
@@ -374,7 +373,10 @@ class Enquiry extends BaseModel
                 });
 
                 $oemQuery->whereExists(function ($subquery) {
-                    $subquery->select(\Illuminate\Support\Facades\DB::raw(1))
+                    // Raw-SQL equivalent of App\Services\EnquiryReferenceService::toReference() -
+                    // can't call the PHP service from inside a whereRaw() string, so the 'XENQ-'
+                    // prefix is intentionally hardcoded here too; keep both in sync if it ever changes.
+                    $subquery->select(DB::raw(1))
                         ->from('xlr8_cre_enquiry_fup')
                         ->whereRaw("xlr8_cre_enquiry_fup.x8_enq_no = CONCAT('XENQ-', xlr8_crm_enquiries.id)")
                         ->whereNotNull('cre_enq_stage')->where('cre_enq_stage', '!=', '')
@@ -404,12 +406,19 @@ class Enquiry extends BaseModel
     }
 
     public const STATUS_NEW = 'new';
+
     public const STATUS_IN_FOLLOWUP = 'in_followup';
+
     public const STATUS_QUOTATION_SENT = 'quotation_sent';
+
     public const STATUS_QUOTATION_APPROVED = 'quotation_approved';
+
     public const STATUS_BOOKING_DONE = 'booking_done';
+
     public const STATUS_OTF_GENERATED = 'otf_generated';
+
     public const STATUS_LOST = 'lost';
+
     public const STATUS_CANCELLED = 'cancelled';
 
     // ==================== CODE-BASED RELATIONSHIPS ====================
@@ -417,7 +426,6 @@ class Enquiry extends BaseModel
     {
         return $this->belongsTo(Lead::class, 'lead_no', 'lead_no');
     }
-
 
     public function person()
     {
@@ -487,7 +495,6 @@ class Enquiry extends BaseModel
         return $query->where('sc_name', $userId);
     }
 
-
     /**
      * Scope a query to only include Hyperlocal enquiries
      */
@@ -498,8 +505,6 @@ class Enquiry extends BaseModel
             ->orWhere('sub_source', 'Hyperlocal')
             ->orWhere('sub_source', 'hyperlocal');
     }
-
-
 
     public function scopeCurrentOrigin($query, string $origin)
     {
@@ -584,8 +589,6 @@ class Enquiry extends BaseModel
     {
         return trim($this->name ?? '');
     }
-
-
 
     public static function getOpenCountByConsultant(int $userId): int
     {

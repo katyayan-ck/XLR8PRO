@@ -2,6 +2,11 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\AadhaarNumber;
+use App\Rules\Gstin;
+use App\Rules\IndianMobileNumber;
+use App\Rules\PanNumber;
+use App\Rules\TanNumber;
 use Illuminate\Foundation\Http\FormRequest;
 
 class PersonRequest extends FormRequest
@@ -35,7 +40,7 @@ class PersonRequest extends FormRequest
 
         return [
             'display_name' => 'required|string|max:255',
-            'mobile' => $isCreate ? ['required', 'digits:10'] : ['sometimes', 'nullable', 'digits:10'],
+            'mobile' => $isCreate ? ['required', new IndianMobileNumber] : ['sometimes', 'nullable', new IndianMobileNumber],
             'entity_type' => 'nullable|in:individual,legal_entity',
             'salutation' => 'nullable|in:Mr,Mrs,Ms,Dr',
             'first_name' => 'nullable|string|max:100',
@@ -46,10 +51,10 @@ class PersonRequest extends FormRequest
             'marital_status' => 'nullable|in:Single,Married,Divorced,Widowed',
             'spouse_name' => 'nullable|string|max:255',
             'occupation' => 'nullable|string|max:255',
-            'aadhaar_no' => 'nullable|digits:12',
-            'pan_no' => 'nullable|regex:/^[A-Za-z]{5}[0-9]{4}[A-Za-z]$/',
-            'tan_no' => 'nullable|string|max:15',
-            'gst_no' => 'nullable|string|max:20',
+            'aadhaar_no' => ['nullable', new AadhaarNumber],
+            'pan_no' => ['nullable', new PanNumber],
+            'tan_no' => ['nullable', new TanNumber],
+            'gst_no' => ['nullable', new Gstin],
         ];
     }
 
@@ -74,7 +79,6 @@ class PersonRequest extends FormRequest
     {
         return [
             'mobile.required' => 'A primary mobile number is required.',
-            'mobile.digits' => 'The mobile number must be exactly 10 digits.',
         ];
     }
 }

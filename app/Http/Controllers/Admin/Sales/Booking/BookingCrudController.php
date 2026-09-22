@@ -30,6 +30,16 @@ use App\Models\Vehicle\Color;
 use App\Models\Vehicle\Segment;
 use App\Models\Vehicle\Variant;
 use App\Models\Vehicle\VehicleModel;
+use App\Rules\AadhaarNumber;
+use App\Rules\ChassisNumber;
+use App\Rules\DealerInvoiceNumber;
+use App\Rules\DmsNumber;
+use App\Rules\Gstin;
+use App\Rules\InvoiceNumber;
+use App\Rules\OtfNumber;
+use App\Rules\PanNumber;
+use App\Services\EnquiryReferenceService;
+use App\Services\IdentifierService;
 use App\Services\OrgService;
 use App\Services\SystemSettingService;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
@@ -71,6 +81,13 @@ class BookingCrudController extends CrudController
     use ShowOperation;
     use UpdateOperation {
         edit as traitEdit;
+    }
+
+    public function __construct(
+        protected IdentifierService $identifiers,
+        protected EnquiryReferenceService $enquiryRef,
+    ) {
+        parent::__construct();
     }
 
     /**
@@ -136,7 +153,7 @@ class BookingCrudController extends CrudController
             if ($enquiry) {
                 $existingBooking = Booking::where(function ($q) use ($enquiry) {
                     $q->where('enq_no', $enquiry->id)
-                        ->orWhere('enq_no', 'XENQ-'.$enquiry->id);
+                        ->orWhere('enq_no', $this->enquiryRef->toReference($enquiry->id));
                     if ($enquiry->enquiry_no) {
                         $q->orWhere('enq_no', $enquiry->enquiry_no);
                     }
@@ -1590,6 +1607,8 @@ class BookingCrudController extends CrudController
         $query = Booking::withoutGlobalScope(SoftDeletingScope::class)
             ->from('xlr8_booking_master as bookings')
             ->leftJoin('xlr8_crm_enquiries as enq', function ($join) {
+                // Raw-SQL equivalent of EnquiryReferenceService::toReference() - see the same note
+                // on Enquiry.php's whereRaw() CONCAT() for why this can't call the PHP service.
                 $join->on('enq.id', '=', 'bookings.enq_no')
                     ->orOn(DB::raw("BINARY CONCAT('XENQ-', enq.id)"), '=', DB::raw('BINARY bookings.enq_no'))
                     ->orOn(DB::raw('BINARY enq.enquiry_no'), '=', DB::raw('BINARY bookings.enq_no'))
@@ -1862,6 +1881,7 @@ class BookingCrudController extends CrudController
         // reviewed change rather than being folded in here.
         $liveCount = DB::table('xlr8_booking_master as b')
             ->join('xlr8_crm_enquiries as e', function ($join) {
+                // Same raw-SQL XENQ- pattern as getBaseQuery() above - see its comment.
                 $join->on('e.id', '=', 'b.enq_no')
                     ->orOn(DB::raw("BINARY CONCAT('XENQ-', e.id)"), '=', DB::raw('BINARY b.enq_no'))
                     ->orOn(DB::raw('BINARY e.enquiry_no'), '=', DB::raw('BINARY b.enq_no'))
@@ -4949,32 +4969,21 @@ class BookingCrudController extends CrudController
         $booking = Booking::findOrFail($id);
 
         $validated = $request->validate([
-            'pan_no' => [
-                'required',
-                'string',
-                'size:10',
-                'regex:/^[A-Z]{5}[0-9]{4}[A-Z]$/',
-            ],
-            'adhar_no' => [
-                'required',
-                'string',
-                'regex:/^[2-9]{1}[0-9]{3}[ -]?[0-9]{4}[ -]?[0-9]{4}$/',
-            ],
-            'gst_no' => [
-                'nullable',
-                'string',
-                'size:15',
-                'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/',
-            ],
+            'pan_no' => ['required', 'string', new PanNumber],
+            'adhar_no' => ['required', 'string', new AadhaarNumber],
+            'gst_no' => ['nullable', 'string', new Gstin],
         ]);
+
+        $panNo = $this->identifiers->normalizePan($validated['pan_no']);
+        $adharNo = $this->identifiers->normalizeAadhaar($validated['adhar_no']);
 
         $gstValue = $request->has('gst_not_required') && $request->gst_not_required
             ? '0'
-            : ($validated['gst_no'] ?? $booking->gstn ?? '0');
+            : ($this->identifiers->normalizeGstin($validated['gst_no'] ?? null) ?? $booking->gstn ?? '0');
 
         $booking->update([
-            'pan_no' => strtoupper($validated['pan_no']),
-            'adhar_no' => preg_replace('/[ -]/', '', $validated['adhar_no']),
+            'pan_no' => $panNo,
+            'adhar_no' => $adharNo,
             'gstn' => $gstValue,
 
         ]);
@@ -4987,8 +4996,8 @@ class BookingCrudController extends CrudController
             'Customer KYC details updated successfully',
             [
                 'module' => 'Pending KYC',
-                'pan_no' => strtoupper($validated['pan_no']),
-                'adhar_no' => preg_replace('/[ -]/', '', $validated['adhar_no']),
+                'pan_no' => $panNo,
+                'adhar_no' => $adharNo,
                 'gstn' => $gstValue,
             ],
             null,
@@ -6883,24 +6892,19 @@ class BookingCrudController extends CrudController
 
         Log::info('Form data after uppercase', $request->except(['_token']));
 
+        // Canonical formats centralized in App\Rules\* (see docs/refactor/ai-findings-22-09-2026.md
+        // for the audit that found this flow's Aadhaar/Chassis rules disagreeing with kycUpdate()'s
+        // and with real stock data respectively — reconciled here to the one canonical rule).
         $validator = Validator::make($request->all(), [
-            'pan_no' => ['required', 'regex:/^[A-Z]{5}\d{4}[A-Z]$/'],
-            'adhar_no' => ['required', 'regex:/^\d{4}-\d{4}-\d{4}$/'],
-            'dms_no' => ['required', 'regex:/^B-\d{8}$/'],
-            'dms_otf' => ['required', 'regex:/^OTF\d{2}[A-Z]\d{6}$/'],
+            'pan_no' => ['required', new PanNumber],
+            'adhar_no' => ['required', new AadhaarNumber],
+            'dms_no' => ['required', new DmsNumber],
+            'dms_otf' => ['required', new OtfNumber],
             'hidden_otf_date' => ['required', 'date'],
             'online_bk_ref_no' => ['required_if:b_mode,Online', 'nullable'],
-            'chassis' => [$request->has('pending_flag') ? 'required' : 'nullable', 'regex:/^S\d[A-Z]\d{5}$/'],
-            'invoice_number' => ['nullable', 'regex:/^INV\d{2}[A-Z]\d{6}$/'],
-            'dealer_invoice_number' => ['nullable', 'regex:/^[A-Z]{3}\d{2}[A-Z]\d{6}$/'],
-        ], [
-            'pan_no.regex' => 'PAN must be like ABCDE1234F',
-            'adhar_no.regex' => 'Aadhar must be 1234-5678-9012',
-            'dms_no.regex' => 'DMS No. must be B-12345678',
-            'dms_otf.regex' => 'OTF must be OTF00A123456',
-            'chassis.regex' => 'Chassis must be S1A12345',
-            'dealer_invoice_number.regex' => 'Dealer Invoice must be like ABC12K555555',
-            'invoice_number.regex' => 'Invoice must be INV00A123456',
+            'chassis' => [$request->has('pending_flag') ? 'required' : 'nullable', new ChassisNumber],
+            'invoice_number' => ['nullable', new InvoiceNumber],
+            'dealer_invoice_number' => ['nullable', new DealerInvoiceNumber],
         ]);
 
         if ($request->has('pending_flag')) {
@@ -6937,6 +6941,10 @@ class BookingCrudController extends CrudController
         }
 
         Log::info('Validation PASSED');
+        // Aadhaar is validated with optional space/dash separators (AadhaarNumber rule) but
+        // stored as plain digits, matching kycUpdate()'s storage shape.
+        $request->merge(['adhar_no' => $this->identifiers->normalizeAadhaar($request->input('adhar_no'))]);
+
         $changes = [];
         $this->logChange($booking, 'online_bk_ref_no', $request->online_bk_ref_no, $changes);
         $this->logChange($booking, 'pan_no', $request->pan_no, $changes);

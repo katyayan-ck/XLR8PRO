@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\Accounts\Receipt;
 use App\Http\Controllers\Controller;
 use App\Models\CRM\Enquiry;
 use App\Models\Module\Booking\Bookingamount;
+use App\Services\EnquiryReferenceService;
 use App\Services\OrgService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -70,7 +71,7 @@ class ReceiptCrudController extends Controller
                 'transaction_no' => $receipt->trans_no,
                 'bank_name' => $receipt->bank,
 
-                'xceler8_enq_no' => $receipt->enq_id ? 'XENQ-'.$receipt->enq_id : '',
+                'xceler8_enq_no' => $receipt->enq_id ? app(EnquiryReferenceService::class)->toReference($receipt->enq_id) : '',
                 'xceler8_booking_no' => $receipt->bid,
                 'votf_no' => $receipt->otf_no,
                 'registration_no' => $receipt->vh_rgn_no,
@@ -150,7 +151,7 @@ class ReceiptCrudController extends Controller
             $receipt->account_of = $request->on_account_of;
             $receipt->mode = $request->payment_mode;
 
-            $cleanEnqId = $request->xceler8_enq_no ? (int) str_replace(['XENQ-', 'xenq-'], '', $request->xceler8_enq_no) : null;
+            $cleanEnqId = app(EnquiryReferenceService::class)->fromReference($request->xceler8_enq_no);
             $receipt->enq_id = $cleanEnqId;
             $receipt->bid = $request->xceler8_booking_no;
             $receipt->otf_no = $request->votf_no;
@@ -242,7 +243,7 @@ class ReceiptCrudController extends Controller
             $receipt->mode = $request->payment_mode;
 
             // Xceler8 References
-            $cleanEnqId = $request->xceler8_enq_no ? (int) str_replace(['XENQ-', 'xenq-'], '', $request->xceler8_enq_no) : null;
+            $cleanEnqId = app(EnquiryReferenceService::class)->fromReference($request->xceler8_enq_no);
             $receipt->enq_id = $cleanEnqId;
             $receipt->bid = $request->xceler8_booking_no;
             $receipt->otf_no = $request->votf_no;

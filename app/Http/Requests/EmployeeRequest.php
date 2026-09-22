@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\EmployeeCode;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -36,6 +37,7 @@ class EmployeeRequest extends FormRequest
             'code' => [
                 'required',
                 'string',
+                new EmployeeCode,
                 Rule::unique('xlr8_admin_employee', 'code')->ignore($currentId),
             ],
             'person_id' => 'required|exists:xlr8_admin_person,id',

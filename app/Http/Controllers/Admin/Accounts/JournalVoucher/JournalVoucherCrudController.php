@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Accounts\JournalVoucher;
 
 use App\Http\Controllers\Controller;
 use App\Models\Module\Booking\Bookingamount;
+use App\Services\EnquiryReferenceService;
 use App\Services\OrgService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -210,7 +211,7 @@ class JournalVoucherCrudController extends Controller
         $voucher->account_of = $request->on_account_of;
         $voucher->mode = $request->payment_mode; // Always JV Mode
 
-        $cleanEnqId = $request->xceler8_enq_no ? (int) str_replace(['XENQ-', 'xenq-'], '', $request->xceler8_enq_no) : null;
+        $cleanEnqId = app(EnquiryReferenceService::class)->fromReference($request->xceler8_enq_no);
         $voucher->enq_id = $cleanEnqId;
         $voucher->bid = $request->xceler8_booking_no;
         $voucher->otf_no = $request->votf_no;
