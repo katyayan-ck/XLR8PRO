@@ -434,14 +434,6 @@ class ReceiptCrudController extends Controller
      */
     private function formatDate($date): string
     {
-        if (! $date) {
-            return '';
-        }
-
-        try {
-            return Carbon::parse($date)->format('d-m-Y');
-        } catch (\Throwable $e) {
-            return (string) $date;
-        }
+        return site_date($date, '');
     }
 }

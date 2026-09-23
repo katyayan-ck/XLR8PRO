@@ -92,7 +92,7 @@ class PersonCrudController extends CrudController
             $mapped = $person->toArray();
             $mapped['serial_no'] = $index + 1;
             $mapped['full_name'] = trim("{$person->first_name} {$person->middle_name} {$person->last_name}");
-            $mapped['dob'] = $person->dob?->format('d/m/Y') ?? '—';
+            $mapped['dob'] = site_date($person->dob, '—');
             $mapped['primary_mobile'] = $person->primary_mobile ?? '—';
             $mapped['primary_email'] = $person->primary_email ?? '—';
 

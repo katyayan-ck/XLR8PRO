@@ -320,6 +320,6 @@ class JournalVoucherCrudController extends Controller
 
     private function formatDate($date): string
     {
-        return $date ? Carbon::parse($date)->format('d-m-Y') : '';
+        return site_date($date, '');
     }
 }

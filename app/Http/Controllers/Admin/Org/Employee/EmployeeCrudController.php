@@ -86,6 +86,7 @@ class EmployeeCrudController extends CrudController
         $gridData = $employees->map(function ($emp, $index) {
             $mapped = $emp->toArray();
             $mapped['serial_no'] = $index + 1;
+            $mapped['joining_date'] = site_date($emp->joining_date);
             $mapped['person_name'] = $emp->person
                 ? trim($emp->person->first_name.' '.$emp->person->last_name)
                 : '—';

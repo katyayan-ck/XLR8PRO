@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\Sales\Lead;
 use App\Http\Requests\LeadRequest;
 use App\Models\CRM\Lead;
 use App\Models\CRM\LeadSource;
+use App\Services\DateFormatService;
 use App\Services\OrgService;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
@@ -164,7 +165,9 @@ class LeadCrudController extends CrudController
         $validated = $request->validated();
 
         if (! empty($validated['expected_delivery_date'])) {
-            $validated['expected_delivery_date'] = Carbon::createFromFormat('d-m-Y', $validated['expected_delivery_date'])->format('Y-m-d');
+            // The create form's native <input type="date"> always submits ISO Y-m-d,
+            // regardless of the site's display date format.
+            $validated['expected_delivery_date'] = Carbon::createFromFormat('Y-m-d', $validated['expected_delivery_date'])->format('Y-m-d');
         }
 
         $lastLead = Lead::latest('id')->first();
@@ -211,7 +214,10 @@ class LeadCrudController extends CrudController
         $validated = $request->validated();
 
         if (! empty($validated['expected_delivery_date'])) {
-            $validated['expected_delivery_date'] = Carbon::createFromFormat('d-m-Y', $validated['expected_delivery_date'])->format('Y-m-d');
+            // The edit form's flatpickr input submits the site's configured display
+            // date format, not a hardcoded one - stays in sync if that setting changes.
+            $siteFormat = app(DateFormatService::class)->phpFormat();
+            $validated['expected_delivery_date'] = Carbon::createFromFormat($siteFormat, $validated['expected_delivery_date'])->format('Y-m-d');
         }
 
         $validated['updated_by'] = backpack_user()->id;
