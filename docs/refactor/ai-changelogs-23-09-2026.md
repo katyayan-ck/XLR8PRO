@@ -1104,3 +1104,43 @@ locations company-wide.
 - `vendor/bin/pint --dirty --format agent` → clean.
 - Full suite re-run (`tests/Unit/Services/` + `tests/Unit/Lang/`) → 80 passed, 299 assertions; same
   8 pre-existing unrelated failures.
+
+## Booking module view reorganization — mirror controller module structure (new project rule, .ai/rules/conventions.md section 14)
+
+Per explicit user instruction to reorganize Blade views into module/process folders matching the
+controller directory structure, and to record this as a standing project rule (done first, in the
+same session, before this checkpoint — see conventions.md section 14).
+
+### Orphan scan (Booking module)
+
+Confirmed all 66 `admin.booking.*` view references across the entire app live only in
+`BookingCrudController.php`. Extracted 51 unique statically-referenced view names, diffed against
+70 actually-present files. Found `getFullBookingData()`'s dynamic view construction
+(`view("admin.booking.{$viewName}", ...)`) with 4 call sites (`show-invoiced`, `show` x2, `doedit`)
+— correctly excluded these from the orphan list (a naive literal-string grep would have
+false-flagged `show-invoiced`). Final orphan list: 17 confirmed-dead `.blade.php` files, plus 2
+stray non-referenced files found during the later file-count reconciliation
+(`otf-form.blade copy.php`, a duplicate scratch copy, and `reservedAddBlade.txt`, a non-Blade text
+scratch file) — 19 files total moved to `resources/views/backup/orphaned/admin/booking/`, each
+prefixed with its original path as a first-line comment, none deleted.
+
+### Reorganization
+
+Moved the remaining 53 live view files from the flat `resources/views/admin/booking/` into
+`resources/views/admin/sales/booking/`, mirroring the controller's actual namespace
+(`App\Http\Controllers\Admin\Sales\Booking\BookingCrudController`). Used `git mv` throughout so
+history is preserved. Updated all 66 `admin.booking.*` references (`view()`, `setListView()`,
+`setEditView()`, `setCreateView()`, `setShowView()`, and the `getFullBookingData()` dynamic-prefix
+string) in `BookingCrudController.php` to `admin.sales.booking.*` via a scoped find/replace,
+confirmed zero remaining old-path references anywhere in `app/`, `routes/`, or `resources/views/`.
+
+### Verification
+
+- `php -l` on the controller → no syntax errors.
+- `php artisan view:clear` → compiled views cleared.
+- Live HTTP round trips (authenticated `backpack` guard, `app()->handle()`) against 9 routes
+  spanning the static list views, the dynamic `getFullBookingData()` targets, and several Phase 4
+  sub-domain work-queue screens (`index`, `create`, `refund/requested`, `rejected`, `refunded`,
+  `invoiced`, `pending-kyc`, `pending-dms`) → all 200.
+- `vendor/bin/pint --dirty --format agent` → clean.
+- `php artisan test --filter=Booking --compact` → 54 passed, 261 assertions, zero regressions.
