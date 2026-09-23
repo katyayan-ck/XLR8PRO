@@ -332,7 +332,7 @@
                         <form method="POST" action="{{ backpack_url('org/person/' . $person->id . '/addresses/' . $address->id) }}" class="mt-2">
                             @csrf
                             @method('PUT')
-                            @include('admin.person.partials.address-fields', ['address' => $address, 'types' => \App\Models\Admin\PersonAddress::ADDRESS_TYPES])
+                            @include('admin.org.person.partials.address-fields', ['address' => $address, 'types' => \App\Models\Admin\PersonAddress::ADDRESS_TYPES])
                             <button type="submit" class="btn btn-sm btn-primary mt-2">Save</button>
                         </form>
                     </details>
@@ -347,7 +347,7 @@
                     </summary>
                     <form method="POST" action="{{ backpack_url('org/person/' . $person->id . '/addresses') }}" class="mt-3">
                         @csrf
-                        @include('admin.person.partials.address-fields', ['address' => null, 'types' => $unusedAddressTypes])
+                        @include('admin.org.person.partials.address-fields', ['address' => null, 'types' => $unusedAddressTypes])
                         <button type="submit" class="btn btn-sm btn-success mt-2">Add</button>
                     </form>
                 </details>
@@ -391,7 +391,7 @@
                         <form method="POST" action="{{ backpack_url('org/person/' . $person->id . '/banking/' . $bank->id) }}" class="mt-2">
                             @csrf
                             @method('PUT')
-                            @include('admin.person.partials.banking-fields', ['bank' => $bank, 'types' => \App\Models\Admin\PersonBankingDetail::ACCOUNT_TYPES])
+                            @include('admin.org.person.partials.banking-fields', ['bank' => $bank, 'types' => \App\Models\Admin\PersonBankingDetail::ACCOUNT_TYPES])
                             <button type="submit" class="btn btn-sm btn-primary mt-2">Save</button>
                         </form>
                     </details>
@@ -406,7 +406,7 @@
                     </summary>
                     <form method="POST" action="{{ backpack_url('org/person/' . $person->id . '/banking') }}" class="mt-3">
                         @csrf
-                        @include('admin.person.partials.banking-fields', ['bank' => null, 'types' => $unusedAccountTypes])
+                        @include('admin.org.person.partials.banking-fields', ['bank' => null, 'types' => $unusedAccountTypes])
                         <button type="submit" class="btn btn-sm btn-success mt-2">Add</button>
                     </form>
                 </details>

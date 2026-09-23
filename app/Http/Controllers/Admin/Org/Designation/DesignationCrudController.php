@@ -56,14 +56,14 @@ class DesignationCrudController extends CrudController
     {
         $this->authorizeManage();
 
-        $this->crud->setListView('admin.designation.list');
+        $this->crud->setListView('admin.org.designation.list');
     }
 
     public function index()
     {
         $this->authorizeManage();
 
-        $this->crud->setListView('admin.designation.list');
+        $this->crud->setListView('admin.org.designation.list');
 
         $designations = Designation::with('parentDesignation')
             ->select([
@@ -98,7 +98,7 @@ class DesignationCrudController extends CrudController
             return $mapped;
         })->values();
 
-        return view('admin.designation.list', [
+        return view('admin.org.designation.list', [
             'title' => 'All Designations',
             'gridConfig' => [
                 'columns' => [
@@ -122,7 +122,7 @@ class DesignationCrudController extends CrudController
     {
         $this->authorizeManage();
 
-        return view('admin.designation.create', [
+        return view('admin.org.designation.create', [
             'title' => 'Add New Designation',
             'designations' => Designation::orderBy('name')->get(),
         ]);
@@ -143,11 +143,11 @@ class DesignationCrudController extends CrudController
     {
         $this->authorizeManage();
 
-        $this->crud->setEditView('admin.designation.edit');
+        $this->crud->setEditView('admin.org.designation.edit');
 
         $designation = Designation::findOrFail($id);
 
-        return view('admin.designation.edit', [
+        return view('admin.org.designation.edit', [
             'title' => 'Edit Designation - '.$designation->name,
             'designation' => $designation,
             'designations' => Designation::orderBy('name')->get(),

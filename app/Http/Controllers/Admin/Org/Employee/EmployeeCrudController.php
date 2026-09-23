@@ -56,7 +56,7 @@ class EmployeeCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view employees.');
         }
 
-        $this->crud->setListView('admin.employee.list');
+        $this->crud->setListView('admin.org.employee.list');
     }
 
     public function index()
@@ -65,7 +65,7 @@ class EmployeeCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view employees.');
         }
 
-        $this->crud->setListView('admin.employee.list');
+        $this->crud->setListView('admin.org.employee.list');
 
         $employees = Employee::with(['person', 'designation', 'primaryBranch', 'primaryDepartment'])
             ->select([
@@ -104,7 +104,7 @@ class EmployeeCrudController extends CrudController
             return $mapped;
         })->values();
 
-        return view('admin.employee.list', [
+        return view('admin.org.employee.list', [
             'title' => 'All Employees',
             'gridConfig' => [
                 'columns' => [
@@ -129,9 +129,9 @@ class EmployeeCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to create employees.');
         }
 
-        $this->crud->setCreateView('admin.employee.create');
+        $this->crud->setCreateView('admin.org.employee.create');
 
-        return view('admin.employee.create', [
+        return view('admin.org.employee.create', [
             'title' => 'Add New Employee',
             'persons' => Person::select('id', 'first_name', 'last_name')->orderBy('first_name')->get(),
             'designations' => Designation::orderBy('name')->get(),
@@ -161,11 +161,11 @@ class EmployeeCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to edit employees.');
         }
 
-        $this->crud->setEditView('admin.employee.edit');
+        $this->crud->setEditView('admin.org.employee.edit');
 
         $employee = Employee::with(['person', 'designation', 'primaryBranch', 'primaryDepartment'])->findOrFail($id);
 
-        return view('admin.employee.edit', [
+        return view('admin.org.employee.edit', [
             'title' => 'Edit Employee',
             'employee' => $employee,
             'persons' => Person::select('id', 'first_name', 'last_name')->orderBy('first_name')->get(),

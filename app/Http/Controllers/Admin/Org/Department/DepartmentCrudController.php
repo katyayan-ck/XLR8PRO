@@ -52,14 +52,14 @@ class DepartmentCrudController extends CrudController
     {
         $this->authorizeManage();
 
-        $this->crud->setListView('admin.department.list');
+        $this->crud->setListView('admin.org.department.list');
     }
 
     public function index()
     {
         $this->authorizeManage();
 
-        $this->crud->setListView('admin.department.list');
+        $this->crud->setListView('admin.org.department.list');
 
         $xlr8_admin_department = Department::select([
             'id',
@@ -96,7 +96,7 @@ class DepartmentCrudController extends CrudController
             return $mapped;
         })->values();
 
-        return view('admin.department.list', [
+        return view('admin.org.department.list', [
             'title' => 'All Departments',
             'gridConfig' => [
                 'columns' => [
@@ -117,7 +117,7 @@ class DepartmentCrudController extends CrudController
     {
         $this->authorizeManage();
 
-        return view('admin.department.create', [
+        return view('admin.org.department.create', [
             'title' => 'Add New Department',
         ]);
     }
@@ -137,11 +137,11 @@ class DepartmentCrudController extends CrudController
     {
         $this->authorizeManage();
 
-        $this->crud->setEditView('admin.department.edit');
+        $this->crud->setEditView('admin.org.department.edit');
 
         $department = Department::findOrFail($id);
 
-        return view('admin.department.edit', [
+        return view('admin.org.department.edit', [
             'title' => 'Edit Department - '.$department->name,
             'department' => $department,
         ]);

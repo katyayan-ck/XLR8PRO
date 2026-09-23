@@ -59,14 +59,14 @@ class BranchCrudController extends CrudController
     {
         $this->authorizeManage();
 
-        $this->crud->setListView('admin.branch.list');
+        $this->crud->setListView('admin.org.branch.list');
     }
 
     public function index()
     {
         $this->authorizeManage();
 
-        $this->crud->setListView('admin.branch.list');
+        $this->crud->setListView('admin.org.branch.list');
 
         $branches = Branch::select([
             'id',
@@ -106,7 +106,7 @@ class BranchCrudController extends CrudController
             return $mapped;
         })->values();
 
-        return view('admin.branch.list', [
+        return view('admin.org.branch.list', [
             'title' => 'All Branches',
             'gridConfig' => [
                 'columns' => [
@@ -135,11 +135,11 @@ class BranchCrudController extends CrudController
     {
         $this->authorizeManage();
 
-        $this->crud->setEditView('admin.branch.edit');
+        $this->crud->setEditView('admin.org.branch.edit');
 
         $branch = Branch::where('code', $code)->firstOrFail();
 
-        return view('admin.branch.edit', [
+        return view('admin.org.branch.edit', [
             'title' => 'Edit Branch - '.$branch->name,
             'branch' => $branch,
             'headOffice' => Branch::where('is_head_office', true)->first(),
@@ -171,7 +171,7 @@ class BranchCrudController extends CrudController
 
         $headOffice = Branch::where('is_head_office', true)->first();
 
-        return view('admin.branch.create', [
+        return view('admin.org.branch.create', [
             'title' => 'Add New Branch',
             'headOffice' => $headOffice,
         ]);

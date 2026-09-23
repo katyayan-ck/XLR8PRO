@@ -1291,3 +1291,75 @@ reorganization + orphan-scan pattern for every other module app-wide (Org, User,
 Pricing, Accounts, etc.), followed by the deep-scan tasks (minimalistic design layout, dark/light
 mode audit, header theme-mode switcher, label/date rollout to other modules, AJAX/JS
 double-check) from the user's original mega-request.
+
+## Org module (batch of 12) view reorganization — mirror controller module structure
+
+First batch of the app-wide reorganization, per explicit user decision to continue past the
+Sales-first modules. Covers all 12 `App\Http\Controllers\Admin\Org\*` sub-controllers together
+since they're small, structurally identical (each 3-4 views, no orphans found except a shared
+`partials/` subfolder under Person, which is not an orphan - it's `@include()`d from
+`person/edit.blade.php`).
+
+### Scope decision
+
+Only controllers already namespaced into a module subfolder (`Admin\Org\*`, and later
+`Admin\Vehicle\*`/`Admin\Iam\*`/etc.) get their views moved to mirror that namespace. Several
+other controllers live directly under `App\Http\Controllers\Admin\` with no module subfolder of
+their own (`GarageCrudController`, `PostCrudController`, `TestDriveCrudController`, the 4
+`Employee*AssignmentCrudController`s, `GraphNodeCrudController`/`GraphEdgeCrudController`, etc.) -
+their own controller placement is itself a separate, out-of-scope architectural concern (the
+"Models own data ops, Services own business logic, Controllers stay thin" / module-namespace
+rule applies to controllers too, but reorganizing controllers is a different, larger initiative
+than this view-mirroring pass). Their views are left exactly where they are, since there's no
+module folder yet to mirror.
+
+### Reorganization
+
+Moved: `branch`, `department`, `designation`, `division`, `employee`, `location`, `person`
+(including its `partials/` subfolder), `person-address`, `person-banking-detail`,
+`person-contact`, `user`, `vertical` - all from flat `resources/views/admin/{name}/` into
+`resources/views/admin/org/{name}/`, matching each controller's real namespace (e.g.
+`App\Http\Controllers\Admin\Org\Branch\BranchCrudController` -> `admin/org/branch/`). Updated all
+`admin.{name}.*` references (66 total across the 12 controllers) to `admin.org.{name}.*`.
+Also fixed 4 stale `@include('admin.person.partials.*')` calls inside the moved
+`person/edit.blade.php` that would have 500'd after the move (the partials subfolder moved with
+its parent, but the include paths inside the parent view still pointed at the old prefix).
+
+**Caught and fixed a serious tooling bug mid-checkpoint**: the first attempt used a bash
+`${var//./\.}` pattern-substitution to escape dots before building each `sed` command, intending
+to produce a literal-dot regex. The substitution silently did nothing (verified in isolation -
+`${old//./\.}` returned the string completely unchanged), so `sed` ran with unescaped dots acting
+as "match any character," corrupting unrelated occurrences of `admin_department`-style
+snake_case variable/string names that merely happened to contain the same character sequence
+around a wildcard match (e.g. `$xlr8_admin_department` -> `$xlr8_admin.org.department.`, a syntax
+error). Caught immediately via `php -l` before any commit, reverted all 12 files with
+`git checkout --`, and redid every replacement with directly-written, properly backslash-escaped
+sed patterns (`s/admin\.branch\./admin.org.branch./g`) instead of programmatic escaping. Re-ran
+`php -l` on all 12 - clean.
+
+### Verification
+
+- `php -l` on all 12 controllers -> no syntax errors (after the fix above).
+- `php artisan view:clear`.
+- App-wide grep confirmed zero leftover `admin.{name}.` (old prefix) references anywhere in
+  `app/`, `routes/`, or `resources/views/` outside the orphaned-backup folders.
+- Live HTTP round trips (authenticated `backpack` guard) against all 12 index/create pairs (24
+  routes) plus 9 edit routes with real record ids/codes:
+  - **9 fully working** (branch, department, designation, division, location, person,
+    person-contact, user, vertical) - all 200 on index/create/edit.
+  - **3 pre-existing 500s**, confirmed unrelated to this reorganization by cross-referencing
+    already-tracked bugs from 20-09-2026 (days before this session's view work began): employee
+    index (BUG-008 - references non-existent columns), person-address index (BUG-020 - same
+    class of issue), person-banking-detail index/create (BUG-021 - missing `CrudTrait` + wrong
+    column names). Their `create` routes for employee/person-address still returned 200 since the
+    500s are in query/column logic, not view resolution.
+  - Confirmed via `git stash`/`git stash pop` isolation that a separate batch of 6 unrelated test
+    failures (`PostModelTest`, `PostServiceTest`, `RBACPersonEmployeeUserTest`,
+    `StandaloneUsersImportTest`) - missing `App\Services\IAM\PostService` class and a missing
+    `storage/user_data.xlsx` test fixture - exist independent of this checkpoint's changes.
+- `vendor/bin/pint --dirty --format agent` -> clean.
+- `php artisan test --filter="Person|Branch|Employee|User|Org"` -> all 8 `Tests\Feature\Admin\Org\*`
+  suites pass in full (`BranchCrudTest`, `DepartmentCrudTest`, `DesignationCrudTest`,
+  `DivisionCrudTest`, `LocationCrudTest`, `PersonCrudTest`, `UserOnboardingTest`,
+  `VerticalCrudTest`) - these exercise the exact views just moved. 62 passed overall; the 6
+  failures noted above are pre-existing and unrelated.

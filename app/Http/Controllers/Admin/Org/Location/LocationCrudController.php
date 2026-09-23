@@ -53,14 +53,14 @@ class LocationCrudController extends CrudController
     {
         $this->authorizeManage();
 
-        $this->crud->setListView('admin.location.list');
+        $this->crud->setListView('admin.org.location.list');
     }
 
     public function index()
     {
         $this->authorizeManage();
 
-        $this->crud->setListView('admin.location.list');
+        $this->crud->setListView('admin.org.location.list');
 
         $locations = Location::select([
             'id',
@@ -121,7 +121,7 @@ class LocationCrudController extends CrudController
             return $mapped;
         })->values();
 
-        return view('admin.location.list', [
+        return view('admin.org.location.list', [
             'title' => 'All Locations',
             'gridConfig' => [
                 'columns' => [
@@ -157,9 +157,9 @@ class LocationCrudController extends CrudController
     {
         $this->authorizeManage();
 
-        $this->crud->setCreateView('admin.location.create');
+        $this->crud->setCreateView('admin.org.location.create');
 
-        return view('admin.location.create', [
+        return view('admin.org.location.create', [
             'title' => 'Add New Location',
             'branches' => Branch::orderBy('name')->get(),
         ]);
@@ -180,13 +180,13 @@ class LocationCrudController extends CrudController
     {
         $this->authorizeManage();
 
-        $this->crud->setEditView('admin.location.edit');
+        $this->crud->setEditView('admin.org.location.edit');
 
         $location = Location::findOrFail($id);
 
         $branches = Branch::orderBy('name')->get();
 
-        return view('admin.location.edit', [
+        return view('admin.org.location.edit', [
             'title' => 'Edit Location - '.$location->name,
             'location' => $location,
             'branches' => $branches,
