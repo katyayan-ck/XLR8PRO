@@ -95,6 +95,7 @@
 
 @push('after_styles')
 <link rel="stylesheet" href="https://unpkg.com/ag-grid-community/styles/ag-theme-quartz.css">
+<link rel="stylesheet" href="{{ asset('css/ag-grid-tabler-theme.css') }}">
 @endpush
 
 @push('after_scripts')

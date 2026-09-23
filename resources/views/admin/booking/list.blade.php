@@ -157,6 +157,9 @@
 
 @push('after_styles')
 <link rel="stylesheet" href="https://unpkg.com/ag-grid-community/styles/ag-theme-quartz.css">
+{{-- Maps the grid onto Tabler's own design tokens (light + dark mode) -
+     see .ai/rules/conventions.md section 13 and public/css/ag-grid-tabler-theme.css --}}
+<link rel="stylesheet" href="{{ asset('css/ag-grid-tabler-theme.css') }}">
 
 <style>
     .ag-theme-quartz .center-header .ag-header-cell-label,
