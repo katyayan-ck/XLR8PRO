@@ -788,8 +788,8 @@ class BookingCrudController extends CrudController
                 'holder_name' => $refund->holder_name ?? 'N/A',
                 'ifsc_code' => $refund->ifsc_code ?? 'N/A',
                 'details' => $refund->details ?? 'N/A',
-                'req_date' => $refund->req_date ? Carbon::parse($refund->req_date)->format('d-M-Y') : 'N/A',
-                'ref_date' => $refund->ref_date ? Carbon::parse($refund->ref_date)->format('d-M-Y') : 'N/A',
+                'req_date' => site_date($refund->req_date),
+                'ref_date' => site_date($refund->ref_date),
                 'mode' => $refund->mode ?? 'N/A',
                 'transaction_details' => $refund->transaction_details ?? 'N/A',
                 'remark' => $refund->remark ?? 'N/A',
@@ -1078,8 +1078,9 @@ class BookingCrudController extends CrudController
 
         $bookingNo = $booking->id;
 
-        $invoiceDate = $booking->inv_date ? Carbon::parse($booking->inv_date)->format('d-M-Y')
-            : ($booking->dealer_inv_date ? Carbon::parse($booking->dealer_inv_date)->format('d-M-Y') : 'N/A');
+        $invoiceDate = $booking->inv_date
+            ? site_date($booking->inv_date)
+            : site_date($booking->dealer_inv_date);
 
         $invoiceNo = $booking->inv_no ?? $booking->dealer_inv_no ?? 'N/A';
 
@@ -1160,9 +1161,7 @@ class BookingCrudController extends CrudController
         }
 
         $policy_no = $booking->policy_no ?? 'N/A';
-        $policy_date = $booking->policy_date
-            ? Carbon::parse($booking->policy_date)->format('d-M-Y')
-            : 'N/A';
+        $policy_date = site_date($booking->policy_date);
 
         $policy_type = match ((int) ($booking->policy_type ?? 0)) {
             1 => 'Standard',
@@ -1306,18 +1305,18 @@ class BookingCrudController extends CrudController
             'id' => $booking->id,
             'serial_no' => null,
             'booking_no' => $bookingNo,
-            'created_at' => Carbon::parse($booking->created_at)->format('d-M-Y'),
-            'booking_date' => $booking->booking_date ? Carbon::parse($booking->booking_date)->format('d-M-Y') : 'N/A',
-            'cancel_date' => $booking->cancel_date ? Carbon::parse($booking->cancel_date)->format('d-M-Y') : 'N/A',
-            'refund_request_date' => $booking->refund_request_date ? Carbon::parse($booking->refund_request_date)->format('d-M-Y') : 'N/A',
-            'refund_date' => $booking->refund_date ? Carbon::parse($booking->refund_date)->format('d-M-Y') : 'N/A',
-            'refund_rejection_date' => $booking->refund_rejection_date ? Carbon::parse($booking->refund_rejection_date)->format('d-M-Y') : 'N/A',
-            'receipt_date' => $booking->receipt_date ? Carbon::parse($booking->receipt_date)->format('d-M-Y') : 'N/A',
+            'created_at' => site_date($booking->created_at),
+            'booking_date' => site_date($booking->booking_date),
+            'cancel_date' => site_date($booking->cancel_date),
+            'refund_request_date' => site_date($booking->refund_request_date),
+            'refund_date' => site_date($booking->refund_date),
+            'refund_rejection_date' => site_date($booking->refund_rejection_date),
+            'receipt_date' => site_date($booking->receipt_date),
             'invoice_date' => $invoiceDate,
-            'cpd' => $booking->cpd ? Carbon::parse($booking->cpd)->format('d-M-Y') : 'N/A',
-            'del_date' => $booking->del_date ? Carbon::parse($booking->del_date)->format('d-M-Y') : 'N/A',
-            'otf_date' => $booking->otf_date ? Carbon::parse($booking->otf_date)->format('d-M-Y') : 'N/A',
-            'inv_date' => $booking->inv_date ? Carbon::parse($booking->inv_date)->format('d-M-Y') : 'N/A',
+            'cpd' => site_date($booking->cpd),
+            'del_date' => site_date($booking->del_date),
+            'otf_date' => site_date($booking->otf_date),
+            'inv_date' => site_date($booking->inv_date),
 
             'name' => $booking->name ?? 'N/A',
             'care_of' => $booking->care_of ?? 'N/A',
@@ -1430,7 +1429,7 @@ class BookingCrudController extends CrudController
             'dms_so' => $booking->dms_so ?? 'N/A',
             'online_bk_ref_no' => $booking->online_bk_ref_no ?? 'N/A',
             'receipt_no' => $booking->receipt_no ?? 'N/A',
-            'receipt_date' => $booking->receipt_date ? Carbon::parse($booking->receipt_date)->format('d-M-Y') : 'N/A',
+            'receipt_date' => site_date($booking->receipt_date),
             'chassis_no' => $booking->chassis_no ?? 'N/A',
             'del_type' => $booking->del_type ?? 'N/A',
             'invoice_no' => $invoiceNo,
@@ -7745,9 +7744,7 @@ class BookingCrudController extends CrudController
 
             $row->serial_no = ($paginatedBookings->currentPage() - 1) * $paginatedBookings->perPage() + $index + 1;
 
-            $row->refund_request_date = $t->refund_request_date
-                ? Carbon::parse($t->refund_request_date)->format('d-M-Y')
-                : 'N/A';
+            $row->refund_request_date = site_date($t->refund_request_date);
 
             $row->action = '
             <div class="d-flex justify-content-center gap-2">
@@ -7881,13 +7878,9 @@ class BookingCrudController extends CrudController
 
             $row->serial_no = ($paginatedBookings->currentPage() - 1) * $paginatedBookings->perPage() + $index + 1;
 
-            $row->refund_request_date = $t->refund_request_date
-                ? Carbon::parse($t->refund_request_date)->format('d-M-Y')
-                : 'N/A';
+            $row->refund_request_date = site_date($t->refund_request_date);
 
-            $row->refund_rejection_date = $t->refund_rejection_date
-                ? Carbon::parse($t->refund_rejection_date)->format('d-M-Y')
-                : 'N/A';
+            $row->refund_rejection_date = site_date($t->refund_rejection_date);
 
             $row->action = '
             <div class="d-flex justify-content-center gap-2">
@@ -8054,13 +8047,9 @@ class BookingCrudController extends CrudController
 
             $row->serial_no = ($paginatedBookings->currentPage() - 1) * $paginatedBookings->perPage() + $index + 1;
 
-            $row->refund_date = $t->refund_date
-                ? Carbon::parse($t->refund_date)->format('d-M-Y')
-                : 'N/A';
+            $row->refund_date = site_date($t->refund_date);
 
-            $row->refund_request_date = $t->refund_request_date
-                ? Carbon::parse($t->refund_request_date)->format('d-M-Y')
-                : 'N/A';
+            $row->refund_request_date = site_date($t->refund_request_date);
 
             $row->action = '
             <div class="d-flex justify-content-center gap-2">
@@ -10223,14 +10212,14 @@ class BookingCrudController extends CrudController
             $mapped->booking_no = $booking->id;
 
             // ----- X8 Fields -----
-            $mapped->x8_enq_date = $booking->created_at ? Carbon::parse($booking->created_at)->format('d-M-Y') : 'N/A';
+            $mapped->x8_enq_date = site_date($booking->created_at);
             $mapped->x8_booking_no = $booking->id;
-            $mapped->x8_booking_date = $booking->booking_date ? Carbon::parse($booking->booking_date)->format('d-M-Y') : 'N/A';
+            $mapped->x8_booking_date = site_date($booking->booking_date);
 
             // ----- Invoice Type -----
             $mapped->invoice_type = $booking->dealer_status == 2 ? 'Dealer Invoice' : 'Normal Invoice';
             $mapped->inv_no = $booking->inv_no ?? 'N/A';
-            $mapped->inv_date = $booking->inv_date ? Carbon::parse($booking->inv_date)->format('d-M-Y') : 'N/A';
+            $mapped->inv_date = site_date($booking->inv_date);
 
             // ----- Customer Category -----
             $mapped->customer_category = $booking->b_cat ?? 'N/A';
@@ -10318,7 +10307,7 @@ class BookingCrudController extends CrudController
             $receiptDisplay = [];
             $receiptTotal = 0;
             foreach ($receiptLogs as $receipt) {
-                $receiptDisplay[] = "{$receipt->type_number} / ".Carbon::parse($receipt->date)->format('d-M-Y').' / ₹'.number_format($receipt->amount, 2);
+                $receiptDisplay[] = "{$receipt->type_number} / ".site_date($receipt->date).' / ₹'.number_format($receipt->amount, 2);
                 $receiptTotal += (float) $receipt->amount;
             }
             $mapped->receipt_details = ! empty($receiptDisplay) ? implode(' | ', $receiptDisplay) : 'N/A';
@@ -10326,10 +10315,10 @@ class BookingCrudController extends CrudController
 
             $receipts = $receiptLogs->values();
             $mapped->receipt_no_1 = isset($receipts[0]) ? $receipts[0]->reciept : 'N/A';
-            $mapped->receipt_date_1 = isset($receipts[0]) ? Carbon::parse($receipts[0]->date)->format('d-M-Y') : 'N/A';
+            $mapped->receipt_date_1 = isset($receipts[0]) ? site_date($receipts[0]->date) : 'N/A';
             $mapped->receipt_amount_1 = isset($receipts[0]) ? number_format($receipts[0]->amount, 2) : 'N/A';
             $mapped->receipt_no_2 = isset($receipts[1]) ? $receipts[1]->reciept : 'N/A';
-            $mapped->receipt_date_2 = isset($receipts[1]) ? Carbon::parse($receipts[1]->date)->format('d-M-Y') : 'N/A';
+            $mapped->receipt_date_2 = isset($receipts[1]) ? site_date($receipts[1]->date) : 'N/A';
             $mapped->receipt_amount_3 = isset($receipts[2]) ? number_format($receipts[2]->amount, 2) : 'N/A';
 
             // ----- BALANCE -----
@@ -10435,7 +10424,7 @@ class BookingCrudController extends CrudController
         if ($statement) {
             return response()->json([
                 'amount' => number_format($statement->credit_amount ?? 0, 2),
-                'date' => $statement->trans_date ? Carbon::parse($statement->trans_date)->format('d-M-Y') : '',
+                'date' => site_date($statement->trans_date, ''),
             ]);
         }
 
