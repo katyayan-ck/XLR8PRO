@@ -1144,3 +1144,48 @@ confirmed zero remaining old-path references anywhere in `app/`, `routes/`, or `
   `invoiced`, `pending-kyc`, `pending-dms`) → all 200.
 - `vendor/bin/pint --dirty --format agent` → clean.
 - `php artisan test --filter=Booking --compact` → 54 passed, 261 assertions, zero regressions.
+
+## Enquiry module view reorganization — mirror controller module structure
+
+Second module in the Sales-first sequencing (Booking → Enquiry → Quotation → Lead → Campaign).
+
+### Orphan scan
+
+All 26 `admin.enquiry.*` references confined to `EnquiryCrudController.php`
+(`App\Http\Controllers\Admin\Sales\Enquiry`). Extracted 14 unique statically-referenced view names
+(including the ones passed through the shared `renderGridPage(string $view, ...)` helper, which
+still uses literal string arguments at every call site, so no dynamic-construction false positives
+here unlike Booking's `getFullBookingData()`). Diffed against 20 actually-present files → 6 orphan
+candidates: `assigned-long-enquiry`, `assigned-quick-enquiry`, `createNew`, `edit`,
+`unassigned-long-enquiry`, `unassigned-quick-enquiry`.
+
+Also found `app/Http/Controllers/Admin/oldEnquiryCrudController.php` — a duplicate, unrouted,
+dead controller (same class name `EnquiryCrudController`, wrong namespace
+`App\Http\Controllers\Admin`) that still references 4 of the 6 orphan candidates. Confirmed it is
+never routed or referenced anywhere else. Logged as a new finding (dead duplicate controller file,
+out of scope for this view-only pass — flagged in `known-bugs-report.md`, not deleted). The
+remaining 2 candidates (`createNew`, `edit`) are referenced nowhere at all, even in the dead
+controller.
+
+Moved all 6 to `resources/views/backup/orphaned/admin/enquiry/` with the original-path comment
+convention.
+
+### Reorganization
+
+Moved the 14 live views from `resources/views/admin/enquiry/` to
+`resources/views/admin/sales/enquiry/` via `git mv`. Updated all 26 `admin.enquiry.*` references
+in `EnquiryCrudController.php` to `admin.sales.enquiry.*`. Also corrected a stale path in a code
+comment in `routes/backpack/core.php` (BUG-094 documentation comment referencing the old
+`setListView('admin.enquiry.list')` path).
+
+### Verification
+
+- `php -l` → no syntax errors.
+- `php artisan view:clear`.
+- Live HTTP round trips (authenticated `backpack` guard) against 6 routes spanning the index,
+  create, `renderGridPage`-based assigned/hyperlocal listings, and finance/exchange sub-views →
+  all 200. Independently confirmed `assignedLongList()`/`unassignedLongList()` render the shared
+  `enquiry-grid` view, not the dead per-status view files, validating the orphan classification.
+- `vendor/bin/pint --dirty --format agent` → clean.
+- `php artisan test --filter=Enquiry --compact` → 5 passed (EnquiryReferenceServiceTest; no other
+  Enquiry-specific test coverage exists yet), zero regressions.

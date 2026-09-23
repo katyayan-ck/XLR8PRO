@@ -335,7 +335,7 @@ Route::group([
     Route::delete('sales/enquiry/{id}', [EnquiryCrudController::class, 'destroy'])->name('sales.enquiry.destroy');
     // BUG-094: search()/showDetailsRow() delegate to Backpack's own ListOperation trait methods
     // (traitSearch()/traitShowDetailsRow()), which only run setupListOperation() — and therefore
-    // only pick up setListView('admin.enquiry.list') — when the route carries the 'operation' key.
+    // only pick up setListView('admin.sales.enquiry.list') — when the route carries the 'operation' key.
     // Same class of bug as BUG-064/BUG-091; see known-bugs-report.md.
     Route::post('sales/enquiry/search', ['uses' => EnquiryCrudController::class.'@search', 'as' => 'sales.enquiry.search', 'operation' => 'list']);
     Route::get('sales/enquiry/{id}/details', ['uses' => EnquiryCrudController::class.'@showDetailsRow', 'as' => 'sales.enquiry.details', 'operation' => 'list']);

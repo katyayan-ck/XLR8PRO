@@ -95,7 +95,7 @@ class EnquiryCrudController extends CrudController
 
     protected function setupListOperation()
     {
-        $this->crud->setListView('admin.enquiry.list');
+        $this->crud->setListView('admin.sales.enquiry.list');
     }
 
     /**
@@ -404,7 +404,7 @@ class EnquiryCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
-        $this->crud->setListView('admin.enquiry.list');
+        $this->crud->setListView('admin.sales.enquiry.list');
 
         $filters = [
             'missed_fup',
@@ -431,7 +431,7 @@ class EnquiryCrudController extends CrudController
             return $counts;
         });
 
-        return view('admin.enquiry.list', [
+        return view('admin.sales.enquiry.list', [
             'title' => 'Master Enquiry List',
             'gridConfig' => [
                 'columns' => $this->getColumns('all'),
@@ -633,7 +633,7 @@ class EnquiryCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
-        return $this->renderGridPage('admin.enquiry.reference-enquiry', 'Reference Enquiries', 'reference');
+        return $this->renderGridPage('admin.sales.enquiry.reference-enquiry', 'Reference Enquiries', 'reference');
     }
 
     public function virtualNumberList()
@@ -642,7 +642,7 @@ class EnquiryCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
-        return $this->renderGridPage('admin.enquiry.virtual-number-enquiry', 'Virtual Number Enquiries', 'virtual');
+        return $this->renderGridPage('admin.sales.enquiry.virtual-number-enquiry', 'Virtual Number Enquiries', 'virtual');
     }
 
     public function hyperlocalList()
@@ -656,7 +656,7 @@ class EnquiryCrudController extends CrudController
         $count = (clone Enquiry::hyperlocal())->count();
 
         return $this->renderGridPage(
-            'admin.enquiry.hyperlocal-enquiry',
+            'admin.sales.enquiry.hyperlocal-enquiry',
             'Hyperlocal Enquiries ('.$count.')',
             'hyperlocal'
         );
@@ -668,7 +668,7 @@ class EnquiryCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
-        return $this->renderGridPage('admin.enquiry.whatsapp-campaign-enquiry', 'WhatsApp Campaign Enquiries', 'whatsapp');
+        return $this->renderGridPage('admin.sales.enquiry.whatsapp-campaign-enquiry', 'WhatsApp Campaign Enquiries', 'whatsapp');
     }
 
     public function assignedLongList()
@@ -677,7 +677,7 @@ class EnquiryCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
-        return $this->renderGridPage('admin.enquiry.enquiry-grid', 'Assigned Long Enquiries', 'assigned_long');
+        return $this->renderGridPage('admin.sales.enquiry.enquiry-grid', 'Assigned Long Enquiries', 'assigned_long');
     }
 
     public function unassignedLongList()
@@ -686,7 +686,7 @@ class EnquiryCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
-        return $this->renderGridPage('admin.enquiry.enquiry-grid', 'Unassigned Long Enquiries', 'unassigned_long');
+        return $this->renderGridPage('admin.sales.enquiry.enquiry-grid', 'Unassigned Long Enquiries', 'unassigned_long');
     }
 
     public function assignedQuickList()
@@ -695,7 +695,7 @@ class EnquiryCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
-        return $this->renderGridPage('admin.enquiry.enquiry-grid', 'Assigned Quick Enquiries', 'assigned_quick');
+        return $this->renderGridPage('admin.sales.enquiry.enquiry-grid', 'Assigned Quick Enquiries', 'assigned_quick');
     }
 
     public function unassignedQuickList()
@@ -704,7 +704,7 @@ class EnquiryCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
-        return $this->renderGridPage('admin.enquiry.enquiry-grid', 'Unassigned Quick Enquiries', 'unassigned_quick');
+        return $this->renderGridPage('admin.sales.enquiry.enquiry-grid', 'Unassigned Quick Enquiries', 'unassigned_quick');
     }
 
     public function exchangeEnquiryList()
@@ -713,7 +713,7 @@ class EnquiryCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
-        return $this->renderGridPage('admin.enquiry.exchange', 'Int in Exchange Dashboard', 'exchange');
+        return $this->renderGridPage('admin.sales.enquiry.exchange', 'Int in Exchange Dashboard', 'exchange');
     }
 
     public function scrappageEnquiryList()
@@ -722,7 +722,7 @@ class EnquiryCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
-        return $this->renderGridPage('admin.enquiry.exchange', 'Int in Scrappage Dashboard', 'scrappage');
+        return $this->renderGridPage('admin.sales.enquiry.exchange', 'Int in Scrappage Dashboard', 'scrappage');
     }
 
     public function exchangeNotInterestedList()
@@ -731,7 +731,7 @@ class EnquiryCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
-        return $this->renderGridPage('admin.enquiry.exchange', 'Not Interested in Exchange Dashboard', 'exchange_not_interested');
+        return $this->renderGridPage('admin.sales.enquiry.exchange', 'Not Interested in Exchange Dashboard', 'exchange_not_interested');
     }
 
     public function financeEnquiryList()
@@ -740,7 +740,7 @@ class EnquiryCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
-        return $this->renderGridPage('admin.enquiry.finance-list', 'Enquiries - Int in Finance', 'finance');
+        return $this->renderGridPage('admin.sales.enquiry.finance-list', 'Enquiries - Int in Finance', 'finance');
     }
 
     public function financeNotInterestedList()
@@ -749,7 +749,7 @@ class EnquiryCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
-        return $this->renderGridPage('admin.enquiry.finance-list', 'Enquiries - Finance Not Interested', 'finance_not_interested');
+        return $this->renderGridPage('admin.sales.enquiry.finance-list', 'Enquiries - Finance Not Interested', 'finance_not_interested');
     }
 
     private function renderGridPage(string $view, string $title, string $listType)
@@ -1659,7 +1659,7 @@ class EnquiryCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to create enquiries.');
         }
 
-        return view('admin.enquiry.create', [
+        return view('admin.sales.enquiry.create', [
             'title' => 'Add New Enquiry',
             'enquiry' => null,
             'fups' => [],
@@ -1673,7 +1673,7 @@ class EnquiryCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to create enquiries.');
         }
 
-        return view('admin.enquiry.reference-create', [
+        return view('admin.sales.enquiry.reference-create', [
             'title' => 'Add Reference Enquiry',
             'enquiry' => null,
             'fups' => [],
@@ -1719,7 +1719,7 @@ class EnquiryCrudController extends CrudController
         $data['exchangeFups'] = $finExchFups->where('remark_type', 2);
         $data['financeFups'] = $finExchFups->where('remark_type', 1);
 
-        return view('admin.enquiry.create', $data);
+        return view('admin.sales.enquiry.create', $data);
     }
 
     private function saveCreFup($enquiry, $request)
@@ -1909,7 +1909,7 @@ class EnquiryCrudController extends CrudController
     // {
     //     $enquiry = Enquiry::with(['segment', 'model', 'variant'])->findOrFail($id);
     //     $existing_car_oems = OrgService::keywordValueByCode('EXISTING_CAR_OEM');
-    //     return view('admin.enquiry.exchange-edit', compact('enquiry', 'existing_car_oems'));
+    //     return view('admin.sales.enquiry.exchange-edit', compact('enquiry', 'existing_car_oems'));
     // }
 
     public function exchangeEnquiryEdit($id)
@@ -1931,7 +1931,7 @@ class EnquiryCrudController extends CrudController
             ->orderByDesc('created_at')
             ->get();
 
-        return view('admin.enquiry.exchange-edit', compact('enquiry', 'existing_car_oems', 'fups'));
+        return view('admin.sales.enquiry.exchange-edit', compact('enquiry', 'existing_car_oems', 'fups'));
     }
 
     // public function exchangeEnquiryUpdate(Request $request, $id)
@@ -2012,7 +2012,7 @@ class EnquiryCrudController extends CrudController
     //     $finance = \App\Models\Module\Finance\XFinance::where('enq_no', $enquiry->enquiry_no)->first();
     //     $financiers = \App\Models\Module\Booking\XlFinancier::select('id', 'name', 'short_name')->get()->toArray();
 
-    //     return view('admin.enquiry.finance-edit', compact('enquiry', 'finance', 'financiers'));
+    //     return view('admin.sales.enquiry.finance-edit', compact('enquiry', 'finance', 'financiers'));
     // }
 
     public function financeEnquiryEdit($id)
@@ -2036,7 +2036,7 @@ class EnquiryCrudController extends CrudController
             ->orderByDesc('created_at')
             ->get();
 
-        return view('admin.enquiry.finance-edit', compact('enquiry', 'finance', 'financiers', 'fups'));
+        return view('admin.sales.enquiry.finance-edit', compact('enquiry', 'finance', 'financiers', 'fups'));
     }
 
     // public function financeEnquiryUpdate(Request $request, $id)
@@ -2622,7 +2622,7 @@ class EnquiryCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
-        return $this->renderGridPage('admin.enquiry.otf-bookings', 'OTF Bookings', 'otf');
+        return $this->renderGridPage('admin.sales.enquiry.otf-bookings', 'OTF Bookings', 'otf');
     }
 
     public function showOtf($id)
@@ -2670,7 +2670,7 @@ class EnquiryCrudController extends CrudController
             $scLocation = OrgService::locationName($matchedSc['primary_loc_code'] ?? '');
         }
 
-        return view('admin.enquiry.showOtf', compact('otf', 'vehicle', 'scDisplay', 'scBranch', 'scLocation', 'scMileIdStr'));
+        return view('admin.sales.enquiry.showOtf', compact('otf', 'vehicle', 'scDisplay', 'scBranch', 'scLocation', 'scMileIdStr'));
     }
 
     public function xceler8List()
@@ -2679,7 +2679,7 @@ class EnquiryCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
-        return $this->renderGridPage('admin.enquiry.enquiry-grid', 'Xceler8 Enquiries', 'xceler8');
+        return $this->renderGridPage('admin.sales.enquiry.enquiry-grid', 'Xceler8 Enquiries', 'xceler8');
     }
 
     /**
