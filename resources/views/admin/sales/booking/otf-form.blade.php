@@ -3065,7 +3065,7 @@ $(document).ready(function () {
             return;
         }
         $.ajax({
-            url: "{{ url('admin/get-do-amount') }}",
+            url: "{{ backpack_url('sales/booking/get-do-amount') }}",
             type: "GET",
             data: { do_no: doNo },
             success: function (res) {

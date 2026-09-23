@@ -748,7 +748,7 @@
     //     + downstream-view contract change outside this optimisation's scope).
     // =========================================================================
     function openVOTF(bookingId) {
-        const url = "{{ url('admin/booking/otf-form') }}/" + bookingId;
+        const url = "{{ backpack_url('sales/booking/otf-form') }}/" + bookingId;
 
         fetch(url, {
             method: 'GET',

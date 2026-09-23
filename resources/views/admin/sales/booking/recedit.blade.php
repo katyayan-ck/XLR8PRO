@@ -344,7 +344,7 @@ function openProofPreview(url,type,fileName)
         }
 
         $.ajax({
-            url: '{{ url("/admin/check-receipt") }}/' + encodeURIComponent(val),
+            url: '{{ backpack_url('sales/booking/check-receipt') }}/' + encodeURIComponent(val),
             method: 'GET',
             success: function(data) {
                 if (data !== 0) {

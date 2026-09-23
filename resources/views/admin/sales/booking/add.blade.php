@@ -2009,7 +2009,7 @@
                 $('#segment').on('change', function() {
                     const segment = this.value;
                     $.ajax({
-                        url: '{{ url('sales/booking/models') }}/' + segment, method: 'GET',
+                        url: '{{ backpack_url('sales/booking/models') }}/' + segment, method: 'GET',
                         success: function(data) {
                             populateSelect($('#model'), data, 'name', 'code');
                             $('#model').prop('disabled', false);
@@ -2026,7 +2026,7 @@
                 $('#model').on('change', function() {
                     const modelId = this.value;
                     $.ajax({
-                        url: '{{ url('sales/booking/variants') }}/' + encodeURIComponent(modelId), method: 'GET',
+                        url: '{{ backpack_url('sales/booking/variants') }}/' + encodeURIComponent(modelId), method: 'GET',
                         success: function(data) {
                             populateSelect($('#variant'), data, 'name', 'code', null, function(option, item) {
                                 option.dataset.seating = item.seating_capacity || '0';
@@ -2053,7 +2053,7 @@
                     if (!variantId) return;
 
                     $.ajax({
-                        url: '{{ url('sales/booking/colors') }}/' + variantId, method: 'GET',
+                        url: '{{ backpack_url('sales/booking/colors') }}/' + variantId, method: 'GET',
                         success: function(data) {
                             let colorsArray = (typeof data === 'object' && !Array.isArray(data)) ? Object.values(data) : (Array.isArray(data) ? data : []);
                             if (colorsArray.length > 0) {
@@ -2076,7 +2076,7 @@
 
                     if (segmentName && modelId && variantId) {
                         $.ajax({
-                            url: '{{ url('sales/booking/accessories') }}/'
+                            url: '{{ backpack_url('sales/booking/accessories') }}/'
                             + encodeURIComponent($('#segment').val())
                             + '/'
                             + encodeURIComponent($('#model').val())
@@ -2156,7 +2156,7 @@
 
                 $('#branch').on('change', function() {
                     $.ajax({
-                        url: '{{ url('sales/booking/locations-by-branch') }}/' + this.value + '?type=sales', method: 'GET',
+                        url: '{{ backpack_url('sales/booking/locations-by-branch') }}/' + this.value + '?type=sales', method: 'GET',
                         success: function(data) {
                             let html = '<option value="" disabled selected>-- Select Location --</option>';
                             if (Array.isArray(data) && data.length > 0) {
@@ -2378,7 +2378,7 @@
                     const value = this.value.trim();
                     if (value) {
                         $.ajax({
-                            url: '{{ url('/admin/check-receipt') }}/' + value, method: 'GET',
+                            url: '{{ backpack_url('sales/booking/check-receipt') }}/' + value, method: 'GET',
                             success: function(data) {
                                 if (data !== 0) {
                                     $('#receiptvoucherwarning').show().text(fieldName.charAt(0).toUpperCase() + fieldName.slice(1).replace(/-/g, ' ') + ' already exists');
