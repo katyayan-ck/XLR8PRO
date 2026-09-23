@@ -1464,3 +1464,46 @@ across both controllers.
 - Live HTTP round trips: key-value and keyword-master index/create all 200.
 - `vendor/bin/pint --dirty --format agent` -> clean.
 - No dedicated test suite exists for either; covered by the live HTTP round trips above.
+
+## Theme-mode switcher enabled in site header (deep-scan pass, item 3 of 6)
+
+Starting the deep-scan tasks from the original mega-request (minimalistic design, dark/light
+audit, header switcher, label/date rollout, AJAX re-verification), after completing all
+app-wide view reorganization batches that had an existing module namespace to mirror.
+
+### Discovery
+
+The Tabler theme already ships a complete, working dark/light/system mode switcher
+(`switch_theme.blade.php`, `light_dark_mode_logic.blade.php`'s `ColorMode` JS class, and CSS rules
+in `style.css` for `.show-theme-*`), positioned in the top-right of both the desktop
+(`inc/menu.blade.php`) and mobile (`_horizontal/menu_container.blade.php`) header via
+`@includeWhen(backpack_theme_config('options.showColorModeSwitcher'), ...)`. It was simply never
+enabled - `config/backpack/theme-tabler.php` had both `options.colorModes` and
+`options.showColorModeSwitcher` commented out, which explains recurring pre-existing log noise
+("Could not find config key: options.showColorModeSwitcher...") seen throughout this session's
+`storage/logs/laravel.log`.
+
+### Fix
+
+Uncommented both options: `colorModes` (system/light/dark with `la-desktop`/`la-sun`/`la-moon`
+icons) and `showColorModeSwitcher: true`. No new views, JS, or CSS needed - purely a one-line
+config activation of existing, already-tested theme infrastructure.
+
+### Verification
+
+- `php -l` on the config file -> clean.
+- `php artisan config:clear && php artisan cache:clear`.
+- Confirmed `backpack_theme_config('options.colorModes')`/`showColorModeSwitcher` resolve
+  correctly both directly and via a full `app()->handle()` HTTP round trip in the same process.
+- Live HTTP round trips across 3 already-reorganized pages from different modules
+  (`admin/sales/booking`, `admin/org/user`, `admin/vehicle/color`) - all 200, switcher markup
+  (`colorMode.switch()`, 3 mode buttons x 2 responsive placements = 6) present in every response.
+- Confirmed the earlier config-key error stopped appearing in `storage/logs/laravel.log` after
+  the fix (a stale error from before `config:clear` was mistaken for a live issue mid-verification,
+  resolved by re-running cleanly).
+- `vendor/bin/pint --dirty --format agent` -> auto-fixed 2 PHPDoc formatting issues in the config
+  file, otherwise clean.
+- `php artisan test --compact` (full suite) -> 167 passed, 32 failed. All 32 failures are
+  pre-existing, confined to an unrelated Post/PostReporting/EmpPostAssignment/HR cluster (missing
+  `App\Services\IAM\PostService` class, missing tables) - none touch views, config, or any area
+  edited this session. Zero new regressions.
