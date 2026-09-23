@@ -296,7 +296,7 @@
     .readonly-field,
     input[readonly],
     select[readonly] {
-        background-color: #f8f9fa;
+        background-color: var(--tblr-bg-surface-secondary);
         cursor: not-allowed;
     }
 
@@ -310,7 +310,7 @@
     .current-file-info {
         font-size: 0.9rem;
         margin-top: 8px;
-        color: #555;
+        color: var(--tblr-muted);
     }
 
     .current-file-info a {
@@ -333,7 +333,7 @@
         padding: 0.375rem 2.25rem 0.375rem 0.75rem !important;
         border: 1px solid #ced4da;
         border-radius: 0.375rem;
-        background-color: #fff;
+        background-color: var(--tblr-card-bg);
     }
 
     .select2-container--default .select2-selection--single .select2-selection__arrow {

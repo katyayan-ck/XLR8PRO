@@ -12,11 +12,11 @@
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
             border: none;
             margin-bottom: 2rem;
-            background: #fff;
+            background: var(--tblr-card-bg);
         }
 
         .enquiry-card .card-header {
-            background: #fff;
+            background: var(--tblr-card-bg);
             border-bottom: 1px solid #edf2f9;
             border-top-left-radius: 12px;
             border-top-right-radius: 12px;
@@ -373,38 +373,38 @@
                                 <label class="form-label">Xceler8 Enquiry Number</label>
                                 <input type="text" name="enq_no" class="form-control"
                                     value="{{ isset($enquiry->id) ? 'XENQ-' . $enquiry->id : '' }}" readonly tabindex="-1"
-                                    style="background-color: #e9ecef; pointer-events: none;">
+                                    style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                             </div>
 
                             <div class="col-md-6 mb-6">
                                 <label class="form-label">Xceler8 Enquiry Date</label>
                                 <input type="text" name="enquiry_date" class="form-control"
                                     value="{{ $enquiry->created_at ? $enquiry->created_at->format('d-m-Y H:i:s') : '' }}"
-                                    readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                    readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                             </div>
                             <div class="col-md-2 mb-3">
                                 <label class="form-label">Virtual Number</label>
                                 <input type="text" name="virtual_no" class="form-control"
                                     value="{{ $enquiry->virtual_no ?? '' }}" readonly tabindex="-1"
-                                    style="background-color: #e9ecef; pointer-events: none;">
+                                    style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">Call Date</label>
                                 <input type="text" name="virtual_call_date" class="form-control"
                                     value="{{ !empty($enquiry->virtual_call_date) ? \Carbon\Carbon::parse($enquiry->virtual_call_date)->format('d-M-Y H:i') : '' }}"
-                                    readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                    readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                             </div>
                             <div class="col-md-2 mb-3">
                                 <label class="form-label">Call Duration</label>
                                 <input type="text" name="call_duration" class="form-control"
                                     value="{{ $enquiry->call_duration ?? '' }}" readonly tabindex="-1"
-                                    style="background-color: #e9ecef; pointer-events: none;">
+                                    style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                             </div>
                             <div class="col-md-2 mb-3">
                                 <label class="form-label">Customer Contact Number</label>
                                 <input type="text" id="virtual_mobile" name="virtual_mobile_display" class="form-control"
                                     value="{{ old('mobile', $enquiry->mobile ?? '') }}" readonly tabindex="-1"
-                                    style="background-color: #e9ecef; pointer-events: none;">
+                                    style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">Call Nature <span class="text-danger">*</span></label>
@@ -443,7 +443,7 @@
 
                             <div class="table-responsive">
                                 <table class="table table-bordered text-center align-middle mb-0"
-                                    style="background-color: #e9ecef;">
+                                    style="background-color: var(--tblr-bg-surface-secondary);">
                                     <thead class="table-secondary text-uppercase" style="font-size: 0.85rem;">
                                         <tr>
                                             <th class="text-center p-3" style="width: 25%;">Parameters</th>
@@ -542,45 +542,45 @@
                                     <label class="form-label">Xceler8 Enquiry Number</label>
                                     <input type="text" name="enq_no" class="form-control"
                                         value="{{ isset($enquiry->id) ? 'XENQ-' . $enquiry->id : '' }}" readonly
-                                        tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                        tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
 
                                 <div class="col-md-6 mb-6">
                                     <label class="form-label">Xceler8 Enquiry Date</label>
                                     <input type="text" name="enquiry_date" class="form-control"
                                         value="{{ $enquiry->created_at ? $enquiry->created_at->format('d-m-Y H:i:s') : '' }}"
-                                        readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                        readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
 
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Lead Date & Time</label>
                                     <input type="text" class="form-control"
                                         value="{{ $enquiry->created_at ? \Carbon\Carbon::parse($enquiry->created_at)->format('d-M-Y H:i') : '—' }}"
-                                        readonly style="background-color: #e9ecef;">
+                                        readonly style="background-color: var(--tblr-bg-surface-secondary);">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Campaign Name</label>
                                     <input type="text" class="form-control"
                                         value="{{ $enquiry->wapp_campaign_name ?? '—' }}" readonly
-                                        style="background-color: #e9ecef;">
+                                        style="background-color: var(--tblr-bg-surface-secondary);">
                                 </div>
                                 <div class="col-md-2 mb-3">
                                     <label class="form-label">Campaign Date</label>
                                     <input type="text" class="form-control"
                                         value="{{ !empty($enquiry->wapp_campaign_date) ? \Carbon\Carbon::parse($enquiry->wapp_campaign_date)->format('d-M-Y') : '—' }}"
-                                        readonly style="background-color: #e9ecef;">
+                                        readonly style="background-color: var(--tblr-bg-surface-secondary);">
                                 </div>
                                 <div class="col-md-2 mb-3">
                                     <label class="form-label">Campaign Segment</label>
                                     <input type="text" class="form-control"
                                         value="{{ $enquiry->wapp_campaign_segment ?? '—' }}" readonly
-                                        style="background-color: #e9ecef;">
+                                        style="background-color: var(--tblr-bg-surface-secondary);">
                                 </div>
                                 <div class="col-md-2 mb-3">
                                     <label class="form-label">Campaign Model</label>
                                     <input type="text" class="form-control"
                                         value="{{ $enquiry->wapp_campaign_model ?? '—' }}" readonly
-                                        style="background-color: #e9ecef;">
+                                        style="background-color: var(--tblr-bg-surface-secondary);">
                                 </div>
                             </div>
                         </div>
@@ -600,21 +600,21 @@
                                     <label class="form-label">Xceler8 Enquiry Number</label>
                                     <input type="text" name="enq_no" class="form-control"
                                         value="{{ isset($enquiry->id) ? 'XENQ-' . $enquiry->id : '' }}" readonly
-                                        tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                        tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
 
                                 <div class="col-md-6 mb-6">
                                     <label class="form-label">Xceler8 Enquiry Date</label>
                                     <input type="text" name="enquiry_date" class="form-control"
                                         value="{{ $enquiry->created_at ? $enquiry->created_at->format('d-m-Y H:i:s') : '' }}"
-                                        readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                        readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                             @endif
 
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">Enquiry Origin</label>
                                 <input type="text" class="form-control" value="{{ $enqTypeStr }}" readonly
-                                    style="background-color: #e9ecef;">
+                                    style="background-color: var(--tblr-bg-surface-secondary);">
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">Enquiry Type <span class="text-danger">*</span></label>
@@ -708,18 +708,18 @@
                                 <div class="col-md-4 mb-4">
                                     <label class="form-label">Model Family</label>
                                     <input type="text" class="form-control" value="{{ $enquiry->model }}" readonly
-                                        style="background-color: #e9ecef;">
+                                        style="background-color: var(--tblr-bg-surface-secondary);">
                                 </div>
 
                                 <div class="col-md-4 mb-4">
                                     <label class="form-label">Variant Family</label>
                                     <input type="text" class="form-control" value="{{ $enquiry->variant }}" readonly
-                                        style="background-color: #e9ecef;">
+                                        style="background-color: var(--tblr-bg-surface-secondary);">
                                 </div>
                                 <div class="col-md-4 mb-4">
                                     <label class="form-label">Color Family</label>
                                     <input type="text" class="form-control" value="{{ $enquiry->color }}" readonly
-                                        style="background-color: #e9ecef;">
+                                        style="background-color: var(--tblr-bg-surface-secondary);">
                                 </div>
                             @endif
 
@@ -762,23 +762,23 @@
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">Fuel Type <span class="text-danger">*</span></label>
                                 <input type="text" id="fuel_type" class="form-control" readonly tabindex="-1"
-                                    style="background-color: #e9ecef;">
+                                    style="background-color: var(--tblr-bg-surface-secondary);">
                                 <input type="hidden" id="fuel_type_id" name="fuel_type">
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">Transmission <span class="text-danger">*</span></label>
                                 <input type="text" id="transmission" name="transmission" class="form-control"
-                                    readonly tabindex="-1" style="background-color: #e9ecef;">
+                                    readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary);">
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">Drivetrain <span class="text-danger">*</span></label>
                                 <input type="text" id="drivetrain" name="drivetrain" class="form-control" readonly
-                                    tabindex="-1" style="background-color: #e9ecef;">
+                                    tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary);">
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">Seating <span class="text-danger">*</span></label>
                                 <input type="text" id="seating" name="seating" class="form-control" readonly
-                                    tabindex="-1" style="background-color: #e9ecef;">
+                                    tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary);">
                             </div>
 
                             <div class="row w-100 m-0 p-0" id="bevSection" style="display: none;">
@@ -982,7 +982,7 @@
                                     <label class="form-label">Purchase Type (SC Input)</label>
                                     <input type="text" class="form-control"
                                         value="{{ collect($purchase_types ?? [])->firstWhere('code', $enquiry?->purchase_type)['value'] ?? ($enquiry?->purchase_type ?? '—') }}"
-                                        readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                        readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                     <input type="hidden" name="purchase_type"
                                         value="{{ old('purchase_type', $enquiry->purchase_type ?? '') }}">
                                 </div>
@@ -1082,57 +1082,57 @@
                             <div class="row">
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Purchase Type</label>
-                                    <input type="text" class="form-control" value="{{ collect($purchase_types ?? [])->firstWhere('code', $enquiry->purchase_type_crm ?? $enquiry->purchase_type)['value'] ?? ($enquiry->purchase_type_crm ?? $enquiry->purchase_type ?? '—') }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                    <input type="text" class="form-control" value="{{ collect($purchase_types ?? [])->firstWhere('code', $enquiry->purchase_type_crm ?? $enquiry->purchase_type)['value'] ?? ($enquiry->purchase_type_crm ?? $enquiry->purchase_type ?? '—') }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Brand Make</label>
-                                    <input type="text" class="form-control" value="{{ $brandMakeName }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                    <input type="text" class="form-control" value="{{ $brandMakeName }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Brand Model</label>
-                                    <input type="text" class="form-control" value="{{ $enquiry->brand_model }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                    <input type="text" class="form-control" value="{{ $enquiry->brand_model }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Vehicle Registration No.</label>
-                                    <input type="text" class="form-control" value="{{ $enquiry->vehicle_no }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                    <input type="text" class="form-control" value="{{ $enquiry->vehicle_no }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Manufacturing Year</label>
-                                    <input type="text" class="form-control" value="{{ $enquiry->make_year }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                    <input type="text" class="form-control" value="{{ $enquiry->make_year }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Odometer Reading</label>
-                                    <input type="text" class="form-control" value="{{ $enquiry->odo_reading }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                    <input type="text" class="form-control" value="{{ $enquiry->odo_reading }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Expected Price</label>
-                                    <input type="text" class="form-control" value="{{ $enquiry->expected_price ? '₹ '.number_format($enquiry->expected_price) : '' }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                    <input type="text" class="form-control" value="{{ $enquiry->expected_price ? '₹ '.number_format($enquiry->expected_price) : '' }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Offered Price</label>
-                                    <input type="text" class="form-control" value="{{ $enquiry->offered_price ? '₹ '.number_format($enquiry->offered_price) : '' }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                    <input type="text" class="form-control" value="{{ $enquiry->offered_price ? '₹ '.number_format($enquiry->offered_price) : '' }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Exchange Bonus</label>
-                                    <input type="text" class="form-control" value="{{ $enquiry->exchange_bonus ? '₹ '.number_format($enquiry->exchange_bonus) : '' }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                    <input type="text" class="form-control" value="{{ $enquiry->exchange_bonus ? '₹ '.number_format($enquiry->exchange_bonus) : '' }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Price Gap</label>
                                     @php 
                                         $diff = ($enquiry->expected_price ?? 0) - ($enquiry->offered_price ?? 0) - ($enquiry->exchange_bonus ?? 0); 
                                     @endphp
-                                    <input type="text" class="form-control" value="{{ $diff ? '₹ '.number_format($diff) : '' }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                    <input type="text" class="form-control" value="{{ $diff ? '₹ '.number_format($diff) : '' }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Reason for Case Lost (If Dropped)</label>
-                                    <input type="text" class="form-control" value="{{ $enquiry->lost_reason }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                    <input type="text" class="form-control" value="{{ $enquiry->lost_reason }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 {{-- EXCHANGE FOLLOW UPS TABLE --}}
                                 @if(isset($exchangeFups) && $exchangeFups->count() > 0)
                                 <div class="col-md-12 mt-4 mb-2">
-                                    <h5 class="fw-bold mb-3" style="color: #495057;">Exchange Follow-up History</h5>
+                                    <h5 class="fw-bold mb-3" style="color: var(--tblr-body-color);">Exchange Follow-up History</h5>
                                     <div class="table-responsive">
-                                        <table class="table table-bordered text-center align-middle mb-0" style="background-color: #e9ecef;">
+                                        <table class="table table-bordered text-center align-middle mb-0" style="background-color: var(--tblr-bg-surface-secondary);">
                                             <thead class="table-secondary text-uppercase" style="font-size: 0.85rem;">
                                                 <tr>
                                                     <th class="text-center px-3" style="width: 10%;">Fup #</th>
@@ -1169,50 +1169,50 @@
                             <div class="row">
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Finance Mode</label>
-                                    <input type="text" class="form-control" value="{{ $financeData->fin_mode ?? $enquiry->fin_mode ?? '' }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                    <input type="text" class="form-control" value="{{ $financeData->fin_mode ?? $enquiry->fin_mode ?? '' }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Loan Status</label>
-                                    <input type="text" class="form-control" value="{{ $financeData->loan_status ?? $enquiry->loan_status ?? '' }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                    <input type="text" class="form-control" value="{{ $financeData->loan_status ?? $enquiry->loan_status ?? '' }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Financier</label>
-                                    <input type="text" class="form-control" value="{{ $financierName }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                    <input type="text" class="form-control" value="{{ $financierName }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Case Status</label>
-                                    <input type="text" class="form-control" value="{{ $caseStatusMap[$financeData->case_status ?? 1] ?? '' }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                    <input type="text" class="form-control" value="{{ $caseStatusMap[$financeData->case_status ?? 1] ?? '' }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Case Lost Reason</label>
-                                    <input type="text" class="form-control" value="{{ $caseLostMap[$financeData->case_lost_reason ?? ''] ?? ($financeData->case_lost_reason ?? '') }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                    <input type="text" class="form-control" value="{{ $caseLostMap[$financeData->case_lost_reason ?? ''] ?? ($financeData->case_lost_reason ?? '') }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Instrument Type</label>
-                                    <input type="text" class="form-control" value="{{ $instTypeMap[$financeData->instrument_type ?? ''] ?? '' }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                    <input type="text" class="form-control" value="{{ $instTypeMap[$financeData->instrument_type ?? ''] ?? '' }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Reference No.</label>
-                                    <input type="text" class="form-control" value="{{ $financeData->instrument_ref_no ?? '' }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                    <input type="text" class="form-control" value="{{ $financeData->instrument_ref_no ?? '' }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Loan Amount</label>
-                                    <input type="text" class="form-control" value="{{ !empty($financeData->loan_amount) ? '₹ '.number_format($financeData->loan_amount) : '' }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                    <input type="text" class="form-control" value="{{ !empty($financeData->loan_amount) ? '₹ '.number_format($financeData->loan_amount) : '' }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Margin Money</label>
-                                    <input type="text" class="form-control" value="{{ !empty($financeData->margin) ? '₹ '.number_format($financeData->margin) : '' }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                    <input type="text" class="form-control" value="{{ !empty($financeData->margin) ? '₹ '.number_format($financeData->margin) : '' }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">File Charge</label>
-                                    <input type="text" class="form-control" value="{{ !empty($financeData->file_charge) ? '₹ '.number_format($financeData->file_charge) : '' }}" readonly tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                    <input type="text" class="form-control" value="{{ !empty($financeData->file_charge) ? '₹ '.number_format($financeData->file_charge) : '' }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 {{-- FINANCE FOLLOW UPS TABLE --}}
                                 @if(isset($financeFups) && $financeFups->count() > 0)
                                 <div class="col-md-12 mt-4 mb-2">
-                                    <h5 class="fw-bold mb-3" style="color: #495057;">Finance Follow-up History</h5>
+                                    <h5 class="fw-bold mb-3" style="color: var(--tblr-body-color);">Finance Follow-up History</h5>
                                     <div class="table-responsive">
-                                        <table class="table table-bordered text-center align-middle mb-0" style="background-color: #e9ecef;">
+                                        <table class="table table-bordered text-center align-middle mb-0" style="background-color: var(--tblr-bg-surface-secondary);">
                                             <thead class="table-secondary text-uppercase" style="font-size: 0.85rem;">
                                                 <tr>
                                                     <th class="text-center px-3" style="width: 10%;">Fup #</th>
@@ -1282,26 +1282,26 @@
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">OEM Assigned SC</label>
                                     <input type="text" class="form-control" value="{{ $oemScDisplay }}" readonly
-                                        tabindex="-1" style="background-color: #e9ecef;">
+                                        tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary);">
                                     <input type="hidden" name="sc_code" value="{{ $oemScCode }}">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">OEM Assigned SC Mile ID</label>
                                     <input type="text" id="oem_sc_mile_id" class="form-control"
                                         value="{{ $oemScMileId }}" readonly tabindex="-1"
-                                        style="background-color: #e9ecef;">
+                                        style="background-color: var(--tblr-bg-surface-secondary);">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">OEM Assigned SC Branch</label>
                                     <input type="text" id="oem_sc_branch" class="form-control"
                                         value="{{ $oemScBranch }}" readonly tabindex="-1"
-                                        style="background-color: #e9ecef;">
+                                        style="background-color: var(--tblr-bg-surface-secondary);">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">OEM Assigned SC Location</label>
                                     <input type="text" id="oem_sc_location" class="form-control"
                                         value="{{ $oemScLocation }}" readonly tabindex="-1"
-                                        style="background-color: #e9ecef;">
+                                        style="background-color: var(--tblr-bg-surface-secondary);">
                                 </div>
                             </div>
                         @endif
@@ -1330,17 +1330,17 @@
                                 <label class="form-label">X8 Assigned SC Mile ID</label>
                                 <input type="text" name="x8_sc_mile_id" id="x8_sc_mile_id" class="form-control"
                                     value="{{ old('x8_sc_mile_id', $enquiry->x8_sc_mile_id ?? '') }}" readonly
-                                    tabindex="-1" style="background-color: #e9ecef; pointer-events: none;">
+                                    tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">X8 Assigned SC Branch</label>
                                 <input type="text" id="x8_sc_branch" class="form-control" readonly tabindex="-1"
-                                    style="background-color: #e9ecef; pointer-events: none;">
+                                    style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">X8 Assigned SC Location</label>
                                 <input type="text" id="x8_sc_location" class="form-control" readonly tabindex="-1"
-                                    style="background-color: #e9ecef; pointer-events: none;">
+                                    style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                             </div>
                         </div>
 
@@ -1508,7 +1508,7 @@
                                 @if ($currentOrigin === 'LONG')
                                     <div class="table-responsive mb-4">
                                         <table class="table table-bordered text-center align-middle mb-0"
-                                            style="background-color: #e9ecef;">
+                                            style="background-color: var(--tblr-bg-surface-secondary);">
                                             <thead class="table-secondary text-uppercase" style="font-size: 0.85rem;">
                                                 <tr>
                                                     <th class="text-center px-3">Fup Count</th>
@@ -1598,7 +1598,7 @@
                                                             </td>
                                                         </tr>
                                                         @if ($fupCount > 4 && $index == 0)
-                                                            <tr id="toggleFupsRow" style="background-color: #f8f9fa;">
+                                                            <tr id="toggleFupsRow" style="background-color: var(--tblr-bg-surface-secondary);">
                                                                 <td colspan="10" class="text-center py-2">
                                                                     <button type="button"
                                                                         class="btn btn-sm btn-outline-secondary fw-bold shadow-sm"
@@ -1636,69 +1636,69 @@
                                             <label class="form-label">Enquiry Status</label>
                                             <input type="text" class="form-control"
                                                 value="{{ $enqStageMap[$enquiry?->quick_status ?? ''] ?? ($enquiry?->quick_status ?? ($enquiry?->stage ?? '—')) }}"
-                                                readonly style="background-color: #e9ecef;">
+                                                readonly style="background-color: var(--tblr-bg-surface-secondary);">
                                         </div>
                                         <div class="col-md-2 mb-3">
                                             <label class="form-label">Fup Count</label>
                                             <input type="text" class="form-control"
                                                 value="{{ $enquiry?->fup_count ?? '—' }}" readonly
-                                                style="background-color: #e9ecef;">
+                                                style="background-color: var(--tblr-bg-surface-secondary);">
                                         </div>
                                         <div class="col-md-3 mb-3">
                                             <label class="form-label">1st Plan Fup Date</label>
                                             <input type="text" class="form-control"
                                                 value="{{ !empty($enquiry?->first_planned_followup_date) ? \Carbon\Carbon::parse($enquiry->first_planned_followup_date)->format('d-M-Y H:i') : '—' }}"
-                                                readonly style="background-color: #e9ecef;">
+                                                readonly style="background-color: var(--tblr-bg-surface-secondary);">
                                         </div>
                                         <div class="col-md-4 mb-3">
                                             <label class="form-label">1st Act Fup Date</label>
                                             <input type="text" class="form-control"
                                                 value="{{ !empty($enquiry?->first_actual_followup_date) ? \Carbon\Carbon::parse($enquiry->first_actual_followup_date)->format('d-M-Y H:i') : '—' }}"
-                                                readonly style="background-color: #e9ecef;">
+                                                readonly style="background-color: var(--tblr-bg-surface-secondary);">
                                         </div>
 
                                         <div class="col-md-3 mb-3">
                                             <label class="form-label">TAT (In Mins)</label>
                                             <input type="text" class="form-control" value="{{ $tatMins }}"
-                                                readonly style="background-color: #e9ecef;">
+                                                readonly style="background-color: var(--tblr-bg-surface-secondary);">
                                         </div>
                                         <div class="col-md-3 mb-3">
                                             <label class="form-label">Recent Plan Fup Date</label>
                                             <input type="text" class="form-control"
                                                 value="{{ !empty($enquiry?->recent_planned_followup_date) ? \Carbon\Carbon::parse($enquiry->recent_planned_followup_date)->format('d-M-Y H:i') : '—' }}"
-                                                readonly style="background-color: #e9ecef;">
+                                                readonly style="background-color: var(--tblr-bg-surface-secondary);">
                                         </div>
                                         <div class="col-md-3 mb-3">
                                             <label class="form-label">Recent Act Fup Date</label>
                                             <input type="text" class="form-control"
                                                 value="{{ !empty($enquiry?->recent_actual_followup_date) ? \Carbon\Carbon::parse($enquiry->recent_actual_followup_date)->format('d-M-Y H:i') : '—' }}"
-                                                readonly style="background-color: #e9ecef;">
+                                                readonly style="background-color: var(--tblr-bg-surface-secondary);">
                                         </div>
                                         <div class="col-md-3 mb-3">
                                             <label class="form-label">Next Fup Date</label>
                                             <input type="text" class="form-control"
                                                 value="{{ !empty($enquiry?->next_fup_date) ? \Carbon\Carbon::parse($enquiry->next_fup_date)->format('d-M-Y H:i') : (!empty($enquiry?->next_planned_followup_date) ? \Carbon\Carbon::parse($enquiry->next_planned_followup_date)->format('d-M-Y H:i') : '—') }}"
-                                                readonly style="background-color: #e9ecef;">
+                                                readonly style="background-color: var(--tblr-bg-surface-secondary);">
                                         </div>
 
                                         <div class="col-md-3 mb-3">
                                             <label class="form-label">Recent Fup Type</label>
                                             <input type="text" class="form-control"
                                                 value="{{ $fupTypeMap[$enquiry?->followup_type ?? ''] ?? ($enquiry?->followup_type ?: '—') }}"
-                                                readonly style="background-color: #e9ecef;">
+                                                readonly style="background-color: var(--tblr-bg-surface-secondary);">
                                         </div>
                                         <div class="col-md-4 mb-3">
                                             <label class="form-label">1st Fup Remarks</label>
                                             <input type="text" class="form-control"
                                                 value="{{ $remMap[$enquiry?->first_fup_remarks ?? ''] ?? ($enquiry?->first_fup_remarks ?: '—') }}"
-                                                readonly style="background-color: #e9ecef;"
+                                                readonly style="background-color: var(--tblr-bg-surface-secondary);"
                                                 title="{{ $remMap[$enquiry?->first_fup_remarks ?? ''] ?? ($enquiry?->first_fup_remarks ?? '') }}">
                                         </div>
                                         <div class="col-md-5 mb-3">
                                             <label class="form-label">Recent Fup Remarks</label>
                                             <input type="text" class="form-control"
                                                 value="{{ $remTypeMap[$enquiry?->followup_remarks_type ?? ''] ?? ($enquiry?->followup_remarks_type ?: '—') }}"
-                                                readonly style="background-color: #e9ecef;">
+                                                readonly style="background-color: var(--tblr-bg-surface-secondary);">
                                         </div>
                                     </div>
                                 @endif
@@ -1715,29 +1715,29 @@
                                         <div class="col-md-3 mb-3"><label class="form-label">Enquiry Stage</label><input
                                                 type="text" class="form-control"
                                                 value="{{ $enqStageMap[$enquiry?->dms_enquiry_stage ?? ''] ?? ($enquiry?->dms_enquiry_stage ?? ($enquiry?->stage ?? '—')) }}"
-                                                readonly style="background-color: #e9ecef;"></div>
+                                                readonly style="background-color: var(--tblr-bg-surface-secondary);"></div>
                                         <div class="col-md-3 mb-3"><label class="form-label">Test Drive
                                                 Count</label><input type="text" class="form-control"
                                                 value="{{ $enquiry?->td_count ?? '0' }}" readonly
-                                                style="background-color: #e9ecef;"></div>
+                                                style="background-color: var(--tblr-bg-surface-secondary);"></div>
                                         <div class="col-md-3 mb-3"><label class="form-label">Test Drive
                                                 Number</label><input type="text" class="form-control"
                                                 value="{{ $enquiry?->test_drive_no ?? '—' }}" readonly
-                                                style="background-color: #e9ecef;"></div>
+                                                style="background-color: var(--tblr-bg-surface-secondary);"></div>
                                         <div class="col-md-3 mb-3"><label class="form-label">Test Drive
                                                 Date</label><input type="text" class="form-control"
                                                 value="{{ isset($enquiry) && $enquiry->td_date ? \Carbon\Carbon::parse($enquiry->td_date)->format('d-M-Y') : '—' }}"
-                                                readonly style="background-color: #e9ecef;"></div>
+                                                readonly style="background-color: var(--tblr-bg-surface-secondary);"></div>
                                         <div class="col-md-3 mb-3"><label class="form-label">Booking Date</label><input
                                                 type="text" class="form-control"
                                                 value="{{ isset($enquiry) && ($enquiry->x8_booking_date || $enquiry->booking_date) ? \Carbon\Carbon::parse($enquiry->x8_booking_date ?? $enquiry->booking_date)->format('d-M-Y') : '—' }}"
-                                                readonly style="background-color: #e9ecef;"></div>
+                                                readonly style="background-color: var(--tblr-bg-surface-secondary);"></div>
 
                                         <div class="col-md-3 mb-3">
                                             <label class="form-label">Likely Purchase In Days </label>
                                             <input type="text" class="form-control"
                                                 value="{{ collect($likely_purchase_dates ?? [])->firstWhere('code', $enquiry?->likely_purchase_days)['value'] ?? ($enquiry?->likely_purchase_days ?? '—') }}"
-                                                readonly style="background-color: #e9ecef;">
+                                                readonly style="background-color: var(--tblr-bg-surface-secondary);">
                                             <input type="hidden" name="likely_purchase_days"
                                                 value="{{ old('likely_purchase_days', $enquiry?->likely_purchase_days ?? '') }}">
                                         </div>
@@ -1758,7 +1758,7 @@
                             {{-- History Table --}}
                             <div class="table-responsive mb-4">
                                 <table class="table table-bordered text-center align-middle mb-0"
-                                    style="background-color: #e9ecef;">
+                                    style="background-color: var(--tblr-bg-surface-secondary);">
                                     <thead class="table-secondary text-uppercase" style="font-size: 0.85rem;">
                                         <tr>
                                             <th class="text-center px-3">Fup Count</th>
@@ -1825,7 +1825,7 @@
                                                     </td>
                                                 </tr>
                                                 @if ($creFupCount > 4 && $index == 0)
-                                                    <tr id="toggleCreFupsRow" style="background-color: #f8f9fa;">
+                                                    <tr id="toggleCreFupsRow" style="background-color: var(--tblr-bg-surface-secondary);">
                                                         <td colspan="7" class="text-center py-2">
                                                             <button type="button"
                                                                 class="btn btn-sm btn-outline-secondary fw-bold shadow-sm"

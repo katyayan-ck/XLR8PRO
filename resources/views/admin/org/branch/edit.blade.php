@@ -8,7 +8,7 @@
 
 <style>
     .readonly-value {
-        background-color: #f8f9fa;
+        background-color: var(--tblr-bg-surface-secondary);
         border: 1px solid #ced4da;
         border-radius: 6px;
         padding: 10px 15px;

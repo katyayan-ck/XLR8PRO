@@ -264,7 +264,7 @@
                 </div>
 
                 <!-- BODY -->
-                <div class="card-body p-0" style="background:#f8fafc">
+                <div class="card-body p-0" style="background: var(--tblr-bg-surface-secondary)">
                     <div class="p-3 border-bottom bg-white">
                         <div class="row align-items-end">
                             <form action="{{ backpack_url('vehicle/segment/import') }}" method="POST"
@@ -294,7 +294,7 @@
                                 <button id="btnCustomiseHeaders" class="btn btn-red btn-sm text-nowrap">Customise
                                     Headers</button>
                                 <div id="columnBubble"
-                                    style="display:none; position:absolute; top:110%; left:0; width:320px; background:#fff; border:1px solid #ddd; border-radius:6px; box-shadow:0 8px 20px rgba(0,0,0,.15); z-index:9999;">
+                                    style="display:none; position:absolute; top:110%; left:0; width:320px; background: var(--tblr-card-bg); border:1px solid #ddd; border-radius:6px; box-shadow:0 8px 20px rgba(0,0,0,.15); z-index:9999;">
                                     <div class="d-flex justify-content-between align-items-center px-2 py-1 border-bottom">
                                         <strong style="font-size:13px;">Customise Headers</strong>
                                         <button id="closeColumnBubble"

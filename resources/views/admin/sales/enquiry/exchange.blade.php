@@ -37,7 +37,7 @@
                         {{ isset($title) ? trim(explode('(', $title)[0]) : 'Exchange List' }}
                     </h2>
                 </div>
-                <div class="card-body p-0" style="background:#f8fafc">
+                <div class="card-body p-0" style="background: var(--tblr-bg-surface-secondary)">
                     <div
                         class="d-flex justify-content-between align-items-center flex-wrap gap-2 p-3 border-bottom bg-white">
                         <div class="d-flex align-items-center gap-2">

@@ -20,14 +20,14 @@
 
     .readonly-label {
         font-weight: 500;
-        color: #495057;
+        color: var(--tblr-body-color);
         margin-bottom: 0.35rem;
         display: block;
     }
 
     .readonly-value {
         padding: 0.375rem 0.75rem;
-        background-color: #f8f9fa;
+        background-color: var(--tblr-bg-surface-secondary);
         border: 1px solid #ced4da;
         border-radius: 0.25rem;
         min-height: 38px;
@@ -435,7 +435,7 @@
                 <h2 class="modal-title" id="proofPreviewModalLabel">Document Preview</h2>
 
             </div>
-            <div class="modal-body text-center p-0" style="min-height: 60vh; background: #f8f9fa;">
+            <div class="modal-body text-center p-0" style="min-height: 60vh; background: var(--tblr-bg-surface-secondary);">
                 <img id="modalProofImg" src="" class="img-fluid shadow align-items-center justify-content-center"
                     style="display:none; max-height:80vh; border-radius:8px;">
                 <iframe id="modalProofPdf" style="display:none; width:100%; height:80vh; border:none;"

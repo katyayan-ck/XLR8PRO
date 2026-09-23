@@ -344,7 +344,7 @@
 
     input[readonly],
     select[readonly] {
-        background-color: #f8f9fa;
+        background-color: var(--tblr-bg-surface-secondary);
         cursor: not-allowed;
     }
 
@@ -379,7 +379,7 @@
     .current-file-info {
         font-size: 0.9rem;
         margin-top: 8px;
-        color: #555;
+        color: var(--tblr-muted);
     }
 
     .current-file-info a {

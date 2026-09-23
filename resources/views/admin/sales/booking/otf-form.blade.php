@@ -41,7 +41,7 @@ use App\Services\OrgService;
     }
 
     .quotation-sheet {
-        background: #fff;
+        background: var(--tblr-card-bg);
         border: 1px solid #000;
         padding: 15px;
     }
@@ -62,7 +62,7 @@ use App\Services\OrgService;
     }
 
     .bill-table .title {
-        background: #f2f2f2;
+        background: var(--tblr-bg-surface-secondary);
         font-weight: 600;
         white-space: nowrap;
     }
@@ -186,7 +186,7 @@ use App\Services\OrgService;
     }
 
     .quotation-stacked-table .ql-label {
-        background: #f2f2f2;
+        background: var(--tblr-bg-surface-secondary);
         font-weight: 600;
         width: 45%;
     }
@@ -197,7 +197,7 @@ use App\Services\OrgService;
     }
 
     .quotation-stacked-table .ql-label .group-select {
-        background: #f2f2f2;
+        background: var(--tblr-bg-surface-secondary);
         font-weight: 600;
         width: 100%;
         border: none;
@@ -235,7 +235,7 @@ use App\Services\OrgService;
     }
 
     .quotation-summary .total-row-cell {
-        background: #f2f2f2;
+        background: var(--tblr-bg-surface-secondary);
         border: solid 1px #000;
     }
 
@@ -320,27 +320,27 @@ use App\Services\OrgService;
     }
 
     .receipt-table thead th {
-        background: #f2f2f2 !important;
+        background: var(--tblr-bg-surface-secondary) !important;
         border: 1px solid #000 !important;
         border-bottom: 1px solid #000 !important;
         font-size: 10px;
         font-weight: 600;
         text-transform: none;
         letter-spacing: normal;
-        color: #000;
+        color: var(--tblr-body-color);
         padding: 3px 5px !important;
         height: 26px;
         vertical-align: middle;
     }
 
     .receipt-table tbody td {
-        background: #fff !important;
+        background: var(--tblr-card-bg) !important;
         border: 1px solid #000 !important;
         padding: 3px 5px !important;
         height: 26px;
         vertical-align: middle;
         font-size: 10px;
-        color: #000;
+        color: var(--tblr-body-color);
     }
 
     .receipt-table tbody tr:hover {
@@ -348,17 +348,17 @@ use App\Services\OrgService;
     }
 
     .receipt-table tbody tr:hover td {
-        background: #fff !important;
+        background: var(--tblr-card-bg) !important;
     }
 
     .receipt-table tfoot td {
-        background: #f2f2f2 !important;
+        background: var(--tblr-bg-surface-secondary) !important;
         border: 1px solid #000 !important;
         padding: 3px 5px !important;
         height: 26px;
         font-size: 10px;
         font-weight: 600;
-        color: #000;
+        color: var(--tblr-body-color);
     }
 
     .receipt-header {
@@ -1450,11 +1450,11 @@ use App\Services\OrgService;
                                         </tr>
                                         <tr class="grid-row total-row">
                                             <td class="ql-label"
-                                                style="background:#f2f2f2; font-weight:bold;">
+                                                style="background: var(--tblr-bg-surface-secondary); font-weight:bold;">
                                                 TOTAL RECEIVABLE
                                             </td>
                                             <td class="ql-amount"
-                                                style="background:#f2f2f2; font-weight:bold;">
+                                                style="background: var(--tblr-bg-surface-secondary); font-weight:bold;">
                                                 <input id="total_receivable"
                                                     name="total_receivable"
                                                     readonly
@@ -1987,7 +1987,7 @@ use App\Services\OrgService;
                                 <table class="bill-table" style="margin-top:-1px; border-top:1px solid #000;">
                                     <tr>
                                         <td class="title"
-                                            style="width:50%; background:#f2f2f2; font-weight:bold; font-size:10px; border-right:1px solid #000;">
+                                            style="width:50%; background: var(--tblr-bg-surface-secondary); font-weight:bold; font-size:10px; border-right:1px solid #000;">
                                             TOTAL DISCOUNT
                                         </td>
                                         <td style="width:50%; padding:3px 5px;">
@@ -2003,10 +2003,10 @@ use App\Services\OrgService;
                                 <table class="bill-table" style="margin-top:-1px; border-top:1px solid #000;">
                                     <tr>
                                         <td class="title"
-                                            style="width:50%; background:#abb8ca; font-weight:bold; font-size:10px; border-right:1px solid #000; color:#000;">
+                                            style="width:50%; background:#abb8ca; font-weight:bold; font-size:10px; border-right:1px solid #000; color: var(--tblr-body-color);">
                                             NET RECEIVABLE
                                         </td>
-                                        <td style="width:50%; padding:3px 5px; background:#abb8ca; color:#000;">
+                                        <td style="width:50%; padding:3px 5px; background:#abb8ca; color: var(--tblr-body-color);">
                                             <input id="net_receivable_summary" name="net_receivable_summary" readonly
                                                 style="width:100%; border:none; background:transparent; font-size:10px; font-weight:bold; text-align:right;"
                                                 value="{{ old('net_receivable_summary', $otfData['net_receivable_summary'] ?? '') }}">
@@ -2225,23 +2225,23 @@ use App\Services\OrgService;
                                             <table class="table table-bordered table-sm mb-0 receipt-table">
                                                 <thead>
                                                     <tr>
-                                                        <th style="font-size: 10px; font-weight: 700; color: #495057; text-transform: uppercase; padding: 6px 8px; width: 30%;">
+                                                        <th style="font-size: 10px; font-weight: 700; color: var(--tblr-body-color); text-transform: uppercase; padding: 6px 8px; width: 30%;">
                                                             <i class="la la-hashtag me-1"></i> Receipt No.
                                                         </th>
 
-                                                        <th style="font-size: 10px; font-weight: 700; color: #495057; text-transform: uppercase; padding: 6px 8px; width: 20%;">
+                                                        <th style="font-size: 10px; font-weight: 700; color: var(--tblr-body-color); text-transform: uppercase; padding: 6px 8px; width: 20%;">
                                                             <i class="la la-calendar me-1"></i> Date
                                                         </th>
 
-                                                        <th style="font-size: 10px; font-weight: 700; color: #495057; text-transform: uppercase; padding: 6px 8px; width: 20%;">
+                                                        <th style="font-size: 10px; font-weight: 700; color: var(--tblr-body-color); text-transform: uppercase; padding: 6px 8px; width: 20%;">
                                                             <i class="la la-credit-card me-1"></i> Receipt Mode
                                                         </th>
 
-                                                        <th style="font-size: 10px; font-weight: 700; color: #495057; text-transform: uppercase; padding: 6px 8px; width: 20%;">
+                                                        <th style="font-size: 10px; font-weight: 700; color: var(--tblr-body-color); text-transform: uppercase; padding: 6px 8px; width: 20%;">
                                                             <i class="la la-money me-1"></i> Amount
                                                         </th>
 
-                                                        <th style="font-size: 10px; font-weight: 700; color: #495057; text-transform: uppercase; padding: 6px 8px; width: 10%; text-align: center;">
+                                                        <th style="font-size: 10px; font-weight: 700; color: var(--tblr-body-color); text-transform: uppercase; padding: 6px 8px; width: 10%; text-align: center;">
                                                             <i class="la la-eye me-1"></i> View
                                                         </th>
                                                     </tr>
@@ -2256,10 +2256,10 @@ use App\Services\OrgService;
                                                             </span>
                                                         </td>
                                                         <td
-                                                            style="padding: 5px 8px; vertical-align: middle; font-size: 10px; color: #495057;">
+                                                            style="padding: 5px 8px; vertical-align: middle; font-size: 10px; color: var(--tblr-body-color);">
                                                             @sitedate($receipt->date)
                                                         </td>
-                                                        <td style="padding: 5px 8px; vertical-align: middle; font-size: 10px; color: #495057;">
+                                                        <td style="padding: 5px 8px; vertical-align: middle; font-size: 10px; color: var(--tblr-body-color);">
                                                             {{ $receipt->mode ?? '' }}
                                                         </td>
                                                         <td
@@ -2288,7 +2288,7 @@ use App\Services\OrgService;
                                                     @empty
                                                     <tr>
                                                         <td colspan="4" class="text-center py-3"
-                                                            style="font-size: 11px; color: #6c757d;">
+                                                            style="font-size: 11px; color: var(--tblr-muted);">
                                                             <i class="la la-inbox"
                                                                 style="font-size: 24px; display: block; margin-bottom: 5px;"></i>
                                                             No Receipts Found
@@ -2300,7 +2300,7 @@ use App\Services\OrgService;
                                                 <tfoot>
                                                     <tr>
                                                         <td colspan="2"
-                                                            style="padding: 5px 8px; font-size: 10px; font-weight: 700; color: #495057; text-align: right;">
+                                                            style="padding: 5px 8px; font-size: 10px; font-weight: 700; color: var(--tblr-body-color); text-align: right;">
                                                             TOTAL:
                                                         </td>
                                                         <td

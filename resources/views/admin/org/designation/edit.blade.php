@@ -15,7 +15,7 @@
     }
 
     .readonly-value {
-        background-color: #f8f9fa;
+        background-color: var(--tblr-bg-surface-secondary);
         border: 1px solid #ced4da;
         border-radius: 6px;
         padding: 10px 15px;
@@ -25,7 +25,7 @@
     }
 
     /* Permission tree (Module -> Process -> Permission), same pattern as demo/roles */
-    .rbac-tree { background: #fff; border: 1px solid #dee2e6; border-radius: .5rem; overflow: hidden; }
+    .rbac-tree { background: var(--tblr-card-bg); border: 1px solid #dee2e6; border-radius: .5rem; overflow: hidden; }
     .rbac-module { border-bottom: 1px solid #eee; }
     .rbac-module:last-child { border-bottom: none; }
     .rbac-row { display: flex; align-items: center; gap: .5rem; padding: .5rem .9rem; }
@@ -33,7 +33,7 @@
     .rbac-row-process { background: #fcfcfd; padding-left: 2.2rem; font-size: .875rem; border-top: 1px solid #f1f1f1; }
     .rbac-row-perm { padding-left: 4.4rem; font-size: .825rem; border-top: 1px dashed #f3f3f3; }
     .rbac-row-perm:hover { background: #fafbff; }
-    .rbac-caret { border: none; background: none; padding: 0 .25rem; color: #6c757d; cursor: pointer; width: 1.2rem; }
+    .rbac-caret { border: none; background: none; padding: 0 .25rem; color: var(--tblr-muted); cursor: pointer; width: 1.2rem; }
     .rbac-caret i { transition: transform .15s ease; display: inline-block; }
     .rbac-module.collapsed > .rbac-module-body { display: none; }
     .rbac-module.collapsed > .rbac-row-module .rbac-caret i { transform: rotate(-90deg); }
@@ -41,8 +41,8 @@
     .rbac-process.collapsed > .rbac-row-process .rbac-caret i { transform: rotate(-90deg); }
     .rbac-label { flex: 1; margin: 0; cursor: pointer; }
     .rbac-label-module { font-weight: 600; }
-    .rbac-label-process { font-weight: 500; color: #333; }
-    .rbac-perm-code { margin-left: .5rem; font-size: .7rem; color: #adb5bd; }
+    .rbac-label-process { font-weight: 500; color: var(--tblr-muted); }
+    .rbac-perm-code { margin-left: .5rem; font-size: .7rem; color: var(--tblr-muted); }
     .rbac-count { font-weight: 500; }
     .rbac-row-actions { display: flex; gap: .25rem; }
     .rbac-row-actions .btn-link { text-decoration: none; padding: 0 .35rem; font-size: .75rem; }

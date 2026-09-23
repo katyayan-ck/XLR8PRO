@@ -40,7 +40,7 @@
                                 @if(isset($isEdit))
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label text-muted">Receipt No.</label>
-                                    <input type="text" class="form-control fw-bold" style="background-color: #e9ecef;" value="{{ $receipt->type_number }}" readonly>
+                                    <input type="text" class="form-control fw-bold" style="background-color: var(--tblr-bg-surface-secondary);" value="{{ $receipt->type_number }}" readonly>
                                 </div>
                                 @endif
 
@@ -181,7 +181,7 @@
                                 </div>
                                 <div class="col-md-8 mb-3">
                                     <label class="form-label">Amount (In Words)</label>
-                                    <input type="text" id="amount_in_words" class="form-control" readonly style="background-color:#e9ecef;">
+                                    <input type="text" id="amount_in_words" class="form-control" readonly style="background-color: var(--tblr-bg-surface-secondary);">
                                 </div>
 
                                 <div class="col-md-4 mb-3 req-instrument" style="display:none;">

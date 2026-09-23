@@ -54,7 +54,7 @@
                                 top:110%;
                                 left:0;
                                 width:260px;
-                                background:#fff;
+                                background: var(--tblr-card-bg);
                                 border:1px solid #ddd;
                                 border-radius:6px;
                                 box-shadow:0 8px 20px rgba(0,0,0,.15);

@@ -206,7 +206,7 @@
 
         .quotation-sheet {
 
-            background: #fff;
+            background: var(--tblr-card-bg);
 
             border: 1px solid #000;
 
@@ -227,7 +227,7 @@
 
         .bill-table .title {
 
-            background: #f2f2f2;
+            background: var(--tblr-bg-surface-secondary);
 
             font-weight: bold;
 
@@ -274,7 +274,7 @@
         }
 
         .bill-table .title {
-            background: #f2f2f2;
+            background: var(--tblr-bg-surface-secondary);
             font-weight: 600;
             white-space: nowrap;
         }
@@ -447,14 +447,14 @@
         }
 
         .quotation-grid td.cell-label {
-            background: #f2f2f2;
+            background: var(--tblr-bg-surface-secondary);
             font-weight: 600;
         }
 
 
 
         .quotation-grid td.cell-label .group-select {
-            background: #f2f2f2;
+            background: var(--tblr-bg-surface-secondary);
             font-weight: 600;
         }
 
@@ -484,7 +484,7 @@
         }
 
         .quotation-summary .total-row-cell {
-            background: #f2f2f2;
+            background: var(--tblr-bg-surface-secondary);
             display: flex;
             align-items: center;
             padding: 5px 8px;
@@ -565,7 +565,7 @@
         }
 
         .financier-discount-grid .fd-label {
-            background: #f2f2f2;
+            background: var(--tblr-bg-surface-secondary);
             font-weight: 600;
         }
 
@@ -582,7 +582,7 @@
 
 
         .cell-label:has(.group-select) {
-            background: #f2f2f2;
+            background: var(--tblr-bg-surface-secondary);
             font-weight: 600;
         }
 
@@ -735,7 +735,7 @@
         }
 
         .select2-selection--multiple .select2-selection__rendered .select2-selection__placeholder {
-            color: #6c757d;
+            color: var(--tblr-muted);
         }
 
         /* Selected count text style - override any other styles */
@@ -777,7 +777,7 @@
             #careof_name_print {
                 font-weight: 500 !important;
                 font-size: 10px !important;
-                color: #000 !important;
+                color: var(--tblr-body-color) !important;
                 display: inline-block !important;
             }
         }
@@ -795,7 +795,7 @@
             -webkit-appearance: auto !important;
             -moz-appearance: auto !important;
 
-            background-color: #fff !important;
+            background-color: var(--tblr-card-bg) !important;
             background-image: var(--bs-form-select-bg-img) !important;
             background-repeat: no-repeat !important;
             background-position: right 6px center !important;
@@ -833,7 +833,7 @@
             border: 1px solid #ccc !important;
             border-radius: 3px !important;
 
-            background: #fff !important;
+            background: var(--tblr-card-bg) !important;
 
             padding: 0 !important;
             margin: 0 !important;
@@ -897,10 +897,10 @@
 
             background: transparent !important;
 
-            color: #212529 !important;
-            -webkit-text-fill-color: #212529 !important;
+            color: var(--tblr-body-color) !important;
+            -webkit-text-fill-color: var(--tblr-body-color) !important;
 
-            caret-color: #212529 !important;
+            caret-color: var(--tblr-body-color) !important;
 
             font-size: 10px !important;
             line-height: 20px !important;
@@ -914,8 +914,8 @@
 
         /* Placeholder */
         #insurance_covers+.select2-container .select2-selection--multiple .select2-search--inline .select2-search__field::placeholder {
-            color: #6c757d !important;
-            -webkit-text-fill-color: #6c757d !important;
+            color: var(--tblr-muted) !important;
+            -webkit-text-fill-color: var(--tblr-muted) !important;
             opacity: 1 !important;
         }
 
@@ -981,7 +981,7 @@
             border: 1px solid #ccc !important;
             border-radius: 3px !important;
 
-            background: #fff !important;
+            background: var(--tblr-card-bg) !important;
 
             padding: 0 !important;
             margin: 0 !important;
@@ -1046,10 +1046,10 @@
 
             background: transparent !important;
 
-            color: #212529 !important;
-            -webkit-text-fill-color: #212529 !important;
+            color: var(--tblr-body-color) !important;
+            -webkit-text-fill-color: var(--tblr-body-color) !important;
 
-            caret-color: #212529 !important;
+            caret-color: var(--tblr-body-color) !important;
 
             font-size: 10px !important;
             line-height: 20px !important;
@@ -1062,8 +1062,8 @@
         /* Placeholder */
         #accessories+.select2-container .select2-selection--multiple .select2-search--inline .select2-search__field::placeholder {
 
-            color: #6c757d !important;
-            -webkit-text-fill-color: #6c757d !important;
+            color: var(--tblr-muted) !important;
+            -webkit-text-fill-color: var(--tblr-muted) !important;
             opacity: 1 !important;
         }
 
@@ -1114,7 +1114,7 @@
             }
 
             .net-receivable-container>div:first-child {
-                background: #f2f2f2 !important;
+                background: var(--tblr-bg-surface-secondary) !important;
                 border-bottom: 2px solid #000 !important;
             }
 
@@ -1139,7 +1139,7 @@
         }
 
         .terms-notes-header {
-            background: #f2f2f2;
+            background: var(--tblr-bg-surface-secondary);
             border-bottom: 1px solid #000;
             font-size: 9px;
             font-weight: bold;
@@ -1186,7 +1186,7 @@
             }
 
             .terms-notes-header {
-                background: #f2f2f2 !important;
+                background: var(--tblr-bg-surface-secondary) !important;
                 border-bottom: 1px solid #000 !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
@@ -1270,7 +1270,7 @@
 
             #careof_name_print {
                 font-weight: 500 !important;
-                color: #000 !important;
+                color: var(--tblr-body-color) !important;
             }
 
             .alert {
@@ -1311,8 +1311,8 @@
 
         /* Make frozen amount fields visibly lighter */
         .quotation-grid input.frozen-field {
-            color: #999 !important;
-            -webkit-text-fill-color: #999 !important;
+            color: var(--tblr-muted) !important;
+            -webkit-text-fill-color: var(--tblr-muted) !important;
             opacity: 0.55 !important;
             font-weight: 400 !important;
             background-color: #f8f8f8 !important;
@@ -1328,8 +1328,8 @@
 
         /* Frozen field should not look like an active input */
         .quotation-grid input.frozen-field:disabled {
-            color: #999 !important;
-            -webkit-text-fill-color: #999 !important;
+            color: var(--tblr-muted) !important;
+            -webkit-text-fill-color: var(--tblr-muted) !important;
             opacity: 0.55 !important;
             background-color: #f8f8f8 !important;
             box-shadow: none !important;
@@ -1630,7 +1630,7 @@
                                     </div>
                                     <!-- Print ke waqt sirf Customer/Relative ka Name (Same Weight & Padding) -->
                                     <span id="careof_name_print" class="print-only-inline"
-                                        style="padding-left: 2px; font-weight: 600; color: #000;"></span>
+                                        style="padding-left: 2px; font-weight: 600; color: var(--tblr-body-color);"></span>
                                 </td>
                             </tr>
                             @php
@@ -1701,7 +1701,7 @@
                                 <td class="title">Financier</td>
                                 <td>
                                     @if ($revisionPdf ?? false)
-                                        <span style="color: #000 !important; font-weight: 400; font-size: 10px;">
+                                        <span style="color: var(--tblr-body-color) !important; font-weight: 400; font-size: 10px;">
                                             {{ $quotationData['financier_display'] ?? '-' }}
                                         </span>
                                     @else
@@ -1778,7 +1778,7 @@
                                                         <div style="flex: 1 1 38%;">
                                                             <select name="registration_no_type" id="registration_no_type"
                                                                 class="form-select form-select-sm"
-                                                                style="font-size: 9px; padding: 1px 3px; height: 22px; border: 1px solid #ccc; border-radius: 3px; width: 100%; background: #fff;">
+                                                                style="font-size: 9px; padding: 1px 3px; height: 22px; border: 1px solid #ccc; border-radius: 3px; width: 100%; background: var(--tblr-card-bg);">
                                                                 <option value="">Select Type</option>
                                                                 @foreach ($reg_no_type_map ?? [
             '1' => 'Regular',
@@ -1797,7 +1797,7 @@
                                                             <select name="registration_category"
                                                                 id="registration_category"
                                                                 class="form-select form-select-sm"
-                                                                style="font-size: 9px; padding: 1px 3px; height: 22px; border: 1px solid #ccc; border-radius: 3px; width: 100%; background: #fff;">
+                                                                style="font-size: 9px; padding: 1px 3px; height: 22px; border: 1px solid #ccc; border-radius: 3px; width: 100%; background: var(--tblr-card-bg);">
                                                                 <option value="">Select Category</option>
                                                                 @foreach ($registration_type_map as $key => $value)
                                                                     <option value="{{ $key }}"
@@ -1808,9 +1808,9 @@
                                                             </select>
                                                         </div>
                                                         <div class="no-print"
-                                                            style="flex: 0 0 auto; display: flex; align-items: center; border: 1px solid #ccc; border-radius: 3px; padding: 1px; background: #fff; height: 22px;">
+                                                            style="flex: 0 0 auto; display: flex; align-items: center; border: 1px solid #ccc; border-radius: 3px; padding: 1px; background: var(--tblr-card-bg); height: 22px;">
                                                             <span
-                                                                style="font-size: 8px; font-weight: bold; margin-right: 3px; margin-left: 2px; color: #555; white-space: nowrap;">In-House:</span>
+                                                                style="font-size: 8px; font-weight: bold; margin-right: 3px; margin-left: 2px; color: var(--tblr-muted); white-space: nowrap;">In-House:</span>
                                                             <label
                                                                 style="font-size: 8px; font-weight: bold; margin: 0 2px; cursor: pointer; display: flex; align-items: center; gap: 1px;">
                                                                 <input type="radio" name="in_house_rto" value="1"
@@ -2053,7 +2053,7 @@
                                             </tr>
 
                                             <tr class="grid-row total-row"
-                                                style="background: #f2f2f2; font-weight: bold;">
+                                                style="background: var(--tblr-bg-surface-secondary); font-weight: bold;">
                                                 <td class="cell-label"
                                                     style="text-align: center; font-weight: bold; font-size: 11px; text-align:left;">
                                                     TOTAL
@@ -2426,7 +2426,7 @@
                                             </tr>
 
                                             <tr class="grid-row total-row"
-                                                style="background: #f2f2f2; font-weight: bold;">
+                                                style="background: var(--tblr-bg-surface-secondary); font-weight: bold;">
                                                 <td class="cell-label"
                                                     style="text-align: center; font-weight: bold; font-size: 11px; text-align:left;">
                                                     TOTAL
@@ -2451,7 +2451,7 @@
 
                                             <tbody>
                                                 <tr class="grid-row total-row"
-                                                    style="background:#f2f2f2; font-weight:bold;">
+                                                    style="background: var(--tblr-bg-surface-secondary); font-weight:bold;">
 
                                                     <td class="cell-label"
                                                         style="width:50%; text-align:left; font-weight:bold; font-size:11px;">
@@ -2511,7 +2511,7 @@
                                             <tbody>
                                                 <tr>
                                                     <td
-                                                        style="background:#f2f2f2; border:1px solid #000; padding:3px 2px; font-size:9px; font-weight:bold; text-align:center;">
+                                                        style="background: var(--tblr-bg-surface-secondary); border:1px solid #000; padding:3px 2px; font-size:9px; font-weight:bold; text-align:center;">
                                                         AMOUNT</td>
                                                     <td style="border:1px solid #000; padding:3px 2px; text-align:right;">
                                                         <input id="inv_discount_display" readonly
@@ -2538,7 +2538,7 @@
                                                             style="font-weight:bold; font-size:10px; text-align:center; width:100%; border:none; background:transparent;">
                                                     </td>
                                                     <td
-                                                        style="background:#f2f2f2; border:1px solid #000; padding:3px 2px; text-align:right;">
+                                                        style="background: var(--tblr-bg-surface-secondary); border:1px solid #000; padding:3px 2px; text-align:right;">
                                                         <input id="total_discount_bifurcation_display" readonly
                                                             style="font-weight:bold; font-size:10px; text-align:center; width:100%; border:none; background:transparent;">
                                                     </td>
@@ -2564,15 +2564,15 @@
                             <div class="net-receivable-container mt-2" style="border: 2px solid #000; width: 100%;">
                                 <!-- Top Bar: NET RECEIVABLE & AMOUNT -->
                                 <div
-                                    style="display: flex; width: 100%; border-bottom: 2px solid #000; background: #f2f2f2;">
+                                    style="display: flex; width: 100%; border-bottom: 2px solid #000; background: var(--tblr-bg-surface-secondary);">
                                     <div
-                                        style="flex: 0 0 50%; font-size: 13px; font-weight: bold; padding: 6px 10px;  color: #000;">
+                                        style="flex: 0 0 50%; font-size: 13px; font-weight: bold; padding: 6px 10px;  color: var(--tblr-body-color);">
                                         NET RECEIVABLE AMOUNT (In Figures) :
                                     </div>
                                     <div
                                         style="flex: 0 0 50%; padding: 6px 10px; display: flex; justify-content: flex-end; align-items: center;">
                                         <input id="net_receivable_summary" name="net_receivable_summary" readonly
-                                            style="font-weight: bold; font-size: 14px; text-align: right; background: transparent; border: none; width: 100%; color: #000; outline: none; padding: 0;"
+                                            style="font-weight: bold; font-size: 14px; text-align: right; background: transparent; border: none; width: 100%; color: var(--tblr-body-color); outline: none; padding: 0;"
                                             value="{{ old('net_receivable_summary', $quotationData['net_receivable_summary'] ?? '') }}">
                                     </div>
                                 </div>
@@ -2583,8 +2583,8 @@
                                 width: 100%;
                                 padding: 5px 10px;
                                 font-size: 12px;
-                                background: #fff;
-                                color: #000;
+                                background: var(--tblr-card-bg);
+                                color: var(--tblr-body-color);
                                 display: flex;
                                 align-items: center;
                                 justify-content: space-between;
@@ -6315,10 +6315,10 @@
                     html: `
                 <div style="text-align: left;">
                     <p style="font-weight: bold; margin-bottom: 10px;">Please select a Financier before saving.</p>
-                    <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin: 10px 0;">
+                    <div style="background: var(--tblr-bg-surface-secondary); padding: 10px; border-radius: 5px; margin: 10px 0;">
                         ⚠️ <b>Financier</b> field is mandatory.
                     </div>
-                    <p style="color: #6c757d; font-size: 12px; margin-top: 10px;">
+                    <p style="color: var(--tblr-muted); font-size: 12px; margin-top: 10px;">
                         Please select a financier from the dropdown.
                     </p>
                 </div>

@@ -16,14 +16,14 @@
 
     .readonly-label {
         font-weight: 500;
-        color: #495057;
+        color: var(--tblr-body-color);
         margin-bottom: 0.35rem;
         display: block;
     }
 
     .readonly-value {
         padding: 0.375rem 0.75rem;
-        background-color: #f8f9fa;
+        background-color: var(--tblr-bg-surface-secondary);
         border: 1px solid #ced4da;
         border-radius: 0.25rem;
         min-height: 38px;
@@ -41,7 +41,7 @@
 
     .small-hint {
         font-size: 0.8125rem;
-        color: #6c757d;
+        color: var(--tblr-muted);
     }
 
     .preview-chip {

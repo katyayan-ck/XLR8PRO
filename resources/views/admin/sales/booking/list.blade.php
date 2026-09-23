@@ -78,7 +78,7 @@
                 </div>
             </div>
 
-            <div class="card-body p-0" style="background:#f8fafc">
+            <div class="card-body p-0" style="background: var(--tblr-bg-surface-secondary)">
 
                 {{-- ========================================================
                      TOOLBAR
@@ -176,7 +176,7 @@
         max-height: 420px;
         display: flex;
         flex-direction: column;
-        background: #fff;
+        background: var(--tblr-card-bg);
         border: 1px solid #ddd;
         border-radius: 8px;
         box-shadow: 0 10px 26px rgba(0,0,0,.16);
@@ -191,7 +191,7 @@
         border: 1px solid #e5e7eb;
         border-radius: 6px;
         margin-bottom: 6px;
-        background: #fff;
+        background: var(--tblr-card-bg);
     }
     .col-group-card.dragging { opacity: .4; }
     .col-group-card__header {
@@ -200,7 +200,7 @@
         gap: 8px;
         padding: 6px 8px;
         cursor: default;
-        background: #f8fafc;
+        background: var(--tblr-bg-surface-secondary);
         border-bottom: 1px solid transparent;
     }
     .col-group-card__header.is-open { border-bottom-color: #e5e7eb; }

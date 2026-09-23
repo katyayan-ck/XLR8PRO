@@ -569,14 +569,14 @@
         }
 
         .readonly-field {
-            background-color: #f8f9fa;
+            background-color: var(--tblr-bg-surface-secondary);
             border-color: #ced4da;
             cursor: not-allowed;
         }
 
         .form-control[readonly],
         .form-select[readonly] {
-            background-color: #f8f9fa;
+            background-color: var(--tblr-bg-surface-secondary);
             cursor: not-allowed;
         }
 

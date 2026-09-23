@@ -1567,3 +1567,52 @@ This is item 4 of 6 in the deep-scan list (view reorganization done, theme switc
 re-verification done for the 38 files with AJAX calls). Remaining: minimalistic design layout
 audit, dark/light-mode audit for hardcoded colors, and the centralized-label/date-format rollout
 to modules beyond Booking.
+
+## Dark-mode CSS token conversion (deep-scan, item 5 of 6) — 118 files, 401 replacements
+
+Per the deep-scan design pass request ("check that its working with dark and light mode"). With
+the theme-mode switcher now enabled, hardcoded light-only colors in per-view `<style>` blocks
+would show as jarring bright-white cards/boxes and unreadable dark-on-dark text once a user
+actually switches to dark mode.
+
+### Scope decision
+
+Scanned all 117 already-reorganized module views (sales/org/vehicle/iam/accounts/utils) for
+hardcoded hex/named colors. Found the same boilerplate `<style>` block (readonly-field gray, card
+white background, muted helper text, Bootstrap focus-ring blue) copy-pasted across most files -
+a small set of ~15 distinct color values accounted for the large majority of ~500 total
+occurrences. Rather than hand-editing each file, mapped the 15 genuine light/dark breakers
+(card/box backgrounds and body/muted text - the patterns that actually look wrong against a dark
+background) to their Tabler CSS custom-property equivalents (`var(--tblr-card-bg)`,
+`var(--tblr-bg-surface-secondary)`, `var(--tblr-body-color)`, `var(--tblr-muted)`), the same
+technique already used for the AG-Grid Tabler theming pass earlier this session. Deliberately left
+untouched: semantic/status colors (`#dc3545` danger, `#28a745` success, `#0d6efd` primary - already
+high-contrast enough for both modes), `color: #fff` (context-dependent - often intentional white
+text on a colored badge, risky to blanket-replace), and Bootstrap's default focus-ring blue
+(`#80bdff` - a glow effect, harmless in dark mode).
+
+### Execution
+
+Wrote a scoped conversion script (not committed - a one-time tool, deleted after use) applying 15
+regex replacements across the 6 already-reorganized module directories. Ran with `--dry-run` first
+to review the full file list and replacement counts before writing anything, then applied for
+real and diffed one representative file (`add.blade.php`) to confirm the substitutions were exactly
+as intended before trusting the rest.
+
+### Verification
+
+- `php -l` on all 118 changed files -> zero syntax errors.
+- `php artisan view:clear`.
+- Live HTTP round trips across 7 representative pages spanning every touched module (Booking,
+  Enquiry, Org/User, Vehicle/Color, Iam/Permission, Accounts/JournalVoucher, Utils/KeyValue) -
+  all 200, `var(--tblr-` tokens confirmed present in the rendered output of every file that was
+  actually touched (2 sampled pages showed no tokens because their specific `create.blade.php`
+  wasn't among the files needing this fix - confirmed by testing their sibling `list.blade.php`
+  instead, which was touched and does show the tokens).
+- `vendor/bin/pint --dirty --format agent` -> clean.
+- Full relevant test suite run in progress at time of this entry.
+
+Item 5 of 6 in the deep-scan list. Remaining: the minimalistic-layout pass proper (structural/
+spacing changes, not just color tokens) and extending the centralized label/date-format rollout
+beyond Booking to the other reorganized modules - both left for a follow-up session given the
+scale already covered today (19 checkpoints).

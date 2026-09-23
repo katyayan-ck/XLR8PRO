@@ -11,7 +11,7 @@
     }
 
     .chip-container .badge:hover {
-        background-color: #e9ecef !important;
+        background-color: var(--tblr-bg-surface-secondary) !important;
         transform: translateY(-1px);
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
     }
@@ -24,7 +24,7 @@
     .proof-chip {
         display: inline-flex;
         align-items: center;
-        background-color: #f8f9fa;
+        background-color: var(--tblr-bg-surface-secondary);
         border: 1px solid #dee2e6;
         border-radius: 50px;
         padding: 6px 16px;
@@ -36,7 +36,7 @@
     }
 
     .proof-chip:hover {
-        background-color: #e9ecef;
+        background-color: var(--tblr-bg-surface-secondary);
         transform: translateY(-1px);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
     }
@@ -47,7 +47,7 @@
         overflow: hidden;
         text-overflow: ellipsis;
         margin: 0 8px;
-        color: #212529;
+        color: var(--tblr-body-color);
     }
 
     .proof-chip .btn-action {
@@ -56,7 +56,7 @@
         font-size: 1.1rem;
         padding: 0 4px;
         cursor: pointer;
-        color: #6c757d;
+        color: var(--tblr-muted);
     }
 
     .proof-chip .btn-download:hover {
@@ -94,7 +94,7 @@
 
     /* Footer buttons - clean & clickable */
     #proofPreviewModal .modal-footer {
-        background: #f8f9fa !important;
+        background: var(--tblr-bg-surface-secondary) !important;
         border-top: none !important;
         padding: 1rem 1.5rem !important;
     }

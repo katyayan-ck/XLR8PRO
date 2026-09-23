@@ -9,11 +9,11 @@ $isViewMode = request()->routeIs('finance.view');
 <link rel="stylesheet" href="{{ asset('plugins/select2/dist/css/select2.min.css') }}">
 <style>
     .readonly-field {
-        background-color: #f8f9fa;
+        background-color: var(--tblr-bg-surface-secondary);
         border: 1px solid #ced4da;
         padding: 0.375rem 0.75rem;
         border-radius: 0.25rem;
-        color: #495057;
+        color: var(--tblr-body-color);
         pointer-events: none;
         height: 38px;
     }
@@ -30,9 +30,9 @@ $isViewMode = request()->routeIs('finance.view');
 
     /* Custom readonly style for frozen fields */
     .field-frozen {
-        background-color: #f8f9fa !important;
+        background-color: var(--tblr-bg-surface-secondary) !important;
         pointer-events: none !important;
-        color: #6c757d !important;
+        color: var(--tblr-muted) !important;
     }
 </style>
 @endpush
@@ -387,7 +387,7 @@ $isViewMode = request()->routeIs('finance.view');
                     <div class="col-sm-3 form-group">
                         <label>GST Rate</label>
                         <input type="text" id="gst_pct" class="form-control readonly-field " value="18%" readonly
-                            style="font-weight: bold; background-color: #e9ecef !important; cursor: not-allowed;">
+                            style="font-weight: bold; background-color: var(--tblr-bg-surface-secondary) !important; cursor: not-allowed;">
 
                     </div>
 
