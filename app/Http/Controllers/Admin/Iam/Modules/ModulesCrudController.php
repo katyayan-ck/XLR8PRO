@@ -46,7 +46,7 @@ class ModulesCrudController extends CrudController
         }
 
         $this->crud->setListView(
-            'admin.modules.list'
+            'admin.iam.modules.list'
         );
     }
 
@@ -57,7 +57,7 @@ class ModulesCrudController extends CrudController
         }
 
         $this->crud->setListView(
-            'admin.modules.list'
+            'admin.iam.modules.list'
         );
 
         $modules = Module::orderBy('id', 'desc')
@@ -94,7 +94,7 @@ class ModulesCrudController extends CrudController
         })->values();
 
         return view(
-            'admin.modules.list',
+            'admin.iam.modules.list',
             [
                 'title' => 'All Modules',
 
@@ -146,11 +146,11 @@ class ModulesCrudController extends CrudController
         }
 
         $this->crud->setCreateView(
-            'admin.modules.create'
+            'admin.iam.modules.create'
         );
 
         return view(
-            'admin.modules.create',
+            'admin.iam.modules.create',
             [
                 'title' => 'Add New Module',
             ]
@@ -188,7 +188,7 @@ class ModulesCrudController extends CrudController
         }
 
         $this->crud->setEditView(
-            'admin.modules.edit'
+            'admin.iam.modules.edit'
         );
 
         $module = Module::findOrFail($id);
@@ -206,7 +206,7 @@ class ModulesCrudController extends CrudController
                 ->toArray();
 
         return view(
-            'admin.modules.edit',
+            'admin.iam.modules.edit',
             [
 
                 'title' => 'Edit Module - '

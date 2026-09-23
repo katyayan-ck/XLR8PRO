@@ -46,7 +46,7 @@ class ProcessCrudController extends CrudController
         }
 
         $this->crud->setListView(
-            'admin.process.list'
+            'admin.iam.process.list'
         );
     }
 
@@ -57,7 +57,7 @@ class ProcessCrudController extends CrudController
         }
 
         $this->crud->setListView(
-            'admin.process.list'
+            'admin.iam.process.list'
         );
 
         $processes = Process::with('module')
@@ -98,7 +98,7 @@ class ProcessCrudController extends CrudController
         })->values();
 
         return view(
-            'admin.process.list',
+            'admin.iam.process.list',
             [
                 'title' => 'All Processes',
 
@@ -155,11 +155,11 @@ class ProcessCrudController extends CrudController
         }
 
         $this->crud->setCreateView(
-            'admin.process.create'
+            'admin.iam.process.create'
         );
 
         return view(
-            'admin.process.create',
+            'admin.iam.process.create',
             [
                 'title' => 'Add New Process',
 
@@ -206,7 +206,7 @@ class ProcessCrudController extends CrudController
         }
 
         $this->crud->setEditView(
-            'admin.process.edit'
+            'admin.iam.process.edit'
         );
 
         $process =
@@ -221,7 +221,7 @@ class ProcessCrudController extends CrudController
                 ->toArray();
 
         return view(
-            'admin.process.edit',
+            'admin.iam.process.edit',
             [
 
                 'title' => 'Edit Process - '
