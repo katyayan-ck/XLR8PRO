@@ -82,7 +82,7 @@ class JournalVoucherCrudController extends Controller
             ];
         })->values();
 
-        return view('admin.accounts.jv-list', ['gridConfig' => ['data' => $data]]);
+        return view('admin.accounts.journal-voucher.list', ['gridConfig' => ['data' => $data]]);
     }
 
     public function create()
@@ -96,7 +96,7 @@ class JournalVoucherCrudController extends Controller
         $mopOptions = $this->getKeyValueOptions(['PAYMENT_MODE', 'MODE_OF_PAYMENT', 'PAYMENT', 'MOP']);
         $jvModeId = array_search('Journal Voucher', $mopOptions) ?: '';
 
-        return view('admin.accounts.jv-create', [
+        return view('admin.accounts.journal-voucher.create', [
             'type' => self::TYPE_VOUCHER,
             'onAccountOfOptions' => $this->getKeyValueOptions(['ACC_OF', 'ON_ACCOUNT_OF', 'ACCOUNT']),
             'jvModeId' => $jvModeId,
@@ -148,7 +148,7 @@ class JournalVoucherCrudController extends Controller
         $user = OrgService::getCurrentUser();
         $mopOptions = $this->getKeyValueOptions(['PAYMENT_MODE', 'MODE_OF_PAYMENT', 'PAYMENT', 'MOP']);
 
-        return view('admin.accounts.jv-create', [
+        return view('admin.accounts.journal-voucher.create', [
             'type' => self::TYPE_VOUCHER,
             'voucher' => $voucher,
             'onAccountOfOptions' => $this->getKeyValueOptions(['ACC_OF', 'ON_ACCOUNT_OF', 'ACCOUNT']),

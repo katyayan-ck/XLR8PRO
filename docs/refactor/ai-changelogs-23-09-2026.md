@@ -1412,3 +1412,32 @@ Moved `modules`, `permission`, `process`, `role` from flat `resources/views/admi
 - `vendor/bin/pint --dirty --format agent` -> clean.
 - `php artisan test --filter="Permission|Role|Process"` -> 11 passed, 1 failed (pre-existing,
   matches already-tracked BUG-016: `xlr8_iam_roles` table doesn't exist), zero new regressions.
+
+## Accounts module view reorganization — mirror controller module structure, resolve shared-folder ambiguity
+
+Fourth app-wide batch. `resources/views/admin/accounts/` was shared, flat, and ambiguously named
+between 2 different controllers (`JournalVoucherCrudController` and `ReceiptCrudController`) via a
+`jv-`/`receipt-` filename prefix convention instead of subfolders.
+
+### Reorganization
+
+Split into `resources/views/admin/accounts/journal-voucher/{create,list}.blade.php` and
+`resources/views/admin/accounts/receipt/{create,list,show}.blade.php`, matching each controller's
+own namespace and adopting the standard `create`/`edit`/`list`/`show` naming used everywhere else
+in this reorganization (dropping the `jv-`/`receipt-` prefix, no longer needed once each
+controller has its own subfolder). Confirmed via `edit()`'s `return view('admin.accounts.
+journal-voucher.create', ...)` that JournalVoucher has the same create/edit-decoy pattern already
+seen elsewhere (BUG-107 etc.) — no separate edit view was ever orphaned since one never existed.
+Updated all 5 references (2 in `JournalVoucherCrudController`, 3 in `ReceiptCrudController`).
+
+### Verification
+
+- `php -l` on both controllers -> no syntax errors. `php artisan view:clear`.
+- App-wide grep confirmed zero leftover `admin.accounts.jv-`/`admin.accounts.receipt-` references.
+- Live HTTP round trips: journal-voucher index/create -> 200; receipt index/create -> 200;
+  receipt/1/show -> 404, confirmed expected (`Bookingamount` id 1 is a voucher-type record, not
+  receipt-type; no receipt-type record exists in this local DB to test `show()` against - not a
+  bug, just missing test data).
+- `vendor/bin/pint --dirty --format agent` -> clean.
+- No dedicated JournalVoucher/Receipt test suite exists; covered by the live HTTP round trips
+  above.
