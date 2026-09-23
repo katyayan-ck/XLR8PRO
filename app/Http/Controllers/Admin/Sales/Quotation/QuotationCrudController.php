@@ -36,7 +36,7 @@ class QuotationCrudController extends CrudController
 
     protected function setupListOperation()
     {
-        $this->crud->setListView('admin.quotation.list');
+        $this->crud->setListView('admin.sales.quotation.list');
     }
 
     public function index()
@@ -65,7 +65,7 @@ class QuotationCrudController extends CrudController
             '3' => 'Special Number',
         ];
 
-        $this->crud->setListView('admin.quotation.list');
+        $this->crud->setListView('admin.sales.quotation.list');
 
         $quotations = Quotation::with('enquiry')
             ->whereNotIn('status', ['booked'])
@@ -306,7 +306,7 @@ class QuotationCrudController extends CrudController
             ];
         })->values();
 
-        return view('admin.quotation.list', [
+        return view('admin.sales.quotation.list', [
             'title' => 'Quotation Listing',
             'gridConfig' => [
                 'columns' => [
@@ -400,7 +400,7 @@ class QuotationCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to create quotations.');
         }
 
-        $this->crud->setCreateView('admin.quotation.create');
+        $this->crud->setCreateView('admin.sales.quotation.create');
 
         $bookingId = request('booking_id');
 
@@ -517,7 +517,7 @@ class QuotationCrudController extends CrudController
         // DD added here before view return
         // dd($data);
 
-        return view('admin.quotation.create', $data);
+        return view('admin.sales.quotation.create', $data);
     }
 
     public function store(Request $request)
@@ -705,7 +705,7 @@ class QuotationCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to edit quotations.');
         }
 
-        $this->crud->setEditView('admin.quotation.create');
+        $this->crud->setEditView('admin.sales.quotation.create');
 
         /*
         |--------------------------------------------------------------------------
@@ -1069,7 +1069,7 @@ class QuotationCrudController extends CrudController
         |--------------------------------------------------------------------------
         */
         return view(
-            'admin.quotation.create',
+            'admin.sales.quotation.create',
             [
                 'quotation' => $quotation,
                 'quotationData' => $quotationData,
@@ -2087,7 +2087,7 @@ class QuotationCrudController extends CrudController
             })
             ->values();
 
-        return view('admin.quotation.history', [
+        return view('admin.sales.quotation.history', [
             'quotation' => $quotation,
             'actions' => $actions,
             'customerName' => $customerName ?: '-',
@@ -2477,7 +2477,7 @@ class QuotationCrudController extends CrudController
     | Open same create.blade.php in VIEW MODE
     |--------------------------------------------------------------------------
     */
-        return view('admin.quotation.create', [
+        return view('admin.sales.quotation.create', [
             'quotation' => $quotation,
             'quotationData' => $quotationData,
             'selectedEnquiry' => $selectedEnquiry,
@@ -2648,7 +2648,7 @@ class QuotationCrudController extends CrudController
         $financiers = XlFinancier::select('id', 'name', 'short_name')
             ->get();
 
-        return view('admin.quotation.create', [
+        return view('admin.sales.quotation.create', [
             'quotation' => $quotation,
             'quotationData' => $quotationData,
             'selectedEnquiry' => $selectedEnquiry,

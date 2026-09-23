@@ -1,3 +1,4 @@
+{{-- ORIGINAL PATH: resources/views/admin/quotation/edit.blade.php --}}
 @extends(backpack_view('blank'))
 
 @php
