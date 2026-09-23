@@ -36,7 +36,7 @@ class VariantCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view variants.');
         }
 
-        $this->crud->setListView('admin.variant.list');
+        $this->crud->setListView('admin.vehicle.variant.list');
     }
 
     public function index()
@@ -45,7 +45,7 @@ class VariantCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view variants.');
         }
 
-        $this->crud->setListView('admin.variant.list');
+        $this->crud->setListView('admin.vehicle.variant.list');
 
         $variants = Variant::with([
             'segment',
@@ -99,7 +99,7 @@ class VariantCrudController extends CrudController
 
         })->values();
 
-        return view('admin.variant.list', [
+        return view('admin.vehicle.variant.list', [
             'title' => 'All Variants',
             'gridConfig' => [
                 'columns' => [
@@ -198,7 +198,7 @@ class VariantCrudController extends CrudController
             ->pluck('name')
             ->toArray();
 
-        return view('admin.variant.edit', [
+        return view('admin.vehicle.variant.edit', [
 
             'variant' => $variant,
 
@@ -275,9 +275,9 @@ class VariantCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to create variants.');
         }
 
-        $this->crud->setCreateView('admin.variant.create');
+        $this->crud->setCreateView('admin.vehicle.variant.create');
 
-        return view('admin.variant.create', [
+        return view('admin.vehicle.variant.create', [
 
             'title' => 'Add New Variant',
 

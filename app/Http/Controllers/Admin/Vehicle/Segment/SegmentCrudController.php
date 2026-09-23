@@ -34,7 +34,7 @@ class SegmentCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view segments.');
         }
 
-        $this->crud->setListView('admin.segment.list');
+        $this->crud->setListView('admin.vehicle.segment.list');
     }
 
     public function index()
@@ -43,7 +43,7 @@ class SegmentCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view segments.');
         }
 
-        $this->crud->setListView('admin.segment.list');
+        $this->crud->setListView('admin.vehicle.segment.list');
 
         $segments = Segment::orderBy('id', 'desc')->get();
 
@@ -68,7 +68,7 @@ class SegmentCrudController extends CrudController
             return $mapped;
         })->values();
 
-        return view('admin.segment.list', [
+        return view('admin.vehicle.segment.list', [
             'title' => 'All Segments',
             'gridConfig' => [
                 'columns' => [
@@ -89,7 +89,7 @@ class SegmentCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to edit segments.');
         }
 
-        $this->crud->setEditView('admin.segment.edit');
+        $this->crud->setEditView('admin.vehicle.segment.edit');
 
         $segment = Segment::findOrFail($id);
 
@@ -101,7 +101,7 @@ class SegmentCrudController extends CrudController
             ->pluck('name')
             ->toArray();
 
-        return view('admin.segment.edit', [
+        return view('admin.vehicle.segment.edit', [
             'title' => 'Edit Segment - '.$segment->name,
             'segment' => $segment,
             'activeSubSegments' => $activeSubSegments,
@@ -157,9 +157,9 @@ class SegmentCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to create segments.');
         }
 
-        $this->crud->setCreateView('admin.segment.create');
+        $this->crud->setCreateView('admin.vehicle.segment.create');
 
-        return view('admin.segment.create', [
+        return view('admin.vehicle.segment.create', [
             'title' => 'Add New Segment',
         ]);
     }

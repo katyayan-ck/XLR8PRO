@@ -29,7 +29,7 @@ class VehicleModelCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view vehicle models.');
         }
 
-        $this->crud->setListView('admin.vehicle-model.list');
+        $this->crud->setListView('admin.vehicle.vehicle-model.list');
     }
 
     public function index()
@@ -38,7 +38,7 @@ class VehicleModelCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view vehicle models.');
         }
 
-        $this->crud->setListView('admin.vehicle-model.list');
+        $this->crud->setListView('admin.vehicle.vehicle-model.list');
 
         $models = VehicleModel::with(['segment', 'subSegment'])
             ->orderBy('id', 'desc')
@@ -63,7 +63,7 @@ class VehicleModelCrudController extends CrudController
             return $mapped;
         })->values();
 
-        return view('admin.vehicle-model.list', [
+        return view('admin.vehicle.vehicle-model.list', [
             'title' => 'All Vehicle Models',
             'gridConfig' => [
                 'columns' => [
@@ -88,7 +88,7 @@ class VehicleModelCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to create vehicle models.');
         }
 
-        return view('admin.vehicle-model.create', [
+        return view('admin.vehicle.vehicle-model.create', [
             'title' => 'Add New Vehicle Model',
             'segments' => Segment::orderBy('name')->get(),
         ]);
@@ -133,7 +133,7 @@ class VehicleModelCrudController extends CrudController
             ->pluck('oem_name')
             ->toArray();
 
-        return view('admin.vehicle-model.edit', [
+        return view('admin.vehicle.vehicle-model.edit', [
             'title' => 'Edit Vehicle Model - '.$vehiclemodel->name,
             'vehiclemodel' => $vehiclemodel,
             'segments' => Segment::orderBy('name')->get(),

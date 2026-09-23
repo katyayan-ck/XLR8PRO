@@ -34,7 +34,7 @@ class BrandCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view brands.');
         }
 
-        $this->crud->setListView('admin.brand.list');
+        $this->crud->setListView('admin.vehicle.brand.list');
     }
 
     public function index()
@@ -43,7 +43,7 @@ class BrandCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view brands.');
         }
 
-        $this->crud->setListView('admin.brand.list');
+        $this->crud->setListView('admin.vehicle.brand.list');
 
         $brands = Brand::select([
             'id',
@@ -72,7 +72,7 @@ class BrandCrudController extends CrudController
             return $mapped;
         })->values();
 
-        return view('admin.brand.list', [
+        return view('admin.vehicle.brand.list', [
             'title' => 'All Brands',
             'gridConfig' => [
                 'columns' => [
@@ -93,11 +93,11 @@ class BrandCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to edit brands.');
         }
 
-        $this->crud->setEditView('admin.brand.edit');
+        $this->crud->setEditView('admin.vehicle.brand.edit');
 
         $brand = Brand::findOrFail($id);
 
-        return view('admin.brand.edit', [
+        return view('admin.vehicle.brand.edit', [
             'title' => 'Edit Brand - '.$brand->name,
             'brand' => $brand,
         ]);
@@ -126,9 +126,9 @@ class BrandCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to create brands.');
         }
 
-        $this->crud->setCreateView('admin.brand.create');
+        $this->crud->setCreateView('admin.vehicle.brand.create');
 
-        return view('admin.brand.create', [
+        return view('admin.vehicle.brand.create', [
             'title' => 'Add New Brand',
         ]);
     }

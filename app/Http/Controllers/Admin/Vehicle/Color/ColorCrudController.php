@@ -36,7 +36,7 @@ class ColorCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view colors.');
         }
 
-        $this->crud->setListView('admin.color.list');
+        $this->crud->setListView('admin.vehicle.color.list');
     }
 
     public function index()
@@ -45,7 +45,7 @@ class ColorCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view colors.');
         }
 
-        $this->crud->setListView('admin.color.list');
+        $this->crud->setListView('admin.vehicle.color.list');
 
         $colors = Color::with([
             'segment',
@@ -93,7 +93,7 @@ class ColorCrudController extends CrudController
 
         })->values();
 
-        return view('admin.color.list', [
+        return view('admin.vehicle.color.list', [
 
             'title' => 'All Colors',
 
@@ -152,11 +152,11 @@ class ColorCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to edit colors.');
         }
 
-        $this->crud->setEditView('admin.color.edit');
+        $this->crud->setEditView('admin.vehicle.color.edit');
 
         $color = Color::findOrFail($id);
 
-        return view('admin.color.edit', [
+        return view('admin.vehicle.color.edit', [
             'title' => 'Edit Color - '.$color->name,
             'color' => $color,
             'segments' => OrgService::segments(),
@@ -190,9 +190,9 @@ class ColorCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to create colors.');
         }
 
-        $this->crud->setCreateView('admin.color.create');
+        $this->crud->setCreateView('admin.vehicle.color.create');
 
-        return view('admin.color.create', [
+        return view('admin.vehicle.color.create', [
             'title' => 'Add New Color',
             'segments' => OrgService::segments(),
         ]);
