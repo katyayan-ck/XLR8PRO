@@ -310,3 +310,26 @@ Applies whenever a Blade view, its CSS, or its JS is touched — not just new vi
 - **Before shipping any UI/UX change**: re-verify the screen's existing validation, AJAX calls, and
   JS logic still function correctly — a visual/style pass must not silently change or break
   functional behavior. Treat this the same as the backend "preserve current functioning" rule.
+
+---
+
+## 14. View Directory Structure & Update Safety (recorded 23-09-2026, per explicit user instruction)
+
+- **Blade views must mirror the module/process folder structure used by controllers.** When a
+  controller lives at `app/Http/Controllers/Admin/Sales/Booking/BookingCrudController.php`, its
+  views belong under a matching `resources/views/admin/sales/booking/` path, not a flat
+  `resources/views/admin/booking/` directory. When moving a view to its correct module folder,
+  update every `view('...')`/`setListView()`/`setEditView()`/`setShowView()`/`setCreateView()` call
+  that references it, and verify via a live HTTP round trip that the route still renders.
+- **Before overwriting or restructuring any existing view file, copy its current, pre-change
+  content into `resources/views/backup/updated/`, preserving a path that makes the original location
+  unambiguous (e.g. mirror the original path under that folder), with the file's original path as a
+  comment on the very first line.** This applies every time an existing view is modified in a way
+  that changes its structure or location — not for small in-place edits like the `@sitedate()`/label
+  rollouts already done this session, which are direct fixes to files staying in place, but for
+  reorganizations, rewrites, or replacements.
+- **When a scan finds a view file that no route or controller `view()` call references** (an
+  orphaned view — this session found several in the Booking module: BUG-106, BUG-107, BUG-109),
+  move it to `resources/views/backup/orphaned/` rather than deleting it, preserving the same
+  path-as-first-line-comment convention, so nothing is silently lost and the working tree stops
+  carrying dead files that could confuse a future editor into thinking they're live.

@@ -1,3 +1,4 @@
+{{-- ORIGINAL PATH: resources/views/admin/booking/int-in-scrappage.blade.php --}}
 @extends(backpack_view('blank'))
 
 @section('header')

@@ -1,3 +1,4 @@
+{{-- ORIGINAL PATH: resources/views/admin/booking/invoiced.blade.php --}}
 {{-- resources/views/booking/invoiced.blade.php --}}
 @extends(backpack_view('blank'))
 

@@ -1,3 +1,4 @@
+{{-- ORIGINAL PATH: resources/views/admin/booking/list1.blade.php --}}
 {{-- resources/views/admin/booking/list.blade.php --}}
 @extends(backpack_view('blank'))
 
