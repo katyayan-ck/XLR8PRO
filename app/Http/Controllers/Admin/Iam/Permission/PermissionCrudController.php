@@ -33,7 +33,7 @@ class PermissionCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view permissions.');
         }
 
-        $this->crud->setListView('admin.permission.list');
+        $this->crud->setListView('admin.iam.permission.list');
     }
 
     public function index()
@@ -42,7 +42,7 @@ class PermissionCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view permissions.');
         }
 
-        $this->crud->setListView('admin.permission.list');
+        $this->crud->setListView('admin.iam.permission.list');
 
         $permissions = Permission::with([
             'module',
@@ -84,7 +84,7 @@ class PermissionCrudController extends CrudController
         })->values();
 
         return view(
-            'admin.permission.list',
+            'admin.iam.permission.list',
             [
                 'title' => 'All Permissions',
 
@@ -136,7 +136,7 @@ class PermissionCrudController extends CrudController
         }
 
         return view(
-            'admin.permission.create',
+            'admin.iam.permission.create',
             [
                 'title' => 'Add Permission',
 
@@ -196,7 +196,7 @@ class PermissionCrudController extends CrudController
         }
 
         return view(
-            'admin.permission.edit',
+            'admin.iam.permission.edit',
             [
 
                 'title' => 'Edit Permission',

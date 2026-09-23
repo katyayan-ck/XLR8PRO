@@ -33,7 +33,7 @@ class RoleCrudController extends CrudController
         }
 
         $this->crud->addClause('where', 'is_post', false);
-        $this->crud->setListView('admin.role.list');
+        $this->crud->setListView('admin.iam.role.list');
     }
 
     public function index()
@@ -42,7 +42,7 @@ class RoleCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view roles.');
         }
 
-        $this->crud->setListView('admin.role.list');
+        $this->crud->setListView('admin.iam.role.list');
 
         $roles = Role::withCount('permissions')
             ->select([
@@ -71,7 +71,7 @@ class RoleCrudController extends CrudController
             return $mapped;
         })->values();
 
-        return view('admin.role.list', [
+        return view('admin.iam.role.list', [
             'title' => 'All Roles',
             'gridConfig' => [
                 'columns' => [
@@ -93,9 +93,9 @@ class RoleCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to create roles.');
         }
 
-        $this->crud->setCreateView('admin.role.create');
+        $this->crud->setCreateView('admin.iam.role.create');
 
-        return view('admin.role.create', [
+        return view('admin.iam.role.create', [
             'title' => 'Add New Role',
             'permissions' => Permission::orderBy('name')->get(),
         ]);
@@ -129,11 +129,11 @@ class RoleCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to edit roles.');
         }
 
-        $this->crud->setEditView('admin.role.edit');
+        $this->crud->setEditView('admin.iam.role.edit');
 
         $role = Role::with('permissions')->findOrFail($id);
 
-        return view('admin.role.edit', [
+        return view('admin.iam.role.edit', [
             'title' => 'Edit Role',
             'role' => $role,
             'permissions' => Permission::orderBy('name')->get(),

@@ -1390,3 +1390,25 @@ directly-written escaped sed patterns this time (learned from the Org batch's to
   pre-existing via byte-identical `git mv` content.
 - `vendor/bin/pint --dirty --format agent` -> clean.
 - No dedicated Vehicle sub-module test suites exist; covered by the live HTTP round trips above.
+
+## Iam module (batch of 4) view reorganization — mirror controller module structure
+
+Third app-wide batch. Covers all 4 `App\Http\Controllers\Admin\Iam\*` sub-controllers (Modules,
+Permission, Process, Role).
+
+### Reorganization
+
+Moved `modules`, `permission`, `process`, `role` from flat `resources/views/admin/{name}/` to
+`resources/views/admin/iam/{name}/`. Updated all 12 `admin.{name}.*` references to
+`admin.iam.{name}.*`.
+
+### Verification
+
+- `php -l` on all 4 controllers -> no syntax errors. `php artisan view:clear`.
+- App-wide grep confirmed zero leftover old-prefix references.
+- Live HTTP round trips: module, permission, process all 200 (index/create). Role's index/create
+  both 500, confirmed pre-existing (already-tracked BUG-013: `Role` model missing `CrudTrait`),
+  unrelated to this reorganization.
+- `vendor/bin/pint --dirty --format agent` -> clean.
+- `php artisan test --filter="Permission|Role|Process"` -> 11 passed, 1 failed (pre-existing,
+  matches already-tracked BUG-016: `xlr8_iam_roles` table doesn't exist), zero new regressions.
