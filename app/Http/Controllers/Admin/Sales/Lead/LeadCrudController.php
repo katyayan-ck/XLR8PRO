@@ -71,7 +71,7 @@ class LeadCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view leads.');
         }
 
-        $this->crud->setListView('admin.lead.list');
+        $this->crud->setListView('admin.sales.lead.list');
     }
 
     public function index()
@@ -80,7 +80,7 @@ class LeadCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view leads.');
         }
 
-        $this->crud->setListView('admin.lead.list');
+        $this->crud->setListView('admin.sales.lead.list');
 
         $leads = Lead::with([
             'source',
@@ -118,7 +118,7 @@ class LeadCrudController extends CrudController
             return $mapped;
         })->values();
 
-        return view('admin.lead.list', [
+        return view('admin.sales.lead.list', [
             'title' => 'Lead Master',
             'gridConfig' => [
                 'columns' => [
@@ -146,7 +146,7 @@ class LeadCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to create leads.');
         }
 
-        return view('admin.lead.create', [
+        return view('admin.sales.lead.create', [
             'title' => 'Add New Lead',
             'sources' => LeadSource::where('is_active', 1)->orderBy('name')->pluck('name', 'code'),
             'segments' => OrgService::segments(),
@@ -189,7 +189,7 @@ class LeadCrudController extends CrudController
 
         $lead = Lead::findOrFail($id);
 
-        return view('admin.lead.edit', [
+        return view('admin.sales.lead.edit', [
             'title' => 'Edit Lead',
             'lead' => $lead,
             'sources' => LeadSource::where('is_active', 1)->orderBy('name')->pluck('name', 'code'),
