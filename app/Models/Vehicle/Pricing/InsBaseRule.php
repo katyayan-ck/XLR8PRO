@@ -4,6 +4,7 @@ namespace App\Models\Vehicle\Pricing;
 
 use App\Models\BaseModel;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class InsBaseRule extends BaseModel
 {
@@ -13,13 +14,16 @@ class InsBaseRule extends BaseModel
         'code',
         'model_code',
         'variant_code',
+        'company',
+        'plan',
+        'od_years',
+        'tp_years',
         'permit',
         'fuel_type',
         'wheels',
         'seating',
         'cc_range',
         'gvw_range',
-        'plan',
         'od_factor',
         'od_surcharge',
         'od_discount_rate',
@@ -37,21 +41,27 @@ class InsBaseRule extends BaseModel
     protected function casts(): array
     {
         return array_merge(parent::casts(), [
-            'wheels'                => 'integer',
-            'seating'               => 'integer',
-            'od_factor'             => 'decimal:6',
-            'od_surcharge'          => 'decimal:6',
-            'od_discount_rate'      => 'decimal:6',
-            'imt_23_rate'           => 'decimal:6',
-            'tp_basic'              => 'decimal:2',
-            'tp_per_passenger'      => 'decimal:2',
-            'tp_legal_driver'       => 'decimal:2',
+            'od_years' => 'integer',
+            'tp_years' => 'integer',
+            'wheels' => 'integer',
+            'od_factor' => 'decimal:6',
+            'od_surcharge' => 'decimal:6',
+            'od_discount_rate' => 'decimal:6',
+            'imt_23_rate' => 'decimal:6',
+            'tp_basic' => 'decimal:2',
+            'tp_per_passenger' => 'decimal:2',
+            'tp_legal_driver' => 'decimal:2',
             'tp_non_fare_passenger' => 'decimal:2',
-            'tp_bi_fuel_kit'        => 'decimal:2',
-            'is_active'             => 'boolean',
-            'wef_date'              => 'date',
-            'expired_on'            => 'date',
+            'tp_bi_fuel_kit' => 'decimal:2',
+            'is_active' => 'boolean',
+            'wef_date' => 'date',
+            'expired_on' => 'date',
         ]);
+    }
+
+    public function idvSlots(): HasMany
+    {
+        return $this->hasMany(InsIdvSlot::class, 'base_rule_id', 'id')->orderBy('year_no');
     }
 
     public function scopeActive(Builder $query): Builder
@@ -59,11 +69,11 @@ class InsBaseRule extends BaseModel
         return $query->where('is_active', true)
             ->where(function ($q) {
                 $q->whereNull('expired_on')
-                  ->orWhere('expired_on', '>=', now()->toDateString());
+                    ->orWhere('expired_on', '>=', now()->toDateString());
             })
             ->where(function ($q) {
                 $q->whereNull('wef_date')
-                  ->orWhere('wef_date', '<=', now()->toDateString());
+                    ->orWhere('wef_date', '<=', now()->toDateString());
             });
     }
 
@@ -77,7 +87,7 @@ class InsBaseRule extends BaseModel
             ->where('permit', $criteria['permit'] ?? null);
 
         foreach (['fuel_type', 'wheels', 'seating', 'cc_range', 'gvw_range', 'plan'] as $field) {
-            if (!empty($criteria[$field])) {
+            if (! empty($criteria[$field])) {
                 $query->where(function ($q) use ($field, $criteria) {
                     $q->where($field, $criteria[$field])->orWhereNull($field);
                 });

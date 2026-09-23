@@ -1,0 +1,411 @@
+So as you know that in our Xceler8 project we are dealing with Car dealership, here we have a problem to solve and that is vehicle live pricing. Now to understand it you need to understand the pricing structure. First of all in our vehicle system we have segments having subsegments having models having variants having color (Each having a unique code). Then there is OEM Pricing which comes as ExShowroom price for each vehicle code = Our Color code. The Vehicle code is like ASEP23QWSC1WD or KEISMED323SDEGR where the last two char are always color code and rest is the Variant Code so as a vehicle comes in various colors Varinat ASEP23QWSC1 will have OEM codes like ASEP23QWSC1WD, ASEP23QWSC1GR, ASEP23QWSC1BG, ASEP23QWSC1SB and ASEP23QWSC1BL which means the varinant ASEP23QWSC1 comes in 5 colors WD, GR, BG, SB and BL so the variant will have a single entry by code ASEP23QWSC1 while colors will have 5 colors of that variant code ASEP23QWSC1 named WD, GR, BG, SB and BL. Now back to the pricing while generally all colors of a variant have same ExShowroom Price sometimes there is difference of price based on color (Some colors may come at a Premium). Now for the Onroad price of a vehicle a number of other params are adjusted to it named :
+Incidental charges, RTO Charges, Insurance Charges, RTO Tape (in case of commercial vehilce), RSA Charges, Shield Charges, Accessory Pack Charges are added, and, RSA Discount, Shield Disocunt, Accessory Pack Discount, Cash Discount is being deducted. Then there is TCS on vehicle whose final invoice price is greater then equals to 10 Lakh will attract a tcs charge of 1 % which is added back to its OnRoad Price. Now we need to understand these pricing elements one by one :
+1. RSA (Road Side Assistance) this service charges are generally defined at Model level, sometime override are used at Varinat level too i.e. for 3XO the RSA is 5000 but for 3XO Petrol these may be 5200. RSA service is available for 1 to 5 years pack (for 1-2 or 1-3 years pack for some models) each pack has a difference price and by default we add first year price in the calculation.
+2. Shield (Extended Warranty) Just like RSA this too is defined at Model level with various pack of various coverage and differnt price for each package, however this is availabel for New and Old cars and we use the first smallest pack of new cars in the price calculation by default
+3. Insurance : This is the most difficult part of pricing as it is not defined by Model or variant but a number of various parameters some of which are defined by IRDA some depends on the vehicle specification like CC, PErmit, Seating Capacity and some are Insurance Company specific. We have multiple insurance companies and we decide which to use for which vehicle or permit in advance. So we have to calculate the Insurance Premium and add it to the PRicing.
+4. RTO is controlled by various rules depending on various params like CC, Permit, Seating etc defined by govt of different state. So we calculate this too in real time and add to pricing.
+5. Incedental Charges, Accessory Pack Price, RTO Tape Price are defined by the Dealer, along with all the disocunts on the model basis some times overriding at Variant level, these are then adjusted in the pricing. 
+
+Now we need a mechanism to keep this pricelist updated in real time with least efforts (Processing) as the changes to any of these can happen any time and eavery change requires to recalculate entire price list. First we need to identify which model/variants are being effected with this change and then recalculate its Full pricing in realtime. Now We need a foolproof system to keep our priclist updated in realtime withminimum efforts. The data is updated to system via Excel import at any time for any rule or sheet. Not always together
+
+Here is another twist to the pricing scenerio, as a vehicle can be sold as private/personal or pessanger vehicle (we will mark each vehicle if it can be sold in other permit too) and permit wise there will be two different insurance and rto for the vehicle and we have to show both in pricing means 3XO will have different RTO and Insurance when being sold as family car and other value when sold as taxi and we have show both pricing. 
+
+As for the recalculation of price almost every change in (insurance rule, inusrance company change, permit change, discount change) need full recalculation of the pricing incuding TCs as these change will impact on IDV (Base for insurance) and INV (Base for RTO) values of the vehicle
+
+Plus some vehicles (Marked specifically) are being sold via CSD which have a altogether different pricing structure, we need to create a CSD Pricelist too for them
+
+
+Questions to answer :
+is the Dual-Tone premium managed as a color surcharge in your OEM price table, or as a separate display variant with its own price record? 
+
+
+Here are answeres to your queries/questions  Revisit uploaded vehicle_system(2).sql for reference. One of the most important thing that our system do not use Id for relation but we have given unique code to each entity and those codes are used in other table for relations. Our Hierarchy is defined as Segment having SubSegment having Model having Variant having color only (no model group here), each entity has two name one is used by us and second is given by OEM in most cases both are same but for each of use we have updated some of them as and when required :
+    Dual-Tone / Multi-Seater as separate OEM codes or same code with color premium? Generally if there is a price difference on Color level for the same varint then we rename it as a new vehicle variant so while both have the same oem name and code still are two different vehicle because of different name.
+
+    LMM vehicle identifiers : Yes it it like that from OEM and we cant change it,  we need a surrogate key strategy.
+
+    Multi-dealer scope — Our target is single dealer of single oem single state with multiple branch location, other state or brand data is just reference data that for differnt dealership we will need to deal with different OEM and states
+
+    Price Hold scope priority — Price holds will work that upper level will override lower model. i.e. if Model is on hold but varint is active then model will take precedance. Or we can make it that if we update a parent all of its child of all level should also get updated accordingly
+
+    Exchange Bns 1 vs Bns 2 — I am not sure which data sheet you are referring to we need to be more specific.
+	
+Hope it will clear all the queries. Ask if more clarification is needed. Here you have to keep in mind that the software is for users, not users for software so the entire process should be as simple and easy to use and follow as possible. We have to simplyfy things not complecate them. 
+
+Going forward we will need to create a live quotation builder too for the end customer where he can tweak various params like insurance, disocunt, rsa, shield, accessory options and get exact on price for his desired vehicle. Our system should be capable of handling this too, we will need realtime rto, insurance claculation for a vehcile then. See the attahced blad it will give a idea of a lots of config option changes that can be done durin a quote generation. See attached quote files from other older system to get an idea.
+
+As for the solution we need to follow some rules :
+naming of tables should be xlr8_pricing_<table>
+all table should have 6 audit field created/deleted/updated_at/by
+all models should extend to BaseModel and respect userdata scoping as and when required
+we will not create SQL FK but use Eloquent Relations instead of it
+give full migration code, group multiple tables in a single migration if possible
+
+Yes we need to start with proper vehicle pricing tables where data will be added via import from the given workbook. Insurance and RTO data is being filled till then we will work on the rest of the data. First of all we need to understand each sheet and its complecations and rules to follow. Lets start from first sheet which is "Vehicle Info" : It is the Vehicle Master data sheet. This sheet is here for reference only all this data is already in the system db (vehicle_segment/subsement/model/variant) along with its specification like Permit / Fuel / Seating / Wheels / Transmission / Drivetrain / Body Make / Body Type / CC / GVW / GST% / Permit
+Most values are coming from our keyvalue mechanism except wheels/seating/cc/gvw and GST.
+First 3 columns (Model Code, OEM Model and OEM Variant) are OEM master values which serves as primary keys of various tables and data dump like Model Code is unique to each color of each varianrt of each model of each subsement of each segment, so it is the primary key to identify each vehicle. OEM Model is its model and variant is its variant name, then we have a column named "Taxi Price" having value Yes or No it is to define if a vehicle is available to sell as Taxi or not.
+Custom Model, Custom Variant are our custom names given to a vehicle as per market language. Then there is Display name which is a bit tricky. While each color or the same variant will have similar custom_variant value, however if there are difference in Price of two vehicle having same Model and Variant (sometime based on color and some time based on seating) then we will have to introduce a new name for the differnt value entry, till then the status of the vehicle will be "UNDEFINED". There might be chance that some vehicle do not have a defined color name which is ok as this coulumn needs to be nullable (we need to add this column in vehicle_variant table). 
+Apart from "UNDEFINED" allowed status are "NEW" for fresh vehicle, "Active" for all completed vehicles, "Disabled" for manually disabled and "Discountinued" for vehicles stop production by OEM. If a vehicle does not have segment/subsement/model/variant / Permit / Fuel / Seating / Wheels / Transmission / Drivetrain / Body Make / Body Type / CC / GVW / GST% / Permit defined then it cannot be marked Active.
+
+
+Now take a look at the Master vehicle sheets ( PV Vehicle, CV Vehicle ) these sheet are coming from OEM having all the Vehicles status with OEM_Model_code (unique vehicle id) alongwith OEM Model, OEM Variant, Colour Name, Transmission (AT/MT here while we have Autimetic and Manual in keyvalue so a parsing will be needed here), Seating. Now if a vehicle is present here but not in our DB then it means it is a new vehicle and we have to create its entries in vehicle_model and vehicle_variant. Now if a vehicle is present in both but marked Discontinued in sheet then we will mark that discontinued in our vehicle_variant table too.
+
+Then there are pricing sheets ( i.e. Price list PV/CV/LMM/LMM TZU/CSD etc) these sheets have actual pricing bifurcation of vehicles. Main catch is that at the time of import we have to ask for WEF date of this data which may be of past/present or future (upto 15 to 30 days). This pricing will be effective from the given WEF and for the reconciliation purpose we need to keep track of price change (every Column). While other vehicle have almost similar, CSD has an altogether different pricing structure and not all vehicles are being sold via CSD plus the vehilces which are in CSD sheet but not in our DB need not to be added to the master data.
+
+Next sheet is CSD Index Codes it have a list of CSD codes of the Vehicles sold through CSD if the vehicle is present in DB then just update its CSD_Code (need to add this column along with last discussed Color Name and also stock_count columns in the vehicle variants for it and update the orm models accordingly) else ignore if not found in DB.
+
+Now comes the Price Addons (which adds to ExShowroom Price) like RSA, Shield, Dealer Chares, RTO (TBD), Insurance (TBD), Accessories (TBD) and Discounting (which deductes from Exshowroom) like RSA/Shield/Accessory/Cash Disounts (TBD in a separate sheet together) and conditional discounts like Corporate/Exchange/Loyalty. Most of these are applied at Vehicle Model level which means applicable on all varints and colors of that model, if there is any override then it will be defined in subsequent rows afer the master data. For example while All Scorpio-N attract RSA @ 1550 but a specific variant @ 1698 then first you will found entry by OEM Model name for all vehicles of that model, after that you will found individual variants which have other values.
+RSA is available from 1 to 8 year pack and by default 1 year pack is added to standard pricing.
+Similarily Shild too have multiple values and by default applicable of OEM Model to be override by variant in subsequent entries if needed. Same with corporate, exchang and loyalty.
+
+Now for Insurance, RTO and Accessories there is an old sturcture attached for reference, RTO and Insu has many options and bifurcation and settings which user can customised at the time of Quote Creation, so we need to capture them all for use for the time being along with sample dealer charges and discounting sheet attached. As for discounting there are two kinds of consumer schemes available one for old-VIN and other for New-VIN while New-VIN applies on all, old-VIN on vehicles where we have older models in stock. So we need to have a provision for that too.
+Now I have completed almost all the required info, now compile it all toghether carefully, see what is still  missing or not explained properly or need calrification before crating a detailed FRS and Workflow for the process.
+
+Here are answers to your queries :
+01. vehicle_variant.status : UNDEFINED status to be allowed when any mandatory fields are missing
+02. Pricing History : Do we need to maintain history of every column change separately, or just store previous version of the entire pricing row? What is the best approach in your opinion?
+03. WEF Date Logic : Yes multiple pricing records exist for the same vehicle with different WEF dates but always in increamental order of date it means if there is already a record with 01 Jan 2026 and today is 26 Jun, 2026 so we can have another record of WEF 12 Jun, 2026 which means the first pricing expired on the night of 25 June 2026 and latest price are applicable from 12 June, however there cannot be two future WEF entries of a vehicle in any case.
+04. Old VIN vs New VIN : How do we identify whether a vehicle in stock is "Old VIN" or "New VIN" at the time of quotation we have to check it in stock table which is yet to define and show quote accordingly.
+05. Insurance : We need structured tables for insurers, add-ons, and packages
+06. RTO : Since RTO data is not TBD structure and sample data already provided in the sample_rto_ins_access.xlsx
+07. Accessories : All values to be linked at model_code + variant_code level
+08. Dealer Charges : They also have model → variant override logic like RSA/Shield?
+09. Quotation Flow : At what stage in Quotation creation should the system pull default RSA (1 year), Shield, and Dealer Charges : Initial Stage and give other options for customisation to the user
+10. Import Process : Sheet Wise Import which we still need to discuss. Let do this too, the entire import process is of multipass, first we will ask for the WEF (to be applicable on all data be it pricing/shield/accessories/rto/insurance) and run the uploaded sheet for PV/CV Models running these two sheets will Add/Update/Discontinue exitsting vehicles. Then we will create an export of the same sheet from updated values from our database current in effect values. Those model/variant which are new or incomplete and do not have any history will be shown in each sheet as blank data row with just first three columns (+ whatever data applicable). Now the user should update complete this sheet and re-run it the system to complete the process, by this way there are less chance of error in listing vehicles. While your thought and ideas are welcome to make the entire process more quick, easy and efficient and still foolproof.
+
+I hope now you have better clarity of the proposed system. go through all the data and instructions provided in last few prompts once again in deep reading mode, make connections within them and then ask questions if still there is confusion, provide your suggestions/feedback/opinion and once everything sort out then only prepare the full detailed verbose FRS and Workflow as an experienced Sr Web Developer cum solution architect
+
+
+Point wise answers to your questions :
+A : Yes
+B : System should let upload a second future WEF, just warn user. There is a catch you need to understand, we will record history and updare WEF in our records only when there are actual change in price else no need to create an history record or change WEF date. 
+C : Display Name + Pricing Difference : "If two colors of the same variant have different Ex-Showroom prices, We need to create two different display_name entries in vehicle_variant"
+D,Old VIN vs New VIN Identification,"Since this will come from the future Stock table, should the system also allow manual override at quotation time (in case stock data is not updated)?" :Yes
+E,Import Process Efficiency,"Your proposed multipass import (PV+CV first → Export → User fills → Re-upload) is good for accuracy. However, it is a bit lengthy. Would you be open to a hybrid approach where the system shows missing/incomplete vehicles in a grid inside the application (instead of forcing Excel re-upload)? This can be faster for users." : Yes this can be faster if number of entries are less then 50 but for large group it is best to work on excel as generally they do data copy paste in bulk from other source.
+F,Dealer Charges Override,You confirmed Dealer Charges also follow model → variant override. Should this override work exactly like RSA/Shield? : Yes
+G,Accessories Linking,You said accessories should be linked at model_code + variant_code level. Does this mean we will maintain a separate vehicle_accessory mapping table? : We already have a mechanism for that, we will use that.
+H,Insurance Structure : for the time being as told earlier Insurance and RTO approach is being redefined the provided data is from an old system and for reference only we will revisit these two thinng in coming days
+
+
+my decision to your opinion :
+Import Process : I am ok with this two mode approach
+Pricing + WEF : We should maintain an is_active flag + wef_date + expired_on in the pricing table. This makes "current price" queries very fast. : Accepted
+vehicle_variant table : We should add a pricing_status or is_pricing_complete flag so that status = Active can be blocked if pricing is missing. : Accepted
+Quotation Engine : Pulling defaults (RSA 1yr + Shield + Dealer Charges) at the initial stage of quotation is good. We should also allow users to reset to defaults later. : Accepted
+History & Audit: Almost every important table (pricing, discount, addon) should have a corresponding _history table because of reconciliation requirements. : (we need to think on this need some time) 
+CSD Channel : Since CSD has different pricing and restricted master creation, we should have a clear channel_type or applicable_channels flag at pricing level. : Did not get exactly what you are proposing
+
+Well lets discuss the RTO and Insurance now see the attached workbook(I have removed other sheets for the time to keep it small). In RTO sheet there are rules based on "Permit / Wheels / GVW / Seater / Fuel / CC / Power". Based on the combination of above heads there are rate/amount defined for "Tax Amount / Surcharge / Hypothecation / Green Tax / Registration Fee / DTC and FITNESS" based on INV ( Invoice Value ). Now the total of these heads amount is the total applicable RTO on a vehicle. When "Taxi Price" are on for a vehicle then we have to calculate 2 RTO one for Private Permit and other for Passanger Permit. In the rules CC and Power are interchangeble for ICE and EV.
+
+Now Come to the Insurance Sheet, just like RTO here too there are different Rules Combo : "Permit or Vehicle Class / Invoice Value / IDV / CC / KW / GVW / Seating / Fuel / Plan ( Full + Third Party)" based upon the combination of these following heads rate/amount is defined : "OD Factor / OD Disc% / OD Aft Disc / IMT 23 / Bundle / TP / Own Driver PA Cover / Legal Liabilty Paid Driver / Legal Liability Cleaner / Non Fare Paying Passengers / PA Cover for Passengers / Per Passenger" now each of these are calculated and added together alongwith GST to get Base Premium irrespective of Insurance Company then there are various companies offering various addons (calculated as % of OD amount of Base Premium) and various combos of these Addons + Base Premium are available from them based on Permit, this offering is known as a combo pack. i.e. ICICI may offer different Addons for Goods, Private and Passanger permit under same Combo Pack name. Then there are default Insurer for each permit type and default Pack for each Insurer+Permit combo. All of this is defined in InsBundle sheet (we have to give this sheet a proper format so it can be managed and import/export easily without any error.
+
+Answer to your queries : 
+1 RTO for TaxiWhen taxi_price : user should choose one
+2 Insurance Base Premium : Base Premium calculation to be recalculated and stored once head wise on price change and used from here for performance
+3 Combo Pack Management : Will it be mostly managed via Excel import, but we will have a CRUD too for easy management
+4 Default Logic : There must be an alert to admin so he can check and fix the issue.
+5 History : Yes, maintain calculation history for both RTO and Insurance at the quotation level 
+
+Apart form these there are some more points to consider before going forward :
+
+A. Apart from this you have missed the proper format for InsBundle sheet requirement, current sheet while easy to read by human, hard to parse by Laravel-excel or other excel reader so we need a clean and working format for it (while not recommended but if it is too difficult then we may split the info in multiple sheets)
+
+B. The final Price are based on so many params and change of any of this trigger recalculation of entire pricelist as follows :
+Inv = Round to 1000 of exshowroom price
+Invoice Value = Exshowroom - all discounts
+IDV = Invoice Value
+Price Addons = Dealer Charges ( Incidental, RTO Tape, Charger, Training Fee, Licence Fee etc), Insurace (Give options to change company and combo during Quoataion while go with default pack of default company of default permit of vehicle for standard price), RTO as per rules, Accessory Pack (will discuss soon), RSA, Shield etc, at last TCS if INV >= 1000000.
+Then there are deductions like various discounts (Accessory, RSA, Shield, Cash, Exchange, Loyalty, Corporate, Special, Extra), see attached Image for more insight on Quote
+We have also finalised the RTO Rules sheet, go through it for for better understanding. 
+Now the issue is that we have to create such an efficient system which will track changes in various pricing factor and auto-recalculate the on road price if any change occures. While giving minimum load on server so a smart mechanism is needed for it.
+
+Now once again go through the entire discussion (data, info) provided in last 7-8 prompts and then reevaluate your answer with utmost caution (without missing any detail and instruction). We are working on finalising the Insurance part too will discuss it with accessories later
+
+Discounting too needed to be discussed in detail. There are several kinds of discount and they have different structure. All Discount applicable on All VIN. But mostly discount are depends on some unique condition and some discount has multiple options to select from, lets start from RSA, Shiled and Accessories Discount these three are bound with RSA, Shield and Accessories purchase (if Available) if during quitation user choose no RSA or No Shield the discount linked to the entity will also withheld in a separate bucket (not to be shown to the user but recorded), similarily every vehicle has a min accessories threshold if accessoried purchased are less then this threshhold then associated accessories discount to be withheld too.
+Now came the Exchang and Loyalty they are treated in a group as only one can be availed if available. Then there is Corporate Discount which comes in various category and user has to choose his appropriate category (if applicable). Cash Discount is unconditional. Then there is Fame Subsidy (if applicable generally for first EV purchase only). Now RSA is from 1 to 8 years model-to-model varies, Shield is generally of two kinds for each vehicle. Then there is special discount which is applicable in rare case. Plus during quotatio a customer can ask for extra discount (it upto approvers if they approve it or not). So I dont think a common model and table will work for each discount type. Once again go through this conversation and supplied inout file for details and then revalidate your discounting solution 
+
+Double check your proposed Addon tables and model solution against the provided data sheet of RSA/Shield and other charges (dealer and all). Also your disount table and models against various discount sheet i.e. Corporate, Exchange, Loyalty alongwith incidental discounts like RSA/Shield/Cash etc. Be sure that your db and model solution is capable of storing and serving the datasheet in question as it is. I just want you to double check that the proposed solution is fully capable of recording and serving on demand all available options of an AddOn or Discount of a vehicle instantly and when required you can export exact excel form data from DB as the source Workbok. If you have double checked it and sure then lets start giving me the udpated solution
+
+Now the base source excel workbook is complete with refined and revised Inusrance and RTO rules and mechanism take a look at this specially on sheets (Insurance Co., Insu Premium and RTO) On the Insurance Co. Sheet you will found the default option for Insurance Company (I, II and III) for each vehicle model (covering all of its variants and colors) permit wise. Currently option II and III are blank but they will be filled in future, so while default insurance will be calculated based on I preference Insurance Company, during Quote if II and III are available then user should be given choice to change them and realtime live calcualation to be done for the chage to get updated insurance price.
+On Insu Premium sheet the relevant data is from column# E to AQ here you will found OD rate for 1,2 and 3 year option (for combo like 1+3 or 3+3) rest are different rate some are in Factor or Percentage while other are fixed amount. Then from coulmn AA there are Addons (Insurance Conpany and Permit wise) there are value in only those columns which are applicable to that specific combo. While Our Standard Insurance will include Basic OD Premium of selected year + TP Premium of Selected Years + NilDep and Consumable Addons (if available) rest of the available addons to be shown as optional during Quotion.
+
+So now take a deep repetitive look on the updated workbook, do deep reasearch and then acting as a Sr and Exparienced Web Developer cum DBA cum Solution Architect, give your view and ask questions if any afeter going carefully multiple times from the latest workbook and our earlier discussions
+
+
+Here are answer to your Major Gaps & Open Questions
+After deep analysis, here are the areas that still need clarification or design decisions:
+A. Insurance Engine (Most Critical Right Now)
+
+Base Premium Calculation:
+We need to create a rule engine (JSON-based or normalized table (preferred)) that can evaluate these rules dynamically
+
+Standard Insurance Definition: is fixed as OD + TP + NilDep + Consumables?
+
+Insurance Company Switching (I, II, III):
+When user changes from Company I to II/III during quotation, we need to recalculate the entire On-Road Price
+
+Addon Storage:Many addons in "Insu Premium" sheet (from column AA onwards) are company + permit specific. Should we store them in a separate insurance_addon_rates table? : Choose the best option which can be updated easily
+
+
+B. RTO Rules
+The RTO sheet has many combinations (Permit + Wheels + GVW + Seater + Fuel + CC).
+Question: We need a rule matching + RTO Calculation engine just like Insurance
+
+C. Conditional Discounts & Withheld Bucket
+From old system + your earlier instructions:
+RSA Discount, Shield Discount, and Accessories Discount are conditional. If user removes RSA/Shield or Accessories < threshold → discount goes to Withheld Bucket.
+
+withheld amount to be stored in the quotation JSON snapshot (for audit) only
+
+D. Discount Bifurcation (Cash vs Credit Note)
+The old system had heavy logic for splitting discounts into Cash / Credit Note based on *_mode flags.
+Yes we still need this bifurcation in the new system at Quotation level
+E. Default Quotation Behavior
+From old system + your instructions:
+
+On initial quote load, system should pull:
+Default RSA = 1 Year
+Default Shield = First available scheme
+Default Dealer Charges = All applicable
+Default Insurance = Company I + Standard Combo (OD + TP + NilDep + Consumables)
+Is this still valid? Yes.
+
+Insurance Standard Definition
+Should "Standard Insurance" always include Nil Depreciation + Consumables (if available), or should this be configurable? This should be configrable however default should be Base Premium + Nil Depreciation + Consumables
+Insurance Addon Handling
+Yes we need to show all available addons as optional checkboxes during quotation (with NilDep + Consumables pre selected and frozen)
+Withheld Discounts
+Store withheld discount amounts in the quotation JSON only
+RTO for Taxi
+When taxi_price = Yes, the system should force the user to choose Private vs Passenger permit for RTO to switch, but auto-calculate and save in a table as soon as the pricing change by import or by interface
+Discount Bifurcation
+Is the Cash vs Credit Note split still required in the new system? Yes.
+
+
+
+You are well aware of Our Xcelera8 project its ORG, Person, Accessory Service and other features. our keyword-value mechanism, entity history mechanism and all, I have also attached the final Quotation Logic which shows how the pricing works dynamically and we have to achieve this. For this you have to think and act a sr experienced web develper cum dba cum solution architect, go through all the availabel/discussed shared knwoledge (increamental) in this and previous chat in this project multiple times carefully and then following the projects guidelines create a robust and elastic solution. 
+
+Here are answers to your queries :
+
+History
+We need to keep full _history tables for every pricing/addon/discount change, or is soft versioning (is_active + wef_date + expired_on) + Quotation JSON snapshot enough for reconciliation?
+CSD Modelling
+A) Completely separate xlr8_pricing_csd table
+
+
+Old VIN vs New VIN
+Until Stock module is ready, do we expose a manual toggle on the Quotation screen (default = New VIN)? Need more details on it
+RTO Rule Conflict Resolution
+When multiple RTO rules match a vehicle, what wins? : Most specific match
+
+Dealer Charges Override
+Confirm that Segment-level is default and Model-level can override (exactly like RSA/Shield). Yes
+TCS limit (₹10 L) and rate (1 %) are global configuration, but will be provided with pricing arrray See and study json structure and logic used in the given sample html implementation for details
+
+The complete import process is multi stage/steps  as follows :
+1. SomeOne will update the PV Vehicle, CV vehicle and all Price List sheets (PV/CV/LMM/LMM TZU and CSD)sheet and run import with wef date.
+2. System will process and create new vehicle if found in and revert a sheet with updated vehicle info with Newly added and/or updated (Live or discountinued) status. Here we need to keep the logic that if a vehicle is marked discontinued in incoming data but we have a vehicle in stock for it then it will not be marked discountinued. And make appropriate entry of Vehicle OEM Model (wiht Variant override whereever applicable) and other serch criteria columns like Fuel and Transmission in Shield of all the models/vehicle with values from our database. 0 value if there is no or blank entry in our DB for that vehicle model/variant, selection criteria combo.
+3. Now the person will complete this and re-run the full sheet.
+4. we have to compare the old and new values before making an update or history. Only history and wef will be created when there is an actual change in values.
+5. Finally Insurance, RTO and Onroad will be calculated for the new and updated records of active vehicles only.
+
+This is what we have proposed now we need to make it sleek, clean and robust process for an error free flexible and adaptable solution. So think hard as a sr dev cum dba cum solution architect and then give your response while keeping in mind and following all the instructions provided
+
+There is a catch in this :
+While pricelist comes multiple times (in phased manner i.e. PV on 2, CV on 5, LMM on 10, CSD on 15)
+Other values like RSA, Shiled etc changes very rarly (almost 1-2 times in a year) and RTO changes are once in 2/3 years. While Insurance may get updated 2-3 times in a year. What do you think how we can make this process faster and more robust while saving necessory check and comparison processing time of redundant data? Should we brake the sheets in differnt workbooks?
+
+Another thing to remember that as WEF date will be of future and so will be the new pricing which means we need to keep old pricing too and this pricing history will be additive so we can fetch standard price of any vehicle from any past date too. and By default the system always return the price applicable on today. Add this one too in the process and update the workflow accordingly.
+
+We do not get any expirty date with wef date as the logic is that current pricing is valid till new chage reported which can be anytime in future. Moreover keep the sheets separate for RTO Rules, Insurance Rules, Accessories, Corporate, Exchange, RSA and Sheild as the do not come in a bundle (in-fact a single sheet too comes in parts lile for RSA we get it in parts for each segment multiple times in a sprint). So now covering everythign re-create the full verbose workflow with covering everything with all possible use case and scenerios. Make steps of entire process give user to choose next step one after another, let him bypass a step if no changes are availabel for it and then final price calculation based on all chages
+
+Now as for hold and multiple pricelist it is best to have differnt workbook for each segment having all the sheets relevant to that segment like "VehicleDefine&Price-PV", "VehicleDefine&Price-CV", "VehicleDefine&Price-LMM" and "VehicleDefine&Price-CSD" with all related sheets like <Segment>-Vehicl, Accessories, RSA, Shield, Discounting, Dealer Charges etc with related data of that segment only. As each segment has differnt pricelist format and source and they come on different date. This will further speed up and optimise the process. Along with this there should be an option to hold/unhold segment wise pricelist (which will temporarily enable/disable the Pricing and Quote/Booking view (when we create it) of that segment. So if a price changed is recieved in the mornnig with today WEF, then till the final onroad is calculated the pricelist and quote/booking feature become unavailable and show a message that the "Pricelist is on hold as new price changes are being implemented". So if I want to hold the CV only then I can click on its button or if I want to hold more then one or all then I can do so. Taxi Pricing in connected with PV if it is hold then Taxi will also hold. CSD index code will work as CSD vehilce sheet (but if a vehicle is live in this list but not available in our db then unlike PV/CV we will not create it with incomplete/fresh status. LMM and LMM-TZU are of same segment but comes from different source and has different format hence two sheet, it does not have a LMM-Vehicle sheet to ascertain new vehicle we will have to identify new vehilces from the pricelist sheet itself. I think now I have cover everything and scenerio related to PRicing. Double check every thing and our previous chat and provided data and see if any thing is missing. Ask questions if needed. Else now re-create the workflow covering every minute details in a proper robust foolproof flow and order so everything is covered and processing is done segment & sheet wise with option to skip a step if no changes in that and final agreement from user to calculate the changes, provision to manage future wef pricing and date wise price snapshop of historical data and all. 
+Cover everything which I may have forgot to mention here. Full bluprint covering everything related to pricing calculation as discussed in this chat. Do deep reserarch, go from everything multiple times, act and think as a sr web dev cum solution architect cum DBA and then go full verbose and define the workflow covering all possibilities and use case and exceptions too
+
+I have an idea that we should give a unique code/id to each insurance and RTO case and add that code to the vehicle (in vahicle_variant) for quick slelction of applicable insurance rules, thus we do not have to go through a series of checks to find our which vehicle belongs to which insurance or RTO rules row or to list all the vehicles related to a specific insurance or RTO rules. If a rule or vehicle specification gets updated then we will re-evaluate this relation. I need your thought on this and what we will have to do to implement it?
+
+app/
+├── Services/
+│   ├── Vehicle/
+│   │   └── VehicleService.php
+│   └── Vehicle/Pricing/
+│       ├── PricingEngineService.php
+│       ├── AddonService.php
+│       ├── DiscountService.php
+│       ├── RtoService.php
+│       ├── InsuranceService.php
+│       ├── ImpactResolver.php
+│       └── Import/
+│           ├── PricingImportOrchestrator.php
+│           ├── AbstractImporter.php
+│           ├── VehicleMasterImporter.php
+│           ├── OemPriceImporter.php
+│           ├── DealerChargeImporter.php
+│           ├── DiscountImporter.php
+│           ├── RsaImporter.php
+│           ├── ShieldImporter.php
+│           └── CompletionWorkbookExporter.php
+├── Jobs/Vehicle/Pricing/
+│   └── RecalculateSingleVehicleJob.php
+├── Http/Controllers/Admin/Pricing/
+│   ├── PricingWorkflowController.php
+│   ├── TcsConfigController.php
+│   ├── RtoRuleController.php
+│   └── InsuranceController.php
+└── Models/Vehicle/Pricing/
+    └── (all previously defined models)
+routes/backpack/pricing.php
+
+VehicleService --Done
+AddonService (final) --Done
+DiscountService (final) --Done
+RtoService (with caching)
+InsuranceService (with caching)
+PricingEngineService (final assembler)--Done
+PricingImportOrchestrator (final)--Done
+RecalculateSingleVehicleJob (final)--Done
+PricingWorkflowController (final)--Done
+
+============================
+Pricing Workbook Worksheets Headers
+======================
+01 - Rules => "RTO Permit", "Insu Permit"
+02 - "Vehicle Info" => "Model Code", "OEM Model", "OEM Variant", "Segment", "Sub Segment", "Fuel", "Seating", "Wheels", "Transmission", "Drivetrain", "Body Make", "Body Type", "CC", "Motor", "GVW", "GST%", "Permit", "Taxi Price", "Custom Model", "Custom Variant", "Display Name", "Colour Name", "Status", "Shield Pack"
+03 - "PV Vehicle" => "Model Code", "OEM Model", "OEM Variant", "Colour Name", "Transmission", "Seating", "Status"
+04 - "CV Vehicle" => "Model Code", "OEM Model", "OEM Variant", "Colour Name", "Seating", "Status"
+05 - "Price List PV" => "Model Code", "OEM Model", "OEM Variant", "Asse Value with Freight", "GST", "GST Amount", "MM Inv Amt", "Dealer Margin", "Dealer Handling", "GST Amount 1", "Ex-Showroom Price ORG", "CV-OEM Scheme @ BNDP", "CV-OEM Scheme with GST", "CV-Dealer Cont @ BNDP", "CV-Dealer Contribution with GST", "CV-Total Consumer Scheme with GST (OEM + Dealer)", "CV-Cash Discount", "CV-Accessories Discount", "CV-Shield Discount", "CV-Check", "CV-Acc Dsc Elg", "CV-Sheld Disc Elg", "OV-OEM Scheme @ BNDP", "OV-OEM Scheme with GST", "OV-Dealer Cont @ BNDP", "OV-Dealer Contribution with GST", "OV-Total Consumer Scheme with GST (OEM + Dealer)", "OV-Cash Discount", "OV-Accessories Discount", "OV-Shield Discount", "OV-Check", "OV-Acc Dsc Elg", "OV-Sheld Disc Elg"
+06 - "Price List CV" => "Model Code", "OEM Model", "OEM Variant", "Asse Value with Freight", "GST", "GST Amount", "MM Inv Amt", "Dealer Margin", "Dealer Handling", "GST Amount 1", "Ex-Showroom Price ORG", "CV-OEM Scheme @ BNDP", "CV-OEM Scheme with GST", "CV-Dealer Cont @ BNDP", "CV-Dealer Contribution with GST", "CV-Total Consumer Scheme with GST (OEM + Dealer)", "CV-Cash Discount", "CV-Accessories Discount", "CV-Shield Discount", "CV-Check", "CV-Acc Dsc Elg", "CV-Sheld Disc Elg", "OV-OEM Scheme @ BNDP", "OV-OEM Scheme with GST", "OV-Dealer Cont @ BNDP", "OV-Dealer Contribution with GST", "OV-Total Consumer Scheme with GST (OEM + Dealer)", "OV-Cash Discount", "OV-Accessories Discount", "OV-Shield Discount", "OV-Check", "OV-Acc Dsc Elg", "OV-Sheld Disc Elg"
+07 - "Price List BEV" => "Model Code", "OEM Model", "OEM Variant", "Asse Value with Freight", "GST", "GST Amount", "MM Inv Amt", "Dealer Margin", "Dealer Handling", "GST Amount 1", "Ex-Showroom Price ORG", "CV-OEM Scheme @ BNDP", "CV-OEM Scheme with GST", "CV-Dealer Cont @ BNDP", "CV-Dealer Contribution with GST", "CV-Total Consumer Scheme with GST (OEM + Dealer)", "CV-Cash Discount", "CV-Accessories Discount", "CV-Shield Discount", "CV-Check", "CV-Acc Dsc Elg", "CV-Sheld Disc Elg", "OV-OEM Scheme @ BNDP", "OV-OEM Scheme with GST", "OV-Dealer Cont @ BNDP", "OV-Dealer Contribution with GST", "OV-Total Consumer Scheme with GST (OEM + Dealer)", "OV-Cash Discount", "OV-Accessories Discount", "OV-Shield Discount", "OV-Check", "OV-Acc Dsc Elg", "OV-Sheld Disc Elg"
+08 - "Price List LMM" => "City", "OEM Model", "OEM Variant", "Model Code", "Assesable Value", "Freight New", "GST%", "Cess%", "GST Amount", "LMM Inv Amt", "New Dealer Margin", "Extra Handling", "GST Amount 1", "Ex Showroom Price", "Ex Showroom Price(Org)", "VIN Scheme", "", "OEM Scheme @ BNDP", "Dealer Cont @ BNDP", "Dealer Contribution with GST", "Total Consumer Scheme with GST (OEM + Dealer)"
+09 - "Price List LMM TZU" => "City", "M.CODE", "Material Description", "Model Name", "Model Group", "Scheme", "Before GST", "New Base Price (Ex-Factory)", "Freight", "Diff/Adjustment", "Assessable Value", "GST on Assessable Value @ 5%", "LMM Billing Price before (PM E-DRIVE SUBSIDY)", "LMM Billing Price After (PM E-DRIVE SUBSIDY)", "New Dealer Marging", "Dealer GST @ 5%", "Ex-Showroom Pre Subsidy", "Battery Capacity", "PM E-DRIVE SUBSIDY Subsidy", "Maharashtra State Subsidy", "Exshowroom Post Subsidy (PM E-DRIVE SUBSIDY)", "Scheme", "Final Transaction Price", "", "OEM Scheme @ BNDP", "Dealer Cont @ BNDP", "Dealer Contribution with GST", "Total Consumer Scheme with GST (OEM + Dealer)"
+10 - "Price List CSD" => "Model Code", "OEM Model", "OEM Variant", "Custom Model", "Custom Variant", "Display Name", "City", "Asse Value with Freight", "Retail Dealer Margin", "DEALER MARGIN DISCOUNT", "BASIC Price Including CSD Dealer Margin", "CSD% Discount", "CSD Discount", "Market Scheme at BNDP", "CSD Basic with Discount", "GST %", "GST Amount", "CSD Final Price", "Amount to be claimed by Dealer", "GST @ 50% Discount", "GST Amount on CSD Basic with Discount", "CSD Profit @ 0.50%", "CSD Final Price with GST Concession"
+11 - "CSD Index Codes" => "OEM Model", "OEM Variant", "CSD Index Code"
+12 - "Corporate" => "OEM Model", "OEM Variant", "CAT B OEM", "CAT B DLR", "CAT B TOTAL", "BULK 1 (2-5) OEM", "BULK 1 (2-5) DLR", "BULK 1 (2-5) TOTAL", "CAT A OEM", "CAT A DLR", "CAT A TOTAL", "BULK 2 (6-10) OEM", "BULK 2 (6-10) DLR", "BULK 2 (6-10) TOTAL", "CAT F OEM", "CAT F DLR", "CAT F TOTAL", "BULK 3 (11 & Above) OEM", "BULK 3 (11 & Above) DLR", "BULK 3 (11 & Above) TOTAL", "CAT Y (Premium) OEM", "CAT Y (Premium) DLR", "CAT Y (Premium) TOTAL", "CAT Z (Signature) OEM", "CAT Z (Signature) DLR", "CAT Z (Signature) TOTAL"
+13 - "Exchange" => "OEM Model", "OEM Variant", "Exchange Bonus OEM", "Exchange Bonus DLR", "Exchange Bonus TOTAL", "Welcome Bonus OEM", "Welcome Bonus DLR", "Welcome Bonus TOTAL", "Scrap Scheme OEM", "Scrap Scheme DLR", "Scrap Scheme TOTAL"
+14 - "RSA" => "Segment", "Model", "Standard Coverage", "Std + 1 Year", "Std + 2 Years", "Std + 3 Years", "Std + 4 Years", "Std + 5 Years"
+15 - "Shield" => "OEM Model", "OEM Variant", "Shield Pack", "Transmission", "Fuel", "Standard Warranty", "Shield Scheme 1 Name", "Shield Scheme 1 Amt", "Shield Scheme 2 Name", "Shield Scheme 2 Amt"
+16 - "Insurance Co." => "Model", "Permit", "Insu Co. 1", "Insu Co. 2", "Insu Co. 3"
+17 - "Insu Premium" => "Inv", "IDV 1", "IDV 2", "IDV 3", "IDV 1", "IDV 2", "IDV 3", "", "Insu Co.", "Permit", "Wheels", "Fuel", "CC", "GVW", "Seatng", "Plan", "OD - OD Factor", "OD - CNG / LPG Kit", "OD - IMT 23", "TP Cover Basic", "TP Cover Per Pass", "TP Cover Bi Fuel Kit (CNG / LPG)", "TP - Compulsory PA COver Owner Driver", "TP - PA Cover for Passengers (1 Lakh Per Person)", "TP - Legal Liability to Driver", "TP - Legal Liability for Non Fare Paying Passengers", "Add On - Nil Depreciation", "Add On - Cosnumables", "Add On - Engine Protect", "Add On - Battery Protect (Including Motor, Charger & Adapter)", "Add On - Battery Protect (Including Motor)", "Add On - Battery Protect", "Add On - Charger & Adapter Cover", "Add On - Motor Protect", "Add On - Tyre Protection", "Add On - Return to Invoice", "Add On - Key Replacement", "Add On - RSA", "Add On - Personal Belongings", "Add On - Daily Cash", "Add On - Advance Assistance Cover", "Add On - Medical Expenses Cover", "Add On - Towing"
+18 - "RTO" => "Permit", "Wheels", "Reg Type", "Body Type", "GVW", "Seater", "Fuel", "CC", "Assesable Value", "Outside State - TRC Only", "Tax Factor", "Tax Slab", "Surcharge", "Hypothecation", "Green Tax", "Registration Fee", "Duplicate Tax Card", "Fitness", "Penalty", "Total Amount"
+19 - "Dealer Charges - Segment Wise" => "Segment", "Permit", "Model", "Incidental Charges", "FastTag", "TRC", "RTO Tape", "COD Charges"
+
+
+
+"RTO Permit", "Insu Permit"
+"Model Code", "OEM Model", "OEM Variant", "Segment", "Sub Segment", "Fuel", "Seating", "Wheels", "Transmission", "Drivetrain", "Body Make", "Body Type", "CC", "Motor", "GVW", "GST%", "Permit", "Taxi Price", "Custom Model", "Custom Variant", "Display Name", "Colour Name", "Status", "Shield Pack"
+"Model Code", "OEM Model", "OEM Variant", "Colour Name", "Transmission", "Seating", "Status"
+"Model Code", "OEM Model", "OEM Variant", "Colour Name", "Seating", "Status"
+"Model Code", "OEM Model", "OEM Variant", "Asse Value with Freight", "GST", "GST Amount", "MM Inv Amt", "Dealer Margin", "Dealer Handling", "GST Amount 1", "Ex-Showroom Price ORG", "CV-OEM Scheme @ BNDP", "CV-OEM Scheme with GST", "CV-Dealer Cont @ BNDP", "CV-Dealer Contribution with GST", "CV-Total Consumer Scheme with GST (OEM + Dealer)", "CV-Cash Discount", "CV-Accessories Discount", "CV-Shield Discount", "CV-Check", "CV-Acc Dsc Elg", "CV-Sheld Disc Elg", "OV-OEM Scheme @ BNDP", "OV-OEM Scheme with GST", "OV-Dealer Cont @ BNDP", "OV-Dealer Contribution with GST", "OV-Total Consumer Scheme with GST (OEM + Dealer)", "OV-Cash Discount", "OV-Accessories Discount", "OV-Shield Discount", "OV-Check", "OV-Acc Dsc Elg", "OV-Sheld Disc Elg"
+"Model Code", "OEM Model", "OEM Variant", "Asse Value with Freight", "GST", "GST Amount", "MM Inv Amt", "Dealer Margin", "Dealer Handling", "GST Amount 1", "Ex-Showroom Price ORG", "CV-OEM Scheme @ BNDP", "CV-OEM Scheme with GST", "CV-Dealer Cont @ BNDP", "CV-Dealer Contribution with GST", "CV-Total Consumer Scheme with GST (OEM + Dealer)", "CV-Cash Discount", "CV-Accessories Discount", "CV-Shield Discount", "CV-Check", "CV-Acc Dsc Elg", "CV-Sheld Disc Elg", "OV-OEM Scheme @ BNDP", "OV-OEM Scheme with GST", "OV-Dealer Cont @ BNDP", "OV-Dealer Contribution with GST", "OV-Total Consumer Scheme with GST (OEM + Dealer)", "OV-Cash Discount", "OV-Accessories Discount", "OV-Shield Discount", "OV-Check", "OV-Acc Dsc Elg", "OV-Sheld Disc Elg"
+"Model Code", "OEM Model", "OEM Variant", "Asse Value with Freight", "GST", "GST Amount", "MM Inv Amt", "Dealer Margin", "Dealer Handling", "GST Amount 1", "Ex-Showroom Price ORG", "CV-OEM Scheme @ BNDP", "CV-OEM Scheme with GST", "CV-Dealer Cont @ BNDP", "CV-Dealer Contribution with GST", "CV-Total Consumer Scheme with GST (OEM + Dealer)", "CV-Cash Discount", "CV-Accessories Discount", "CV-Shield Discount", "CV-Check", "CV-Acc Dsc Elg", "CV-Sheld Disc Elg", "OV-OEM Scheme @ BNDP", "OV-OEM Scheme with GST", "OV-Dealer Cont @ BNDP", "OV-Dealer Contribution with GST", "OV-Total Consumer Scheme with GST (OEM + Dealer)", "OV-Cash Discount", "OV-Accessories Discount", "OV-Shield Discount", "OV-Check", "OV-Acc Dsc Elg", "OV-Sheld Disc Elg"
+"City", "OEM Model", "OEM Variant", "Model Code", "Assesable Value", "Freight New", "GST%", "Cess%", "GST Amount", "LMM Inv Amt", "New Dealer Margin", "Extra Handling", "GST Amount 1", "Ex Showroom Price", "Ex Showroom Price(Org)", "VIN Scheme", "", "OEM Scheme @ BNDP", "Dealer Cont @ BNDP", "Dealer Contribution with GST", "Total Consumer Scheme with GST (OEM + Dealer)"
+"City", "M.CODE", "Material Description", "Model Name", "Model Group", "Scheme", "Before GST", "New Base Price (Ex-Factory)", "Freight", "Diff/Adjustment", "Assessable Value", "GST on Assessable Value @ 5%", "LMM Billing Price before (PM E-DRIVE SUBSIDY)", "LMM Billing Price After (PM E-DRIVE SUBSIDY)", "New Dealer Marging", "Dealer GST @ 5%", "Ex-Showroom Pre Subsidy", "Battery Capacity", "PM E-DRIVE SUBSIDY Subsidy", "Maharashtra State Subsidy", "Exshowroom Post Subsidy (PM E-DRIVE SUBSIDY)", "Scheme", "Final Transaction Price", "", "OEM Scheme @ BNDP", "Dealer Cont @ BNDP", "Dealer Contribution with GST", "Total Consumer Scheme with GST (OEM + Dealer)"
+"Model Code", "OEM Model", "OEM Variant", "Custom Model", "Custom Variant", "Display Name", "City", "Asse Value with Freight", "Retail Dealer Margin", "DEALER MARGIN DISCOUNT", "BASIC Price Including CSD Dealer Margin", "CSD% Discount", "CSD Discount", "Market Scheme at BNDP", "CSD Basic with Discount", "GST %", "GST Amount", "CSD Final Price", "Amount to be claimed by Dealer", "GST @ 50% Discount", "GST Amount on CSD Basic with Discount", "CSD Profit @ 0.50%", "CSD Final Price with GST Concession"
+"OEM Model", "OEM Variant", "CSD Index Code"
+"OEM Model", "OEM Variant", "CAT B OEM", "CAT B DLR", "CAT B TOTAL", "BULK 1 (2-5) OEM", "BULK 1 (2-5) DLR", "BULK 1 (2-5) TOTAL", "CAT A OEM", "CAT A DLR", "CAT A TOTAL", "BULK 2 (6-10) OEM", "BULK 2 (6-10) DLR", "BULK 2 (6-10) TOTAL", "CAT F OEM", "CAT F DLR", "CAT F TOTAL", "BULK 3 (11 & Above) OEM", "BULK 3 (11 & Above) DLR", "BULK 3 (11 & Above) TOTAL", "CAT Y (Premium) OEM", "CAT Y (Premium) DLR", "CAT Y (Premium) TOTAL", "CAT Z (Signature) OEM", "CAT Z (Signature) DLR", "CAT Z (Signature) TOTAL"
+"OEM Model", "OEM Variant", "Exchange Bonus OEM", "Exchange Bonus DLR", "Exchange Bonus TOTAL", "Welcome Bonus OEM", "Welcome Bonus DLR", "Welcome Bonus TOTAL", "Scrap Scheme OEM", "Scrap Scheme DLR", "Scrap Scheme TOTAL"
+"Segment", "Model", "Standard Coverage", "Std + 1 Year", "Std + 2 Years", "Std + 3 Years", "Std + 4 Years", "Std + 5 Years"
+"OEM Model", "OEM Variant", "Shield Pack", "Transmission", "Fuel", "Standard Warranty", "Shield Scheme 1 Name", "Shield Scheme 1 Amt", "Shield Scheme 2 Name", "Shield Scheme 2 Amt"
+"Model", "Permit", "Insu Co. 1", "Insu Co. 2", "Insu Co. 3"
+"Inv", "IDV 1", "IDV 2", "IDV 3", "IDV 1", "IDV 2", "IDV 3", "", "Insu Co.", "Permit", "Wheels", "Fuel", "CC", "GVW", "Seatng", "Plan", "OD - OD Factor", "OD - CNG / LPG Kit", "OD - IMT 23", "TP Cover Basic", "TP Cover Per Pass", "TP Cover Bi Fuel Kit (CNG / LPG)", "TP - Compulsory PA COver Owner Driver", "TP - PA Cover for Passengers (1 Lakh Per Person)", "TP - Legal Liability to Driver", "TP - Legal Liability for Non Fare Paying Passengers", "Add On - Nil Depreciation", "Add On - Cosnumables", "Add On - Engine Protect", "Add On - Battery Protect (Including Motor, Charger & Adapter)", "Add On - Battery Protect (Including Motor)", "Add On - Battery Protect", "Add On - Charger & Adapter Cover", "Add On - Motor Protect", "Add On - Tyre Protection", "Add On - Return to Invoice", "Add On - Key Replacement", "Add On - RSA", "Add On - Personal Belongings", "Add On - Daily Cash", "Add On - Advance Assistance Cover", "Add On - Medical Expenses Cover", "Add On - Towing"
+"Permit", "Wheels", "Reg Type", "Body Type", "GVW", "Seater", "Fuel", "CC", "Assesable Value", "Outside State - TRC Only", "Tax Factor", "Tax Slab", "Surcharge", "Hypothecation", "Green Tax", "Registration Fee", "Duplicate Tax Card", "Fitness", "Penalty", "Total Amount"
+"Dealer Charges - Segment Wise" => "Segment", "Permit", "Model", "Incidental Charges", "FastTag", "TRC", "RTO Tape", "COD Charges"
+
+
+=================================
+I have updated my pricing sheets as the given "Our Pricing Sheets.xlsx" now the entire workbook has been divided in 5 different workbook as per their data. So now we have to update the price calculation process according to it. 
+
+1. First user will start the process 
+1.1 He will upload the Pricing.xlsx from which the system will read PV Vehicle and CV Vehicle sheet and check if there is any new vehicle identified, if yes then create a "Fresh Vehicle Entry" and show prompt to user that there are new vehicle identified and generate the Vehicle_info sheet with latest data for user to consume. Once user update/fill the data of incomplete/fresh vahicle he will run the Pricing again to upload/update vehicle in the system
+1.2 once all vehicle are completed then the pricing sheet will be processed with mapping history of any price change in any vehicle
+1.3 Once All Pricing data is updated in the system then the system will check and give updated Addons-N-Discount Sheet with all the vehicle groups (Corporate, Exchange, Dealer Charges, RSA, Shield as per each sheet rule of grouping) for review and update. It will list all the vehicle even the one who does not have a value assigned to it. Now either user accept the current values or change the values in the sheet and reupload it for updating
+1.4 Now user will be asked if there is any change in Insurance/RTO Rules if he say yes then Insurance and RTO Workbook will be provided to him with latest updated data. Now user can modify update it and re-import or can choose to keep the existing values.
+
+2. Once the data update part is complete now the user will be prompt to check and set Pricelist Block for any or all segments and run price calculation using Insurance and RTO Rules and save price snapshot of every vehicle for OV (Old Vin) and NV (New Vin). Once done Show a summary report of entire process to the user i.e.
+15 new vehicle Found, 12 completed 3 still incomplete, All Insurance, RTO, OnRoad Pricing calculated with all optionals i.e. All Addon Packs, All Insu Company Options, All Applicable RTO pricing while default On Road Price will be calculated using the default options
+Now user will mark the process Complete and choose which or all pricing to be reopen.
+
+Till one process is in progress no new process can be started till it completed.
+
+So this is the basic idea of our Pricing Workflow now Acting as an experienced and smart Solution architect plan a smart, efficient and robust pricing solution workflow for it
+
+Here are answere to your queries :
+
+PV Vehicle / CV Vehicle only for “new” detection — Yes
+CSD — separate optional upload as it comes from a different source and has vary limited inventory too so it can be managed standalone. Actually when the user upload pricing he will multiselect pricing sheet to process (PV, CV, LMM, CSD) and system will work on only those sheets. We have to keep the WEF logic as discussed and implemented in first stage. 
+Incomplete vehicles at Stage 5 — calc only complete ones and list incomplete in summary
+Process timeout — auto-cancel abandoned sessions after N days? : Abandon sessions will be treated as active session and user either has to resume then complete or discard/cancel the old incomplete session (even if it were started by some other user) then only a new process can be start. I want to know at which stage the process can be aborted/discarded and what will be the effect of it? How we will rollback to original state before start of the process?
+Corporate/Exchange grouping — each sheet has its own Grouping/Selection criteria and we will dicuss each of them separately.
+Here is another thing to consider we need to implement a header mechanism while the columns will be same for each sheet there might be chang in the header i.e. "Asse Value with Freight" might be renamed to "AssVal With Freight" in future, only lable is updated the value remains the same so we need to give our our code to each head of each sheet and record its current label which can be update anytime while we will use our codename in the logic to keep the logic separate from any label change
+
+Well before going forward we need to discuss and understand each sheet and its data and singinficance. So while pricing.xlsx sheets are discussed, now its time to discuss the common rules :
+In mostly sheets the vehicle selection is based on various parameters Segment, Model, Variant, Permit, Transmissions etc. As we knows that Segment has Sub-Segments having Models having Variants and All/Any or Blank/Null value in a columns means all instance of the value and all of their child and dsendant till last level. But if  sinlge value or comma separated list of values like PV or "PV,CV" means named value(s) and all of there desendant till last level. Now if we have to override for some vehicle(S) then we will use Global entry first and Specific entries in the subsequent rows, take a look at following data :
+Segment | Model | Variant
+PV | Any | Any (Will apply the values/rule to all desendants of PV)
+PV | Thar, Bolero | Any (will override the all variants of Thar and Bolero Models under PV Segment)
+PV | 3XO | AMT 3X, AMT 4WD (Will again override of two variants of 3XO only)
+
+So lest start sheet wise on Addons-N-Discount (Dealer Charges, RSA and Sheild are Addons while Exchange and Corporate are discount):
+1. Sheet "Dealer Charges - Segment Wise" : Combo of Segment, Permit and Model is used to identify the Vehicles :- These are various addon charges applicable on a vehicle like charges for Incidental Charges, FastTag, TRC, RTO Tape and COD Charges
+
+2. Sheet "Shield" : Uses combo of Shield Pack, Transmission and Fuel :- These are charges for extended warranty over standard warranty which comes with different age and Shield Scheme 1 is always the default
+
+3. Sheet "RSA" : Uses Segment and Model only :- These are charges for RoadSide Assitance and can be purchased over the standard RSA for upto 5 years (first paid option is default rest are different for different selection)
+
+4. Sheet "Exchange" Uses Model and Variant only :- There are multiple of types of scheme i.e. Exchange, Welcome or Scrappage and the total bonus/discount is made up of dealer and oem share. In future these schme can be added or removed as per the policy.
+
+5. Sheet "Corporate" Uses Model and Variant only :- Like Exchange this discount is applicable across various Categories (CAT B, BULK 1 (2-5), CAT A, BULK 2 (6-10), CAT F, BULK 3 (11 & Above), CAT Y and CAT Z) and total is sum of OEM and Dealer(DLR) share
+
+Here are answer of your questions :
+Whole-row vs field merge on override — default assumption: more specific row replaces the entire previous match. : Yes
+Comma-separated values — trim + case-insensitive match. : Yes
+Segment typos in RSA (PEROSNAL / PERSONAL) — normalize to your segment codes (e.g. PV) on import. : Yes (here I have a thought this will happen in various place throughout the project, people will use differnt spelling/typos for an entity name like Bikaner can be supplied as BKN, BEEKANER, BINAKER or BIKBANR or Fuel Type Diesel as Diesle, Dysle, D-Jal. So we should create a service which will take an entity type, its name, value and action, and, then perform specific operation i.e. setSynonym("Branch", "BKN", "BEEKANER, BIKANER, BINAKER", "ADD") should add the supplied 3 synonym value of Bikaner to the DB and getSynonym("Branch","BINAKER") should return "BKN" from the DB for any value of it.
+Shield Pack on Variant — used as the vehicle’s pack when resolving Shield rows; blank pack on vehicle matches only ANY pack rules. : Yes
+
+Here is an important observation to be used globally :
+if a header name is Model or Variant only then the value will be matched with name column of vehicle_model table and display_name column of vehicle_variant Table, while if the header name is OEM Model and/or OEM Variant then it will be matched with Name column of vehicle_model and oem_name of vehicle_variant. Its a global rule to be follow project wise to add this to project memory
+
+
+Now lets move to other Workbooks, starting from "CSD Index Codes" : It has only one sheet of the same name and here vehicles are identified by OEM Model and OEM Variant while Value of "CSD Index Code" is added to the csd_index column of vehicle_variant table. Only the vehicle having a CSD index can be consider for csd pricing, if a vehicle previously had a csd index but it is missing in current import then its csd code will be removed (to achieve this we will set all vehicles csd index to null before imoporting so only the current listed vehicles will have a value in csd index
+
+Now for the RTO-Rules workbook : this has a single sheet named rto where vehicle are grouped using combo of Permit, Wheels, Reg Type, Body Type, GVW, Seater, Fuel, CC and Assesable Value (Range). Then for each vehicle group there are various heads Outside State - TRC Only, Tax Factor, Tax Slab, Surcharge, Hypothecation, Green Tax, Registration Fee, Duplicate Tax Card, Fitness, Penalty and Total Amount and their value/formula
+
+Insurance Workbook :
+It is the most complicated part of pricing it consist 3 sheets and we have to consume the first two of them named Insurance Co. and Insu Premium. So lets understand the Insurance working first.
+
+Each vehicle model + applicable permit combo have a default Insurance Company assigned to it (Given under header "Insu Co. 1" and can have other options too under "Insu Co. 2" and "Insu Co. 3", where "Insu Co. 1" will always be the default option.
+Now On Sheet named "Insu Premium Sheet" you will get various selection params like (IDV 1, IDV 2, IDV 3, IDV 1, IDV 2, IDV 3, Insu Co., Permit, Wheels, Fuel, CC, GVW, Seatng and Plan). This is where the things get interesting and complicated. Let understand and decode it :
+IDV 1/2/3 are extension of Plan 1+3/3+3 which may be 1+4 or 5+5 and more in future. Now 1+3 meand 1 year OD and 3 year TP total 4 year plan, 3+3 means full insurance of 3 year hence for 3 year OD plan we need od of all three years which will be used to get Final OD of the plan, so if in future there comes a plan of 5+8 then we will need 5 IDV headers IDV 1/2/3/4/5 and final OD will be sum of them 5. There is another layer to it these IDV And Plan works in combo of Insu Co. as different company will have different values for same vehicle group of an IDV + Plan combo, and above this there may be some company which will give a total OD factor like 250% of INV instead of three different IDV for 3+3 plan. 
+
+Now comes the Addon Part : there are around 16-17 insurance addons are defined but not all companies are providing all addons for all vehicle group and IDV + Plan combo so these are different for each case.
+
+Now the most important part : We need to calculate everything which means if a vehicle group is being served by 3 insurance companies for 5 IDV + Plan combo then we have to calculate all 15 insurance and there available addons where for each combo basic insurance will be added to Nildep and Consumables Addon price to get the default/standard insurance value
+
+We need a better format for insurance data where we can properly capture the data dynamically so instead of fixed headers like IDV 1/2/3 (which will be useless if a 5+8 or 4+7 plan came in future) plus multiple Insurance company as it may increase in future, and option to mark default company or default plan for a vehicle group, also the provision to change the standard insurance form Basic+NilDep+Consumable to some other combo
+
+So think upon it, use your expertise, do some research how other handle this kind of problems and then give a better solution to it which is robust and scalable yet fast and efficient.
+
+Add one more rule to your global memory to use query caching and other methode to optimise and speed up the operations wherever possible. Now as for the answer to your questions :
+Rules sheet — import and use for permit mapping
+OD factor vs multi-IDV — OD factor is applied to the sum of all avaibale IDV and calculated to 3 palce post decimal always.
+Invoice base for IDV % — Invoice value is calculated from Exshowroom and addon charges and discounts, it will be calculated during the pricing import, I will give you the exact formula for it.
+Taxi — taxi_price = Yes forces Private vs Passenger RTO choice; insurance follows mapped Insu Permit. Still correct? Yes
+
+=========================
+First of all we need to understand the Vehicle creation system and keep it in the project memory it will be constant for entire project life unless stated otehrwise. 
+we have segments having subsegments having models having variants of different color, in the OEM Pricing sheet there are only Model Code, OEM Model, OEM Variant there is no Custom Model Name or Custom Variant Name Defined, Neither the Segment or SubSegment. Infact Segment are defined by the Sheet Name i.e. PV, CV, BEV, LMM etc. In our system we have code for Segment, Subsegment and Model. These codes are in every child for FK and every child has all the codes of all of its ancestors. Then there are custom and display name given to each entity by us manually. First we take the Model Code and see if it exist or not if found then we take the Segment Code and Subsegment Code from it, if we do not found the model then we find the Segment the first word afer price list in the sheet name, once we get the segment code we crate a new segment entry and sub-segment entry of the same name and assign the segment code to the subsegment code too, then we use the newly created Segment and sub-segment code to create a new Model, for the time being the oem name and code is used for custom name and code, Then we create the variant with the searched or newly created segment, subsegment and model code without display name, and other specifications like fuel, seat, CC, bodymake, bodytype, transmission, drivetrain, weight etc. And mark the vehicle incomplete. Now a vehicle will be incomplete till it does not have atleast a segment code, subsegment code, model code, display name, fuel type, permit, drivetrain atleast.
+
+So our new vehicle should be created in this way. I have seen that your current script is not following it and many variant has been create without a model code.
+
+When user gave the completed vehicle info then too we have to check that the minimum requirements of a complete vehicle is fullfilled, only a completed vehicle can be marked Active, however it can be marked Inactive or Discontinued while incomplete.
+
+The above rules has to be follow when completing the exported vehicle info for testing
+
+Well I want to change: 
+1. the rules of vehicle creation from pricing import
+At the time of vehicle creation from pricelist import only the OEM Model, Varaint name to be capture along with Color Code and pricing data leaving all other blank (update structure or Model accordingly if needed) and mark the vehicle incomplete.
+2. Rules of minimum criteria for a vehicle to be complete :
+Segment, Sub Segment, Fuel, Seating, Wheels, Transmission, Drivetrain, Body Make, Body Type, , GST%, Permit, Taxi Price, Custom Model, Custom Variant, Display Name, Colour Name, CC, Motor and GVW needs to be there to mark a vehicle complete/active. Here in case of Private permit CC for ICE or Motor for Electric is required, in case of goods permit only GVW is required, and In case of Passanger Permit none of the three are required.
+
+
+So no with all the discussion I want you to revisit the entire chat as a fresh set of eyes and think smartly as a sr and experienced Laravel Dev cum DBA cum Solution Architect. Evaluate everything we have created, updated or using be it DB, ORM Model, Service, Controller, Blade or any other file. then see where are we stuck and why. Is there a better and more efficient way to do this. Refactor/Redesign entire solution from scratch as too many modifications patch oversight has been done in the process. What do you think a proper better rebuid from the scratch of the Priclist Import and Onroad Price calculation is a better idea or not. If yes then what do you propose now after carefully study and analyse all the requriement final, code and logic developed.

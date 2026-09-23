@@ -11,7 +11,6 @@ namespace App\Services\Vehicle\Pricing;
 
 use App\Models\Vehicle\Pricing\ChangeFlag;
 use App\Models\Vehicle\Pricing\Pricing;
-use App\Models\Vehicle\Pricing\Profile;
 use App\Models\Vehicle\Pricing\Snapshot;
 use App\Models\Vehicle\Variant;
 use App\Services\Vehicle\AccessoryService;
@@ -30,7 +29,7 @@ class PricingEngineService
         protected AccessoryService $accessories
     ) {}
 
-        public function getPricingPayload(string $oemCode, array $options = []): array
+    public function getPricingPayload(string $oemCode, array $options = []): array
     {
         $vin = strtolower((string) ($options['vin_type'] ?? 'nv'));
         if ($vin === 'current' || $vin === 'new') {
@@ -77,8 +76,8 @@ class PricingEngineService
                 ->where('is_processed', false)
                 ->update([
                     'is_processed' => true,
-                    'updated_by'   => $userId,
-                    'updated_at'   => now(),
+                    'updated_by' => $userId,
+                    'updated_at' => now(),
                 ]);
         }
 
@@ -103,6 +102,7 @@ class PricingEngineService
         if (! $variant) {
             $json['errors'][] = 'Variant not found';
             $json['incomplete'] = true;
+
             return $json;
         }
 
@@ -119,7 +119,7 @@ class PricingEngineService
 
         if ($this->isHeld($variant->segment_code)) {
             $json['hold'] = true;
-            $json['errors'][] = 'Price list on hold for segment ' . $variant->segment_code;
+            $json['errors'][] = 'Price list on hold for segment '.$variant->segment_code;
         }
 
         $price = Pricing::query()
@@ -132,6 +132,7 @@ class PricingEngineService
 
         if (! $price) {
             $json['errors'][] = 'No active OEM price row';
+
             return $json;
         }
 
@@ -155,40 +156,29 @@ class PricingEngineService
         $json['discounts']['corporate'] = $this->discountOptions($variant, 'CORPORATE');
         $json['discounts']['exchange'] = $this->discountOptions($variant, 'EXCHANGE');
 
-        $charges = (float) $json['dealer_charges']['total']
-            + (float) $json['rsa']['selected_amount']
-            + (float) $json['shield']['selected_amount'];
-
-        $less = (float) $json['discounts']['oem_scheme']
-            + (float) $json['discounts']['dealer_cont']
-            + (float) $json['discounts']['cash']
-            + (float) $json['discounts']['accessory']
-            + (float) $json['discounts']['shield']
-            + (float) $json['discounts']['rsa'];
-
-        $invoice = round((float) $json['ex_showroom'] + $charges - $less, 2);
+        $invoice = $this->invoiceBase($json);
         $json['invoice_value'] = $invoice;
 
         $json['tcs'] = $this->tcs->compute($invoice);
 
         $json['rto'] = $this->rto->quote([
-            'segment'     => $variant->segment_code,
-            'model'       => $variant->model_code,
-            'variant'     => $variant->code,
-            'permit'      => $json['permit'],
-            'wheels'      => $variant->wheels,
-            'fuel'        => $json['fuel'],
-            'gvw'         => $variant->gvw,
+            'segment' => $variant->segment_code,
+            'model' => $variant->model_code,
+            'variant' => $variant->code,
+            'permit' => $json['permit'],
+            'wheels' => $variant->wheels,
+            'fuel' => $json['fuel'],
+            'gvw' => $variant->gvw,
             'ex_showroom' => $json['ex_showroom'],
         ]);
 
         $json['insurance'] = $this->insurance->quote([
             'segment' => $variant->segment_code,
-            'permit'  => $json['permit'],
-            'fuel'    => $json['fuel'],
-            'wheels'  => $variant->wheels,
-            'cc'      => $variant->cc_capacity,
-            'gvw'     => $variant->gvw,
+            'permit' => $json['permit'],
+            'fuel' => $json['fuel'],
+            'wheels' => $variant->wheels,
+            'cc' => $variant->cc_capacity,
+            'gvw' => $variant->gvw,
             'seating' => $variant->seating_capacity,
             'invoice' => $invoice,
         ]);
@@ -206,7 +196,7 @@ class PricingEngineService
                 is_array($packs) ? $packs : []
             )), 2);
         } catch (\Throwable $e) {
-            $json['errors'][] = 'Accessories: ' . $e->getMessage();
+            $json['errors'][] = 'Accessories: '.$e->getMessage();
         }
 
         $onRoad = round(
@@ -226,7 +216,7 @@ class PricingEngineService
             + (float) $json['discounts']['dealer_cont'];
 
         if (! $complete) {
-            $json['errors'][] = 'Master incomplete: ' . implode(',', $this->vehicles->missingFields($variant));
+            $json['errors'][] = 'Master incomplete: '.implode(',', $this->vehicles->missingFields($variant));
         }
 
         return $json;
@@ -243,6 +233,7 @@ class PricingEngineService
     ): void {
         if (! Schema::hasTable('xlr8_vehicle_pricing_snapshots')) {
             Log::warning('[PricingEngine] snapshot table missing — JSON not persisted');
+
             return;
         }
 
@@ -255,7 +246,7 @@ class PricingEngineService
             ->where('is_active', true)
             ->whereDate('wef_date', '<', $wef)
             ->update([
-                'is_active'  => false,
+                'is_active' => false,
                 'expired_on' => $wef,
                 'updated_by' => $userId,
                 'updated_at' => now(),
@@ -264,20 +255,44 @@ class PricingEngineService
         Snapshot::query()->updateOrCreate(
             [
                 'model_code' => $oemCode,
-                'channel'    => $channel,
-                'vin_type'   => $vinType,
-                'wef_date'   => $wef,
+                'channel' => $channel,
+                'vin_type' => $vinType,
+                'wef_date' => $wef,
             ],
             [
                 'import_session_id' => $sessionId,
-                'variant_code'      => $oemCode,
-                'payload'           => $payload,
-                'is_active'         => true,
-                'expired_on'        => null,
-                'updated_by'        => $userId,
-                'created_by'        => $userId,
+                'variant_code' => $oemCode,
+                'payload' => $payload,
+                'is_active' => true,
+                'expired_on' => null,
+                'updated_by' => $userId,
+                'created_by' => $userId,
             ]
         );
+    }
+
+    /**
+     * Invoice Value (a.k.a. IDV/RTO base) — the exact "invoice-base for IDV %"
+     * formula is still TBD by business (GAP-04). Interim, agreed stand-in:
+     * Ex-Showroom + dealer charges + RSA + Shield selected amounts, minus
+     * OEM/dealer/cash/accessory/shield/RSA discounts. Single method so the
+     * moment the real formula is confirmed, it changes in exactly one place —
+     * every caller (insurance, RTO) already consumes the result, not the parts.
+     */
+    protected function invoiceBase(array $json): float
+    {
+        $charges = (float) ($json['dealer_charges']['total'] ?? 0)
+            + (float) ($json['rsa']['selected_amount'] ?? 0)
+            + (float) ($json['shield']['selected_amount'] ?? 0);
+
+        $less = (float) ($json['discounts']['oem_scheme'] ?? 0)
+            + (float) ($json['discounts']['dealer_cont'] ?? 0)
+            + (float) ($json['discounts']['cash'] ?? 0)
+            + (float) ($json['discounts']['accessory'] ?? 0)
+            + (float) ($json['discounts']['shield'] ?? 0)
+            + (float) ($json['discounts']['rsa'] ?? 0);
+
+        return round((float) ($json['ex_showroom'] ?? 0) + $charges - $less, 2);
     }
 
     protected function dealerCharges(Variant $variant, ?string $permit): array
@@ -346,9 +361,9 @@ class PricingEngineService
             }
             $opts[] = [
                 'scheme' => $row->scheme_name ?? $row->name ?? null,
-                'years'  => $row->tenure_years ?? null,
+                'years' => $row->tenure_years ?? null,
                 'amount' => (float) ($row->amount ?? 0),
-                'default'=> (bool) ($row->is_default ?? false),
+                'default' => (bool) ($row->is_default ?? false),
             ];
         }
         $out['options'] = $opts;
@@ -388,10 +403,10 @@ class PricingEngineService
             $oem = (float) ($row->oem_share ?? 0);
             $dlr = (float) ($row->dealer_share ?? 0);
             $base['options'][] = [
-                'name'   => $row->scheme_name ?? $row->category ?? $row->name ?? null,
-                'oem'    => $oem,
+                'name' => $row->scheme_name ?? $row->category ?? $row->name ?? null,
+                'oem' => $oem,
                 'dealer' => $dlr,
-                'total'  => round($oem + $dlr, 2),
+                'total' => round($oem + $dlr, 2),
             ];
         }
 
@@ -402,9 +417,9 @@ class PricingEngineService
     {
         $map = [
             'segment' => $variant->segment_code,
-            'model'   => $variant->model_code,
+            'model' => $variant->model_code,
             'variant' => $variant->code,
-            'permit'  => $permit,
+            'permit' => $permit,
         ];
         foreach ($map as $col => $val) {
             if (! isset($row->{$col})) {
@@ -430,9 +445,9 @@ class PricingEngineService
         }
 
         return DB::table('xlr8_vehicle_pricing_holds')
-            ->where('is_active', 1)
+            ->where('is_held', 1)
             ->where(function ($q) use ($segment) {
-                $q->where('scope', 'ALL')->orWhere('scope', $segment)->orWhere('segment', $segment);
+                $q->where('scope', 'ALL')->orWhere('scope', $segment);
             })
             ->when(Schema::hasColumn('xlr8_vehicle_pricing_holds', 'deleted_at'), fn ($q) => $q->whereNull('deleted_at'))
             ->exists();
@@ -444,7 +459,7 @@ class PricingEngineService
             return null;
         }
         try {
-            foreach (['xlr8_utilities_keyvalues', 'xlr8_keyvalues'] as $table) {
+            foreach (['xlr8_utils_keyvalue', 'xlr8_utilities_keyvalues', 'xlr8_keyvalues'] as $table) {
                 if (Schema::hasTable($table)) {
                     $v = DB::table($table)->where('id', $id)->value('value');
                     if ($v) {

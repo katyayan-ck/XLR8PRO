@@ -3,8 +3,8 @@
 namespace App\Models\Vehicle;
 
 use App\Models\BaseModel;
-use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use App\Models\Traits\HasColumnTransformations;
+use Backpack\CRUD\app\Models\Traits\CrudTrait;
 
 class SubSegment extends BaseModel
 {
@@ -16,16 +16,15 @@ class SubSegment extends BaseModel
     protected $fillable = [
         'segment_code',
         'code',
-        'oem_name',
-        'description',
+        'name',
         'is_active',
         'created_by',
         'updated_by',
-        'deleted_by'
+        'deleted_by',
     ];
 
     protected $casts = [
-        'is_active'  => 'boolean',
+        'is_active' => 'boolean',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
@@ -35,18 +34,18 @@ class SubSegment extends BaseModel
 
         'segment_code' => [
             'trim',
-            'uppercase_alphanumeric_dash_underscore'
+            'uppercase_alphanumeric_dash_underscore',
         ],
 
         'code' => [
             'trim',
-            'uppercase_alphanumeric_dash_underscore'
+            'uppercase_alphanumeric_dash_underscore',
         ],
 
-        'oem_name' => [
+        'name' => [
             'strip_tags',
             'trim_spaces',
-            'title_case'
+            'title_case',
         ],
     ];
 
@@ -84,7 +83,7 @@ class SubSegment extends BaseModel
     public static function generateCode(string $oem_name): string
     {
         $map = [
-            'XUV'     => 'XUV',
+            'XUV' => 'XUV',
             'NON XUV' => 'NXUV',
             'NON-XUV' => 'NXUV',
         ];
