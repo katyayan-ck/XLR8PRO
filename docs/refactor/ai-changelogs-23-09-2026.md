@@ -1189,3 +1189,42 @@ comment in `routes/backpack/core.php` (BUG-094 documentation comment referencing
 - `vendor/bin/pint --dirty --format agent` → clean.
 - `php artisan test --filter=Enquiry --compact` → 5 passed (EnquiryReferenceServiceTest; no other
   Enquiry-specific test coverage exists yet), zero regressions.
+
+## Quotation module view reorganization — mirror controller module structure
+
+Third module in the Sales-first sequencing (Booking → Enquiry → Quotation → Lead → Campaign).
+
+### Orphan scan
+
+All 10 `admin.quotation.*` references confined to `QuotationCrudController.php`. Only 3 unique
+view names actually used (`create`, `history`, `list`) against 6 present files. Confirmed via
+`setEditView('admin.quotation.create')` that `edit()` renders `create.blade.php`, not
+`edit.blade.php` — same orphaned-decoy pattern as Booking's BUG-107. Likewise `preview()` (backed
+by a real route, `sales.quotation.preview`) explicitly `return view('admin.quotation.create', ...)`
+— `preview.blade.php` is a fully dead file despite having a live, working route pointing at its
+name. A third file, a stray untracked scratch copy (`copy of create with lines ui`, no
+`.blade.php` extension, never referenced), was also found and moved.
+
+Moved all 3 (`edit.blade.php`, `preview.blade.php`, `copy of create with lines ui`) to
+`resources/views/backup/orphaned/admin/quotation/` with the original-path comment convention.
+
+### Reorganization
+
+Moved the 3 live views to `resources/views/admin/sales/quotation/` via `git mv`. Updated all 10
+`admin.quotation.*` references (`view()`, `setListView()`, `setCreateView()`, `setEditView()`) in
+`QuotationCrudController.php` to `admin.sales.quotation.*`.
+
+### Verification
+
+- `php -l` → no syntax errors. `php artisan view:clear`.
+- Live HTTP round trips (authenticated `backpack` guard): `index` → 200; `create` (no `id`/
+  `booking_id` query param) → 404, confirmed pre-existing intentional `abort(404, ...)` behavior,
+  not caused by this change; `{id}/edit` and `{id}/history` with a nonexistent id → 404 (expected
+  `findOrFail` behavior — no quotation rows exist in this local DB to test against a real id);
+  `pending` → 500, traced via `storage/logs/laravel.log` to a `BadMethodCallException` from
+  03:50 that morning (`pendingQuotations()` doesn't exist) — already tracked as pre-existing
+  BUG-048, unrelated to this reorganization.
+- `vendor/bin/pint --dirty --format agent` → clean.
+- No dedicated Quotation controller test suite exists; ran the closest adjacent coverage
+  (`--filter=Quotation`, 2 passed via `BookingOtfServiceTest`'s quotation-merge case), zero
+  regressions.

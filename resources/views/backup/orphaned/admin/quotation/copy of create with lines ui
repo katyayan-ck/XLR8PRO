@@ -1,3 +1,4 @@
+{{-- ORIGINAL PATH: resources/views/admin/quotation/copy of create with lines ui --}}
 @extends(backpack_view('blank'))
 
 @php
