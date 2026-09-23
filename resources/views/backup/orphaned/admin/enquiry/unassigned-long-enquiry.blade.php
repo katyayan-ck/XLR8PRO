@@ -1,3 +1,4 @@
+{{-- ORIGINAL PATH: resources/views/admin/enquiry/unassigned-long-enquiry.blade.php --}}
 @extends(backpack_view('blank'))
 
 
@@ -8,7 +9,7 @@
                 <div
                     class="card-header bg-gradient-primary d-flex justify-content-between align-items-center flex-nowrap flex-md-nowrap flex-wrap gap-3">
                     <h2 class="card-title mb-0 fw-bold text-black text-nowrap">
-                        {{ $title ?? 'Unassigned Quick Enquiries' }}
+                        {{ $title ?? 'Unassigned Long Enquiries' }}
                     </h2>
                 </div>
 
@@ -84,7 +85,8 @@
 
         const columnDefs = [
 
-            ...ALL_COLUMNS.filter(col => [
+            ...ALL_COLUMNS
+            .filter(col => [
 
                 'serial_no',
                 'x8_enquiry_no',
@@ -93,9 +95,9 @@
                 // 'oem_enquiry_no',
                 // 'oem_enquiry_date',
                // 'oem_enquiry_assign_date',
-                'oem_quick_enquiry_no',
-                'oem_quick_enquiry_date',
-                'oem_quick_enquiry_status',
+                'oem_long_enquiry_no',
+                'oem_long_enquiry_date',
+                'oem_long_enquiry_status',
                 //'oem_quick_enquiry_assign_date',
                 
                 'segment_name',
@@ -121,29 +123,14 @@
                 'city',
                 'sc_code',
                 'dealer_branch',
-                'dealer_location',                
+                'dealer_location',
                 'followup_type',
                 'followup_date',
                 'followup_time',
-                // 'person_code',
-                // 'reference_details',
-                // 'referred_by',
-                // 'referee_phone',
-                // 'referee_name',
-                // 'planned_campaign_name',
-                
-                // 'activity_type',
-                // 'activity_segment',
-                // 'activity_model',
-                // 'activity_start_date',
-                // 'activity_end_date',
-                // 'activity_branch',
-                // 'activity_location',
-                'customer_type',
                 'occupation_type',
-                
-                'occupation_sub_type',                
-                'company_name',                
+                'customer_type',
+                'occupation_sub_type',
+                'company_name',
                 'dob',
                 'marital_status',
                 'marriage_date',
@@ -172,16 +159,57 @@
                 'booking_date',
                 'oem_booking_no',
                 'oem_booking_date',
-                'oem_otf_no',
+                'oem_otf_no'
 
-            ].includes(col.field)),
+            ].includes(col.field))
 
-            ...ALL_COLUMNS.filter(col => ['action'].includes(col.field)).map(col => {
+            .map(col => {
+
+                switch (col.field) {
+
+                    // Date columns
+                    case 'enquiry_date':
+                    case 'likely_purchase_date':
+                    case 'followup_date':
+                    case 'dob':
+                    case 'marriage_date':
+                    case 'booking_date':
+                    case 'oem_booking_date':
+                    case 'cre_next_fup_date':
+                    case 'oem_enquiry_date':
+                    case 'oem_long_enquiry_date':
+
+                        col.filter = 'agDateColumnFilter';
+                        break;
+
+                        // Number columns
+                    case 'mobile':
+                    case 'zipcode':
+
+                        col.filter = 'agNumberColumnFilter';
+                        break;
+
+                        // Everything else
+                    default:
+
+                        col.filter = 'agTextColumnFilter';
+                }
+
+                col.floatingFilter = true;
+
+                return col;
+
+            }),
+
+            ...ALL_COLUMNS
+            .filter(col => col.field === 'action')
+            .map(col => {
 
                 col.pinned = 'right';
                 col.width = 140;
                 col.sortable = false;
                 col.filter = false;
+                col.floatingFilter = false;
                 col.cellRenderer = 'htmlRenderer';
 
                 return col;
@@ -200,6 +228,7 @@
             defaultColDef: {
                 sortable: true,
                 filter: true,
+                floatingFilter: true,
                 resizable: true,
                 headerClass: 'center-header',
                 cellStyle: {
@@ -219,9 +248,9 @@
                 'x8_enquiry_date',
                 //'oem_enquiry_no',
                 //'oem_enquiry_date',
-                'oem_quick_enquiry_no',
-                'oem_quick_enquiry_date',
-                'oem_quick_enquiry_status',
+                'oem_long_enquiry_no',
+                'oem_long_enquiry_date',
+                'oem_long_enquiry_status',
                 //'x8_enquiry_assign_date',
                 //'oem_enquiry_assign_date',
                 //'oem_quick_enquiry_assign_date',
@@ -252,7 +281,7 @@
                 // 'followup_type',
                 // 'followup_date',
                 //'followup_time',
-                // 'customer_type',
+                 'customer_type',
                 // 'occupation_type',
                
                 // 'occupation_sub_type',                
@@ -265,9 +294,10 @@
                 // 'km_travelled_daily',
                 // 'application_type',
                 // 'application',
-                // 'pincode',    
+                'pincode',
+                'address',    
                 // 'has_ev',
-                // 'purchase_type',
+                'purchase_type',
                 // 'remarks',
                 'action'
 
@@ -299,7 +329,7 @@
                 checkbox.type = 'checkbox';
                 checkbox.checked = gridApi.getColumn(col.field)?.isVisible() ?? false;
 
-                if (['serial_no', 'quick_enq_no', 'action'].includes(col.field)) {
+                if (['serial_no', 'long_enq_no', 'action'].includes(col.field)) {
                     checkbox.disabled = true;
                 }
 
@@ -366,9 +396,9 @@
                 'x8_enquiry_date',
                 //'oem_enquiry_no',
                 //'oem_enquiry_date',
-                'oem_quick_enquiry_no',
-                'oem_quick_enquiry_date',
-                'oem_quick_enquiry_status',
+                'oem_long_enquiry_no',
+                'oem_long_enquiry_date',
+                'oem_long_enquiry_status',
                 //'x8_enquiry_assign_date',
                 //'oem_enquiry_assign_date',
                 //'oem_quick_enquiry_assign_date',
@@ -399,7 +429,7 @@
                 // 'followup_type',
                 // 'followup_date',
                 //'followup_time',
-                // 'customer_type',
+                'customer_type',
                 // 'occupation_type',
                
                 // 'occupation_sub_type',                
@@ -412,9 +442,10 @@
                 // 'km_travelled_daily',
                 // 'application_type',
                 // 'application',
-                // 'pincode',    
+                'pincode',    
                 // 'has_ev',
-                // 'purchase_type',
+                'address',
+                'purchase_type',
                 // 'remarks',
                 'action'
 
@@ -442,9 +473,9 @@
 
                 const wb = XLSX.utils.book_new();
                 const ws = XLSX.utils.json_to_sheet(rows);
-                XLSX.utils.book_append_sheet(wb, ws, "Unassigned Quick Enquiries");
+                XLSX.utils.book_append_sheet(wb, ws, "Unassigned Long Enquiries");
                 XLSX.writeFile(wb,
-                    `unassigned-quick-enquiries-${new Date().toISOString().slice(0, 10)}.xlsx`);
+                    `unassigned-long-enquiries-${new Date().toISOString().slice(0, 10)}.xlsx`);
             });
 
             document.getElementById('exportPdf').addEventListener('click', () => {
@@ -475,7 +506,7 @@
                     },
                 });
 
-                doc.save(`unassigned-quick-enquiries-${new Date().toISOString().slice(0, 10)}.pdf`);
+                doc.save(`unassigned-long-enquiries-${new Date().toISOString().slice(0, 10)}.pdf`);
             });
         });
 

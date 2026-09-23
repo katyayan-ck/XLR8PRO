@@ -1,3 +1,4 @@
+{{-- ORIGINAL PATH: resources/views/admin/enquiry/edit.blade.php --}}
 @extends(backpack_view('blank'))
 
 @section('title', isset($enquiry) ? 'Edit Enquiry' : 'Add New Enquiry')

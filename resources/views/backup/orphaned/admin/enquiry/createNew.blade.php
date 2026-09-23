@@ -1,3 +1,4 @@
+{{-- ORIGINAL PATH: resources/views/admin/enquiry/createNew.blade.php --}}
 {{-- =========================== SHORT ENQUIRY Customer Information ===========================
 
 @extends(backpack_view('blank'))

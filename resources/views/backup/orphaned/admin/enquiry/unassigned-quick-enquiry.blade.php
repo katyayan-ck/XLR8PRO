@@ -1,3 +1,4 @@
+{{-- ORIGINAL PATH: resources/views/admin/enquiry/unassigned-quick-enquiry.blade.php --}}
 @extends(backpack_view('blank'))
 
 
@@ -8,7 +9,7 @@
                 <div
                     class="card-header bg-gradient-primary d-flex justify-content-between align-items-center flex-nowrap flex-md-nowrap flex-wrap gap-3">
                     <h2 class="card-title mb-0 fw-bold text-black text-nowrap">
-                        {{ $title ?? 'Assigned Long Enquiries' }}
+                        {{ $title ?? 'Unassigned Quick Enquiries' }}
                     </h2>
                 </div>
 
@@ -89,14 +90,15 @@
                 'serial_no',
                 'x8_enquiry_no',
                 'x8_enquiry_date',
-                'x8_enquiry_assign_date',
+                //'x8_enquiry_assign_date',
                 // 'oem_enquiry_no',
                 // 'oem_enquiry_date',
-                'oem_enquiry_assign_date',
-                'oem_long_enquiry_no',
-                'oem_long_enquiry_date',
-                'oem_long_enquiry_status',-
-                'oem_long_enquiry_assign_date',                
+               // 'oem_enquiry_assign_date',
+                'oem_quick_enquiry_no',
+                'oem_quick_enquiry_date',
+                'oem_quick_enquiry_status',
+                //'oem_quick_enquiry_assign_date',
+                
                 'segment_name',
                 'model_name',
                 'variant_name',
@@ -138,9 +140,9 @@
                 // 'activity_end_date',
                 // 'activity_branch',
                 // 'activity_location',
-                
-                'occupation_type',
                 'customer_type',
+                'occupation_type',
+                
                 'occupation_sub_type',                
                 'company_name',                
                 'dob',
@@ -218,9 +220,9 @@
                 'x8_enquiry_date',
                 //'oem_enquiry_no',
                 //'oem_enquiry_date',
-                'oem_long_enquiry_no',
-                'oem_long_enquiry_date',
-                'oem_long_enquiry_status',
+                'oem_quick_enquiry_no',
+                'oem_quick_enquiry_date',
+                'oem_quick_enquiry_status',
                 //'x8_enquiry_assign_date',
                 //'oem_enquiry_assign_date',
                 //'oem_quick_enquiry_assign_date',
@@ -251,7 +253,7 @@
                 // 'followup_type',
                 // 'followup_date',
                 //'followup_time',
-                'customer_type',
+                // 'customer_type',
                 // 'occupation_type',
                
                 // 'occupation_sub_type',                
@@ -264,10 +266,9 @@
                 // 'km_travelled_daily',
                 // 'application_type',
                 // 'application',
-                'pincode',  
-                'address',  
+                // 'pincode',    
                 // 'has_ev',
-                'purchase_type',
+                // 'purchase_type',
                 // 'remarks',
                 'action'
 
@@ -299,7 +300,7 @@
                 checkbox.type = 'checkbox';
                 checkbox.checked = gridApi.getColumn(col.field)?.isVisible() ?? false;
 
-                if (['serial_no', 'long_enq_no', 'action'].includes(col.field)) {
+                if (['serial_no', 'quick_enq_no', 'action'].includes(col.field)) {
                     checkbox.disabled = true;
                 }
 
@@ -366,9 +367,9 @@
                 'x8_enquiry_date',
                 //'oem_enquiry_no',
                 //'oem_enquiry_date',
-                'oem_long_enquiry_no',
-                'oem_long_enquiry_date',
-                'oem_long_enquiry_status',
+                'oem_quick_enquiry_no',
+                'oem_quick_enquiry_date',
+                'oem_quick_enquiry_status',
                 //'x8_enquiry_assign_date',
                 //'oem_enquiry_assign_date',
                 //'oem_quick_enquiry_assign_date',
@@ -442,8 +443,9 @@
 
                 const wb = XLSX.utils.book_new();
                 const ws = XLSX.utils.json_to_sheet(rows);
-                XLSX.utils.book_append_sheet(wb, ws, "Assigned Long Enquiries");
-                XLSX.writeFile(wb, `assigned-long-enquiries-${new Date().toISOString().slice(0, 10)}.xlsx`);
+                XLSX.utils.book_append_sheet(wb, ws, "Unassigned Quick Enquiries");
+                XLSX.writeFile(wb,
+                    `unassigned-quick-enquiries-${new Date().toISOString().slice(0, 10)}.xlsx`);
             });
 
             document.getElementById('exportPdf').addEventListener('click', () => {
@@ -474,7 +476,7 @@
                     },
                 });
 
-                doc.save(`assigned-long-enquiries-${new Date().toISOString().slice(0, 10)}.pdf`);
+                doc.save(`unassigned-quick-enquiries-${new Date().toISOString().slice(0, 10)}.pdf`);
             });
         });
 
