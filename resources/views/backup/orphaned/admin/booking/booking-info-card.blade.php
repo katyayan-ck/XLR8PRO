@@ -1,3 +1,4 @@
+{{-- ORIGINAL PATH: resources/views/admin/booking/booking-info-card.blade.php --}}
 <div class="card mb-4">
     <div class="card-header bg-info text-white">
         <h5 class="mb-0">

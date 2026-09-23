@@ -1,3 +1,4 @@
+{{-- ORIGINAL PATH: resources/views/admin/booking/complete-payout-view.blade.php --}}
 @php
 $GST_RATE = 0.18;
 

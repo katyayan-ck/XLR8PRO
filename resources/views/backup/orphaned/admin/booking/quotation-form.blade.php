@@ -1,3 +1,4 @@
+{{-- ORIGINAL PATH: resources/views/admin/booking/quotation-form.blade.php --}}
 @extends(backpack_view('blank'))
 
 @php

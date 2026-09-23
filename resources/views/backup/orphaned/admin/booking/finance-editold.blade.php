@@ -1,3 +1,4 @@
+{{-- ORIGINAL PATH: resources/views/admin/booking/finance-editold.blade.php --}}
 @extends(backpack_view('blank'))
 
 @section('header')
