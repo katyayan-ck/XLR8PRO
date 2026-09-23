@@ -23,7 +23,7 @@
                 </div>
             </div>
 
-            <div class="card-body p-0" style="background:#f8fafc">
+            <div class="card-body p-0" style="background: var(--tblr-bg-surface-secondary)">
                 <div
                     class="d-flex justify-content-between align-items-center flex-wrap gap-3 p-3 border-bottom bg-white">
                     <div class="d-flex align-items-center gap-2 flex-nowrap">

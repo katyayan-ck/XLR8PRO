@@ -32,7 +32,7 @@
                             {{-- =========================== REQUESTED VISIBLE FIELDS =========================== --}}
 
                             <!-- Referee Details -->
-                            <h3 class="mb-0 ms-3" style="color: #000 !important;">Referee Details</h3>
+                            <h3 class="mb-0 ms-3" style="color: var(--tblr-body-color) !important;">Referee Details</h3>
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col-md-4 mb-3">
@@ -62,7 +62,7 @@
                             </div>
 
                             <!-- Customer Details -->
-                            <h3 class="mb-0 ms-3" style="color: #000 !important;">Customer Information</h3>
+                            <h3 class="mb-0 ms-3" style="color: var(--tblr-body-color) !important;">Customer Information</h3>
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
@@ -79,7 +79,7 @@
                             </div>
 
                             <!-- Vehicle Details -->
-                            <h3 class="mb-0 ms-3" style="color: #000 !important;">Vehicle Details</h3>
+                            <h3 class="mb-0 ms-3" style="color: var(--tblr-body-color) !important;">Vehicle Details</h3>
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col-md-3 mb-3">

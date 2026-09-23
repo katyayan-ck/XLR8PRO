@@ -74,7 +74,7 @@
     }
 
     .ag-row-pinned {
-        background: #f8f9fa !important;
+        background: var(--tblr-bg-surface-secondary) !important;
         font-weight: 700;
 
     }

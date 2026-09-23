@@ -19,7 +19,7 @@
         }
         /* Make read-only flatpickr inputs look clickable */
         .flatpickr-input[readonly] {
-            background-color: #fff;
+            background-color: var(--tblr-card-bg);
             cursor: pointer;
         }
     </style>

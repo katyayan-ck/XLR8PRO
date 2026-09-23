@@ -1356,9 +1356,9 @@
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); transition: all 0.2s ease; user-select: none;
         }
         .proof-chip:hover {
-            background-color: #e9ecef; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+            background-color: var(--tblr-bg-surface-secondary); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
         }
-        .proof-chip i { font-size: 1.4rem; margin-right: 10px; color: #6c757d; }
+        .proof-chip i { font-size: 1.4rem; margin-right: 10px; color: var(--tblr-muted); }
         .proof-chip .file-name {
             max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-right: 12px;
         }
@@ -1372,7 +1372,7 @@
         .select2-container--bootstrap5 .select2-selection--single,
         .select2-container .select2-selection--single {
             height: calc(1.5em + 0.75rem + 2px) !important; padding: 0.375rem 2.25rem 0.375rem 0.75rem !important;
-            font-size: 1rem; font-weight: 400; line-height: 1.5; color: #212529; background-color: #fff;
+            font-size: 1rem; font-weight: 400; line-height: 1.5; color: var(--tblr-body-color); background-color: var(--tblr-card-bg);
             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
             background-repeat: no-repeat !important; background-position: right 0.75rem center !important;
             background-size: 16px 12px !important; border: 1px solid #ced4da !important; border-radius: 0.375rem !important;

@@ -36,7 +36,7 @@
                                 @if(isset($isEdit))
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label text-muted">Voucher No.</label>
-                                    <input type="text" class="form-control fw-bold" style="background-color: #e9ecef;" value="{{ $voucher->type_number }}" readonly>
+                                    <input type="text" class="form-control fw-bold" style="background-color: var(--tblr-bg-surface-secondary);" value="{{ $voucher->type_number }}" readonly>
                                 </div>
                                 @endif
 
@@ -188,7 +188,7 @@
                                 
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Mode of Payment</label>
-                                    <input type="text" class="form-control" value="Journal Voucher" readonly style="background-color:#e9ecef;">
+                                    <input type="text" class="form-control" value="Journal Voucher" readonly style="background-color: var(--tblr-bg-surface-secondary);">
                                     <input type="hidden" name="payment_mode" value="{{ $jvModeId }}">
                                 </div>
                                 <div class="col-md-3 mb-3">
@@ -197,7 +197,7 @@
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Amount (In Words)</label>
-                                    <input type="text" id="amount_in_words" class="form-control" readonly style="background-color:#e9ecef;">
+                                    <input type="text" id="amount_in_words" class="form-control" readonly style="background-color: var(--tblr-bg-surface-secondary);">
                                 </div>
                                 <div class="col-md-12 mb-3">
                                     <label class="form-label">Remarks <span class="text-danger">*</span></label>

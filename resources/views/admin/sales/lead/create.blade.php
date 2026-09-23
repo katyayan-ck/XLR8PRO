@@ -16,7 +16,7 @@
         }
 
         .readonly-field {
-            background: #f8f9fa;
+            background: var(--tblr-bg-surface-secondary);
         }
     </style>
 

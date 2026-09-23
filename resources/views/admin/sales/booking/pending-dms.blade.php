@@ -30,7 +30,7 @@
 
             </div>
 
-            <div class="card-body p-0" style="background:#f8fafc">
+            <div class="card-body p-0" style="background: var(--tblr-bg-surface-secondary)">
                 <div class="d-flex justify-content-between align-items-center
                             flex-wrap gap-3
                             p-3 border-bottom bg-white">
@@ -60,7 +60,7 @@
                                 top:110%;
                                 left:0;
                                 width:260px;
-                                background:#fff;
+                                background: var(--tblr-card-bg);
                                 border:1px solid #ddd;
                                 border-radius:6px;
                                 box-shadow:0 8px 20px rgba(0,0,0,.15);
@@ -140,7 +140,7 @@
     .ag-pinned-left-cols-container .ag-header-group-cell,
     .ag-pinned-right-cols-container .ag-header-cell,
     .ag-pinned-right-cols-container .ag-header-group-cell {
-        background-color: #f0f8ff !important;
+        background-color: var(--tblr-bg-surface-secondary) !important;
         font-weight: 600;
     }
 
