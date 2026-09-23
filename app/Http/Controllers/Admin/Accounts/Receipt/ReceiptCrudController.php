@@ -347,7 +347,22 @@ class ReceiptCrudController extends Controller
             $rules['transaction_date'] = 'required|date';
         }
 
-        $request->validate($rules);
+        $request->validate($rules, [], [
+            'receipt_date' => __('accounts.fields.receipt_date'),
+            'on_account_of' => __('accounts.fields.on_account_of'),
+            'location' => __('accounts.fields.location'),
+            'payment_mode' => __('accounts.fields.payment_mode'),
+            'amount' => __('accounts.fields.amount'),
+            'customer_name' => __('accounts.fields.customer_name'),
+            'mobile' => __('accounts.fields.mobile'),
+            'xceler8_enq_no' => __('accounts.fields.xceler8_enq_no'),
+            'vehicle_registration_no' => __('accounts.fields.vehicle_registration_no'),
+            'vehicle_chassis_no' => __('accounts.fields.vehicle_chassis_no'),
+            'invoice_no' => __('accounts.fields.invoice_no'),
+            'instrument_no' => __('accounts.fields.instrument_no'),
+            'bank_name' => __('accounts.fields.bank_name'),
+            'transaction_date' => __('accounts.fields.transaction_date'),
+        ]);
     }
 
     /**

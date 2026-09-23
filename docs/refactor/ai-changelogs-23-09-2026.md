@@ -1679,3 +1679,53 @@ from the site setting, so synced both `edit.blade.php`'s flatpickr `dateFormat`/
 **This completes all 6 items of the deep-scan list**: view reorganization (all controllers with
 an existing module namespace), theme-mode switcher, AJAX/JS re-verification, dark/light-mode
 color tokens, and now the date-format rollout. 21 checkpoints total this session.
+
+## Centralized label/validation registry rollout — Org, Vehicle, Iam, Accounts, Lead/LeadSource/Campaign
+
+Per explicit user direction, extending Booking's resources/lang/en/booking.php pattern to the
+other reorganized modules, mirroring the date-format rollout done earlier.
+
+### New lang files
+
+`resources/lang/en/org.php` (117 field labels across 12 Org sub-modules), `vehicle.php` (30
+labels across 6 sub-modules), `iam.php` (8 labels across 4 sub-modules), `accounts.php` (23
+labels for JournalVoucher/Receipt), `sales.php` (24 labels for Lead/LeadSource/Campaign - Booking
+keeps its own larger file since it predates this rollout and is a different scale).
+
+### Wiring
+
+- 12 Org FormRequests, 6 Vehicle FormRequests, 4 Iam FormRequests, 3 Sales FormRequests (Lead,
+  LeadSource, Campaign): replaced each empty/sparse `attributes()` method with a full mapping of
+  every field to `__('{module}.fields.{field}')`, using Laravel's standard FormRequest
+  `attributes()` hook (auto-applied to that request's validator).
+- 2 Accounts controllers (JournalVoucher, Receipt) use inline `$request->validate($rules)` rather
+  than FormRequests - added the `$customAttributes` 3rd positional argument (`validate($rules, [],
+  $customAttributes)`) covering every possible field across their conditional rule branches.
+- `UserRequest`/`PersonRequest`/`PersonContactRequest` already had partial `attributes()`/
+  `messages()` content (a handful of entries, some already-good custom messages) - merged the full
+  label set in without disturbing the existing custom messages.
+
+### Verification
+
+- `php -l` on all 27 edited files + 5 new lang files -> no syntax errors.
+- Cross-checked every `__('{module}.fields.X')` reference used across all edited files against
+  its lang file's defined keys via a script - caught and fixed 2 real gaps before verification:
+  a missed `vertical_image` key (org.php) and 2 digit-suffixed fields (`address_line_1`/
+  `address_line_2`, missed by an initial extraction regex that excluded digits). Final check: 0
+  missing keys across all 4 module/file pairs (95 org keys, 30 vehicle keys, 8 iam keys, 24 sales
+  keys, 23 accounts keys - all resolve).
+- Live validator instantiation tests confirmed real error messages now use the new labels (e.g.
+  "The Name field is required.", "The Voucher Date field is required.", "The Address Line 1 field
+  is required.") and that pre-existing custom messages (PersonContact's uniqueness message) remain
+  intact alongside the new labels.
+- `php artisan config:clear`, `php artisan view:clear`.
+- Live HTTP round trips across 6 create forms spanning every touched module -> all 200.
+- `vendor/bin/pint --dirty --format agent` -> line-ending normalization only, no logic changes.
+- `php artisan test --filter="Brand|Color|Segment|Variant|VehicleModel|Modules|Permission|
+  Process|Role|Lead|Campaign|JournalVoucher|Receipt"` -> 13 passed, 1 pre-existing failure
+  (already-tracked BUG-016: `xlr8_iam_roles` table missing), zero new regressions. Earlier Org
+  module run (background task): 58 passed, 3 pre-existing failures, zero new regressions.
+
+**Deferred to a follow-up checkpoint**: Enquiry's `getValidationRules()` (~162 lines, Booking-scale)
+and Quotation's inline validator - both large enough to warrant their own dedicated pass rather
+than folding into this checkpoint.

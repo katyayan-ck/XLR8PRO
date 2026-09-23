@@ -57,7 +57,11 @@ class ProcessRequest extends FormRequest
     public function attributes()
     {
         return [
-            //
+            'code' => __('iam.fields.code'),
+            'name' => __('iam.fields.name'),
+            'description' => __('iam.fields.description'),
+            'module_code' => __('iam.fields.module_code'),
+            'is_active' => __('iam.fields.is_active'),
         ];
     }
 

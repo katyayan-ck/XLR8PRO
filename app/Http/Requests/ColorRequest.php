@@ -56,7 +56,14 @@ class ColorRequest extends FormRequest
     public function attributes()
     {
         return [
-            //
+            'code' => __('vehicle.fields.code'),
+            'name' => __('vehicle.fields.name'),
+            'hex_code' => __('vehicle.fields.hex_code'),
+            'segment_code' => __('vehicle.fields.segment_code'),
+            'sub_segment_code' => __('vehicle.fields.sub_segment_code'),
+            'model_code' => __('vehicle.fields.model_code'),
+            'variant_code' => __('vehicle.fields.variant_code'),
+            'is_active' => __('vehicle.fields.is_active'),
         ];
     }
 

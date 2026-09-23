@@ -57,7 +57,11 @@ class DepartmentRequest extends FormRequest
     public function attributes()
     {
         return [
-            //
+            'code' => __('org.fields.code'),
+            'name' => __('org.fields.name'),
+            'description' => __('org.fields.description'),
+            'department_image' => __('org.fields.department_image'),
+            'is_active' => __('org.fields.is_active'),
         ];
     }
 

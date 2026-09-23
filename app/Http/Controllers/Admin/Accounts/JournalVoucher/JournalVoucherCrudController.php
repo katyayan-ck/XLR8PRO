@@ -288,7 +288,21 @@ class JournalVoucherCrudController extends Controller
             $rules['exist_receipt_no'] = 'required|string|max:100';
         }
 
-        $request->validate($rules);
+        $request->validate($rules, [], [
+            'voucher_date' => __('accounts.fields.voucher_date'),
+            'location' => __('accounts.fields.location'),
+            'on_account_of' => __('accounts.fields.on_account_of'),
+            'jv_cat' => __('accounts.fields.jv_cat'),
+            'party_name' => __('accounts.fields.party_name'),
+            'customer_name' => __('accounts.fields.customer_name'),
+            'amount' => __('accounts.fields.amount'),
+            'remarks' => __('accounts.fields.remarks'),
+            'used_model' => __('accounts.fields.used_model'),
+            'used_rgn_no' => __('accounts.fields.used_rgn_no'),
+            'from_dept' => __('accounts.fields.from_dept'),
+            'to_dept' => __('accounts.fields.to_dept'),
+            'exist_receipt_no' => __('accounts.fields.exist_receipt_no'),
+        ]);
     }
 
     private function getKeyValueOptions(array $keywordCodes): array

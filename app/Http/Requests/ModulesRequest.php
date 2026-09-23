@@ -56,7 +56,10 @@ class ModulesRequest extends FormRequest
     public function attributes()
     {
         return [
-            //
+            'code' => __('iam.fields.code'),
+            'name' => __('iam.fields.name'),
+            'description' => __('iam.fields.description'),
+            'is_active' => __('iam.fields.is_active'),
         ];
     }
 

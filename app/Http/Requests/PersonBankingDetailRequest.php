@@ -58,7 +58,16 @@ class PersonBankingDetailRequest extends FormRequest
     public function attributes()
     {
         return [
-            //
+            'person_id' => __('org.fields.person_id'),
+            'account_holder_name' => __('org.fields.account_holder_name'),
+            'account_number' => __('org.fields.account_number'),
+            'account_type' => __('org.fields.account_type'),
+            'bank_name' => __('org.fields.bank_name'),
+            'branch_name' => __('org.fields.branch_name'),
+            'ifsc_code' => __('org.fields.ifsc_code'),
+            'swift_code' => __('org.fields.swift_code'),
+            'is_primary' => __('org.fields.is_primary'),
+            'is_verified' => __('org.fields.is_verified'),
         ];
     }
 

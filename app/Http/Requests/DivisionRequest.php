@@ -56,7 +56,12 @@ class DivisionRequest extends FormRequest
     public function attributes()
     {
         return [
-            //
+            'code' => __('org.fields.code'),
+            'name' => __('org.fields.name'),
+            'description' => __('org.fields.description'),
+            'dept_code' => __('org.fields.dept_code'),
+            'division_image' => __('org.fields.division_image'),
+            'is_active' => __('org.fields.is_active'),
         ];
     }
 

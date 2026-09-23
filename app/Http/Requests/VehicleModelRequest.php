@@ -62,7 +62,12 @@ class VehicleModelRequest extends FormRequest
     public function attributes()
     {
         return [
-            //
+            'code' => __('vehicle.fields.code'),
+            'name' => __('vehicle.fields.name'),
+            'oem_name' => __('vehicle.fields.oem_name'),
+            'segment_code' => __('vehicle.fields.segment_code'),
+            'sub_segment_id' => __('vehicle.fields.sub_segment_id'),
+            'is_active' => __('vehicle.fields.is_active'),
         ];
     }
 

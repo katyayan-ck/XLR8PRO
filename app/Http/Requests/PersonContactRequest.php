@@ -66,7 +66,10 @@ class PersonContactRequest extends FormRequest
     public function attributes()
     {
         return [
-            //
+            'person_code' => __('org.fields.person_code'),
+            'data_type' => __('org.fields.data_type'),
+            'contact_type' => __('org.fields.contact_type'),
+            'contact_detail' => __('org.fields.contact_detail'),
         ];
     }
 

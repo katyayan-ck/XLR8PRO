@@ -56,7 +56,10 @@ class LeadSourceRequest extends FormRequest
     public function attributes()
     {
         return [
-            //
+            'code' => __('sales.fields.code'),
+            'name' => __('sales.fields.name'),
+            'description' => __('sales.fields.description'),
+            'is_active' => __('sales.fields.is_active'),
         ];
     }
 
