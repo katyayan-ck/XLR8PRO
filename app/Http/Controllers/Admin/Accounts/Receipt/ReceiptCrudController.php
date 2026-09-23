@@ -89,7 +89,7 @@ class ReceiptCrudController extends Controller
             'data' => $data,
         ];
 
-        return view('admin.accounts.receipt-list', compact('gridConfig'));
+        return view('admin.accounts.receipt.list', compact('gridConfig'));
     }
 
     /**
@@ -105,7 +105,7 @@ class ReceiptCrudController extends Controller
             ->where('type', self::TYPE_RECEIPT)
             ->findOrFail($id);
 
-        return view('admin.accounts.receipt-show', [
+        return view('admin.accounts.receipt.show', [
             'receipt' => $receipt,
             'onAccountOfOptions' => $this->getKeyValueOptions(['ACC_OF', 'ON_ACCOUNT_OF', 'ACCOUNT']),
             'paymentModeOptions' => $this->getKeyValueOptions(['PAYMENT_MODE', 'MODE_OF_PAYMENT', 'PAYMENT', 'MOP']),
@@ -120,7 +120,7 @@ class ReceiptCrudController extends Controller
 
         $user = OrgService::getCurrentUser();
 
-        return view('admin.accounts.receipt-create', [
+        return view('admin.accounts.receipt.create', [
             'type' => self::TYPE_RECEIPT,
             'onAccountOfOptions' => $this->getKeyValueOptions(['ACC_OF', 'ON_ACCOUNT_OF', 'ACCOUNT']),
             'paymentModeOptions' => $this->getKeyValueOptions(['PAYMENT_MODE', 'MODE_OF_PAYMENT', 'PAYMENT', 'MOP']),
@@ -210,7 +210,7 @@ class ReceiptCrudController extends Controller
 
         $user = OrgService::getCurrentUser();
 
-        return view('admin.accounts.receipt-create', [
+        return view('admin.accounts.receipt.create', [
             'type' => self::TYPE_RECEIPT,
             'receipt' => $receipt,
             'onAccountOfOptions' => $this->getKeyValueOptions(['ACC_OF', 'ON_ACCOUNT_OF', 'ACCOUNT']),
