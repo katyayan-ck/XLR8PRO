@@ -51,7 +51,15 @@ class PersonAddressRequest extends FormRequest
     public function attributes()
     {
         return [
-            //
+            'person_id' => __('org.fields.person_id'),
+            'type' => __('org.fields.type'),
+            'address_line_1' => __('org.fields.address_line_1'),
+            'address_line_2' => __('org.fields.address_line_2'),
+            'city' => __('org.fields.city'),
+            'state' => __('org.fields.state'),
+            'pincode' => __('org.fields.pincode'),
+            'country' => __('org.fields.country'),
+            'is_primary' => __('org.fields.is_primary'),
         ];
     }
 

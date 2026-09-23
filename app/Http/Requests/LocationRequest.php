@@ -69,7 +69,26 @@ class LocationRequest extends FormRequest
     public function attributes()
     {
         return [
-            //
+            'code' => __('org.fields.code'),
+            'name' => __('org.fields.name'),
+            'description' => __('org.fields.description'),
+            'branch_code' => __('org.fields.branch_code'),
+            'phone' => __('org.fields.phone'),
+            'email' => __('org.fields.email'),
+            'address' => __('org.fields.address'),
+            'city' => __('org.fields.city'),
+            'pincode' => __('org.fields.pincode'),
+            'latitude' => __('org.fields.latitude'),
+            'longitude' => __('org.fields.longitude'),
+            'location_image' => __('org.fields.location_image'),
+            'is_office_only' => __('org.fields.is_office_only'),
+            'is_sales_location' => __('org.fields.is_sales_location'),
+            'is_stock_location' => __('org.fields.is_stock_location'),
+            'is_parts_location' => __('org.fields.is_parts_location'),
+            'is_workshop' => __('org.fields.is_workshop'),
+            'is_lmmws' => __('org.fields.is_lmmws'),
+            'is_mwh' => __('org.fields.is_mwh'),
+            'is_active' => __('org.fields.is_active'),
         ];
     }
 

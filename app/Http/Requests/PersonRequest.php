@@ -66,7 +66,22 @@ class PersonRequest extends FormRequest
     public function attributes()
     {
         return [
-            'display_name' => 'name',
+            'display_name' => __('org.fields.display_name'),
+            'first_name' => __('org.fields.first_name'),
+            'middle_name' => __('org.fields.middle_name'),
+            'last_name' => __('org.fields.last_name'),
+            'salutation' => __('org.fields.salutation'),
+            'gender' => __('org.fields.gender'),
+            'dob' => __('org.fields.dob'),
+            'marital_status' => __('org.fields.marital_status'),
+            'spouse_name' => __('org.fields.spouse_name'),
+            'occupation' => __('org.fields.occupation'),
+            'entity_type' => __('org.fields.entity_type'),
+            'mobile' => __('org.fields.mobile'),
+            'aadhaar_no' => __('org.fields.aadhaar_no'),
+            'pan_no' => __('org.fields.pan_no'),
+            'gst_no' => __('org.fields.gst_no'),
+            'tan_no' => __('org.fields.tan_no'),
         ];
     }
 

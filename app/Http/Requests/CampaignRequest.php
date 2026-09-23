@@ -55,7 +55,14 @@ class CampaignRequest extends FormRequest
     public function attributes()
     {
         return [
-            //
+            'name' => __('sales.fields.name'),
+            'activity_code' => __('sales.fields.activity_code'),
+            'segment_code' => __('sales.fields.segment_code'),
+            'model_code' => __('sales.fields.model_code'),
+            'branch_code' => __('sales.fields.branch_code'),
+            'location_code' => __('sales.fields.location_code'),
+            'start_date' => __('sales.fields.start_date'),
+            'end_date' => __('sales.fields.end_date'),
         ];
     }
 

@@ -80,7 +80,28 @@ class VariantRequest extends FormRequest
     public function attributes()
     {
         return [
-            //
+            'code' => __('vehicle.fields.code'),
+            'display_name' => __('vehicle.fields.display_name'),
+            'custom_name' => __('vehicle.fields.custom_name'),
+            'oem_name' => __('vehicle.fields.oem_name'),
+            'segment_code' => __('vehicle.fields.segment_code'),
+            'sub_segment_code' => __('vehicle.fields.sub_segment_code'),
+            'model_code' => __('vehicle.fields.model_code'),
+            'body_make_id' => __('vehicle.fields.body_make_id'),
+            'body_type_id' => __('vehicle.fields.body_type_id'),
+            'fuel_type_id' => __('vehicle.fields.fuel_type_id'),
+            'transmission' => __('vehicle.fields.transmission'),
+            'drivetrain' => __('vehicle.fields.drivetrain'),
+            'seating_capacity' => __('vehicle.fields.seating_capacity'),
+            'wheels' => __('vehicle.fields.wheels'),
+            'cc_capacity' => __('vehicle.fields.cc_capacity'),
+            'gvw' => __('vehicle.fields.gvw'),
+            'taxi_price' => __('vehicle.fields.taxi_price'),
+            'permit_id' => __('vehicle.fields.permit_id'),
+            'status_id' => __('vehicle.fields.status_id'),
+            'csd_index' => __('vehicle.fields.csd_index'),
+            'is_csd' => __('vehicle.fields.is_csd'),
+            'is_active' => __('vehicle.fields.is_active'),
         ];
     }
 

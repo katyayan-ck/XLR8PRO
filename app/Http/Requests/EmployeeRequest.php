@@ -59,7 +59,15 @@ class EmployeeRequest extends FormRequest
     public function attributes()
     {
         return [
-            //
+            'code' => __('org.fields.code'),
+            'person_id' => __('org.fields.person_id'),
+            'designation_id' => __('org.fields.designation_id'),
+            'primary_branch_id' => __('org.fields.primary_branch_id'),
+            'primary_department_id' => __('org.fields.primary_department_id'),
+            'joining_date' => __('org.fields.joining_date'),
+            'resignation_date' => __('org.fields.resignation_date'),
+            'employment_type' => __('org.fields.employment_type'),
+            'is_active' => __('org.fields.is_active'),
         ];
     }
 

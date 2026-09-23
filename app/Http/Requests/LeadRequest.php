@@ -58,7 +58,21 @@ class LeadRequest extends FormRequest
     public function attributes()
     {
         return [
-            //
+            'first_name' => __('sales.fields.first_name'),
+            'last_name' => __('sales.fields.last_name'),
+            'mobile' => __('sales.fields.mobile'),
+            'email' => __('sales.fields.email'),
+            'occupation' => __('sales.fields.occupation'),
+            'source_code' => __('sales.fields.source_code'),
+            'segment_code' => __('sales.fields.segment_code'),
+            'model_code' => __('sales.fields.model_code'),
+            'variant_code' => __('sales.fields.variant_code'),
+            'color_code' => __('sales.fields.color_code'),
+            'expected_delivery_date' => __('sales.fields.expected_delivery_date'),
+            'priority' => __('sales.fields.priority'),
+            'status' => __('sales.fields.status'),
+            'notes' => __('sales.fields.notes'),
+            'referral_details' => __('sales.fields.referral_details'),
         ];
     }
 

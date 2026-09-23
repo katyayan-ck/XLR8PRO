@@ -56,7 +56,14 @@ class DesignationRequest extends FormRequest
     public function attributes()
     {
         return [
-            //
+            'code' => __('org.fields.code'),
+            'name' => __('org.fields.name'),
+            'description' => __('org.fields.description'),
+            'designation_image' => __('org.fields.designation_image'),
+            'is_top_mgmt' => __('org.fields.is_top_mgmt'),
+            'parent_desig_code' => __('org.fields.parent_desig_code'),
+            'rank' => __('org.fields.rank'),
+            'is_active' => __('org.fields.is_active'),
         ];
     }
 

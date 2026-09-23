@@ -53,7 +53,11 @@ class SubSegmentRequest extends FormRequest
     public function attributes()
     {
         return [
-            //
+            'code' => __('vehicle.fields.code'),
+            'name' => __('vehicle.fields.name'),
+            'description' => __('vehicle.fields.description'),
+            'segment_id' => __('vehicle.fields.segment_id'),
+            'is_active' => __('vehicle.fields.is_active'),
         ];
     }
 

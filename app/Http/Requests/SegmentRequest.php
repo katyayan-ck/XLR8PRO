@@ -52,7 +52,9 @@ class SegmentRequest extends FormRequest
     public function attributes()
     {
         return [
-            //
+            'code' => __('vehicle.fields.code'),
+            'name' => __('vehicle.fields.name'),
+            'is_active' => __('vehicle.fields.is_active'),
         ];
     }
 

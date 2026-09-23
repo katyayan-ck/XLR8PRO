@@ -72,7 +72,19 @@ class BranchRequest extends FormRequest
     public function attributes()
     {
         return [
-            //
+            'code' => __('org.fields.code'),
+            'name' => __('org.fields.name'),
+            'description' => __('org.fields.description'),
+            'phone' => __('org.fields.phone'),
+            'email' => __('org.fields.email'),
+            'address' => __('org.fields.address'),
+            'city' => __('org.fields.city'),
+            'pincode' => __('org.fields.pincode'),
+            'latitude' => __('org.fields.latitude'),
+            'longitude' => __('org.fields.longitude'),
+            'branch_image' => __('org.fields.branch_image'),
+            'is_head_office' => __('org.fields.is_head_office'),
+            'is_active' => __('org.fields.is_active'),
         ];
     }
 

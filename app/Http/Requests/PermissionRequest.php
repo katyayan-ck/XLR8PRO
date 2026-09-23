@@ -53,7 +53,10 @@ class PermissionRequest extends FormRequest
     public function attributes()
     {
         return [
-            //
+            'name' => __('iam.fields.name'),
+            'guard_name' => __('iam.fields.guard_name'),
+            'module_code' => __('iam.fields.module_code'),
+            'process_code' => __('iam.fields.process_code'),
         ];
     }
 
