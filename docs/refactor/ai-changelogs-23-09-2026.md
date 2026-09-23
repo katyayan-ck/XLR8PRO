@@ -1075,3 +1075,32 @@ date-format rollouts.
 **Next**: extend to the remaining 16 lower-traffic AG-Grid screens, then a dark-mode visual audit of
 the custom Booking cards/forms (replacing any hardcoded colors like `#f8fafc`/`#f0f8ff` found along
 the way with Tabler token references), which is the other half of the user's design-pass direction.
+
+## Critical fix: BUG-110 — Booking form's cascading dropdown AJAX 404s
+
+User-reported live error: "The route admin/get-models/BEV could not be found." Investigated and
+fixed immediately, ahead of the broader project-wide UI/UX request that arrived in the same message,
+since this is an actively-broken feature rather than a design/consistency improvement.
+
+`admin.booking.add.blade.php` (the real, live create/edit view - `edit.blade.php` is the orphaned
+decoy per BUG-107) had 5 hardcoded AJAX URLs under a nonexistent `admin/get-*` path prefix
+(`get-models`, `get-variants`, `get-colors`, `get-accessories`, `get-locations`). The correct,
+already-implemented equivalents exist under the Booking module's own route group
+(`sales/booking/models/{segment_id}`, `.../variants/{model}`, `.../colors/{variant}`,
+`.../accessories/{segment}/{model}/{variant}`, `.../locations-by-branch/{branchCode?}`). Rewrote all
+5 to the correct paths. The 5th call (branch → location) also never included the selected branch
+code in its request at all - a second, independent bug in the same handler - fixed by adding it, so
+the location dropdown now correctly scopes to the selected branch instead of returning all sales
+locations company-wide.
+
+### Verification
+
+- `Blade::compileString()` → compiles cleanly.
+- Reproduced the exact originally-reported URL (`/admin/get-models/BEV`) → still 404s (confirms this
+  was a real, specific bug, not a red herring).
+- The corrected URL (`/admin/sales/booking/models/BEV`) → 200.
+- All 5 fixed endpoints independently round-tripped with real segment/model/variant/branch codes
+  pulled live from the database → all 200.
+- `vendor/bin/pint --dirty --format agent` → clean.
+- Full suite re-run (`tests/Unit/Services/` + `tests/Unit/Lang/`) → 80 passed, 299 assertions; same
+  8 pre-existing unrelated failures.
