@@ -1259,3 +1259,35 @@ in `LeadSourceCrudController.php` to their `admin.sales.*` equivalents.
 - `vendor/bin/pint --dirty --format agent` → clean.
 - `php artisan test --filter=Lead --compact` → 1 passed (incidental `IdentifierServiceTest` match;
   no dedicated Lead/LeadSource test suite exists), zero regressions.
+
+## Campaign module view reorganization — mirror controller module structure
+
+Fifth and final module in the Sales-first sequencing (Booking → Enquiry → Quotation → Lead →
+Campaign) — this completes the Sales-adjacent batch of the project-wide view reorganization.
+
+### Scan and reorganization
+
+All 6 `admin.campaign.*` references confined to `CampaignCrudController.php`, only 2 unique names
+(`create`, `list`) against 3 present files. `setEditView('admin.campaign.create')` confirms
+`edit.blade.php` is the same orphaned-decoy pattern already seen in Booking (BUG-107) and
+Quotation — `edit()` actually renders `create.blade.php`. Moved `edit.blade.php` to
+`resources/views/backup/orphaned/admin/campaign/` with the original-path comment.
+
+Moved the 2 live views to `resources/views/admin/sales/campaign/` via `git mv`. Updated all 6
+`admin.campaign.*` references to `admin.sales.campaign.*`.
+
+### Verification
+
+- `php -l` → no syntax errors. `php artisan view:clear`.
+- Live HTTP round trips (authenticated `backpack` guard, real campaign id 3): `index` → 200,
+  `create` → 200, `{id}/edit` → 200.
+- `vendor/bin/pint --dirty --format agent` → clean.
+- No dedicated Campaign test suite exists (`--filter=Campaign` found none) — covered entirely by
+  the live HTTP round trips above.
+
+**This completes the Sales-first batch of the project-wide view reorganization** (Booking,
+Enquiry, Quotation, Lead/LeadSource, Campaign — 5 checkpoints). Remaining scope: the same
+reorganization + orphan-scan pattern for every other module app-wide (Org, User, HR, Vehicle,
+Pricing, Accounts, etc.), followed by the deep-scan tasks (minimalistic design layout, dark/light
+mode audit, header theme-mode switcher, label/date rollout to other modules, AJAX/JS
+double-check) from the user's original mega-request.

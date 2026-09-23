@@ -40,7 +40,7 @@ class CampaignCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view campaigns.');
         }
 
-        $this->crud->setListView('admin.campaign.list');
+        $this->crud->setListView('admin.sales.campaign.list');
 
         $campaigns = Campaign::with(['segment', 'model'])
             ->select([
@@ -81,7 +81,7 @@ class CampaignCrudController extends CrudController
             return $mapped;
         })->values();
 
-        return view('admin.campaign.list', [
+        return view('admin.sales.campaign.list', [
             'title' => 'Campaign List',
             'gridConfig' => [
                 'columns' => [
@@ -105,9 +105,9 @@ class CampaignCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to create campaigns.');
         }
 
-        $this->crud->setCreateView('admin.campaign.create');
+        $this->crud->setCreateView('admin.sales.campaign.create');
 
-        return view('admin.campaign.create', [
+        return view('admin.sales.campaign.create', [
             'title' => 'Add Campaign',
             'segments' => OrgService::segments(),
             'models' => [],
@@ -140,11 +140,11 @@ class CampaignCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to edit campaigns.');
         }
 
-        $this->crud->setEditView('admin.campaign.create');
+        $this->crud->setEditView('admin.sales.campaign.create');
 
         $campaign = Campaign::findOrFail($id);
 
-        return view('admin.campaign.create', [
+        return view('admin.sales.campaign.create', [
             'title' => 'Edit Campaign',
             'campaign' => $campaign,
             'segments' => OrgService::segments(),
