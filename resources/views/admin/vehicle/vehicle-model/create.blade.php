@@ -103,7 +103,7 @@ $(document).ready(function () {
 
         if (segmentCode) {
             $.ajax({
-                url: "{{ url('admin/vehicle-model/sub-segments') }}/" + segmentCode,
+                url: "{{ backpack_url('vehicle/model/sub-segments') }}/" + segmentCode,
                 type: "GET",
                 success: function (response) {
                     let options = '<option value="">Select Sub Segment</option>';

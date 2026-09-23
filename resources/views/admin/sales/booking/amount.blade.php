@@ -198,7 +198,7 @@
                 const val = this.value.trim();
                 if (!val) return warning.style.display = 'none';
 
-                fetch('{{ url("/admin/check-receipt") }}/' + encodeURIComponent(val))
+                fetch('{{ backpack_url('sales/booking/check-receipt') }}/' + encodeURIComponent(val))
                     .then(r => r.text())
                     .then(data => {
                         const dup = data.trim() === '1' || data.trim().toLowerCase() === 'true' || data.trim().toLowerCase() === 'exists';

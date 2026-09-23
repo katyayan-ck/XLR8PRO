@@ -109,7 +109,7 @@
 
                     if (brandCode) {
                         $.ajax({
-                            url: "{{ url('admin/sub-segment/segments') }}/" + brandCode,
+                            url: "{{ backpack_url('vehicle/sub-segment/segments') }}/" + brandCode,
                             type: "GET",
                             success: function (response) {
                                 let options = '<option value="">Select Segment</option>';

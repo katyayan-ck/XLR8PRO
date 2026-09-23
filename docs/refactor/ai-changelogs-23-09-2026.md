@@ -1507,3 +1507,63 @@ config activation of existing, already-tested theme infrastructure.
   pre-existing, confined to an unrelated Post/PostReporting/EmpPostAssignment/HR cluster (missing
   `App\Services\IAM\PostService` class, missing tables) - none touch views, config, or any area
   edited this session. Zero new regressions.
+
+## AJAX/JS re-verification pass (deep-scan, item 4 of 6) — critical fix to BUG-110's own fix
+
+Per the user's explicit "double/triple check every blade js (AJAX)" request. Extracted every
+literal AJAX URL string (`$.ajax`/`.get`/`.post`/`fetch`) from all 38 Blade files under
+`resources/views/admin` that contain AJAX calls, filtered out ones already built via
+`{{ route(...) }}`/`{{ backpack_url(...) }}` (safe by construction), and cross-checked every
+remaining hardcoded/`url()`-built path against the real route list.
+
+### Critical discovery: BUG-110's own fix was still broken
+
+Re-verifying `add.blade.php`'s already-"fixed" AJAX calls found they still 404 in real browser
+use. Root cause: Laravel's `url()` helper only prepends `APP_URL` — it has no awareness of
+Backpack's `admin` route prefix. `{{ url('sales/booking/models') }}` generates a URL missing
+`/admin/`, which doesn't match the real registered route. Confirmed directly:
+`/sales/booking/models/BEV` -> 404, `/admin/sales/booking/models/BEV` -> 200. The correct helper
+is `backpack_url()`, which correctly includes the prefix. This slipped through BUG-110's original
+verification because that check hand-typed the admin-prefixed path into a test request rather
+than rendering the actual Blade output. Logged as **BUG-114 (Critical, FIXED)** with a process
+note for future AJAX-URL work in this app.
+
+### 4 more Blade AJAX calls found pointing at wrong paths
+
+`check-receipt` (4 sites: add/amount/pendedit/recedit), Booking list's OTF-form link builder, and
+2 Vehicle module cascading dropdowns (SubSegment segments-by-brand, Model sub-segments-by-segment)
+all hardcoded a path missing a required module segment (`sales/booking/`, `vehicle/`, or
+`vehicle/model/` vs the `vehicle-model/` they used). Logged as **BUG-115 (High, FIXED)**.
+
+### Fix
+
+Corrected all 10 occurrences across 9 files to `backpack_url()` with the exact matching route
+path (not `url()`): `add.blade.php` (6), `amount.blade.php`, `pendedit.blade.php`,
+`recedit.blade.php`, `list.blade.php`, `otf-form.blade.php`, `sub-segment/create.blade.php`,
+`vehicle-model/create.blade.php`, `vehicle-model/edit.blade.php`.
+
+### 3 genuinely unimplemented AJAX endpoints found (Spares module)
+
+`spare-request/create.blade.php`'s parts-autocomplete, RO-number-duplicate-check, and
+model->variant cascading dropdown, plus `edit.blade.php`'s variant dropdown, call
+`admin/fetch-parts`/`admin/check-ro-number`/`admin/get-variants` - none of which have a
+registered route (`fetchParts()` exists as a method but was never wired to a route; the other two
+methods don't exist anywhere). Logged as **BUG-116 (High, not fixed)** - this needs a product
+decision on what each endpoint should query, not a URL correction, so left undone.
+
+### Verification
+
+- `php -l` on all 9 edited files -> no syntax errors.
+- `php artisan view:clear`.
+- Live HTTP round trips confirmed every corrected endpoint now resolves: `check-receipt/RCP1` ->
+  200, `get-do-amount` -> 200, `vehicle/model/sub-segments/1` -> 200. `vehicle/sub-segment/
+  segments/1` still 500s, confirmed as the pre-existing, already-tracked BUG-010 (method never
+  defined), unrelated to and not fixable by this URL correction.
+- `vendor/bin/pint --dirty --format agent` -> clean.
+- `php artisan test --filter="Booking|Vehicle|SubSegment" --compact` -> 54 passed, zero
+  regressions.
+
+This is item 4 of 6 in the deep-scan list (view reorganization done, theme switcher done, AJAX
+re-verification done for the 38 files with AJAX calls). Remaining: minimalistic design layout
+audit, dark/light-mode audit for hardcoded colors, and the centralized-label/date-format rollout
+to modules beyond Booking.

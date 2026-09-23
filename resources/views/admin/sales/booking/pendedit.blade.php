@@ -813,7 +813,7 @@
                 const rn = $(this).val().trim();
                 if (rn) {
                     $.ajax({
-                        url: "{{ url('/admin/check-receipt') }}/" + encodeURIComponent(rn), 
+                        url: "{{ backpack_url('sales/booking/check-receipt') }}/" + encodeURIComponent(rn), 
                         method: 'GET',
                         success: function(data) {
                             if (data != 0) {
