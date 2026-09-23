@@ -1729,3 +1729,94 @@ keeps its own larger file since it predates this rollout and is a different scal
 **Deferred to a follow-up checkpoint**: Enquiry's `getValidationRules()` (~162 lines, Booking-scale)
 and Quotation's inline validator - both large enough to warrant their own dedicated pass rather
 than folding into this checkpoint.
+
+## Full Booking/Enquiry frontend audit and fix (user-directed): AJAX routes, dead modals, missing methods
+
+Per direct user request: "check and fix Booking system frontend functionality and broken routes
+and js... mostly ajax routes errors... Full Booking/Enquiry system." Conducted a full,
+independent audit (not just re-checking the earlier deep-scan's narrower AJAX-URL sweep) across
+all 67 Booking+Enquiry Blade views and all 78 parameterless GET routes.
+
+### Method: full render sweep
+
+Rendered every parameterless GET route (78 total) via an authenticated `app()->handle()` round
+trip, saved status codes. Before any fixes: **20 of 78 routes 500'd.** Cross-checked every
+`route()`/`backpack_url()`/`url()` literal call across all 67 files against the real route list.
+
+### Fix 1 (BUG-114/BUG-115 twin found): RTO screens' "Import with GID" redirected to Finance
+
+`pending-rto.blade.php` and `erroneousRTO.blade.php`'s `importWithGid()` JS function both
+hardcoded `backpack_url('finance/import')` instead of `rto/import` - a copy-paste bug (the page's
+own static "Import" link correctly used `rto/import`) that would have imported RTO data into the
+Finance pipeline instead. Fixed both.
+
+### Fix 2 (BUG-118, Critical): duplicate jQuery/Bootstrap-4 loads + 11 dead `.modal()` calls
+
+The dominant likely cause of "nothing is working." 13 files across Booking's highest-traffic edit
+screens (including the main `add.blade.php` create/edit form) either duplicate-loaded jQuery/
+Bootstrap 4.6.2 on top of Backpack's already-loaded jQuery 3.6.1 + Tabler's Bootstrap 5, or called
+jQuery's Bootstrap-4-only `.modal()` plugin API with nothing on the page ever providing it -
+`$(...).modal is not a function` in the browser console, silently, on every popup (proof previews,
+error dialogs, instrument/policy-copy uploads). Removed all duplicate library loads, converted all
+11 `.modal()` calls to the vanilla `bootstrap.Modal.getOrCreateInstance(el).show()/.hide()` API
+already used correctly elsewhere in this same codebase (`show.blade.php` etc.), and removed a
+double-backdrop workaround hack in `pendedit.blade.php` that the duplicate-load bug itself caused.
+
+### Fix 3 (BUG-119, revisits BUG-050/BUG-046): 13 of 18 dead-route methods implemented/aliased
+
+`routes/backpack/booking.php`/`routes/backpack/core.php` register 15 Booking + 5 Enquiry routes
+pointing at methods that never existed on their controllers - previously documented (BUG-050/
+BUG-046) but never fixed. Implemented/aliased 13 using confidently-inferable sibling relationships
+(not guesses): `delivered()` as the proven logical inverse of the working `pendingDeliveries()`
+query; 6 Booking "-List" methods and 2 Enquiry "legacy" methods as thin delegating aliases to their
+unambiguous working, same-named-minus-suffix siblings; 3 Booking "*View($id)" methods aliased to
+the generic `show($id)`; `erroneousEntries()`/`erroneousEntriesData()` implemented against
+`erroneousBookings()`'s exact query (title match confirms intent); `getSalesConsultants()`
+implemented using the already-existing, already-cached `OrgService::salesConsultants()`.
+
+**Confirmed real-world impact**: Enquiry's `export-legacy` (now `exportData()`, fixed) is the
+actual live target of the "Export" button on 7 different Enquiry screens despite its "-legacy"
+name - not dead code. Enquiry's `erroneous` (now `erroneousList` - still open, see below) is a
+real sidebar menu link.
+
+**Deliberately left unfixed (5 of 18)**: Booking's `editRefund`/`orderVerify` (POST, single-record
+mutation actions - aliasing to the wrong handler risks corrupting data, no confident sibling
+found) and Enquiry's `pendingList`/`erroneousList` (no provable filter logic exists anywhere in
+the controller for what "pending"/"erroneous" means for an Enquiry - guessing risks showing wrong
+business data). All 5 documented in known-bugs-report.md as needing product/business input, not
+silently left broken without a paper trail.
+
+### Fix 4 (BUG-120): `getReferenceUsers()` TypeError on missing query params
+
+`OrgService::getReferenceUsers(string $type, string $mobile)` has non-nullable params; the
+controller passed `$request->type`/`$request->mobile` directly (null when absent). Fixed with
+`(string) $request->input(..., '')`.
+
+### Fix 5 (BUG-121): 4 Booking screens' select2 pointed at a nonexistent local asset
+
+`exch-edit`, `finance-view`, `kyc-edit`, `payout-edit` all referenced
+`asset('plugins/select2/...')`, which has never existed in `public/`. Only `exch-edit.blade.php`
+actually calls `.select2()`, so its dropdown was silently broken; the other 3 had dead includes.
+Replaced all 4 with the same working CDN URL already used in 9 other Booking files.
+
+### Found, documented, not fixed (need external input)
+
+- **BUG-122** (High): 5 Booking report screens genuinely 500 because `xlr8_vehicle_master`/
+  `xlr8_us_location` don't exist as tables in this database (same class as BUG-009) - a schema
+  issue, not fixable by code changes. BUG-119's routing fix correctly wires their "-List" siblings
+  to delegate here, so both will work together the moment the tables exist.
+- **BUG-123** (Cosmetic): `show.blade.php` references a missing placeholder PDF icon image.
+
+### Verification
+
+- `php -l` on all ~20 edited files across this whole session-turn -> zero syntax errors.
+- Full 78-route render sweep re-run after all fixes: **7 of 78 still fail** (down from 20) - all 7
+  confirmed pre-existing/out-of-scope: 5 are BUG-122's missing-table issue, 2 are the deliberately
+  undone Enquiry list methods. **13 routes went from fatal `BadMethodCallException`/`TypeError` to
+  200**, with zero new regressions on the 58 routes that were already passing.
+- Live-rendered `admin/sales/booking/create` confirmed the modal-fix output directly: 2
+  `bootstrap.Modal.getOrCreateInstance` calls present, zero old-API/duplicate-library traces.
+- `vendor/bin/pint --dirty --format agent` -> clean.
+- `php artisan test --filter="Booking|Enquiry"` -> 59 passed, zero regressions.
+- Logged BUG-118 through BUG-123 (6 new entries) in known-bugs-report.md with full findings,
+  fixes, and reasoning for the deliberately-unfixed write-action methods.

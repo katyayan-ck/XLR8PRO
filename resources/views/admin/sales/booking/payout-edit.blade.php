@@ -6,7 +6,7 @@ $isViewMode = request()->routeIs('finance.view');
 @section('title', 'Payout Details')
 
 @push('head')
-<link rel="stylesheet" href="{{ asset('plugins/select2/dist/css/select2.min.css') }}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
 <style>
     .readonly-field {
         background-color: var(--tblr-bg-surface-secondary);
