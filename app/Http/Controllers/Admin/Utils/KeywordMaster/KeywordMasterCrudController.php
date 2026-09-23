@@ -33,7 +33,7 @@ class KeywordMasterCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view keywords.');
         }
 
-        $this->crud->setListView('admin.keyword_master.list');
+        $this->crud->setListView('admin.utils.keyword-master.list');
     }
 
     public function index()
@@ -42,7 +42,7 @@ class KeywordMasterCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view keywords.');
         }
 
-        $this->crud->setListView('admin.keyword_master.list');
+        $this->crud->setListView('admin.utils.keyword-master.list');
 
         $keywords = KeywordMaster::select([
             'id',
@@ -88,7 +88,7 @@ class KeywordMasterCrudController extends CrudController
             return $mapped;
         })->values();
 
-        return view('admin.keyword_master.list', [
+        return view('admin.utils.keyword-master.list', [
             'title' => 'Keyword Master',
             'gridConfig' => [
                 'columns' => [
@@ -114,11 +114,11 @@ class KeywordMasterCrudController extends CrudController
         }
 
         $this->crud->setCreateView(
-            'admin.keyword_master.create'
+            'admin.utils.keyword-master.create'
         );
 
         return view(
-            'admin.keyword_master.create',
+            'admin.utils.keyword-master.create',
             [
                 'title' => 'Add Keyword',
             ]
@@ -151,14 +151,14 @@ class KeywordMasterCrudController extends CrudController
         }
 
         $this->crud->setEditView(
-            'admin.keyword_master.edit'
+            'admin.utils.keyword-master.edit'
         );
 
         $keyword =
             KeywordMaster::findOrFail($id);
 
         return view(
-            'admin.keyword_master.edit',
+            'admin.utils.keyword-master.edit',
             [
                 'title' => 'Edit Keyword',
 
