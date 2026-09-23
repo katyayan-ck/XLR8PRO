@@ -1616,3 +1616,66 @@ Item 5 of 6 in the deep-scan list. Remaining: the minimalistic-layout pass prope
 spacing changes, not just color tokens) and extending the centralized label/date-format rollout
 beyond Booking to the other reorganized modules - both left for a follow-up session given the
 scale already covered today (19 checkpoints).
+
+## Date-format rollout beyond Booking (deep-scan, item 6 of 6) — Org, Iam, Accounts, Enquiry, Lead
+
+Per the deep-scan design pass request ("update dates to new format mechanism"), extending the
+site_date()/DateFormatService pattern established for Booking to the other reorganized modules.
+
+### Scope survey
+
+Checked every reorganized module's grid config (`headerName` containing "date"/"created") and any
+`->format()`/hardcoded date-formatting helper. Vehicle, Utils, Quotation, Campaign have no date
+columns or formatting at all - nothing to do. Found real gaps in: Org (Employee's `joining_date`
+sent raw/unformatted via `->toArray()`; Person's `dob` hardcoded to `d/m/Y`), Iam (Role's
+`created_at` sent raw), Accounts (both JournalVoucher's and Receipt's private `formatDate()`
+helpers hardcoded to `d-m-Y`), and Enquiry (a `formatDate($date, $format)` helper called ~30
+times, 23 of them with `'d-M-Y'` - which happens to already match the site's configured format
+today, but wasn't wired to the setting so would silently desync if it ever changes).
+
+### Fixes
+
+- `EmployeeCrudController::index()`: added `$mapped['joining_date'] = site_date($emp->joining_date)`.
+- `PersonCrudController::index()`: `$person->dob?->format('d/m/Y')` -> `site_date($person->dob, '—')`.
+- `RoleCrudController::index()`: added `$mapped['created_at'] = site_date($role->created_at)`.
+- `JournalVoucherCrudController`/`ReceiptCrudController`'s private `formatDate()` methods:
+  replaced their `Carbon::parse($date)->format('d-m-Y')` bodies with `site_date($date, '')`,
+  preserving the exact same method signature so all existing call sites keep working unchanged.
+- `EnquiryCrudController::formatDate()`: now delegates to `site_date()` specifically when
+  `$format === 'd-M-Y'` (23 of 31 call sites) - the 8 call sites using a time-inclusive format
+  (`d-M-Y H:i`/`H:i:s`) are correctly left untouched, since `site_date()` only formats the date
+  portion.
+
+### Bonus finding: a real, previously-undocumented Lead bug
+
+While tracing Lead's `expected_delivery_date` handling (found via its flatpickr hardcoded to
+`d-m-Y`, not the site format), discovered `LeadCrudController::store()` parses the submitted value
+with `Carbon::createFromFormat('d-m-Y', ...)` - but the **create form uses a native
+`<input type="date">`**, which browsers always submit as ISO `Y-m-d` regardless of display format.
+Reproduced directly: `Carbon::createFromFormat('d-m-Y', '2026-09-25')` throws
+`"The separation symbol could not be found"`, uncaught, so **creating any Lead with a delivery
+date filled in has always 500'd**. Fixed by parsing `Y-m-d` (matching what the native input
+actually sends) instead. `update()`'s equivalent parsing was already correct for its own
+flatpickr-fed text input (which does send `d-m-Y`) - but that hardcoded format was also drifting
+from the site setting, so synced both `edit.blade.php`'s flatpickr `dateFormat`/pre-fill and
+`update()`'s parsing to the dynamic `DateFormatService::phpFormat()` value, matching the
+`SITE_DATE_FORMAT` JS pattern already established for Booking (checkpoint 5c).
+
+### Verification
+
+- `php -l` on all 7 edited files -> no syntax errors.
+- `php artisan view:clear`.
+- Live HTTP round trips: `org/person`, `sales/enquiry`, `accounts/receipt`,
+  `accounts/journal-voucher` -> all 200. `org/employee` -> 500, confirmed pre-existing
+  (already-tracked BUG-008: `person_id` column doesn't exist), unrelated to the date change.
+  `sales/lead/1/edit` -> 500, confirmed pre-existing (already-tracked BUG-112), unrelated.
+- `vendor/bin/pint --dirty --format agent` -> auto-fixed formatting/import ordering, no logic
+  changes.
+- `php artisan test --filter="Employee|Person|Role|JournalVoucher|Receipt|Enquiry|Lead"` -> 34
+  passed, 3 failed (all 3 pre-existing and already tracked - PostModelTest/
+  RBACPersonEmployeeUserTest's missing-table cluster, StandaloneUsersImportTest's missing
+  fixture), zero new regressions.
+
+**This completes all 6 items of the deep-scan list**: view reorganization (all controllers with
+an existing module namespace), theme-mode switcher, AJAX/JS re-verification, dark/light-mode
+color tokens, and now the date-format rollout. 21 checkpoints total this session.

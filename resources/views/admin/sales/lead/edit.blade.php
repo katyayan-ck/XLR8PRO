@@ -301,10 +301,10 @@
     value="{{ old(
         'expected_delivery_date',
         $lead->expected_delivery_date
-            ? \Carbon\Carbon::parse($lead->expected_delivery_date)->format('d-m-Y')
+            ? \Carbon\Carbon::parse($lead->expected_delivery_date)->format(app(\App\Services\DateFormatService::class)->phpFormat())
             : ''
     ) }}"
-    placeholder="DD-MM-YYYY"
+    placeholder="{{ app(\App\Services\DateFormatService::class)->phpFormat() }}"
     autocomplete="off">
                                 </div>
 
@@ -398,9 +398,11 @@
 
 
 
+        const SITE_DATE_FORMAT = '@php echo app(\App\Services\DateFormatService::class)->phpFormat(); @endphp';
+
         $(document).ready(function () {
             flatpickr("#expected_delivery_date", {
-                dateFormat: "d-m-Y",
+                dateFormat: SITE_DATE_FORMAT,
                 allowInput: true,
                 minDate: "today"
             });

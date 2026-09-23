@@ -391,6 +391,13 @@ class EnquiryCrudController extends CrudController
         if (empty($date) || str_starts_with($date, '0000')) {
             return '—';
         }
+
+        // Pure-date formats follow the site's centrally-configured date format
+        // instead of a hardcoded one, so they stay in sync if that setting changes.
+        if ($format === 'd-M-Y') {
+            return site_date($date, '—');
+        }
+
         try {
             return Carbon::parse($date)->format($format);
         } catch (Throwable $th) {

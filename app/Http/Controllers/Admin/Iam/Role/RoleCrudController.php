@@ -58,6 +58,7 @@ class RoleCrudController extends CrudController
         $gridData = $roles->map(function ($role, $index) {
             $mapped = $role->toArray();
             $mapped['serial_no'] = $index + 1;
+            $mapped['created_at'] = site_date($role->created_at);
             $mapped['permissions_count'] = $role->permissions_count.' permissions';
 
             $editUrl = backpack_url("iam/role/{$role->id}/edit");
