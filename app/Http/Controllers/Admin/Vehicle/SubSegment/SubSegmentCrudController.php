@@ -39,7 +39,7 @@ class SubSegmentCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view sub segments.');
         }
 
-        $this->crud->setListView('admin.sub-segment.list');
+        $this->crud->setListView('admin.vehicle.sub-segment.list');
     }
 
     public function index()
@@ -48,7 +48,7 @@ class SubSegmentCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view sub segments.');
         }
 
-        $this->crud->setListView('admin.sub-segment.list');
+        $this->crud->setListView('admin.vehicle.sub-segment.list');
 
         $subsegments = SubSegment::orderBy('id', 'desc')->get();
 
@@ -74,7 +74,7 @@ class SubSegmentCrudController extends CrudController
             return $mapped;
         })->values();
 
-        return view('admin.sub-segment.list', [
+        return view('admin.vehicle.sub-segment.list', [
             'title' => 'All Sub Segments',
             'gridConfig' => [
                 'columns' => [
@@ -97,7 +97,7 @@ class SubSegmentCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to edit sub segments.');
         }
 
-        $this->crud->setEditView('admin.sub-segment.edit');
+        $this->crud->setEditView('admin.vehicle.sub-segment.edit');
 
         $subsegment = SubSegment::with('segment')->findOrFail($id);
 
@@ -109,7 +109,7 @@ class SubSegmentCrudController extends CrudController
             ->pluck('name')
             ->toArray();
 
-        return view('admin.sub-segment.edit', [
+        return view('admin.vehicle.sub-segment.edit', [
             'title' => 'Edit Sub Segment - '.$subsegment->name,
             'subsegment' => $subsegment,
             'segments' => Segment::orderBy('name')->get(),
@@ -167,9 +167,9 @@ class SubSegmentCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to create sub segments.');
         }
 
-        $this->crud->setCreateView('admin.sub-segment.create');
+        $this->crud->setCreateView('admin.vehicle.sub-segment.create');
 
-        return view('admin.sub-segment.create', [
+        return view('admin.vehicle.sub-segment.create', [
             'title' => 'Add New Sub Segment',
         ]);
     }

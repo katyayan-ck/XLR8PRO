@@ -1363,3 +1363,30 @@ sed patterns (`s/admin\.branch\./admin.org.branch./g`) instead of programmatic e
   `DivisionCrudTest`, `LocationCrudTest`, `PersonCrudTest`, `UserOnboardingTest`,
   `VerticalCrudTest`) - these exercise the exact views just moved. 62 passed overall; the 6
   failures noted above are pre-existing and unrelated.
+
+## Vehicle module (batch of 6) view reorganization — mirror controller module structure
+
+Second app-wide batch. Covers all 6 `App\Http\Controllers\Admin\Vehicle\*` sub-controllers
+(Brand, Color, Segment, SubSegment, Variant, Model) together — same rationale as the Org batch
+(small, structurally identical, no orphans).
+
+### Reorganization
+
+Moved `brand`, `color`, `segment`, `sub-segment`, `variant`, `vehicle-model` from flat
+`resources/views/admin/{name}/` to `resources/views/admin/vehicle/{name}/`. Updated all 18
+`admin.{name}.*` references across the 6 controllers to `admin.vehicle.{name}.*`, using
+directly-written escaped sed patterns this time (learned from the Org batch's tooling bug).
+
+### Verification
+
+- `php -l` on all 6 controllers -> no syntax errors. `php artisan view:clear`.
+- App-wide grep confirmed zero leftover old-prefix references.
+- Live HTTP round trips: 5 of 6 sub-modules fully working (color, segment, sub-segment, variant,
+  model - index/create/edit all 200 with real record ids). Brand's index -> 500, confirmed
+  pre-existing (already-tracked BUG-009: `xlr8_vehicle_brand` table doesn't exist), unrelated to
+  this reorganization.
+- Found and logged **BUG-113** (Low, not fixed): SubSegment index and Variant index/create emit
+  non-fatal undefined-variable/null-foreach PHP warnings (pages still render, 200) - confirmed
+  pre-existing via byte-identical `git mv` content.
+- `vendor/bin/pint --dirty --format agent` -> clean.
+- No dedicated Vehicle sub-module test suites exist; covered by the live HTTP round trips above.
