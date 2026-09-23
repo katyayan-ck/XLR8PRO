@@ -830,7 +830,7 @@ class BookingCrudController extends CrudController
 
         $receiptLogs = $data['receiptLogs'];
 
-        return view("admin.booking.{$viewName}", $data + get_defined_vars());
+        return view("admin.sales.booking.{$viewName}", $data + get_defined_vars());
     }
 
     // NOTE (optimisation): an older, fully commented-out duplicate of
@@ -2002,7 +2002,7 @@ class BookingCrudController extends CrudController
 
     protected function setupListOperation()
     {
-        $this->crud->setListView('admin.booking.list');
+        $this->crud->setListView('admin.sales.booking.list');
     }
 
     /**
@@ -2095,7 +2095,7 @@ class BookingCrudController extends CrudController
     private function renderBookingListing(array $statusFilter, string $title, string $showRouteSuffix, bool $fullActions): View
     {
         $this->crud->hasAccessOrFail('list');
-        $this->crud->setListView('admin.booking.list');
+        $this->crud->setListView('admin.sales.booking.list');
 
         $this->data['crud'] = $this->crud;
         $this->data['title'] = $title;
@@ -2146,7 +2146,7 @@ class BookingCrudController extends CrudController
             'lastPage' => $paginatedBookings->lastPage(),
         ];
 
-        return view('admin.booking.list', $this->data);
+        return view('admin.sales.booking.list', $this->data);
     }
 
     /** All Live Bookings (status: 1 = live, 8 = pending) — full action set. */
@@ -2298,7 +2298,7 @@ class BookingCrudController extends CrudController
         // ==========================================================
 
         CRUD::setValidation(BookingRequest::class);
-        $this->crud->setCreateView('admin.booking.add');
+        $this->crud->setCreateView('admin.sales.booking.add');
 
         $data = [];
 
@@ -2466,7 +2466,7 @@ class BookingCrudController extends CrudController
             ?? '';
 
         CRUD::setValidation(BookingRequest::class);
-        $this->crud->setEditView('admin.booking.add');
+        $this->crud->setEditView('admin.sales.booking.add');
 
         \Log::info('EDIT FORM PREFILL DEBUG', [
             'booking_id' => $id,
@@ -2691,7 +2691,7 @@ class BookingCrudController extends CrudController
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return view('admin.booking.amount', compact('booking', 'receipts'));
+        return view('admin.sales.booking.amount', compact('booking', 'receipts'));
     }
 
     public function addAmount(Request $request, $id)
@@ -3512,7 +3512,7 @@ class BookingCrudController extends CrudController
 
         $this->data['gridConfig'] = $gridConfig;
 
-        return view('admin.booking.order-verification', $this->data);
+        return view('admin.sales.booking.order-verification', $this->data);
     }
 
     private function getCommonLookups()
@@ -3669,7 +3669,7 @@ class BookingCrudController extends CrudController
 
         $this->data['gridConfig'] = $gridConfig;
 
-        return view('admin.booking.pending-order', $this->data);
+        return view('admin.sales.booking.pending-order', $this->data);
     }
 
     // public function dmsedit($id, Request $request)
@@ -3698,7 +3698,7 @@ class BookingCrudController extends CrudController
     //         'so_required'        => $fromPending && $isBevOrPersonal,
     //     ];
 
-    //     return view('admin.booking.dms-edit', compact('booking', 'data'));
+    //     return view('admin.sales.booking.dms-edit', compact('booking', 'data'));
     // }
     public function dmsedit($id, Request $request)
     {
@@ -3710,7 +3710,7 @@ class BookingCrudController extends CrudController
         $fromPending = $request->query('from') === 'pending';
         $data = $this->dmsService->resolveEditData($booking, $fromPending);
 
-        return view('admin.booking.dms-edit', compact('booking', 'data'));
+        return view('admin.sales.booking.dms-edit', compact('booking', 'data'));
     }
 
     public function dmsupdate(Request $request, $id)
@@ -3862,7 +3862,7 @@ class BookingCrudController extends CrudController
             session()->flash('info', 'No pending KYC bookings found.');
         }
 
-        return view('admin.booking.pending-kyc', $this->data);
+        return view('admin.sales.booking.pending-kyc', $this->data);
     }
 
     // public function kycEdit($id)
@@ -3878,7 +3878,7 @@ class BookingCrudController extends CrudController
     //         'saleConsultants' => OrgService::usersByDesignation('CNS') ?? [],
     //     ];
 
-    //     return view('admin.booking.kyc-edit', compact('booking', 'data'));
+    //     return view('admin.sales.booking.kyc-edit', compact('booking', 'data'));
     // }
     public function kycEdit($id)
     {
@@ -3891,7 +3891,7 @@ class BookingCrudController extends CrudController
         $booking = Booking::findOrFail($id);
         $data = $this->kycService->resolveEditData($booking);
 
-        return view('admin.booking.kyc-edit', compact('booking', 'data'));
+        return view('admin.sales.booking.kyc-edit', compact('booking', 'data'));
     }
 
     public function kycUpdate(Request $request, $id)
@@ -4026,7 +4026,7 @@ class BookingCrudController extends CrudController
 
         $this->data['gridConfig'] = $gridConfig;
 
-        return view('admin.booking.pending-dms', $this->data);
+        return view('admin.sales.booking.pending-dms', $this->data);
     }
 
     public function Exchange(Request $request)
@@ -4118,7 +4118,7 @@ class BookingCrudController extends CrudController
             session()->flash('info', 'No exchange interested bookings found.');
         }
 
-        return view('admin.booking.exchange', $this->data);
+        return view('admin.sales.booking.exchange', $this->data);
     }
 
     public function Scrappage(Request $request)
@@ -4212,7 +4212,7 @@ class BookingCrudController extends CrudController
 
         $this->data['gridConfig'] = $gridConfig;
 
-        return view('admin.booking.scrappage', $this->data);
+        return view('admin.sales.booking.scrappage', $this->data);
     }
 
     public function exchnotInterested(Request $request)
@@ -4316,7 +4316,7 @@ class BookingCrudController extends CrudController
             session()->flash('info', 'No not-interested bookings found.');
         }
 
-        return view('admin.booking.exchange-not-interested', $this->data);
+        return view('admin.sales.booking.exchange-not-interested', $this->data);
     }
 
     public function intInFinance(Request $request)
@@ -4402,7 +4402,7 @@ class BookingCrudController extends CrudController
 
         $this->data['gridConfig'] = $gridConfig;
 
-        return view('admin.booking.int-in-finance', $this->data);
+        return view('admin.sales.booking.int-in-finance', $this->data);
     }
 
     // public function finnotInterested(Request $request)
@@ -4500,7 +4500,7 @@ class BookingCrudController extends CrudController
     //         session()->flash('info', 'No not-interested finance bookings found.');
     //     }
 
-    //     return view('admin.booking.finance-not-interested', $this->data);
+    //     return view('admin.sales.booking.finance-not-interested', $this->data);
     // }
     public function finnotInterested(Request $request)
     {
@@ -4595,7 +4595,7 @@ class BookingCrudController extends CrudController
 
         $this->data['gridConfig'] = $gridConfig;
 
-        return view('admin.booking.finance-not-interested', $this->data);
+        return view('admin.sales.booking.finance-not-interested', $this->data);
     }
 
     public function finRetail(Request $request)
@@ -4676,7 +4676,7 @@ class BookingCrudController extends CrudController
 
         $this->data['gridConfig'] = $gridConfig;
 
-        return view('admin.booking.finance-retail', $this->data);
+        return view('admin.sales.booking.finance-retail', $this->data);
     }
 
     public function finPayout(Request $request)
@@ -4768,7 +4768,7 @@ class BookingCrudController extends CrudController
         $this->data['gridConfig'] = $gridConfig;
         $this->data['financiers'] = $financiers;
 
-        return view('admin.booking.finance-payout', $this->data);
+        return view('admin.sales.booking.finance-payout', $this->data);
     }
 
     public function finPayoutCompleted(Request $request)
@@ -4862,7 +4862,7 @@ class BookingCrudController extends CrudController
         $this->data['gridConfig'] = $gridConfig;
         $this->data['financiers'] = $financiers;
 
-        return view('admin.booking.finance-payout-completed', $this->data);
+        return view('admin.sales.booking.finance-payout-completed', $this->data);
     }
 
     public function fetchPendBkData()
@@ -5099,7 +5099,7 @@ class BookingCrudController extends CrudController
 
         $this->data['gridConfig'] = $gridConfig;
 
-        return view('admin.booking.pending-payment', $this->data);
+        return view('admin.sales.booking.pending-payment', $this->data);
     }
 
     public function pendingInsurance(Request $request)
@@ -5186,7 +5186,7 @@ class BookingCrudController extends CrudController
 
         $this->data['gridConfig'] = $gridConfig;
 
-        return view('admin.booking.pending-insurance', $this->data);
+        return view('admin.sales.booking.pending-insurance', $this->data);
     }
 
     public function pendingRto(Request $request)
@@ -5278,7 +5278,7 @@ class BookingCrudController extends CrudController
 
         $this->data['gridConfig'] = $gridConfig;
 
-        return view('admin.booking.pending-rto', $this->data);
+        return view('admin.sales.booking.pending-rto', $this->data);
     }
 
     public function pendingDeliveries(Request $request)
@@ -5356,7 +5356,7 @@ class BookingCrudController extends CrudController
 
         $this->data['gridConfig'] = $gridConfig;
 
-        return view('admin.booking.pending-deliveries', $this->data);
+        return view('admin.sales.booking.pending-deliveries', $this->data);
     }
 
     public function pendingRegistration(Request $request)
@@ -5429,7 +5429,7 @@ class BookingCrudController extends CrudController
 
         $this->data['gridConfig'] = $gridConfig;
 
-        return view('admin.booking.pending-registration', $this->data);
+        return view('admin.sales.booking.pending-registration', $this->data);
     }
 
     public function pendingDO(Request $request)
@@ -5490,7 +5490,7 @@ class BookingCrudController extends CrudController
             session()->flash('info', 'No pending Delivery Order found.');
         }
 
-        return view('admin.booking.pending-do', $this->data);
+        return view('admin.sales.booking.pending-do', $this->data);
     }
 
     public function doEdit($id)
@@ -5516,7 +5516,7 @@ class BookingCrudController extends CrudController
 
         $data = $this->getFullBookingData($id, 'doedit');
 
-        return view('admin.booking.doedit', array_merge($data->getData(), [
+        return view('admin.sales.booking.doedit', array_merge($data->getData(), [
             'booking' => $booking,
             'finance' => $finance,
         ]));
@@ -5635,7 +5635,7 @@ class BookingCrudController extends CrudController
 
         $this->data['gridConfig'] = $gridConfig;
 
-        return view('admin.booking.pending-invoices', $this->data);
+        return view('admin.sales.booking.pending-invoices', $this->data);
     }
 
     // public function pendingEdit($id)
@@ -5658,7 +5658,7 @@ class BookingCrudController extends CrudController
     //         'location'        => $booking->location?->name ?? 'N/A',
     //     ];
 
-    //     return view('admin.booking.pendedit', compact('booking', 'data', 'receiptLogs'));
+    //     return view('admin.sales.booking.pendedit', compact('booking', 'data', 'receiptLogs'));
     // }
     public function pendingEdit($id)
     {
@@ -5796,7 +5796,7 @@ class BookingCrudController extends CrudController
         ];
 
         return view(
-            'admin.booking.pendedit',
+            'admin.sales.booking.pendedit',
             compact('booking', 'data', 'receiptLogs')
         );
     }
@@ -6290,7 +6290,7 @@ class BookingCrudController extends CrudController
         $this->data['booking_id'] = $bookingId;
         $this->data['receipt_id'] = $receiptId;
 
-        return view('admin.booking.recedit', $this->data);
+        return view('admin.sales.booking.recedit', $this->data);
     }
 
     public function receiptUpdate(Request $request, $bookingId, $receiptId)
@@ -6408,7 +6408,7 @@ class BookingCrudController extends CrudController
 
     //     $this->data['lookups'] = $this->getCommonLookups();
 
-    //     return view('admin.booking.dealer-edit', $this->data);
+    //     return view('admin.sales.booking.dealer-edit', $this->data);
     // }
     public function dealerInvoice($id)
     {
@@ -6539,7 +6539,7 @@ class BookingCrudController extends CrudController
 
         $this->data['lookups'] = $this->getCommonLookups();
 
-        return view('admin.booking.dealer-edit', $this->data);
+        return view('admin.sales.booking.dealer-edit', $this->data);
     }
 
     public function dealerInvoiceUpdate(Request $request, $id)
@@ -6634,7 +6634,7 @@ class BookingCrudController extends CrudController
         ['insurance' => $insurance, 'data' => $data, 'dsaname' => $dsaname] = $this->insuranceService->resolveEditData($booking);
         $uid = backpack_auth()->id();
 
-        return view('admin.booking.insurance-edit', compact(
+        return view('admin.sales.booking.insurance-edit', compact(
             'booking',
             'insurance',
             'data',
@@ -6708,7 +6708,7 @@ class BookingCrudController extends CrudController
         $uid = backpack_auth()->id();
 
         return view(
-            'admin.booking.rto-edit',
+            'admin.sales.booking.rto-edit',
             compact('booking', 'rto', 'data', 'dsaname', 'uid')
         );
     }
@@ -7006,7 +7006,7 @@ class BookingCrudController extends CrudController
     //     ];
 
     //     return view(
-    //         'admin.booking.delivery-edit',
+    //         'admin.sales.booking.delivery-edit',
     //         compact('booking', 'data', 'insurance', 'rto')
     //     );
     // }
@@ -7021,7 +7021,7 @@ class BookingCrudController extends CrudController
         ['insurance' => $insurance, 'rto' => $rto, 'data' => $data] = $this->deliveryService->resolveEditData($booking);
 
         return view(
-            'admin.booking.delivery-edit',
+            'admin.sales.booking.delivery-edit',
             compact('booking', 'data', 'insurance', 'rto')
         );
     }
@@ -7125,7 +7125,7 @@ class BookingCrudController extends CrudController
         ] = $this->exchangeService->resolveEditData($booking);
 
         return view(
-            'admin.booking.exch-edit',
+            'admin.sales.booking.exch-edit',
             compact(
                 'booking',
                 'exchange',
@@ -7473,7 +7473,7 @@ class BookingCrudController extends CrudController
             ])
             ->first()?->rootThreads ?? collect();
 
-        return view('admin.booking.finance-edit', compact(
+        return view('admin.sales.booking.finance-edit', compact(
             'booking',
             'finance',
             'data',
@@ -7578,7 +7578,7 @@ class BookingCrudController extends CrudController
         ['finance' => $finance, 'data' => $data, 'dsaname' => $dsaname] =
             $this->financeService->resolveRetailEditData($booking);
 
-        return view('admin.booking.retail-edit', compact(
+        return view('admin.sales.booking.retail-edit', compact(
             'booking',
             'finance',
             'data',
@@ -7605,7 +7605,7 @@ class BookingCrudController extends CrudController
             'bookingHistory' => $bookingHistory,
         ] = $this->financeService->resolvePayoutEditData($booking);
 
-        return view('admin.booking.payout-edit', compact(
+        return view('admin.sales.booking.payout-edit', compact(
             'booking',
             'finance',
             'data',
@@ -7700,7 +7700,7 @@ class BookingCrudController extends CrudController
         ['finance' => $finance, 'data' => $data] = $this->financeService->resolveFinanceViewData($booking);
 
         return view(
-            'admin.booking.finance-view',
+            'admin.sales.booking.finance-view',
             compact('booking', 'finance', 'data')
         );
     }
@@ -7785,7 +7785,7 @@ class BookingCrudController extends CrudController
             session()->flash('info', 'No pending refund requests found.');
         }
 
-        return view('admin.booking.pending-refund', $this->data);
+        return view('admin.sales.booking.pending-refund', $this->data);
     }
 
     public function refundView($id)
@@ -7836,7 +7836,7 @@ class BookingCrudController extends CrudController
             ])
             ->first()?->rootThreads ?? collect();
 
-        return view('admin.booking.show', compact('booking', 'data', 'bookingHistory'));
+        return view('admin.sales.booking.show', compact('booking', 'data', 'bookingHistory'));
     }
 
     public function rejected(Request $request)
@@ -7918,7 +7918,7 @@ class BookingCrudController extends CrudController
 
         $this->data['gridConfig'] = $gridConfig;
 
-        return view('admin.booking.rejected', $this->data);
+        return view('admin.sales.booking.rejected', $this->data);
     }
 
     public function rejectedView($id)
@@ -7955,7 +7955,7 @@ class BookingCrudController extends CrudController
 
         $data['receiptLogs'] = $receiptLogs;
 
-        return view('admin.booking.show', [
+        return view('admin.sales.booking.show', [
             'booking' => $booking,
             'entry' => $booking,
             'data' => $data,
@@ -8091,7 +8091,7 @@ class BookingCrudController extends CrudController
             session()->flash('info', 'No refunded bookings found.');
         }
 
-        return view('admin.booking.refunded', $this->data);
+        return view('admin.sales.booking.refunded', $this->data);
     }
 
     public function refundedUpdate(Request $request, $id)
@@ -8213,7 +8213,7 @@ class BookingCrudController extends CrudController
 
         $this->data['gridConfig'] = $gridConfig;
 
-        return view('admin.booking.erroneousBookings', $this->data);
+        return view('admin.sales.booking.erroneousBookings', $this->data);
     }
 
     public function erroneousFinance(Request $request)
@@ -8302,7 +8302,7 @@ class BookingCrudController extends CrudController
             'data' => $gridData,
         ];
 
-        return view('admin.booking.erroneousFinance', $this->data);
+        return view('admin.sales.booking.erroneousFinance', $this->data);
     }
 
     public function erroneousInsurance(Request $request)
@@ -8375,7 +8375,7 @@ class BookingCrudController extends CrudController
             'data' => $gridData,
         ];
 
-        return view('admin.booking.erroneousInsurance', $this->data);
+        return view('admin.sales.booking.erroneousInsurance', $this->data);
     }
 
     public function erroneousRTO(Request $request)
@@ -8447,7 +8447,7 @@ class BookingCrudController extends CrudController
             'data' => $gridData,
         ];
 
-        return view('admin.booking.erroneousRTO', $this->data);
+        return view('admin.sales.booking.erroneousRTO', $this->data);
     }
 
     public function stockReport(Request $request)
@@ -8668,7 +8668,7 @@ class BookingCrudController extends CrudController
 
         $this->data['gridConfig'] = $gridConfig;
 
-        return view('admin.booking.stock', $this->data);
+        return view('admin.sales.booking.stock', $this->data);
     }
 
     public function liveOrderReport(Request $request)
@@ -8734,7 +8734,7 @@ class BookingCrudController extends CrudController
             session()->flash('info', 'No live orders found.');
         }
 
-        return view('admin.booking.live-order', $this->data);
+        return view('admin.sales.booking.live-order', $this->data);
     }
 
     public function fetchCbrData()
@@ -9403,7 +9403,7 @@ class BookingCrudController extends CrudController
             session()->flash('info', 'No consolidated booking data found.');
         }
 
-        return view('admin.booking.consolidated-booking', $this->data);
+        return view('admin.sales.booking.consolidated-booking', $this->data);
     }
 
     public function branchBookingReport(Request $request)
@@ -9649,7 +9649,7 @@ class BookingCrudController extends CrudController
             session()->flash('info', 'No branch booking data found.');
         }
 
-        return view('admin.booking.branch-booking', $this->data);
+        return view('admin.sales.booking.branch-booking', $this->data);
     }
 
     public function pendingActionsReport(Request $request)
@@ -9778,7 +9778,7 @@ class BookingCrudController extends CrudController
 
         $this->data['gridConfig'] = $gridConfig;
 
-        return view('admin.booking.pending-actions', $this->data);
+        return view('admin.sales.booking.pending-actions', $this->data);
     }
 
     public function checkFieldPayment($id)
@@ -9858,7 +9858,7 @@ class BookingCrudController extends CrudController
         $booking = Booking::findOrFail($id);
 
         return view(
-            'admin.booking.preview',
+            'admin.sales.booking.preview',
             compact('booking')
         );
     }
@@ -9868,7 +9868,7 @@ class BookingCrudController extends CrudController
     //     $this->crud->hasAccessOrFail('list');
 
     //     // Use the new transaction-list Blade
-    //     $this->crud->setListView('admin.booking.transaction-list');
+    //     $this->crud->setListView('admin.sales.booking.transaction-list');
 
     //     $this->data['crud'] = $this->crud;
     //     $this->data['title'] = 'Transaction / OTF Listings';
@@ -10121,7 +10121,7 @@ class BookingCrudController extends CrudController
     //         'lastPage'    => $paginatedBookings->lastPage(),
     //     ];
 
-    //     return view('admin.booking.transaction-list', $this->data);
+    //     return view('admin.sales.booking.transaction-list', $this->data);
     // }
 
     public function liveNotInvoiced()
@@ -10132,7 +10132,7 @@ class BookingCrudController extends CrudController
 
         $this->crud->hasAccessOrFail('list');
 
-        $this->crud->setListView('admin.booking.transaction-list');
+        $this->crud->setListView('admin.sales.booking.transaction-list');
 
         $this->data['crud'] = $this->crud;
         $this->data['title'] = 'Transaction / OTF Listings';
@@ -10361,7 +10361,7 @@ class BookingCrudController extends CrudController
             'lastPage' => $paginatedBookings->lastPage(),
         ];
 
-        return view('admin.booking.transaction-list', $this->data);
+        return view('admin.sales.booking.transaction-list', $this->data);
     }
 
     public function otfProcess($id)
@@ -10400,7 +10400,7 @@ class BookingCrudController extends CrudController
             ]);
         }
 
-        return view('admin.booking.otf-form', $data);
+        return view('admin.sales.booking.otf-form', $data);
     }
 
     public function getDoAmount(Request $request)

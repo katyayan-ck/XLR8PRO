@@ -1,3 +1,4 @@
+{{-- ORIGINAL PATH: resources/views/admin/booking/otf-form.blade copy.php --}}
 @extends(backpack_view('blank'))
 @php
 $chassisImage = $booking->getFirstMediaUrl('chassis_image');
