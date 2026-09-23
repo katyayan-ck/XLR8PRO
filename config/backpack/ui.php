@@ -2,18 +2,18 @@
 
 return [
 
-   
     'view_namespace' => 'backpack.theme-tabler::',
     'view_namespace_fallback' => 'backpack.theme-tabler::',
 
-   
-
-    'default_date_format' => 'DD/MM/YYYY',
-    'default_datetime_format' => 'D MMM YYYY, HH:mm',
+    // Aligned to the site-wide dd-MMM-YYYY date standard (see
+    // .ai/rules/conventions.md section 13 and App\Services\DateFormatService)
+    // - isoFormat() uses moment.js-style tokens, hence DD-MMM-YYYY here
+    // rather than the PHP/Carbon d-M-Y token used by DateFormatService.
+    'default_date_format' => 'DD-MMM-YYYY',
+    'default_datetime_format' => 'DD-MMM-YYYY, HH:mm',
 
     'html_direction' => 'ltr',
 
-   
     'project_name' => 'Xceler8 DMS',
 
     'meta_robots_content' => 'noindex, nofollow',
@@ -30,38 +30,32 @@ return [
 
     'show_powered_by' => true,
 
-
     'show_getting_started' => env('APP_ENV') == 'local',
 
-
-   
     'styles' => [
-       
+
     ],
 
-    'mix_styles' => [ 
+    'mix_styles' => [
     ],
 
-    'vite_styles' => [ 
+    'vite_styles' => [
     ],
-
-  
 
     'scripts' => [
-      
+
     ],
 
-    'mix_scripts' => [ 
+    'mix_scripts' => [
     ],
 
-    'vite_scripts' => [ 
+    'vite_scripts' => [
     ],
 
     'classes' => [
-       
+
         'table' => null,
 
-       
         'tableWrapper' => null,
     ],
 

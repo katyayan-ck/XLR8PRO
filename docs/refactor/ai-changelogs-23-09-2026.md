@@ -968,3 +968,44 @@ code).
 Not yet covered: caching for the Booking listing/AG-Grid queries themselves (`getBaseQuery()`,
 `preloadGridLookups()` - already N+1-fixed in Phase 2, but not response-cached), and the same
 caching pattern for other modules' equivalent lookup services, left for future sessions.
+
+## Phase 5, ninth checkpoint: date-format conversion for AG-Grid listing screens + Backpack alignment
+
+Started the Tabler visual design pass per the user's direction (dark-mode support required, restyle
+AG-Grid to match Tabler, align Backpack's native date format, prioritize highest-traffic screens
+first). Investigation revealed the AG-Grid listing screens' dates are formatted **server-side in
+PHP** (`mapBookingForGrid()` and ~10 individual listing methods in `BookingCrudController`), sent to
+the frontend as pre-formatted strings - a completely separate code path from the Blade `@sitedate()`
+work done in earlier checkpoints, and one that had 30 of its own hardcoded `Carbon::parse($x)
+->format('d-M-Y')` occurrences never touched until now.
+
+**Aligned Backpack's own native date format** (`config/backpack/ui.php`): `default_date_format`/
+`default_datetime_format` used moment.js-style tokens (`DD/MM/YYYY`) for any native Backpack CRUD
+`type => 'date'`/`'datetime'` column - changed to `DD-MMM-YYYY`/`DD-MMM-YYYY, HH:mm` to match the
+site-wide standard. Verified via `Carbon::parse(...)->isoFormat(...)` (the method Backpack's
+`crud::columns.date` partial actually calls) → `23-Sep-2026`.
+
+**Converted all 30 controller-side date-format occurrences** to `site_date()` - 24 via a small,
+reviewed Perl script matching the exact `$x ? Carbon::parse($x)->format('d-M-Y') : 'N/A'` pattern
+(the same one converted in Blade views across earlier checkpoints), 6 handled individually for
+minor variations (no ternary, string interpolation, array-index ternaries, non-`'N/A'` fallback).
+Most of these live in `mapBookingForGrid()`, the single shared row-mapper Phase 2's N+1 fix already
+established as the one code path every Booking listing screen goes through - converting it here
+fixes the date format for every AG-Grid listing screen at once, not just one.
+
+### Verification
+
+- `php -l` clean; `git diff` reviewed line-by-line to confirm every conversion preserves the
+  original's exact null/empty-fallback behavior.
+- `vendor/bin/pint --dirty --format agent` → clean (minor whitespace fix on the config file).
+- Full suite re-run (`tests/Unit/Services/` + `tests/Unit/Lang/`) → 80 passed, 299 assertions; same
+  8 pre-existing unrelated failures as every checkpoint this phase.
+- Live HTTP round trip against the main booking listing and 3 other grid screens (`refund-requested`,
+  `rejected`, `refunded`) → all 4 return 200. Direct reflection-based invocation of
+  `mapBookingForGrid()` in isolation isn't possible (Backpack's CRUD facade requires real
+  route/middleware context), so this relies on the full HTTP round trip instead of a unit-level
+  check - confirms every listing screen's shared row-mapper still renders correctly with the new
+  date formatting.
+
+**Next**: the actual AG-Grid visual restyling (colors, borders, row density, header style) to match
+Tabler - not yet started, this checkpoint only fixed the underlying date data these grids display.
