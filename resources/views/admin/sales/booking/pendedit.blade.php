@@ -447,7 +447,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary"
-                    onclick="$('#proofPreviewModal').modal('hide')">Close</button>
+                    onclick="bootstrap.Modal.getOrCreateInstance(document.getElementById('proofPreviewModal')).hide()">Close</button>
                 <button type="button" id="modalDownloadBtn" class="btn btn-primary">
                     <i class="fas fa-download me-1"></i> Download
                 </button>
@@ -459,13 +459,16 @@
 
 @push('after_scripts')
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+{{-- jQuery is already loaded by Backpack's base layout (theme-tabler); loading it again here
+     redeclares window.jQuery/$. Bootstrap 4.6.2's bundle was loaded only to provide jQuery's
+     $.fn.modal() plugin API, which conflicts with the Tabler theme's own Bootstrap 5 JS. Both
+     removed - .modal() call sites converted to the vanilla bootstrap.Modal API already used
+     throughout the rest of this controller's views - see BUG-118. --}}
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/additional-methods.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
@@ -924,8 +927,7 @@
                 }
 
                 try {
-                    $('#proofPreviewModal').modal('show');
-                    $('.modal-backdrop').remove();
+                    bootstrap.Modal.getOrCreateInstance(document.getElementById('proofPreviewModal')).show();
 
                     console.log('Modal show called successfully.');
                 } catch (error) {

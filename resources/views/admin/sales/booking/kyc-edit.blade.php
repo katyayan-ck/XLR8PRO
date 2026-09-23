@@ -3,7 +3,7 @@
 @section('title', 'Complete KYC - Booking #' . $booking->id)
 
 @push('after_styles')
-<link rel="stylesheet" href="{{ asset('plugins/select2/dist/css/select2.min.css') }}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
 <style>
@@ -199,7 +199,7 @@
 @endsection
 
 @push('after_scripts')
-<script src="{{ asset('plugins/select2/dist/js/select2.min.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>

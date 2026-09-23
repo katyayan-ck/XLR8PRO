@@ -331,7 +331,7 @@
     document.getElementById('downloadLink').href = url;
     document.getElementById('downloadLink').download = name;
 
-    $('#previewModal').modal('show');
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('previewModal')).show();
 }
 
     function removeExistingPhoto(key) {

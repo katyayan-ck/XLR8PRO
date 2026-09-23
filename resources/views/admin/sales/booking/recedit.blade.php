@@ -203,7 +203,7 @@
     document.getElementById('modalDownloadLink').href = url;
     document.getElementById('modalDownloadLink').download = fileName;
 
-    $('#proofPreviewModal').modal('show');
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('proofPreviewModal')).show();
 }
         document.getElementById('deleteReceiptBtn')?.addEventListener('click', function(e) {
             e.preventDefault();
@@ -292,7 +292,7 @@ function openProofPreview(url,type,fileName)
 
     document.getElementById('modalDownloadLink').href = url;
 
-    $('#proofPreviewModal').modal('show');
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('proofPreviewModal')).show();
 }
     $(document).ready(function() {
 

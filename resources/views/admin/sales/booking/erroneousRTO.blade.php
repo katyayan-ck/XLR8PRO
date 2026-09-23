@@ -163,7 +163,7 @@
             alert('Please enter GID');
             return;
         }
-        const url = `{{ backpack_url('finance/import') }}?gid=${gid}`;
+        const url = `{{ backpack_url('rto/import') }}?gid=${gid}`;
         if (confirm('Import data from Google Sheet with GID: ' + gid + '?')) {
             window.location.href = url;
         }

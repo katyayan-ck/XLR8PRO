@@ -375,7 +375,7 @@ function handlePolicyCopy(input) {
     document.getElementById('policyModalDownload').href = url;
     document.getElementById('policyModalPreview').src = url;
 
-    $('#policyCopyModal').modal('show');
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('policyCopyModal')).show();
 }
 
     document.getElementById('policyCopyInput')?.addEventListener('change', function() {

@@ -565,6 +565,27 @@ class EnquiryCrudController extends CrudController
         }, $fileName, ['Content-Type' => 'text/csv']);
     }
 
+    /**
+     * BUG-046: route existed with no matching method. Confirmed via 7 live views'
+     * "Export" buttons all hardcoding 'sales/enquiry/export-legacy' (not dead code despite the
+     * route's "-legacy" name) - export() already accepts the exact same searchText/list_type
+     * params these buttons send, so this aliases the working method rather than duplicating it.
+     */
+    public function exportData(Request $request)
+    {
+        return $this->export($request);
+    }
+
+    /**
+     * BUG-046: route existed with no matching method. Alias of the real, working data() method -
+     * same params/shape, matching the route comment's own description of grid-data-legacy as
+     * data()'s superseded predecessor.
+     */
+    public function gridData(Request $request)
+    {
+        return $this->data($request);
+    }
+
     private function applyOtfSearch($query, string $searchText): void
     {
         if ($searchText === '') {
@@ -2474,6 +2495,20 @@ class EnquiryCrudController extends CrudController
         return response()->json(LeadSource::active()->orderBy('sort_order')->orderBy('name')->pluck('name', 'code')->toArray());
     }
 
+    /**
+     * BUG-046: route existed with no matching method. Implemented using the already-existing,
+     * already-cached OrgService::salesConsultants() helper — the same utility this controller
+     * already imports OrgService for, matching getSources()'s JSON-lookup shape.
+     */
+    public function getSalesConsultants(Request $request)
+    {
+        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view enquiries.');
+        }
+
+        return response()->json(OrgService::salesConsultants($request->input('branch_code', 'ALL')));
+    }
+
     public function getVariants($modelCode)
     {
         if (! backpack_user()->can('SLS_ENQR_VIEW')) {
@@ -2527,7 +2562,10 @@ class EnquiryCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
-        return response()->json(OrgService::getReferenceUsers($request->type, $request->mobile));
+        return response()->json(OrgService::getReferenceUsers(
+            (string) $request->input('type', ''),
+            (string) $request->input('mobile', '')
+        ));
     }
 
     public function locationByPincode(Request $request)

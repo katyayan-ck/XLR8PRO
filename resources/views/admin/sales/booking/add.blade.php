@@ -1422,7 +1422,10 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+    {{-- Bootstrap 4.6.2's bundle was loaded here only to provide jQuery's $.fn.modal() plugin
+         API, which conflicts with the Tabler theme's own Bootstrap 5 JS. Both .modal('show')
+         call sites converted to the vanilla bootstrap.Modal API already used throughout the
+         rest of this controller's views (show.blade.php etc.) - see BUG-118. --}}
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     {{-- SortableJS powers the new drag-to-reorder form cards. --}}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
@@ -1510,7 +1513,7 @@
             document.getElementById('proofModalFileName').innerText = name;
             document.getElementById('proofModalDownload').href = url;
             document.getElementById('proofModalPreview').src = url;
-            $('#proofModal').modal('show');
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('proofModal')).show();
         }
         document.getElementById('proofInput')?.addEventListener('change', function() { handleProof(this); });
 
@@ -2404,7 +2407,7 @@
                 $.each(errors, function(_, error) { errorHtml += '<li>' + error.message + '</li>'; });
                 errorHtml += '</ul>';
                 $('#errorModal .modal-body').html(errorHtml);
-                $('#errorModal').modal('show');
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('errorModal')).show();
             }
 
             function toggleRequiredMark(selector, show) {

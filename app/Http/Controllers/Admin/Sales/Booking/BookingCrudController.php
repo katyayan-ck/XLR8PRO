@@ -2205,6 +2205,141 @@ class BookingCrudController extends CrudController
         return $this->renderBookingListing([3], 'Cancelled Bookings', 'show', false);
     }
 
+    /**
+     * Delivered Bookings — the confirmed-delivered counterpart of pendingDeliveries().
+     *
+     * BUG-050: this route existed with no matching method (fatal on every hit). Implemented
+     * here using the exact inverse of pendingDeliveries()'s established filter (status 2,
+     * whereIn xlr8_booking_delivered ids instead of whereNotIn) since that is the only
+     * authoritative definition of "delivered" already proven correct elsewhere in this
+     * controller — not a guess. Uses the modern renderBookingListing()-style shared list view
+     * (matching every other listing in this class) rather than the old client-side-fetch AJAX
+     * pattern the orphaned pre-reorg delivered-bookings.blade.php used.
+     */
+    public function delivered()
+    {
+        if (! backpack_user()->can('SLS_BKNG_DELIVERY')) {
+            abort(403, 'Unauthorized. You do not have permission to perform this action.');
+        }
+
+        $this->crud->hasAccessOrFail('list');
+        $this->crud->setListView('admin.sales.booking.list');
+
+        $this->data['crud'] = $this->crud;
+        $this->data['title'] = 'Delivered Bookings';
+
+        $query = $this->getBaseQuery()->where('bookings.status', 2);
+
+        $deliveredIds = DB::table('xlr8_booking_delivered')
+            ->where('status', 1)
+            ->pluck('bid')
+            ->toArray();
+
+        $query->whereIn('bookings.id', $deliveredIds);
+
+        $paginatedBookings = $query->orderBy('booking_date', 'DESC')->paginate(50);
+
+        $lookups = $this->preloadGridLookups($paginatedBookings->getCollection());
+
+        $gridData = $paginatedBookings->map(function ($booking, $index) use ($paginatedBookings, $lookups) {
+            $mapped = $this->mapBookingForGrid($booking, $lookups);
+
+            $mapped->serial_no = ($paginatedBookings->currentPage() - 1) * $paginatedBookings->perPage() + $index + 1;
+            $mapped->action = $this->buildBookingRowActions($booking, 'show', false);
+
+            return $mapped;
+        })->values();
+
+        $columns = $this->getAgGridColumns();
+        $columns[] = [
+            'headerName' => 'Action',
+            'field' => 'action',
+            'width' => 160,
+            'minWidth' => 140,
+            'sortable' => false,
+            'filter' => false,
+            'resizable' => false,
+            'cellRenderer' => 'htmlRenderer',
+            'pinned' => 'right',
+            'cellClass' => 'text-center p-0',
+            'suppressSizeToFit' => true,
+        ];
+
+        $this->data['gridConfig'] = [
+            'columns' => $columns,
+            'data' => $gridData,
+        ];
+
+        $this->data['pagination'] = [
+            'total' => $paginatedBookings->total(),
+            'perPage' => $paginatedBookings->perPage(),
+            'currentPage' => $paginatedBookings->currentPage(),
+            'lastPage' => $paginatedBookings->lastPage(),
+        ];
+
+        return view('admin.sales.booking.list', $this->data);
+    }
+
+    /** BUG-050: route existed with no matching method. Alias of delivered() — same data, "list" suffix. */
+    public function deliveredList()
+    {
+        return $this->delivered();
+    }
+
+    /** BUG-050/BUG-106: route existed with no matching method. Single-booking view, same as show(). */
+    public function deliveredView($id)
+    {
+        return $this->show($id);
+    }
+
+    /** BUG-050: route existed with no matching method. Alias of refundView() — same data, different route name. */
+    public function refundedView($id)
+    {
+        return $this->show($id);
+    }
+
+    /** BUG-050: route existed with no matching method. Single-booking view, same as show(). */
+    public function scrappageView($id)
+    {
+        return $this->show($id);
+    }
+
+    /** BUG-050: route existed with no matching method. Alias of finRetail() — same data, "list" suffix. */
+    public function finRetailed(Request $request)
+    {
+        return $this->finRetail($request);
+    }
+
+    /** BUG-050: route existed with no matching method. Alias of invoiced() — same data, "list" suffix. */
+    public function invoicedList()
+    {
+        return $this->invoiced();
+    }
+
+    /** BUG-050: route existed with no matching method. Alias of liveOrderReport() — same data, "list" suffix. */
+    public function liveOrderList(Request $request)
+    {
+        return $this->liveOrderReport($request);
+    }
+
+    /** BUG-050: route existed with no matching method. Alias of pendingActionsReport() — same data, "list" suffix. */
+    public function pendingActionsList(Request $request)
+    {
+        return $this->pendingActionsReport($request);
+    }
+
+    /** BUG-050: route existed with no matching method. Alias of pendingInvoices() — same data, "list" suffix. */
+    public function pendingInvoicesList(Request $request)
+    {
+        return $this->pendingInvoices($request);
+    }
+
+    /** BUG-050: route existed with no matching method. Alias of stockReport() — same data, "list" suffix. */
+    public function stockList(Request $request)
+    {
+        return $this->stockReport($request);
+    }
+
     protected function setupCreateOperation()
     {
         $quotation = null;
@@ -8214,6 +8349,46 @@ class BookingCrudController extends CrudController
         $this->data['gridConfig'] = $gridConfig;
 
         return view('admin.sales.booking.erroneousBookings', $this->data);
+    }
+
+    /**
+     * BUG-050: route existed with no matching method. Alias of erroneousBookings() — the
+     * route's title match ("errors" -> "Erroneous Booking Entries") confirms this is its
+     * intended target, not a guess.
+     */
+    public function erroneousEntries(Request $request)
+    {
+        return $this->erroneousBookings($request);
+    }
+
+    /**
+     * BUG-050: route existed with no matching method. JSON data companion to erroneousEntries()/
+     * erroneousBookings() — same query/filter, returned as JSON instead of a rendered page, for
+     * any programmatic/AJAX consumer of the "errors/data" endpoint.
+     */
+    public function erroneousEntriesData(Request $request)
+    {
+        if (! backpack_user()->can('SLS_BKNG_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to perform this action.');
+        }
+
+        $query = $this->getBaseQuery()
+            ->withoutGlobalScopes()
+            ->withoutGlobalScope(SoftDeletingScope::class)
+            ->where('bookings.status', 1)
+            ->orderBy('bookings.id', 'DESC');
+
+        $paginatedBookings = $query->paginate(50);
+        $gridLookups = $this->preloadGridLookups($paginatedBookings->getCollection());
+
+        $gridData = $paginatedBookings->map(function ($t, $index) use ($paginatedBookings, $gridLookups) {
+            $row = $this->mapBookingForGrid($t, $gridLookups);
+            $row->serial_no = ($paginatedBookings->currentPage() - 1) * $paginatedBookings->perPage() + $index + 1;
+
+            return $row;
+        })->values();
+
+        return response()->json(['data' => $gridData]);
     }
 
     public function erroneousFinance(Request $request)

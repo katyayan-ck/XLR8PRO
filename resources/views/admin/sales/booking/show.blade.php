@@ -2532,7 +2532,7 @@ function openFdocProofModal(url, name) {
         img.style.display = 'block';
     }
 
-    $('#fdocProofModal').modal('show');
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('fdocProofModal')).show();
 }
 
 

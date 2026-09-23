@@ -164,7 +164,7 @@
         document.getElementById('instrumentModalFileName').innerText = name;
         document.getElementById('instrumentModalPreview').src = url;
         document.getElementById('instrumentModalDownload').href = url;
-        $('#instrumentProofModal').modal('show');
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('instrumentProofModal')).show();
     };
 
     $('#instrumentProofModal').on('show.bs.modal', function () {

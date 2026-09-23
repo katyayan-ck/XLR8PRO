@@ -262,10 +262,10 @@
             previewFrame.src = url;
         }
 
-        $('#proofModal').modal({
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('proofModal'), {
             backdrop: false,
             keyboard: true
-        }).modal('show');
+        }).show();
     }
 </script>
 @endpush
