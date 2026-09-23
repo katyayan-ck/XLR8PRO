@@ -57,7 +57,7 @@ class PersonContactCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view person contacts.');
         }
 
-        $this->crud->setListView('admin.person-contact.list');
+        $this->crud->setListView('admin.org.person-contact.list');
     }
 
     public function index()
@@ -66,7 +66,7 @@ class PersonContactCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view person contacts.');
         }
 
-        $this->crud->setListView('admin.person-contact.list');
+        $this->crud->setListView('admin.org.person-contact.list');
 
         $contacts = PersonContact::with('person')
             ->select([
@@ -99,7 +99,7 @@ class PersonContactCrudController extends CrudController
             return $mapped;
         })->values();
 
-        return view('admin.person-contact.list', [
+        return view('admin.org.person-contact.list', [
             'title' => 'All Person Contacts',
             'gridConfig' => [
                 'columns' => [
@@ -122,9 +122,9 @@ class PersonContactCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to create person contacts.');
         }
 
-        $this->crud->setCreateView('admin.person-contact.create');
+        $this->crud->setCreateView('admin.org.person-contact.create');
 
-        return view('admin.person-contact.create', [
+        return view('admin.org.person-contact.create', [
             'title' => 'Add New Person Contact',
             'persons' => Person::select(
                 'person_code',
@@ -158,11 +158,11 @@ class PersonContactCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to edit person contacts.');
         }
 
-        $this->crud->setEditView('admin.person-contact.edit');
+        $this->crud->setEditView('admin.org.person-contact.edit');
 
         $contact = PersonContact::with('person')->findOrFail($id);
 
-        return view('admin.person-contact.edit', [
+        return view('admin.org.person-contact.edit', [
             'title' => 'Edit Person Contact',
             'contact' => $contact,
             'persons' => Person::select(

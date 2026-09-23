@@ -52,14 +52,14 @@ class VerticalCrudController extends CrudController
     {
         $this->authorizeManage();
 
-        $this->crud->setListView('admin.vertical.list');
+        $this->crud->setListView('admin.org.vertical.list');
     }
 
     public function index()
     {
         $this->authorizeManage();
 
-        $this->crud->setListView('admin.vertical.list');
+        $this->crud->setListView('admin.org.vertical.list');
 
         $verticals = Vertical::select([
             'id',
@@ -95,7 +95,7 @@ class VerticalCrudController extends CrudController
             return $mapped;
         })->values();
 
-        return view('admin.vertical.list', [
+        return view('admin.org.vertical.list', [
             'title' => 'All Verticals',
             'gridConfig' => [
                 'columns' => [
@@ -117,9 +117,9 @@ class VerticalCrudController extends CrudController
     {
         $this->authorizeManage();
 
-        $this->crud->setCreateView('admin.vertical.create');
+        $this->crud->setCreateView('admin.org.vertical.create');
 
-        return view('admin.vertical.create', [
+        return view('admin.org.vertical.create', [
             'title' => 'Add New Vertical',
         ]);
     }
@@ -139,11 +139,11 @@ class VerticalCrudController extends CrudController
     {
         $this->authorizeManage();
 
-        $this->crud->setEditView('admin.vertical.edit');
+        $this->crud->setEditView('admin.org.vertical.edit');
 
         $vertical = Vertical::findOrFail($id);
 
-        return view('admin.vertical.edit', [
+        return view('admin.org.vertical.edit', [
             'title' => 'Edit Vertical - '.$vertical->name,
             'vertical' => $vertical,
         ]);

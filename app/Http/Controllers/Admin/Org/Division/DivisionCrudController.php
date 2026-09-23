@@ -53,14 +53,14 @@ class DivisionCrudController extends CrudController
     {
         $this->authorizeManage();
 
-        $this->crud->setListView('admin.division.list');
+        $this->crud->setListView('admin.org.division.list');
     }
 
     public function index()
     {
         $this->authorizeManage();
 
-        $this->crud->setListView('admin.division.list');
+        $this->crud->setListView('admin.org.division.list');
 
         $divisions = Division::with('department')
             ->select([
@@ -101,7 +101,7 @@ class DivisionCrudController extends CrudController
             return $mapped;
         })->values();
 
-        return view('admin.division.list', [
+        return view('admin.org.division.list', [
             'title' => 'All Divisions',
             'gridConfig' => [
                 'columns' => [
@@ -123,9 +123,9 @@ class DivisionCrudController extends CrudController
     {
         $this->authorizeManage();
 
-        $this->crud->setCreateView('admin.division.create');
+        $this->crud->setCreateView('admin.org.division.create');
 
-        return view('admin.division.create', [
+        return view('admin.org.division.create', [
             'title' => 'Add New Division',
             'departments' => Department::where('is_active', 1)
                 ->orderBy('name')
@@ -148,7 +148,7 @@ class DivisionCrudController extends CrudController
     {
         $this->authorizeManage();
 
-        $this->crud->setEditView('admin.division.edit');
+        $this->crud->setEditView('admin.org.division.edit');
 
         $division = Division::with('department')->findOrFail($id);
 
@@ -157,7 +157,7 @@ class DivisionCrudController extends CrudController
             ->orderBy('name')
             ->get();
 
-        return view('admin.division.edit', [
+        return view('admin.org.division.edit', [
             'title' => 'Edit Division - '.$division->name,
             'division' => $division,
             'departments' => $departments,

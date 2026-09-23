@@ -57,7 +57,7 @@ class PersonAddressCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view person addresses.');
         }
 
-        $this->crud->setListView('admin.person-address.list');
+        $this->crud->setListView('admin.org.person-address.list');
     }
 
     public function index()
@@ -66,7 +66,7 @@ class PersonAddressCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view person addresses.');
         }
 
-        $this->crud->setListView('admin.person-address.list');
+        $this->crud->setListView('admin.org.person-address.list');
 
         $addresses = PersonAddress::with('person')
             ->select([
@@ -103,7 +103,7 @@ class PersonAddressCrudController extends CrudController
             return $mapped;
         })->values();
 
-        return view('admin.person-address.list', [
+        return view('admin.org.person-address.list', [
             'title' => 'All Person Addresses',
             'gridConfig' => [
                 'columns' => [
@@ -129,9 +129,9 @@ class PersonAddressCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to create person addresses.');
         }
 
-        $this->crud->setCreateView('admin.person-address.create');
+        $this->crud->setCreateView('admin.org.person-address.create');
 
-        return view('admin.person-address.create', [
+        return view('admin.org.person-address.create', [
             'title' => 'Add New Person Address',
             'persons' => Person::select('id', 'first_name', 'last_name')
                 ->orderBy('first_name')
@@ -160,11 +160,11 @@ class PersonAddressCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to edit person addresses.');
         }
 
-        $this->crud->setEditView('admin.person-address.edit');
+        $this->crud->setEditView('admin.org.person-address.edit');
 
         $address = PersonAddress::with('person')->findOrFail($id);
 
-        return view('admin.person-address.edit', [
+        return view('admin.org.person-address.edit', [
             'title' => 'Edit Person Address',
             'address' => $address,
             'persons' => Person::select('id', 'first_name', 'last_name')

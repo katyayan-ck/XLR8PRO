@@ -164,7 +164,7 @@ class UserCrudController extends CrudController
             return $mapped;
         })->values();
 
-        return view('admin.user.list', [
+        return view('admin.org.user.list', [
             'title' => 'All Users',
             'gridConfig' => [
                 'columns' => [
@@ -238,7 +238,7 @@ class UserCrudController extends CrudController
             ? EmployeeHistory::where('emp_code', $employee->code)->orderByDesc('effective_from')->get()
             : collect();
 
-        return view('admin.user.show', [
+        return view('admin.org.user.show', [
             'title' => 'User Details',
             'user' => $user,
             'person' => $person,
@@ -484,7 +484,7 @@ class UserCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to create users.');
         }
 
-        return view('admin.user.create', array_merge([
+        return view('admin.org.user.create', array_merge([
             'title' => 'New User',
         ], $this->onboardingLookupData()));
     }
@@ -599,7 +599,7 @@ class UserCrudController extends CrudController
         $employee = $user->employee_code ? Employee::where('code', $user->employee_code)->first() : null;
         $person = $user->person_code ? Person::where('person_code', $user->person_code)->first() : null;
 
-        return view('admin.user.edit', array_merge([
+        return view('admin.org.user.edit', array_merge([
             'title' => 'Edit User',
             'user' => $user,
             'employee' => $employee,

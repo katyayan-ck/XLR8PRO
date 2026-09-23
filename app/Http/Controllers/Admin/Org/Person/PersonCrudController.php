@@ -59,14 +59,14 @@ class PersonCrudController extends CrudController
     {
         $this->authorizeView();
 
-        $this->crud->setListView('admin.person.list');
+        $this->crud->setListView('admin.org.person.list');
     }
 
     public function index()
     {
         $this->authorizeView();
 
-        $this->crud->setListView('admin.person.list');
+        $this->crud->setListView('admin.org.person.list');
 
         $persons = Person::select([
             'id',
@@ -107,7 +107,7 @@ class PersonCrudController extends CrudController
             return $mapped;
         })->values();
 
-        return view('admin.person.list', [
+        return view('admin.org.person.list', [
             'title' => 'All Persons',
             'gridConfig' => [
                 'columns' => [
@@ -134,7 +134,7 @@ class PersonCrudController extends CrudController
     {
         $this->authorizeManage();
 
-        return view('admin.person.create', ['title' => 'Add New Person']);
+        return view('admin.org.person.create', ['title' => 'Add New Person']);
     }
 
     public function store(PersonRequest $request)
@@ -176,11 +176,11 @@ class PersonCrudController extends CrudController
     {
         $this->authorizeManage();
 
-        $this->crud->setEditView('admin.person.edit');
+        $this->crud->setEditView('admin.org.person.edit');
 
         $person = Person::with(['contacts', 'addresses', 'bankingDetails'])->findOrFail($id);
 
-        return view('admin.person.edit', [
+        return view('admin.org.person.edit', [
             'title' => 'Edit Person - '.($person->display_name ?: $person->full_name),
             'person' => $person,
         ]);

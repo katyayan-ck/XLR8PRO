@@ -65,7 +65,7 @@ class PersonBankingDetailCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view person banking details.');
         }
 
-        $this->crud->setListView('admin.person-banking-detail.list');
+        $this->crud->setListView('admin.org.person-banking-detail.list');
     }
 
     public function index()
@@ -74,7 +74,7 @@ class PersonBankingDetailCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view person banking details.');
         }
 
-        $this->crud->setListView('admin.person-banking-detail.list');
+        $this->crud->setListView('admin.org.person-banking-detail.list');
 
         $bankings = PersonBankingDetail::with('person')
             ->select([
@@ -113,7 +113,7 @@ class PersonBankingDetailCrudController extends CrudController
             return $mapped;
         })->values();
 
-        return view('admin.person-banking-detail.list', [
+        return view('admin.org.person-banking-detail.list', [
             'title' => 'All Person Banking Details',
             'gridConfig' => [
                 'columns' => [
@@ -141,9 +141,9 @@ class PersonBankingDetailCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to create person banking details.');
         }
 
-        $this->crud->setCreateView('admin.person-banking-detail.create');
+        $this->crud->setCreateView('admin.org.person-banking-detail.create');
 
-        return view('admin.person-banking-detail.create', [
+        return view('admin.org.person-banking-detail.create', [
             'title' => 'Add New Banking Detail',
             'persons' => Person::select('id', 'first_name', 'last_name')
                 ->orderBy('first_name')
@@ -172,11 +172,11 @@ class PersonBankingDetailCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to edit person banking details.');
         }
 
-        $this->crud->setEditView('admin.person-banking-detail.edit');
+        $this->crud->setEditView('admin.org.person-banking-detail.edit');
 
         $banking = PersonBankingDetail::with('person')->findOrFail($id);
 
-        return view('admin.person-banking-detail.edit', [
+        return view('admin.org.person-banking-detail.edit', [
             'title' => 'Edit Banking Detail',
             'banking' => $banking,
             'persons' => Person::select('id', 'first_name', 'last_name')
