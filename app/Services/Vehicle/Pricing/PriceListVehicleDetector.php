@@ -36,19 +36,25 @@ class PriceListVehicleDetector
         $t = preg_replace('/\s+/', ' ', $t) ?? $t;
 
         $exact = [
-            'PRICE LIST PV'      => 'PRICE_LIST_PV',
-            'PRICE LIST CV'      => 'PRICE_LIST_CV',
-            'PRICE LIST BEV'     => 'PRICE_LIST_BEV',
+            'PRICE LIST PV' => 'PRICE_LIST_PV',
+            'PRICE LIST CV' => 'PRICE_LIST_CV',
+            'PRICE LIST BEV' => 'PRICE_LIST_BEV',
             'PRICE LIST LMM TZU' => 'PRICE_LIST_LMM_TZU',
-            'PRICE LIST TZU'     => 'PRICE_LIST_LMM_TZU',
-            'LMM TZU'            => 'PRICE_LIST_LMM_TZU',
-            'PRICE LIST LMM'     => 'PRICE_LIST_LMM',
-            'LMM'                => 'PRICE_LIST_LMM',
-            'PRICE LIST CSD'     => 'PRICE_LIST_CSD',
-            'CSD'                => 'PRICE_LIST_CSD',
+            'PRICE LIST TZU' => 'PRICE_LIST_LMM_TZU',
+            'LMM TZU' => 'PRICE_LIST_LMM_TZU',
+            'PRICE LIST LMM' => 'PRICE_LIST_LMM',
+            'LMM' => 'PRICE_LIST_LMM',
+            'PRICE LIST CSD' => 'PRICE_LIST_CSD',
+            'CSD' => 'PRICE_LIST_CSD',
         ];
         if (isset($exact[$t])) {
             return $exact[$t];
+        }
+        // "CSD Index Codes" and similar lookup/reference sheets are not price
+        // lists, but would otherwise false-positive against the substring
+        // fallbacks below (e.g. containing "CSD").
+        if (str_contains($t, 'INDEX')) {
+            return null;
         }
         if (str_contains($t, 'TZU')) {
             return 'PRICE_LIST_LMM_TZU';
@@ -92,7 +98,7 @@ class PriceListVehicleDetector
 
         $plog = new PricingProcessLogger($session->id);
         $plog->info('Detect start', [
-            'file'   => $absolutePath,
+            'file' => $absolutePath,
             'sheets' => $selectedSheetCodes,
         ]);
 
@@ -111,13 +117,13 @@ class PriceListVehicleDetector
             $title = $worksheet->getTitle();
             $sheetCode = self::sheetCodeFromTitle($title);
             $plog->debug('Worksheet seen', [
-                'title'       => $title,
+                'title' => $title,
                 'mapped_code' => $sheetCode,
                 'highest_row' => $worksheet->getHighestDataRow(),
             ]);
             if ($sheetCode !== null && in_array($sheetCode, $selectedSheetCodes, true)) {
                 $worksheetsToProcess[] = [
-                    'title'     => $title,
+                    'title' => $title,
                     'sheetCode' => $sheetCode,
                     'worksheet' => $worksheet,
                 ];
@@ -126,7 +132,7 @@ class PriceListVehicleDetector
 
         $totalSheets = count($worksheetsToProcess);
         $plog->info('Worksheets selected', [
-            'count'  => $totalSheets,
+            'count' => $totalSheets,
             'titles' => array_column($worksheetsToProcess, 'title'),
         ]);
 
@@ -156,15 +162,15 @@ class PriceListVehicleDetector
             $last = end($pendingBulk);
             $plog->info('Bulk insert', [
                 'profiles' => $count,
-                'stubs'    => $mc,
-                'last'     => $last['oem_code'] ?? null,
+                'stubs' => $mc,
+                'last' => $last['oem_code'] ?? null,
             ]);
             if ($onProgress) {
                 $onProgress([
-                    'phase'     => 'detect',
+                    'phase' => 'detect',
                     'last_code' => $last['oem_code'] ?? null,
-                    'logs'      => [
-                        $this->ts() . " Bulk profiles {$count}, stubs {$mc} (last: " . ($last['oem_code'] ?? '-') . ')',
+                    'logs' => [
+                        $this->ts()." Bulk profiles {$count}, stubs {$mc} (last: ".($last['oem_code'] ?? '-').')',
                     ],
                 ]);
             }
@@ -186,13 +192,13 @@ class PriceListVehicleDetector
 
             if ($onProgress) {
                 $onProgress([
-                    'phase'     => 'detect',
-                    'message'   => "Detecting: {$title}",
-                    'percent'   => min(14, 2 + (int) round(($idx / max($totalSheets, 1)) * 12)),
-                    'sheet'     => $title,
+                    'phase' => 'detect',
+                    'message' => "Detecting: {$title}",
+                    'percent' => min(14, 2 + (int) round(($idx / max($totalSheets, 1)) * 12)),
+                    'sheet' => $title,
                     'processed' => $sheetNum,
-                    'total'     => $totalSheets,
-                    'logs'      => [$this->ts() . " Loading sheet {$title} ({$sheetNum}/{$totalSheets}) rows≈{$highestRow}…"],
+                    'total' => $totalSheets,
+                    'logs' => [$this->ts()." Loading sheet {$title} ({$sheetNum}/{$totalSheets}) rows≈{$highestRow}…"],
                 ]);
             }
 
@@ -211,9 +217,10 @@ class PriceListVehicleDetector
                 if ($onProgress) {
                     $onProgress([
                         'phase' => 'detect',
-                        'logs'  => [$this->ts() . " WARN: {$title} — OEM Code / Model Code header missing, skipped"],
+                        'logs' => [$this->ts()." WARN: {$title} — OEM Code / Model Code header missing, skipped"],
                     ]);
                 }
+
                 continue;
             }
 
@@ -235,12 +242,12 @@ class PriceListVehicleDetector
                 if ($r === $dataStart || $r % 500 === 0 || $r === $highestRow) {
                     if ($onProgress) {
                         $onProgress([
-                            'phase'     => 'detect',
-                            'message'   => "{$title}: row {$r}/{$highestRow}",
-                            'sheet'     => $title,
+                            'phase' => 'detect',
+                            'message' => "{$title}: row {$r}/{$highestRow}",
+                            'sheet' => $title,
                             'processed' => $sheetNum,
-                            'total'     => $totalSheets,
-                            'logs'      => [$this->ts() . " {$title} scanning row {$r}/{$highestRow} (fresh={$sheetFresh}, known={$sheetKnown})"],
+                            'total' => $totalSheets,
+                            'logs' => [$this->ts()." {$title} scanning row {$r}/{$highestRow} (fresh={$sheetFresh}, known={$sheetKnown})"],
                         ]);
                     }
                 }
@@ -260,6 +267,7 @@ class PriceListVehicleDetector
                 if (isset($existingCodes[$oemCode])) {
                     $known[$oemCode] = true;
                     $sheetKnown++;
+
                     continue;
                 }
 
@@ -275,12 +283,12 @@ class PriceListVehicleDetector
                 }
 
                 $pendingBulk[] = [
-                    'oem_code'    => $oemCode,
-                    'oem_model'   => $oemModel,
+                    'oem_code' => $oemCode,
+                    'oem_model' => $oemModel,
                     'oem_variant' => $oemVariant,
-                    'segment'     => $segment,
+                    'segment' => $segment,
                     'sheet_title' => $title,
-                    'color_code'  => $this->vehicles->colorFromOemCode($oemCode),
+                    'color_code' => $this->vehicles->colorFromOemCode($oemCode),
                 ];
                 $fresh[$oemCode] = true;
                 $existingCodes[$oemCode] = true;
@@ -290,11 +298,11 @@ class PriceListVehicleDetector
                     $flushBulk();
                     if ($onProgress) {
                         $onProgress([
-                            'phase'     => 'detect',
-                            'message'   => "{$title}: {$sheetFresh} new, {$sheetKnown} known",
-                            'sheet'     => $title,
+                            'phase' => 'detect',
+                            'message' => "{$title}: {$sheetFresh} new, {$sheetKnown} known",
+                            'sheet' => $title,
                             'last_code' => $oemCode,
-                            'logs'      => [$this->ts() . " {$title} — Fresh so far {$sheetFresh} (last: {$oemCode})"],
+                            'logs' => [$this->ts()." {$title} — Fresh so far {$sheetFresh} (last: {$oemCode})"],
                         ]);
                     }
                 }
@@ -306,29 +314,29 @@ class PriceListVehicleDetector
             ]);
             if ($onProgress) {
                 $onProgress([
-                    'phase'   => 'detect',
+                    'phase' => 'detect',
                     'message' => "{$title}: fresh={$sheetFresh}, known={$sheetKnown}",
-                    'logs'    => [$this->ts() . " {$title} done — fresh={$sheetFresh}, known={$sheetKnown}"],
+                    'logs' => [$this->ts()." {$title} done — fresh={$sheetFresh}, known={$sheetKnown}"],
                 ]);
             }
             unset($worksheet);
         }
 
         $result = [
-            'fresh'           => array_keys($fresh),
-            'known'           => array_keys($known),
-            'created'         => $created,
+            'fresh' => array_keys($fresh),
+            'known' => array_keys($known),
+            'created' => $created,
             'masters_created' => $mastersCreated,
-            'codes_seen'      => count($fresh) + count($known),
+            'codes_seen' => count($fresh) + count($known),
         ];
 
         $plog->info('Detect done', $result);
         Log::info('[PriceListVehicleDetector] done', [
             'session_id' => $session->id,
-            'created'    => $created,
-            'stubs'      => $mastersCreated,
-            'fresh'      => count($fresh),
-            'known'      => count($known),
+            'created' => $created,
+            'stubs' => $mastersCreated,
+            'fresh' => count($fresh),
+            'known' => count($known),
         ]);
 
         return $result;
@@ -343,6 +351,7 @@ class PriceListVehicleDetector
         foreach ($rows as $r) {
             if (($r['oem_model'] ?? '') === '') {
                 $plog->warning('Stub skipped — OEM Model blank', ['oem_code' => $r['oem_code']]);
+
                 continue;
             }
             try {
@@ -359,7 +368,7 @@ class PriceListVehicleDetector
             } catch (\Throwable $e) {
                 $plog->warning('Stub create failed', [
                     'oem_code' => $r['oem_code'],
-                    'error'    => $e->getMessage(),
+                    'error' => $e->getMessage(),
                 ]);
             }
         }
@@ -382,39 +391,39 @@ class PriceListVehicleDetector
 
         foreach ($rows as $r) {
             $profiles[] = [
-                'model_code'                   => $r['oem_code'],
-                'import_session_id'            => $session->id,
-                'variant_code'                 => $r['oem_code'],
-                'segment'                      => $r['segment'],
-                'is_vehicle_master_complete'   => 0,
+                'model_code' => $r['oem_code'],
+                'import_session_id' => $session->id,
+                'variant_code' => $r['oem_code'],
+                'segment' => $r['segment'],
+                'is_vehicle_master_complete' => 0,
                 'is_pricing_template_complete' => 0,
-                'is_rule_profile_complete'     => 0,
-                'is_publishable'               => 0,
-                'is_disabled'                  => 1,
-                'created_by'                   => $userId,
-                'updated_by'                   => $userId,
-                'created_at'                   => $now,
-                'updated_at'                   => $now,
+                'is_rule_profile_complete' => 0,
+                'is_publishable' => 0,
+                'is_disabled' => 1,
+                'created_by' => $userId,
+                'updated_by' => $userId,
+                'created_at' => $now,
+                'updated_at' => $now,
             ];
 
             $flags[] = [
                 'import_session_id' => $session->id,
-                'segment'           => $r['segment'],
-                'change_type'       => 'vehicle_master',
-                'model_code'        => $r['oem_code'],
-                'variant_code'      => $r['oem_code'],
-                'field_name'        => 'new_vehicle',
-                'old_value'         => null,
-                'new_value'         => json_encode([
-                    'oem_model'   => $r['oem_model'] ?? null,
+                'segment' => $r['segment'],
+                'change_type' => 'vehicle_master',
+                'model_code' => $r['oem_code'],
+                'variant_code' => $r['oem_code'],
+                'field_name' => 'new_vehicle',
+                'old_value' => null,
+                'new_value' => json_encode([
+                    'oem_model' => $r['oem_model'] ?? null,
                     'oem_variant' => $r['oem_variant'] ?? null,
-                    'color_code'  => $r['color_code'] ?? '',
+                    'color_code' => $r['color_code'] ?? '',
                 ], JSON_UNESCAPED_UNICODE),
-                'is_processed'      => 0,
-                'created_by'        => $userId,
-                'updated_by'        => $userId,
-                'created_at'        => $now,
-                'updated_at'        => $now,
+                'is_processed' => 0,
+                'created_by' => $userId,
+                'updated_by' => $userId,
+                'created_at' => $now,
+                'updated_at' => $now,
             ];
         }
 
@@ -428,7 +437,7 @@ class PriceListVehicleDetector
 
     protected function readRow(Worksheet $worksheet, int $row1Based, string $highestCol): array
     {
-        $range = 'A' . $row1Based . ':' . $highestCol . $row1Based;
+        $range = 'A'.$row1Based.':'.$highestCol.$row1Based;
         $rowData = $worksheet->rangeToArray($range, null, true, true, false);
 
         return $rowData[0] ?? [];
@@ -464,6 +473,6 @@ class PriceListVehicleDetector
 
     protected function ts(): string
     {
-        return '[' . now()->format('H:i:s') . ']';
+        return '['.now()->format('H:i:s').']';
     }
 }

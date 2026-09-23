@@ -159,6 +159,18 @@ Entry format:
 | BUG-121 | 4 Booking edit views (`exch-edit`, `finance-view`, `kyc-edit`, `payout-edit`) referenced a local `asset('plugins/select2/...')` file that doesn't exist anywhere in `public/`, 404ing in the browser — only `exch-edit.blade.php` actually calls `.select2()` on a field, so that screen's dropdown was silently unstyled/non-functional; the other 3 had dead includes with no functional impact | Medium | FIXED | 23-09-2026 | 23-09-2026 (ai-changelogs-23-09-2026.md) |
 | BUG-122 | 5 Booking listing screens (`reports/branch-booking`, `reports/consolidated-booking`, `reports/live-order`, `reports/pending-actions`, `reports/stock`) 500 because `xlr8_vehicle_master` and `xlr8_us_location` don't exist as tables in this database — same class of issue as BUG-009 (`xlr8_vehicle_brand`), a genuinely missing schema, not a code bug | High | OPEN (documented only — needs the actual tables/migration, or a decision that these reports were superseded by a different schema and should be rewritten against it; BUG-119's routing fix correctly wires their "-List" siblings to delegate here, so both will start working together once the tables exist) | 23-09-2026 | — |
 | BUG-123 | `resources/views/admin/sales/booking/show.blade.php` references `asset('images/pdf-icon.png')` as a PDF-preview placeholder icon; the file doesn't exist in `public/images/` | Cosmetic | OPEN (documented only — a broken image icon, not a functional break; needs an actual icon asset added) | 23-09-2026 | — |
+| BUG-124 | `RulesWorkbookService::importPermitMap()` assigned an array directly to `ImportSession::$notes`, whose mutator only accepts `?string`, throwing a `TypeError` and crashing the *entire* Insurance/RTO rules import (this had likely never completed once in this environment) | High | FIXED | 24-09-2026 | 24-09-2026 (ai-changelogs-24-09-2026.md) |
+| BUG-125 | `onlyExisting()` wrote explicit `NULL` into NOT-NULL numeric columns (`od_factor`, `penalty`, etc.) for legitimately blank source cells, crashing the insert; `findIdvColumns()` matched both "IDV N" header groups in the sheet (a rupee-amount example group and the real percentage-formula group), feeding raw rupee amounts into a `decimal(6,3)` percent column | Medium | FIXED | 24-09-2026 | 24-09-2026 (ai-changelogs-24-09-2026.md) |
+| BUG-126 | `xlr8_vehicle_pricing_ins_base_rules.seating` was typed `smallint unsigned`, but the real sheet's Seating column holds range text ("1 to 7", "8 to 18") like the sibling `cc_range`/`gvw_range` columns — import failed with "Data truncated for column 'seating'" | Low | FIXED | 24-09-2026 | 24-09-2026 (ai-changelogs-24-09-2026.md) |
+| BUG-127 | `RulesWorkbookService::importFile()` forgot `pricing.ins.base_rules`/`pricing.rto.rules`/`pricing.ins.addon_rates` from cache after import, but not the new `pricing.ins.idv_slots` key added this session — a re-import left `InsuranceService` quoting IDV against stale (or empty) slot data for up to 15 minutes | Medium | FIXED | 24-09-2026 | 24-09-2026 (ai-changelogs-24-09-2026.md) |
+| BUG-128 | `App\Models\Vehicle\Accessory` had zero `TYPE_*` constants defined, but `AccessoryService::$sheetTypeMap`'s property default referenced 7 of them (`Accessory::TYPE_ACCESSORY` etc.) — evaluating that default fatally crashed on `Undefined constant`, which crashed *every* `PricingEngineService::getPricingPayload()` call the instant `AccessoryService` was constructor-injected, before any try/catch could run | Critical | FIXED | 24-09-2026 | 24-09-2026 (ai-changelogs-24-09-2026.md) |
+| BUG-129 | `PricingEngineService::isHeld()` queried `xlr8_vehicle_pricing_holds.is_active` and `.segment`, neither of which exist (real columns: `is_held`, `scope`) — every `getPricingPayload()` call crashed with `Unknown column 'is_active'` before reaching Insurance/RTO | Critical | FIXED | 24-09-2026 | 24-09-2026 (ai-changelogs-24-09-2026.md) |
+| BUG-130 | `App\Models\Vehicle\SubSegment::$fillable` was missing `name` (the real, NOT NULL column) and instead listed two phantom columns (`oem_name`, `description`) that don't exist on `xlr8_vehicle_subsegment` at all — every `SubSegment::create()` silently dropped the `name` value the caller explicitly passed, then crashed on the NOT NULL constraint | Medium | FIXED | 24-09-2026 | 24-09-2026 (ai-changelogs-24-09-2026.md) |
+| BUG-131 | `PriceListVehicleDetector::sheetCodeFromTitle()` maps the "CSD Index Codes" sheet title to `PRICE_LIST_CSD` via a `str_contains($t, 'CSD')` fallback, but that sheet is a lookup/index table, not a price list — price import then fails that sheet with "header/model_code not found" | Low | FIXED | 24-09-2026 | 24-09-2026 (ai-changelogs-24-09-2026.md) |
+| BUG-132 | **Root cause, not just the Accessories symptom**: `PricingEngineService::kv()` queried 2 hardcoded, wrong table names (`xlr8_utilities_keyvalues`, `xlr8_keyvalues`); the real table (per the `Keyvalue` model) is `xlr8_utils_keyvalue` — every `permit`/`fuel` code lookup silently returned null for every vehicle, ever, in this environment. This is why Accessories saw `permit=ANY`, and why RTO/Insurance wildcard-matched every permit/fuel instead of the vehicle's real one | Critical | FIXED | 24-09-2026 | 24-09-2026 (ai-changelogs-24-09-2026.md) |
+| BUG-133 | `AccessoryService::normalizeTypeFilter()` referenced `Accessory::ALL_TYPES`/`Accessory::BUNDLE_TYPES`, neither of which existed — same undefined-constant crash pattern as BUG-128, on the same model, surfaced only after BUG-132's fix let the accessories code path run far enough to reach it | Critical | FIXED | 24-09-2026 | 24-09-2026 (ai-changelogs-24-09-2026.md) |
+| BUG-134 | `Accessory::$fillable` was missing `type`, `set_qty`, `discount` — but `AccessoryService`'s real import write path (`Accessory::updateOrCreate([...], ['type' => $type, 'set_qty' => 1, ...])`) mass-assigns exactly those fields, meaning every accessory import silently stored `type` as the DB default (`'Accessory'`) regardless of the row's real type (Ceramic/PPF/Maxicare/GPS_VLTD/RTO_Tape/Kazam) | Critical | FIXED | 24-09-2026 | 24-09-2026 (ai-changelogs-24-09-2026.md) |
+| BUG-135 | `Snapshot` (used by `PricingEngineService::calculateAndPublish()`, the "Publish" half of "Calculate & Publish") redeclared `protected $casts;` with no default, shadowing `BaseModel`'s array default with `null` — crashed on `array_merge(): Argument #1 must be of type array, null given` the instant the model was instantiated, meaning `calculateAndPublish()` had never worked for any vehicle, ever | Critical | FIXED | 24-09-2026 | 24-09-2026 (ai-changelogs-24-09-2026.md) |
 
 Not a bug (false positive, listed for reference): the original `infer-conventions` sweep flagged
 "`SheetHeaderService`/`SynonymService` not used by importers" — re-investigation on 19-09-2026
@@ -1354,3 +1366,142 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 - **Found:** 23-09-2026, via an IDE diagnostic while editing an adjacent line of the same file for BUG-118.
 - **Where:** `resources/views/admin/sales/booking/show.blade.php` line ~2462, `asset('images/pdf-icon.png')`.
 - **Proposed solution:** add the missing icon file to `public/images/`, or point it at an existing icon/Line Awesome class already used elsewhere in the app instead of an image asset.
+
+### BUG-124 — `RulesWorkbookService::importPermitMap()` crashed the whole Insurance/RTO rules import
+
+- **Status:** FIXED
+- **Severity:** High — this was the actual reason Insurance/RTO rules import had likely never completed in this environment, independent of the deeper `company`/`plan`/IDV schema gap fixed the same day.
+- **Found:** 24-09-2026, while running the approved "Calculate & Publish on the demo workbook" verification step for the Pricing Insurance/RTO rewrite — `RulesWorkbookService::importFile()` against `docs/reference/pricing/data/VehiclePricingSample.xlsx` threw `App\Models\Vehicle\Pricing\ImportSession::setNotesAttribute(): Argument #1 ($value) must be of type ?string, array given`.
+- **Where:** `app/Services/Vehicle/Pricing/RulesWorkbookService.php::importPermitMap()`, line ~314.
+- **Description:** `ImportSession::$notes` is a plain string column with a `setNotesAttribute(?string $value)` mutator (it also mirrors the value onto a legacy `remarks` column). `importPermitMap()` built an associative array (`['insu_permit_map' => $pairs]`) and assigned it directly to `$session->notes`, which is only valid if `notes` were an `array`-cast column — it isn't. Every call to `importFile()` that reached this line (i.e., every RTO or Insurance sheet import that includes a Permit Map sheet) crashed with an uncaught `TypeError`, aborting the whole batch — including sheets/rows that would otherwise have imported successfully.
+- **Fix:** `json_encode()` the array before assignment (`$session->notes = json_encode($notes);`). The read side (`$notes = $session->notes ?? []; if (is_string($notes)) { $notes = json_decode($notes, true) ?: []; }`) already round-trips a JSON string correctly, so no other change was needed. See `docs/refactor/ai-changelogs-24-09-2026.md`.
+
+### BUG-125 — `od_factor`/`penalty` NOT-NULL crashes and out-of-range `idv_pct` on real workbook import
+
+- **Status:** FIXED
+- **Severity:** Medium — real data is written for the majority of rows; the affected rows either failed a NOT-NULL constraint (silently dropped, logged as an import error) or wrote a value into the wrong column.
+- **Found:** 24-09-2026, during the Calculate & Publish verification pass — importing the real sample workbook surfaced `SQLSTATE[23000]: Column 'od_factor' cannot be null`, `SQLSTATE[23000]: Column 'penalty' cannot be null`, and `SQLSTATE[22003]: Numeric value out of range` for `idv_pct` (a raw rupee amount, e.g. `949905`, landing in a `decimal(6,3)` percent column).
+- **Modified:** 24-09-2026 — initial hypothesis (multiple stacked sub-tables with independent header rows per sheet) was wrong; investigation of the real header row found the true cause below.
+- **Where:** `RulesWorkbookService::onlyExisting()` and `RulesWorkbookService::findIdvColumns()`.
+- **Description:** two independent root causes, both in the same import pass:
+  1. `onlyExisting()` kept every payload key whose column exists, including an explicit `null` for a genuinely blank source cell — fine for nullable columns, but several numeric columns (`od_factor`, `tp_basic`, RTO's `penalty`, etc.) are `NOT NULL DEFAULT 0`. Explicitly inserting `NULL` into those violated the constraint instead of falling through to the column's own default. This is real business data too: "3+3" (long-term bundled) insurance plans genuinely carry no per-year OD Factor in the sheet at all — a different pricing model, not missing data.
+  2. `findIdvColumns()` matched every header cell labelled "IDV N" — but the sheet has **two** such groups with identical labels: the first is a worked rupee-amount *example* (95% of a sample "Inv" reference column, already computed, not target data), the second is the actual percentage *formula* text ("95% of Invoice") that should be imported. The old scan picked up both groups indiscriminately, feeding raw rupee amounts into `idv_pct` (a `decimal(6,3)` column) for the example columns.
+- **Fix:** `onlyExisting()` now checks column nullability (via `Schema::getColumns()`, cached per table) and drops a `null` value for a non-nullable column instead of forcing it into the payload, letting the DB's own default apply. `findIdvColumns()` now inspects real data beneath each "IDV N" candidate column and keeps only the ones whose populated cells contain `%` (formula text), discarding the pure-numeric example columns. Verified end-to-end: re-importing the sample workbook after the fix produced **zero errors** across all 4 sheets (150 rows written: 15 permit-map, 64 companies, 26 insurance base rules, 45 RTO rules), and IDV slots now hold only sane percentages (95/80/70), never a stray rupee amount. See `docs/refactor/ai-changelogs-24-09-2026.md`.
+
+### BUG-126 — `ins_base_rules.seating` typed as a number, but the real data is a range string
+
+- **Status:** FIXED
+- **Severity:** Low — affected 8 of ~967 Insu Premium data rows (Passenger-permit rows) in the sample workbook.
+- **Found:** 24-09-2026, immediately after fixing BUG-125 — the next import attempt surfaced `SQLSTATE[01000]: Warning: 1265 Data truncated for column 'seating'` for rows carrying `"1 to 7"`/`"8 to 18"`.
+- **Where:** `xlr8_vehicle_pricing_ins_base_rules.seating` (was `smallint unsigned`); `App\Models\Vehicle\Pricing\InsBaseRule::casts()`; `App\Services\Vehicle\Pricing\InsuranceService::scopeMatch()`.
+- **Description:** `seating` was typed as a plain number, but the real sheet's Seating column holds band/range text exactly like the sibling `cc_range`/`gvw_range` columns on the same table (already `varchar`) — not every vehicle has a single seating count, some rows describe a seating range.
+- **Fix:** migration `2026_09_24_090003_...seating_to_range.php` widens `seating` to `varchar(30)` nullable (additive, no data loss). Removed the now-incorrect `'seating' => 'integer'` cast from `InsBaseRule`. Added `seating` range-matching to `InsuranceService::scopeMatch()` via the existing `rangeMatch()` helper, extended to also accept `"N to M"` (not just `"N-M"`) since that's the wording this column actually uses. See `docs/refactor/ai-changelogs-24-09-2026.md`.
+
+### BUG-127 — new `pricing.ins.idv_slots` cache key never invalidated on reimport
+
+- **Status:** FIXED
+- **Severity:** Medium — silent stale data, not a crash: after a rules reimport, `InsuranceService::quote()` would keep computing `idv_sum`/`od` against the previous import's IDV slots (or an empty result, if none existed yet) for up to the cache's 15-minute TTL.
+- **Found:** 24-09-2026, during the Calculate & Publish re-verification after the BUG-125/126 fixes — `InsuranceService::quote()` returned `idv_sum: 0`/`od: 0` for a company/plan combination that had real, freshly-imported IDV slots in the database.
+- **Where:** `RulesWorkbookService::importFile()`, the `Cache::forget(...)` block at the end of the import.
+- **Description:** this session added a new `Cache::flexible('pricing.ins.idv_slots', ...)` lookup to `InsuranceService` for the new `ins_idv_slots` child table, but the corresponding `Cache::forget()` call was never added alongside the existing `pricing.rto.rules`/`pricing.ins.base_rules`/`pricing.ins.addon_rates` invalidations — a gap introduced by this session's own IDV-slots feature, not a pre-existing bug.
+- **Fix:** added `Cache::forget('pricing.ins.idv_slots')` to the same invalidation block. Verified: re-importing after the fix, `InsuranceService::quote()` immediately reflected the fresh IDV slot data with no manual cache clear needed. See `docs/refactor/ai-changelogs-24-09-2026.md`.
+
+### BUG-128 — `Accessory::TYPE_*` constants didn't exist; crashed every `getPricingPayload()` call
+
+- **Status:** FIXED
+- **Severity:** Critical — this made `PricingEngineService::getPricingPayload()`/`calculateAndPublish()` completely unusable for every vehicle, unconditionally, independent of any Insurance/RTO data. Not found earlier because no prior session had real complete vehicle + price data to actually reach this code path.
+- **Found:** 24-09-2026, running the first real end-to-end `getPricingPayload()` call against genuinely complete/priced sample data (the first time this method had ever been exercised against real data in this environment) — `Error: Undefined constant App\Models\Vehicle\Accessory::TYPE_ACCESSORY`.
+- **Where:** `app/Services/Vehicle/AccessoryService.php` (`protected array $sheetTypeMap = ['accessories' => Accessory::TYPE_ACCESSORY, ...]`, a property default referencing 7 constants); `app/Models/Vehicle/Accessory.php` (had none of them).
+- **Description:** `AccessoryService`'s `$sheetTypeMap` property default references `Accessory::TYPE_ACCESSORY`, `TYPE_CERAMIC`, `TYPE_PPF`, `TYPE_MAXICARE`, `TYPE_GPS_VLTD`, `TYPE_RTO_TAPE`, `TYPE_KAZAM` — none of which were ever defined on the `Accessory` model. PHP evaluates property defaults the moment the class is instantiated, before any calling code's try/catch can intercept it — so simply constructor-injecting `AccessoryService` into `PricingEngineService` (which happens on every `getPricingPayload()` call) crashed immediately, regardless of whether accessories were even relevant to that call.
+- **Fix:** added the 7 missing constants to `Accessory`, using the exact enum values already documented in the `xlr8_vehicle_accessories.type` column's own DB comment (`Accessory|Ceramic|PPF|Maxicare|GPS_VLTD|RTO_Tape|Kazam`) — not guessed. Verified: `getPricingPayload()` now runs past this point. See `docs/refactor/ai-changelogs-24-09-2026.md`.
+
+### BUG-129 — `PricingEngineService::isHeld()` queried nonexistent columns
+
+- **Status:** FIXED
+- **Severity:** Critical — crashed every `getPricingPayload()` call for a variant with a resolvable segment (i.e. every complete vehicle), immediately after BUG-128 was fixed.
+- **Found:** 24-09-2026, same end-to-end verification pass, immediately after fixing BUG-128 — `SQLSTATE[42S22]: Unknown column 'is_active' in 'where clause'` querying `xlr8_vehicle_pricing_holds`.
+- **Where:** `app/Services/Vehicle/Pricing/PricingEngineService.php::isHeld()`.
+- **Description:** queried `xlr8_vehicle_pricing_holds.is_active` and `.segment`; the real columns are `is_held` and `scope` (confirmed via `Schema::getColumnListing()`) — this "price list on hold" check had never worked, for any segment, ever.
+- **Fix:** corrected both column references (`is_held`, `scope`). Verified end-to-end: `getPricingPayload()` for a real complete/priced sample vehicle (`AP61WLED2BB18A99WD`) now returns a full payload with `incomplete: false`, `hold: false`, real computed `invoice_value`, `insurance`, `rto`, and `on_road` figures. See `docs/refactor/ai-changelogs-24-09-2026.md`.
+
+### BUG-130 — `SubSegment` model's `$fillable` silently dropped `name`, listed 2 phantom columns
+
+- **Status:** FIXED
+- **Severity:** Medium — 34 of 57 rows in the sample Vehicle Info sheet failed with this error, leaving those vehicles' masters unable to be completed via this path.
+- **Found:** 24-09-2026, running `VehicleInfoImportService::importFile()` against the sample workbook's real "Vehicle Info" sheet — `SQLSTATE[HY000]: Field 'name' doesn't have a default value` inserting into `xlr8_vehicle_subsegment`.
+- **Modified:** 24-09-2026 — initial read assumed the calling code never passed a `name` value (would have needed a business decision on the default, so left open). Direct reproduction (`VehicleService::findOrCreateSubSegment()` called in isolation with an explicit non-empty name) showed the generated INSERT had no `name` column at all despite the caller's array literal including `'name' => ...` — the real cause was one layer down, in the model itself.
+- **Where:** `app/Models/Vehicle/SubSegment.php::$fillable`.
+- **Description:** `$fillable` was `['segment_code', 'code', 'oem_name', 'description', 'is_active', ...]` — but the real `xlr8_vehicle_subsegment` table has no `oem_name` or `description` columns at all (confirmed via `Schema::getColumns()`); the real, NOT NULL column is `name`, which wasn't in `$fillable`. Every caller (`VehicleService::findOrCreateSubSegment()`, `VehicleMasterService`) already correctly passed a real `name` value — Eloquent's mass-assignment protection silently dropped it because it wasn't fillable, and the INSERT then hit the NOT NULL constraint with no `name` key present at all. Same model-schema-drift pattern as every other bug found this session, just one layer removed from where the crash surfaced.
+- **Fix:** `$fillable` now lists the real `name` column and drops the two phantom ones; `columnTransformations`' `oem_name` key renamed to `name` to match. No business-data guessing was needed — the correct value was already being passed by every caller, just discarded before it ever reached the database. Verified: `findOrCreateSubSegment()` now succeeds directly, and a full re-run of `VehicleInfoImportService::importFile()` against the sample workbook improved from `completed: 53` to `completed: 87` with zero SQL errors — only 4 rows remain rejected, for a legitimate, unrelated business reason ("cannot set Active while incomplete [color]"). See `docs/refactor/ai-changelogs-24-09-2026.md`.
+
+### BUG-131 — "CSD Index Codes" sheet false-positively detected as a Price List sheet
+
+- **Status:** FIXED
+- **Severity:** Low — produced one non-fatal error line in the price import result (`"CSD Index Codes: header/model_code not found"`), didn't block anything else.
+- **Found:** 24-09-2026, running `PriceListPricingImporter::importFile()` against the sample workbook.
+- **Where:** `PriceListVehicleDetector::sheetCodeFromTitle()`.
+- **Description:** the method's fallback `str_contains($t, 'CSD')` check matched "CSD Index Codes" (a lookup/index table) the same as "Price List CSD" (an actual price sheet), since both titles contain "CSD". The same class of risk existed for the `LMM`/`BEV` substring fallbacks too, just not concretely triggered by this sample workbook.
+- **Fix:** added an early `str_contains($t, 'INDEX')` guard returning `null` before any of the substring fallbacks run — a title containing "INDEX" is never treated as a price list sheet, regardless of what other keyword it also contains. Verified: `sheetCodeFromTitle('CSD Index Codes')` now returns `null` while `'Price List CSD'`/`'CSD'`/`'Price List PV'` are unaffected. See `docs/refactor/ai-changelogs-24-09-2026.md`.
+
+### BUG-132 — `PricingEngineService::kv()` queried the wrong table names; broke permit/fuel resolution app-wide
+
+- **Status:** FIXED
+- **Severity:** Critical — silently broke permit/fuel-code resolution for **every** `getPricingPayload()` call for every vehicle, in this environment, the entire time. Originally logged as a Low-severity Accessories-only symptom; investigating it further (rather than accepting "out of scope, needs a domain decision") found the real, much bigger cause.
+- **Found:** 24-09-2026 — initial symptom: a real, complete, priced sample vehicle (`AP61WLED2BB18A99WD`) produced `"Accessories: Invalid scope combination (segment=concrete, model=concrete, variant=concrete, permit=ANY)..."`. Investigating *why* `permit` resolved to the "ANY" token led to `PricingEngineService::kv()`.
+- **Modified:** 24-09-2026 — traced further: `$variant->permit_id` was a real, non-null value (`5080`); the `Keyvalue` row for that id genuinely has `code=GOODS`/`value=Goods`. Calling `kv(5080)` directly still returned `null`. `kv()` queries `Schema::hasTable()` against 2 hardcoded table name guesses that don't exist in this schema; the real table, per `App\Models\Utilities\KeyValue\Keyvalue::$table`, is `xlr8_utils_keyvalue` — a third name matching neither guess.
+- **Where:** `app/Services/Vehicle/Pricing/PricingEngineService.php::kv()`.
+- **Description:** `kv()` tried `xlr8_utilities_keyvalues` and `xlr8_keyvalues`, neither of which exist (real: `xlr8_utils_keyvalue`) — so `Schema::hasTable()` was false for both, and the method silently returned `null` for every id, always. This meant `$json['permit']` and `$json['fuel']` were `null` for every vehicle, every time, in every prior verification this session — RTO/Insurance's `scopeMatch()`/`tokenMatch()` treat a `null` context value as "matches anything," so those services still produced plausible-looking (but permit/fuel-*unscoped*) output; only `AccessoryService`'s stricter "all-ANY-or-all-concrete" validation was strict enough to actually surface the gap as a visible error.
+- **Fix:** added the real table name (`xlr8_utils_keyvalue`) as the first candidate `kv()` tries, keeping the other two guesses as harmless fallbacks. Verified: `getPricingPayload('AP61WLED2BB18A99WD')` now resolves `permit=Goods`, `fuel=ELECTRIC` (both real, previously both silently null); `rto.selected_permit` is now a genuine single-permit match instead of a null-context wildcard match across all permits. **Caveat for anyone reading this session's earlier changelog entries**: the "genuine end-to-end success" claimed for the first full `getPricingPayload()` run was real for the OD/TP/tax/surcharge *formulas*, but ran with `permit`/`fuel` silently unscoped — this fix is what makes that scoping genuinely correct going forward. See `docs/refactor/ai-changelogs-24-09-2026.md`.
+
+### BUG-133 — `Accessory::ALL_TYPES`/`BUNDLE_TYPES` didn't exist (same pattern as BUG-128)
+
+- **Status:** FIXED
+- **Severity:** Critical — crashed the accessories lookup for every vehicle, the moment BUG-132's fix let real code reach this far.
+- **Found:** 24-09-2026, immediately after fixing BUG-132 — `Error: Undefined constant App\Models\Vehicle\Accessory::BUNDLE_TYPES`.
+- **Where:** `AccessoryService::normalizeTypeFilter()`; `Accessory` model.
+- **Description:** same class of bug as BUG-128 (undefined `Accessory::TYPE_*` constants) — `ALL_TYPES` and `BUNDLE_TYPES` were referenced but never defined.
+- **Fix:** added `ALL_TYPES` (all 7 real types) and `BUNDLE_TYPES` (the default "all"/"bundle" listing set) to `Accessory`. `BUNDLE_TYPES` excludes `TYPE_RTO_TAPE`/`TYPE_KAZAM`, inferred from `AccessoryService::listByType()`'s own docblock ("Explicit single-type fetch (use for RTO_Tape / Kazam)"), which states those two are fetched explicitly, not as part of the default bundle — not guessed, read from the adjacent code's own stated intent. Verified: `getPricingPayload()` now returns `errors: []` entirely — no crash, no caught error, real (empty, since the sample data has no accessories configured for this scope) `accessories.packs`. See `docs/refactor/ai-changelogs-24-09-2026.md`.
+
+### BUG-134 — `Accessory::$fillable` silently dropped `type`/`set_qty`/`discount` on every import
+
+- **Status:** FIXED
+- **Severity:** Critical — data corruption, not a crash: every accessory ever imported via `AccessoryService`'s row-processing loop had its `type` silently forced to the DB column's default (`'Accessory'`), regardless of whether the source row was actually Ceramic/PPF/Maxicare/GPS_VLTD/RTO_Tape/Kazam. `set_qty`/`discount` were also silently dropped (less harmful, since `set_qty`'s default of `1` often coincides with the real value, but not guaranteed).
+- **Found:** 24-09-2026, while writing a regression test for BUG-128/133's constants — a test `create()` call mirroring `AccessoryService`'s real write shape (`type`, `item`, `set_qty`) crashed on `item` missing, which led to inspecting the full real schema and finding `type`/`set_qty`/`discount` were never in `$fillable` even though `AccessoryService::processRow()`'s real `Accessory::updateOrCreate([...], ['type' => $type, ..., 'set_qty' => 1, ...])` call mass-assigns exactly those fields.
+- **Where:** `app/Models/Vehicle/Accessory.php::$fillable`; the real write path is `app/Services/Vehicle/AccessoryService.php` (accessory catalog import).
+- **Description:** `$fillable` was `['part_no', 'display_name', 'item', 'ndp', 'mrp', 'details', 'bundle', 'status', 'created_by', 'updated_by', 'deleted_by']` — missing `type`, `set_qty`, `discount`, all 3 real, NOT-fillable-listed columns that the app's own import logic actively writes. Same model/schema-drift pattern as every other bug this session.
+- **Fix:** added `type`, `set_qty`, `discount` to `$fillable`, plus `'set_qty' => 'integer'`/`'discount' => 'decimal:2'` casts matching the existing `ndp`/`mrp` convention. Verified directly: a `create()` call with `type => Ceramic` now correctly persists `Ceramic` instead of silently becoming the default `Accessory`. **This means every accessory catalog row imported before this fix in this environment likely has the wrong `type` recorded** — a data-correction/re-import concern for whoever owns that catalog, flagged here for visibility, not attempted as part of this fix (no accessory catalog data exists yet in this local environment to correct). See `docs/refactor/ai-changelogs-24-09-2026.md`.
+
+### BUG-135 — `Snapshot` model crashed on instantiation; `calculateAndPublish()` had never worked
+
+- **Status:** FIXED
+- **Severity:** Critical — this is the "Publish" half of "Calculate & Publish"; `PricingEngineService::calculateAndPublish()` could never successfully persist a snapshot for any vehicle, ever, in this environment.
+- **Found:** 24-09-2026, during a systematic audit checking every Pricing/Vehicle model's `$fillable` against its real schema (a check prompted by the string of identical model/schema-drift bugs found this session) — `new Snapshot()` alone (no attributes) threw `TypeError: array_merge(): Argument #1 must be of type array, null given` inside Eloquent's own `HasAttributes.php`.
+- **Where:** `app/Models/Vehicle/Pricing/Snapshot.php`.
+- **Description:** `Snapshot` redeclared `protected $casts;` with no default value, then tried to merge extra casts into it inside a custom `__construct()` (`$this->casts = array_merge($this->casts ?? [], [...])`, called *after* `parent::__construct($attributes)`). PHP property redeclaration without an initializer resets the property to `null` in the subclass, shadowing `BaseModel`'s array default (`['created_at' => 'datetime', ...]`) entirely. Eloquent's own internals read `$this->casts` *during* `parent::__construct()` — before the subclass's override line ever runs — and crashed immediately on the `null`. Every other model touched this session that needed extra casts beyond `BaseModel`'s already used the correct Laravel 11 `protected function casts(): array { return array_merge(parent::casts(), [...]); }` method-override pattern instead of touching the `$casts` property at all; `Snapshot` was the one model still using the old, broken property-redeclaration approach.
+- **Fix:** rewrote `Snapshot` to use the same `casts()` method-override pattern as every other model in this codebase, and removed the broken constructor entirely (no longer needed). Verified: `new Snapshot()` now succeeds; `PricingEngineService::calculateAndPublish('AP61WLED2BB18A99WD', ...)` now returns `published: true` with a real snapshot row persisted to `xlr8_vehicle_pricing_snapshots` — the first successful end-to-end Calculate *and* Publish in this environment. See `docs/refactor/ai-changelogs-24-09-2026.md`.
+
+### Audit finding — 3 more models have inert phantom `$fillable` entries (not fixed, not actively exercised)
+
+While auditing every Pricing/Vehicle model's `$fillable` against its real schema for BUG-135,
+found 3 more models with the same phantom-column pattern as BUG-130/134, but — unlike those —
+**confirmed none of them are currently written to by any real code path** (checked every
+`::create()`/`::updateOrCreate()` call site for each model):
+
+- `VehicleModel::$fillable` lists `custom_name`, `description` — neither exists on
+  `xlr8_vehicle_model`. No write path in `VehicleService`/`VehicleMasterService` sets either field
+  on a `VehicleModel` (both only ever get set on `Variant`, which does have real `custom_name`/
+  `description` columns — a different model, not a bug).
+- `Segment::$fillable` lists `description` — doesn't exist on `xlr8_vehicle_segment`. No write path
+  sets it.
+- `App\Models\Vehicle\Pricing\Pricing::$fillable` lists `variant_code`, `curr_acc_elg`,
+  `curr_shield_elg`, `old_acc_elg`, `old_shield_elg` — none exist on `xlr8_vehicle_pricing`.
+  `PriceListPricingImporter` (the only real writer) never references any of them.
+- (Already known, from earlier this session): `InsBaseRule::$fillable` lists `code`, `model_code`,
+  `variant_code`, `imt_23_rate` — none exist on `xlr8_vehicle_pricing_ins_base_rules`; not touched by
+  the `InsuranceService`/`RulesWorkbookService` rewrite this session since neither reads/writes them.
+
+**Status: not fixed.** Since nothing currently writes through these phantom fields, there is no live
+bug to reproduce or verify a fix against (unlike BUG-130/134/135, each confirmed via a real crash or
+real data corruption). Fixing them would mean guessing what the correct real column name should be
+without a call site to confirm intent — logged here for whoever next touches these models, not
+guessed at.

@@ -45,29 +45,29 @@ class Pricing extends BaseModel
     protected function casts(): array
     {
         return array_merge(parent::casts(), [
-            'wef_date'                      => 'date',
-            'expired_on'                    => 'date',
-            'is_active'                     => 'boolean',
+            'wef_date' => 'date',
+            'expired_on' => 'date',
+            'is_active' => 'boolean',
             'assessable_value_with_freight' => 'decimal:2',
-            'gst_percent'                   => 'decimal:2',
-            'gst_amount'                    => 'decimal:2',
-            'mm_invoice_amount'             => 'decimal:2',
-            'dealer_margin'                 => 'decimal:2',
-            'ex_showroom_price'             => 'decimal:2',
-            'curr_oem_scheme'               => 'decimal:2',
-            'curr_dealer_cont'              => 'decimal:2',
-            'curr_cash_discount'            => 'decimal:2',
-            'curr_acc_discount'             => 'decimal:2',
-            'curr_shield_discount'          => 'decimal:2',
-            'curr_acc_elg'                  => 'decimal:4',
-            'curr_shield_elg'               => 'decimal:4',
-            'old_oem_scheme'                => 'decimal:2',
-            'old_dealer_cont'               => 'decimal:2',
-            'old_cash_discount'             => 'decimal:2',
-            'old_acc_discount'              => 'decimal:2',
-            'old_shield_discount'           => 'decimal:2',
-            'old_acc_elg'                   => 'decimal:4',
-            'old_shield_elg'                => 'decimal:4',
+            'gst_percent' => 'decimal:2',
+            'gst_amount' => 'decimal:2',
+            'mm_invoice_amount' => 'decimal:2',
+            'dealer_margin' => 'decimal:2',
+            'ex_showroom_price' => 'decimal:2',
+            'curr_oem_scheme' => 'decimal:2',
+            'curr_dealer_cont' => 'decimal:2',
+            'curr_cash_discount' => 'decimal:2',
+            'curr_acc_discount' => 'decimal:2',
+            'curr_shield_discount' => 'decimal:2',
+            'curr_acc_elg' => 'decimal:4',
+            'curr_shield_elg' => 'decimal:4',
+            'old_oem_scheme' => 'decimal:2',
+            'old_dealer_cont' => 'decimal:2',
+            'old_cash_discount' => 'decimal:2',
+            'old_acc_discount' => 'decimal:2',
+            'old_shield_discount' => 'decimal:2',
+            'old_acc_elg' => 'decimal:4',
+            'old_shield_elg' => 'decimal:4',
         ]);
     }
 
@@ -76,11 +76,11 @@ class Pricing extends BaseModel
         return $query->where('is_active', true)
             ->where(function ($q) {
                 $q->whereNull('expired_on')
-                  ->orWhere('expired_on', '>=', now()->toDateString());
+                    ->orWhere('expired_on', '>=', now()->toDateString());
             })
             ->where(function ($q) {
                 $q->whereNull('wef_date')
-                  ->orWhere('wef_date', '<=', now()->toDateString());
+                    ->orWhere('wef_date', '<=', now()->toDateString());
             });
     }
 
