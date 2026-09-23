@@ -108,6 +108,7 @@
 
 @push('after_styles')
 <link rel="stylesheet" href="https://unpkg.com/ag-grid-community/styles/ag-theme-quartz.css">
+<link rel="stylesheet" href="{{ asset('css/ag-grid-tabler-theme.css') }}">
 
 <style>
     .ag-theme-quartz .center-header .ag-header-cell-label,
