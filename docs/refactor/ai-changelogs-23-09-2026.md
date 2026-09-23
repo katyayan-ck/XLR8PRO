@@ -1441,3 +1441,26 @@ Updated all 5 references (2 in `JournalVoucherCrudController`, 3 in `ReceiptCrud
 - `vendor/bin/pint --dirty --format agent` -> clean.
 - No dedicated JournalVoucher/Receipt test suite exists; covered by the live HTTP round trips
   above.
+
+## Utils module (KeyValue, KeywordMaster) view reorganization
+
+Fifth app-wide batch. Covers `App\Http\Controllers\Admin\Utils\KeyValue\KeyValueCrudController`
+and `App\Http\Controllers\Admin\Utils\KeywordMaster\KeywordMasterCrudController`.
+
+### Reorganization
+
+Moved `keyvalue` -> `resources/views/admin/utils/keyvalue/` and `keyword_master` ->
+`resources/views/admin/utils/keyword-master/` (normalized to kebab-case, matching the route's own
+`utils/keyword-master` URI and every other module's naming convention). Updated all 6 references
+across both controllers.
+
+### Verification
+
+- `php -l` on both controllers -> no syntax errors. `php artisan route:clear` (a stale route
+  cache briefly made `route:list` show zero KeywordMaster routes despite them being correctly
+  registered in `routes/backpack/core.php` - unrelated to this change, cleared and confirmed).
+  `php artisan view:clear`.
+- App-wide grep confirmed zero leftover old-prefix references.
+- Live HTTP round trips: key-value and keyword-master index/create all 200.
+- `vendor/bin/pint --dirty --format agent` -> clean.
+- No dedicated test suite exists for either; covered by the live HTTP round trips above.

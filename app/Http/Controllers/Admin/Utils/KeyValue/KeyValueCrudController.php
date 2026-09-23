@@ -36,7 +36,7 @@ class KeyValueCrudController extends CrudController
         }
 
         $this->crud->setListView(
-            'admin.keyvalue.list'
+            'admin.utils.keyvalue.list'
         );
     }
 
@@ -47,7 +47,7 @@ class KeyValueCrudController extends CrudController
         }
 
         $this->crud->setListView(
-            'admin.keyvalue.list'
+            'admin.utils.keyvalue.list'
         );
 
         $keyValues = Keyvalue::select([
@@ -96,7 +96,7 @@ class KeyValueCrudController extends CrudController
         })->values();
 
         return view(
-            'admin.keyvalue.list',
+            'admin.utils.keyvalue.list',
             [
                 'title' => 'Key Values',
 
@@ -129,7 +129,7 @@ class KeyValueCrudController extends CrudController
         }
 
         $this->crud->setCreateView(
-            'admin.keyvalue.create'
+            'admin.utils.keyvalue.create'
         );
 
         $keywordMasters =
@@ -140,7 +140,7 @@ class KeyValueCrudController extends CrudController
                 ]);
 
         return view(
-            'admin.keyvalue.create',
+            'admin.utils.keyvalue.create',
             [
                 'title' => 'Add Key Value',
 
@@ -175,7 +175,7 @@ class KeyValueCrudController extends CrudController
         }
 
         $this->crud->setEditView(
-            'admin.keyvalue.edit'
+            'admin.utils.keyvalue.edit'
         );
 
         $keyValue =
@@ -189,7 +189,7 @@ class KeyValueCrudController extends CrudController
                 ]);
 
         return view(
-            'admin.keyvalue.edit',
+            'admin.utils.keyvalue.edit',
             [
                 'title' => 'Edit Key Value',
 
