@@ -71,7 +71,7 @@ class LeadSourceCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view lead sources.');
         }
 
-        $this->crud->setListView('admin.lead-source.list');
+        $this->crud->setListView('admin.sales.lead-source.list');
     }
 
     public function index()
@@ -80,7 +80,7 @@ class LeadSourceCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view lead sources.');
         }
 
-        $this->crud->setListView('admin.lead-source.list');
+        $this->crud->setListView('admin.sales.lead-source.list');
 
         $leadSources = LeadSource::select([
             'id',
@@ -111,7 +111,7 @@ class LeadSourceCrudController extends CrudController
             return $mapped;
         })->values();
 
-        return view('admin.lead-source.list', [
+        return view('admin.sales.lead-source.list', [
             'title' => 'All Lead Sources',
             'gridConfig' => [
                 'columns' => [
@@ -133,9 +133,9 @@ class LeadSourceCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to create lead sources.');
         }
 
-        $this->crud->setCreateView('admin.lead-source.create');
+        $this->crud->setCreateView('admin.sales.lead-source.create');
 
-        return view('admin.lead-source.create', [
+        return view('admin.sales.lead-source.create', [
             'title' => 'Add New Lead Source',
         ]);
     }
@@ -173,11 +173,11 @@ class LeadSourceCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to edit lead sources.');
         }
 
-        $this->crud->setEditView('admin.lead-source.edit');
+        $this->crud->setEditView('admin.sales.lead-source.edit');
 
         $leadSource = LeadSource::findOrFail($id);
 
-        return view('admin.lead-source.edit', [
+        return view('admin.sales.lead-source.edit', [
             'title' => 'Edit Lead Source - '.$leadSource->name,
             'leadSource' => $leadSource,
         ]);

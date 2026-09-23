@@ -1228,3 +1228,34 @@ Moved the 3 live views to `resources/views/admin/sales/quotation/` via `git mv`.
 - No dedicated Quotation controller test suite exists; ran the closest adjacent coverage
   (`--filter=Quotation`, 2 passed via `BookingOtfServiceTest`'s quotation-merge case), zero
   regressions.
+
+## Lead / Lead Source module view reorganization — mirror controller module structure
+
+Fourth module (of Sales-first sequencing) — covers both `LeadCrudController` and the closely
+related `LeadSourceCrudController`, done together since they're a small, simple pair with no
+orphans.
+
+### Scan and reorganization
+
+Both controllers reference exactly the 3 present views each (`create`, `edit`, `list`) — no
+orphans in either module. Moved `resources/views/admin/lead/` →
+`resources/views/admin/sales/lead/` (3 files) and `resources/views/admin/lead-source/` →
+`resources/views/admin/sales/lead-source/` (3 files) via `git mv`. Updated all 5
+`admin.lead.*` references in `LeadCrudController.php` and all 7 `admin.lead-source.*` references
+in `LeadSourceCrudController.php` to their `admin.sales.*` equivalents.
+
+### Verification
+
+- `php -l` on both controllers → no syntax errors. `php artisan view:clear`.
+- Live HTTP round trips: `index`/`create` for both modules → 200; `lead-source/{id}/edit` with a
+  real id → 200.
+- `lead/{id}/edit` with a real id → **500**. Root-caused (not caused by this reorganization — the
+  moved file is byte-identical via `git mv`, confirmed) to a pre-existing array/string mismatch:
+  `OrgService::variants()`/`colors()` return a nested `code => [fields...]` shape while the edit
+  view's dropdown loops expect a flat `code => name` map (matching `OrgService::models()`, which
+  correctly returns the flat shape). Logged as **BUG-112 (High)** in `known-bugs-report.md` —
+  not fixed, out of scope for this pass, flagged prominently given severity (Lead editing appears
+  completely broken for any lead with a real vehicle selection).
+- `vendor/bin/pint --dirty --format agent` → clean.
+- `php artisan test --filter=Lead --compact` → 1 passed (incidental `IdentifierServiceTest` match;
+  no dedicated Lead/LeadSource test suite exists), zero regressions.
