@@ -722,81 +722,111 @@ class OrgService
     // //////
     public static function usersByDesignation(string $desigCode, string $branchCode = 'ALL'): array
     {
-        $users = User::with('person')                    // ← Eager load person (needed for display_name)
-            ->whereHas('employee', function ($q) use ($desigCode) {
-                $q->where('designation_code', $desigCode);   // ← Use new column (recommended)
-                // $q->where('desig_code', $desigCode);      // ← Use this only if still using legacy column
-            })
-            ->when($branchCode !== 'ALL', function ($q) use ($branchCode) {
-                $q->whereHas('branches', fn ($b) => $b->where('code', $branchCode));
-            })
-            ->select('id', 'username', 'employee_code', 'person_code')
-            ->get();
+        return Cache::remember(
+            "org.users_by_designation.{$desigCode}.{$branchCode}",
+            self::CACHE_TTL,
+            function () use ($desigCode, $branchCode) {
+                $users = User::with('person')                    // ← Eager load person (needed for display_name)
+                    ->whereHas('employee', function ($q) use ($desigCode) {
+                        $q->where('designation_code', $desigCode);   // ← Use new column (recommended)
+                        // $q->where('desig_code', $desigCode);      // ← Use this only if still using legacy column
+                    })
+                    ->when($branchCode !== 'ALL', function ($q) use ($branchCode) {
+                        $q->whereHas('branches', fn ($b) => $b->where('code', $branchCode));
+                    })
+                    ->select('id', 'username', 'employee_code', 'person_code')
+                    ->get();
 
-        // Now map and include display_name (accessor will work)
-        return $users->map(function ($user) {
-            return [
-                'id' => $user->id,
-                'username' => $user->username,
-                'employee_code' => $user->employee_code,
-                'person_code' => $user->person_code,
-                'display_name' => $user->display_name,     // ← This now works
-            ];
-        })->toArray();
+                // Now map and include display_name (accessor will work)
+                return $users->map(function ($user) {
+                    return [
+                        'id' => $user->id,
+                        'username' => $user->username,
+                        'employee_code' => $user->employee_code,
+                        'person_code' => $user->person_code,
+                        'display_name' => $user->display_name,     // ← This now works
+                    ];
+                })->toArray();
+            }
+        );
     }
 
     public static function usersByDepartment(string $deptCode, string $branchCode = 'ALL', string $divCode = 'ALL'): array
     {
-        return self::formatUsers(
-            self::userQuery([
-                'dept_code' => $deptCode,
-                'branch_code' => $branchCode,
-                'div_code' => $divCode !== 'ALL' ? $divCode : null,
-            ])
+        return Cache::remember(
+            "org.users_by_department.{$deptCode}.{$branchCode}.{$divCode}",
+            self::CACHE_TTL,
+            fn () => self::formatUsers(
+                self::userQuery([
+                    'dept_code' => $deptCode,
+                    'branch_code' => $branchCode,
+                    'div_code' => $divCode !== 'ALL' ? $divCode : null,
+                ])
+            )
         );
     }
 
     public static function usersByDivision(string $divCode, string $branchCode = 'ALL'): array
     {
-        return self::formatUsers(
-            self::userQuery([
-                'div_code' => $divCode,
-                'branch_code' => $branchCode,
-            ])
+        return Cache::remember(
+            "org.users_by_division.{$divCode}.{$branchCode}",
+            self::CACHE_TTL,
+            fn () => self::formatUsers(
+                self::userQuery([
+                    'div_code' => $divCode,
+                    'branch_code' => $branchCode,
+                ])
+            )
         );
     }
 
     public static function salesConsultants(string $branchCode = 'ALL'): array
     {
-        return self::formatUsers(
-            self::userQuery([
-                'desig_code' => 'CNS',
-                'dept_code' => 'SLS',
-                'branch_code' => $branchCode,
-            ])
+        return Cache::remember(
+            "org.sales_consultants.{$branchCode}",
+            self::CACHE_TTL,
+            fn () => self::formatUsers(
+                self::userQuery([
+                    'desig_code' => 'CNS',
+                    'dept_code' => 'SLS',
+                    'branch_code' => $branchCode,
+                ])
+            )
         );
     }
 
     public static function salesTeamUsers(string $branchCode = 'ALL'): array
     {
-        return self::formatUsers(
-            self::userQuery([
-                'dept_code' => 'SLS',
-                'branch_code' => $branchCode,
-            ])
+        return Cache::remember(
+            "org.sales_team_users.{$branchCode}",
+            self::CACHE_TTL,
+            fn () => self::formatUsers(
+                self::userQuery([
+                    'dept_code' => 'SLS',
+                    'branch_code' => $branchCode,
+                ])
+            )
         );
     }
 
     public static function getKeyValuesByCode(string $keywordCode): ?Collection
     {
-        return KeywordMaster::where('code', strtoupper(trim($keywordCode)))
-            ->first()?->keyvalues()->where('is_active', true)->get();
+        return Cache::remember(
+            'org.keyvalues_by_code.'.strtoupper(trim($keywordCode)),
+            self::CACHE_TTL,
+            fn () => KeywordMaster::where('code', strtoupper(trim($keywordCode)))
+                ->first()?->keyvalues()->where('is_active', true)->get()
+        );
     }
 
     public static function getKeyValuesByColName(string $colName): ?Collection
     {
-        return KeywordMaster::where('keyword', strtoupper(trim($colName)))
-            ->first()?->keyvalues()->where('is_active', true)->get();
+        return Cache::remember(
+            'org.keyvalues_by_colname.'.strtoupper(trim($colName)),
+            self::CACHE_TTL,
+            fn () => KeywordMaster::where('keyword', strtoupper(trim($colName)))
+                ->first()?->keyvalues()->where('is_active', true)->get()
+        );
     }
 
     // public static function getKeyValueById(int $id): ?Keyvalue
@@ -812,16 +842,24 @@ class OrgService
             return null;
         }
 
-        return Keyvalue::where('id', (int) $id)
-            ->where('is_active', true)
-            ->first();
+        return Cache::remember(
+            'org.keyvalue_by_id.'.(int) $id,
+            self::CACHE_TTL,
+            fn () => Keyvalue::where('id', (int) $id)
+                ->where('is_active', true)
+                ->first()
+        );
     }
 
     public static function getKeyValueByCode(string $code): ?Keyvalue
     {
-        return Keyvalue::where('code', strtoupper(trim($code)))
-            ->where('is_active', true)
-            ->first();
+        return Cache::remember(
+            'org.keyvalue_by_code.'.strtoupper(trim($code)),
+            self::CACHE_TTL,
+            fn () => Keyvalue::where('code', strtoupper(trim($code)))
+                ->where('is_active', true)
+                ->first()
+        );
     }
 
     /**
@@ -829,12 +867,16 @@ class OrgService
      */
     public static function keywordValueByCode(string $keywordCode): array
     {
-        return Keyvalue::where('keyword_code', strtoupper(trim($keywordCode)))
-            ->where('is_active', true)
-            ->orderBy('value')
-            ->select('code', 'value')
-            ->get()
-            ->toArray();
+        return Cache::remember(
+            'org.keyword_value_by_code.'.strtoupper(trim($keywordCode)),
+            self::CACHE_TTL,
+            fn () => Keyvalue::where('keyword_code', strtoupper(trim($keywordCode)))
+                ->where('is_active', true)
+                ->orderBy('value')
+                ->select('code', 'value')
+                ->get()
+                ->toArray()
+        );
     }
 
     public static function users(array $filters = []): array

@@ -917,3 +917,54 @@ centralized labels wired in, except `dealerInvoiceUpdate()`** (deliberately skip
 its rules already has an explicit custom message, so custom attributes would have zero visible
 effect there). This completes the label/validation-message registry piece of Phase 5's original
 scope for the Booking module.
+
+## Phase 5, eighth checkpoint: query caching for OrgService lookups
+
+Moves to the query-caching piece of Phase 5 (the visual design pass needs the user's direction, so
+this scoped, mechanical piece was picked up instead). `OrgService` already had `Cache::remember()`-
+based caching (1-hour TTL, no active invalidation - a pre-existing, established convention) on its
+master-entity lookups (`branches()`, `segments()`, `departments()`, etc.), but NOT on its
+user/keyword lookup methods - which are exactly the methods every Phase 4 Booking sub-domain
+service's `resolveEditData()` calls on every single edit-screen page load.
+
+**Added the same caching convention to 9 previously-uncached methods**: `usersByDesignation()`,
+`usersByDepartment()`, `usersByDivision()`, `salesConsultants()`, `salesTeamUsers()`,
+`getKeyValuesByCode()`, `getKeyValuesByColName()`, `getKeyValueById()`, `getKeyValueByCode()`,
+`keywordValueByCode()`. Each gets its own parameterized cache key (e.g.
+`org.sales_consultants.{branchCode}`) so different filter combinations don't collide. 34 call sites
+across the Booking services/controller benefit directly.
+
+**Deliberately left `getUsers()` uncached**: it has 13+ independent filter parameters (branch,
+location, department, division, vertical, segment, sub-segment, model, variant, user type,
+primary-only flag, designation), making a comprehensive, collision-free cache key materially more
+complex to get right - and this method controls which users appear in data-entry dropdowns, so a
+wrong cache key could silently serve a stale/mis-scoped user list. Not worth the risk for this
+mechanical pass; flagged as a candidate for a more careful, dedicated follow-up if its query cost
+turns out to matter in practice.
+
+**Found BUG-108 while writing tests, not from production usage**: `userQuery()`'s branch-scope
+filter throws `SQLSTATE[42S02]` for any real (non-`'ALL'`) branch code - it joins through
+`xlr8_admin_emp_branch_pivot`, a table that doesn't exist in this database. Every real Booking call
+site only ever passes the default `'ALL'`, so this was never previously exercised. Documented in
+full, not fixed (needs a decision on whether branch-scoped filtering is a missing migration or dead
+code).
+
+### Verification
+
+- `php -l` clean; `vendor/bin/pint --dirty --format agent` → clean.
+- **New: `tests/Unit/Services/OrgServiceCachingTest.php`** (7 tests, 12 assertions) - confirms
+  cached results are identical across calls, confirms the cache-hit path issues at most 1 query (the
+  cache-table lookup itself, vs. the original 3-query `whereHas` chain), confirms distinct cache keys
+  per parameter combination, and documents BUG-108 in a code comment rather than asserting a false
+  success path for the branch-scoped case.
+- Live tinker verification: `DB::enableQueryLog()` around two consecutive `salesConsultants()` calls
+  → 3 queries first call, 1 query (the cache lookup) second call, identical returned data.
+- Live HTTP round trips, cache cold then cache warm: `create`, `{id}/edit`,
+  `insurance/{id}/edit` all 200 in both states.
+- Full suite re-run (`tests/Unit/Services/` + `tests/Unit/Lang/`) → 80 passed, 299 assertions; same
+  8 pre-existing unrelated failures as every checkpoint this phase.
+
+**This covers the query-caching piece of Phase 5 for the OrgService lookups Booking depends on.**
+Not yet covered: caching for the Booking listing/AG-Grid queries themselves (`getBaseQuery()`,
+`preloadGridLookups()` - already N+1-fixed in Phase 2, but not response-cached), and the same
+caching pattern for other modules' equivalent lookup services, left for future sessions.
