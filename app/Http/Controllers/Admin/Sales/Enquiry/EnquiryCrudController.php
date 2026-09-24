@@ -144,6 +144,15 @@ class EnquiryCrudController extends CrudController
             // 5. CRE Deviation Stage Map
             $deviationStageMap = collect(OrgService::keywordValueByCode('DEVIATION_STAGE'))->pluck('value', 'code')->toArray();
 
+            // 6. Additional Maps for List View
+            $genderMap = collect(OrgService::keywordValueByCode('GENDER'))->pluck('value', 'code')->toArray();
+            $usageAreaMap = collect(OrgService::keywordValueByCode('USAGE_AREA'))->pluck('value', 'code')->toArray();
+            $kmTravelledMap = collect(OrgService::keywordValueByCode('KM_TRAVELLED_DAILY'))->pluck('value', 'code')->toArray();
+            $appTypeMap = collect(OrgService::keywordValueByCode('APPLICATION_TYPE'))->pluck('value', 'code')->toArray();
+            $appMap = collect(OrgService::keywordValueByCode('APPLICATION'))->pluck('value', 'code')->toArray();
+            $occTypeMap = collect(OrgService::keywordValueByCode('OCCUPATION_TYPE'))->pluck('value', 'code')->toArray();
+            $locationsMap = collect(OrgService::locations())->toArray();
+
             $scUsers = OrgService::getUsers(
                 'ALL',
                 'ALL',
@@ -164,7 +173,7 @@ class EnquiryCrudController extends CrudController
             $scNamesByCode = [];
 
             foreach ($scUsers as $user) {
-                $userName = trim(($user['first_name'] ?? '').' '.($user['last_name'] ?? '')) ?: ($user['name'] ?? '—');
+                $userName = trim(($user['name'] ?? '').' '.($user['last_name'] ?? '')) ?: ($user['name'] ?? '—');
 
                 if (! empty($user['employee_code'])) {
                     $scByCode[$user['employee_code']] = $user;
@@ -199,7 +208,18 @@ class EnquiryCrudController extends CrudController
                 'maritalStatusMap',
                 'ageGroupMap',
                 'lostSubReasonMap',
-                'deviationStageMap'
+                'deviationStageMap',
+                'maritalStatusMap',
+                'ageGroupMap',
+                'lostSubReasonMap',
+                'deviationStageMap',
+                'genderMap',
+                'usageAreaMap',
+                'kmTravelledMap',
+                'appTypeMap',
+                'appMap',
+                'occTypeMap',
+                'locationsMap'
             );
         });
     }
@@ -368,18 +388,22 @@ class EnquiryCrudController extends CrudController
             return [];
         }
 
-        $x8Nos = array_map(fn ($id) => $this->enquiryRef->toReference($id), $enquiryIds);
+        $x8Nos = array_map(fn ($id) => (string) $this->enquiryRef->fromReference($id), $enquiryIds);
+        $legacyX8Nos = array_map(fn ($id) => 'XENQ-' . $this->enquiryRef->fromReference($id), $enquiryIds);
+
+        $searchNos = array_merge($x8Nos, $legacyX8Nos);
 
         $rows = DB::table('xlr8_cre_enquiry_fup')
-            ->whereIn('x8_enq_no', $x8Nos)
+            ->whereIn('x8_enq_no', $searchNos)
             ->where('cre_fup_deviation_stage', '!=', 'OPEN_FOLLOW_UP')
             ->orderByDesc('id')
             ->get();
 
         $latest = [];
         foreach ($rows as $row) {
-            if (! isset($latest[$row->x8_enq_no])) {
-                $latest[$row->x8_enq_no] = $row;
+            $cleanId = $this->enquiryRef->fromReference($row->x8_enq_no);
+            if (! isset($latest[$cleanId])) {
+                $latest[$cleanId] = $row;
             }
         }
 
@@ -844,6 +868,13 @@ class EnquiryCrudController extends CrudController
         $lostSubReasonMap = $lookups['lostSubReasonMap'] ?? [];
         $deviationStageMap = $lookups['deviationStageMap'] ?? [];
         $existingQuotations = $lookups['existingQuotations'] ?? [];
+        $genderMap = $lookups['genderMap'] ?? [];
+        $usageAreaMap = $lookups['usageAreaMap'] ?? [];
+        $kmTravelledMap = $lookups['kmTravelledMap'] ?? [];
+        $appTypeMap = $lookups['appTypeMap'] ?? [];
+        $appMap = $lookups['appMap'] ?? [];
+        $occTypeMap = $lookups['occTypeMap'] ?? [];
+        $locationsMap = $lookups['locationsMap'] ?? [];
 
         $x8AssignedSc = $this->getAssignedSc($e->x8_sc_code ?? null, $e->x8_sc_mile_id ?? null, $scByCode, $scByMileId);
         $oemAssignedSc = $this->getAssignedSc($e->sc_name ?? null, $e->sc_mile_id ?? null, $scByCode, $scByMileId);
@@ -1010,8 +1041,8 @@ class EnquiryCrudController extends CrudController
         $row = [
             'serial_no' => $i + 1,
             'x8_enquiry_no' => $this->enquiryRef->toReference($e->id),
-            'x8_enquiry_date' => $this->formatDate($e->created_at, 'd-M-Y H:i'),
-            'x8_enquiry_assign_date' => $this->formatDate($e->x8_enquiry_assign_date ?? $e->enq_assign_date, 'd-M-Y'),
+            'x8_enquiry_date' => $e->created_at ? Carbon::parse($e->created_at)->timezone('Asia/Kolkata')->format('d-M-Y H:i') : '—',
+            'x8_enquiry_assign_date' => $this->formatDate($e->x8_enq_assign_date ?? $e->enq_assign_date, 'd-M-Y'),
             'oem_enquiry_no' => $e->x8_enquiry_no ?? $e->enquiry_no ?? $e->oem_enquiry_no ?? '—',
             'oem_enquiry_date' => $this->formatDate($e->x8_enquiry_date ?? $e->enquiry_date ?? $e->oem_enquiry_date, 'd-M-Y'),
             'oem_enquiry_assign_date' => $this->formatDate($e->oem_enquiry_assign_date ?? $e->enq_assign_date, 'd-M-Y'),
@@ -1044,6 +1075,9 @@ class EnquiryCrudController extends CrudController
         if (in_array($type, ['long', 'quick', 'all', 'reference', 'virtual', 'whatsapp', 'exchange', 'scrappage', 'exchange_not_interested', 'finance', 'finance_not_interested'])) {
             $x8BranchCode = $x8AssignedSc['primary_branch_code'] ?? null;
             $oemBranchCode = $oemAssignedSc['primary_branch_code'] ?? null;
+
+            $x8EnqNo = $this->enquiryRef->fromReference($e->id);
+            $creFup = $lookups['creFups'][$x8EnqNo] ?? null;
 
             $creFup = $lookups['creFups'][$this->enquiryRef->toReference($e->id)] ?? null;
 
@@ -1087,14 +1121,14 @@ class EnquiryCrudController extends CrudController
                 'x8_sc_code' => $x8AssignedSc['display_name'] ?? $scNamesByCode[$e->x8_sc_code] ?? $e->x8_sc_code ?? '—',
                 'x8_sc_mile_id' => $e->x8_sc_mile_id ?? $x8AssignedSc['mile_id'] ?? '—',
                 'x8_sc_branch' => $branchesMap[$x8BranchCode] ?? $x8BranchCode ?? '—',
-                'x8_sc_location' => $x8AssignedSc['primary_loc_code'] ?? '—',
+                'x8_sc_location' => $locationsMap[$x8AssignedSc['primary_loc_code'] ?? ''] ?? $x8AssignedSc['primary_loc_code'] ?? '—',
                 'sc_name' => $scNamesByCode[$e->sc_name] ?? $e->sc_name ?? '—',
                 'sc_mile_id' => $e->sc_mile_id ?? $oemAssignedSc['mile_id'] ?? '—',
                 'oem_sc_branch' => $branchesMap[$oemBranchCode] ?? $oemBranchCode ?? '—',
-                'oem_sc_location' => $oemAssignedSc['primary_loc_code'] ?? '—',
+                'oem_sc_location' => $locationsMap[$oemAssignedSc['primary_loc_code'] ?? ''] ?? $oemAssignedSc['primary_loc_code'] ?? '—',
                 'dealer_branch' => $e->dealer_branch ?? '—',
                 'dealer_location' => $e->dealer_location ?? '—',
-                'occupation_type' => $e->occupation_type ?? '—',
+                'occupation_type' => $occTypeMap[$e->occupation_type ?? ''] ?? $e->occupation_type ?? '—',
                 'customer_type' => $e->customer_type ?? '—',
                 'occupation_sub_type' => $e->occupation_sub_type ?? '—',
                 'company_name' => $e->company_name ?? '—',
@@ -1102,10 +1136,10 @@ class EnquiryCrudController extends CrudController
                 'marital_status' => $maritalStatusMap[$e->marital_status ?? ''] ?? $e->marital_status ?? '—',
                 'marriage_date' => $this->formatDate($e->marriage_date, 'd-M-Y'),
                 'age_group' => $ageGroupMap[$e->age_group ?? ''] ?? $e->age_group ?? '—',
-                'usage_area' => $e->usage_area ?? '—',
-                'km_travelled_daily' => $e->km_travelled_daily ?? '—',
-                'application_type' => $e->application_type ?? '—',
-                'application' => $e->application ?? '—',
+                'usage_area' => $usageAreaMap[$e->usage_area ?? ''] ?? $e->usage_area ?? '—',
+                'km_travelled_daily' => $kmTravelledMap[$e->km_travelled_daily ?? ''] ?? $e->km_travelled_daily ?? '—',
+                'application_type' => $appTypeMap[$e->application_type ?? ''] ?? $e->application_type ?? '—',
+                'application' => $appMap[$e->application ?? ''] ?? $e->application ?? '—',
                 'has_ev' => $e->has_ev ?? '—',
                 'purchase_type' => $purcTypeMap[$e->purchase_type ?? ''] ?? $e->purchase_type ?? '—',
                 'purchase_type_crm' => $purcTypeMap[$e->purchase_type_crm ?? ''] ?? $e->purchase_type_crm ?? '—',
@@ -1727,8 +1761,11 @@ class EnquiryCrudController extends CrudController
                 ->get();
         }
 
+        $x8EnqNo = $this->enquiryRef->fromReference($enquiry->id);
+        $legacyEnqNo = 'XENQ-' . $x8EnqNo;
+
         $creFups = DB::table('xlr8_cre_enquiry_fup')
-            ->where('x8_enq_no', $this->enquiryRef->toReference($enquiry->id))
+            ->whereIn('x8_enq_no', [(string) $x8EnqNo, $legacyEnqNo])
             ->where('cre_fup_deviation_stage', '!=', 'OPEN_FOLLOW_UP')
             ->orderBy('id', 'asc')
             ->get();
@@ -1753,17 +1790,18 @@ class EnquiryCrudController extends CrudController
     private function saveCreFup($enquiry, $request)
     {
         if ($request->filled('cre_enq_stage') || $request->filled('cre_customer_stage') || $request->filled('cre_fup_remarks')) {
-            $x8EnqNo = $this->enquiryRef->toReference($enquiry->id);
+            $x8EnqNo = $this->enquiryRef->fromReference($enquiry->id);
+            $legacyEnqNo = 'XENQ-' . $x8EnqNo;
 
             // CLEANUP: Delete any legacy 'OPEN_FOLLOW_UP' pending rows to prevent orphan data
             DB::table('xlr8_cre_enquiry_fup')
-                ->where('x8_enq_no', $x8EnqNo)
+                ->whereIn('x8_enq_no', [(string) $x8EnqNo, $legacyEnqNo])
                 ->where('cre_fup_deviation_stage', 'OPEN_FOLLOW_UP')
                 ->delete();
 
             // 1. Get the actual last completed FUP to determine planned date and count
             $lastFup = DB::table('xlr8_cre_enquiry_fup')
-                ->where('x8_enq_no', $x8EnqNo)
+                ->whereIn('x8_enq_no', [(string) $x8EnqNo, $legacyEnqNo])
                 ->orderBy('id', 'desc')
                 ->first();
 
@@ -2338,7 +2376,7 @@ class EnquiryCrudController extends CrudController
             'email' => 'nullable|email|max:150',
             'gender' => $req,
             'zipcode' => $req.'|max:10',
-            'vpo' => $req.'|max:150',
+            'vpo' => 'nullable|max:150',
             'tehsil' => $req.'|max:100',
             'district' => $req.'|max:100',
             'city' => $req.'|max:100',
@@ -2364,8 +2402,8 @@ class EnquiryCrudController extends CrudController
 
             // 5. CRE Enquiry Stage (No longer mandatory)
             'cre_enq_stage' => 'nullable|string|max:50',
-            'cre_customer_stage' => 'nullable|string|max:50',
-            'cre_next_fup_date' => 'nullable|date',
+            'cre_customer_stage' => $isEdit ? 'required|string|max:50' : 'nullable|string|max:50',
+            'cre_next_fup_date' => $isEdit ? 'required_unless:cre_enq_stage,LOST,DROPPED|nullable|date' : 'nullable|date',
             'cre_fup_remarks' => 'nullable|string|max:255',
             'cre_fup_deviation_stage' => 'nullable|string|max:50',
 
@@ -2585,7 +2623,7 @@ class EnquiryCrudController extends CrudController
 
         $lead = Lead::where('lead_no', $leadNo)->firstOrFail();
 
-        return response()->json($lead->only(['source_code', 'referral_details', 'first_name', 'last_name', 'mobile', 'email', 'occupation', 'segment_code', 'model_code', 'variant_code', 'color_code']));
+        return response()->json($lead->only(['source_code', 'referral_details', 'name', 'last_name', 'mobile', 'email', 'occupation', 'segment_code', 'model_code', 'variant_code', 'color_code']));
     }
 
     public function checkDuplicateEnquiry(Request $request)

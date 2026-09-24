@@ -177,6 +177,14 @@
             $fmtDate = fn($d) => !empty($d) ? \Carbon\Carbon::parse($d)->format('d-M-Y') : '—';
             $fmtDateTime = fn($d) => !empty($d) ? \Carbon\Carbon::parse($d)->format('d-M-Y H:i') : '—';
 
+            $creSegmentName = \App\Services\OrgService::segments()[$enquiry->segment_code] ?? ($enquiry->segment_code ?: '—');
+            $creModelName = \App\Services\OrgService::models($enquiry->segment_code)[$enquiry->model_code] ?? ($enquiry->model_code ?: '—');
+            
+            $variantData = \App\Services\OrgService::variants($enquiry->model_code)[$enquiry->variant_code] ?? null;
+            $creVariantName = $variantData['name'] ?? ($enquiry->variant_code ?: '—');
+
+            $creColorName = \App\Services\OrgService::colors($enquiry->variant_code)[$enquiry->color_code] ?? ($enquiry->color_code ?: '—');
+
             $comparisonRows = [
                 [
                     'label' => 'Enquiry Number',
@@ -216,28 +224,22 @@
                 [
                     'label' => 'Segment',
                     'dump' => $enquiry->segment ?: '—',
-                    'cre' => $segments[$enquiry->segment_code] ?? ($enquiry->segment_code ?: '—'),
+                    'cre' => $creSegmentName,
                 ],
                 [
                     'label' => 'Model',
                     'dump' => $enquiry->model ?: '—',
-                    'cre' =>
-                        collect($models ?? [])->firstWhere('code', $enquiry->model_code)['name'] ??
-                        ($enquiry->model_code ?: '—'),
+                    'cre' => $creModelName,
                 ],
                 [
                     'label' => 'Variant',
                     'dump' => $enquiry->variant ?: '—',
-                    'cre' =>
-                        collect($variants ?? [])->firstWhere('code', $enquiry->variant_code)['name'] ??
-                        ($enquiry->variant_code ?: '—'),
+                    'cre' => $creVariantName,
                 ],
                 [
                     'label' => 'Color',
                     'dump' => $enquiry->color ?: '—',
-                    'cre' =>
-                        collect($colors ?? [])->firstWhere('code', $enquiry->color_code)['name'] ??
-                        ($enquiry->color_code ?: '—'),
+                    'cre' => $creColorName,
                 ],
                 [
                     'label' => 'Likely Purchase in Days',
@@ -642,12 +644,14 @@
                                     <option value="">Select Enquiry Source</option>
                                 </select>
                             </div>
+                            @if(!$isLong)
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">DMS Enquiry Number <small class="text-muted"></small></label>
                                 <input type="text" name="dms_enq_no" class="form-control"
                                     value="{{ old('dms_enq_no', $enquiry->dms_enq_no ?? '') }}"
                                     placeholder="Enter DMS Enquiry Number">
                             </div>
+                            @endif
 
                             {{-- WRAPPERS ADDED FOR DYNAMIC HIDING --}}
                             <div class="col-md-3 mb-3 d-none" id="sub_source_wrapper">
@@ -712,7 +716,7 @@
                         <div class="row">
 
 
-                            @if ($isLong && $isQuick)
+                            @if ($isLong || $isQuick)
                                 <div class="col-md-4 mb-4">
                                     <label class="form-label">Model Family</label>
                                     <input type="text" class="form-control" value="{{ $enquiry->model }}" readonly
@@ -932,8 +936,8 @@
                                     value="{{ old('zipcode', $enquiry->zipcode ?? '') }}" required>
                             </div>
                             <div class="col-md-2 mb-2">
-                                <label class="form-label">VPO <span class="text-danger">*</span></label>
-                                <select id="vpo_select" class="form-control form-select" required>
+                                <label class="form-label">VPO</label>
+                                <select id="vpo_select" class="form-control form-select">
                                     <option value="">Select VPO</option>
                                 </select>
                                 <input type="text" id="vpo_input" class="form-control mt-2 d-none"
@@ -1053,12 +1057,12 @@
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Existing Vehicle Number</label>
                                     <input type="text" name="vehicle_no" class="form-control"
-                                        value="{{ old('vehicle_no', $enquiry->vehicle_no ?? '') }}">
+                                        value="{{ old('vehicle_no', $enquiry->vehicle_no ?? '') }}" oninput="this.value = this.value.replace(/\s+/g, '').toUpperCase();">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Existing Make Year</label>
-                                    <input type="number" name="make_year" class="form-control"
-                                        value="{{ old('make_year', $enquiry->make_year ?? '') }}">
+                                    <input type="text" name="make_year" class="form-control" maxlength="4"
+                                        value="{{ old('make_year', $enquiry->make_year ?? '') }}" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 4);">
                                 </div>
                             </div>
                         </div>
@@ -1477,7 +1481,7 @@
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">D.O.B. <small class="text-muted"></small></label>
                                 <input type="text" id="dob" name="dob" class="form-control"
-                                    value="{{ old('dob', $enquiry->dob ?? '') }}" placeholder="Select D.O.B.">
+                                    value="{{ old('dob', isset($enquiry) && $enquiry->dob ? \Carbon\Carbon::parse($enquiry->dob)->format('d-M-Y') : '') }}" placeholder="Select D.O.B.">
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">Age Group <small class="text-muted"></small></label>
@@ -2048,9 +2052,9 @@
 
 
                                 <div class="col-md-2 mb-2">
-                                    <label class="form-label">Customer Stage</label>
+                                    <label class="form-label">Customer Stage @if(isset($enquiry))<span class="text-danger">*</span>@endif</label>
                                     <select name="cre_customer_stage" id="cre_customer_stage"
-                                        class="form-control form-select">
+                                        class="form-control form-select" @if(isset($enquiry)) required @endif>
                                         <option value="">Select Stage</option>
                                         @foreach ($customer_stages as $item)
                                             <option value="{{ $item['code'] }}"
@@ -2069,10 +2073,10 @@
                                 </div>
 
                                 <div class="col-md-2 mb-2">
-                                    <label class="form-label">Next Fup Date</label>
+                                    <label class="form-label">Next Fup Date @if(isset($enquiry))<span class="text-danger">*</span>@endif</label>
                                     <input type="text" id="cre_next_fup_date" name="cre_next_fup_date"
                                         class="form-control" value="{{ old('cre_next_fup_date') }}"
-                                        placeholder="DD-MMM-YYYY HH:MM">
+                                        placeholder="DD-MMM-YYYY HH:MM" @if(isset($enquiry)) required @endif>
                                 </div>
                                 <div class="col-md-2 mb-2">
                                     <label class="form-label">CRE Followup Remarks</label>
@@ -2348,7 +2352,8 @@
             flatpickr("#cre_next_fup_date", {
                 dateFormat: "d-M-Y H:i",
                 enableTime: true,
-                allowInput: false
+                allowInput: false,
+                minDate: "today"
             });
 
             // Toggle FUPs button listener
@@ -2626,6 +2631,7 @@
                             'pointer-events': 'auto',
                             'background-color': ''
                         })
+                        .prop('required', currentEnquiry.isEdit ? true : false)
                         .removeAttr('tabindex');
                 }
             }
