@@ -131,7 +131,7 @@ class CampaignCrudController extends CrudController
 
         \Alert::success('Campaign created successfully.')->flash();
 
-        return redirect()->route('campaign.index');
+        return redirect()->route('sales.campaign.index');
     }
 
     public function edit($id)
@@ -169,7 +169,7 @@ class CampaignCrudController extends CrudController
 
         \Alert::success('Campaign updated successfully.')->flash();
 
-        return redirect()->route('campaign.index');
+        return redirect()->route('sales.campaign.index');
     }
 
     public function destroy($id)
