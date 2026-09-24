@@ -674,15 +674,15 @@
     <x-backpack::menu-dropdown title="Exchange" icon="la la-exchange-alt" nested="true">
         <x-backpack::menu-dropdown title="Enquiry Stage" icon="la la-question-circle" nested="true">
             <a class="dropdown-item d-flex align-items-center justify-content-between"
-                href="{{ backpack_url('exchange/enquiry/int-in-exchange') }}">
+                href="{{ backpack_url('sales/enquiry/exchange/int-in-exchange') }}">
                 <span><i class="la la-check me-2"></i>Int in Exchange</span>
             </a>
             <a class="dropdown-item d-flex align-items-center justify-content-between"
-                href="{{ backpack_url('exchange/enquiry/int-in-scrappage') }}">
+                href="{{ backpack_url('sales/enquiry/exchange/int-in-scrappage') }}">
                 <span><i class="la la-recycle me-2"></i>Int in Scrappage</span>
             </a>
             <a class="dropdown-item d-flex align-items-center justify-content-between"
-                href="{{ backpack_url('exchange/enquiry/not-interested') }}">
+                href="{{ backpack_url('sales/enquiry/exchange/not-interested') }}">
                 <span><i class="la la-thumbs-down me-2"></i>Not Interested</span>
             </a>
         </x-backpack::menu-dropdown>
@@ -708,11 +708,11 @@
     <x-backpack::menu-dropdown title="Finance" icon="la la-money-bill" nested="true">
         <x-backpack::menu-dropdown title="Enquiry Stage" icon="la la-question-circle" nested="true">
             <a class="dropdown-item d-flex align-items-center justify-content-between"
-                href="{{ backpack_url('finance/enquiry/int-in-finance') }}">
+                href="{{ backpack_url('sales/enquiry/finance/int-in-finance') }}">
                 <span><i class="la la-check me-2"></i>Int in Finance</span>
             </a>
             <a class="dropdown-item d-flex align-items-center justify-content-between"
-                href="{{ backpack_url('finance/enquiry/not-interested') }}">
+                href="{{ backpack_url('sales/enquiry/finance/not-interested') }}">
                 <span><i class="la la-thumbs-down me-2"></i>Not Interested</span>
             </a>
         </x-backpack::menu-dropdown>
