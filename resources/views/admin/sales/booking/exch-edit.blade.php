@@ -26,7 +26,7 @@
 
                             <div class="col-sm-2 form-group">
                                 <label class="form-label">Purchase Type <span class="required-mark">*</span></label>
-                                <select name="buyer_type" id="buyer_type" class="form-control select2 form-select" required>
+                                <select name="buyer_type" id="buyer_type" class="form-control form-select" required>
                                     <option value="First Time Buy"
                                         {{ $booking->buyer_type == 'First Time Buy' ? 'selected' : '' }}>
                                         First time
@@ -51,7 +51,7 @@
                             <div class="col-sm-2 form-group">
                                 <label class="form-label">Brand (Make 1) <span class="required-mark"
                                         style="display: none;">*</span></label>
-                                <select name="enum_master1" id="enum_master1" class="form-select select2">
+                                <select name="enum_master1" id="enum_master1" class="form-select">
                                     <option value="0">Please Select...</option>
                                     @foreach ($data['enum_master'] as $enum)
                                         <option value="{{ $enum->code }}"
@@ -78,7 +78,7 @@
                             <div class="col-sm-2 form-group">
                                 <label class="form-label">Brand (Make 2) <span class="required-mark"
                                         style="display: none;">*</span></label>
-                                <select name="enum_master2" id="enum_master2" class="form-select select2">
+                                <select name="enum_master2" id="enum_master2" class="form-select">
                                     <option value="0">Please Select...</option>
                                     @foreach ($data['enum_master'] as $enum)
                                         <option value="{{ $enum->code }}"

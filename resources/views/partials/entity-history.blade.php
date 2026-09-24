@@ -39,30 +39,42 @@
     </div>
 </div>
 <script>
-    $(document).on(
-    'click',
-    '.history-media-thumb,.pdf-preview-btn',
-    function(){
+document.addEventListener('click', function (event) {
 
-        let url  = $(this).data('url');
-        let type = $(this).data('type');
+    const target = event.target.closest(
+        '.history-media-thumb, .pdf-preview-btn'
+    );
 
-        $('#historyModalImage').hide();
-        $('#historyModalPdf').hide();
-
-        if(type === 'image'){
-            $('#historyModalImage')
-                .attr('src',url)
-                .show();
-        }
-        else{
-            $('#historyModalPdf')
-                .attr('src',url)
-                .show();
-        }
-
-        $('#historyMediaModal').modal('show');
+    if (!target) {
+        return;
     }
-);
 
+    const url = target.dataset.url;
+    const type = target.dataset.type;
+
+    const image = document.getElementById('historyModalImage');
+    const pdf = document.getElementById('historyModalPdf');
+    const modalElement = document.getElementById('historyMediaModal');
+
+    if (!image || !pdf || !modalElement) {
+        return;
+    }
+
+    // Hide both
+    image.style.display = 'none';
+    pdf.style.display = 'none';
+
+    // Show selected preview
+    if (type === 'image') {
+        image.src = url;
+        image.style.display = 'block';
+    } else if (type === 'pdf') {
+        pdf.src = url;
+        pdf.style.display = 'block';
+    }
+
+    // Open Bootstrap modal
+    const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+    modal.show();
+});
 </script>

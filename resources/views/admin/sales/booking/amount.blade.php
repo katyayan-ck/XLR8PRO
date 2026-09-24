@@ -14,41 +14,66 @@
                         Booking Summary
                     </h2>
                 </div>
+
                 <div class="card-body">
                     <div class="row g-3">
+
                         <div class="col-sm-3">
                             <label class="small fw-bold">Booking Date</label>
-                            <input type="text" class="form-control"
+                            <input type="text"
+                                class="form-control"
                                 value="@sitedate($booking->booking_date)"
                                 readonly>
                         </div>
+
                         <div class="col-sm-3">
                             <label class="small fw-bold">Customer Name</label>
-                            <input type="text" class="form-control" value="{{ $booking->name ?? 'N/A' }}" readonly>
+                            <input type="text"
+                                class="form-control"
+                                value="{{ $data['customer_name'] ?? 'N/A' }}"
+                                readonly>
                         </div>
+
                         <div class="col-sm-3">
                             <label class="small fw-bold">Branch</label>
-                            <input type="text" class="form-control" value="{{ $booking->branch?->name ?? 'N/A' }}"
+                            <input type="text"
+                                class="form-control"
+                                value="{{ $data['branch_name'] ?? 'N/A' }}"
                                 readonly>
                         </div>
+
                         <div class="col-sm-3">
                             <label class="small fw-bold">Location</label>
-                            <input type="text" class="form-control"
-                                value="{{ $booking->location ? ($booking->location->name  ?? 'N/A') : 'N/A' }}"
+                            <input type="text"
+                                class="form-control"
+                                value="{{ $data['location_name'] ?? 'N/A' }}"
                                 readonly>
                         </div>
+
                         <div class="col-sm-4">
                             <label class="small fw-bold">Model</label>
-                            <input type="text" class="form-control" value="{{ $booking->model_code ?? 'N/A' }}" readonly>
+                            <input type="text"
+                                class="form-control"
+                                value="{{ $data['model_name'] ?? 'N/A' }}"
+                                readonly>
                         </div>
+
                         <div class="col-sm-4">
                             <label class="small fw-bold">Variant</label>
-                            <input type="text" class="form-control" value="{{ $booking->variant_code ?? 'N/A' }}" readonly>
+                            <input type="text"
+                                class="form-control"
+                                value="{{ $data['variant_name'] ?? 'N/A' }}"
+                                readonly>
                         </div>
+
                         <div class="col-sm-4">
                             <label class="small fw-bold">Color</label>
-                            <input type="text" class="form-control" value="{{ $booking->color_code ?? 'N/A' }}" readonly>
+                            <input type="text"
+                                class="form-control"
+                                value="{{ $data['color_name'] ?? 'N/A' }}"
+                                readonly>
                         </div>
+
                     </div>
                 </div>
             </div>
@@ -69,7 +94,7 @@
                         <input type="hidden" name="bid" value="{{ $booking->id }}">
 
                         <div class="row g-4">
-                            <div class="col-md-3">
+                            <div class="col-md-2">
                                 <div class="form-group">
                                     <label for="receipt_date" class="form-label">Receipt Date <span
                                             class="text-danger">*</span></label>
@@ -79,7 +104,7 @@
                                 </div>
                             </div>
 
-                            <div class="col-md-3">
+                            <div class="col-md-2">
                                 <div class="form-group">
                                     <label for="reciept_no" class="form-label">Receipt Number <span
                                             class="text-danger">*</span></label>
@@ -106,7 +131,7 @@
                                 </div>
                             </div>
 
-                            <div class="col-md-3">
+                            <div class="col-md-2">
                                 <div class="form-group">
                                     <label for="amount" class="form-label">Received Amount <span
                                             class="text-danger">*</span></label>
@@ -168,7 +193,7 @@
 @push('after_scripts')
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     // Site-wide date display format (see .ai/rules/conventions.md section 13) - flatpickr's
     // token syntax matches PHP's date() tokens, so the PHP-side format string is reused as-is.
@@ -230,10 +255,16 @@
         if (input.files && input.files[0]) {
             const file = input.files[0];
 
-            // Optional: Size check
             if (file.size > 2 * 1024 * 1024) {
-                alert('File size exceeds 2MB!');
                 input.value = '';
+
+                Swal.fire({
+                    icon: 'error',
+                    title: 'File Too Large',
+                    text: 'File size must not exceed 2MB.',
+                    confirmButtonText: 'OK'
+                });
+
                 return;
             }
 

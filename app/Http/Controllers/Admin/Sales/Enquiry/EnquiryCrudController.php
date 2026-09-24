@@ -306,7 +306,11 @@ class EnquiryCrudController extends CrudController
             }),
 
             'finance' => Enquiry::where('fin_mode', 'In-house'),
-            'finance_not_interested' => Enquiry::whereIn('fin_mode', ['Cash', 'Customer Self', 'Yet To Decide', 'Purchase Plan Cancelled']),
+            'finance_not_interested' => Enquiry::where(function ($q) {
+                $q->whereNull('fin_mode')
+                ->orWhere('fin_mode', '')
+                ->orWhere('fin_mode', '!=', 'In-house');
+            }),
 
             // APPLY NEW SCOPE TO THE DEFAULT MAIN LISTING
             default => Enquiry::mainListing(),

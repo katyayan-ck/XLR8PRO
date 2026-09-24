@@ -105,8 +105,10 @@ class BookingCoreService
         $booking = new Booking;
         $quotation = null;
 
-        if (! empty($input['quotation_no'] ?? null)) {
-            $quotation = Quotation::where('id', $input['quotation_no'])->first();
+        $quotationId = $input['quotation_id'] ?? $input['quotation_no'] ?? null;
+
+        if (! empty($quotationId)) {
+            $quotation = Quotation::find($quotationId);
         }
 
         if ($quotation) {

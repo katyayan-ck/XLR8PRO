@@ -38,84 +38,84 @@
 <div class="card card-body shadow-sm mb-4" style="border-radius:12px">
     <h2 class="mb-3">Invoice Details</h2>
     <div class="row">
-        <div class="col-md-3 form-group readonly-field">
+        <div class="col-md-2 form-group readonly-field">
             <label class="readonly-label">XB No.</label>
             <div class="readonly-value">
                 {{ $booking->id ?? '—' }}
             </div>
         </div>
 
-        <div class="col-md-3 form-group readonly-field">
+        <div class="col-md-2 form-group readonly-field">
             <label class="readonly-label">Booking Date</label>
             <div class="readonly-value">
                 @sitedate($booking->booking_date, '—')
             </div>
         </div>
 
-        <div class="col-md-3 form-group readonly-field">
+        <div class="col-md-2 form-group readonly-field">
             <label class="readonly-label">DMS OTF No.</label>
             <div class="readonly-value">
                 {{ $booking->dms_otf ?? '—' }}
             </div>
         </div>
 
-        <div class="col-md-3 form-group readonly-field">
+        <div class="col-md-2 form-group readonly-field">
             <label class="readonly-label">Customer Name</label>
             <div class="readonly-value">
                 {{ $customer_name ?? '—' }}
             </div>
         </div>
 
-        <div class="col-md-3 form-group readonly-field">
+        <div class="col-md-2 form-group readonly-field">
             <label class="readonly-label">Branch</label>
             <div class="readonly-value">
                 {{ $branch_name ?? '—' }}
             </div>
         </div>
 
-        <div class="col-md-3 form-group readonly-field">
+        <div class="col-md-2 form-group readonly-field">
             <label class="readonly-label">Location</label>
             <div class="readonly-value">
                 {{ $location_name ?? '—' }}
             </div>
         </div>
 
-        <div class="col-md-3 form-group readonly-field">
+        <div class="col-md-2 form-group readonly-field">
             <label class="readonly-label">Model</label>
             <div class="readonly-value">
                 {{ $model_name ?? '—' }}
             </div>
         </div>
 
-        <div class="col-md-3 form-group readonly-field">
+        <div class="col-md-2 form-group readonly-field">
             <label class="readonly-label">Variant</label>
             <div class="readonly-value">
                 {{ $variant_name ?? '—' }}
             </div>
         </div>
 
-        <div class="col-md-3 form-group readonly-field">
+        <div class="col-md-2 form-group readonly-field">
             <label class="readonly-label">Color</label>
             <div class="readonly-value">
                 {{ $color_name ?? '—' }}
             </div>
         </div>
 
-        <div class="col-md-3 form-group readonly-field">
+        <div class="col-md-2 form-group readonly-field">
             <label class="readonly-label">Chassis No.</label>
             <div class="readonly-value">
                 {{ $booking->chassis_no ?? $booking->chassis_no ?? '—' }}
             </div>
         </div>
 
-        <div class="col-md-3 form-group readonly-field">
+        <div class="col-md-2 form-group readonly-field">
             <label class="readonly-label">Dealer Invoice No.</label>
             <div class="readonly-value">
                 {{ $booking->dealer_inv_no ?? '—' }}
             </div>
         </div>
 
-        <div class="col-md-3 form-group readonly-field">
+        <div class="col-md-2 form-group readonly-field">
             <label class="readonly-label">Dealer Invoice Date</label>
             <div class="readonly-value">
                 @sitedate($booking->dealer_inv_date, '—')

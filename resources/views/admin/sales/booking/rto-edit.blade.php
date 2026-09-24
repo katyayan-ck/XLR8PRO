@@ -107,9 +107,6 @@
                 <label class="readonly-label">Customer Name</label>
                 <div class="readonly-value">
                     {{ $booking->name ?? '—' }}
-                    @if($booking->care_of)
-                    (C/o: {{ $booking->care_of }})
-                    @endif
                 </div>
             </div>
 
