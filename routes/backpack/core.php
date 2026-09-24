@@ -38,6 +38,7 @@ use App\Http\Controllers\Admin\Vehicle\Segment\SegmentCrudController;
 use App\Http\Controllers\Admin\Vehicle\SubSegment\SubSegmentCrudController;
 use App\Http\Controllers\Admin\Vehicle\Variant\VariantCrudController;
 use App\Http\Controllers\Admin\VehicleAccessoryCrudController;
+use App\Http\Controllers\Admin\ImportController;
 use Illuminate\Support\Facades\Route;
 
 Route::group([
@@ -86,53 +87,53 @@ Route::group([
     // hooks (in addition to redundant inline checks in the overridden action methods), and
     // search()/showDetailsRow() have NO inline override at all, relying solely on the hook. See
     // .ai/rules/module-structure.md §3 and known-bugs-report.md BUG-064.
-    Route::get('vehicle/brand', ['uses' => BrandCrudController::class.'@index', 'as' => 'vehicle.brand.index', 'operation' => 'list']);
-    Route::post('vehicle/brand', ['uses' => BrandCrudController::class.'@store', 'as' => 'vehicle.brand.store', 'operation' => 'create']);
-    Route::get('vehicle/brand/create', ['uses' => BrandCrudController::class.'@create', 'as' => 'vehicle.brand.create', 'operation' => 'create']);
-    Route::post('vehicle/brand/search', ['uses' => BrandCrudController::class.'@search', 'as' => 'vehicle.brand.search', 'operation' => 'list']);
-    Route::delete('vehicle/brand/{id}', ['uses' => BrandCrudController::class.'@destroy', 'as' => 'vehicle.brand.destroy', 'operation' => 'delete']);
-    Route::put('vehicle/brand/{id}', ['uses' => BrandCrudController::class.'@update', 'as' => 'vehicle.brand.update', 'operation' => 'update']);
-    Route::get('vehicle/brand/{id}/details', ['uses' => BrandCrudController::class.'@showDetailsRow', 'as' => 'vehicle.brand.details', 'operation' => 'list']);
-    Route::get('vehicle/brand/{id}/edit', ['uses' => BrandCrudController::class.'@edit', 'as' => 'vehicle.brand.edit', 'operation' => 'update']);
+    Route::get('vehicle/brand', ['uses' => BrandCrudController::class . '@index', 'as' => 'vehicle.brand.index', 'operation' => 'list']);
+    Route::post('vehicle/brand', ['uses' => BrandCrudController::class . '@store', 'as' => 'vehicle.brand.store', 'operation' => 'create']);
+    Route::get('vehicle/brand/create', ['uses' => BrandCrudController::class . '@create', 'as' => 'vehicle.brand.create', 'operation' => 'create']);
+    Route::post('vehicle/brand/search', ['uses' => BrandCrudController::class . '@search', 'as' => 'vehicle.brand.search', 'operation' => 'list']);
+    Route::delete('vehicle/brand/{id}', ['uses' => BrandCrudController::class . '@destroy', 'as' => 'vehicle.brand.destroy', 'operation' => 'delete']);
+    Route::put('vehicle/brand/{id}', ['uses' => BrandCrudController::class . '@update', 'as' => 'vehicle.brand.update', 'operation' => 'update']);
+    Route::get('vehicle/brand/{id}/details', ['uses' => BrandCrudController::class . '@showDetailsRow', 'as' => 'vehicle.brand.details', 'operation' => 'list']);
+    Route::get('vehicle/brand/{id}/edit', ['uses' => BrandCrudController::class . '@edit', 'as' => 'vehicle.brand.edit', 'operation' => 'update']);
 
-    Route::get('vehicle/color', ['uses' => ColorCrudController::class.'@index', 'as' => 'vehicle.color.index', 'operation' => 'list']);
-    Route::post('vehicle/color', ['uses' => ColorCrudController::class.'@store', 'as' => 'vehicle.color.store', 'operation' => 'create']);
-    Route::get('vehicle/color/create', ['uses' => ColorCrudController::class.'@create', 'as' => 'vehicle.color.create', 'operation' => 'create']);
-    Route::post('vehicle/color/search', ['uses' => ColorCrudController::class.'@search', 'as' => 'vehicle.color.search', 'operation' => 'list']);
-    Route::delete('vehicle/color/{id}', ['uses' => ColorCrudController::class.'@destroy', 'as' => 'vehicle.color.destroy', 'operation' => 'delete']);
-    Route::put('vehicle/color/{id}', ['uses' => ColorCrudController::class.'@update', 'as' => 'vehicle.color.update', 'operation' => 'update']);
-    Route::get('vehicle/color/{id}/details', ['uses' => ColorCrudController::class.'@showDetailsRow', 'as' => 'vehicle.color.details', 'operation' => 'list']);
-    Route::get('vehicle/color/{id}/edit', ['uses' => ColorCrudController::class.'@edit', 'as' => 'vehicle.color.edit', 'operation' => 'update']);
+    Route::get('vehicle/color', ['uses' => ColorCrudController::class . '@index', 'as' => 'vehicle.color.index', 'operation' => 'list']);
+    Route::post('vehicle/color', ['uses' => ColorCrudController::class . '@store', 'as' => 'vehicle.color.store', 'operation' => 'create']);
+    Route::get('vehicle/color/create', ['uses' => ColorCrudController::class . '@create', 'as' => 'vehicle.color.create', 'operation' => 'create']);
+    Route::post('vehicle/color/search', ['uses' => ColorCrudController::class . '@search', 'as' => 'vehicle.color.search', 'operation' => 'list']);
+    Route::delete('vehicle/color/{id}', ['uses' => ColorCrudController::class . '@destroy', 'as' => 'vehicle.color.destroy', 'operation' => 'delete']);
+    Route::put('vehicle/color/{id}', ['uses' => ColorCrudController::class . '@update', 'as' => 'vehicle.color.update', 'operation' => 'update']);
+    Route::get('vehicle/color/{id}/details', ['uses' => ColorCrudController::class . '@showDetailsRow', 'as' => 'vehicle.color.details', 'operation' => 'list']);
+    Route::get('vehicle/color/{id}/edit', ['uses' => ColorCrudController::class . '@edit', 'as' => 'vehicle.color.edit', 'operation' => 'update']);
 
-    Route::get('vehicle/segment', ['uses' => SegmentCrudController::class.'@index', 'as' => 'vehicle.segment.index', 'operation' => 'list']);
-    Route::post('vehicle/segment', ['uses' => SegmentCrudController::class.'@store', 'as' => 'vehicle.segment.store', 'operation' => 'create']);
-    Route::get('vehicle/segment/create', ['uses' => SegmentCrudController::class.'@create', 'as' => 'vehicle.segment.create', 'operation' => 'create']);
-    Route::post('vehicle/segment/import', ['uses' => SegmentCrudController::class.'@import', 'as' => 'vehicle.segment.import', 'operation' => 'create']);
-    Route::post('vehicle/segment/search', ['uses' => SegmentCrudController::class.'@search', 'as' => 'vehicle.segment.search', 'operation' => 'list']);
-    Route::delete('vehicle/segment/{id}', ['uses' => SegmentCrudController::class.'@destroy', 'as' => 'vehicle.segment.destroy', 'operation' => 'delete']);
-    Route::put('vehicle/segment/{id}', ['uses' => SegmentCrudController::class.'@update', 'as' => 'vehicle.segment.update', 'operation' => 'update']);
-    Route::get('vehicle/segment/{id}/details', ['uses' => SegmentCrudController::class.'@showDetailsRow', 'as' => 'vehicle.segment.details', 'operation' => 'list']);
-    Route::get('vehicle/segment/{id}/edit', ['uses' => SegmentCrudController::class.'@edit', 'as' => 'vehicle.segment.edit', 'operation' => 'update']);
+    Route::get('vehicle/segment', ['uses' => SegmentCrudController::class . '@index', 'as' => 'vehicle.segment.index', 'operation' => 'list']);
+    Route::post('vehicle/segment', ['uses' => SegmentCrudController::class . '@store', 'as' => 'vehicle.segment.store', 'operation' => 'create']);
+    Route::get('vehicle/segment/create', ['uses' => SegmentCrudController::class . '@create', 'as' => 'vehicle.segment.create', 'operation' => 'create']);
+    Route::post('vehicle/segment/import', ['uses' => SegmentCrudController::class . '@import', 'as' => 'vehicle.segment.import', 'operation' => 'create']);
+    Route::post('vehicle/segment/search', ['uses' => SegmentCrudController::class . '@search', 'as' => 'vehicle.segment.search', 'operation' => 'list']);
+    Route::delete('vehicle/segment/{id}', ['uses' => SegmentCrudController::class . '@destroy', 'as' => 'vehicle.segment.destroy', 'operation' => 'delete']);
+    Route::put('vehicle/segment/{id}', ['uses' => SegmentCrudController::class . '@update', 'as' => 'vehicle.segment.update', 'operation' => 'update']);
+    Route::get('vehicle/segment/{id}/details', ['uses' => SegmentCrudController::class . '@showDetailsRow', 'as' => 'vehicle.segment.details', 'operation' => 'list']);
+    Route::get('vehicle/segment/{id}/edit', ['uses' => SegmentCrudController::class . '@edit', 'as' => 'vehicle.segment.edit', 'operation' => 'update']);
 
-    Route::get('vehicle/sub-segment', ['uses' => SubSegmentCrudController::class.'@index', 'as' => 'vehicle.sub-segment.index', 'operation' => 'list']);
-    Route::post('vehicle/sub-segment', ['uses' => SubSegmentCrudController::class.'@store', 'as' => 'vehicle.sub-segment.store', 'operation' => 'create']);
-    Route::get('vehicle/sub-segment/create', ['uses' => SubSegmentCrudController::class.'@create', 'as' => 'vehicle.sub-segment.create', 'operation' => 'create']);
-    Route::post('vehicle/sub-segment/search', ['uses' => SubSegmentCrudController::class.'@search', 'as' => 'vehicle.sub-segment.search', 'operation' => 'list']);
-    Route::delete('vehicle/sub-segment/{id}', ['uses' => SubSegmentCrudController::class.'@destroy', 'as' => 'vehicle.sub-segment.destroy', 'operation' => 'delete']);
-    Route::put('vehicle/sub-segment/{id}', ['uses' => SubSegmentCrudController::class.'@update', 'as' => 'vehicle.sub-segment.update', 'operation' => 'update']);
-    Route::get('vehicle/sub-segment/{id}/details', ['uses' => SubSegmentCrudController::class.'@showDetailsRow', 'as' => 'vehicle.sub-segment.details', 'operation' => 'list']);
-    Route::get('vehicle/sub-segment/{id}/edit', ['uses' => SubSegmentCrudController::class.'@edit', 'as' => 'vehicle.sub-segment.edit', 'operation' => 'update']);
+    Route::get('vehicle/sub-segment', ['uses' => SubSegmentCrudController::class . '@index', 'as' => 'vehicle.sub-segment.index', 'operation' => 'list']);
+    Route::post('vehicle/sub-segment', ['uses' => SubSegmentCrudController::class . '@store', 'as' => 'vehicle.sub-segment.store', 'operation' => 'create']);
+    Route::get('vehicle/sub-segment/create', ['uses' => SubSegmentCrudController::class . '@create', 'as' => 'vehicle.sub-segment.create', 'operation' => 'create']);
+    Route::post('vehicle/sub-segment/search', ['uses' => SubSegmentCrudController::class . '@search', 'as' => 'vehicle.sub-segment.search', 'operation' => 'list']);
+    Route::delete('vehicle/sub-segment/{id}', ['uses' => SubSegmentCrudController::class . '@destroy', 'as' => 'vehicle.sub-segment.destroy', 'operation' => 'delete']);
+    Route::put('vehicle/sub-segment/{id}', ['uses' => SubSegmentCrudController::class . '@update', 'as' => 'vehicle.sub-segment.update', 'operation' => 'update']);
+    Route::get('vehicle/sub-segment/{id}/details', ['uses' => SubSegmentCrudController::class . '@showDetailsRow', 'as' => 'vehicle.sub-segment.details', 'operation' => 'list']);
+    Route::get('vehicle/sub-segment/{id}/edit', ['uses' => SubSegmentCrudController::class . '@edit', 'as' => 'vehicle.sub-segment.edit', 'operation' => 'update']);
     Route::get('vehicle/sub-segment/segments/{brandCode}', [SubSegmentCrudController::class, 'getSegmentsByBrand'])->name('vehicle.sub-segment.get-segments');
     Route::get('vehicle/sub-segment/sub-segments/{segmentCode}', [SubSegmentCrudController::class, 'getSubSegmentsBySegment'])->name('vehicle.sub-segment.get-sub-segments');
 
-    Route::get('vehicle/variant', ['uses' => VariantCrudController::class.'@index', 'as' => 'vehicle.variant.index', 'operation' => 'list']);
-    Route::post('vehicle/variant', ['uses' => VariantCrudController::class.'@store', 'as' => 'vehicle.variant.store', 'operation' => 'create']);
-    Route::get('vehicle/variant/create', ['uses' => VariantCrudController::class.'@create', 'as' => 'vehicle.variant.create', 'operation' => 'create']);
-    Route::post('vehicle/variant/search', ['uses' => VariantCrudController::class.'@search', 'as' => 'vehicle.variant.search', 'operation' => 'list']);
-    Route::delete('vehicle/variant/{id}', ['uses' => VariantCrudController::class.'@destroy', 'as' => 'vehicle.variant.destroy', 'operation' => 'delete']);
-    Route::put('vehicle/variant/{id}', ['uses' => VariantCrudController::class.'@update', 'as' => 'vehicle.variant.update', 'operation' => 'update']);
-    Route::get('vehicle/variant/{id}/details', ['uses' => VariantCrudController::class.'@showDetailsRow', 'as' => 'vehicle.variant.details', 'operation' => 'list']);
-    Route::get('vehicle/variant/{id}/edit', ['uses' => VariantCrudController::class.'@edit', 'as' => 'vehicle.variant.edit', 'operation' => 'update']);
+    Route::get('vehicle/variant', ['uses' => VariantCrudController::class . '@index', 'as' => 'vehicle.variant.index', 'operation' => 'list']);
+    Route::post('vehicle/variant', ['uses' => VariantCrudController::class . '@store', 'as' => 'vehicle.variant.store', 'operation' => 'create']);
+    Route::get('vehicle/variant/create', ['uses' => VariantCrudController::class . '@create', 'as' => 'vehicle.variant.create', 'operation' => 'create']);
+    Route::post('vehicle/variant/search', ['uses' => VariantCrudController::class . '@search', 'as' => 'vehicle.variant.search', 'operation' => 'list']);
+    Route::delete('vehicle/variant/{id}', ['uses' => VariantCrudController::class . '@destroy', 'as' => 'vehicle.variant.destroy', 'operation' => 'delete']);
+    Route::put('vehicle/variant/{id}', ['uses' => VariantCrudController::class . '@update', 'as' => 'vehicle.variant.update', 'operation' => 'update']);
+    Route::get('vehicle/variant/{id}/details', ['uses' => VariantCrudController::class . '@showDetailsRow', 'as' => 'vehicle.variant.details', 'operation' => 'list']);
+    Route::get('vehicle/variant/{id}/edit', ['uses' => VariantCrudController::class . '@edit', 'as' => 'vehicle.variant.edit', 'operation' => 'update']);
 
     // ==================== STANDARD CRUD ROUTES ====================
     // ==================== IAM: MODULES / PERMISSION / PROCESS / ROLE ====================
@@ -140,97 +141,101 @@ Route::group([
     // on setupListOperation() etc. hooks (plus redundant inline checks in most action methods, but
     // NOT in search()/showDetailsRow(), which have no override at all). See BUG-064 /
     // .ai/rules/module-structure.md §3.
-    Route::get('iam/module', ['uses' => ModulesCrudController::class.'@index', 'as' => 'iam.module.index', 'operation' => 'list']);
-    Route::post('iam/module', ['uses' => ModulesCrudController::class.'@store', 'as' => 'iam.module.store', 'operation' => 'create']);
-    Route::get('iam/module/create', ['uses' => ModulesCrudController::class.'@create', 'as' => 'iam.module.create', 'operation' => 'create']);
-    Route::post('iam/module/search', ['uses' => ModulesCrudController::class.'@search', 'as' => 'iam.module.search', 'operation' => 'list']);
-    Route::delete('iam/module/{id}', ['uses' => ModulesCrudController::class.'@destroy', 'as' => 'iam.module.destroy', 'operation' => 'delete']);
-    Route::put('iam/module/{id}', ['uses' => ModulesCrudController::class.'@update', 'as' => 'iam.module.update', 'operation' => 'update']);
-    Route::get('iam/module/{id}/details', ['uses' => ModulesCrudController::class.'@showDetailsRow', 'as' => 'iam.module.details', 'operation' => 'list']);
-    Route::get('iam/module/{id}/edit', ['uses' => ModulesCrudController::class.'@edit', 'as' => 'iam.module.edit', 'operation' => 'update']);
+    Route::get('iam/module', ['uses' => ModulesCrudController::class . '@index', 'as' => 'iam.module.index', 'operation' => 'list']);
+    Route::post('iam/module', ['uses' => ModulesCrudController::class . '@store', 'as' => 'iam.module.store', 'operation' => 'create']);
+    Route::get('iam/module/create', ['uses' => ModulesCrudController::class . '@create', 'as' => 'iam.module.create', 'operation' => 'create']);
+    Route::post('iam/module/search', ['uses' => ModulesCrudController::class . '@search', 'as' => 'iam.module.search', 'operation' => 'list']);
+    Route::delete('iam/module/{id}', ['uses' => ModulesCrudController::class . '@destroy', 'as' => 'iam.module.destroy', 'operation' => 'delete']);
+    Route::put('iam/module/{id}', ['uses' => ModulesCrudController::class . '@update', 'as' => 'iam.module.update', 'operation' => 'update']);
+    Route::get('iam/module/{id}/details', ['uses' => ModulesCrudController::class . '@showDetailsRow', 'as' => 'iam.module.details', 'operation' => 'list']);
+    Route::get('iam/module/{id}/edit', ['uses' => ModulesCrudController::class . '@edit', 'as' => 'iam.module.edit', 'operation' => 'update']);
 
-    Route::get('iam/permission', ['uses' => PermissionCrudController::class.'@index', 'as' => 'iam.permission.index', 'operation' => 'list']);
-    Route::post('iam/permission', ['uses' => PermissionCrudController::class.'@store', 'as' => 'iam.permission.store', 'operation' => 'create']);
-    Route::get('iam/permission/create', ['uses' => PermissionCrudController::class.'@create', 'as' => 'iam.permission.create', 'operation' => 'create']);
-    Route::post('iam/permission/search', ['uses' => PermissionCrudController::class.'@search', 'as' => 'iam.permission.search', 'operation' => 'list']);
-    Route::delete('iam/permission/{id}', ['uses' => PermissionCrudController::class.'@destroy', 'as' => 'iam.permission.destroy', 'operation' => 'delete']);
-    Route::put('iam/permission/{id}', ['uses' => PermissionCrudController::class.'@update', 'as' => 'iam.permission.update', 'operation' => 'update']);
-    Route::get('iam/permission/{id}/details', ['uses' => PermissionCrudController::class.'@showDetailsRow', 'as' => 'iam.permission.details', 'operation' => 'list']);
-    Route::get('iam/permission/{id}/edit', ['uses' => PermissionCrudController::class.'@edit', 'as' => 'iam.permission.edit', 'operation' => 'update']);
+    Route::get('iam/permission', ['uses' => PermissionCrudController::class . '@index', 'as' => 'iam.permission.index', 'operation' => 'list']);
+    Route::post('iam/permission', ['uses' => PermissionCrudController::class . '@store', 'as' => 'iam.permission.store', 'operation' => 'create']);
+    Route::get('iam/permission/create', ['uses' => PermissionCrudController::class . '@create', 'as' => 'iam.permission.create', 'operation' => 'create']);
+    Route::post('iam/permission/search', ['uses' => PermissionCrudController::class . '@search', 'as' => 'iam.permission.search', 'operation' => 'list']);
+    Route::delete('iam/permission/{id}', ['uses' => PermissionCrudController::class . '@destroy', 'as' => 'iam.permission.destroy', 'operation' => 'delete']);
+    Route::put('iam/permission/{id}', ['uses' => PermissionCrudController::class . '@update', 'as' => 'iam.permission.update', 'operation' => 'update']);
+    Route::get('iam/permission/{id}/details', ['uses' => PermissionCrudController::class . '@showDetailsRow', 'as' => 'iam.permission.details', 'operation' => 'list']);
+    Route::get('iam/permission/{id}/edit', ['uses' => PermissionCrudController::class . '@edit', 'as' => 'iam.permission.edit', 'operation' => 'update']);
 
-    Route::get('iam/process', ['uses' => ProcessCrudController::class.'@index', 'as' => 'iam.process.index', 'operation' => 'list']);
-    Route::post('iam/process', ['uses' => ProcessCrudController::class.'@store', 'as' => 'iam.process.store', 'operation' => 'create']);
-    Route::get('iam/process/create', ['uses' => ProcessCrudController::class.'@create', 'as' => 'iam.process.create', 'operation' => 'create']);
-    Route::post('iam/process/search', ['uses' => ProcessCrudController::class.'@search', 'as' => 'iam.process.search', 'operation' => 'list']);
-    Route::delete('iam/process/{id}', ['uses' => ProcessCrudController::class.'@destroy', 'as' => 'iam.process.destroy', 'operation' => 'delete']);
-    Route::put('iam/process/{id}', ['uses' => ProcessCrudController::class.'@update', 'as' => 'iam.process.update', 'operation' => 'update']);
-    Route::get('iam/process/{id}/details', ['uses' => ProcessCrudController::class.'@showDetailsRow', 'as' => 'iam.process.details', 'operation' => 'list']);
-    Route::get('iam/process/{id}/edit', ['uses' => ProcessCrudController::class.'@edit', 'as' => 'iam.process.edit', 'operation' => 'update']);
+    Route::get('iam/process', ['uses' => ProcessCrudController::class . '@index', 'as' => 'iam.process.index', 'operation' => 'list']);
+    Route::post('iam/process', ['uses' => ProcessCrudController::class . '@store', 'as' => 'iam.process.store', 'operation' => 'create']);
+    Route::get('iam/process/create', ['uses' => ProcessCrudController::class . '@create', 'as' => 'iam.process.create', 'operation' => 'create']);
+    Route::post('iam/process/search', ['uses' => ProcessCrudController::class . '@search', 'as' => 'iam.process.search', 'operation' => 'list']);
+    Route::delete('iam/process/{id}', ['uses' => ProcessCrudController::class . '@destroy', 'as' => 'iam.process.destroy', 'operation' => 'delete']);
+    Route::put('iam/process/{id}', ['uses' => ProcessCrudController::class . '@update', 'as' => 'iam.process.update', 'operation' => 'update']);
+    Route::get('iam/process/{id}/details', ['uses' => ProcessCrudController::class . '@showDetailsRow', 'as' => 'iam.process.details', 'operation' => 'list']);
+    Route::get('iam/process/{id}/edit', ['uses' => ProcessCrudController::class . '@edit', 'as' => 'iam.process.edit', 'operation' => 'update']);
 
-    Route::get('iam/role', ['uses' => RoleCrudController::class.'@index', 'as' => 'iam.role.index', 'operation' => 'list']);
-    Route::post('iam/role', ['uses' => RoleCrudController::class.'@store', 'as' => 'iam.role.store', 'operation' => 'create']);
-    Route::get('iam/role/create', ['uses' => RoleCrudController::class.'@create', 'as' => 'iam.role.create', 'operation' => 'create']);
-    Route::post('iam/role/search', ['uses' => RoleCrudController::class.'@search', 'as' => 'iam.role.search', 'operation' => 'list']);
-    Route::delete('iam/role/{id}', ['uses' => RoleCrudController::class.'@destroy', 'as' => 'iam.role.destroy', 'operation' => 'delete']);
-    Route::put('iam/role/{id}', ['uses' => RoleCrudController::class.'@update', 'as' => 'iam.role.update', 'operation' => 'update']);
-    Route::get('iam/role/{id}/details', ['uses' => RoleCrudController::class.'@showDetailsRow', 'as' => 'iam.role.details', 'operation' => 'list']);
-    Route::get('iam/role/{id}/edit', ['uses' => RoleCrudController::class.'@edit', 'as' => 'iam.role.edit', 'operation' => 'update']);
+    Route::get('iam/role', ['uses' => RoleCrudController::class . '@index', 'as' => 'iam.role.index', 'operation' => 'list']);
+    Route::post('iam/role', ['uses' => RoleCrudController::class . '@store', 'as' => 'iam.role.store', 'operation' => 'create']);
+    Route::get('iam/role/create', ['uses' => RoleCrudController::class . '@create', 'as' => 'iam.role.create', 'operation' => 'create']);
+    Route::post('iam/role/search', ['uses' => RoleCrudController::class . '@search', 'as' => 'iam.role.search', 'operation' => 'list']);
+    Route::delete('iam/role/{id}', ['uses' => RoleCrudController::class . '@destroy', 'as' => 'iam.role.destroy', 'operation' => 'delete']);
+    Route::put('iam/role/{id}', ['uses' => RoleCrudController::class . '@update', 'as' => 'iam.role.update', 'operation' => 'update']);
+    Route::get('iam/role/{id}/details', ['uses' => RoleCrudController::class . '@showDetailsRow', 'as' => 'iam.role.details', 'operation' => 'list']);
+    Route::get('iam/role/{id}/edit', ['uses' => RoleCrudController::class . '@edit', 'as' => 'iam.role.edit', 'operation' => 'update']);
     Route::crud('vehicle-accessory', VehicleAccessoryCrudController::class);
 
     // ==================== ORG: Branch/Department/Designation/Division/Employee/Location/Person/PersonAddress/PersonBankingDetail/PersonContact/Vertical ====================
-    foreach ([
-        ['branch', 'org.branch', BranchCrudController::class],
-        ['department', 'org.department', DepartmentCrudController::class],
-        ['designation', 'org.designation', DesignationCrudController::class],
-        ['division', 'org.division', DivisionCrudController::class],
-        ['employee', 'org.employee', EmployeeCrudController::class],
-        ['location', 'org.location', LocationCrudController::class],
-        ['person', 'org.person', PersonCrudController::class],
-        ['person-address', 'org.person-address', PersonAddressCrudController::class],
-        ['person-banking-detail', 'org.person-banking-detail', PersonBankingDetailCrudController::class],
-        ['person-contact', 'org.person-contact', PersonContactCrudController::class],
-        ['vertical', 'org.vertical', VerticalCrudController::class],
-    ] as [$slug, $name, $controller]) {
-        $uri = 'org/'.$slug;
-        Route::get($uri, ['uses' => $controller.'@index', 'as' => $name.'.index', 'operation' => 'list']);
-        Route::post($uri, ['uses' => $controller.'@store', 'as' => $name.'.store', 'operation' => 'create']);
-        Route::get($uri.'/create', ['uses' => $controller.'@create', 'as' => $name.'.create', 'operation' => 'create']);
-        Route::post($uri.'/search', ['uses' => $controller.'@search', 'as' => $name.'.search', 'operation' => 'list']);
-        Route::delete($uri.'/{id}', ['uses' => $controller.'@destroy', 'as' => $name.'.destroy', 'operation' => 'delete']);
-        Route::put($uri.'/{id}', ['uses' => $controller.'@update', 'as' => $name.'.update', 'operation' => 'update']);
-        Route::get($uri.'/{id}/details', ['uses' => $controller.'@showDetailsRow', 'as' => $name.'.details', 'operation' => 'list']);
-        Route::get($uri.'/{id}/edit', ['uses' => $controller.'@edit', 'as' => $name.'.edit', 'operation' => 'update']);
+    foreach (
+        [
+            ['branch', 'org.branch', BranchCrudController::class],
+            ['department', 'org.department', DepartmentCrudController::class],
+            ['designation', 'org.designation', DesignationCrudController::class],
+            ['division', 'org.division', DivisionCrudController::class],
+            ['employee', 'org.employee', EmployeeCrudController::class],
+            ['location', 'org.location', LocationCrudController::class],
+            ['person', 'org.person', PersonCrudController::class],
+            ['person-address', 'org.person-address', PersonAddressCrudController::class],
+            ['person-banking-detail', 'org.person-banking-detail', PersonBankingDetailCrudController::class],
+            ['person-contact', 'org.person-contact', PersonContactCrudController::class],
+            ['vertical', 'org.vertical', VerticalCrudController::class],
+        ] as [$slug, $name, $controller]
+    ) {
+        $uri = 'org/' . $slug;
+        Route::get($uri, ['uses' => $controller . '@index', 'as' => $name . '.index', 'operation' => 'list']);
+        Route::post($uri, ['uses' => $controller . '@store', 'as' => $name . '.store', 'operation' => 'create']);
+        Route::get($uri . '/create', ['uses' => $controller . '@create', 'as' => $name . '.create', 'operation' => 'create']);
+        Route::post($uri . '/search', ['uses' => $controller . '@search', 'as' => $name . '.search', 'operation' => 'list']);
+        Route::delete($uri . '/{id}', ['uses' => $controller . '@destroy', 'as' => $name . '.destroy', 'operation' => 'delete']);
+        Route::put($uri . '/{id}', ['uses' => $controller . '@update', 'as' => $name . '.update', 'operation' => 'update']);
+        Route::get($uri . '/{id}/details', ['uses' => $controller . '@showDetailsRow', 'as' => $name . '.details', 'operation' => 'list']);
+        Route::get($uri . '/{id}/edit', ['uses' => $controller . '@edit', 'as' => $name . '.edit', 'operation' => 'update']);
     }
 
-    Route::put('org/designation/{id}/permissions', ['uses' => DesignationCrudController::class.'@updatePermissions', 'as' => 'org.designation.permissions', 'operation' => 'update']);
+    Route::put('org/designation/{id}/permissions', ['uses' => DesignationCrudController::class . '@updatePermissions', 'as' => 'org.designation.permissions', 'operation' => 'update']);
 
     // ==================== ORG: Person — integrated contacts/addresses/banking sub-resources ====================
-    foreach ([
-        ['contacts', 'contact', 'Contact'],
-        ['addresses', 'address', 'Address'],
-        ['banking', 'banking', 'Banking'],
-    ] as [$slug, $singular, $method]) {
+    foreach (
+        [
+            ['contacts', 'contact', 'Contact'],
+            ['addresses', 'address', 'Address'],
+            ['banking', 'banking', 'Banking'],
+        ] as [$slug, $singular, $method]
+    ) {
         $uri = "org/person/{id}/{$slug}";
-        Route::post($uri, ['uses' => PersonCrudController::class."@store{$method}", 'as' => "org.person.{$singular}.store", 'operation' => 'update']);
-        Route::put("{$uri}/{{$singular}Id}", ['uses' => PersonCrudController::class."@update{$method}", 'as' => "org.person.{$singular}.update", 'operation' => 'update']);
-        Route::delete("{$uri}/{{$singular}Id}", ['uses' => PersonCrudController::class."@destroy{$method}", 'as' => "org.person.{$singular}.destroy", 'operation' => 'update']);
-        Route::post("{$uri}/{{$singular}Id}/primary", ['uses' => PersonCrudController::class."@primary{$method}", 'as' => "org.person.{$singular}.primary", 'operation' => 'update']);
+        Route::post($uri, ['uses' => PersonCrudController::class . "@store{$method}", 'as' => "org.person.{$singular}.store", 'operation' => 'update']);
+        Route::put("{$uri}/{{$singular}Id}", ['uses' => PersonCrudController::class . "@update{$method}", 'as' => "org.person.{$singular}.update", 'operation' => 'update']);
+        Route::delete("{$uri}/{{$singular}Id}", ['uses' => PersonCrudController::class . "@destroy{$method}", 'as' => "org.person.{$singular}.destroy", 'operation' => 'update']);
+        Route::post("{$uri}/{{$singular}Id}/primary", ['uses' => PersonCrudController::class . "@primary{$method}", 'as' => "org.person.{$singular}.primary", 'operation' => 'update']);
     }
 
     // ==================== ORG: User ====================
-    Route::get('org/user', ['uses' => UserCrudController::class.'@index', 'as' => 'org.user.index', 'operation' => 'list']);
-    Route::post('org/user', ['uses' => UserCrudController::class.'@store', 'as' => 'org.user.store', 'operation' => 'create']);
-    Route::get('org/user/create', ['uses' => UserCrudController::class.'@create', 'as' => 'org.user.create', 'operation' => 'create']);
-    Route::get('org/user/search-persons', ['uses' => UserCrudController::class.'@searchPersons', 'as' => 'org.user.search-persons', 'operation' => 'create']);
-    Route::post('org/user/search', ['uses' => UserCrudController::class.'@search', 'as' => 'org.user.search', 'operation' => 'list']);
-    Route::delete('org/user/{id}', ['uses' => UserCrudController::class.'@destroy', 'as' => 'org.user.destroy', 'operation' => 'delete']);
-    Route::put('org/user/{id}', ['uses' => UserCrudController::class.'@update', 'as' => 'org.user.update', 'operation' => 'update']);
-    Route::get('org/user/{id}/show', ['uses' => UserCrudController::class.'@show', 'as' => 'org.user.show', 'operation' => 'list']);
-    Route::get('org/user/{id}/details', ['uses' => UserCrudController::class.'@showDetailsRow', 'as' => 'org.user.details', 'operation' => 'list']);
-    Route::get('org/user/{id}/edit', ['uses' => UserCrudController::class.'@edit', 'as' => 'org.user.edit', 'operation' => 'update']);
-    Route::post('org/user/{id}/suspend', ['uses' => UserCrudController::class.'@suspend', 'as' => 'org.user.suspend', 'operation' => 'update']);
-    Route::post('org/user/{id}/revoke', ['uses' => UserCrudController::class.'@revoke', 'as' => 'org.user.revoke', 'operation' => 'delete']);
-    Route::post('org/user/{id}/activate', ['uses' => UserCrudController::class.'@activate', 'as' => 'org.user.activate', 'operation' => 'update']);
+    Route::get('org/user', ['uses' => UserCrudController::class . '@index', 'as' => 'org.user.index', 'operation' => 'list']);
+    Route::post('org/user', ['uses' => UserCrudController::class . '@store', 'as' => 'org.user.store', 'operation' => 'create']);
+    Route::get('org/user/create', ['uses' => UserCrudController::class . '@create', 'as' => 'org.user.create', 'operation' => 'create']);
+    Route::get('org/user/search-persons', ['uses' => UserCrudController::class . '@searchPersons', 'as' => 'org.user.search-persons', 'operation' => 'create']);
+    Route::post('org/user/search', ['uses' => UserCrudController::class . '@search', 'as' => 'org.user.search', 'operation' => 'list']);
+    Route::delete('org/user/{id}', ['uses' => UserCrudController::class . '@destroy', 'as' => 'org.user.destroy', 'operation' => 'delete']);
+    Route::put('org/user/{id}', ['uses' => UserCrudController::class . '@update', 'as' => 'org.user.update', 'operation' => 'update']);
+    Route::get('org/user/{id}/show', ['uses' => UserCrudController::class . '@show', 'as' => 'org.user.show', 'operation' => 'list']);
+    Route::get('org/user/{id}/details', ['uses' => UserCrudController::class . '@showDetailsRow', 'as' => 'org.user.details', 'operation' => 'list']);
+    Route::get('org/user/{id}/edit', ['uses' => UserCrudController::class . '@edit', 'as' => 'org.user.edit', 'operation' => 'update']);
+    Route::post('org/user/{id}/suspend', ['uses' => UserCrudController::class . '@suspend', 'as' => 'org.user.suspend', 'operation' => 'update']);
+    Route::post('org/user/{id}/revoke', ['uses' => UserCrudController::class . '@revoke', 'as' => 'org.user.revoke', 'operation' => 'delete']);
+    Route::post('org/user/{id}/activate', ['uses' => UserCrudController::class . '@activate', 'as' => 'org.user.activate', 'operation' => 'update']);
 
     // =========== UTILS: SYSTEM SETTINGS ==========
     // (previously via Route::crud('system-settings', ...); explicit for slash-URL/dot-name split)
@@ -241,14 +246,14 @@ Route::group([
     // [Controller::class, 'method'] (as done for every other migrated controller in this rollout)
     // omits that key, which Route::crud()/setupXRoutes() always include — silently breaking the
     // hooks and leaving index()/create() completely unguarded. See known-bugs-report.md BUG-064.
-    Route::get('utils/system-setting', ['uses' => SystemSettingCrudController::class.'@index', 'as' => 'utils.system-setting.index', 'operation' => 'list']);
-    Route::post('utils/system-setting', ['uses' => SystemSettingCrudController::class.'@store', 'as' => 'utils.system-setting.store', 'operation' => 'create']);
-    Route::get('utils/system-setting/create', ['uses' => SystemSettingCrudController::class.'@create', 'as' => 'utils.system-setting.create', 'operation' => 'create']);
-    Route::get('utils/system-setting/{id}/edit', ['uses' => SystemSettingCrudController::class.'@edit', 'as' => 'utils.system-setting.edit', 'operation' => 'update']);
-    Route::put('utils/system-setting/{id}', ['uses' => SystemSettingCrudController::class.'@update', 'as' => 'utils.system-setting.update', 'operation' => 'update']);
+    Route::get('utils/system-setting', ['uses' => SystemSettingCrudController::class . '@index', 'as' => 'utils.system-setting.index', 'operation' => 'list']);
+    Route::post('utils/system-setting', ['uses' => SystemSettingCrudController::class . '@store', 'as' => 'utils.system-setting.store', 'operation' => 'create']);
+    Route::get('utils/system-setting/create', ['uses' => SystemSettingCrudController::class . '@create', 'as' => 'utils.system-setting.create', 'operation' => 'create']);
+    Route::get('utils/system-setting/{id}/edit', ['uses' => SystemSettingCrudController::class . '@edit', 'as' => 'utils.system-setting.edit', 'operation' => 'update']);
+    Route::put('utils/system-setting/{id}', ['uses' => SystemSettingCrudController::class . '@update', 'as' => 'utils.system-setting.update', 'operation' => 'update']);
     Route::delete('utils/system-setting/{id}', [SystemSettingCrudController::class, 'destroy'])->name('utils.system-setting.destroy');
-    Route::post('utils/system-setting/search', ['uses' => SystemSettingCrudController::class.'@search', 'as' => 'utils.system-setting.search', 'operation' => 'list']);
-    Route::get('utils/system-setting/{id}/details', ['uses' => SystemSettingCrudController::class.'@showDetailsRow', 'as' => 'utils.system-setting.details', 'operation' => 'list']);
+    Route::post('utils/system-setting/search', ['uses' => SystemSettingCrudController::class . '@search', 'as' => 'utils.system-setting.search', 'operation' => 'list']);
+    Route::get('utils/system-setting/{id}/details', ['uses' => SystemSettingCrudController::class . '@showDetailsRow', 'as' => 'utils.system-setting.details', 'operation' => 'list']);
     Route::get('utils/system-setting/{id}/show', [SystemSettingCrudController::class, 'show'])->name('utils.system-setting.show');
 
     // =========== UTILS: KEY VALUE ==========
@@ -271,14 +276,14 @@ Route::group([
 
     // =========== SPARES: SPARE REQUEST ==========
     // Same 'operation' key requirement as system-setting above — see BUG-064.
-    Route::get('spares/spare-request', ['uses' => SpareRequestCrudController::class.'@index', 'as' => 'spares.spare-request.index', 'operation' => 'list']);
-    Route::post('spares/spare-request', ['uses' => SpareRequestCrudController::class.'@store', 'as' => 'spares.spare-request.store', 'operation' => 'create']);
-    Route::get('spares/spare-request/create', ['uses' => SpareRequestCrudController::class.'@create', 'as' => 'spares.spare-request.create', 'operation' => 'create']);
-    Route::get('spares/spare-request/{id}/edit', ['uses' => SpareRequestCrudController::class.'@edit', 'as' => 'spares.spare-request.edit', 'operation' => 'update']);
-    Route::put('spares/spare-request/{id}', ['uses' => SpareRequestCrudController::class.'@update', 'as' => 'spares.spare-request.update', 'operation' => 'update']);
+    Route::get('spares/spare-request', ['uses' => SpareRequestCrudController::class . '@index', 'as' => 'spares.spare-request.index', 'operation' => 'list']);
+    Route::post('spares/spare-request', ['uses' => SpareRequestCrudController::class . '@store', 'as' => 'spares.spare-request.store', 'operation' => 'create']);
+    Route::get('spares/spare-request/create', ['uses' => SpareRequestCrudController::class . '@create', 'as' => 'spares.spare-request.create', 'operation' => 'create']);
+    Route::get('spares/spare-request/{id}/edit', ['uses' => SpareRequestCrudController::class . '@edit', 'as' => 'spares.spare-request.edit', 'operation' => 'update']);
+    Route::put('spares/spare-request/{id}', ['uses' => SpareRequestCrudController::class . '@update', 'as' => 'spares.spare-request.update', 'operation' => 'update']);
     Route::delete('spares/spare-request/{id}', [SpareRequestCrudController::class, 'destroy'])->name('spares.spare-request.destroy');
-    Route::post('spares/spare-request/search', ['uses' => SpareRequestCrudController::class.'@search', 'as' => 'spares.spare-request.search', 'operation' => 'list']);
-    Route::get('spares/spare-request/{id}/details', ['uses' => SpareRequestCrudController::class.'@showDetailsRow', 'as' => 'spares.spare-request.details', 'operation' => 'list']);
+    Route::post('spares/spare-request/search', ['uses' => SpareRequestCrudController::class . '@search', 'as' => 'spares.spare-request.search', 'operation' => 'list']);
+    Route::get('spares/spare-request/{id}/details', ['uses' => SpareRequestCrudController::class . '@showDetailsRow', 'as' => 'spares.spare-request.details', 'operation' => 'list']);
 
     // =========== ACCOUNTS: RECEIPT ==========
     Route::get('accounts/receipt', [ReceiptCrudController::class, 'index'])->name('accounts.receipt.index');
@@ -337,8 +342,8 @@ Route::group([
     // (traitSearch()/traitShowDetailsRow()), which only run setupListOperation() — and therefore
     // only pick up setListView('admin.sales.enquiry.list') — when the route carries the 'operation' key.
     // Same class of bug as BUG-064/BUG-091; see known-bugs-report.md.
-    Route::post('sales/enquiry/search', ['uses' => EnquiryCrudController::class.'@search', 'as' => 'sales.enquiry.search', 'operation' => 'list']);
-    Route::get('sales/enquiry/{id}/details', ['uses' => EnquiryCrudController::class.'@showDetailsRow', 'as' => 'sales.enquiry.details', 'operation' => 'list']);
+    Route::post('sales/enquiry/search', ['uses' => EnquiryCrudController::class . '@search', 'as' => 'sales.enquiry.search', 'operation' => 'list']);
+    Route::get('sales/enquiry/{id}/details', ['uses' => EnquiryCrudController::class . '@showDetailsRow', 'as' => 'sales.enquiry.details', 'operation' => 'list']);
 
     // Data / Export — 'grid-data' and 'export' are the real, working data()/export() methods;
     // 'grid-data-legacy'/'export-legacy' are BUG-046's confirmed-broken gridData()/exportData()
@@ -422,4 +427,10 @@ Route::group([
     Route::get('sales/enquiry/otf-bookings', [EnquiryCrudController::class, 'otfBookingsList'])
         ->name('sales.enquiry.otf-bookings');
     Route::get('sales/enquiry/otf-bookings/{id}/show', [EnquiryCrudController::class, 'showOtf'])->name('sales.enquiry.otf.show');
+    Route::prefix('imports')->name('imports.')->group(function () {
+        Route::get('admin', [ImportController::class, 'admin'])->name('admin');
+        Route::get('sales', [ImportController::class, 'sales'])->name('sales');
+        Route::get('service', [ImportController::class, 'service'])->name('service');
+        Route::get('spares', [ImportController::class, 'spares'])->name('spares');
+    });
 }); // ← This should be the last line

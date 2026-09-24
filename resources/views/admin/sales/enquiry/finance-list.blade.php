@@ -147,7 +147,7 @@
                     .then(data => {
                         // 2. Hide the custom HTML loader
                         if (loader) loader.style.display = 'none';
-                        
+
                         params.successCallback(data.rows || [], data.lastRow ?? 0);
 
                         // Auto-size the action column dynamically based on rendered buttons
@@ -213,11 +213,11 @@
             // Backend Global Search (Forces grid to fetch new matching data)
             document.getElementById('quickFilter')?.addEventListener('input', debounce(e => {
                 currentSearchText = e.target.value.trim();
-                
+
                 // Show the custom HTML loader
                 const loader = document.getElementById('gridLoader');
                 if (loader) loader.style.display = 'flex';
-                
+
                 gridApi.setGridOption('datasource', {
                     ...dataSource
                 });

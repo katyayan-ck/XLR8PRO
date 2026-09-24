@@ -60,7 +60,7 @@
         $isXceler8 = isset($enquiry) && strtoupper($enquiry->current_origin ?? '') === 'XCELER8';
 
         // Dynamic Heading string
-        $enqTypeStr = 'Enquiry';
+        $enqTypeStr = 'Xceler8 Enquiry';
         if ($isReference) {
             $enqTypeStr = 'Reference Enquiry';
         } elseif ($isVirtual) {
@@ -382,7 +382,8 @@
                                 <label class="form-label">Xceler8 Enquiry Date</label>
                                 <input type="text" name="enquiry_date" class="form-control"
                                     value="{{ $enquiry->created_at ? $enquiry->created_at->format('d-m-Y H:i:s') : '' }}"
-                                    readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                    readonly tabindex="-1"
+                                    style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                             </div>
                             <div class="col-md-2 mb-3">
                                 <label class="form-label">Virtual Number</label>
@@ -394,7 +395,8 @@
                                 <label class="form-label">Call Date</label>
                                 <input type="text" name="virtual_call_date" class="form-control"
                                     value="{{ !empty($enquiry->virtual_call_date) ? \Carbon\Carbon::parse($enquiry->virtual_call_date)->format('d-M-Y H:i') : '' }}"
-                                    readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                    readonly tabindex="-1"
+                                    style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                             </div>
                             <div class="col-md-2 mb-3">
                                 <label class="form-label">Call Duration</label>
@@ -461,9 +463,10 @@
                                                 // Standardize strings for automatic matching
                                                 $d = trim(strip_tags((string) $row['dump']));
                                                 $c = trim(strip_tags((string) $row['cre']));
-                                                
+
                                                 // Check if ANY of the two fields is missing/dash
-                                                $anyEmpty = in_array($d, ['—', '-', '']) || in_array($c, ['—', '-', '']);
+                                                $anyEmpty =
+                                                    in_array($d, ['—', '-', '']) || in_array($c, ['—', '-', '']);
 
                                                 if (in_array($d, ['—', '-', ''])) {
                                                     $d = '';
@@ -492,7 +495,8 @@
                                                         style="min-height: 38px;">
                                                         @if ($anyEmpty || (isset($row['skip_comparison']) && $row['skip_comparison']))
                                                             {{-- If any side is empty or skipped, always show a dash --}}
-                                                            <span class="text-secondary fw-bold" style="font-size: 1rem;">—</span>
+                                                            <span class="text-secondary fw-bold"
+                                                                style="font-size: 1rem;">—</span>
                                                         @elseif (isset($row['manual_mismatch']))
                                                             {{-- Manual Checkbox Logic --}}
                                                             <div class="d-flex align-items-center">
@@ -506,7 +510,7 @@
                                                             </div>
                                                         @else
                                                             {{-- Automatic Comparison Logic --}}
-                                                            @if($isAutoMismatch)
+                                                            @if ($isAutoMismatch)
                                                                 <span class="text-danger fw-bold d-flex align-items-center"
                                                                     style="font-size: 0.9rem;">
                                                                     <i class="la la-times-circle me-1"
@@ -544,14 +548,16 @@
                                     <label class="form-label">Xceler8 Enquiry Number</label>
                                     <input type="text" name="enq_no" class="form-control"
                                         value="{{ isset($enquiry->id) ? 'XENQ-' . $enquiry->id : '' }}" readonly
-                                        tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                        tabindex="-1"
+                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
 
                                 <div class="col-md-6 mb-6">
                                     <label class="form-label">Xceler8 Enquiry Date</label>
                                     <input type="text" name="enquiry_date" class="form-control"
                                         value="{{ $enquiry->created_at ? $enquiry->created_at->format('d-m-Y H:i:s') : '' }}"
-                                        readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                        readonly tabindex="-1"
+                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
 
                                 <div class="col-md-3 mb-3">
@@ -602,14 +608,16 @@
                                     <label class="form-label">Xceler8 Enquiry Number</label>
                                     <input type="text" name="enq_no" class="form-control"
                                         value="{{ isset($enquiry->id) ? 'XENQ-' . $enquiry->id : '' }}" readonly
-                                        tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                        tabindex="-1"
+                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
 
                                 <div class="col-md-6 mb-6">
                                     <label class="form-label">Xceler8 Enquiry Date</label>
                                     <input type="text" name="enquiry_date" class="form-control"
                                         value="{{ $enquiry->created_at ? $enquiry->created_at->format('d-m-Y H:i:s') : '' }}"
-                                        readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                        readonly tabindex="-1"
+                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                             @endif
 
@@ -893,7 +901,8 @@
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">Contact Number<span class="text-danger">*</span></label>
                                 <input type="text" id="mobile" name="mobile" maxlength="10" class="form-control"
-                                    value="{{ old('mobile', $enquiry->mobile ?? '') }}" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);" required>
+                                    value="{{ old('mobile', $enquiry->mobile ?? '') }}"
+                                    oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);" required>
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">Alternate Contact Number<small
@@ -986,15 +995,18 @@
                                     <label class="form-label">Purchase Type (SC Input)</label>
                                     <input type="text" class="form-control"
                                         value="{{ collect($purchase_types ?? [])->firstWhere('code', $enquiry?->purchase_type)['value'] ?? ($enquiry?->purchase_type ?? '—') }}"
-                                        readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                        readonly tabindex="-1"
+                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                     <input type="hidden" name="purchase_type"
                                         value="{{ old('purchase_type', $enquiry->purchase_type ?? '') }}">
                                 </div>
                             @endif
 
                             <div class="col-md-4 mb-4">
-                                <label class="form-label">Purchase Type (CRE Input) <span class="text-danger">*</span></label>
-                                <select name="purchase_type_crm" id="purchase_type_crm" class="form-control form-select" required>
+                                <label class="form-label">Purchase Type (CRE Input) <span
+                                        class="text-danger">*</span></label>
+                                <select name="purchase_type_crm" id="purchase_type_crm" class="form-control form-select"
+                                    required>
                                     <option value="">Select Purchase Type (CRE Input)</option>
                                     @foreach ($purchase_types as $item)
                                         <option value="{{ $item['code'] }}"
@@ -1008,10 +1020,18 @@
                                 <label class="form-label">Finance Mode <span class="text-danger">*</span></label>
                                 <select name="fin_mode" id="fin_mode" class="form-control form-select">
                                     <option value="" disabled selected>Select Finance Mode</option>
-                                    <option value="In-house" {{ old('fin_mode', $enquiry->fin_mode ?? '') == 'In-house' ? 'selected' : '' }}>In-house</option>
-                                    <option value="Customer Self" {{ old('fin_mode', $enquiry->fin_mode ?? '') == 'Customer Self' ? 'selected' : '' }}>Customer Self</option>
-                                    <option value="Cash" {{ old('fin_mode', $enquiry->fin_mode ?? '') == 'Cash' ? 'selected' : '' }}>Cash</option>
-                                    <option value="Yet To Decide" {{ old('fin_mode', $enquiry->fin_mode ?? '') == 'Yet To Decide' ? 'selected' : '' }}>Yet To Decide</option>
+                                    <option value="In-house"
+                                        {{ old('fin_mode', $enquiry->fin_mode ?? '') == 'In-house' ? 'selected' : '' }}>
+                                        In-house</option>
+                                    <option value="Customer Self"
+                                        {{ old('fin_mode', $enquiry->fin_mode ?? '') == 'Customer Self' ? 'selected' : '' }}>
+                                        Customer Self</option>
+                                    <option value="Cash"
+                                        {{ old('fin_mode', $enquiry->fin_mode ?? '') == 'Cash' ? 'selected' : '' }}>Cash
+                                    </option>
+                                    <option value="Yet To Decide"
+                                        {{ old('fin_mode', $enquiry->fin_mode ?? '') == 'Yet To Decide' ? 'selected' : '' }}>
+                                        Yet To Decide</option>
                                 </select>
                             </div>
 
@@ -1049,14 +1069,16 @@
                     </div>
                 </div>
 
-                @if(isset($enquiry))
+                @if (isset($enquiry))
                     {{-- ================= READ ONLY MODE: Greyed Out Data Cards ================= --}}
                     @php
                         // Fetch extended finance data from dedicated modules
-                        $financeData = \App\Models\Module\Finance\XFinance::where('enq_no', $enquiry->enquiry_no)->orWhere('bid', $enquiry->id)->first();
-                        
+                        $financeData = \App\Models\Module\Finance\XFinance::where('enq_no', $enquiry->enquiry_no)
+                            ->orWhere('bid', $enquiry->id)
+                            ->first();
+
                         $financierName = '';
-                        if($financeData && $financeData->financier) {
+                        if ($financeData && $financeData->financier) {
                             $fin = collect($financiers ?? [])->firstWhere('id', $financeData->financier);
                             $financierName = $fin ? $fin->name : '';
                         } elseif ($enquiry->financier) {
@@ -1067,9 +1089,9 @@
                         $caseStatusMap = [1 => 'In-Process', 2 => 'Finance Done / Exchange Done', 3 => 'Case Lost'];
                         $instTypeMap = [1 => 'Financier Payment', 2 => 'Delivery Order', 3 => 'Sanction Letter'];
                         $caseLostMap = [1 => 'Cash Purchase', 2 => 'Customer Self Finance'];
-                        
+
                         $brandMakeName = '';
-                        if($enquiry->brand_make) {
+                        if ($enquiry->brand_make) {
                             $bm = collect($existing_car_oems ?? [])->firstWhere('code', $enquiry->brand_make);
                             $brandMakeName = $bm ? $bm['value'] : $enquiry->brand_make;
                         }
@@ -1080,89 +1102,138 @@
                             <h3 class="mb-0 fw-bold">Exchange & Finance Details (Read-Only)</h3>
                         </div>
                         <div class="card-body">
-                            
+
                             {{-- Exchange Details --}}
                             <h4 class="fw-bold mb-3">Exchange / Scrappage Valuation</h4>
                             <div class="row">
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Purchase Type</label>
-                                    <input type="text" class="form-control" value="{{ collect($purchase_types ?? [])->firstWhere('code', $enquiry->purchase_type_crm ?? $enquiry->purchase_type)['value'] ?? ($enquiry->purchase_type_crm ?? $enquiry->purchase_type ?? '—') }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                    <input type="text" class="form-control"
+                                        value="{{ collect($purchase_types ?? [])->firstWhere('code', $enquiry->purchase_type_crm ?? $enquiry->purchase_type)['value'] ?? ($enquiry->purchase_type_crm ?? ($enquiry->purchase_type ?? '—')) }}"
+                                        readonly tabindex="-1"
+                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Brand Make</label>
-                                    <input type="text" class="form-control" value="{{ $brandMakeName }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                    <input type="text" class="form-control" value="{{ $brandMakeName }}" readonly
+                                        tabindex="-1"
+                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Brand Model</label>
-                                    <input type="text" class="form-control" value="{{ $enquiry->brand_model }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                    <input type="text" class="form-control" value="{{ $enquiry->brand_model }}"
+                                        readonly tabindex="-1"
+                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Vehicle Registration No.</label>
-                                    <input type="text" class="form-control" value="{{ $enquiry->vehicle_no }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                    <input type="text" class="form-control" value="{{ $enquiry->vehicle_no }}"
+                                        readonly tabindex="-1"
+                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Manufacturing Year</label>
-                                    <input type="text" class="form-control" value="{{ $enquiry->make_year }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                    <input type="text" class="form-control" value="{{ $enquiry->make_year }}"
+                                        readonly tabindex="-1"
+                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Odometer Reading</label>
-                                    <input type="text" class="form-control" value="{{ $enquiry->odo_reading }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                    <input type="text" class="form-control" value="{{ $enquiry->odo_reading }}"
+                                        readonly tabindex="-1"
+                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Expected Price</label>
-                                    <input type="text" class="form-control" value="{{ $enquiry->expected_price ? '₹ '.number_format($enquiry->expected_price) : '' }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                    <input type="text" class="form-control"
+                                        value="{{ $enquiry->expected_price ? '₹ ' . number_format($enquiry->expected_price) : '' }}"
+                                        readonly tabindex="-1"
+                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Offered Price</label>
-                                    <input type="text" class="form-control" value="{{ $enquiry->offered_price ? '₹ '.number_format($enquiry->offered_price) : '' }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                    <input type="text" class="form-control"
+                                        value="{{ $enquiry->offered_price ? '₹ ' . number_format($enquiry->offered_price) : '' }}"
+                                        readonly tabindex="-1"
+                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Exchange Bonus</label>
-                                    <input type="text" class="form-control" value="{{ $enquiry->exchange_bonus ? '₹ '.number_format($enquiry->exchange_bonus) : '' }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                    <input type="text" class="form-control"
+                                        value="{{ $enquiry->exchange_bonus ? '₹ ' . number_format($enquiry->exchange_bonus) : '' }}"
+                                        readonly tabindex="-1"
+                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Price Gap</label>
-                                    @php 
-                                        $diff = ($enquiry->expected_price ?? 0) - ($enquiry->offered_price ?? 0) - ($enquiry->exchange_bonus ?? 0); 
+                                    @php
+                                        $diff =
+                                            ($enquiry->expected_price ?? 0) -
+                                            ($enquiry->offered_price ?? 0) -
+                                            ($enquiry->exchange_bonus ?? 0);
                                     @endphp
-                                    <input type="text" class="form-control" value="{{ $diff ? '₹ '.number_format($diff) : '' }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                    <input type="text" class="form-control"
+                                        value="{{ $diff ? '₹ ' . number_format($diff) : '' }}" readonly tabindex="-1"
+                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Reason for Case Lost (If Dropped)</label>
-                                    <input type="text" class="form-control" value="{{ $enquiry->lost_reason }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                    <input type="text" class="form-control" value="{{ $enquiry->lost_reason }}"
+                                        readonly tabindex="-1"
+                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 {{-- EXCHANGE FOLLOW UPS TABLE --}}
-                                @if(isset($exchangeFups) && $exchangeFups->count() > 0)
-                                <div class="col-md-12 mt-4 mb-2">
-                                    <h5 class="fw-bold mb-3" style="color: var(--tblr-body-color);">Exchange Follow-up History</h5>
-                                    <div class="table-responsive">
-                                        <table class="table table-bordered text-center align-middle mb-0" style="background-color: var(--tblr-bg-surface-secondary);">
-                                            <thead class="table-secondary text-uppercase" style="font-size: 0.85rem;">
-                                                <tr>
-                                                    <th class="text-center px-3" style="width: 10%;">Fup #</th>
-                                                    <th class="text-center px-3" style="width: 45%;">Remarks</th>
-                                                    <th class="text-center px-3" style="width: 25%;">Created By</th>
-                                                    <th class="text-center px-3" style="width: 20%;">Date & Time</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                @foreach($exchangeFups as $fup)
-                                                    @php
-                                                        $creator = \App\Models\User::find($fup->created_by);
-                                                        $code = $creator ? ($creator->employee_code ?? $creator->person_code) : null;
-                                                        $creatorName = \App\Services\OrgService::getUserNameByCode($code);
-                                                    @endphp
+                                @if (isset($exchangeFups) && $exchangeFups->count() > 0)
+                                    <div class="col-md-12 mt-4 mb-2">
+                                        <h5 class="fw-bold mb-3" style="color: var(--tblr-body-color);">Exchange Follow-up
+                                            History</h5>
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered text-center align-middle mb-0"
+                                                style="background-color: var(--tblr-bg-surface-secondary);">
+                                                <thead class="table-secondary text-uppercase" style="font-size: 0.85rem;">
                                                     <tr>
-                                                        <td class="fw-bold align-middle table-secondary text-center px-3 text-dark">{{ $fup->fup_count }}</td>
-                                                        <td><div class="form-control bg-white h-auto border-0 text-wrap text-start" style="min-width: 150px;">{{ $fup->remarks }}</div></td>
-                                                        <td><div class="form-control bg-white h-auto border-0 text-center">{{ $creatorName }}</div></td>
-                                                        <td><div class="form-control bg-white h-auto border-0 text-center">{{ \Carbon\Carbon::parse($fup->created_at)->format('d-M-Y h:i A') }}</div></td>
+                                                        <th class="text-center px-3" style="width: 10%;">Fup #</th>
+                                                        <th class="text-center px-3" style="width: 45%;">Remarks</th>
+                                                        <th class="text-center px-3" style="width: 25%;">Created By</th>
+                                                        <th class="text-center px-3" style="width: 20%;">Date & Time</th>
                                                     </tr>
-                                                @endforeach
-                                            </tbody>
-                                        </table>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach ($exchangeFups as $fup)
+                                                        @php
+                                                            $creator = \App\Models\User::find($fup->created_by);
+                                                            $code = $creator
+                                                                ? $creator->employee_code ?? $creator->person_code
+                                                                : null;
+                                                            $creatorName = \App\Services\OrgService::getUserNameByCode(
+                                                                $code,
+                                                            );
+                                                        @endphp
+                                                        <tr>
+                                                            <td
+                                                                class="fw-bold align-middle table-secondary text-center px-3 text-dark">
+                                                                {{ $fup->fup_count }}</td>
+                                                            <td>
+                                                                <div class="form-control bg-white h-auto border-0 text-wrap text-start"
+                                                                    style="min-width: 150px;">{{ $fup->remarks }}</div>
+                                                            </td>
+                                                            <td>
+                                                                <div
+                                                                    class="form-control bg-white h-auto border-0 text-center">
+                                                                    {{ $creatorName }}</div>
+                                                            </td>
+                                                            <td>
+                                                                <div
+                                                                    class="form-control bg-white h-auto border-0 text-center">
+                                                                    {{ \Carbon\Carbon::parse($fup->created_at)->format('d-M-Y h:i A') }}
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </div>
-                                </div>
                                 @endif
                             </div>
 
@@ -1173,76 +1244,124 @@
                             <div class="row">
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Finance Mode</label>
-                                    <input type="text" class="form-control" value="{{ $financeData->fin_mode ?? $enquiry->fin_mode ?? '' }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                    <input type="text" class="form-control"
+                                        value="{{ $financeData->fin_mode ?? ($enquiry->fin_mode ?? '') }}" readonly
+                                        tabindex="-1"
+                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Loan Status</label>
-                                    <input type="text" class="form-control" value="{{ $financeData->loan_status ?? $enquiry->loan_status ?? '' }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                    <input type="text" class="form-control"
+                                        value="{{ $financeData->loan_status ?? ($enquiry->loan_status ?? '') }}" readonly
+                                        tabindex="-1"
+                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Financier</label>
-                                    <input type="text" class="form-control" value="{{ $financierName }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                    <input type="text" class="form-control" value="{{ $financierName }}" readonly
+                                        tabindex="-1"
+                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Case Status</label>
-                                    <input type="text" class="form-control" value="{{ $caseStatusMap[$financeData->case_status ?? 1] ?? '' }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                    <input type="text" class="form-control"
+                                        value="{{ $caseStatusMap[$financeData->case_status ?? 1] ?? '' }}" readonly
+                                        tabindex="-1"
+                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Case Lost Reason</label>
-                                    <input type="text" class="form-control" value="{{ $caseLostMap[$financeData->case_lost_reason ?? ''] ?? ($financeData->case_lost_reason ?? '') }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                    <input type="text" class="form-control"
+                                        value="{{ $caseLostMap[$financeData->case_lost_reason ?? ''] ?? ($financeData->case_lost_reason ?? '') }}"
+                                        readonly tabindex="-1"
+                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Instrument Type</label>
-                                    <input type="text" class="form-control" value="{{ $instTypeMap[$financeData->instrument_type ?? ''] ?? '' }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                    <input type="text" class="form-control"
+                                        value="{{ $instTypeMap[$financeData->instrument_type ?? ''] ?? '' }}" readonly
+                                        tabindex="-1"
+                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Reference No.</label>
-                                    <input type="text" class="form-control" value="{{ $financeData->instrument_ref_no ?? '' }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                    <input type="text" class="form-control"
+                                        value="{{ $financeData->instrument_ref_no ?? '' }}" readonly tabindex="-1"
+                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Loan Amount</label>
-                                    <input type="text" class="form-control" value="{{ !empty($financeData->loan_amount) ? '₹ '.number_format($financeData->loan_amount) : '' }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                    <input type="text" class="form-control"
+                                        value="{{ !empty($financeData->loan_amount) ? '₹ ' . number_format($financeData->loan_amount) : '' }}"
+                                        readonly tabindex="-1"
+                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Margin Money</label>
-                                    <input type="text" class="form-control" value="{{ !empty($financeData->margin) ? '₹ '.number_format($financeData->margin) : '' }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                    <input type="text" class="form-control"
+                                        value="{{ !empty($financeData->margin) ? '₹ ' . number_format($financeData->margin) : '' }}"
+                                        readonly tabindex="-1"
+                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">File Charge</label>
-                                    <input type="text" class="form-control" value="{{ !empty($financeData->file_charge) ? '₹ '.number_format($financeData->file_charge) : '' }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                    <input type="text" class="form-control"
+                                        value="{{ !empty($financeData->file_charge) ? '₹ ' . number_format($financeData->file_charge) : '' }}"
+                                        readonly tabindex="-1"
+                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 {{-- FINANCE FOLLOW UPS TABLE --}}
-                                @if(isset($financeFups) && $financeFups->count() > 0)
-                                <div class="col-md-12 mt-4 mb-2">
-                                    <h5 class="fw-bold mb-3" style="color: var(--tblr-body-color);">Finance Follow-up History</h5>
-                                    <div class="table-responsive">
-                                        <table class="table table-bordered text-center align-middle mb-0" style="background-color: var(--tblr-bg-surface-secondary);">
-                                            <thead class="table-secondary text-uppercase" style="font-size: 0.85rem;">
-                                                <tr>
-                                                    <th class="text-center px-3" style="width: 10%;">Fup #</th>
-                                                    <th class="text-center px-3" style="width: 45%;">Remarks</th>
-                                                    <th class="text-center px-3" style="width: 25%;">Created By</th>
-                                                    <th class="text-center px-3" style="width: 20%;">Date & Time</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                @foreach($financeFups as $fup)
-                                                    @php
-                                                        $creator = \App\Models\User::find($fup->created_by);
-                                                        $code = $creator ? ($creator->employee_code ?? $creator->person_code) : null;
-                                                        $creatorName = \App\Services\OrgService::getUserNameByCode($code);
-                                                    @endphp
+                                @if (isset($financeFups) && $financeFups->count() > 0)
+                                    <div class="col-md-12 mt-4 mb-2">
+                                        <h5 class="fw-bold mb-3" style="color: var(--tblr-body-color);">Finance Follow-up
+                                            History</h5>
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered text-center align-middle mb-0"
+                                                style="background-color: var(--tblr-bg-surface-secondary);">
+                                                <thead class="table-secondary text-uppercase" style="font-size: 0.85rem;">
                                                     <tr>
-                                                        <td class="fw-bold align-middle table-secondary text-center px-3 text-dark">{{ $fup->fup_count }}</td>
-                                                        <td><div class="form-control bg-white h-auto border-0 text-wrap text-start" style="min-width: 150px;">{{ $fup->remarks }}</div></td>
-                                                        <td><div class="form-control bg-white h-auto border-0 text-center">{{ $creatorName }}</div></td>
-                                                        <td><div class="form-control bg-white h-auto border-0 text-center">{{ \Carbon\Carbon::parse($fup->created_at)->format('d-M-Y h:i A') }}</div></td>
+                                                        <th class="text-center px-3" style="width: 10%;">Fup #</th>
+                                                        <th class="text-center px-3" style="width: 45%;">Remarks</th>
+                                                        <th class="text-center px-3" style="width: 25%;">Created By</th>
+                                                        <th class="text-center px-3" style="width: 20%;">Date & Time</th>
                                                     </tr>
-                                                @endforeach
-                                            </tbody>
-                                        </table>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach ($financeFups as $fup)
+                                                        @php
+                                                            $creator = \App\Models\User::find($fup->created_by);
+                                                            $code = $creator
+                                                                ? $creator->employee_code ?? $creator->person_code
+                                                                : null;
+                                                            $creatorName = \App\Services\OrgService::getUserNameByCode(
+                                                                $code,
+                                                            );
+                                                        @endphp
+                                                        <tr>
+                                                            <td
+                                                                class="fw-bold align-middle table-secondary text-center px-3 text-dark">
+                                                                {{ $fup->fup_count }}</td>
+                                                            <td>
+                                                                <div class="form-control bg-white h-auto border-0 text-wrap text-start"
+                                                                    style="min-width: 150px;">{{ $fup->remarks }}</div>
+                                                            </td>
+                                                            <td>
+                                                                <div
+                                                                    class="form-control bg-white h-auto border-0 text-center">
+                                                                    {{ $creatorName }}</div>
+                                                            </td>
+                                                            <td>
+                                                                <div
+                                                                    class="form-control bg-white h-auto border-0 text-center">
+                                                                    {{ \Carbon\Carbon::parse($fup->created_at)->format('d-M-Y h:i A') }}
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </div>
-                                </div>
                                 @endif
                             </div>
                         </div>
@@ -1334,7 +1453,8 @@
                                 <label class="form-label">X8 Assigned SC Mile ID</label>
                                 <input type="text" name="x8_sc_mile_id" id="x8_sc_mile_id" class="form-control"
                                     value="{{ old('x8_sc_mile_id', $enquiry->x8_sc_mile_id ?? '') }}" readonly
-                                    tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                    tabindex="-1"
+                                    style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">X8 Assigned SC Branch</label>
@@ -1448,19 +1568,25 @@
                             <div class="col-md-4 mb-3">
                                 <label class="form-label">Consideration Set 1 - Brand</label>
                                 <select id="consider_make" name="consid_brand" class="form-control form-select">
-                                    <option value="No Consideration" {{ old('consid_brand', $enquiry->consid_brand ?? 'No Consideration') == 'No Consideration' ? 'selected' : '' }}>No Consideration</option>
+                                    <option value="No Consideration"
+                                        {{ old('consid_brand', $enquiry->consid_brand ?? 'No Consideration') == 'No Consideration' ? 'selected' : '' }}>
+                                        No Consideration</option>
                                     @foreach ($existing_car_oems as $item)
-                                        <option value="{{ $item['code'] }}" {{ old('consid_brand', $enquiry->consid_brand ?? '') == $item['code'] ? 'selected' : '' }}>{{ $item['value'] }}</option>
+                                        <option value="{{ $item['code'] }}"
+                                            {{ old('consid_brand', $enquiry->consid_brand ?? '') == $item['code'] ? 'selected' : '' }}>
+                                            {{ $item['value'] }}</option>
                                     @endforeach
                                 </select>
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label class="form-label">Consideration Set 1 - Model</label>
-                                <input type="text" id="consider_model" name="consid_model" class="form-control" value="{{ old('consid_model', $enquiry->consid_model ?? '') }}" readonly>
+                                <input type="text" id="consider_model" name="consid_model" class="form-control"
+                                    value="{{ old('consid_model', $enquiry->consid_model ?? '') }}" readonly>
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label class="form-label">Consideration Set 1 - Variant</label>
-                                <input type="text" id="consider_variant" name="consid_variant" class="form-control" value="{{ old('consid_variant', $enquiry->consid_variant ?? '') }}" readonly>
+                                <input type="text" id="consider_variant" name="consid_variant" class="form-control"
+                                    value="{{ old('consid_variant', $enquiry->consid_variant ?? '') }}" readonly>
                             </div>
                         </div>
 
@@ -1602,7 +1728,8 @@
                                                             </td>
                                                         </tr>
                                                         @if ($fupCount > 4 && $index == 0)
-                                                            <tr id="toggleFupsRow" style="background-color: var(--tblr-bg-surface-secondary);">
+                                                            <tr id="toggleFupsRow"
+                                                                style="background-color: var(--tblr-bg-surface-secondary);">
                                                                 <td colspan="10" class="text-center py-2">
                                                                     <button type="button"
                                                                         class="btn btn-sm btn-outline-secondary fw-bold shadow-sm"
@@ -1616,7 +1743,8 @@
                                                     @endforeach
                                                 @else
                                                     <tr>
-                                                        <td colspan="10" class="text-muted py-3 bg-white text-center">No
+                                                        <td colspan="10" class="text-muted py-3 bg-white text-center">
+                                                            No
                                                             Follow-up Data Found</td>
                                                     </tr>
                                                 @endif
@@ -1719,7 +1847,8 @@
                                         <div class="col-md-3 mb-3"><label class="form-label">Enquiry Stage</label><input
                                                 type="text" class="form-control"
                                                 value="{{ $enqStageMap[$enquiry?->dms_enquiry_stage ?? ''] ?? ($enquiry?->dms_enquiry_stage ?? ($enquiry?->stage ?? '—')) }}"
-                                                readonly style="background-color: var(--tblr-bg-surface-secondary);"></div>
+                                                readonly style="background-color: var(--tblr-bg-surface-secondary);">
+                                        </div>
                                         <div class="col-md-3 mb-3"><label class="form-label">Test Drive
                                                 Count</label><input type="text" class="form-control"
                                                 value="{{ $enquiry?->td_count ?? '0' }}" readonly
@@ -1731,11 +1860,13 @@
                                         <div class="col-md-3 mb-3"><label class="form-label">Test Drive
                                                 Date</label><input type="text" class="form-control"
                                                 value="{{ isset($enquiry) && $enquiry->td_date ? \Carbon\Carbon::parse($enquiry->td_date)->format('d-M-Y') : '—' }}"
-                                                readonly style="background-color: var(--tblr-bg-surface-secondary);"></div>
+                                                readonly style="background-color: var(--tblr-bg-surface-secondary);">
+                                        </div>
                                         <div class="col-md-3 mb-3"><label class="form-label">Booking Date</label><input
                                                 type="text" class="form-control"
                                                 value="{{ isset($enquiry) && ($enquiry->x8_booking_date || $enquiry->booking_date) ? \Carbon\Carbon::parse($enquiry->x8_booking_date ?? $enquiry->booking_date)->format('d-M-Y') : '—' }}"
-                                                readonly style="background-color: var(--tblr-bg-surface-secondary);"></div>
+                                                readonly style="background-color: var(--tblr-bg-surface-secondary);">
+                                        </div>
 
                                         <div class="col-md-3 mb-3">
                                             <label class="form-label">Likely Purchase In Days </label>
@@ -1829,7 +1960,8 @@
                                                     </td>
                                                 </tr>
                                                 @if ($creFupCount > 4 && $index == 0)
-                                                    <tr id="toggleCreFupsRow" style="background-color: var(--tblr-bg-surface-secondary);">
+                                                    <tr id="toggleCreFupsRow"
+                                                        style="background-color: var(--tblr-bg-surface-secondary);">
                                                         <td colspan="7" class="text-center py-2">
                                                             <button type="button"
                                                                 class="btn btn-sm btn-outline-secondary fw-bold shadow-sm"
@@ -2010,10 +2142,12 @@
             input.value = formatted;
         }
 
-        function loadKeywordDropdown(keyword, parent, $target, placeholder = 'Select Option', selected = '', parentKeyword = '', callback = null) {
+        function loadKeywordDropdown(keyword, parent, $target, placeholder = 'Select Option', selected = '', parentKeyword =
+            '', callback = null) {
             if (!parent) return $target.html(`<option value="">${placeholder}</option>`).prop('disabled', true);
-            let url = "{{ route('sales.enquiry.master-keyword-values', ['keyword' => '__K__', 'parent' => '__P__']) }}".replace(
-                '__K__', encodeURIComponent(keyword)).replace('__P__', encodeURIComponent(parent));
+            let url = "{{ route('sales.enquiry.master-keyword-values', ['keyword' => '__K__', 'parent' => '__P__']) }}"
+                .replace(
+                    '__K__', encodeURIComponent(keyword)).replace('__P__', encodeURIComponent(parent));
             if (parentKeyword) {
                 url += (url.includes('?') ? '&' : '?') + 'parent_keyword=' + encodeURIComponent(parentKeyword);
             }
@@ -2365,9 +2499,9 @@
             // ================= CONSIDERATION SET 1 =================
             $('#consider_make').on('change', function() {
                 const isValid = $(this).val() && $(this).val() !== 'No Consideration';
-                
+
                 $('#consider_model, #consider_variant').prop('readonly', !isValid);
-                
+
                 if (!isValid) {
                     $('#consider_model, #consider_variant').val('');
                 }
@@ -2377,9 +2511,9 @@
             // ================= CONSIDERATION SET 2 =================
             $('#consider_make_2').on('change', function() {
                 const isValid = $(this).val() && $(this).val() !== 'No Consideration';
-                
+
                 $('#consider_model_2, #consider_variant_2').prop('readonly', !isValid);
-                
+
                 if (!isValid) {
                     $('#consider_model_2, #consider_variant_2').val('');
                 }
@@ -2410,8 +2544,9 @@
                 } else {
                     $sourceCode.prop('disabled', false).prop('required', true);
                     loadKeywordDropdown('ENQ_SOURCE', rawVal, $sourceCode, 'Select Enquiry Source',
-                        currentEnquiry.source, '', function() {
-                            if(currentEnquiry.isEdit) {
+                        currentEnquiry.source, '',
+                        function() {
+                            if (currentEnquiry.isEdit) {
                                 $sourceCode.trigger('change');
                             }
                         });
@@ -2579,27 +2714,35 @@
                 if (source) {
                     $.ajax({
                         // FIX: Changed from ENQUIRY_SUB_SOURCE to ENQ_SUB_SOURCE
-                        url: "{{ route('sales.enquiry.master-keyword-values', ['keyword' => 'ENQ_SUB_SOURCE', 'parent' => '__P__']) }}".replace('__P__', encodeURIComponent(source)),
+                        url: "{{ route('sales.enquiry.master-keyword-values', ['keyword' => 'ENQ_SUB_SOURCE', 'parent' => '__P__']) }}"
+                            .replace('__P__', encodeURIComponent(source)),
                         type: "GET",
                         success: (response) => {
                             if (response && response.length > 0) {
                                 $('#sub_source_wrapper').removeClass('d-none');
                                 $subSource.prop('disabled', false).prop('required', true);
-                                let html = `<option value="">Select Enquiry Sub Source</option>`;
+                                let html =
+                                `<option value="">Select Enquiry Sub Source</option>`;
                                 $.each(response, (_, item) => {
-                                    let isSelected = (String(currentEnquiry.subSource).toUpperCase() === String(item.code).toUpperCase()) ? 'selected' : '';
-                                    html += `<option value="${item.code}" ${isSelected}>${item.value}</option>`;
+                                    let isSelected = (String(currentEnquiry.subSource)
+                                        .toUpperCase() === String(item.code)
+                                        .toUpperCase()) ? 'selected' : '';
+                                    html +=
+                                        `<option value="${item.code}" ${isSelected}>${item.value}</option>`;
                                 });
                                 $subSource.html(html);
                             } else {
                                 $('#sub_source_wrapper').addClass('d-none');
-                                $subSource.html('<option value="">Select Enquiry Sub Source</option>').val('').prop('disabled', true).prop('required', false);
+                                $subSource.html(
+                                        '<option value="">Select Enquiry Sub Source</option>')
+                                    .val('').prop('disabled', true).prop('required', false);
                             }
                         }
                     });
                 } else {
                     $('#sub_source_wrapper').addClass('d-none');
-                    $subSource.html('<option value="">Select Enquiry Sub Source</option>').val('').prop('disabled', true).prop('required', false);
+                    $subSource.html('<option value="">Select Enquiry Sub Source</option>').val('').prop(
+                        'disabled', true).prop('required', false);
                 }
 
                 // Show/Hide Planned Campaign
@@ -2680,7 +2823,8 @@
                     'disabled', true);
                 $('#fuel_type, #fuel_type_id, #transmission, #drivetrain, #seating').val('');
                 if (modelCode) {
-                    fetchDropdown("{{ backpack_url('sales/enquiry/variants') }}/" + modelCode, $variantCode,
+                    fetchDropdown("{{ backpack_url('sales/enquiry/variants') }}/" + modelCode,
+                        $variantCode,
                         'Select Variant', currentEnquiry.isEdit ? currentEnquiry.variant : '', () => {
                             if (currentEnquiry.isEdit && currentEnquiry.variant) $variantCode.trigger(
                                 'change');
@@ -2722,7 +2866,8 @@
                             allowOutsideClick: false
                         }).then((result) => {
                             if (result.isConfirmed && response.id) {
-                                window.location.href = "{{ backpack_url('sales/enquiry') }}/" +
+                                window.location.href =
+                                    "{{ backpack_url('sales/enquiry') }}/" +
                                     response.id + "/edit";
                             }
                         });
