@@ -1048,9 +1048,10 @@ class BookingCrudController extends CrudController
         $colorCodes = $bookings->pluck('color_code')->filter()->unique()->values(); 
 
         return [
-            'consultants' => DB::table('xlr8_admin_person')
-                ->whereIn('person_code', $consultantCodes)
-                ->pluck('display_name', 'person_code'),
+            'consultants' => DB::table('xlr8_admin_employee as e')
+                ->join('xlr8_admin_person as p', 'p.person_code', '=', 'e.person_code')
+                ->whereIn('e.code', $consultantCodes)
+                ->pluck('p.display_name', 'e.code'),
 
             'dsas' => XL_DSA_MASTER::whereIn('id', $dsaIds)->pluck('name', 'id'),
 
@@ -3336,7 +3337,7 @@ class BookingCrudController extends CrudController
 
         $validator = Validator::make($request->all(), [
             'id' => 'required',
-            'remark' => 'required|string|min:3|max:1500',
+            'remark' => 'required|string|min:1|max:1500',
             'status' => 'nullable|in:0,1,2,3,4,5,6,7,8',
             'fdoc' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
             'dept' => 'nullable|string|max:50',

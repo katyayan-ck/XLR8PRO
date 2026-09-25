@@ -2045,7 +2045,13 @@
                             'X-Requested-With': 'XMLHttpRequest'
                         }
                     })
-                    .then(response => response.json())
+                    .then(async response => {
+                        if (!response.ok) {
+                            const text = await response.text();
+                            throw new Error(`HTTP ${response.status}: ${text.slice(0, 200)}`);
+                        }
+                        return response.json();
+                    })
                     .then(data => {
                         statusSelect.disabled = false;
 
@@ -2086,17 +2092,13 @@
                         }
                     })
                     .catch(err => {
-                        console.error(err);
-
+                        console.error('checkFieldPayment failed', err);
                         statusSelect.disabled = false;
-
-                        Swal.fire(
-                            'Error',
-                            'Could not verify payment status. Please try again.',
-                            'error'
-                        );
-
-                        statusSelect.value = "0";
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Verification Failed',
+                            text: 'Could not reach the server to verify payment status. Please try again or contact support.',
+                        });
                     });
 
                     return;
@@ -2676,6 +2678,53 @@ document.addEventListener('DOMContentLoaded', function () {
 //     // Safety re-run
 //     setTimeout(hideEmptyFields, 600);
 // });
+
+document.addEventListener('DOMContentLoaded', function () {
+
+        document.querySelectorAll('form').forEach(function (form) {
+
+            const remarkField = form.querySelector('[name="remark"]');
+            if (!remarkField) return;
+
+            // Skip hidden helper forms (#activateForm, #restoreForm, etc.)
+            if (form.style.display === 'none') return;
+
+            form.addEventListener('submit', function (e) {
+
+                const raw = (remarkField.value || '').trim();
+
+                if (raw.length === 0) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    remarkField.classList.add('is-invalid');
+                    remarkField.focus();
+                    remarkField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Remarks Required',
+                        text: 'Please enter a remark before saving.',
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#0d6efd',
+                    }).then(function () {
+                        remarkField.focus();
+                    });
+
+                    return false;
+                }
+
+                remarkField.classList.remove('is-invalid');
+            });
+
+            remarkField.addEventListener('input', function () {
+                if ((this.value || '').trim().length > 0) {
+                    this.classList.remove('is-invalid');
+                }
+            });
+        });
+
+    });
 </script>
 
 @endsection
