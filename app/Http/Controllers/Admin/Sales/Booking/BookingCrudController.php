@@ -211,6 +211,64 @@ class BookingCrudController extends CrudController
         $this->data['customer_categories'] = $customer_categories;
         $this->data['occupation_types'] = $occupation_types;
 
+        $bookingPaymentLogs = collect();
+        $bookingPaymentPrefill = [
+            'has_previous_payment' => false,
+            'collection_type'      => '',
+            'receipt_no'           => '',
+            'receipt_date'         => '',
+            'payment_mode'         => '',
+            'total_amount'         => 0,
+        ];
+
+        if (!empty($enquiry)) {
+
+            $bookingPaymentLogs = Bookingamount::query()
+                ->where('enq_id', $enquiry->id)
+                ->whereNull('bid')
+                ->whereNull('deleted_at')
+                ->orderBy('date', 'desc')
+                ->orderBy('id', 'desc')
+                ->get();
+
+            if ($bookingPaymentLogs->isNotEmpty()) {
+
+                $receipts = $bookingPaymentLogs->where('type', 1);
+                $vouchers = $bookingPaymentLogs->where('type', 4);
+
+                $hasReceipt = $receipts->isNotEmpty();
+                $hasVoucher = $vouchers->isNotEmpty();
+
+                // Receipt + Voucher => Receipt remains the collection type
+                $collectionType = $hasReceipt ? '1' : '4';
+
+                // Latest receipt number if receipt exists.
+                // Otherwise latest voucher number.
+                $latestPayment = $hasReceipt
+                    ? $receipts->first()
+                    : $vouchers->first();
+
+                $bookingPaymentPrefill = [
+                    'has_previous_payment' => true,
+
+                    'collection_type' => $collectionType,
+
+                    'receipt_no' => $latestPayment?->type_number,
+
+                    'receipt_date' => $latestPayment?->date,
+
+                    'payment_mode' => $latestPayment?->mode,
+
+                    'total_amount' => (float) $bookingPaymentLogs->sum(
+                        fn ($payment) => (float) $payment->amount
+                    ),
+                ];
+            }
+        }
+
+        $this->data['booking_payment_logs'] = $bookingPaymentLogs;
+        $this->data['booking_payment_prefill'] = $bookingPaymentPrefill;
+
         return $this->traitCreate();
     }
 
