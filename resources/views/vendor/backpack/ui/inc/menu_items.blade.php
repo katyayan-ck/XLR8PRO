@@ -247,23 +247,7 @@
 <x-backpack::menu-item title="Users" icon="la la-users" :link="backpack_url('org/user')" />
 @endif -->
 
-            <a class="dropdown-item d-flex align-items-center justify-content-between"
-                href="{{ backpack_url('sales/enquiry/xceler8') }}">
-                <span>
-                    <i class="nav-icon la la-list me-2"></i>
-                    Xceler8 Fresh Enquiries
-                </span>
-                <span class="badge rounded-pill text-dark" style="background-color: #e9ecef;">
-                    {{ $enqCounts['xceler8'] ?? 0 }}
-                </span>
-            </a>
 
-            <a class="dropdown-item d-flex align-items-center justify-content-between"
-                href="{{ backpack_url('sales/enquiry/hyperlocal') }}">
-                <span><i class="nav-icon la la-map-marker me-2"></i>Hyperlocal Enquiries</span>
-                <span class="badge rounded-pill text-dark"
-                    style="background-color: #e9ecef;">{{ $enqCounts['hyperlocal'] ?? 0 }}</span>
-            </a>
 
 
         {{-- ========================================================================= --}}
