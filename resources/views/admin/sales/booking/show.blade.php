@@ -2079,13 +2079,9 @@
                                 allowOutsideClick: false
                             }).then((result) => {
                                 if (result.isConfirmed) {
-<<<<<<< HEAD
                                     window.location.href =
                                         "{{ route('sales.booking.pending-edit', $booking->id) }}" +
                                         "#pending";
-=======
-                                    window.location.href = "{{ route('sales.booking.pending-edit', $booking->id) }}" + "#pending";
->>>>>>> origin/stage
                                 } else {
                                     statusSelect.value = "0";
                                 }
