@@ -6,10 +6,11 @@ use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 class PersonContact extends Model
 {
-    use SoftDeletes, CrudTrait;
+    use CrudTrait, SoftDeletes;
 
     protected $table = 'xlr8_admin_person_contacts';
 
@@ -27,7 +28,8 @@ class PersonContact extends Model
     |--------------------------------------------------------------------------
     */
 
-    const DATA_TYPES    = ['Mobile', 'Email', 'Landline', 'Fax'];
+    const DATA_TYPES = ['Mobile', 'Email', 'Landline', 'Fax'];
+
     const CONTACT_TYPES = ['Primary', 'Alternate', 'Office', 'Home', 'Emergency'];
 
     protected $fillable = [
@@ -75,7 +77,7 @@ class PersonContact extends Model
         });
 
         static::deleting(function (PersonContact $c) {
-            if (!$c->isForceDeleting() && auth()->check()) {
+            if (! $c->isForceDeleting() && auth()->check()) {
                 $c->deleted_by = auth()->id();
                 $c->saveQuietly();
             }
@@ -94,20 +96,47 @@ class PersonContact extends Model
     /**
      * Promote this contact to Primary for its data_type.
      * The existing Primary for this (person_code, data_type) is demoted to Alternate.
-     * DB unique constraint on (person_code, data_type, contact_type='Primary') is respected.
+     *
+     * contact_type is a fixed 5-value DB ENUM with a unique index on
+     * (person_code, data_type, contact_type) — MySQL checks that constraint per
+     * statement (no deferred checking), so if this row is already 'Alternate' and
+     * the old Primary is about to be demoted to 'Alternate' too, a naive demote-
+     * then-promote sequence would momentarily give both rows the same enum value
+     * and fail. Stage this row through a free contact_type first when that
+     * collision is possible.
      */
     public function makesPrimary(): void
     {
-        // Demote current Primary
-        static::where('person_code',   $this->person_code)
-            ->where('data_type',     $this->data_type)
-            ->where('contact_type',  'Primary')
-            ->where('id', '!=',      $this->id)
-            ->whereNull('deleted_at')
-            ->update(['contact_type' => 'Alternate', 'updated_by' => auth()->id()]);
+        DB::transaction(function () {
+            $oldPrimary = static::where('person_code', $this->person_code)
+                ->where('data_type', $this->data_type)
+                ->where('contact_type', 'Primary')
+                ->where('id', '!=', $this->id)
+                ->whereNull('deleted_at')
+                ->first();
 
-        $this->contact_type = 'Primary';
-        $this->save();
+            if ($oldPrimary) {
+                if ($this->contact_type === 'Alternate') {
+                    $usedTypes = static::where('person_code', $this->person_code)
+                        ->where('data_type', $this->data_type)
+                        ->whereNull('deleted_at')
+                        ->pluck('contact_type')
+                        ->all();
+
+                    $freeType = collect(self::CONTACT_TYPES)->first(fn ($t) => ! in_array($t, $usedTypes, true));
+
+                    if ($freeType) {
+                        $this->contact_type = $freeType;
+                        $this->save();
+                    }
+                }
+
+                $oldPrimary->update(['contact_type' => 'Alternate', 'updated_by' => auth()->id()]);
+            }
+
+            $this->contact_type = 'Primary';
+            $this->save();
+        });
     }
 
     // ── Scopes ────────────────────────────────────────────────────────────────
@@ -116,18 +145,22 @@ class PersonContact extends Model
     {
         return $q->where('contact_type', 'Primary');
     }
+
     public function scopeByDataType($q, $type)
     {
         return $q->where('data_type', $type);
     }
+
     public function scopeMobiles($q)
     {
         return $q->where('data_type', 'Mobile');
     }
+
     public function scopeEmails($q)
     {
         return $q->where('data_type', 'Email');
     }
+
     public function scopeEmergency($q)
     {
         return $q->where('contact_type', 'Emergency');

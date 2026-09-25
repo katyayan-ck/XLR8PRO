@@ -40,7 +40,7 @@
                 </div>
                 <div class="card-body">
 
-                    <form method="POST" action="{{ backpack_url('spare-request') }}">
+                    <form method="POST" action="{{ backpack_url('spares/spare-request') }}">
                         @csrf
 
                         <h5 class="mb-3">Order Information</h5>

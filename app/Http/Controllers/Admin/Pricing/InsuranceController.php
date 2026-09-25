@@ -17,19 +17,27 @@ class InsuranceController extends Controller
 
     public function defaultsIndex()
     {
+        if (! backpack_user()->can('PRC_INSR_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view insurance defaults.');
+        }
+
         $defaults = InsDefault::query()
             ->orderBy('model_code')
             ->orderBy('permit')
             ->paginate(50);
 
         return view('admin.pricing.insurance.defaults', [
-            'title'    => 'Insurance Defaults',
+            'title' => 'Insurance Defaults',
             'defaults' => $defaults,
         ]);
     }
 
     public function baseRulesIndex()
     {
+        if (! backpack_user()->can('PRC_INSR_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view insurance base rules.');
+        }
+
         $rules = InsBaseRule::query()
             ->orderBy('permit')
             ->orderByDesc('wef_date')
@@ -43,6 +51,10 @@ class InsuranceController extends Controller
 
     public function addonRatesIndex()
     {
+        if (! backpack_user()->can('PRC_INSR_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view insurance addon rates.');
+        }
+
         $rates = InsAddonRate::query()
             ->orderBy('insurance_company')
             ->orderBy('permit')
@@ -57,10 +69,14 @@ class InsuranceController extends Controller
 
     public function testCalculate(Request $request)
     {
+        if (! backpack_user()->can('PRC_INSR_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to test insurance calculations.');
+        }
+
         $request->validate([
-            'model_code'  => 'required|string',
+            'model_code' => 'required|string',
             'ex_showroom' => 'required|numeric|min:0',
-            'permit'      => 'nullable|string',
+            'permit' => 'nullable|string',
         ]);
 
         try {
@@ -68,7 +84,7 @@ class InsuranceController extends Controller
                 $request->model_code,
                 [
                     'ex_showroom' => (float) $request->ex_showroom,
-                    'permits'     => $request->permit
+                    'permits' => $request->permit
                         ? [$request->permit]
                         : null,
                 ]
@@ -76,7 +92,7 @@ class InsuranceController extends Controller
 
             return response()->json([
                 'success' => true,
-                'result'  => $result,
+                'result' => $result,
             ]);
         } catch (\Throwable $e) {
             return response()->json([

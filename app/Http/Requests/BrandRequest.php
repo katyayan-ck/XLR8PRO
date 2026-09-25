@@ -3,11 +3,15 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class BrandRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
+     *
+     * Permission-level authorization (brand.edit) is enforced explicitly in
+     * BrandCrudController, matching this app's established convention.
      *
      * @return bool
      */
@@ -19,11 +23,24 @@ class BrandRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
+     * Only used by update() — BrandCrudController has no store() override, so
+     * create/store falls through to Backpack's own default handling.
+     *
      * @return array
      */
     public function rules()
     {
+        $currentId = $this->route('id');
+
         return [
+            'name' => 'required|string|max:255',
+            'code' => [
+                'required',
+                'string',
+                'size:5',
+                Rule::unique('xlr8_vehicle_brand', 'code')->ignore($currentId),
+            ],
+            'is_active' => 'boolean',
         ];
     }
 
@@ -35,7 +52,9 @@ class BrandRequest extends FormRequest
     public function attributes()
     {
         return [
-            //
+            'code' => __('vehicle.fields.code'),
+            'name' => __('vehicle.fields.name'),
+            'is_active' => __('vehicle.fields.is_active'),
         ];
     }
 

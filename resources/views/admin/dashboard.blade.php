@@ -55,7 +55,7 @@
                     'value' => 0, //$totalBranches,
                     'icon' => 'la-sitemap',
                     'color' => 'primary',
-                    'link' => backpack_url('branch'),
+                    'link' => backpack_url('org/branch'),
                 ])
             </div>
             <div class="col-md-3">
@@ -64,7 +64,7 @@
                     'value' => 0, //$totalLocations,
                     'icon' => 'la-map-marker',
                     'color' => 'info',
-                    'link' => backpack_url('location'),
+                    'link' => backpack_url('org/location'),
                 ])
             </div>
             <div class="col-md-3">
@@ -73,7 +73,7 @@
                     'value' => 0, //$totalDepartments,
                     'icon' => 'la-building',
                     'color' => 'success',
-                    'link' => backpack_url('department'),
+                    'link' => backpack_url('org/department'),
                 ])
             </div>
             <div class="col-md-3">
@@ -82,7 +82,7 @@
                     'value' => 0, //$totalEmployees,
                     'icon' => 'la-users',
                     'color' => 'warning',
-                    'link' => backpack_url('employee'),
+                    'link' => backpack_url('org/employee'),
                 ])
             </div>
         </div>
@@ -96,7 +96,7 @@
                     'subtitle' => '', //$todayEnquiries . ' today',
                     'icon' => 'la-comments',
                     'color' => 'secondary',
-                    'link' => backpack_url('enquiry'),
+                    'link' => backpack_url('sales/enquiry'),
                 ])
             </div>
             <div class="col-md-3">
@@ -106,7 +106,7 @@
                     'subtitle' => '', //$todayBookings . ' today',
                     'icon' => 'la-calendar',
                     'color' => 'danger',
-                    'link' => backpack_url('booking'),
+                    'link' => backpack_url('sales/booking'),
                 ])
             </div>
             <div class="col-md-3">
@@ -125,7 +125,7 @@
                     'value' => 0, //$activeUsers,
                     'icon' => 'la-user-circle',
                     'color' => 'info',
-                    'link' => backpack_url('user'),
+                    'link' => backpack_url('org/user'),
                 ])
             </div>
         </div>
@@ -176,13 +176,13 @@
                         <h5 class="mb-0"><i class="la la-bolt"></i> Quick Actions</h5>
                     </div>
                     <div class="card-body">
-                        <a href="{{ backpack_url('branch/create') }}" class="btn btn-primary btn-sm"><i
+                        <a href="{{ backpack_url('org/branch/create') }}" class="btn btn-primary btn-sm"><i
                                 class="la la-plus"></i> New Branch</a>
-                        <a href="{{ backpack_url('location/create') }}" class="btn btn-info btn-sm"><i
+                        <a href="{{ backpack_url('org/location/create') }}" class="btn btn-info btn-sm"><i
                                 class="la la-plus"></i> New Location</a>
-                        <a href="{{ backpack_url('enquiry/create') }}" class="btn btn-secondary btn-sm"><i
+                        <a href="{{ backpack_url('sales/enquiry/create') }}" class="btn btn-secondary btn-sm"><i
                                 class="la la-plus"></i> New Enquiry</a>
-                        <a href="{{ backpack_url('booking/create') }}" class="btn btn-danger btn-sm"><i
+                        <a href="{{ backpack_url('sales/booking/create') }}" class="btn btn-danger btn-sm"><i
                                 class="la la-plus"></i> New Booking</a>
                         <a href="{{ backpack_url('sale/create') }}" class="btn btn-success btn-sm"><i
                                 class="la la-plus"></i> New Sale</a>

@@ -1,355 +1,322 @@
 <?php
 
+use App\Http\Controllers\Admin\Sales\Booking\BookingCrudController;
+use App\Http\Controllers\Admin\Sales\Enquiry\EnquiryCrudController;
+use App\Http\Controllers\Admin\Sales\Quotation\QuotationCrudController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Admin\BookingCrudController;
-use App\Http\Controllers\Admin\QuotationCrudController;
-use App\Http\Controllers\Admin\ReceiptCrudController;
-
 
 Route::group([
-    'prefix'     => config('backpack.base.route_prefix', 'admin'),
+    'prefix' => config('backpack.base.route_prefix', 'admin'),
     'middleware' => array_merge(
         (array) config('backpack.base.web_middleware', 'web'),
         (array) config('backpack.base.middleware_key', 'admin')
     ),
-    'namespace'  => 'App\Http\Controllers\Admin',
+    'namespace' => 'App\Http\Controllers\Admin',
 ], function () {
 
-    // ================= CRUD =================
-    Route::crud('user', 'UserCrudController');
-    Route::crud('booking', 'BookingCrudController');
+    // =========== BOOKING ========================
+    // Core CRUD (previously via Route::crud('booking', ...), registered explicitly — see
+    // .ai/rules/module-structure.md; Route::crud() can't produce a slash-separated URL alongside a
+    // dot-separated route name from a single $name argument, confirmed during batch 30).
+    //
+    // BUG-091: the explicit re-registration below dropped the 'operation' route-meta key that
+    // Route::crud() used to set automatically. Without it, Backpack never calls
+    // setupListOperation()/setupCreateOperation()/setupUpdateOperation() on the controller, so it
+    // falls back to fully-generic rendering (an empty edit form, no custom list columns — see
+    // known-bugs-report.md). Restored here using the same ['uses'=>..,'as'=>..,'operation'=>..]
+    // style already used throughout routes/backpack/core.php.
+    Route::get('sales/booking', ['uses' => BookingCrudController::class.'@index', 'as' => 'sales.booking.index', 'operation' => 'list']);
+    Route::post('sales/booking', ['uses' => BookingCrudController::class.'@store', 'as' => 'sales.booking.store', 'operation' => 'create']);
+    Route::get('sales/booking/create', ['uses' => BookingCrudController::class.'@create', 'as' => 'sales.booking.create', 'operation' => 'create']);
+    Route::get('sales/booking/{id}/edit', ['uses' => BookingCrudController::class.'@edit', 'as' => 'sales.booking.edit', 'operation' => 'update']);
+    Route::put('sales/booking/{id}', ['uses' => BookingCrudController::class.'@update', 'as' => 'sales.booking.update', 'operation' => 'update']);
+    Route::delete('sales/booking/{id}', ['uses' => BookingCrudController::class.'@destroy', 'as' => 'sales.booking.destroy', 'operation' => 'delete']);
+    Route::post('sales/booking/search', ['uses' => BookingCrudController::class.'@search', 'as' => 'sales.booking.search', 'operation' => 'list']);
+    Route::get('sales/booking/{id}/details', ['uses' => BookingCrudController::class.'@showDetailsRow', 'as' => 'sales.booking.details', 'operation' => 'list']);
+    Route::get('sales/booking/{id}/show', ['uses' => BookingCrudController::class.'@show', 'as' => 'sales.booking.show', 'operation' => 'show']);
+    Route::get('sales/booking/{id}/preview', [BookingCrudController::class, 'preview'])->name('sales.booking.preview');
 
-    Route::get('booking/errors', 'BookingCrudController@erroneousEntries')
-        ->name('booking.errors');
+    // BUG-050's confirmed-broken methods (no real implementation) — kept registered under the new
+    // URL scheme, still broken, not fixed here.
+    Route::get('sales/booking/errors', [BookingCrudController::class, 'erroneousEntries'])
+        ->name('sales.booking.errors');
+    Route::get('sales/booking/errors/data', [BookingCrudController::class, 'erroneousEntriesData'])
+        ->name('sales.booking.errors.data');
+    Route::get('sales/booking/delivered', [BookingCrudController::class, 'delivered'])
+        ->name('sales.booking.delivered');
+    Route::get('sales/booking/delivered/list', [BookingCrudController::class, 'deliveredList'])
+        ->name('sales.booking.delivered.list');
+    Route::get('sales/booking/delivered-view/{id}', [BookingCrudController::class, 'deliveredView'])
+        ->name('sales.booking.delivered-view');
+    Route::get('sales/booking/finance/retailed', [BookingCrudController::class, 'finRetailed'])
+        ->name('sales.booking.finance.retailed');
+    Route::get('sales/booking/invoiced/list', [BookingCrudController::class, 'invoicedList'])
+        ->name('sales.booking.invoiced.list');
+    Route::get('sales/booking/pending-invoices/list', [BookingCrudController::class, 'pendingInvoicesList'])
+        ->name('sales.booking.pending-invoices.list');
+    Route::post('sales/booking/order-verify/{id}', [BookingCrudController::class, 'orderVerify'])
+        ->name('sales.booking.order-verify');
+    Route::get('sales/booking/reports/stock/list', [BookingCrudController::class, 'stockList'])
+        ->name('sales.booking.reports.stock.list');
+    Route::get('sales/booking/reports/live-order/list', [BookingCrudController::class, 'liveOrderList'])
+        ->name('sales.booking.reports.live-order.list');
+    Route::get('sales/booking/reports/pending-actions/list', [BookingCrudController::class, 'pendingActionsList'])
+        ->name('sales.booking.reports.pending-actions.list');
+    Route::get('sales/booking/{id}/refunded-view', [BookingCrudController::class, 'refundedView'])
+        ->name('sales.booking.refunded-view');
+    Route::get('sales/booking/{id}/scrappage-view', [BookingCrudController::class, 'scrappageView'])
+        ->name('sales.booking.scrappage-view');
 
-    Route::get('booking/errors/data', 'BookingCrudController@erroneousEntriesData')
-        ->name('booking.errors.data');
+    Route::get('sales/booking/erroneous-bookings', [BookingCrudController::class, 'erroneousBookings'])
+        ->name('sales.booking.erroneous-bookings');
+    Route::get('sales/booking/finance/erroneous', [BookingCrudController::class, 'erroneousFinance'])
+        ->name('sales.booking.finance.erroneous');
+    Route::get('sales/booking/insurance/erroneous', [BookingCrudController::class, 'erroneousInsurance'])
+        ->name('sales.booking.insurance.erroneous');
+    Route::get('sales/booking/rto/erroneous', [BookingCrudController::class, 'erroneousRTO'])
+        ->name('sales.booking.rto.erroneous');
 
-    Route::get(
-        'booking/erroneous-bookings',
-        'BookingCrudController@erroneousBookings'
-    )->name('booking.erroneous-bookings');
+    Route::get('sales/booking/otf-form/{id}', [BookingCrudController::class, 'otfProcess'])
+        ->name('sales.booking.otf-process');
+    Route::get('sales/booking/otf-form', [BookingCrudController::class, 'liveNotInvoiced'])
+        ->name('sales.booking.otf-form');
+    Route::post('sales/booking/{id}/otf-save', [BookingCrudController::class, 'otfSave'])
+        ->name('sales.booking.otf.save');
+    Route::get('sales/booking/{id}/generate-votf', [BookingCrudController::class, 'generateVotfNumber'])
+        ->name('sales.booking.generate-votf');
+    Route::get('sales/booking/{id}/download-otf-pdf', [BookingCrudController::class, 'downloadOtfPdf'])
+        ->name('sales.booking.download-otf-pdf');
 
-    Route::get(
-        'finance/erroneous',
-        'BookingCrudController@erroneousFinance'
-    )->name('finance.erroneous');
-
-    Route::get(
-        'insurance/erroneous',
-        'BookingCrudController@erroneousInsurance'
-    )->name('insurance.erroneous');
-
-    Route::get(
-        'rto/erroneous',
-        'BookingCrudController@erroneousRTO'
-    )->name('rto.erroneous');
-
-    Route::get(
-        'booking/otf-form/{id}',
-        [BookingCrudController::class, 'otfProcess']
-    )->name('booking.otf-process');
-
-    Route::get(
-        'booking/otf-form',
-        [BookingCrudController::class, 'liveNotInvoiced']
-    )->name('booking.otf-form');
-
-    Route::get(
-        'get-do-amount',
-        [BookingCrudController::class, 'getDOAmount']
-    )->name('booking.get-do-amount');
-
-    Route::get(
-        'booking/get-ta-statement',
-        [BookingCrudController::class, 'getTAStatement']
-    )->name('booking.get-ta-statement');
-
-    // Route::get(
-    //     'quotation-form',
-    //     [BookingCrudController::class, 'quotationForm']
-    // )->name('booking.quotation-form');
-
+    Route::get('sales/booking/get-do-amount', [BookingCrudController::class, 'getDOAmount'])
+        ->name('sales.booking.get-do-amount');
+    Route::get('sales/booking/get-ta-statement', [BookingCrudController::class, 'getTAStatement'])
+        ->name('sales.booking.get-ta-statement');
 
     // ================= QUOTATION =================
 
+    Route::get('sales/quotation', [QuotationCrudController::class, 'index'])->name('sales.quotation.index');
 
-    Route::get(
-        'quotation-form',
-        [QuotationCrudController::class, 'index']
-    )->name('quotation.index');
+    Route::get('sales/quotation/pending', [QuotationCrudController::class, 'pendingQuotations'])
+        ->name('sales.quotation.pending');
 
-    Route::get('quotation-form/pending', [QuotationCrudController::class, 'pendingQuotations'])
-        ->name('quotation.pending');
+    Route::get('sales/quotation/create', [QuotationCrudController::class, 'create'])->name('sales.quotation.create');
 
-    Route::get(
-        'quotation-form/create',
-        [QuotationCrudController::class, 'create']
-    )->name('quotation.create');
+    Route::post('sales/quotation/store', [QuotationCrudController::class, 'store'])->name('sales.quotation.store');
 
-    Route::post(
-        'quotation-form/store',
-        [QuotationCrudController::class, 'store']
-    )->name('quotation.store');
+    Route::get('sales/quotation/{id}/edit', [QuotationCrudController::class, 'edit'])->name('sales.quotation.edit');
 
-    Route::get(
-        'quotation-form/{id}/edit',
-        [QuotationCrudController::class, 'edit']
-    )->name('quotation.edit');
+    Route::put('sales/quotation/{id}', [QuotationCrudController::class, 'update'])->name('sales.quotation.update');
 
-    Route::put(
-        'quotation-form/{id}',
-        [QuotationCrudController::class, 'update']
-    )->name('quotation.update');
+    Route::get('sales/quotation/{quotation_no}/preview', [QuotationCrudController::class, 'preview'])->name('sales.quotation.preview');
 
+    Route::get('sales/quotation/{id}/history', [QuotationCrudController::class, 'history'])->name('sales.quotation.history');
 
-
-    Route::get('quotation/{quotation_no}/preview', [QuotationCrudController::class, 'preview'])->name('quotation.preview');
-
-
-    Route::get(
-        'quotation-form/{id}/history',
-        [QuotationCrudController::class, 'history']
-    )->name('quotation.history');
-
-    Route::get(
-        'quotation-form/{id}/history/{version}/pdf',
-        [QuotationCrudController::class, 'historyPdf']
-    )->name('quotation.history.pdf');
-
-    Route::get(
-        'booking-process/{id}/preview',
-        'BookingCrudController@preview'
-    )->name('booking.preview');
+    Route::get('sales/quotation/{id}/history/{version}/pdf', [QuotationCrudController::class, 'historyPdf'])->name('sales.quotation.history-pdf');
 
     // ================= ADD BOOKING AMOUNT / RECEIPT =================
-    Route::get('booking/{id}/add-amount', [
-        'uses' => 'App\Http\Controllers\Admin\BookingCrudController@addAmountForm',
-        'as'   => 'booking.add-amount'
-    ]);
+    Route::get('sales/booking/{id}/add-amount', [BookingCrudController::class, 'addAmountForm'])
+        ->name('sales.booking.add-amount');
+    Route::post('sales/booking/{id}/add-amount', [BookingCrudController::class, 'addAmount'])
+        ->name('sales.booking.add-amount.store');
+    Route::post('sales/booking/{id}/add-receipt', [BookingCrudController::class, 'addReceipt'])
+        ->name('sales.booking.add-receipt.store');
+    Route::post('sales/booking/request-refund/{id}', [BookingCrudController::class, 'requestRefund'])
+        ->name('sales.booking.request-refund');
+    Route::get('sales/booking/{id}/receipt/{receipt_id}/edit', [BookingCrudController::class, 'receiptEdit'])
+        ->name('sales.booking.receipt.edit');
+    Route::put('sales/booking/{bookingId}/receipt/{receiptId}', [BookingCrudController::class, 'receiptUpdate'])
+        ->name('sales.booking.receipt.update');
+    Route::get('sales/booking/pending-payment', [BookingCrudController::class, 'pendingPayment'])
+        ->name('sales.booking.pending-payment');
+    Route::get('sales/booking/check-receipt/{rn}', [BookingCrudController::class, 'CheckReceipt'])
+        ->name('sales.booking.check-receipt');
+    Route::get('sales/booking/{id}/check-field-payment', [BookingCrudController::class, 'checkFieldPayment'])
+        ->name('sales.booking.check-field-payment');
 
-    Route::post('booking/{id}/add-amount', [
-        'uses' => 'App\Http\Controllers\Admin\BookingCrudController@addAmount',
-        'as'   => 'booking.add-amount.store'
-    ]);
-    Route::post('booking/{id}/add-receipt', [
-        'uses' => 'App\Http\Controllers\Admin\BookingCrudController@addReceipt',
-        'as'   => 'booking.add-receipt.store'
-    ]);
-    Route::post('booking/request-refund/{id}', 'BookingCrudController@requestRefund')
-        ->name('request-refund');
+    // ================= FOLLOWUP =================
+    Route::post('sales/booking/followup', [BookingCrudController::class, 'storeFollowup'])
+        ->name('sales.booking.followup.store');
 
     // ================= ORDER VERIFICATION =================
-    Route::get('booking/order-verification', 'BookingCrudController@orderVerification')
-        ->name('booking.order-verification');
+    Route::get('sales/booking/order-verification', [BookingCrudController::class, 'orderVerification'])
+        ->name('sales.booking.order-verification');
+    Route::get('sales/booking/order-update/{id}/{status}', [BookingCrudController::class, 'orderUpdate'])
+        ->name('sales.booking.order-update')
+        ->where(['id' => '[0-9]+', 'status' => '[0-5]']);
+    Route::get('sales/booking/pending-order', [BookingCrudController::class, 'pendingorder'])
+        ->name('sales.booking.pending-order');
 
-    Route::post('booking/order-verify/{id}', 'BookingCrudController@orderVerify')
-        ->name('booking.order-verify');
+    // ================= EDIT (generic booking status save) =================
+    Route::post('sales/booking/{id}/statusave', [BookingCrudController::class, 'statusave'])
+        ->name('sales.booking.statusave');
+    Route::get('sales/booking/{id}/pending-edit', [BookingCrudController::class, 'pendingEdit'])
+        ->name('sales.booking.pending-edit');
+    Route::post('sales/booking/{id}/pending-update', [BookingCrudController::class, 'pendingUpdate'])
+        ->name('sales.booking.pending-update');
 
-    Route::get('booking/order-update/{id}/{status}', [
-        'uses'  => 'App\Http\Controllers\Admin\BookingCrudController@orderUpdate',
-        'as'    => 'admin.booking.orderupdate',
-    ])->where(['id' => '[0-9]+', 'status' => '[0-5]']);
+    // ================= KYC =================
+    Route::get('sales/booking/pending-kyc', [BookingCrudController::class, 'pendingKyc'])
+        ->name('sales.booking.pending-kyc');
+    Route::get('sales/booking/{id}/kyc-edit', [BookingCrudController::class, 'kycEdit'])
+        ->name('sales.booking.kyc.edit');
+    Route::put('sales/booking/{id}/kyc-update', [BookingCrudController::class, 'kycUpdate'])
+        ->name('sales.booking.kyc.update');
 
-    // ================= ORDERED VERIFICATION =================
-    Route::get('booking/pending/sales-order', 'BookingCrudController@pendingorder')
-        ->name('booking.pending-order');
+    // ================= DMS =================
+    Route::get('sales/booking/pending-dms', [BookingCrudController::class, 'pendingDms'])
+        ->name('sales.booking.pending-dms');
+    Route::get('sales/booking/{id}/dms-edit', [BookingCrudController::class, 'dmsedit'])
+        ->name('sales.booking.dms-edit');
+    Route::put('sales/booking/{id}/dms-update', [BookingCrudController::class, 'dmsupdate'])
+        ->name('sales.booking.dms-update');
 
+    // ================= VIEW: HOLD / CANCELLED / INVOICED =================
+    Route::get('sales/booking/hold', [BookingCrudController::class, 'hold'])
+        ->name('sales.booking.hold');
+    Route::get('sales/booking/cancelled', [BookingCrudController::class, 'cancelled'])
+        ->name('sales.booking.cancelled');
+    Route::get('sales/booking/invoiced', [BookingCrudController::class, 'invoiced'])
+        ->name('sales.booking.invoiced');
+    Route::get('sales/booking/{id}/invoiced-show', [BookingCrudController::class, 'showInvoiced'])
+        ->name('sales.booking.invoiced.show');
 
+    // ================= PENDING: INSURANCE / RTO / DELIVERIES / REGISTRATION / DO =================
+    Route::get('sales/booking/pending-insurance', [BookingCrudController::class, 'pendingInsurance'])
+        ->name('sales.booking.pending-insurance');
+    Route::get('sales/booking/pending-rto', [BookingCrudController::class, 'pendingRto'])
+        ->name('sales.booking.pending-rto');
+    Route::get('sales/booking/pending-deliveries', [BookingCrudController::class, 'pendingDeliveries'])
+        ->name('sales.booking.pending-deliveries');
+    Route::get('sales/booking/pending-registration', [BookingCrudController::class, 'pendingRegistration'])
+        ->name('sales.booking.pending-registration');
+    Route::get('sales/booking/pending-do', [BookingCrudController::class, 'pendingDO'])
+        ->name('sales.booking.pending-do');
+    Route::get('sales/booking/pending-invoices', [BookingCrudController::class, 'pendingInvoices'])
+        ->name('sales.booking.pending-invoices');
 
-    // ================= PENDING KYC =================
-    Route::get(
-        'booking/pending-kyc',
-        'BookingCrudController@pendingKyc'
-    )->name('booking.pending-kyc');
+    // ================= AJAX / HELPER LOOKUPS =================
+    Route::get('sales/booking/branch-locations/{bid}', [BookingCrudController::class, 'getBranchLocation'])
+        ->name('sales.booking.get-branch-location');
+    Route::get('sales/booking/locations-by-branch/{branchCode?}', [BookingCrudController::class, 'getLocationsByBranch'])
+        ->name('sales.booking.get-locations-by-branch');
+    Route::get('sales/booking/locations/{state_id}', [BookingCrudController::class, 'getLocations'])
+        ->name('sales.booking.get-locations');
+    Route::get('sales/booking/locations-by-pincode/{pincode}', [BookingCrudController::class, 'getLocationsByPincode'])
+        ->name('sales.booking.get-locations-by-pincode');
+    Route::get('sales/booking/models/{segment_id}', [BookingCrudController::class, 'getModels'])
+        ->name('sales.booking.get-models');
+    Route::get('sales/booking/variants/{model}', [BookingCrudController::class, 'getVariants'])
+        ->name('sales.booking.get-variants');
+    Route::get('sales/booking/colors/{variant}', [BookingCrudController::class, 'getColors'])
+        ->name('sales.booking.get-colors');
+    Route::get('sales/booking/chassis-numbers/{modelCode}', [BookingCrudController::class, 'getChassisNumbers'])
+        ->name('sales.booking.get-chassis-numbers');
+    Route::get('sales/booking/accessories/{segment}/{model}/{variant}', [BookingCrudController::class, 'getAccessories'])
+        ->name('sales.booking.get-accessories');
+    Route::get('sales/booking/state-by-location/{location_id}', [BookingCrudController::class, 'getStateByLocation'])
+        ->name('sales.booking.get-state-by-location');
 
+    // ================= EXCHANGE / SCRAPPAGE =================
+    Route::get('sales/booking/exchange', [BookingCrudController::class, 'Exchange'])
+        ->name('sales.booking.exchange');
+    Route::get('sales/booking/scrappage', [BookingCrudController::class, 'Scrappage'])
+        ->name('sales.booking.scrappage');
+    Route::get('sales/booking/exchange/not-interested', [BookingCrudController::class, 'exchnotInterested'])
+        ->name('sales.booking.exchange.not-interested');
+    Route::get('sales/booking/exchange/{id}/edit', [BookingCrudController::class, 'exchangeEdit'])
+        ->name('sales.booking.exchange.edit');
+    Route::put('sales/booking/exchange/{id}/update', [BookingCrudController::class, 'exchangeUpdate'])
+        ->name('sales.booking.exchange.update');
 
+    // ================= FINANCE =================
+    Route::get('sales/booking/finance', [BookingCrudController::class, 'intInFinance'])
+        ->name('sales.booking.finance');
+    Route::get('sales/booking/finance/{id}/view', [BookingCrudController::class, 'financeView'])
+        ->name('sales.booking.finance.view');
+    Route::get('sales/booking/finance/not-interested', [BookingCrudController::class, 'finnotInterested'])
+        ->name('sales.booking.finance.not-interested');
+    Route::get('sales/booking/finance/retail', [BookingCrudController::class, 'finRetail'])
+        ->name('sales.booking.finance.retail');
+    Route::get('sales/booking/finance/payout', [BookingCrudController::class, 'finPayout'])
+        ->name('sales.booking.finance.payout');
+    Route::get('sales/booking/finance/payout/completed', [BookingCrudController::class, 'finPayoutCompleted'])
+        ->name('sales.booking.finance.payout.completed');
+    Route::get('sales/booking/finance/{id}/edit', [BookingCrudController::class, 'finEdit'])
+        ->name('sales.booking.finance.edit');
+    Route::put('sales/booking/finance/{id}/update', [BookingCrudController::class, 'finUpdate'])
+        ->name('sales.booking.finance.update');
+    Route::get('sales/booking/finance/{id}/retail-edit', [BookingCrudController::class, 'RetailEdit'])
+        ->name('sales.booking.finance.retail-edit');
+    Route::get('sales/booking/finance/{id}/payout-edit', [BookingCrudController::class, 'PayoutEdit'])
+        ->name('sales.booking.finance.payout-edit');
+    Route::put('sales/booking/finance/{id}/payout-update', [BookingCrudController::class, 'PayoutUpdate'])
+        ->name('sales.booking.finance.payout-update');
 
-    // ================= KYC Edit & Update =================
-    Route::get('booking/{id}/kyc-edit', 'BookingCrudController@kycEdit')
-        ->name('booking.kyc.edit');
-    Route::put('booking/{id}/kyc-update', 'BookingCrudController@kycUpdate')
-        ->name('kyc.update');
+    // ================= INSURANCE =================
+    Route::get('sales/booking/insurance/{id}/edit', [BookingCrudController::class, 'insedit'])
+        ->name('sales.booking.insurance.edit');
+    Route::put('sales/booking/insurance/{id}', [BookingCrudController::class, 'insUpdate'])
+        ->name('sales.booking.insurance.update');
 
-    // ================= PENDING DMS =================
-    Route::get('booking/pending-dms', 'BookingCrudController@pendingDms')
-        ->name('booking.pending-dms');
+    // ================= RTO =================
+    Route::get('sales/booking/rto/{id}/edit', [BookingCrudController::class, 'rtoEdit'])
+        ->name('sales.booking.rto.edit');
+    Route::post('sales/booking/rto/{id}/update', [BookingCrudController::class, 'rtoUpdate'])
+        ->name('sales.booking.rto.update');
 
+    // ================= DELIVERY =================
+    Route::get('sales/booking/{id}/delivery-edit', [BookingCrudController::class, 'PendDeliveryEdit'])
+        ->name('sales.booking.delivery-photos.edit');
+    Route::put('sales/booking/{id}/delivery-update', [BookingCrudController::class, 'PendDeliveryUpdate'])
+        ->name('sales.booking.delivery-photos.update');
 
-    // DMS Edit & Update routes (custom, non-CRUD)
-    Route::get('booking/{id}/dms-edit', 'BookingCrudController@dmsedit')->name('dms-edit');
-    Route::put('booking/{id}/dms-update', 'BookingCrudController@dmsupdate')->name('dms.update');
+    // ================= DELIVERY ORDER (DO) =================
+    Route::get('sales/booking/do/{id}/edit', [BookingCrudController::class, 'doEdit'])
+        ->name('sales.booking.do.edit');
+    Route::put('sales/booking/do/{id}', [BookingCrudController::class, 'doUpdate'])
+        ->name('sales.booking.do.update');
 
-    // ================= PENDING PAYMENT =================
-    Route::get('booking/pending-payment', 'BookingCrudController@pendingPayment')
-        ->name('booking.pending-payment');
+    // ================= DEALER INVOICE =================
+    Route::get('sales/booking/{id}/dealer-invoice', [BookingCrudController::class, 'dealerInvoice'])
+        ->name('sales.booking.dealer-invoice');
+    Route::put('sales/booking/{id}/dealer-invoice', [BookingCrudController::class, 'dealerInvoiceUpdate'])
+        ->name('sales.booking.dealer-invoice.update');
 
+    // ================= REFUND / REJECTED =================
+    // Note: 'refundView' was previously reachable via 2 different URIs (both registered, pointing
+    // at the identical method) — consolidated to 1 canonical route.
+    Route::get('sales/booking/refund/requested', [BookingCrudController::class, 'refundRequested'])
+        ->name('sales.booking.refund.requested');
+    Route::get('sales/booking/{id}/refund-view', [BookingCrudController::class, 'refundView'])
+        ->name('sales.booking.refund-view');
+    Route::put('sales/booking/{id}/refund-update', [BookingCrudController::class, 'refundUpdate'])
+        ->name('sales.booking.refund-update');
+    Route::post('sales/booking/refund/{id}/edit', [BookingCrudController::class, 'editRefund'])
+        ->name('sales.booking.refund.edit');
+    Route::get('sales/booking/refunded', [BookingCrudController::class, 'refunded'])
+        ->name('sales.booking.refunded');
+    Route::put('sales/booking/{id}/refunded-update', [BookingCrudController::class, 'refundedUpdate'])
+        ->name('sales.booking.refunded-update');
+    Route::get('sales/booking/rejected', [BookingCrudController::class, 'rejected'])
+        ->name('sales.booking.rejected');
+    Route::get('sales/booking/{id}/rejected-view', [BookingCrudController::class, 'rejectedView'])
+        ->name('sales.booking.rejected-view');
 
-    // On-Hold Bookings
-    Route::get('booking/hold', 'BookingCrudController@hold')
-        ->name('booking.hold');
+    // ================= REPORTS =================
+    Route::get('sales/booking/reports/consolidated-booking', [BookingCrudController::class, 'consolidatedBookingReport'])
+        ->name('sales.booking.reports.consolidated-booking');
+    Route::get('sales/booking/reports/branch-booking', [BookingCrudController::class, 'branchBookingReport'])
+        ->name('sales.booking.reports.branch-booking');
+    Route::get('sales/booking/reports/stock', [BookingCrudController::class, 'stockReport'])
+        ->name('sales.booking.reports.stock');
+    Route::get('sales/booking/reports/live-order', [BookingCrudController::class, 'liveOrderReport'])
+        ->name('sales.booking.reports.live-order');
+    Route::get('sales/booking/reports/pending-actions', [BookingCrudController::class, 'pendingActionsReport'])
+        ->name('sales.booking.reports.pending-actions');
 
-    // Cancelled Bookings
-    Route::get('booking/cancelled', 'BookingCrudController@cancelled')
-        ->name('booking.cancelled');
-    // ================= INVOICED BOOKINGS =================
-    Route::get('booking/invoiced', 'BookingCrudController@invoiced')
-        ->name('booking.invoiced');
-    Route::get('booking/invoiced/list', 'BookingCrudController@invoicedList')
-        ->name('booking.invoiced.list');
-
-
-    // ================= PENDING INSURANCE =================
-    Route::get('booking/pending-insurance', 'BookingCrudController@pendingInsurance')
-        ->name('booking.pending-insurance');
-
-    // ================= PENDING RTO =================
-    Route::get('booking/pending-rto', 'BookingCrudController@pendingRto')
-        ->name('booking.pending-rto');
-
-    // ================= PENDING DELIVERIES =================
-    Route::get('booking/pending-deliveries', 'BookingCrudController@pendingDeliveries')
-        ->name('booking.pending-deliveries');
-
-    // ================= PENDING REGISTRATION =================
-    Route::get('booking/pending-registration', [App\Http\Controllers\Admin\BookingCrudController::class, 'pendingRegistration'])
-        ->name('booking.pending-registration');
-
-    // ================= PENDING DO (Delivery Order) =================
-    Route::get('booking/pending-do', 'BookingCrudController@pendingDO')
-        ->name('booking.pending-do');
-
-
-    // AJAX / HELPER ROUTES
-
-    Route::get(
-        'booking/{id}/generate-votf',
-        [BookingCrudController::class, 'generateVotfNumber']
-    )->name('booking.generate-votf');
-
-    Route::get('/branchlocations/{bid}', 'BookingCrudController@getBranchLocation')
-        ->name('get.branch');
-
-
-    Route::get(
-        'get-locations/{branchCode?}',
-        [App\Http\Controllers\Admin\BookingCrudController::class, 'getLocationsByBranch']
-    )
-        ->name('get-locations.by.branch');
-
-
-    Route::get('get-locations/{state_id}', [App\Http\Controllers\Admin\BookingCrudController::class, 'getLocations'])
-        ->name('get.locations');
-
-    Route::get('get-locations-by-pincode/{pincode}', [App\Http\Controllers\Admin\BookingCrudController::class, 'getLocationsByPincode'])
-        ->name('get.locations.by.pincode');
-
-    Route::get('/get-models/{segment_id}', 'BookingCrudController@getModels')
-        ->name('get.models');
-
-    Route::get('/check-receipt/{rn}', 'BookingCrudController@CheckReceipt')
-        ->name('check-receipt');
-
-    Route::get('/get-variants/{model}', 'BookingCrudController@getVariants')
-        ->name('get.variants');
-
-    Route::get('/get-colors/{variant}', 'BookingCrudController@getColors')
-        ->name('get.colors');
-
-    Route::get('/get-chassis-numbers/{modelCode}', 'BookingCrudController@getChassisNumbers')
-        ->name('get.chasis');
-
-    Route::get('/get-accessories/{segment}/{model}/{variant}', 'BookingCrudController@getAccessories')
-        ->name('get.accessories');
-
-
-    Route::get('/get-state-by-location/{location_id}', 'BookingCrudController@getStateByLocation')
-        ->name('get.state.by.location');
-    Route::post('booking/followup', 'BookingCrudController@storeFollowup')
-        ->name('booking.followup.store');
-
-
-
-    Route::post('booking/{id}/statusave', 'BookingCrudController@statusave')
-        ->name('statusave');
-
-    Route::get('booking/refund/requested', 'BookingCrudController@refundRequested')
-        ->name('booking.refund.requested')
-        ->middleware('admin');
-
-    Route::get('refund-view/{id}', 'BookingCrudController@refundView')
-        ->name('refund.view')
-        ->middleware('admin');
-
-    Route::get('booking/refunded', 'BookingCrudController@refunded')
-        ->name('booking.refunded')
-        ->middleware('admin');
-
-    Route::get('refunded-view/{id}', 'BookingCrudController@refundedView')
-        ->name('refunded.view')
-        ->middleware('admin');
-
-    Route::get('booking/rejected', 'BookingCrudController@rejected')
-        ->name('booking.rejected')
-        ->middleware('admin');
-
-    Route::get('rejected-view/{id}', 'BookingCrudController@rejectedView')
-        ->name('rejected.view')
-        ->middleware('admin');
-
-    Route::get('booking/exchange', 'BookingCrudController@Exchange')
-        ->name('booking.exchange')
-        ->middleware('admin');
-
-
-    Route::get('booking/scrappage', 'BookingCrudController@Scrappage')
-        ->name('booking.scrappage')
-        ->middleware('admin');
-
-    Route::get('scrappage-view/{id}', 'BookingCrudController@scrappageView')
-        ->name('scrappage.view')
-        ->middleware('admin');
-
-    // Not Interested Bookings List (ag-grid style)
-    Route::get('/booking/exchange/not-interested', 'BookingCrudController@exchnotInterested')
-        ->name('exchange.not-interested')
-        ->middleware('admin');
-
-    Route::get('booking/{id}/receipt/{receipt_id}/edit', 'BookingCrudController@receiptEdit')
-        ->name('receipt.edit');
-    Route::put('booking/{bookingId}/receipt/{receiptId}', 'BookingCrudController@receiptUpdate')
-        ->name('receipt.update');
     // ================= ACCOUNTS - ISSUE RECEIPT =================
+    // (moved to routes/backpack/core.php — see BUG-036-pattern note there)
 
-    Route::get(
-        'accounts/receipt-list',
-        [ReceiptCrudController::class, 'index']
-    )->name('accounts.receipt.index');
-
-    Route::get(
-        'accounts/receipt/create',
-        [ReceiptCrudController::class, 'create']
-    )->name('accounts.receipt.create');
-
-    Route::post(
-        'accounts/receipt-list',
-        [ReceiptCrudController::class, 'store']
-    )->name('accounts.receipt.store');
-
-    Route::get(
-        'accounts/receipt/{id}/edit',
-        [ReceiptCrudController::class, 'edit']
-    )->name('accounts.receipt.edit');
-
-    Route::put(
-        'accounts/receipt/{id}',
-        [ReceiptCrudController::class, 'update']
-    )->name('accounts.receipt.update');
-
-    Route::delete(
-        'accounts/receipt/{id}',
-        [ReceiptCrudController::class, 'destroy']
-    )->name('accounts.receipt.destroy');
     // ================= SPECIAL DISCOUNT =================
 
     Route::get('special-discount', function () {
@@ -359,7 +326,6 @@ Route::group([
     Route::get('special-discount/create', function () {
         return view('admin.sales-cashier.special-discount-create');
     })->name('special-discount.create');
-
 
     // ================= RTO CHARGES =================
 
@@ -371,178 +337,9 @@ Route::group([
         return view('admin.sales-cashier.rto-charges-create');
     })->name('rto-charges.create');
 
-
-    Route::get('booking/finance', 'BookingCrudController@intInFinance')
-        ->name('booking.finance')
-        ->middleware('admin');
-
-    Route::get('finance-view/{id}', 'BookingCrudController@financeView')
-        ->name('finance.view')
-        ->middleware('admin');
-
-    Route::get('booking/finance/not-interested', 'BookingCrudController@finnotInterested')
-        ->name('finance.not-interested')
-        ->middleware('admin');
-
-
-
-    Route::get('booking/finance/retail', 'BookingCrudController@finRetail')
-        ->name('finance.retail')
-        ->middleware('admin');
-
-    Route::get('booking/finance/retailed', 'BookingCrudController@finRetailed')
-        ->name('finance.retailed')
-        ->middleware('admin');
-
-
-    Route::get('finance/payout', 'BookingCrudController@finPayout')
-        ->name('finance.payout')
-        ->middleware('admin');
-
-    Route::get('finance/payout/completed', 'BookingCrudController@finPayoutCompleted')
-        ->name('finance.payout.completed')
-        ->middleware('admin');
-    Route::get('booking/{id}/invoiced-show', 'BookingCrudController@showInvoiced')
-        ->name('booking.invoiced.show');
-    Route::get('booking/{id}/pending-edit', 'BookingCrudController@pendingEdit')
-        ->name('booking.pending-edit');
-    Route::post('booking/{id}/pending-update', 'BookingCrudController@pendingUpdate')
-        ->name('booking.pending-update');
-    Route::get('reports/consolidated-booking', 'BookingCrudController@consolidatedBookingReport')
-        ->name('reports.consolidated-booking')
-        ->middleware('admin');
-
-    Route::get('reports/branch-booking', 'BookingCrudController@branchBookingReport')
-        ->name('reports.branch-booking')
-        ->middleware('admin');
-
-    Route::get('reports/stock', 'BookingCrudController@stockReport')
-        ->name('reports.stock')
-        ->middleware('admin');
-
-    Route::get('reports/stock/list', 'BookingCrudController@stockList')
-        ->name('reports.stock.list')
-        ->middleware('admin');
-
-    // ================= LIVE ORDER REPORT =================
-    Route::get('reports/live-order', 'BookingCrudController@liveOrderReport')
-        ->name('reports.live-order')
-        ->middleware('admin');
-
-    Route::get('reports/live-order/list', 'BookingCrudController@liveOrderList')
-        ->name('reports.live-order.list')
-        ->middleware('admin');
-
-    Route::get('reports/pending-actions', 'BookingCrudController@pendingActionsReport')
-        ->name('reports.pending-actions')
-        ->middleware('admin');
-
-    Route::get('reports/pending-actions/list', 'BookingCrudController@pendingActionsList')
-        ->name('reports.pending-actions.list')
-        ->middleware('admin');
-
-
-
-
-
-
-    Route::get('booking/delivered', 'BookingCrudController@delivered')
-        ->name('booking.delivered');
-
-    Route::get('booking/delivered/list', 'BookingCrudController@deliveredList')
-        ->name('booking.delivered.list');
-
-    Route::get('booking/delivered-view/{id}', 'BookingCrudController@deliveredView')
-        ->name('delivered-view');
-    // ================= PENDING INVOICES =================
-    Route::get('booking/pending-invoices', 'BookingCrudController@pendingInvoices')
-        ->name('booking.pending-invoices');
-
-    Route::get('booking/pending-invoices/list', 'BookingCrudController@pendingInvoicesList')
-        ->name('booking.pending-invoices.list');
-
-    Route::get('booking/{id}/receipt/{receipt_id}/edit', 'BookingCrudController@receiptEdit')
-        ->name('receipt.edit');
-    // ================= DEALER INVOICE OPERATIONS =================
-    Route::get('booking/{id}/dealer-invoice', 'BookingCrudController@dealerInvoice')
-        ->name('booking.dealer-invoice');
-
-    Route::put('booking/{id}/dealer-invoice', 'BookingCrudController@dealerInvoiceUpdate')
-        ->name('booking.dealer-invoice.update');
-    Route::get('insurance/edit/{id}', 'BookingCrudController@insedit')->name('insurance.edit');
-    Route::put('insurance/update/{id}', 'BookingCrudController@insUpdate')
-        ->name('booking.insurance.update');
-
-    Route::get('booking/rto/edit/{id}', 'BookingCrudController@rtoEdit')
-        ->name('booking.rto.edit');
-
-    Route::post('booking/rto/update/{id}', 'BookingCrudController@rtoUpdate')
-        ->name('booking.rto.update');
-    Route::get('booking/{id}/delivery-edit', 'BookingCrudController@PendDeliveryEdit')
-        ->name('booking.delivery-photos.edit');
-
-    Route::put('booking/{id}/delivery-update', 'BookingCrudController@PendDeliveryUpdate')
-        ->name('booking.delivery-photos.update');
-
-    Route::get('exchange/{id}/edit', 'BookingCrudController@exchangeEdit')
-        ->name('exchange-edit')
-        ->middleware('admin');
-
-    Route::put('exchange/{id}/update', 'BookingCrudController@exchangeUpdate')
-        ->name('exchange.update')
-        ->middleware('admin');
-
-    Route::get('finance/{id}/edit', 'BookingCrudController@finEdit')
-        ->name('finance-edit')
-        ->middleware('admin');
-    Route::get('finance/{id}/retail-edit', 'BookingCrudController@RetailEdit')
-        ->name('finance.retailedit')
-        ->middleware('admin');
-
-    Route::put('finance/{id}/update', 'BookingCrudController@finUpdate')
-        ->name('finance.update')
-        ->middleware('admin');
-
-    Route::get('finance/{id}/payout-edit', 'BookingCrudController@PayoutEdit')
-        ->name('finance.payoutedit')
-        ->middleware('admin');
-    Route::put('finance/{id}/payout-update', 'BookingCrudController@PayoutUpdate')
-        ->name('payout.update')
-        ->middleware('admin');
-
-    Route::get('booking/{id}/refund-view', 'BookingCrudController@refundView')
-        ->name('booking.refund-view');
-    Route::put('booking/{id}/refund-update', 'BookingCrudController@refundUpdate')
-        ->name('update-refund')
-        ->middleware('admin');
-
-    Route::post('/refund/edit/{id}', 'BookingCrudController@editRefund')
-        ->name('editRefund');
-    Route::put('booking/{id}/refunded-update', 'BookingCrudController@refundedUpdate')
-        ->name('update-refunded')
-        ->middleware('admin');
-    Route::get('booking/{id}/check-field-payment', 'BookingCrudController@checkFieldPayment')
-        ->name('booking.check-field-payment');
-
-    Route::get('finance/do/edit/{id}', 'BookingCrudController@doEdit')
-        ->name('finance.do.edit');
-
-    Route::put('finance/do/update/{id}', 'BookingCrudController@doUpdate')
-        ->name('finance.do.update');
-
-    Route::get('booking/{id}/check-field-payment', 'BookingCrudController@checkFieldPayment')
-        ->name('booking.check-field-payment');
-    Route::post('booking/{id}/otf-save', 'BookingCrudController@otfSave')
-        ->name('booking.otf.save');
-    Route::get('booking/{id}/download-otf-pdf', [BookingCrudController::class, 'downloadOtfPdf'])
-        ->name('booking.download-otf-pdf');
-
     Route::get(
-        'enquiries/{id}/validate-quotation-vehicle',
-        [\App\Http\Controllers\Admin\EnquiryCrudController::class, 'validateQuotationVehicle']
-    )->name('enquiry.validate.quotation.vehicle');
+        'sales/enquiry/{id}/validate-quotation-vehicle',
+        [EnquiryCrudController::class, 'validateQuotationVehicle']
+    )->name('sales.enquiry.validate-quotation-vehicle');
 
-    Route::crud('enquiry', 'EnquiryCrudController');
-
-    
 });

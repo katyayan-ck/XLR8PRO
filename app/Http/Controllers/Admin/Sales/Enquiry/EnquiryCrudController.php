@@ -1,0 +1,2832 @@
+<?php
+
+namespace App\Http\Controllers\Admin\Sales\Enquiry;
+
+use App\Jobs\ImportEnquiriesJob;
+use App\Models\CRM\Campaign;
+use App\Models\CRM\Enquiry;
+use App\Models\CRM\Lead;
+use App\Models\CRM\LeadSource;
+use App\Models\CRM\Quotation;
+use App\Models\Module\Booking\XlFinancier;
+use App\Models\Module\Finance\XFinance;
+use App\Services\EnquiryReferenceService;
+use App\Services\OrgService;
+use Backpack\CRUD\app\Http\Controllers\CrudController;
+use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
+use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
+use Prologue\Alerts\Facades\Alert;
+use Throwable;
+
+class EnquiryCrudController extends CrudController
+{
+    use CreateOperation, DeleteOperation, ListOperation, UpdateOperation {
+        ListOperation::search as protected traitSearch;
+        ListOperation::showDetailsRow as protected traitShowDetailsRow;
+    }
+
+    public function __construct(protected EnquiryReferenceService $enquiryRef)
+    {
+        parent::__construct();
+    }
+
+    public function setup()
+    {
+        CRUD::setModel(Enquiry::class);
+        CRUD::setRoute(config('backpack.base.route_prefix').'/sales/enquiry');
+        CRUD::setEntityNameStrings('enquiry', 'enquiries');
+    }
+
+    /**
+     * Overrides DeleteOperation's default destroy() to add a permission gate.
+     * See known-bugs-report.md BUG-047: the trait default has no explicit
+     * access condition beyond Backpack's own allowAccess('delete') (granted
+     * automatically by setupDeleteDefaults()), so without this override any
+     * authenticated backpack user could delete any enquiry.
+     */
+    public function destroy($id)
+    {
+        if (! backpack_user()->can('SLS_ENQR_DELETE')) {
+            abort(403, 'Unauthorized. You do not have permission to delete enquiries.');
+        }
+
+        $this->crud->hasAccessOrFail('delete');
+
+        $id = $this->crud->getCurrentEntryId() ?? $id;
+
+        return $this->crud->delete($id);
+    }
+
+    /**
+     * Overrides ListOperation's search()/showDetailsRow() to add a permission gate.
+     * See known-bugs-report.md BUG-047: both trait defaults only call
+     * hasAccessOrFail('list'), which setupListDefaults() grants automatically,
+     * so without this override they bypassed every inline check added elsewhere
+     * in this controller.
+     */
+    public function search()
+    {
+        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view enquiries.');
+        }
+
+        return $this->traitSearch();
+    }
+
+    public function showDetailsRow($id)
+    {
+        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view enquiries.');
+        }
+
+        return $this->traitShowDetailsRow($id);
+    }
+
+    protected function setupListOperation()
+    {
+        $this->crud->setListView('admin.sales.enquiry.list');
+    }
+
+    /**
+     * Cached Lookup Maps for Grid Enrichment
+     */
+    private function getEnquiryLookupMaps(): array
+    {
+        return Cache::remember('enquiry_lookup_maps_v2', now()->addMinutes(10), function () {
+            $lpMap = collect(OrgService::keywordValueByCode('LIKELY_PURCHASE_DAY'))
+                ->pluck('value', 'code')
+                ->toArray();
+
+            $fuelMap = collect(OrgService::getKeyValuesByCode('FUEL_TYPE'))
+                ->pluck('value', 'id')
+                ->toArray();
+
+            $finMap = collect(XlFinancier::select('id', 'name')->get())
+                ->pluck('name', 'id')
+                ->toArray();
+
+            $branchesMap = collect(OrgService::branches())->toArray();
+            $segmentsMap = collect(OrgService::segments())->toArray();
+
+            $fupTypesMap = collect(OrgService::keywordValueByCode('FOLLOW_UP_TYPE'))->pluck('value', 'code')->toArray();
+            $enqStageMap = collect(OrgService::keywordValueByCode('ENQ_STAGE'))->pluck('value', 'code')->toArray();
+            $custStageMap = collect(OrgService::keywordValueByCode('CUSTOMER_STAGE'))->pluck('value', 'code')->toArray();
+            $purcTypeMap = collect(OrgService::keywordValueByCode('PURCHASE_TYPE'))->pluck('value', 'code')->toArray();
+            $lostReasonMap = collect(OrgService::keywordValueByCode('LOST_REASON'))->pluck('value', 'code')->toArray();
+
+            // 1. Source & Sub-Source Maps
+            $sourcesMap = collect(OrgService::keywordValueByCode('ENQ_SOURCE'))->pluck('value', 'code')->toArray();
+            $subSourceMap = collect(OrgService::keywordValueByCode('ENQ_SUB_SOURCE'))->pluck('value', 'code')->toArray();
+
+            // 2. OEM Enquiry Type Map
+            $enquiryTypeMap = collect(OrgService::keywordValueByCode('ENQ_TYPE'))->pluck('value', 'code')->toArray();
+
+            // 3. Demographics: Marital Status & Age Group
+            $maritalStatusMap = collect(OrgService::keywordValueByCode('MARITAL_STATUS'))->pluck('value', 'code')->toArray();
+            $ageGroupMap = collect(OrgService::keywordValueByCode('AGE_GROUP'))->pluck('value', 'code')->toArray();
+
+            // 4. Lost Sub Reason Map (checks both LOST_SUBREASON and LOST_SUB_REASON variations)
+            $sub1 = OrgService::keywordValueByCode('LOST_SUBREASON');
+            $sub2 = OrgService::keywordValueByCode('LOST_SUB_REASON');
+            $lostSubReasonMap = collect(array_merge($sub1, $sub2))->pluck('value', 'code')->toArray();
+
+            // 5. CRE Deviation Stage Map
+            $deviationStageMap = collect(OrgService::keywordValueByCode('DEVIATION_STAGE'))->pluck('value', 'code')->toArray();
+
+            // 6. Additional Maps for List View
+            $genderMap = collect(OrgService::keywordValueByCode('GENDER'))->pluck('value', 'code')->toArray();
+            $usageAreaMap = collect(OrgService::keywordValueByCode('USAGE_AREA'))->pluck('value', 'code')->toArray();
+            $kmTravelledMap = collect(OrgService::keywordValueByCode('KM_TRAVELLED_DAILY'))->pluck('value', 'code')->toArray();
+            $appTypeMap = collect(OrgService::keywordValueByCode('APPLICATION_TYPE'))->pluck('value', 'code')->toArray();
+            $appMap = collect(OrgService::keywordValueByCode('APPLICATION'))->pluck('value', 'code')->toArray();
+            $occTypeMap = collect(OrgService::keywordValueByCode('OCCUPATION_TYPE'))->pluck('value', 'code')->toArray();
+            $locationsMap = collect(OrgService::locations())->toArray();
+
+            $scUsers = OrgService::getUsers(
+                'ALL',
+                'ALL',
+                'ALL',
+                'ALL',
+                'ALL',
+                'ALL',
+                'ALL',
+                'ALL',
+                'ALL',
+                'ALL',
+                null,
+                true
+            );
+
+            $scByCode = [];
+            $scByMileId = [];
+            $scNamesByCode = [];
+
+            foreach ($scUsers as $user) {
+                $userName = trim(($user['name'] ?? '').' '.($user['last_name'] ?? '')) ?: ($user['name'] ?? '—');
+
+                if (! empty($user['employee_code'])) {
+                    $scByCode[$user['employee_code']] = $user;
+                    $scNamesByCode[$user['employee_code']] = $userName;
+                }
+                if (! empty($user['person_code'])) {
+                    $scByCode[$user['person_code']] = $user;
+                    $scNamesByCode[$user['person_code']] = $userName;
+                }
+                if (! empty($user['mile_id'])) {
+                    $scByMileId[$user['mile_id']] = $user;
+                }
+            }
+
+            return compact(
+                'lpMap',
+                'fuelMap',
+                'finMap',
+                'branchesMap',
+                'segmentsMap',
+                'scByCode',
+                'scByMileId',
+                'scNamesByCode',
+                'fupTypesMap',
+                'enqStageMap',
+                'custStageMap',
+                'purcTypeMap',
+                'lostReasonMap',
+                'sourcesMap',
+                'subSourceMap',
+                'enquiryTypeMap',
+                'maritalStatusMap',
+                'ageGroupMap',
+                'lostSubReasonMap',
+                'deviationStageMap',
+                'maritalStatusMap',
+                'ageGroupMap',
+                'lostSubReasonMap',
+                'deviationStageMap',
+                'genderMap',
+                'usageAreaMap',
+                'kmTravelledMap',
+                'appTypeMap',
+                'appMap',
+                'occTypeMap',
+                'locationsMap'
+            );
+        });
+    }
+
+    private function resolveMapType(string $listType): string
+    {
+        return match (true) {
+            in_array($listType, ['assigned_long', 'unassigned_long']) => 'long',
+            in_array($listType, ['assigned_quick', 'unassigned_quick']) => 'quick',
+            $listType === 'otf' => 'otf',
+            in_array($listType, [
+                'reference',
+                'virtual',
+                'whatsapp',
+                'hyperlocal',
+                'exchange',
+                'scrappage',
+                'exchange_not_interested',
+                'finance',
+                'finance_not_interested',
+            ]) => $listType,
+
+            default => 'all',
+        };
+    }
+
+    private function getBaseQuery(string $listType)
+    {
+        if ($listType === 'otf') {
+            return DB::table('xlr8_crm_booking as crm_booking')
+                ->select([
+                    'crm_booking.id',
+                    'crm_booking.booking_date',
+                    'crm_booking.status',
+                    'crm_booking.cancellation_date',
+                    'crm_booking.sc_mile_id as sc_name',
+                    'crm_booking.oem_code',
+                    'crm_booking.invoice_no',
+                    'crm_booking.evaluation_no',
+                    'crm_booking.so_no',
+                    'crm_booking.customer_code',
+                    'crm_booking.customer_tan as tan_no',
+                    'crm_booking.customer_name',
+                    'crm_booking.customer_address',
+                    'crm_booking.customer_city as city',
+                    'crm_booking.customer_tehsil as tehsil',
+                    'crm_booking.customer_district as district',
+                    'crm_booking.customer_pan as pan_no',
+                    'crm_booking.customer_aadhar as adhar_no',
+                    'crm_booking.otf_no as otf_number',
+                ])
+                ->where('crm_booking.is_active', 1);
+        }
+
+        $query = match ($listType) {
+            'reference' => Enquiry::reference(),
+            'virtual' => Enquiry::virtual(),
+            'whatsapp' => Enquiry::whatsapp(),
+            'hyperlocal' => Enquiry::hyperlocal(),
+            'xceler8' => Enquiry::xceler8(),
+            'assigned_long' => Enquiry::assignedLong(),
+            'unassigned_long' => Enquiry::unassignedLong(),
+            'assigned_quick' => Enquiry::assignedQuick(),
+            'unassigned_quick' => Enquiry::unassignedQuick(),
+            'exchange' => Enquiry::where(function ($q) {
+                $q->whereIn('purchase_type_crm', ['Exchange Buy', 'EXCHANGE_BUY'])
+                    ->orWhere(function ($sub) {
+                        $sub->where(function ($sub2) {
+                            $sub2->whereNull('purchase_type_crm')->orWhere('purchase_type_crm', '');
+                        })->whereIn('purchase_type', ['Exchange Buy', 'EXCHANGE_BUY']);
+                    });
+            }),
+
+            'scrappage' => Enquiry::where(function ($q) {
+                $q->whereIn('purchase_type_crm', ['Scrappage', 'SCRAPPAGE'])
+                    ->orWhere(function ($sub) {
+                        $sub->where(function ($sub2) {
+                            $sub2->whereNull('purchase_type_crm')->orWhere('purchase_type_crm', '');
+                        })->whereIn('purchase_type', ['Scrappage', 'SCRAPPAGE']);
+                    });
+            }),
+
+            'exchange_not_interested' => Enquiry::where(function ($q) {
+                $q->whereIn('purchase_type_crm', [
+                    'First Time Buy',
+                    'FIRST_TIME_BUY',
+                    'Additional Buy',
+                    'ADDITIONAL_BUY',
+                    'No Consideration',
+                    'NO_CONSIDERATION',
+                ])
+                    ->orWhere(function ($sub) {
+                        $sub->where(function ($sub2) {
+                            $sub2->whereNull('purchase_type_crm')->orWhere('purchase_type_crm', '');
+                        })->whereIn('purchase_type', [
+                            'First Time Buy',
+                            'FIRST_TIME_BUY',
+                            'Additional Buy',
+                            'ADDITIONAL_BUY',
+                            'No Consideration',
+                            'NO_CONSIDERATION',
+                        ]);
+                    });
+            }),
+
+            'finance' => Enquiry::where('fin_mode', 'In-house'),
+            'finance_not_interested' => Enquiry::whereIn('fin_mode', ['Cash', 'Customer Self', 'Yet To Decide', 'Purchase Plan Cancelled']),
+
+            // APPLY NEW SCOPE TO THE DEFAULT MAIN LISTING
+            default => Enquiry::mainListing(),
+        };
+
+        return $query->with(['segment', 'model', 'variant', 'color', 'campaign']);
+    }
+
+    private static array $vehicleFromOemCodeCache = [];
+
+    private function resolveVehicleFromOemCode(?string $oemCode): array
+    {
+        $empty = ['segment' => '—', 'model' => '—', 'variant' => '—', 'color' => '—'];
+
+        $oemCode = trim((string) $oemCode);
+        if (strlen($oemCode) < 3) {
+            return $empty;
+        }
+
+        if (isset(self::$vehicleFromOemCodeCache[$oemCode])) {
+            return self::$vehicleFromOemCodeCache[$oemCode];
+        }
+
+        // 1. Base code (variant code) aur last 2 chars (color code) alag karein
+        $variantCode = substr($oemCode, 0, -2);
+        $colorCode = strtoupper(substr($oemCode, -2));
+
+        // 2. Direct xlr8_vehicle_variant table se rows fetch karein
+        $rows = DB::table('xlr8_vehicle_variant')
+            ->where('code', $variantCode)
+            ->get(['segment_code', 'model_code', 'custom_name', 'color', 'color_code']);
+
+        if ($rows->isEmpty()) {
+            return self::$vehicleFromOemCodeCache[$oemCode] = $empty;
+        }
+
+        // 3. Variant details ke liye any row
+        $baseRow = $rows->first();
+
+        // 4. Color column data jahan color_code matching ho
+        $colorRow = $rows->first(fn ($r) => strtoupper((string) $r->color_code) === $colorCode);
+
+        $result = [
+            'segment' => $baseRow->segment_code ?? '—',
+            'model' => $baseRow->model_code ?? '—',
+            'variant' => $baseRow->custom_name ?? '—',
+            'color' => ($colorRow->color ?? $baseRow->color) ?? '—',
+        ];
+
+        return self::$vehicleFromOemCodeCache[$oemCode] = $result;
+    }
+
+    /**
+     * Latest CRE follow-up row per enquiry, batched for a page/chunk of enquiries
+     */
+    private function getLatestCreFups(array $enquiryIds): array
+    {
+        if (empty($enquiryIds)) {
+            return [];
+        }
+
+        $x8Nos = array_map(fn ($id) => (string) $this->enquiryRef->fromReference($id), $enquiryIds);
+        $legacyX8Nos = array_map(fn ($id) => 'XENQ-' . $this->enquiryRef->fromReference($id), $enquiryIds);
+
+        $searchNos = array_merge($x8Nos, $legacyX8Nos);
+
+        $rows = DB::table('xlr8_cre_enquiry_fup')
+            ->whereIn('x8_enq_no', $searchNos)
+            ->where('cre_fup_deviation_stage', '!=', 'OPEN_FOLLOW_UP')
+            ->orderByDesc('id')
+            ->get();
+
+        $latest = [];
+        foreach ($rows as $row) {
+            $cleanId = $this->enquiryRef->fromReference($row->x8_enq_no);
+            if (! isset($latest[$cleanId])) {
+                $latest[$cleanId] = $row;
+            }
+        }
+
+        return $latest;
+    }
+
+    private function formatDate(?string $date, string $format): string
+    {
+        if (empty($date) || str_starts_with($date, '0000')) {
+            return '—';
+        }
+
+        // Pure-date formats follow the site's centrally-configured date format
+        // instead of a hardcoded one, so they stay in sync if that setting changes.
+        if ($format === 'd-M-Y') {
+            return site_date($date, '—');
+        }
+
+        try {
+            return Carbon::parse($date)->format($format);
+        } catch (Throwable $th) {
+            return '—';
+        }
+    }
+
+    public function index()
+    {
+        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view enquiries.');
+        }
+
+        $this->crud->setListView('admin.sales.enquiry.list');
+
+        $filters = [
+            'missed_fup',
+            'today_fup',
+            'birthday',
+            'anniversary',
+            'exchange',
+            'pending_eval',
+            'delayed',
+            'wrong_assign',
+            'finance',
+            'stage_mismatch',
+            'lost_verif',
+        ];
+
+        $highlightCounts = Cache::remember('enquiry_highlight_counts', now()->addMinutes(2), function () use ($filters) {
+            $counts = [];
+            foreach ($filters as $filter) {
+                $query = Enquiry::query();
+                OrgService::applyHighlightFilter($query, $filter);
+                $counts[$filter] = $query->count();
+            }
+
+            return $counts;
+        });
+
+        return view('admin.sales.enquiry.list', [
+            'title' => 'Master Enquiry List',
+            'gridConfig' => [
+                'columns' => $this->getColumns('all'),
+                'defaultColumns' => $this->getDefaultColumns(),
+                'data' => [],
+            ],
+            'highlightCounts' => $highlightCounts,
+        ]);
+    }
+
+    public function data(Request $request)
+    {
+        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view enquiries.');
+        }
+
+        $startRow = max(0, (int) $request->input('startRow', 0));
+
+        // NEW: Check if the frontend is actually requesting pagination chunks
+        $hasPagination = $request->has('endRow');
+        $limit = $hasPagination ? (max(1, (int) $request->input('endRow')) - $startRow) : null;
+
+        $searchText = trim((string) $request->input('searchText', ''));
+        $highlightFilter = trim((string) $request->input('highlightFilter', ''));
+        $filterModel = (array) $request->input('filterModel', []);
+        $listType = trim((string) $request->input('list_type', 'all'));
+
+        $query = $this->getBaseQuery($listType);
+
+        if ($listType === 'otf') {
+            $this->applyOtfSearch($query, $searchText);
+            $this->applyOtfFilter($query, $filterModel);
+            $this->applyOtfSort($query, (array) $request->input('sortModel', []));
+        } else {
+            $this->applyEnquirySearch($query, $searchText);
+            $this->applyEnquirySort($query, (array) $request->input('sortModel', []));
+            $this->applyEnquiryFilter($query, $filterModel);
+            OrgService::applyHighlightFilter($query, $highlightFilter);
+        }
+
+        $total = (clone $query)->count();
+        $mapType = $this->resolveMapType($listType);
+        $lookups = $this->getEnquiryLookupMaps();
+
+        // NEW: If no pagination limits are sent (Client-Side Model), fetch everything
+        if ($hasPagination) {
+            $pageRows = $query->skip($startRow)->take($limit)->get();
+        } else {
+            $pageRows = $query->get();
+        }
+
+        if ($listType !== 'otf') {
+            $lookups['creFups'] = $this->getLatestCreFups($pageRows->pluck('id')->all());
+            $lookups['existingQuotations'] = $this->getExistingQuotations($pageRows->pluck('id')->all());
+        }
+
+        $gridData = $pageRows
+            ->map(fn ($e, $i) => $this->mapData($e, $startRow + $i, $mapType, $lookups))
+            ->all();
+
+        return response()->json(['rows' => $gridData, 'lastRow' => $total]);
+    }
+
+    public function export(Request $request)
+    {
+        if (! backpack_user()->can('SLS_ENQR_EXPORT')) {
+            abort(403, 'Unauthorized. You do not have permission to export enquiries.');
+        }
+
+        $searchText = trim((string) $request->input('searchText', ''));
+        $highlightFilter = trim((string) $request->input('highlightFilter', ''));
+        $filterModel = json_decode((string) $request->input('filterModel', '{}'), true) ?: [];
+        $listType = trim((string) $request->input('list_type', 'all'));
+
+        $query = $this->getBaseQuery($listType);
+
+        if ($listType === 'otf') {
+            $this->applyOtfSearch($query, $searchText);
+            $this->applyOtfFilter($query, $filterModel);
+            $this->applyOtfSort($query, (array) $request->input('sortModel', []));
+            $query->orderByDesc('crm_booking.id');
+        } else {
+            $this->applyEnquirySearch($query, $searchText);
+            $this->applyEnquirySort($query, (array) $request->input('sortModel', []));
+            $this->applyEnquiryFilter($query, $filterModel);
+            OrgService::applyHighlightFilter($query, $highlightFilter);
+            $query->orderByDesc('created_at');
+        }
+
+        $mapType = $this->resolveMapType($listType);
+        $columns = array_values(array_filter(
+            $this->getColumns($mapType),
+            fn ($col) => ($col['field'] ?? null) !== 'action'
+        ));
+
+        $lookups = $this->getEnquiryLookupMaps();
+
+        $fileName = $listType === 'otf'
+            ? 'otf-bookings-'.now()->format('Y-m-d_His').'.csv'
+            : 'enquiries-'.now()->format('Y-m-d_His').'.csv';
+
+        return response()->streamDownload(function () use ($query, $columns, $mapType, $lookups) {
+            $out = fopen('php://output', 'w');
+
+            fputcsv($out, array_merge(['S.No.'], array_map(fn ($c) => $c['headerName'], $columns)));
+
+            $serial = 0;
+            $query->chunk(500, function ($chunk) use ($out, &$serial, $columns, $mapType, $lookups) {
+                if ($mapType !== 'otf') {
+                    $lookups['creFups'] = $this->getLatestCreFups($chunk->pluck('id')->all());
+                    $lookups['existingQuotations'] = $this->getExistingQuotations($chunk->pluck('id')->all());
+                }
+                foreach ($chunk as $e) {
+                    $rowData = $this->mapData($e, $serial, $mapType, $lookups);
+                    $serial++;
+                    fputcsv($out, array_merge(
+                        [$serial],
+                        array_map(fn ($c) => $rowData[$c['field']] ?? '', $columns)
+                    ));
+                }
+            });
+
+            fclose($out);
+        }, $fileName, ['Content-Type' => 'text/csv']);
+    }
+
+    /**
+     * BUG-046: route existed with no matching method. Confirmed via 7 live views'
+     * "Export" buttons all hardcoding 'sales/enquiry/export-legacy' (not dead code despite the
+     * route's "-legacy" name) - export() already accepts the exact same searchText/list_type
+     * params these buttons send, so this aliases the working method rather than duplicating it.
+     */
+    public function exportData(Request $request)
+    {
+        return $this->export($request);
+    }
+
+    /**
+     * BUG-046: route existed with no matching method. Alias of the real, working data() method -
+     * same params/shape, matching the route comment's own description of grid-data-legacy as
+     * data()'s superseded predecessor.
+     */
+    public function gridData(Request $request)
+    {
+        return $this->data($request);
+    }
+
+    private function applyOtfSearch($query, string $searchText): void
+    {
+        if ($searchText === '') {
+            return;
+        }
+        $like = "%{$searchText}%";
+        $query->where(function ($q) use ($like, $searchText) {
+            $q->where('crm_booking.id', (int) $searchText)
+                ->orWhere('crm_booking.otf_no', 'like', $like)
+                ->orWhere('crm_booking.customer_name', 'like', $like)
+                ->orWhere('crm_booking.customer_code', 'like', $like)
+                ->orWhere('crm_booking.customer_pan', 'like', $like)
+                ->orWhere('crm_booking.customer_aadhar', 'like', $like);
+        });
+    }
+
+    private const OTF_SORT_COLUMN_MAP = [
+        'booking_no' => 'crm_booking.id',
+        'booking_date' => 'crm_booking.booking_date',
+        'booking_status' => 'crm_booking.status',
+        'cancellation_date' => 'crm_booking.cancellation_date',
+        'customer_name' => 'crm_booking.customer_name',
+        'customer_code' => 'crm_booking.customer_code',
+        'otf_number' => 'crm_booking.otf_no',
+    ];
+
+    private function applyOtfSort($query, array $sortModel): void
+    {
+        $applied = false;
+        foreach ($sortModel as $sort) {
+            $colId = $sort['colId'] ?? null;
+            if ($colId && isset(self::OTF_SORT_COLUMN_MAP[$colId])) {
+                $query->orderBy(self::OTF_SORT_COLUMN_MAP[$colId], strtolower($sort['sort'] ?? 'asc') === 'desc' ? 'desc' : 'asc');
+                $applied = true;
+            }
+        }
+        if (! $applied) {
+            $query->orderByDesc('crm_booking.id');
+        }
+    }
+
+    private const OTF_FILTER_FIELD_MAP = [
+        'booking_no' => 'crm_booking.id',
+        'booking_date' => 'crm_booking.booking_date',
+        'sc_name' => 'crm_booking.sc_mile_id',
+        'booking_status' => 'crm_booking.status',
+        'cancellation_date' => 'crm_booking.cancellation_date',
+        'customer_code' => 'crm_booking.customer_code',
+        'customer_name' => 'crm_booking.customer_name',
+        'customer_address' => 'crm_booking.customer_address',
+        'customer_city' => 'crm_booking.customer_city',
+        'customer_tehsil' => 'crm_booking.customer_tehsil',
+        'customer_district' => 'crm_booking.customer_district',
+        'pan_number' => 'crm_booking.customer_pan',
+        'tan_number' => 'crm_booking.customer_tan',
+        'aadhaar_number' => 'crm_booking.customer_aadhar',
+        'otf_number' => 'crm_booking.otf_no',
+    ];
+
+    private function applyOtfFilter($query, array $filterModel): void
+    {
+        foreach ($filterModel as $field => $condition) {
+            if (! is_array($condition) || ! isset(self::OTF_FILTER_FIELD_MAP[$field])) {
+                continue;
+            }
+            $this->applyFilterCondition($query, self::OTF_FILTER_FIELD_MAP[$field], $condition);
+        }
+    }
+
+    public function referenceList()
+    {
+        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view enquiries.');
+        }
+
+        return $this->renderGridPage('admin.sales.enquiry.reference-enquiry', 'Reference Enquiries', 'reference');
+    }
+
+    public function virtualNumberList()
+    {
+        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view enquiries.');
+        }
+
+        return $this->renderGridPage('admin.sales.enquiry.virtual-number-enquiry', 'Virtual Number Enquiries', 'virtual');
+    }
+
+    public function hyperlocalList()
+    {
+        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view enquiries.');
+        }
+
+        $this->crud->hasAccessOrFail('list');
+
+        $count = (clone Enquiry::hyperlocal())->count();
+
+        return $this->renderGridPage(
+            'admin.sales.enquiry.hyperlocal-enquiry',
+            'Hyperlocal Enquiries ('.$count.')',
+            'hyperlocal'
+        );
+    }
+
+    public function whatsappCampaignList()
+    {
+        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view enquiries.');
+        }
+
+        return $this->renderGridPage('admin.sales.enquiry.whatsapp-campaign-enquiry', 'WhatsApp Campaign Enquiries', 'whatsapp');
+    }
+
+    public function assignedLongList()
+    {
+        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view enquiries.');
+        }
+
+        return $this->renderGridPage('admin.sales.enquiry.enquiry-grid', 'Assigned Long Enquiries', 'assigned_long');
+    }
+
+    public function unassignedLongList()
+    {
+        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view enquiries.');
+        }
+
+        return $this->renderGridPage('admin.sales.enquiry.enquiry-grid', 'Unassigned Long Enquiries', 'unassigned_long');
+    }
+
+    public function assignedQuickList()
+    {
+        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view enquiries.');
+        }
+
+        return $this->renderGridPage('admin.sales.enquiry.enquiry-grid', 'Assigned Quick Enquiries', 'assigned_quick');
+    }
+
+    public function unassignedQuickList()
+    {
+        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view enquiries.');
+        }
+
+        return $this->renderGridPage('admin.sales.enquiry.enquiry-grid', 'Unassigned Quick Enquiries', 'unassigned_quick');
+    }
+
+    public function exchangeEnquiryList()
+    {
+        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view enquiries.');
+        }
+
+        return $this->renderGridPage('admin.sales.enquiry.exchange', 'Int in Exchange Dashboard', 'exchange');
+    }
+
+    public function scrappageEnquiryList()
+    {
+        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view enquiries.');
+        }
+
+        return $this->renderGridPage('admin.sales.enquiry.exchange', 'Int in Scrappage Dashboard', 'scrappage');
+    }
+
+    public function exchangeNotInterestedList()
+    {
+        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view enquiries.');
+        }
+
+        return $this->renderGridPage('admin.sales.enquiry.exchange', 'Not Interested in Exchange Dashboard', 'exchange_not_interested');
+    }
+
+    public function financeEnquiryList()
+    {
+        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view enquiries.');
+        }
+
+        return $this->renderGridPage('admin.sales.enquiry.finance-list', 'Enquiries - Int in Finance', 'finance');
+    }
+
+    public function financeNotInterestedList()
+    {
+        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view enquiries.');
+        }
+
+        return $this->renderGridPage('admin.sales.enquiry.finance-list', 'Enquiries - Finance Not Interested', 'finance_not_interested');
+    }
+
+    private function renderGridPage(string $view, string $title, string $listType)
+    {
+        $this->crud->hasAccessOrFail('list');
+        $this->crud->setListView($view);
+
+        $mapType = $this->resolveMapType($listType);
+        $columnsType = in_array($mapType, ['quick', 'long']) ? 'all' : $mapType;
+
+        return view($view, [
+            'title' => $title,
+            'listType' => $listType,
+            'segments' => OrgService::segments(),
+            'gridConfig' => [
+                'list_type' => $listType,
+                'columns' => $this->getColumns($columnsType),
+                'defaultColumns' => $this->getDefaultColumns(),
+            ],
+        ]);
+    }
+
+    private function getAssignedSc($code, $mileId, $scByCode, $scByMileId): ?array
+    {
+        if (! empty($code) && isset($scByCode[$code])) {
+            return $scByCode[$code];
+        }
+
+        if (! empty($mileId) && isset($scByMileId[$mileId])) {
+            return $scByMileId[$mileId];
+        }
+
+        return null;
+    }
+
+    private function actionWidth(string $type): int
+    {
+        return match ($type) {
+            'all', 'quick', 'long', 'exchange', 'scrappage', 'exchange_not_interested', 'finance', 'finance_not_interested' => 240,
+            'hyperlocal' => 90,
+            default => 200,
+        };
+    }
+
+    private function mapData($e, $i, $type, array $lookups)
+    {
+        $lpMap = $lookups['lpMap'] ?? [];
+        $fuelMap = $lookups['fuelMap'] ?? [];
+        $finMap = $lookups['finMap'] ?? [];
+        $branchesMap = $lookups['branchesMap'] ?? [];
+        $scByCode = $lookups['scByCode'] ?? [];
+        $scByMileId = $lookups['scByMileId'] ?? [];
+        $scNamesByCode = $lookups['scNamesByCode'] ?? [];
+        $fupTypesMap = $lookups['fupTypesMap'] ?? [];
+        $enqStageMap = $lookups['enqStageMap'] ?? [];
+        $custStageMap = $lookups['custStageMap'] ?? [];
+        $purcTypeMap = $lookups['purcTypeMap'] ?? [];
+        $lostReasonMap = $lookups['lostReasonMap'] ?? [];
+        $sourcesMap = $lookups['sourcesMap'] ?? [];
+        $subSourceMap = $lookups['subSourceMap'] ?? [];
+        $enquiryTypeMap = $lookups['enquiryTypeMap'] ?? [];
+        $maritalStatusMap = $lookups['maritalStatusMap'] ?? [];
+        $ageGroupMap = $lookups['ageGroupMap'] ?? [];
+        $lostSubReasonMap = $lookups['lostSubReasonMap'] ?? [];
+        $deviationStageMap = $lookups['deviationStageMap'] ?? [];
+        $existingQuotations = $lookups['existingQuotations'] ?? [];
+        $genderMap = $lookups['genderMap'] ?? [];
+        $usageAreaMap = $lookups['usageAreaMap'] ?? [];
+        $kmTravelledMap = $lookups['kmTravelledMap'] ?? [];
+        $appTypeMap = $lookups['appTypeMap'] ?? [];
+        $appMap = $lookups['appMap'] ?? [];
+        $occTypeMap = $lookups['occTypeMap'] ?? [];
+        $locationsMap = $lookups['locationsMap'] ?? [];
+
+        $x8AssignedSc = $this->getAssignedSc($e->x8_sc_code ?? null, $e->x8_sc_mile_id ?? null, $scByCode, $scByMileId);
+        $oemAssignedSc = $this->getAssignedSc($e->sc_name ?? null, $e->sc_mile_id ?? null, $scByCode, $scByMileId);
+
+        $segmentRel = $e instanceof Model && $e->relationLoaded('segment') ? $e->getRelation('segment') : null;
+        $modelRel = $e instanceof Model && $e->relationLoaded('model') ? $e->getRelation('model') : null;
+        $variantRel = $e instanceof Model && $e->relationLoaded('variant') ? $e->getRelation('variant') : null;
+        $colorRel = $e instanceof Model && $e->relationLoaded('color') ? $e->getRelation('color') : null;
+
+        $cleanVal = function ($val) {
+            $trimmed = trim((string) $val);
+            if ($trimmed === '' || in_array(strtoupper($trimmed), ['NA', 'N/A', 'NULL', '—'])) {
+                return '—';
+            }
+
+            return $trimmed;
+        };
+
+        $resolvedSegment = $resolvedModel = $resolvedVariant = $resolvedColor = null;
+
+        if ($type !== 'otf') {
+            $segmentRel = $e instanceof Model && $e->relationLoaded('segment') ? $e->getRelation('segment') : null;
+            $modelRel = $e instanceof Model && $e->relationLoaded('model') ? $e->getRelation('model') : null;
+            $variantRel = $e instanceof Model && $e->relationLoaded('variant') ? $e->getRelation('variant') : null;
+            $colorRel = $e instanceof Model && $e->relationLoaded('color') ? $e->getRelation('color') : null;
+
+            $resolvedSegment = $cleanVal($e->segment_code ? ($segmentRel?->name ?? $e->segment ?? $e->segment_code) : $e->segment);
+            $resolvedModel = $cleanVal($e->model_code ? ($modelRel?->name ?? $e->model ?? $e->model_code) : $e->model);
+            $resolvedVariant = $cleanVal($e->variant_code ? ($variantRel?->display_name ?? $variantRel?->custom_name ?? $variantRel?->oem_name ?? $e->variant ?? $e->variant_code) : $e->variant);
+            $resolvedColor = $cleanVal($e->color_code ? ($colorRel?->name ?? $e->color ?? $e->color_code) : $e->color);
+        }
+
+        $editUrl = backpack_url("sales/enquiry/{$e->id}/edit");
+
+        // Extract raw vehicle codes for the pre-quotation validation.
+        // These are checked on the client side before navigation.
+        $segmentVal = trim((string) ($e->segment_code ?? ''));
+        $modelVal = trim((string) ($e->model_code ?? ''));
+        $variantVal = trim((string) ($e->variant_code ?? ''));
+        $colorVal = trim((string) ($e->color_code ?? ''));
+
+        if (! empty($existingQuotations[$e->id])) {
+
+            $quotationId = $existingQuotations[$e->id];
+
+            $quotUrl = backpack_url("sales/quotation/{$quotationId}/preview");
+
+            $quotBtnText = 'Quote';
+            $quotBtnClass = 'btn-success';
+        } else {
+
+            $quotUrl = backpack_url("sales/quotation/create?id={$e->id}");
+
+            $quotBtnText = 'Quote';
+            $quotBtnClass = 'btn-success';
+        }
+
+        $bookUrl = backpack_url("sales/booking/create?enquiry_id={$e->id}");
+
+        if ($type === 'hyperlocal') {
+            return [
+                'serial_no' => $i + 1,
+                'lead_id' => $e->lead_id ?? $e->id ?? '—',
+                'name' => $e->name ?? '—',
+                'email' => $e->email ?? '—',
+                'phone_number' => $e->mobile ?? $e->phone_number ?? '—',
+                'call_start_time' => $this->formatDate($e->call_start_time ?? $e->created_at, 'd-M-Y H:i:s'),
+                'call_end_time' => $this->formatDate($e->call_end_time, 'd-M-Y H:i:s'),
+                'call_recording_url' => $e->call_recording_url ?? '—',
+                'call_duration' => $e->call_duration ?? $e->call_duration_in_seconds ?? '—',
+                'call_status' => $e->call_status ?? '—',
+                'call_type' => $e->call_type ?? '—',
+                'notes' => $e->notes ?? $e->remarks ?? '—',
+                'lead_status' => $e->lead_status ?? $e->status ?? '—',
+                'multi_visit' => $e->multi_visit ?? '—',
+                'lead_intent' => $e->lead_intent ?? '—',
+                'lead_type' => $e->lead_type ?? '—',
+                'lead_for' => $e->lead_for ?? '—',
+                'medium' => $e->medium ?? '—',
+                'source' => $e->source_code ?? $e->source_name ?? '—',
+                'client_crm_status' => $e->client_crm_status ?? '—',
+                'client_crm_message' => $e->client_crm_message ?? '—',
+                'enquiry_status' => $e->enquiry_status ?? $e->status ?? '—',
+                'enquiry_date' => $this->formatDate($e->enquiry_date ?? $e->created_at, 'd-M-Y'),
+                'model' => $e->model_name ?? $e->model ?? '—',
+                'dealer_code' => $e->dealer_code ?? $e->dealer_branch ?? '—',
+                'dms_enquiry_stage' => $enqStageMap[$e->stage ?? ''] ?? $e->stage ?? '—',
+                'cre_enquiry_stage' => '—',
+                'cre_next_fup_date' => '—',
+                'cre_next_fup_time' => '—',
+                'cre_next_fup_remarks' => '—',
+                'x8_quotation_no' => $e->x8_quotation_no ?? $e->quotation_no ?? '—',
+                'x8_booking_no' => $e->x8_booking_no ?? $e->booking_no ?? '—',
+                'x8_booking_date' => $this->formatDate($e->x8_booking_date ?? $e->booking_date, 'd-M-Y'),
+                'oem_booking_no' => $e->oem_booking_no ?? '—',
+                'oem_booking_date' => $this->formatDate($e->oem_booking_date, 'd-M-Y'),
+                'oem_otf_no' => $e->oem_otf_no ?? '—',
+                'oem_test_drive_no' => $e->oem_test_drive_no ?? $e->test_drive_no ?? '—',
+                'territory' => $e->territory ?? '—',
+                'fup_count' => $e->fup_count ?? '—',
+                'td_date' => $this->formatDate($e->td_date, 'd-M-Y'),
+                'lost_reason' => $e->lost_reason ?? '—',
+                'followup_status' => $e->fup_status ?? '—',
+                'action' => '—',
+            ];
+        }
+
+        if ($type === 'otf') {
+            // Updated to point to the new read-only view route
+            $viewUrl = backpack_url("sales/enquiry/otf-bookings/{$e->id}/show");
+            $vehicle = $this->resolveVehicleFromOemCode($e->oem_code ?? null);
+
+            return [
+                'serial_no' => $i + 1,
+                'booking_no' => $e->id ?? '—',
+                'booking_date' => $this->formatDate($e->booking_date, 'd-M-Y'),
+                'sc_name' => $e->sc_name ?? '—',
+                'booking_status' => $e->status ?? '—',
+                'cancellation_date' => $this->formatDate($e->cancellation_date, 'd-M-Y'),
+                'segment' => $vehicle['segment'],
+                'model' => $vehicle['model'],
+                'variant' => $vehicle['variant'],
+                'color' => $vehicle['color'],
+                'oem_model_code' => $e->oem_code ?? '—',
+                'customer_code' => $e->customer_code ?? '—',
+                'customer_name' => $e->customer_name ?? '—',
+                'customer_address' => $e->customer_address ?? '—',
+                'customer_city' => $e->city ?? '—',
+                'customer_tehsil' => $e->tehsil ?? '—',
+                'customer_district' => $e->district ?? '—',
+                'pan_number' => $e->pan_no ?? '—',
+                'tan_number' => $e->tan_no ?? '—',
+                'aadhaar_number' => $e->adhar_no ?? '—',
+                'invoice_no' => $e->invoice_no ?? '—',
+                'evaluation_id' => $e->evaluation_id ?? '—',
+                'so_number' => $e->so_number ?? '—',
+                'otf_number' => $e->otf_number ?? '—',
+                'action' => '<div class="d-flex justify-content-center gap-2"><a href="'.$viewUrl.'" class="btn btn-sm btn-primary">View</a></div>',
+            ];
+        }
+
+        $actionBtns = '<a href="'.$editUrl.'" class="btn btn-sm btn-primary">Edit</a>';
+
+        $actionBtns .= '<a href="'.$quotUrl.'"'
+            .' class="btn '.$quotBtnClass.' btn-sm js-quote-link"'
+            .' title="'.$quotBtnText.'"'
+            .' data-enquiry-id="'.$e->id.'"'
+            .' data-segment="'.e($segmentVal).'"'
+            .' data-model="'.e($modelVal).'"'
+            .' data-variant="'.e($variantVal).'"'
+            .' data-color="'.e($colorVal).'"'
+            .'>'.$quotBtnText.'</a>';
+        $actionBtns .= '<a href="'.$bookUrl.'" class="btn btn-warning btn-sm" title="Convert to Booking">Book</a>';
+
+        // Add context-specific Process buttons
+        if (in_array($type, ['exchange', 'scrappage', 'exchange_not_interested'])) {
+            $exchUrl = backpack_url("sales/enquiry/exchange/{$e->id}/edit");
+            $actionBtns .= '<a href="'.$exchUrl.'" class="btn btn-sm btn-info">Process</a>';
+        } elseif (in_array($type, ['finance', 'finance_not_interested'])) {
+            $finUrl = backpack_url("sales/enquiry/finance/{$e->id}/edit");
+            $actionBtns .= '<a href="'.$finUrl.'" class="btn btn-sm btn-info">Process</a>';
+        }
+
+        $row = [
+            'serial_no' => $i + 1,
+            'x8_enquiry_no' => $this->enquiryRef->toReference($e->id),
+            'x8_enquiry_date' => $e->created_at ? Carbon::parse($e->created_at)->timezone('Asia/Kolkata')->format('d-M-Y H:i') : '—',
+            'x8_enquiry_assign_date' => $this->formatDate($e->x8_enq_assign_date ?? $e->enq_assign_date, 'd-M-Y'),
+            'oem_enquiry_no' => $e->x8_enquiry_no ?? $e->enquiry_no ?? $e->oem_enquiry_no ?? '—',
+            'oem_enquiry_date' => $this->formatDate($e->x8_enquiry_date ?? $e->enquiry_date ?? $e->oem_enquiry_date, 'd-M-Y'),
+            'oem_enquiry_assign_date' => $this->formatDate($e->oem_enquiry_assign_date ?? $e->enq_assign_date, 'd-M-Y'),
+            'segment_name' => $resolvedSegment,
+            'model_name' => $resolvedModel,
+            'variant_name' => $resolvedVariant,
+            'color_name' => $resolvedColor,
+            'mobile' => $e->mobile ?? '—',
+            'alternate_mobile' => $e->alternate_mobile ?? '—',
+            'dms_enquiry_stage' => $enqStageMap[$e->stage ?? ''] ?? $e->stage ?? '—',
+            'cre_enquiry_stage' => '—',
+            'cre_next_fup_date' => '—',
+            'cre_next_fup_time' => '—',
+            'cre_next_fup_remarks' => '—',
+            'x8_quotation_no' => $e->x8_quotation_no ?? $e->quotation_no ?? '—',
+            'x8_booking_no' => $e->x8_booking_no ?? $e->booking_no ?? '—',
+            'x8_booking_date' => $this->formatDate($e->x8_booking_date ?? $e->booking_date, 'd-M-Y'),
+            'oem_booking_no' => $e->oem_booking_no ?? '—',
+            'oem_booking_date' => $this->formatDate($e->oem_booking_date, 'd-M-Y'),
+            'oem_otf_no' => $e->oem_otf_no ?? '—',
+            'oem_test_drive_no' => $e->oem_test_drive_no ?? $e->test_drive_no ?? '—',
+            'territory' => $e->territory ?? '—',
+            'fup_count' => $e->fup_count ?? '—',
+            'td_date' => $this->formatDate($e->td_date, 'd-M-Y'),
+            'lost_reason' => $lostReasonMap[$e->lost_reason ?? ''] ?? $e->lost_reason ?? '—',
+            'followup_status' => $e->fup_status ?? '—',
+            'action' => '<div class="d-flex justify-content-center gap-2">'.$actionBtns.'</div>',
+        ];
+
+        if (in_array($type, ['long', 'quick', 'all', 'reference', 'virtual', 'whatsapp', 'exchange', 'scrappage', 'exchange_not_interested', 'finance', 'finance_not_interested'])) {
+            $x8BranchCode = $x8AssignedSc['primary_branch_code'] ?? null;
+            $oemBranchCode = $oemAssignedSc['primary_branch_code'] ?? null;
+
+            $x8EnqNo = $this->enquiryRef->fromReference($e->id);
+            $creFup = $lookups['creFups'][$x8EnqNo] ?? null;
+
+            $creFup = $lookups['creFups'][$this->enquiryRef->toReference($e->id)] ?? null;
+
+            // FIX: Using array_merge so it actively overwrites the '—' placeholders from the base array
+            $row = array_merge($row, [
+                'oem_long_enquiry_no' => $e->oem_long_enquiry_no ?? '—',
+                'oem_long_enquiry_date' => $this->formatDate($e->oem_long_enquiry_date, 'd-M-Y'),
+                'oem_long_enquiry_assign_date' => $this->formatDate($e->oem_long_enquiry_assign_date, 'd-M-Y'),
+                'oem_quick_enquiry_no' => $e->oem_quick_enquiry_no ?? $e->quick_enquiry_no ?? '—',
+                'oem_quick_enquiry_date' => $this->formatDate($e->oem_quick_enquiry_date ?? $e->quick_enquiry_date, 'd-M-Y'),
+                'oem_quick_enquiry_status' => $e->oem_quick_enquiry_status ?? $e->quick_status ?? '—',
+                'oem_quick_enquiry_assign_date' => $this->formatDate($e->oem_quick_enquiry_assign_date ?? $e->quick_enq_assign_date, 'd-M-Y'),
+                'x8_enq_source' => $e->x8_enq_source ?? $e->x8_source_code ?? '—',
+                'name' => $e->name ?? '—',
+                'care_of_type' => match ((int) ($e->care_of_type ?? 0)) {
+                    1 => 'Son of',
+                    2 => 'Daughter of',
+                    3 => 'Married to',
+                    4 => 'Guardian Name',
+                    5 => 'Owned By',
+                    default => $e->care_of_type ?? '—',
+                },
+                'care_of' => $e->care_of ?? '—',
+                'email' => $e->email ?? '—',
+                'gender' => $e->gender ?? '—',
+                'enquiry_type' => $enquiryTypeMap[$e->enquiry_type ?? ''] ?? $e->enquiry_type ?? '—',
+                'source_code' => $sourcesMap[$e->source_code ?? ''] ?? $e->source?->name ?? $e->source_code ?? '—',
+                'sub_source' => $subSourceMap[$e->sub_source ?? ''] ?? $e->sub_source ?? '—',
+                'likely_purchase_date' => $lpMap[$e->likely_purchase_date] ?? $e->likely_purchase_date ?? '—',
+                'x8_quotation_date' => $this->formatDate($e->x8_quotation_date ?? $e->quotation_date, 'd-M-Y'),
+                'fuel_type' => $cleanVal($fuelMap[$variantRel?->fuel_type_id ?? ''] ?? $fuelMap[$variantRel?->fuel_type ?? ''] ?? $variantRel?->fuel_type),
+                'transmission' => $cleanVal($variantRel?->transmission),
+                'drivetrain' => $cleanVal($variantRel?->drivetrain),
+                'seating' => $cleanVal($variantRel?->seating ?? $variantRel?->seating_capacity),
+                'pincode' => $e->pincode ?? $e->zipcode ?? '—',
+                'vpo' => $e->vpo ?? '—',
+                'tehsil' => $e->tehsil ?? '—',
+                'district' => $e->district ?? '—',
+                'city' => $e->city ?? '—',
+                'address' => $e->address ?? $e->customer_address ?? '—',
+                'x8_sc_code' => $x8AssignedSc['display_name'] ?? $scNamesByCode[$e->x8_sc_code] ?? $e->x8_sc_code ?? '—',
+                'x8_sc_mile_id' => $e->x8_sc_mile_id ?? $x8AssignedSc['mile_id'] ?? '—',
+                'x8_sc_branch' => $branchesMap[$x8BranchCode] ?? $x8BranchCode ?? '—',
+                'x8_sc_location' => $locationsMap[$x8AssignedSc['primary_loc_code'] ?? ''] ?? $x8AssignedSc['primary_loc_code'] ?? '—',
+                'sc_name' => $scNamesByCode[$e->sc_name] ?? $e->sc_name ?? '—',
+                'sc_mile_id' => $e->sc_mile_id ?? $oemAssignedSc['mile_id'] ?? '—',
+                'oem_sc_branch' => $branchesMap[$oemBranchCode] ?? $oemBranchCode ?? '—',
+                'oem_sc_location' => $locationsMap[$oemAssignedSc['primary_loc_code'] ?? ''] ?? $oemAssignedSc['primary_loc_code'] ?? '—',
+                'dealer_branch' => $e->dealer_branch ?? '—',
+                'dealer_location' => $e->dealer_location ?? '—',
+                'occupation_type' => $occTypeMap[$e->occupation_type ?? ''] ?? $e->occupation_type ?? '—',
+                'customer_type' => $e->customer_type ?? '—',
+                'occupation_sub_type' => $e->occupation_sub_type ?? '—',
+                'company_name' => $e->company_name ?? '—',
+                'dob' => $this->formatDate($e->dob, 'd-M-Y'),
+                'marital_status' => $maritalStatusMap[$e->marital_status ?? ''] ?? $e->marital_status ?? '—',
+                'marriage_date' => $this->formatDate($e->marriage_date, 'd-M-Y'),
+                'age_group' => $ageGroupMap[$e->age_group ?? ''] ?? $e->age_group ?? '—',
+                'usage_area' => $usageAreaMap[$e->usage_area ?? ''] ?? $e->usage_area ?? '—',
+                'km_travelled_daily' => $kmTravelledMap[$e->km_travelled_daily ?? ''] ?? $e->km_travelled_daily ?? '—',
+                'application_type' => $appTypeMap[$e->application_type ?? ''] ?? $e->application_type ?? '—',
+                'application' => $appMap[$e->application ?? ''] ?? $e->application ?? '—',
+                'has_ev' => $e->has_ev ?? '—',
+                'purchase_type' => $purcTypeMap[$e->purchase_type ?? ''] ?? $e->purchase_type ?? '—',
+                'purchase_type_crm' => $purcTypeMap[$e->purchase_type_crm ?? ''] ?? $e->purchase_type_crm ?? '—',
+                'consid_brand' => $e->consid_brand ?? $e->consider_make ?? '—',
+                'consid_model' => $e->consid_model ?? $e->consider_model ?? '—',
+                'consid_variant' => $e->consid_variant ?? $e->consider_variant ?? '—',
+                'expected_price' => $e->expected_price ?? '—',
+                'offered_price' => $e->offered_price ?? '—',
+                'exchange_bonus' => $e->exchange_bonus ?? '—',
+                'price_gap' => ($e->expected_price || $e->offered_price || $e->exchange_bonus) ? (($e->expected_price ?? 0) - ($e->offered_price ?? 0) - ($e->exchange_bonus ?? 0)) : '—',
+                'fin_mode' => $e->fin_mode ?? '—',
+                'financier_name' => $finMap[$e->financier] ?? $e->financier ?? '—',
+                'loan_status' => $e->loan_status ?? '—',
+
+                // Follow up (SC side)
+                'fup_type' => $fupTypesMap[$e->followup_type] ?? $e->followup_type ?? '—',
+                'followup_type' => $fupTypesMap[$e->followup_type] ?? $e->followup_type ?? '—',
+                'followup_date' => $this->formatDate($e->followup_date, 'd-M-Y'),
+                'followup_time' => $e->followup_time ?? '—',
+                'recent_planned_followup_date' => trim($this->formatDate($e->followup_date, 'd-M-Y').' '.($e->followup_time ?? '')) ?: '—',
+                'recent_actual_followup_date' => $this->formatDate($e->recent_actual_followup_date, 'd-M-Y H:i'),
+                'call_duration' => $e->actual_fup_duration ?? $e->call_duration ?? '—',
+                'deviation_stage' => $deviationStageMap[$e->deviation_stage ?? ''] ?? $e->deviation_stage ?? '—',
+                'remarks' => $e->recent_fup_remarks ?? $e->remarks ?? '—',
+                'followup_remarks_type' => $e->recent_fup_remarks_type ?? '—',
+                'comments' => $e->recent_fup_comments ?? '—',
+                'stage' => $enqStageMap[$e->stage ?? ''] ?? $e->stage ?? '—',
+                'td_count' => $e->test_drive_count ?? '—',
+                'test_drive_no' => $e->test_drive_no ?? $e->oem_test_drive_no ?? '—',
+                'td_date' => $this->formatDate($e->td_date, 'd-M-Y'),
+                'lost_reason' => $lostReasonMap[$e->lost_reason ?? ''] ?? $e->lost_reason ?? '—',
+                'lost_sub_reason' => $lostSubReasonMap[$e->lost_sub_reason ?? ''] ?? $e->lost_sub_reason ?? '—',
+                'lost_detail_reason' => $e->lost_detail_reason ?? '—',
+                'lost_remarks' => $e->lost_remarks ?? '—',
+
+                // Follow up (CRE side)
+                'cre_fup_count' => $creFup->cre_fup_count ?? '—',
+                'cre_planned_fup_date' => $creFup ? $this->formatDate($creFup->cre_planned_fup_date, 'd-M-Y') : '—',
+                'cre_actual_fup_date' => $creFup ? $this->formatDate($creFup->cre_actual_fup_date, 'd-M-Y H:i') : '—',
+                'cre_fup_call_duration' => $creFup->cre_fup_call_duration ?? '—',
+                'cre_fup_deviation_stage' => $deviationStageMap[$creFup->cre_fup_deviation_stage ?? ''] ?? $creFup->cre_fup_deviation_stage ?? '—',
+                'cre_enq_stage' => $enqStageMap[$creFup->cre_enq_stage ?? ''] ?? $creFup->cre_enq_stage ?? '—',
+                'cre_customer_stage' => $custStageMap[$creFup->cre_customer_stage ?? ''] ?? $creFup->cre_customer_stage ?? '—',
+                'cre_fup_remarks' => $creFup->cre_fup_remarks ?? '—',
+                // 'cre_next_fup_date'            => $creFup ? $this->formatDate($creFup->cre_next_fup_date, 'd-M-Y') : '—',
+                'cre_next_fup_date' => $creFup ? $this->formatDate($creFup->cre_next_fup_date, 'd-M-Y H:i') : '—',
+            ]);
+        }
+
+        if ($type === 'reference') {
+            $row['referee_name'] = $e->referee_name ?? '—';
+            $row['referee_phone'] = $e->referee_phone ?? '—';
+            $row['referred_by'] = $e->referred_by ?? '—';
+            $row['name'] = $e->name ?? '—';
+        } elseif ($type === 'virtual') {
+            $row['virtual_no'] = $e->virtual_no ?? '—';
+            $row['call_date_and_time'] = $this->formatDate($e->virtual_call_date, 'd-M-Y H:i');
+            $row['call_date'] = $this->formatDate($e->virtual_call_date, 'd-M-Y');
+            $row['call_nature'] = $e->call_nature ?? '—';
+            $row['call_duration'] = $e->call_duration ?? $e->virtual_call_duration ?? ($row['call_duration'] ?? '—');
+            $row['remarks'] = $e->remarks ?? ($row['remarks'] ?? '—');
+        } elseif ($type === 'whatsapp') {
+            $row['campaign_name'] = $e->wapp_campaign_name ?? '—';
+            $row['campaign_date'] = $this->formatDate($e->wapp_campaign_date, 'd-M-Y');
+            $row['campaign_segment'] = $e->wapp_campaign_segment ?? '—';
+            $row['campaign_model'] = $e->wapp_campaign_model ?? '—';
+            $row['name'] = $e->name ?? '—';
+        }
+
+        return $row;
+    }
+
+    private function getColumns($type)
+    {
+
+        $actionColumn = [
+            'field' => 'action',
+            'headerName' => 'Action',
+            'pinned' => 'right',
+            'sortable' => false,
+            'filter' => false,
+            'suppressSizeToFit' => true,
+            'cellClass' => 'text-center p-0 action-cell',
+        ];
+
+        $commonEnd = [
+            $actionColumn,
+        ];
+
+        if ($type === 'reference') {
+            return [
+                ['field' => 'serial_no', 'headerName' => 'S.No.'],
+                ['field' => 'x8_enquiry_date', 'headerName' => 'Lead Date & Time'],
+                ['field' => 'referred_by', 'headerName' => 'Referee Type'],
+                ['field' => 'referee_name', 'headerName' => 'Referee Name'],
+                ['field' => 'referee_phone', 'headerName' => 'Referee Contact No.'],
+                ['field' => 'name', 'headerName' => 'Customer Name'],
+                ['field' => 'mobile', 'headerName' => 'Customer Contact No.'],
+                ['field' => 'model_name', 'headerName' => 'Model'],
+                ['field' => 'variant_name', 'headerName' => 'Variant'],
+                ['field' => 'color_name', 'headerName' => 'Color'],
+                ['field' => 'pincode', 'headerName' => 'Pin Code'],
+                ['field' => 'vpo', 'headerName' => 'VPO'],
+                ['field' => 'tehsil', 'headerName' => 'Tehsil'],
+                ['field' => 'district', 'headerName' => 'District'],
+                ['field' => 'x8_sc_code', 'headerName' => 'X8 Assigned SC'],
+                ['field' => 'x8_sc_mile_id', 'headerName' => 'X8 Assigned SC Mile ID'],
+                ['field' => 'x8_sc_branch', 'headerName' => 'X8 Assigned SC Branch'],
+                ['field' => 'x8_sc_location', 'headerName' => 'X8 Assigned SC Location'],
+                ['field' => 'oem_enquiry_no', 'headerName' => 'OEM Enquiry No.'],
+                $actionColumn,
+            ];
+        }
+
+        if ($type === 'virtual') {
+            return [
+                ['field' => 'serial_no', 'headerName' => 'S.No.'],
+                ['field' => 'virtual_no', 'headerName' => 'Virtual Number'],
+                ['field' => 'call_date', 'headerName' => 'Call Date'],
+                ['field' => 'call_duration', 'headerName' => 'Call Duration'],
+                ['field' => 'call_nature', 'headerName' => 'Call Nature'],
+                ['field' => 'mobile', 'headerName' => 'Contact No.'],
+                ['field' => 'alternate_mobile', 'headerName' => 'Alternate Contact No.'],
+                ['field' => 'pincode', 'headerName' => 'Pin Code'],
+                ['field' => 'vpo', 'headerName' => 'VPO'],
+                ['field' => 'tehsil', 'headerName' => 'Tehsil'],
+                ['field' => 'district', 'headerName' => 'District'],
+                ['field' => 'x8_sc_code', 'headerName' => 'X8 Assigned SC'],
+                ['field' => 'x8_sc_mile_id', 'headerName' => 'X8 Assigned SC Mile ID'],
+                ['field' => 'x8_sc_branch', 'headerName' => 'X8 Assigned SC Branch'],
+                ['field' => 'x8_sc_location', 'headerName' => 'X8 Assigned SC Location'],
+                ['field' => 'oem_enquiry_no', 'headerName' => 'OEM Enquiry No.'],
+                $actionColumn,
+            ];
+        }
+
+        if ($type === 'otf') {
+            return [
+                ['field' => 'serial_no', 'headerName' => 'S.No.', 'width' => 80, 'pinned' => 'left'],
+                ['field' => 'booking_no', 'headerName' => 'Booking Number', 'width' => 150, 'pinned' => 'left'],
+                ['field' => 'booking_date', 'headerName' => 'Booking Date', 'width' => 130],
+                ['field' => 'sc_name', 'headerName' => 'SC Code', 'width' => 120],
+                ['field' => 'booking_status', 'headerName' => 'Booking Status', 'width' => 130],
+                ['field' => 'cancellation_date', 'headerName' => 'Booking Cancellation Date', 'width' => 160],
+                ['field' => 'segment', 'headerName' => 'Segment', 'width' => 120],
+                ['field' => 'model', 'headerName' => 'Model', 'width' => 140],
+                ['field' => 'variant', 'headerName' => 'Variant', 'width' => 160],
+                ['field' => 'color', 'headerName' => 'Color', 'width' => 130],
+                ['field' => 'oem_model_code', 'headerName' => 'OEM Model Code', 'width' => 160],
+                ['field' => 'customer_code', 'headerName' => 'Booking Customer Code', 'width' => 160],
+                ['field' => 'customer_name', 'headerName' => 'Booking Customer Name', 'width' => 200],
+                ['field' => 'customer_address', 'headerName' => 'Booking Customer Address', 'width' => 250],
+                ['field' => 'customer_city', 'headerName' => 'Booking Customer City', 'width' => 150],
+                ['field' => 'customer_tehsil', 'headerName' => 'Booking Customer Tehsil', 'width' => 150],
+                ['field' => 'customer_district', 'headerName' => 'Booking Customer District', 'width' => 150],
+                ['field' => 'pan_number', 'headerName' => 'Billing Customer PAN Number', 'width' => 160],
+                ['field' => 'tan_number', 'headerName' => 'Billing Customer TAN Number', 'width' => 160],
+                ['field' => 'aadhaar_number', 'headerName' => 'Billing Customer Aadhaar Number', 'width' => 180],
+                ['field' => 'invoice_no', 'headerName' => 'Invoice No.', 'width' => 150],
+                ['field' => 'evaluation_id', 'headerName' => 'Evaluation ID', 'width' => 150],
+                ['field' => 'so_number', 'headerName' => 'SO Number', 'width' => 150],
+                ['field' => 'otf_number', 'headerName' => 'OTF Number', 'width' => 160],
+                [
+                    'field' => 'action',
+                    'headerName' => 'Action',
+                    'pinned' => 'right',
+                    'sortable' => false,
+                    'filter' => false,
+                    'suppressSizeToFit' => true,
+                    'cellRenderer' => 'htmlRenderer',
+                    'cellClass' => 'text-center p-0 action-cell',
+                ],
+            ];
+        }
+
+        if ($type === 'hyperlocal') {
+            return array_merge([
+                ['field' => 'serial_no', 'headerName' => 'S.No.', 'width' => 80, 'pinned' => 'left'],
+                ['field' => 'lead_id', 'headerName' => 'Leads-ID', 'width' => 120],
+                ['field' => 'name', 'headerName' => 'Name', 'width' => 180],
+                ['field' => 'email', 'headerName' => 'Email', 'width' => 200],
+                ['field' => 'phone_number', 'headerName' => 'Phone-Number', 'width' => 150],
+                ['field' => 'call_start_time', 'headerName' => 'Call-Start-Time', 'width' => 180, 'type' => 'date'],
+                ['field' => 'call_end_time', 'headerName' => 'Call-End-Time', 'width' => 180, 'type' => 'date'],
+                ['field' => 'call_recording_url', 'headerName' => 'Call-Recording-URL', 'width' => 250],
+                ['field' => 'call_duration', 'headerName' => 'Call-Duration-in-Seconds', 'width' => 180, 'type' => 'number'],
+                ['field' => 'call_status', 'headerName' => 'Call-Status', 'width' => 150],
+                ['field' => 'call_type', 'headerName' => 'Call-Type', 'width' => 150],
+                ['field' => 'notes', 'headerName' => 'Notes', 'width' => 250],
+                ['field' => 'lead_status', 'headerName' => 'Lead-Status', 'width' => 150],
+                ['field' => 'multi_visit', 'headerName' => 'Multi-Visit', 'width' => 130],
+                ['field' => 'lead_intent', 'headerName' => 'Lead-Intent', 'width' => 150],
+                ['field' => 'lead_type', 'headerName' => 'Lead-Type', 'width' => 150],
+                ['field' => 'lead_for', 'headerName' => 'Lead-For', 'width' => 150],
+                ['field' => 'medium', 'headerName' => 'Medium', 'width' => 150],
+                ['field' => 'source', 'headerName' => 'Source', 'width' => 150],
+                ['field' => 'client_crm_status', 'headerName' => 'Client-CRM-Status', 'width' => 180],
+                ['field' => 'client_crm_message', 'headerName' => 'Client-CRM-Message', 'width' => 250],
+                ['field' => 'enquiry_status', 'headerName' => 'Enquiry-Status', 'width' => 150],
+                ['field' => 'enquiry_date', 'headerName' => 'Enquiry-Date', 'width' => 150, 'type' => 'date'],
+                ['field' => 'model', 'headerName' => 'Model', 'width' => 180],
+                ['field' => 'dealer_code', 'headerName' => 'Dealer-Code', 'width' => 150],
+            ], $commonEnd);
+        }
+
+        if ($type === 'whatsapp') {
+            return [
+                ['field' => 'serial_no', 'headerName' => 'S.No.'],
+                ['field' => 'x8_enquiry_date', 'headerName' => 'Lead Date & Time'],
+                ['field' => 'campaign_name', 'headerName' => 'Whatsapp Campaign Name'],
+                ['field' => 'campaign_date', 'headerName' => 'Whatsapp Campaign Date'],
+                ['field' => 'campaign_segment', 'headerName' => 'Whatsapp Campaign Segment'],
+                ['field' => 'campaign_model', 'headerName' => 'Whatsapp Campaign Model'],
+                ['field' => 'name', 'headerName' => 'Customer Name'],
+                ['field' => 'mobile', 'headerName' => 'Customer Contact No.'],
+                ['field' => 'model_name', 'headerName' => 'Model'],
+                ['field' => 'variant_name', 'headerName' => 'Variant'],
+                ['field' => 'pincode', 'headerName' => 'Pin Code'],
+                ['field' => 'vpo', 'headerName' => 'VPO'],
+                ['field' => 'tehsil', 'headerName' => 'Tehsil'],
+                ['field' => 'district', 'headerName' => 'District'],
+                ['field' => 'x8_sc_code', 'headerName' => 'X8 Assigned SC'],
+                ['field' => 'x8_sc_mile_id', 'headerName' => 'X8 Assigned SC Mile ID'],
+                ['field' => 'x8_sc_branch', 'headerName' => 'X8 Assigned SC Branch'],
+                ['field' => 'x8_sc_location', 'headerName' => 'X8 Assigned SC Location'],
+                ['field' => 'oem_enquiry_no', 'headerName' => 'OEM Enquiry No.'],
+                $actionColumn,
+            ];
+        }
+
+        $baseCols = [
+            ['field' => 'serial_no', 'headerName' => 'S.No.'],
+            ['field' => 'x8_enquiry_no', 'headerName' => 'X8 Enquiry No.'],
+            ['field' => 'x8_enquiry_date', 'headerName' => 'X8 Enquiry Date'],
+            ['field' => 'x8_enquiry_assign_date', 'headerName' => 'X8 Enquiry Assign Date'],
+            ['field' => 'oem_enquiry_no', 'headerName' => 'OEM Enquiry No.'],
+            ['field' => 'oem_enquiry_date', 'headerName' => 'OEM Enquiry Date'],
+            ['field' => 'oem_enquiry_assign_date', 'headerName' => 'OEM Enquiry Assign Date'],
+            ['field' => 'oem_quick_enquiry_no', 'headerName' => 'OEM Quick Enquiry No.'],
+            ['field' => 'oem_quick_enquiry_date', 'headerName' => 'OEM Quick Enquiry Date'],
+            ['field' => 'oem_quick_enquiry_assign_date', 'headerName' => 'OEM Quick Enquiry Assign Date'],
+            ['field' => 'x8_enq_source', 'headerName' => 'X8 Enquiry Source'],
+            ['field' => 'enquiry_type', 'headerName' => 'OEM Enquiry Type'],
+            ['field' => 'source_code', 'headerName' => 'OEM Enquiry Source'],
+            ['field' => 'sub_source', 'headerName' => 'OEM Enquiry Sub Source'],
+            ['field' => 'likely_purchase_date', 'headerName' => 'Likely Purchase In Days'],
+            ['field' => 'x8_quotation_no', 'headerName' => 'X8 Quotation No.'],
+            ['field' => 'x8_quotation_date', 'headerName' => 'X8 Quotation Date'],
+            ['field' => 'oem_booking_no', 'headerName' => 'OEM Booking No.'],
+            ['field' => 'oem_booking_date', 'headerName' => 'OEM Booking Date'],
+            ['field' => 'oem_otf_no', 'headerName' => 'OEM OTF No.'],
+            ['field' => 'x8_booking_no', 'headerName' => 'X8 Booking No.'],
+            ['field' => 'x8_booking_date', 'headerName' => 'X8 Booking Date'],
+        ];
+
+        $midCols = [
+            ['field' => 'segment_name', 'headerName' => 'Segment'],
+            ['field' => 'model_name', 'headerName' => 'Model'],
+            ['field' => 'variant_name', 'headerName' => 'Variant'],
+            ['field' => 'color_name', 'headerName' => 'Color'],
+            ['field' => 'fuel_type', 'headerName' => 'Fuel Type'],
+            ['field' => 'transmission', 'headerName' => 'Transmission'],
+            ['field' => 'drivetrain', 'headerName' => 'Drivetrain'],
+            ['field' => 'seating', 'headerName' => 'Seating'],
+            ['field' => 'usage_area', 'headerName' => 'Usage Area'],
+            ['field' => 'km_travelled_daily', 'headerName' => 'KM Travelled Daily'],
+            ['field' => 'application_type', 'headerName' => 'Application Type'],
+            ['field' => 'application', 'headerName' => 'Application'],
+            ['field' => 'has_ev', 'headerName' => 'Has EV?'],
+            ['field' => 'name', 'headerName' => 'Customer Name'],
+            ['field' => 'care_of_type', 'headerName' => 'Care Of'],
+            ['field' => 'care_of', 'headerName' => 'Care Of Name'],
+            ['field' => 'mobile', 'headerName' => 'Contact No.'],
+            ['field' => 'alternate_mobile', 'headerName' => 'Alternate Contact No.'],
+            ['field' => 'email', 'headerName' => 'Email'],
+            ['field' => 'gender', 'headerName' => 'Gender'],
+            ['field' => 'pincode', 'headerName' => 'Pincode'],
+            ['field' => 'territory', 'headerName' => 'Territory'],
+            ['field' => 'tehsil', 'headerName' => 'Tehsil'],
+            ['field' => 'district', 'headerName' => 'District'],
+            ['field' => 'city', 'headerName' => 'State'],
+            ['field' => 'address', 'headerName' => 'Address'],
+            ['field' => 'purchase_type', 'headerName' => 'Purchase Type'],
+            ['field' => 'purchase_type_crm', 'headerName' => 'Purchase Type (CRE)'],
+            ['field' => 'expected_price', 'headerName' => 'Expected Price'],
+            ['field' => 'offered_price', 'headerName' => 'Offered Price'],
+            ['field' => 'exchange_bonus', 'headerName' => 'Exchange Bonus'],
+            ['field' => 'price_gap', 'headerName' => 'Price Gap'],
+            ['field' => 'fin_mode', 'headerName' => 'Finance Mode'],
+            ['field' => 'financier_name', 'headerName' => 'Financier'],
+            ['field' => 'loan_status', 'headerName' => 'Loan Status'],
+            ['field' => 'x8_sc_code', 'headerName' => 'X8 Assigned SC'],
+            ['field' => 'x8_sc_mile_id', 'headerName' => 'X8 Assigned SC Mile ID'],
+            ['field' => 'x8_sc_branch', 'headerName' => 'X8 Assigned SC Branch'],
+            ['field' => 'x8_sc_location', 'headerName' => 'X8 Assigned SC Location'],
+            ['field' => 'sc_name', 'headerName' => 'OEM Assigned SC'],
+            ['field' => 'sc_mile_id', 'headerName' => 'OEM Assigned SC Mile ID'],
+            ['field' => 'oem_sc_branch', 'headerName' => 'OEM Assigned SC Branch'],
+            ['field' => 'oem_sc_location', 'headerName' => 'OEM Assigned SC Location'],
+            ['field' => 'occupation_type', 'headerName' => 'Occupation Type'],
+            ['field' => 'customer_type', 'headerName' => 'Customer Type'],
+            ['field' => 'occupation_sub_type', 'headerName' => 'Occupation Sub Type'],
+            ['field' => 'company_name', 'headerName' => 'Company Name'],
+            ['field' => 'dob', 'headerName' => 'D.O.B.'],
+            ['field' => 'marital_status', 'headerName' => 'Marital Status'],
+            ['field' => 'marriage_date', 'headerName' => 'Marriage Date'],
+            ['field' => 'age_group', 'headerName' => 'Age Group'],
+            ['field' => 'consid_brand', 'headerName' => 'Consideration Make'],
+            ['field' => 'consid_model', 'headerName' => 'Consideration Model'],
+            ['field' => 'consid_variant', 'headerName' => 'Consideration Variant'],
+            ['field' => 'fup_count', 'headerName' => 'FUP Count'],
+            ['field' => 'followup_type', 'headerName' => 'FUP Type'],
+            ['field' => 'recent_planned_followup_date', 'headerName' => 'Planned FUP Date & Time'],
+            ['field' => 'recent_actual_followup_date', 'headerName' => 'Actual FUP Date & Time'],
+            ['field' => 'call_duration', 'headerName' => 'FUP Call Duration'],
+            ['field' => 'deviation_stage', 'headerName' => 'FUP Deviation Stage'],
+            ['field' => 'remarks', 'headerName' => 'FUP Remarks'],
+            ['field' => 'followup_remarks_type', 'headerName' => 'FUP Remarks Type'],
+            ['field' => 'comments', 'headerName' => 'FUP Comments'],
+            ['field' => 'stage', 'headerName' => 'Enquiry Stage'],
+            ['field' => 'td_count', 'headerName' => 'Test Drive Count'],
+            ['field' => 'test_drive_no', 'headerName' => 'Test Drive No.'],
+            ['field' => 'td_date', 'headerName' => 'Test Drive Date'],
+            ['field' => 'lost_reason', 'headerName' => 'Lost Reason'],
+            ['field' => 'lost_sub_reason', 'headerName' => 'Lost Sub Reason'],
+            ['field' => 'lost_detail_reason', 'headerName' => 'Lost Detail Reason'],
+            ['field' => 'lost_remarks', 'headerName' => 'Lost Remarks'],
+            ['field' => 'cre_fup_count', 'headerName' => 'CRE FUP Count'],
+            ['field' => 'cre_planned_fup_date', 'headerName' => 'CRE Planned FUP Date & Time'],
+            ['field' => 'cre_actual_fup_date', 'headerName' => 'CRE Actual FUP Date & Time'],
+            ['field' => 'cre_fup_call_duration', 'headerName' => 'CRE FUP Call Duration'],
+            ['field' => 'cre_fup_deviation_stage', 'headerName' => 'CRE FUP Deviation Stage'],
+            ['field' => 'cre_enq_stage', 'headerName' => 'CRE Enquiry Satge'],
+            ['field' => 'cre_customer_stage', 'headerName' => 'CRE Customer Stage'],
+            ['field' => 'cre_fup_remarks', 'headerName' => 'CRE FUP Remarks'],
+            ['field' => 'cre_next_fup_date', 'headerName' => 'CRE Next FUP Date'],
+        ];
+
+        return array_merge($baseCols, $midCols, $commonEnd);
+    }
+
+    private function getDefaultColumns(): array
+    {
+        return [
+            'serial_no',
+            'x8_enquiry_no',
+            'x8_enquiry_date',
+            'oem_enquiry_no',
+            'oem_quick_enquiry_no',
+            'source_code',
+            'sub_source',
+            'x8_quotation_no',
+            'oem_booking_no',
+            'x8_booking_no',
+            'model_name',
+            'variant_name',
+            'color_name',
+            'fuel_type',
+            'transmission',
+            'drivetrain',
+            'seating',
+            'name',
+            'mobile',
+            'alternate_mobile',
+            'tehsil',
+            'district',
+            'purchase_type',
+            'purchase_type_crm',
+            'expected_price',
+            'price_gap',
+            'fin_mode',
+            'x8_sc_code',
+            'sc_name',
+            'dob',
+            'marital_status',
+            'consid_brand',
+            'consid_model',
+            'consid_variant',
+            'recent_planned_followup_date',
+            'deviation_stage',
+            'stage',
+            'td_count',
+            'td_date',
+            'cre_planned_fup_date',
+            'cre_next_fup_date',
+            'cre_enq_stage',
+            'cre_customer_stage',
+            'action',
+        ];
+    }
+
+    private function applyEnquirySearch($query, string $searchText): void
+    {
+        if ($searchText === '') {
+            return;
+        }
+
+        $like = "%{$searchText}%";
+        $xenqId = $this->enquiryRef->fromReference($searchText);
+        $isXenq = $xenqId !== null && str_starts_with(strtoupper(trim($searchText)), 'XENQ-');
+
+        $tableName = $query->getModel()->getTable();
+
+        // Cache and filter only text/string columns to avoid scanning dates, IDs, and numbers
+        $tableColumns = Cache::remember('text_columns_'.$tableName, 3600, function () use ($tableName) {
+            $columns = Schema::getColumnListing($tableName);
+
+            // Exclude IDs, timestamps, and numeric fields that ruin 'LIKE' performance
+            $excluded = ['id', 'created_at', 'updated_at', 'deleted_at', 'cne', 'fup_count', 'test_drive_count'];
+
+            return array_diff($columns, $excluded);
+        });
+
+        $query->where(function ($q) use ($like, $xenqId, $isXenq, $tableColumns, $tableName) {
+            if ($isXenq && $xenqId) {
+                $q->where($tableName.'.id', $xenqId);
+            } else {
+                $q->where(function ($sub) use ($tableColumns, $tableName, $like) {
+                    foreach ($tableColumns as $index => $column) {
+                        if ($index === 0) {
+                            $sub->where($tableName.'.'.$column, 'like', $like);
+                        } else {
+                            $sub->orWhere($tableName.'.'.$column, 'like', $like);
+                        }
+                    }
+                });
+
+                // Search relationships
+                $q->orWhereHas('model', fn ($q2) => $q2->where('name', 'like', $like))
+                    ->orWhereHas('segment', fn ($q2) => $q2->where('name', 'like', $like))
+                    ->orWhereHas('color', fn ($q2) => $q2->where('name', 'like', $like))
+                    ->orWhereHas('variant', fn ($q2) => $q2->where('display_name', 'like', $like)
+                        ->orWhere('custom_name', 'like', $like)
+                        ->orWhere('oem_name', 'like', $like));
+            }
+        });
+    }
+
+    private function applyEnquirySort($query, array $sortModel): void
+    {
+        $cols = ['enquiry_no', 'enquiry_type', 'sub_source', 'person_code', 'name', 'mobile', 'email', 'occupation_type', 'customer_type', 'company_name', 'gender', 'dob', 'marital_status', 'city', 'district', 'purchase_type', 'created_at', 'updated_at'];
+        $sortApplied = false;
+
+        foreach ($sortModel as $sort) {
+            $colId = $sort['colId'] ?? null;
+            if ($colId && in_array($colId, $cols, true)) {
+                $query->orderBy($colId, strtolower($sort['sort'] ?? 'asc') === 'desc' ? 'desc' : 'asc');
+                $sortApplied = true;
+            }
+        }
+        if (! $sortApplied) {
+            $query->orderByDesc('updated_at');
+        }
+    }
+
+    private const FILTER_FIELD_MAP = [
+        'full_name' => null,
+        'action' => null,
+        'source_name' => 'source_code',
+        'segment_name' => null,
+        'model_name' => null,
+        'variant_name' => null,
+        'color_name' => null,
+        'exchange_make' => 'brand_make',
+        'exchange_model' => 'brand_model',
+        'consider_make' => 'consid_brand',
+        'consider_model' => 'consid_model',
+        'consider_variant' => 'consid_variant',
+        'likely_purchase_in_days' => 'likely_purchase_date',
+    ];
+
+    private const FILTER_CODE_COLUMN_MAP = [
+        'segment_name' => ['code' => 'segment_code', 'relation' => 'segment', 'relCols' => ['name'], 'rawCol' => 'segment'],
+        'model_name' => ['code' => 'model_code', 'relation' => 'model', 'relCols' => ['name'], 'rawCol' => 'model'],
+        'variant_name' => ['code' => 'variant_code', 'relation' => 'variant', 'relCols' => ['display_name', 'custom_name', 'oem_name'], 'rawCol' => 'variant'],
+        'color_name' => ['code' => 'color_code', 'relation' => 'color', 'relCols' => ['name'], 'rawCol' => 'color'],
+    ];
+
+    private function applyEnquiryFilter($query, array $filterModel): void
+    {
+        if (empty($filterModel)) {
+            return;
+        }
+
+        foreach ($filterModel as $field => $condition) {
+            if (! is_array($condition)) {
+                continue;
+            }
+
+            if (isset(self::FILTER_CODE_COLUMN_MAP[$field])) {
+                $map = self::FILTER_CODE_COLUMN_MAP[$field];
+                $query->where(function ($q) use ($map, $condition) {
+                    $q->where(function ($q2) use ($map, $condition) {
+                        $q2->whereNotNull($map['code'])->where($map['code'], '!=', '')
+                            ->whereHas($map['relation'], function ($q3) use ($map, $condition) {
+                                $this->applyFilterConditionAnyColumn($q3, $map['relCols'], $condition);
+                            });
+                    })->orWhere(function ($q2) use ($map, $condition) {
+                        $q2->where(function ($q3) use ($map) {
+                            $q3->whereNull($map['code'])->orWhere($map['code'], '');
+                        });
+                        $this->applyFilterCondition($q2, $map['rawCol'], $condition);
+                    });
+                });
+
+                continue;
+            }
+
+            $column = array_key_exists($field, self::FILTER_FIELD_MAP) ? self::FILTER_FIELD_MAP[$field] : $field;
+            if ($column === null) {
+                continue;
+            }
+            $this->applyFilterCondition($query, $column, $condition);
+        }
+    }
+
+    private function applyFilterConditionAnyColumn($query, array $columns, array $condition): void
+    {
+        $query->where(function ($q) use ($columns, $condition) {
+            foreach ($columns as $col) {
+                $q->orWhere(function ($q2) use ($col, $condition) {
+                    $this->applyFilterCondition($q2, $col, $condition);
+                });
+            }
+        });
+    }
+
+    private function applyFilterCondition($query, string $column, array $condition): void
+    {
+        if (isset($condition['conditions']) && is_array($condition['conditions'])) {
+            $operator = strtoupper($condition['operator'] ?? 'AND') === 'OR' ? 'orWhere' : 'where';
+            $query->where(function ($q) use ($column, $condition, $operator) {
+                foreach ($condition['conditions'] as $sub) {
+                    $q->{$operator}(function ($q2) use ($column, $sub) {
+                        $this->applyFilterCondition($q2, $column, $sub);
+                    });
+                }
+            });
+
+            return;
+        }
+
+        $type = $condition['type'] ?? 'contains';
+        $value = $condition['filter'] ?? null;
+
+        switch ($type) {
+            case 'equals':
+                $query->where($column, $value);
+                break;
+            case 'notEqual':
+                $query->where($column, '!=', $value);
+                break;
+            case 'startsWith':
+                $query->where($column, 'like', "{$value}%");
+                break;
+            case 'endsWith':
+                $query->where($column, 'like', "%{$value}");
+                break;
+            case 'blank':
+                $query->where(function ($q) use ($column) {
+                    $q->whereNull($column)->orWhere($column, '');
+                });
+                break;
+            case 'notBlank':
+                $query->whereNotNull($column)->where($column, '!=', '');
+                break;
+            case 'contains':
+            default:
+                if ($value !== null && $value !== '') {
+                    $query->where($column, 'like', "%{$value}%");
+                }
+                break;
+        }
+    }
+
+    public function create()
+    {
+        if (! backpack_user()->can('SLS_ENQR_CREATE')) {
+            abort(403, 'Unauthorized. You do not have permission to create enquiries.');
+        }
+
+        return view('admin.sales.enquiry.create', [
+            'title' => 'Add New Enquiry',
+            'enquiry' => null,
+            'fups' => [],
+            'creFups' => [],
+        ] + $this->getEnquiryFormData());
+    }
+
+    public function createReference()
+    {
+        if (! backpack_user()->can('SLS_ENQR_CREATE')) {
+            abort(403, 'Unauthorized. You do not have permission to create enquiries.');
+        }
+
+        return view('admin.sales.enquiry.reference-create', [
+            'title' => 'Add Reference Enquiry',
+            'enquiry' => null,
+            'fups' => [],
+            'creFups' => [],
+        ] + $this->getEnquiryFormData());
+    }
+
+    public function edit($id)
+    {
+        if (! backpack_user()->can('SLS_ENQR_EDIT')) {
+            abort(403, 'Unauthorized. You do not have permission to edit enquiries.');
+        }
+
+        $data = $this->getEnquiryFormData();
+        $data['title'] = 'Edit Enquiry';
+        $enquiry = Enquiry::with(['campaign', 'segment', 'model', 'variant', 'color'])->findOrFail($id);
+
+        $fups = [];
+        if (strtoupper($enquiry->current_origin ?? '') === 'LONG') {
+            $fups = DB::table('xlr8_crm_enquiries_fup')
+                ->where('enquiry_no', $enquiry->enquiry_no)
+                ->orderBy('id', 'asc')
+                ->get();
+        }
+
+        $x8EnqNo = $this->enquiryRef->fromReference($enquiry->id);
+        $legacyEnqNo = 'XENQ-' . $x8EnqNo;
+
+        $creFups = DB::table('xlr8_cre_enquiry_fup')
+            ->whereIn('x8_enq_no', [(string) $x8EnqNo, $legacyEnqNo])
+            ->where('cre_fup_deviation_stage', '!=', 'OPEN_FOLLOW_UP')
+            ->orderBy('id', 'asc')
+            ->get();
+
+        // Fetch the new Finance & Exchange Follow-ups
+        $enqNoFallback = $enquiry->enquiry_no ?? $enquiry->oem_enquiry_no ?? $this->enquiryRef->toReference($enquiry->id);
+        $finExchFups = DB::table('xlr8_finexch_fup')
+            ->where('enq_no', $enqNoFallback)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $data['enquiry'] = $enquiry;
+        $data['fups'] = $fups;
+        $data['creFups'] = $creFups;
+        // Split them by remark_type to pass to the view
+        $data['exchangeFups'] = $finExchFups->where('remark_type', 2);
+        $data['financeFups'] = $finExchFups->where('remark_type', 1);
+
+        return view('admin.sales.enquiry.create', $data);
+    }
+
+    private function saveCreFup($enquiry, $request)
+    {
+        if ($request->filled('cre_enq_stage') || $request->filled('cre_customer_stage') || $request->filled('cre_fup_remarks')) {
+            $x8EnqNo = $this->enquiryRef->fromReference($enquiry->id);
+            $legacyEnqNo = 'XENQ-' . $x8EnqNo;
+
+            // CLEANUP: Delete any legacy 'OPEN_FOLLOW_UP' pending rows to prevent orphan data
+            DB::table('xlr8_cre_enquiry_fup')
+                ->whereIn('x8_enq_no', [(string) $x8EnqNo, $legacyEnqNo])
+                ->where('cre_fup_deviation_stage', 'OPEN_FOLLOW_UP')
+                ->delete();
+
+            // 1. Get the actual last completed FUP to determine planned date and count
+            $lastFup = DB::table('xlr8_cre_enquiry_fup')
+                ->whereIn('x8_enq_no', [(string) $x8EnqNo, $legacyEnqNo])
+                ->orderBy('id', 'desc')
+                ->first();
+
+            $fupCount = $lastFup ? $lastFup->cre_fup_count + 1 : 1;
+            $plannedDate = ($lastFup && $lastFup->cre_next_fup_date)
+                ? $lastFup->cre_next_fup_date
+                : Carbon::now('Asia/Kolkata')->format('Y-m-d H:i:s');
+
+            $actualDate = Carbon::now('Asia/Kolkata')->format('Y-m-d H:i:s');
+
+            // --- DEVIATION STAGE CALCULATION ---
+            $planned = Carbon::parse($plannedDate, 'Asia/Kolkata')->startOfDay();
+            $actual = Carbon::parse($actualDate, 'Asia/Kolkata')->startOfDay();
+            $diffDays = $planned->diffInDays($actual, false);
+
+            $deviationCode = 'SAME_DAY';
+            if ($diffDays < 0) {
+                $deviationCode = 'PREPONED_FOLLOW_UPS';
+            } elseif ($diffDays == 1 || $diffDays == 2) {
+                $deviationCode = '1_AND_2_DAYS';
+            } elseif ($diffDays >= 3 && $diffDays <= 10) {
+                $deviationCode = '3_TO_10_DAYS';
+            } elseif ($diffDays > 10) {
+                $deviationCode = 'GREATER_THAN_10_DAYS';
+            }
+
+            $nextFupDate = $request->cre_next_fup_date ? Carbon::parse($request->cre_next_fup_date, 'Asia/Kolkata')->format('Y-m-d H:i:s') : null;
+
+            // Insert ONLY the completed follow up row
+            DB::table('xlr8_cre_enquiry_fup')->insert([
+                'enquiry_no' => $enquiry->oem_enquiry_no ?? $enquiry->enquiry_no,
+                'quick_enquiry_no' => $enquiry->quick_enquiry_no ?? $enquiry->oem_quick_enquiry_no,
+                'x8_enq_no' => $x8EnqNo,
+                'cre_fup_count' => $fupCount,
+                'cre_planned_fup_date' => $plannedDate,
+                'cre_actual_fup_date' => $actualDate,
+                'cre_fup_deviation_stage' => $deviationCode,
+                'cre_enq_stage' => $request->cre_enq_stage,
+                'cre_customer_stage' => $request->cre_customer_stage,
+                'cre_fup_remarks' => $request->cre_fup_remarks,
+                'cre_next_fup_date' => $nextFupDate,
+                'created_by' => backpack_user()->id,
+                'created_at' => now('Asia/Kolkata'),
+                'updated_at' => now('Asia/Kolkata'),
+            ]);
+        }
+    }
+
+    public function store(Request $request)
+    {
+        if (! backpack_user()->can('SLS_ENQR_CREATE')) {
+            abort(403, 'Unauthorized. You do not have permission to create enquiries.');
+        }
+
+        try {
+            $validated = $request->validate($this->getValidationRules());
+            $this->processEntityRelations($validated);
+
+            // Format all possible date fields for MySQL
+            $dateFields = ['virtual_call_date', 'wapp_campaign_date', 'dob', 'marriage_date', 'activity_start_date', 'activity_end_date', 'cre_likely_purchase_date'];
+            foreach ($dateFields as $field) {
+                if (! empty($validated[$field])) {
+                    $validated[$field] = Carbon::parse($validated[$field])->format('Y-m-d H:i:s');
+                }
+            }
+
+            $validated['created_by'] = backpack_user()->id;
+
+            // Reference leads get REFERENCE immediately, otherwise standard new CRM enquiries get Xceler8
+            $isRef = isset($validated['source_code']) && strtoupper($validated['source_code']) === 'REFERENCE';
+            $validated['origin'] = $isRef ? 'REFERENCE' : 'Xceler8';
+            $validated['current_origin'] = $isRef ? 'REFERENCE' : 'Xceler8';
+
+            $validated['x8_enq_assign_date'] = now();
+
+            $creFields = ['cre_fup_call_duration', 'cre_fup_deviation_stage', 'cre_enq_stage', 'cre_customer_stage', 'cre_fup_remarks', 'cre_next_fup_date'];
+            $enquiryData = collect($validated)->except($creFields)->toArray();
+
+            $enquiry = Enquiry::create($enquiryData);
+
+            $this->saveCreFup($enquiry, $request);
+
+            Alert::success('Enquiry created successfully.')->flash();
+
+            return redirect(backpack_url('sales/enquiry'));
+        } catch (Throwable $e) {
+            Log::error($e->getMessage());
+            throw $e;
+        }
+    }
+
+    public function update(Request $request, $id)
+    {
+        if (! backpack_user()->can('SLS_ENQR_EDIT')) {
+            abort(403, 'Unauthorized. You do not have permission to edit enquiries.');
+        }
+
+        $enquiry = Enquiry::findOrFail($id);
+        $validated = $request->validate($this->getValidationRules($id));
+        $this->processEntityRelations($validated);
+
+        // Format all possible date fields for MySQL
+        $dateFields = ['virtual_call_date', 'wapp_campaign_date', 'dob', 'marriage_date', 'activity_start_date', 'activity_end_date', 'cre_likely_purchase_date'];
+        foreach ($dateFields as $field) {
+            if (! empty($validated[$field])) {
+                $validated[$field] = Carbon::parse($validated[$field])->format('Y-m-d H:i:s');
+            }
+        }
+
+        $validated['updated_by'] = backpack_user()->id;
+
+        // Ensure current_origin is absolutely untouched during edits
+        unset($validated['current_origin']);
+
+        if (isset($validated['x8_sc_code']) && $enquiry->x8_sc_code !== $validated['x8_sc_code']) {
+            $validated['x8_enq_assign_date'] = now();
+        }
+
+        $creFields = ['cre_fup_call_duration', 'cre_fup_deviation_stage', 'cre_enq_stage', 'cre_customer_stage', 'cre_fup_remarks', 'cre_next_fup_date'];
+        $enquiryData = collect($validated)->except($creFields)->toArray();
+
+        // --- MISMATCH TRACKING LOGIC ---
+        // Only run if the comparison table was actually rendered and submitted
+        if ($request->has('comparison_rendered')) {
+            // Now checking IF the box IS checked (meaning the user flagged it as unmatched)
+            if ($request->has('mismatch_enq_stage')) {
+                $enquiryData['enq_stage_mismatch'] = $enquiry->enq_stage_mismatch + 1;
+            }
+            if ($request->has('mismatch_next_fup')) {
+                $enquiryData['next_fup_mismatch'] = $enquiry->next_fup_mismatch + 1;
+            }
+            if ($request->has('mismatch_fup_remarks')) {
+                $enquiryData['latest_fup_remarks_mismatch'] = $enquiry->latest_fup_remarks_mismatch + 1;
+            }
+            if (! empty($enquiry->test_drive_no) && $request->has('mismatch_test_drive')) {
+                $enquiryData['test_drive_mismatch'] = $enquiry->test_drive_mismatch + 1;
+            }
+        }
+
+        $enquiry->update($enquiryData);
+
+        $this->saveCreFup($enquiry, $request);
+
+        Alert::success('Enquiry updated successfully.')->flash();
+
+        // --- DYNAMIC REDIRECT LOGIC ---
+        // 1. Try to return to the exact previous list using http_referrer
+        if ($request->filled('http_referrer') && ! str_contains($request->http_referrer, '/edit')) {
+            return redirect($request->http_referrer);
+        }
+
+        // 2. Fallback routing based on enquiry traits if referrer is missing or invalid
+        $source = strtoupper($enquiry->source_code ?? '');
+        $origin = strtoupper($enquiry->current_origin ?? '');
+
+        if ($source === 'REFERENCE') {
+            return redirect(backpack_url('sales/enquiry/reference'));
+        } elseif ($source === 'WHATSAPP') {
+            return redirect(backpack_url('sales/enquiry/whatsapp-campaign'));
+        } elseif ($source === 'HYPERLOCAL') {
+            return redirect(backpack_url('sales/enquiry/hyperlocal'));
+        } elseif ($origin === 'VIRTUAL') {
+            return redirect(backpack_url('sales/enquiry/virtual-number'));
+        }
+
+        // 3. Default fallback
+        return redirect(backpack_url('sales/enquiry'));
+    }
+
+    // public function exchangeEnquiryEdit($id)
+    // {
+    //     $enquiry = Enquiry::with(['segment', 'model', 'variant'])->findOrFail($id);
+    //     $existing_car_oems = OrgService::keywordValueByCode('EXISTING_CAR_OEM');
+    //     return view('admin.sales.enquiry.exchange-edit', compact('enquiry', 'existing_car_oems'));
+    // }
+
+    public function exchangeEnquiryEdit($id)
+    {
+        if (! backpack_user()->can('SLS_ENQR_EDIT')) {
+            abort(403, 'Unauthorized. You do not have permission to edit enquiries.');
+        }
+
+        $enquiry = Enquiry::with(['segment', 'model', 'variant'])->findOrFail($id);
+        $existing_car_oems = OrgService::keywordValueByCode('EXISTING_CAR_OEM');
+
+        // Robust Enquiry Number Fallback
+        $enqNo = $enquiry->enquiry_no ?? $enquiry->oem_enquiry_no ?? $this->enquiryRef->toReference($enquiry->id);
+
+        // Fetch Exchange Follow-ups (Type 2)
+        $fups = DB::table('xlr8_finexch_fup')
+            ->where('enq_no', $enqNo)
+            ->where('remark_type', 2)
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('admin.sales.enquiry.exchange-edit', compact('enquiry', 'existing_car_oems', 'fups'));
+    }
+
+    // public function exchangeEnquiryUpdate(Request $request, $id)
+    // {
+    //     $enquiry = Enquiry::findOrFail($id);
+    //     $enquiry->update($request->only([
+    //         'brand_make',
+    //         'brand_model',
+    //         'vehicle_no',
+    //         'lost_reason',
+    //         'make_year',
+    //         'odo_reading',
+    //         'expected_price',
+    //         'offered_price',
+    //         'exchange_bonus'
+    //     ]));
+    //     Alert::success('Exchange Details Updated successfully.')->flash();
+
+    //     if ($enquiry->purchase_type === 'Scrappage') {
+    //         return redirect(backpack_url('sales/enquiry/exchange/int-in-scrappage'));
+    //     }
+    //     return redirect(backpack_url('sales/enquiry/exchange/int-in-exchange'));
+    // }
+
+    public function exchangeEnquiryUpdate(Request $request, $id)
+    {
+        if (! backpack_user()->can('SLS_ENQR_EDIT')) {
+            abort(403, 'Unauthorized. You do not have permission to edit enquiries.');
+        }
+
+        $enquiry = Enquiry::findOrFail($id);
+
+        // Robust Enquiry Number Fallback
+        $enqNo = $enquiry->enquiry_no ?? $enquiry->oem_enquiry_no ?? $this->enquiryRef->toReference($enquiry->id);
+
+        $enquiry->update($request->only([
+            'brand_make',
+            'brand_model',
+            'vehicle_no',
+            'make_year',
+            'odo_reading',
+            'expected_price',
+            'offered_price',
+            'exchange_bonus',
+        ]));
+
+        // Process New Exchange Follow-up Remark
+        if ($request->filled('remarks')) {
+            $lastFup = DB::table('xlr8_finexch_fup')
+                ->where('enq_no', $enqNo)
+                ->where('remark_type', 2)
+                ->orderByDesc('id')
+                ->first();
+
+            DB::table('xlr8_finexch_fup')->insert([
+                'enq_no' => $enqNo,
+                'remark_type' => 2,
+                'fup_count' => $lastFup ? $lastFup->fup_count + 1 : 1,
+                'remarks' => $request->remarks,
+                'created_by' => backpack_user()->id,
+                'created_at' => now('Asia/Kolkata'),
+                'updated_at' => now('Asia/Kolkata'),
+            ]);
+        }
+
+        Alert::success('Exchange Details Updated successfully.')->flash();
+
+        if ($enquiry->purchase_type === 'Scrappage') {
+            return redirect(backpack_url('sales/enquiry/exchange/int-in-scrappage'));
+        }
+
+        return redirect(backpack_url('sales/enquiry/exchange/int-in-exchange'));
+    }
+
+    // public function financeEnquiryEdit($id)
+    // {
+    //     $enquiry = Enquiry::with(['segment', 'model', 'variant'])->findOrFail($id);
+    //     $finance = \App\Models\Module\Finance\XFinance::where('enq_no', $enquiry->enquiry_no)->first();
+    //     $financiers = \App\Models\Module\Booking\XlFinancier::select('id', 'name', 'short_name')->get()->toArray();
+
+    //     return view('admin.sales.enquiry.finance-edit', compact('enquiry', 'finance', 'financiers'));
+    // }
+
+    public function financeEnquiryEdit($id)
+    {
+        if (! backpack_user()->can('SLS_ENQR_EDIT')) {
+            abort(403, 'Unauthorized. You do not have permission to edit enquiries.');
+        }
+
+        $enquiry = Enquiry::with(['segment', 'model', 'variant'])->findOrFail($id);
+
+        // Robust Enquiry Number Fallback
+        $enqNo = $enquiry->enquiry_no ?? $enquiry->oem_enquiry_no ?? $this->enquiryRef->toReference($enquiry->id);
+
+        $finance = XFinance::where('enq_no', $enqNo)->first();
+        $financiers = XlFinancier::select('id', 'name', 'short_name')->get()->toArray();
+
+        // Fetch Finance Follow-ups (Type 1)
+        $fups = DB::table('xlr8_finexch_fup')
+            ->where('enq_no', $enqNo)
+            ->where('remark_type', 1)
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('admin.sales.enquiry.finance-edit', compact('enquiry', 'finance', 'financiers', 'fups'));
+    }
+
+    // public function financeEnquiryUpdate(Request $request, $id)
+    // {
+    //     $enquiry = Enquiry::findOrFail($id);
+    //     $enquiry->update([
+    //         'fin_mode' => $request->fin_mode,
+    //         'financier' => $request->financier,
+    //     ]);
+
+    //     $finance = \App\Models\Module\Finance\XFinance::firstOrNew(['enq_no' => $enquiry->enquiry_no]);
+
+    //     $finance->bid = $enquiry->id;
+    //     $finance->fin_mode = $request->fin_mode;
+    //     $finance->financier = $request->financier;
+    //     $finance->loan_status = $request->loan_status;
+    //     $finance->case_status = $request->case_status ?? 1;
+    //     $finance->verification_status = $request->verification_status ?? 1;
+    //     $finance->case_lost_reason = $request->case_lost_reason;
+
+    //     if (!in_array($request->fin_mode, ['Cash', 'Customer Self', 'Yet To Decide', 'Purchase Plan Cancelled'])) {
+    //         $finance->instrument_type = $request->instrument_type;
+    //         $finance->instrument_ref_no = $request->instrument_ref_no;
+    //         $finance->loan_amount = $request->loan_amount;
+    //         $finance->margin = $request->margin_money;
+    //         $finance->file_charge = $request->file_charge;
+    //     } else {
+    //         $finance->instrument_type = null;
+    //         $finance->instrument_ref_no = null;
+    //         $finance->loan_amount = null;
+    //         $finance->margin = null;
+    //         $finance->file_charge = null;
+    //     }
+
+    //     $finance->updated_by = backpack_auth()->id();
+    //     $finance->status = ($finance->fin_mode === 'In-house' && $finance->case_status == 2) ? 2 : 1;
+    //     $finance->save();
+
+    //     if ($request->hasFile('instrument_proof')) {
+    //         $finance->clearMediaCollection('instrument_proof');
+    //         $finance->addMediaFromRequest('instrument_proof')->toMediaCollection('instrument_proof');
+    //     }
+
+    //     Alert::success('Finance Details Updated successfully.')->flash();
+
+    //     if (in_array($enquiry->fin_mode, ['Cash', 'Customer Self', 'Yet To Decide', 'Purchase Plan Cancelled'])) {
+    //         return redirect(backpack_url('sales/enquiry/finance/not-interested'));
+    //     }
+    //     return redirect(backpack_url('sales/enquiry/finance/int-in-finance'));
+    // }
+
+    public function financeEnquiryUpdate(Request $request, $id)
+    {
+        if (! backpack_user()->can('SLS_ENQR_EDIT')) {
+            abort(403, 'Unauthorized. You do not have permission to edit enquiries.');
+        }
+
+        $enquiry = Enquiry::findOrFail($id);
+
+        // Robust Enquiry Number Fallback
+        $enqNo = $enquiry->enquiry_no ?? $enquiry->oem_enquiry_no ?? $this->enquiryRef->toReference($enquiry->id);
+
+        $enquiry->update([
+            'fin_mode' => $request->fin_mode,
+            'financier' => $request->financier,
+        ]);
+
+        $finance = XFinance::firstOrNew(['enq_no' => $enqNo]);
+
+        $finance->bid = $enquiry->id;
+        $finance->fin_mode = $request->fin_mode;
+        $finance->financier = $request->financier;
+        $finance->loan_status = $request->loan_status;
+        $finance->case_status = $request->case_status ?? 1;
+        $finance->verification_status = $request->verification_status ?? 1;
+        $finance->case_lost_reason = $request->case_lost_reason;
+
+        if (! in_array($request->fin_mode, ['Cash', 'Customer Self', 'Yet To Decide', 'Purchase Plan Cancelled'])) {
+            $finance->instrument_type = $request->instrument_type;
+            $finance->instrument_ref_no = $request->instrument_ref_no;
+            $finance->loan_amount = $request->loan_amount;
+            $finance->margin = $request->margin_money;
+            $finance->file_charge = $request->file_charge;
+        } else {
+            $finance->instrument_type = null;
+            $finance->instrument_ref_no = null;
+            $finance->loan_amount = null;
+            $finance->margin = null;
+            $finance->file_charge = null;
+        }
+
+        $finance->updated_by = backpack_auth()->id();
+        $finance->status = ($finance->fin_mode === 'In-house' && $finance->case_status == 2) ? 2 : 1;
+        $finance->save();
+
+        if ($request->hasFile('instrument_proof')) {
+            $finance->clearMediaCollection('instrument_proof');
+            $finance->addMediaFromRequest('instrument_proof')->toMediaCollection('instrument_proof');
+        }
+
+        // Process New Finance Follow-up Remark
+        if ($request->filled('remarks')) {
+            $lastFup = DB::table('xlr8_finexch_fup')
+                ->where('enq_no', $enqNo)
+                ->where('remark_type', 1)
+                ->orderByDesc('id')
+                ->first();
+
+            DB::table('xlr8_finexch_fup')->insert([
+                'enq_no' => $enqNo,
+                'remark_type' => 1,
+                'fup_count' => $lastFup ? $lastFup->fup_count + 1 : 1,
+                'remarks' => $request->remarks,
+                'created_by' => backpack_user()->id,
+                'created_at' => now('Asia/Kolkata'),
+                'updated_at' => now('Asia/Kolkata'),
+            ]);
+        }
+
+        Alert::success('Finance Details Updated successfully.')->flash();
+
+        if (in_array($enquiry->fin_mode, ['Cash', 'Customer Self', 'Yet To Decide', 'Purchase Plan Cancelled'])) {
+            return redirect(backpack_url('sales/enquiry/finance/not-interested'));
+        }
+
+        return redirect(backpack_url('sales/enquiry/finance/int-in-finance'));
+    }
+
+    public function storeReference(Request $request)
+    {
+        if (! backpack_user()->can('SLS_ENQR_CREATE')) {
+            abort(403, 'Unauthorized. You do not have permission to create enquiries.');
+        }
+
+        try {
+            $validated = $request->validate([
+                // Strictly Mandatory Fields
+                'referee_name' => 'required|max:100',
+                'referee_phone' => 'required|numeric|digits:10',
+                'name' => 'required|max:100',
+                'mobile' => 'required|numeric|digits:10',
+                'segment_code' => 'required',
+                'model_code' => 'required',
+
+                // Everything else is optional during Creation
+                'referred_by' => 'nullable|max:100',
+                'last_name' => 'nullable|max:100',
+                'alternate_mobile' => 'nullable|max:15',
+                'email' => 'nullable|email|max:150',
+                'gender' => 'nullable',
+                'zipcode' => 'nullable|max:10',
+                'vpo' => 'nullable|max:150',
+                'tehsil' => 'nullable|max:100',
+                'district' => 'nullable|max:100',
+                'city' => 'nullable|max:100',
+                'territory' => 'nullable|string|max:100',
+                'variant_code' => 'nullable',
+                'color_code' => 'nullable',
+
+                'usage_area' => 'nullable',
+                'km_travelled_daily' => 'nullable',
+                'application_type' => 'nullable',
+                'application' => 'nullable',
+                'x8_sc_code' => 'nullable|string|max:200',
+                'x8_sc_mile_id' => 'nullable|string|max:100',
+            ]);
+
+            $this->processEntityRelations($validated);
+
+            // Required Forced Values
+            $validated['enquiry_type'] = 'TELEPHONE';
+            $validated['source_code'] = 'REFERENCE';
+
+            // Standard metadata
+            $validated['created_by'] = backpack_user()->id;
+            $validated['origin'] = 'REFERENCE';
+            $validated['current_origin'] = 'REFERENCE';
+            // $validated['cne']            = 1;
+
+            Enquiry::create($validated);
+
+            Alert::success('Reference Enquiry created successfully.')->flash();
+
+            return redirect(backpack_url('sales/enquiry/reference'));
+        } catch (Throwable $e) {
+            Log::error($e->getMessage());
+            throw $e;
+        }
+    }
+
+    private function processEntityRelations(array &$validated)
+    {
+        if (! empty($validated['segment_code'])) {
+            $validated['segment'] = OrgService::segments()[$validated['segment_code']] ?? null;
+        }
+        if (! empty($validated['segment_code']) && ! empty($validated['model_code'])) {
+            $validated['model'] = OrgService::models($validated['segment_code'])[$validated['model_code']] ?? null;
+        }
+        if (! empty($validated['model_code']) && ! empty($validated['variant_code'])) {
+            $validated['variant'] = OrgService::variants($validated['model_code'])[$validated['variant_code']]['name'] ?? null;
+        }
+        if (! empty($validated['variant_code']) && ! empty($validated['color_code'])) {
+            $validated['color'] = OrgService::colors($validated['variant_code'])[$validated['color_code']] ?? null;
+        }
+    }
+
+    private function getValidationRules($id = null)
+    {
+        $fullFormActive = request()->has('segment_code') || ! request()->has('call_nature');
+
+        // 1. FAST-PATH BYPASS: For Non-Sales Virtual Enquiries
+        if (! $fullFormActive) {
+            return [
+                'call_nature' => 'required|string',
+                'mobile' => 'required|max:15',
+                'remarks' => 'nullable|string',
+                'virtual_no' => 'nullable|string',
+                'virtual_call_date' => 'nullable',
+                'call_duration' => 'nullable|string',
+                'dealer_branch' => 'nullable',
+                'dealer_location' => 'nullable',
+            ];
+        }
+
+        // 2. STANDARD VALIDATION RULES
+        $req = 'required';
+
+        $sourceCode = strtoupper(request()->input('source_code', ''));
+        $isRef = $sourceCode === 'REFERENCE';
+
+        // Dynamic field requirements based on source
+        $refReq = $isRef ? 'required' : 'nullable';
+
+        // If the frontend disabled source_code (e.g., for Walk-In), it won't be sent in the request.
+        $sourceReq = request()->has('source_code') ? 'required' : 'nullable';
+
+        // CRE fields are only mandatory on EDIT
+        $isEdit = $id !== null;
+        $creReq = $isEdit ? 'required' : 'nullable';
+
+        return [
+            'enquiry_type' => $req,
+            'source_code' => $sourceReq,
+            'sub_source' => 'nullable',
+            'person_code' => 'nullable',
+            'reference_details' => 'nullable|max:255',
+
+            // Reference Details (Mandatory if Source is Reference)
+            'referred_by' => $refReq.'|max:100',
+            'referee_phone' => $refReq.'|max:15',
+            'referee_name' => $refReq.'|max:100',
+
+            'planned_campaign' => 'nullable|max:150',
+            'likely_purchase_days' => 'nullable|max:150',
+            'cre_likely_purchase_date' => 'nullable|date',
+            'cre_likely_purchase_days' => 'nullable|max:150',
+            'activity_type' => 'nullable',
+            'activity_segment' => 'nullable',
+            'activity_model' => 'nullable',
+            'activity_start_date' => 'nullable|date',
+            'activity_end_date' => 'nullable|date',
+            'activity_branch' => 'nullable',
+            'activity_location' => 'nullable',
+
+            // 1. Customer Primary Details
+            'name' => $req.'|max:100',
+            'care_of_type' => 'nullable|max:100',
+            'care_of' => 'nullable|max:100',
+            'mobile' => 'required|max:15',
+            'alternate_mobile' => 'nullable|max:15',
+            'email' => 'nullable|email|max:150',
+            'gender' => $req,
+            'zipcode' => $req.'|max:10',
+            'vpo' => 'nullable|max:150',
+            'tehsil' => $req.'|max:100',
+            'district' => $req.'|max:100',
+            'city' => $req.'|max:100',
+            'territory' => $req.'|string|max:100',
+
+            // 2. Vehicle Info (Color is now optional everywhere)
+            'segment_code' => $req,
+            'model_code' => $req,
+            'variant_code' => $req,
+            'color_code' => 'nullable',
+            // Fetched automatically
+            'usage_area' => 'nullable', // Checked dynamically by HTML5 based on segment
+            'km_travelled_daily' => 'nullable',
+            'application_type' => 'nullable',
+            'application' => 'nullable',
+
+            // 3. X8 SC Details (Optional on Create, Mandatory on Edit)
+            'x8_sc_code' => ($isEdit ? 'required' : 'nullable').'|string|max:200',
+            'x8_sc_mile_id' => 'nullable|string|max:100',
+
+            // 4. CRM Purchase Type
+            'purchase_type_crm' => $req.'|string|max:100',
+
+            // 5. CRE Enquiry Stage (No longer mandatory)
+            'cre_enq_stage' => 'nullable|string|max:50',
+            'cre_customer_stage' => $isEdit ? 'required|string|max:50' : 'nullable|string|max:50',
+            'cre_next_fup_date' => $isEdit ? 'required_unless:cre_enq_stage,LOST,DROPPED|nullable|date' : 'nullable|date',
+            'cre_fup_remarks' => 'nullable|string|max:255',
+            'cre_fup_deviation_stage' => 'nullable|string|max:50',
+
+            // WhatsApp Campaign Fields
+            'wapp_campaign_name' => 'nullable|string|max:150',
+            'wapp_campaign_date' => 'nullable|date',
+            'wapp_campaign_segment' => 'nullable|string|max:50',
+            'wapp_campaign_model' => 'nullable|string|max:150',
+
+            // --- OTHER EXISTING FIELDS ---
+            'occupation_type' => 'nullable',
+            'customer_type' => 'nullable',
+            'occupation_sub_type' => 'nullable',
+            'company_name' => 'nullable|max:150',
+            'dob' => 'nullable|date',
+            'marital_status' => 'nullable',
+            'marriage_date' => 'nullable|date',
+            'age_group' => 'nullable',
+            'has_ev' => 'nullable',
+            'purchase_type' => 'nullable',
+            'consid_brand' => 'nullable|max:100',
+            'consid_model' => 'nullable|max:100',
+            'consid_variant' => 'nullable|max:100',
+            'consid_brand2' => 'nullable|max:100',
+            'consid_model2' => 'nullable|max:100',
+            'consid_variant2' => 'nullable|max:100',
+            'vehicle_no' => 'nullable|max:30',
+            'remarks' => 'nullable',
+
+            'place_of_registration' => 'nullable|max:100',
+            // 'dealer_branch' => $req,
+            // 'dealer_location' => $req,
+            'sc_name' => 'nullable',
+            'booking_no' => 'nullable|string|max:50',
+            'otf_no' => 'nullable|string|max:50',
+            'dms_enq_no' => 'nullable|string|max:50',
+            'followup_type' => 'nullable',
+            'followup_date' => 'nullable|date',
+            'followup_time' => 'nullable',
+            'actual_fup_date' => 'nullable|date',
+            'actual_fup_duration' => 'nullable|string|max:100',
+            'followup_status' => 'nullable|string|max:100',
+            'latest_fup_status' => 'nullable|string|max:100',
+            'fup_count' => 'nullable|integer',
+            'recent_actual_followup_date' => 'nullable|date',
+            'recent_fup_remarks' => 'nullable|string|max:255',
+            'recent_fup_remarks_type' => 'nullable|string|max:255',
+            'recent_fup_comments' => 'nullable|string|max:255',
+            'test_drive_count' => 'nullable|integer',
+            'test_drive_no' => 'nullable|string|max:100',
+            'td_date' => 'nullable|date',
+            'lost_reason' => 'nullable|string|max:100',
+            'lost_sub_reason' => 'nullable|string|max:100',
+            'lost_detail_reason' => 'nullable|string|max:100',
+            'lost_remarks' => 'nullable|string|max:100',
+            'make_year' => 'nullable|integer',
+            'odo_reading' => 'nullable|numeric',
+            'expected_price' => 'nullable|numeric',
+            'offered_price' => 'nullable|numeric',
+            'exchange_bonus' => 'nullable|numeric',
+            'fin_mode' => 'nullable|string|max:50',
+            'financier' => 'nullable|integer',
+            'brand_make' => 'nullable|string|max:100',
+            'brand_model' => 'nullable|string|max:100',
+            'call_nature' => 'nullable|string',
+        ];
+    }
+
+    private function getEnquiryFormData()
+    {
+        $kw = fn ($k) => OrgService::keywordValueByCode($k);
+
+        return [
+            'segments' => OrgService::segments(),
+            'models' => [],
+            'variants' => [],
+            'colors' => [],
+            'locations' => [],
+            'saleconsultants' => OrgService::getUsers(desigCode: 'CNS'),
+            'branches' => OrgService::branches(),
+            // 'campaigns' => Campaign::orderBy('name')->pluck('name')->toArray(),
+            'campaigns' => Campaign::where('forever', 1)
+                ->orWhereDate('end_date', '>=', Carbon::today())
+                ->orderBy('name')
+                ->pluck('name')
+                ->toArray(),
+            'likely_purchase_dates' => $kw('LIKELY_PURCHASE_DAY'),
+            'enquiry_types' => $kw('ENQ_TYPE'),
+            'activity_types' => $kw('ACTIVITY_TYPE'),
+            'follow_up_types' => $kw('FOLLOW_UP_TYPE'),
+            'occupation_types' => $kw('OCCUPATION_TYPE'),
+            'occupation_sub_types' => $kw('OCCUPATION_SUB_TYPE'),
+            'customer_types' => $kw('CUSTOMER_TYPE'),
+            'genders' => $kw('GENDER'),
+            'marital_statuses' => $kw('MARITAL_STATUS'),
+            'age_groups' => $kw('AGE_GROUP'),
+            'usage_areas' => $kw('USAGE_AREA'),
+            'km_travelled_daily' => $kw('KM_TRAVELLED_DAILY'),
+            'application_types' => $kw('APPLICATION_TYPE'),
+            'applications' => $kw('APPLICATION'),
+            'call_nature_virtual' => $kw('CALL_NATURE_VIRTUAL'),
+            'sc_fup_remarks' => $kw('SC_FUP_REMARKS'),
+            'sc_fup_remarks_types' => $kw('SC_FUP_REMARKS_TYPE'),
+            'deviation_stages' => $kw('DEVIATION_STAGE'),
+            'enquiry_stages' => $kw('ENQ_STAGE'),
+            'customer_stages' => $kw('CUSTOMER_STAGE'),
+            'purchase_types' => $kw('PURCHASE_TYPE'),
+            'enquiry_sources' => $kw('ENQ_SOURCE'),
+            'enquiry_sub_sources' => $kw('ENQ_SUB_SOURCE'),
+            'existing_car_oems' => $kw('EXISTING_CAR_OEM'),
+            'existing_car_models' => $kw('EXISTING_CAR_MODEL'),
+            'existing_car_variants' => $kw('EXISTING_CAR_VARIANT'),
+            'fuel_types' => $kw('FUEL_TYPE'),
+            'transmission_types' => $kw('TRANSMISSION_TYPE'),
+            'finance_types' => $kw('FINANCE_TYPE'),
+            'purchase_reasons' => $kw('PURCHASE_REASON'),
+            'financiers' => collect(XlFinancier::select('id', 'name', 'short_name')->get()->toArray())->map(fn ($f) => (object) $f),
+        ];
+    }
+
+    public function getSources()
+    {
+        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view enquiries.');
+        }
+
+        return response()->json(LeadSource::active()->orderBy('sort_order')->orderBy('name')->pluck('name', 'code')->toArray());
+    }
+
+    /**
+     * BUG-046: route existed with no matching method. Implemented using the already-existing,
+     * already-cached OrgService::salesConsultants() helper — the same utility this controller
+     * already imports OrgService for, matching getSources()'s JSON-lookup shape.
+     */
+    public function getSalesConsultants(Request $request)
+    {
+        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view enquiries.');
+        }
+
+        return response()->json(OrgService::salesConsultants($request->input('branch_code', 'ALL')));
+    }
+
+    public function getVariants($modelCode)
+    {
+        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view enquiries.');
+        }
+
+        return response()->json(OrgService::variants($modelCode));
+    }
+
+    public function getColors($variantCode)
+    {
+        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view enquiries.');
+        }
+
+        return response()->json(OrgService::colors($variantCode));
+    }
+
+    public function getModels(string $segmentCode)
+    {
+        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view enquiries.');
+        }
+
+        return response()->json(OrgService::models($segmentCode));
+    }
+
+    public function getLocations($branchCode)
+    {
+        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view enquiries.');
+        }
+
+        return response()->json(OrgService::locations($branchCode));
+    }
+
+    public function getKeywordValues($keyword, $parent, Request $request)
+    {
+        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view enquiries.');
+        }
+
+        return response()->json(
+            OrgService::keywordValueByParentCode($keyword, $parent, $request->query('parent_keyword'))
+        );
+    }
+
+    public function getReferenceUsers(Request $request)
+    {
+        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view enquiries.');
+        }
+
+        return response()->json(OrgService::getReferenceUsers(
+            (string) $request->input('type', ''),
+            (string) $request->input('mobile', '')
+        ));
+    }
+
+    public function locationByPincode(Request $request)
+    {
+        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view enquiries.');
+        }
+
+        return response()->json(OrgService::getLocationByPincode($request->pincode));
+    }
+
+    public function getLead($leadNo)
+    {
+        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view enquiries.');
+        }
+
+        $lead = Lead::where('lead_no', $leadNo)->firstOrFail();
+
+        return response()->json($lead->only(['source_code', 'referral_details', 'name', 'last_name', 'mobile', 'email', 'occupation', 'segment_code', 'model_code', 'variant_code', 'color_code']));
+    }
+
+    public function checkDuplicateEnquiry(Request $request)
+    {
+        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view enquiries.');
+        }
+
+        $enquiry = Enquiry::where('mobile', $request->mobile)->where('segment_code', $request->segment_code)->first();
+
+        return response()->json([
+            'exists' => (bool) $enquiry,
+            'enquiry_no' => $enquiry?->enquiry_no,
+            'id' => $enquiry?->id,
+        ]);
+    }
+
+    public function importEnquiries(Request $request)
+    {
+        if (! backpack_user()->can('SLS_ENQR_IMPORT')) {
+            abort(403, 'Unauthorized. You do not have permission to import enquiries.');
+        }
+
+        if (! $request->hasFile('excel_file') || ! in_array($request->file('excel_file')->getClientOriginalExtension(), ['xlsx', 'xls'])) {
+            Alert::error('Invalid or missing file! Only Excel files (.xlsx, .xls) allowed')->flash();
+
+            return redirect()->back();
+        }
+
+        $absolutePath = Storage::disk('local')->path($request->file('excel_file')->store('imports', 'local'));
+        $importLogId = DB::table('xlr8_crm_import_logs')->insertGetId([
+            'file_name' => $request->file('excel_file')->getClientOriginalName(),
+            'stored_path' => $absolutePath,
+            'status' => 'queued',
+            'created_by' => backpack_user()->id ?? null,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        ImportEnquiriesJob::dispatch($importLogId, $absolutePath);
+        Alert::success("File uploaded and queued for processing (Import #{$importLogId}).")->flash();
+
+        return redirect()->back();
+    }
+
+    public function importStatus($id)
+    {
+        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view enquiries.');
+        }
+
+        if (! $log = DB::table('xlr8_crm_import_logs')->where('id', $id)->first()) {
+            return response()->json(['error' => 'Not found'], 404);
+        }
+
+        return response()->json([
+            'id' => $log->id,
+            'status' => $log->status,
+            'total_rows' => $log->total_rows,
+            'processed_rows' => $log->processed_rows,
+            'percent' => $log->total_rows > 0 ? round(($log->processed_rows / $log->total_rows) * 100, 1) : 0,
+            'stats' => $log->stats ? json_decode($log->stats, true) : null,
+            'error_message' => $log->error_message,
+        ]);
+    }
+
+    public function importHistory()
+    {
+        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view enquiries.');
+        }
+
+        return response()->json(DB::table('xlr8_crm_import_logs')->orderByDesc('id')->limit(5)->get());
+    }
+
+    public function otfBookingsList()
+    {
+        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view enquiries.');
+        }
+
+        return $this->renderGridPage('admin.sales.enquiry.otf-bookings', 'OTF Bookings', 'otf');
+    }
+
+    public function showOtf($id)
+    {
+        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view enquiries.');
+        }
+
+        $this->crud->hasAccessOrFail('list');
+
+        // Fetch the OTF booking from crm_booking table
+        $otf = DB::table('xlr8_crm_booking')->where('id', $id)->first();
+        if (! $otf) {
+            abort(404, 'OTF Booking not found.');
+        }
+
+        // Resolve vehicle details based on oem_code
+        $vehicle = $this->resolveVehicleFromOemCode($otf->oem_code);
+
+        // Resolve SC details using existing mappings
+        $lookups = $this->getEnquiryLookupMaps();
+        $scByCode = $lookups['scByCode'] ?? [];
+        $scByMileId = $lookups['scByMileId'] ?? [];
+
+        $scDisplay = '—';
+        $scBranch = '—';
+        $scLocation = '—';
+        $scMileIdStr = $otf->sc_mile_id ?? '—'; // Default fallback
+
+        // If sc_mile_id stores a code, resolve it from scByCode first
+        $matchedSc = null;
+        if (! empty($otf->sc_mile_id)) {
+            if (isset($scByCode[$otf->sc_mile_id])) {
+                $matchedSc = $scByCode[$otf->sc_mile_id];
+            } elseif (isset($scByMileId[$otf->sc_mile_id])) {
+                $matchedSc = $scByMileId[$otf->sc_mile_id];
+            }
+        }
+
+        if ($matchedSc) {
+            $scDisplay = ($matchedSc['display_name'] ?? '').' - '.($matchedSc['employee_code'] ?? '');
+            // Extract the actual Mile ID/Employee Code
+            $scMileIdStr = $matchedSc['employee_code'] ?? $matchedSc['mile_id'] ?? $otf->sc_mile_id;
+            $scBranch = OrgService::branchName($matchedSc['primary_branch_code'] ?? '');
+            $scLocation = OrgService::locationName($matchedSc['primary_loc_code'] ?? '');
+        }
+
+        return view('admin.sales.enquiry.showOtf', compact('otf', 'vehicle', 'scDisplay', 'scBranch', 'scLocation', 'scMileIdStr'));
+    }
+
+    public function xceler8List()
+    {
+        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view enquiries.');
+        }
+
+        return $this->renderGridPage('admin.sales.enquiry.enquiry-grid', 'Xceler8 Enquiries', 'xceler8');
+    }
+
+    /**
+     * Get quotation IDs for a batch of enquiry IDs.
+     * Returns [enquiry_id => quotation_id, ...]
+     */
+    private function getExistingQuotations(array $enquiryIds): array
+    {
+        if (empty($enquiryIds)) {
+            return [];
+        }
+
+        // Fetch the latest quotation per enquiry (most recent revision)
+        $quotations = Quotation::whereIn('enquiry_no', $enquiryIds)
+            ->orderByDesc('id')
+            ->get(['id', 'enquiry_no']);
+
+        $map = [];
+        foreach ($quotations as $q) {
+            // Keep only the first (latest) quotation per enquiry
+            if (! isset($map[$q->enquiry_no])) {
+                $map[$q->enquiry_no] = $q->id;
+            }
+        }
+
+        return $map;
+    }
+
+    public function validateQuotationVehicle($id)
+    {
+        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view enquiries.');
+        }
+
+        $enquiry = Enquiry::findOrFail($id);
+
+        $missing = [];
+
+        $fields = [
+            'segment_code' => 'Segment',
+            'model_code' => 'Model',
+            'variant_code' => 'Variant',
+            'color_code' => 'Color',
+        ];
+
+        foreach ($fields as $column => $label) {
+
+            $value = trim((string) ($enquiry->{$column} ?? ''));
+
+            if (
+                $value === '' ||
+                $value === '0' ||
+                strtoupper($value) === 'NULL' ||
+                strtoupper($value) === 'N/A' ||
+                strtoupper($value) === 'NA' ||
+                $value === '—'
+            ) {
+                $missing[] = $label;
+            }
+        }
+
+        return response()->json([
+            'valid' => empty($missing),
+            'missing' => $missing,
+        ]);
+    }
+}

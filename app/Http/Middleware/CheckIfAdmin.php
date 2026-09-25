@@ -3,6 +3,10 @@
 namespace App\Http\Middleware;
 
 use Closure;
+use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class CheckIfAdmin
 {
@@ -22,19 +26,23 @@ class CheckIfAdmin
      * does not have a '/home' route, use something you've built for your users
      * (again - users, not admins).
      *
-     * @param  \Illuminate\Contracts\Auth\Authenticatable|null  $user
+     * @param  Authenticatable|null  $user
      * @return bool
      */
     private function checkIfUserIsAdmin($user)
     {
-        return true;
+        // Emergency coarse-grained gate: only internal staff (user_type = 'Emp')
+        // may reach the /admin panel. Per-controller RBAC is separate, later work.
+        return $user
+            && $user->user_type === 'Emp'
+            && (bool) $user->is_active;
     }
 
     /**
      * Answer to unauthorized access request.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
+     * @param  Request  $request
+     * @return Response|RedirectResponse
      */
     private function respondToUnauthorizedRequest($request)
     {
@@ -48,8 +56,7 @@ class CheckIfAdmin
     /**
      * Handle an incoming request.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
+     * @param  Request  $request
      * @return mixed
      */
     public function handle($request, Closure $next)
@@ -59,7 +66,7 @@ class CheckIfAdmin
         }
 
         if (! $this->checkIfUserIsAdmin(backpack_user())) {
-            return $this->respondToUnauthorizedRequest($request);
+            abort(403, 'You do not have access to the admin panel.');
         }
 
         return $next($request);
