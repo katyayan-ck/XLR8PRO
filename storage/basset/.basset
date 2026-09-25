@@ -518,33 +518,33 @@
         "asset_disk_path": "basset/vendor/backpack/crud/src/resources/assets/css/common.css",
         "asset_attributes": []
     },
-    "C:\\laragon\\www\\XLR8PRO\\vendor/backpack/theme-tabler/resources/assets/css/style.css": {
-        "asset_name": "C:\\laragon\\www\\XLR8PRO\\vendor/backpack/theme-tabler/resources/assets/css/style.css",
-        "asset_path": "C:\\laragon\\www\\XLR8PRO\\vendor/backpack/theme-tabler/resources/assets/css/style.css",
+    "D:\\laragon\\www\\XLR8PRO\\vendor/backpack/theme-tabler/resources/assets/css/style.css": {
+        "asset_name": "D:\\laragon\\www\\XLR8PRO\\vendor/backpack/theme-tabler/resources/assets/css/style.css",
+        "asset_path": "D:\\laragon\\www\\XLR8PRO\\vendor/backpack/theme-tabler/resources/assets/css/style.css",
         "asset_disk_path": "basset/vendor/backpack/theme-tabler/resources/assets/css/style.css",
         "asset_attributes": []
     },
-    "C:\\laragon\\www\\XLR8PRO\\vendor/backpack/theme-tabler/resources/assets/css/color-adjustments.css": {
-        "asset_name": "C:\\laragon\\www\\XLR8PRO\\vendor/backpack/theme-tabler/resources/assets/css/color-adjustments.css",
-        "asset_path": "C:\\laragon\\www\\XLR8PRO\\vendor/backpack/theme-tabler/resources/assets/css/color-adjustments.css",
+    "D:\\laragon\\www\\XLR8PRO\\vendor/backpack/theme-tabler/resources/assets/css/color-adjustments.css": {
+        "asset_name": "D:\\laragon\\www\\XLR8PRO\\vendor/backpack/theme-tabler/resources/assets/css/color-adjustments.css",
+        "asset_path": "D:\\laragon\\www\\XLR8PRO\\vendor/backpack/theme-tabler/resources/assets/css/color-adjustments.css",
         "asset_disk_path": "basset/vendor/backpack/theme-tabler/resources/assets/css/color-adjustments.css",
         "asset_attributes": []
     },
-    "C:\\laragon\\www\\XLR8PRO\\vendor/backpack/crud/src/resources/assets/css/common.css": {
-        "asset_name": "C:\\laragon\\www\\XLR8PRO\\vendor/backpack/crud/src/resources/assets/css/common.css",
-        "asset_path": "C:\\laragon\\www\\XLR8PRO\\vendor/backpack/crud/src/resources/assets/css/common.css",
+    "D:\\laragon\\www\\XLR8PRO\\vendor/backpack/crud/src/resources/assets/css/common.css": {
+        "asset_name": "D:\\laragon\\www\\XLR8PRO\\vendor/backpack/crud/src/resources/assets/css/common.css",
+        "asset_path": "D:\\laragon\\www\\XLR8PRO\\vendor/backpack/crud/src/resources/assets/css/common.css",
         "asset_disk_path": "basset/vendor/backpack/crud/src/resources/assets/css/common.css",
         "asset_attributes": []
     },
-    "C:\\laragon\\www\\XLR8PRO\\vendor/backpack/crud/src/resources/assets/js/common.js": {
-        "asset_name": "C:\\laragon\\www\\XLR8PRO\\vendor/backpack/crud/src/resources/assets/js/common.js",
-        "asset_path": "C:\\laragon\\www\\XLR8PRO\\vendor/backpack/crud/src/resources/assets/js/common.js",
+    "D:\\laragon\\www\\XLR8PRO\\vendor/backpack/crud/src/resources/assets/js/common.js": {
+        "asset_name": "D:\\laragon\\www\\XLR8PRO\\vendor/backpack/crud/src/resources/assets/js/common.js",
+        "asset_path": "D:\\laragon\\www\\XLR8PRO\\vendor/backpack/crud/src/resources/assets/js/common.js",
         "asset_disk_path": "basset/vendor/backpack/crud/src/resources/assets/js/common.js",
         "asset_attributes": []
     },
-    "C:\\laragon\\www\\XLR8PRO\\vendor/backpack/theme-tabler/resources/assets/js/tabler.js": {
-        "asset_name": "C:\\laragon\\www\\XLR8PRO\\vendor/backpack/theme-tabler/resources/assets/js/tabler.js",
-        "asset_path": "C:\\laragon\\www\\XLR8PRO\\vendor/backpack/theme-tabler/resources/assets/js/tabler.js",
+    "D:\\laragon\\www\\XLR8PRO\\vendor/backpack/theme-tabler/resources/assets/js/tabler.js": {
+        "asset_name": "D:\\laragon\\www\\XLR8PRO\\vendor/backpack/theme-tabler/resources/assets/js/tabler.js",
+        "asset_path": "D:\\laragon\\www\\XLR8PRO\\vendor/backpack/theme-tabler/resources/assets/js/tabler.js",
         "asset_disk_path": "basset/vendor/backpack/theme-tabler/resources/assets/js/tabler.js",
         "asset_attributes": []
     }

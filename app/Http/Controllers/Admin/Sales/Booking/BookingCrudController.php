@@ -168,7 +168,6 @@ class BookingCrudController extends CrudController
 
         if ($enquiryId = request('enquiry_id')) {
             $enquiry = Enquiry::find($enquiryId);
-
             if ($enquiry) {
                 $existingBooking = Booking::where(function ($q) use ($enquiry) {
                     $q->where('enq_no', $enquiry->id)

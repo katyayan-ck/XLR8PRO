@@ -2037,7 +2037,6 @@
             if (["3", "4"].includes(selectedStatus)) {
                 if ([2, 3].includes(parseInt(colType))) {
                     statusSelect.disabled = true;
-
                     fetch("{{ route('sales.booking.check-field-payment', $booking->id) }}", {
                         method: 'GET',
                         headers: {
@@ -2080,9 +2079,13 @@
                                 allowOutsideClick: false
                             }).then((result) => {
                                 if (result.isConfirmed) {
+<<<<<<< HEAD
                                     window.location.href =
                                         "{{ route('sales.booking.pending-edit', $booking->id) }}" +
                                         "#pending";
+=======
+                                    window.location.href = "{{ route('sales.booking.pending-edit', $booking->id) }}" + "#pending";
+>>>>>>> origin/stage
                                 } else {
                                     statusSelect.value = "0";
                                 }

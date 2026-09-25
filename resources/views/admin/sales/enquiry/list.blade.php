@@ -12,7 +12,8 @@
 
                     <div class="d-flex align-items-center gap-3 flex-nowrap">
                         @if (Route::has('enquiry.add') || Route::has('enquiries.create'))
-                            <a href="{{ backpack_url('sales/enquiry/create') }}" class="btn btn-blue btn-sm fw-bold shadow-sm">
+                            <a href="{{ backpack_url('sales/enquiry/create') }}"
+                                class="btn btn-blue btn-sm fw-bold shadow-sm">
                                 <i class="la la-plus me-1"></i> Add New Enquiry
                             </a>
                         @endif
@@ -21,32 +22,7 @@
 
                 <div class="card-body p-0" style="background: var(--tblr-bg-surface-secondary)">
 
-                    {{-- Optional Import Section --}}
-                    @if (Route::has('enquiry.import'))
-                        <div class="p-3 border-bottom bg-white">
-                            <div class="row align-items-end">
-                                <div class="col-md-8">
-                                    <h5 class="mb-2 text-dark">
-                                        <i class="la la-file-excel-o"></i> Import Enquiries from Excel
-                                    </h5>
-                                    <small class="text-muted">
-                                        Upload Excel file containing enquiry data. First row should contain headers.
-                                    </small>
-                                </div>
-                                <div class="col-md-4">
-                                    <form action="{{ route('sales.enquiry.import') }}" method="POST"
-                                        enctype="multipart/form-data" class="d-flex gap-2">
-                                        @csrf
-                                        <input type="file" name="excel_file" class="form-control form-control-sm"
-                                            accept=".xlsx,.xls" required>
-                                        <button type="submit" class="btn btn-success btn-sm px-4 text-nowrap">
-                                            <i class="la la-upload"></i> Import
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    @endif
+
 
                     {{-- HIGHLIGHT FILTERS --}}
                     @isset($highlightCounts)
@@ -127,14 +103,15 @@
                     </div>
 
                     <!-- GRID CONTAINER WITH LOADER WRAPPER -->
-<div style="position: relative;">
-    <div id="gridLoader" style="display:none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.7); z-index: 1000; justify-content: center; align-items: center;">
-        <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
-        </div>
-    </div>
-    <div id="myGrid" class="ag-theme-quartz" style="height: calc(93vh - 260px); width:100%;"></div>
-</div>
+                    <div style="position: relative;">
+                        <div id="gridLoader"
+                            style="display:none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.7); z-index: 1000; justify-content: center; align-items: center;">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                        <div id="myGrid" class="ag-theme-quartz" style="height: calc(93vh - 260px); width:100%;"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -341,80 +318,79 @@
                 }
             }, 400));
 
-            
+
             // ============================================================
-// QUOTE BUTTON - SERVER SIDE VEHICLE VALIDATION
-// Enquiry Color = Optional
-// Quotation Color = Mandatory
-// ============================================================
+            // QUOTE BUTTON - SERVER SIDE VEHICLE VALIDATION
+            // Enquiry Color = Optional
+            // Quotation Color = Mandatory
+            // ============================================================
 
-document.addEventListener('click', async function (e) {
+            document.addEventListener('click', async function(e) {
 
-    const link = e.target.closest('.js-quote-link');
+                const link = e.target.closest('.js-quote-link');
 
-    if (!link) {
-        return;
-    }
+                if (!link) {
+                    return;
+                }
 
-    // STOP the normal <a href=""> navigation first.
-    e.preventDefault();
-    e.stopPropagation();
+                // STOP the normal <a href=""> navigation first.
+                e.preventDefault();
+                e.stopPropagation();
 
-    const enquiryId = link.getAttribute('data-enquiry-id');
+                const enquiryId = link.getAttribute('data-enquiry-id');
 
-    if (!enquiryId) {
-        console.error('Quote validation failed: enquiry ID missing.');
-        return;
-    }
+                if (!enquiryId) {
+                    console.error('Quote validation failed: enquiry ID missing.');
+                    return;
+                }
 
-    try {
+                try {
 
-        const validationUrl =
-            `{{ backpack_url('sales/enquiry') }}/${enquiryId}/validate-quotation-vehicle`;
+                    const validationUrl =
+                        `{{ backpack_url('sales/enquiry') }}/${enquiryId}/validate-quotation-vehicle`;
 
-        const response = await fetch(validationUrl, {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        });
+                    const response = await fetch(validationUrl, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
 
-        if (!response.ok) {
-            throw new Error(
-                `Vehicle validation request failed: ${response.status}`
-            );
-        }
+                    if (!response.ok) {
+                        throw new Error(
+                            `Vehicle validation request failed: ${response.status}`
+                        );
+                    }
 
-        const result = await response.json();
+                    const result = await response.json();
 
-        console.log('Quotation vehicle validation:', result);
+                    console.log('Quotation vehicle validation:', result);
 
-        // ========================================================
-        // ALL REQUIRED VEHICLE DETAILS ARE PRESENT
-        // ========================================================
+                    // ========================================================
+                    // ALL REQUIRED VEHICLE DETAILS ARE PRESENT
+                    // ========================================================
 
-        if (result.valid === true) {
+                    if (result.valid === true) {
 
-            window.location.href = link.href;
-            return;
-        }
+                        window.location.href = link.href;
+                        return;
+                    }
 
-        // ========================================================
-        // VEHICLE DETAILS ARE MISSING
-        // ========================================================
+                    // ========================================================
+                    // VEHICLE DETAILS ARE MISSING
+                    // ========================================================
 
-        const missing = Array.isArray(result.missing)
-            ? result.missing
-            : [];
+                    const missing = Array.isArray(result.missing) ?
+                        result.missing : [];
 
-        Swal.fire({
+                    Swal.fire({
 
-            icon: 'warning',
+                        icon: 'warning',
 
-            title: 'Vehicle Details Required',
+                        title: 'Vehicle Details Required',
 
-            html: `
+                        html: `
                 <div style="text-align:left;">
 
                     <p style="margin-bottom:12px;">
@@ -427,10 +403,10 @@ document.addEventListener('click', async function (e) {
                         padding:0;
                     ">
                         ${missing.map(field => `
-                            <li>
-                                <strong>${field}</strong>
-                            </li>
-                        `).join('')}
+                                                            <li>
+                                                                <strong>${field}</strong>
+                                                            </li>
+                                                        `).join('')}
                     </ul>
 
                     <p style="
@@ -446,54 +422,54 @@ document.addEventListener('click', async function (e) {
                 </div>
             `,
 
-            confirmButtonText: 'Go to Edit Enquiry',
+                        confirmButtonText: 'Go to Edit Enquiry',
 
-            confirmButtonColor: '#3085d6',
+                        confirmButtonColor: '#3085d6',
 
-            showCancelButton: true,
+                        showCancelButton: true,
 
-            cancelButtonText: 'Cancel',
+                        cancelButtonText: 'Cancel',
 
-            allowOutsideClick: false
+                        allowOutsideClick: false
 
-        }).then((result) => {
+                    }).then((result) => {
 
-            if (!result.isConfirmed) {
-                return;
-            }
+                        if (!result.isConfirmed) {
+                            return;
+                        }
 
-            // ====================================================
-            // OPEN SAME ENQUIRY EDIT PAGE
-            // ====================================================
+                        // ====================================================
+                        // OPEN SAME ENQUIRY EDIT PAGE
+                        // ====================================================
 
-            const editUrl =
-                `{{ backpack_url('sales/enquiry') }}/${enquiryId}/edit`;
+                        const editUrl =
+                            `{{ backpack_url('sales/enquiry') }}/${enquiryId}/edit`;
 
-            window.location.href = editUrl;
-        });
+                        window.location.href = editUrl;
+                    });
 
-    } catch (error) {
+                } catch (error) {
 
-        console.error(
-            'Quotation vehicle validation error:',
-            error
-        );
+                    console.error(
+                        'Quotation vehicle validation error:',
+                        error
+                    );
 
-        Swal.fire({
+                    Swal.fire({
 
-            icon: 'error',
+                        icon: 'error',
 
-            title: 'Validation Error',
+                        title: 'Validation Error',
 
-            text: 'Unable to verify vehicle details. Please try again.',
+                        text: 'Unable to verify vehicle details. Please try again.',
 
-            confirmButtonText: 'OK'
+                        confirmButtonText: 'OK'
 
-        });
+                    });
 
-    }
+                }
 
-});
+            });
 
             document.querySelectorAll('.highlight-filter').forEach(btn => {
                 btn.addEventListener('click', function() {
@@ -590,7 +566,8 @@ document.addEventListener('click', async function (e) {
                     highlightFilter: currentHighlightFilter,
                     list_type: LIST_TYPE
                 });
-                window.location.href = '{{ backpack_url('sales/enquiry/export-legacy') }}?' + params.toString();
+                window.location.href = '{{ backpack_url('sales/enquiry/export-legacy') }}?' + params
+                    .toString();
             });
 
             document.getElementById('exportPdf').addEventListener('click', () => {
