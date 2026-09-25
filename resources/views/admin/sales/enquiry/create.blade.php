@@ -647,9 +647,9 @@
                             @if(!$isLong)
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">DMS Enquiry Number <small class="text-muted"></small></label>
-                                <input type="text" name="dms_enq_no" class="form-control"
-                                    value="{{ old('dms_enq_no', $enquiry->dms_enq_no ?? '') }}"
-                                    placeholder="Enter DMS Enquiry Number">
+                                <input type="text" name="dms_enq_no" class="form-control text-uppercase"
+                                    value="{{ old('dms_enq_no', $enquiry->dms_enq_no ?? 'EN-') }}"
+                                    placeholder="EN-XXXXX">
                             </div>
                             @endif
 

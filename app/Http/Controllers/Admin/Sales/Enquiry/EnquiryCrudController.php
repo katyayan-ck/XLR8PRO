@@ -44,7 +44,7 @@ class EnquiryCrudController extends CrudController
     public function setup()
     {
         CRUD::setModel(Enquiry::class);
-        CRUD::setRoute(config('backpack.base.route_prefix').'/sales/enquiry');
+        CRUD::setRoute(config('backpack.base.route_prefix') . '/sales/enquiry');
         CRUD::setEntityNameStrings('enquiry', 'enquiries');
     }
 
@@ -57,7 +57,7 @@ class EnquiryCrudController extends CrudController
      */
     public function destroy($id)
     {
-        if (! backpack_user()->can('SLS_ENQR_DELETE')) {
+        if (!backpack_user()->can('SLS_ENQR_DELETE')) {
             abort(403, 'Unauthorized. You do not have permission to delete enquiries.');
         }
 
@@ -77,7 +77,7 @@ class EnquiryCrudController extends CrudController
      */
     public function search()
     {
-        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+        if (!backpack_user()->can('SLS_ENQR_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
@@ -86,7 +86,7 @@ class EnquiryCrudController extends CrudController
 
     public function showDetailsRow($id)
     {
-        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+        if (!backpack_user()->can('SLS_ENQR_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
@@ -145,7 +145,10 @@ class EnquiryCrudController extends CrudController
             $deviationStageMap = collect(OrgService::keywordValueByCode('DEVIATION_STAGE'))->pluck('value', 'code')->toArray();
 
             // 6. Additional Maps for List View
-            $genderMap = collect(OrgService::keywordValueByCode('GENDER'))->pluck('value', 'code')->toArray();
+            $genderMap = collect(OrgService::keywordValueByCode('GENDER'))
+                ->pluck('value', 'code')
+                ->mapWithKeys(fn($val, $key) => [strtoupper(trim((string) $key)) => $val])
+                ->toArray();
             $usageAreaMap = collect(OrgService::keywordValueByCode('USAGE_AREA'))->pluck('value', 'code')->toArray();
             $kmTravelledMap = collect(OrgService::keywordValueByCode('KM_TRAVELLED_DAILY'))->pluck('value', 'code')->toArray();
             $appTypeMap = collect(OrgService::keywordValueByCode('APPLICATION_TYPE'))->pluck('value', 'code')->toArray();
@@ -173,17 +176,17 @@ class EnquiryCrudController extends CrudController
             $scNamesByCode = [];
 
             foreach ($scUsers as $user) {
-                $userName = trim(($user['name'] ?? '').' '.($user['last_name'] ?? '')) ?: ($user['name'] ?? '—');
+                $userName = trim(($user['name'] ?? '') . ' ' . ($user['last_name'] ?? '')) ?: ($user['name'] ?? '—');
 
-                if (! empty($user['employee_code'])) {
+                if (!empty($user['employee_code'])) {
                     $scByCode[$user['employee_code']] = $user;
                     $scNamesByCode[$user['employee_code']] = $userName;
                 }
-                if (! empty($user['person_code'])) {
+                if (!empty($user['person_code'])) {
                     $scByCode[$user['person_code']] = $user;
                     $scNamesByCode[$user['person_code']] = $userName;
                 }
-                if (! empty($user['mile_id'])) {
+                if (!empty($user['mile_id'])) {
                     $scByMileId[$user['mile_id']] = $user;
                 }
             }
@@ -285,52 +288,52 @@ class EnquiryCrudController extends CrudController
             'assigned_quick' => Enquiry::assignedQuick(),
             'unassigned_quick' => Enquiry::unassignedQuick(),
             'exchange' => Enquiry::where(function ($q) {
-                $q->whereIn('purchase_type_crm', ['Exchange Buy', 'EXCHANGE_BUY'])
+                    $q->whereIn('purchase_type_crm', ['Exchange Buy', 'EXCHANGE_BUY'])
                     ->orWhere(function ($sub) {
                         $sub->where(function ($sub2) {
                             $sub2->whereNull('purchase_type_crm')->orWhere('purchase_type_crm', '');
                         })->whereIn('purchase_type', ['Exchange Buy', 'EXCHANGE_BUY']);
                     });
-            }),
+                }),
 
             'scrappage' => Enquiry::where(function ($q) {
-                $q->whereIn('purchase_type_crm', ['Scrappage', 'SCRAPPAGE'])
+                    $q->whereIn('purchase_type_crm', ['Scrappage', 'SCRAPPAGE'])
                     ->orWhere(function ($sub) {
                         $sub->where(function ($sub2) {
                             $sub2->whereNull('purchase_type_crm')->orWhere('purchase_type_crm', '');
                         })->whereIn('purchase_type', ['Scrappage', 'SCRAPPAGE']);
                     });
-            }),
+                }),
 
             'exchange_not_interested' => Enquiry::where(function ($q) {
-                $q->whereIn('purchase_type_crm', [
+                    $q->whereIn('purchase_type_crm', [
                     'First Time Buy',
                     'FIRST_TIME_BUY',
                     'Additional Buy',
                     'ADDITIONAL_BUY',
                     'No Consideration',
                     'NO_CONSIDERATION',
-                ])
+                    ])
                     ->orWhere(function ($sub) {
                         $sub->where(function ($sub2) {
                             $sub2->whereNull('purchase_type_crm')->orWhere('purchase_type_crm', '');
                         })->whereIn('purchase_type', [
-                            'First Time Buy',
-                            'FIRST_TIME_BUY',
-                            'Additional Buy',
-                            'ADDITIONAL_BUY',
-                            'No Consideration',
-                            'NO_CONSIDERATION',
-                        ]);
+                                'First Time Buy',
+                                'FIRST_TIME_BUY',
+                                'Additional Buy',
+                                'ADDITIONAL_BUY',
+                                'No Consideration',
+                                'NO_CONSIDERATION',
+                            ]);
                     });
-            }),
+                }),
 
             'finance' => Enquiry::where('fin_mode', 'In-house'),
             'finance_not_interested' => Enquiry::where(function ($q) {
-                $q->whereNull('fin_mode')
-                ->orWhere('fin_mode', '')
-                ->orWhere('fin_mode', '!=', 'In-house');
-            }),
+                    $q->whereNull('fin_mode')
+                    ->orWhere('fin_mode', '')
+                    ->orWhere('fin_mode', '!=', 'In-house');
+                }),
 
             // APPLY NEW SCOPE TO THE DEFAULT MAIN LISTING
             default => Enquiry::mainListing(),
@@ -371,7 +374,7 @@ class EnquiryCrudController extends CrudController
         $baseRow = $rows->first();
 
         // 4. Color column data jahan color_code matching ho
-        $colorRow = $rows->first(fn ($r) => strtoupper((string) $r->color_code) === $colorCode);
+        $colorRow = $rows->first(fn($r) => strtoupper((string) $r->color_code) === $colorCode);
 
         $result = [
             'segment' => $baseRow->segment_code ?? '—',
@@ -392,20 +395,25 @@ class EnquiryCrudController extends CrudController
             return [];
         }
 
-        $x8Nos = array_map(fn ($id) => (string) $this->enquiryRef->fromReference($id), $enquiryIds);
-        $legacyX8Nos = array_map(fn ($id) => 'XENQ-' . $this->enquiryRef->fromReference($id), $enquiryIds);
+        // Clean up inputs to absolute integers
+        $cleanIds = array_map(fn($id) => (int) $this->enquiryRef->fromReference($id), $enquiryIds);
+        
+        $x8Nos = array_map(fn($id) => (string) $id, $cleanIds);
+        $legacyX8Nos = array_map(fn($id) => 'XENQ-' . $id, $cleanIds);
 
         $searchNos = array_merge($x8Nos, $legacyX8Nos);
 
         $rows = DB::table('xlr8_cre_enquiry_fup')
             ->whereIn('x8_enq_no', $searchNos)
-            ->where('cre_fup_deviation_stage', '!=', 'OPEN_FOLLOW_UP')
+            // Use IFNULL to securely handle NULLs without complex nested closures
+            ->whereRaw("IFNULL(cre_fup_deviation_stage, '') != 'OPEN_FOLLOW_UP'")
             ->orderByDesc('id')
             ->get();
 
         $latest = [];
         foreach ($rows as $row) {
-            $cleanId = $this->enquiryRef->fromReference($row->x8_enq_no);
+            // Strictly enforce integer keys to match mapData lookup exactly
+            $cleanId = (int) $this->enquiryRef->fromReference($row->x8_enq_no);
             if (! isset($latest[$cleanId])) {
                 $latest[$cleanId] = $row;
             }
@@ -435,7 +443,7 @@ class EnquiryCrudController extends CrudController
 
     public function index()
     {
-        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+        if (!backpack_user()->can('SLS_ENQR_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
@@ -479,7 +487,7 @@ class EnquiryCrudController extends CrudController
 
     public function data(Request $request)
     {
-        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+        if (!backpack_user()->can('SLS_ENQR_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
@@ -524,7 +532,7 @@ class EnquiryCrudController extends CrudController
         }
 
         $gridData = $pageRows
-            ->map(fn ($e, $i) => $this->mapData($e, $startRow + $i, $mapType, $lookups))
+            ->map(fn($e, $i) => $this->mapData($e, $startRow + $i, $mapType, $lookups))
             ->all();
 
         return response()->json(['rows' => $gridData, 'lastRow' => $total]);
@@ -532,7 +540,7 @@ class EnquiryCrudController extends CrudController
 
     public function export(Request $request)
     {
-        if (! backpack_user()->can('SLS_ENQR_EXPORT')) {
+        if (!backpack_user()->can('SLS_ENQR_EXPORT')) {
             abort(403, 'Unauthorized. You do not have permission to export enquiries.');
         }
 
@@ -559,19 +567,19 @@ class EnquiryCrudController extends CrudController
         $mapType = $this->resolveMapType($listType);
         $columns = array_values(array_filter(
             $this->getColumns($mapType),
-            fn ($col) => ($col['field'] ?? null) !== 'action'
+            fn($col) => ($col['field'] ?? null) !== 'action'
         ));
 
         $lookups = $this->getEnquiryLookupMaps();
 
         $fileName = $listType === 'otf'
-            ? 'otf-bookings-'.now()->format('Y-m-d_His').'.csv'
-            : 'enquiries-'.now()->format('Y-m-d_His').'.csv';
+            ? 'otf-bookings-' . now()->format('Y-m-d_His') . '.csv'
+            : 'enquiries-' . now()->format('Y-m-d_His') . '.csv';
 
         return response()->streamDownload(function () use ($query, $columns, $mapType, $lookups) {
             $out = fopen('php://output', 'w');
 
-            fputcsv($out, array_merge(['S.No.'], array_map(fn ($c) => $c['headerName'], $columns)));
+            fputcsv($out, array_merge(['S.No.'], array_map(fn($c) => $c['headerName'], $columns)));
 
             $serial = 0;
             $query->chunk(500, function ($chunk) use ($out, &$serial, $columns, $mapType, $lookups) {
@@ -584,7 +592,7 @@ class EnquiryCrudController extends CrudController
                     $serial++;
                     fputcsv($out, array_merge(
                         [$serial],
-                        array_map(fn ($c) => $rowData[$c['field']] ?? '', $columns)
+                        array_map(fn($c) => $rowData[$c['field']] ?? '', $columns)
                     ));
                 }
             });
@@ -650,7 +658,7 @@ class EnquiryCrudController extends CrudController
                 $applied = true;
             }
         }
-        if (! $applied) {
+        if (!$applied) {
             $query->orderByDesc('crm_booking.id');
         }
     }
@@ -676,7 +684,7 @@ class EnquiryCrudController extends CrudController
     private function applyOtfFilter($query, array $filterModel): void
     {
         foreach ($filterModel as $field => $condition) {
-            if (! is_array($condition) || ! isset(self::OTF_FILTER_FIELD_MAP[$field])) {
+            if (!is_array($condition) || !isset(self::OTF_FILTER_FIELD_MAP[$field])) {
                 continue;
             }
             $this->applyFilterCondition($query, self::OTF_FILTER_FIELD_MAP[$field], $condition);
@@ -685,7 +693,7 @@ class EnquiryCrudController extends CrudController
 
     public function referenceList()
     {
-        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+        if (!backpack_user()->can('SLS_ENQR_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
@@ -694,7 +702,7 @@ class EnquiryCrudController extends CrudController
 
     public function virtualNumberList()
     {
-        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+        if (!backpack_user()->can('SLS_ENQR_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
@@ -703,7 +711,7 @@ class EnquiryCrudController extends CrudController
 
     public function hyperlocalList()
     {
-        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+        if (!backpack_user()->can('SLS_ENQR_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
@@ -713,14 +721,14 @@ class EnquiryCrudController extends CrudController
 
         return $this->renderGridPage(
             'admin.sales.enquiry.hyperlocal-enquiry',
-            'Hyperlocal Enquiries ('.$count.')',
+            'Hyperlocal Enquiries (' . $count . ')',
             'hyperlocal'
         );
     }
 
     public function whatsappCampaignList()
     {
-        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+        if (!backpack_user()->can('SLS_ENQR_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
@@ -729,7 +737,7 @@ class EnquiryCrudController extends CrudController
 
     public function assignedLongList()
     {
-        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+        if (!backpack_user()->can('SLS_ENQR_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
@@ -738,7 +746,7 @@ class EnquiryCrudController extends CrudController
 
     public function unassignedLongList()
     {
-        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+        if (!backpack_user()->can('SLS_ENQR_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
@@ -747,7 +755,7 @@ class EnquiryCrudController extends CrudController
 
     public function assignedQuickList()
     {
-        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+        if (!backpack_user()->can('SLS_ENQR_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
@@ -756,7 +764,7 @@ class EnquiryCrudController extends CrudController
 
     public function unassignedQuickList()
     {
-        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+        if (!backpack_user()->can('SLS_ENQR_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
@@ -765,7 +773,7 @@ class EnquiryCrudController extends CrudController
 
     public function exchangeEnquiryList()
     {
-        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+        if (!backpack_user()->can('SLS_ENQR_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
@@ -774,7 +782,7 @@ class EnquiryCrudController extends CrudController
 
     public function scrappageEnquiryList()
     {
-        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+        if (!backpack_user()->can('SLS_ENQR_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
@@ -783,7 +791,7 @@ class EnquiryCrudController extends CrudController
 
     public function exchangeNotInterestedList()
     {
-        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+        if (!backpack_user()->can('SLS_ENQR_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
@@ -792,7 +800,7 @@ class EnquiryCrudController extends CrudController
 
     public function financeEnquiryList()
     {
-        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+        if (!backpack_user()->can('SLS_ENQR_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
@@ -801,7 +809,7 @@ class EnquiryCrudController extends CrudController
 
     public function financeNotInterestedList()
     {
-        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+        if (!backpack_user()->can('SLS_ENQR_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
@@ -830,11 +838,11 @@ class EnquiryCrudController extends CrudController
 
     private function getAssignedSc($code, $mileId, $scByCode, $scByMileId): ?array
     {
-        if (! empty($code) && isset($scByCode[$code])) {
+        if (!empty($code) && isset($scByCode[$code])) {
             return $scByCode[$code];
         }
 
-        if (! empty($mileId) && isset($scByMileId[$mileId])) {
+        if (!empty($mileId) && isset($scByMileId[$mileId])) {
             return $scByMileId[$mileId];
         }
 
@@ -920,7 +928,7 @@ class EnquiryCrudController extends CrudController
         $variantVal = trim((string) ($e->variant_code ?? ''));
         $colorVal = trim((string) ($e->color_code ?? ''));
 
-        if (! empty($existingQuotations[$e->id])) {
+        if (!empty($existingQuotations[$e->id])) {
 
             $quotationId = $existingQuotations[$e->id];
 
@@ -1016,30 +1024,30 @@ class EnquiryCrudController extends CrudController
                 'evaluation_id' => $e->evaluation_id ?? '—',
                 'so_number' => $e->so_number ?? '—',
                 'otf_number' => $e->otf_number ?? '—',
-                'action' => '<div class="d-flex justify-content-center gap-2"><a href="'.$viewUrl.'" class="btn btn-sm btn-primary">View</a></div>',
+                'action' => '<div class="d-flex justify-content-center gap-2"><a href="' . $viewUrl . '" class="btn btn-sm btn-primary">View</a></div>',
             ];
         }
 
-        $actionBtns = '<a href="'.$editUrl.'" class="btn btn-sm btn-primary">Edit</a>';
+        $actionBtns = '<a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a>';
 
-        $actionBtns .= '<a href="'.$quotUrl.'"'
-            .' class="btn '.$quotBtnClass.' btn-sm js-quote-link"'
-            .' title="'.$quotBtnText.'"'
-            .' data-enquiry-id="'.$e->id.'"'
-            .' data-segment="'.e($segmentVal).'"'
-            .' data-model="'.e($modelVal).'"'
-            .' data-variant="'.e($variantVal).'"'
-            .' data-color="'.e($colorVal).'"'
-            .'>'.$quotBtnText.'</a>';
-        $actionBtns .= '<a href="'.$bookUrl.'" class="btn btn-warning btn-sm" title="Convert to Booking">Book</a>';
+        $actionBtns .= '<a href="' . $quotUrl . '"'
+            . ' class="btn ' . $quotBtnClass . ' btn-sm js-quote-link"'
+            . ' title="' . $quotBtnText . '"'
+            . ' data-enquiry-id="' . $e->id . '"'
+            . ' data-segment="' . e($segmentVal) . '"'
+            . ' data-model="' . e($modelVal) . '"'
+            . ' data-variant="' . e($variantVal) . '"'
+            . ' data-color="' . e($colorVal) . '"'
+            . '>' . $quotBtnText . '</a>';
+        $actionBtns .= '<a href="' . $bookUrl . '" class="btn btn-warning btn-sm" title="Convert to Booking">Book</a>';
 
         // Add context-specific Process buttons
         if (in_array($type, ['exchange', 'scrappage', 'exchange_not_interested'])) {
             $exchUrl = backpack_url("sales/enquiry/exchange/{$e->id}/edit");
-            $actionBtns .= '<a href="'.$exchUrl.'" class="btn btn-sm btn-info">Process</a>';
+            $actionBtns .= '<a href="' . $exchUrl . '" class="btn btn-sm btn-info">Process</a>';
         } elseif (in_array($type, ['finance', 'finance_not_interested'])) {
             $finUrl = backpack_url("sales/enquiry/finance/{$e->id}/edit");
-            $actionBtns .= '<a href="'.$finUrl.'" class="btn btn-sm btn-info">Process</a>';
+            $actionBtns .= '<a href="' . $finUrl . '" class="btn btn-sm btn-info">Process</a>';
         }
 
         $row = [
@@ -1073,124 +1081,119 @@ class EnquiryCrudController extends CrudController
             'td_date' => $this->formatDate($e->td_date, 'd-M-Y'),
             'lost_reason' => $lostReasonMap[$e->lost_reason ?? ''] ?? $e->lost_reason ?? '—',
             'followup_status' => $e->fup_status ?? '—',
-            'action' => '<div class="d-flex justify-content-center gap-2">'.$actionBtns.'</div>',
+            'action' => '<div class="d-flex justify-content-center gap-2">' . $actionBtns . '</div>',
         ];
 
         if (in_array($type, ['long', 'quick', 'all', 'reference', 'virtual', 'whatsapp', 'exchange', 'scrappage', 'exchange_not_interested', 'finance', 'finance_not_interested'])) {
             $x8BranchCode = $x8AssignedSc['primary_branch_code'] ?? null;
             $oemBranchCode = $oemAssignedSc['primary_branch_code'] ?? null;
 
-            $x8EnqNo = $this->enquiryRef->fromReference($e->id);
+            // Strictly cast to integer to ensure it maps to the array keys generated by getLatestCreFups
+            $x8EnqNo = (int) $this->enquiryRef->fromReference($e->id);
             $creFup = $lookups['creFups'][$x8EnqNo] ?? null;
 
-            $creFup = $lookups['creFups'][$this->enquiryRef->toReference($e->id)] ?? null;
+            // Direct assignment guarantees exact keys are matched for AG-Grid without array_merge overwrites
+            $row['oem_long_enquiry_no'] = $e->oem_long_enquiry_no ?? '—';
+            $row['oem_long_enquiry_date'] = $this->formatDate($e->oem_long_enquiry_date, 'd-M-Y');
+            $row['oem_long_enquiry_assign_date'] = $this->formatDate($e->oem_long_enquiry_assign_date, 'd-M-Y');
+            $row['oem_quick_enquiry_no'] = $e->oem_quick_enquiry_no ?? $e->quick_enquiry_no ?? '—';
+            $row['oem_quick_enquiry_date'] = $this->formatDate($e->oem_quick_enquiry_date ?? $e->quick_enquiry_date, 'd-M-Y');
+            $row['oem_quick_enquiry_status'] = $e->oem_quick_enquiry_status ?? $e->quick_status ?? '—';
+            $row['oem_quick_enquiry_assign_date'] = $this->formatDate($e->oem_quick_enquiry_assign_date ?? $e->quick_enq_assign_date, 'd-M-Y');
+            $row['x8_enq_source'] = $e->x8_enq_source ?? $e->x8_source_code ?? '—';
+            $row['name'] = $e->name ?? '—';
+            $row['care_of_type'] = match ((int) ($e->care_of_type ?? 0)) {
+                1 => 'Son of',
+                2 => 'Daughter of',
+                3 => 'Married to',
+                4 => 'Guardian Name',
+                5 => 'Owned By',
+                default => $e->care_of_type ?? '—',
+            };
+            $row['care_of'] = $e->care_of ?? '—';
+            $row['email'] = $e->email ?? '—';
+            $row['gender'] = $genderMap[strtoupper(trim((string)($e->gender ?? '')))] ?? $e->gender ?? '—';
+            $row['enquiry_type'] = $enquiryTypeMap[$e->enquiry_type ?? ''] ?? $e->enquiry_type ?? '—';
+            $row['source_code'] = $sourcesMap[$e->source_code ?? ''] ?? $e->source?->name ?? $e->source_code ?? '—';
+            $row['sub_source'] = $subSourceMap[$e->sub_source ?? ''] ?? $e->sub_source ?? '—';
+            $row['likely_purchase_date'] = $lpMap[$e->likely_purchase_date] ?? $e->likely_purchase_date ?? '—';
+            $row['x8_quotation_date'] = $this->formatDate($e->x8_quotation_date ?? $e->quotation_date, 'd-M-Y');
+            $row['fuel_type'] = $cleanVal($fuelMap[$variantRel?->fuel_type_id ?? ''] ?? $fuelMap[$variantRel?->fuel_type ?? ''] ?? $variantRel?->fuel_type);
+            $row['transmission'] = $cleanVal($variantRel?->transmission);
+            $row['drivetrain'] = $cleanVal($variantRel?->drivetrain);
+            $row['seating'] = $cleanVal($variantRel?->seating ?? $variantRel?->seating_capacity);
+            $row['pincode'] = $e->pincode ?? $e->zipcode ?? '—';
+            $row['vpo'] = $e->vpo ?? '—';
+            $row['tehsil'] = $e->tehsil ?? '—';
+            $row['district'] = $e->district ?? '—';
+            $row['city'] = $e->city ?? '—';
+            $row['address'] = $e->address ?? $e->customer_address ?? '—';
+            $row['x8_sc_code'] = $x8AssignedSc['display_name'] ?? $scNamesByCode[$e->x8_sc_code] ?? $e->x8_sc_code ?? '—';
+            $row['x8_sc_mile_id'] = $e->x8_sc_mile_id ?? $x8AssignedSc['mile_id'] ?? '—';
+            $row['x8_sc_branch'] = strtoupper($branchesMap[$x8BranchCode] ?? $x8BranchCode ?? '—');
+            $row['x8_sc_location'] = $locationsMap[$x8AssignedSc['primary_loc_code'] ?? ''] ?? $x8AssignedSc['primary_loc_code'] ?? '—';
+            $row['sc_name'] = $scNamesByCode[$e->sc_name] ?? $e->sc_name ?? '—';
+            $row['sc_mile_id'] = $e->sc_mile_id ?? $oemAssignedSc['mile_id'] ?? '—';
+            $row['oem_sc_branch'] = $branchesMap[$oemBranchCode] ?? $oemBranchCode ?? '—';
+            $row['oem_sc_location'] = $locationsMap[$oemAssignedSc['primary_loc_code'] ?? ''] ?? $oemAssignedSc['primary_loc_code'] ?? '—';
+            $row['dealer_branch'] = $e->dealer_branch ?? '—';
+            $row['dealer_location'] = $e->dealer_location ?? '—';
+            $row['occupation_type'] = $occTypeMap[$e->occupation_type ?? ''] ?? $e->occupation_type ?? '—';
+            $row['customer_type'] = $e->customer_type ?? '—';
+            $row['occupation_sub_type'] = $e->occupation_sub_type ?? '—';
+            $row['company_name'] = $e->company_name ?? '—';
+            $row['dob'] = $this->formatDate($e->dob, 'd-M-Y');
+            $row['marital_status'] = $maritalStatusMap[$e->marital_status ?? ''] ?? $e->marital_status ?? '—';
+            $row['marriage_date'] = $this->formatDate($e->marriage_date, 'd-M-Y');
+            $row['age_group'] = $ageGroupMap[$e->age_group ?? ''] ?? $e->age_group ?? '—';
+            $row['usage_area'] = $usageAreaMap[$e->usage_area ?? ''] ?? $e->usage_area ?? '—';
+            $row['km_travelled_daily'] = $kmTravelledMap[$e->km_travelled_daily ?? ''] ?? $e->km_travelled_daily ?? '—';
+            $row['application_type'] = $appTypeMap[$e->application_type ?? ''] ?? $e->application_type ?? '—';
+            $row['application'] = $appMap[$e->application ?? ''] ?? $e->application ?? '—';
+            $row['has_ev'] = $e->has_ev ?? '—';
+            $row['purchase_type'] = $purcTypeMap[$e->purchase_type ?? ''] ?? $e->purchase_type ?? '—';
+            $row['purchase_type_crm'] = $purcTypeMap[$e->purchase_type_crm ?? ''] ?? $e->purchase_type_crm ?? '—';
+            $row['consid_brand'] = $e->consid_brand ?? $e->consider_make ?? '—';
+            $row['consid_model'] = $e->consid_model ?? $e->consider_model ?? '—';
+            $row['consid_variant'] = $e->consid_variant ?? $e->consider_variant ?? '—';
+            $row['expected_price'] = $e->expected_price ?? '—';
+            $row['offered_price'] = $e->offered_price ?? '—';
+            $row['exchange_bonus'] = $e->exchange_bonus ?? '—';
+            $row['price_gap'] = ($e->expected_price || $e->offered_price || $e->exchange_bonus) ? (($e->expected_price ?? 0) - ($e->offered_price ?? 0) - ($e->exchange_bonus ?? 0)) : '—';
+            $row['fin_mode'] = $e->fin_mode ?? '—';
+            $row['financier_name'] = $finMap[$e->financier] ?? $e->financier ?? '—';
+            $row['loan_status'] = $e->loan_status ?? '—';
 
-            // FIX: Using array_merge so it actively overwrites the '—' placeholders from the base array
-            $row = array_merge($row, [
-                'oem_long_enquiry_no' => $e->oem_long_enquiry_no ?? '—',
-                'oem_long_enquiry_date' => $this->formatDate($e->oem_long_enquiry_date, 'd-M-Y'),
-                'oem_long_enquiry_assign_date' => $this->formatDate($e->oem_long_enquiry_assign_date, 'd-M-Y'),
-                'oem_quick_enquiry_no' => $e->oem_quick_enquiry_no ?? $e->quick_enquiry_no ?? '—',
-                'oem_quick_enquiry_date' => $this->formatDate($e->oem_quick_enquiry_date ?? $e->quick_enquiry_date, 'd-M-Y'),
-                'oem_quick_enquiry_status' => $e->oem_quick_enquiry_status ?? $e->quick_status ?? '—',
-                'oem_quick_enquiry_assign_date' => $this->formatDate($e->oem_quick_enquiry_assign_date ?? $e->quick_enq_assign_date, 'd-M-Y'),
-                'x8_enq_source' => $e->x8_enq_source ?? $e->x8_source_code ?? '—',
-                'name' => $e->name ?? '—',
-                'care_of_type' => match ((int) ($e->care_of_type ?? 0)) {
-                    1 => 'Son of',
-                    2 => 'Daughter of',
-                    3 => 'Married to',
-                    4 => 'Guardian Name',
-                    5 => 'Owned By',
-                    default => $e->care_of_type ?? '—',
-                },
-                'care_of' => $e->care_of ?? '—',
-                'email' => $e->email ?? '—',
-                'gender' => $e->gender ?? '—',
-                'enquiry_type' => $enquiryTypeMap[$e->enquiry_type ?? ''] ?? $e->enquiry_type ?? '—',
-                'source_code' => $sourcesMap[$e->source_code ?? ''] ?? $e->source?->name ?? $e->source_code ?? '—',
-                'sub_source' => $subSourceMap[$e->sub_source ?? ''] ?? $e->sub_source ?? '—',
-                'likely_purchase_date' => $lpMap[$e->likely_purchase_date] ?? $e->likely_purchase_date ?? '—',
-                'x8_quotation_date' => $this->formatDate($e->x8_quotation_date ?? $e->quotation_date, 'd-M-Y'),
-                'fuel_type' => $cleanVal($fuelMap[$variantRel?->fuel_type_id ?? ''] ?? $fuelMap[$variantRel?->fuel_type ?? ''] ?? $variantRel?->fuel_type),
-                'transmission' => $cleanVal($variantRel?->transmission),
-                'drivetrain' => $cleanVal($variantRel?->drivetrain),
-                'seating' => $cleanVal($variantRel?->seating ?? $variantRel?->seating_capacity),
-                'pincode' => $e->pincode ?? $e->zipcode ?? '—',
-                'vpo' => $e->vpo ?? '—',
-                'tehsil' => $e->tehsil ?? '—',
-                'district' => $e->district ?? '—',
-                'city' => $e->city ?? '—',
-                'address' => $e->address ?? $e->customer_address ?? '—',
-                'x8_sc_code' => $x8AssignedSc['display_name'] ?? $scNamesByCode[$e->x8_sc_code] ?? $e->x8_sc_code ?? '—',
-                'x8_sc_mile_id' => $e->x8_sc_mile_id ?? $x8AssignedSc['mile_id'] ?? '—',
-                'x8_sc_branch' => $branchesMap[$x8BranchCode] ?? $x8BranchCode ?? '—',
-                'x8_sc_location' => $locationsMap[$x8AssignedSc['primary_loc_code'] ?? ''] ?? $x8AssignedSc['primary_loc_code'] ?? '—',
-                'sc_name' => $scNamesByCode[$e->sc_name] ?? $e->sc_name ?? '—',
-                'sc_mile_id' => $e->sc_mile_id ?? $oemAssignedSc['mile_id'] ?? '—',
-                'oem_sc_branch' => $branchesMap[$oemBranchCode] ?? $oemBranchCode ?? '—',
-                'oem_sc_location' => $locationsMap[$oemAssignedSc['primary_loc_code'] ?? ''] ?? $oemAssignedSc['primary_loc_code'] ?? '—',
-                'dealer_branch' => $e->dealer_branch ?? '—',
-                'dealer_location' => $e->dealer_location ?? '—',
-                'occupation_type' => $occTypeMap[$e->occupation_type ?? ''] ?? $e->occupation_type ?? '—',
-                'customer_type' => $e->customer_type ?? '—',
-                'occupation_sub_type' => $e->occupation_sub_type ?? '—',
-                'company_name' => $e->company_name ?? '—',
-                'dob' => $this->formatDate($e->dob, 'd-M-Y'),
-                'marital_status' => $maritalStatusMap[$e->marital_status ?? ''] ?? $e->marital_status ?? '—',
-                'marriage_date' => $this->formatDate($e->marriage_date, 'd-M-Y'),
-                'age_group' => $ageGroupMap[$e->age_group ?? ''] ?? $e->age_group ?? '—',
-                'usage_area' => $usageAreaMap[$e->usage_area ?? ''] ?? $e->usage_area ?? '—',
-                'km_travelled_daily' => $kmTravelledMap[$e->km_travelled_daily ?? ''] ?? $e->km_travelled_daily ?? '—',
-                'application_type' => $appTypeMap[$e->application_type ?? ''] ?? $e->application_type ?? '—',
-                'application' => $appMap[$e->application ?? ''] ?? $e->application ?? '—',
-                'has_ev' => $e->has_ev ?? '—',
-                'purchase_type' => $purcTypeMap[$e->purchase_type ?? ''] ?? $e->purchase_type ?? '—',
-                'purchase_type_crm' => $purcTypeMap[$e->purchase_type_crm ?? ''] ?? $e->purchase_type_crm ?? '—',
-                'consid_brand' => $e->consid_brand ?? $e->consider_make ?? '—',
-                'consid_model' => $e->consid_model ?? $e->consider_model ?? '—',
-                'consid_variant' => $e->consid_variant ?? $e->consider_variant ?? '—',
-                'expected_price' => $e->expected_price ?? '—',
-                'offered_price' => $e->offered_price ?? '—',
-                'exchange_bonus' => $e->exchange_bonus ?? '—',
-                'price_gap' => ($e->expected_price || $e->offered_price || $e->exchange_bonus) ? (($e->expected_price ?? 0) - ($e->offered_price ?? 0) - ($e->exchange_bonus ?? 0)) : '—',
-                'fin_mode' => $e->fin_mode ?? '—',
-                'financier_name' => $finMap[$e->financier] ?? $e->financier ?? '—',
-                'loan_status' => $e->loan_status ?? '—',
+            $row['fup_type'] = $fupTypesMap[$e->followup_type] ?? $e->followup_type ?? '—';
+            $row['followup_type'] = $fupTypesMap[$e->followup_type] ?? $e->followup_type ?? '—';
+            $row['followup_date'] = $this->formatDate($e->followup_date, 'd-M-Y');
+            $row['followup_time'] = $e->followup_time ?? '—';
+            $row['recent_planned_followup_date'] = trim($this->formatDate($e->followup_date, 'd-M-Y').' '.($e->followup_time ?? '')) ?: '—';
+            $row['recent_actual_followup_date'] = $this->formatDate($e->recent_actual_followup_date, 'd-M-Y H:i');
+            $row['call_duration'] = $e->actual_fup_duration ?? $e->call_duration ?? '—';
+            $row['deviation_stage'] = $deviationStageMap[$e->deviation_stage ?? ''] ?? $e->deviation_stage ?? '—';
+            $row['remarks'] = $e->recent_fup_remarks ?? $e->remarks ?? '—';
+            $row['followup_remarks_type'] = $e->recent_fup_remarks_type ?? '—';
+            $row['comments'] = $e->recent_fup_comments ?? '—';
+            $row['stage'] = $enqStageMap[$e->stage ?? ''] ?? $e->stage ?? '—';
+            $row['td_count'] = $e->test_drive_count ?? '—';
+            $row['test_drive_no'] = $e->test_drive_no ?? $e->oem_test_drive_no ?? '—';
+            $row['td_date'] = $this->formatDate($e->td_date, 'd-M-Y');
+            $row['lost_reason'] = $lostReasonMap[$e->lost_reason ?? ''] ?? $e->lost_reason ?? '—';
+            $row['lost_sub_reason'] = $lostSubReasonMap[$e->lost_sub_reason ?? ''] ?? $e->lost_sub_reason ?? '—';
+            $row['lost_detail_reason'] = $e->lost_detail_reason ?? '—';
+            $row['lost_remarks'] = $e->lost_remarks ?? '—';
 
-                // Follow up (SC side)
-                'fup_type' => $fupTypesMap[$e->followup_type] ?? $e->followup_type ?? '—',
-                'followup_type' => $fupTypesMap[$e->followup_type] ?? $e->followup_type ?? '—',
-                'followup_date' => $this->formatDate($e->followup_date, 'd-M-Y'),
-                'followup_time' => $e->followup_time ?? '—',
-                'recent_planned_followup_date' => trim($this->formatDate($e->followup_date, 'd-M-Y').' '.($e->followup_time ?? '')) ?: '—',
-                'recent_actual_followup_date' => $this->formatDate($e->recent_actual_followup_date, 'd-M-Y H:i'),
-                'call_duration' => $e->actual_fup_duration ?? $e->call_duration ?? '—',
-                'deviation_stage' => $deviationStageMap[$e->deviation_stage ?? ''] ?? $e->deviation_stage ?? '—',
-                'remarks' => $e->recent_fup_remarks ?? $e->remarks ?? '—',
-                'followup_remarks_type' => $e->recent_fup_remarks_type ?? '—',
-                'comments' => $e->recent_fup_comments ?? '—',
-                'stage' => $enqStageMap[$e->stage ?? ''] ?? $e->stage ?? '—',
-                'td_count' => $e->test_drive_count ?? '—',
-                'test_drive_no' => $e->test_drive_no ?? $e->oem_test_drive_no ?? '—',
-                'td_date' => $this->formatDate($e->td_date, 'd-M-Y'),
-                'lost_reason' => $lostReasonMap[$e->lost_reason ?? ''] ?? $e->lost_reason ?? '—',
-                'lost_sub_reason' => $lostSubReasonMap[$e->lost_sub_reason ?? ''] ?? $e->lost_sub_reason ?? '—',
-                'lost_detail_reason' => $e->lost_detail_reason ?? '—',
-                'lost_remarks' => $e->lost_remarks ?? '—',
-
-                // Follow up (CRE side)
-                'cre_fup_count' => $creFup->cre_fup_count ?? '—',
-                'cre_planned_fup_date' => $creFup ? $this->formatDate($creFup->cre_planned_fup_date, 'd-M-Y') : '—',
-                'cre_actual_fup_date' => $creFup ? $this->formatDate($creFup->cre_actual_fup_date, 'd-M-Y H:i') : '—',
-                'cre_fup_call_duration' => $creFup->cre_fup_call_duration ?? '—',
-                'cre_fup_deviation_stage' => $deviationStageMap[$creFup->cre_fup_deviation_stage ?? ''] ?? $creFup->cre_fup_deviation_stage ?? '—',
-                'cre_enq_stage' => $enqStageMap[$creFup->cre_enq_stage ?? ''] ?? $creFup->cre_enq_stage ?? '—',
-                'cre_customer_stage' => $custStageMap[$creFup->cre_customer_stage ?? ''] ?? $creFup->cre_customer_stage ?? '—',
-                'cre_fup_remarks' => $creFup->cre_fup_remarks ?? '—',
-                // 'cre_next_fup_date'            => $creFup ? $this->formatDate($creFup->cre_next_fup_date, 'd-M-Y') : '—',
-                'cre_next_fup_date' => $creFup ? $this->formatDate($creFup->cre_next_fup_date, 'd-M-Y H:i') : '—',
-            ]);
+            // Direct CRE mapping to exact AG-Grid columns
+            $row['cre_fup_count'] = $creFup->cre_fup_count ?? '—';
+            $row['cre_planned_fup_date'] = $creFup ? $this->formatDate($creFup->cre_planned_fup_date, 'd-M-Y') : '—';
+            $row['cre_actual_fup_date'] = $creFup ? $this->formatDate($creFup->cre_actual_fup_date, 'd-M-Y H:i') : '—';
+            $row['cre_fup_call_duration'] = $creFup->cre_fup_call_duration ?? '—';
+            $row['cre_fup_deviation_stage'] = $deviationStageMap[$creFup->cre_fup_deviation_stage ?? ''] ?? $creFup->cre_fup_deviation_stage ?? '—';
+            $row['cre_enq_stage'] = $enqStageMap[$creFup->cre_enq_stage ?? ''] ?? $creFup->cre_enq_stage ?? '—';
+            $row['cre_customer_stage'] = $custStageMap[$creFup->cre_customer_stage ?? ''] ?? $creFup->cre_customer_stage ?? '—';
+            $row['cre_fup_remarks'] = $creFup->cre_fup_remarks ?? '—';
+            $row['cre_next_fup_date'] = $creFup ? $this->formatDate($creFup->cre_next_fup_date, 'd-M-Y H:i') : '—';
         }
 
         if ($type === 'reference') {
@@ -1548,7 +1551,7 @@ class EnquiryCrudController extends CrudController
         $tableName = $query->getModel()->getTable();
 
         // Cache and filter only text/string columns to avoid scanning dates, IDs, and numbers
-        $tableColumns = Cache::remember('text_columns_'.$tableName, 3600, function () use ($tableName) {
+        $tableColumns = Cache::remember('text_columns_' . $tableName, 3600, function () use ($tableName) {
             $columns = Schema::getColumnListing($tableName);
 
             // Exclude IDs, timestamps, and numeric fields that ruin 'LIKE' performance
@@ -1559,23 +1562,23 @@ class EnquiryCrudController extends CrudController
 
         $query->where(function ($q) use ($like, $xenqId, $isXenq, $tableColumns, $tableName) {
             if ($isXenq && $xenqId) {
-                $q->where($tableName.'.id', $xenqId);
+                $q->where($tableName . '.id', $xenqId);
             } else {
                 $q->where(function ($sub) use ($tableColumns, $tableName, $like) {
                     foreach ($tableColumns as $index => $column) {
                         if ($index === 0) {
-                            $sub->where($tableName.'.'.$column, 'like', $like);
+                            $sub->where($tableName . '.' . $column, 'like', $like);
                         } else {
-                            $sub->orWhere($tableName.'.'.$column, 'like', $like);
+                            $sub->orWhere($tableName . '.' . $column, 'like', $like);
                         }
                     }
                 });
 
                 // Search relationships
-                $q->orWhereHas('model', fn ($q2) => $q2->where('name', 'like', $like))
-                    ->orWhereHas('segment', fn ($q2) => $q2->where('name', 'like', $like))
-                    ->orWhereHas('color', fn ($q2) => $q2->where('name', 'like', $like))
-                    ->orWhereHas('variant', fn ($q2) => $q2->where('display_name', 'like', $like)
+                $q->orWhereHas('model', fn($q2) => $q2->where('name', 'like', $like))
+                    ->orWhereHas('segment', fn($q2) => $q2->where('name', 'like', $like))
+                    ->orWhereHas('color', fn($q2) => $q2->where('name', 'like', $like))
+                    ->orWhereHas('variant', fn($q2) => $q2->where('display_name', 'like', $like)
                         ->orWhere('custom_name', 'like', $like)
                         ->orWhere('oem_name', 'like', $like));
             }
@@ -1594,7 +1597,7 @@ class EnquiryCrudController extends CrudController
                 $sortApplied = true;
             }
         }
-        if (! $sortApplied) {
+        if (!$sortApplied) {
             $query->orderByDesc('updated_at');
         }
     }
@@ -1629,7 +1632,7 @@ class EnquiryCrudController extends CrudController
         }
 
         foreach ($filterModel as $field => $condition) {
-            if (! is_array($condition)) {
+            if (!is_array($condition)) {
                 continue;
             }
 
@@ -1721,7 +1724,7 @@ class EnquiryCrudController extends CrudController
 
     public function create()
     {
-        if (! backpack_user()->can('SLS_ENQR_CREATE')) {
+        if (!backpack_user()->can('SLS_ENQR_CREATE')) {
             abort(403, 'Unauthorized. You do not have permission to create enquiries.');
         }
 
@@ -1735,7 +1738,7 @@ class EnquiryCrudController extends CrudController
 
     public function createReference()
     {
-        if (! backpack_user()->can('SLS_ENQR_CREATE')) {
+        if (!backpack_user()->can('SLS_ENQR_CREATE')) {
             abort(403, 'Unauthorized. You do not have permission to create enquiries.');
         }
 
@@ -1749,7 +1752,7 @@ class EnquiryCrudController extends CrudController
 
     public function edit($id)
     {
-        if (! backpack_user()->can('SLS_ENQR_EDIT')) {
+        if (!backpack_user()->can('SLS_ENQR_EDIT')) {
             abort(403, 'Unauthorized. You do not have permission to edit enquiries.');
         }
 
@@ -1856,7 +1859,7 @@ class EnquiryCrudController extends CrudController
 
     public function store(Request $request)
     {
-        if (! backpack_user()->can('SLS_ENQR_CREATE')) {
+        if (!backpack_user()->can('SLS_ENQR_CREATE')) {
             abort(403, 'Unauthorized. You do not have permission to create enquiries.');
         }
 
@@ -1867,12 +1870,24 @@ class EnquiryCrudController extends CrudController
             // Format all possible date fields for MySQL
             $dateFields = ['virtual_call_date', 'wapp_campaign_date', 'dob', 'marriage_date', 'activity_start_date', 'activity_end_date', 'cre_likely_purchase_date'];
             foreach ($dateFields as $field) {
-                if (! empty($validated[$field])) {
+                if (!empty($validated[$field])) {
                     $validated[$field] = Carbon::parse($validated[$field])->format('Y-m-d H:i:s');
                 }
             }
 
-            $validated['created_by'] = backpack_user()->id;
+            // Strictly enforce EN- prefix for DMS Enquiry Number
+            if (isset($validated['dms_enq_no'])) {
+                $dmsEnq = strtoupper(trim((string) $validated['dms_enq_no']));
+                if ($dmsEnq === 'EN-' || $dmsEnq === '') {
+                    $validated['dms_enq_no'] = null;
+                } elseif (!str_starts_with($dmsEnq, 'EN-')) {
+                    $validated['dms_enq_no'] = 'EN-' . preg_replace('/^E?N?-?/', '', $dmsEnq);
+                } else {
+                    $validated['dms_enq_no'] = $dmsEnq;
+                }
+            }
+
+            $validated['updated_by'] = backpack_user()->id;
 
             // Reference leads get REFERENCE immediately, otherwise standard new CRM enquiries get Xceler8
             $isRef = isset($validated['source_code']) && strtoupper($validated['source_code']) === 'REFERENCE';
@@ -1890,7 +1905,20 @@ class EnquiryCrudController extends CrudController
 
             Alert::success('Enquiry created successfully.')->flash();
 
-            return redirect(backpack_url('sales/enquiry'));
+            $source = strtoupper($enquiry->source_code ?? '');
+            $origin = strtoupper($enquiry->current_origin ?? '');
+
+            if ($source === 'REFERENCE') {
+                return redirect(backpack_url('sales/enquiry/reference'));
+            } elseif ($source === 'WHATSAPP') {
+                return redirect(backpack_url('sales/enquiry/whatsapp-campaign'));
+            } elseif ($source === 'HYPERLOCAL') {
+                return redirect(backpack_url('sales/enquiry/hyperlocal'));
+            } elseif ($origin === 'VIRTUAL') {
+                return redirect(backpack_url('sales/enquiry/virtual-number'));
+            }
+
+            return redirect(backpack_url('sales/enquiry/xceler8'));
         } catch (Throwable $e) {
             Log::error($e->getMessage());
             throw $e;
@@ -1899,7 +1927,7 @@ class EnquiryCrudController extends CrudController
 
     public function update(Request $request, $id)
     {
-        if (! backpack_user()->can('SLS_ENQR_EDIT')) {
+        if (!backpack_user()->can('SLS_ENQR_EDIT')) {
             abort(403, 'Unauthorized. You do not have permission to edit enquiries.');
         }
 
@@ -1910,8 +1938,19 @@ class EnquiryCrudController extends CrudController
         // Format all possible date fields for MySQL
         $dateFields = ['virtual_call_date', 'wapp_campaign_date', 'dob', 'marriage_date', 'activity_start_date', 'activity_end_date', 'cre_likely_purchase_date'];
         foreach ($dateFields as $field) {
-            if (! empty($validated[$field])) {
+            if (!empty($validated[$field])) {
                 $validated[$field] = Carbon::parse($validated[$field])->format('Y-m-d H:i:s');
+            }
+        }
+
+        if (isset($validated['dms_enq_no'])) {
+            $dmsEnq = strtoupper(trim((string) $validated['dms_enq_no']));
+            if ($dmsEnq === 'EN-' || $dmsEnq === '') {
+                $validated['dms_enq_no'] = null;
+            } elseif (!str_starts_with($dmsEnq, 'EN-')) {
+                $validated['dms_enq_no'] = 'EN-' . preg_replace('/^E?N?-?/', '', $dmsEnq);
+            } else {
+                $validated['dms_enq_no'] = $dmsEnq;
             }
         }
 
@@ -1940,7 +1979,7 @@ class EnquiryCrudController extends CrudController
             if ($request->has('mismatch_fup_remarks')) {
                 $enquiryData['latest_fup_remarks_mismatch'] = $enquiry->latest_fup_remarks_mismatch + 1;
             }
-            if (! empty($enquiry->test_drive_no) && $request->has('mismatch_test_drive')) {
+            if (!empty($enquiry->test_drive_no) && $request->has('mismatch_test_drive')) {
                 $enquiryData['test_drive_mismatch'] = $enquiry->test_drive_mismatch + 1;
             }
         }
@@ -1953,7 +1992,7 @@ class EnquiryCrudController extends CrudController
 
         // --- DYNAMIC REDIRECT LOGIC ---
         // 1. Try to return to the exact previous list using http_referrer
-        if ($request->filled('http_referrer') && ! str_contains($request->http_referrer, '/edit')) {
+        if ($request->filled('http_referrer') && !str_contains($request->http_referrer, '/edit')) {
             return redirect($request->http_referrer);
         }
 
@@ -1984,7 +2023,7 @@ class EnquiryCrudController extends CrudController
 
     public function exchangeEnquiryEdit($id)
     {
-        if (! backpack_user()->can('SLS_ENQR_EDIT')) {
+        if (!backpack_user()->can('SLS_ENQR_EDIT')) {
             abort(403, 'Unauthorized. You do not have permission to edit enquiries.');
         }
 
@@ -2028,7 +2067,7 @@ class EnquiryCrudController extends CrudController
 
     public function exchangeEnquiryUpdate(Request $request, $id)
     {
-        if (! backpack_user()->can('SLS_ENQR_EDIT')) {
+        if (!backpack_user()->can('SLS_ENQR_EDIT')) {
             abort(403, 'Unauthorized. You do not have permission to edit enquiries.');
         }
 
@@ -2087,7 +2126,7 @@ class EnquiryCrudController extends CrudController
 
     public function financeEnquiryEdit($id)
     {
-        if (! backpack_user()->can('SLS_ENQR_EDIT')) {
+        if (!backpack_user()->can('SLS_ENQR_EDIT')) {
             abort(403, 'Unauthorized. You do not have permission to edit enquiries.');
         }
 
@@ -2160,7 +2199,7 @@ class EnquiryCrudController extends CrudController
 
     public function financeEnquiryUpdate(Request $request, $id)
     {
-        if (! backpack_user()->can('SLS_ENQR_EDIT')) {
+        if (!backpack_user()->can('SLS_ENQR_EDIT')) {
             abort(403, 'Unauthorized. You do not have permission to edit enquiries.');
         }
 
@@ -2184,7 +2223,7 @@ class EnquiryCrudController extends CrudController
         $finance->verification_status = $request->verification_status ?? 1;
         $finance->case_lost_reason = $request->case_lost_reason;
 
-        if (! in_array($request->fin_mode, ['Cash', 'Customer Self', 'Yet To Decide', 'Purchase Plan Cancelled'])) {
+        if (!in_array($request->fin_mode, ['Cash', 'Customer Self', 'Yet To Decide', 'Purchase Plan Cancelled'])) {
             $finance->instrument_type = $request->instrument_type;
             $finance->instrument_ref_no = $request->instrument_ref_no;
             $finance->loan_amount = $request->loan_amount;
@@ -2237,7 +2276,7 @@ class EnquiryCrudController extends CrudController
 
     public function storeReference(Request $request)
     {
-        if (! backpack_user()->can('SLS_ENQR_CREATE')) {
+        if (!backpack_user()->can('SLS_ENQR_CREATE')) {
             abort(403, 'Unauthorized. You do not have permission to create enquiries.');
         }
 
@@ -2299,26 +2338,26 @@ class EnquiryCrudController extends CrudController
 
     private function processEntityRelations(array &$validated)
     {
-        if (! empty($validated['segment_code'])) {
+        if (!empty($validated['segment_code'])) {
             $validated['segment'] = OrgService::segments()[$validated['segment_code']] ?? null;
         }
-        if (! empty($validated['segment_code']) && ! empty($validated['model_code'])) {
+        if (!empty($validated['segment_code']) && !empty($validated['model_code'])) {
             $validated['model'] = OrgService::models($validated['segment_code'])[$validated['model_code']] ?? null;
         }
-        if (! empty($validated['model_code']) && ! empty($validated['variant_code'])) {
+        if (!empty($validated['model_code']) && !empty($validated['variant_code'])) {
             $validated['variant'] = OrgService::variants($validated['model_code'])[$validated['variant_code']]['name'] ?? null;
         }
-        if (! empty($validated['variant_code']) && ! empty($validated['color_code'])) {
+        if (!empty($validated['variant_code']) && !empty($validated['color_code'])) {
             $validated['color'] = OrgService::colors($validated['variant_code'])[$validated['color_code']] ?? null;
         }
     }
 
     private function getValidationRules($id = null)
     {
-        $fullFormActive = request()->has('segment_code') || ! request()->has('call_nature');
+        $fullFormActive = request()->has('segment_code') || !request()->has('call_nature');
 
         // 1. FAST-PATH BYPASS: For Non-Sales Virtual Enquiries
-        if (! $fullFormActive) {
+        if (!$fullFormActive) {
             return [
                 'call_nature' => 'required|string',
                 'mobile' => 'required|max:15',
@@ -2355,9 +2394,9 @@ class EnquiryCrudController extends CrudController
             'reference_details' => 'nullable|max:255',
 
             // Reference Details (Mandatory if Source is Reference)
-            'referred_by' => $refReq.'|max:100',
-            'referee_phone' => $refReq.'|max:15',
-            'referee_name' => $refReq.'|max:100',
+            'referred_by' => $refReq . '|max:100',
+            'referee_phone' => $refReq . '|max:15',
+            'referee_name' => $refReq . '|max:100',
 
             'planned_campaign' => 'nullable|max:150',
             'likely_purchase_days' => 'nullable|max:150',
@@ -2372,19 +2411,19 @@ class EnquiryCrudController extends CrudController
             'activity_location' => 'nullable',
 
             // 1. Customer Primary Details
-            'name' => $req.'|max:100',
+            'name' => $req . '|max:100',
             'care_of_type' => 'nullable|max:100',
             'care_of' => 'nullable|max:100',
             'mobile' => 'required|max:15',
             'alternate_mobile' => 'nullable|max:15',
             'email' => 'nullable|email|max:150',
             'gender' => $req,
-            'zipcode' => $req.'|max:10',
+            'zipcode' => $req . '|max:10',
             'vpo' => 'nullable|max:150',
-            'tehsil' => $req.'|max:100',
-            'district' => $req.'|max:100',
-            'city' => $req.'|max:100',
-            'territory' => $req.'|string|max:100',
+            'tehsil' => $req . '|max:100',
+            'district' => $req . '|max:100',
+            'city' => $req . '|max:100',
+            'territory' => $req . '|string|max:100',
 
             // 2. Vehicle Info (Color is now optional everywhere)
             'segment_code' => $req,
@@ -2398,11 +2437,11 @@ class EnquiryCrudController extends CrudController
             'application' => 'nullable',
 
             // 3. X8 SC Details (Optional on Create, Mandatory on Edit)
-            'x8_sc_code' => ($isEdit ? 'required' : 'nullable').'|string|max:200',
+            'x8_sc_code' => ($isEdit ? 'required' : 'nullable') . '|string|max:200',
             'x8_sc_mile_id' => 'nullable|string|max:100',
 
             // 4. CRM Purchase Type
-            'purchase_type_crm' => $req.'|string|max:100',
+            'purchase_type_crm' => $req . '|string|max:100',
 
             // 5. CRE Enquiry Stage (No longer mandatory)
             'cre_enq_stage' => 'nullable|string|max:50',
@@ -2478,7 +2517,7 @@ class EnquiryCrudController extends CrudController
 
     private function getEnquiryFormData()
     {
-        $kw = fn ($k) => OrgService::keywordValueByCode($k);
+        $kw = fn($k) => OrgService::keywordValueByCode($k);
 
         return [
             'segments' => OrgService::segments(),
@@ -2524,13 +2563,13 @@ class EnquiryCrudController extends CrudController
             'transmission_types' => $kw('TRANSMISSION_TYPE'),
             'finance_types' => $kw('FINANCE_TYPE'),
             'purchase_reasons' => $kw('PURCHASE_REASON'),
-            'financiers' => collect(XlFinancier::select('id', 'name', 'short_name')->get()->toArray())->map(fn ($f) => (object) $f),
+            'financiers' => collect(XlFinancier::select('id', 'name', 'short_name')->get()->toArray())->map(fn($f) => (object) $f),
         ];
     }
 
     public function getSources()
     {
-        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+        if (!backpack_user()->can('SLS_ENQR_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
@@ -2544,7 +2583,7 @@ class EnquiryCrudController extends CrudController
      */
     public function getSalesConsultants(Request $request)
     {
-        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+        if (!backpack_user()->can('SLS_ENQR_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
@@ -2553,7 +2592,7 @@ class EnquiryCrudController extends CrudController
 
     public function getVariants($modelCode)
     {
-        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+        if (!backpack_user()->can('SLS_ENQR_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
@@ -2562,7 +2601,7 @@ class EnquiryCrudController extends CrudController
 
     public function getColors($variantCode)
     {
-        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+        if (!backpack_user()->can('SLS_ENQR_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
@@ -2571,7 +2610,7 @@ class EnquiryCrudController extends CrudController
 
     public function getModels(string $segmentCode)
     {
-        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+        if (!backpack_user()->can('SLS_ENQR_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
@@ -2580,7 +2619,7 @@ class EnquiryCrudController extends CrudController
 
     public function getLocations($branchCode)
     {
-        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+        if (!backpack_user()->can('SLS_ENQR_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
@@ -2589,7 +2628,7 @@ class EnquiryCrudController extends CrudController
 
     public function getKeywordValues($keyword, $parent, Request $request)
     {
-        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+        if (!backpack_user()->can('SLS_ENQR_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
@@ -2600,7 +2639,7 @@ class EnquiryCrudController extends CrudController
 
     public function getReferenceUsers(Request $request)
     {
-        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+        if (!backpack_user()->can('SLS_ENQR_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
@@ -2612,7 +2651,7 @@ class EnquiryCrudController extends CrudController
 
     public function locationByPincode(Request $request)
     {
-        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+        if (!backpack_user()->can('SLS_ENQR_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
@@ -2621,7 +2660,7 @@ class EnquiryCrudController extends CrudController
 
     public function getLead($leadNo)
     {
-        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+        if (!backpack_user()->can('SLS_ENQR_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
@@ -2632,7 +2671,7 @@ class EnquiryCrudController extends CrudController
 
     public function checkDuplicateEnquiry(Request $request)
     {
-        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+        if (!backpack_user()->can('SLS_ENQR_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
@@ -2647,11 +2686,11 @@ class EnquiryCrudController extends CrudController
 
     public function importEnquiries(Request $request)
     {
-        if (! backpack_user()->can('SLS_ENQR_IMPORT')) {
+        if (!backpack_user()->can('SLS_ENQR_IMPORT')) {
             abort(403, 'Unauthorized. You do not have permission to import enquiries.');
         }
 
-        if (! $request->hasFile('excel_file') || ! in_array($request->file('excel_file')->getClientOriginalExtension(), ['xlsx', 'xls'])) {
+        if (!$request->hasFile('excel_file') || !in_array($request->file('excel_file')->getClientOriginalExtension(), ['xlsx', 'xls'])) {
             Alert::error('Invalid or missing file! Only Excel files (.xlsx, .xls) allowed')->flash();
 
             return redirect()->back();
@@ -2675,11 +2714,11 @@ class EnquiryCrudController extends CrudController
 
     public function importStatus($id)
     {
-        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+        if (!backpack_user()->can('SLS_ENQR_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
-        if (! $log = DB::table('xlr8_crm_import_logs')->where('id', $id)->first()) {
+        if (!$log = DB::table('xlr8_crm_import_logs')->where('id', $id)->first()) {
             return response()->json(['error' => 'Not found'], 404);
         }
 
@@ -2696,7 +2735,7 @@ class EnquiryCrudController extends CrudController
 
     public function importHistory()
     {
-        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+        if (!backpack_user()->can('SLS_ENQR_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
@@ -2705,7 +2744,7 @@ class EnquiryCrudController extends CrudController
 
     public function otfBookingsList()
     {
-        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+        if (!backpack_user()->can('SLS_ENQR_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
@@ -2714,7 +2753,7 @@ class EnquiryCrudController extends CrudController
 
     public function showOtf($id)
     {
-        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+        if (!backpack_user()->can('SLS_ENQR_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
@@ -2722,7 +2761,7 @@ class EnquiryCrudController extends CrudController
 
         // Fetch the OTF booking from crm_booking table
         $otf = DB::table('xlr8_crm_booking')->where('id', $id)->first();
-        if (! $otf) {
+        if (!$otf) {
             abort(404, 'OTF Booking not found.');
         }
 
@@ -2741,7 +2780,7 @@ class EnquiryCrudController extends CrudController
 
         // If sc_mile_id stores a code, resolve it from scByCode first
         $matchedSc = null;
-        if (! empty($otf->sc_mile_id)) {
+        if (!empty($otf->sc_mile_id)) {
             if (isset($scByCode[$otf->sc_mile_id])) {
                 $matchedSc = $scByCode[$otf->sc_mile_id];
             } elseif (isset($scByMileId[$otf->sc_mile_id])) {
@@ -2750,7 +2789,7 @@ class EnquiryCrudController extends CrudController
         }
 
         if ($matchedSc) {
-            $scDisplay = ($matchedSc['display_name'] ?? '').' - '.($matchedSc['employee_code'] ?? '');
+            $scDisplay = ($matchedSc['display_name'] ?? '') . ' - ' . ($matchedSc['employee_code'] ?? '');
             // Extract the actual Mile ID/Employee Code
             $scMileIdStr = $matchedSc['employee_code'] ?? $matchedSc['mile_id'] ?? $otf->sc_mile_id;
             $scBranch = OrgService::branchName($matchedSc['primary_branch_code'] ?? '');
@@ -2762,7 +2801,7 @@ class EnquiryCrudController extends CrudController
 
     public function xceler8List()
     {
-        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+        if (!backpack_user()->can('SLS_ENQR_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
@@ -2787,7 +2826,7 @@ class EnquiryCrudController extends CrudController
         $map = [];
         foreach ($quotations as $q) {
             // Keep only the first (latest) quotation per enquiry
-            if (! isset($map[$q->enquiry_no])) {
+            if (!isset($map[$q->enquiry_no])) {
                 $map[$q->enquiry_no] = $q->id;
             }
         }
@@ -2797,7 +2836,7 @@ class EnquiryCrudController extends CrudController
 
     public function validateQuotationVehicle($id)
     {
-        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+        if (!backpack_user()->can('SLS_ENQR_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
