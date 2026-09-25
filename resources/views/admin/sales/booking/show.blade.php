@@ -1509,56 +1509,56 @@
 
 <script>
     function openPaymentProof(url, fileName = 'Proof File') {
-    document.getElementById('paymentProofFileName').textContent = fileName;
-    const downloadBtn = document.getElementById('paymentProofDownload');
-    downloadBtn.href = url;
-    downloadBtn.download = fileName;
-    const frame = document.getElementById('paymentProofPreviewFrame');
-    frame.src = url;
-    frame.style.display = 'block';
-    const modal = new bootstrap.Modal(document.getElementById('paymentProofModal'));
-    modal.show();
-}
+        document.getElementById('paymentProofFileName').textContent = fileName;
+        const downloadBtn = document.getElementById('paymentProofDownload');
+        downloadBtn.href = url;
+        downloadBtn.download = fileName;
+        const frame = document.getElementById('paymentProofPreviewFrame');
+        frame.src = url;
+        frame.style.display = 'block';
+        const modal = new bootstrap.Modal(document.getElementById('paymentProofModal'));
+        modal.show();
+    }
     function openPaymentProofModal(url, fileName)
-{
-    document.getElementById('paymentProofFileName').innerText = fileName;
+    {
+        document.getElementById('paymentProofFileName').innerText = fileName;
 
-    document.getElementById('paymentProofPreviewFrame').src = url;
+        document.getElementById('paymentProofPreviewFrame').src = url;
 
-    document.getElementById('paymentProofDownload').href = url;
+        document.getElementById('paymentProofDownload').href = url;
 
-    const modal = new bootstrap.Modal(
-        document.getElementById('paymentProofModal')
-    );
+        const modal = new bootstrap.Modal(
+            document.getElementById('paymentProofModal')
+        );
 
-    modal.show();
-}
+        modal.show();
+    }
         function createProofChip(containerId, fileName, fileUrl, isPdf = false) {
 
-    const container = document.getElementById(containerId);
-    if (!container) return;
+            const container = document.getElementById(containerId);
+            if (!container) return;
 
-    container.innerHTML = "";
+            container.innerHTML = "";
 
-    const chip = document.createElement('span');
+            const chip = document.createElement('span');
 
-    chip.className = "btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-2 px-3 py-2";
+            chip.className = "btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-2 px-3 py-2";
 
-    chip.style.cursor = "pointer";
+            chip.style.cursor = "pointer";
 
-    chip.innerHTML = `
-    <i class="la la-paperclip"></i>
-    <span class="fw-medium small">
-        ${fileName.length > 28 ? fileName.substring(0,25) + '...' : fileName}
-    </span>
-`;
+            chip.innerHTML = `
+            <i class="la la-paperclip"></i>
+            <span class="fw-medium small">
+                ${fileName.length > 28 ? fileName.substring(0,25) + '...' : fileName}
+            </span>
+        `;
 
-    chip.onclick = function () {
-        openPaymentProofModal(fileUrl, fileName);
-    };
+            chip.onclick = function () {
+                openPaymentProofModal(fileUrl, fileName);
+            };
 
-    container.appendChild(chip);
-}
+            container.appendChild(chip);
+        }
 
         function removeProofChip(containerId) {
             const container = document.getElementById(containerId);
@@ -1581,11 +1581,11 @@
 
             if (file.size > 2 * 1024 * 1024) {
                 Swal.fire({
-    icon: 'error',
-    title: 'Invalid File',
-    text: 'File must be less than 2MB!',
-    confirmButtonColor: '#dc3545'
-});
+                    icon: 'error',
+                    title: 'Invalid File',
+                    text: 'File must be less than 2MB!',
+                    confirmButtonColor: '#dc3545'
+                });
                 input.value = '';
                 return;
             }
@@ -1624,48 +1624,49 @@
             });
         }
         function handleRefundProof(input)
-{
-    if (!input.files?.[0]) return;
+        {
+            if (!input.files?.[0]) return;
 
-    const file = input.files[0];
+            const file = input.files[0];
 
-    if (file.size > 2 * 1024 * 1024) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Invalid File',
-            text: 'File must be less than 2MB!',
-            confirmButtonColor: '#dc3545'
-        });
-        input.value = '';
-        return;
-    }
+            if (file.size > 2 * 1024 * 1024) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid File',
+                    text: 'File must be less than 2MB!',
+                    confirmButtonColor: '#dc3545'
+                });
+                input.value = '';
+                return;
+            }
 
-    const fileURL = URL.createObjectURL(file);
+            const fileURL = URL.createObjectURL(file);
 
-    const container = document.getElementById('pay_proof_chip');
-    container.innerHTML = '';
+            const container = document.getElementById('pay_proof_chip');
+            container.innerHTML = '';
 
-    const chip = document.createElement('span');
+            const chip = document.createElement('span');
 
-    chip.className = "btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-2 px-3 py-2";
-    chip.style.cursor = "pointer";
+            chip.className = "btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-2 px-3 py-2";
+            chip.style.cursor = "pointer";
 
-    chip.innerHTML = `
-        <i class="la la-paperclip"></i>
-        <span class="fw-medium small">
-            ${file.name.length > 28 ? file.name.substring(0,25) + '...' : file.name}
-        </span>
-    `;
+            chip.innerHTML = `
+                <i class="la la-paperclip"></i>
+                <span class="fw-medium small">
+                    ${file.name.length > 28 ? file.name.substring(0,25) + '...' : file.name}
+                </span>
+            `;
 
-    chip.onclick = function() {
+            chip.onclick = function() {
 
-        const type = file.type === 'application/pdf' ? 'pdf' : 'image';
+                const type = file.type === 'application/pdf' ? 'pdf' : 'image';
 
-        openProofPreview(fileURL, type, file.name);
-    };
+                openProofPreview(fileURL, type, file.name);
+            };
 
-    container.appendChild(chip);
-}
+            container.appendChild(chip);
+        }
+
         function openProofPreview(url, type) {
             const modalEl = document.getElementById('proofModal');
             const modal = new bootstrap.Modal(modalEl);
@@ -1689,58 +1690,59 @@
 
             modal.show();
         }
-function openProofPreview(url, type, fileName = 'Payment Proof') {
-    if (!url) {
-        Swal.fire({ title: 'Error', text: 'No file available', icon: 'error' });
-        return;
+
+    function openProofPreview(url, type, fileName = 'Payment Proof') {
+        if (!url) {
+            Swal.fire({ title: 'Error', text: 'No file available', icon: 'error' });
+            return;
+        }
+
+        const modalEl = document.getElementById('proofPreviewModal');
+        const modal = new bootstrap.Modal(modalEl, { backdrop: true, keyboard: true });
+
+        const imgEl   = document.getElementById('modalProofImage');
+        const pdfEl   = document.getElementById('modalProofPdf');
+        const noPrev  = document.getElementById('modalNoPreview');
+        const dlLink  = document.getElementById('modalDownloadLink');
+        const titleEl = document.getElementById('proofPreviewModalLabel');
+
+        imgEl.style.display = 'none';
+        pdfEl.style.display = 'none';
+        noPrev.classList.add('d-none');
+        imgEl.src = '';
+        pdfEl.src = '';
+
+        titleEl.textContent = fileName;
+
+        if (type === 'image') {
+            imgEl.src = url;
+            imgEl.style.display = 'block';
+        } else if (type === 'pdf') {
+            // Add toolbar + fit width + scroll
+            pdfEl.src = url + '#toolbar=1&navpanes=1&scrollbar=1&zoom=100&view=FitH';
+            pdfEl.style.display = 'block';
+        } else {
+            noPrev.classList.remove('d-none');
+        }
+
+        dlLink.href = url;
+        dlLink.download = fileName;
+
+        modal.show();
+
+        setTimeout(() => {
+            document.querySelectorAll('.modal').forEach(el => {
+                el.style.opacity = '1';
+                el.style.backgroundColor = '#000';
+            });
+            if (type === 'pdf') pdfEl.contentWindow?.focus();
+        }, 150);
     }
 
-    const modalEl = document.getElementById('proofPreviewModal');
-    const modal = new bootstrap.Modal(modalEl, { backdrop: true, keyboard: true });
-
-    const imgEl   = document.getElementById('modalProofImage');
-    const pdfEl   = document.getElementById('modalProofPdf');
-    const noPrev  = document.getElementById('modalNoPreview');
-    const dlLink  = document.getElementById('modalDownloadLink');
-    const titleEl = document.getElementById('proofPreviewModalLabel');
-
-    imgEl.style.display = 'none';
-    pdfEl.style.display = 'none';
-    noPrev.classList.add('d-none');
-    imgEl.src = '';
-    pdfEl.src = '';
-
-    titleEl.textContent = fileName;
-
-    if (type === 'image') {
-        imgEl.src = url;
-        imgEl.style.display = 'block';
-    } else if (type === 'pdf') {
-        // Add toolbar + fit width + scroll
-        pdfEl.src = url + '#toolbar=1&navpanes=1&scrollbar=1&zoom=100&view=FitH';
-        pdfEl.style.display = 'block';
-    } else {
-        noPrev.classList.remove('d-none');
-    }
-
-    dlLink.href = url;
-    dlLink.download = fileName;
-
-    modal.show();
-
-    setTimeout(() => {
-        document.querySelectorAll('.modal').forEach(el => {
-            el.style.opacity = '1';
-            el.style.backgroundColor = '#000';
-        });
-        if (type === 'pdf') pdfEl.contentWindow?.focus();
-    }, 150);
-}
-
-document.getElementById('proofPreviewModal')?.addEventListener('hidden.bs.modal', () => {
-    document.getElementById('modalProofImage').src = '';
-    document.getElementById('modalProofPdf').src = '';
-});
+    document.getElementById('proofPreviewModal')?.addEventListener('hidden.bs.modal', () => {
+        document.getElementById('modalProofImage').src = '';
+        document.getElementById('modalProofPdf').src = '';
+    });
 
         function openProofPreview(url, type, fileName) {
         if (!url) {
@@ -1785,9 +1787,10 @@ document.getElementById('proofPreviewModal')?.addEventListener('hidden.bs.modal'
         document.body.removeChild(a);
     }
 
-    $('#proofPreviewModal').on('hidden.bs.modal', function () {
-        $('#modalProofImg').attr('src', '');
-        $('#modalProofPdf').attr('src', '');
+    document.getElementById('proofPreviewModal')
+    ?.addEventListener('hidden.bs.modal', function () {
+        document.getElementById('modalProofImg').src = '';
+        document.getElementById('modalProofPdf').src = '';
     });
 
         let uploadedFile = null;
@@ -2025,16 +2028,15 @@ document.getElementById('proofPreviewModal')?.addEventListener('hidden.bs.modal'
             const statusSelect = document.getElementById('status');
             const selectedStatus = statusSelect.value;
 
-            const colType        = "{{ $booking->col_type ?? 0 }}";
-            const bookingAmount  = parseFloat("{{ $booking->booking_amount ?? 0 }}");
-            const pending        = {{ $booking->pending ?? 0 }};
-            const bookingId      = {{ $booking->id }};
+            const colType       = "{{ $booking->col_type ?? 0 }}";
+            const bookingAmount = parseFloat("{{ $booking->booking_amount ?? 0 }}");
+            const pending       = {{ $booking->pending ?? 0 }};
+            const bookingId     = {{ $booking->id }};
 
-            
-            if (["3", "4", "6"].includes(selectedStatus)) {
+            // Only Cancelled and Delivery require payment validation
+            if (["3", "4"].includes(selectedStatus)) {
                 if ([2, 3].includes(parseInt(colType))) {
                     statusSelect.disabled = true;
-                
                     fetch("{{ route('sales.booking.check-field-payment', $booking->id) }}", {
                         method: 'GET',
                         headers: {
@@ -2042,16 +2044,25 @@ document.getElementById('proofPreviewModal')?.addEventListener('hidden.bs.modal'
                             'X-Requested-With': 'XMLHttpRequest'
                         }
                     })
-                    .then(response => response.json())
+                    .then(async response => {
+                        if (!response.ok) {
+                            const text = await response.text();
+                            throw new Error(`HTTP ${response.status}: ${text.slice(0, 200)}`);
+                        }
+                        return response.json();
+                    })
                     .then(data => {
                         statusSelect.disabled = false;
-                    
+
                         if (data.success === false) {
                             let titleText = '';
-                            if (selectedStatus === "3") titleText = 'Cannot Cancel Booking';
-                            else if (selectedStatus === "4") titleText = 'Cannot Proceed with Delivery';
-                            else if (selectedStatus === "6") titleText = 'Cannot Put Booking On Hold';
-                        
+
+                            if (selectedStatus === "3") {
+                                titleText = 'Cannot Cancel Booking';
+                            } else if (selectedStatus === "4") {
+                                titleText = 'Cannot Proceed with Delivery';
+                            }
+
                             Swal.fire({
                                 icon: 'warning',
                                 title: titleText,
@@ -2068,28 +2079,36 @@ document.getElementById('proofPreviewModal')?.addEventListener('hidden.bs.modal'
                                 allowOutsideClick: false
                             }).then((result) => {
                                 if (result.isConfirmed) {
+<<<<<<< HEAD
+                                    window.location.href =
+                                        "{{ route('sales.booking.pending-edit', $booking->id) }}" +
+                                        "#pending";
+=======
                                     window.location.href = "{{ route('sales.booking.pending-edit', $booking->id) }}" + "#pending";
+>>>>>>> origin/stage
                                 } else {
                                     statusSelect.value = "0";
                                 }
                             });
-                        }
-                        else {
+                        } else {
                             proceedWithNormalFlow(selectedStatus);
                         }
                     })
                     .catch(err => {
-                        console.error(err);
+                        console.error('checkFieldPayment failed', err);
                         statusSelect.disabled = false;
-                        Swal.fire('Error', 'Could not verify payment status. Please try again.', 'error');
-                        statusSelect.value = "0";
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Verification Failed',
+                            text: 'Could not reach the server to verify payment status. Please try again or contact support.',
+                        });
                     });
-                
+
                     return;
                 }
             }
-        
-            
+
+            // Status 6 comes directly here
             proceedWithNormalFlow(selectedStatus);
         }
 
@@ -2662,6 +2681,53 @@ document.addEventListener('DOMContentLoaded', function () {
 //     // Safety re-run
 //     setTimeout(hideEmptyFields, 600);
 // });
+
+document.addEventListener('DOMContentLoaded', function () {
+
+        document.querySelectorAll('form').forEach(function (form) {
+
+            const remarkField = form.querySelector('[name="remark"]');
+            if (!remarkField) return;
+
+            // Skip hidden helper forms (#activateForm, #restoreForm, etc.)
+            if (form.style.display === 'none') return;
+
+            form.addEventListener('submit', function (e) {
+
+                const raw = (remarkField.value || '').trim();
+
+                if (raw.length === 0) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    remarkField.classList.add('is-invalid');
+                    remarkField.focus();
+                    remarkField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Remarks Required',
+                        text: 'Please enter a remark before saving.',
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#0d6efd',
+                    }).then(function () {
+                        remarkField.focus();
+                    });
+
+                    return false;
+                }
+
+                remarkField.classList.remove('is-invalid');
+            });
+
+            remarkField.addEventListener('input', function () {
+                if ((this.value || '').trim().length > 0) {
+                    this.classList.remove('is-invalid');
+                }
+            });
+        });
+
+    });
 </script>
 
 @endsection

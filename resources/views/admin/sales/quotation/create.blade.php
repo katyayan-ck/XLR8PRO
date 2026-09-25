@@ -284,6 +284,7 @@
             box-shadow: none !important;
             background: transparent !important;
             padding: 2px;
+            width: 100%;
         }
 
 
@@ -1334,6 +1335,15 @@
             background-color: #f8f8f8 !important;
             box-shadow: none !important;
             text-decoration: none !important;
+        }
+        .quotation-grid input.fixed-amount-field {
+            background-color: #f8f8f8 !important;
+            cursor: not-allowed !important;
+        }
+
+        .quotation-grid input.fixed-amount-field:focus {
+            outline: none !important;
+            box-shadow: none !important;
         }
     </style>
 @endpush
@@ -3028,7 +3038,6 @@
                     COD: 2500,
 
                     "charger-swapping": [
-                        { title: "No Swapping @ ₹0",             amount: 0,     default: false },
                         { title: "NCH to 7.2 kW @ ₹18,500",      amount: 18500, default: true  },
                         { title: "NCH to 11.2 kW @ ₹28,500",     amount: 28500, default: false },
                         { title: "7.2 kW to 11.2 kW @ ₹15,000",  amount: 15000, default: false }
@@ -3811,91 +3820,109 @@
             $('#accessories_amount').val(total.toFixed(2));
         }
 
-        
+        const EDITABLE_AMOUNT_FIELDS = [
+            '#other_cash_discount',
+            '#special_cash_discount'
+        ];
+
+        function enforceFixedAmountFields() {
+
+            $('.quotation-grid td.cell-amount input').each(function () {
+
+                const $field = $(this);
+
+                if (EDITABLE_AMOUNT_FIELDS.includes('#' + $field.attr('id'))) {
+                    $field
+                        .prop('readonly', false)
+                        .prop('disabled', false)
+                        .removeClass('fixed-amount-field');
+
+                    return;
+                }
+
+                $field
+                    .prop('readonly', true)
+                    .addClass('fixed-amount-field');
+            });
+        }
 
         function toggleRowVisibility() {
 
-            // Price grid rows
+            // Make sure all system-generated amounts stay fixed
+            enforceFixedAmountFields();
+
+            // ============================================================
+            // PRICE GRID
+            // Empty / N/A = hide
+            // 0 = VALID VALUE, therefore SHOW
+            // ============================================================
+
             $('.price-grid tbody tr').each(function() {
+
                 let $row = $(this);
                 let $input = $row.find('td.cell-amount input').first();
-                let value = $input.length ? ($input.val() || '').toString().trim() : '';
 
-                // If the field currently has a real amount, mark this row as "present"
-                if (value !== '' && value !== 'N/A' && Number(value) !== 0) {
-                    $row.data('was-present', true);
-                }
+                let value = $input.length
+                    ? ($input.val() ?? '').toString().trim()
+                    : '';
 
-                // EXCEPT: Always show accessories_discount and shield_scheme rows in Edit Mode
-                if (IS_EDIT_MODE) {
-                    // Check if this is the accessories_discount row
-                    let isAccessorySchemeRow = $row.find('#accessories_discount').length > 0;
-                    let isShieldSchemeRow = $row.find('#shield_scheme').length > 0;
-
-                    if (isAccessorySchemeRow || isShieldSchemeRow) {
-                        // Always show these rows in Edit Mode, regardless of value
-                        $row.show();
-                        return;
-                    }
-                }
-
-                if (
-                    !$row.data('was-present') &&
-                    (value === '' || value === 'N/A' || Number(value) === 0)
-                ) {
+                if (value === '' || value === 'N/A') {
                     $row.hide();
                 } else {
+                    // 0 and 0.00 are valid values
                     $row.show();
                 }
             });
 
-            // Discount grid rows
+
+            // ============================================================
+            // DISCOUNT GRID
+            // Empty / N/A = hide
+            // 0 = VALID VALUE, therefore SHOW
+            // ============================================================
+
             $('.discount-grid tbody tr').each(function() {
+
                 let $row = $(this);
                 let $input = $row.find('td.cell-amount input').first();
-                let value = $input.length ? ($input.val() || '').toString().trim() : '';
 
-                // If the field currently has a real amount, mark this row as "present"
-                if (value !== '' && value !== 'N/A' && Number(value) !== 0) {
-                    $row.data('was-present', true);
-                }
+                let value = $input.length
+                    ? ($input.val() ?? '').toString().trim()
+                    : '';
 
-                // EXCEPT: Always show accessories_discount and shield_scheme rows in Edit Mode
-                if (IS_EDIT_MODE) {
-                    // Check if this is the accessories_discount or shield_scheme row
-                    let isAccessorySchemeRow = $row.find('#accessories_discount').length > 0;
-                    let isShieldSchemeRow = $row.find('#shield_scheme').length > 0;
-
-                    if (isAccessorySchemeRow || isShieldSchemeRow) {
-                        // Always show these rows in Edit Mode, regardless of value
-                        $row.show();
-                        return;
-                    }
-                }
-
-                // Hide only if the field was never present
-                if (
-                    !$row.data('was-present') &&
-                    (value === '' || value === 'N/A' || Number(value) === 0)
-                ) {
+                if (value === '' || value === 'N/A') {
                     $row.hide();
                 } else {
+                    // 0 and 0.00 are valid values
                     $row.show();
                 }
             });
 
-            // Hide TCS row if value is N/A or 0
+
+            // ============================================================
+            // TCS
+            // 0 is also a valid system-generated value.
+            // ============================================================
+
             $('.tcs-row').each(function() {
-                let $row = $(this);
-                let tcsInput = $row.find('td.cell-amount input');
-                let tcsValue = tcsInput.length ? (tcsInput.val() || '').toString().trim() : '';
 
-                if (tcsValue === '' || tcsValue === 'N/A' || Number(tcsValue) === 0) {
+                let $row = $(this);
+                let $input = $row.find('td.cell-amount input');
+
+                let value = $input.length
+                    ? ($input.val() ?? '').toString().trim()
+                    : '';
+
+                if (value === '' || value === 'N/A') {
                     $row.hide();
                 } else {
                     $row.show();
                 }
             });
+
+
+            // Re-enforce after visibility changes
+            enforceFixedAmountFields();
         }
 
         // ============================================================
@@ -4608,18 +4635,19 @@
             $(this).val(value);
         });
 
-        // ---- Coating change ----
         $('#coating').on('change', function() {
             let value = $(this).val();
             if (value === '' || value === 'No Coating') {
-                $('#coating_price').val('N/A').prop('disabled', true);
-                $('#ceramic_discount').val('N/A').prop('disabled', true);
-                $('#ceramic_discount_type').val('').prop('disabled', true);
+                $('#coating_price')
+                    .val('N/A')
+                    .prop('disabled', true);
             } else {
-                $('#coating_price').val('').prop('disabled', false);
-                $('#ceramic_discount').val('').prop('disabled', false);
-                $('#ceramic_discount_type').prop('disabled', false);
+
+                $('#coating_price')
+                    .val('')
+                    .prop('disabled', false);
             }
+            checkLinkedDiscountFields();
             calculateQuotation();
             toggleRowVisibility();
         });
@@ -4648,20 +4676,19 @@
             toggleRowVisibility();
         });
 
-        // ---- Charger Swapping change ----
         $('#charger_swapping').on('change', function() {
             let selectedOption = $(this).find('option:selected');
             let amount = selectedOption.data('amount');
             if (amount !== undefined && amount > 0) {
-                $('#charger_swapping_amount').val(amount).prop('disabled', false);
-                $('#charger_swapping_discount').prop('disabled', false);
-                $('#charger_swapping_discount_type').prop('disabled', false);
-                $('#charger_swapping_option').prop('disabled', false);
+                $('#charger_swapping_amount')
+                    .val(amount)
+                    .prop('disabled', false);
             } else {
-                $('#charger_swapping_amount').val('N/A').prop('disabled', true);
-                $('#charger_swapping_discount').val('N/A').prop('disabled', true);
-                $('#charger_swapping_discount_type').val('').prop('disabled', true);
+                $('#charger_swapping_amount')
+                    .val('N/A')
+                    .prop('disabled', true);
             }
+            checkLinkedDiscountFields();
             calculateQuotation();
             toggleRowVisibility();
         });
@@ -5269,8 +5296,13 @@
         }
 
         function isEmptyGridValue(value) {
-            value = (value || '').toString().trim();
-            return (value === '' || value === '0' || value === '0.00' || value === 'N/A');
+
+            value = (value ?? '').toString().trim();
+
+            return (
+                value === '' ||
+                value === 'N/A'
+            );
         }
 
         function prepareItemVisibilityForPrint() {
@@ -5824,10 +5856,15 @@
                 }
             @endif
 
+            // Apply system-generated amount field rules
+            enforceFixedAmountFields();
+
             checkConditionalFields();
 
             setTimeout(function() {
+                enforceFixedAmountFields();
                 checkConditionalFields();
+
             }, 300);
         });
 
@@ -5981,10 +6018,6 @@
             updateRegistrationPrintText();
         });
 
-        // ============================================================
-        // CONDITIONAL FIELD FREEZING LOGIC
-        // ============================================================
-
         let conditionalRules = null;
 
         function loadConditionalRules() {
@@ -6022,14 +6055,27 @@
         }
 
         function checkConditionalFields() {
+
             // Load rules first
             loadConditionalRules();
 
+            // Check Coating / PPF / Charger Swapping
+            // discount dependencies independently
+            checkLinkedDiscountFields();
+
             if (!conditionalRules) {
                 // No rules - enable both fields
-                $('#accessories_discount').prop('disabled', false).removeClass('frozen-field');
-                $('#shield_scheme').prop('disabled', false).removeClass('frozen-field');
+                $('#accessories_discount')
+                    .prop('disabled', false)
+                    .removeClass('frozen-field');
+
+                $('#shield_scheme')
+                    .prop('disabled', false)
+                    .removeClass('frozen-field');
+
                 $('.freeze-message').remove();
+
+                calculateQuotation();
                 return;
             }
 
@@ -6041,6 +6087,83 @@
 
             // Recalculate after state changes
             calculateQuotation();
+        }
+
+        function checkLinkedDiscountFields() {
+            const linkedFields = [
+                {
+                    amount: '#coating_price',
+                    discount: '#ceramic_discount',
+                    type: '#ceramic_discount_type'
+                },
+                {
+                    amount: '#ppf',
+                    discount: '#ppf_discount',
+                    type: '#ppf_discount_type'
+                },
+                {
+                    amount: '#charger_swapping_amount',
+                    discount: '#charger_swapping_discount',
+                    type: '#charger_swapping_discount_type',
+                    option: '#charger_swapping_option'
+                }
+            ];
+
+            linkedFields.forEach(function(field) {
+
+                const $amount = $(field.amount);
+                const $discount = $(field.discount);
+                const $type = $(field.type);
+
+                if (!$amount.length || !$discount.length) {
+                    return;
+                }
+
+                const rawAmount = String($amount.val() ?? '').trim();
+                const amount = parseFloat(rawAmount.replace(/,/g, '')) || 0;
+
+                const isAvailable =
+                    rawAmount !== '' &&
+                    rawAmount.toUpperCase() !== 'N/A' &&
+                    amount > 0;
+
+                if (!isAvailable) {
+
+                    // Freeze discount amount
+                    $discount
+                        .prop('disabled', true)
+                        .addClass('frozen-field')
+                        .attr('placeholder', 'Not applicable');
+
+                    // Freeze discount type
+                    if ($type.length) {
+                        $type.prop('disabled', true);
+                    }
+
+                    // Charger swapping has an additional option dropdown
+                    if (field.option) {
+                        $(field.option).prop('disabled', true);
+                    }
+
+                } else {
+
+                    // Enable discount amount
+                    $discount
+                        .prop('disabled', false)
+                        .removeClass('frozen-field')
+                        .attr('placeholder', '0.00');
+
+                    // Enable discount type
+                    if ($type.length) {
+                        $type.prop('disabled', false);
+                    }
+
+                    // Enable charger swapping option
+                    if (field.option) {
+                        $(field.option).prop('disabled', false);
+                    }
+                }
+            });
         }
 
         function checkAccessoriesSchemeCondition() {
@@ -6212,16 +6335,39 @@
         });
 
         $(document).on('keyup change', '#shield_price', function() {
-
             checkConditionalFields();
-
             calculateQuotation();
-
             toggleRowVisibility();
         });
 
         $(document).on('keyup change', '#accessories_amount', function() {
             checkConditionalFields();
+        });
+
+        $(document).on('keyup change', '#coating_price', function() {
+
+            checkLinkedDiscountFields();
+
+            calculateQuotation();
+            toggleRowVisibility();
+        });
+
+        // PPF amount -> PPF Special Discount
+        $(document).on('keyup change', '#ppf', function() {
+
+            checkLinkedDiscountFields();
+
+            calculateQuotation();
+            toggleRowVisibility();
+        });
+
+        // Charger Swapping amount -> Charger Swapping Discount
+        $(document).on('keyup change', '#charger_swapping_amount', function() {
+
+            checkLinkedDiscountFields();
+
+            calculateQuotation();
+            toggleRowVisibility();
         });
 
         $(document).on('click', '#btnFetchMock', function() {

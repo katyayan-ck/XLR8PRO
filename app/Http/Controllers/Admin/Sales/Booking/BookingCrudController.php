@@ -172,9 +172,11 @@ class BookingCrudController extends CrudController
                 $existingBooking = Booking::where(function ($q) use ($enquiry) {
                     $q->where('enq_no', $enquiry->id)
                         ->orWhere('enq_no', $this->enquiryRef->toReference($enquiry->id));
+
                     if ($enquiry->enquiry_no) {
                         $q->orWhere('enq_no', $enquiry->enquiry_no);
                     }
+
                     if ($enquiry->quick_enquiry_no) {
                         $q->orWhere('enq_no', $enquiry->quick_enquiry_no);
                     }
@@ -183,19 +185,31 @@ class BookingCrudController extends CrudController
                 if ($existingBooking) {
                     \Alert::warning('Booking already exists with this enquiry.')->flash();
 
-                    return redirect(backpack_url("sales/booking/{$existingBooking->id}/edit"));
+                    return redirect(
+                        backpack_url("sales/booking/{$existingBooking->id}/edit")
+                    );
                 }
             }
         }
 
         if ($quotationId = request('quotation_id')) {
             $existingBooking = Booking::where('quotation_id', $quotationId)->first();
+
             if ($existingBooking) {
                 \Alert::warning('Booking already exists with this quotation.')->flash();
 
-                return redirect(backpack_url("sales/booking/{$existingBooking->id}/edit"));
+                return redirect(
+                    backpack_url("sales/booking/{$existingBooking->id}/edit")
+                );
             }
         }
+
+        
+        $customer_categories = OrgService::keywordValueByCode('CUSTOMER_TYPE');
+        $occupation_types = OrgService::keywordValueByCode('OCCUPATION_TYPE');
+
+        $this->data['customer_categories'] = $customer_categories;
+        $this->data['occupation_types'] = $occupation_types;
 
         return $this->traitCreate();
     }
@@ -274,6 +288,7 @@ class BookingCrudController extends CrudController
 
         $validator = Validator::make($request->all(), [
             'customertype' => 'required|string|max:255',
+            'customercat' => 'required|string|max:255',
             'user' => 'nullable',
             'hiddenbookingdate' => 'nullable|date',
             'refrenceno' => 'nullable|string|max:255',
@@ -1027,17 +1042,37 @@ class BookingCrudController extends CrudController
         $financierIds = $bookings->pluck('financier')->filter()->unique()->values();
         $insurerIds = $bookings->pluck('insurance_insurer_id')->filter()->unique()->values();
         $modelCodes = $bookings->pluck('model_code')->filter()->unique()->values();
+        $segmentCodes = $bookings->pluck('segment_code')->filter()->unique()->values();
+        $variantCodes = $bookings->pluck('variant_code')->filter()->unique()->values();
+        $colorCodes = $bookings->pluck('color_code')->filter()->unique()->values(); 
 
         return [
-            'consultants' => DB::table('xlr8_admin_person')
-                ->whereIn('person_code', $consultantCodes)
-                ->pluck('display_name', 'person_code'),
+            'consultants' => DB::table('xlr8_admin_employee as e')
+                ->join('xlr8_admin_person as p', 'p.person_code', '=', 'e.person_code')
+                ->whereIn('e.code', $consultantCodes)
+                ->pluck('p.display_name', 'e.code'),
 
             'dsas' => XL_DSA_MASTER::whereIn('id', $dsaIds)->pluck('name', 'id'),
 
             'financiers' => XlFinancier::whereIn('id', $financierIds)->get()->keyBy('id'),
 
             'insurers' => XlInsurer::whereIn('id', $insurerIds)->get()->keyBy('id'),
+
+            'segments' => Segment::whereIn('code', $segmentCodes)
+                ->where('is_active', true)
+                ->pluck('name', 'code'),
+
+            'models' => VehicleModel::whereIn('code', $modelCodes)
+                ->where('is_active', true)
+                ->pluck('name', 'code'),
+
+            'variants' => Variant::whereIn('code', $variantCodes)
+                ->where('is_active', true)
+                ->pluck('display_name', 'code'),
+
+            'colors' => Color::whereIn('code', $colorCodes)
+                ->where('is_active', true)
+                ->pluck('name', 'code'),
 
             'stockCounts' => Stock::where('status', 'available')
                 ->whereIn('model_code', $modelCodes)
@@ -1342,10 +1377,21 @@ class BookingCrudController extends CrudController
             'gstn' => ! empty($booking->gstn) && $booking->gstn !== '0' && $booking->gstn !== 0
                 ? $booking->gstn
                 : 'N/A',
-            'segment' => $booking->segment_code ?? 'N/A',
-            'model' => $booking->model_code ?? 'N/A',
-            'variant' => $booking->variant_code ?? 'N/A',
-            'color' => $booking->color_code ?? 'N/A',
+            'segment' => $lookups['segments'][$booking->segment_code]
+                ?? $booking->segment_code
+                ?? 'N/A',
+
+            'model' => $lookups['models'][$booking->model_code]
+                ?? $booking->model_code
+                ?? 'N/A',
+
+            'variant' => $lookups['variants'][$booking->variant_code]
+                ?? $booking->variant_code
+                ?? 'N/A',
+
+            'color' => $lookups['colors'][$booking->color_code]
+                ?? $booking->color_code
+                ?? 'N/A',
             'booking_amount' => $booking->booking_amount,
             'accessories_amount' => $accessoriesAmount,
 
@@ -2731,24 +2777,21 @@ class BookingCrudController extends CrudController
         $data['segments'] = CommonHelper::getVehicleSegments();
 
         $data['models'] = CommonHelper::getVehicleModels(
-            $entry->segment_code ?? null
+            $linkedEnquiry?->segment_code ?? $entry->segment_code ?? null
         ) ?? [];
 
         $data['variants'] = CommonHelper::getVehicleVariants(
-            $entry->model_code ?? null
+            $linkedEnquiry?->model_code ?? $entry->model_code ?? null
         ) ?? [];
 
         $data['colors'] = CommonHelper::getVehicleColors(
-            $entry->variant_code ?? null
+            $linkedEnquiry?->variant_code ?? $entry->variant_code ?? null
         ) ?? [];
 
-        // ==========================================================
-        // 5. ACCESSORIES
-        // ==========================================================
         $data['accessories_dropdown'] = Accessory::getAccessories(
-            $entry->segment_code ?? null,
-            $entry->model_code ?? null,
-            $entry->variant_code ?? null
+            $linkedEnquiry?->segment_code ?? $entry->segment_code ?? null,
+            $linkedEnquiry?->model_code ?? $entry->model_code ?? null,
+            $linkedEnquiry?->variant_code ?? $entry->variant_code ?? null
         );
 
         // ==========================================================
@@ -2826,7 +2869,117 @@ class BookingCrudController extends CrudController
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return view('admin.sales.booking.amount', compact('booking', 'receipts'));
+        $enquiry = null;
+
+        if ($booking->enq_no) {
+            $enquiry = Enquiry::resolveByAnyReference($booking->enq_no);
+        }
+
+        $customerName = $booking->name
+            ?? $enquiry?->name
+            ?? 'N/A';
+
+        $branchCode = $booking->branch_code
+            ?? $enquiry?->dealer_branch;
+
+        $branchName = 'N/A';
+
+        if (!empty($branchCode)) {
+            $branchName = Branch::where('code', $branchCode)
+                ->value('name');
+
+            if (!$branchName) {
+                $branchName = Branch::where('branch_code', $branchCode)
+                    ->value('name');
+            }
+        }
+
+        $branchName = $branchName ?: ($branchCode ?: 'N/A');
+
+        $locationCode = $booking->location_code
+            ?? $enquiry?->dealer_location;
+
+        $locationName = 'N/A';
+
+        if (!empty($locationCode)) {
+            $locationName = Location::where('code', $locationCode)
+                ->value('name');
+        }
+
+        $locationName = $locationName
+            ?: ($booking->location_other ?? $locationCode ?? 'N/A');
+
+        $modelCode = $booking->model_code
+            ?? $enquiry?->model_code;
+
+        $variantCode = $booking->variant_code
+            ?? $enquiry?->variant_code;
+
+        $colorCode = $booking->color_code
+            ?? $enquiry?->color_code;
+
+        $modelName = 'N/A';
+
+        if (!empty($modelCode)) {
+            $modelName = VehicleModel::where('code', $modelCode)
+                ->value('name');
+        }
+
+        $modelName = $modelName ?: ($modelCode ?: 'N/A');
+
+        $variantName = 'N/A';
+        $colorName = 'N/A';
+
+        if (!empty($variantCode)) {
+
+            $variantRows = DB::table('xlr8_vehicle_variant')
+                ->where('code', $variantCode)
+                ->get([
+                    'custom_name',
+                    'color',
+                    'color_code',
+                ]);
+
+            if ($variantRows->isNotEmpty()) {
+
+                $variantName = $variantRows->first()->custom_name
+                    ?? $variantRows->first()->display_name
+                    ?? 'N/A';
+
+                if (!empty($colorCode)) {
+
+                    $colorRow = $variantRows->first(function ($row) use ($colorCode) {
+                        return strtoupper((string) $row->color_code)
+                            === strtoupper((string) $colorCode);
+                    });
+
+                    if ($colorRow) {
+                        $colorName = $colorRow->color ?? 'N/A';
+                    }
+                }
+
+                if ($colorName === 'N/A') {
+                    $colorName = $variantRows->first()->color ?? 'N/A';
+                }
+            }
+        }
+
+        $variantName = $variantName ?: ($variantCode ?: 'N/A');
+        $colorName = $colorName ?: ($colorCode ?: 'N/A');
+
+        $data = [
+            'customer_name' => $customerName,
+            'branch_name'   => $branchName,
+            'location_name' => $locationName,
+            'model_name'    => $modelName,
+            'variant_name'  => $variantName,
+            'color_name'    => $colorName,
+        ];
+
+        return view(
+            'admin.sales.booking.amount',
+            compact('booking', 'receipts', 'data')
+        );
     }
 
     public function addAmount(Request $request, $id)
@@ -3183,7 +3336,7 @@ class BookingCrudController extends CrudController
 
         $validator = Validator::make($request->all(), [
             'id' => 'required',
-            'remark' => 'required|string|min:3|max:1500',
+            'remark' => 'required|string|min:1|max:1500',
             'status' => 'nullable|in:0,1,2,3,4,5,6,7,8',
             'fdoc' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
             'dept' => 'nullable|string|max:50',
@@ -7480,9 +7633,9 @@ class BookingCrudController extends CrudController
 
         $validator = Validator::make($request->all(), [
             'buyer_type' => 'required|string|in:First Time Buy,Additional Buy,Exchange Buy,Scrappage',
-            'enum_master1' => 'nullable|integer',
+            'enum_master1' => 'nullable|string|max:255',
             'vehicle_details' => 'nullable|string|max:255',
-            'enum_master2' => 'nullable|integer',
+            'enum_master2' => 'nullable|string|max:255',
             'vehicle_details2' => 'nullable|string|max:255',
 
             'registration_no' => [
@@ -7556,25 +7709,9 @@ class BookingCrudController extends CrudController
             'buyer_type' => $request->buyer_type,
         ]);
 
-        // ============================================================
-        // REDIRECT TO THE CORRECT LISTING BASED ON BUYER TYPE
-        // ============================================================
-        if ($request->buyer_type === 'Scrappage') {
-            return redirect()
-                ->route('sales.booking.scrappage')
-                ->with('success', 'Scrappage details updated successfully!');
-        }
-
-        if ($request->buyer_type === 'Exchange Buy') {
-            return redirect()
-                ->route('sales.booking.exchange')
-                ->with('success', 'Exchange purchase details updated successfully!');
-        }
-
-        // For any other buyer type, go back to the main booking list
         return redirect()
-            ->route('sales.booking.index')
-            ->with('success', 'Purchase type details updated successfully!');
+            ->route('sales.booking.exchange')
+            ->with('success', 'Exchange purchase details updated successfully!');
     }
 
     public function finEdit($id)

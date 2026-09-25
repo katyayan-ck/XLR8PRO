@@ -101,7 +101,7 @@
 
                     @if ($quotation)
                         {{-- Pass the ID because controller searches using: Quotation::where('id', $request->quotation_no) --}}
-                        <input type="hidden" name="quotation_no" value="{{ $quotation->id }}">
+                        <input type="hidden" name="quotation_id" value="{{ $quotation->id }}">
                     @endif
 
                     @if ($enquiry)
@@ -141,7 +141,7 @@
 
                                 @if ($quotation)
                                     <div class="d-flex align-items-center gap-2 ms-2">
-                                        <a href="{{ backpack_url('quotation/' . $quotation->id . '/preview') }}"
+                                        <a href="{{ backpack_url('sales/quotation/' . $quotation->id . '/preview') }}"
                                             target="_blank" class="btn btn-info btn-sm">
                                             <i class="ik ik-file-text mr-2"></i> View Quotation PDF
                                         </a>
@@ -168,13 +168,24 @@
 
                                     <div class="col-sm-2">
                                         <div class="form-group">
-                                            <label for="customercat">Customer Category <span
-                                                    class="required-mark">*</span></label>
-                                            <select name="customercat" id="customercat" class="form-control form-select"
-                                                required>
-                                                <option value="Individual" {{ old('customercat', $entry?->b_cat ?? 'Individual') == 'Individual' ? 'selected' : '' }}>Individual</option>
-                                                <option value="CSD" {{ old('customercat', $entry?->b_cat ?? '') == 'CSD' ? 'selected' : '' }}>CSD</option>
-                                                <option value="Firm" {{ old('customercat', $entry?->b_cat ?? '') == 'Firm' ? 'selected' : '' }}>Firm</option>
+                                            <label for="customercat">
+                                                Customer Category <span class="required-mark">*</span>
+                                            </label>
+
+                                            <select name="customercat"
+                                                    id="customercat"
+                                                    class="form-control form-select"
+                                                    required>
+
+                                                <option value="">Select Customer Category</option>
+
+                                                @foreach ($customer_categories ?? [] as $item)
+                                                    <option value="{{ $item['code'] }}"
+                                                        {{ old('customercat', $enquiry?->customer_type ?? $entry?->b_cat ?? '') == $item['code'] ? 'selected' : '' }}>
+                                                        {{ $item['value'] }}
+                                                    </option>
+                                                @endforeach
+
                                             </select>
                                         </div>
                                     </div>
@@ -473,20 +484,36 @@
                                         </div>
                                     </div>
 
-                                    <!-- Occupation -->
                                     <div class="col-sm-3">
                                         <div class="form-group">
-                                            <label for="occupation">{{ __('booking.fields.occupation') }} <span class="required-mark">*</span></label>
-                                            <select name="occupation" id="occupation" class="form-control form-select" required>
-                                                @php $occ = old('occupation', $entry?->occ ?? ($enquiry->occupation_type ?? ($q['occ'] ?? ''))); @endphp
-                                                <option value="" disabled {{ empty($occ) ? 'selected' : '' }}>-- Select Occupation --</option>
-                                                <option value="Agriculture" {{ $occ == 'Agriculture' ? 'selected' : '' }}>Agriculture</option>
-                                                <option value="Business" {{ $occ == 'Business' ? 'selected' : '' }}>Business</option>
-                                                <option value="Salaried (Govt.)" {{ $occ == 'Salaried (Govt.)' ? 'selected' : '' }}>Salaried (Govt.)</option>
-                                                <option value="Salaried (Pvt.)" {{ $occ == 'Salaried (Pvt.)' ? 'selected' : '' }}>Salaried (Pvt.)</option>
-                                                <option value="Self Employed (Professional)" {{ $occ == 'Self Employed (Professional)' ? 'selected' : '' }}>Self Employed (Professional)</option>
-                                                <option value="Pensioner" {{ $occ == 'Pensioner' ? 'selected' : '' }}>Pensioner</option>
-                                                <option value="Other" {{ $occ == 'Other' ? 'selected' : '' }}>Other</option>
+                                            <label for="occupation">
+                                                {{ __('booking.fields.occupation') }}
+                                                <span class="required-mark">*</span>
+                                            </label>
+
+                                            @php
+                                                $occ = old(
+                                                    'occupation',
+                                                    $entry?->occ
+                                                        ?? $enquiry?->occupation_type
+                                                        ?? ($q['occ'] ?? '')
+                                                );
+                                            @endphp
+
+                                            <select name="occupation"
+                                                    id="occupation"
+                                                    class="form-control form-select"
+                                                    required>
+
+                                                <option value="">-- Select Occupation --</option>
+
+                                                @foreach ($occupation_types ?? [] as $item)
+                                                    <option value="{{ $item['code'] }}"
+                                                        {{ (string) $occ === (string) $item['code'] ? 'selected' : '' }}>
+                                                        {{ $item['value'] }}
+                                                    </option>
+                                                @endforeach
+
                                             </select>
                                         </div>
                                     </div>
@@ -1082,7 +1109,6 @@
                                                     'saleconsultant',
                                                     $data['saleconsultant']
                                                         ?? $enquiry?->x8_sc_code
-                                                        ?? $enquiry?->sc_code
                                                         ?? $entry?->consultant
                                                         ?? ''
                                                 );
@@ -1103,8 +1129,8 @@
 
                                                     @php
                                                         $conCode = is_object($consultant)
-                                                            ? ($consultant->person_code ?? '')
-                                                            : ($consultant['person_code'] ?? '');
+                                                            ? ($consultant->employee_code ?? '')
+                                                            : ($consultant['employee_code'] ?? '');
 
                                                         $displayName = is_object($consultant)
                                                             ? ($consultant->display_name ?? '')
@@ -1673,9 +1699,12 @@
                     $('#careofnamelabel').html(isFirm ? 'Owner Name <span class="required-mark">*</span>' : 'Care Of Name <span class="required-mark">*</span>');
                 }).trigger('change');
 
-                if (!prefillData.hasQuotation) {
-                    if (prefillData.branch) $('#branch').trigger('change');
-                    if (prefillData.segment) $('#segment').trigger('change');
+                if (prefillData.branch) {
+                    $('#branch').trigger('change');
+                }
+
+                if (prefillData.segment) {
+                    $('#segment').trigger('change');
                 }
 
                 if ($('#financier').val()) {

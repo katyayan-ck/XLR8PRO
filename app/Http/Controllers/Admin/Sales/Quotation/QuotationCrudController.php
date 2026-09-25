@@ -71,11 +71,16 @@ class QuotationCrudController extends CrudController
             ->whereNotIn('status', ['booked'])
             ->latest('id')
             ->get();
+        
+        $bookingMap = DB::table('xlr8_booking_master')
+            ->whereNotNull('quotation_id')
+            ->pluck('id', 'quotation_id');
 
-        $gridData = $quotations->map(function ($quotation, $index) use ($insurance_type_map, $registration_type_map, $reg_no_type_map) {
+        $gridData = $quotations->map(function ($quotation, $index) use ($insurance_type_map, $registration_type_map, $reg_no_type_map, $bookingMap) {
 
             $data = $quotation->standard_data ?? [];
             $enquiry = $quotation->enquiry;
+            $bookingId = $bookingMap[$quotation->id] ?? null;
 
             // If enquiry is null, try to find it by enquiry_no
             if (! $enquiry) {
@@ -299,7 +304,7 @@ class QuotationCrudController extends CrudController
                     <button
                         type="button"
                         class="btn btn-sm btn-success"
-                        onclick="confirmBookingProcess('.$quotation->id.', '.($quotation->booking_id ?? 'null').')">
+                        onclick="confirmBookingProcess('.$quotation->id.', '.($bookingId ?? 'null').')">
                         Booking
                     </button>
                 </div>',
@@ -403,30 +408,57 @@ class QuotationCrudController extends CrudController
         $this->crud->setCreateView('admin.sales.quotation.create');
 
         $bookingId = request('booking_id');
+        $booking = null;
+        $enquiry = null;
 
         if ($bookingId) {
+
             $booking = Booking::findOrFail($bookingId);
 
-            if (empty($booking->enq_no)) {
-                abort(404, 'Enquiry not associated with this booking.');
+            if (!empty($booking->enq_no)) {
+                $enquiry = Enquiry::resolveByAnyReference(
+                    $booking->enq_no
+                );
             }
 
-            $enquiry = Enquiry::where(
-                'enquiry_no',
-                $booking->enq_no
-            )->first();
+            if (!$enquiry && !empty($booking->quotation_id)) {
+                $linkedQuotation = Quotation::with('enquiry')
+                    ->find($booking->quotation_id);
 
-            if (! $enquiry) {
-                abort(404, 'Associated enquiry not found.');
+                $enquiry = $linkedQuotation?->enquiry;
+            }
+
+            if (!$enquiry) {
+                abort(
+                    404,
+                    'Associated enquiry not found. ' .
+                    'Booking ID: ' . $bookingId .
+                    ', Enquiry Reference: ' . ($booking->enq_no ?? 'NULL')
+                );
             }
 
             $enquiryId = $enquiry->id;
-        } else {
-            $enquiryId = request('id');
 
-            if (! $enquiryId) {
+        } else {
+
+            $enquiryReference = request('id');
+
+            if (!$enquiryReference) {
                 abort(404, 'Enquiry not found.');
             }
+
+            $selectedEnquiry = Enquiry::resolveByAnyReference(
+                $enquiryReference
+            );
+
+            if (!$selectedEnquiry) {
+                abort(
+                    404,
+                    'Enquiry not found. Reference: ' . $enquiryReference
+                );
+            }
+
+            $enquiryId = $selectedEnquiry->id;
         }
 
         $selectedEnquiry = Enquiry::findOrFail($enquiryId);
@@ -514,8 +546,6 @@ class QuotationCrudController extends CrudController
             ],
         ];
 
-        // DD added here before view return
-        // dd($data);
 
         return view('admin.sales.quotation.create', $data);
     }
@@ -524,6 +554,14 @@ class QuotationCrudController extends CrudController
     {
         if (! backpack_user()->can('SLS_QUOT_CREATE')) {
             abort(403, 'Unauthorized. You do not have permission to create quotations.');
+        }
+        
+        $booking = null;
+
+        if ($request->filled('booking_id')) {
+            $booking = Booking::findOrFail(
+                $request->input('booking_id')
+            );
         }
 
         $quotationData = $request->except([
@@ -565,7 +603,6 @@ class QuotationCrudController extends CrudController
                 }
             }
 
-            // Ensure accessories are a clean array
             if (isset($quotationData['accessories']) && is_array($quotationData['accessories'])) {
                 $quotationData['accessories'] = array_values($quotationData['accessories']);
             }
@@ -583,33 +620,20 @@ class QuotationCrudController extends CrudController
             $quotation->status = 'raised';
             $quotation->created_by = auth()->id();
 
-            $quotation->save();     // ← saves correctly
+            $quotation->save();     
 
-            /*
-        |--------------------------------------------------------------------------
-        | 23. Link quotation back to Booking
-        |--------------------------------------------------------------------------
-        */
-            if (isset($booking) && $booking) {
+            
+            if ($booking) {
                 $booking->quotation_id = $quotation->id;
                 $booking->save();
             }
 
-            /*
-        |--------------------------------------------------------------------------
-        | 24. Save Discount Fields
-        |--------------------------------------------------------------------------
-        */
+           
             $this->saveDiscountFields(
                 $quotation,
                 $quotationData
             );
 
-            /*
-        |--------------------------------------------------------------------------
-        | 25. Quote Action
-        |--------------------------------------------------------------------------
-        */
             QuoteAction::create([
                 'quotation_no' => $quotation->id,
                 'action_by' => backpack_user()->id,
