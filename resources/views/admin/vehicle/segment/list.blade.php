@@ -265,19 +265,7 @@
 
                 <!-- BODY -->
                 <div class="card-body p-0" style="background: var(--tblr-bg-surface-secondary)">
-                    <div class="p-3 border-bottom bg-white">
-                        <div class="row align-items-end">
-                            <form action="{{ backpack_url('vehicle/segment/import') }}" method="POST"
-                                onsubmit="return confirm('Are you sure you want to import latest data from Google Sheet?')"
-                                class="d-inline">
-                                @csrf
-                                <button type="submit" class="btn btn-success btn-sm d-flex align-items-center gap-2">
-                                    <i class="la la-cloud-download"></i>
-                                    <span>Import Now</span>
-                                </button>
-                            </form>
-                        </div>
-                    </div>
+
                     <div
                         class="d-flex justify-content-between align-items-center flex-wrap gap-3 p-3 border-bottom bg-white">
                         <div class="d-flex align-items-center gap-2 flex-nowrap">

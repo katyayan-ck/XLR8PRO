@@ -206,6 +206,12 @@ class ImportEnquiriesJob implements ShouldQueue
                         ]);
                         $data['updated_at'] = $now;
 
+                        $this->appendDuplicateEntry($mobile, [
+                            'enquiry_type'      => 'virtual',
+                            'virtual_call_date' => $data['virtual_call_date'] ?? null,
+                            'recorded_at'       => $now->toDateTimeString(),
+                        ]);
+
                         if (empty($mobile)) {
                             DB::table('xlr8_crm_enquiries')->insert(array_merge(
                                 $data,
@@ -287,6 +293,13 @@ class ImportEnquiriesJob implements ShouldQueue
                         ]);
                         $data['updated_at'] = $now;
 
+                        $this->appendDuplicateEntry($mobile, [
+                            'enquiry_type'    => 'hyperlocal',
+                            'call_start_time' => $data['virtual_call_date'] ?? null,
+                            'model'           => $data['model'] ?? null,
+                            'recorded_at'     => $now->toDateTimeString(),
+                        ]);
+
                         if (empty($mobile)) {
                             DB::table('xlr8_crm_enquiries')->insert(array_merge(
                                 $data,
@@ -336,10 +349,14 @@ class ImportEnquiriesJob implements ShouldQueue
                         $name = $this->cleanString($this->cell($row, $headerMap, 'Customer Name'), 100);
                         $scMileId = $this->cleanString($this->cell($row, $headerMap, 'SC Mile Id'), 50);
                         $mobile   = $this->cleanString($this->cell($row, $headerMap, 'Mobile Phone'), 15);
+                        $scName   = $this->cleanString($this->cell($row, $headerMap, 'Sales Consultant'), 200); // NEW: Sales Consultant name
 
                         $modelName = $this->cell($row, $headerMap, 'Product Family');
 
                         $fupCountRaw = $this->cell($row, $headerMap, 'Completed Followup Count');
+
+                        // Captured separately (not just inline) so we can check it below for Dropped/Lost logic
+                        $quickStatusRaw = $this->cleanString($this->cell($row, $headerMap, 'Status'), 50);
 
                         $data = $this->stripNulls([
                             'enquiry_no'                   => $longEnquiryNo, // Use the extracted variable here
@@ -347,6 +364,7 @@ class ImportEnquiriesJob implements ShouldQueue
                             'mobile'                       => $mobile,
                             'email'                        => $this->cleanString($this->cell($row, $headerMap, 'Email'), 150),
                             'sc_mile_id'                   => $scMileId,
+                            'sc_name'                      => $scName, // NEW: save Sales Consultant name
                             'model'                        => $this->cleanString($modelName, 100),
                             'variant'                      => $this->cleanString($this->cell($row, $headerMap, 'Variant Description'), 100),
                             'color'                        => $this->cleanString($this->cell($row, $headerMap, 'Color'), 100),
@@ -355,7 +373,7 @@ class ImportEnquiriesJob implements ShouldQueue
                             'enquiry_type'                 => $this->resolveKeyValue('ENQ_TYPE', $this->cell($row, $headerMap, 'Enquiry Type')),
                             'source_code'                  => $this->resolveKeyValue('ENQ_SOURCE', $this->cell($row, $headerMap, 'Enquiry Source')),
                             'sub_source'                   => $this->resolveKeyValue('ENQ_SUB_SOURCE', $this->cell($row, $headerMap, 'Enquiry Sub Source')),
-                            'quick_status'                 => $this->cleanString($this->cell($row, $headerMap, 'Status'), 50),
+                            'quick_status'                 => $quickStatusRaw,
                             'quick_enquiry_date'           => $this->excelDate($this->cell($row, $headerMap, 'Quick Enquiry Date')),
                             'quick_enq_assign_date'        => $this->excelDate($this->cell($row, $headerMap, 'Quick Enquiry Assignment DateTime')),
                             'test_drive_no'                => $this->cleanString($this->cell($row, $headerMap, 'Test Drive Number'), 50),
@@ -374,8 +392,25 @@ class ImportEnquiriesJob implements ShouldQueue
                         $currentOrigin = (!empty($quickEnquiryNo) && !empty($longEnquiryNo)) ? 'LONG' : 'QUICK';
 
                         $data['updated_at'] = $now;
+
+                        $this->appendDuplicateEntry($mobile, [
+                            'enquiry_type'        => 'quick',
+                            'quick_enquiry_date'  => $data['quick_enquiry_date'] ?? null,
+                            'product_family'      => $data['model'] ?? null,
+                            'variant_description' => $data['variant'] ?? null,
+                            'color'               => $data['color'] ?? null,
+                            'recorded_at'         => $now->toDateTimeString(),
+                        ]);
                         // Put current_origin in $data so it forces an update if the row already exists
                         $data['current_origin'] = $currentOrigin;
+
+                        // NEW: If Quick Status is "Dropped Lead" or "Lost Lead" -> mark entry as is_active = 3
+                        if (
+                            $quickStatusRaw !== null
+                            && in_array(strtolower(trim($quickStatusRaw)), ['dropped lead', 'lost lead'], true)
+                        ) {
+                            $data['is_active'] = 3;
+                        }
 
                         // UNIQUENESS: By Quick Enquiry Number for Quick Sheet
                         if (empty($quickEnquiryNo)) {
@@ -426,14 +461,19 @@ class ImportEnquiriesJob implements ShouldQueue
                         $name = $this->cleanString($this->cell($row, $headerMap, 'Customer Name'), 100);
                         $scMileId = $this->cleanString($this->cell($row, $headerMap, 'SC Mile Id'), 50);
                         $mobile   = $this->cleanString($this->cell($row, $headerMap, 'Customer Phone'), 15);
+                        $scName   = $this->cleanString($this->cell($row, $headerMap, 'Sales Consultant'), 200); // NEW: Sales Consultant name
 
                         $modelName = $this->cell($row, $headerMap, 'Product Family');
+
+                        // Captured separately so we can check it below for Dropped/Lost logic
+                        $stageRaw = $this->cleanString($this->cell($row, $headerMap, 'Stage'), 50);
 
                         $data = $this->stripNulls([
                             'name'                    => $name,
                             'mobile'                  => $mobile,
                             'email'                   => $this->cleanString($this->cell($row, $headerMap, 'Customer Email'), 150),
                             'sc_mile_id'              => $scMileId,
+                            'sc_name'                 => $scName, // NEW: save Sales Consultant name
                             'model'                   => $this->cleanString($modelName, 100),
                             'variant'                 => $this->cleanString($this->cell($row, $headerMap, 'Variant Description'), 100),
                             'color'                   => $this->cleanString($this->cell($row, $headerMap, 'Color'), 100),
@@ -442,7 +482,7 @@ class ImportEnquiriesJob implements ShouldQueue
                             'enquiry_type'            => $this->resolveKeyValue('ENQ_TYPE', $this->cell($row, $headerMap, 'Enquiry Type')),
                             'source_code'             => $this->resolveKeyValue('ENQ_SOURCE', $this->cell($row, $headerMap, 'Enquiry Source')),
                             'sub_source'              => $this->resolveKeyValue('ENQ_SUB_SOURCE', $this->cell($row, $headerMap, 'Enquiry Sub Source')),
-                            'stage'                   => $this->cleanString($this->cell($row, $headerMap, 'Stage'), 50),
+                            'stage'                   => $stageRaw,
                             'enquiry_date'            => $this->excelDate($this->cell($row, $headerMap, 'Enquiry Date')),
                             'enq_assign_date'            => $this->excelDate($this->cell($row, $headerMap, 'Enq Assign Date')),
                             'customer_address'        => $this->cleanString($this->cell($row, $headerMap, 'Customer Address'), 255),
@@ -459,6 +499,23 @@ class ImportEnquiriesJob implements ShouldQueue
                             'lost_remarks'            => $this->cleanString($this->cell($row, $headerMap, 'Lost remarks by Sales Consultant'), 255),
                         ]);
                         $data['updated_at'] = $now;
+
+                        $this->appendDuplicateEntry($mobile, [
+                            'enquiry_type'        => 'long',
+                            'enquiry_date'        => $data['enquiry_date'] ?? null,
+                            'product_family'      => $data['model'] ?? null,
+                            'variant_description' => $data['variant'] ?? null,
+                            'color'               => $data['color'] ?? null,
+                            'recorded_at'         => $now->toDateTimeString(),
+                        ]);
+
+                        // NEW: If (Long) Stage is "Dropped" or "Lost" -> mark entry as is_active = 3
+                        if (
+                            $stageRaw !== null
+                            && in_array(strtolower(trim($stageRaw)), ['dropped', 'lost'], true)
+                        ) {
+                            $data['is_active'] = 3;
+                        }
 
                         // UNIQUENESS: By Enquiry Number for Long Sheet
                         if (empty($enquiryNo)) {
@@ -524,6 +581,14 @@ class ImportEnquiriesJob implements ShouldQueue
                         ]);
                         $data['updated_at'] = $now;
 
+                        $this->appendDuplicateEntry($mobile, [
+                            'enquiry_type'  => 'reference',
+                            'lead_datetime' => $data['lead_datetime'] ?? null,
+                            'model'         => $data['model'] ?? null,
+                            'variant'       => $data['variant'] ?? null,
+                            'recorded_at'   => $now->toDateTimeString(),
+                        ]);
+
                         if (empty($mobile)) {
                             DB::table('xlr8_crm_enquiries')->insert(array_merge(
                                 $data,
@@ -585,6 +650,16 @@ class ImportEnquiriesJob implements ShouldQueue
                             'source_code'           => 'DEALER_SOCIAL_MEDIA',
                         ]);
                         $data['updated_at'] = $now;
+
+                        $this->appendDuplicateEntry($mobile, [
+                            'enquiry_type'       => 'whatsapp',
+                            'lead_datetime'      => $data['lead_datetime'] ?? null,
+                            'wapp_campaign_name' => $data['wapp_campaign_name'] ?? null,
+                            'wapp_campaign_date' => $data['wapp_campaign_date'] ?? null,
+                            'model'              => $data['model'] ?? null,
+                            'variant'            => $data['variant'] ?? null,
+                            'recorded_at'        => $now->toDateTimeString(),
+                        ]);
 
                         if (empty($mobile)) {
                             DB::table('xlr8_crm_enquiries')->insert(array_merge(
@@ -833,6 +908,45 @@ class ImportEnquiriesJob implements ShouldQueue
         }
 
         return $string;
+    }
+
+    /**
+     * Whenever the mobile number in the row being imported already exists in
+     * xlr8_crm_enquiries (from ANY origin, whether or not this sheet's own
+     * primary-key match criteria matches), push a history entry into that
+     * existing row's `duplicate` JSON column. History is appended, never
+     * overwritten, so every existing row keeps a full log of every sheet
+     * import that re-used its mobile number.
+     */
+    private function appendDuplicateEntry(?string $mobile, array $entry): void
+    {
+        if (empty($mobile)) {
+            return;
+        }
+
+        $existingRows = DB::table('xlr8_crm_enquiries')
+            ->where('mobile', $mobile)
+            ->get(['id', 'duplicate']);
+
+        if ($existingRows->isEmpty()) {
+            return;
+        }
+
+        foreach ($existingRows as $existingRow) {
+            $history = [];
+            if (!empty($existingRow->duplicate)) {
+                $decoded = json_decode($existingRow->duplicate, true);
+                if (is_array($decoded)) {
+                    $history = $decoded;
+                }
+            }
+
+            $history[] = $entry;
+
+            DB::table('xlr8_crm_enquiries')
+                ->where('id', $existingRow->id)
+                ->update(['duplicate' => json_encode($history)]);
+        }
     }
 
     private function upsertRow(string $table, array $matchCriteria, array $data, array $insertExtra): bool
