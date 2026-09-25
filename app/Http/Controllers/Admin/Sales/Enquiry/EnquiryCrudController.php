@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Admin\Sales\Enquiry;
 
-use App\Jobs\ImportEnquiriesJob;
+
 use App\Models\CRM\Campaign;
 use App\Models\CRM\Enquiry;
 use App\Models\CRM\Lead;
@@ -25,7 +25,6 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Storage;
 use Prologue\Alerts\Facades\Alert;
 use Throwable;
 
@@ -2682,64 +2681,6 @@ class EnquiryCrudController extends CrudController
             'enquiry_no' => $enquiry?->enquiry_no,
             'id' => $enquiry?->id,
         ]);
-    }
-
-    public function importEnquiries(Request $request)
-    {
-        if (!backpack_user()->can('SLS_ENQR_IMPORT')) {
-            abort(403, 'Unauthorized. You do not have permission to import enquiries.');
-        }
-
-        if (!$request->hasFile('excel_file') || !in_array($request->file('excel_file')->getClientOriginalExtension(), ['xlsx', 'xls'])) {
-            Alert::error('Invalid or missing file! Only Excel files (.xlsx, .xls) allowed')->flash();
-
-            return redirect()->back();
-        }
-
-        $absolutePath = Storage::disk('local')->path($request->file('excel_file')->store('imports', 'local'));
-        $importLogId = DB::table('xlr8_crm_import_logs')->insertGetId([
-            'file_name' => $request->file('excel_file')->getClientOriginalName(),
-            'stored_path' => $absolutePath,
-            'status' => 'queued',
-            'created_by' => backpack_user()->id ?? null,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        ImportEnquiriesJob::dispatch($importLogId, $absolutePath);
-        Alert::success("File uploaded and queued for processing (Import #{$importLogId}).")->flash();
-
-        return redirect()->back();
-    }
-
-    public function importStatus($id)
-    {
-        if (!backpack_user()->can('SLS_ENQR_VIEW')) {
-            abort(403, 'Unauthorized. You do not have permission to view enquiries.');
-        }
-
-        if (!$log = DB::table('xlr8_crm_import_logs')->where('id', $id)->first()) {
-            return response()->json(['error' => 'Not found'], 404);
-        }
-
-        return response()->json([
-            'id' => $log->id,
-            'status' => $log->status,
-            'total_rows' => $log->total_rows,
-            'processed_rows' => $log->processed_rows,
-            'percent' => $log->total_rows > 0 ? round(($log->processed_rows / $log->total_rows) * 100, 1) : 0,
-            'stats' => $log->stats ? json_decode($log->stats, true) : null,
-            'error_message' => $log->error_message,
-        ]);
-    }
-
-    public function importHistory()
-    {
-        if (!backpack_user()->can('SLS_ENQR_VIEW')) {
-            abort(403, 'Unauthorized. You do not have permission to view enquiries.');
-        }
-
-        return response()->json(DB::table('xlr8_crm_import_logs')->orderByDesc('id')->limit(5)->get());
     }
 
     public function otfBookingsList()

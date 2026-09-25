@@ -208,6 +208,34 @@ class BookingCoreService
         try {
             $booking->save();
 
+             $previousEnquiryPayments = collect();
+
+            if (!empty($booking->enq_no)) {
+
+                $previousEnquiryPayments = Bookingamount::query()
+                    ->where('enq_id', $booking->enq_no)
+                    ->whereNull('bid')
+                    ->whereNull('deleted_at')
+                    ->get();
+
+                if ($previousEnquiryPayments->isNotEmpty()) {
+
+                    Bookingamount::whereIn(
+                        'id',
+                        $previousEnquiryPayments->pluck('id')
+                    )->update([
+                        'bid' => $booking->id,
+                    ]);
+
+                    Log::info('[PAYMENT] Previous enquiry payments linked to booking', [
+                        'booking_id' => $booking->id,
+                        'enquiry_id' => $booking->enq_no,
+                        'payment_ids' => $previousEnquiryPayments->pluck('id')->values()->all(),
+                        'total_amount' => $previousEnquiryPayments->sum('amount'),
+                    ]);
+                }
+            }
+
             if ($quotation) {
                 $quotation->status = 'booked';
                 $quotation->save();
@@ -286,8 +314,10 @@ class BookingCoreService
 
         $number = $input['receiptno'] ?? $input['voucherno'] ?? null;
 
+        
         if (
             ! $isDummy
+            && $previousEnquiryPayments->isEmpty()
             && in_array($booking->col_type, [1, 4])
             && $booking->booking_amount > 0
             && $number

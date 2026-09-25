@@ -1,12 +1,13 @@
 @extends(backpack_view('blank'))
 
-@section('title', 'Process Exchange / Scrappage')
+@section('title', 'Sales Imports')
 
 @push('after_styles')
     <style>
         .card {
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            border: none;
         }
 
         .form-control:focus,
@@ -21,110 +22,146 @@
     <div class="container-fluid">
         <div class="row">
             <div class="col-12">
-                <div class="card">
-                    <div class="card-header text-black">
-                        <h2 class="mb-0">Sales Imports</h2>
-                    </div>
+                <!-- Main Header -->
+                <h2 class="mb-4 text-dark fw-bold">
+                    <i class="la la-shopping-cart me-2"></i>Sales Imports
+                </h2>
 
+                <!-- Int in Finance Dashboard Card -->
+                <div class="card mb-4">
+                    <div class="card-header bg-white border-bottom">
+                        <h4 class="card-title mb-0 fw-bold text-dark">
+                            <i class="la la-money-bill me-2"></i>Int in Finance Dashboard
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                            <div>
+                                <small class="text-muted d-block">
+                                    <i class="la la-clock me-1"></i>Last Updated At
+                                </small>
+                                <span class="fw-semibold text-dark">{{ $lastFinanceImport ?? 'N/A' }}</span>
+                            </div>
+                            <div>
+                                <a href="{{ backpack_url('finance/import') }}"
+                                    class="btn btn-success btn-sm d-flex align-items-center gap-2"
+                                    onclick="return confirm('Are you sure you want to import latest data from Google Sheet?')">
+                                    <i class="la la-cloud-download"></i>
+                                    <span>Import Now</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="card">
-
-                    {{-- HEADER --}}
-                    <div
-                        class="card-header bg-gradient-primary d-flex justify-content-between align-items-center flex-wrap gap-3">
-                        <h2 class="card-title mb-0 fw-bold text-black text-nowrap">
-                            Int in Finance Dashboard
-                        </h2>
+                <!-- Int in Insurance Dashboard Card -->
+                <div class="card mb-4">
+                    <div class="card-header bg-white border-bottom">
+                        <h4 class="card-title mb-0 fw-bold text-dark">
+                            <i class="la la-shield-alt me-2"></i>Int in Insurance Dashboard
+                        </h4>
                     </div>
-                    <a href="{{ backpack_url('finance/import') }}"
-                        class="btn btn-success btn-sm d-flex align-items-center gap-2"
-                        onclick="return confirm('Are you sure you want to import latest data from Google Sheet?')">
-                        <i class="la la-cloud-download"></i>
-                        <span>Import Now</span>
-                    </a>
-
-
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                            <div>
+                                <small class="text-muted d-block">
+                                    <i class="la la-clock me-1"></i>Last Updated At
+                                </small>
+                                <span class="fw-semibold text-dark">{{ $lastInsuranceImport ?? 'N/A' }}</span>
+                            </div>
+                            <div>
+                                <a href="{{ backpack_url('insurance/import') }}"
+                                    class="btn btn-success btn-sm d-flex align-items-center gap-2"
+                                    onclick="return confirm('Are you sure you want to import latest data from Google Sheet?')">
+                                    <i class="la la-cloud-download"></i>
+                                    <span>Import Now</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="card">
 
-                    {{-- HEADER --}}
-                    <div
-                        class="card-header bg-gradient-primary d-flex justify-content-between align-items-center flex-wrap gap-3">
-                        <h2 class="card-title mb-0 fw-bold text-black text-nowrap">
-                            Int in insurance Dashboard
-                        </h2>
+                <!-- Int in RTO Dashboard Card -->
+                <div class="card mb-4">
+                    <div class="card-header bg-white border-bottom">
+                        <h4 class="card-title mb-0 fw-bold text-dark">
+                            <i class="la la-truck me-2"></i>Int in RTO Dashboard
+                        </h4>
                     </div>
-                    <a href="{{ backpack_url('insurance/import') }}"
-                        class="btn btn-success btn-sm d-flex align-items-center gap-2"
-                        onclick="return confirm('Are you sure you want to import latest data from Google Sheet?')">
-                        <i class="la la-cloud-download"></i>
-                        <span>Import Now</span>
-                    </a>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                            <div>
+                                <small class="text-muted d-block">
+                                    <i class="la la-clock me-1"></i>Last Updated At
+                                </small>
+                                <span class="fw-semibold text-dark">{{ $lastRtoImport ?? 'N/A' }}</span>
+                            </div>
+                            <div>
+                                <a href="{{ backpack_url('rto/import') }}"
+                                    class="btn btn-success btn-sm d-flex align-items-center gap-2"
+                                    onclick="return confirm('Are you sure you want to import latest data from Google Sheet?')">
+                                    <i class="la la-cloud-download"></i>
+                                    <span>Import Now</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="card">
 
-                    {{-- HEADER --}}
-                    <div
-                        class="card-header bg-gradient-primary d-flex justify-content-between align-items-center flex-wrap gap-3">
-                        <h2 class="card-title mb-0 fw-bold text-black text-nowrap">
-                            Int in rto Dashboard
-                        </h2>
+                <!-- Enquiry Dashboard Card -->
+                <div class="card mb-4">
+                    <div class="card-header bg-white border-bottom">
+                        <h4 class="card-title mb-0 fw-bold text-dark">
+                            <i class="la la-question-circle me-2"></i>Enquiry Dashboard
+                        </h4>
                     </div>
-                    <a href="{{ backpack_url('rto/import') }}"
-                        class="btn btn-success btn-sm d-flex align-items-center gap-2"
-                        onclick="return confirm('Are you sure you want to import latest data from Google Sheet?')">
-                        <i class="la la-cloud-download"></i>
-                        <span>Import Now</span>
-                    </a>
-                </div>
-                <div class="card">
-                    {{-- HEADER --}}
-                    <div
-                        class="card-header bg-gradient-primary d-flex justify-content-between align-items-center flex-wrap gap-3">
-                        <h2 class="card-title mb-0 fw-bold text-black text-nowrap">
-                            enquiry Dashboard
-                        </h2>
-                    </div>
-                    {{-- Optional Import Section --}}
-                    <div class="p-3 border-bottom bg-white">
-                        <div class="row align-items-end">
-                            <div class="col-md-8">
-                                <h5 class="mb-2 text-dark">
-                                    <i class="la la-file-excel-o"></i> Import Enquiries from Excel
-                                </h5>
-                                <small class="text-muted">
+                    <div class="card-body">
+                        <!-- File Upload Section -->
+                        <div class="row align-items-center mb-4">
+                            <div class="col-md-7">
+                                <h6 class="mb-1 text-dark fw-bold">
+                                    <i class="la la-file-excel-o me-1"></i> Import Enquiries from Excel
+                                </h6>
+                                <small class="text-muted d-block">
                                     Upload Excel file containing enquiry data. First row should contain headers.
                                 </small>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-5 mt-2 mt-md-0">
                                 <form action="{{ route('sales.enquiry.import') }}" method="POST"
                                     enctype="multipart/form-data" class="d-flex gap-2">
                                     @csrf
                                     <input type="file" name="excel_file" class="form-control form-control-sm"
                                         accept=".xlsx,.xls" required>
-                                    <button type="submit" class="btn btn-success btn-sm px-4 text-nowrap">
-                                        <i class="la la-upload"></i> Import
+                                    <button type="submit"
+                                        class="btn btn-success btn-sm px-4 text-nowrap d-flex align-items-center gap-1">
+                                        <i class="la la-upload"></i>
+                                        <span>Import</span>
                                     </button>
                                 </form>
                             </div>
-                            <!-- Import Status Panel -->
-                            <div class="p-3 border-bottom bg-white" id="importStatusPanel" style="display:none;">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <strong id="importStatusTitle">Import in progress…</strong>
-                                    <span class="text-muted small" id="importStatusPercent">0%</span>
-                                </div>
-                                <div class="progress" style="height: 8px;">
-                                    <div class="progress-bar bg-success" id="importProgressBar" role="progressbar"
-                                        style="width: 0%"></div>
-                                </div>
-                                <div class="small text-muted mt-2" id="importStatusDetail"></div>
-                            </div>
+                        </div>
 
-                            <!-- Recent Imports -->
-                            <div class="p-3 border-bottom bg-white">
-                                <h6 class="text-muted mb-2">Recent Imports</h6>
-                                <table class="table table-sm mb-0" id="importHistoryTable">
+                        <!-- Progress Panel -->
+                        <div class="border rounded p-3 mb-4 bg-light" id="importStatusPanel" style="display:none;">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <strong id="importStatusTitle"><i class="la la-spinner la-spin me-1"></i>Import in
+                                    progress…</strong>
+                                <span class="text-muted small" id="importStatusPercent">0%</span>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-success" id="importProgressBar" role="progressbar"
+                                    style="width: 0%"></div>
+                            </div>
+                            <div class="small text-muted mt-2" id="importStatusDetail"></div>
+                        </div>
+
+                        <!-- Recent Imports Table -->
+                        <div class="pt-2">
+                            <h6 class="text-muted mb-3 fw-bold">
+                                <i class="la la-history me-1"></i>Recent Imports
+                            </h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm align-middle mb-0" id="importHistoryTable">
                                     <thead>
                                         <tr>
                                             <th>File</th>
@@ -157,6 +194,17 @@
 
     <!-- Import Polling Script -->
     <script>
+        function importWithGid() {
+            const gid = document.getElementById('gidInput').value.trim();
+            if (!gid) {
+                alert('Please enter GID');
+                return;
+            }
+            const url = `{{ backpack_url('rto/import') }}?gid=${gid}`;
+            if (confirm('Import data from Google Sheet with GID: ' + gid + '?')) {
+                window.location.href = url;
+            }
+        }
         (function() {
             const statusUrlBase = "{{ url('/' . config('backpack.base.route_prefix') . '/enquiry/import/status') }}";
             const historyUrl = "{{ route('sales.enquiry.import.history') }}";
@@ -164,7 +212,7 @@
 
             function renderHistory(rows) {
                 const tbody = document.querySelector('#importHistoryTable tbody');
-                if (!rows.length) {
+                if (!rows || !rows.length) {
                     tbody.innerHTML = '<tr><td colspan="4" class="text-muted">No imports yet</td></tr>';
                     return;
                 }
@@ -174,11 +222,11 @@
                         r.status === 'failed' ? 'danger' :
                         'warning';
                     return `<tr>
-                <td>${r.file_name}</td>
-                <td><span class="badge bg-${badge}">${r.status}</span></td>
-                <td>${r.status === 'processing' ? pct + '%' : '-'}</td>
-                <td>${r.updated_at}</td>
-            </tr>`;
+                        <td>${r.file_name}</td>
+                        <td><span class="badge bg-${badge}">${r.status}</span></td>
+                        <td>${r.status === 'processing' ? pct + '%' : '-'}</td>
+                        <td>${r.updated_at}</td>
+                    </tr>`;
                 }).join('');
 
                 const newest = rows[0];

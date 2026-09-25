@@ -38,7 +38,10 @@ use App\Http\Controllers\Admin\Vehicle\Segment\SegmentCrudController;
 use App\Http\Controllers\Admin\Vehicle\SubSegment\SubSegmentCrudController;
 use App\Http\Controllers\Admin\Vehicle\Variant\VariantCrudController;
 use App\Http\Controllers\Admin\VehicleAccessoryCrudController;
-use App\Http\Controllers\Admin\ImportController;
+use App\Http\Controllers\Admin\Import\AdminImportController;
+use App\Http\Controllers\Admin\Import\SalesImportController;
+use App\Http\Controllers\Admin\Import\ServiceImportController;
+use App\Http\Controllers\Admin\Import\SpareImportController;
 use Illuminate\Support\Facades\Route;
 
 Route::group([
@@ -52,10 +55,15 @@ Route::group([
 
     Route::get('org-demo', [OrgDemoController::class, 'index'])->name('backpack.org.demo');
 
-    Route::get('finance/import', [FinanceCrudController::class, 'import'])->name('finance.import');
-    Route::get('insurance/import', [InsuranceCrudController::class, 'import'])->name('insurance.import');
-    Route::get('rto/import', [RtoCrudController::class, 'import'])->name('rto.import');
-    Route::post('segment/import', [SegmentCrudController::class, 'import'])->name('segment.import');
+    Route::get('finance/import', [SalesImportController::class, 'finimport'])->name('finance.import');
+    Route::get('insurance/import', [SalesImportController::class, 'insimport'])->name('insurance.import');
+    Route::get('rto/import', [SalesImportController::class, 'rtoimport'])->name('rto.import');
+    Route::post('vehicle/import', [AdminImportController::class, 'import'])->name('vehicle.import');
+    // Import / Status
+    Route::post('sales/enquiry/import', [SalesImportController::class, 'importEnquiries'])->name('sales.enquiry.import');
+    Route::get('sales/enquiry/import/status/{id}', [SalesImportController::class, 'importStatus'])->name('sales.enquiry.import.status');
+    Route::get('sales/enquiry/import/history', [SalesImportController::class, 'importHistory'])->name('sales.enquiry.import.history');
+
 
     Route::get('home', [DashboardController::class, 'index'])->name('backpack.dashboard.home');
     Route::get('dashboard', [DashboardController::class, 'index'])->name('backpack.dashboard');
@@ -108,7 +116,6 @@ Route::group([
     Route::get('vehicle/segment', ['uses' => SegmentCrudController::class . '@index', 'as' => 'vehicle.segment.index', 'operation' => 'list']);
     Route::post('vehicle/segment', ['uses' => SegmentCrudController::class . '@store', 'as' => 'vehicle.segment.store', 'operation' => 'create']);
     Route::get('vehicle/segment/create', ['uses' => SegmentCrudController::class . '@create', 'as' => 'vehicle.segment.create', 'operation' => 'create']);
-    Route::post('vehicle/segment/import', ['uses' => SegmentCrudController::class . '@import', 'as' => 'vehicle.segment.import', 'operation' => 'create']);
     Route::post('vehicle/segment/search', ['uses' => SegmentCrudController::class . '@search', 'as' => 'vehicle.segment.search', 'operation' => 'list']);
     Route::delete('vehicle/segment/{id}', ['uses' => SegmentCrudController::class . '@destroy', 'as' => 'vehicle.segment.destroy', 'operation' => 'delete']);
     Route::put('vehicle/segment/{id}', ['uses' => SegmentCrudController::class . '@update', 'as' => 'vehicle.segment.update', 'operation' => 'update']);
@@ -388,10 +395,6 @@ Route::group([
     Route::get('sales/enquiry/reference/create', [EnquiryCrudController::class, 'createReference'])->name('sales.enquiry.reference.create');
     Route::post('sales/enquiry/reference/store', [EnquiryCrudController::class, 'storeReference'])->name('sales.enquiry.reference.store');
 
-    // Import / Status
-    Route::post('sales/enquiry/import', [EnquiryCrudController::class, 'importEnquiries'])->name('sales.enquiry.import');
-    Route::get('sales/enquiry/import/status/{id}', [EnquiryCrudController::class, 'importStatus'])->name('sales.enquiry.import.status');
-    Route::get('sales/enquiry/import/history', [EnquiryCrudController::class, 'importHistory'])->name('sales.enquiry.import.history');
 
     // =========================================================
     // EXCHANGE & SCRAPPAGE ENQUIRY ROUTES
@@ -428,9 +431,9 @@ Route::group([
         ->name('sales.enquiry.otf-bookings');
     Route::get('sales/enquiry/otf-bookings/{id}/show', [EnquiryCrudController::class, 'showOtf'])->name('sales.enquiry.otf.show');
     Route::prefix('imports')->name('imports.')->group(function () {
-        Route::get('admin', [ImportController::class, 'admin'])->name('admin');
-        Route::get('sales', [ImportController::class, 'sales'])->name('sales');
-        Route::get('service', [ImportController::class, 'service'])->name('service');
-        Route::get('spares', [ImportController::class, 'spares'])->name('spares');
+        Route::get('admin', [AdminImportController::class, 'admin'])->name('admin');
+        Route::get('sales', [SalesImportController::class, 'sales'])->name('sales');
+        Route::get('service', [ServiceImportController::class, 'service'])->name('service');
+        Route::get('spares', [SpareImportController::class, 'spares'])->name('spares');
     });
 }); // ← This should be the last line
