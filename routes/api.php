@@ -24,7 +24,7 @@ Route::prefix('v1')->group(function () {
 
     Route::group(['middleware' => ['auth:sanctum', 'validate_device']], function () {
         Route::post('/pricing/calculate-exchange', [PricingApiController::class, 'calculateExchange']);
-        Route::post('/pricing/generate-quote', [PricingApiController::class, 'generateQuote']);
+        // generate-quote removed: PricingApiController::generateQuote never existed (DEC-020).
     });
 
     // ╔════════════════════════════════════════════════════════╗

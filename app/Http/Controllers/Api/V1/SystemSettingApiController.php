@@ -147,6 +147,34 @@ class SystemSettingApiController extends BaseController
     }
 
     /**
+     * Category shortcuts: routes category/{site,dealership,pricing} existed without
+     * these methods (DEC-020).
+     */
+    public function siteSettings(): JsonResponse
+    {
+        return $this->categorySettings('site', fn () => $this->settingService->getSiteSettings());
+    }
+
+    public function dealershipSettings(): JsonResponse
+    {
+        return $this->categorySettings('dealership', fn () => $this->settingService->getDealershipSettings());
+    }
+
+    public function pricingSettings(): JsonResponse
+    {
+        return $this->categorySettings('pricing', fn () => $this->settingService->getPricingSettings());
+    }
+
+    private function categorySettings(string $category, \Closure $resolve): JsonResponse
+    {
+        try {
+            return $this->successResponse($resolve(), "Settings for '{$category}' retrieved", 200);
+        } catch (Throwable $e) {
+            return $this->handleException($e, 'Get Category Settings', ['category' => $category, 'user_id' => Auth::id()]);
+        }
+    }
+
+    /**
      * Get single setting
      *
      * Retrieves a single setting by key.

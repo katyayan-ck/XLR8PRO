@@ -391,6 +391,23 @@ class NotificationController extends BaseController
     }
 
     /**
+     * Revoke (deactivate) every push-device token of the current user.
+     * Route POST /devices/revoke-all existed without this method (DEC-020).
+     */
+    public function revokeAllDevices(Request $request): JsonResponse
+    {
+        try {
+            $count = $this->firebaseService->revokeAllUserDevices(auth('sanctum')->user());
+
+            return $this->successResponse(['revoked' => $count], 'All devices revoked', 200);
+        } catch (Throwable $e) {
+            return $this->handleException($e, 'Revoke All Devices', [
+                'user_id' => auth('sanctum')->id(),
+            ]);
+        }
+    }
+
+    /**
      * Get unread notifications count
      *
      * Retrieves count of unread notifications, alerts, and messages.

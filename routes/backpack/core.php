@@ -68,7 +68,7 @@ Route::group([
     // 'destroy' is a dead route — no destroy() method exists, no DeleteOperation trait used. See
     // known-bugs-report.md BUG-012 (pre-existing, documented, not fixed here — kept registered
     // under the new URL to preserve exact prior behavior).
-    Route::delete('vehicle/model/{id}', [VehicleModelCrudController::class, 'destroy'])->name('vehicle.model.destroy');
+    // vehicle.model.destroy removed: no destroy() and no delete button (DEC-020).
     Route::get('vehicle/model/sub-segments/{segmentCode}', [VehicleModelCrudController::class, 'getSubSegmentsBySegment'])->name('vehicle.model.get-sub-segments');
 
     Route::get('vehicle/variant/subsegments', [VariantCrudController::class, 'getSubSegments'])->name('vehicle.variant.get-sub-segments');
@@ -286,7 +286,7 @@ Route::group([
     Route::get('accounts/receipt/create', [ReceiptCrudController::class, 'create'])->name('accounts.receipt.create');
     Route::get('accounts/receipt/{id}/edit', [ReceiptCrudController::class, 'edit'])->name('accounts.receipt.edit');
     Route::put('accounts/receipt/{id}', [ReceiptCrudController::class, 'update'])->name('accounts.receipt.update');
-    Route::delete('accounts/receipt/{id}', [ReceiptCrudController::class, 'destroy'])->name('accounts.receipt.destroy');
+    // accounts.receipt.destroy removed: no destroy() and no delete button (DEC-020).
     Route::get('accounts/receipt/{id}/show', [ReceiptCrudController::class, 'show'])->name('accounts.receipt.show');
     Route::get('accounts/receipt/fetch-enquiry', [ReceiptCrudController::class, 'fetchEnquiryDetails'])
         ->name('accounts.receipt.fetch-enquiry');
@@ -376,7 +376,7 @@ Route::group([
     Route::get('sales/enquiry/assigned-quick', [EnquiryCrudController::class, 'assignedQuickList'])->name('sales.enquiry.assigned-quick');
     Route::get('sales/enquiry/unassigned-quick', [EnquiryCrudController::class, 'unassignedQuickList'])->name('sales.enquiry.unassigned-quick');
     // 'pending'/'erroneous' point at BUG-046's confirmed-broken pendingList()/erroneousList() methods.
-    Route::get('sales/enquiry/pending', [EnquiryCrudController::class, 'pendingList'])->name('sales.enquiry.pending');
+    // sales.enquiry.pending removed: pendingList() never existed and nothing links to it (DEC-020).
     Route::get('sales/enquiry/erroneous', [EnquiryCrudController::class, 'erroneousList'])->name('sales.enquiry.erroneous');
 
     // Reference Forms

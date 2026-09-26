@@ -77,6 +77,55 @@ class SystemSetting extends BaseModel
     }
 
     /**
+     * Scope: settings of a topic. Live rows leave `topic` empty and encode the
+     * topic as the key prefix (`site.name`), so both forms match (DEC-021).
+     */
+    public function scopeByTopic($query, string $topic)
+    {
+        return $query->where(function ($q) use ($topic) {
+            $q->where('topic', $topic)
+                ->orWhere(function ($q) use ($topic) {
+                    $q->where(fn ($q) => $q->whereNull('topic')->orWhere('topic', ''))
+                        ->where('key', 'like', $topic.'.%');
+                });
+        });
+    }
+
+    /**
+     * Scope: settings of a group within a topic.
+     */
+    public function scopeByGroup($query, string $group)
+    {
+        return $query->where('group', $group);
+    }
+
+    /**
+     * Visible settings of one topic as key => typed value.
+     */
+    public static function getByTopic(string $topic): array
+    {
+        return static::visible()
+            ->byTopic($topic)
+            ->orderBy('key')
+            ->get()
+            ->mapWithKeys(fn ($row) => [$row->key => static::castValue($row)])
+            ->toArray();
+    }
+
+    /**
+     * Visible settings grouped by topic (the `topic` column, else the key prefix).
+     */
+    public static function allByTopic(): array
+    {
+        return static::visible()
+            ->orderBy('key')
+            ->get()
+            ->groupBy(fn ($row) => $row->topic ?: strstr($row->key, '.', true) ?: 'general')
+            ->map(fn ($rows) => $rows->mapWithKeys(fn ($row) => [$row->key => static::castValue($row)])->toArray())
+            ->toArray();
+    }
+
+    /**
      * Flush cache for single setting
      */
     public static function flushCache(string $key): void
@@ -85,11 +134,12 @@ class SystemSetting extends BaseModel
     }
 
     /**
-     * Flush all settings cache
+     * Flush all settings cache. Forgets each key: the `database` cache store
+     * doesn't support tags (DEC-021).
      */
     public static function flushAllCache(): void
     {
-        Cache::tags('settings')->flush();
+        static::withTrashed()->pluck('key')->each(fn ($key) => static::flushCache($key));
     }
 
     /**
@@ -141,11 +191,9 @@ class SystemSetting extends BaseModel
 
         $setting->value = is_string($value) ? $value : json_encode($value);
 
-        if (auth()->check()) {
-            $setting->updatedby = auth()->id();
-        }
-
-        $setting->saveQuietly();
+        // save() (not saveQuietly) so BaseModel stamps updated_by and the saved
+        // hook clears this key's cache (DEC-021).
+        $setting->save();
 
         return $setting;
     }

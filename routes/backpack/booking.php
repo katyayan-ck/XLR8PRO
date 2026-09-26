@@ -54,8 +54,7 @@ Route::group([
         ->name('sales.booking.invoiced.list');
     Route::get('sales/booking/pending-invoices/list', [BookingCrudController::class, 'pendingInvoicesList'])
         ->name('sales.booking.pending-invoices.list');
-    Route::post('sales/booking/order-verify/{id}', [BookingCrudController::class, 'orderVerify'])
-        ->name('sales.booking.order-verify');
+    // sales.booking.order-verify removed: orderVerify() never existed and nothing links to it (DEC-020).
     Route::get('sales/booking/reports/stock/list', [BookingCrudController::class, 'stockList'])
         ->name('sales.booking.reports.stock.list');
     Route::get('sales/booking/reports/live-order/list', [BookingCrudController::class, 'liveOrderList'])
