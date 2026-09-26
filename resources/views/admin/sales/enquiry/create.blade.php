@@ -649,7 +649,8 @@
                                 <label class="form-label">DMS Enquiry Number <small class="text-muted"></small></label>
                                 <input type="text" name="dms_enq_no" class="form-control text-uppercase"
                                     value="{{ old('dms_enq_no', $enquiry->dms_enq_no ?? 'EN-') }}"
-                                    placeholder="EN-XXXXX">
+                                    placeholder="EN-XXXXX" 
+                                    oninput="let v=this.value.toUpperCase(); if(!v.startsWith('EN-')){this.value='EN-';}else{this.value='EN-'+v.substring(3).replace(/[^0-9]/g,'');}">
                             </div>
                             @endif
 
@@ -1069,16 +1070,14 @@
                     </div>
                 </div>
 
-                @if (isset($enquiry))
+                @if(isset($enquiry))
                     {{-- ================= READ ONLY MODE: Greyed Out Data Cards ================= --}}
                     @php
                         // Fetch extended finance data from dedicated modules
-                        $financeData = \App\Models\Module\Finance\XFinance::where('enq_no', $enquiry->enquiry_no)
-                            ->orWhere('bid', $enquiry->id)
-                            ->first();
-
+                        $financeData = \App\Models\Module\Finance\XFinance::where('enq_no', $enquiry->enquiry_no)->orWhere('bid', $enquiry->id)->first();
+                        
                         $financierName = '';
-                        if ($financeData && $financeData->financier) {
+                        if($financeData && $financeData->financier) {
                             $fin = collect($financiers ?? [])->firstWhere('id', $financeData->financier);
                             $financierName = $fin ? $fin->name : '';
                         } elseif ($enquiry->financier) {
@@ -1089,283 +1088,202 @@
                         $caseStatusMap = [1 => 'In-Process', 2 => 'Finance Done / Exchange Done', 3 => 'Case Lost'];
                         $instTypeMap = [1 => 'Financier Payment', 2 => 'Delivery Order', 3 => 'Sanction Letter'];
                         $caseLostMap = [1 => 'Cash Purchase', 2 => 'Customer Self Finance'];
-
+                        
                         $brandMakeName = '';
-                        if ($enquiry->brand_make) {
+                        if($enquiry->brand_make) {
                             $bm = collect($existing_car_oems ?? [])->firstWhere('code', $enquiry->brand_make);
                             $brandMakeName = $bm ? $bm['value'] : $enquiry->brand_make;
                         }
+
+                        // Determine Exchange vs Scrappage Visibility & Heading
+                        $rawPurcType = strtoupper(trim($enquiry->purchase_type_crm ?? $enquiry->purchase_type ?? ''));
+                        $isExchangeCase = str_contains($rawPurcType, 'EXCHANGE');
+                        $isScrappageCase = str_contains($rawPurcType, 'SCRAPPAGE');
+                        $showExchangeCard = $isExchangeCase || $isScrappageCase;
+                        $exchangeHeading = $isScrappageCase ? 'Scrappage Details (Read-Only)' : 'Exchange Details (Read-Only)';
+
+                        // Determine Finance Visibility
+                        $hasFinanceData = $financeData || !empty($enquiry->fin_mode) || (isset($financeFups) && $financeFups->count() > 0);
                     @endphp
 
+                    @if($showExchangeCard)
                     <div class="card enquiry-card" style="order: {{ $order['exchange'] }}; margin-top: 1.5rem;">
                         <div class="card-header d-flex justify-content-between align-items-center">
-                            <h3 class="mb-0 fw-bold">Exchange & Finance Details (Read-Only)</h3>
+                            <h3 class="mb-0 fw-bold">{{ $exchangeHeading }}</h3>
                         </div>
                         <div class="card-body">
-
-                            {{-- Exchange Details --}}
-                            <h4 class="fw-bold mb-3">Exchange / Scrappage Valuation</h4>
                             <div class="row">
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Purchase Type</label>
-                                    <input type="text" class="form-control"
-                                        value="{{ collect($purchase_types ?? [])->firstWhere('code', $enquiry->purchase_type_crm ?? $enquiry->purchase_type)['value'] ?? ($enquiry->purchase_type_crm ?? ($enquiry->purchase_type ?? '—')) }}"
-                                        readonly tabindex="-1"
-                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                    <input type="text" class="form-control" value="{{ collect($purchase_types ?? [])->firstWhere('code', $enquiry->purchase_type_crm ?? $enquiry->purchase_type)['value'] ?? ($enquiry->purchase_type_crm ?? $enquiry->purchase_type ?? '—') }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Brand Make</label>
-                                    <input type="text" class="form-control" value="{{ $brandMakeName }}" readonly
-                                        tabindex="-1"
-                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                    <input type="text" class="form-control" value="{{ $brandMakeName }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Brand Model</label>
-                                    <input type="text" class="form-control" value="{{ $enquiry->brand_model }}"
-                                        readonly tabindex="-1"
-                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                    <input type="text" class="form-control" value="{{ $enquiry->brand_model }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Vehicle Registration No.</label>
-                                    <input type="text" class="form-control" value="{{ $enquiry->vehicle_no }}"
-                                        readonly tabindex="-1"
-                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                    <input type="text" class="form-control" value="{{ $enquiry->vehicle_no }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Manufacturing Year</label>
-                                    <input type="text" class="form-control" value="{{ $enquiry->make_year }}"
-                                        readonly tabindex="-1"
-                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                    <input type="text" class="form-control" value="{{ $enquiry->make_year }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Odometer Reading</label>
-                                    <input type="text" class="form-control" value="{{ $enquiry->odo_reading }}"
-                                        readonly tabindex="-1"
-                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                    <input type="text" class="form-control" value="{{ $enquiry->odo_reading }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Expected Price</label>
-                                    <input type="text" class="form-control"
-                                        value="{{ $enquiry->expected_price ? '₹ ' . number_format($enquiry->expected_price) : '' }}"
-                                        readonly tabindex="-1"
-                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                    <input type="text" class="form-control" value="{{ $enquiry->expected_price ? '₹ '.number_format($enquiry->expected_price) : '' }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Offered Price</label>
-                                    <input type="text" class="form-control"
-                                        value="{{ $enquiry->offered_price ? '₹ ' . number_format($enquiry->offered_price) : '' }}"
-                                        readonly tabindex="-1"
-                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                    <input type="text" class="form-control" value="{{ $enquiry->offered_price ? '₹ '.number_format($enquiry->offered_price) : '' }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Exchange Bonus</label>
-                                    <input type="text" class="form-control"
-                                        value="{{ $enquiry->exchange_bonus ? '₹ ' . number_format($enquiry->exchange_bonus) : '' }}"
-                                        readonly tabindex="-1"
-                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                    <input type="text" class="form-control" value="{{ $enquiry->exchange_bonus ? '₹ '.number_format($enquiry->exchange_bonus) : '' }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Price Gap</label>
-                                    @php
-                                        $diff =
-                                            ($enquiry->expected_price ?? 0) -
-                                            ($enquiry->offered_price ?? 0) -
-                                            ($enquiry->exchange_bonus ?? 0);
+                                    @php 
+                                        $diff = ($enquiry->expected_price ?? 0) - ($enquiry->offered_price ?? 0) - ($enquiry->exchange_bonus ?? 0); 
                                     @endphp
-                                    <input type="text" class="form-control"
-                                        value="{{ $diff ? '₹ ' . number_format($diff) : '' }}" readonly tabindex="-1"
-                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                    <input type="text" class="form-control" value="{{ $diff ? '₹ '.number_format($diff) : '' }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Reason for Case Lost (If Dropped)</label>
-                                    <input type="text" class="form-control" value="{{ $enquiry->lost_reason }}"
-                                        readonly tabindex="-1"
-                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                    <input type="text" class="form-control" value="{{ $enquiry->lost_reason }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
+
                                 {{-- EXCHANGE FOLLOW UPS TABLE --}}
-                                @if (isset($exchangeFups) && $exchangeFups->count() > 0)
-                                    <div class="col-md-12 mt-4 mb-2">
-                                        <h5 class="fw-bold mb-3" style="color: var(--tblr-body-color);">Exchange Follow-up
-                                            History</h5>
-                                        <div class="table-responsive">
-                                            <table class="table table-bordered text-center align-middle mb-0"
-                                                style="background-color: var(--tblr-bg-surface-secondary);">
-                                                <thead class="table-secondary text-uppercase" style="font-size: 0.85rem;">
+                                @if(isset($exchangeFups) && $exchangeFups->count() > 0)
+                                <div class="col-md-12 mt-4 mb-2">
+                                    <h5 class="fw-bold mb-3" style="color: var(--tblr-body-color);">Exchange Follow-up History</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered text-center align-middle mb-0" style="background-color: var(--tblr-bg-surface-secondary);">
+                                            <thead class="table-secondary text-uppercase" style="font-size: 0.85rem;">
+                                                <tr>
+                                                    <th class="text-center px-3" style="width: 10%;">Fup #</th>
+                                                    <th class="text-center px-3" style="width: 45%;">Remarks</th>
+                                                    <th class="text-center px-3" style="width: 25%;">Created By</th>
+                                                    <th class="text-center px-3" style="width: 20%;">Date & Time</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach($exchangeFups as $fup)
+                                                    @php
+                                                        $creator = \App\Models\User::find($fup->created_by);
+                                                        $code = $creator ? ($creator->employee_code ?? $creator->person_code) : null;
+                                                        $creatorName = \App\Services\OrgService::getUserNameByCode($code);
+                                                    @endphp
                                                     <tr>
-                                                        <th class="text-center px-3" style="width: 10%;">Fup #</th>
-                                                        <th class="text-center px-3" style="width: 45%;">Remarks</th>
-                                                        <th class="text-center px-3" style="width: 25%;">Created By</th>
-                                                        <th class="text-center px-3" style="width: 20%;">Date & Time</th>
+                                                        <td class="fw-bold align-middle table-secondary text-center px-3 text-dark">{{ $fup->fup_count }}</td>
+                                                        <td><div class="form-control bg-white h-auto border-0 text-wrap text-start" style="min-width: 150px;">{{ $fup->remarks }}</div></td>
+                                                        <td><div class="form-control bg-white h-auto border-0 text-center">{{ $creatorName }}</div></td>
+                                                        <td><div class="form-control bg-white h-auto border-0 text-center">{{ \Carbon\Carbon::parse($fup->created_at)->format('d-M-Y h:i A') }}</div></td>
                                                     </tr>
-                                                </thead>
-                                                <tbody>
-                                                    @foreach ($exchangeFups as $fup)
-                                                        @php
-                                                            $creator = \App\Models\User::find($fup->created_by);
-                                                            $code = $creator
-                                                                ? $creator->employee_code ?? $creator->person_code
-                                                                : null;
-                                                            $creatorName = \App\Services\OrgService::getUserNameByCode(
-                                                                $code,
-                                                            );
-                                                        @endphp
-                                                        <tr>
-                                                            <td
-                                                                class="fw-bold align-middle table-secondary text-center px-3 text-dark">
-                                                                {{ $fup->fup_count }}</td>
-                                                            <td>
-                                                                <div class="form-control bg-white h-auto border-0 text-wrap text-start"
-                                                                    style="min-width: 150px;">{{ $fup->remarks }}</div>
-                                                            </td>
-                                                            <td>
-                                                                <div
-                                                                    class="form-control bg-white h-auto border-0 text-center">
-                                                                    {{ $creatorName }}</div>
-                                                            </td>
-                                                            <td>
-                                                                <div
-                                                                    class="form-control bg-white h-auto border-0 text-center">
-                                                                    {{ \Carbon\Carbon::parse($fup->created_at)->format('d-M-Y h:i A') }}
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    @endforeach
-                                                </tbody>
-                                            </table>
-                                        </div>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
                                     </div>
-                                @endif
-                            </div>
-
-                            <hr class="my-4" style="border-color: #e9ecef;">
-
-                            {{-- Finance Details --}}
-                            <h4 class="fw-bold mb-3">Finance & Loan Details</h4>
-                            <div class="row">
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label">Finance Mode</label>
-                                    <input type="text" class="form-control"
-                                        value="{{ $financeData->fin_mode ?? ($enquiry->fin_mode ?? '') }}" readonly
-                                        tabindex="-1"
-                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
                                 </div>
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label">Loan Status</label>
-                                    <input type="text" class="form-control"
-                                        value="{{ $financeData->loan_status ?? ($enquiry->loan_status ?? '') }}" readonly
-                                        tabindex="-1"
-                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
-                                </div>
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label">Financier</label>
-                                    <input type="text" class="form-control" value="{{ $financierName }}" readonly
-                                        tabindex="-1"
-                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
-                                </div>
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label">Case Status</label>
-                                    <input type="text" class="form-control"
-                                        value="{{ $caseStatusMap[$financeData->case_status ?? 1] ?? '' }}" readonly
-                                        tabindex="-1"
-                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
-                                </div>
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label">Case Lost Reason</label>
-                                    <input type="text" class="form-control"
-                                        value="{{ $caseLostMap[$financeData->case_lost_reason ?? ''] ?? ($financeData->case_lost_reason ?? '') }}"
-                                        readonly tabindex="-1"
-                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
-                                </div>
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label">Instrument Type</label>
-                                    <input type="text" class="form-control"
-                                        value="{{ $instTypeMap[$financeData->instrument_type ?? ''] ?? '' }}" readonly
-                                        tabindex="-1"
-                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
-                                </div>
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label">Reference No.</label>
-                                    <input type="text" class="form-control"
-                                        value="{{ $financeData->instrument_ref_no ?? '' }}" readonly tabindex="-1"
-                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
-                                </div>
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label">Loan Amount</label>
-                                    <input type="text" class="form-control"
-                                        value="{{ !empty($financeData->loan_amount) ? '₹ ' . number_format($financeData->loan_amount) : '' }}"
-                                        readonly tabindex="-1"
-                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
-                                </div>
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label">Margin Money</label>
-                                    <input type="text" class="form-control"
-                                        value="{{ !empty($financeData->margin) ? '₹ ' . number_format($financeData->margin) : '' }}"
-                                        readonly tabindex="-1"
-                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
-                                </div>
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label">File Charge</label>
-                                    <input type="text" class="form-control"
-                                        value="{{ !empty($financeData->file_charge) ? '₹ ' . number_format($financeData->file_charge) : '' }}"
-                                        readonly tabindex="-1"
-                                        style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
-                                </div>
-                                {{-- FINANCE FOLLOW UPS TABLE --}}
-                                @if (isset($financeFups) && $financeFups->count() > 0)
-                                    <div class="col-md-12 mt-4 mb-2">
-                                        <h5 class="fw-bold mb-3" style="color: var(--tblr-body-color);">Finance Follow-up
-                                            History</h5>
-                                        <div class="table-responsive">
-                                            <table class="table table-bordered text-center align-middle mb-0"
-                                                style="background-color: var(--tblr-bg-surface-secondary);">
-                                                <thead class="table-secondary text-uppercase" style="font-size: 0.85rem;">
-                                                    <tr>
-                                                        <th class="text-center px-3" style="width: 10%;">Fup #</th>
-                                                        <th class="text-center px-3" style="width: 45%;">Remarks</th>
-                                                        <th class="text-center px-3" style="width: 25%;">Created By</th>
-                                                        <th class="text-center px-3" style="width: 20%;">Date & Time</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    @foreach ($financeFups as $fup)
-                                                        @php
-                                                            $creator = \App\Models\User::find($fup->created_by);
-                                                            $code = $creator
-                                                                ? $creator->employee_code ?? $creator->person_code
-                                                                : null;
-                                                            $creatorName = \App\Services\OrgService::getUserNameByCode(
-                                                                $code,
-                                                            );
-                                                        @endphp
-                                                        <tr>
-                                                            <td
-                                                                class="fw-bold align-middle table-secondary text-center px-3 text-dark">
-                                                                {{ $fup->fup_count }}</td>
-                                                            <td>
-                                                                <div class="form-control bg-white h-auto border-0 text-wrap text-start"
-                                                                    style="min-width: 150px;">{{ $fup->remarks }}</div>
-                                                            </td>
-                                                            <td>
-                                                                <div
-                                                                    class="form-control bg-white h-auto border-0 text-center">
-                                                                    {{ $creatorName }}</div>
-                                                            </td>
-                                                            <td>
-                                                                <div
-                                                                    class="form-control bg-white h-auto border-0 text-center">
-                                                                    {{ \Carbon\Carbon::parse($fup->created_at)->format('d-M-Y h:i A') }}
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    @endforeach
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
                                 @endif
                             </div>
                         </div>
                     </div>
+                    @endif
+
+                    @if($hasFinanceData)
+                    <div class="card enquiry-card" style="order: {{ $order['exchange'] }}; margin-top: 1.5rem;">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h3 class="mb-0 fw-bold">Finance & Loan Details (Read-Only)</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Finance Mode</label>
+                                    <input type="text" class="form-control" value="{{ $financeData->fin_mode ?? $enquiry->fin_mode ?? '' }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Loan Status</label>
+                                    <input type="text" class="form-control" value="{{ $financeData->loan_status ?? $enquiry->loan_status ?? '' }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Financier</label>
+                                    <input type="text" class="form-control" value="{{ $financierName }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Case Status</label>
+                                    <input type="text" class="form-control" value="{{ $caseStatusMap[$financeData->case_status ?? 1] ?? '' }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Case Lost Reason</label>
+                                    <input type="text" class="form-control" value="{{ $caseLostMap[$financeData->case_lost_reason ?? ''] ?? ($financeData->case_lost_reason ?? '') }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Instrument Type</label>
+                                    <input type="text" class="form-control" value="{{ $instTypeMap[$financeData->instrument_type ?? ''] ?? '' }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Reference No.</label>
+                                    <input type="text" class="form-control" value="{{ $financeData->instrument_ref_no ?? '' }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Loan Amount</label>
+                                    <input type="text" class="form-control" value="{{ !empty($financeData->loan_amount) ? '₹ '.number_format($financeData->loan_amount) : '' }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Margin Money</label>
+                                    <input type="text" class="form-control" value="{{ !empty($financeData->margin) ? '₹ '.number_format($financeData->margin) : '' }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">File Charge</label>
+                                    <input type="text" class="form-control" value="{{ !empty($financeData->file_charge) ? '₹ '.number_format($financeData->file_charge) : '' }}" readonly tabindex="-1" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: none;">
+                                </div>
+
+                                {{-- FINANCE FOLLOW UPS TABLE --}}
+                                @if(isset($financeFups) && $financeFups->count() > 0)
+                                <div class="col-md-12 mt-4 mb-2">
+                                    <h5 class="fw-bold mb-3" style="color: var(--tblr-body-color);">Finance Follow-up History</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered text-center align-middle mb-0" style="background-color: var(--tblr-bg-surface-secondary);">
+                                            <thead class="table-secondary text-uppercase" style="font-size: 0.85rem;">
+                                                <tr>
+                                                    <th class="text-center px-3" style="width: 10%;">Fup #</th>
+                                                    <th class="text-center px-3" style="width: 45%;">Remarks</th>
+                                                    <th class="text-center px-3" style="width: 25%;">Created By</th>
+                                                    <th class="text-center px-3" style="width: 20%;">Date & Time</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach($financeFups as $fup)
+                                                    @php
+                                                        $creator = \App\Models\User::find($fup->created_by);
+                                                        $code = $creator ? ($creator->employee_code ?? $creator->person_code) : null;
+                                                        $creatorName = \App\Services\OrgService::getUserNameByCode($code);
+                                                    @endphp
+                                                    <tr>
+                                                        <td class="fw-bold align-middle table-secondary text-center px-3 text-dark">{{ $fup->fup_count }}</td>
+                                                        <td><div class="form-control bg-white h-auto border-0 text-wrap text-start" style="min-width: 150px;">{{ $fup->remarks }}</div></td>
+                                                        <td><div class="form-control bg-white h-auto border-0 text-center">{{ $creatorName }}</div></td>
+                                                        <td><div class="form-control bg-white h-auto border-0 text-center">{{ \Carbon\Carbon::parse($fup->created_at)->format('d-M-Y h:i A') }}</div></td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                    @endif
                 @endif
 
                 {{-- =========================== 5. SALES CONSULTANT DETAIL =========================== --}}
