@@ -38,6 +38,7 @@ add-ons & discounts → insurance & RTO (keep or import) → impact summary → 
 - Pricing JSON keys never change (unused keys present with 0/null).
 - Rule rows (RTO/TCS/insurance) are written only via `App\Services\Vehicle\Pricing\Rules\*Service` (DEC-056): the workbook
   importer maps columns, the service owns scope/amount rules and WEF expiry (`expireActive()`).
+  Add-ons / discounts / dealer charges likewise via `...\Pricing\Addons\*Service` (group expiry: `expireActive($wef, ['addon_type' => 'RSA'])`).
 - Pricing admin requires `manage_pricing` / `PRC_*` permissions; `PricingResetService` is destructive — local only.
 - Open spec gaps GAP-01…11 (insurance addon importer, history satellites, insurer master, IDV formula…) —
   do not paper over them without instruction.

@@ -313,3 +313,17 @@ Branch `feature/integrations`. Decisions DEC-033…038 are in `docs/decisions/de
   - New: `PricingRuleEntityServicesTest` (4), including a real two-sheet workbook import: expiry, ANY wheels, amounts, row errors, plan years, IDV slots.
   - Pricing / RTO / insurance tests: 45 passed.
 - **Smoke:** the pricing screens return 200 for user 1 (workflow stages redirect with no open session) and 403 for user 40.
+
+## Add-ons, discounts, dealer charges on entity services (DEC-057)
+- **New:** `app/Services/Vehicle/Pricing/Addons/{DealerCharge,Addon,Discount}Service.php`.
+- **Before → after:**
+  - **`AddonDiscountImportService`:**
+    - Before: `Model::query()->create(onlyFillable(...))` plus a bulk `update` per group.
+    - After: the services' `create()` / `expireActive($wef, group)`. Rejected rows are reported with the field message.
+  - **`HasColumnTransformations`:** never blanks a non-empty value.
+  - **`Field::scope`:** gains `anyIsBlank`.
+  - **Models:** `$fillable` aligned to the real columns, plus `$entityService`.
+- **Bug:** BUG-178 logged (engine ignores WIDE dealer charges; model scope column mismatch).
+- **Tests:**
+  - New: `PricingAddonEntityServicesTest` (3, including a three-sheet workbook import with group expiry, ANY scope, zero-row skip and discount totals).
+  - Related groups: 127 passed.

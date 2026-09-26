@@ -212,6 +212,7 @@ Entry format:
 | BUG-174 | `import:rbac-master` silently imported nothing: its sheet classes implement no Maatwebsite `To*` concern (and call an undefined `skip()`), yet the command printed "No errors. All rows processed cleanly" | Medium | FIXED (retired, DEC-052) | 27-09-2026 | 27-09-2026 |
 | BUG-176 | `HasColumnTransformations` re-transformed every attribute on every update: editing any field of a keyword value whose legacy code has spaces rewrote the code (hyphens), orphaning its references — 1,903 such codes exist | High | FIXED (DEC-055) | 27-09-2026 | 27-09-2026 |
 | BUG-177 | Imports menu and the `imports/admin` landing page have no permission check (a user with no import permission opens it; the vehicle import POST itself is gated on `VEH_SEG_CREATE`) | Low | OPEN (permission choice needs owner) | 27-09-2026 | — |
+| BUG-178 | Pricing engine ignores imported dealer charges: `dealerCharges()` reads narrow rows (`charge_name`/`amount`) while the importer writes the spec's WIDE columns (CP-06), so the pricing JSON's dealer charges total 0; `scopeHit()` checks a `model` column (table has `model_code`), so model scope is never applied | High | OPEN (price-changing fix — owner approval) | 27-09-2026 | — |
 | BUG-175 | Person contacts/addresses/banking: the per-person type-slot unique keys include soft-deleted rows, so re-adding a deleted slot (e.g. a new Primary address after deleting one) failed with a duplicate-key 500; promoting a non-Alternate row to Primary while Alternate was used also collided | High | FIXED (DEC-053) | 27-09-2026 | 27-09-2026 |
 
 Not a bug (false positive, listed for reference): the original `infer-conventions` sweep flagged
@@ -2001,3 +2002,15 @@ guessed at.
 
 - **Status:** OPEN (27-09-2026) — which permission should gate the Imports menu/page is an owner decision.
 - **Evidence:** `AdminImportController::admin()` returns the view with no check, and the Imports menu dropdown has no `can()`. User 40 (no import permission) gets 200. The import POST checks `VEH_SEG_CREATE`.
+
+### BUG-178 — Engine ignores WIDE dealer charges
+
+- **Status:** OPEN (27-09-2026). The fix changes every computed price, so it needs owner approval.
+- **Evidence:**
+  - `AddonDiscountImportService` writes one WIDE row per scope (`incidental`, `fastag`, `trc`, `rto_tape`, `cod`; `charge_name` / `amount` null), which the Machine Spec requires (CP-06, §Dealer Charges).
+  - `PricingEngineService::dealerCharges()` classifies rows by `charge_name` and takes `amount`, so each wide row becomes "other" = 0 and `dealer_charges.total` is 0.
+  - `scopeHit()` maps `'model' => $variant->model_code`, but the table column is `model_code`, so `isset($row->model)` is false and the model scope is skipped (a model-specific charge applies to every model).
+- **Proposed fix:**
+  - Read the wide columns into the contract keys (incidental, fasttag, trc, rto_tape, cod) with the most specific matching row winning.
+  - Map the scope keys to the real columns (`model_code`, `segment`, `permit`).
+  - Add a test with one ANY row and one model row.

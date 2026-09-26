@@ -578,3 +578,22 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
   - `PricingResetService` is a local-only reset tool.
 - **Next pricing groups:** add-ons/discounts/dealer charges/CSD, prices + vehicle profiles, accessories.
 - **Approved-by:** user (DEC-050 roll-out, "continue") · **Risk:** MED (rules import now rejects non-numeric amounts per row) · **Reversal:** revert.
+
+### DEC-057 | 27-09-2026 | A3 (UAT) | Add-ons, discounts and dealer charges on entity services (pricing group 2 of 4)
+- **Services (`App\Services\Vehicle\Pricing\Addons\`):** `DealerChargeService`, `AddonService` (RSA / Shield), `DiscountService` (Exchange / Corporate…).
+  - `AddonDiscountImportService` writes only through them. It keeps the sheet mapping and its skip decisions (no scope; all-zero dealer charges; no year amounts). Its `onlyFillable()` / `expireAddons()` / `expireDiscounts()` are gone.
+  - **Group expiry** (`expireActive($wef, ['addon_type' => 'RSA'])`): an RSA import never expires Shield rows, and vice versa (spec pitfall).
+- **Field rules (Machine Spec):**
+  - **Scope:** ANY / ALL / blank = all, synonyms first (Segment, Permit, Fuel). On NOT NULL scope columns "all" is stored as `ANY` (addon/discount `model_code` as before, dealer-charge `segment`); elsewhere as null.
+    - Before, an ANY-segment dealer charge failed on the NOT NULL column and was lost. Now it is saved. The engine treats ANY, blank and null alike.
+  - **Amounts:** as DEC-056 (₹ and separators ignored, blank markers = 0, other text reported).
+  - A dealer-charge row with only zero amounts is refused ("never seed zero-value rows"). The importer already skipped such rows.
+  - **Discount total:** a blank total = OEM share + dealer share, and `amount` follows the total, as the importer computed.
+- **Models:** `DealerCharge` / `Addon` / `Discount` `$fillable` now equal the real columns (`Discount.segment` is not a column; `default_allocation`, `is_conditional`, `linked_to` were missing).
+- **Framework:**
+  - `Field::scope(..., anyIsBlank: true)`.
+  - `expireActive()` group filter.
+  - The model backstop keeps a value when its pipeline would blank it (the service already resolved it to the field default, e.g. `ANY`).
+- **CSD:** there is no live writer (only the dead legacy `XpricingHelper`), so there is nothing to route.
+- **Found, not changed (needs owner, BUG-178):** `PricingEngineService::dealerCharges()` reads narrow rows (`charge_name` + `amount`). The importer writes the spec's WIDE columns (CP-06: incidental/fastag/trc/rto_tape/cod), so imported dealer charges add 0 to the pricing JSON. `scopeHit()` also checks a `model` column where the table has `model_code`.
+- **Approved-by:** user (DEC-050 roll-out, "continue") · **Risk:** MED · **Reversal:** revert.

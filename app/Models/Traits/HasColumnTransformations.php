@@ -156,7 +156,15 @@ trait HasColumnTransformations
                 continue;
             }
 
-            $this->attributes[$column] = $this->runTransformation((string) $rawValue, $transformation);
+            $transformed = $this->runTransformation((string) $rawValue, $transformation);
+
+            // A pipeline that blanks a stored value (e.g. scope "ANY" → blank, whose default is ANY)
+            // is the entity service's job to resolve; the backstop keeps the value as given.
+            if ($transformed === '' && trim((string) $rawValue) !== '') {
+                continue;
+            }
+
+            $this->attributes[$column] = $transformed;
         }
     }
 

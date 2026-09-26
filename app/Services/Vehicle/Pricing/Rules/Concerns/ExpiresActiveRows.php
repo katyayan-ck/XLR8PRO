@@ -13,8 +13,13 @@ use Illuminate\Support\Facades\Schema;
  */
 trait ExpiresActiveRows
 {
-    /** Expire every active row; returns how many were expired. */
-    public function expireActive(string $wefDate): int
+    /**
+     * Expire every active row — or only one group's (e.g. ['addon_type' => 'RSA']: group imports
+     * expire only their group, RSA ≠ Shield); returns how many were expired.
+     *
+     * @param  array<string, mixed>  $group
+     */
+    public function expireActive(string $wefDate, array $group = []): int
     {
         $model = new ($this->model());
         $table = $model->getTable();
@@ -27,6 +32,6 @@ trait ExpiresActiveRows
             $changes['updated_by'] = auth(backpack_guard_name())->id() ?? auth()->id();
         }
 
-        return $this->model()::query()->where('is_active', 1)->update($changes);
+        return $this->model()::query()->where($group)->where('is_active', 1)->update($changes);
     }
 }

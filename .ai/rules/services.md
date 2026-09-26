@@ -15,8 +15,8 @@ those fields. CRUD controllers, importers, APIs, jobs and seeders call `create()
 validate or transform themselves, never keep FormRequest rules for these fields, and never write the table with
 `DB::table()` or `Model::create()`. Business rules go in `beforeCreate/beforeUpdate` via `fail()`. The model declares
 `protected string $entityService` so its transform backstop reads the same definition.
-Migrated: `Vehicle\{Segment,SubSegment,VehicleModel,Variant}Service`, `Org\{Branch,Location,Department,Division,Vertical,Designation}Service`, `Person\{PersonRecord,PersonContact,PersonAddress,PersonBanking}Service`, `Org\EmployeeService`, `IAM\{User,UserScope}Service`, `Utils\{KeywordMaster,Keyvalue}Service`, `Vehicle\Pricing\Rules\{RtoRule,TcsConfig,InsBaseRule,InsIdvSlot,InsDefault,InsAddonRate}Service`.
-Next: pricing add-ons/discounts/dealer charges/CSD, prices + profiles, accessories. Engine-written records (sessions, flags, snapshots, history) stay with the engine. The model backstop transforms only changed attributes on update (BUG-176). On update only changed values are validated (stored legacy values never block an edit, DEC-054).
+Migrated: `Vehicle\{Segment,SubSegment,VehicleModel,Variant}Service`, `Org\{Branch,Location,Department,Division,Vertical,Designation}Service`, `Person\{PersonRecord,PersonContact,PersonAddress,PersonBanking}Service`, `Org\EmployeeService`, `IAM\{User,UserScope}Service`, `Utils\{KeywordMaster,Keyvalue}Service`, `Vehicle\Pricing\Rules\{RtoRule,TcsConfig,InsBaseRule,InsIdvSlot,InsDefault,InsAddonRate}Service`, `Vehicle\Pricing\Addons\{DealerCharge,Addon,Discount}Service`.
+Next: pricing prices + profiles, accessories. Engine-written records (sessions, flags, snapshots, history) stay with the engine. The model backstop transforms only changed attributes on update (BUG-176). On update only changed values are validated (stored legacy values never block an edit, DEC-054).
 Scopes: grant/revoke/sync only via `UserScopeService` (revoke = deactivate, never delete).
 
 Never re-implement a capability below; open the service, match its contract, extend it if needed.

@@ -207,11 +207,15 @@ final class Field
     }
 
     /** Pricing-rule scope text (trimmed; synonyms first when a synonym type is given). */
-    public static function scope(string $name, int $max, ?string $synonymType = null): self
+    public static function scope(string $name, int $max, ?string $synonymType = null, bool $anyIsBlank = false): self
     {
         $field = self::make($name)->format('Scope value; ANY / blank = all')->transform('trim_spaces');
         if ($synonymType !== null) {
             $field->transform(fn (string $v) => (string) app(SynonymService::class)->resolve($synonymType, $v));
+        }
+        // Tables whose "all" is stored as blank (or the field default, e.g. model_code 'ANY').
+        if ($anyIsBlank) {
+            $field->transform(fn (string $v) => in_array(strtoupper(trim($v)), ['ANY', 'ALL'], true) ? '' : $v);
         }
 
         return $field->rules('string', "max:{$max}");
