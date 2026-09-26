@@ -4,13 +4,14 @@ namespace App\Http\Controllers\Admin\Iam\Modules;
 
 use App\Http\Requests\ModulesRequest;
 use App\Models\IAM\Module;
-use App\Models\IAM\Process;
+use App\Services\IAM\RbacService;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
+use Exception;
 
 class ModulesCrudController extends CrudController
 {
@@ -19,24 +20,11 @@ class ModulesCrudController extends CrudController
     use ListOperation;
     use UpdateOperation;
 
-    /**
-     * No dedicated "module.*" permission exists in xlr8_iam_permissions — this
-     * reuses "rbac.*", the same pair used by RoleCrudController and
-     * PermissionCrudController, since Module/Process management is part of the
-     * same RBAC-taxonomy screen set.
-     */
     public function setup()
     {
         CRUD::setModel(Module::class);
-
-        CRUD::setRoute(
-            config('backpack.base.route_prefix').'/iam/module'
-        );
-
-        CRUD::setEntityNameStrings(
-            'module',
-            'modules'
-        );
+        CRUD::setRoute(config('backpack.base.route_prefix').'/iam/module');
+        CRUD::setEntityNameStrings('module', 'modules');
     }
 
     protected function setupListOperation()
@@ -45,9 +33,7 @@ class ModulesCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view modules.');
         }
 
-        $this->crud->setListView(
-            'admin.iam.modules.list'
-        );
+        $this->crud->setListView('admin.iam.modules.list');
     }
 
     public function index()
@@ -56,87 +42,37 @@ class ModulesCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view modules.');
         }
 
-        $this->crud->setListView(
-            'admin.iam.modules.list'
-        );
+        $this->crud->setListView('admin.iam.modules.list');
 
-        $modules = Module::orderBy('id', 'desc')
-            ->get();
+        $modules = Module::orderBy('id', 'desc')->get();
 
         $gridData = $modules->map(function ($module, $index) {
-
             $mapped = $module->toArray();
-
-            $mapped['serial_no'] =
-                $index + 1;
-
-            $mapped['is_active'] =
-                $module->is_active
-                ? 'Active'
-                : 'Inactive';
-
-            $editUrl =
-                backpack_url(
-                    "iam/module/{$module->id}/edit"
-                );
-
+            $mapped['serial_no'] = $index + 1;
+            $mapped['is_active'] = $module->is_active ? 'Active' : 'Inactive';
+            $editUrl = backpack_url("iam/module/{$module->id}/edit");
             $mapped['action'] = '
                 <div class="d-flex gap-2 justify-content-center">
-                    <a href="'.$editUrl.'"
-                       class="btn btn-sm btn-primary py-1 px-2">
-                        Edit
-                    </a>
+                    <a href="'.$editUrl.'" class="btn btn-sm btn-primary py-1 px-2">Edit</a>
                 </div>
             ';
-
             return $mapped;
-
         })->values();
 
-        return view(
-            'admin.iam.modules.list',
-            [
-                'title' => 'All Modules',
-
-                'gridConfig' => [
-
-                    'columns' => [
-
-                        [
-                            'field' => 'serial_no',
-                            'headerName' => 'S.No.',
-                        ],
-
-                        [
-                            'field' => 'code',
-                            'headerName' => 'Code',
-                        ],
-
-                        [
-                            'field' => 'name',
-                            'headerName' => 'Module Name',
-                        ],
-
-                        [
-                            'field' => 'description',
-                            'headerName' => 'Description',
-                        ],
-
-                        [
-                            'field' => 'is_active',
-                            'headerName' => 'Active',
-                        ],
-
-                        [
-                            'field' => 'action',
-                            'headerName' => 'Actions',
-                        ],
-                    ],
-
-                    'data' => $gridData,
+        return view('admin.iam.modules.list', [
+            'title' => 'All Modules',
+            'gridConfig' => [
+                'columns' => [
+                    ['field' => 'serial_no', 'headerName' => 'S.No.'],
+                    ['field' => 'code', 'headerName' => 'Code'],
+                    ['field' => 'name', 'headerName' => 'Module Name'],
+                    ['field' => 'description', 'headerName' => 'Description'],
+                    ['field' => 'is_active', 'headerName' => 'Active'],
+                    ['field' => 'action', 'headerName' => 'Actions'],
                 ],
-            ]
-        );
+                'data' => $gridData,
+            ],
+        ]);
     }
 
     public function create()
@@ -145,16 +81,29 @@ class ModulesCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to create modules.');
         }
 
-        $this->crud->setCreateView(
-            'admin.iam.modules.create'
-        );
+        $this->crud->setCreateView('admin.iam.modules.form');
 
-        return view(
-            'admin.iam.modules.create',
-            [
-                'title' => 'Add New Module',
-            ]
-        );
+        return view('admin.iam.modules.form', [
+            'title' => 'Add New Module',
+            'activeProcesses' => [], // Empty array for create mode
+        ]);
+    }
+
+    public function edit($id, RbacService $rbacService)
+    {
+        if (! backpack_user()->can('IAM_RBAC_MANAGE')) {
+            abort(403, 'Unauthorized. You do not have permission to edit modules.');
+        }
+
+        $this->crud->setEditView('admin.iam.modules.form');
+        
+        $module = Module::findOrFail($id);
+        
+        return view('admin.iam.modules.form', [
+            'title' => 'Edit Module - ' . $module->name,
+            'module' => $module,
+            'activeProcesses' => $rbacService->getActiveProcessNamesByModule($module->code),
+        ]);
     }
 
     public function store(ModulesRequest $request)
@@ -164,123 +113,36 @@ class ModulesCrudController extends CrudController
         }
 
         $validated = $request->validated();
-
-        $validated['is_active'] =
-            $request->boolean(
-                'is_active'
-            );
+        $validated['is_active'] = $request->boolean('is_active');
 
         Module::create($validated);
 
-        \Alert::success(
-            'Module created successfully!'
-        )->flash();
+        \Alert::success('Module created successfully!')->flash();
 
-        return redirect(
-            backpack_url('iam/module')
-        );
+        return redirect(backpack_url('iam/module'));
     }
-
-    public function edit($id)
+    
+    public function update(ModulesRequest $request, $id, RbacService $rbacService)
     {
         if (! backpack_user()->can('IAM_RBAC_MANAGE')) {
             abort(403, 'Unauthorized. You do not have permission to edit modules.');
         }
 
-        $this->crud->setEditView(
-            'admin.iam.modules.edit'
-        );
-
         $module = Module::findOrFail($id);
-
-        $activeProcesses =
-            Process::where(
-                'module_code',
-                $module->code
-            )
-                ->where(
-                    'is_active',
-                    1
-                )
-                ->pluck('name')
-                ->toArray();
-
-        return view(
-            'admin.iam.modules.edit',
-            [
-
-                'title' => 'Edit Module - '
-                    .$module->name,
-
-                'module' => $module,
-
-                'activeProcesses' => $activeProcesses,
-            ]
-        );
-    }
-
-    public function update(
-        ModulesRequest $request,
-        $id
-    ) {
-        if (! backpack_user()->can('IAM_RBAC_MANAGE')) {
-            abort(403, 'Unauthorized. You do not have permission to edit modules.');
-        }
-
-        $module = Module::findOrFail(
-            $id
-        );
-
+        
         $validated = $request->validated();
+        $validated['is_active'] = $request->boolean('is_active');
 
-        if (
-            $module->is_active == 1 &&
-            ! $request->boolean(
-                'is_active'
-            )
-        ) {
-
-            $activeProcessCount =
-                Process::where(
-                    'module_code',
-                    $module->code
-                )
-                    ->where(
-                        'is_active',
-                        1
-                    )
-                    ->count();
-
-            if (
-                $activeProcessCount > 0
-            ) {
-
-                \Alert::error(
-                    "Cannot deactivate Module. {$activeProcessCount} active Process(es) exist."
-                )->flash();
-
-                return redirect()
-                    ->back()
-                    ->withInput();
-            }
+        try {
+            $rbacService->updateModule($module, $validated);
+        } catch (Exception $e) {
+            \Alert::error($e->getMessage())->flash();
+            return redirect()->back()->withInput();
         }
 
-        $validated['is_active'] =
-            $request->boolean(
-                'is_active'
-            );
+        \Alert::success('Module updated successfully!')->flash();
 
-        $module->update(
-            $validated
-        );
-
-        \Alert::success(
-            'Module updated successfully!'
-        )->flash();
-
-        return redirect(
-            backpack_url('iam/module')
-        );
+        return redirect(backpack_url('iam/module'));
     }
 
     public function destroy($id)

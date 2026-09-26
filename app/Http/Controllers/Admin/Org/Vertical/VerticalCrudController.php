@@ -117,10 +117,26 @@ class VerticalCrudController extends CrudController
     {
         $this->authorizeManage();
 
-        $this->crud->setCreateView('admin.org.vertical.create');
+        // Updated view reference
+        $this->crud->setCreateView('admin.org.vertical.form');
 
-        return view('admin.org.vertical.create', [
+        return view('admin.org.vertical.form', [
             'title' => 'Add New Vertical',
+        ]);
+    }
+
+    public function edit($id)
+    {
+        $this->authorizeManage();
+
+        // Updated view reference
+        $this->crud->setEditView('admin.org.vertical.form');
+
+        $vertical = Vertical::findOrFail($id);
+
+        return view('admin.org.vertical.form', [
+            'title' => 'Edit Vertical - '.$vertical->name,
+            'vertical' => $vertical,
         ]);
     }
 
@@ -133,20 +149,6 @@ class VerticalCrudController extends CrudController
         \Alert::success('Vertical created successfully!')->flash();
 
         return redirect(backpack_url('org/vertical'));
-    }
-
-    public function edit($id)
-    {
-        $this->authorizeManage();
-
-        $this->crud->setEditView('admin.org.vertical.edit');
-
-        $vertical = Vertical::findOrFail($id);
-
-        return view('admin.org.vertical.edit', [
-            'title' => 'Edit Vertical - '.$vertical->name,
-            'vertical' => $vertical,
-        ]);
     }
 
     public function update(VerticalRequest $request, $id)

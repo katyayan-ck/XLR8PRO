@@ -157,11 +157,30 @@ class LocationCrudController extends CrudController
     {
         $this->authorizeManage();
 
-        $this->crud->setCreateView('admin.org.location.create');
+        // Updated view reference
+        $this->crud->setCreateView('admin.org.location.form');
 
-        return view('admin.org.location.create', [
+        return view('admin.org.location.form', [
             'title' => 'Add New Location',
             'branches' => Branch::orderBy('name')->get(),
+        ]);
+    }
+
+    public function edit($id)
+    {
+        $this->authorizeManage();
+
+        // Updated view reference
+        $this->crud->setEditView('admin.org.location.form');
+
+        $location = Location::findOrFail($id);
+
+        $branches = Branch::orderBy('name')->get();
+
+        return view('admin.org.location.form', [
+            'title' => 'Edit Location - '.$location->name,
+            'location' => $location,
+            'branches' => $branches,
         ]);
     }
 
@@ -174,23 +193,6 @@ class LocationCrudController extends CrudController
         \Alert::success('Location created successfully!')->flash();
 
         return redirect(backpack_url('org/location'));
-    }
-
-    public function edit($id)
-    {
-        $this->authorizeManage();
-
-        $this->crud->setEditView('admin.org.location.edit');
-
-        $location = Location::findOrFail($id);
-
-        $branches = Branch::orderBy('name')->get();
-
-        return view('admin.org.location.edit', [
-            'title' => 'Edit Location - '.$location->name,
-            'location' => $location,
-            'branches' => $branches,
-        ]);
     }
 
     public function update(LocationRequest $request, $id)
