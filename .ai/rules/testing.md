@@ -20,4 +20,5 @@ paths:
   `auth(backpack_guard_name())->loginUsingId($id)`, `$kernel->handle(Request::create(...))`, one request per
   process (re-bootstrapping in one process breaks the Blade component registry). API: create a
   `DeviceSession` + `createToken('x', ['device_id:<id>'])` inside a rolled-back transaction.
-- Smoke-test as superadmin **and** a scoped user (e.g. user 40) — superadmin hides permission bugs.
+- Smoke-test the touched screens as superadmin **and** a scoped user (e.g. user 40) — superadmin hides permission bugs.
+- Full-screen sweep = `tests/Feature/Admin/AdminScreenSmokeTest.php` (group `smoke`, excluded from the default suite; ~350 requests, minutes). Run before merges; add newly broken-but-tracked screens to its `KNOWN_BROKEN` list with the bug id.

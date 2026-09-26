@@ -175,3 +175,11 @@ Branch `feature/integrations`. Decisions DEC-033…038 are in `docs/decisions/de
   - The edit page lists the variant's colour rows.
   - The legacy colour-table guard was removed.
 - **Pending decision:** canonical model-code form, for the data repair (BUG-171).
+
+## Faster verification (user request)
+- The per-process full smoke (~10 min) is replaced by `tests/Feature/Admin/AdminScreenSmokeTest.php`:
+  - It is one in-process sweep of every parameter-free admin screen, as superadmin and as a non-superadmin user, with a documented `KNOWN_BROKEN` list.
+  - It is group `smoke` and excluded from the default suite via `phpunit.xml`.
+  - It still makes about 350 requests (a few minutes), so run it before merges only.
+- **Cadence:** after each change, smoke only the touched screens (seconds); run the full suite periodically. Rules updated in `.ai/guidelines/10-workflow.md` and `.ai/rules/testing.md`.
+- **Model-code impact analysis (BUG-171):** the spaced OEM form dominates. Enquiries have 3,627 spaced vs 1,874 squashed, booking insurance 114 vs 27, and variants 600 vs 46. Only the model master mostly holds squashed codes (15 of 17).

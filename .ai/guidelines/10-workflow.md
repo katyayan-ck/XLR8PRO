@@ -22,7 +22,7 @@ conflict · auth/permission/secret changes · UAT-visible behaviour changes beyo
 2. Scoped `vendor/bin/phpstan analyse <files> --memory-limit=2G`.
 3. `php artisan test --compact` (or the narrowest relevant `--filter`) — runs on `xlrm_testing`.
    Known pre-existing failures are listed in `.ai/state/current.md`; don't add new ones.
-4. HTTP smoke of touched screens as superadmin **and** a scoped non-superadmin user.
+4. HTTP smoke of **only the touched screens** as superadmin **and** a scoped non-superadmin user (seconds). Run the full suite periodically, and the full screen sweep (`php artisan test --group=smoke`, a few minutes) only before merges — never after every change.
 
 **Database**
 - Schema changes are **Laravel migrations** (guarded with `Schema::hasColumn/hasTable`, working `down()`),
