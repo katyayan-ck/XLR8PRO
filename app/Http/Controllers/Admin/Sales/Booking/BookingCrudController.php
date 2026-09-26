@@ -132,6 +132,10 @@ class BookingCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to perform this action.');
         }
 
+        $this->data['customer_categories'] = OrgService::keywordValueByCode('CUSTOMER_TYPE');
+
+        $this->data['occupation_types'] = OrgService::keywordValueByCode('OCCUPATION_TYPE');
+
         return $this->traitEdit($id);
     }
 
@@ -452,6 +456,7 @@ class BookingCrudController extends CrudController
 
         $rules = [
             'sale_type' => 'required|in:1,2',
+            'customercat' => 'required|string|max:255',
             'name' => 'required|string|max:255',
             'care_of' => 'nullable|string|max:255',
             'care_of_name' => 'nullable|string|max:255',
@@ -1000,6 +1005,10 @@ class BookingCrudController extends CrudController
                 'enq.alternate_mobile as alt_mobile',
                 'enq.referee_name as r_name',
                 'enq.referee_phone as r_mobile',
+                'enq.referee_model as r_model',
+                'enq.referee_variant as r_variant',
+                'enq.referee_chassis as r_chassis',
+                'enq.referred_by as referred_by',
                 DB::raw('NULL as accessories'),
                 DB::raw('NULL as apack_amount'),
                 'enq.x8_sc_code as consultant',
@@ -1008,9 +1017,7 @@ class BookingCrudController extends CrudController
                 // 3. Fallbacks
                 DB::raw('NULL as location_other'),
                 DB::raw('NULL as vehicle_oem_code'),
-                DB::raw('NULL as r_model'),
-                DB::raw('NULL as r_variant'),
-                DB::raw('NULL as r_chassis'),
+                
             ]);
 
         $query->leftJoin('xlr8_booking_refund as ref', function ($join) {

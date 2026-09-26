@@ -647,20 +647,18 @@
                                                 );
                                             @endphp
 
-                                            <select name="occupation"
-                                                    id="occupation"
-                                                    class="form-control form-select"
-                                                    required>
-
-                                                <option value="">-- Select Occupation --</option>
+                                            <select name="occupation" id="occupation" class="form-control form-select" required>
+                                                <option value="">Select Occupation</option>
 
                                                 @foreach ($occupation_types ?? [] as $item)
                                                     <option value="{{ $item['code'] }}"
-                                                        {{ (string) $occ === (string) $item['code'] ? 'selected' : '' }}>
+                                                        {{ old(
+                                                            'occupation',
+                                                            $enquiry?->occupation_type ?? ''
+                                                        ) == $item['code'] ? 'selected' : '' }}>
                                                         {{ $item['value'] }}
                                                     </option>
                                                 @endforeach
-
                                             </select>
                                         </div>
                                     </div>
@@ -821,7 +819,12 @@
                                 <div class="row">
                                     <div class="col-sm-1">
                                         <div class="form-group">
-                                            <label><input type="checkbox" id="referredby" name="referredby" {{ old('referredby', $entry?->r_name ? 'on' : '') ? 'checked' : '' }}> Referred By</label>
+                                            <label><input type="checkbox"
+                                                            id="referredby"
+                                                            name="referredby"
+                                                            value="1"
+                                                            {{ old('referredby', $entry?->referred_by ?? null) ? 'checked' : '' }}> 
+                                                            Referred By</label>
                                         </div>
                                     </div>
 
@@ -2162,6 +2165,10 @@
                     toggleRequiredMark($('#refcustomername, #refmobileno, #refexistingmodel, #refvariant, #refchassisregno'), isChecked);
                     if (!isChecked && $('#bookingForm').data('validator')) $('#bookingForm').validate().resetForm();
                 });
+
+                if ($('#referredby').is(':checked')) {
+                    $('#referredby').trigger('change');
+                }
 
                 $('#bookingsource').on('change', function() {
                     const isDSA = this.value === 'DSA';

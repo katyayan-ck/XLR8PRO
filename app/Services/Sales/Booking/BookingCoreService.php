@@ -184,6 +184,9 @@ class BookingCoreService
                     'x8_sc_code' => $input['saleconsultant'] ?? null,
                     'referee_name' => $input['refcustomername'] ?? null,
                     'referee_phone' => $input['refmobileno'] ?? null,
+                    'referee_model' => $input['refexistingmodel'] ?? null,
+                    'referee_variant' => $input['refvariant'] ?? null,
+                    'referee_chassis' => $input['refchassisregno'] ?? null,
                     'referred_by' => $input['referredby'] ?? null,
                     'remarks' => $input['details'] ?? null,
                 ]);
@@ -442,6 +445,15 @@ class BookingCoreService
         if ($booking->b_type != ($input['customer_type'] ?? null)) {
             $rem[] = 'Customer Type Changed from '.($booking->b_type ?? 'null').' to '.($input['customer_type'] ?? null);
             $booking->b_type = $input['customer_type'] ?? null;
+        }
+
+        if ($booking->b_cat != ($input['customercat'] ?? null)) {
+            $rem[] = 'Customer Category Changed from '
+                .($booking->b_cat ?? 'null')
+                .' to '
+                .($input['customercat'] ?? null);
+
+            $booking->b_cat = $input['customercat'] ?? null;
         }
 
         if ($booking->booking_date != ($input['booking_date_actual'] ?? null)) {
@@ -719,6 +731,26 @@ class BookingCoreService
         if ($linkedEnquiry && $linkedEnquiry->referee_phone != ($input['ref_mobile_no'] ?? null)) {
             $rem[] = 'Referred Mobile Changed';
             $linkedEnquiry->referee_phone = $input['ref_mobile_no'] ?? null;
+        }
+
+        if ($linkedEnquiry && $linkedEnquiry->referee_model != ($input['ref_existing_model'] ?? null)) {
+            $rem[] = 'Referred Existing Model Changed';
+            $linkedEnquiry->referee_model = $input['ref_existing_model'] ?? null;
+        }
+
+        if ($linkedEnquiry && $linkedEnquiry->referee_variant != ($input['ref_variant'] ?? null)) {
+            $rem[] = 'Referred Variant Changed';
+            $linkedEnquiry->referee_variant = $input['ref_variant'] ?? null;
+        }
+
+        if ($linkedEnquiry && $linkedEnquiry->referee_chassis != ($input['ref_chassis_reg_no'] ?? null)) {
+            $rem[] = 'Referred Chassis/Registration No. Changed';
+            $linkedEnquiry->referee_chassis = $input['ref_chassis_reg_no'] ?? null;
+        }
+
+        if ($linkedEnquiry && $linkedEnquiry->referred_by != ($input['referredby'] ?? null)) {
+            $rem[] = 'Referred By Changed';
+            $linkedEnquiry->referred_by = $input['referredby'] ?? null;
         }
 
         if ($linkedEnquiry && $linkedEnquiry->remarks != ($input['details'] ?? null)) {
