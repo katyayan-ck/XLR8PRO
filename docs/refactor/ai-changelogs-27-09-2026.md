@@ -339,3 +339,6 @@ Branch `feature/integrations`. Decisions DEC-033…038 are in `docs/decisions/de
   - New: `PricingVehicleAndPriceServicesTest` (3): canonical stub model reused, Vehicle Info through variant rules, price key/WEF expiry.
   - Full suite: 288 passed, 1 skipped.
 - **Smoke:** the pricing and vehicle screens return 200 for user 1 (workflow stages 302 with no session).
+
+## Accessories (pricing group 4) — paused
+- The roll-out is paused on BUG-179 (two divergent accessory importers; the spec forbids rewriting `AccessoryService`). No code change.

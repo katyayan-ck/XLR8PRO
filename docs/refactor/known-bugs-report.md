@@ -213,6 +213,7 @@ Entry format:
 | BUG-176 | `HasColumnTransformations` re-transformed every attribute on every update: editing any field of a keyword value whose legacy code has spaces rewrote the code (hyphens), orphaning its references — 1,903 such codes exist | High | FIXED (DEC-055) | 27-09-2026 | 27-09-2026 |
 | BUG-177 | Imports menu and the `imports/admin` landing page have no permission check (a user with no import permission opens it; the vehicle import POST itself is gated on `VEH_SEG_CREATE`) | Low | OPEN (permission choice needs owner) | 27-09-2026 | — |
 | BUG-178 | Pricing engine ignores imported dealer charges: `dealerCharges()` reads narrow rows (`charge_name`/`amount`) while the importer writes the spec's WIDE columns (CP-06), so the pricing JSON's dealer charges total 0; `scopeHit()` checks a `model` column (table has `model_code`), so model scope is never applied | High | OPEN (price-changing fix — owner approval) | 27-09-2026 | — |
+| BUG-179 | Two divergent accessory importers: the wired one (`import:vehicle-accessories` → `AccessoryImportService`) reads one sheet without type/discount/permit, soft-disables the whole catalogue and echoes every row; the spec-shaped one (`AccessoryService::importExcel*`: typed sheets, discount, permit, hard purge) has no caller | Medium | OPEN (owner: which importer is authoritative) | 27-09-2026 | — |
 | BUG-175 | Person contacts/addresses/banking: the per-person type-slot unique keys include soft-deleted rows, so re-adding a deleted slot (e.g. a new Primary address after deleting one) failed with a duplicate-key 500; promoting a non-Alternate row to Primary while Alternate was used also collided | High | FIXED (DEC-053) | 27-09-2026 | 27-09-2026 |
 
 Not a bug (false positive, listed for reference): the original `infer-conventions` sweep flagged
@@ -2014,3 +2015,17 @@ guessed at.
   - Read the wide columns into the contract keys (incidental, fasttag, trc, rto_tape, cod) with the most specific matching row winning.
   - Map the scope keys to the real columns (`model_code`, `segment`, `permit`).
   - Add a test with one ANY row and one model row.
+
+### BUG-179 — Two divergent accessory importers
+
+- **Status:** OPEN (27-09-2026). It blocks the DEC-050 roll-out for accessories (pricing group 4).
+- **Evidence:**
+  - **Wired:** `app/Console/Commands/ImportVehicleAccessories.php` (`import:vehicle-accessories`) and `App\Imports\VehicleAccessoriesImport` (no caller) use `AccessoryImportService::execute()`:
+    - it reads only the first sheet and no type, discount or permit;
+    - it sets every accessory and scope to `status = 0`, then upserts;
+    - it `echo`/`print_r`s every row.
+  - **Not wired:** `AccessoryService::importExcel()` / `importExcelWithSheetOrder()`:
+    - one sheet per type (Accessory, Maxicare, Ceramic, PPF, GPS VLTD, RTO Tape, Kazam), MRP (rounded), discount and permit scopes;
+    - it hard-deletes both tables inside a transaction.
+  - The Machine Spec says "AccessoryService — existing packs/discounts (DO NOT rewrite)".
+- **Decision needed:** which importer (and which purge semantics) is authoritative. Then both entity services (accessory, accessory scope) are added and the chosen importer writes through them, and the other is removed.
