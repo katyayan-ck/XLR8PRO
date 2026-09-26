@@ -41,6 +41,8 @@ After the merge: run `php artisan test --compact` plus a smoke of `sales/*` as u
 - Dead-code follow-ups.
 - `dev/admin` is ahead of `stage` with all of this.
 
+**Vehicle masters (DEC-050/051):** rules live in the entity services; local vehicle tables purged, awaiting a fresh import (needs gscreds.json). Keep xlrm_testing as is until then.
+
 **Waiting on the user:**
 - OK to merge `dev/admin` → `stage`? Merging deploys to dev.xceler8.in; PHP 8.4 is confirmed there.
 - Data scoping switch-on (BUG-083).

@@ -214,3 +214,9 @@ Branch `feature/integrations`. Decisions DEC-033…038 are in `docs/decisions/de
   - The vehicle import (`AdminImportController`) writes only through the services, uses the full OEM code for variants, stops writing the legacy colour table, and reports rejected rows.
 - **Rules:** `.ai/guidelines/20-architecture.md` (Entity writes), `.ai/rules/services.md` and `.ai/rules/imports.md`.
 - **Tests:** `VehicleEntityServicesTest` (7) and `VehicleMasterWriteTest` (7).
+
+## Vehicle master purge before a fresh import (DEC-051)
+- **Local `xlrm` only:** deleted 7 segments, 7 sub-segments, 50 models, 2,652 variant rows and 2,548 legacy colour rows, after a backup to `storage/app/backups/xlrm-vehicle-masters-pre-purge-27-09-2026.sql`.
+- **Not touched:** pricing tables, CRM/booking references and `xlrm_testing`. Don't refresh the test copy until the fresh import is in.
+- **Smoke:** the vehicle lists, create forms, `imports/admin` and the dashboard all return 200 on the empty tables.
+- **Next:** reload through Imports → Admin → Vehicle import. It reads a Google Sheet, so a local `gscreds.json` is required. Every row goes through the entity services, and rejected rows are listed after the import.

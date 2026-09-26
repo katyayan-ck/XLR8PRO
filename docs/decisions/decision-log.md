@@ -433,3 +433,11 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
 - **Withdrawn:** the vehicle code normaliser, its command and the two data-correction migrations (DEC-049 data part; never deployed). The DEC-049 hyphen format stays, as a field rule.
 - **Roll-out order:** Vehicle masters (segment, sub-segment, model, variant) first; then Org masters, Person, Employee/User (+ importer), KeyValue, Pricing entities.
 - **Risk:** MED (write paths change) · **Approved-by:** user · **Reversal:** revert per-entity commits.
+
+### DEC-051 | 27-09-2026 | A3 (UAT) | Purge the local vehicle master data before a fresh import
+- **Decision (user, option 1):** hard-delete all rows of `xlr8_vehicle_segment`, `xlr8_vehicle_subsegment`, `xlr8_vehicle_model`, `xlr8_vehicle_variant` and the legacy `xlr8_vehicle_color` in the **local** `xlrm` only. The data is reloaded through the vehicle import, which now writes only through the entity services (DEC-050).
+- **Not touched:**
+  - Pricing tables, CRM/booking references and key-values.
+  - `xlrm_testing`: it keeps its copy so the vehicle tests have data. Don't `testing:refresh-db` until the fresh import is in.
+- **Backup:** `storage/app/backups/xlrm-vehicle-masters-pre-purge-27-09-2026.sql`. No foreign keys reference these tables.
+- **Risk:** HIGH (destructive, local) · **Approved-by:** user · **Reversal:** restore the backup.
