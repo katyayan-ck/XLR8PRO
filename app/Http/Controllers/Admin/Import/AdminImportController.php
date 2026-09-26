@@ -160,9 +160,10 @@ class AdminImportController extends Controller
                 $variantCode = substr($fullModelCode, 0, -2);
                 $colorCode = strtoupper(substr($fullModelCode, -2));
 
-                $modelCode = strtoupper(substr($rawOemModel, 0, 30));
+                // Canonical hyphenated code (THAR ROXX → THAR-ROXX, DEC-049); matches the admin forms.
+                $modelCode = \App\Services\Vehicle\VehicleCodeNormaliser::canonical(substr($rawOemModel, 0, 30));
                 $segmentCode = $segmentMapping[$rawSegment] ?? strtoupper(substr($rawSegment, 0, 5));
-                $subSegmentCode = ! empty($rawSubSegment) ? substr($rawSubSegment, 0, 15) : null;
+                $subSegmentCode = ! empty($rawSubSegment) ? \App\Services\Vehicle\VehicleCodeNormaliser::canonical(substr($rawSubSegment, 0, 15)) : null;
 
                 $fuelTypeId = $this->getOrCreateKeyValue($fuelMap, 'FUEL_TYPE', $fuelStr, $now);
                 $bodyMakeId = $this->getOrCreateKeyValue($bodyMakeMap, 'BODY_MAKE', $bodyMakeStr, $now);

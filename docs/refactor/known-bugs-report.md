@@ -208,6 +208,7 @@ Entry format:
 | BUG-170 | Segment/sub-segment create used Backpack's unvalidated default store (duplicate code = 500); sub-segment edit posted `segment_id` (not a column) so a segment change was silently dropped and the form never pre-selected the current segment | High | FIXED | 27-09-2026 | 27-09-2026 |
 | BUG-171 | Editing any vehicle master re-saved its `code` through the space-stripping transform, orphaning children: 588 variants (+584 legacy colour rows) now reference model codes that no longer exist (`THAR ROXX` vs `THARROXX`, 17 models) | Critical | FIXED (DEC-048/049) | 27-09-2026 | 27-09-2026 |
 | BUG-172 | Variant uniqueness was table-wide on `code`, but colours are separate rows sharing the code → every multi-colour variant failed to save; colour fields missing from form/model; deactivation checked the legacy colour table | High | FIXED | 27-09-2026 | 27-09-2026 |
+| BUG-173 | Variant code convention split: 2,548 colour rows store the OEM code WITHOUT its 2-char colour suffix (booking team's vehicle import cuts it), while pricing profiles and the spec use the full OEM code (code + colour); 104 rows created 23-09 hold full codes with no colour, 103 of them duplicating an existing code+colour row | High | OPEN (needs owner decision) | 27-09-2026 | — |
 
 Not a bug (false positive, listed for reference): the original `infer-conventions` sweep flagged
 "`SheetHeaderService`/`SynonymService` not used by importers" — re-investigation on 19-09-2026
@@ -1964,4 +1965,10 @@ guessed at.
 
 - **Status:** FIXED (27-09-2026, DEC-048) — `code` unique per (`code`, `color_code`); `color`/`color_code` on the form and model; edit page lists sibling colour rows; the legacy colour-table deactivation guard removed.
 - **BUG-171 fixed 27-09-2026 (DEC-049):** canonical hyphen format (user). The code transform hyphenates spaces. Migrations `normalise_vehicle_codes` + `normalise_model_keywords` converted 64 model codes (families incl. squashed twins), `NON XUV`, and 29 `CUSTOM-MODEL` keyword codes, with every reference (variants 1,436, enquiries 13,943 + 3,310, booking insurance 610, legacy colours, leads, campaigns, scopes). Orphaned variants 588 → 0. Backups in `storage/app/backups`, maps in `storage/logs/*-normalisation-<db>.json`.
+
+### BUG-173 — Variant code: full OEM code vs code without colour
+
+- **Status:** OPEN (needs owner decision)
+- **Evidence (27-09-2026):** `xlr8_vehicle_variant`: 2,548 rows with `color_code` whose `code` does not end with it (548 distinct codes, created 05-08); 104 rows without colour (23-09 20:36–20:48), 103 of which equal an existing `code`+`color_code`. `xlr8_vehicle_pricing_profile.model_code` = `variant.code` + `color_code` for 53 of 54 profiles. `AdminImportController` line ~160 builds `$variantCode = substr($fullModelCode, 0, -2)`.
+- **Proposed:** migrate to the full OEM code (code + colour) for the 2,548 rows, merge the 103 duplicate stubs into them, update references (accessory scopes, enquiries/bookings `variant` where they hold codes), and stop the import from cutting the suffix.
 
