@@ -52,6 +52,15 @@ class ImportEnquiriesJob implements ShouldQueue
     private array $keyvalueCache = [];
     private bool $keyvalueCacheLoaded = false;
 
+    // NEW: caches keyvalue row ids by [keyword_code][code], used to resolve
+    // an ENQ_SOURCE row's id so it can be set as the parent_id of its ENQ_SUB_SOURCE row.
+    private array $keyvalueIdCache = [];
+
+    // NEW: caches each row's current parent_id string by [keyword_code][code], so
+    // repeated sightings of the same code under a different parent can ADD to the
+    // existing comma separated parent_id list instead of re-querying the DB every time.
+    private array $keyvalueParentCache = [];
+
     private int $processedSoFar = 0;
 
     public function __construct(int $importLogId, string $storedPath)
@@ -358,6 +367,15 @@ class ImportEnquiriesJob implements ShouldQueue
                         // Captured separately (not just inline) so we can check it below for Dropped/Lost logic
                         $quickStatusRaw = $this->cleanString($this->cell($row, $headerMap, 'Status'), 50);
 
+                        // NEW: resolves Enquiry Type -> Source -> Sub Source together, so Source's
+                        // parent_id keeps adding every Enquiry Type id it's seen under, and Sub
+                        // Source's parent_id keeps adding every Source id it's seen under.
+                        $enqHierarchy = $this->resolveEnquiryHierarchy(
+                            $this->cell($row, $headerMap, 'Enquiry Type'),
+                            $this->cell($row, $headerMap, 'Enquiry Source'),
+                            $this->cell($row, $headerMap, 'Enquiry Sub Source')
+                        );
+
                         $data = $this->stripNulls([
                             'enquiry_no'                   => $longEnquiryNo, // Use the extracted variable here
                             'name'                         => $name,
@@ -370,9 +388,9 @@ class ImportEnquiriesJob implements ShouldQueue
                             'color'                        => $this->cleanString($this->cell($row, $headerMap, 'Color'), 100),
                             'purchase_type'                => $this->resolvePurchaseType($this->cell($row, $headerMap, 'Purchase Type')),
                             'likely_purchase_days'         => $this->resolveKeyValue('LIKELY_PURCHASE_DAY', $this->cell($row, $headerMap, 'Likely Purchase In Days')),
-                            'enquiry_type'                 => $this->resolveKeyValue('ENQ_TYPE', $this->cell($row, $headerMap, 'Enquiry Type')),
-                            'source_code'                  => $this->resolveKeyValue('ENQ_SOURCE', $this->cell($row, $headerMap, 'Enquiry Source')),
-                            'sub_source'                   => $this->resolveKeyValue('ENQ_SUB_SOURCE', $this->cell($row, $headerMap, 'Enquiry Sub Source')),
+                            'enquiry_type'                 => $enqHierarchy['enquiry_type'],
+                            'source_code'                  => $enqHierarchy['source_code'],
+                            'sub_source'                   => $enqHierarchy['sub_source'],
                             'quick_status'                 => $quickStatusRaw,
                             'quick_enquiry_date'           => $this->excelDate($this->cell($row, $headerMap, 'Quick Enquiry Date')),
                             'quick_enq_assign_date'        => $this->excelDate($this->cell($row, $headerMap, 'Quick Enquiry Assignment DateTime')),
@@ -468,6 +486,15 @@ class ImportEnquiriesJob implements ShouldQueue
                         // Captured separately so we can check it below for Dropped/Lost logic
                         $stageRaw = $this->cleanString($this->cell($row, $headerMap, 'Stage'), 50);
 
+                        // NEW: resolves Enquiry Type -> Source -> Sub Source together, so Source's
+                        // parent_id keeps adding every Enquiry Type id it's seen under, and Sub
+                        // Source's parent_id keeps adding every Source id it's seen under.
+                        $enqHierarchy = $this->resolveEnquiryHierarchy(
+                            $this->cell($row, $headerMap, 'Enquiry Type'),
+                            $this->cell($row, $headerMap, 'Enquiry Source'),
+                            $this->cell($row, $headerMap, 'Enquiry Sub Source')
+                        );
+
                         $data = $this->stripNulls([
                             'name'                    => $name,
                             'mobile'                  => $mobile,
@@ -479,9 +506,9 @@ class ImportEnquiriesJob implements ShouldQueue
                             'color'                   => $this->cleanString($this->cell($row, $headerMap, 'Color'), 100),
                             'purchase_type'           => $this->resolvePurchaseType($this->cell($row, $headerMap, 'Purchase Type')),
                             'likely_purchase_days'    => $this->resolveKeyValue('LIKELY_PURCHASE_DAY', $this->cell($row, $headerMap, 'Likely Purchase In Days')),
-                            'enquiry_type'            => $this->resolveKeyValue('ENQ_TYPE', $this->cell($row, $headerMap, 'Enquiry Type')),
-                            'source_code'             => $this->resolveKeyValue('ENQ_SOURCE', $this->cell($row, $headerMap, 'Enquiry Source')),
-                            'sub_source'              => $this->resolveKeyValue('ENQ_SUB_SOURCE', $this->cell($row, $headerMap, 'Enquiry Sub Source')),
+                            'enquiry_type'            => $enqHierarchy['enquiry_type'],
+                            'source_code'             => $enqHierarchy['source_code'],
+                            'sub_source'              => $enqHierarchy['sub_source'],
                             'stage'                   => $stageRaw,
                             'enquiry_date'            => $this->excelDate($this->cell($row, $headerMap, 'Enquiry Date')),
                             'enq_assign_date'            => $this->excelDate($this->cell($row, $headerMap, 'Enq Assign Date')),
@@ -642,8 +669,7 @@ class ImportEnquiriesJob implements ShouldQueue
                             'lead_datetime'         => $this->excelDate($this->cell($row, $headerMap, 'Lead Date & Time'), true),
                             'wapp_campaign_name'    => $this->cleanString($this->cell($row, $headerMap, 'Wapp Campaign Name'), 100),
                             'wapp_campaign_date'    => $this->excelDate($this->cell($row, $headerMap, 'Wapp Campaign Date')),
-                            'segment'               => $this->cleanString($this->cell($row, $headerMap, 'Wapp Campaign Segment'), 100),
-                            'model'                 => $this->cleanString($this->cell($row, $headerMap, 'Wapp Campaign Model'), 100),
+                            'model'                 => $this->cleanString($this->cell($row, $headerMap, 'Model'), 100),
                             'tehsil'                => $this->cleanString($this->cell($row, $headerMap, 'Tehsil'), 100),
                             // Fixed for every Whatsapp row
                             'enquiry_type'          => 'DIGITAL',
@@ -702,6 +728,17 @@ class ImportEnquiriesJob implements ShouldQueue
                 foreach ($chunk as $i => $row) {
                     $excelRow = $i + 2;
                     try {
+                        // NEW: resolves Enquiry Type -> Source -> Sub Source together, so Source's
+                        // parent_id keeps adding every Enquiry Type id it's seen under, and Sub
+                        // Source's parent_id keeps adding every Source id it's seen under. This
+                        // sheet only stores enquiry_type (as a code) and enquiry_sub_source (as a
+                        // code); enquiry_source itself stays a raw string per this table's schema.
+                        $enqHierarchy = $this->resolveEnquiryHierarchy(
+                            $this->cell($row, $headerMap, 'Enquiry Type'),
+                            $this->cell($row, $headerMap, 'Enquiry Source'),
+                            $this->cell($row, $headerMap, 'Enquiry Sub Source')
+                        );
+
                         $data = [
                             'enquiry_no'            => $this->cleanString($this->cell($row, $headerMap, 'Enquiry Number'), 50),
                             'sc_code'               => $this->cleanString($this->cell($row, $headerMap, 'Sales Consultant'), 200),
@@ -715,9 +752,9 @@ class ImportEnquiriesJob implements ShouldQueue
                             'remarks'               => $this->resolveKeyValue('SC_FUP_REMARKS', $this->cell($row, $headerMap, 'Remark')),
                             'comments'              => $this->cleanString($this->cell($row, $headerMap, 'Comments')),
                             'enquiry_date'          => $this->excelDate($this->cell($row, $headerMap, 'Enquiry Date')),
-                            'enquiry_type'          => $this->resolveKeyValue('ENQ_TYPE', $this->cell($row, $headerMap, 'Enquiry Type')),
+                            'enquiry_type'          => $enqHierarchy['enquiry_type'],
                             'enquiry_source'        => $this->cleanString($this->cell($row, $headerMap, 'Enquiry Source'), 50),
-                            'enquiry_sub_source'    => $this->resolveKeyValue('ENQ_SUB_SOURCE', $this->cell($row, $headerMap, 'Enquiry Sub Source')),
+                            'enquiry_sub_source'    => $enqHierarchy['sub_source'],
                             'enquiry_status'        => $this->cleanString($this->cell($row, $headerMap, 'Enquiry Status'), 50),
                             'purchase_type'         => $this->cleanString($this->cell($row, $headerMap, 'Purchase Type'), 50),
                             'deviation_stage'       => $this->resolveKeyValue('DEVIATION_STAGE', $this->cell($row, $headerMap, 'Deviation Stage')),
@@ -773,12 +810,14 @@ class ImportEnquiriesJob implements ShouldQueue
                         $customerPhone = $this->cell($row, $headerMap, 'Customer Phone') ?? $this->cell($row, $headerMap, 'Lead Phone');
 
                         // 6. APPLIED resolveKeyValue FOR TD STAGE
+                        $stageCode = $this->resolveKeyValue('TEST_DRIVE_STAGE', $this->cell($row, $headerMap, 'Stage'));
+
                         $data = [
                             'test_drive_no'           => $this->cleanString($this->cell($row, $headerMap, 'Test Drive Number'), 50),
                             'enquiry_no'              => $this->cleanString($this->cell($row, $headerMap, 'Enquiry Number'), 50),
                             'sc_code'                 => $this->cleanString($this->cell($row, $headerMap, 'Sales Consultant'), 200),
                             'sc_mile_id'              => $this->cleanString($this->cell($row, $headerMap, 'SC Mile Id'), 100),
-                            'stage'                   => $this->resolveKeyValue('TEST_DRIVE_STAGE', $this->cell($row, $headerMap, 'Stage')),
+                            'stage'                   => $stageCode,
                             'td_created_date'         => $this->excelDate($this->cell($row, $headerMap, 'TD Created Date')),
                             'scheduled_td_start_time' => $this->excelDate($this->cell($row, $headerMap, 'Scheduled TD Start Time'), true),
                             'scheduled_td_end_time'   => $this->excelDate($this->cell($row, $headerMap, 'Scheduled TD End Time'), true),
@@ -801,8 +840,14 @@ class ImportEnquiriesJob implements ShouldQueue
                         if ($query->exists()) {
                             $stats['skipped']++;
                         } else {
+                            // NEW: If Stage resolves to "Auto Cancelled by System" or "Test Drive Cancelled"
+                            // -> mark the test drive entry as is_active = 3
+                            $isActive = in_array($stageCode, ['AUTO_CANCELLED_BY_SYSTEM', 'TEST_DRIVE_CANCELLED'], true)
+                                ? 3
+                                : 1;
+
                             DB::table('xlr8_crm_testdrive')->insert(array_merge($data, [
-                                'is_active'  => 1,
+                                'is_active'  => $isActive,
                                 'created_at' => $now,
                                 'updated_at' => $now,
                             ]));
@@ -995,9 +1040,14 @@ class ImportEnquiriesJob implements ShouldQueue
         $rows = DB::table('xlr8_utils_keyvalue')
             ->whereIn('keyword_code', self::KEYVALUE_CODES)
             ->where('is_active', 1)
-            ->get(['keyword_code', 'code', 'value']);
+            ->get(['id', 'keyword_code', 'code', 'value', 'parent_id']);
 
         foreach ($rows as $row) {
+            // NEW: cache the row id and current parent_id by keyword_code + code
+            // regardless of value, so parent lookups/appends always work.
+            $this->keyvalueIdCache[$row->keyword_code][$row->code] = $row->id;
+            $this->keyvalueParentCache[$row->keyword_code][$row->code] = $row->parent_id;
+
             $normalized = $this->normalizeForMatch($row->value);
             if ($normalized === '') {
                 continue;
@@ -1008,12 +1058,86 @@ class ImportEnquiriesJob implements ShouldQueue
         $this->keyvalueCacheLoaded = true;
     }
 
+    /**
+     * NEW: Resolves (or looks up) the id of a keyvalue row by its keyword_code + code.
+     * Used to fetch the ENQ_SOURCE row's id so it can be stored as the parent_id
+     * of the matching ENQ_SUB_SOURCE row.
+     */
+    private function getKeyvalueId(string $keywordCode, ?string $code): ?int
+    {
+        if ($code === null) {
+            return null;
+        }
+
+        if (isset($this->keyvalueIdCache[$keywordCode][$code])) {
+            return $this->keyvalueIdCache[$keywordCode][$code];
+        }
+
+        $row = DB::table('xlr8_utils_keyvalue')
+            ->where('keyword_code', $keywordCode)
+            ->where('code', $code)
+            ->first(['id']);
+
+        if ($row) {
+            $this->keyvalueIdCache[$keywordCode][$code] = $row->id;
+            return $row->id;
+        }
+
+        return null;
+    }
+
+    /**
+     * NEW: Resolves an Enquiry Type -> Enquiry Source -> Enquiry Sub Source chain in
+     * one go, so that Source gets linked to its Enquiry Type and Sub Source gets
+     * linked to its Source. Each level's parent_id keeps ADDING new parent ids as a
+     * comma separated list (e.g. a source seen under Telephone (id 1) then under
+     * Walkin (id 2) ends up with parent_id "1,2") instead of overwriting it.
+     *
+     * @return array{enquiry_type: ?string, source_code: ?string, sub_source: ?string}
+     */
+    private function resolveEnquiryHierarchy($enqTypeRawValue, $sourceRawValue, $subSourceRawValue): array
+    {
+        $enqTypeCode = $this->resolveKeyValue('ENQ_TYPE', $enqTypeRawValue);
+        $enqTypeId   = $this->getKeyvalueId('ENQ_TYPE', $enqTypeCode);
+
+        // NEW: Source's parent_id accumulates every Enquiry Type id it's been seen under
+        $sourceCode = $this->resolveKeyValue('ENQ_SOURCE', $sourceRawValue, $enqTypeId);
+        $sourceId   = $this->getKeyvalueId('ENQ_SOURCE', $sourceCode);
+
+        // Sub Source's parent_id accumulates every Enquiry Source id it's been seen under
+        $subSourceCode = $this->resolveKeyValue('ENQ_SUB_SOURCE', $subSourceRawValue, $sourceId);
+
+        return [
+            'enquiry_type' => $enqTypeCode,
+            'source_code'  => $sourceCode,
+            'sub_source'   => $subSourceCode,
+        ];
+    }
+
+    /**
+     * NEW: Resolves an Enquiry Sub Source, making sure its parent_id keeps ADDING the
+     * id of every Enquiry Source keyvalue row it's seen under (creating the Enquiry
+     * Source row first if it doesn't exist yet). Kept for call sites that only have
+     * Source + Sub Source available (no Enquiry Type column).
+     */
+    private function resolveEnquirySubSource($sourceRawValue, $subSourceRawValue): ?string
+    {
+        $sourceCode = $this->resolveKeyValue('ENQ_SOURCE', $sourceRawValue);
+        $sourceId   = $this->getKeyvalueId('ENQ_SOURCE', $sourceCode);
+
+        return $this->resolveKeyValue('ENQ_SUB_SOURCE', $subSourceRawValue, $sourceId);
+    }
+
     private function resolvePurchaseType($rawValue): ?string
     {
         return $this->resolveKeyValue('PURCHASE_TYPE', $rawValue);
     }
 
-    private function resolveKeyValue(string $keywordCode, $rawValue): ?string
+    // NEW: added optional $parentId param — when a new keyvalue row has to be created,
+    // it's saved with this as its parent_id (e.g. an ENQ_SUB_SOURCE row's parent_id is
+    // set to its ENQ_SOURCE row's id — see resolveEnquirySubSource()). If an existing
+    // row is found but doesn't have a parent_id yet, it's backfilled the same way.
+    private function resolveKeyValue(string $keywordCode, $rawValue, $parentId = null): ?string
     {
         if ($rawValue === null) {
             return null;
@@ -1027,7 +1151,9 @@ class ImportEnquiriesJob implements ShouldQueue
         }
 
         if (isset($this->keyvalueCache[$keywordCode][$normalized])) {
-            return $this->keyvalueCache[$keywordCode][$normalized];
+            $cachedCode = $this->keyvalueCache[$keywordCode][$normalized];
+            $this->addParentId($keywordCode, $cachedCode, $parentId);
+            return $cachedCode;
         }
 
         $trimmedValue = trim(preg_replace('/\s+/', ' ', $rawValue));
@@ -1046,6 +1172,8 @@ class ImportEnquiriesJob implements ShouldQueue
                 $this->keyvalueCache[$keywordCode][$existingNormalized] = $existing->code;
             }
 
+            $this->addParentId($keywordCode, $existing->code, $parentId, $existing->parent_id);
+
             return $existing->code;
         }
 
@@ -1056,6 +1184,7 @@ class ImportEnquiriesJob implements ShouldQueue
 
         if ($existingByValue) {
             $this->keyvalueCache[$keywordCode][$normalized] = $existingByValue->code;
+            $this->addParentId($keywordCode, $existingByValue->code, $parentId, $existingByValue->parent_id);
             return $existingByValue->code;
         }
 
@@ -1066,7 +1195,7 @@ class ImportEnquiriesJob implements ShouldQueue
                 'code'         => $newCode,
                 'value'        => $trimmedValue,
                 'details'      => null,
-                'parent_id'    => null,
+                'parent_id'    => $parentId !== null ? (string) $parentId : null,
                 'level'        => 0,
                 'path'         => null,
                 'extra_data'   => null,
@@ -1081,6 +1210,14 @@ class ImportEnquiriesJob implements ShouldQueue
             ]);
 
             $this->keyvalueCache[$keywordCode][$normalized] = $newCode;
+            // NEW: seed the parent cache with this row's single starting parent (if any),
+            // so future sightings under a different parent get ADDED to this list.
+            $this->keyvalueParentCache[$keywordCode][$newCode] = $parentId !== null ? (string) $parentId : null;
+
+            $newId = DB::getPdo()->lastInsertId();
+            if ($newId) {
+                $this->keyvalueIdCache[$keywordCode][$newCode] = (int) $newId;
+            }
 
             return $newCode;
         } catch (\Illuminate\Database\QueryException $e) {
@@ -1092,12 +1229,73 @@ class ImportEnquiriesJob implements ShouldQueue
 
                 if ($existing) {
                     $this->keyvalueCache[$keywordCode][$normalized] = $existing->code;
+                    $this->addParentId($keywordCode, $existing->code, $parentId, $existing->parent_id);
                     return $existing->code;
                 }
             }
 
             throw $e;
         }
+    }
+
+    /**
+     * NEW: Adds $parentId into the code's parent_id column as a comma separated list,
+     * without dropping any parent id already stored there — e.g. a Source first seen
+     * under Enquiry Type id 1 (parent_id "1") then later seen under Enquiry Type id 2
+     * ends up with parent_id "1,2". Safe to call repeatedly; a parent id already
+     * present is left untouched.
+     */
+    private function addParentId(string $keywordCode, string $code, $parentId, $knownCurrentParentId = 'unknown'): void
+    {
+        if ($parentId === null) {
+            return;
+        }
+
+        $parentId = (string) $parentId;
+
+        if ($knownCurrentParentId !== 'unknown') {
+            $current = $knownCurrentParentId;
+        } elseif (array_key_exists($code, $this->keyvalueParentCache[$keywordCode] ?? [])) {
+            $current = $this->keyvalueParentCache[$keywordCode][$code];
+        } else {
+            $current = DB::table('xlr8_utils_keyvalue')
+                ->where('keyword_code', $keywordCode)
+                ->where('code', $code)
+                ->value('parent_id');
+        }
+
+        $ids = $this->splitParentIds($current);
+
+        if (in_array($parentId, $ids, true)) {
+            // Already linked to this parent — just keep the cache in sync.
+            $this->keyvalueParentCache[$keywordCode][$code] = $current;
+            return;
+        }
+
+        $ids[] = $parentId;
+        $newParentId = implode(',', $ids);
+
+        DB::table('xlr8_utils_keyvalue')
+            ->where('keyword_code', $keywordCode)
+            ->where('code', $code)
+            ->update(['parent_id' => $newParentId, 'updated_at' => now()]);
+
+        $this->keyvalueParentCache[$keywordCode][$code] = $newParentId;
+    }
+
+    /**
+     * NEW: Splits a comma separated parent_id string into a clean list of ids.
+     */
+    private function splitParentIds($parentIdString): array
+    {
+        if ($parentIdString === null || $parentIdString === '') {
+            return [];
+        }
+
+        return array_values(array_filter(
+            array_map('trim', explode(',', (string) $parentIdString)),
+            fn($v) => $v !== ''
+        ));
     }
 
     private function normalizeForMatch(string $value): string
