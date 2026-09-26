@@ -44,6 +44,8 @@ final class Field
 
     public bool $raw = false;
 
+    public bool $json = false;
+
     /** @var list<mixed> rules applied to each item of an array input ("name.*") */
     public array $eachRules = [];
 
@@ -180,6 +182,15 @@ final class Field
     public static function documents(string $name = 'documents'): self
     {
         return self::make($name)->format('Files, max 10 MB each')->rules('array')->each('file', 'max:10240')->virtual();
+    }
+
+    /** JSON object/array: an array as is, or JSON text (a form textarea) decoded to one. */
+    public static function json(string $name): self
+    {
+        $field = self::make($name)->format('JSON object or list')->rules('array');
+        $field->json = true;
+
+        return $field;
     }
 
     /** Stored exactly as given — no trimming or transforms (passwords). */

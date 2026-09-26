@@ -15,8 +15,8 @@ those fields. CRUD controllers, importers, APIs, jobs and seeders call `create()
 validate or transform themselves, never keep FormRequest rules for these fields, and never write the table with
 `DB::table()` or `Model::create()`. Business rules go in `beforeCreate/beforeUpdate` via `fail()`. The model declares
 `protected string $entityService` so its transform backstop reads the same definition.
-Migrated: `Vehicle\{Segment,SubSegment,VehicleModel,Variant}Service`, `Org\{Branch,Location,Department,Division,Vertical,Designation}Service`, `Person\{PersonRecord,PersonContact,PersonAddress,PersonBanking}Service`, `Org\EmployeeService`, `IAM\{User,UserScope}Service`.
-Next: KeyValue, Pricing entities. On update only changed values are validated (stored legacy values never block an edit, DEC-054).
+Migrated: `Vehicle\{Segment,SubSegment,VehicleModel,Variant}Service`, `Org\{Branch,Location,Department,Division,Vertical,Designation}Service`, `Person\{PersonRecord,PersonContact,PersonAddress,PersonBanking}Service`, `Org\EmployeeService`, `IAM\{User,UserScope}Service`, `Utils\{KeywordMaster,Keyvalue}Service`.
+Next: Pricing entities. The model backstop transforms only changed attributes on update (BUG-176). On update only changed values are validated (stored legacy values never block an edit, DEC-054).
 Scopes: grant/revoke/sync only via `UserScopeService` (revoke = deactivate, never delete).
 
 Never re-implement a capability below; open the service, match its contract, extend it if needed.
@@ -29,7 +29,7 @@ Full health notes: `docs/reference/Shared-Services-Utilities-Catalog.md`.
 | Person / contacts / addresses / banking | writes: `App\Services\Person\*Service`; lookups + aggregate upsert: `App\Services\PersonService` | never hand-roll phone/PAN/Aadhaar cleanup |
 | Identifier formats & normalisation | `App\Services\IdentifierService` + `App\Rules\*` | Aadhaar, PAN, mobile, GSTIN, chassis, OTF/DMS/invoice |
 | Enquiry references (`XENQ-{id}`) | `EnquiryReferenceService`, `Enquiry::resolveByAnyReference()` | |
-| Keyword/lookup values | `App\Services\KeywordValueService` (cached) | never query `Keyvalue` directly |
+| Keyword/lookup values | reads: `App\Services\KeywordValueService` (cached); writes: `Utils\KeyvalueService` / `KeywordMasterService` | never query or write `Keyvalue` directly |
 | Synonyms before matching imported values | `App\Services\Utils\SynonymService` | |
 | RBAC helpers | `App\Services\RBACService`, `App\Services\IAM\{PermissionTreeService,RolePermissionService}` | |
 | Row-level data scope | `App\Services\IAM\DataScopeService`, `OrgScopeService` | enforcement not yet switched on |

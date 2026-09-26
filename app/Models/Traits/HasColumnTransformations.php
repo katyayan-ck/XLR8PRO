@@ -113,8 +113,11 @@ trait HasColumnTransformations
             $model->applyColumnTransformations();
         });
 
+        // On update only the attributes being changed are transformed: re-running the pipeline
+        // over untouched ones rewrote stored values — e.g. a legacy code with spaces became a
+        // hyphenated code on any edit of another field, orphaning its references (BUG-176).
         static::updating(function ($model) {
-            $model->applyColumnTransformations();
+            $model->applyColumnTransformations(array_keys($model->getDirty()));
         });
     }
 
@@ -123,9 +126,12 @@ trait HasColumnTransformations
     // -----------------------------------------------------------------------
 
     /**
-     * Run all $columnTransformations rules against the current model attributes.
+     * Run the $columnTransformations rules against the model attributes — all of them, or only
+     * the given columns (the dirty ones on update).
+     *
+     * @param  list<string>|null  $onlyColumns
      */
-    public function applyColumnTransformations(): void
+    public function applyColumnTransformations(?array $onlyColumns = null): void
     {
         $transformations = $this->resolvedColumnTransformations();
         if ($transformations === []) {
@@ -133,6 +139,10 @@ trait HasColumnTransformations
         }
 
         foreach ($transformations as $column => $transformation) {
+            if ($onlyColumns !== null && ! in_array($column, $onlyColumns, true)) {
+                continue;
+            }
+
             // Skip columns that are neither fillable nor unguarded
             if (! $this->isColumnWritable($column)) {
                 continue;

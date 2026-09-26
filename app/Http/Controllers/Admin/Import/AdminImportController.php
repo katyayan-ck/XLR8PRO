@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Admin\Import;
 
+use App\Models\Utilities\KeyValue\Keyvalue;
+use App\Services\Utils\KeyvalueService;
 use Illuminate\Validation\ValidationException;
 use App\Services\Vehicle\VariantService;
 use App\Services\Vehicle\VehicleModelService;
@@ -299,18 +301,18 @@ class AdminImportController extends Controller
         $upper = strtoupper(trim($value));
 
         if (! isset($map[$upper])) {
-            $id = \DB::table('xlr8_utils_keyvalue')->insertGetId([
+            // New values go through KeyvalueService (code format, keyword must exist — DEC-055).
+            $values = app(KeyvalueService::class);
+            $code = $values->normalise(['code' => $value])['code'];
+            $existing = Keyvalue::where('keyword_code', $keyword)->where('code', $code)->first();
+            $map[$upper] = ($existing ?? $values->create([
                 'keyword_code' => $keyword,
-                'key' => '',
-                'code' => $upper,
+                'code' => $code,
                 'value' => ucfirst(strtolower($value)),
-                'status' => 1,
-                'is_active' => 1,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ]);
-            $map[$upper] = $id;
-            \Log::warning("Auto-created {$keyword}: {$value}");
+            ]))->id;
+            if (! $existing) {
+                \Log::warning("Auto-created {$keyword}: {$value}");
+            }
         }
 
         return $map[$upper];

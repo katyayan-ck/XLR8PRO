@@ -210,6 +210,8 @@ Entry format:
 | BUG-172 | Variant uniqueness was table-wide on `code`, but colours are separate rows sharing the code → every multi-colour variant failed to save; colour fields missing from form/model; deactivation checked the legacy colour table | High | FIXED | 27-09-2026 | 27-09-2026 |
 | BUG-173 | Variant code convention split: 2,548 colour rows store the OEM code WITHOUT its 2-char colour suffix (booking team's vehicle import cuts it), while pricing profiles and the spec use the full OEM code (code + colour); 104 rows created 23-09 hold full codes with no colour, 103 of them duplicating an existing code+colour row | High | OPEN (needs owner decision) | 27-09-2026 | — |
 | BUG-174 | `import:rbac-master` silently imported nothing: its sheet classes implement no Maatwebsite `To*` concern (and call an undefined `skip()`), yet the command printed "No errors. All rows processed cleanly" | Medium | FIXED (retired, DEC-052) | 27-09-2026 | 27-09-2026 |
+| BUG-176 | `HasColumnTransformations` re-transformed every attribute on every update: editing any field of a keyword value whose legacy code has spaces rewrote the code (hyphens), orphaning its references — 1,903 such codes exist | High | FIXED (DEC-055) | 27-09-2026 | 27-09-2026 |
+| BUG-177 | Imports menu and the `imports/admin` landing page have no permission check (a user with no import permission opens it; the vehicle import POST itself is gated on `VEH_SEG_CREATE`) | Low | OPEN (permission choice needs owner) | 27-09-2026 | — |
 | BUG-175 | Person contacts/addresses/banking: the per-person type-slot unique keys include soft-deleted rows, so re-adding a deleted slot (e.g. a new Primary address after deleting one) failed with a duplicate-key 500; promoting a non-Alternate row to Primary while Alternate was used also collided | High | FIXED (DEC-053) | 27-09-2026 | 27-09-2026 |
 
 Not a bug (false positive, listed for reference): the original `infer-conventions` sweep flagged
@@ -1987,3 +1989,15 @@ guessed at.
   - A trashed row found in a target slot is removed first.
   - Promotion swaps slots (`SwapsPrimarySlot`).
   - Tests: `tests/Feature/Person/PersonEntityServicesTest.php`.
+
+### BUG-176 — Model backstop rewrote untouched attributes on update
+
+- **Status:** FIXED 27-09-2026 (DEC-055).
+- **Cause:** the `updating` hook of `HasColumnTransformations` ran the transformation pipeline over every configured column, not just the changed ones. A keyword value with a legacy code containing spaces got its code hyphenated whenever anything else on the row was edited (Key Value screen, enquiry import parent update), breaking every reference to the old code.
+- **Fix:** on update only dirty attributes are transformed; on create, all are.
+- **Test:** `KeywordEntityServicesTest::test_editing_a_legacy_value_never_rewrites_its_code`.
+
+### BUG-177 — Imports landing page not permission-gated
+
+- **Status:** OPEN (27-09-2026) — which permission should gate the Imports menu/page is an owner decision.
+- **Evidence:** `AdminImportController::admin()` returns the view with no check, and the Imports menu dropdown has no `can()`. User 40 (no import permission) gets 200. The import POST checks `VEH_SEG_CREATE`.

@@ -3,6 +3,8 @@
 
 namespace App\Jobs;
 
+use App\Models\Utilities\KeyValue\Keyvalue;
+use App\Services\Utils\KeyvalueService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -1189,24 +1191,12 @@ class ImportEnquiriesJob implements ShouldQueue
         }
 
         try {
-            DB::table('xlr8_utils_keyvalue')->insert([
+            // Written through KeyvalueService, the keyword values' single write path (DEC-055).
+            $created = app(KeyvalueService::class)->create([
                 'keyword_code' => $keywordCode,
-                'key'          => null,
                 'code'         => $newCode,
                 'value'        => $trimmedValue,
-                'details'      => null,
                 'parent_id'    => $parentId !== null ? (string) $parentId : null,
-                'level'        => 0,
-                'path'         => null,
-                'extra_data'   => null,
-                'status'       => 1,
-                'is_active'    => 1,
-                'created_by'   => null,
-                'updated_by'   => null,
-                'deleted_by'   => null,
-                'created_at'   => now(),
-                'updated_at'   => now(),
-                'deleted_at'   => null,
             ]);
 
             $this->keyvalueCache[$keywordCode][$normalized] = $newCode;
@@ -1214,14 +1204,12 @@ class ImportEnquiriesJob implements ShouldQueue
             // so future sightings under a different parent get ADDED to this list.
             $this->keyvalueParentCache[$keywordCode][$newCode] = $parentId !== null ? (string) $parentId : null;
 
-            $newId = DB::getPdo()->lastInsertId();
-            if ($newId) {
-                $this->keyvalueIdCache[$keywordCode][$newCode] = (int) $newId;
-            }
+            $this->keyvalueIdCache[$keywordCode][$newCode] = (int) $created->id;
 
             return $newCode;
-        } catch (\Illuminate\Database\QueryException $e) {
-            if ($e->getCode() == 23000) {
+        } catch (\Illuminate\Database\QueryException|\Illuminate\Validation\ValidationException $e) {
+            // Created meanwhile by another run (duplicate): use that row.
+            if ($e instanceof \Illuminate\Validation\ValidationException || $e->getCode() == 23000) {
                 $existing = DB::table('xlr8_utils_keyvalue')
                     ->where('keyword_code', $keywordCode)
                     ->where('code', $newCode)
@@ -1275,10 +1263,10 @@ class ImportEnquiriesJob implements ShouldQueue
         $ids[] = $parentId;
         $newParentId = implode(',', $ids);
 
-        DB::table('xlr8_utils_keyvalue')
-            ->where('keyword_code', $keywordCode)
-            ->where('code', $code)
-            ->update(['parent_id' => $newParentId, 'updated_at' => now()]);
+        $row = Keyvalue::where('keyword_code', $keywordCode)->where('code', $code)->first();
+        if ($row) {
+            app(KeyvalueService::class)->addParent($row, $parentId);
+        }
 
         $this->keyvalueParentCache[$keywordCode][$code] = $newParentId;
     }

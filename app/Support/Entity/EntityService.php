@@ -192,6 +192,13 @@ abstract class EntityService
 
                 continue;
             }
+            if ($field->json && is_string($value)) {
+                $decoded = trim($value) === '' ? null : json_decode($value, true);
+                // Invalid JSON stays text, so the field's `array` rule reports it.
+                $out[$name] = trim($value) === '' ? null : (is_array($decoded) ? $decoded : $value);
+
+                continue;
+            }
             if ($field->raw) {
                 $out[$name] = $value === '' ? null : $value;
 

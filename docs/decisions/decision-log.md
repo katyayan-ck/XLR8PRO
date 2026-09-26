@@ -532,3 +532,20 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
   - User-screen onboarding and edit are one transaction.
   - A rejected value leaves nothing half-written; before, a person and employee could be saved without their user.
 - **Approved-by:** user (DEC-050 roll-out, "continue") · **Risk:** MED (User screen and user import validation; IAM orchestration unchanged) · **Reversal:** revert.
+
+### DEC-055 | 27-09-2026 | A3 (UAT) | Keyword masters and values on entity services (DEC-050 roll-out); backstop transforms only changed attributes
+- **Services:** `Utils\KeywordMasterService`, `Utils\KeyvalueService`. Reads stay on the cached `KeywordValueService`; its cache for the keyword is cleared after each write.
+  - **Callers:**
+    - The Keyword and Key Value screens (`KeyvalueRequest` / `KeywordMasterRequest` deleted).
+    - The vehicle import (`AdminImportController::getOrCreateKeyValue`, was `DB::table()->insertGetId`).
+    - The enquiry import (`ImportEnquiriesJob`, booking team's file, minimal change: its insert and its parent-list `UPDATE` now call the service; matching/caching untouched).
+  - The models' `$columnTransformations` and the `Keyvalue` save hook (upper-casing `key`, code fallback to key) moved into the service.
+- **One rule set where the copies disagreed:**
+  - **Code uniqueness:** the screen rule was table-wide, while the data and the enquiry import use one code per keyword (the same code exists under several keywords). It is now unique **within its keyword**.
+  - **`parent_id`:** the screen allowed one integer, while the enquiry import stores a comma-separated parent list. Now a comma-separated id list, with `addParent()` appending one.
+  - **`extra_data`:** the screen posted JSON text but validated `array`, so any filled-in value failed. Now JSON text is decoded (`Field::json()`), and invalid JSON is reported.
+  - **Codes:** the standard code format (DEC-049), fixed once created. The vehicle import looks existing values up by the normalised code before creating one.
+  - **A value's keyword must exist.** Two keywords were in use without a master row: `PERMIT` (vehicle import, 4 values) and `FOLLOW_UP_REMARKS_TYPE` (19 values). Migration `2026_09_27_130000_add_missing_keyword_masters` adds them (idempotent, through the service). It has run on local `xlrm` and `xlrm_testing`; other environments get it on deploy.
+- **Legacy codes are left as they are** (DEC-050: no correcting old data): 1,903 stored codes contain spaces (mostly `SPARE_BIN`).
+- **Framework — BUG-176:** `HasColumnTransformations` re-ran every column's pipeline on **every update**, so editing any field of a row whose stored code had spaces silently rewrote the code (`OLD BIN A1` → `OLD-BIN-A1`), orphaning references. This is the BUG-171 pattern, and it applied to keyword values and every model with the backstop. Now, on update, only the changed attributes are transformed.
+- **Approved-by:** user (DEC-050 roll-out, "continue") · **Risk:** MED (Key Value screens, vehicle/enquiry imports create keyword values through validation) · **Reversal:** revert; migration `down()` removes the two masters.

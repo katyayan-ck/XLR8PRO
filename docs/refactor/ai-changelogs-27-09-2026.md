@@ -281,3 +281,22 @@ Branch `feature/integrations`. Decisions DEC-033…038 are in `docs/decisions/de
   - `UserRbacWorkbookTest` is back to strict: the unchanged round trip has 0 failed rows.
   - User, Person and Org tests pass.
 - **Smoke:** the User list/create/edit/show pages, the bulk-import page and the Employee list return 200 for user 1 and 403 for user 40, unchanged.
+
+## Keyword masters and values on entity services (DEC-055)
+- **New:**
+  - `app/Services/Utils/KeywordMasterService.php`
+  - `app/Services/Utils/KeyvalueService.php` (with `addParent()`)
+  - Migration `2026_09_27_130000_add_missing_keyword_masters.php` (`PERMIT`, `FOLLOW_UP_REMARKS_TYPE`)
+  - `Field::json()`
+- **Before → after:**
+  - **Key Value / Keyword controllers:** before, `Model::create/update` with FormRequests. After, the services; both requests are deleted.
+  - **`AdminImportController::getOrCreateKeyValue`:** before, `DB::table()->insertGetId`. After, a lookup by normalised code, then `KeyvalueService::create`.
+  - **`ImportEnquiriesJob`:** before, `DB::table` insert plus a parent-list `update`. After, `KeyvalueService::create` / `addParent`. A duplicate race (DB 23000 or unique validation) still reuses the existing row.
+  - **`Keyvalue` / `KeywordMaster` models:** `$columnTransformations` and the save hook were removed; each model now declares `$entityService`.
+  - **`HasColumnTransformations`:** on update, only dirty attributes are transformed (BUG-176).
+- **Not changed:** `BrandCrudController` still has direct keyvalue inserts, but it is not routed at all (Brand retired, DEC-038). It's a purge candidate.
+- **Bugs:** BUG-176 (fixed), BUG-177 (logged, open).
+- **Tests:** new `KeywordEntityServicesTest` (6). Full suite: 278 passed, 1 skipped.
+- **Smoke:**
+  - The Key Value and Keyword list/create/edit pages return 200 for user 1 and 403 for user 40.
+  - `imports/admin` returns 200 for both (BUG-177).

@@ -83,7 +83,7 @@ final class PersonRecordService extends EntityService
                 ->transform('trim', 'uppercase')->rules(new TanNumber)->unique(includeTrashed: true),
             Field::make('gst_no')->label(__('org.fields.gst_no'))->format('GSTIN, upper-case')
                 ->transform('trim', 'uppercase')->rules(new Gstin)->unique(includeTrashed: true),
-            Field::make('extra_data')->rules('array'),
+            Field::json('extra_data'),
             Field::phone('mobile')->label(__('org.fields.mobile'))->virtual(),
             Field::image('profile_photo')->label('Profile Photo'),
             Field::documents('identity_documents')->label('Identity Documents'),
