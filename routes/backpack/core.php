@@ -21,7 +21,6 @@ use App\Http\Controllers\Admin\Org\PersonBankingDetail\PersonBankingDetailCrudCo
 use App\Http\Controllers\Admin\Org\PersonContact\PersonContactCrudController;
 use App\Http\Controllers\Admin\Org\User\UserCrudController;
 use App\Http\Controllers\Admin\Org\Vertical\VerticalCrudController;
-use App\Http\Controllers\Admin\OrgDemoController;
 use App\Http\Controllers\Admin\Rto\RtoCrudController;
 use App\Http\Controllers\Admin\Sales\Campaign\CampaignCrudController;
 use App\Http\Controllers\Admin\Sales\Enquiry\EnquiryCrudController;
@@ -31,7 +30,6 @@ use App\Http\Controllers\Admin\Spares\SpareRequest\SpareRequestCrudController;
 use App\Http\Controllers\Admin\Utils\KeyValue\KeyValueCrudController;
 use App\Http\Controllers\Admin\Utils\KeywordMaster\KeywordMasterCrudController;
 use App\Http\Controllers\Admin\Utils\SystemSetting\SystemSettingCrudController;
-use App\Http\Controllers\Admin\Vehicle\Brand\BrandCrudController;
 use App\Http\Controllers\Admin\Vehicle\Color\ColorCrudController;
 use App\Http\Controllers\Admin\Vehicle\Model\VehicleModelCrudController;
 use App\Http\Controllers\Admin\Vehicle\Segment\SegmentCrudController;
@@ -48,8 +46,6 @@ Route::group([
     ),
     'namespace' => 'App\Http\Controllers\Admin',
 ], function () {
-
-    Route::get('org-demo', [OrgDemoController::class, 'index'])->name('backpack.org.demo');
 
     Route::get('finance/import', [FinanceCrudController::class, 'import'])->name('finance.import');
     Route::get('insurance/import', [InsuranceCrudController::class, 'import'])->name('insurance.import');
@@ -86,14 +82,9 @@ Route::group([
     // hooks (in addition to redundant inline checks in the overridden action methods), and
     // search()/showDetailsRow() have NO inline override at all, relying solely on the hook. See
     // .ai/rules/module-structure.md §3 and known-bugs-report.md BUG-064.
-    Route::get('vehicle/brand', ['uses' => BrandCrudController::class.'@index', 'as' => 'vehicle.brand.index', 'operation' => 'list']);
-    Route::post('vehicle/brand', ['uses' => BrandCrudController::class.'@store', 'as' => 'vehicle.brand.store', 'operation' => 'create']);
-    Route::get('vehicle/brand/create', ['uses' => BrandCrudController::class.'@create', 'as' => 'vehicle.brand.create', 'operation' => 'create']);
-    Route::post('vehicle/brand/search', ['uses' => BrandCrudController::class.'@search', 'as' => 'vehicle.brand.search', 'operation' => 'list']);
-    Route::delete('vehicle/brand/{id}', ['uses' => BrandCrudController::class.'@destroy', 'as' => 'vehicle.brand.destroy', 'operation' => 'delete']);
-    Route::put('vehicle/brand/{id}', ['uses' => BrandCrudController::class.'@update', 'as' => 'vehicle.brand.update', 'operation' => 'update']);
-    Route::get('vehicle/brand/{id}/details', ['uses' => BrandCrudController::class.'@showDetailsRow', 'as' => 'vehicle.brand.details', 'operation' => 'list']);
-    Route::get('vehicle/brand/{id}/edit', ['uses' => BrandCrudController::class.'@edit', 'as' => 'vehicle.brand.edit', 'operation' => 'update']);
+    // Brand retired for UAT: no xlr8_vehicle_brand table (BUG-009, DEC-038). Old URLs land on Segment.
+    Route::redirect('vehicle/brand', '/'.config('backpack.base.route_prefix').'/vehicle/segment');
+    Route::redirect('vehicle/brand/{any}', '/'.config('backpack.base.route_prefix').'/vehicle/segment')->where('any', '.*');
 
     Route::get('vehicle/color', ['uses' => ColorCrudController::class.'@index', 'as' => 'vehicle.color.index', 'operation' => 'list']);
     Route::post('vehicle/color', ['uses' => ColorCrudController::class.'@store', 'as' => 'vehicle.color.store', 'operation' => 'create']);
@@ -122,7 +113,6 @@ Route::group([
     Route::put('vehicle/sub-segment/{id}', ['uses' => SubSegmentCrudController::class.'@update', 'as' => 'vehicle.sub-segment.update', 'operation' => 'update']);
     Route::get('vehicle/sub-segment/{id}/details', ['uses' => SubSegmentCrudController::class.'@showDetailsRow', 'as' => 'vehicle.sub-segment.details', 'operation' => 'list']);
     Route::get('vehicle/sub-segment/{id}/edit', ['uses' => SubSegmentCrudController::class.'@edit', 'as' => 'vehicle.sub-segment.edit', 'operation' => 'update']);
-    Route::get('vehicle/sub-segment/segments/{brandCode}', [SubSegmentCrudController::class, 'getSegmentsByBrand'])->name('vehicle.sub-segment.get-segments');
     Route::get('vehicle/sub-segment/sub-segments/{segmentCode}', [SubSegmentCrudController::class, 'getSubSegmentsBySegment'])->name('vehicle.sub-segment.get-sub-segments');
 
     Route::get('vehicle/variant', ['uses' => VariantCrudController::class.'@index', 'as' => 'vehicle.variant.index', 'operation' => 'list']);

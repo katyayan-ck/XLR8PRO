@@ -277,3 +277,14 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
   - Employees are created and updated via Users → Bulk import or the User screen.
 - **Menu:** hide Vehicle → Brand (no table, BUG-009); the 8 booking report links (missing tables, BUG-122; user choice — menu only, Sales code untouched); Spares links (module broken, out of UAT scope: BUG-030/031/032/116).
 - **Risk:** MED (UAT-visible, approved scope) · **Approved-by:** user (DEC-034) · **Reversal:** revert.
+
+### DEC-038 | 27-09-2026 01:10 | A3 (UAT) | Remove three dead in-scope links (org-demo, sub-segment brand AJAX, Price List)
+- **Decision:**
+  - Delete the `org-demo` route, `OrgDemoController` and its view. The page 500s via the retired Posts model (BUG-049), and nothing links to it.
+  - Delete the `vehicle/sub-segment/segments/{brandCode}` route: the method never existed and the only caller is already commented out (BUG-010/065). Remove that dead JS block too.
+  - Hide the Sales-config "Price List" menu link: `admin/pricing` has no route or screen, so it always 404s (BUG-069). Pricing screens stay reachable from the Pricing menu.
+- **Options:** implement the pages instead. Rejected: there's no brand table and no price-list spec; both would be new features.
+- **Risk:** LOW (dead or 500 surfaces only) · **Approved-by:** auto (the plan §2 drop list covers demo pages) · **Reversal:** revert the commit.
+- **Addendum (01:40):**
+  - All `vehicle/brand*` routes are replaced by redirects to `vehicle/segment`. The Brand controller, request and views stay in the tree, unrouted, for Track B reference.
+  - Deleted the unreferenced brand writers `Imports/Sheets/SegmentSheet`, `Imports/Concerns/MasterDataSeeder` and `CodeGenerator`: no callers, and they write to a missing table and column.

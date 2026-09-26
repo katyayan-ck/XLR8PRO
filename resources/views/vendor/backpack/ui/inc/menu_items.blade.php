@@ -239,13 +239,7 @@
     {{-- Separator --}}
     <x-backpack::menu-separator title="Sales Configuration" />
 
-    {{-- Price List --}}
-    @if (backpack_user() && (backpack_user()->can('can_view_documents') || backpack_user()->hasRole('super admin')))
-        <a class="dropdown-item d-flex align-items-center justify-content-between"
-            href="{{ backpack_url('pricing') }}">
-            <span><i class="la la-tag me-2"></i>Price List</span>
-        </a>
-    @endif
+    {{-- Price List hidden: admin/pricing has no route or screen (BUG-069, DEC-038). --}}
 
     {{-- Enquiries --}}
     <x-backpack::menu-dropdown title="Enquiries" icon="la la-question-circle" nested="true">

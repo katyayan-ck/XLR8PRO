@@ -43,20 +43,20 @@ Entry format:
 | BUG-005 | `UserCrudController` checked `user.*` (singular) against real `users.*` (plural) permissions | High | FIXED | 19-09-2026 (~23:00) | 19-09-2026 23:45 |
 | BUG-006 | `checkPermission` middleware registered but wired to no route | Medium | OPEN | 19-09-2026 (pre-rollout sweep) | — |
 | BUG-007 | `/admin/user` — Backpack's `hasAccessOrFail('list')` throws unconditionally | Critical | FIXED | 19-09-2026 (~22:30) | 26-09-2026 |
-| BUG-008 | `EmployeeCrudController` references non-existent columns (`person_id` etc.) | High | PARTIALLY FIXED (list) — create/edit OPEN | 20-09-2026 09:45 | — |
-| BUG-009 | `BrandCrudController` — `xlr8_vehicle_brand` table doesn't exist | High | OPEN | 20-09-2026 10:30 | — |
-| BUG-010 | `SubSegmentCrudController::getSegmentsByBrand` — dead route, method never defined | Low | OPEN | 20-09-2026 11:15 | — |
-| BUG-011 | `SubSegment.name` validated/submitted but not `$fillable` — silently never saved | Medium | OPEN | 20-09-2026 11:15 | — |
-| BUG-012 | `VehicleModelCrudController::destroy()` — dead route, method never defined | Low | OPEN | 20-09-2026 12:00 | — |
+| BUG-008 | `EmployeeCrudController` references non-existent columns (`person_id` etc.) | High | MITIGATED (DEC-037) | 20-09-2026 09:45 | 27-09-2026 |
+| BUG-009 | `BrandCrudController` — `xlr8_vehicle_brand` table doesn't exist | High | MITIGATED (DEC-037/038) | 20-09-2026 10:30 | 27-09-2026 |
+| BUG-010 | `SubSegmentCrudController::getSegmentsByBrand` — dead route, method never defined | Low | FIXED | 20-09-2026 11:15 | 27-09-2026 |
+| BUG-011 | `SubSegment.name` validated/submitted but not `$fillable` — silently never saved | Medium | FIXED | 20-09-2026 11:15 | 27-09-2026 |
+| BUG-012 | `VehicleModelCrudController::destroy()` — dead route, method never defined | Low | FIXED | 20-09-2026 12:00 | 27-09-2026 |
 | BUG-013 | `RoleCrudController` — `Role` model missing `CrudTrait`, screen 500s for everyone | Critical | FIXED | 20-09-2026 13:00 | 26-09-2026 |
 | BUG-014 | PRO-only Backpack features used without `backpack/pro` installed — `SystemSettingCrudController` (filter) and `UserCrudController` (filter + `select2` fields) | Medium | FIXED for `UserCrudController` (its Create/Edit no longer use Backpack fields/filters at all — hand-rolled forms instead, see BUG-040); `SystemSettingCrudController`'s filter left as-is, still OPEN | 20-09-2026 13:00 | 21-09-2026 14:00 (User only) |
 | BUG-015 | `PostCrudController` / `UserTypeCrudController` — entirely unreachable, no routes | Medium | OPEN | 20-09-2026 13:00 | — |
-| BUG-016 | `RoleRequest` validation references non-existent `xlr8_iam_roles` table | Medium | OPEN | 20-09-2026 13:00 | — |
+| BUG-016 | `RoleRequest` validation references non-existent `xlr8_iam_roles` table | Medium | FIXED | 20-09-2026 13:00 | 27-09-2026 |
 | BUG-017 | Dead/unused traits and classes (`HasAuditFields`, `ScopedQuery`, `AfterImportListener`, `BrandCrudController::import()`) | Low | OPEN | 19-09-2026 / 20-09-2026 (see entry) | — |
-| BUG-018 | `App\Models\IAM\Role` has a misleading, dead `$table` property | Cosmetic | OPEN | 19-09-2026 22:20 | — |
+| BUG-018 | `App\Models\IAM\Role` has a misleading, dead `$table` property | Cosmetic | FIXED | 19-09-2026 22:20 | 27-09-2026 |
 | BUG-019 | Unexplained large external change to `BookingCrudController.php` | Unknown | OPEN — needs owner input | 20-09-2026 13:00 | — |
-| BUG-020 | `PersonAddressCrudController` references columns that don't exist (`type`, `person_id`, `is_primary`) | High | PARTIALLY FIXED (list) — create/edit OPEN | 20-09-2026 15:30 | — |
-| BUG-021 | `PersonBankingDetailCrudController` — missing `CrudTrait` + wrong column names (stacked) | Critical | PARTIALLY FIXED (list/create render) — form persistence OPEN | 20-09-2026 16:00 | — |
+| BUG-020 | `PersonAddressCrudController` references columns that don't exist (`type`, `person_id`, `is_primary`) | High | MITIGATED (DEC-037) | 20-09-2026 15:30 | 27-09-2026 |
+| BUG-021 | `PersonBankingDetailCrudController` — missing `CrudTrait` + wrong column names (stacked) | Critical | MITIGATED (DEC-037) | 20-09-2026 16:00 | 27-09-2026 |
 | BUG-022 | `VehicleAccessoryCrudController` — no Operation traits, `Route::crud()` registers nothing, entirely unreachable | Medium | OPEN | 20-09-2026 16:30 | — |
 | BUG-023 | `Route::crud('keyvalue', 'KeyvalueCrudController')` — wrong case, works on Windows only | High | FIXED | 20-09-2026 16:30 | 20-09-2026 16:45 |
 | BUG-024 | 20 more CrudControllers entirely unreachable (Garage, GraphNode/Edge, 5x Employee assignment, DesigDeptTree, PostPermission, PostReporting, ReportingHierarchy, TestDrive [commented-out route], DashboardControllerCrudController, SpareOrderingreport, SparePartwise, HRTransfer, HRRelieving, EmployeeJourney, Performance) | Medium | OPEN | 20-09-2026 17:00 | — |
@@ -73,7 +73,7 @@ Entry format:
 | BUG-046 | `EnquiryCrudController` — 5 registered routes (`pendingList`, `erroneousList`, `gridData`, `exportData`, `getSalesConsultants`) point to methods that don't exist on the class; 2 look like typos for the real `data()`/`export()` methods | High | FIXED | 20-09-2026 00:10 | 26-09-2026 |
 | BUG-047 | `EnquiryCrudController::destroy()`/`search()`/`showDetailsRow()` had zero Spatie-permission enforcement — trait defaults only check Backpack's own `hasAccessOrFail`, which is auto-allowed by the traits' own bootstrap | Critical | FIXED | 20-09-2026 00:15 | 20-09-2026 00:30 |
 | BUG-048 | `QuotationCrudController` — `quotation-form/pending` route has no matching `pendingQuotations` method (same pattern as BUG-046) | High | FIXED | 20-09-2026 01:00 | 26-09-2026 |
-| BUG-049 | `OrgDemoController::index()` fatals (500) via `OrgService::usersByPost()` calling an undefined `User::posts()` relation | Medium | OPEN | 20-09-2026 02:00 | — |
+| BUG-049 | `OrgDemoController::index()` fatals (500) via `OrgService::usersByPost()` calling an undefined `User::posts()` relation | Medium | FIXED | 20-09-2026 02:00 | 27-09-2026 |
 | BUG-050 | `BookingCrudController` — 15 registered routes point at methods that don't exist on the class (same pattern as BUG-046/048, largest instance found so far) | High | FIXED | 20-09-2026 03:00 | 26-09-2026 |
 | BUG-051 | `BookingCrudController::destroy()`/`edit()`/`search()`/`showDetailsRow()` had zero Spatie-permission enforcement — same root cause as BUG-047 | Critical | FIXED | 20-09-2026 03:00 | 20-09-2026 03:30 |
 | BUG-052 | `CommonHelper` passes `null` to `trim()` in 3 places — deprecated in PHP 8.1+, will fatal on a future PHP version | Low | FIXED | 20-09-2026 03:15 | 24-09-2026 |
@@ -89,11 +89,11 @@ Entry format:
 | BUG-062 | 5 Booking menu links (dummy, ready-to-invoice, pending-incomplete-votfs, rto-agent-tracker, brokerage) point at URLs with no route ever registered | Low | OPEN | 20-09-2026 07:20 | — |
 | BUG-063 | `SystemSettingCrudController::destroy()` had zero Spatie-permission enforcement — `setup()` deliberately omits 'delete' from `allowAccess()` but `DeleteOperation`'s own bootstrap re-grants it anyway | Critical | FIXED | 20-09-2026 08:00 | 20-09-2026 08:05 |
 | BUG-064 | Converting `Route::crud()` to explicit routes silently disables `setupXOperation()`-hook-only permission checks (no `'operation'` key on the new route) — affected `SystemSettingCrudController`/`SpareRequestCrudController`; process risk now documented permanently in `.ai/rules/module-structure.md` | Critical | FIXED | 20-09-2026 08:15 | 20-09-2026 08:30 |
-| BUG-065 | `SubSegmentCrudController` — a registered route points at a nonexistent `getSegmentsByBrand()` method | Medium | OPEN | 20-09-2026 09:00 | — |
+| BUG-065 | `SubSegmentCrudController` — a registered route points at a nonexistent `getSegmentsByBrand()` method | Medium | FIXED | 20-09-2026 09:00 | 27-09-2026 |
 | BUG-066 | Hardcoded-URL audit methodology only ever checked Blade views, never controllers' own PHP source — 17+ controllers across batches 30-35 retained stale `backpack_url()` calls (AJAX grid buttons, post-save redirects) pointing at pre-rename URLs; also missed multi-line-formatted calls | High | FIXED | 21-09-2026 06:00 | 21-09-2026 07:30 |
 | BUG-067 | `routes/backpack/pricing_routes.php` is a stale, incomplete duplicate of `routes/backpack/pricing.php` — both auto-loaded, harmlessly deduped for overlapping routes (same pattern as BUG-036) | Low | FIXED | 21-09-2026 08:00 | 21-09-2026 09:00 |
 | BUG-068 | Pricing module (6 controllers) had zero Spatie-permission enforcement of any kind before this batch — anyone reaching `CheckIfAdmin`'s coarse gate could view/mutate pricing, including a destructive data-delete action (`PricingResetController`) | Critical | FIXED | 21-09-2026 08:00 | 21-09-2026 08:30 |
-| BUG-069 | Admin menu's "Price List" link (`backpack_url('pricing')`) targets a URL with no registered route — always 404's; also its visibility condition previously used `auth()->user()->...` which never resolves under Backpack's guard (BUG-055), now switched to `backpack_user()->...` for consistency, but the dead target itself is unfixed | Low | OPEN (gate mechanism fixed, target still dead) | 21-09-2026 08:00 | — |
+| BUG-069 | Admin menu's "Price List" link (`backpack_url('pricing')`) targets a URL with no registered route — always 404's; also its visibility condition previously used `auth()->user()->...` which never resolves under Backpack's guard (BUG-055), now switched to `backpack_user()->...` for consistency, but the dead target itself is unfixed | Low | MITIGATED (DEC-038) | 21-09-2026 08:00 | 27-09-2026 |
 | BUG-070 | No SuperAdmin bypass existed anywhere for the ~400+ `backpack_user()->can('CODE')` checks across every migrated controller — `RBACService::canUserAccess()` implements the bypass correctly but is never called by any of them; additionally, no `superadmin` role/user currently existed in the database | Critical | FIXED | 21-09-2026 10:00 | 21-09-2026 10:30 |
 | BUG-071 | 3 disconnected role-assignment mechanisms exist (Spatie's real `assignRole()`, `RBACService::assignRole()` which wrote to an unrelated, nonexistent-class temporal table, and `StandaloneUsersImport`/`UserImporter` which either never assigned a role at all or used a stale pre-Designation-switch role-name map that always threw) — the result was that almost no real employee had ever had a working Spatie role | Critical | FIXED (all 3 — `RBACService::assignRole()` now fixed too: correct class path, plus now also calls the real Spatie grant so it actually affects access, not just the temporal history table) | 21-09-2026 11:00 | 21-09-2026 13:10 |
 | BUG-072 | `App\Services\Importers\UserImporter` (and its dead duplicate `App\Imports\UserImporter`) `use`d several nonexistent `App\Models\Core\*` classes (`Employee`, `Department`, `Location`, `Vertical`, `UserType`, `Post`) — would fatal the instant any of them was referenced; the dead duplicate file has been deleted, the real one's imports corrected (`Post` has no real backing model/relation at all — confirmed dead, per BUG-015/024 — so that one assignment step now logs and skips rather than resurrecting a dead subsystem) | High | FIXED (import paths only — see BUG-075 for deeper, separate brokenness found in the same file) | 21-09-2026 11:20 | 21-09-2026 13:00 |
@@ -189,7 +189,7 @@ Entry format:
 | BUG-151 | Class/namespace/path mismatches and wrong imports (DesigDeptTree, XVehicleStock, ExportLog, ImportLog, XCommonHelper, BookingCrudController, …) | Medium | FIXED (listed items) | 24-09-2026 | 24-09-2026 |
 | BUG-152 | Accessory import log never written (`AccessoryService`) and double-JSON-encoded (both accessory import services) | Low | FIXED | 24-09-2026 | 24-09-2026 |
 | BUG-153 | `getChassisNumbers` filters on `status = 'available'`, which no stock row has | Low | OPEN (needs business rule) | 24-09-2026 | — |
-| BUG-154 | Employee / Person Address / Person Banking create-edit forms are id-based against the code-based schema | High | OPEN (form redesign) | 24-09-2026 | — |
+| BUG-154 | Employee / Person Address / Person Banking create-edit forms are id-based against the code-based schema | High | MITIGATED (DEC-037) | 24-09-2026 | 27-09-2026 |
 | BUG-155 | Dead routes (no method, no callers) and dead/unloadable files still in the tree | Low | OPEN (cleanup decision) | 24-09-2026 | — |
 | BUG-156 | Class references in the wrong letter case (`XL_DSA_MASTER` ×8 files, `KeyValue\KeyValue`, `Crm\LeadSource`) — work on Windows, fail to autoload on a case-sensitive (Linux) filesystem | High (if production is Linux) | FIXED | 25-09-2026 | 25-09-2026 |
 | BUG-157 | `FirebaseService` calls `User::deviceTokens()`, which was never defined — sending push to a user, listing and revoking a user's devices all fatal | High | FIXED | 25-09-2026 | 25-09-2026 |
@@ -287,6 +287,8 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 - **Description:** Queries/validates `person_id`, `designation_id`, `primary_branch_id`, `primary_department_id` — none exist on `xlr8_admin_employee`. Confirmed via `database-schema`: real columns are `person_code`, `desig_code`/`designation_code`, `primary_branch_code`, `primary_dept_code`, etc. — this app's documented code-based relations convention.
 - **Proposed solution:** rewrite `index()`'s `select()`, and `store()`/`update()`'s validation + mass-assignment, to use the real code-based columns. First confirm whether `Employee`'s relationship methods (`person()`, `designation()`, `primaryBranch()`, `primaryDepartment()`) are already correct — if so, only the controller needs fixing, not the model.
 
+- **Update 27-09-2026:** standalone Employee create/edit retired (URLs redirect to the list); employees are onboarded via Users → Bulk import (BUG-162 fix) and edited on the Person/User screens. — [ai-changelogs-27-09-2026.md](ai-changelogs-27-09-2026.md)
+
 ### BUG-009 — `BrandCrudController` — backing table doesn't exist
 
 - **Status:** OPEN
@@ -297,6 +299,8 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 - **Description:** `SQLSTATE[42S02]: Base table or view not found: 1146 Table 'xlrm.xlr8_vehicle_brand' doesn't exist`. The dead `import()` method (see BUG-017) hardcodes a single brand code `'MHD'`, suggesting this app may only ever have supported one brand and the whole entity was abandoned.
 - **Proposed solution:** business decision needed before any code fix: was the table dropped/renamed, or is "Brand" no longer a real concept in this schema? Confirm intent, then either create the table, repoint the model, or remove the screen.
 
+- **Update 27-09-2026:** Brand menu hidden; all `vehicle/brand*` URLs redirect to Segment. Dead brand writers `SegmentSheet`, `MasterDataSeeder`, `CodeGenerator` (no callers; also targeted a nonexistent `segment.brand_code`) deleted. Brand as a master returns in Track B if needed. — [ai-changelogs-27-09-2026.md](ai-changelogs-27-09-2026.md)
+
 ### BUG-010 — `SubSegmentCrudController::getSegmentsByBrand` — dead route
 
 - **Status:** OPEN
@@ -305,6 +309,8 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 - **Where:** `routes/backpack/core.php` (`sub-segment/segments/{brandCode}` route) → `SubSegmentCrudController`, which has never defined this method.
 - **Description:** Hitting this route throws "method does not exist." Looks like an abandoned AJAX helper, possibly superseded by the working `getSubSegmentsBySegment`.
 - **Proposed solution:** check whether any frontend JS still calls this endpoint; if not, remove the dead route. If it is called, implement the method (likely a simple `Segment::whereHas(...)` style query — needs the actual UI requirement to write correctly).
+
+- **Update 27-09-2026:** dead route `vehicle/sub-segment/segments/{brandCode}` and its commented-out JS caller removed (DEC-038). — [ai-changelogs-27-09-2026.md](ai-changelogs-27-09-2026.md)
 
 ### BUG-011 — `SubSegment.name` validated/submitted but not `$fillable` — silently never saved
 
@@ -315,6 +321,8 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 - **Description:** `$fillable` omits `name` (only has `oem_name`, `description`), but `update()` validates and mass-assigns a `name` field. Eloquent silently ignores non-fillable keys on mass assignment rather than throwing — editing a Sub Segment's name through the admin screen has likely never actually persisted.
 - **Proposed solution:** add `'name'` to `SubSegment::$fillable`. One-line fix. Worth a quick check for similar fillable/validated-field mismatches on other models while in there (this is the second such case found this session, alongside the different-category BUG-008).
 
+- **Update 27-09-2026:** verified: `SubSegment::$fillable` includes `name` (fixed in an earlier sweep; tracker was stale). — [ai-changelogs-27-09-2026.md](ai-changelogs-27-09-2026.md)
+
 ### BUG-012 — `VehicleModelCrudController::destroy()` — dead route
 
 - **Status:** OPEN
@@ -323,6 +331,8 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 - **Where:** `routes/backpack/core.php` (`DELETE vehicle-model/{id}` route) → `VehicleModelCrudController`, which has never defined `destroy()`.
 - **Description:** Same category as BUG-010 — route registered, handler missing.
 - **Proposed solution:** trivial — add `public function destroy($id) { return $this->crud->delete($id); }`, the same one-liner used everywhere else in this rollout. Lowest-effort fix in this entire list.
+
+- **Update 27-09-2026:** verified: no `vehicle/model` destroy route is registered anymore (removed in the 26-09 dead-route purge). — [ai-changelogs-27-09-2026.md](ai-changelogs-27-09-2026.md)
 
 ### BUG-013 — `RoleCrudController` — `Role` model missing `CrudTrait`, screen 500s for everyone
 
@@ -362,6 +372,8 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 - **Description:** `Rule::unique('xlr8_iam_roles', 'name')` — this table doesn't exist (confirmed 19-09-2026 during the `isSuperAdmin()` investigation: `Role`'s real table is `xlr8_admin_designation`, via Spatie's base `Role` model overriding `App\Models\IAM\Role`'s own `$table` property at runtime). Deliberately preserved verbatim rather than silently corrected, consistent with how every other pre-existing bug in this rollout was handled.
 - **Proposed solution:** change to `Rule::unique('xlr8_admin_designation', 'name')`. Trivial fix, but sequence it after BUG-013 (fixing this alone won't make the screen usable).
 
+- **Update 27-09-2026:** verified: `RoleRequest` validates against `config('permission.table_names.roles')` (DEC-018). — [ai-changelogs-27-09-2026.md](ai-changelogs-27-09-2026.md)
+
 ### BUG-017 — Dead/unused traits and classes
 
 - **Status:** OPEN
@@ -384,6 +396,8 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 - **Description:** Declares `protected $table = 'xlr8_iam_roles'`, a table that doesn't exist. Spatie's base `Role` model constructor forcibly overrides `$table` to `config('permission.table_names.roles')` (`xlr8_admin_designation`) at runtime, so the declared property never actually takes effect — confirmed empirically. Purely a maintainability footgun: a future reader could reasonably (and wrongly) assume the declared property is accurate.
 - **Proposed solution:** delete the misleading line, or replace with a comment explaining the override. No behavior change either way — purely a readability fix.
 
+- **Update 27-09-2026:** verified: the `$table` property on `IAM\Role` is commented out with an explanation (DEC-018). — [ai-changelogs-27-09-2026.md](ai-changelogs-27-09-2026.md)
+
 ### BUG-019 — Unexplained large external change to `BookingCrudController.php`
 
 - **Status:** OPEN — needs owner input, not further investigation from inside a session
@@ -403,6 +417,8 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 - **Description:** `GET /admin/person-address` 500s: `SQLSTATE[42S22]: Column not found: 1054 Unknown column 'type' in 'field list'`. Checked the real schema directly (`SHOW COLUMNS FROM xlr8_admin_person_addresses`): the real column is `address_type` (enum: `Primary/Office/Home/Alternate/Permanent`), not `type`. The controller also references `person_id` in `store()`/`update()`'s validation (`exists:xlr8_admin_person,id`), but the real FK on this table is `person_code`, not `person_id`. There is also **no `is_primary` column at all** — "primary" is represented by `address_type = 'Primary'`, not a separate boolean, so the `is_primary` field referenced throughout the controller and grid doesn't exist either. Same category of bug as BUG-008 (`EmployeeCrudController`) — a controller written against assumed column names that don't match the actual schema.
 - **Proposed solution:** rewrite `index()`'s `select()`, and `store()`/`update()`'s validation and mass-assignment, to use `address_type` (with the real enum values) and `person_code` instead of `type`/`person_id`, and remove or replace the `is_primary` handling with an `address_type === 'Primary'` check. Needs a look at the `PersonAddress` model's actual relationships/casts first to confirm nothing else assumes the wrong column names too.
 
+- **Update 27-09-2026:** standalone Person Address create/edit retired; addresses are edited inline on the Person screen ("Open person"). — [ai-changelogs-27-09-2026.md](ai-changelogs-27-09-2026.md)
+
 ### BUG-021 — `PersonBankingDetailCrudController` — two stacked independent bugs (missing `CrudTrait` + wrong column names)
 
 - **Status:** PARTIALLY FIXED — list and create render; form persistence still OPEN (was: OPEN)
@@ -414,6 +430,8 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
   1. `GET /admin/person-banking-detail` returns `500` **even with no permission at all** (the crash happens before `setupListOperation()`'s permission check runs): `Exception: Please use CrudTrait on the model.` — `App\Models\Admin\PersonBankingDetail` doesn't use Backpack's `CrudTrait`, same category as BUG-013 (`RoleCrudController`/`App\Models\IAM\Role`).
   2. Even once that's fixed, the controller's queries/validation still reference columns that don't exist on `xlr8_admin_person_banking_details`: `person_id` (real FK is `person_code`), `swift_code` (real column is `micr_code`), `is_primary` (doesn't exist at all), and `account_type` is validated against `savings/current/fd/rd/other` when the real enum is `Primary/Secondary/Joint/Trust`. Confirmed via `SHOW COLUMNS FROM xlr8_admin_person_banking_details`. Same category as BUG-008/BUG-020.
 - **Proposed solution:** add `use Backpack\CRUD\app\Models\Traits\CrudTrait;` to `PersonBankingDetail` first (same low-risk fix as BUG-013's proposal), then separately rewrite the controller's column references to match the real schema (`person_code`, `micr_code`, drop or replace `is_primary`, correct the `account_type` enum values). Both fixes are needed before this screen works at all — fixing only one leaves the other blocking.
+
+- **Update 27-09-2026:** standalone Person Banking create/edit retired; banking is edited inline on the Person screen ("Open person"). — [ai-changelogs-27-09-2026.md](ai-changelogs-27-09-2026.md)
 
 ### BUG-022 — `VehicleAccessoryCrudController` is entirely unreachable — no Operation traits, so `Route::crud()` registers nothing
 
@@ -695,6 +713,8 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 - **Description:** Reproduced directly via `App\Services\OrgService::usersByPost('SLS_CNS_CHR_003', 'CHR')` in isolation → `BadMethodCallException: Call to undefined method App\Models\User::posts()`. `OrgService::usersByPost()` calls a `posts()` relationship that doesn't exist on the `User` model (confirmed via the same call throwing identically outside any HTTP context). Pre-existing, unrelated to the permission-gating fix — the page has apparently never worked, consistent with its name ("org-demo") suggesting scaffolding/demo code rather than a maintained feature.
 - **Proposed solution:** either implement `User::posts()` (if "post" is a real org concept elsewhere in the codebase under a different relation name) or remove the broken call/page entirely if it's dead demo code nobody uses. Not fixed in this rollout — implementing missing model relationships is outside a permission-gating pass's scope.
 
+- **Update 27-09-2026:** `org-demo` route, `OrgDemoController` and `org-demo.blade.php` deleted (demo page, nothing linked to it; DEC-038). — [ai-changelogs-27-09-2026.md](ai-changelogs-27-09-2026.md)
+
 ### BUG-050 — `BookingCrudController` has 15 registered routes pointing at methods that don't exist on the class
 
 - **Status:** FIXED (was: OPEN)
@@ -842,6 +862,8 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 - **Description:** Confirmed via `grep -n "function getSegmentsByBrand" SubSegmentCrudController.php` — zero matches. The sibling method `getSubSegmentsBySegment($segmentCode)` (used by the adjacent route) does exist and works; `getSegmentsByBrand` appears to have been planned (the route was registered) but never implemented.
 - **Proposed solution:** implement `getSegmentsByBrand($brandCode)` (likely a simple `Segment::where('brand_code', $brandCode)->...` lookup, mirroring the sibling method) or remove the dead route. Not fixed in this rollout — outside a route/permission migration's scope.
 
+- **Update 27-09-2026:** same as BUG-010 — route removed (DEC-038). — [ai-changelogs-27-09-2026.md](ai-changelogs-27-09-2026.md)
+
 ### BUG-066 — Hardcoded-URL audit methodology missed controllers' own PHP source, and multi-line-formatted `backpack_url()` calls
 
 - **Status:** FIXED
@@ -879,6 +901,8 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 - **Description:** two independent problems stacked on the same link. (1) Its target, `backpack_url('pricing')`, has never had a matching route — Pricing's real routes all live under `admin/pricing/{process}/...`. (2) Its visibility condition used `auth()->check()`/`auth()->user()->hasPermissionTo(...)`/`auth()->user()->hasRole(...)` — per the already-documented BUG-055, `auth()->user()` never resolves the backpack-authenticated user in this app (Backpack's guard-switching middleware is disabled), so this condition was always `false` for real staff, meaning the link was invisible to everyone regardless of (1).
 - **Fix applied:** switched the condition to `backpack_user() && (backpack_user()->can('can_view_documents') || backpack_user()->hasRole('super admin'))`, consistent with every other menu gate in this file — the link is now at least visible to the intended audience. The dead target itself (problem 1) is **not fixed** — deciding what it should actually point to (a landing page across all 6 Pricing sub-entities? the most-used one, e.g. `pricing/hold`?) is a feature/UX decision outside this migration's scope, same precedent as BUG-056/060/062.
 - **Proposed solution:** either build a real Pricing landing page and register `admin/pricing` → it, or repoint the link at one of the 6 real sub-entity URLs (most likely `pricing/hold` or `pricing/tcs` as the most routine entry points) and add explicit sub-links for the rest.
+
+- **Update 27-09-2026:** "Price List" menu link hidden — there is no price-list route or screen. Pricing screens remain under the Pricing menu. — [ai-changelogs-27-09-2026.md](ai-changelogs-27-09-2026.md)
 
 ### BUG-070 — No SuperAdmin bypass for any permission check; no user currently holds SuperAdmin status
 
@@ -1749,6 +1773,8 @@ guessed at.
 - **Description:** forms submit and validate `person_id`, `designation_id`, `primary_branch_id`, `primary_department_id`, `is_primary`, `swift_code`; the tables use `person_code`, `designation_code`, `primary_branch_code`, `primary_dept_code`, and encode "primary" as `address_type`/`account_type = 'Primary'`. The employee pivot tables (`xlr8_admin_emp_*_pivot`) don't exist.
 - **Proposed solution:** rebuild the three forms on codes. Needs confirmation that these standalone screens are still wanted, since `UserCrudController`'s combined person/employee/user journey already writes these tables.
 
+- **Update 27-09-2026:** forms retired rather than redesigned for UAT; the code-based redesign moves to Track B (Org module). — [ai-changelogs-27-09-2026.md](ai-changelogs-27-09-2026.md)
+
 ### BUG-155 — Dead routes and dead files still in the tree
 
 - **Status:** OPEN (documented only — cleanup decision)
@@ -1818,4 +1844,3 @@ guessed at.
 - **Found:** 26-09-2026 23:10, importing `docs/reference/pricing/data/userdata.xlsx` into `xlrm_testing` twice (+25 nameless persons per run; 6 employees and users re-pointed after two runs). Live `xlrm` unaffected.
 - **Fixed:** 26-09-2026 23:40 — `UsersImportWorkbook` reads only `Users_Import`; existing employees keep their `person_code`; rows without Employee Name are skipped; the importer reports created/updated/skipped/failed; `import:users` picks the sheet automatically. Verified on a fresh copy: run 1 created 295 / updated 158 / failed 0; run 2 created 0 with identical counts; 0 employees linked to nameless persons. Regression tests: `tests/Unit/StandaloneUsersImportTest.php` (3). DEC-035.
 - **Where:** `app/Imports/Sheets/StandaloneUsersImport.php`, `app/Imports/UsersImportWorkbook.php`, `app/Console/Commands/ImportUsersCommand.php`.
-

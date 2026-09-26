@@ -98,40 +98,4 @@
         </div>
     </div>
 
-    {{-- Move JS to the proper Backpack stack
-    @push('after_scripts')
-        <script>
-            $(document).ready(function () {
-                $('#brand_code').on('change', function () {
-                    let brandCode = $(this).val();
-
-                    $('#segment_code').html('<option value="">Loading...</option>');
-
-                    if (brandCode) {
-                        $.ajax({
-                            url: "{{ backpack_url('vehicle/sub-segment/segments') }}/" + brandCode,
-                            type: "GET",
-                            success: function (response) {
-                                let options = '<option value="">Select Segment</option>';
-
-                                $.each(response, function (index, segment) {
-                                    options += `<option value="${segment.code}">${segment.name}</option>`;
-                                });
-
-                                $('#segment_code').html(options);
-                            },
-                            error: function () {
-                                $('#segment_code').html('<option value="">Error loading segments</option>');
-                            }
-                        });
-                    } else {
-                        $('#segment_code').html('<option value="">Select Segment</option>');
-                    }
-                });
-
-                // Optional: Trigger change if brand is pre-selected (edit mode)
-                // $('#brand_code').trigger('change');
-            });
-        </script>
-    @endpush --}}
 @endsection
