@@ -26,7 +26,29 @@ class StandaloneUsersImport implements ToCollection, WithHeadingRow
 {
     private int $success = 0;
 
+    private int $created = 0;
+
+    private int $updated = 0;
+
+    private int $skipped = 0;
+
+    private int $failed = 0;
+
     private int $rowIndex = 1;
+
+    /**
+     * @return array{success: int, created: int, updated: int, skipped: int, failed: int}
+     */
+    public function summary(): array
+    {
+        return [
+            'success' => $this->success,
+            'created' => $this->created,
+            'updated' => $this->updated,
+            'skipped' => $this->skipped,
+            'failed' => $this->failed,
+        ];
+    }
 
     public function collection(Collection $rows)
     {
@@ -40,7 +62,8 @@ class StandaloneUsersImport implements ToCollection, WithHeadingRow
         // Cleared once at the end, not per-row, to avoid needless cache churn on large imports.
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
-        echo "\n✅ Standalone Users Import Completed! Success: {$this->success}\n";
+        echo "\n✅ Standalone Users Import Completed! Success: {$this->success} "
+            ."(created {$this->created}, updated {$this->updated}, skipped {$this->skipped}, failed {$this->failed})\n";
     }
 
     private function processRow(array $row, int $rowIndex): void
@@ -50,8 +73,21 @@ class StandaloneUsersImport implements ToCollection, WithHeadingRow
             return;
         }
 
+        // Employee Name is mandatory: a row without it can't identify a person (BUG-162 —
+        // such rows used to create nameless persons and re-point existing employees).
+        if ($this->s($this->getValue($row, ['employee_name', 'Employee Name*'])) === '') {
+            $this->skipped++;
+            $this->logRow($rowIndex, '⏭️ SKIPPED', "{$empCode}: missing Employee Name");
+
+            return;
+        }
+
         try {
-            $personCode = $this->derivePersonCode($row);
+            // person_code is immutable: an existing employee keeps its person; only a new
+            // employee gets a derived code (Aadhaar → PAN → PERS-###### sequence).
+            $existingPersonCode = DB::table('xlr8_admin_employee')->where('code', $empCode)->value('person_code');
+            $personCode = $existingPersonCode ?: $this->derivePersonCode($row);
+            $isNew = $existingPersonCode === null;
 
             // 1. Person (core + contacts + addresses + banking) via PersonService
             $this->createOrUpdatePerson($row, $personCode, $rowIndex);
@@ -73,8 +109,10 @@ class StandaloneUsersImport implements ToCollection, WithHeadingRow
             $this->syncUserRole($userId, $desigCode, $rowIndex);
 
             $this->success++;
+            $isNew ? $this->created++ : $this->updated++;
             echo "[Row {$rowIndex}] ✅ SUCCESS - {$empCode}\n";
         } catch (\Throwable $e) {
+            $this->failed++;
             $this->logRow($rowIndex, '❌ FAILED', $e->getMessage());
             Log::error("StandaloneUsersImport row {$rowIndex} failed", [
                 'emp_code' => $empCode,

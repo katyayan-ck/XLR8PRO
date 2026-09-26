@@ -240,3 +240,20 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
 ### DEC-033 | 26-09-2026 22:30 | Programme | Track B paused; focus on Track A UAT
 - **Decision:** the user paused Track B at the end of B0 (xceler8 committed at `d9009db`, see its B-DEC-003). All effort goes to Track A for the UAT deadline. Finalised Track A patterns will then be recreated in Track B faster.
 - **Approved-by:** user.
+
+### DEC-034 | 26-09-2026 22:50 | A3 (UAT) | UAT scope and priorities (target: 3 days, with the booking team's merge)
+- **In scope:** Org/HR/User admin; Vehicle master & Pricing.
+- **Out of scope:** Sales (Enquiry/Quotation/Booking/Accounts). Another team owns it; their code merges into this branch later, after which we re-check what's broken. **We don't touch Sales code from now on**, except the menu-only hiding of the 8 broken booking report links (user choice).
+- **HR data entry:** no UI for Employee / Person Address / Person Banking create-edit (BUG-154). A bulk create/update **importer** is enough to onboard test users. The broken create/edit entry points are hidden; the lists stay.
+- **Merge note:** Sales-area files this branch already changed before the scope split are listed in `.ai/state/current.md` for the merge.
+- **Approved-by:** user.
+
+### DEC-035 | 26-09-2026 23:20 | A3 (UAT) | User bulk importer = `import:users` (`StandaloneUsersImport`); fix identity corruption (BUG-162)
+- **Finding (xlrm_testing):** the importer is fed **every** sheet of the master workbook. The `Reporting` sheet also has an "Emp Code" column but no name/PAN/Aadhaar/mobile, so for its rows the importer generated sequence person codes, created nameless persons (+25 per run), and **re-pointed existing employees and users to them** (6 after two runs). Live `xlrm` is unaffected (never imported).
+- **Decision:**
+  - (1) A workbook wrapper that reads only `Users_Import` (other sheets ignored).
+  - (2) An existing employee keeps its `person_code` (identity is immutable), so the importer never re-points it.
+  - (3) Rows without the mandatory Employee Name are skipped with a logged reason.
+  - A clear end summary: created / updated / skipped / failed.
+  - The test proves idempotency and identity stability on a fresh `xlrm_testing` copy.
+- **Risk:** MED (import path used for UAT onboarding) · **Approved-by:** auto (clear data-integrity bug fix inside the user-approved importer scope) · **Reversal:** revert.

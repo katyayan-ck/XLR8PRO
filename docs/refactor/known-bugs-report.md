@@ -197,6 +197,7 @@ Entry format:
 | BUG-159 | `NotificationController` and `SystemSettingApiController` called `$this->middleware()` in their constructors (removed in Laravel 11+) — every notifications and settings API request fataled | Critical | FIXED | 26-09-2026 | 26-09-2026 |
 | BUG-160 | Only 1 of 201 users has `admin.dashboard`, so the post-login dashboard returns 403 for almost everyone | High | FIXED | 26-09-2026 | 26-09-2026 |
 | BUG-161 | Bookings have no branch: xlr8_booking_master has no branch column and the enquiry fallback (dealer_branch) is empty on all 60,923 enquiries, so VOTF numbers can never be generated | High | OPEN (needs decision) | 26-09-2026 | — |
+| BUG-162 | User bulk import read every workbook sheet: Reporting-sheet rows (Emp Code, no name) created nameless persons each run and re-pointed existing employees/users to them | Critical | FIXED | 26-09-2026 | 26-09-2026 |
 
 Not a bug (false positive, listed for reference): the original `infer-conventions` sweep flagged
 "`SheetHeaderService`/`SynonymService` not used by importers" — re-investigation on 19-09-2026
@@ -1807,3 +1808,12 @@ guessed at.
 - **Where:** `BookingOtfService::generateVotfNumber()`; `xlr8_booking_master` (no branch/location column); `xlr8_crm_enquiries.dealer_branch` / `dealer_location` (0 of 60,923 filled); only 1 of 45 local bookings has an `enq_no`.
 - **Description:** VOTF numbers embed the branch code. The booking has no branch of its own; the display code copies it from the linked enquiry, which has none either. The code now falls back to the enquiry (DEC-027), but the data never provides it.
 - **Decision needed:** where a booking's branch comes from — (a) a new `branch_code` column on the booking, set at creation from the creating user's primary branch; (b) the consultant's primary branch; (c) populate enquiry `dealer_branch` from its source data.
+
+### BUG-162 — User bulk import corrupted identities (fed every sheet)
+
+- **Status:** FIXED
+- **Severity:** Critical — running the import on the master workbook re-pointed existing employees and users to empty persons.
+- **Found:** 26-09-2026 23:10, importing `docs/reference/pricing/data/userdata.xlsx` into `xlrm_testing` twice (+25 nameless persons per run; 6 employees and users re-pointed after two runs). Live `xlrm` unaffected.
+- **Fixed:** 26-09-2026 23:40 — `UsersImportWorkbook` reads only `Users_Import`; existing employees keep their `person_code`; rows without Employee Name are skipped; the importer reports created/updated/skipped/failed; `import:users` picks the sheet automatically. Verified on a fresh copy: run 1 created 295 / updated 158 / failed 0; run 2 created 0 with identical counts; 0 employees linked to nameless persons. Regression tests: `tests/Unit/StandaloneUsersImportTest.php` (3). DEC-035.
+- **Where:** `app/Imports/Sheets/StandaloneUsersImport.php`, `app/Imports/UsersImportWorkbook.php`, `app/Console/Commands/ImportUsersCommand.php`.
+
