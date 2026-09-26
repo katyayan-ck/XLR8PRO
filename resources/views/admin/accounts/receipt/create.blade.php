@@ -266,7 +266,8 @@
             });
 
             function handleOnAccountOf() {
-                let selectedText = $('#on_account_of option:selected').data('text') || '';
+                let selectedText = $('#on_account_of option:selected').text().trim().toUpperCase();
+                
                 $('.conditional-section').hide();
                 $('#invoice-no-section').hide();
                 
@@ -274,7 +275,7 @@
                 $('#invoice_no').prop('required', false); 
                 $('.req-reg-asterisk, .req-chassis-asterisk').hide();
 
-                if (['NEW VEHICLE SALES', 'USED VEHICLE SALES'].includes(selectedText)) {
+                if (selectedText.includes('SALES')) {
                     $('#vehicle-sales-section').show();
                     $('#xceler8_enq_no').prop('required', true);
                     $('#req_enq_asterisk').show();
@@ -393,7 +394,7 @@
             $('#xceler8_enq_no, #xceler8_booking_no, #votf_no').on('blur', fetchEnquiryData);
             $('#fetch_enquiry_btn').on('click', fetchEnquiryData);
 
-           / const a = ['', 'One ', 'Two ', 'Three ', 'Four ', 'Five ', 'Six ', 'Seven ', 'Eight ', 'Nine ', 'Ten ', 'Eleven ', 'Twelve ', 'Thirteen ', 'Fourteen ', 'Fifteen ', 'Sixteen ', 'Seventeen ', 'Eighteen ', 'Nineteen '];
+           const a = ['', 'One ', 'Two ', 'Three ', 'Four ', 'Five ', 'Six ', 'Seven ', 'Eight ', 'Nine ', 'Ten ', 'Eleven ', 'Twelve ', 'Thirteen ', 'Fourteen ', 'Fifteen ', 'Sixteen ', 'Seventeen ', 'Eighteen ', 'Nineteen '];
             const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
 
             function inWords (num) {
@@ -421,5 +422,5 @@
                 $('#amount').trigger('input');
             }
         });
-    </script>\-*
+    </script>
 @endpush
