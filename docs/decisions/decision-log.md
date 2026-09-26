@@ -118,3 +118,27 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
   - `set()` uses `save()` instead of `saveQuietly()`. This drops the nonexistent `updatedby` write (BaseModel stamps `updated_by`) and runs the `saved` hook, so the cache is actually cleared.
   - `flushAllCache()` forgets each key instead of using `Cache::tags()`, which throws on the `database` store.
 - **Risk:** MED · **Approved-by:** auto (the A4 "Settings fixes" scope, pulled forward because the API depends on it) · **Reversal:** revert.
+
+### DEC-022 | 26-09-2026 17:05 | A0 | BUG-160: grant `admin.dashboard` to every designation (role), via an idempotent seeder
+- **Options:** make the dashboard login-only; grant the permission to all roles; leave as is.
+- **Rationale:** user choice — keep the permission check and fix the data.
+- **Risk:** HIGH (permission data) · **Approved-by:** user · **Reversal:** the seeder logs every role it granted to `storage/logs/grant-dashboard-permission-{database}.json`; revoke exactly those via tinker (the command is shown in the seeder docblock).
+
+### DEC-023 | 26-09-2026 17:05 | A0 | Hide Quotation → Pending and Enquiry → Erroneous until Track B
+- **Decision:** remove both menu links and routes (their methods never existed). Track B's Quotation and Enquiry modules provide proper work queues.
+- **Risk:** MED (UAT-visible) · **Approved-by:** user.
+
+### DEC-024 | 26-09-2026 17:05 | A0 | Implement booking refund-details edit (`editRefund`)
+- **Decision:** add `BookingRefundService::applyRefundDetailsEdit()`, which validates and updates the refund request's bank and deduction fields and its document, and records history. The status field is not changed by this form. Includes tests.
+- **Risk:** MED · **Approved-by:** user.
+
+### DEC-025 | 26-09-2026 17:05 | A0 | BUG-104: production also lacks the 7 booking columns; add them via migration (types reviewed with the user before running)
+- **Risk:** HIGH (schema) · **Approved-by:** user (fix direction); column types still need user review.
+
+### DEC-026 | 26-09-2026 17:12 | A0 | Retire WAMP/XAMPP from PATH; Laragon PHP 8.4.26 becomes the CLI PHP
+- **Rationale:** user confirmed Laragon is the only local dev stack (WAMP/XAMPP unused).
+- **Change:**
+  - User PATH: remove `D:\wamp64\bin\php\php8.3.14` and `D:\wamp64\bin\mysql\mysql9.1.0\bin`.
+  - Machine PATH: replace `D:\xampp\php` and `D:\laragon\bin\php\php-8.3.30-Win32-vs16-x64` with `D:\laragon\bin\php\php-8.4.26-Win32-vs17-x64`. This needs admin; if it's denied, the user runs the given one-liner in an elevated shell.
+  - The previous values are saved to `docs/decisions/path-backup-26-09-2026.txt` for reversal.
+- **Risk:** MED (environment) · **Approved-by:** user · **Reversal:** restore from the backup file.

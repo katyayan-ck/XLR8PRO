@@ -95,8 +95,7 @@ Route::group([
 
     Route::get('sales/quotation', [QuotationCrudController::class, 'index'])->name('sales.quotation.index');
 
-    Route::get('sales/quotation/pending', [QuotationCrudController::class, 'pendingQuotations'])
-        ->name('sales.quotation.pending');
+    // sales.quotation.pending removed: pendingQuotations() never existed; hidden until Track B (DEC-023).
 
     Route::get('sales/quotation/create', [QuotationCrudController::class, 'create'])->name('sales.quotation.create');
 

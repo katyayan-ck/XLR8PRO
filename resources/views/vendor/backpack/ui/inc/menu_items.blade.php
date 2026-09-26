@@ -347,13 +347,7 @@
 
             </a>
         @endif
-        @if (backpack_user() && backpack_user()->can('SLS_ENQR_VIEW'))
-            <a class="dropdown-item d-flex align-items-center justify-content-between"
-                href="{{ backpack_url('sales/enquiry/erroneous') }}">
-                <span><i class="la la-bug"></i>Erroneous Entries</span>
-
-            </a>
-        @endif
+        {{-- Erroneous Entries hidden until the Track B Enquiry module (DEC-023). --}}
 
 
 
@@ -366,10 +360,7 @@
                 href="{{ backpack_url('sales/quotation') }}">
                 <span><i class="la la-file-signature me-2"></i>Quotation List</span>
             </a>
-            <a class="dropdown-item d-flex align-items-center justify-content-between"
-                href="{{ backpack_url('sales/quotation/pending') }}">
-                <span><i class="la la-clock me-2"></i>Pending Quotations</span>
-            </a>
+            {{-- Pending Quotations hidden until the Track B Quotation module (DEC-023). --}}
             {{-- "Approved Quotations" links to a route that has never existed
                 (backpack_url('quotation-form/approved') before this rename) — see
                 known-bugs-report.md BUG-056. Left as a dead link, not fixed here. --}}

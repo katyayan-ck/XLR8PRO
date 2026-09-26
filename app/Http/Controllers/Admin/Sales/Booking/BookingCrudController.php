@@ -8099,6 +8099,75 @@ class BookingCrudController extends CrudController
         ]);
     }
 
+    /**
+     * "Edit Refund Details" form on a Refund Rejected booking (route
+     * sales.booking.refund.edit existed without this method). Same rules as
+     * requestRefund() minus the documents (DEC-024).
+     */
+    public function editRefund(Request $request, $id)
+    {
+        if (! backpack_user()->can('SLS_BKNG_REFUND')) {
+            abort(403, 'Unauthorized. You do not have permission to perform this action.');
+        }
+
+        $booking = Booking::findOrFail($id);
+
+        $refund = Xl_Refunds::where('entity_type', 'booking')
+            ->where('entity_id', $booking->id)
+            ->latest('id')
+            ->first();
+
+        if (! $refund) {
+            return redirect()->back()->with('error', 'Refund record not found for this booking.');
+        }
+
+        // booking_amount is a disabled field on the form, so compare against the stored value.
+        $input = array_merge($request->all(), [
+            'booking_amount' => (float) ($booking->booking_amount ?? 0),
+            'account_type' => strtolower((string) $request->input('account_type')),
+            'ifsc_code' => strtoupper(trim((string) $request->input('ifsc_code'))),
+        ]);
+
+        $validator = Validator::make($input, [
+            'deduction' => 'required|numeric|min:0|lte:booking_amount',
+            'remaining_amount' => 'required|numeric|min:0',
+            'bank_name' => 'required|string|max:25',
+            'branch_name' => ['required', 'max:35', 'regex:/^[A-Za-z0-9\s\-\.\,\/]{3,255}$/'],
+            'account_type' => 'required|in:savings,current',
+            'account_number' => ['required', 'regex:/^[0-9]{9,18}$/'],
+            'holder_name' => ['required', 'max:50', 'regex:/^[A-Za-z\s\.]{3,255}$/'],
+            'ifsc_code' => ['required', 'regex:/^[A-Z]{4}0[A-Z0-9]{6}$/'],
+            'details' => 'nullable|string|max:250',
+        ], [
+            'deduction.lte' => 'Deduction cannot exceed booking amount.',
+            'branch_name.regex' => 'Enter a valid branch name.',
+            'holder_name.regex' => 'Enter a valid account holder name.',
+            'account_number.regex' => 'Account number must contain only 9-18 digits.',
+            'ifsc_code.regex' => 'Enter a valid IFSC code.',
+        ], [
+            'deduction' => __('booking.fields.refund_deduction'),
+            'remaining_amount' => __('booking.fields.refund_remaining_amount'),
+            'bank_name' => __('booking.fields.refund_bank_name'),
+            'branch_name' => __('booking.fields.refund_branch_name'),
+            'account_type' => __('booking.fields.refund_account_type'),
+            'account_number' => __('booking.fields.refund_account_number'),
+            'holder_name' => __('booking.fields.refund_holder_name'),
+            'ifsc_code' => __('booking.fields.refund_ifsc_code'),
+            'details' => __('booking.fields.refund_deduction_reason'),
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput()
+                ->with('error', 'Please fix the errors below.');
+        }
+
+        $this->refundService->applyRefundDetailsEdit($booking, $refund, $validator->validated());
+
+        return redirect()->back()->with('success', 'Refund details updated successfully.');
+    }
+
     public function refundUpdate(Request $request, $id)
     {
         if (! backpack_user()->can('SLS_BKNG_REFUND')) {

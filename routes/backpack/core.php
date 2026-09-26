@@ -377,7 +377,7 @@ Route::group([
     Route::get('sales/enquiry/unassigned-quick', [EnquiryCrudController::class, 'unassignedQuickList'])->name('sales.enquiry.unassigned-quick');
     // 'pending'/'erroneous' point at BUG-046's confirmed-broken pendingList()/erroneousList() methods.
     // sales.enquiry.pending removed: pendingList() never existed and nothing links to it (DEC-020).
-    Route::get('sales/enquiry/erroneous', [EnquiryCrudController::class, 'erroneousList'])->name('sales.enquiry.erroneous');
+    // sales.enquiry.erroneous removed: erroneousList() never existed; hidden until Track B (DEC-023).
 
     // Reference Forms
     Route::get('sales/enquiry/reference/create', [EnquiryCrudController::class, 'createReference'])->name('sales.enquiry.reference.create');

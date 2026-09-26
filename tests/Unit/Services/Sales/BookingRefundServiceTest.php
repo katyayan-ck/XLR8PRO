@@ -178,4 +178,56 @@ class BookingRefundServiceTest extends TestCase
         $this->assertSame('Cheque', $updated->mode);
         $this->assertEquals(5, $booking->fresh()->status);
     }
+
+    public function test_apply_refund_details_edit_updates_bank_fields_without_touching_status(): void
+    {
+        $booking = $this->makeBooking(['status' => 7]);
+        $refund = $this->service->apply($booking, $this->requestPayload(), []);
+        $booking->update(['status' => 7]);
+        $historyBefore = $booking->commMaster?->threads()->count() ?? 0;
+
+        $edited = $this->service->applyRefundDetailsEdit($booking, $refund, $this->editPayload([
+            'bank_name' => 'new bank',
+            'ifsc_code' => 'icic0004321',
+            'account_type' => 'Current',
+            'remaining_amount' => 90000,
+            'details' => 'revised charges',
+        ]));
+
+        $this->assertSame('NEW BANK', $edited->bank_name);
+        $this->assertSame('ICIC0004321', $edited->ifsc_code);
+        $this->assertSame('current', $edited->account_type);
+        $this->assertEquals(90000, $edited->amount);
+        $this->assertSame('revised charges', $edited->details);
+        $this->assertEquals(7, $booking->fresh()->status);
+        $this->assertSame($historyBefore + 1, $booking->fresh()->commMaster->threads()->count());
+    }
+
+    public function test_apply_refund_details_edit_records_nothing_when_unchanged(): void
+    {
+        $booking = $this->makeBooking(['status' => 7]);
+        $refund = $this->service->apply($booking, $this->requestPayload(), []);
+        $historyBefore = $booking->fresh()->commMaster->threads()->count();
+
+        $this->service->applyRefundDetailsEdit($booking, $refund->fresh(), $this->editPayload([
+            'details' => $refund->details,
+        ]));
+
+        $this->assertSame($historyBefore, $booking->fresh()->commMaster->threads()->count());
+    }
+
+    private function editPayload(array $overrides = []): array
+    {
+        return array_merge([
+            'bank_name' => 'test bank',
+            'branch_name' => 'Main Branch',
+            'account_type' => 'savings',
+            'account_number' => '123456789012',
+            'holder_name' => 'John Doe',
+            'ifsc_code' => 'hdfc0001234',
+            'deduction' => 5000,
+            'remaining_amount' => 95000,
+            'details' => 'cancellation charges',
+        ], $overrides);
+    }
 }

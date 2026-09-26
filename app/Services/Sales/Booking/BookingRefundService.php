@@ -180,6 +180,51 @@ class BookingRefundService
     }
 
     /**
+     * Edits the bank details, deduction and remaining amount of an existing refund
+     * request (the "Edit Refund Details" form on a Refund Rejected booking). Doesn't
+     * change the booking or refund status. Records which fields changed (DEC-024).
+     *
+     * @param  array<string, mixed>  $validated
+     */
+    public function applyRefundDetailsEdit(Booking $booking, Xl_Refunds $refund, array $validated): Xl_Refunds
+    {
+        $new = [
+            'bank_name' => strtoupper(trim((string) $validated['bank_name'])),
+            'branch_name' => strtoupper(trim((string) $validated['branch_name'])),
+            'account_type' => strtolower((string) $validated['account_type']),
+            'account_number' => trim((string) $validated['account_number']),
+            'holder_name' => trim((string) $validated['holder_name']),
+            'ifsc_code' => strtoupper(trim((string) $validated['ifsc_code'])),
+            'amount' => (string) (float) $validated['remaining_amount'],
+            'details' => trim((string) ($validated['details'] ?? '')),
+        ];
+
+        $changes = [];
+        foreach ($new as $field => $value) {
+            if ((string) $refund->{$field} !== $value) {
+                $changes[$field] = ['from' => $refund->{$field}, 'to' => $value];
+            }
+        }
+
+        if ($changes === []) {
+            return $refund;
+        }
+
+        $refund->update($new);
+
+        $booking->addHistory(
+            'commented',
+            'Refund Details Edited',
+            'Refund request details were updated.',
+            ['changes' => $changes, 'deduction' => $validated['deduction'] ?? null],
+            null,
+            backpack_user()
+        );
+
+        return $refund;
+    }
+
+    /**
      * Applies the refundUpdate() flow: attaches the (mandatory) payment
      * proof, marks the booking Refunded (status 5), and records history.
      * Assumes an Xl_Refunds row already exists for this booking (caller
