@@ -79,7 +79,7 @@ Entry format:
 | BUG-052 | `CommonHelper` passes `null` to `trim()` in 3 places — deprecated in PHP 8.1+, will fatal on a future PHP version | Low | FIXED | 20-09-2026 03:15 | 24-09-2026 |
 | BUG-053 | `phpunit.xml` hardcodes `DB_DATABASE=xlrn` (nonexistent — real DB is `xlrm`), breaking the entire test suite (39/40 tests fail); documented only per explicit user instruction, needs owner confirmation before fixing | High | FIXED | 20-09-2026 04:00 | 22-09-2026 |
 | BUG-054 | `LeadCrudController`/`LeadSourceCrudController::search()`/`showDetailsRow()` had zero Spatie-permission enforcement — same root cause as BUG-047/051 | Critical | FIXED | 20-09-2026 04:30 | 20-09-2026 04:35 |
-| BUG-055 | `@can`/`Auth::user()` never resolves the backpack-authenticated user anywhere in this app — Backpack's own `UseBackpackAuthGuardInsteadOfDefaultAuthGuard` middleware is commented out in `config/backpack/base.php`; silently breaks every `@can`/`auth()->user()->can()` check (fail-closed, not fail-open) | High | OPEN — needs owner input | 20-09-2026 05:00 | — |
+| BUG-055 | `@can`/`Auth::user()` never resolves the backpack-authenticated user anywhere in this app — Backpack's own `UseBackpackAuthGuardInsteadOfDefaultAuthGuard` middleware is commented out in `config/backpack/base.php`; silently breaks every `@can`/`auth()->user()->can()` check (fail-closed, not fail-open) | High | FIXED | 20-09-2026 05:00 |  27-09-2026 |
 | BUG-056 | Admin menu's "Approved Quotations" link points at a route/feature that has never existed (pre-existing, unrelated to URL rename) | Low | OPEN | 20-09-2026 05:10 | — |
 | BUG-057 | `lead/edit.blade.php` fatals with `htmlspecialchars(): ... array given` — pre-existing, unrelated to this session's changes, surfaced by first-time testing | Medium | FIXED | 20-09-2026 04:45 | 24-09-2026 |
 | BUG-058 | `EnquiryCrudController::getKeywordValues()` route had a literal doubled `admin/admin/` URL segment — fixed incidentally while migrating the line to the new URL scheme | Low | FIXED | 20-09-2026 06:00 | 20-09-2026 06:15 |
@@ -780,6 +780,8 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 - **This rollout's own new menu-permission checks use `backpack_user()->can(...)` explicitly**, not `@can`, specifically because of this finding — see batch 30's changelog entry.
 
 - **Update 27-09-2026:** re-verified on the current code — in an admin request `auth()->user()` is `null` and `Gate::allows('admin.dashboard')` is `false` even for superadmin, while `backpack_user()` works. Impact is wider than `@can`: 99 call sites in admin controllers/services/models use `auth()->id()`/`Auth::id()`/`$request->user()` — e.g. `Person`/`PersonContact`/`PersonAddress`/`PersonBankingDetail` stamp `created_by/updated_by` = NULL (all 215 persons in `xlrm` have NULL `created_by`), pricing sessions/holds/imports record no actor, `EntityHistoryService` has no actor. `BaseModel` already works around it. Recommended fix: enable `UseBackpackAuthGuardInsteadOfDefaultAuthGuard` (awaiting owner approval).
+
+- **Fixed 27-09-2026 (DEC-042):** middleware enabled + `User::$guard_name = 'web'` (without it every non-superadmin permission check failed under the switched guard). Full admin smoke identical for users 1/40; `tests/Feature/Admin/AdminAuthGuardTest.php`. Records created from now on get `created_by`/`updated_by`; existing NULLs stay NULL.
 
 ### BUG-056 — Admin menu's "Approved Quotations" link points at a route that has never existed
 

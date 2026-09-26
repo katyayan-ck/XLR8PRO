@@ -324,3 +324,11 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
     - Our migration now uses their `sale_type` type.
     - A new migration converts the local varchar `sale_type` (0 rows set) to their type.
 - **Risk:** MED (shared branch) · **Approved-by:** user (27-09-2026, "merge … resolve conflicts") · **Reversal:** local tags `backup/feature-integrations-pre-merge` and `backup/stage-local-pre-merge`; revert the merge commit.
+
+### DEC-042 | 27-09-2026 | A3 (UAT) | Enable Backpack's guard-switch middleware (BUG-055)
+- **Decision:** enable `UseBackpackAuthGuardInsteadOfDefaultAuthGuard` so that `auth()`, `@can` and `Gate` resolve the admin user in admin requests, and pin `User::$guard_name = 'web'`.
+- **Why the guard pin:** with only the middleware on, Spatie resolved permissions against the switched default guard (`backpack`), while every permission is stored under `web`. Every non-superadmin permission check failed. The pin restores the previous permission semantics exactly.
+- **Verified:**
+  - Full smoke of all 169 parameter-free admin GET screens, as user 1 and user 40, is identical before and after.
+  - 231 tests pass. New `AdminAuthGuardTest`.
+- **Approved-by:** user (27-09-2026, "switch if it broke nothing") · **Reversal:** re-comment the middleware line.

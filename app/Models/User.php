@@ -26,6 +26,12 @@ class User extends Authenticatable
 
     protected $table = 'users';
 
+    /**
+     * Roles and permissions are minted with guard `web`. Admin requests switch the default
+     * guard to `backpack` (BUG-055), so Spatie must not derive the guard from the default.
+     */
+    protected string $guard_name = 'web';
+
     protected $fillable = [
         'username',
         'password',
