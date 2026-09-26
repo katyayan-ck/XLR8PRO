@@ -739,13 +739,13 @@
             <x-backpack::menu-dropdown title="Finance" icon="la la-money-bill" nested="true">
                 <x-backpack::menu-dropdown title="Enquiry Stage" icon="la la-question-circle" nested="true">
                     <a class="dropdown-item d-flex align-items-center justify-content-between"
-                        href="{{ backpack_url('finance/enquiry/int-in-finance') }}">
-                        <span><i class="la la-check me-2"></i>Int in Finance</span>
-                    </a>
-                    <a class="dropdown-item d-flex align-items-center justify-content-between"
-                        href="{{ backpack_url('finance/enquiry/not-interested') }}">
-                        <span><i class="la la-thumbs-down me-2"></i>Not Interested</span>
-                    </a>
+                href="{{ backpack_url('sales/enquiry/finance/int-in-finance') }}">
+                <span><i class="la la-check me-2"></i>Int in Finance</span>
+            </a>
+            <a class="dropdown-item d-flex align-items-center justify-content-between"
+                href="{{ backpack_url('sales/enquiry/finance/not-interested') }}">
+                <span><i class="la la-thumbs-down me-2"></i>Not Interested</span>
+            </a>
                 </x-backpack::menu-dropdown>
                 @if (backpack_user() && backpack_user()->can('SLS_BKNG_FINANCE'))
                     <x-backpack::menu-dropdown title="Booking Stage" icon="la la-book-open" nested="true">

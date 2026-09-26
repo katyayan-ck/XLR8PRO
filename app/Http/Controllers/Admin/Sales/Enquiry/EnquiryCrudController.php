@@ -1099,7 +1099,7 @@ class EnquiryCrudController extends CrudController
             $row['oem_quick_enquiry_date'] = $this->formatDate($e->oem_quick_enquiry_date ?? $e->quick_enquiry_date, 'd-M-Y');
             $row['oem_quick_enquiry_status'] = $e->oem_quick_enquiry_status ?? $e->quick_status ?? '—';
             $row['oem_quick_enquiry_assign_date'] = $this->formatDate($e->oem_quick_enquiry_assign_date ?? $e->quick_enq_assign_date, 'd-M-Y');
-            $row['x8_enq_source'] = $e->x8_enq_source ?? $e->x8_source_code ?? '—';
+            // $row['x8_enq_source'] = $e->x8_enq_source ?? $e->x8_source_code ?? '—';
             $row['name'] = $e->name ?? '—';
             $row['care_of_type'] = match ((int) ($e->care_of_type ?? 0)) {
                 1 => 'Son of',
@@ -1387,7 +1387,7 @@ class EnquiryCrudController extends CrudController
             ['field' => 'oem_quick_enquiry_no', 'headerName' => 'OEM Quick Enquiry No.'],
             ['field' => 'oem_quick_enquiry_date', 'headerName' => 'OEM Quick Enquiry Date'],
             ['field' => 'oem_quick_enquiry_assign_date', 'headerName' => 'OEM Quick Enquiry Assign Date'],
-            ['field' => 'x8_enq_source', 'headerName' => 'X8 Enquiry Source'],
+            // ['field' => 'x8_enq_source', 'headerName' => 'X8 Enquiry Source'],
             ['field' => 'enquiry_type', 'headerName' => 'OEM Enquiry Type'],
             ['field' => 'source_code', 'headerName' => 'OEM Enquiry Source'],
             ['field' => 'sub_source', 'headerName' => 'OEM Enquiry Sub Source'],
