@@ -34,3 +34,42 @@ Branch `feature/integrations`. Decisions DEC-033…038 are in `docs/decisions/de
 - `php artisan test --compact`: 221 passed, 1 skipped.
 - Smoke of all 65 parameter-free Vehicle/Pricing/Org/IAM/Utils GET screens as user 1: all 200/302 after the Brand redirect.
 - User 40 (scoped): expected 403s; retired URLs return 302.
+
+## Users & RBAC workbook (DEC-040) and user-importer hardening (BUG-163/164/165)
+- **New files:**
+  - `app/Services/IAM/UserRbacExportService.php` gathers the data.
+  - `app/Exports/UserRbac/{UserRbacWorkbookExport,UserRbacSheet}.php` build the workbook.
+  - `app/Imports/Sheets/UserScopesSheetImport.php` imports the scope rows.
+  - `app/Console/Commands/ExportUserRbacCommand.php` adds `php artisan users:export-rbac [--path=]`.
+  - `tests/Feature/Org/UserRbacWorkbookTest.php` (6 tests).
+- **Workbook sheets:**
+  - `Instructions`, `Permissions` (Module → Process → Permission), `Roles` (designations + permissions).
+  - `Users_Import`: importer headers are editable; `[Read-only]` columns hold roles, effective permissions and scopes.
+  - `User_Scopes`: one row per value; the value dropdown depends on the scope type.
+  - Hidden `Lists`: named ranges; lists start with `ALL`.
+  - Values are `Name (CODE)` labels.
+- **Web (Users → Bulk import):**
+  - "Export users & RBAC" (`ORG_USER_EXPORT`), route `org.user.export`.
+  - "Download template" is now the same workbook without user rows (the old template had the unreadable `D.O.B.` header).
+  - Import results show the User_Scopes summary.
+- **`UsersImportWorkbook`:** imports `Users_Import`, then `User_Scopes` if present. `import:users` prints both summaries.
+- **`StandaloneUsersImport`:**
+  - Absent columns are left untouched.
+  - `Employee Status`, `Employment Type` and `Login Active` are honoured.
+  - No partial-name guessing (designation or org). Unknown values are reported and the stored value is kept.
+  - Addon columns are merged and the slugged keys fixed (BUG-163). `dob` is read and Excel date serials parsed.
+  - User type comes from the resolved designation code.
+  - Reporting manager codes in any format are kept.
+- **`OrgScopeService`:**
+  - `vertical` added to the hierarchy.
+  - Variant name column fixed (`display_name`).
+  - `ALL` expansion de-duplicated.
+  - `resolveLabel()` and `types()` added (BUG-164).
+- **`phpstan.neon`:** the `app/Models_backup` exclude is now optional. PHPStan had been failing to start since the 26-09 purge.
+- **Verification:**
+  - An unchanged export re-imported on `xlrm_testing` changes no employee, user, person, contact or role. The only change is the employees' primary codes that were missing from their scopes, which are added by design (27 on the test copy).
+  - Reconciliation of `storage/userdata.xlsx` against `xlrm`: 104 findings (BUG-166), in the local `storage/app/exports/userdata-vs-db-27-09-2026.xlsx`.
+- **Other:**
+  - BUG-055 re-verified with its wider impact documented.
+  - BUG-090 impact confirmed: 34 users without a role.
+  - DEC-039 (ticket intake: staff UI + API).

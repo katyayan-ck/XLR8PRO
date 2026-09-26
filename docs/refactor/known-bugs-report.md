@@ -198,6 +198,10 @@ Entry format:
 | BUG-160 | Only 1 of 201 users has `admin.dashboard`, so the post-login dashboard returns 403 for almost everyone | High | FIXED | 26-09-2026 | 26-09-2026 |
 | BUG-161 | Bookings have no branch: xlr8_booking_master has no branch column and the enquiry fallback (dealer_branch) is empty on all 60,923 enquiries, so VOTF numbers can never be generated | High | OPEN (needs decision) | 26-09-2026 | — |
 | BUG-162 | User bulk import read every workbook sheet: Reporting-sheet rows (Emp Code, no name) created nameless persons each run and re-pointed existing employees/users to them | Critical | FIXED | 26-09-2026 | 26-09-2026 |
+| BUG-163 | User importer lost addon scopes and DOB: it took only the first non-empty scope column and its addon/DOB keys never matched the slugged template headers (`addon_branch`, `add_on_divisions`, `dob`) | High | FIXED | 27-09-2026 | 27-09-2026 |
+| BUG-164 | `OrgScopeService` resolves variants by a `name` column that `xlr8_vehicle_variant` doesn't have — any variant given by name crashes the import row; `ALL` expansion returned duplicate codes | Medium | FIXED | 27-09-2026 | 27-09-2026 |
+| BUG-165 | User importer rewrote data it wasn't given: absent columns nulled/defaulted employee fields, every row forced `employment_status=active` and `users.is_active=1`, and partial-name `LIKE` guesses mapped unknown values to other masters — incl. designation, i.e. the user's role (a stale `MAN` became `ACS_MGR`) | High | FIXED | 27-09-2026 | 27-09-2026 |
+| BUG-166 | `storage/userdata.xlsx` (source of the user import) has values that match no master: old codes `SJN`/`NKH`/`SDS`/`KLY` (DB: `SUJ`/`NOK`/`SDR`/`KOL`), `BEV` entered as a division ×32, department `IT` ×2; 38 DB users are not in the file | Medium | OPEN (data — needs owner fixes in the workbook) | 27-09-2026 | — |
 
 Not a bug (false positive, listed for reference): the original `infer-conventions` sweep flagged
 "`SheetHeaderService`/`SynonymService` not used by importers" — re-investigation on 19-09-2026
@@ -773,6 +777,8 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 - **Proposed solution:** either (a) uncomment `UseBackpackAuthGuardInsteadOfDefaultAuthGuard` in `config/backpack/base.php` (the "correct"/intended fix per Backpack's own design — but changing global default-guard behavior for the whole admin request lifecycle is exactly the kind of change that needs the repo owner's sign-off, since it could have side effects on any other code that assumes `Auth::user()` reflects the `'web'` guard during an admin request — e.g. shared code paths hit by both public and admin routes), or (b) as this rollout has done throughout, never rely on `@can`/`auth()->user()`/bare `Gate::` calls in admin-panel code — always use `backpack_user()->can(...)` explicitly instead, and treat the existing `@can(...)` line as a bug to fix the same way (documented, not touched, in this batch). **Not fixed** — needs the owner to pick (a) or (b), same "needs owner input before a global behavior change" category as BUG-019/053.
 - **This rollout's own new menu-permission checks use `backpack_user()->can(...)` explicitly**, not `@can`, specifically because of this finding — see batch 30's changelog entry.
 
+- **Update 27-09-2026:** re-verified on the current code — in an admin request `auth()->user()` is `null` and `Gate::allows('admin.dashboard')` is `false` even for superadmin, while `backpack_user()` works. Impact is wider than `@can`: 99 call sites in admin controllers/services/models use `auth()->id()`/`Auth::id()`/`$request->user()` — e.g. `Person`/`PersonContact`/`PersonAddress`/`PersonBankingDetail` stamp `created_by/updated_by` = NULL (all 215 persons in `xlrm` have NULL `created_by`), pricing sessions/holds/imports record no actor, `EntityHistoryService` has no actor. `BaseModel` already works around it. Recommended fix: enable `UseBackpackAuthGuardInsteadOfDefaultAuthGuard` (awaiting owner approval).
+
 ### BUG-056 — Admin menu's "Approved Quotations" link points at a route that has never existed
 
 - **Status:** OPEN
@@ -1124,6 +1130,8 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 - **Where:** `xlr8_admin_employee` — confirmed via `Employee::whereNotNull('designation_code')->get()->filter(fn($e) => !Designation::where('code', $e->designation_code)->exists())->count()` → 36, and an empty-primary_branch_code count → 30.
 - **Description:** these are real, pre-existing data gaps (either from historical migrations before the code-based org refactor, or from imports run before all designation codes existed) — not caused by anything in this session's Person/Org/User work.
 - **Proposed solution:** a one-time data-cleanup pass (either backfill correct values from another source, or explicitly null them out with a documented reason) is needed before every employee can be edited through the new integrated User screen. Out of scope to guess at correct values here — needs the app owner's input on what the right designation/branch actually was for each of the 36+30 rows.
+
+- **Update 27-09-2026:** impact confirmed — 34 users whose employees carry retired codes (`MAN`×18, `CNS`×6, `DSA`×3, `GM`×2, `RTO`×2, `SWD`, `API`, `TST`) have no Spatie role, hence no permissions and no dashboard; they also have no scopes. The user importer no longer maps these codes to other designations by partial name (BUG-165). See BUG-166.
 
 ### BUG-091 — Booking Add/Edit rendered as an empty generic form after route restructuring
 
@@ -1844,3 +1852,36 @@ guessed at.
 - **Found:** 26-09-2026 23:10, importing `docs/reference/pricing/data/userdata.xlsx` into `xlrm_testing` twice (+25 nameless persons per run; 6 employees and users re-pointed after two runs). Live `xlrm` unaffected.
 - **Fixed:** 26-09-2026 23:40 — `UsersImportWorkbook` reads only `Users_Import`; existing employees keep their `person_code`; rows without Employee Name are skipped; the importer reports created/updated/skipped/failed; `import:users` picks the sheet automatically. Verified on a fresh copy: run 1 created 295 / updated 158 / failed 0; run 2 created 0 with identical counts; 0 employees linked to nameless persons. Regression tests: `tests/Unit/StandaloneUsersImportTest.php` (3). DEC-035.
 - **Where:** `app/Imports/Sheets/StandaloneUsersImport.php`, `app/Imports/UsersImportWorkbook.php`, `app/Console/Commands/ImportUsersCommand.php`.
+
+### BUG-163 — User importer lost addon scopes and date of birth
+
+- **Status:** FIXED
+- **Severity:** High — addon branches/locations/divisions in the users workbook were silently dropped.
+- **Found:** 27-09-2026, building the users & RBAC round-trip export (DEC-040) and reconciling `storage/userdata.xlsx` with the DB.
+- **Fixed:** 27-09-2026 — [ai-changelogs-27-09-2026.md](ai-changelogs-27-09-2026.md)
+- **Where:** `app/Imports/Sheets/StandaloneUsersImport.php::syncUserScopes()` / `createOrUpdatePerson()`.
+- **Description:** `getValue($row, [primary, …, addon])` returns the *first* non-empty key, so a row with a primary branch never looked at its addon column. The addon keys (`addon_branches`, `addon_divisions`…) also never matched the headers after Maatwebsite's slug formatter (`Addon Branch` → `addon_branch`, `Add On Divisions` → `add_on_divisions`), and `D.O.B.` slugs to `dob`, which wasn't read. Evidence: the dump's `AddOn Location = CTG` and `Add On Divisions = Personal` (×3) are missing from those users' scopes.
+- **Fix:** every scope column is expanded and merged per type (each column separately, so `ALL` works in any of them); slugged addon keys and `dob` added.
+
+### BUG-164 — OrgScopeService variant lookup uses a non-existent column
+
+- **Status:** FIXED
+- **Severity:** Medium — `resolveCode('variant', <name>)` threw `Unknown column 'name'`; `expandCodes('variant','ALL')` returned 2,625 rows for 652 codes.
+- **Found / Fixed:** 27-09-2026 — [ai-changelogs-27-09-2026.md](ai-changelogs-27-09-2026.md)
+- **Fix:** variant name column → `display_name`; `ALL` expansion is distinct; `vertical` added to the hierarchy (the importer special-cased it); `resolveLabel()` accepts export labels `Name (CODE)`.
+
+### BUG-165 — User importer overwrote or guessed data it was not given
+
+- **Status:** FIXED
+- **Severity:** High — a re-import could reactivate separated employees and disabled logins, wipe joining dates / reporting managers, and change a user's role through a fuzzy designation match.
+- **Found:** 27-09-2026, no-op round trip (export → import unchanged) on `xlrm_testing`: 2 users gained role `ACS_MGR` (stale designation `MAN` matched "Accounts Manager" by `LIKE`), 3 invalid department/segment codes were nulled or re-mapped (`COMM` → `CV`), 7 reporting managers in non-`BMPL-####` formats were cleared.
+- **Fixed:** 27-09-2026 — [ai-changelogs-27-09-2026.md](ai-changelogs-27-09-2026.md)
+- **Fix:** columns absent from the sheet are left untouched (blank present = clear); `Employee Status`, `Employment Type`, `Login Active` honoured when present (new rows default active/permanent, existing rows keep theirs); no partial-name guessing for designation or org codes — an unknown value keeps the stored code and is reported (`VALUE SKIPPED` / `ROLE SKIPPED`); user type derives from the resolved designation code; Excel date serials parsed. After the fix an unchanged export re-imports with zero changes except missing primary scopes (by design).
+
+### BUG-166 — Users workbook data that matches no master
+
+- **Status:** OPEN (data — needs the owner to correct `storage/userdata.xlsx` or re-export and fix)
+- **Severity:** Medium — affected users got no branch/location/division scope.
+- **Found:** 27-09-2026 — reconciliation `storage/app/exports/userdata-vs-db-27-09-2026.xlsx` (104 findings; local file, gitignored).
+- **Details:** Branch `SJN` ×6 and locations `SJN` ×5, `NKH` ×5, `SDS` ×4, `KLY` ×2 are old codes (DB uses `SUJ`, `NOK`, `SDR`, `KOL`); `BEV` entered as a division ×32 (it is a segment); department `IT` ×2 (no such department); sub segment `NON XUV` ×6 not in scopes (will be applied on the next import). 38 DB users (BMPL-0011…0058 and the superadmin) are not in the file — 34 of them are the BUG-090 users with retired designation codes and have **no role and no scopes**.
+- **Proposed solution:** fix the codes in the exported workbook (dropdowns prevent new bad values) and re-import; decide what the 34 role-less users should be (new designation, or deactivate via `Login Active = No`).

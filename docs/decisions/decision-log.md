@@ -288,3 +288,23 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
 - **Addendum (01:40):**
   - All `vehicle/brand*` routes are replaced by redirects to `vehicle/segment`. The Brand controller, request and views stay in the tree, unrouted, for Track B reference.
   - Deleted the unreferenced brand writers `Imports/Sheets/SegmentSheet`, `Imports/Concerns/MasterDataSeeder` and `CodeGenerator`: no callers, and they write to a missing table and column.
+
+### DEC-039 | 27-09-2026 02:00 | B2b (Track B, planning) | Ticket intake channels: staff UI + API now
+- **Decision:** SUP-DEC-003 is resolved. Tickets can be raised from (1) the internal staff UI and (2) the API (mobile app and other systems). The customer portal and inbound email are deferred, not rejected.
+- **Approved-by:** user (27-09-2026) · **Reversal:** add channels in a later phase.
+
+### DEC-040 | 27-09-2026 02:05 | A3 (UAT) | User & RBAC export workbook that round-trips through the user importer
+- **Decision:** add a reusable export (Maatwebsite `WithMultipleSheets`) via `php artisan users:export-rbac` and a button on Users → Bulk import (permission `ORG_USER_EXPORT`, which already exists). Sheets:
+  - `Permissions` (Module → Process → Permission) and `Roles` (designations + permissions): read-only.
+  - `Users_Import`: editable columns use the importer's own headers. Read-only columns are prefixed `[Read-only]` so the importer ignores them.
+  - `User_Scopes`: one row per user + scope type + value; this is how multi-select is done.
+  - Hidden `Lists` sheet with named ranges.
+- **Dropdowns:** every master-data cell is a list validation (stop on invalid input) with the label `Name (CODE)`. Scope and primary org lists start with `ALL`. The User_Scopes value list depends on the scope type (`INDIRECT`).
+- **Why not comma lists:** Excel list validation allows one value per cell. Multi-select needs VBA (.xlsm, blocked by most mail and AV policies) or free text (no validation). One row per value keeps every cell validated.
+- **Importer semantics needed for a safe round-trip:**
+  - Label parsing: `Name (CODE)` → CODE.
+  - For a user listed in `User_Scopes`, the listed set becomes their scope (others deactivated with `to_date`, never deleted; primary codes always kept).
+  - Employee columns absent from a sheet are left untouched instead of nulled or defaulted.
+  - `Employee Status` and `Login Active` are honoured when present.
+  - Excel date serials are parsed.
+- **Risk:** MED: it changes how the bulk importer treats missing columns (safer) and adds scope removal (only via the new sheet). **Approved-by:** user request (27-09-2026) · **Reversal:** revert the commit.

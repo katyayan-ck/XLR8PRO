@@ -20,3 +20,7 @@ paths:
 - Google Sheets imports (Finance/Insurance/RTO) need valid service-account credentials; the key file is
   local-only (never commit it — `gscreds.json` is gitignored).
 - Large exports: stream (chunked) rather than building the whole sheet in memory.
+- Users workbook (DEC-040): `php artisan users:export-rbac` / Users → Bulk import → Export produces an importable file
+  (`Users_Import` + `User_Scopes`, dropdowns fed by named ranges). The user importer never guesses: unknown values
+  are reported (`VALUE SKIPPED`/`ROLE SKIPPED`) and keep the stored code; absent columns are left untouched.
+  Keep an unchanged export's re-import a no-op (`UserRbacWorkbookTest`).

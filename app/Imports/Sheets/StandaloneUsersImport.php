@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
 use Spatie\Permission\PermissionRegistrar;
 
 /**
@@ -96,13 +97,13 @@ class StandaloneUsersImport implements ToCollection, WithHeadingRow
             $desigCode = $this->createOrUpdateEmployee($row, $empCode, $personCode, $rowIndex);
 
             // 3. User account
-            $userId = $this->createOrUpdateUser($row, $empCode, $personCode, $rowIndex);
+            $userId = $this->createOrUpdateUser($row, $empCode, $personCode, $rowIndex, $desigCode);
 
             // 4. Scopes → xlr8_admin_user_scopes (primary + expanded ALL)
             $this->syncUserScopes($row, $userId, $rowIndex);
 
             // 5. person ↔ user_type link
-            $this->syncPersonUserType($personCode, $userId, $row);
+            $this->syncPersonUserType($personCode, $userId, $desigCode);
 
             // 6. Designation → Spatie role (the Employee's Designation IS the role — see
             // config/permission.php's 'roles' table mapping to xlr8_admin_designation)
@@ -205,7 +206,7 @@ class StandaloneUsersImport implements ToCollection, WithHeadingRow
             'display_name' => $fullName,
             'first_name' => null, // PersonService will split from display_name
             'gender' => $this->s($this->getValue($row, ['gender', 'Gender'])),
-            'dob' => $this->getValue($row, ['date_of_birth', 'D.O.B.']),
+            'dob' => $this->parseDate($this->getValue($row, ['date_of_birth', 'dob', 'D.O.B.'])),
             'marital_status' => $this->s($this->getValue($row, ['marital_status', 'Marital Status'])),
             'pan_no' => $this->n($this->getValue($row, ['pan_no', 'PAN No.'])),
             'aadhaar_no' => $this->n($this->getValue($row, ['aadhaar_no', 'Aadhaar No'])),
@@ -234,47 +235,75 @@ class StandaloneUsersImport implements ToCollection, WithHeadingRow
             $this->getValue($row, ['designation', 'Designation*'])
         );
 
-        $branchCode = $this->resolveOrgCode('branch', $this->getValue($row, ['primary_branch', 'Primary Branch*']));
-        $locCode = $this->resolveOrgCode('location', $this->getValue($row, ['primary_location', 'Primary Location*']));
-        $deptCode = $this->resolveOrgCode('department', $this->getValue($row, ['primary_department', 'Primary Department*']));
-        $divCode = $this->resolveOrgCode('division', $this->getValue($row, ['primary_division', 'Primary Division']));
-        $vertical = $this->resolveVerticalCode($this->getValue($row, ['vertical', 'Vertical']));
-        $segment = $this->resolveOrgCode('segment', $this->getValue($row, ['segment', 'Segment']));
-        $subSegment = $this->resolveOrgCode('sub_segment', $this->getValue($row, ['sub_segment', 'Sub Segment']));
-
-        $reportingManager = $this->parseReportingManager(
-            $this->getValue($row, ['reporting_manager', 'Reporting Manager'])
-        );
-
-        // employment_type is ENUM NOT NULL — never send empty string
-        $empTypeRaw = strtolower((string) ($this->n($this->getValue($row, ['employment_type', 'Employment Type'])) ?? ''));
-        $employmentType = match (true) {
-            in_array($empTypeRaw, ['permanent', 'probation', 'apprentice', 'contract', 'temporary'], true) => $empTypeRaw,
-            default => 'permanent',
-        };
+        $exists = DB::table('xlr8_admin_employee')->where('code', $empCode)->exists();
 
         $data = [
             'code' => $empCode,
             'person_code' => $personCode,
-            'desig_code' => $desigCode,          // legacy
-            'designation_code' => $desigCode,          // preferred
-            'primary_branch_code' => $branchCode,
-            'primary_loc_code' => $locCode,
-            'primary_dept_code' => $deptCode,
-            'primary_div_code' => $divCode,
-            'vertical_code' => $vertical,
-            'segment_code' => $segment,
-            'sub_segment_code' => $subSegment,
-            'mile_id' => $this->n($this->getValue($row, ['oem_mile_id', 'OEM Mile ID', 'mile_id', 'Mile ID'])),
-            'father_name' => $this->n($this->getValue($row, ['father_name', 'Father Name'])),
-            'employment_type' => $employmentType,
-            'employment_status' => 'active',
-            'joining_date' => $this->parseDate($this->getValue($row, ['date_of_joining', 'Date of Joining'])),
-            'reporting_manager_code' => $reportingManager,
             'updated_at' => $now,
         ];
 
-        $exists = DB::table('xlr8_admin_employee')->where('code', $empCode)->exists();
+        // An unresolvable designation never erases the stored one (some employees carry codes
+        // missing from xlr8_admin_designation, BUG-090); the role step reports the row.
+        if ($desigCode !== null || ! $exists) {
+            $data['desig_code'] = $desigCode;          // legacy
+            $data['designation_code'] = $desigCode;    // preferred
+        } else {
+            $desigCode = DB::table('xlr8_admin_employee')->where('code', $empCode)->value('designation_code');
+        }
+
+        // A column missing from the sheet leaves the stored value untouched; a present but
+        // blank cell clears it (DEC-040 — the round-trip export carries every column).
+        $optional = [
+            'primary_branch_code' => [['primary_branch', 'Primary Branch*'], fn ($v) => $this->resolveOrgCode('branch', $v)],
+            'primary_loc_code' => [['primary_location', 'Primary Location*'], fn ($v) => $this->resolveOrgCode('location', $v)],
+            'primary_dept_code' => [['primary_department', 'Primary Department*'], fn ($v) => $this->resolveOrgCode('department', $v)],
+            'primary_div_code' => [['primary_division', 'Primary Division'], fn ($v) => $this->resolveOrgCode('division', $v)],
+            'vertical_code' => [['vertical', 'Vertical'], fn ($v) => $this->resolveVerticalCode($v)],
+            'segment_code' => [['segment', 'Segment'], fn ($v) => $this->resolveOrgCode('segment', $v)],
+            'sub_segment_code' => [['sub_segment', 'Sub Segment'], fn ($v) => $this->resolveOrgCode('sub_segment', $v)],
+            'mile_id' => [['oem_mile_id', 'OEM Mile ID', 'mile_id', 'Mile ID'], fn ($v) => $this->n($v)],
+            'father_name' => [['father_name', 'Father Name'], fn ($v) => $this->n($v)],
+            'joining_date' => [['date_of_joining', 'Date of Joining'], fn ($v) => $this->parseDate($v)],
+            'reporting_manager_code' => [['reporting_manager', 'Reporting Manager'], fn ($v) => $this->parseReportingManager($v)],
+        ];
+        $lookedUp = ['primary_branch_code', 'primary_loc_code', 'primary_dept_code', 'primary_div_code', 'vertical_code', 'segment_code', 'sub_segment_code'];
+        foreach ($optional as $column => [$keys, $resolve]) {
+            if (! $this->hasColumn($row, $keys)) {
+                continue;
+            }
+            $raw = $this->getValue($row, $keys);
+            $value = $resolve($raw);
+
+            // A value that names no master row (e.g. a stale code) keeps the stored value
+            // instead of clearing it; ALL/blank intentionally clear the primary.
+            if ($value === null && in_array($column, $lookedUp, true)
+                && $this->n($raw) !== null && ! in_array(strtoupper((string) $raw), ['ALL', 'ANY'], true)) {
+                $this->logRow($rowIndex, '⚠️ VALUE SKIPPED', "{$empCode}: {$column} '{$raw}' not found".($exists ? ', stored value kept' : ', left empty'));
+                if ($exists) {
+                    continue;
+                }
+            }
+
+            $data[$column] = $value;
+        }
+
+        // employment_type / employment_status are ENUM NOT NULL: set from a valid value,
+        // default only for a new employee, otherwise keep what is stored.
+        $empType = strtolower((string) $this->n($this->getValue($row, ['employment_type', 'Employment Type'])));
+        if (in_array($empType, ['permanent', 'probation', 'apprentice', 'contract', 'temporary'], true)) {
+            $data['employment_type'] = $empType;
+        } elseif (! $exists) {
+            $data['employment_type'] = 'permanent';
+        }
+
+        $empStatus = strtolower((string) $this->n($this->getValue($row, ['employee_status', 'Employee Status'])));
+        if (in_array($empStatus, ['active', 'inactive', 'separated', 'terminated', 'absconded'], true)) {
+            $data['employment_status'] = $empStatus;
+        } elseif (! $exists) {
+            $data['employment_status'] = 'active';
+        }
+
         if ($exists) {
             DB::table('xlr8_admin_employee')->where('code', $empCode)->update($data);
         } else {
@@ -294,12 +323,12 @@ class StandaloneUsersImport implements ToCollection, WithHeadingRow
     // USER
     // ─────────────────────────────────────────────────────────────
 
-    private function createOrUpdateUser(array $row, string $empCode, string $personCode, int $rowIndex): int
+    private function createOrUpdateUser(array $row, string $empCode, string $personCode, int $rowIndex, ?string $desigCode): int
     {
         $now = Carbon::now();
         $username = strtolower($empCode);
-        $desig = strtoupper((string) $this->code($this->getValue($row, ['designation', 'Designation*'])));
-        $userType = in_array($desig, ['RTO', 'DSA'], true) ? 'Associate' : 'Emp';
+        // Resolved designation code, not the raw cell (an export label is "Name (CODE)").
+        $userType = in_array(strtoupper((string) $desigCode), ['RTO', 'DSA'], true) ? 'Associate' : 'Emp';
 
         $mobile = $this->cleanPhone($this->getValue($row, ['personal_contact_number', 'Personal Contact Number*'])) ?? '1234567890';
         $password = Hash::make($mobile);
@@ -314,10 +343,13 @@ class StandaloneUsersImport implements ToCollection, WithHeadingRow
             'updated_at' => $now,
         ];
 
+        $loginActive = $this->yesNo($this->getValue($row, ['login_active', 'Login Active']));
+
         $existingId = DB::table('users')->where('username', $username)->value('id');
         if ($existingId) {
-            // Do not overwrite password on update
+            // Do not overwrite password on update; keep the login flag unless the sheet sets it.
             unset($data['password']);
+            $data['is_active'] = $loginActive ?? DB::table('users')->where('id', $existingId)->value('is_active');
             DB::table('users')->where('id', $existingId)->update($data);
             $this->logRow($rowIndex, '🔄 USER UPDATED', "username = {$username} | type = {$userType}");
 
@@ -325,6 +357,7 @@ class StandaloneUsersImport implements ToCollection, WithHeadingRow
         }
 
         $data['created_at'] = $now;
+        $data['is_active'] = $loginActive ?? 1;
         $userId = DB::table('users')->insertGetId($data);
         $this->logRow($rowIndex, '✅ USER CREATED', "username = {$username} | type = {$userType}");
 
@@ -344,29 +377,34 @@ class StandaloneUsersImport implements ToCollection, WithHeadingRow
         $fromDate = now()->toDateString();
         $now = now();
 
-        // Map Excel columns → scope_type. Supports primary + addon / multi-value.
+        // Excel columns → scope_type. Every listed column adds codes (primary + addon): the old
+        // lookup stopped at the first non-empty column and its addon keys never matched the
+        // template's slugged headers (`addon_branch`, `add_on_divisions`…), so addons were lost (BUG-163).
         // OrgScopeService::expandCodes handles ALL/ANY → all active codes, and comma-lists.
-        $scopeInputs = [
-            'branch' => $this->getValue($row, ['primary_branch', 'Primary Branch*', 'branches', 'Branches', 'addon_branches']),
-            'location' => $this->getValue($row, ['primary_location', 'Primary Location*', 'locations', 'Locations', 'addon_locations']),
-            'department' => $this->getValue($row, ['primary_department', 'Primary Department*', 'departments', 'Departments', 'addon_departments']),
-            'division' => $this->getValue($row, ['primary_division', 'Primary Division', 'divisions', 'Divisions', 'addon_divisions']),
-            'vertical' => $this->getValue($row, ['vertical', 'Vertical', 'verticals', 'Verticals']),
-            'segment' => $this->getValue($row, ['segment', 'Segment', 'segments', 'Segments']),
-            'sub_segment' => $this->getValue($row, ['sub_segment', 'Sub Segment', 'sub_segments', 'Sub Segments']),
-            'model' => $this->getValue($row, ['model', 'Model', 'models', 'Models']),
-            'variant' => $this->getValue($row, ['variant', 'Variant', 'variants', 'Variants']),
+        $scopeColumns = [
+            'branch' => ['primary_branch', 'branches', 'addon_branch', 'addon_branches', 'add_on_branches'],
+            'location' => ['primary_location', 'locations', 'addon_location', 'addon_locations', 'add_on_locations'],
+            'department' => ['primary_department', 'departments', 'addon_department', 'addon_departments', 'add_on_departments'],
+            'division' => ['primary_division', 'divisions', 'addon_division', 'addon_divisions', 'add_on_divisions'],
+            'vertical' => ['vertical', 'verticals'],
+            'segment' => ['segment', 'segments'],
+            'sub_segment' => ['sub_segment', 'sub_segments'],
+            'model' => ['model', 'models'],
+            'variant' => ['variant', 'variants'],
         ];
 
         $inserted = 0;
 
-        foreach ($scopeInputs as $type => $raw) {
-            if ($raw === null || trim((string) $raw) === '') {
-                continue;
+        foreach ($scopeColumns as $type => $keys) {
+            $codes = [];
+            foreach ($keys as $key) {
+                $raw = $this->getValue($row, [$key]);
+                if ($raw !== null) {
+                    $codes = array_merge($codes, $this->expandScopeCodes($type, $raw));
+                }
             }
 
-            $codes = $this->expandScopeCodes($type, $raw);
-            foreach ($codes as $code) {
+            foreach (array_unique($codes) as $code) {
                 if (! $code || strtoupper($code) === 'ALL') {
                     continue;
                 }
@@ -409,37 +447,12 @@ class StandaloneUsersImport implements ToCollection, WithHeadingRow
     }
 
     /**
-     * Expand scope value → list of codes.
-     * Uses OrgScopeService when type is in its hierarchy; falls back for vertical.
+     * Expand scope value (`ALL`, codes, names or `Name (CODE)` labels, comma-separated) → codes.
      */
     private function expandScopeCodes(string $type, ?string $raw): array
     {
         if (! $raw) {
             return [];
-        }
-
-        $upper = strtoupper(trim($raw));
-
-        // Vertical is not in OrgScopeService::$hierarchy — handle directly
-        if ($type === 'vertical') {
-            if (in_array($upper, ['ALL', 'ANY'], true)) {
-                return DB::table('xlr8_admin_vertical')
-                    ->where('is_active', 1)
-                    ->pluck('code')
-                    ->map(fn ($c) => strtoupper($c))
-                    ->toArray();
-            }
-
-            $parts = array_filter(array_map('trim', explode(',', $raw)));
-            $codes = [];
-            foreach ($parts as $part) {
-                $resolved = $this->resolveVerticalCode($part);
-                if ($resolved) {
-                    $codes[] = $resolved;
-                }
-            }
-
-            return array_unique($codes);
         }
 
         return OrgScopeService::expandCodes($type, $raw);
@@ -449,10 +462,10 @@ class StandaloneUsersImport implements ToCollection, WithHeadingRow
     // PERSON USER TYPE  (xlr8_admin_person_user_types)
     // ─────────────────────────────────────────────────────────────
 
-    private function syncPersonUserType(string $personCode, int $userId, array $row): void
+    private function syncPersonUserType(string $personCode, int $userId, ?string $desigCode): void
     {
-        $desig = strtoupper((string) $this->code($this->getValue($row, ['designation', 'Designation*'])));
-        $userType = in_array($desig, ['RTO', 'DSA'], true) ? 'Associate' : 'Emp';
+        // Resolved designation code, not the raw cell (an export label is "Name (CODE)").
+        $userType = in_array(strtoupper((string) $desigCode), ['RTO', 'DSA'], true) ? 'Associate' : 'Emp';
         $now = now();
 
         $exists = DB::table('xlr8_admin_person_user_types')
@@ -540,32 +553,15 @@ class StandaloneUsersImport implements ToCollection, WithHeadingRow
             return null;
         }
 
-        // OrgScopeService supports: branch, location, department, division, segment, sub_segment, model, variant
-        $resolved = OrgScopeService::resolveCode($type, $input);
+        // OrgScopeService supports: branch, location, department, division, vertical, segment, sub_segment, model, variant
+        $resolved = OrgScopeService::resolveLabel($type, $input);
 
         if ($resolved && $resolved !== 'ALL') {
             return $resolved;
         }
 
-        // Fallback: try name LIKE (for slightly dirty Excel values)
-        $tableMap = [
-            'branch' => ['xlr8_admin_branch', 'code', 'name'],
-            'location' => ['xlr8_admin_location', 'code', 'name'],
-            'department' => ['xlr8_admin_department', 'code', 'name'],
-            'division' => ['xlr8_admin_division', 'code', 'name'],
-            'segment' => ['xlr8_vehicle_segment', 'code', 'name'],
-            'sub_segment' => ['xlr8_vehicle_subsegment', 'code', 'name'],
-        ];
-
-        if (isset($tableMap[$type])) {
-            [$table, $codeCol, $nameCol] = $tableMap[$type];
-            $code = DB::table($table)
-                ->where($nameCol, 'LIKE', '%'.$val.'%')
-                ->value($codeCol);
-
-            return $code ? strtoupper($code) : null;
-        }
-
+        // No partial-name guessing: an unknown value is reported by the caller and never
+        // silently mapped to a different master row (DEC-040).
         return null;
     }
 
@@ -580,23 +576,22 @@ class StandaloneUsersImport implements ToCollection, WithHeadingRow
             return null;
         }
 
+        // Export label "Name (CODE)"
+        if (preg_match('/\(([^()]+)\)\s*$/', $val, $m)
+            && DB::table('xlr8_admin_designation')->where('code', trim($m[1]))->exists()) {
+            return trim($m[1]);
+        }
+
         // Exact code
         $exists = DB::table('xlr8_admin_designation')->where('code', $val)->exists();
         if ($exists) {
             return $val;
         }
 
-        // Name match (exact then LIKE)
+        // Exact name only: the designation is the user's role, so a partial-name guess could
+        // grant another role's permissions (a stale "MAN" matched "Accounts Manager").
         $code = DB::table('xlr8_admin_designation')
             ->whereRaw('UPPER(name) = ?', [$val])
-            ->value('code');
-
-        if ($code) {
-            return strtoupper($code);
-        }
-
-        $code = DB::table('xlr8_admin_designation')
-            ->where('name', 'LIKE', '%'.$val.'%')
             ->value('code');
 
         return $code ? strtoupper($code) : null;
@@ -608,29 +603,7 @@ class StandaloneUsersImport implements ToCollection, WithHeadingRow
             return null;
         }
 
-        $val = strtoupper(trim($input));
-        if (in_array($val, ['ALL', 'ANY', '0', '', 'NULL', 'N/A', '-'], true)) {
-            return null;
-        }
-
-        $exists = DB::table('xlr8_admin_vertical')->where('code', $val)->exists();
-        if ($exists) {
-            return $val;
-        }
-
-        $code = DB::table('xlr8_admin_vertical')
-            ->whereRaw('UPPER(name) = ?', [$val])
-            ->value('code');
-
-        if ($code) {
-            return strtoupper($code);
-        }
-
-        $code = DB::table('xlr8_admin_vertical')
-            ->where('name', 'LIKE', '%'.$val.'%')
-            ->value('code');
-
-        return $code ? strtoupper($code) : null;
+        return $this->resolveOrgCode('vertical', $input);
     }
 
     /**
@@ -646,12 +619,8 @@ class StandaloneUsersImport implements ToCollection, WithHeadingRow
             return strtoupper(trim($m[1]));
         }
 
-        // Already a code
-        if (preg_match('/^BMPL-\d+$/i', trim($value))) {
-            return strtoupper(trim($value));
-        }
-
-        return null;
+        // Otherwise the cell is the code itself (any stored format, e.g. "GS-0001").
+        return strtoupper(trim($value));
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -690,6 +659,27 @@ class StandaloneUsersImport implements ToCollection, WithHeadingRow
         return null;
     }
 
+    /** True when the sheet has any of these columns (a heading-row key exists even for a blank cell). */
+    private function hasColumn(array $row, array $keys): bool
+    {
+        foreach ($keys as $key) {
+            if (array_key_exists($key, $row)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function yesNo(?string $v): ?int
+    {
+        return match (strtolower(trim((string) $v))) {
+            'yes', 'y', '1', 'true', 'active' => 1,
+            'no', 'n', '0', 'false', 'inactive' => 0,
+            default => null,
+        };
+    }
+
     private function s(mixed $v): string
     {
         return trim((string) ($v ?? ''));
@@ -702,22 +692,17 @@ class StandaloneUsersImport implements ToCollection, WithHeadingRow
         return in_array(strtolower($v), ['', 'null', 'n/a', 'na', '-', '?'], true) ? null : $v;
     }
 
-    private function code(mixed $v, int $max = 0): ?string
-    {
-        $v = strtoupper(trim((string) ($v ?? '')));
-        if (in_array($v, ['', 'NULL', 'N/A', 'NA', '-'], true)) {
-            return null;
-        }
-
-        return $max > 0 ? substr($v, 0, $max) : $v;
-    }
-
     private function parseDate(mixed $v): ?string
     {
         if (! $v || trim((string) $v) === '') {
             return null;
         }
         try {
+            // An edited Excel date cell arrives as a serial number (e.g. 45567).
+            if (is_numeric($v) && (float) $v > 1000 && (float) $v < 100000) {
+                return Carbon::instance(ExcelDate::excelToDateTimeObject((float) $v))->format('Y-m-d');
+            }
+
             return Carbon::parse($v)->format('Y-m-d');
         } catch (\Throwable) {
             return null;

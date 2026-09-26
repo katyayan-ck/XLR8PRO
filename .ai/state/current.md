@@ -23,14 +23,21 @@ After the merge: run `php artisan test --compact` plus a smoke of `sales/*` as u
 
 **Track B:** paused after B0 (DEC-033). Resume from xceler8 `d9009db`.
 
+**Users & RBAC workbook (DEC-040):** run `php artisan users:export-rbac` or use Users → Bulk import → Export. Edit the file, then re-import it. An unchanged re-import is a no-op.
+
 **Waiting on the user:**
-- Rotate the Google service-account key, then approve the history purge.
-- `userdata.xlsx` (real PII) is tracked in git.
-- Ticket intake channels.
+- BUG-055: approve enabling Backpack's guard-switch middleware.
+- 34 role-less users (BUG-090/166).
+- Fix the dump codes (BUG-166).
 - SLA/retention (later).
 - Enabling data scoping.
 - Approval scope dimensions.
 
+**Deferred by the user:**
+- Google key rotation, until the code is fixed.
+- `userdata.xlsx` holds dummy data, so it is not a PII concern.
+- Ticket intake is decided: staff UI + API (DEC-039).
+
 **Environment:** Laragon, PHP 8.4.26 (+redis), MySQL 8.4.3, Redis + Mailpit available.
 After local schema or data changes, run `php artisan testing:refresh-db --force --bin-dir="D:\laragon\bin\mysql\mysql-8.4.3-winx64\bin"`.
-Tests: 221 passed, 1 skipped.
+Tests: see the latest changelog.

@@ -10,6 +10,11 @@
             <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <h2 class="card-title mb-0 fw-bold">Bulk import users</h2>
                 <div class="d-flex gap-2">
+                    @if (backpack_user()->can('ORG_USER_EXPORT'))
+                        <a href="{{ route('org.user.export') }}" class="btn btn-primary btn-sm">
+                            <i class="la la-file-excel me-1"></i> Export users &amp; RBAC
+                        </a>
+                    @endif
                     <a href="{{ route('org.user.import.template') }}" class="btn btn-outline-primary btn-sm">
                         <i class="la la-download me-1"></i> Download template
                     </a>
@@ -25,6 +30,12 @@
                     details, scopes and designation role) for each row of the <strong>Users_Import</strong> sheet.
                     Existing employees are matched by <strong>Emp Code</strong>, so re-importing the same file is safe.
                     Columns marked * are mandatory; designation, department, branch and location must match existing masters.
+                </p>
+                <p class="text-body-secondary mb-3">
+                    To change existing users, use <strong>Export users &amp; RBAC</strong>, edit the file (every master
+                    value is a dropdown) and upload it here. In its <strong>User_Scopes</strong> sheet each row is one
+                    branch, location, department, division, vertical, segment, sub segment, model or variant; for every
+                    user listed there, the listed rows replace that user's scopes. The file's Instructions sheet has the details.
                 </p>
 
                 <form method="POST" action="{{ route('org.user.import.process') }}" enctype="multipart/form-data" class="row g-2 align-items-end">
@@ -66,6 +77,18 @@
                             </div>
                         @endforeach
                     </div>
+
+                    @if ($result['scopes'])
+                        <p class="mb-3">
+                            <strong>User_Scopes:</strong>
+                            {{ $result['scopes']['users'] }} users updated ·
+                            {{ $result['scopes']['inserted'] }} scopes added ·
+                            {{ $result['scopes']['activated'] }} re-activated ·
+                            {{ $result['scopes']['deactivated'] }} removed ·
+                            <span class="{{ $result['scopes']['skipped_users'] ? 'text-warning' : '' }}">{{ $result['scopes']['skipped_users'] }} users skipped</span> ·
+                            <span class="{{ $result['scopes']['failed_rows'] ? 'text-danger' : '' }}">{{ $result['scopes']['failed_rows'] }} invalid rows</span>
+                        </p>
+                    @endif
 
                     @if (count($result['issues']))
                         <h4 class="fw-semibold">Rows needing attention</h4>
