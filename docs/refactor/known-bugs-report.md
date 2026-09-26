@@ -43,7 +43,7 @@ Entry format:
 | BUG-005 | `UserCrudController` checked `user.*` (singular) against real `users.*` (plural) permissions | High | FIXED | 19-09-2026 (~23:00) | 19-09-2026 23:45 |
 | BUG-006 | `checkPermission` middleware registered but wired to no route | Medium | OPEN | 19-09-2026 (pre-rollout sweep) | — |
 | BUG-007 | `/admin/user` — Backpack's `hasAccessOrFail('list')` throws unconditionally | Critical | OPEN | 19-09-2026 (~22:30) | — |
-| BUG-008 | `EmployeeCrudController` references non-existent columns (`person_id` etc.) | High | OPEN | 20-09-2026 09:45 | — |
+| BUG-008 | `EmployeeCrudController` references non-existent columns (`person_id` etc.) | High | PARTIALLY FIXED (list) — create/edit OPEN | 20-09-2026 09:45 | — |
 | BUG-009 | `BrandCrudController` — `xlr8_vehicle_brand` table doesn't exist | High | OPEN | 20-09-2026 10:30 | — |
 | BUG-010 | `SubSegmentCrudController::getSegmentsByBrand` — dead route, method never defined | Low | OPEN | 20-09-2026 11:15 | — |
 | BUG-011 | `SubSegment.name` validated/submitted but not `$fillable` — silently never saved | Medium | OPEN | 20-09-2026 11:15 | — |
@@ -55,8 +55,8 @@ Entry format:
 | BUG-017 | Dead/unused traits and classes (`HasAuditFields`, `ScopedQuery`, `AfterImportListener`, `BrandCrudController::import()`) | Low | OPEN | 19-09-2026 / 20-09-2026 (see entry) | — |
 | BUG-018 | `App\Models\IAM\Role` has a misleading, dead `$table` property | Cosmetic | OPEN | 19-09-2026 22:20 | — |
 | BUG-019 | Unexplained large external change to `BookingCrudController.php` | Unknown | OPEN — needs owner input | 20-09-2026 13:00 | — |
-| BUG-020 | `PersonAddressCrudController` references columns that don't exist (`type`, `person_id`, `is_primary`) | High | OPEN | 20-09-2026 15:30 | — |
-| BUG-021 | `PersonBankingDetailCrudController` — missing `CrudTrait` + wrong column names (stacked) | Critical | OPEN | 20-09-2026 16:00 | — |
+| BUG-020 | `PersonAddressCrudController` references columns that don't exist (`type`, `person_id`, `is_primary`) | High | PARTIALLY FIXED (list) — create/edit OPEN | 20-09-2026 15:30 | — |
+| BUG-021 | `PersonBankingDetailCrudController` — missing `CrudTrait` + wrong column names (stacked) | Critical | PARTIALLY FIXED (list/create render) — form persistence OPEN | 20-09-2026 16:00 | — |
 | BUG-022 | `VehicleAccessoryCrudController` — no Operation traits, `Route::crud()` registers nothing, entirely unreachable | Medium | OPEN | 20-09-2026 16:30 | — |
 | BUG-023 | `Route::crud('keyvalue', 'KeyvalueCrudController')` — wrong case, works on Windows only | High | FIXED | 20-09-2026 16:30 | 20-09-2026 16:45 |
 | BUG-024 | 20 more CrudControllers entirely unreachable (Garage, GraphNode/Edge, 5x Employee assignment, DesigDeptTree, PostPermission, PostReporting, ReportingHierarchy, TestDrive [commented-out route], DashboardControllerCrudController, SpareOrderingreport, SparePartwise, HRTransfer, HRRelieving, EmployeeJourney, Performance) | Medium | OPEN | 20-09-2026 17:00 | — |
@@ -76,12 +76,12 @@ Entry format:
 | BUG-049 | `OrgDemoController::index()` fatals (500) via `OrgService::usersByPost()` calling an undefined `User::posts()` relation | Medium | OPEN | 20-09-2026 02:00 | — |
 | BUG-050 | `BookingCrudController` — 15 registered routes point at methods that don't exist on the class (same pattern as BUG-046/048, largest instance found so far) | High | OPEN | 20-09-2026 03:00 | — |
 | BUG-051 | `BookingCrudController::destroy()`/`edit()`/`search()`/`showDetailsRow()` had zero Spatie-permission enforcement — same root cause as BUG-047 | Critical | FIXED | 20-09-2026 03:00 | 20-09-2026 03:30 |
-| BUG-052 | `CommonHelper` passes `null` to `trim()` in 3 places — deprecated in PHP 8.1+, will fatal on a future PHP version | Low | OPEN | 20-09-2026 03:15 | — |
-| BUG-053 | `phpunit.xml` hardcodes `DB_DATABASE=xlrn` (nonexistent — real DB is `xlrm`), breaking the entire test suite (39/40 tests fail); documented only per explicit user instruction, needs owner confirmation before fixing | High | OPEN — needs owner input | 20-09-2026 04:00 | — |
+| BUG-052 | `CommonHelper` passes `null` to `trim()` in 3 places — deprecated in PHP 8.1+, will fatal on a future PHP version | Low | FIXED | 20-09-2026 03:15 | 24-09-2026 |
+| BUG-053 | `phpunit.xml` hardcodes `DB_DATABASE=xlrn` (nonexistent — real DB is `xlrm`), breaking the entire test suite (39/40 tests fail); documented only per explicit user instruction, needs owner confirmation before fixing | High | FIXED | 20-09-2026 04:00 | 22-09-2026 |
 | BUG-054 | `LeadCrudController`/`LeadSourceCrudController::search()`/`showDetailsRow()` had zero Spatie-permission enforcement — same root cause as BUG-047/051 | Critical | FIXED | 20-09-2026 04:30 | 20-09-2026 04:35 |
 | BUG-055 | `@can`/`Auth::user()` never resolves the backpack-authenticated user anywhere in this app — Backpack's own `UseBackpackAuthGuardInsteadOfDefaultAuthGuard` middleware is commented out in `config/backpack/base.php`; silently breaks every `@can`/`auth()->user()->can()` check (fail-closed, not fail-open) | High | OPEN — needs owner input | 20-09-2026 05:00 | — |
 | BUG-056 | Admin menu's "Approved Quotations" link points at a route/feature that has never existed (pre-existing, unrelated to URL rename) | Low | OPEN | 20-09-2026 05:10 | — |
-| BUG-057 | `lead/edit.blade.php` fatals with `htmlspecialchars(): ... array given` — pre-existing, unrelated to this session's changes, surfaced by first-time testing | Medium | OPEN | 20-09-2026 04:45 | — |
+| BUG-057 | `lead/edit.blade.php` fatals with `htmlspecialchars(): ... array given` — pre-existing, unrelated to this session's changes, surfaced by first-time testing | Medium | FIXED | 20-09-2026 04:45 | 24-09-2026 |
 | BUG-058 | `EnquiryCrudController::getKeywordValues()` route had a literal doubled `admin/admin/` URL segment — fixed incidentally while migrating the line to the new URL scheme | Low | FIXED | 20-09-2026 06:00 | 20-09-2026 06:15 |
 | BUG-059 | `finance-retailed.blade.php` calls `route('finance.booking.retailed')`, a route name that has never existed — fatals the whole page on render | High | FIXED | 20-09-2026 07:00 | 20-09-2026 07:35 |
 | BUG-060 | 3 Booking breadcrumb links pointed at bare `backpack_url('finance')`, a URL with no registered route — always 404'd | Low | FIXED | 20-09-2026 07:10 | 20-09-2026 07:35 |
@@ -100,8 +100,8 @@ Entry format:
 | BUG-073 | `App\Models\Admin\EmployeeHistory` extends `BaseModel`, which forces the `SoftDeletes` trait, but `xlr8_admin_employee_history` has no `deleted_at` column — every query fatals with "Unknown column 'deleted_at'"; the table had 0 rows and had evidently never been queried before | High | FIXED | 21-09-2026 12:00 | 21-09-2026 12:05 |
 | BUG-074 | `Employee::getDesignationCodeAttribute()`/`getDesignationNameAttribute()` had the entire intended fallback expression written INSIDE the array-index string literal (e.g. `$this->attributes['designation_code ?? $this->desig_code']`) instead of as real PHP — both accessors always returned `null` via Eloquent, for every employee, everywhere in the app, silently masked by `??` fallback chains elsewhere (e.g. `OrgService.php`) | Critical | FIXED | 21-09-2026 12:00 | 21-09-2026 12:10 |
 | BUG-075 | `App\Services\Importers\UserImporter::createOrUpdateUser()` builds `$userData` using entirely nonexistent `users` table columns (`personid`, `employeeid`, `usertypeid`, `code`, `name`, `email`, `isactive` — real columns are `person_code`, `employee_code`, `user_type_id`, `username`, `is_active`, no `code`/`name`/`email` at all) — this importer has evidently never successfully created or updated a single real user record | Critical | OPEN | 21-09-2026 13:00 | — |
-| BUG-076 | `RBACService::getAccessibleResources()`/`getModelClassForResourceType()`/`getUserPermissions()` reference `App\Models\Core\Brand/Color/Department/Location/Segment/SubSegment/Variant/VehicleModel/Vertical` (none exist — same dead `Core` namespace pattern as BUG-071/072/075) plus `$user->employee->posts` and `$user->userRoleAssignments` relations that don't exist on the real models; confirmed unreachable from any controller (`grep` found zero callers) | Medium | OPEN (documented only — dead/unreachable code) | 21-09-2026 13:05 | — |
-| BUG-025 | `LeadCrudController` sets `created_by`/`updated_by` on Lead records, but `Lead` model's `$fillable` omits both — silently dropped on every save | Medium | OPEN | 20-09-2026 17:30 | — |
+| BUG-076 | `RBACService::getAccessibleResources()`/`getModelClassForResourceType()`/`getUserPermissions()` reference `App\Models\Core\Brand/Color/Department/Location/Segment/SubSegment/Variant/VehicleModel/Vertical` (none exist — same dead `Core` namespace pattern as BUG-071/072/075) plus `$user->employee->posts` and `$user->userRoleAssignments` relations that don't exist on the real models; confirmed unreachable from any controller (`grep` found zero callers) | Medium | PARTIALLY FIXED (imports) — `employee->posts` dead code OPEN | 21-09-2026 13:05 | — |
+| BUG-025 | `LeadCrudController` sets `created_by`/`updated_by` on Lead records, but `Lead` model's `$fillable` omits both — silently dropped on every save | Medium | FIXED | 20-09-2026 17:30 | 24-09-2026 |
 | BUG-026 | `composer dump-autoload`'s `package:discover` post-script fails (exit code 1) whenever a moved/renamed controller class is still referenced by its old name somewhere still-loaded (e.g. a stale `use`/string route registration) | Low | FIXED (self-resolves once every reference is updated — no code fix needed, just an ordering rule) | 20-09-2026 17:40 | 20-09-2026 17:45 |
 | BUG-027 | `CampaignCrudController` mass-assigned raw `$request->all()` via `fill()`, and `created_by`/`updated_by`/`deleted_by` are all in `Campaign::$fillable` — a POST/PUT body could spoof authorship by including those keys directly | Medium | FIXED (side effect of converting to FormRequest's `->validated()`, not separately scoped) | 20-09-2026 18:00 | 20-09-2026 18:10 |
 | BUG-028 | `FinanceCrudController` + `InsuranceCrudController` both declare List/Create/Update/Delete Operation traits + a `ScopedCrud` trait, but neither has a `setup()` (never calls `CRUD::setModel()`) nor a `Route::crud()` registration — 100% dead scaffold on both; only their custom `import()` actions have real routes, and neither has a menu entry | Low | OPEN | 20-09-2026 18:20 | — |
@@ -111,7 +111,7 @@ Entry format:
 | BUG-032 | `SpareRequestCrudController::setup()` never calls `CRUD::setModel()` — `store()`/`update()`/`destroy()` (the unmodified trait defaults) fatal on a null model; confirmed live (`POST /admin/spare-request` → `500`, generic `Error`) | Critical | OPEN | 20-09-2026 19:20 | — |
 | BUG-033 | `routes/backpack/booking.php` registers `DELETE accounts/receipt/{id}` → `[ReceiptCrudController::class, 'destroy']`, but `ReceiptCrudController` has no `destroy()` method at all — would throw `BadMethodCallException` if ever hit | Medium | OPEN | 20-09-2026 19:35 | — |
 | BUG-034 | `composer dump-autoload` hung indefinitely (never completed, even with `--no-scripts`/`--no-plugins`) during batch 21 — environmental/tooling issue, not caused by any code change; PSR-4 class resolution and `route:list`/HTTP-kernel testing all worked fine without a fresh dump | Low | OPEN (environmental — flagged to user, not something this rollout can fix) | 20-09-2026 20:10 | — |
-| BUG-035 | `JournalVoucherCrudController::index()` references an undefined `$receipt` variable (copy-paste leftover from the sibling `ReceiptCrudController`) — produces a PHP warning on every grid row, though the `??` fallback chain prevents a crash | Low | OPEN | 20-09-2026 20:20 | — |
+| BUG-035 | `JournalVoucherCrudController::index()` references an undefined `$receipt` variable (copy-paste leftover from the sibling `ReceiptCrudController`) — produces a PHP warning on every grid row, though the `??` fallback chain prevents a crash | Low | FIXED | 20-09-2026 20:20 | 24-09-2026 |
 | BUG-077 | `Employee` has no `is_active` column; naive "active dependents" checks against it would silently no-op | Medium | FIXED (avoided) | 21-09-2026 | 21-09-2026 |
 | BUG-078 | `phpunit.xml` misconfigured (typo'd DB name, no `APP_URL` override, placeholder `APP_KEY`) — `php artisan test` was unusable | High | FIXED | 21-09-2026 | 21-09-2026 |
 | BUG-079 | `actingAs($user, $guard)` breaks Spatie permission checks for any non-default guard in tests | Medium | WON'T FIX (worked around in tests) | 21-09-2026 | — |
@@ -135,20 +135,20 @@ Entry format:
 | BUG-097 | VOTF generation (`generateVotfNumber`) and persistence (`otfSave`) are two separate HTTP requests with no shared lock/reservation — a preview endpoint computes the "next" number, and the later save just trusts whatever the client sends back, so two concurrent OTF saves can collide on the same VOTF number | Medium | OPEN (documented only — needs a design decision, not a mechanical fix) | 22-09-2026 | — |
 | BUG-098 | `BookingCrudController::store()`'s `XExchange` creation set a `vehicle_oem_code` field that doesn't exist on `xlr8_booking_exchange` — every "Exchange Buy" booking creation silently failed to create the exchange row (caught by its own try/catch, logged only) | Medium | FIXED | 22-09-2026 | 23-09-2026 (ai-changelogs-22-09-2026.md) |
 | BUG-099 | Neither `store()` nor `update()`'s `XExchange` creation set `vh_id` (`NOT NULL`, no DB default) — `store()` silently failed the same way as BUG-098; `update()`'s copy has no try/catch, so editing a booking to "Exchange Buy" for the first time threw a hard 500 | High | FIXED | 22-09-2026 | 23-09-2026 (ai-changelogs-22-09-2026.md) |
-| BUG-100 | `dmsupdate()` crashes with an uncaught `QueryException` whenever a DMS update clears every remaining pending item — `pending_remark` is `NOT NULL` with no DB default, but the code sets it to `null` when the pending-items list becomes empty | High | OPEN (documented only — reproduced in a unit test; needs a decision, e.g. empty string vs. allowing null at the schema level) | 23-09-2026 | — |
+| BUG-100 | `dmsupdate()` crashes with an uncaught `QueryException` whenever a DMS update clears every remaining pending item — `pending_remark` is `NOT NULL` with no DB default, but the code sets it to `null` when the pending-items list becomes empty | High | FIXED | 23-09-2026 | 24-09-2026 |
 | BUG-101 | `dmsupdate()`'s "BEV/Personal segment → order 3 when DMS SO missing" branch is dead code — `xlr8_booking_master` has no `segment_code` column, so a freshly-loaded `Booking` always has `segment_code = null` there, and `dmsupdate()` (unlike `dmsedit()`) never resolves it from the linked Enquiry before the check runs | Low | OPEN (documented only — long-standing dead branch, not caused by this refactor; needs a product decision on whether `dmsupdate()` should resolve segment_code like `dmsedit()` does) | 23-09-2026 | — |
 | BUG-102 | `exchangeUpdate()`'s `XExchange` upsert payload sets 9 fields (`enum_master1/2`, `vehicle_details/2`, `registration_no`, `manufacturing_year`, `odometer_reading`, `expected_price`, `offered_price`, `exchange_bonus`) that don't exist as columns on `xlr8_booking_exchange` — every save silently drops them (no error; `HasColumnTransformations` strips unknown attributes), so only `vh_id`/`purchase_type`/`verification_status`/`case_status` ever actually persist to that row | Low | OPEN (documented only — data isn't lost, since the same fields are also correctly synced onto the linked Enquiry row; only the intended XExchange mirror copy silently no-ops, and the "changes" history log spuriously reports these fields as changing on every save since the old value read back is always null) | 23-09-2026 | — |
-| BUG-103 | `requestRefund()`'s "Refund Requested Again" history branch checks `$booking->status` *after* `$booking->update(['status' => 4, ...])` has already run, so it always compares `4 == 7` and never fires, even when a refund is genuinely requested again after a prior rejection (status 7 → 4) | Low | OPEN (documented only — an unambiguous one-line fix, comparing the already-captured `$oldStatus` instead, but changes user-visible booking-history output, so left as a product decision) | 23-09-2026 | — |
+| BUG-103 | `requestRefund()`'s "Refund Requested Again" history branch checks `$booking->status` *after* `$booking->update(['status' => 4, ...])` has already run, so it always compares `4 == 7` and never fires, even when a refund is genuinely requested again after a prior rejection (status 7 → 4) | Low | FIXED | 23-09-2026 | 24-09-2026 |
 | BUG-104 | **CRITICAL, broader than first found** — `xlr8_booking_master` is missing many columns that `BookingCrudController` writes via direct property assignment then `save()`: `final_data`/`consultant`/`buyer_type`/`accessories` (`otfSave()`) **and** `sale_type` (`store()` **and** `update()` — reproduced live against a real pre-existing booking row, id 1). Since `sale_type` is a `required` validated field on both the booking-create and booking-edit forms, **every booking create and every booking edit also throws the same uncaught `QueryException`**, not just OTF Save | **Critical** | OPEN (documented only — needs a schema/product decision: add the missing columns via a proper migration, or confirm this local DB's schema is stale relative to wherever this feature is believed to work, before any code fix is attempted) | 23-09-2026 | — |
 | BUG-105 | `store()`'s RTO seed on quotation-to-booking conversion read an undefined `$quotationData` variable (`XlRto::updateOrCreate(['bid' => ...], ['rgn_type' => $quotationData['registration_type'] ?? null])`) instead of `$quotation->standard_data`, unlike the adjacent, correct Insurance seed 3 lines above it — silently produced `rgn_type = null` on every quotation-converted booking (PHP warnings, not a crash) | Medium | FIXED | 23-09-2026 | 23-09-2026 (ai-changelogs-23-09-2026.md, BookingCoreService extraction) |
 | BUG-106 | Route `sales.booking.delivered-view` (`GET sales/booking/delivered-view/{id}`) points to `BookingCrudController::deliveredView()`, a method that doesn't exist anywhere in the controller (`BadMethodCallException`, confirmed via a live HTTP round trip and the Laravel log) — the `admin.booking.delivered-view` Blade view it would render is also not referenced by any other working controller method, so it appears fully orphaned/dead on both ends | Low | OPEN (documented only — found incidentally while verifying an unrelated Blade edit to that same view; needs a decision on whether the route/view should be wired to a real method or removed) | 23-09-2026 | — |
 | BUG-107 | `resources/views/admin/booking/edit.blade.php` is completely unreferenced by any route or controller method — `BookingCrudController::edit()` delegates to Backpack's `UpdateOperation` trait, which is explicitly configured via `$this->crud->setEditView('admin.booking.add')` to use `add.blade.php` (the same file used for create) for both create AND edit. `edit.blade.php` exists, is syntactically valid, and was even being kept in date-format/label sync with the live views by this session's Phase 5 work before this was noticed — but nothing ever renders it | Low | OPEN (documented only — a 3rd instance of an orphaned Booking view found this session, alongside BUG-106's `delivered-view` and the separately-noted dead `oldpendedit.blade.php`; suggests a broader pattern worth a dedicated cleanup pass rather than one-off fixes) | 23-09-2026 | — |
-| BUG-108 | `OrgService::userQuery()`'s branch-scope filter (used by `usersByDesignation()`, `usersByDepartment()`, `usersByDivision()`, `salesConsultants()`, `salesTeamUsers()`, `users()`) throws `SQLSTATE[42S02]: Base table or view not found` for any real (non-`'ALL'`) branch code, because it joins through `xlr8_admin_emp_branch_pivot`, a table that doesn't exist in this database — surfaced while writing a unit test for the Phase 5 query-caching pass, not by any production usage | Medium | OPEN (documented only — every real Booking call site only ever passes the default `'ALL'` branch code, so this has apparently never been exercised in practice; needs a decision on whether branch-scoped user filtering is a genuinely missing feature or dead code to remove) | 23-09-2026 | — |
+| BUG-108 | `OrgService::userQuery()`'s branch-scope filter (used by `usersByDesignation()`, `usersByDepartment()`, `usersByDivision()`, `salesConsultants()`, `salesTeamUsers()`, `users()`) throws `SQLSTATE[42S02]: Base table or view not found` for any real (non-`'ALL'`) branch code, because it joins through `xlr8_admin_emp_branch_pivot`, a table that doesn't exist in this database — surfaced while writing a unit test for the Phase 5 query-caching pass, not by any production usage | Medium | FIXED | 23-09-2026 | 24-09-2026 |
 | BUG-109 | `resources/views/admin/booking/pending-delivery.blade.php` (singular) is unreferenced by any `view()` call in the controller — a 4th orphaned Booking view found this session (after BUG-106's `delivered-view`, BUG-107's `edit.blade.php`, and the separately-noted dead `oldpendedit.blade.php`), likely superseded by the still-live `pending-deliveries.blade.php` (plural) | Low | OPEN (documented only — found incidentally while rolling out the AG-Grid Tabler theme CSS to the highest-traffic listing screens; reinforces that a dedicated orphaned-view cleanup pass, as already proposed under BUG-107, is worth doing) | 23-09-2026 | — |
 | BUG-110 | `admin.booking.add.blade.php` (the real, live Booking create/edit form) had 5 hardcoded AJAX URLs (`admin/get-models`, `get-variants`, `get-colors`, `get-accessories`, `get-locations`) pointing to routes that don't exist anywhere in the app — segment/model/variant/color/accessory/location cascading dropdowns all threw 404s and silently failed, user-reported as "The route admin/get-models/BEV could not be found" | **High** | FIXED | 23-09-2026 | 23-09-2026 (ai-changelogs-23-09-2026.md) |
 | BUG-111 | `app/Http/Controllers/Admin/oldEnquiryCrudController.php` is a full, unrouted duplicate of `EnquiryCrudController` (same class name, wrong namespace `App\Http\Controllers\Admin` instead of `App\Http\Controllers\Admin\Sales\Enquiry`) — not referenced by any route or other file, confirmed dead, but still references 4 view files that would otherwise look orphaned | Low | OPEN (documented only — found while scanning Enquiry views for the module reorganization pass; candidate for deletion once someone confirms it holds no logic worth salvaging) | 23-09-2026 | — |
-| BUG-112 | `sales/lead/{id}/edit` 500s for any lead whose model resolves to at least one active variant — `LeadCrudController::edit()` passes `OrgService::variants($lead->model_code)`/`OrgService::colors($lead->variant_code)` straight into `admin.sales.lead.edit`'s `@foreach ($variants as $code => $name){{ $name }}` loops, but those two methods return `code => [array of fields]` (not a flat `code => name` map like `OrgService::models()` correctly does) — `htmlspecialchars(): Argument #1 ($string) must be of type string, array given` | **High** | OPEN (documented only — found incidentally while verifying the Lead view move renders correctly; confirmed pre-existing via byte-identical `git mv` content, not caused by the reorganization; the Lead edit screen appears to be completely broken for any lead with a real vehicle selection) | 23-09-2026 | — |
-| BUG-113 | Vehicle SubSegment index and Variant index/create screens emit undefined-variable/null-foreach PHP warnings (non-fatal, pages still render) — a controller-passed variable (likely a segment/variant filter list) is missing in `SubSegmentCrudController::index()` and `VariantCrudController::index()`/`create()` | Low | OPEN (documented only — found incidentally while verifying the Vehicle module view move; confirmed pre-existing via byte-identical `git mv` content) | 23-09-2026 | — |
+| BUG-112 | `sales/lead/{id}/edit` 500s for any lead whose model resolves to at least one active variant — `LeadCrudController::edit()` passes `OrgService::variants($lead->model_code)`/`OrgService::colors($lead->variant_code)` straight into `admin.sales.lead.edit`'s `@foreach ($variants as $code => $name){{ $name }}` loops, but those two methods return `code => [array of fields]` (not a flat `code => name` map like `OrgService::models()` correctly does) — `htmlspecialchars(): Argument #1 ($string) must be of type string, array given` | **High** | FIXED | 23-09-2026 | 24-09-2026 |
+| BUG-113 | Vehicle SubSegment index and Variant index/create screens emit undefined-variable/null-foreach PHP warnings (non-fatal, pages still render) — a controller-passed variable (likely a segment/variant filter list) is missing in `SubSegmentCrudController::index()` and `VariantCrudController::index()`/`create()` | Low | FIXED | 23-09-2026 | 24-09-2026 |
 | BUG-114 | **BUG-110's original fix was itself still broken** — 5 of the 6 corrected AJAX URLs used `url()` instead of `backpack_url()`, so the generated URL never included the `admin/` route prefix and still 404'd in real browser use (`/sales/booking/models/BEV` 404s; only `/admin/sales/booking/models/BEV` matches) | **Critical** | FIXED | 23-09-2026 | 23-09-2026 (ai-changelogs-23-09-2026.md) |
 | BUG-115 | 4 more Blade AJAX calls hardcode a wrong `admin/*` path that doesn't match their real registered route (missing `sales/booking/`, `vehicle/`, or `vehicle/model/` segment): Booking's `check-receipt` (4 call sites: add/amount/pendedit/recedit), Booking list's `otf-form` link builder, Vehicle SubSegment's `sub-segment/segments`, and Vehicle Model's `vehicle-model/sub-segments` (real route is `vehicle/model/sub-segments`) | High | FIXED | 23-09-2026 | 23-09-2026 (ai-changelogs-23-09-2026.md) |
 | BUG-116 | Spares module's create/edit forms call 3 AJAX endpoints that don't exist as routes at all: `admin/fetch-parts` (controller method `fetchParts()` exists but has zero route registered for it), `admin/check-ro-number` (no matching method anywhere), `admin/get-variants` (no matching method anywhere) — the parts-autocomplete, RO-number-duplicate-check, and model→variant cascading dropdown are all completely non-functional in `SpareRequestCrudController`'s create/edit screens | High | OPEN (documented only — genuinely unimplemented backend, not a URL typo; needs a product decision on whether to build the missing routes/methods or remove the dead UI, out of scope for a URL-correction pass) | 23-09-2026 | — |
@@ -158,7 +158,7 @@ Entry format:
 | BUG-120 | `OrgService::getReferenceUsers(string $type, string $mobile)` has non-nullable params but `EnquiryCrudController::getReferenceUsers()` passed `$request->type`/`$request->mobile` directly (null when absent from the query string), throwing an uncaught `TypeError` instead of returning an empty/graceful result | Low (no current UI caller found for this endpoint) | FIXED | 23-09-2026 | 23-09-2026 (ai-changelogs-23-09-2026.md) |
 | BUG-121 | 4 Booking edit views (`exch-edit`, `finance-view`, `kyc-edit`, `payout-edit`) referenced a local `asset('plugins/select2/...')` file that doesn't exist anywhere in `public/`, 404ing in the browser — only `exch-edit.blade.php` actually calls `.select2()` on a field, so that screen's dropdown was silently unstyled/non-functional; the other 3 had dead includes with no functional impact | Medium | FIXED | 23-09-2026 | 23-09-2026 (ai-changelogs-23-09-2026.md) |
 | BUG-122 | 5 Booking listing screens (`reports/branch-booking`, `reports/consolidated-booking`, `reports/live-order`, `reports/pending-actions`, `reports/stock`) 500 because `xlr8_vehicle_master` and `xlr8_us_location` don't exist as tables in this database — same class of issue as BUG-009 (`xlr8_vehicle_brand`), a genuinely missing schema, not a code bug | High | OPEN (documented only — needs the actual tables/migration, or a decision that these reports were superseded by a different schema and should be rewritten against it; BUG-119's routing fix correctly wires their "-List" siblings to delegate here, so both will start working together once the tables exist) | 23-09-2026 | — |
-| BUG-123 | `resources/views/admin/sales/booking/show.blade.php` references `asset('images/pdf-icon.png')` as a PDF-preview placeholder icon; the file doesn't exist in `public/images/` | Cosmetic | OPEN (documented only — a broken image icon, not a functional break; needs an actual icon asset added) | 23-09-2026 | — |
+| BUG-123 | `resources/views/admin/sales/booking/show.blade.php` references `asset('images/pdf-icon.png')` as a PDF-preview placeholder icon; the file doesn't exist in `public/images/` | Cosmetic | FIXED | 23-09-2026 | 24-09-2026 |
 | BUG-124 | `RulesWorkbookService::importPermitMap()` assigned an array directly to `ImportSession::$notes`, whose mutator only accepts `?string`, throwing a `TypeError` and crashing the *entire* Insurance/RTO rules import (this had likely never completed once in this environment) | High | FIXED | 24-09-2026 | 24-09-2026 (ai-changelogs-24-09-2026.md) |
 | BUG-125 | `onlyExisting()` wrote explicit `NULL` into NOT-NULL numeric columns (`od_factor`, `penalty`, etc.) for legitimately blank source cells, crashing the insert; `findIdvColumns()` matched both "IDV N" header groups in the sheet (a rupee-amount example group and the real percentage-formula group), feeding raw rupee amounts into a `decimal(6,3)` percent column | Medium | FIXED | 24-09-2026 | 24-09-2026 (ai-changelogs-24-09-2026.md) |
 | BUG-126 | `xlr8_vehicle_pricing_ins_base_rules.seating` was typed `smallint unsigned`, but the real sheet's Seating column holds range text ("1 to 7", "8 to 18") like the sibling `cc_range`/`gvw_range` columns — import failed with "Data truncated for column 'seating'" | Low | FIXED | 24-09-2026 | 24-09-2026 (ai-changelogs-24-09-2026.md) |
@@ -171,6 +171,29 @@ Entry format:
 | BUG-133 | `AccessoryService::normalizeTypeFilter()` referenced `Accessory::ALL_TYPES`/`Accessory::BUNDLE_TYPES`, neither of which existed — same undefined-constant crash pattern as BUG-128, on the same model, surfaced only after BUG-132's fix let the accessories code path run far enough to reach it | Critical | FIXED | 24-09-2026 | 24-09-2026 (ai-changelogs-24-09-2026.md) |
 | BUG-134 | `Accessory::$fillable` was missing `type`, `set_qty`, `discount` — but `AccessoryService`'s real import write path (`Accessory::updateOrCreate([...], ['type' => $type, 'set_qty' => 1, ...])`) mass-assigns exactly those fields, meaning every accessory import silently stored `type` as the DB default (`'Accessory'`) regardless of the row's real type (Ceramic/PPF/Maxicare/GPS_VLTD/RTO_Tape/Kazam) | Critical | FIXED | 24-09-2026 | 24-09-2026 (ai-changelogs-24-09-2026.md) |
 | BUG-135 | `Snapshot` (used by `PricingEngineService::calculateAndPublish()`, the "Publish" half of "Calculate & Publish") redeclared `protected $casts;` with no default, shadowing `BaseModel`'s array default with `null` — crashed on `array_merge(): Argument #1 must be of type array, null given` the instant the model was instantiated, meaning `calculateAndPublish()` had never worked for any vehicle, ever | Critical | FIXED | 24-09-2026 | 24-09-2026 (ai-changelogs-24-09-2026.md) |
+| BUG-136 | Data-scoping enforcement layer (`DataScopeFilter`, `ScopedCrud`, `RBACService::getAccessibleResources()`) was built against a model (`UserDataScope`) whose table doesn't exist and a service (`App\Services\IAM\DataScopeService`) that was never written, plus undefined `User::userDataScopes()`/`getScopedIds()` and wrong `scopeColumn`s on `Stock`/`XlSpareRequest`. Not live-reachable, but it means **no row-level data scoping is enforced anywhere** | High | FIXED (code); enforcement switch-on OPEN — needs decision | 24-09-2026 | 24-09-2026 (ai-changelogs-24-09-2026.md) |
+| BUG-137 | `UserImporter::createDataScopes()` inserted scope rows via `UserDataScope::insert()` with keys `userid`/`scopetype`/`scopevalue`/`status` into a nonexistent table — any bulk-user-import row with an "Accessible Branches/Departments/Locations" value failed | High | FIXED | 24-09-2026 | 24-09-2026 (ai-changelogs-24-09-2026.md) |
+| BUG-138 | `DocService::hasAccess()` returned `true` for every document attached to an entity (a "Placeholder" that discarded the scope lookup) — any user passing the earlier checks' fall-through got access | High (unreachable today: `DocService` can't construct) | FIXED | 24-09-2026 | 24-09-2026 (ai-changelogs-24-09-2026.md) |
+| BUG-139 | `DocService`: `search()` return type `Collection` is unimported (resolves to nonexistent `App\Services\Collection`); `approve()` calls `ApprovalService::approve()`, which doesn't exist; `getAiTags()` needs the uninstalled `google/cloud-vision` package | Medium (unreachable today) | PARTIALLY FIXED — (1) fixed; (2)/(3) OPEN | 24-09-2026 | — |
+| BUG-140 | `app/Models_backup/User.php` declares `App\Models\User`; `phpstan.neon` scans all of `app/`, so Larastan resolves the stale backup class and reports false "undefined method" errors (e.g. `isSuperAdmin()`) app-wide | Low (tooling only; no runtime effect) | FIXED (PHPStan config) — deleting the directory still pending sign-off | 24-09-2026 | 25-09-2026 |
+| BUG-141 | `App\Models\XlSpareRequest` (+ `XlSpareRequestDetail`) live in `app/Models/Module/Spare/` but declare `namespace App\Models` — PSR-4 mismatch, class can't autoload; nothing else references it | Low | FIXED | 24-09-2026 | 24-09-2026 |
+| BUG-142 | `CalculatePricingSessionJob` had output before `<?php`, breaking `declare(strict_types=1)` — the pricing "Calculate" dispatch always fataled | Critical | FIXED | 24-09-2026 | 24-09-2026 |
+| BUG-143 | `UserReporting`, `UserDeviceToken`, `XlSpareRequestDetail` override `scopeActive($query)` incompatibly with `BaseModel` — fatal on class load | High | FIXED | 24-09-2026 | 24-09-2026 |
+| BUG-144 | `ValidateDevice` middleware imported nonexistent `Core\DeviceSession`/`OtpAttemptLog` and wrote `$user->phone` — every `auth:sanctum` API route failed | Critical | FIXED | 24-09-2026 | 24-09-2026 |
+| BUG-145 | `FirebaseService` called nonexistent `Factory::withDefaultAuth()`; Firebase/Notification/Doc services couldn't construct | High | FIXED | 24-09-2026 | 24-09-2026 |
+| BUG-146 | `BaseModel::resolveActorId()` read the `web` guard, so every admin write was stamped as user 1 | High | FIXED (historic rows not correctable) | 24-09-2026 | 24-09-2026 |
+| BUG-147 | 8 API routes pointed at wrong method names (fixed); 5 point at methods never written | Medium | PARTIALLY FIXED | 24-09-2026 | 24-09-2026 (8 of 13) |
+| BUG-148 | System Settings admin screen used Backpack PRO features, a nonexistent model, wrong unique table and nonexistent `storeCrud`/`updateCrud` | High | FIXED | 24-09-2026 | 24-09-2026 |
+| BUG-149 | `UserCrudController::destroy()` called nonexistent `parent::deleteCrud()` — user delete always failed | High | FIXED | 24-09-2026 | 24-09-2026 |
+| BUG-150 | `OrgService::getKeyValuesByCode()` returned null for keyword codes with values but no master row (`PERMIT`, …) | Medium | FIXED | 24-09-2026 | 24-09-2026 |
+| BUG-151 | Class/namespace/path mismatches and wrong imports (DesigDeptTree, XVehicleStock, ExportLog, ImportLog, XCommonHelper, BookingCrudController, …) | Medium | FIXED (listed items) | 24-09-2026 | 24-09-2026 |
+| BUG-152 | Accessory import log never written (`AccessoryService`) and double-JSON-encoded (both accessory import services) | Low | FIXED | 24-09-2026 | 24-09-2026 |
+| BUG-153 | `getChassisNumbers` filters on `status = 'available'`, which no stock row has | Low | OPEN (needs business rule) | 24-09-2026 | — |
+| BUG-154 | Employee / Person Address / Person Banking create-edit forms are id-based against the code-based schema | High | OPEN (form redesign) | 24-09-2026 | — |
+| BUG-155 | Dead routes (no method, no callers) and dead/unloadable files still in the tree | Low | OPEN (cleanup decision) | 24-09-2026 | — |
+| BUG-156 | Class references in the wrong letter case (`XL_DSA_MASTER` ×8 files, `KeyValue\KeyValue`, `Crm\LeadSource`) — work on Windows, fail to autoload on a case-sensitive (Linux) filesystem | High (if production is Linux) | FIXED | 25-09-2026 | 25-09-2026 |
+| BUG-157 | `FirebaseService` calls `User::deviceTokens()`, which was never defined — sending push to a user, listing and revoking a user's devices all fatal | High | FIXED | 25-09-2026 | 25-09-2026 |
+| BUG-158 | `User::branches/locations/departments` and `Employee::branches/locations/departments` target nonexistent `xlr8_admin_emp_*_pivot` tables; live caller: `UserExporter` (user export POST) | Medium | OPEN (needs design decision) | 25-09-2026 | — |
 
 Not a bug (false positive, listed for reference): the original `infer-conventions` sweep flagged
 "`SheetHeaderService`/`SynonymService` not used by importers" — re-investigation on 19-09-2026
@@ -251,9 +274,10 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 
 ### BUG-008 — `EmployeeCrudController` references non-existent columns
 
-- **Status:** OPEN
+- **Status:** PARTIALLY FIXED — list screen fixed; create/edit still OPEN (was: OPEN)
 - **Severity:** High (entire Employee admin screen — list, create, edit, update — likely never worked)
 - **Found:** 20-09-2026 09:45, batch 4 of the permission rollout.
+- **Modified:** 24-09-2026 22:00 — `index()` rewritten against the real code-based columns (`person_code`, `designation_code`, `primary_branch_code`, `primary_dept_code`, `employment_status`); branch/department names via `OrgService`. List returns 200 in the admin smoke sweep. `store()`/`update()` and the create/edit forms still validate and submit `*_id` fields — rebuilding them against the code-based schema is a form redesign, tracked in BUG-154.
 - **Where:** `app/Http/Controllers/Admin/Org/Employee/EmployeeCrudController.php` (`index()`, `store()`, `update()`).
 - **Description:** Queries/validates `person_id`, `designation_id`, `primary_branch_id`, `primary_department_id` — none exist on `xlr8_admin_employee`. Confirmed via `database-schema`: real columns are `person_code`, `desig_code`/`designation_code`, `primary_branch_code`, `primary_dept_code`, etc. — this app's documented code-based relations convention.
 - **Proposed solution:** rewrite `index()`'s `select()`, and `store()`/`update()`'s validation + mass-assignment, to use the real code-based columns. First confirm whether `Employee`'s relationship methods (`person()`, `designation()`, `primaryBranch()`, `primaryDepartment()`) are already correct — if so, only the controller needs fixing, not the model.
@@ -263,6 +287,7 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 - **Status:** OPEN
 - **Severity:** High (entire Brand screen non-functional)
 - **Found:** 20-09-2026 10:30, batch 5 of the permission rollout.
+- **Modified:** 24-09-2026 22:00 — re-verified: `xlr8_vehicle_brand` still doesn't exist and the brand concept has no data anywhere; the SubSegment create form's brand AJAX is commented out for the same reason. Still needs the business decision above.
 - **Where:** `app/Http/Controllers/Admin/Vehicle/Brand/BrandCrudController.php`; model `App\Models\Vehicle\Brand`.
 - **Description:** `SQLSTATE[42S02]: Base table or view not found: 1146 Table 'xlrm.xlr8_vehicle_brand' doesn't exist`. The dead `import()` method (see BUG-017) hardcodes a single brand code `'MHD'`, suggesting this app may only ever have supported one brand and the whole entity was abandoned.
 - **Proposed solution:** business decision needed before any code fix: was the table dropped/renamed, or is "Brand" no longer a real concept in this schema? Confirm intent, then either create the table, repoint the model, or remove the screen.
@@ -299,6 +324,7 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 - **Status:** OPEN
 - **Severity:** Critical (this is the actual RBAC role-management screen the whole permission rollout depends on)
 - **Found:** 20-09-2026 13:00, batch 8 of the permission rollout.
+- **Modified:** 24-09-2026 22:00 — root cause re-verified: Spatie's roles table is configured as `xlr8_admin_designation`, which has no `is_post`/`seq_no` columns the screen queries. The Role screen therefore duplicates the Designation screen over the same table. Needs a product decision: remove the Role screen, or point it at a real roles table.
 - **Where:** `app/Models/IAM/Role.php`; surfaces in `app/Http/Controllers/Admin/Iam/Role/RoleCrudController.php`.
 - **Description:** `App\Models\IAM\Role` doesn't use Backpack's `CrudTrait`, which `CRUD::setModel()` requires internally. Fails inside `setup()`, before any permission check (added this rollout) can run. `GET /admin/role` returns `500` regardless of permission held.
 - **Proposed solution:** add `use Backpack\CRUD\app\Models\Traits\CrudTrait;` to `App\Models\IAM\Role`. Low risk — standard trait already used by every other Backpack-managed model in this app. Before adding it, confirm this wasn't deliberate (e.g., is role management meant to happen some other way, via seeders/artisan commands rather than this UI?).
@@ -363,18 +389,20 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 
 ### BUG-020 — `PersonAddressCrudController` references columns that don't exist
 
-- **Status:** OPEN
+- **Status:** PARTIALLY FIXED — list screen fixed; create/edit still OPEN (was: OPEN)
 - **Severity:** High (entire Person Address admin screen — list, create, update — likely never worked)
 - **Found:** 20-09-2026 15:30, batch 11 of the permission rollout.
+- **Modified:** 24-09-2026 22:00 — list now selects `address_type` and derives `is_primary` from `address_type === 'Primary'` (there is no `is_primary` column). 200 in the smoke sweep. Create/edit remain id-based — see BUG-154.
 - **Where:** `app/Http/Controllers/Admin/Org/PersonAddress/PersonAddressCrudController.php` (`index()`, `store()`, `update()`).
 - **Description:** `GET /admin/person-address` 500s: `SQLSTATE[42S22]: Column not found: 1054 Unknown column 'type' in 'field list'`. Checked the real schema directly (`SHOW COLUMNS FROM xlr8_admin_person_addresses`): the real column is `address_type` (enum: `Primary/Office/Home/Alternate/Permanent`), not `type`. The controller also references `person_id` in `store()`/`update()`'s validation (`exists:xlr8_admin_person,id`), but the real FK on this table is `person_code`, not `person_id`. There is also **no `is_primary` column at all** — "primary" is represented by `address_type = 'Primary'`, not a separate boolean, so the `is_primary` field referenced throughout the controller and grid doesn't exist either. Same category of bug as BUG-008 (`EmployeeCrudController`) — a controller written against assumed column names that don't match the actual schema.
 - **Proposed solution:** rewrite `index()`'s `select()`, and `store()`/`update()`'s validation and mass-assignment, to use `address_type` (with the real enum values) and `person_code` instead of `type`/`person_id`, and remove or replace the `is_primary` handling with an `address_type === 'Primary'` check. Needs a look at the `PersonAddress` model's actual relationships/casts first to confirm nothing else assumes the wrong column names too.
 
 ### BUG-021 — `PersonBankingDetailCrudController` — two stacked independent bugs (missing `CrudTrait` + wrong column names)
 
-- **Status:** OPEN
+- **Status:** PARTIALLY FIXED — list and create render; form persistence still OPEN (was: OPEN)
 - **Severity:** Critical (screen 500s for everyone, before any permission check runs)
 - **Found:** 20-09-2026 16:00, batch 12 of the permission rollout.
+- **Modified:** 24-09-2026 22:00 — `PersonBankingDetail` now uses `CrudTrait`; list selects `person_code`, derives `is_primary` from `account_type === 'Primary'` and no longer requests the nonexistent `swift_code`. List and create return 200. Form save still id-based — see BUG-154.
 - **Where:** `app/Models/Admin/PersonBankingDetail.php` (missing trait); `app/Http/Controllers/Admin/Org/PersonBankingDetail/PersonBankingDetailCrudController.php` (`index()`, `store()`, `update()` — wrong columns).
 - **Description:** Two independent, stacked bugs on the same screen:
   1. `GET /admin/person-banking-detail` returns `500` **even with no permission at all** (the crash happens before `setupListOperation()`'s permission check runs): `Exception: Please use CrudTrait on the model.` — `App\Models\Admin\PersonBankingDetail` doesn't use Backpack's `CrudTrait`, same category as BUG-013 (`RoleCrudController`/`App\Models\IAM\Role`).
@@ -402,9 +430,10 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 
 ### BUG-025 — `LeadCrudController` silently drops `created_by`/`updated_by` on every save (not fillable on the `Lead` model)
 
-- **Status:** OPEN
+- **Status:** FIXED (was: OPEN)
 - **Severity:** Medium (no crash, no visible failure — data just silently never gets an audit trail; same failure shape as BUG-011)
 - **Found:** 20-09-2026 17:30, batch 15 of the permission rollout, before any wiring started.
+- **Fixed:** 24-09-2026 22:00 — `BaseModel`'s `creating`/`updating` hooks stamp `created_by`/`updated_by` regardless of `$fillable`; the actor was wrong (always user 1) until BUG-146, fixed in the same sweep. [ai-changelogs-24-09-2026.md](ai-changelogs-24-09-2026.md) — "Known-bugs sweep".
 - **Where:** `app/Models/CRM/Lead.php` (`$fillable`); `app/Http/Controllers/Admin/LeadCrudController.php` (`store()`, `update()`).
 - **Description:** `store()` sets `$validated['created_by'] = backpack_user()->id;` and `update()` sets `$validated['updated_by'] = backpack_user()->id;`, then mass-assigns via `Lead::create($validated)` / `$lead->update($validated)`. `SHOW COLUMNS FROM xlr8_crm_leads` confirms `created_by`, `updated_by`, and `deleted_by` all exist as real, nullable `bigint unsigned` columns — but `Lead::$fillable` does not list any of the three (it stops at `assigned_at`). Laravel's mass-assignment protection silently ignores unfillable keys rather than throwing, so every Lead ever created or updated through this controller has `created_by`/`updated_by` left `NULL`, with no error surfaced anywhere. Same failure category as BUG-011 (`SubSegment.name` not fillable) — a model/controller drift, not a query error.
 - **Proposed solution:** add `'created_by'`, `'updated_by'`, `'deleted_by'` to `Lead::$fillable` (least-risk fix, consistent with BUG-011's proposal). Preserved verbatim in this rollout's batch 15 — flagged, not silently fixed, per the established pattern of not fixing pre-existing bugs outside the scoped task.
@@ -443,6 +472,7 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 - **Status:** OPEN
 - **Severity:** High (unlike BUG-028's "reachable but no menu link" controllers, this one is reachable *and* broken — anyone who does hit `/admin/rto/import` directly gets a real runtime error, not a working import)
 - **Found:** 20-09-2026 18:50, batch 19 of the permission rollout, while reading the full file before wiring.
+- **Modified:** 24-09-2026 22:00 — still blocked on configuration, not code: the RTO import needs its Google Sheet ID, and the sibling Finance/Insurance imports currently fail with Google `Invalid JWT Signature` (service-account credentials). Needs the owner to supply both.
 - **Where:** `app/Http/Controllers/Admin/RtoCrudController.php`, `import()`, line 176: `Sheets::spreadsheet($spreadsheetId)->sheet($sheetSafe)->all();`.
 - **Description:** Every sibling controller with this Google-Sheets-import shape (`FinanceCrudController`, `InsuranceCrudController` — BUG-028) hardcodes its own `$spreadsheetId = '...';` as the first line of `import()`. `RtoCrudController::import()` is 330+ lines long and references `$spreadsheetId` exactly once, at line 176 — **it is never assigned anywhere in the method, the class, or any parent/trait.** Confirmed via `grep -n "spreadsheetId" RtoCrudController.php` returning only that one usage. In PHP 8.3 this is `Undefined variable $spreadsheetId` (a warning, not fatal on its own), but the resulting `null` is then passed into `Sheets::spreadsheet(null)`, which is virtually certain to fail (either immediately, or when the Google API client tries to build a request URL with no spreadsheet id) before any row of any sheet is ever read. This strongly suggests the hardcoded spreadsheet ID was accidentally deleted at some point (e.g. during a refactor or a bad merge) and never restored, or was never filled in when this controller was copy-pasted from `FinanceCrudController`/`InsuranceCrudController` in the first place.
 - **Proposed solution:** needs the real RTO Google Sheet's spreadsheet ID from whoever owns this integration — not something this rollout can guess or safely fabricate. Once known, add `$spreadsheetId = '<real-id>';` as the first line of `import()`, matching the sibling controllers' pattern exactly. Left the method entirely untouched (including this bug) in batch 19 — only added the permission check, consistent with not fixing pre-existing bugs outside the scoped task, and doubly so here since there is no safe guess for the missing value.
@@ -494,9 +524,10 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 
 ### BUG-035 — `JournalVoucherCrudController::index()` references an undefined `$receipt` variable
 
-- **Status:** OPEN
+- **Status:** FIXED (was: OPEN)
 - **Severity:** Low (a PHP warning per grid row, not a crash — the `??` fallback chain still resolves `customer_name` from `$enquiry` instead)
 - **Found:** 20-09-2026 20:20, batch 22 of the permission rollout, while reading the file before wiring.
+- **Fixed:** 24-09-2026 22:00 — `customer_name` now reads `$voucher->name` (the undefined `$receipt` is gone). [ai-changelogs-24-09-2026.md](ai-changelogs-24-09-2026.md) — "Known-bugs sweep".
 - **Where:** `app/Http/Controllers/Admin/JournalVoucherCrudController.php`, `index()`, line 44: `'customer_name' => $receipt->name ?? $enquiry->name ?? $enquiry->customer_name ?? '',`.
 - **Description:** Every other line in this method's grid-mapping closure uses `$voucher` (the actual loop variable — this method maps `Bookingamount` rows where `type = 2`) or `$enquiry` (the joined lookup). `$receipt` is not a parameter, not a local variable, not a class property — it does not exist anywhere in this file. This is a near-identical structure to `ReceiptCrudController::index()`'s own grid-mapping closure (both controllers manage rows in the same shared `xlr8_booking_amount` table, differentiated only by a `type` column), strongly suggesting this line was copy-pasted from `ReceiptCrudController` (which legitimately has a `$receipt` variable in the equivalent position) without renaming it to `$voucher`. In PHP 8.3, accessing an undefined variable emits a warning (not fatal), and `$receipt->name` on the resulting `null` emits a second warning (property access on null, not using the null-safe `?->` operator) — both non-fatal, and the `??` chain still falls through correctly to `$enquiry->name`, so the grid's `customer_name` column likely still shows a sensible value in practice. Not reproduced with a live warning capture in this batch (would require enabling and inspecting PHP's error log at debug verbosity beyond what a `500`-only check would show) — flagged from static reading, high confidence given the total absence of any `$receipt` definition in the file.
 - **Proposed solution:** change `$receipt->name` to `$voucher->name` on line 44 (the correct, intended variable, already used identically elsewhere in the same method, e.g. line 43's `'credit_to' => $voucher->name ?? $enquiry->name ?? ''`). Trivial, low-risk fix, but not applied in this rollout — out of scope for a permission-gating task, and this is exactly the kind of "flag, don't silently fix" pre-existing bug this rollout has consistently deferred everywhere else.
@@ -592,6 +623,7 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 - **Status:** OPEN
 - **Severity:** High (every one of the controller's 4 view-rendering actions 500s with "View not found," even past BUG-041's gate fix and with the correct permission granted — the feature has never been able to render anything)
 - **Found:** 20-09-2026 21:50, batch 24 of the permission rollout, while verifying the `users.import` permission gate end-to-end (`GET /admin/users/import` with the correct permission granted still returned `500`).
+- **Modified:** 24-09-2026 22:00 — re-verified: the views were never built; the import/export screens still 500. Needs a decision on whether the feature is wanted.
 - **Where:** `app/Http/Controllers/Admin/Org/User/UserImportExportController.php` — `showImportForm()` (`admin.users.import`), `showExportForm()` (`admin.users.export`), `importHistory()` (`admin.users.import-history`), `exportHistory()` (`admin.users.export-history`). None of the four exist anywhere under `resources/views/` — confirmed via `find resources/views/admin -maxdepth 1 -iname "*user*"`, which found only the unrelated `resources/views/admin/user-type/` directory; no `resources/views/admin/users/` directory exists at all.
 - **Description:** Even with BUG-041 (gate bypass) and BUG-042 (missing import) fixed, and the correct `users.import` permission granted, `GET /admin/users/import` still returns `500: View [admin.users.import] not found.` This is the third independent bug stacked on this single controller — the underlying feature (bulk user import/export via Excel) has apparently never had its UI built, or the views were deleted/moved without the controller being updated to match, at some point in this controller's history.
 - **Proposed solution:** needs the actual view templates built (or, if they exist under different names/paths not yet found, the controller's `view(...)` calls corrected to point at them). Not fixed in this rollout — building 4 new Blade views (import form, export form, import history table, export history table) is a real feature-completion task, not a permission-gating fix. The security fix (BUG-041) and the trivial import fix (BUG-042) stand on their own regardless of this remaining gap — closing the security hole was the priority, and is done; the feature being otherwise non-functional was already effectively true before this batch (it 500'd before too, just via a different, less severe symptom sequence).
@@ -649,6 +681,7 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 - **Status:** OPEN
 - **Severity:** Medium (500 for every user who reaches this page, including ones who now correctly have the `admin.manage` permission after batch 28's fix — but it's a low-traffic, clearly-labeled "demo" page, not a real feature)
 - **Found:** 20-09-2026 02:00, during batch 28, while verifying the newly-added `admin.manage` permission gate on `OrgDemoController` via HTTP-kernel round trip — the request passed the gate (no longer `403`) but then returned `500`.
+- **Modified:** 24-09-2026 22:00 — the Post concept has since been removed (BUG-080), so `User::posts()` will not come back. `org-demo` still 500s. Decision needed: delete the demo screen or rewrite it on designations.
 - **Where:** `app/Http/Controllers/Admin/OrgDemoController.php:index()` → `App\Services\OrgService::usersByPost('SLS_CNS_CHR_003', 'CHR')`.
 - **Description:** Reproduced directly via `App\Services\OrgService::usersByPost('SLS_CNS_CHR_003', 'CHR')` in isolation → `BadMethodCallException: Call to undefined method App\Models\User::posts()`. `OrgService::usersByPost()` calls a `posts()` relationship that doesn't exist on the `User` model (confirmed via the same call throwing identically outside any HTTP context). Pre-existing, unrelated to the permission-gating fix — the page has apparently never worked, consistent with its name ("org-demo") suggesting scaffolding/demo code rather than a maintained feature.
 - **Proposed solution:** either implement `User::posts()` (if "post" is a real org concept elsewhere in the codebase under a different relation name) or remove the broken call/page entirely if it's dead demo code nobody uses. Not fixed in this rollout — implementing missing model relationships is outside a permission-gating pass's scope.
@@ -672,18 +705,20 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 
 ### BUG-052 — `CommonHelper` passes `null` to `trim()`, deprecated in PHP 8.1+
 
-- **Status:** OPEN
+- **Status:** FIXED (was: OPEN)
 - **Severity:** Low (deprecation warning today; will become a fatal `TypeError` on a future PHP major version)
 - **Found:** 20-09-2026 03:15, during batch 29's HTTP-kernel test of `BookingCrudController::index()` — 3 `DEPRECATED` warnings surfaced in the response for every hit.
+- **Fixed:** 24-09-2026 22:00 — `CommonHelper` casts `(string)` before `trim()` for segment/model/variant codes. [ai-changelogs-24-09-2026.md](ai-changelogs-24-09-2026.md) — "Known-bugs sweep".
 - **Where:** `app/Helpers/CommonHelper.php` lines 97, 107, 116 — each calls `trim($something)` where `$something` can be `null`.
 - **Description:** PHP 8.1 deprecated passing `null` to non-nullable internal function parameters (like `trim()`'s `$string`); this codebase runs PHP 8.3, where it's still just a deprecation notice, not an error, but a future PHP version will make this fatal. Pre-existing, unrelated to this rollout's permission changes — reproduced identically before and after.
 - **Proposed solution:** wrap each call site with `trim((string) $value)` or `trim($value ?? '')`. Not fixed in this rollout — a 3-line, low-risk fix but outside a permission-gating pass's scope; flagged for a future cleanup pass.
 
 ### BUG-053 — `phpunit.xml` hardcodes a nonexistent test database name, breaking the entire test suite
 
-- **Status:** OPEN — deliberately not fixed, per explicit user instruction to document only
+- **Status:** FIXED (was: OPEN — deliberately not fixed, per explicit user instruction to document only)
 - **Severity:** High (blocks `php artisan test`/`vendor/bin/phpunit` entirely — 39 of 40 tests fail, the 1 "pass" is a trivial route-existence check unrelated to the database)
 - **Found:** 20-09-2026 04:00, running `php artisan test --compact` as a post-rollout quality-gate check (per this project's own `CLAUDE.md` standing rule: "After every change: `./vendor/bin/pint`, `./vendor/bin/phpstan analyse`, `php artisan test` must all pass" — the first time in this session this specific gate was actually run, rather than relying on the HTTP-kernel manual-transaction test methodology used batch-by-batch throughout the rollout).
+- **Fixed:** 24-09-2026 22:00 — `phpunit.xml` `DB_DATABASE` is `xlrm` (changed in commit `ec768c9`, 22-09-2026, outside this tracker). Verified: the full suite connects and runs (212 passed; remaining failures are BUG-080's Post tests and a missing fixture).
 - **Where:** `phpunit.xml:33` — `<env name="DB_DATABASE" value="xlrn"/>`. The real, configured application database (per `.env:27`, `DB_DATABASE=xlrm`) is `xlrm` — one letter different (`xlrn` vs `xlrm`).
 - **Description:** Every test that touches the database fails immediately with `PDOException: SQLSTATE[HY000] [1049] Unknown database 'xlrn'` — this is not a connectivity or credentials issue, the database literally doesn't exist under that name. Given `xlrn`/`xlrm` are a single transposed letter apart, and no `xlrn` database exists anywhere on this machine, this has the strong signature of an unintentional typo rather than a deliberately separate, never-provisioned test database. This means the test suite has almost certainly never passed in this environment — not something this session's changes caused (reproduced identically on files this session never touched, e.g. `Tests\Unit\Services\PostServiceTest`).
 - **Also noted separately**: `Tests\Feature\ExampleTest::test_the_application_returns_a_successful_response` fails independent of the database issue (`GET /` → `404` instead of `200`) — Laravel's default scaffold test, unrelated to this application's actual routes (there's no reason `/` should 200 in this app), likely just never cleaned up after the project diverged from the Laravel starter template.
@@ -719,9 +754,10 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 
 ### BUG-057 — `lead/edit.blade.php` fatals with `htmlspecialchars(): Argument #1 ($string) must be of type string, array given`
 
-- **Status:** OPEN
+- **Status:** FIXED (was: OPEN)
 - **Severity:** Medium (500 on every visit to the Lead edit screen — pre-existing, confirmed unrelated to this session's changes)
 - **Found:** 20-09-2026 04:45, during batch 30's HTTP-kernel test of the newly-renamed `sales.lead.edit` route (`GET /admin/sales/lead/1/edit`) — request correctly passed the new `SLS_LEAD_EDIT` permission gate (no longer `403`) but then hit a real `500`.
+- **Fixed:** 24-09-2026 22:00 — same root cause as BUG-112; `LeadCrudController::edit()` now passes variant names as a flat string list. All 4 lead edit pages return 200 (were 500). [ai-changelogs-24-09-2026.md](ai-changelogs-24-09-2026.md) — "Known-bugs sweep".
 - **Where:** `resources/views/admin/lead/edit.blade.php`, compiled view line ~208 — `LeadCrudController::edit()` passes `OrgService::segments()`/`models($lead->segment_code)`/`variants($lead->model_code)`/`colors($lead->variant_code)` (all array-returning lookups) into the view alongside `$lead`; one of them (not pinned down to an exact source line — the compiled Blade cache obscures the original line number, and this is outside this batch's scope to fully root-cause) is echoed directly via `{{ }}` somewhere instead of being iterated, and PHP 8.1+ no longer silently stringifies arrays passed to `htmlspecialchars()`.
 - **Description:** Confirmed pre-existing and unrelated to this batch: this session's only change to this controller/view pair was the earlier `SLS_LEAD_*` permission-code rename (batch 30) — `edit()`'s own view-data assembly and `edit.blade.php`'s template logic were never touched. The bug is reachable via the *new* URL the same way it would have been via the *old* one; the route rename didn't cause it, only surfaced it (first time this exact controller action was exercised with real data in this session's testing).
 - **Proposed solution:** find and fix the specific `{{ }}` echo of an array value in `edit.blade.php` (likely `{{ $models }}`/`{{ $variants }}`/`{{ $colors }}` used directly instead of via `@foreach`, or a `old('field', $lead->some_array_attribute)` pattern) — not fixed in this rollout, outside a route/permission migration's scope.
@@ -755,6 +791,7 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 - **Status:** OPEN
 - **Severity:** Medium (4 confirmed 500s on real data, surfaced by first-time HTTP-kernel testing of these specific actions in this session)
 - **Found:** 20-09-2026 07:30, during batch 32's HTTP-kernel round-trip test of the newly-renamed Booking routes — all 4 actions correctly passed their new `SLS_BKNG_*` permission gate (no longer `403`) but then hit a real `500` once the gate let the request through to the original, untouched method body.
+- **Modified:** 24-09-2026 22:00 — re-smoked in the admin sweep: the parameterised Booking screens now mostly return 200 after the Phase 4 service extractions. Not closed because `otfProcess` still depends on BUG-104.
 - **Where:** `app/Http/Controllers/Admin/Sales/Booking/BookingCrudController.php` — `pendingKyc()`, `stockReport()` (already surfaced once before, in batch 29's testing, and left undocumented at the time — now formally logged), `intInFinance()`, `otfProcess()` (an `Undefined variable $otf_processed` warning was visible in the log for this one, suggesting a missing view-data key).
 - **Description:** Confirmed structurally unrelated to this batch: every permission check added in batches 29 and 32 is literally the first statement of its method body (`if (! backpack_user()->can(...)) { abort(403, ...); }`), executed and returning before any of the original method logic runs. A `500` only occurs *after* the check passes, meaning the failure is entirely within pre-existing, untouched business/view logic — not something introduced by the URL rename or the permission gate itself. Not individually root-caused in this batch given the scope (4 separate, likely-unrelated underlying bugs, each requiring its own investigation) — flagged here as a group so they're not lost, rather than diving into each one and expanding this batch's scope further.
 - **Proposed solution:** investigate each of the 4 methods separately in a future, dedicated bug-fixing pass — not a route/permission migration concern.
@@ -982,6 +1019,7 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 - **Status:** OPEN (pre-existing — carried forward unchanged during today's Org CRUD refactor, not introduced or fixed)
 - **Severity:** Medium — if branch-level data scoping is actually relied on anywhere (the `ScopedCrud` trait exists specifically to restrict which branches a non-superadmin user's list view shows), it currently has zero effect for the Branch list.
 - **Found:** 22-09-2026, while rewriting `BranchCrudController` to delegate to `BranchService` — noticed `use ScopedCrud;` is declared, and the trait defines its own `setupListOperation()` that calls `parent::setupListOperation()` then `$this->applyDataScope()`, but `BranchCrudController` **also** defines its own `setupListOperation()` (for the `ORG_ENTITY_MANAGE` permission check) — in PHP, a class's own method always wins over a trait's method of the same name, so the trait's version (and therefore `applyDataScope()`) never runs.
+- **Modified:** 24-09-2026 22:00 — `ScopedCrud` itself now works (BUG-136). This controller still never calls `applyDataScope()`; turning it on is part of the open "enable data scoping" decision in BUG-136.
 - **Where:** `app/Http/Controllers/Admin/Org/Branch/BranchCrudController.php` (`setupListOperation()`), `app/Http/Controllers/Admin/Traits/ScopedCrud.php`.
 - **Description:** this shadowing existed identically before today's refactor (the pre-existing controller had the exact same pattern with `ORG_BRCH_VIEW` in place of `ORG_ENTITY_MANAGE`) — not a regression introduced by this session's changes, just carried forward as-is since fixing branch-level data scoping is a distinct, larger concern from the code-immutability/dependency-guard/media/permission work this phase covers.
 - **Proposed solution:** either call `$this->applyDataScope()` explicitly at the end of `BranchCrudController::setupListOperation()`, or restructure `ScopedCrud` to hook in a way that doesn't require the consuming controller to remember to call it. Needs a decision from whoever owns the branch-scoping feature on whether it's still meant to be active before touching this.
@@ -1153,9 +1191,10 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 
 ### BUG-100 — `dmsupdate()` crashes when a DMS update clears every remaining pending item
 
-- **Status:** OPEN (documented only — needs a decision, not a mechanical fix)
+- **Status:** FIXED (was: OPEN (documented only — needs a decision, not a mechanical fix))
 - **Severity:** High — a hard, uncaught 500 on a routine, expected outcome of the DMS-completion workflow (finishing the last missing DMS field is exactly when this fires).
 - **Found:** 23-09-2026, during the Sales-system-refactor Phase 4 pass (extracting `BookingDmsService`) — reproduced live in a unit test (`BookingDmsServiceTest::test_apply_with_zero_remaining_pending_items_hits_a_pre_existing_not_null_constraint_bug`).
+- **Fixed:** 24-09-2026 22:00 — option (a): `BookingDmsService` stores `''` when nothing is pending. Chosen because the column is NOT NULL and existing rows already use `''` for "nothing pending"; no reader distinguishes null from `''`. Test updated to assert the save succeeds. [ai-changelogs-24-09-2026.md](ai-changelogs-24-09-2026.md) — "Known-bugs sweep".
 - **Where:** `app/Http/Controllers/Admin/Sales/Booking/BookingCrudController.php::dmsupdate()` (now `app/Services/Sales/Booking/BookingDmsService.php::apply()`, same logic, same bug — extraction faithfully preserved it).
 - **Description:** `xlr8_booking_master.pending_remark` is `NOT NULL` with no database default (confirmed via `SHOW COLUMNS`). The code does `$booking->pending_remark = !empty($finalPending) ? implode(...) : null;` — when a DMS update resolves the last remaining pending item, `$finalPending` becomes `[]`, so `pending_remark` is set to `null`, and the subsequent `saveQuietly()` throws `SQLSTATE[23000]: Column 'pending_remark' cannot be null`. This is a pre-existing bug in the original inline code, not introduced by the extraction — confirmed by inspecting `git blame`-equivalent history showing this exact ternary predates today's refactor.
 - **Proposed solution:** needs a decision from whoever owns this workflow: (a) use `''` instead of `null` when clearing pending items (simplest, matches the column's actual constraint), or (b) migrate the column to nullable if `null` genuinely carries different meaning than `''` elsewhere that reads `pending_remark`. Not guessed at here since it touches a schema decision and possibly downstream code that reads this column.
@@ -1180,9 +1219,10 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 
 ### BUG-103 — `requestRefund()`'s "Refund Requested Again" history branch never fires
 
-- **Status:** OPEN (documented only — an unambiguous one-line fix, but changes user-visible history output, so left as a product decision rather than silently applied)
+- **Status:** FIXED (was: OPEN (documented only — an unambiguous one-line fix, but changes user-visible history output, so left as a product decision rather than silently applied))
 - **Severity:** Low — no data corruption or crash; the refund request itself still succeeds and the booking still moves to "Refund Queued" (status 4) correctly. The only effect is a missing, more-specific history entry on the re-request-after-rejection path.
 - **Found:** 23-09-2026, during the Sales-system-refactor Phase 4 pass (extracting `BookingRefundService`) — noticed while tracing `$oldStatus`'s only read site.
+- **Fixed:** 24-09-2026 22:00 — `BookingRefundService::apply()` captures the status before the update and checks `=== 7`. Applied as the unambiguous intent of the existing branch (the history text only makes sense for a re-request after rejection). 2 tests: re-request records the entry, first request doesn't. [ai-changelogs-24-09-2026.md](ai-changelogs-24-09-2026.md) — "Known-bugs sweep".
 - **Where:** `app/Http/Controllers/Admin/Sales/Booking/BookingCrudController.php::requestRefund()` (now `app/Services/Sales/Booking/BookingRefundService.php::apply()`, same logic, same bug — extraction faithfully preserved it, did not attempt to fix).
 - **Description:** The method captures `$oldStatus = $booking->status;` then immediately calls `$booking->update(['status' => 4, 'refund_request_date' => now()]);`, which also updates the in-memory `$booking->status` to `4`. The very next line checks `if ($booking->status == 7) { ...write 'Refund Requested Again' history... }` — but `$booking->status` is now `4`, never `7`, so this branch is unreachable. It was almost certainly meant to check `$oldStatus == 7` (was this a re-request after a prior rejection?).
 - **Proposed solution:** change the condition to `if ($oldStatus == 7)`. Straightforward, but changes what appears in a booking's history log for this scenario going forward — flagged here for a product owner to confirm before applying, rather than silently changed during an otherwise behavior-preserving refactor.
@@ -1192,6 +1232,7 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 - **Status:** OPEN (documented only — needs a schema/product decision before any fix)
 - **Severity:** CRITICAL — confirmed to affect not just OTF Save but **booking creation (`store()`) and booking editing (`update()`) as well**. Every one of these three actions throws an uncaught 500-level `QueryException`. `store()`/`update()` are the two most fundamental actions in the entire Booking module — if this database's schema is what's actually running, no new booking can be created and no existing booking can be edited at all.
 - **Found:** 23-09-2026, during the Sales-system-refactor Phase 4 pass. First surfaced extracting `BookingOtfService` (`final_data` missing), then independently re-confirmed extracting `BookingCoreService` (`sale_type` missing) — both reproduced directly in tinker against real, pre-existing booking rows (id `1`), not just test fixtures, to rule out a test-only artifact.
+- **Modified:** 24-09-2026 22:00 — re-verified: `xlr8_booking_master` still lacks `sale_type`, `final_data`, `consultant`, `buyer_type`, `accessories`, `segment_code`, `status_kw`. No migration in the repo defines this table, so the fix depends on the production schema. **Needs the owner's answer** (is production missing these too, or is the local DB stale?).
 - **Where:**
   - `otfSave()` (now `BookingOtfService::apply()`): sets `$booking->final_data` unconditionally (plus `consultant`/`buyer_type`/`accessories` conditionally) then `save()`s.
   - `store()` (now `BookingCoreService::store()`): sets `$booking->sale_type` (among other fields) then `save()`s (an INSERT).
@@ -1213,9 +1254,10 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 
 ### BUG-108 — OrgService branch-scoped user queries crash: missing pivot table
 
-- **Status:** OPEN (documented only — needs a product decision, not guessed at here)
+- **Status:** FIXED (was: OPEN (documented only — needs a product decision, not guessed at here))
 - **Severity:** Medium — no current production impact found (every real Booking call site uses the default `'ALL'` branch scope), but the branch-scoping feature itself is completely non-functional for any caller that does pass a real branch code.
 - **Found:** 23-09-2026, during the Sales-system-refactor Phase 5 query-caching pass, while writing a unit test for the newly-cached `OrgService::salesConsultants()`/`usersByDepartment()` methods with a non-default branch code argument.
+- **Fixed:** 24-09-2026 22:00 — branch filter in `userQuery()`/`usersByDesignation()` now uses `employee.primary_branch_code`, matching the dept/division filters beside it (which already use the employee's primary codes). Verified live: 6/3/123 users for branch BKN, no crash. If users should also match via secondary branch scopes (`user_scopes`), that's an extension, not a regression. [ai-changelogs-24-09-2026.md](ai-changelogs-24-09-2026.md) — "Known-bugs sweep".
 - **Where:** `app/Services/OrgService.php::userQuery()` (the shared private helper behind `usersByDesignation()`, `usersByDepartment()`, `usersByDivision()`, `salesConsultants()`, `salesTeamUsers()`, `users()`).
 - **Description:** The branch-scope filter does `$q->whereHas('branches', fn ($b) => $b->where('code', $filters['branch_code']))`, which Eloquent compiles into a join through `xlr8_admin_emp_branch_pivot` - a table that `SHOW TABLES` confirms doesn't exist in this database. Reproduced live: `OrgService::salesConsultants('SOME_BRANCH')` throws `SQLSTATE[42S02]`.
 - **Proposed solution:** needs a decision from whoever owns the org/employee-branch data model: (a) the pivot table genuinely needs to exist and this is a missing migration, in which case branch-scoped user filtering is a real, currently-broken feature; or (b) branch scoping was superseded by a different mechanism (e.g. the `user_scopes` table already used elsewhere in this same file for non-primary scope matching) and this code path is dead and should be removed. Not guessed at here since it's a schema/architecture decision, not a mechanical fix.
@@ -1240,18 +1282,20 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 
 ### BUG-112 — Lead edit screen 500s for any lead with a real vehicle selection
 
-- **Status:** OPEN (documented only)
+- **Status:** FIXED (was: OPEN (documented only))
 - **Severity:** High — this is a live, user-facing crash on a core CRUD screen, not a cosmetic or dead-code issue.
 - **Found:** 23-09-2026, incidentally, while doing a live HTTP round trip to verify the Lead view move (`admin.lead.*` → `admin.sales.lead.*`) didn't break anything. Confirmed pre-existing (not caused by the move) by inspecting the moved file's content, which `git mv` leaves byte-identical.
+- **Fixed:** 24-09-2026 22:00 — `LeadCrudController::edit()` passes `array_map(fn ($v) => $v['name'], OrgService::variants(...))`. All 4 lead edit pages return 200. [ai-changelogs-24-09-2026.md](ai-changelogs-24-09-2026.md) — "Known-bugs sweep".
 - **Where:** `app/Http/Controllers/Admin/Sales/Lead/LeadCrudController.php::edit()` + `resources/views/admin/sales/lead/edit.blade.php`; root cause in `app/Services/OrgService.php::variants()`/`colors()`.
 - **Description:** `edit()` passes `'variants' => OrgService::variants($lead->model_code)` and `'colors' => OrgService::colors($lead->variant_code)` into the edit view, which loops `@foreach ($variants as $code => $name) ... {{ $name }}`, expecting a flat `code => name` map — exactly what `OrgService::models()` correctly returns via `->pluck('name', 'code')->toArray()`. But `variants()`/`colors()` instead return `code => [array of fields: 'name', 'fuel_type_id', 'fuel_type', ...]` (a richer shape, presumably built for some other consumer). `{{ $name }}` on an array throws `htmlspecialchars(): Argument #1 ($string) must be of type string, array given`, a 500 for any lead whose `model_code` has at least one active variant. `LeadCrudController::create()` never hits this because it initializes `'models' => []`/`'colors' => []` unconditionally rather than eagerly resolving them.
 - **Proposed solution:** Either have `edit()` map `variants`/`colors` down to `code => name` before passing to the view (e.g. `->map(fn($v) => $v['name'])`), or add a second flat-shaped accessor to `OrgService` (e.g. `variantNames()`/`colorNames()`) if other consumers rely on the richer array shape and can't be changed. Not fixed here — out of scope for the view-reorganization pass; flagged prominently given the severity.
 
 ### BUG-113 — Undefined-variable warnings on Vehicle SubSegment/Variant listing and create screens
 
-- **Status:** OPEN (documented only)
+- **Status:** FIXED (was: OPEN (documented only))
 - **Severity:** Low — non-fatal PHP warnings, pages still render and return 200; not a crash.
 - **Found:** 23-09-2026, incidentally, while doing live HTTP round trips to verify the Vehicle module view move (`admin.{name}.*` -> `admin.vehicle.{name}.*`) didn't break anything. Confirmed pre-existing (not caused by the move) since the moved view content is byte-identical via `git mv`.
+- **Fixed:** 24-09-2026 22:00 — `SubSegmentCrudController::create()` now passes `segments`; Variant create verified 200 in the same sweep. [ai-changelogs-24-09-2026.md](ai-changelogs-24-09-2026.md) — "Known-bugs sweep".
 - **Where:** `resources/views/admin/vehicle/sub-segment/list.blade.php` (via `SubSegmentCrudController::index()`, `$segments` undefined) and `resources/views/admin/vehicle/variant/list.blade.php` + `create.blade.php` (via `VariantCrudController::index()`/`create()`, an unnamed foreach target undefined/null).
 - **Description:** `foreach ($segments as ...)` / a second unnamed foreach loop in these 3 views iterate over a variable never passed from their controller action, producing `Undefined variable` and `foreach() argument must be of type array|object, null given` warnings on every load. Since PHP warnings don't halt execution, the pages still render (200) with that section of the dropdown/list simply empty.
 - **Proposed solution:** Trace what each foreach is meant to populate (likely a segment/variant filter dropdown) and have the corresponding controller action pass the missing array, or remove the dead markup if the feature was abandoned. Not fixed here — out of scope for the view-reorganization pass; flagged for a future UI/data-completeness pass.
@@ -1355,15 +1399,17 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 - **Status:** OPEN (documented only)
 - **Severity:** High — these are real, currently-unusable reporting screens (branch-booking, consolidated-booking, live-order, pending-actions, stock).
 - **Found:** 23-09-2026, during the same audit, via `SQLSTATE[42S02]: Base table or view not found: 1146 Table 'xlrm.xlr8_vehicle_master' doesn't exist` and the same for `xlr8_us_location`.
+- **Modified:** 24-09-2026 22:00 — re-smoked: 8 Booking report screens (not 5) 500 on missing tables. Still a schema decision.
 - **Where:** `stockReport()`, `liveOrderReport()`, `pendingActionsReport()`, and the `branch-booking`/`consolidated-booking` report methods in `BookingCrudController.php`.
 - **Description:** same class of issue as BUG-009 (`xlr8_vehicle_brand` missing) - these queries join against `xlr8_vehicle_master` and `xlr8_us_location`, neither of which exist as tables in this local database. Not a code bug; a genuinely missing/renamed schema. BUG-119's routing fix correctly wires each report's "-List" sibling to delegate to it, so once these tables exist (or the queries are rewritten against whatever schema replaced them), both the summary and list variants will start working together with no further code change needed.
 - **Proposed solution:** confirm with the database/schema owner whether `xlr8_vehicle_master`/`xlr8_us_location` were renamed, dropped, or never migrated to this environment, then either add the missing tables/migration or rewrite these 5 report queries against the current schema (likely `xlr8_vehicle_model`/`xlr8_admin_location`-family tables used everywhere else in this app).
 
 ### BUG-123 — Broken placeholder image reference in Booking's `show.blade.php`
 
-- **Status:** OPEN (documented only)
+- **Status:** FIXED (was: OPEN (documented only))
 - **Severity:** Cosmetic — a broken image icon (browser's default missing-image glyph) for the PDF-preview placeholder, not a functional break.
 - **Found:** 23-09-2026, via an IDE diagnostic while editing an adjacent line of the same file for BUG-118.
+- **Fixed:** 24-09-2026 22:00 — placeholder replaced with an inline SVG data URI; also guarded `$otf_processed` so refund-view/rejected-view render (200). [ai-changelogs-24-09-2026.md](ai-changelogs-24-09-2026.md) — "Known-bugs sweep".
 - **Where:** `resources/views/admin/sales/booking/show.blade.php` line ~2462, `asset('images/pdf-icon.png')`.
 - **Proposed solution:** add the missing icon file to `public/images/`, or point it at an existing icon/Line Awesome class already used elsewhere in the app instead of an image asset.
 
@@ -1505,3 +1551,224 @@ bug to reproduce or verify a fix against (unlike BUG-130/134/135, each confirmed
 real data corruption). Fixing them would mean guessing what the correct real column name should be
 without a call site to confirm intent — logged here for whoever next touches these models, not
 guessed at.
+
+### BUG-136 — Data-scoping enforcement layer built against a nonexistent model and service
+
+- **Status:** FIXED (code). Enforcement switch-on: OPEN, needs a decision.
+- **Severity:** High — not because anything crashed, but because the app has had no working row-level data scoping at all.
+- **Found:** 24-09-2026, during the shared-services audit (`docs/reference/Shared-Services-Utilities-Catalog.md` §4).
+- **Where:** `app/Http/Scopes/DataScopeFilter.php`, `app/Http/Controllers/Admin/Traits/ScopedCrud.php`, `app/Services/RBACService.php` (`getAccessibleResources()`), `app/Models/UserDataScope.php`, `app/Models/Module/Booking/Stock.php`, `app/Models/Module/Spare/XlSpareRequest.php`.
+- **Description:** `DataScopeFilter` resolved `App\Services\IAM\DataScopeService`, which was never written (its `AppServiceProvider` registration is commented out). `ScopedCrud` called `User::userDataScopes()` / `getScopedIds()`, which don't exist. `UserDataScope` maps to `user_data_scopes`, which doesn't exist and has no migration. `Stock::$scopeColumn = 'branchid'` and `XlSpareRequest::$scopeColumn = 'branch_code'` name columns that aren't on those tables. None of it was reachable: `Stock` imports but never applies `ScopedQuery`; `XlSpareRequest` can't autoload (BUG-141); the 4 `ScopedCrud` controllers return `''` from `getScopeType()` or override `setupListOperation()` without calling the trait; `getAccessibleResources()` has no callers. The live scope store is `App\Models\Admin\UserScope` (`xlr8_admin_user_scopes`, `scope_code`, 1,465 rows).
+- **Fix (option A, user-approved):** new `App\Services\IAM\DataScopeService` built on `User::getScopeCodes()`, translating scope codes to entity ids via a fixed type map (the 7 `scope_type` values in live data); `null` = unrestricted, `[]` = no access (fails closed). `ScopedCrud` rewired to it (also now honours `bypass_data_scoping` and fails closed in its hierarchy fallback). `DataScopeFilter` docs/default corrected. `Stock`/`XlSpareRequest` declarations corrected to `location`/`location_id` and `branch`/`srv_brnch_id`. `UserDataScope` marked `@deprecated` (still referenced by the two unrouted `RulesUserImporter` copies). Verified against a real scoped user; 7 tests in `tests/Unit/Services/IAM/DataScopeServiceTest.php`.
+- **Still open (behaviour changes, need a decision):** applying `ScopedQuery` to `Stock`; enabling scoping in the 4 `ScopedCrud` controllers; fixing `XlSpareRequest`'s namespace; `User::activeScopes()` ignoring `from_date`/`to_date`; deleting the unrouted `RulesUserImporter` copies and then `UserDataScope`.
+
+### BUG-137 — `UserImporter` scope writes targeted a nonexistent table with wrong column names
+
+- **Status:** FIXED
+- **Severity:** High — the only live-reachable breakage in the BUG-136 system.
+- **Found:** 24-09-2026, same audit.
+- **Where:** `app/Services/Importers/UserImporter.php::createDataScopes()` (routed via `UserImportExportController::import()`).
+- **Description:** built rows with `userid`, `scopetype`, `scopevalue` (entity id), `status` and called `UserDataScope::insert()` — wrong table, wrong column names, wrong value shape (id instead of code).
+- **Fix:** writes `App\Models\Admin\UserScope` rows (`user_id`, `scope_type`, `scope_code` = entity's canonical code, `is_active`). Idempotent against the `(user_id, scope_type, scope_code)` unique key, which includes soft-deleted rows: an existing row is reactivated/restored instead of re-inserted. Verified in a rolled-back transaction (unknown code skipped, no duplicate on re-import, soft-deleted row restored).
+
+### BUG-138 — `DocService::hasAccess()` granted access to every entity-attached document
+
+- **Status:** FIXED
+- **Severity:** High in principle; unreachable today because `DocService` can't be constructed (`NotificationService`).
+- **Found:** 24-09-2026, while removing `DocService`'s dependency on the nonexistent `DataScopeService`.
+- **Modified:** 24-09-2026 22:00 — now reachable: `DocService` constructs since the Firebase/NotificationService fixes (BUG-145).
+- **Where:** `app/Services/DocService.php::hasAccess()`.
+- **Description:** after the owner / explicit-grant / RBAC checks, any document with a `documentable` hit a block that fetched the user's scopes, discarded them, and returned `true` (commented "Placeholder"). The later "ask the entity's own `hasAccess()`" branch was unreachable.
+- **Fix:** removed the placeholder; the method now falls through to the entity's `hasAccess()` or denies. Also corrected the wrong `EntityHistoryService` import and removed the unused scope dependency.
+
+### BUG-139 — Three further `DocService` defects
+
+- **Status:** PARTIALLY FIXED — item (1) fixed; (2) and (3) still OPEN (was: OPEN (documented only))
+- **Severity:** Medium — unreachable until `DocService` can construct.
+- **Found:** 24-09-2026, IDE diagnostics while fixing BUG-138.
+- **Modified:** 24-09-2026 22:00 — (1) fixed: `Illuminate\Support\Collection` imported. `DocService` now constructs, so (2) and (3) are reachable and still need their decisions (locked Approval Engine; dependency approval).
+- **Where:** `app/Services/DocService.php`.
+- **Description:** (1) `search(): Collection` — `Collection` isn't imported, so the return type is the nonexistent `App\Services\Collection` and any return throws a `TypeError`. (2) `approve()` calls `$this->approvalService->approve()`; `ApprovalService` has `approveDocument(GraphNode, User, string)` instead, a different contract. (3) `getAiTags()` uses `Google\Cloud\Vision\V1\ImageAnnotatorClient`; `google/cloud-vision` isn't installed.
+- **Proposed solution:** (1) import `Illuminate\Support\Collection`. (2) decide how document approval maps onto the graph-based `ApprovalService` (touches the locked Approval Engine — needs authorization). (3) install the package (dependency change — needs approval) or guard the feature off.
+
+### BUG-140 — `Models_backup` duplicate `App\Models\User` breaks PHPStan resolution
+
+- **Status:** FIXED for static analysis (was: OPEN) — directory deletion still pending sign-off
+- **Fixed:** 25-09-2026 — `phpstan.neon` `excludePaths: app/Models_backup`; the `User::isSuperAdmin()`/`permissionOverrides()` false positives are gone. [ai-changelogs-25-09-2026.md](ai-changelogs-25-09-2026.md)
+- **Severity:** Low — static analysis only.
+- **Found:** 24-09-2026, PHPStan reported `User::isSuperAdmin()` undefined in files that call a method that plainly exists.
+- **Where:** `app/Models_backup/User.php`, `phpstan.neon`.
+- **Description:** the dead backup directory declares `namespace App\Models; class User` without the current methods. `phpstan.neon` scans all of `app/`, so Larastan resolves the backup class; every "Quality Gate" PHPStan run carries these false positives. Composer's PSR-4 map never loads the file, so runtime is unaffected.
+- **Proposed solution:** delete `app/Models_backup/` (zero references), or add it to `excludePaths` in `phpstan.neon`.
+
+### BUG-141 — `XlSpareRequest` can't autoload (namespace/path mismatch)
+
+- **Status:** FIXED (was: OPEN)
+- **Severity:** Low
+- **Found:** 24-09-2026, same audit.
+- **Fixed:** 24-09-2026 22:00 — all 9 `app/Models/Module/Spare/*` models now declare `namespace App\Models\Module\Spare` and import `BaseModel`; they autoload. `XlSpareRequest` now carries its (corrected) `ScopedQuery` declaration live, but nothing queries it yet. `XlSpareMaster`'s `EnumMaster` relations remain broken (class doesn't exist). [ai-changelogs-24-09-2026.md](ai-changelogs-24-09-2026.md) — "Known-bugs sweep".
+- **Where:** `app/Models/Module/Spare/XlSpareRequest.php`, `XlSpareRequestDetail.php`.
+- **Description:** files declare `namespace App\Models` but live under `app/Models/Module/Spare/`; `class_exists('App\Models\XlSpareRequest')` is false. Nothing outside the pair references them.
+- **Proposed solution:** decide whether the Spare Request module is dead (move to backup/orphaned) or meant to be live (fix namespace — note it would then also become data-scoped via `ScopedQuery`).
+
+### BUG-142 — `CalculatePricingSessionJob` could never load (output before `<?php`)
+
+- **Status:** FIXED
+- **Severity:** Critical — the pricing workflow's "Calculate" action always failed.
+- **Found:** 24-09-2026, class-load sweep of every class under `app/`.
+- **Fixed:** 24-09-2026 22:00 — [ai-changelogs-24-09-2026.md](ai-changelogs-24-09-2026.md) — "Known-bugs sweep"
+- **Where:** `app/Jobs/Vehicle/Pricing/CalculatePricingSessionJob.php`, dispatched from `PricingWorkflowController` (~line 430).
+- **Description:** the file began with two blank lines before `<?php`, which breaks the file's leading `declare(strict_types=1)` ("must be the very first statement") — a compile-time fatal every time the class was loaded, i.e. on every dispatch.
+- **Fix:** removed the leading blank lines. Class loads.
+
+### BUG-143 — Three models fatal on load: `scopeActive()` signature incompatible with `BaseModel`
+
+- **Status:** FIXED
+- **Severity:** High — any code touching these models fataled; `UserDeviceToken` also blocked `FirebaseService` (BUG-145).
+- **Found:** 24-09-2026, class-load sweep.
+- **Fixed:** 24-09-2026 22:00 — [ai-changelogs-24-09-2026.md](ai-changelogs-24-09-2026.md) — "Known-bugs sweep"
+- **Where:** `app/Models/Admin/UserReporting.php`, `app/Models/IAM/UserDeviceToken.php`, `app/Models/Module/Spare/XlSpareRequestDetail.php`.
+- **Description:** each declared `public function scopeActive($query)` while `BaseModel::scopeActive(Builder $query): Builder` is typed — an incompatible override, fatal at class link time.
+- **Fix:** signatures now `scopeActive(Builder $query): Builder`.
+
+### BUG-144 — Every authenticated API route failed: `ValidateDevice` middleware imported nonexistent models
+
+- **Status:** FIXED
+- **Severity:** Critical — `validate_device` runs on the whole `auth:sanctum` group in `routes/api.php`, so the entire authenticated mobile API was down.
+- **Found:** 24-09-2026, broken-import scan (used imports only).
+- **Fixed:** 24-09-2026 22:00 — [ai-changelogs-24-09-2026.md](ai-changelogs-24-09-2026.md) — "Known-bugs sweep"
+- **Where:** `app/Http/Middleware/ValidateDevice.php`.
+- **Description:** imported `App\Models\Core\DeviceSession` / `OtpAttemptLog` (real classes live in `App\Models\IAM`), and wrote `$user->phone` (no such attribute) into the NOT NULL `mobile` column.
+- **Fix:** imports repointed to `App\Models\IAM\*`; `mobile` now from `$user->primary_mobile` (empty string fallback).
+
+### BUG-145 — `FirebaseService` called a nonexistent SDK method; Firebase, Notification and Doc services couldn't construct
+
+- **Status:** FIXED
+- **Severity:** High — push notifications and everything that injects `NotificationService`/`DocService` failed at construction.
+- **Found:** 24-09-2026, service construction checks during the sweep.
+- **Fixed:** 24-09-2026 22:00 — [ai-changelogs-24-09-2026.md](ai-changelogs-24-09-2026.md) — "Known-bugs sweep"
+- **Where:** `app/Services/FirebaseService.php` (constructor).
+- **Description:** used `Factory::withDefaultAuth()`, which doesn't exist in the installed `kreait/firebase-php` 7.24.1; the `catch (Exception)` didn't catch the resulting `Error`.
+- **Fix:** `(new Factory())->withServiceAccount(config('firebase.credentials'))`, `catch (\Throwable)`. Verified: `FirebaseService`, `NotificationService`, `DocService` all construct; messaging initialises with the real credentials.
+
+### BUG-146 — Every admin-panel write was audit-stamped as user 1
+
+- **Status:** FIXED
+- **Severity:** High — audit trail (`created_by`/`updated_by`/`deleted_by`) wrong for all admin writes on `BaseModel` descendants.
+- **Found:** 24-09-2026, while verifying BUG-025 — all 45 bookings and all 4 leads had `created_by = 1`.
+- **Fixed:** 24-09-2026 22:00 — [ai-changelogs-24-09-2026.md](ai-changelogs-24-09-2026.md) — "Known-bugs sweep"
+- **Where:** `app/Models/BaseModel.php::resolveActorId()`.
+- **Description:** used `auth()->id()` (default `web` guard). Admin users authenticate on Backpack's `backpack` guard, and `UseBackpackAuthGuardInsteadOfDefaultAuthGuard` is disabled, so the lookup was always null and fell back to 1.
+- **Fix:** `auth(backpack_guard_name())->id() ?? auth()->id() ?? 1`. Verified via the web path: a write as Backpack user 40 stamps 40. **Historic rows are not corrected** — the real authors can't be recovered.
+
+### BUG-147 — API routes pointed at wrong method names
+
+- **Status:** PARTIALLY FIXED — 8 routes fixed; 5 routes still point at methods that were never written.
+- **Severity:** Medium
+- **Found:** 24-09-2026, route → method existence scan.
+- **Fixed:** 24-09-2026 22:00 (the 8) — [ai-changelogs-24-09-2026.md](ai-changelogs-24-09-2026.md) — "Known-bugs sweep"
+- **Where:** `routes/api.php`.
+- **Description / fix:** repointed to the real methods: `GET /devices` → `getUserDevices`, `DELETE /devices/{id}` → `unregisterDevice`, `/notifications/{id}/read` → `markNotificationAsRead`, `/notifications/mark-all-read` → `markAllNotificationsAsRead`, `GET /messages/user/{user_id}` → `getConversationMessages`, `system-settings/topic/{topic}` → `getByTopic`, `export/json` → `exportSettings`, `import/json` → `importSettings`. The `system-settings/{key}` catch-all also swallowed `export/json` (registered earlier); it now excludes it. Verified by router matching.
+- **Still open:** `NotificationController::revokeAllDevices`, `SystemSettingApiController::siteSettings` / `dealershipSettings` / `pricingSettings`, `PricingApiController::generateQuote` (and its injected `PricingService` is empty). Decision: implement or remove these routes.
+
+### BUG-148 — System Settings admin screen: list, create and save all 500'd
+
+- **Status:** FIXED
+- **Severity:** High — settings (incl. `display.date_format`) could not be managed from the UI.
+- **Found:** 24-09-2026, admin smoke sweep.
+- **Fixed:** 24-09-2026 22:00 — [ai-changelogs-24-09-2026.md](ai-changelogs-24-09-2026.md) — "Known-bugs sweep"
+- **Where:** `app/Http/Controllers/Admin/Utils/SystemSetting/SystemSettingCrudController.php`.
+- **Description:** used a Backpack PRO filter and `select2` field (PRO isn't installed), the latter backed by nonexistent `App\Models\SystemSettingTopic`; validated `unique:systemsettings` (real table `xlr8_utils_system_setting`); `store()`/`update()` called `parent::storeCrud()`/`updateCrud()`, which don't exist in Backpack 7.
+- **Fix:** list ordered by topic/sort order instead of the PRO filter; `topic` is a text field with a hint listing existing topics; `type`/`input_type` use `select_from_array`; correct unique table; removed the broken overrides (the default operations run, still gated by the per-operation permission hooks).
+
+### BUG-149 — Deleting a user always failed
+
+- **Status:** FIXED
+- **Severity:** High
+- **Found:** 24-09-2026, method-existence scan.
+- **Fixed:** 24-09-2026 22:00 — [ai-changelogs-24-09-2026.md](ai-changelogs-24-09-2026.md) — "Known-bugs sweep"
+- **Where:** `app/Http/Controllers/Admin/Org/User/UserCrudController.php::destroy()`.
+- **Description:** called `parent::deleteCrud()`, which doesn't exist in Backpack 7; caught by the method's own `catch`, so every delete reported failure.
+- **Fix:** `use DeleteOperation { destroy as traitDestroy; }` and `return $this->traitDestroy($id);` — last-super-admin guard and logging unchanged.
+
+### BUG-150 — `OrgService::getKeyValuesByCode()` returned null for keywords without a master row
+
+- **Status:** FIXED
+- **Severity:** Medium — e.g. `PERMIT` and `FOLLOW_UP_REMARKS_TYPE` dropdowns were empty.
+- **Found:** 24-09-2026, comparing `OrgService` with `KeywordValueService` (the SSOT).
+- **Fixed:** 24-09-2026 22:00 — [ai-changelogs-24-09-2026.md](ai-changelogs-24-09-2026.md) — "Known-bugs sweep"
+- **Where:** `app/Services/OrgService.php::getKeyValuesByCode()`.
+- **Description:** looked values up via the `KeywordMaster` row; some codes have values but no master row.
+- **Fix:** reads `Keyvalue` by `keyword_code` directly, as `KeywordValueService` does; cache key bumped to `v2` so stale nulls aren't served. Verified identical results for every master-backed code; `PERMIT` now returns GOODS, MISC, PASSENGER, PRIVATE.
+
+### BUG-151 — Class/namespace/path mismatches and wrong imports across models, helpers and controllers
+
+- **Status:** FIXED (listed items)
+- **Severity:** Medium–High depending on caller (e.g. Booking `locations/{state}` AJAX 500'd).
+- **Found:** 24-09-2026, class-load and broken-import scans.
+- **Fixed:** 24-09-2026 22:00 — [ai-changelogs-24-09-2026.md](ai-changelogs-24-09-2026.md) — "Known-bugs sweep"
+- **Where / fix:** file renames `Admin/DesignationDeptTree.php` → `DesigDeptTree.php` and `Module/Booking/X_Vh_Stock.php` → `XVehicleStock.php` (to match their classes); `Core/ExportLog` namespace corrected; `Core/ImportLog::user()` pointed at `App\Models\User`; imports repointed in `XCommonHelper` (`PinCodes`, `XlSpareClosure`), `BookingCrudController` (`PinCodes`, `XCommonHelper`), `SystemSettingCrudController`, `EntityHistoryController`, `UserExporter`, `RBACService` (also BUG-076), `AccessoryService`, `AccessoryImportService`, `VehicleAccessoryCrudController`; stale `Core\*` imports removed from `DocAccess`, `DocGroup`, `NotificationsMaster`. Spare models: see BUG-141.
+- **Still open:** `DesigDeptTree::posts()` targets the removed `App\Models\Iam\Post` (BUG-080); `XlSpareMaster`'s `EnumMaster` relations; `Booking`'s `EnumMaster` import; `BookingStateService` (unused, nonexistent `EntityHistory` model).
+
+### BUG-152 — Vehicle accessory import log never written, and double-encoded when it was
+
+- **Status:** FIXED
+- **Severity:** Low
+- **Found:** 24-09-2026, same scan.
+- **Fixed:** 24-09-2026 22:00 — [ai-changelogs-24-09-2026.md](ai-changelogs-24-09-2026.md) — "Known-bugs sweep"
+- **Where:** `app/Services/Vehicle/AccessoryService.php`, `app/Services/Vehicle/AccessoryImportService.php`.
+- **Description:** `AccessoryService` guarded logging with `class_exists()` on the wrong class name, so it never logged. Both services `json_encode()`d `warnings`/`errors` although `ImportLog` casts them to `array`, storing a JSON string inside JSON.
+- **Fix:** correct class; arrays passed straight to the cast. Verified the stored value is single-encoded and reads back as an array.
+
+### BUG-153 — `getChassisNumbers` query matches nothing
+
+- **Status:** OPEN (documented only — needs a business rule)
+- **Severity:** Low — no caller found.
+- **Found:** 24-09-2026, admin smoke sweep.
+- **Where:** `BookingCrudController::getChassisNumbers()`.
+- **Description:** filters on column `chasis_no` and `status = 'available'`; no stock row has that status, so the list is always empty.
+- **Proposed solution:** owner to define which stock statuses mean "available for booking", or remove the unused endpoint.
+
+### BUG-154 — Employee, Person Address and Person Banking create/edit forms are id-based against a code-based schema
+
+- **Status:** OPEN (documented only — form redesign)
+- **Severity:** High — these forms can't save correctly.
+- **Found:** 24-09-2026, while fixing BUG-008/020/021's list screens.
+- **Where:** `EmployeeCrudController`, `PersonAddressCrudController`, `PersonBankingDetailCrudController` (create/edit views, `store()`/`update()`).
+- **Description:** forms submit and validate `person_id`, `designation_id`, `primary_branch_id`, `primary_department_id`, `is_primary`, `swift_code`; the tables use `person_code`, `designation_code`, `primary_branch_code`, `primary_dept_code`, and encode "primary" as `address_type`/`account_type = 'Primary'`. The employee pivot tables (`xlr8_admin_emp_*_pivot`) don't exist.
+- **Proposed solution:** rebuild the three forms on codes. Needs confirmation that these standalone screens are still wanted, since `UserCrudController`'s combined person/employee/user journey already writes these tables.
+
+### BUG-155 — Dead routes and dead files still in the tree
+
+- **Status:** OPEN (documented only — cleanup decision)
+- **Severity:** Low
+- **Found:** 24-09-2026, route/method and class-load scans.
+- **Where:** admin routes with no controller method and no callers: `orderVerify`, `editRefund`, quotation `pending`, enquiry `pending`/`erroneous`. Dead or unloadable files: `oldEnquiryCrudController.php`, `Module/Booking/XlInsurance.php` (declares `App\Models`, duplicates the live model), two `RulesUserImporter` copies, `VehicleDefineImporter`, Post controllers, `AppServiceProvider`'s `PostService`/`ReportingService` singletons (cause of `ReportingServiceTest`/`PostServiceTest` failures, BUG-080), `BookingStateService`, `app/Models_backup/` (BUG-140).
+- **Proposed solution:** delete after owner sign-off.
+
+### BUG-156 — Class references in the wrong letter case (fail on case-sensitive filesystems)
+
+- **Status:** FIXED
+- **Severity:** High if production runs on Linux; invisible on Windows/Laragon.
+- **Found:** 25-09-2026, following up PHPStan's `class.nameCase` finding with a whole-repo scan of `App\…` references against the exact on-disk file path.
+- **Fixed:** 25-09-2026 — [ai-changelogs-25-09-2026.md](ai-changelogs-25-09-2026.md)
+- **Where:** `XL_DSA_MASTER` (class/file is `Xl_DSA_Master`) in `BookingCrudController`, `OrgService`, `BookingCoreService`, `BookingExchangeService`, `BookingFinanceService`, `BookingInsuranceService`, `BookingOtfService`, `BookingRtoService`; `App\Models\Utilities\KeyValue\KeyValue` (file `Keyvalue.php`) in `CommThread::action()`; `App\Models\Crm\LeadSource` (directory `CRM`) in `CrmLeadSourceSeeder`.
+- **Description:** PHP class names are case-insensitive, but Composer's PSR-4 autoloader maps the name *as written* to a file path. On Linux, `…\XL_DSA_MASTER` looks for `XL_DSA_MASTER.php`, doesn't find it, and fatals — unless the class happened to be loaded earlier in the request under the correct case. The DSA lookup runs on most Booking edit screens.
+- **Fix:** references corrected to the declared case. Rescan: zero mismatches in the app (the only remaining hits are in `.kilo/worktrees/`, a tool scratch copy, not app code).
+
+### BUG-157 — `User::deviceTokens()` was never defined
+
+- **Status:** FIXED
+- **Severity:** High — `FirebaseService::sendToUserDevices()`, `getUserActiveDevices()`, `revokeAllUserDevices()` all fatal (`BadMethodCallException`); hidden until BUG-145 let the service construct.
+- **Found:** 25-09-2026, PHPStan re-run after excluding `Models_backup` (BUG-140).
+- **Fixed:** 25-09-2026 — [ai-changelogs-25-09-2026.md](ai-changelogs-25-09-2026.md)
+- **Where:** `app/Models/User.php`; callers in `app/Services/FirebaseService.php`.
+- **Fix:** `deviceTokens()` → `hasMany(UserDeviceToken::class)` (`xlr8_iam_user_device_token.user_id`, matching the existing inverse `UserDeviceToken::user()`). Generated SQL verified, incl. the `active()` scope. Not in the backup `User` either — it was never written.
+
+### BUG-158 — Employee/User branch-location-department relations target nonexistent pivot tables
+
+- **Status:** OPEN (documented only — needs a design decision)
+- **Severity:** Medium — one live caller.
+- **Found:** 25-09-2026, following PHPStan relation findings in `OrgService`/`DashboardController`.
+- **Where:** `User::branches()`, `locations()`, `departments()`; `Employee::branches()`, `locations()`, `departments()` — all `belongsToMany` through `xlr8_admin_emp_{branch,location,department}_pivot`, which don't exist (same root cause as BUG-108). Callers: `UserExporter` (reached by `POST org/user/export`) — **live, crashes on the first user**; `DashboardController::getSuperAdminDashboard()`/`getScopedUserDashboard()` — dead (never called by `index()`); `OrgService::usersByPost()` — dead (BUG-049); the two `RulesUserImporter` copies — unrouted (BUG-155).
+- **Proposed solution:** decide what the user export's "assignments" sheet should contain now that assignments are code-based — likely primary codes from `employee` plus additional scopes from `user_scopes` (the live scope store, BUG-136). Then rewrite `UserExporter` on that and remove the six pivot relations with the dead callers.

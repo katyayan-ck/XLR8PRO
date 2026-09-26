@@ -94,18 +94,16 @@ class BookingRefundService
      * request - preserves the original's inner try/catch), moves the
      * booking to status 4 (Refund Queued), and records history.
      *
-     * BUG-103 (known-bugs-report.md): the "Refund Requested Again"
-     * history branch checks $booking->status AFTER the status has
-     * already been overwritten to 4 by the update() call above it, so it
-     * compares 4 == 7 and never fires - preserved exactly, not silently
-     * fixed, since the intended check (comparing the OLD status) is an
-     * unambiguous one-line fix but changes user-visible history output.
+     * The "Refund Requested Again" history entry is keyed on the status the
+     * booking had *before* this request (7 = Refund Rejected).
      *
      * @param  array<string, mixed>  $validated
      * @param  array<string, ?UploadedFile>  $files  keyed by acc_proof/aadhar/pan
      */
     public function apply(Booking $booking, array $validated, array $files): Xl_Refunds
     {
+        $previousStatus = (int) $booking->status;
+
         $refund = Xl_Refunds::create([
             'entity_type' => 'booking',
             'entity_id' => $booking->id,
@@ -145,7 +143,7 @@ class BookingRefundService
             'refund_request_date' => now(),
         ]);
 
-        if ($booking->status == 7) {
+        if ($previousStatus === 7) {
             $booking->addHistory(
                 'commented',
                 'Refund Requested Again',

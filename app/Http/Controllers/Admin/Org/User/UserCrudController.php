@@ -63,7 +63,9 @@ use Spatie\Permission\PermissionRegistrar;
 class UserCrudController extends CrudController
 {
     use CreateOperation;
-    use DeleteOperation;
+    use DeleteOperation {
+        destroy as traitDestroy;
+    }
     use ListOperation {
         search as traitSearch;
         showDetailsRow as traitShowDetailsRow;
@@ -873,9 +875,9 @@ class UserCrudController extends CrudController
      * - Log deletion event
      * - Soft delete if available
      *
-     * @return RedirectResponse
+     * @return RedirectResponse|string
      */
-    public function destroy()
+    public function destroy($id)
     {
         if (! backpack_user()->can('ORG_USER_DELETE')) {
             abort(403, 'Unauthorized. You do not have permission to delete users.');
@@ -895,7 +897,7 @@ class UserCrudController extends CrudController
                 'timestamp' => now(),
             ]);
 
-            return parent::deleteCrud();
+            return $this->traitDestroy($id);
         } catch (\Exception $e) {
             Log::error('User deletion failed', [
                 'error' => $e->getMessage(),

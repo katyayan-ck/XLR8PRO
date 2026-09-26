@@ -2,32 +2,33 @@
 
 namespace App\Services;
 
-use App\Models\Utilities\Noty\{Notification, Alert, Message};
 use App\Models\IAM\UserDeviceToken;
 use App\Models\User;
+use App\Models\Utilities\Noty\Message;
+use App\Models\Utilities\Noty\Notification;
+use Exception;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Kreait\Firebase\Factory;
 use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification as FCMNotification;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Log;
-use Exception;
 
 class FirebaseService
 {
     protected $messaging;
+
     protected $projectId;
 
     public function __construct()
     {
         try {
-            $factory = (new Factory())
-                ->withServiceAccount(config('firebase.credentials'))
-                ->withDefaultAuth();
+            $factory = (new Factory)
+                ->withServiceAccount(config('firebase.credentials'));
 
             $this->messaging = $factory->createMessaging();
             $this->projectId = config('firebase.project_id');
-        } catch (Exception $e) {
-            Log::error('Firebase initialization failed: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            Log::error('Firebase initialization failed: '.$e->getMessage());
             $this->messaging = null;
         }
     }
@@ -85,7 +86,7 @@ class FirebaseService
 
             return $device;
         } catch (Exception $e) {
-            Log::error('Failed to register device token: ' . $e->getMessage());
+            Log::error('Failed to register device token: '.$e->getMessage());
             throw $e;
         }
     }
@@ -96,13 +97,15 @@ class FirebaseService
     public function sendToDevice(UserDeviceToken $device, array $notification, array $data = []): bool
     {
         try {
-            if (!$device->isValid()) {
+            if (! $device->isValid()) {
                 Log::warning('Device token invalid or expired', ['device_id' => $device->device_id]);
+
                 return false;
             }
 
-            if (!$this->messaging) {
+            if (! $this->messaging) {
                 Log::warning('Firebase not initialized');
+
                 return false;
             }
 
@@ -285,6 +288,7 @@ class FirebaseService
     public function generateDeepLink(string $entityType, int $entityId): string
     {
         $scheme = strtolower($entityType);
+
         return "vdms://{$scheme}/{$entityId}";
     }
 
@@ -346,7 +350,8 @@ class FirebaseService
 
             return true;
         } catch (Exception $e) {
-            Log::error('Failed to revoke device: ' . $e->getMessage());
+            Log::error('Failed to revoke device: '.$e->getMessage());
+
             return false;
         }
     }
@@ -388,7 +393,7 @@ class FirebaseService
     public function testConnection(): array
     {
         try {
-            if (!$this->messaging) {
+            if (! $this->messaging) {
                 return [
                     'success' => false,
                     'message' => 'Firebase not initialized',

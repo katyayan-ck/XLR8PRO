@@ -9,7 +9,7 @@ use App\Models\CRM\Enquiry;
 use App\Models\Module\Booking\Booking;
 use App\Models\Module\Booking\Stock;
 use App\Models\Module\Booking\Xessories;
-use App\Models\Module\Booking\XL_DSA_MASTER;
+use App\Models\Module\Booking\Xl_DSA_Master;
 use App\Models\Module\Booking\XlFinancier;
 use App\Models\Module\Finance\XFinance;
 use App\Models\User;
@@ -477,7 +477,7 @@ class BookingFinanceService
 
     private function dsaName(mixed $dsaId): string
     {
-        $drec = XL_DSA_MASTER::find($dsaId);
+        $drec = Xl_DSA_Master::find($dsaId);
 
         return $drec ? $drec->name.' - '.$drec->mobile : 'N/A';
     }

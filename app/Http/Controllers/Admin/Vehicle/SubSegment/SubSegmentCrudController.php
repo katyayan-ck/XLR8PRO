@@ -171,6 +171,7 @@ class SubSegmentCrudController extends CrudController
 
         return view('admin.vehicle.sub-segment.create', [
             'title' => 'Add New Sub Segment',
+            'segments' => Segment::query()->where('is_active', true)->orderBy('name')->get(['code', 'name']),
         ]);
     }
 

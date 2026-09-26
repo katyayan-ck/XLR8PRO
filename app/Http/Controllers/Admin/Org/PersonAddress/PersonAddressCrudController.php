@@ -72,14 +72,13 @@ class PersonAddressCrudController extends CrudController
             ->select([
                 'id',
                 'person_code',
-                'type',
+                'address_type',
                 'address_line_1',
                 'address_line_2',
                 'city',
                 'state',
                 'pincode',
                 'country',
-                'is_primary',
             ])
             ->orderBy('id', 'desc')
             ->get();
@@ -87,7 +86,9 @@ class PersonAddressCrudController extends CrudController
         $gridData = $addresses->map(function ($address, $index) {
             $mapped = $address->toArray();
             $mapped['serial_no'] = $index + 1;
-            $mapped['is_primary'] = $address->is_primary;
+            $mapped['type'] = $address->address_type;
+            // "Primary" is encoded in address_type (see PersonAddress::makePrimary()).
+            $mapped['is_primary'] = $address->address_type === 'Primary';
             $mapped['person_name'] = $address->person
                 ? $address->person->first_name.' '.$address->person->last_name
                 : '—';

@@ -5,7 +5,6 @@ namespace Tests\Unit\Services\Sales;
 use App\Models\Module\Booking\Booking;
 use App\Models\User;
 use App\Services\Sales\Booking\BookingDmsService;
-use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
 
@@ -41,8 +40,8 @@ class BookingDmsServiceTest extends TestCase
     {
         // Includes an unrelated pending item that won't be cleared, so
         // pending_remark stays non-empty here - see
-        // test_apply_with_zero_remaining_pending_items_hits_a_pre_existing_not_null_constraint_bug()
-        // for the all-clear case, which is a separate, pre-existing bug.
+        // test_apply_clearing_every_pending_item_stores_an_empty_pending_remark()
+        // for the all-clear case.
         $booking = $this->makeBooking([
             'order' => 2,
             'pending_remark' => 'Unrelated item, DMS Booking no needs to be updated',
@@ -95,17 +94,10 @@ class BookingDmsServiceTest extends TestCase
         $this->assertStringContainsString('DMS SO number needs to be updated', $updated->pending_remark);
     }
 
-    /**
-     * Pre-existing bug (not introduced by this refactor - the original
-     * inline controller code had the identical
-     * `$booking->pending_remark = !empty($finalPending) ? ... : null;`
-     * assignment): xlr8_booking_master.pending_remark is NOT NULL with no
-     * database default, but the code sets it to null whenever every
-     * pending item clears. Reproduced here to document it, not to assert
-     * it's correct - see BUG-100 in known-bugs-report.md.
-     */
-    public function test_apply_with_zero_remaining_pending_items_hits_a_pre_existing_not_null_constraint_bug(): void
+    public function test_apply_clearing_every_pending_item_stores_an_empty_pending_remark(): void
     {
+        // Regression for BUG-100: pending_remark is NOT NULL, so clearing the
+        // last pending item used to throw instead of saving.
         $booking = $this->makeBooking([
             'pending_remark' => 'DMS OTF Date needs to be updated',
             'status' => 8,
@@ -115,15 +107,15 @@ class BookingDmsServiceTest extends TestCase
             'dms_so' => '0000000000',
         ]);
 
-        $this->expectException(QueryException::class);
-        $this->expectExceptionMessage("Column 'pending_remark' cannot be null");
-
-        $this->service->apply($booking, [
+        $updated = $this->service->apply($booking, [
             'dms_no' => 'B-12345678',
             'dms_otf' => 'OTF00A123456',
             'otf_date' => '2026-01-01',
             'dms_so' => '1234567890',
         ], true);
+
+        $this->assertSame('', $updated->fresh()->pending_remark);
+        $this->assertSame(0, (int) $updated->fresh()->pending);
     }
 
     public function test_apply_order_stays_2_when_booking_is_not_bev_or_personal_segment(): void

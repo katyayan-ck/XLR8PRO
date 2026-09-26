@@ -69,6 +69,11 @@ class Employee extends BaseModel
         return $this->belongsTo(Person::class, 'person_code', 'person_code');
     }
 
+    public function getDisplayNameAttribute(): ?string
+    {
+        return $this->person?->display_name;
+    }
+
     /**
      * New clean relation to Designation (which now acts as Spatie Role)
      */

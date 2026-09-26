@@ -9,6 +9,7 @@ use App\Models\Admin\Employee;
 use App\Models\Admin\Location;
 use App\Models\Admin\Person;
 use App\Models\Admin\UserScope;
+use App\Models\IAM\UserDeviceToken;
 use App\Models\IAM\UserPermissionDenial;
 use App\Services\OrgService;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
@@ -111,6 +112,11 @@ class User extends Authenticatable
         return $this->hasMany(UserScope::class);
     }
 
+    public function deviceTokens()
+    {
+        return $this->hasMany(UserDeviceToken::class);
+    }
+
     public function activeScopes()
     {
         return $this->scopes()->where('is_active', true);
@@ -164,6 +170,21 @@ class User extends Authenticatable
     public function getAllEmailsAttribute()
     {
         return $this->person?->all_emails ?? collect();
+    }
+
+    public function getAllAddressesAttribute()
+    {
+        return $this->person?->addresses ?? collect();
+    }
+
+    public function getAllBankingAttribute()
+    {
+        return $this->person?->bankingDetails ?? collect();
+    }
+
+    public function isEmployee(): bool
+    {
+        return $this->employee()->exists();
     }
 
     public function branches()

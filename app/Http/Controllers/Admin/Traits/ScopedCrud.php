@@ -2,8 +2,19 @@
 
 namespace App\Http\Controllers\Admin\Traits;
 
-use Illuminate\Support\Facades\Log;
+use App\Services\IAM\DataScopeService;
 
+/**
+ * Restricts a Backpack CRUD list to the rows the user's data scope allows.
+ *
+ * The using controller returns a DataScopeService::TYPE_MODELS key from
+ * getScopeType() ('' disables scoping). Direct scope ids filter the CRUD's
+ * own `id`; otherwise $hierarchies lets a parent scope (e.g. branch for a
+ * location list) filter via a foreign key. No resolvable scope → no rows.
+ *
+ * Only runs through this trait's setupListOperation() — a controller that
+ * overrides setupListOperation() must call $this->applyDataScope() itself.
+ */
 trait ScopedCrud
 {
     protected function setupListOperation()
@@ -12,46 +23,32 @@ trait ScopedCrud
         $this->applyDataScope();
     }
 
-    protected function applyDataScope()
+    protected function applyDataScope(): void
     {
-        $user = backpack_user();
-
-        if ($user->isSuperAdmin()) {
-            return;
-        }
-
         $scopeType = $this->getScopeType();
 
-        if (!$scopeType) {
+        if ($scopeType === '') {
             return;
         }
 
-        $scopes = $user->userDataScopes()->byType($scopeType)->active()->get();
+        $service = app(DataScopeService::class);
+        $ids = $service->getAccessibleIds(backpack_user(), $scopeType);
 
-        if ($scopes->isEmpty()) {
-            return; 
-        }
-
-        $hasWildcard = $scopes->contains(function ($scope) {
-            return $scope->isWildcard();
-        });
-
-        if ($hasWildcard) {
+        if ($ids === null) {
             return;
         }
 
-        $accessibleIds = $scopes->pluck('scope_value')->filter()->unique()->toArray();
+        if ($ids !== []) {
+            $this->crud->addClause('whereIn', 'id', $ids);
 
-        if (empty($accessibleIds) && $this->hasHierarchy($scopeType)) {
-            $this->applyHierarchyFilters($scopeType);
             return;
         }
 
-        if (!empty($accessibleIds)) {
-            $this->crud->addClause('whereIn', 'id', $accessibleIds);
-        } else {
-            $this->crud->addClause('whereRaw', '1=0'); 
+        if ($this->hasHierarchy($scopeType) && $this->applyHierarchyFilters($scopeType, $service)) {
+            return;
         }
+
+        $this->crud->addClause('whereRaw', '1 = 0');
     }
 
     abstract protected function getScopeType(): string;
@@ -61,26 +58,24 @@ trait ScopedCrud
         return isset($this->hierarchies[$scopeType]);
     }
 
-    protected function applyHierarchyFilters(string $scopeType)
+    /**
+     * @return bool whether any parent-scope filter was applied
+     */
+    protected function applyHierarchyFilters(string $scopeType, DataScopeService $service): bool
     {
         $user = backpack_user();
-        $hierarchies = $this->hierarchies[$scopeType] ?? [];
         $applied = false;
 
-        foreach ($hierarchies as $hierarchy) {
-            $parentType = $hierarchy['parent_type'];
-            $foreignKey = $hierarchy['foreign_key'];
-            $parentIds = $user->getScopedIds($parentType);
+        foreach ($this->hierarchies[$scopeType] ?? [] as $hierarchy) {
+            $parentIds = $service->getAccessibleIds($user, $hierarchy['parent_type']);
 
-            if (!empty($parentIds)) {
-                $this->crud->addClause('whereIn', $foreignKey, $parentIds);
+            if (! empty($parentIds)) {
+                $this->crud->addClause('whereIn', $hierarchy['foreign_key'], $parentIds);
                 $applied = true;
             }
         }
 
-        if (!$applied) {
-           
-        }
+        return $applied;
     }
 
     protected $hierarchies = [
@@ -94,12 +89,8 @@ trait ScopedCrud
             ['parent_type' => 'segment', 'foreign_key' => 'segment_id'],
         ],
         'vehicle_model' => [
-            ['parent_type' => 'brand', 'foreign_key' => 'brand_id'],
             ['parent_type' => 'segment', 'foreign_key' => 'segment_id'],
             ['parent_type' => 'sub_segment', 'foreign_key' => 'sub_segment_id'],
-        ],
-        'variant' => [
-            ['parent_type' => 'vehicle_model', 'foreign_key' => 'vehicle_model_id'],
         ],
     ];
 }

@@ -1,9 +1,12 @@
 <?php
+
 namespace App\Models\Admin;
 
+use App\Models\Iam\Post;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany};
 
 /**
  * Table: xlr8_admin_desig_dept_tree
@@ -26,7 +29,7 @@ class DesigDeptTree extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
-        'level'     => 'integer',
+        'level' => 'integer',
     ];
 
     // ── Relations ─────────────────────────────────────────────────────────────
@@ -63,12 +66,27 @@ class DesigDeptTree extends Model
     /** Posts anchored to this tree node */
     public function posts(): HasMany
     {
-        return $this->hasMany(\App\Models\Iam\Post::class, 'tree_code', 'tree_code');
+        return $this->hasMany(Post::class, 'tree_code', 'tree_code');
     }
 
     // ── Scopes ────────────────────────────────────────────────────────────────
-    public function scopeActive($q)               { return $q->where('is_active', true); }
-    public function scopeByDept($q, string $d)    { return $q->where('dept_code', $d); }
-    public function scopeByDesig($q, string $d)   { return $q->where('desig_code', $d); }
-    public function scopeRoots($q)                { return $q->whereNull('reports_to_code'); }
+    public function scopeActive($q)
+    {
+        return $q->where('is_active', true);
+    }
+
+    public function scopeByDept($q, string $d)
+    {
+        return $q->where('dept_code', $d);
+    }
+
+    public function scopeByDesig($q, string $d)
+    {
+        return $q->where('desig_code', $d);
+    }
+
+    public function scopeRoots($q)
+    {
+        return $q->whereNull('reports_to_code');
+    }
 }

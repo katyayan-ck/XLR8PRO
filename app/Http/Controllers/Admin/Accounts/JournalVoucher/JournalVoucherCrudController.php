@@ -20,10 +20,6 @@ use Prologue\Alerts\Facades\Alert;
  *
  * This is a plain Controller, not a Backpack CrudController, so permission
  * checks are placed directly at the top of each public action.
- *
- * See known-bugs-report.md BUG-035: index() references an undefined
- * $receipt variable (line 44, a copy-paste leftover from
- * ReceiptCrudController) — not fixed here, out of scope for this batch.
  */
 class JournalVoucherCrudController extends Controller
 {
@@ -59,7 +55,7 @@ class JournalVoucherCrudController extends Controller
 
                 'debit_to' => $voucher->party_name,
                 'credit_to' => $voucher->name ?? $enquiry->name ?? '',
-                'customer_name' => $receipt->name ?? $enquiry->name ?? $enquiry->customer_name ?? '',
+                'customer_name' => $voucher->name ?? $enquiry->name ?? $enquiry->customer_name ?? '',
                 'care_of' => $voucher->care_of ?? '',
                 'address' => $voucher->address ?? '',
                 'contact_no' => $voucher->mobile ?? $enquiry->mobile ?? '',

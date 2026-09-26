@@ -10,7 +10,7 @@ use App\Models\Module\Booking\Booking;
 use App\Models\Module\Booking\Stock;
 use App\Models\Module\Booking\Xessories;
 use App\Models\Module\Booking\XExchange;
-use App\Models\Module\Booking\XL_DSA_MASTER;
+use App\Models\Module\Booking\Xl_DSA_Master;
 use App\Models\Module\Booking\XlFinancier;
 use App\Models\Module\Finance\XFinance;
 use App\Models\User;
@@ -181,7 +181,7 @@ class BookingExchangeService
         $data['consultant_name'] = $consultant?->display_name ?? 'N/A';
         $data['consultant_mile_id'] = $consultant?->employee_code ?? 'N/A';
 
-        $drec = XL_DSA_MASTER::find($booking->dsa_id);
+        $drec = Xl_DSA_Master::find($booking->dsa_id);
         $dsaname = $drec ? $drec->name.'-'.$drec->mobile : 'N/A';
 
         $user = backpack_user();

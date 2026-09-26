@@ -154,9 +154,10 @@ class BookingDmsService
 
         $finalPending = array_unique(array_filter(array_merge($remainingPending, $newPending)));
 
+        // Column is NOT NULL; existing rows with nothing pending hold ''.
         $booking->pending_remark = ! empty($finalPending)
             ? implode(' , ', array_map('trim', $finalPending))
-            : null;
+            : '';
 
         $booking->pending = count($finalPending);
 

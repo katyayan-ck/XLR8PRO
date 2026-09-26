@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\BaseController;
-use App\Services\EntityHistoryService;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
 use App\Models\Utilities\CommHistory\CommThread;
+use App\Services\Utils\EntityHistoryService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Throwable;
 
 /**
@@ -36,24 +36,31 @@ class EntityHistoryController extends BaseController
      *     summary="Get entity history",
      *     description="Retrieve status and communication threads for an entity",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="entityType",
      *         in="path",
      *         required=true,
      *         description="Entity type (e.g., Booking, Quote)",
+     *
      *         @OA\Schema(type="string")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="entityId",
      *         in="path",
      *         required=true,
      *         description="Entity ID",
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="History retrieved",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="http_status", type="integer", example=200),
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="code", type="string", example="S200"),
@@ -61,24 +68,22 @@ class EntityHistoryController extends BaseController
      *             @OA\Property(property="data", type="object")
      *         )
      *     ),
+     *
      *     @OA\Response(response=404, description="History not found"),
      *     @OA\Response(response=401, description="Unauthorized"),
      *     @OA\Response(response=500, description="Internal server error")
      * )
-     *
-     * @param string $entityType
-     * @param int $entityId
-     * @return JsonResponse
      */
     public function getHistory(string $entityType, int $entityId): JsonResponse
     {
         try {
             $entity = app("App\\Models\\{$entityType}")->findOrFail($entityId);
             $master = $entity->commMaster;
-            if (!$master) {
+            if (! $master) {
                 return $this->notFoundResponse('History');
             }
             $threads = $master->rootThreads()->with('children', 'media', 'actor', 'action')->get();
+
             return $this->successResponse($threads, 'History retrieved');
         } catch (Throwable $e) {
             return $this->handleException($e, 'Get History', [
@@ -100,24 +105,31 @@ class EntityHistoryController extends BaseController
      *     summary="Add comment to entity history",
      *     description="Add a new thread or reply with optional attachments",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="entityType",
      *         in="path",
      *         required=true,
      *         description="Entity type (e.g., Booking, Quote)",
+     *
      *         @OA\Schema(type="string")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="entityId",
      *         in="path",
      *         required=true,
      *         description="Entity ID",
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"action_key"},
+     *
      *             @OA\Property(property="action_key", type="string", example="remarked"),
      *             @OA\Property(property="title", type="string", nullable=true),
      *             @OA\Property(property="message", type="string", nullable=true),
@@ -125,10 +137,13 @@ class EntityHistoryController extends BaseController
      *             @OA\Property(property="attachments", type="array", @OA\Items(type="string"), nullable=true)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Comment added",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="http_status", type="integer", example=201),
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="code", type="string", example="S201"),
@@ -136,16 +151,12 @@ class EntityHistoryController extends BaseController
      *             @OA\Property(property="data", type="object")
      *         )
      *     ),
+     *
      *     @OA\Response(response=400, description="Invalid input"),
      *     @OA\Response(response=404, description="Entity not found"),
      *     @OA\Response(response=401, description="Unauthorized"),
      *     @OA\Response(response=500, description="Internal server error")
      * )
-     *
-     * @param Request $request
-     * @param string $entityType
-     * @param int $entityId
-     * @return JsonResponse
      */
     public function addThread(Request $request, string $entityType, int $entityId): JsonResponse
     {
@@ -201,20 +212,26 @@ class EntityHistoryController extends BaseController
      *     summary="Create group or one-to-one chat",
      *     description="Create a chat with participants and history mechanism",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"type","participants","title"},
+     *
      *             @OA\Property(property="type", type="string", enum={"group","one_to_one"}),
      *             @OA\Property(property="participants", type="array", @OA\Items(type="integer")),
      *             @OA\Property(property="title", type="string"),
      *             @OA\Property(property="description", type="string", nullable=true)
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Chat created",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="http_status", type="integer", example=201),
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="code", type="string", example="S201"),
@@ -222,13 +239,11 @@ class EntityHistoryController extends BaseController
      *             @OA\Property(property="data", type="object")
      *         )
      *     ),
+     *
      *     @OA\Response(response=400, description="Invalid input"),
      *     @OA\Response(response=401, description="Unauthorized"),
      *     @OA\Response(response=500, description="Internal server error")
      * )
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function createChat(Request $request): JsonResponse
     {

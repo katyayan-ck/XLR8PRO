@@ -10,7 +10,7 @@ use App\Models\Admin\Person;
 use App\Models\Admin\PinCodes;
 use App\Models\Admin\Vertical;
 use App\Models\Module\Booking\Bookingamount;
-use App\Models\Module\Booking\XL_DSA_MASTER;
+use App\Models\Module\Booking\Xl_DSA_Master;
 use App\Models\User;
 use App\Models\Utilities\KeyValue\Keyvalue;
 use App\Models\Utilities\KeyValue\KeywordMaster;
@@ -46,7 +46,9 @@ class OrgService
             )
             ->when(
                 isset($filters['branch_code']) && $filters['branch_code'] !== 'ALL',
-                fn ($q) => $q->whereHas('branches', fn ($b) => $b->where('code', $filters['branch_code']))
+                // Employee branch pivot tables don't exist; filter on the primary branch,
+                // like the dept/div filters above.
+                fn ($q) => $q->whereHas('employee', fn ($e) => $e->where('primary_branch_code', $filters['branch_code']))
             )
             ->select('id', 'username', 'employee_code')
             ->get();
@@ -732,7 +734,7 @@ class OrgService
                         // $q->where('desig_code', $desigCode);      // ← Use this only if still using legacy column
                     })
                     ->when($branchCode !== 'ALL', function ($q) use ($branchCode) {
-                        $q->whereHas('branches', fn ($b) => $b->where('code', $branchCode));
+                        $q->whereHas('employee', fn ($e) => $e->where('primary_branch_code', $branchCode));
                     })
                     ->select('id', 'username', 'employee_code', 'person_code')
                     ->get();
@@ -809,13 +811,19 @@ class OrgService
         );
     }
 
+    /**
+     * Reads values by keyword_code directly (as KeywordValueService::getEnum() does)
+     * rather than via the KeywordMaster row: some keyword codes (e.g. PERMIT) have
+     * values but no master row, which previously returned null here.
+     */
     public static function getKeyValuesByCode(string $keywordCode): ?Collection
     {
         return Cache::remember(
-            'org.keyvalues_by_code.'.strtoupper(trim($keywordCode)),
+            'org.keyvalues_by_code.v2.'.strtoupper(trim($keywordCode)),
             self::CACHE_TTL,
-            fn () => KeywordMaster::where('code', strtoupper(trim($keywordCode)))
-                ->first()?->keyvalues()->where('is_active', true)->get()
+            fn () => Keyvalue::where('keyword_code', strtoupper(trim($keywordCode)))
+                ->where('is_active', true)
+                ->get()
         );
     }
 
@@ -891,7 +899,7 @@ class OrgService
         }
 
         if ($colType === 3) {
-            return XL_DSA_MASTER::find((int) $code)?->name ?? $default;
+            return Xl_DSA_Master::find((int) $code)?->name ?? $default;
         }
 
         $user = User::with('person')
@@ -937,7 +945,7 @@ class OrgService
 
             case 'Promoter':
 
-                return XL_DSA_MASTER::where('mobile', $mobile)
+                return Xl_DSA_Master::where('mobile', $mobile)
                     ->orderBy('name')
                     ->pluck('name', 'id')
                     ->toArray();

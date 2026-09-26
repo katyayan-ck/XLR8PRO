@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Admin\Sales\Booking;
 
 use App\Helpers\CommonHelper;
+use App\Helpers\XCommonHelper;
 use App\Http\Requests\BookingRequest;
 use App\Models\Admin\Branch;
 use App\Models\Admin\Location;
+use App\Models\Admin\PinCodes;
 use App\Models\CRM\Enquiry;
 use App\Models\CRM\Quotation;
 use App\Models\Module\Booking\Booking;
@@ -13,7 +15,7 @@ use App\Models\Module\Booking\Bookingamount;
 use App\Models\Module\Booking\Stock;
 use App\Models\Module\Booking\Xessories;
 use App\Models\Module\Booking\XExchange;
-use App\Models\Module\Booking\XL_DSA_MASTER;
+use App\Models\Module\Booking\Xl_DSA_Master;
 use App\Models\Module\Booking\Xl_Refunds;
 use App\Models\Module\Booking\XlDelivery;
 use App\Models\Module\Booking\XlFinancier;
@@ -22,7 +24,6 @@ use App\Models\Module\Booking\XlRtoRules;
 use App\Models\Module\Finance\XFinance;
 use App\Models\Module\Insurance\XlInsurance;
 use App\Models\Module\Insurance\XlInsurer;
-use App\Models\PinCodes;
 use App\Models\User;
 use App\Models\Vehicle\Accessory;
 use App\Models\Vehicle\Color;
@@ -717,7 +718,7 @@ class BookingCrudController extends CrudController
             default => 'N/A',
         };
 
-        $drec = XL_DSA_MASTER::find($booking->dsa_id);
+        $drec = Xl_DSA_Master::find($booking->dsa_id);
         $data['dsaname'] = $drec ? $drec->name.' - '.$drec->mobile : 'N/A';
 
         $data['make1'] = $booking->exist_oem1 ?? 'N/A';
@@ -745,7 +746,7 @@ class BookingCrudController extends CrudController
             'tax_copy'
         )->get()->toArray() ?? [];
 
-        $data['dsa_details'] = XL_DSA_MASTER::all()
+        $data['dsa_details'] = Xl_DSA_Master::all()
             ->map(fn ($dsa) => [
                 'id' => $dsa->id,
                 'name' => $dsa->name,
@@ -1033,7 +1034,7 @@ class BookingCrudController extends CrudController
                 ->whereIn('person_code', $consultantCodes)
                 ->pluck('display_name', 'person_code'),
 
-            'dsas' => XL_DSA_MASTER::whereIn('id', $dsaIds)->pluck('name', 'id'),
+            'dsas' => Xl_DSA_Master::whereIn('id', $dsaIds)->pluck('name', 'id'),
 
             'financiers' => XlFinancier::whereIn('id', $financierIds)->get()->keyBy('id'),
 
@@ -1085,7 +1086,7 @@ class BookingCrudController extends CrudController
         $invoiceNo = $booking->inv_no ?? $booking->dealer_inv_no ?? 'N/A';
 
         $dsaName = $booking->dsa_id
-            ? ($lookups['dsas'][$booking->dsa_id] ?? (XL_DSA_MASTER::find($booking->dsa_id)?->name ?? 'N/A'))
+            ? ($lookups['dsas'][$booking->dsa_id] ?? (Xl_DSA_Master::find($booking->dsa_id)?->name ?? 'N/A'))
             : 'N/A';
 
         $daysOld = $booking->booking_date
@@ -2456,7 +2457,7 @@ class BookingCrudController extends CrudController
 
         $data['person_id'] = backpack_auth()->id();
 
-        $data['dsa_details'] = XL_DSA_MASTER::all()->map(function ($dsa) {
+        $data['dsa_details'] = Xl_DSA_Master::all()->map(function ($dsa) {
             return (object) [
                 'id' => $dsa->id,
                 'name' => $dsa->name,
@@ -2716,7 +2717,7 @@ class BookingCrudController extends CrudController
             'count' => $data['salesconsultants']->count(),
         ]);
 
-        $data['dsa_details'] = XL_DSA_MASTER::all()
+        $data['dsa_details'] = Xl_DSA_Master::all()
             ->map(fn ($dsa) => (object) [
                 'id' => $dsa->id,
                 'name' => $dsa->name,
@@ -10411,7 +10412,7 @@ class BookingCrudController extends CrudController
 
             // ----- DSA -----
             $mapped->dsa_retail = ! empty($otfData['dsa_id'] ?? $booking->dsa_id ?? '') ? 'Yes' : 'No';
-            $dsaName = $booking->dsa_id ? (XL_DSA_MASTER::find($booking->dsa_id)?->name ?? 'N/A') : 'N/A';
+            $dsaName = $booking->dsa_id ? (Xl_DSA_Master::find($booking->dsa_id)?->name ?? 'N/A') : 'N/A';
             $mapped->dsa_name = $dsaName;
             $mapped->dsa_location = $otfData['dsa_location'] ?? 'N/A';
             $mapped->exchange = $otfData['exchange'] ?? $booking->buyer_type ?? 'NA';
@@ -10758,7 +10759,7 @@ class BookingCrudController extends CrudController
             return $consultant;
         }, $consultants);
 
-        $dsaList = XL_DSA_MASTER::orderBy('name')->get(['id', 'name', 'dlocation']);
+        $dsaList = Xl_DSA_Master::orderBy('name')->get(['id', 'name', 'dlocation']);
 
         $permit_map = OrgService::getKeyValuesByCode('RTO_PERMIT')
             ->sortBy('id')

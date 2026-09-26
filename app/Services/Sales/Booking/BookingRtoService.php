@@ -8,7 +8,7 @@ use App\Models\Admin\Location;
 use App\Models\CRM\Enquiry;
 use App\Models\Module\Booking\Booking;
 use App\Models\Module\Booking\Stock;
-use App\Models\Module\Booking\XL_DSA_MASTER;
+use App\Models\Module\Booking\Xl_DSA_Master;
 use App\Models\Module\Booking\XlRto;
 use App\Models\Module\Booking\XlRtoRules;
 use App\Models\User;
@@ -110,7 +110,7 @@ class BookingRtoService
             $data['chassis'] = [];
         }
 
-        $data['dsa_details'] = XL_DSA_MASTER::all()
+        $data['dsa_details'] = Xl_DSA_Master::all()
             ->map(fn ($dsa) => [
                 'id' => $dsa->id,
                 'name' => $dsa->name,
@@ -124,7 +124,7 @@ class BookingRtoService
             ? $collector->name.' - ('.($collector->emp_code ?? 'N/A').')'
             : 'N/A';
 
-        $drec = XL_DSA_MASTER::find($booking->dsa_id);
+        $drec = Xl_DSA_Master::find($booking->dsa_id);
         $dsaname = $drec ? $drec->name.' - '.$drec->mobile : 'N/A';
 
         $data['make1'] = $booking->exist_oem1 ?? 'N/A';

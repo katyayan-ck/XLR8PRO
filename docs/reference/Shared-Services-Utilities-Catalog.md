@@ -132,15 +132,13 @@ implementations exist. Whoever touches auth next should determine which one is a
 and retire the other, or fold them into one with a shared core + the two different response styles
 as a thin wrapper choice.
 
-### `RBACService` — `App\Services\RBACService` 🟡 Working, one broken method
+### `RBACService` — `App\Services\RBACService` 🟢 Working
 Central RBAC: Spatie permission checks, SuperAdmin wildcard bypass, cached permission aggregation
 (roles + post assignments + temporal `UserRoleAssignment`), `canUserAccess()`, `grantPermission()`/
 `revokePermission()`, `assignRole()`/`removeRole()`.
 
-**`getAccessibleResources()` is broken** — it calls `app(DataScopeService::class)` internally, and
-`App\Services\IAM\DataScopeService` does not exist anywhere in the codebase (see §12, Critical
-Findings — this is the single most consequential gap found in this audit). The rest of the class
-instantiates and works fine; only this one method path is affected.
+`getAccessibleResources()` depended on `App\Services\IAM\DataScopeService`, which didn't exist until
+the §4 fix — it now resolves. The method has no callers in the app today.
 
 ### `App\Services\IAM\PermissionTreeService` 🟢 Working
 Parses real `xlr8_iam_permissions` rows (the `MODULE_PROCESS_ACTIVITY` convention from
@@ -153,87 +151,71 @@ model directly. Used by `DesignationService`.
 
 ---
 
-## 4. Data Scoping — 🔴🔴 the biggest finding in this audit, revised after deeper investigation
+## 4. Data Scoping — 🟢 fixed 24-09-2026 (option A: one system, built on the live scope table)
 
-**This section was investigated further after initial publication (still 24-09-2026) while starting
-the "fix" phase. The finding is bigger than "one missing class" — it's two competing, incompatible
-data-scoping systems sharing one database table, only one of which actually works.**
+### What was actually wrong (corrected record)
+Two statements made earlier in this audit were wrong and are corrected here:
+- **The two scope models did not share a table.** `App\Models\UserDataScope` points at
+  `user_data_scopes`, a table that **does not exist** and has no migration. The live store is
+  `App\Models\Admin\UserScope` → `xlr8_admin_user_scopes` (`user_id, scope_type, scope_code,
+  is_active, from_date, to_date`; 1,465 rows; unique key on `user_id + scope_type + scope_code`).
+- **The broken scoping code was not reachable in the live app** — no screen was crashing:
+  `Stock` imports `ScopedQuery` but never applies it; `XlSpareRequest` applies it but can't autoload
+  (its file declares `namespace App\Models` from `app/Models/Module/Spare/` — a PSR-4 mismatch; only
+  its own Detail sibling references it); the 4 `ScopedCrud` controllers either return `''` from
+  `getScopeType()` (Finance, Insurance, Rto → no-op) or override `setupListOperation()` without
+  calling the trait (Branch); `RBACService::getAccessibleResources()` has no callers; `DocService`
+  can't construct at all (§8).
 
-### The real, live, working system: `App\Models\Admin\UserScope` + `User::bypassesDataScoping()` 🟢 Working
-`App\Models\Admin\UserScope` maps to `xlr8_admin_user_scopes` with columns `user_id, scope_type,
-scope_code, is_active, from_date, to_date` (verified via `Schema::getColumnListing()`) — **1,465 real
-rows exist in this table.** `User` model relationship: `scopes(): HasMany(UserScope::class)`, plus
-working methods `bypassesDataScoping()`, `getScopeCodes(string $type): array`, `getAllScopes(): array`,
-`activeScopes()`. This is the actual, currently-functioning scoping mechanism referenced correctly
-throughout `.ai/rules/known-pitfalls.md` (P-08, P-15, P-16) and used by `OrgScopeService` (§2)-style
-code-based resolution. **Nothing needs fixing here.**
+The **one genuinely live-broken path** was `App\Services\Importers\UserImporter` (routed via
+`UserImportExportController::import()`): any row with an "Accessible Branches / Departments /
+Locations" value called `UserDataScope::insert()` with keys `userid`, `scopetype`, `scopevalue`,
+`status` against the nonexistent table.
 
-### The broken, parallel, seemingly-abandoned system: `App\Models\UserDataScope` + `DataScopeFilter` + `ScopedCrud` 🔴🔴 Multiple independent breaks
-A **second Eloquent model, `App\Models\UserDataScope`, maps to the exact same table**
-(`xlr8_admin_user_scopes`) but assumes different, incompatible columns: `scope_value` (cast
-`integer`) where the real column is `scope_code` (string). This second model is the one
-`App\Http\Scopes\DataScopeFilter` (an Eloquent global `Scope`, applied via the `ScopedQuery` trait,
-§13) and `App\Http\Controllers\Admin\Traits\ScopedCrud` are built against — and neither actually
-works:
+**Consequence worth knowing: no row-level data scoping is enforced anywhere in the app today.**
+Scope rows are assigned (User CRUD, the importer) but nothing filters queries by them.
 
-1. **`DataScopeFilter::apply()`** calls `app(App\Services\IAM\DataScopeService::class)` for any
-   authenticated non-SuperAdmin user — **that class does not exist anywhere in the codebase**
-   (`AppServiceProvider.php` has its registration commented out — planned, never built). Only 2
-   models use `ScopedQuery`: `App\Models\Module\Booking\Stock` and
-   `App\Models\Module\Spare\XlSpareRequest`. Confirmed live: `app(App\Services\DocService::class)` —
-   which depends on the same missing class — throws `BindingResolutionException: Target class
-   [App\Services\EntityHistoryService] does not exist` before even reaching this one, but the
-   `DataScopeService` dependency is separately confirmed missing by direct `grep`.
-2. **Even if `DataScopeService` existed, both `ScopedQuery` consumers declare the wrong scope
-   column for their real table**: `Stock::$scopeColumn = 'branchid'` — `xlr8_booking_stock_master`
-   has no `branchid` column at all (real columns: `location_id`, no branch column whatsoever).
-   `XlSpareRequest::$scopeColumn = 'branch_code'` — `xlr8_spare_request` has no `branch_code` column
-   either (real column: `srv_brnch_id`, an integer FK). **`'location'` is a real, populated
-   `scope_type` value** in the live table, so `Stock` scoping by `location_id`/`'location'` is a
-   directly-supported, non-guessed fix; `XlSpareRequest` should scope by `srv_brnch_id`/`'branch'`.
-3. **`ScopedCrud::applyDataScope()` calls `$user->userDataScopes()` and `$user->getScopedIds(...)`
-   — neither method is defined anywhere on `User` or any trait it uses.** This trait would crash
-   identically to `DataScopeFilter` the instant a non-SuperAdmin user hits a CRUD controller using
-   it, for a different reason (missing relationship, not missing service). **Correcting this
-   session's earlier classification: `ScopedCrud` is 🔴 Broken, not 🟢 Working** — the earlier
-   assessment only checked that it didn't depend on the missing `DataScopeService`, not that its
-   own `User` method calls actually exist.
-4. **`RBACService::getAccessibleResources()`** (§3) also depends on the missing
-   `App\Services\IAM\DataScopeService`, expecting a third method name on it,
-   `getAccessibleIds(User, string $resourceType): ?array`.
-5. **A separate, real write-path is also broken**: `App\Services\Importers\UserImporter`
-   (bulk user-import from Excel) builds scope-assignment rows with keys `userid`, `scopetype`,
-   `scopevalue`, `status` and calls `UserDataScope::insert($scopes)` — **none of those 4 keys match
-   the real column names** (`user_id`, `scope_type`, `scope_code`, `is_active`). Any row in an
-   import sheet with an "Accessible Branches/Departments/Locations" column would throw `Unknown
-   column 'userid'` the moment this code path is exercised. `app/Imports/RulesUserImporter.php`
-   and `app/Services/Importers/RulesUserImporter.php` also reference `UserDataScope` — not yet
-   checked whether their write shape has the same bug (flagged for the next pass, not assumed).
+### The fix (option A)
+- **New `App\Services\IAM\DataScopeService`** — the class `DataScopeFilter` always imported but that
+  never existed, now built on the live system via `User::getScopeCodes()`. Scope rows hold codes;
+  scoped business columns hold ids, so it translates code → id through a fixed type map
+  (`TYPE_MODELS`: branch, location, department, division, vertical, segment, sub_segment — exactly
+  the 7 `scope_type` values present in live data). Contract: `null` = unrestricted (SuperAdmin or
+  `bypass_data_scoping`), `[]` = no access (no rows of that type, or unknown type — fails closed),
+  `int[]` = allowed ids. Exposes `getAccessibleIds()` plus `getOrgScope()` / `getVehicleScope()`
+  aliases, so `DataScopeFilter` and `RBACService::getAccessibleResources()` resolve unchanged.
+- **`DataScopeFilter`** — logic unchanged (it already expected this contract); docs corrected to
+  say `$scopeColumn` must be an id column; default `branch_code` → `branch_id`; column now
+  table-qualified.
+- **`ScopedCrud`** — replaced calls to the never-defined `User::userDataScopes()` /
+  `getScopedIds()` with `DataScopeService`; now honours `bypass_data_scoping`; the hierarchy
+  fallback now fails closed instead of silently showing everything; dropped hierarchy entries keyed
+  on `brand` / `vehicle_model`, which are not real scope types.
+- **`UserImporter::createDataScopes()`** — writes `UserScope` rows with the real columns and the
+  entity's canonical code; idempotent against the unique key (restores a soft-deleted row rather
+  than colliding). Verified in a rolled-back transaction: unknown codes skipped, re-import doesn't
+  duplicate, a soft-deleted row is restored.
+- **`DocService`** — wrong `EntityHistoryService` import corrected; unused scope dependency removed;
+  `hasAccess()` no longer returns `true` for every entity-attached document (a placeholder that
+  ignored the scope lookup) — it falls through to the entity's own `hasAccess()`, else denies.
+- **`Stock` / `XlSpareRequest`** — scope declarations corrected to real columns (`location` /
+  `location_id`; `branch` / `srv_brnch_id`). Declaration only: neither changes live behaviour.
+- **`UserDataScope`** — marked `@deprecated`; still referenced only by the two unrouted
+  `RulesUserImporter` copies (`app/Imports/`, `app/Services/Importers/`), so it goes when they do.
 
-### Why this needs your decision, not a fix I write now
-This isn't a `$fillable` typo — it's two full, independently-built scoping subsystems (one
-storage-shape each) sharing one table, and the live app currently runs on the *unbroken* one
-(`UserScope`/`scope_code`) while `DataScopeFilter`/`ScopedCrud`/`UserDataScope`/`DataScopeService`
-form an apparently-abandoned parallel attempt that was never finished or wired up. Before writing
-any fix, I need your call on the actual intended direction:
+Verified live against a real scoped user (id 40, location `BKN`): `getAccessibleIds('location')` →
+`[1]`; `DataScopeFilter` on `Stock` → `location_id in (1)`, 723 of 895 rows. Tests:
+`tests/Unit/Services/IAM/DataScopeServiceTest.php` (7 tests).
 
-- **(A) Retire the broken parallel system.** Rewrite `DataScopeFilter`/`ScopedCrud` to use the real,
-  working `UserScope`/`scope_code`/`bypassesDataScoping()`/`getScopeCodes()` API instead of the
-  phantom `UserDataScope`/`DataScopeService`. Delete `App\Models\UserDataScope` once nothing
-  references it. Fix `UserImporter`'s column names to match `UserScope`'s real shape (`scope_code`,
-  not `scope_value`/integer id — meaning `UserImporter`'s branch/department/location scope-writing
-  logic would also need to write codes, not ids, to match). This is the path I'd lean toward given
-  the real system already has 1,465 live rows and working consumers, but it's a call that affects
-  real RBAC/data-visibility code, so I'm not making it unilaterally.
-- **(B) Finish building the parallel system as originally intended.** Build the missing
-  `DataScopeService`, fix `Stock`/`XlSpareRequest`'s column declarations, fix `ScopedCrud`'s missing
-  `User` methods, and fix `UserImporter`'s write shape to match `UserDataScope`'s `scope_value`
-  (integer) column — but this means running two scope systems side by side (the working
-  code-based one and this now-fixed id-based one), which seems like the wrong direction unless
-  there's a reason the id-based shape is specifically wanted somewhere I haven't found.
-
-I have not written any fix for this section — flagging it here and stopping for your input, per the
-"no guessing on business/architecture decisions" discipline the rest of this session has followed.
+### Deliberately not done — needs a decision
+Turning enforcement **on** changes what users see, so none of these were done:
+- Apply `ScopedQuery` to `Stock` (non-SuperAdmin users would then see only their locations' stock).
+- Call `applyDataScope()` from `BranchCrudController::setupListOperation()`, or return real scope
+  types from Finance / Insurance / Rto `getScopeType()`.
+- Fix `XlSpareRequest`'s namespace (it would become loadable *and* scoped at once).
+- `User::activeScopes()` ignores `from_date` / `to_date` (a date-aware `scopeActive` on `UserScope`
+  is commented out), so time-bounded scope rows are treated as always active.
+- Delete the two unrouted `RulesUserImporter` copies, then `UserDataScope`.
 
 ---
 
@@ -304,25 +286,30 @@ confirmed nothing still calls them (not checked in this pass; flag for the "fix"
 
 ## 8. Documents
 
-### `DocService` — `App\Services\DocService` 🔴 **Completely broken — has never worked**
-Constructor requires `EntityHistoryService, NotificationService, RBACService, DataScopeService,
-ApprovalService, SystemSettingService` — but its `use` statements import `App\Services\
-EntityHistoryService` (root namespace) and `App\Services\DataScopeService` (root namespace).
-**Neither exists at those paths.** The real classes are `App\Services\Utils\EntityHistoryService`
-(§10) and nothing at all for `DataScopeService` (§4). Confirmed live:
+### `DocService` — `App\Services\DocService` 🟡 **Constructs (since 24-09-2026) — 2 method-level defects open**
+Originally failed to construct on two wrong imports (`App\Services\EntityHistoryService`,
+`App\Services\DataScopeService` — neither existed):
 ```
 app(App\Services\DocService::class)
 → BindingResolutionException: Target class [App\Services\EntityHistoryService] does not exist.
 ```
-Every capability this class is meant to provide — document upload with Vision-AI tagging, access
-control, grouping/zip-download, Scout search, approval delegation — is currently **completely
-unreachable**. This is the single most complete "SSOT that isn't" finding in this audit: `.ai/rules/
-services.md` names it as the mandatory document-management entry point ("Never create ad-hoc file
-columns on tables. Use Spatie Media Library via DocService"), but nothing can call it.
+**Fixed 24-09-2026 (with §4):** `EntityHistoryService` import corrected to `App\Services\Utils\`;
+the `DataScopeService` dependency removed (its only use was a result `hasAccess()` discarded); and
+`hasAccess()` no longer returns `true` for every entity-attached document — that placeholder is
+gone, so it falls through to the entity's own `hasAccess()` or denies.
 
-**Fix requires two decisions, not one line-edit**: (1) correct the two wrong `use` imports
-(`EntityHistoryService` → `App\Services\Utils\EntityHistoryService`), and (2) `DataScopeService`
-doesn't exist at all yet — same root blocker as §4, must be resolved together.
+~~Still blocked by `NotificationService` (§9).~~ **Unblocked 24-09-2026** — the Firebase fix (§9)
+lets `NotificationService`, and so `DocService`, construct (verified via `app(DocService::class)`).
+`.ai/rules/services.md` names this the mandatory document-management entry point.
+
+**Other defects found while fixing (BUG-139):**
+- `getAiTags()` uses `Google\Cloud\Vision\V1\ImageAnnotatorClient` — the package isn't installed;
+  fatal the first time `ai_tagging_enabled` is on and an image is uploaded. **Open** (dependency
+  change needs approval).
+- ~~`search(): Collection` unimported~~ — **fixed 24-09-2026** (`Illuminate\Support\Collection`).
+- `approve()` calls `$this->approvalService->approve()`, which `ApprovalService` doesn't have
+  (its method is `approveDocument(GraphNode, User, string)`, a different shape). **Open** (locked
+  Approval Engine — needs authorization).
 
 ### Real document-storage model layer 🟢 Working (independent of `DocService`)
 `App\Models\Utilities\Docs\{Document,DocGroup,DocAccess}` — real, well-formed models with Spatie
@@ -343,7 +330,8 @@ independent, non-overlapping "documents" concept that predates the current one.
 Three independent, overlapping notification concepts exist in this codebase. None of the newest,
 "intended" ones fully work yet.
 
-### `NotificationService` — `App\Services\NotificationService` 🔴 Broken (Firebase SDK mismatch)
+### `NotificationService` — `App\Services\NotificationService` 🟢 Constructs (fixed 24-09-2026 via `FirebaseService`)
+Before the fix:
 ```
 app(App\Services\NotificationService::class)
 → Error: Call to undefined method Kreait\Firebase\Factory::withDefaultAuth()
@@ -355,7 +343,12 @@ a newer SDK major version; classic dependency-upgrade drift). **Every capability
 currently unreachable. This is the service `.ai/rules/services.md` names as the canonical
 notification router.
 
-### `FirebaseService` — `App\Services\FirebaseService` 🔴 Broken (root cause of the above)
+### `FirebaseService` — `App\Services\FirebaseService` 🟢 Fixed 24-09-2026 (was the root cause of the above)
+**Fix (BUG-145):** constructor now uses `(new Factory())->withServiceAccount(config('firebase.credentials'))`
+— the service-account path the app already configures — and catches `\Throwable` (the old
+`catch (Exception)` couldn't catch the `Error`). Verified: constructs, messaging initialises with the
+real credentials. Original analysis kept below.
+
 Wraps `Kreait\Firebase\Factory` for FCM push. The `withDefaultAuth()` call inside its constructor
 (or an early init path) is what actually throws. **Confirmed installed version: `kreait/firebase-php
 7.24.1`** (via `composer show`) — `withDefaultAuth()` was a `Factory` method in the older v5/v6-era
@@ -486,19 +479,15 @@ normalization is sound, it's just not consistently the *only* mechanism (see `Id
 `PersonService::cleanPhone()` above for parallel normalization logic that doesn't go through this
 trait).
 
-### `ScopedQuery` — `App\Models\Traits\ScopedQuery` 🔴 Broken (see §4 — the trait itself is fine, the scope it applies is broken)
+### `ScopedQuery` — `App\Models\Traits\ScopedQuery` 🟢 Working (fixed via §4), ⚪ not applied to any loadable model
+Boots `DataScopeFilter` as a global scope. Works now that `DataScopeService` exists; no live model
+currently applies it (see §4, "Deliberately not done").
 
-### `ScopedCrud` — `App\Http\Controllers\Admin\Traits\ScopedCrud` 🔴 Broken (corrected — see §4)
-**Original pass in this audit classified this as working; deeper investigation while starting the
-fix phase found it isn't.** Backpack CRUD mixin (`setupListOperation()` override) intended to filter
-CRUD list results by the logged-in user's data scope, with a hierarchical fallback map (location→
-branch, department→vertical, sub_segment→segment, vehicle_model→brand/segment/sub_segment, variant→
-vehicle_model) and a SuperAdmin bypass — the fallback-map *design* is good, real prior art. But it
-calls `$user->userDataScopes()` and `$user->getScopedIds(...)`, and **neither method is defined
-anywhere on `User` or any trait it uses.** It doesn't depend on the missing `DataScopeService`, but
-crashes for the same underlying reason as `DataScopeFilter`: built against the abandoned parallel
-`UserDataScope` scoping system rather than the real, live `UserScope`/`scope_code` one. Full detail
-in §4.
+### `ScopedCrud` — `App\Http\Controllers\Admin\Traits\ScopedCrud` 🟢 Working (fixed via §4), ⚪ no controller reaches it
+Backpack CRUD mixin that restricts a list to the user's data scope, with a parent-scope fallback
+map. Previously called `User::userDataScopes()` / `getScopedIds()`, neither of which exists; now
+goes through `DataScopeService`, honours `bypass_data_scoping`, and fails closed. Its 4 consumers
+(Finance, Insurance, Rto, Branch CRUD controllers) never reach it — see §4.
 
 ### `HasTreeStructure` — `App\Models\Traits\HasTreeStructure` 🟢 Working
 Generic materialized-path self-referential hierarchy mixin (`parent_id`/`level`/`path`).
@@ -596,6 +585,14 @@ legacy-but-load-bearing — don't add new callers without a plan to eventually m
   Vehicle subfolders, including duplicate copies of most traits in §13). **Zero references anywhere
   in `app/`** (`grep -rl "Models_backup" app/` = 0 hits). Entirely dead; safe to delete once someone
   confirms it's not being kept intentionally as a manual backup/reference outside git history.
+  **It also corrupts PHPStan app-wide**: `app/Models_backup/User.php` declares the same class,
+  `App\Models\User` (without `isSuperAdmin()` and other current methods), and `phpstan.neon` scans
+  all of `app/`, so Larastan resolves the wrong `User` and reports false "undefined method" errors
+  in any file that calls those methods. No runtime effect (Composer's PSR-4 map never loads the
+  backup file). Either delete the directory or add it to `excludePaths` in `phpstan.neon`.
+- **`App\Models\XlSpareRequest`** (`app/Models/Module/Spare/XlSpareRequest.php`, plus its `Detail`
+  sibling) — namespace doesn't match its path, so it can't autoload; nothing outside the pair
+  references it. Either dead or a module that was never wired up.
 - **`app/Services/PricingService.php`** — 0 bytes, no class. (§6)
 - **`app/Imports/Concerns/{PivotWriter,PersonBuilder,EmployeeBuilder}.php`** — fully built (real
   logic, not stubs) but never `use`d by any class. Looks like intended-but-never-wired-in helpers for
@@ -611,20 +608,13 @@ legacy-but-load-bearing — don't add new callers without a plan to eventually m
 
 For the "fix what's broken" phase, in priority order:
 
-1. **🔴🔴 Two competing data-scoping systems share one DB table; only one works** — the real, live
-   one (`UserScope`/`scope_code`, 1,465 real rows, used by `bypassesDataScoping()`) vs. an
-   apparently-abandoned parallel one (`UserDataScope`/`scope_value`, `DataScopeFilter`,
-   `ScopedCrud`, the missing `DataScopeService`) that breaks in at least 5 independent, verified
-   ways — see §4 for the full breakdown. This is an architecture decision (retire the broken
-   parallel system vs. finish building it), not a mechanical fix — flagged for your call before any
-   code changes.
-2. **🔴 `DocService` can't instantiate at all** — wrong `use` import for `EntityHistoryService`
-   (easy, mechanical fix) plus the missing `DataScopeService` above (not mechanical). Document
-   management (`.ai/rules/services.md`'s mandated entry point) is currently 100% unreachable.
-3. **🔴 `NotificationService`/`FirebaseService` can't instantiate** — `Kreait\Firebase\Factory::
-   withDefaultAuth()` doesn't exist on the installed SDK version. Needs `composer show
-   kreait/firebase-php` to identify the real version, then an API-compat fix against that SDK's
-   actual current initialization method — not a guess.
+1. **🟢 Fixed 24-09-2026 — data scoping consolidated onto the live `UserScope` system** (§4). The
+   only live breakage was `UserImporter`'s scope writes; the bigger finding is that **no row-level
+   data scoping is enforced anywhere today**. Switching enforcement on is a pending decision (§4).
+2. **🟡 Fixed 24-09-2026 — `DocService` constructs** (§8). Still open: `approve()` vs the locked
+   Approval Engine, and the uninstalled Vision SDK (BUG-139).
+3. **🟢 Fixed 24-09-2026 — `NotificationService`/`FirebaseService` construct** (§9, BUG-145):
+   `withDefaultAuth()` replaced with the v7 `withServiceAccount()` against the configured credentials.
 4. **🟡 OTP delivery only reaches Email, not SMS** — `OtpNotificationService::sendViaSms()` is an
    explicit placeholder. A business decision (which SMS provider?) is needed before this can be a
    real fix, not a code bug to patch blindly.

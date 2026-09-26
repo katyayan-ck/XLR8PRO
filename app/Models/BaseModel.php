@@ -3,23 +3,22 @@
 namespace App\Models;
 
 use App\Models\Traits\HasColumnTransformations;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-
 
 abstract class BaseModel extends Model implements HasMedia
 {
-    use SoftDeletes,
-        InteractsWithMedia,
+    use CrudTrait,
         HasColumnTransformations,
-        CrudTrait,
-        HasFactory;
+        HasFactory,
+        InteractsWithMedia,
+        SoftDeletes;
 
     protected $guarded = ['id'];
 
@@ -30,7 +29,7 @@ abstract class BaseModel extends Model implements HasMedia
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
         'extra_data' => 'array',
-        'is_active'  => 'boolean',
+        'is_active' => 'boolean',
     ];
 
     protected $appends = [];
@@ -86,7 +85,10 @@ abstract class BaseModel extends Model implements HasMedia
             return config('app.system_user_id');
         }
 
-        return auth()->check() ? auth()->id() : 1;
+        // Admin users authenticate on Backpack's own guard, which auth() (the default
+        // 'web' guard) doesn't see here — without this, every admin-panel write was
+        // stamped as user 1.
+        return auth(backpack_guard_name())->id() ?? auth()->id() ?? 1;
     }
 
     public function getDateFormat(): string
@@ -217,8 +219,8 @@ abstract class BaseModel extends Model implements HasMedia
     public function getCreationDetails(): array
     {
         return [
-            'created_at'      => $this->created_at?->toIso8601String(),
-            'created_by_id'   => $this->created_by,
+            'created_at' => $this->created_at?->toIso8601String(),
+            'created_by_id' => $this->created_by,
             'created_by_name' => $this->createdByUser?->name ?? 'System',
         ];
     }
@@ -226,8 +228,8 @@ abstract class BaseModel extends Model implements HasMedia
     public function getUpdateDetails(): array
     {
         return [
-            'updated_at'      => $this->updated_at?->toIso8601String(),
-            'updated_by_id'   => $this->updated_by,
+            'updated_at' => $this->updated_at?->toIso8601String(),
+            'updated_by_id' => $this->updated_by,
             'updated_by_name' => $this->updatedByUser?->name ?? 'System',
         ];
     }
@@ -239,8 +241,8 @@ abstract class BaseModel extends Model implements HasMedia
         }
 
         return [
-            'deleted_at'      => $this->deleted_at->toIso8601String(),
-            'deleted_by_id'   => $this->deleted_by,
+            'deleted_at' => $this->deleted_at->toIso8601String(),
+            'deleted_by_id' => $this->deleted_by,
             'deleted_by_name' => $this->deletedByUser?->name ?? 'System',
         ];
     }

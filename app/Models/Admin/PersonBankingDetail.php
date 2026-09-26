@@ -2,6 +2,7 @@
 
 namespace App\Models\Admin;
 
+use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -9,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 
 class PersonBankingDetail extends Model
 {
-    use SoftDeletes;
+    use CrudTrait, SoftDeletes;
 
     protected $table = 'xlr8_admin_person_banking_details';
 

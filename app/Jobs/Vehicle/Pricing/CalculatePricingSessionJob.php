@@ -1,5 +1,3 @@
-
-
 <?php
 
 /**
@@ -31,6 +29,7 @@ class CalculatePricingSessionJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $timeout = 1800;
+
     public int $tries = 1;
 
     public function __construct(
@@ -67,17 +66,17 @@ class CalculatePricingSessionJob implements ShouldQueue
 
         $plog->info('Calculate batch assemble', [
             'complete_profiles' => $codes->count(),
-            'with_price'        => $priced->count(),
-            'wef'               => $wef,
+            'with_price' => $priced->count(),
+            'wef' => $wef,
         ]);
 
         $this->progress($session->id, [
-            'phase'   => 'calculating',
-            'message' => 'Queueing ' . $priced->count() . ' vehicles…',
+            'phase' => 'calculating',
+            'message' => 'Queueing '.$priced->count().' vehicles…',
             'percent' => 5,
-            'total'   => $priced->count(),
-            'done'    => false,
-            'logs'    => ['[' . now()->format('H:i:s') . '] Calculate batch size ' . $priced->count()],
+            'total' => $priced->count(),
+            'done' => false,
+            'logs' => ['['.now()->format('H:i:s').'] Calculate batch size '.$priced->count()],
         ]);
 
         $jobs = [];
@@ -96,43 +95,44 @@ class CalculatePricingSessionJob implements ShouldQueue
                 'calculated' => 0,
             ]);
             $this->progress($session->id, [
-                'phase'   => 'done',
+                'phase' => 'done',
                 'message' => 'Nothing to calculate (no complete+priced vehicles).',
                 'percent' => 100,
-                'done'    => true,
+                'done' => true,
             ]);
+
             return;
         }
 
-       $sessionId = $session->id;
+        $sessionId = $session->id;
         Bus::batch($jobs)
-            ->name('pricing-calc-' . $sessionId)
+            ->name('pricing-calc-'.$sessionId)
             ->allowFailures()
             ->then(function (Batch $batch) use ($sessionId) {
                 $s = ImportSession::find($sessionId);
                 if ($s) {
                     app(PricingSessionService::class)->advance($s, ImportSession::STAGE_SUMMARY, [
                         'calculated' => $batch->totalJobs - $batch->failedJobs,
-                        'calc_failed'=> $batch->failedJobs,
+                        'calc_failed' => $batch->failedJobs,
                     ]);
                 }
-                Cache::put('pricing_progress_' . $sessionId, [
-                    'phase'   => 'done',
-                    'message' => 'Calculate finished. ' . ($batch->totalJobs - $batch->failedJobs) . ' published.',
+                Cache::put('pricing_progress_'.$sessionId, [
+                    'phase' => 'done',
+                    'message' => 'Calculate finished. '.($batch->totalJobs - $batch->failedJobs).' published.',
                     'percent' => 100,
-                    'done'    => true,
-                    'failed'  => false,
+                    'done' => true,
+                    'failed' => false,
                     'updated_at' => now()->toIso8601String(),
                 ], now()->addHours(6));
             })
             ->catch(function (Batch $batch, Throwable $e) use ($sessionId) {
                 Log::error('[CalculatePricingSessionJob] batch failed', ['error' => $e->getMessage()]);
-                Cache::put('pricing_progress_' . $sessionId, [
-                    'phase'   => 'failed',
+                Cache::put('pricing_progress_'.$sessionId, [
+                    'phase' => 'failed',
                     'message' => $e->getMessage(),
                     'percent' => 100,
-                    'done'    => true,
-                    'failed'  => true,
+                    'done' => true,
+                    'failed' => true,
                     'updated_at' => now()->toIso8601String(),
                 ], now()->addHours(6));
             })
@@ -149,7 +149,7 @@ class CalculatePricingSessionJob implements ShouldQueue
             unset($data['logs']);
         }
         Cache::put($key, array_merge($prev, $data, [
-            'logs'       => array_slice($logs, -80),
+            'logs' => array_slice($logs, -80),
             'updated_at' => now()->toIso8601String(),
         ]), now()->addHours(6));
     }

@@ -8,6 +8,7 @@ use App\Models\Admin\Department;
 use App\Models\Admin\Designation;
 use App\Models\Admin\Employee;
 use App\Models\Admin\Person;
+use App\Services\OrgService;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
@@ -67,18 +68,17 @@ class EmployeeCrudController extends CrudController
 
         $this->crud->setListView('admin.org.employee.list');
 
-        $employees = Employee::with(['person', 'designation', 'primaryBranch', 'primaryDepartment'])
+        $employees = Employee::with(['person', 'designation'])
             ->select([
                 'id',
                 'code',
-                'person_id',
-                'designation_id',
-                'primary_branch_id',
-                'primary_department_id',
+                'person_code',
+                'designation_code',
+                'primary_branch_code',
+                'primary_dept_code',
                 'joining_date',
-                'resignation_date',
                 'employment_type',
-                'is_active',
+                'employment_status',
             ])
             ->orderBy('id', 'desc')
             ->get();
@@ -91,8 +91,9 @@ class EmployeeCrudController extends CrudController
                 ? trim($emp->person->first_name.' '.$emp->person->last_name)
                 : '—';
             $mapped['designation_name'] = $emp->designation?->name ?? '—';
-            $mapped['branch_name'] = $emp->primaryBranch?->name ?? '—';
-            $mapped['department_name'] = $emp->primaryDepartment?->name ?? '—';
+            $mapped['branch_name'] = $emp->primary_branch_code ? OrgService::branchName($emp->primary_branch_code) : '—';
+            $mapped['department_name'] = $emp->primary_dept_code ? OrgService::departmentName($emp->primary_dept_code) : '—';
+            $mapped['is_active'] = $emp->employment_status === 'active';
 
             $editUrl = backpack_url("org/employee/{$emp->id}/edit");
 

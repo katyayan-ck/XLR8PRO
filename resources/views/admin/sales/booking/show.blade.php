@@ -130,7 +130,7 @@
 
                 <h2 class="mb-0 fw-bold">Actions</h2>
 
-                @if($otf_processed)
+                @if($otf_processed ?? false)
                 <a href="{{ backpack_url('sales/booking/otf-form/' . $booking->id) }}" class="btn btn-primary">
                     <i class="la la-file-text"></i>
                     Booking Process (Resume)
@@ -2459,7 +2459,15 @@ modal.show();
                 preview.src = URL.createObjectURL(file);
                 preview.style.display = 'block';
             } else if (file.type === 'application/pdf') {
-                preview.src = "{{ asset('images/pdf-icon.png') }}"; // PDF placeholder
+                // PDF placeholder (inline; there is no images/pdf-icon.png asset)
+                preview.src = "data:image/svg+xml;utf8," + encodeURIComponent(
+                    '<svg xmlns="http://www.w3.org/2000/svg" width="96" height="120" viewBox="0 0 96 120">' +
+                    '<path d="M8 4h56l24 24v84a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8a4 4 0 0 1 4-4z" fill="#f1f3f5" stroke="#adb5bd" stroke-width="3"/>' +
+                    '<path d="M64 4v24h24" fill="none" stroke="#adb5bd" stroke-width="3"/>' +
+                    '<rect x="14" y="70" width="68" height="28" rx="4" fill="#d63939"/>' +
+                    '<text x="48" y="90" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#fff" text-anchor="middle">PDF</text>' +
+                    '</svg>'
+                );
                 preview.style.display = 'block';
             }
         }

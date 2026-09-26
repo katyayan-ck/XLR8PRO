@@ -198,7 +198,8 @@ class LeadCrudController extends CrudController
             'sources' => LeadSource::where('is_active', 1)->orderBy('name')->pluck('name', 'code'),
             'segments' => OrgService::segments(),
             'models' => OrgService::models($lead->segment_code),
-            'variants' => OrgService::variants($lead->model_code),
+            // variants() returns code => [name, fuel_type, ...]; the view lists code => name.
+            'variants' => array_map(fn (array $v) => $v['name'], OrgService::variants($lead->model_code)),
             'colors' => OrgService::colors($lead->variant_code),
         ]);
     }

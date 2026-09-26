@@ -6,7 +6,7 @@ use App\Models\CRM\Enquiry;
 use App\Models\CRM\Quotation;
 use App\Models\Module\Booking\Booking;
 use App\Models\Module\Booking\Bookingamount;
-use App\Models\Module\Booking\XL_DSA_MASTER;
+use App\Models\Module\Booking\Xl_DSA_Master;
 use App\Models\Module\Booking\XlFinancier;
 use App\Models\Module\Booking\XlRto;
 use App\Models\Module\Finance\XFinance;
@@ -105,7 +105,7 @@ class BookingOtfService
             return $consultant;
         }, $salesconsultants);
 
-        $dsaList = XL_DSA_MASTER::orderBy('name')->get(['id', 'name', 'dlocation']);
+        $dsaList = Xl_DSA_Master::orderBy('name')->get(['id', 'name', 'dlocation']);
         $finance = XFinance::where('bid', $booking->id)->first();
         $insurance = XlInsurance::where('bid', $booking->id)->first();
         $rto = XlRto::where('bid', $booking->id)->first();
@@ -135,7 +135,7 @@ class BookingOtfService
         $selectedPolicyType = $insurance?->policy_type ?? ($otfData['policy_type'] ?? null);
         $selectedRegistrationType = $rto?->rgn_type ?? ($otfData['registration_type'] ?? null);
 
-        $dsa = ! empty($booking->dsa_id) ? XL_DSA_MASTER::find($booking->dsa_id) : null;
+        $dsa = ! empty($booking->dsa_id) ? Xl_DSA_Master::find($booking->dsa_id) : null;
 
         $segment = Segment::where('code', $booking->segment_code)->first();
         $model = VehicleModel::where('code', $booking->model_code)->first();

@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Core;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -110,18 +111,20 @@ class ExportLog extends Model
      */
     public function getFormattedFileSize()
     {
-        if (!$this->file_size) return '0 B';
+        if (! $this->file_size) {
+            return '0 B';
+        }
 
         $units = ['B', 'KB', 'MB', 'GB'];
         $size = $this->file_size;
 
         foreach ($units as $unit) {
             if ($size < 1024) {
-                return round($size, 2) . ' ' . $unit;
+                return round($size, 2).' '.$unit;
             }
             $size /= 1024;
         }
 
-        return round($size, 2) . ' TB';
+        return round($size, 2).' TB';
     }
 }

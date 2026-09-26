@@ -8,7 +8,7 @@ use App\Models\CRM\QuoteAction;
 use App\Models\Module\Booking\Booking;
 use App\Models\Module\Booking\Bookingamount;
 use App\Models\Module\Booking\XExchange;
-use App\Models\Module\Booking\XL_DSA_MASTER;
+use App\Models\Module\Booking\Xl_DSA_Master;
 use App\Models\Module\Booking\XlFinancier;
 use App\Models\Module\Booking\XlRto;
 use App\Models\Module\Finance\XFinance;
@@ -384,7 +384,7 @@ class BookingCoreService
         $adharNoNormalized = preg_replace('/[^0-9]/', '', $input['adhar_no'] ?? '');
 
         $allUsers = OrgService::usersByDepartment('SLS') ?? [];
-        $dsaDetails = XL_DSA_MASTER::all()->map(fn ($dsa) => [
+        $dsaDetails = Xl_DSA_Master::all()->map(fn ($dsa) => [
             'id' => $dsa->id,
             'name' => $dsa->name,
             'mobile' => $dsa->mobile,

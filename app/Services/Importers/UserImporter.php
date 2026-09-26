@@ -9,11 +9,11 @@ use App\Models\Admin\Division;
 use App\Models\Admin\Employee;
 use App\Models\Admin\Location;
 use App\Models\Admin\Person;
+use App\Models\Admin\UserScope;
 use App\Models\Admin\UserType;
 use App\Models\Admin\Vertical;
 use App\Models\IAM\Role;
 use App\Models\User;
-use App\Models\UserDataScope;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -386,62 +386,40 @@ class UserImporter
     }
 
     /**
-     * Create user data scopes for RBAC
+     * Create user data scopes (xlr8_admin_user_scopes via UserScope — rows
+     * hold codes; DataScopeService translates them to ids at query time).
+     * Unknown codes are skipped. Idempotent: the table has a unique key on
+     * (user_id, scope_type, scope_code) that includes soft-deleted rows, so
+     * an existing row is reactivated/restored instead of re-inserted.
      */
     private function createDataScopes($user, $rowData)
     {
-        $scopes = [];
+        $columns = [
+            'Accessible Branches' => ['branch', Branch::class],
+            'Accessible Departments' => ['department', Department::class],
+            'Accessible Locations' => ['location', Location::class],
+        ];
 
-        // Branch scope
-        if (! empty($rowData['Accessible Branches'])) {
-            $branches = array_map('trim', explode(',', $rowData['Accessible Branches']));
-            foreach ($branches as $branchCode) {
-                $branch = Branch::where('code', $branchCode)->first();
-                if ($branch) {
-                    $scopes[] = [
-                        'userid' => $user->id,
-                        'scopetype' => 'branch',
-                        'scopevalue' => $branch->id,
-                        'status' => 'active',
-                    ];
-                }
+        foreach ($columns as $column => [$scopeType, $modelClass]) {
+            if (empty($rowData[$column])) {
+                continue;
             }
-        }
 
-        // Department scope
-        if (! empty($rowData['Accessible Departments'])) {
-            $departments = array_map('trim', explode(',', $rowData['Accessible Departments']));
-            foreach ($departments as $deptCode) {
-                $dept = Department::where('code', $deptCode)->first();
-                if ($dept) {
-                    $scopes[] = [
-                        'userid' => $user->id,
-                        'scopetype' => 'department',
-                        'scopevalue' => $dept->id,
-                        'status' => 'active',
-                    ];
+            foreach (array_map('trim', explode(',', $rowData[$column])) as $code) {
+                $entity = $modelClass::where('code', $code)->first();
+                if (! $entity) {
+                    continue;
                 }
-            }
-        }
 
-        // Location scope
-        if (! empty($rowData['Accessible Locations'])) {
-            $locations = array_map('trim', explode(',', $rowData['Accessible Locations']));
-            foreach ($locations as $locCode) {
-                $location = Location::where('code', $locCode)->first();
-                if ($location) {
-                    $scopes[] = [
-                        'userid' => $user->id,
-                        'scopetype' => 'location',
-                        'scopevalue' => $location->id,
-                        'status' => 'active',
-                    ];
-                }
+                $scope = UserScope::withTrashed()->firstOrNew([
+                    'user_id' => $user->id,
+                    'scope_type' => $scopeType,
+                    'scope_code' => $entity->code,
+                ]);
+                $scope->is_active = true;
+                $scope->deleted_at = null;
+                $scope->save();
             }
-        }
-
-        if (! empty($scopes)) {
-            UserDataScope::insert($scopes);
         }
     }
 

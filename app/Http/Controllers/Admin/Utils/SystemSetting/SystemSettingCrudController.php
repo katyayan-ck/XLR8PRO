@@ -2,14 +2,13 @@
 
 namespace App\Http\Controllers\Admin\Utils\SystemSetting;
 
-use App\Models\SystemSetting;
+use App\Models\Utilities\Settings\SystemSetting;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
-use Backpack\CRUD\app\Http\Requests\CrudRequest;
 
 class SystemSettingCrudController extends CrudController
 {
@@ -21,7 +20,7 @@ class SystemSettingCrudController extends CrudController
 
     public function setup()
     {
-        $this->crud->setModel(\App\Models\Utilities\Settings\SystemSetting::class);
+        $this->crud->setModel(SystemSetting::class);
         $this->crud->setRoute(config('backpack.base.route_prefix').'/utils/system-setting');
         $this->crud->setEntityNameStrings('system setting', 'system settings');
 
@@ -111,15 +110,8 @@ class SystemSettingCrudController extends CrudController
             'type' => 'boolean',
         ]);
 
-        $this->crud->addFilter([
-            'name' => 'topic',
-            'type' => 'select2',
-            'label' => 'Topic',
-        ], function () {
-            return SystemSetting::select('topic')->distinct()->orderBy('topic')->get()->pluck('topic', 'topic')->toArray();
-        }, function ($value) {
-            $this->crud->addClause('where', 'topic', $value);
-        });
+        // Backpack filters need backpack/pro (not installed); sort by topic instead.
+        $this->crud->orderBy('topic')->orderBy('sort_order');
 
         $this->crud->setDefaultPageLength(50);
     }
@@ -131,7 +123,7 @@ class SystemSettingCrudController extends CrudController
         }
 
         $this->crud->setValidation([
-            'key' => 'required|unique:systemsettings|regex:/^[a-z]+\.[a-z_]+$/',
+            'key' => 'required|unique:xlr8_utils_system_setting,key|regex:/^[a-z]+\.[a-z_]+$/',
             'label' => 'required|string|max:255',
             'value' => 'required',
             'topic' => 'required|string',
@@ -151,7 +143,7 @@ class SystemSettingCrudController extends CrudController
         }
 
         $this->crud->setValidation([
-            'key' => 'required|unique:systemsettings,key,'.$this->crud->getCurrentEntryId(),
+            'key' => 'required|unique:xlr8_utils_system_setting,key,'.$this->crud->getCurrentEntryId(),
             'label' => 'required|string|max:255',
             'value' => 'required',
             'topic' => 'required|string',
@@ -169,11 +161,8 @@ class SystemSettingCrudController extends CrudController
         $this->crud->addField([
             'name' => 'topic',
             'label' => 'Topic/Category',
-            'type' => 'select2',
-            'entity' => 'topic',
-            'attribute' => 'code',
-            'model' => 'App\Models\SystemSettingTopic',
-            'options' => [],
+            'type' => 'text',
+            'hint' => 'Existing topics: '.implode(', ', SystemSetting::query()->distinct()->orderBy('topic')->pluck('topic')->filter()->all()),
             'tab' => 'Basic Information',
         ]);
 
@@ -222,7 +211,7 @@ class SystemSettingCrudController extends CrudController
         $this->crud->addField([
             'name' => 'type',
             'label' => 'Data Type',
-            'type' => 'select',
+            'type' => 'select_from_array',
             'options' => [
                 'string' => 'String (Text)',
                 'integer' => 'Integer (Number)',
@@ -239,7 +228,7 @@ class SystemSettingCrudController extends CrudController
         $this->crud->addField([
             'name' => 'input_type',
             'label' => 'Input Type (Admin UI)',
-            'type' => 'select',
+            'type' => 'select_from_array',
             'options' => [
                 'text' => 'Text Input',
                 'textarea' => 'Text Area',
@@ -315,15 +304,5 @@ class SystemSettingCrudController extends CrudController
             'type' => 'checkbox',
             'tab' => 'Permissions',
         ]);
-    }
-
-    public function store(CrudRequest $request)
-    {
-        return parent::storeCrud($request);
-    }
-
-    public function update(CrudRequest $request)
-    {
-        return parent::updateCrud($request);
     }
 }

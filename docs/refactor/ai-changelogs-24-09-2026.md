@@ -547,3 +547,118 @@ tests pass (7 assertions).
 **Session total: 13 of 14 found issues are FIXED** (BUG-124 through BUG-135, minus the documented
 `ELECTRIC`/`EV` synonym finding and the 4 inert phantom-fillable findings, neither of which are
 code bugs needing a fix). Still no commit made — pending user review.
+
+## Shared-services audit + data-scoping consolidation (option A)
+
+### Audit
+New reference doc: `docs/reference/Shared-Services-Utilities-Catalog.md` — every shared
+service/helper/trait/utility model, status verified by reading code and live instantiation. Found
+`.ai/rules/services.md` stale (3 wrong paths; 3 of 4 "correct usage" examples use the wrong call
+style and method name). Confirmed broken: `DocService`, `NotificationService`/`FirebaseService`
+(`kreait/firebase-php` 7.24.1 has no `Factory::withDefaultAuth()`); SMS OTP is a log-only stub.
+
+### Data scoping — user chose option A (retire the broken parallel system, build on the live one)
+Two corrections to the audit's first draft, made while fixing: `UserDataScope` does **not** share
+`xlr8_admin_user_scopes` — it points at `user_data_scopes`, which doesn't exist; and none of the
+broken scope code was reachable (details in BUG-136). The one live breakage was `UserImporter`.
+
+| File | Before | After |
+|---|---|---|
+| `app/Services/IAM/DataScopeService.php` (new) | did not exist; `DataScopeFilter` imported it | resolves `User::getScopeCodes()` → entity ids via `TYPE_MODELS` (7 real scope types); `null`/`[]`/`int[]` contract; `getAccessibleIds()` + `getOrgScope()`/`getVehicleScope()` |
+| `app/Http/Scopes/DataScopeFilter.php` | default `scopeColumn` `branch_code`; docs said codes | default `branch_id`; docs say id column; column table-qualified; logic unchanged |
+| `app/Http/Controllers/Admin/Traits/ScopedCrud.php` | `User::userDataScopes()`/`getScopedIds()` (undefined); empty hierarchy fallback showed all | uses `DataScopeService`; honours `bypass_data_scoping`; fallback fails closed; dropped `brand`/`vehicle_model` parent entries (not real scope types) |
+| `app/Services/Importers/UserImporter.php` | `UserDataScope::insert()` with `userid/scopetype/scopevalue/status` | `UserScope` rows with `user_id/scope_type/scope_code/is_active`, idempotent against the unique key incl. soft-deleted rows |
+| `app/Services/DocService.php` | imported nonexistent `App\Services\EntityHistoryService` + `DataScopeService`; `hasAccess()` returned `true` for any entity-attached doc | `App\Services\Utils\EntityHistoryService`; scope dependency removed; placeholder removed (falls through to entity `hasAccess()` or denies) |
+| `app/Models/Module/Booking/Stock.php` | `branch` / `branchid` (no such column) | `location` / `location_id`; trait still not applied (no behaviour change) |
+| `app/Models/Module/Spare/XlSpareRequest.php` | `branch_code` (no such column) | `srv_brnch_id` (no behaviour change: class can't autoload, BUG-141) |
+| `app/Models/UserDataScope.php` | unmarked | `@deprecated` — kept only for the two unrouted `RulesUserImporter` copies |
+
+Verified: real scoped user 40 (location `BKN`) → `getAccessibleIds('location')` = `[1]`;
+`DataScopeFilter` on `Stock` → `location_id in (1)`, 723/895 rows. `UserImporter` scope writing
+verified in a rolled-back transaction. New `tests/Unit/Services/IAM/DataScopeServiceTest.php`
+(7 tests). This session's suites: 43 passed. Pint clean. PHPStan: remaining findings are
+pre-existing (`UserImporter` lines 233/302), model-PHPDoc gaps, or BUG-140 (the `Models_backup`
+duplicate `User` class poisoning resolution).
+
+**Not done — each changes what users see:** applying `ScopedQuery` to `Stock`; enabling scoping in
+the 4 `ScopedCrud` controllers; fixing `XlSpareRequest`'s namespace; date-aware `activeScopes()`;
+deleting the unrouted `RulesUserImporter` copies + `UserDataScope`. Logged as BUG-136..141.
+
+Still no commit made — pending user review.
+
+## Known-bugs sweep — re-verified the tracker + `docs/knownissues.txt`, fixed what was safe
+
+Method: loaded every class under `app/` (restarting past fatals), scanned for used-vs-dead broken
+imports and routes pointing at missing methods, and smoke-tested ~196 admin GET screens as
+superadmin (in-process, fresh app per request). 30 screen failures found; the fixable ones are
+fixed below, the rest are documented with their blocker. Full entries: BUG-142..155 plus updates
+to 008/009/013/020/021/025/029/035/043/049/052/053/057/061/076/083/100/103/104/108/112/113/122/
+123/138/139/141 in `known-bugs-report.md`.
+
+### Load/runtime fatals
+
+| File | Before | After |
+|---|---|---|
+| `app/Jobs/Vehicle/Pricing/CalculatePricingSessionJob.php` | 2 blank lines before `<?php` → strict_types fatal; pricing "Calculate" always failed (BUG-142) | removed |
+| `app/Models/Admin/UserReporting.php`, `app/Models/IAM/UserDeviceToken.php`, `app/Models/Module/Spare/XlSpareRequestDetail.php` | `scopeActive($query)` incompatible with `BaseModel` → link-time fatal (BUG-143) | `scopeActive(Builder $query): Builder` |
+| `app/Http/Middleware/ValidateDevice.php` | imported `App\Models\Core\DeviceSession`/`OtpAttemptLog`; wrote `$user->phone` → whole `auth:sanctum` API down (BUG-144) | `App\Models\IAM\*`; `mobile` = `primary_mobile` |
+| `app/Services/FirebaseService.php` | `Factory::withDefaultAuth()` (not in kreait 7.24.1); `catch (Exception)` | `withServiceAccount(config('firebase.credentials'))`, `catch (\Throwable)`; Firebase/Notification/Doc services now construct (BUG-145) |
+| `app/Services/DocService.php` | `Collection` return type unimported | `use Illuminate\Support\Collection;` (BUG-139 item 1) |
+
+### Class/namespace/path mismatches and imports (BUG-151, BUG-141)
+
+| File | Before | After |
+|---|---|---|
+| `app/Models/Admin/DesignationDeptTree.php` | file name ≠ class `DesigDeptTree` → unloadable | `git mv` → `DesigDeptTree.php` |
+| `app/Models/Module/Booking/X_Vh_Stock.php` | file name ≠ class `XVehicleStock` | `git mv` → `XVehicleStock.php` |
+| `app/Models/Core/ExportLog.php` | `namespace App\Models` | `App\Models\Core` + `use App\Models\User` |
+| `app/Models/Core/ImportLog.php` | `user()` → nonexistent `Core\User` | `use App\Models\User` |
+| 9 × `app/Models/Module/Spare/*.php` | `namespace App\Models` | `App\Models\Module\Spare` + `use App\Models\BaseModel`. `XlSpareRequest` now autoloads with its corrected `ScopedQuery` declaration live — nothing queries it, so no screen changes |
+| `XCommonHelper`, `BookingCrudController` | wrong `PinCodes` / spare closure / helper imports → Booking `locations/{state}` 500 | `App\Models\Admin\PinCodes`, `Module\Spare\XlSpareClosure`, `App\Helpers\XCommonHelper` |
+| `SystemSettingCrudController`, `EntityHistoryController`, `UserExporter`, `RBACService`, `AccessoryService`, `AccessoryImportService`, `VehicleAccessoryCrudController`, `DocAccess`, `DocGroup`, `NotificationsMaster` | imports of nonexistent classes (mostly the dead `Core\*` namespace) | repointed to the real classes / removed (RBACService closes BUG-076's import half) |
+
+### Behaviour fixes
+
+| File | Before | After |
+|---|---|---|
+| `app/Models/BaseModel.php::resolveActorId()` | `auth()->id()` (web guard) → every admin write stamped user 1 (BUG-146) | `auth(backpack_guard_name())->id() ?? auth()->id() ?? 1`; verified user 40 stamps 40. Historic rows not corrected |
+| `routes/api.php` | 8 routes → wrong method names; `{key}` catch-all swallowed `export/json` | repointed (see BUG-147); catch-all excludes `export/json`. 5 routes still have no method |
+| `SystemSettingCrudController` | PRO filter + PRO `select2` on nonexistent model, `unique:systemsettings`, `parent::storeCrud()/updateCrud()` (BUG-148) | orderBy topic/sort_order, text `topic` with hint, `select_from_array`, `unique:xlr8_utils_system_setting,key`, overrides removed |
+| `UserCrudController::destroy()` | `parent::deleteCrud()` (not in Backpack 7) → every delete failed (BUG-149) | `DeleteOperation { destroy as traitDestroy; }` |
+| `OrgService::getKeyValuesByCode()` | via `KeywordMaster` → null for `PERMIT` etc. (BUG-150) | `Keyvalue::where('keyword_code', …)`; cache key `v2` |
+| `OrgService::userQuery()` / `usersByDesignation()` | `whereHas('branches')` → nonexistent pivot table, SQL error (BUG-108) | `whereHas('employee', primary_branch_code = …)`, like the dept/div filters |
+| `BookingDmsService::apply()` | `pending_remark = null` on NOT NULL column (BUG-100) | `''` |
+| `BookingRefundService::apply()` | checked status after overwriting it → "Refund Requested Again" never logged (BUG-103) | captures previous status, checks `=== 7` |
+| `AccessoryService`, `AccessoryImportService` | log guarded by `class_exists` on wrong class; `json_encode()` into array-cast columns (BUG-152) | real class; arrays passed to the cast (verified single-encoded) |
+| `JournalVoucherCrudController::index()` | undefined `$receipt` (BUG-035) | `$voucher->name` |
+| `CommonHelper` | `trim(null)` deprecations (BUG-052) | `trim((string) …)` |
+| `LeadCrudController::edit()` | nested variant arrays into a string field → all lead edits 500 (BUG-057/112) | flat list of names; 4/4 → 200 |
+| `SubSegmentCrudController::create()` | `$segments` undefined (BUG-113) | passes active segments |
+| `EmployeeCrudController::index()` | selected nonexistent `*_id` columns (BUG-008) | real code columns + `OrgService` names; `is_active` from `employment_status` |
+| `PersonAddressCrudController` list | `is_primary` column (doesn't exist) (BUG-020) | derived from `address_type === 'Primary'` |
+| `PersonBankingDetailCrudController` list + `PersonBankingDetail` model | no `CrudTrait`; `swift_code`/`is_primary` columns (BUG-021) | `CrudTrait`; `person_code`; `is_primary` from `account_type` |
+| `resources/views/admin/sales/booking/show.blade.php` | undefined `$otf_processed` (refund/rejected views 500); missing `images/pdf-icon.png` (BUG-123) | `$otf_processed ?? false`; inline SVG placeholder |
+| `app/Models/Admin/Employee.php` | no `display_name` | proxy to `person->display_name` |
+| `app/Models/User.php` | `all_addresses`, `all_banking`, `isEmployee()` missing (RBAC test) | proxies to `person` / `employee()->exists()` |
+
+### Tests
+- `BookingDmsServiceTest`: the test asserting the BUG-100 crash now asserts `pending_remark === ''`, `pending === 0`.
+- `BookingRefundServiceTest`: re-request after rejection records "Refund Requested Again"; first request doesn't.
+- Full suite: **212 passed, 31 failed** (was 208 / 34). The 31: 30 are the removed Post module
+  (BUG-080 — `PostModelTest`, `PostReportingTest`, `EmpPostAssignmentTest`, `PostServiceTest`,
+  `ReportingServiceTest`), 1 is the missing `storage/user_data.xlsx` fixture.
+- Pint: 38 dirty files formatted. PHPStan (23 changed files): remaining findings are BUG-140
+  (`Models_backup` `User`), undocumented model magic properties, and pre-existing items
+  (`XL_DSA_MASTER` case, `DocService` Vision SDK/`approve()`, `DesigDeptTree::posts()`).
+
+### Still open — needs a decision (not guessed)
+- **BUG-104** (Critical): booking create/edit/OTF save — `xlr8_booking_master` lacks 7 columns; needs the production schema.
+- **BUG-154**: Employee / Person Address / Person Banking create-edit forms need rebuilding on codes.
+- **BUG-013** Role screen duplicates Designation; **BUG-049** org-demo (Post removed); **BUG-043** user import views never built.
+- **BUG-009/122**: Brand and 8 booking-report tables don't exist.
+- **BUG-029** + Finance/Insurance imports: Google Sheet ID and valid service-account credentials.
+- **BUG-147**: 5 API routes without methods; **BUG-155**: dead routes/files cleanup; **BUG-153**: "available" chassis rule.
+- **BUG-136/083**: switching data scoping on; **BUG-095**: hardcoded user-ID whitelists; **BUG-139** (2)/(3): locked Approval Engine / new dependency.
+- Spares screens (BUG-031/116): `X_Location` model and `spare-request.data` route missing.
+
+Still no commit made — pending user review.

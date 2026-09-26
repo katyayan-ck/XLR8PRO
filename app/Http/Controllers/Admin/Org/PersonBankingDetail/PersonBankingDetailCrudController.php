@@ -79,15 +79,13 @@ class PersonBankingDetailCrudController extends CrudController
         $bankings = PersonBankingDetail::with('person')
             ->select([
                 'id',
-                'person_id',
+                'person_code',
                 'bank_name',
                 'account_holder_name',
                 'account_number',
                 'ifsc_code',
                 'account_type',
                 'branch_name',
-                'swift_code',
-                'is_primary',
                 'is_verified',
             ])
             ->orderBy('id', 'desc')
@@ -96,7 +94,8 @@ class PersonBankingDetailCrudController extends CrudController
         $gridData = $bankings->map(function ($banking, $index) {
             $mapped = $banking->toArray();
             $mapped['serial_no'] = $index + 1;
-            $mapped['is_primary'] = $banking->is_primary;
+            // "Primary" is encoded in account_type (see PersonBankingDetail::makePrimary()).
+            $mapped['is_primary'] = $banking->account_type === 'Primary';
             $mapped['is_verified'] = $banking->is_verified;
             $mapped['person_name'] = $banking->person
                 ? $banking->person->first_name.' '.$banking->person->last_name
@@ -124,7 +123,6 @@ class PersonBankingDetailCrudController extends CrudController
                     ['field' => 'account_number',      'headerName' => 'Account Number'],
                     ['field' => 'ifsc_code',           'headerName' => 'IFSC Code'],
                     ['field' => 'branch_name',         'headerName' => 'Branch Name'],
-                    ['field' => 'swift_code',          'headerName' => 'Swift Code'],
                     ['field' => 'account_type',        'headerName' => 'Account Type'],
                     ['field' => 'is_primary',          'headerName' => 'Primary'],
                     ['field' => 'is_verified',         'headerName' => 'Verified'],

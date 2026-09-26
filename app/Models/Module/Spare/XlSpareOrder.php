@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Module\Spare;
 
+use App\Models\BaseModel;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class XlSpareOrder extends BaseModel
@@ -11,6 +12,7 @@ class XlSpareOrder extends BaseModel
     protected $table = 'xlr8_spare_order';
 
     protected $fillable = [];
+
     protected $guarded = ['id'];
 
     public function scopeForPartInStore($query, $partIds, $storeId)

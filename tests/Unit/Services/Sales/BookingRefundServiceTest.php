@@ -82,15 +82,24 @@ class BookingRefundServiceTest extends TestCase
         $this->assertTrue($refund->getMedia('aadhar')->isEmpty());
     }
 
-    public function test_apply_never_fires_the_requested_again_history_branch(): void
+    public function test_apply_records_requested_again_when_the_booking_was_previously_rejected(): void
     {
-        // BUG-103 (known-bugs-report.md): the original code checks
-        // $booking->status AFTER it has already been overwritten to 4 by
-        // the update() call, so comparing it to 7 is always false. This
-        // test locks in that (documented) pre-existing behavior rather
-        // than asserting the presumably-intended check against the OLD
-        // status.
+        // Regression for BUG-103: the check used to run after the status had
+        // already been overwritten to 4, so it never fired.
         $booking = $this->makeBooking(['status' => 7]);
+
+        $this->service->apply($booking, $this->requestPayload(), []);
+
+        $history = $booking->commMaster()->first()?->rootThreads ?? collect();
+        $titles = $history->pluck('title')->all();
+
+        $this->assertContains('Refund Requested Again', $titles);
+        $this->assertContains('Refund Requested', $titles);
+    }
+
+    public function test_apply_does_not_record_requested_again_for_a_first_refund_request(): void
+    {
+        $booking = $this->makeBooking(['status' => 3]);
 
         $this->service->apply($booking, $this->requestPayload(), []);
 

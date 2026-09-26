@@ -4,8 +4,6 @@ namespace App\Models\Utilities\Noty;
 
 use App\Models\BaseModel;
 use App\Models\User;
-use App\Models\Core\Notification;
-
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 

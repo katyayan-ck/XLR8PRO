@@ -1,27 +1,29 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Module\Spare;
 
+use App\Models\BaseModel;
 use App\Models\Traits\ScopedQuery;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class XlSpareRequest extends BaseModel
 {
-    use SoftDeletes, ScopedQuery;
+    use ScopedQuery, SoftDeletes;
 
     protected $table = 'xlr8_spare_request';
 
     protected $guarded = ['id'];
 
     /**
-     * DataScopeFilter config — filters by branch_code column.
-     * If this table uses an integer branch_id instead, change scopeColumn to 'branch_id'
-     * and keep it commented until branch column migration is done (same as Booking/Stock).
+     * DataScopeFilter config. The table's branch column is srv_brnch_id
+     * (an id; there is no branch_code column).
      */
-    public string $scopeType   = 'branch';
-    public string $scopeColumn = 'branch_code'; // ← change to 'branch_id' if needed
-    public string $scopeGroup  = 'org';
+    public string $scopeType = 'branch';
+
+    public string $scopeColumn = 'srv_brnch_id';
+
+    public string $scopeGroup = 'org';
 
     // ── Relations ─────────────────────────────────────────────────────
 

@@ -4,6 +4,7 @@ namespace App\Models\Admin;
 
 use App\Models\BaseModel;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class UserReporting extends BaseModel
@@ -25,9 +26,9 @@ class UserReporting extends BaseModel
     ];
 
     protected $casts = [
-        'is_active'  => 'boolean',
-        'from_date'  => 'date',
-        'to_date'    => 'date',
+        'is_active' => 'boolean',
+        'from_date' => 'date',
+        'to_date' => 'date',
         'extra_data' => 'array',
         'max_levels' => 'integer',
     ];
@@ -43,7 +44,7 @@ class UserReporting extends BaseModel
     }
 
     // Scopes
-    public function scopeActive($query)
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true)
             ->where(function ($q) {
@@ -63,8 +64,9 @@ class UserReporting extends BaseModel
     {
         if ($scopeType && $scopeCode) {
             return $query->where('scope_type', $scopeType)
-                         ->where('scope_code', $scopeCode);
+                ->where('scope_code', $scopeCode);
         }
+
         return $query->whereNull('scope_type');
     }
 }
