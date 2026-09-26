@@ -141,13 +141,19 @@ class UserRbacWorkbookTest extends TestCase
     {
         $user = DB::table('users as u')->join('xlr8_admin_employee as e', 'e.code', '=', 'u.employee_code')
             ->whereNotNull('e.primary_loc_code')
-            ->whereExists(fn ($q) => $q->from('xlr8_admin_user_scopes as s')->whereColumn('s.user_id', 'u.id')
-                ->where('s.scope_type', 'location')->where('s.is_active', 1)->whereNull('s.deleted_at')->whereColumn('s.scope_code', '!=', 'e.primary_loc_code'))
             ->first(['u.id', 'u.employee_code', 'e.primary_loc_code']);
-        if (! $user) {
-            $this->markTestSkipped('No user with a non-primary location scope.');
+        $locations = DB::table('xlr8_admin_location')->where('is_active', 1)->whereNull('deleted_at')
+            ->where('code', '!=', $user?->primary_loc_code)->orderByDesc('code')->limit(2)->get(['code', 'name']);
+        if (! $user || $locations->count() < 2) {
+            $this->markTestSkipped('Needs an employee with a primary location and two other active locations.');
         }
-        $newLocation = DB::table('xlr8_admin_location')->where('is_active', 1)->where('code', '!=', $user->primary_loc_code)->orderByDesc('code')->first(['code', 'name']);
+        [$newLocation, $staleLocation] = [$locations[0], $locations[1]];
+
+        // Precondition: the user holds a non-primary location that the sheet will not list.
+        DB::table('xlr8_admin_user_scopes')->updateOrInsert(
+            ['user_id' => $user->id, 'scope_type' => 'location', 'scope_code' => $staleLocation->code],
+            ['is_active' => 1, 'to_date' => null, 'deleted_at' => null, 'from_date' => now()->toDateString(), 'updated_at' => now()]
+        );
         $otherUsersBefore = array_values(array_filter($this->activeScopes(), fn ($s) => ! str_starts_with($s, "{$user->id}|")));
 
         $import = new UserScopesSheetImport;
@@ -168,7 +174,8 @@ class UserRbacWorkbookTest extends TestCase
             $this->assertContains($scope, $actual->all());
         }
         $this->assertSame([], $actual->filter(fn ($s) => str_contains($s, '|location|'))->diff($expected)->values()->all(), 'unlisted locations removed');
-        $this->assertTrue(DB::table('xlr8_admin_user_scopes')->where('user_id', $user->id)->where('is_active', 0)->whereNotNull('to_date')->exists());
+        $this->assertTrue(DB::table('xlr8_admin_user_scopes')->where('user_id', $user->id)->where('scope_type', 'location')
+            ->where('scope_code', $staleLocation->code)->where('is_active', 0)->whereNotNull('to_date')->exists(), 'unlisted location deactivated');
         $this->assertSame($otherUsersBefore, array_values(array_filter($this->activeScopes(), fn ($s) => ! str_starts_with($s, "{$user->id}|"))), 'other users untouched');
         $this->assertSame(1, $import->summary()['users']);
     }
