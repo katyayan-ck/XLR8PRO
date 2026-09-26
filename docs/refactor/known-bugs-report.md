@@ -42,13 +42,13 @@ Entry format:
 | BUG-004 | Stray `/` in `UserImportExportController.php` blocked `route:list` | High | FIXED | pre-19-09-2026 (reported, not fixed, in an earlier session) | 19-09-2026 23:15 |
 | BUG-005 | `UserCrudController` checked `user.*` (singular) against real `users.*` (plural) permissions | High | FIXED | 19-09-2026 (~23:00) | 19-09-2026 23:45 |
 | BUG-006 | `checkPermission` middleware registered but wired to no route | Medium | OPEN | 19-09-2026 (pre-rollout sweep) | — |
-| BUG-007 | `/admin/user` — Backpack's `hasAccessOrFail('list')` throws unconditionally | Critical | OPEN | 19-09-2026 (~22:30) | — |
+| BUG-007 | `/admin/user` — Backpack's `hasAccessOrFail('list')` throws unconditionally | Critical | FIXED | 19-09-2026 (~22:30) | 26-09-2026 |
 | BUG-008 | `EmployeeCrudController` references non-existent columns (`person_id` etc.) | High | PARTIALLY FIXED (list) — create/edit OPEN | 20-09-2026 09:45 | — |
 | BUG-009 | `BrandCrudController` — `xlr8_vehicle_brand` table doesn't exist | High | OPEN | 20-09-2026 10:30 | — |
 | BUG-010 | `SubSegmentCrudController::getSegmentsByBrand` — dead route, method never defined | Low | OPEN | 20-09-2026 11:15 | — |
 | BUG-011 | `SubSegment.name` validated/submitted but not `$fillable` — silently never saved | Medium | OPEN | 20-09-2026 11:15 | — |
 | BUG-012 | `VehicleModelCrudController::destroy()` — dead route, method never defined | Low | OPEN | 20-09-2026 12:00 | — |
-| BUG-013 | `RoleCrudController` — `Role` model missing `CrudTrait`, screen 500s for everyone | Critical | OPEN | 20-09-2026 13:00 | — |
+| BUG-013 | `RoleCrudController` — `Role` model missing `CrudTrait`, screen 500s for everyone | Critical | FIXED | 20-09-2026 13:00 | 26-09-2026 |
 | BUG-014 | PRO-only Backpack features used without `backpack/pro` installed — `SystemSettingCrudController` (filter) and `UserCrudController` (filter + `select2` fields) | Medium | FIXED for `UserCrudController` (its Create/Edit no longer use Backpack fields/filters at all — hand-rolled forms instead, see BUG-040); `SystemSettingCrudController`'s filter left as-is, still OPEN | 20-09-2026 13:00 | 21-09-2026 14:00 (User only) |
 | BUG-015 | `PostCrudController` / `UserTypeCrudController` — entirely unreachable, no routes | Medium | OPEN | 20-09-2026 13:00 | — |
 | BUG-016 | `RoleRequest` validation references non-existent `xlr8_iam_roles` table | Medium | OPEN | 20-09-2026 13:00 | — |
@@ -70,11 +70,11 @@ Entry format:
 | BUG-043 | `UserImportExportController`'s views (`admin.users.import`, `admin.users.export`, `admin.users.import-history`, `admin.users.export-history`) do not exist anywhere in `resources/views/` — every action 500s with "View not found," even with the correct permission and past the (now-fixed) gate bypass | High | OPEN | 20-09-2026 21:50 | — |
 | BUG-044 | `ExportController` (3 vehicle-data export routes) and `PerformanceController::report()` had **zero authentication of any kind** — `routes/web.php` registered them with only the default `web` middleware, fully public to anonymous visitors; confirmed via `route:list -v` (no `admin`/auth middleware present) before fixing, and a guest request correctly gets `302`-to-login after | Critical | FIXED | 20-09-2026 22:00 | 20-09-2026 22:10 |
 | BUG-045 | `app/Http/Controllers/Admin/oldEnquiryCrudController.php` — entirely unreachable, no route anywhere references it (superseded draft of the real `EnquiryCrudController`) | Low | OPEN (documented only) | 20-09-2026 22:20 | — |
-| BUG-046 | `EnquiryCrudController` — 5 registered routes (`pendingList`, `erroneousList`, `gridData`, `exportData`, `getSalesConsultants`) point to methods that don't exist on the class; 2 look like typos for the real `data()`/`export()` methods | High | OPEN | 20-09-2026 00:10 | — |
+| BUG-046 | `EnquiryCrudController` — 5 registered routes (`pendingList`, `erroneousList`, `gridData`, `exportData`, `getSalesConsultants`) point to methods that don't exist on the class; 2 look like typos for the real `data()`/`export()` methods | High | FIXED | 20-09-2026 00:10 | 26-09-2026 |
 | BUG-047 | `EnquiryCrudController::destroy()`/`search()`/`showDetailsRow()` had zero Spatie-permission enforcement — trait defaults only check Backpack's own `hasAccessOrFail`, which is auto-allowed by the traits' own bootstrap | Critical | FIXED | 20-09-2026 00:15 | 20-09-2026 00:30 |
-| BUG-048 | `QuotationCrudController` — `quotation-form/pending` route has no matching `pendingQuotations` method (same pattern as BUG-046) | High | OPEN | 20-09-2026 01:00 | — |
+| BUG-048 | `QuotationCrudController` — `quotation-form/pending` route has no matching `pendingQuotations` method (same pattern as BUG-046) | High | FIXED | 20-09-2026 01:00 | 26-09-2026 |
 | BUG-049 | `OrgDemoController::index()` fatals (500) via `OrgService::usersByPost()` calling an undefined `User::posts()` relation | Medium | OPEN | 20-09-2026 02:00 | — |
-| BUG-050 | `BookingCrudController` — 15 registered routes point at methods that don't exist on the class (same pattern as BUG-046/048, largest instance found so far) | High | OPEN | 20-09-2026 03:00 | — |
+| BUG-050 | `BookingCrudController` — 15 registered routes point at methods that don't exist on the class (same pattern as BUG-046/048, largest instance found so far) | High | FIXED | 20-09-2026 03:00 | 26-09-2026 |
 | BUG-051 | `BookingCrudController::destroy()`/`edit()`/`search()`/`showDetailsRow()` had zero Spatie-permission enforcement — same root cause as BUG-047 | Critical | FIXED | 20-09-2026 03:00 | 20-09-2026 03:30 |
 | BUG-052 | `CommonHelper` passes `null` to `trim()` in 3 places — deprecated in PHP 8.1+, will fatal on a future PHP version | Low | FIXED | 20-09-2026 03:15 | 24-09-2026 |
 | BUG-053 | `phpunit.xml` hardcodes `DB_DATABASE=xlrn` (nonexistent — real DB is `xlrm`), breaking the entire test suite (39/40 tests fail); documented only per explicit user instruction, needs owner confirmation before fixing | High | FIXED | 20-09-2026 04:00 | 22-09-2026 |
@@ -195,7 +195,7 @@ Entry format:
 | BUG-157 | `FirebaseService` calls `User::deviceTokens()`, which was never defined — sending push to a user, listing and revoking a user's devices all fatal | High | FIXED | 25-09-2026 | 25-09-2026 |
 | BUG-158 | `User::branches/locations/departments` and `Employee::branches/locations/departments` target nonexistent `xlr8_admin_emp_*_pivot` tables; live caller: `UserExporter` (user export POST) | Medium | OPEN (needs design decision) | 25-09-2026 | — |
 | BUG-159 | `NotificationController` and `SystemSettingApiController` called `$this->middleware()` in their constructors (removed in Laravel 11+) — every notifications and settings API request fataled | Critical | FIXED | 26-09-2026 | 26-09-2026 |
-| BUG-160 | Only 1 of 201 users has `admin.dashboard`, so the post-login dashboard returns 403 for almost everyone | High | OPEN (needs decision) | 26-09-2026 | — |
+| BUG-160 | Only 1 of 201 users has `admin.dashboard`, so the post-login dashboard returns 403 for almost everyone | High | FIXED | 26-09-2026 | 26-09-2026 |
 | BUG-161 | Bookings have no branch: xlr8_booking_master has no branch column and the enquiry fallback (dealer_branch) is empty on all 60,923 enquiries, so VOTF numbers can never be generated | High | OPEN (needs decision) | 26-09-2026 | — |
 
 Not a bug (false positive, listed for reference): the original `infer-conventions` sweep flagged
@@ -268,7 +268,8 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 
 ### BUG-007 — `/admin/user` — Backpack's `hasAccessOrFail('list')` throws unconditionally
 
-- **Status:** OPEN
+- **Status:** FIXED (was: OPEN)
+- **Fixed:** 26-09-2026 22:40 — Superseded: `/admin/user` is served by `Admin\Org\User\UserCrudController` with its own permission-checked `index()`; admin smoke 26-09-2026 returns 200 for `org/user` and `org/user/create`.
 - **Severity:** Critical (a real admin screen — user management — is completely unusable for everyone, including a user with the wildcard `*` permission)
 - **Found:** 19-09-2026 (~22:30), while testing BUG-005's fix.
 - **Where:** `app/Http/Controllers/Admin/UserCrudController.php` (relies on Backpack's default `ListOperation::index()` — no custom override).
@@ -324,7 +325,8 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 
 ### BUG-013 — `RoleCrudController` — `Role` model missing `CrudTrait`, screen 500s for everyone
 
-- **Status:** OPEN
+- **Status:** FIXED (was: OPEN)
+- **Fixed:** 26-09-2026 22:40 — Roles are designations: Role screen retired and `iam/role` redirects to Org → Designation; `IAM\Role` gained `CrudTrait` (DEC-018). Smoke: `iam/role` 302 → `org/designation` 200.
 - **Severity:** Critical (this is the actual RBAC role-management screen the whole permission rollout depends on)
 - **Found:** 20-09-2026 13:00, batch 8 of the permission rollout.
 - **Modified:** 24-09-2026 22:00 — root cause re-verified: Spatie's roles table is configured as `xlr8_admin_designation`, which has no `is_post`/`seq_no` columns the screen queries. The Role screen therefore duplicates the Designation screen over the same table. Needs a product decision: remove the Role screen, or point it at a real roles table.
@@ -652,7 +654,8 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 
 ### BUG-046 — `EnquiryCrudController` has 5 registered routes pointing at methods that don't exist on the class
 
-- **Status:** OPEN
+- **Status:** FIXED (was: OPEN)
+- **Fixed:** 26-09-2026 22:40 — All Enquiry routes now point at existing methods (dead ones removed/hidden: `sales.enquiry.pending`, `sales.enquiry.erroneous` — DEC-020/023). Route→method scan clean.
 - **Severity:** High (each of these 5 routes fatals with a `BadMethodCallException`/500 the instant it's hit — not caught by any `try/catch`, since Laravel's own controller dispatcher throws before the method body would even run)
 - **Found:** 20-09-2026 00:10, during batch 26 (permission rollout for `EnquiryCrudController`), while cross-referencing every route registered against `EnquiryCrudController` in `routes/backpack/core.php`/`booking.php` against the controller's actual `public function` list (`grep -n "public function " EnquiryCrudController.php`) before deciding where to place permission checks.
 - **Where:** `routes/backpack/core.php` — `Route::get('enquiries/pending', [...,'pendingList'])` (route name `enquiry.pending`), `Route::get('enquiries/erroneous', [...,'erroneousList'])` (`enquiry.erroneous`), `Route::match(['get','post'], 'enquiry/data', [...,'gridData'])` (`enquiry.data`), `Route::get('enquiry/export', [...,'exportData'])` (`enquiry.export`), `Route::get('enquiry/sales-consultants', [...,'getSalesConsultants'])`.
@@ -670,7 +673,8 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 
 ### BUG-048 — `QuotationCrudController` — `quotation-form/pending` route has no matching `pendingQuotations` method
 
-- **Status:** OPEN
+- **Status:** FIXED (was: OPEN)
+- **Fixed:** 26-09-2026 22:40 — `sales.quotation.pending` removed and its menu item hidden until Track B (DEC-023). Route→method scan clean.
 - **Severity:** High (fatals with `Error: Call to undefined method` the instant it's hit — same failure mode as BUG-046)
 - **Found:** 20-09-2026 01:00, during batch 27 (`QuotationCrudController` permission rollout), cross-referencing `grep -rn "QuotationCrudController" routes/backpack/booking.php` against `grep -n "public function " QuotationCrudController.php`.
 - **Where:** `routes/backpack/booking.php` — `Route::get('quotation-form/pending', [QuotationCrudController::class, 'pendingQuotations'])->name('quotation.pending')`.
@@ -691,7 +695,8 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 
 ### BUG-050 — `BookingCrudController` has 15 registered routes pointing at methods that don't exist on the class
 
-- **Status:** OPEN
+- **Status:** FIXED (was: OPEN)
+- **Fixed:** 26-09-2026 22:40 — Booking dead routes removed (`order-verify`) or implemented (`editRefund`, DEC-024); route→method scan finds no Booking route without a method.
 - **Severity:** High (each fatals with `Error: Call to undefined method` the instant it's hit — same failure mode as BUG-046/BUG-048, at far larger scale)
 - **Found:** 20-09-2026 03:00, during batch 29 (`BookingCrudController` permission rollout), by programmatically diffing every route registered against `BookingCrudController` (117 routes total, across `routes/backpack/booking.php`) against `ReflectionClass`/regex-extracted `public function` names in the controller (`php artisan route:list --json` piped through a Python diff script — manual grep-by-grep checking wasn't practical at this scale).
 - **Where:** `routes/backpack/booking.php` — `delivered` (`booking/delivered`), `deliveredList` (`booking/delivered/list`), `deliveredView` (`booking/delivered-view/{id}`), `editRefund` (`/refund/edit/{id}`), `erroneousEntries` (`booking/errors`), `erroneousEntriesData` (`booking/errors/data`), `finRetailed` (`booking/finance/retailed`), `invoicedList` (`booking/invoiced/list`), `liveOrderList` (`reports/live-order/list`), `orderVerify` (`booking/order-verify/{id}`), `pendingActionsList` (`reports/pending-actions/list`), `pendingInvoicesList` (`booking/pending-invoices/list`), `refundedView` (`refunded-view/{id}`), `scrappageView` (`scrappage-view/{id}`), `stockList` (`reports/stock/list`).
@@ -1787,7 +1792,8 @@ guessed at.
 
 ### BUG-160 — Dashboard (post-login landing page) is 403 for 200 of 201 users
 
-- **Status:** OPEN (needs a decision — security/UAT-visible)
+- **Status:** FIXED (was: OPEN (needs a decision — security/UAT-visible))
+- **Fixed:** 26-09-2026 22:40 — `GrantDashboardPermissionSeeder` granted `admin.dashboard` to all 75 designations (DEC-022); scoped user 40 now gets the dashboard (200).
 - **Severity:** High
 - **Found:** 26-09-2026, non-superadmin smoke test (user 40, Accounts Executive).
 - **Where:** `DashboardController::index()` requires `admin.dashboard`; only 1 user holds it (via any role).

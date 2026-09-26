@@ -8,7 +8,7 @@ designations, test isolation (`xlrm_testing`), PHP 8.4, dead-code purge (DEC-030
 consolidation (DEC-031).
 
 **Next:**
-1. Track B foundation: create `D:\laragon\www\xceler8` (Laravel 13, Filament 5, modular), CI, ETL skeleton.
+1. **UAT hardening of this app (priority, DEC-033).** Track B is paused after B0 (resume from xceler8 `d9009db`).
 2. Track A normalisation programme (A2): schema baseline → manifest → generator + Rector fixer → batches.
 3. UAT fixes as they come (A3).
 

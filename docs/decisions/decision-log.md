@@ -236,3 +236,7 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
 - **Modules (first cut):** platform, iam, org, vehicle, pricing, crm, quotation, booking, accounts, stock, service-spares, reports, legacy-sync.
 - **AI context:** the same `.ai/` layout as this repo, with Track B rules (Filament, Actions/Queries/Data, Pest).
 - **Risk:** MED (new project, environment) · **Approved-by:** user (DEC-015, plan §3 / §8) · **Reversal:** delete the `xceler8` directory and database; nothing in `xlrm` depends on it.
+
+### DEC-033 | 26-09-2026 22:30 | Programme | Track B paused; focus on Track A UAT
+- **Decision:** the user paused Track B at the end of B0 (xceler8 committed at `d9009db`, see its B-DEC-003). All effort goes to Track A for the UAT deadline. Finalised Track A patterns will then be recreated in Track B faster.
+- **Approved-by:** user.
