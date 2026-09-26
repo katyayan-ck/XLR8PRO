@@ -1,7 +1,9 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Module\Spare;
 
+use App\Models\BaseModel;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class XlSpareRequestDetail extends BaseModel
@@ -11,6 +13,7 @@ class XlSpareRequestDetail extends BaseModel
     protected $table = 'xlr8_spare_req_details';
 
     protected $fillable = [];
+
     protected $guarded = ['id'];
 
     public function spareRequest()
@@ -23,7 +26,7 @@ class XlSpareRequestDetail extends BaseModel
         return $this->belongsTo(XlSpareMaster::class, 'part_id');
     }
 
-    public function scopeActive($query)
+    public function scopeActive(Builder $query): Builder
     {
         return $query->whereNull('deleted_at')->where('status', '!=', 2);
     }
@@ -32,10 +35,11 @@ class XlSpareRequestDetail extends BaseModel
     {
         if ($searchValue) {
             $query->whereHas('partMaster', function ($q) use ($searchValue) {
-                $q->where('part_no', 'like', '%' . $searchValue . '%')
-                    ->orWhere('name', 'like', '%' . $searchValue . '%');
+                $q->where('part_no', 'like', '%'.$searchValue.'%')
+                    ->orWhere('name', 'like', '%'.$searchValue.'%');
             });
         }
+
         return $query;
     }
 
@@ -46,6 +50,7 @@ class XlSpareRequestDetail extends BaseModel
                 $q->where('category_id', $partCategory);
             });
         }
+
         return $query;
     }
 
@@ -56,6 +61,7 @@ class XlSpareRequestDetail extends BaseModel
                 $q->where('division_id', $productDivision);
             });
         }
+
         return $query;
     }
 }

@@ -1,3 +1,12 @@
+---
+name: xcelr8-new-module
+description: "Use when adding a new module or process, scaffolding CRUD, or creating a controller/service/route file/model that must follow the Xceler8 Module/Process/Activity structure, permission naming and menu gating. Triggers: new module, new process, scaffold, add CRUD, new feature, new controller, new service, new route file."
+---
+
+> Ported 26-09-2026 from `.ai/_archive/2026-09-26/.ai/skills/xcelr8-new-module` (DEC-031). Current facts in
+> `.ai/rules/**` win over anything below that conflicts (e.g. dead code removed on 26-09-2026,
+> roles = designations, tests on `xlrm_testing`, migrations not SQL-first).
+
 # Skill: XCELR8 New Module Scaffold
 
 **When to activate:** Any task that asks to create a new module, add a new process to an existing module, scaffold new CRUD, or add a new feature following Xcelr8 architecture.
@@ -33,8 +42,9 @@ Permission::findOrCreate('SLS_BKNG_CANCEL', 'web');
 ```
 
 ### 2. Database Table(s)
+Deliver as a guarded Laravel migration (`Schema::hasTable` check, working `down()`), run on local only —
+see `.ai/rules/database.md`. The SQL below shows the target shape.
 ```sql
--- SQL first (default), migration only if user asks
 CREATE TABLE `xcelr8_sales_bookings` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `booking_number` VARCHAR(20) NOT NULL UNIQUE,
@@ -169,7 +179,16 @@ class BookingCrudController extends CrudController
         CRUD::setModel(Booking::class);
         CRUD::setRoute(config('backpack.base.route_prefix') . '/sales/booking');
         CRUD::setEntityNameStrings('booking', 'bookings');
-        $this->middleware('permission:SLS_BKNG_VIEW');
+    }
+
+    public function index()
+    {
+        // Inline check as the first statement — never $this->middleware() in setup()
+        // (runs too late / doesn't exist on Laravel 11+). See .ai/rules/admin-backpack.md.
+        if (! backpack_user()->can('SLS_BKNG_VIEW')) {
+            abort(403, 'Unauthorized.');
+        }
+        // …
     }
 }
 ```

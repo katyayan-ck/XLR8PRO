@@ -1,12 +1,11 @@
 <?php
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\V1\AuthController;
-use App\Http\Controllers\Api\V1\SystemSettingApiController;
-use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\DocController;
 use App\Http\Controllers\Api\V1\EntityHistoryController;
+use App\Http\Controllers\Api\V1\NotificationController;
+use App\Http\Controllers\Api\V1\SystemSettingApiController;
+use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
 
@@ -22,10 +21,9 @@ Route::prefix('v1')->group(function () {
             ->name('api.auth.verify-otp');
     });
 
-    Route::group(['middleware' => ['auth:api']], function () {
-    Route::post('/pricing/calculate-exchange', [App\Http\Controllers\Api\V1\PricingApiController::class, 'calculateExchange']);
-    Route::post('/pricing/generate-quote', [App\Http\Controllers\Api\V1\PricingApiController::class, 'generateQuote']);
-});
+    // Pricing API removed: calculate-exchange called PricingService::calculateExchangeGap(),
+    // which never existed (PricingService was an empty file), and generate-quote had no
+    // method. Track B rebuilds the pricing API on PricingEngineService (DEC-020, DEC-030).
 
     // ╔════════════════════════════════════════════════════════╗
     // ║ PROTECTED ROUTES (Authentication + Device Validation) ║
@@ -42,7 +40,7 @@ Route::prefix('v1')->group(function () {
                 ->name('api.auth.logout');
         });
 
-        //DocManager Routes
+        // DocManager Routes
         Route::post('docs/upload', [DocController::class, 'upload']);
         Route::get('docs/my', [DocController::class, 'getMyDocs']);
         Route::post('docs/groups', [DocController::class, 'createGroup']);
@@ -53,20 +51,20 @@ Route::prefix('v1')->group(function () {
         Route::get('docs/analytics', [DocController::class, 'getAnalytics']);
         Route::post('docs/{docId}/approve', [DocController::class, 'approve']);
 
-        //CommMasters routes (protected)
+        // CommMasters routes (protected)
         Route::get('history/{entityType}/{entityId}', [EntityHistoryController::class, 'getHistory']);
         Route::post('history/{entityType}/{entityId}/thread', [EntityHistoryController::class, 'addThread']);
 
         Route::post('/devices/register', [NotificationController::class, 'registerDevice']);
-        Route::get('/devices', [NotificationController::class, 'getDevices']);
-        Route::delete('/devices/{id}', [NotificationController::class, 'revokeDevice']);
+        Route::get('/devices', [NotificationController::class, 'getUserDevices']);
+        Route::delete('/devices/{id}', [NotificationController::class, 'unregisterDevice']);
         Route::post('/devices/revoke-all', [NotificationController::class, 'revokeAllDevices']);
 
         // Notifications
         Route::get('/notifications', [NotificationController::class, 'getNotifications']);
         Route::get('/notifications/unread', [NotificationController::class, 'getUnreadNotifications']);
-        Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
-        Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
+        Route::post('/notifications/{id}/read', [NotificationController::class, 'markNotificationAsRead']);
+        Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllNotificationsAsRead']);
         Route::delete('/notifications/{id}', [NotificationController::class, 'deleteNotification']);
 
         // Alerts
@@ -74,7 +72,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/alerts/{id}/read', [NotificationController::class, 'markAlertAsRead']);
 
         // Messages
-        Route::get('/messages/user/{user_id}', [NotificationController::class, 'getConversation']);
+        Route::get('/messages/user/{user_id}', [NotificationController::class, 'getConversationMessages']);
         Route::post('/messages/user/{user_id}', [NotificationController::class, 'sendMessage']);
         Route::post('/messages/{id}/read', [NotificationController::class, 'markMessageAsRead']);
         // System Settings routes (protected)
@@ -85,7 +83,7 @@ Route::prefix('v1')->group(function () {
                 ->name('api.settings.index');
 
             // Get settings by topic
-            Route::get('topic/{topic}', [SystemSettingApiController::class, 'topic'])
+            Route::get('topic/{topic}', [SystemSettingApiController::class, 'getByTopic'])
                 ->name('api.settings.topic');
 
             // Category shortcuts
@@ -99,20 +97,21 @@ Route::prefix('v1')->group(function () {
                 ->name('api.settings.pricing');
 
             // Get setting by key (MUST be last - catchall pattern)
+            // excludes export/json, which is registered later in the admin group
             Route::get('{key}', [SystemSettingApiController::class, 'show'])
-                ->where('key', '.*')
+                ->where('key', '(?!export/json$).*')
                 ->name('api.settings.show');
         });
 
         // Admin-only routes
-        Route::middleware('role:admin|super_admin')->group(function () {
+        Route::middleware('permission:UTL_SETTINGS_MANAGE')->group(function () {
             Route::prefix('system-settings')->group(function () {
 
                 // Export/Import
-                Route::get('export/json', [SystemSettingApiController::class, 'exportJson'])
+                Route::get('export/json', [SystemSettingApiController::class, 'exportSettings'])
                     ->name('api.settings.export.json');
 
-                Route::post('import/json', [SystemSettingApiController::class, 'importJson'])
+                Route::post('import/json', [SystemSettingApiController::class, 'importSettings'])
                     ->name('api.settings.import.json');
 
                 // Admin update setting

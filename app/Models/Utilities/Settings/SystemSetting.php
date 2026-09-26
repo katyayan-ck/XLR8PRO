@@ -2,15 +2,15 @@
 
 namespace App\Models\Utilities\Settings;
 
+use App\Models\BaseModel;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
-use App\Models\BaseModel;
 
 /**
  * SystemSetting Model
- * 
+ *
  * Manages application-wide configuration settings with:
  * - Topic/Category based organization
  * - Type casting and validation
@@ -30,14 +30,14 @@ class SystemSetting extends BaseModel
         'type',
         'description',
         'iseditable',
-        'isvisible',
+        'is_visible',
     ];
 
     protected $casts = [
         'type' => 'string',
         'description' => 'string',
         'iseditable' => 'boolean',
-        'isvisible' => 'boolean',
+        'is_visible' => 'boolean',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
@@ -73,7 +73,56 @@ class SystemSetting extends BaseModel
      */
     public function scopeVisible($query)
     {
-        return $query->where('isvisible', true);
+        return $query->where('is_visible', true);
+    }
+
+    /**
+     * Scope: settings of a topic. Live rows leave `topic` empty and encode the
+     * topic as the key prefix (`site.name`), so both forms match (DEC-021).
+     */
+    public function scopeByTopic($query, string $topic)
+    {
+        return $query->where(function ($q) use ($topic) {
+            $q->where('topic', $topic)
+                ->orWhere(function ($q) use ($topic) {
+                    $q->where(fn ($q) => $q->whereNull('topic')->orWhere('topic', ''))
+                        ->where('key', 'like', $topic.'.%');
+                });
+        });
+    }
+
+    /**
+     * Scope: settings of a group within a topic.
+     */
+    public function scopeByGroup($query, string $group)
+    {
+        return $query->where('group', $group);
+    }
+
+    /**
+     * Visible settings of one topic as key => typed value.
+     */
+    public static function getByTopic(string $topic): array
+    {
+        return static::visible()
+            ->byTopic($topic)
+            ->orderBy('key')
+            ->get()
+            ->mapWithKeys(fn ($row) => [$row->key => static::castValue($row)])
+            ->toArray();
+    }
+
+    /**
+     * Visible settings grouped by topic (the `topic` column, else the key prefix).
+     */
+    public static function allByTopic(): array
+    {
+        return static::visible()
+            ->orderBy('key')
+            ->get()
+            ->groupBy(fn ($row) => $row->topic ?: strstr($row->key, '.', true) ?: 'general')
+            ->map(fn ($rows) => $rows->mapWithKeys(fn ($row) => [$row->key => static::castValue($row)])->toArray())
+            ->toArray();
     }
 
     /**
@@ -81,26 +130,26 @@ class SystemSetting extends BaseModel
      */
     public static function flushCache(string $key): void
     {
-        Cache::forget('setting.' . $key);
+        Cache::forget('setting.'.$key);
     }
 
     /**
-     * Flush all settings cache
+     * Flush all settings cache. Forgets each key: the `database` cache store
+     * doesn't support tags (DEC-021).
      */
     public static function flushAllCache(): void
     {
-        Cache::tags('settings')->flush();
+        static::withTrashed()->pluck('key')->each(fn ($key) => static::flushCache($key));
     }
 
     /**
      * Ensure a setting exists or create it if it doesn't
      *
-     * @param string $key Setting key
-     * @param mixed $value Value to set
-     * @param string $type Data type (string, integer, boolean, json, etc.)
-     * @param string|null $label Human-readable label
-     * @param string|null $description Description text
-     * @return self
+     * @param  string  $key  Setting key
+     * @param  mixed  $value  Value to set
+     * @param  string  $type  Data type (string, integer, boolean, json, etc.)
+     * @param  string|null  $label  Human-readable label
+     * @param  string|null  $description  Description text
      */
     public static function ensure(
         string $key,
@@ -129,25 +178,22 @@ class SystemSetting extends BaseModel
     /**
      * Set a setting value
      *
-     * @param string $key Setting key
-     * @param mixed $value Value to set
-     * @return self
+     * @param  string  $key  Setting key
+     * @param  mixed  $value  Value to set
      */
     public static function set(string $key, $value): self
     {
         $setting = static::where('key', $key)->first();
 
-        if (!$setting) {
+        if (! $setting) {
             throw new \Exception("Setting '{$key}' not found. Use ensure() to create it first.");
         }
 
         $setting->value = is_string($value) ? $value : json_encode($value);
 
-        if (auth()->check()) {
-            $setting->updatedby = auth()->id();
-        }
-
-        $setting->saveQuietly();
+        // save() (not saveQuietly) so BaseModel stamps updated_by and the saved
+        // hook clears this key's cache (DEC-021).
+        $setting->save();
 
         return $setting;
     }
@@ -163,8 +209,8 @@ class SystemSetting extends BaseModel
     /**
      * Get a setting value with type casting
      *
-     * @param string $key Setting key
-     * @param mixed $default Default value if not found
+     * @param  string  $key  Setting key
+     * @param  mixed  $default  Default value if not found
      * @return mixed
      */
     public static function get(string $key, $default = null)
@@ -175,18 +221,18 @@ class SystemSetting extends BaseModel
     /**
      * Get value with caching and type casting
      *
-     * @param string $key Setting key
-     * @param mixed $default Default value
+     * @param  string  $key  Setting key
+     * @param  mixed  $default  Default value
      * @return mixed
      */
     public static function getValue(string $key, $default = null)
     {
-        $cacheKey = 'setting.' . $key;
+        $cacheKey = 'setting.'.$key;
 
         return Cache::rememberForever($cacheKey, function () use ($key, $default) {
             $setting = static::where('key', $key)->first();
 
-            if (!$setting) {
+            if (! $setting) {
                 return $default;
             }
 
@@ -197,7 +243,6 @@ class SystemSetting extends BaseModel
     /**
      * Cast setting value based on type
      *
-     * @param self $setting
      * @return mixed
      */
     protected static function castValue(self $setting)
@@ -215,27 +260,23 @@ class SystemSetting extends BaseModel
 
     /**
      * Get all settings as key-value array
-     *
-     * @return array
      */
     public static function getAllAsArray(): array
     {
-        return static::where('isvisible', true)
+        return static::where('is_visible', true)
             ->get()
-            ->mapWithKeys(fn($row) => [$row->key => static::castValue($row)])
+            ->mapWithKeys(fn ($row) => [$row->key => static::castValue($row)])
             ->toArray();
     }
 
     /**
      * Get all settings for export
-     *
-     * @return array
      */
     public static function allForExport(): array
     {
         return static::orderBy('key')
             ->get()
-            ->map(fn($row) => [
+            ->map(fn ($row) => [
                 'key' => $row->key,
                 'label' => $row->label,
                 'value' => $row->value,

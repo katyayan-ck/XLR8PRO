@@ -1,3 +1,12 @@
+---
+name: xcelr8-pricing
+description: "Use for vehicle pricing work: pricing pipeline, ImportSession, price lists, WEF imports, add-ons, discount rules, RTO/insurance rules, Calculate & Publish, getPricing()/PricingEngineService, PricingJsonContract, xlr8_vehicle_pricing_* tables."
+---
+
+> Ported 26-09-2026 from `.ai/_archive/2026-09-26/.ai/skills/xcelr8-pricing` (DEC-031). Current facts in
+> `.ai/rules/**` win over anything below that conflicts (e.g. dead code removed on 26-09-2026,
+> roles = designations, tests on `xlrm_testing`, migrations not SQL-first).
+
 # Skill: XCELR8 Pricing Pipeline
 
 **When to activate:** Any task involving: vehicle pricing, ImportSession, price list upload, WEF import, add-ons, discount rules, RTO, insurance import, Calculate, Publish, getPricing, PricingEngineService, quotation pricing, `xlr8_vehicle_pricing_*` tables.

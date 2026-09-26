@@ -1,4 +1,93 @@
 <laravel-boost-guidelines>
+=== .ai/00-project rules ===
+
+# Xceler8 (XLRM) — project context
+
+**What:** BMPL's dealership management system (DMS): enquiries → quotations (with approvals) → bookings
+(KYC, DMS, finance, insurance, RTO, exchange, delivery, refunds, OTF) → accounts, plus vehicle master &
+pricing, org/HR/IAM, spares, and shared platform utilities.
+
+**Two tracks (see `docs/decisions/decision-log.md` DEC-001):**
+- **Track A — this repo (`xlrm`)**: live app, stabilised for UAT. Laravel 12, PHP 8.4, Backpack 7
+  (Tabler, no PRO), MySQL 8.4, Spatie permission/medialibrary, Sanctum API (mobile app consumer).
+  **Do not add Filament here.**
+- **Track B — `D:\laragon\www\xceler8`**: greenfield rebuild (Laravel 13, Filament 5, modular monolith)
+  with an ETL toolkit so this app's data migrates at switch-over.
+
+**Golden rules**
+1. Read the real file before changing it; match existing contracts. Grep before writing new logic —
+   the SSOT services are listed in `.ai/rules/services.md`.
+2. Models own data access, Services own business logic, Controllers stay thin (validate → service → respond).
+3. Business keys are code-based (`person_code`, `branch_code`, `segment_code`…), not integer FKs.
+4. Never query KeyValue/org tables directly — use `KeywordValueService` / `OrgService` (cached).
+5. Never guess a business rule or override a locked spec — stop and ask. Specs: `.ai/knowledge/specs/index.md`.
+6. Every decision is logged in `docs/decisions/decision-log.md` (DEC-NNN) **before** the change.
+7. Tests never touch `xlrm` — they run on `xlrm_testing` (`php artisan testing:refresh-db`).
+
+**Where context lives** (load only what the task needs — see `.ai/README.md`):
+`.ai/rules/` (auto-loaded by path) · `.ai/skills/` (on demand) · `.ai/knowledge/` (read when linked,
+incl. generated DB schema cards in `knowledge/db/`) · `.ai/state/current.md` (active work) ·
+`.ai/state/bugs-index.md` (open bugs; full tracker `docs/refactor/known-bugs-report.md` is grep-only).
+
+=== .ai/10-workflow rules ===
+
+# Workflow (all AI tools)
+
+**Git**
+- Never work on `main`. Branches: `feature/*` or `refactor/*` (current integration branch: `feature/integrations`).
+- Commit at checkpoints with `type(scope): message` (feat, fix, refactor, docs, test, chore, security).
+  **Never push, force-push or rewrite history without explicit approval in that turn.**
+
+**Stop and ask (never decide alone)** — the user approves high-risk items explicitly:
+history rewrite/push · any non-local DB operation · destructive changes to real data (drop tables/columns
+with rows, irreversible type changes, mass remaps) · deleting tracked files outside an approved list ·
+environment/machine changes · new or major-upgraded dependencies · business-rule ambiguity or locked-spec
+conflict · auth/permission/secret changes · UAT-visible behaviour changes beyond an obvious bug fix.
+
+**Logging (mandatory)**
+- Decision → `docs/decisions/decision-log.md` (DEC-NNN, append-only, written before the change).
+- Change → `docs/refactor/ai-changelogs-DD-MM-YYYY.md` (files, before → after, reason, DEC id).
+- New bug found anywhere → `docs/refactor/known-bugs-report.md` immediately (BUG-NNN; never delete
+  entries; update status in place; keep the index table current). Check `.ai/state/bugs-index.md` first.
+
+**Quality gates (every change)**
+1. `php -l` on touched files; `vendor/bin/pint --dirty --format agent`.
+2. Scoped `vendor/bin/phpstan analyse <files> --memory-limit=2G`.
+3. `php artisan test --compact` (or the narrowest relevant `--filter`) — runs on `xlrm_testing`.
+   Known pre-existing failures are listed in `.ai/state/current.md`; don't add new ones.
+4. HTTP smoke of touched screens as superadmin **and** a scoped non-superadmin user.
+
+**Database**
+- Schema changes are **Laravel migrations** (guarded with `Schema::hasColumn/hasTable`, working `down()`),
+  run on local only. Never `dropIfExists` a live table. Other environments get migrations via deploy.
+- Refresh the test copy after local schema/data changes: `php artisan testing:refresh-db --force`.
+
+**Output**
+- Full files when creating; precise edits when changing. No placeholder "rest unchanged" code.
+- Don't create documentation files unless asked or required by this workflow.
+
+=== .ai/20-architecture rules ===
+
+# Architecture essentials
+
+- **Layers:** Controller (FormRequest validation, permission check, call one service, shape response) →
+  Service (`App\Services\{Module}\{Process}\*Service`, business logic, transactions, cross-model work) →
+  Model (extends `App\Models\BaseModel`: soft deletes, audit actor stamping, media, generic scopes).
+- **Hierarchy:** Module → Process → Activity. Permission = `{MOD}_{PROC}_{ACT}` (e.g. `SLS_BKNG_KYC`),
+  minted with `guard_name = 'web'`. Route name `module.process.activity`, URI kebab-case under
+  `/admin/{module}/{process}/…`. Codes and the module table: `.ai/rules/admin-backpack.md`.
+- **Authorization:** inline `if (! backpack_user()->can('CODE')) abort(403);` as the first statement of each
+  admin action (see the hook-timing trap in `.ai/rules/admin-backpack.md`). API: `auth:sanctum` +
+  `validate_device`; Spatie `role`/`permission` middleware aliases are registered. SuperAdmin bypass is a
+  Gate `before` hook in `AppServiceProvider`. Roles **are** designations (`xlr8_admin_designation`).
+- **Data scoping:** `App\Services\IAM\DataScopeService` on `xlr8_admin_user_scopes`; `ScopedQuery`/`ScopedCrud`
+  exist but are not yet switched on (decision pending). Jobs must not depend on a user scope.
+- **API envelope:** `{http_status, success, code, message, data}` via `BaseController` helpers.
+- **Dates:** stored UTC; displayed with `site_date()` / `@sitedate` (site setting `display.date_format`).
+- **Labels:** `resources/lang/en/{module}.php` is the single source for field labels & validation names.
+- **Money:** new columns `DECIMAL(15,2)`; legacy varchar money is being normalised (DEC-003).
+- **Every job** sets `$timeout`, `$tries`, and implements `failed()`.
+
 === foundation rules ===
 
 # Laravel Boost Guidelines
@@ -7,7 +96,7 @@ The Laravel Boost guidelines are specifically curated by Laravel maintainers for
 
 ## Foundational Context
 
-This application is a Laravel application running on PHP 8.3. You are an expert with the Laravel ecosystem. Always use the APIs that match the installed major version of each package — do not assume a version.
+This application is a Laravel application running on PHP 8.4. You are an expert with the Laravel ecosystem. Always use the APIs that match the installed major version of each package — do not assume a version.
 
 Before relying on a package's API, confirm its installed version:
 - PHP packages: run `composer show --direct` to list direct dependencies with versions, or `composer show <vendor/package>` for a single package.
@@ -191,5 +280,24 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 - Run the narrowest set of tests that covers the change. Pass a file path or `--filter=testName` to `php artisan test --compact`.
 - Rerun a test after each change to it.
 - Run `vendor/bin/phpunit` to call the test runner directly. It accepts the same file path and `--filter=testName` arguments.
+
+=== backpack/crud/backpack-crud rules ===
+
+# Backpack (admin panel, Track A)
+
+Backpack 7 + Tabler, no PRO. For any CrudController/field/column/operation work, **activate the `backpack-crud` skill** (full reference, loaded on demand) and follow `.ai/rules/admin-backpack.md` (permissions, hook-timing trap, routes, menu). Don't use PRO-only fields/filters (`select2`, PRO filters); `storeCrud/updateCrud/deleteCrud` don't exist in v7.
+
+=== spatie/laravel-medialibrary/core rules ===
+
+## Media Library
+
+- `spatie/laravel-medialibrary` associates files with Eloquent models, with support for collections, conversions, and responsive images.
+- Always activate the `medialibrary-development` skill when working with media uploads, conversions, collections, responsive images, or any code that uses the `HasMedia` interface or `InteractsWithMedia` trait.
+
+=== petebishwhip/laradocs/core rules ===
+
+# Laradocs
+
+Only for dev documentation pages — activate the `laradocs-development` skill when writing docs pages.
 
 </laravel-boost-guidelines>

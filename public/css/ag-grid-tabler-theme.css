@@ -1,0 +1,58 @@
+/**
+ * Maps AG-Grid Quartz theme CSS custom properties onto Tabler's own
+ * design-token variables (--tblr-*), so every AG-Grid listing screen
+ * visually matches the rest of the admin panel and automatically follows
+ * whatever Tabler skin/colors are active - including light/dark mode,
+ * since Tabler redefines --tblr-* under [data-bs-theme="dark"] and these
+ * rules simply reference that same variable rather than a fixed color.
+ *
+ * See .ai/rules/conventions.md section 13 (uniform card/page/AG-Grid
+ * styling) and docs/refactor/ai-changelogs-*.md for the Phase 5 rollout
+ * this belongs to. Include this file's <link> AFTER the AG-Grid theme
+ * CSS (ag-theme-quartz.css) on any listing screen using AG-Grid.
+ */
+
+.ag-theme-quartz {
+    /* Typography - match Tabler's own font stack exactly */
+    --ag-font-family: var(--tblr-font-sans-serif, "Inter Var", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+    --ag-font-size: 13px;
+
+    /* Colors - reference Tabler's tokens, not fixed hex values, so this
+       stays correct if the active skin or dark/light mode changes */
+    --ag-foreground-color: var(--tblr-body-color);
+    --ag-background-color: var(--tblr-body-bg);
+    --ag-header-background-color: var(--tblr-secondary-bg, var(--tblr-body-bg));
+    --ag-header-foreground-color: var(--tblr-body-color);
+    --ag-border-color: var(--tblr-border-color);
+    --ag-row-border-color: var(--tblr-border-color);
+    --ag-odd-row-background-color: var(--tblr-body-bg);
+    --ag-row-hover-color: var(--tblr-secondary-bg-subtle, rgba(var(--tblr-primary-rgb, 32, 107, 196), 0.06));
+    --ag-selected-row-background-color: rgba(var(--tblr-primary-rgb, 32, 107, 196), 0.1);
+    --ag-input-focus-border-color: var(--tblr-primary);
+    --ag-range-selection-border-color: var(--tblr-primary);
+
+    /* Density - "minimalistic, max data on screen" per project convention */
+    --ag-row-height: 38px;
+    --ag-header-height: 40px;
+    --ag-cell-horizontal-padding: 10px;
+    --ag-grid-size: 6px;
+
+    /* Match Tabler's card border radius instead of AG-Grid's own default */
+    --ag-border-radius: var(--tblr-border-radius, 4px);
+
+    border: 1px solid var(--tblr-border-color);
+    border-radius: var(--tblr-border-radius, 4px);
+}
+
+.ag-theme-quartz .ag-header-cell-text {
+    font-weight: 600;
+    text-transform: none;
+}
+
+/* Pagination / status bar controls use Tabler's own button/text styling
+   rather than AG-Grid's default look, for visual consistency with the
+   rest of each page. */
+.ag-theme-quartz .ag-paging-panel {
+    color: var(--tblr-body-color);
+    font-size: 13px;
+}

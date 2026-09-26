@@ -2,20 +2,20 @@
 
 namespace App\Services\Exporters;
 
+use App\Models\Admin\Employee;
 use App\Models\User;
-use App\Models\Core\Employee;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use PhpOffice\PhpSpreadsheet\Style\Font;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Font;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 /**
  * UserExporter Service
- * 
+ *
  * Handles bulk export of users to Excel files
  * Exports Person, Employee, User, and all assignment data
  * Includes RBAC and data scoping information
@@ -23,11 +23,12 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 class UserExporter
 {
     private $filters = [];
+
     private $outputPath;
 
     public function __construct($outputPath = null)
     {
-        $this->outputPath = $outputPath ?? storage_path('exports/users_' . date('Y-m-d-His') . '.xlsx');
+        $this->outputPath = $outputPath ?? storage_path('exports/users_'.date('Y-m-d-His').'.xlsx');
     }
 
     /**
@@ -36,6 +37,7 @@ class UserExporter
     public function withFilters($filters)
     {
         $this->filters = $filters;
+
         return $this;
     }
 
@@ -45,6 +47,7 @@ class UserExporter
     public function filterByBranch($branchId)
     {
         $this->filters['branch_id'] = $branchId;
+
         return $this;
     }
 
@@ -54,6 +57,7 @@ class UserExporter
     public function filterByDepartment($departmentId)
     {
         $this->filters['department_id'] = $departmentId;
+
         return $this;
     }
 
@@ -63,6 +67,7 @@ class UserExporter
     public function filterByDesignation($designationId)
     {
         $this->filters['designation_id'] = $designationId;
+
         return $this;
     }
 
@@ -72,6 +77,7 @@ class UserExporter
     public function filterByStatus($isActive)
     {
         $this->filters['is_active'] = $isActive;
+
         return $this;
     }
 
@@ -81,7 +87,7 @@ class UserExporter
     public function execute()
     {
         try {
-            $spreadsheet = new Spreadsheet();
+            $spreadsheet = new Spreadsheet;
 
             // Get users based on filters
             $users = $this->getFilteredUsers();
@@ -111,7 +117,7 @@ class UserExporter
             ];
         } catch (Exception $e) {
             Log::error('User Export Failed', ['error' => $e->getMessage()]);
-            throw new Exception("Export failed: " . $e->getMessage());
+            throw new Exception('Export failed: '.$e->getMessage());
         }
     }
 
@@ -127,7 +133,7 @@ class UserExporter
             'employee.primaryBranch',
             'employee.primaryDepartment',
             'userDataScopes',
-            'roles'
+            'roles',
         ]);
 
         if (isset($this->filters['branch_id'])) {
@@ -185,7 +191,7 @@ class UserExporter
             'User Email',
             'User Type',
             'User Status',
-            'Last Login'
+            'Last Login',
         ];
 
         // Write headers
@@ -260,7 +266,7 @@ class UserExporter
             'From Date',
             'To Date',
             'Is Current',
-            'Additional Info'
+            'Additional Info',
         ];
 
         // Write headers
@@ -330,7 +336,7 @@ class UserExporter
                     $pivot->fromdate->format('d-m-Y'),
                     $pivot->todate?->format('d-m-Y') ?? 'Current',
                     $pivot->iscurrent ? 'Yes' : 'No',
-                    'Branch: ' . $location->branch->name,
+                    'Branch: '.$location->branch->name,
                 ];
 
                 foreach ($data as $col => $value) {
@@ -351,7 +357,7 @@ class UserExporter
                     $pivot->fromdate->format('d-m-Y'),
                     $pivot->todate?->format('d-m-Y') ?? 'Current',
                     $pivot->iscurrent ? 'Yes' : 'No',
-                    'Order: ' . $pivot->assignmentorder . ' | Remarks: ' . ($pivot->remarks ?? 'N/A'),
+                    'Order: '.$pivot->assignmentorder.' | Remarks: '.($pivot->remarks ?? 'N/A'),
                 ];
 
                 foreach ($data as $col => $value) {
@@ -382,7 +388,7 @@ class UserExporter
             'Scope Type',
             'Scope Value',
             'Entity Name',
-            'Status'
+            'Status',
         ];
 
         // Write headers
@@ -432,27 +438,27 @@ class UserExporter
         $sheet->setCellValue('A1', 'VDMS User Export Summary');
         $sheet->getStyle('A1')->setFont(new Font(['bold' => true, 'size' => 14]));
 
-        $sheet->setCellValue('A2', 'Generated: ' . Carbon::now()->format('d-m-Y H:i:s'));
+        $sheet->setCellValue('A2', 'Generated: '.Carbon::now()->format('d-m-Y H:i:s'));
 
         // Statistics
         $row = 4;
-        $sheet->setCellValue('A' . $row, 'Total Users');
-        $sheet->setCellValue('B' . $row, $users->count());
+        $sheet->setCellValue('A'.$row, 'Total Users');
+        $sheet->setCellValue('B'.$row, $users->count());
         $row++;
 
         $activeCount = $users->where('isactive', true)->count();
-        $sheet->setCellValue('A' . $row, 'Active Users');
-        $sheet->setCellValue('B' . $row, $activeCount);
+        $sheet->setCellValue('A'.$row, 'Active Users');
+        $sheet->setCellValue('B'.$row, $activeCount);
         $row++;
 
         $inactiveCount = $users->where('isactive', false)->count();
-        $sheet->setCellValue('A' . $row, 'Inactive Users');
-        $sheet->setCellValue('B' . $row, $inactiveCount);
+        $sheet->setCellValue('A'.$row, 'Inactive Users');
+        $sheet->setCellValue('B'.$row, $inactiveCount);
         $row += 2;
 
         // By Branch
-        $sheet->setCellValue('A' . $row, 'Distribution by Branch');
-        $sheet->getStyle('A' . $row)->setFont(new Font(['bold' => true, 'size' => 11]));
+        $sheet->setCellValue('A'.$row, 'Distribution by Branch');
+        $sheet->getStyle('A'.$row)->setFont(new Font(['bold' => true, 'size' => 11]));
         $row++;
 
         $branchData = $users->groupBy(function ($user) {
@@ -460,8 +466,8 @@ class UserExporter
         })->map->count();
 
         foreach ($branchData as $branch => $count) {
-            $sheet->setCellValue('A' . $row, $branch);
-            $sheet->setCellValue('B' . $row, $count);
+            $sheet->setCellValue('A'.$row, $branch);
+            $sheet->setCellValue('B'.$row, $count);
             $row++;
         }
 
@@ -484,6 +490,7 @@ class UserExporter
     public function download()
     {
         $this->execute();
+
         return response()->download($this->outputPath);
     }
 }

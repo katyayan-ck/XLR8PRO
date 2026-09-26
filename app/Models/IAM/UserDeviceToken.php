@@ -4,6 +4,7 @@ namespace App\Models\IAM;
 
 use App\Models\BaseModel;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class UserDeviceToken extends BaseModel
@@ -50,7 +51,7 @@ class UserDeviceToken extends BaseModel
 
     // ========== SCOPES ==========
 
-    public function scopeActive($query)
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true)
             ->whereNull('deleted_at');
@@ -79,7 +80,7 @@ class UserDeviceToken extends BaseModel
             return false;
         }
 
-        return $this->is_active && !$this->deleted_at;
+        return $this->is_active && ! $this->deleted_at;
     }
 
     public function markAsUsed(): self

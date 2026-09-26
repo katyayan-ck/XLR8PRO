@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Module\Spare;
+
+use App\Models\BaseModel;
 
 class XlSpareMaster extends BaseModel
 {
@@ -14,7 +16,7 @@ class XlSpareMaster extends BaseModel
         'order_price',
         'sale_price',
         'order_qty',
-      
+
     ];
 
     public function category()
@@ -45,21 +47,28 @@ class XlSpareMaster extends BaseModel
     public function scopeFilterBySearch($query, $searchValue)
     {
         if ($searchValue) {
-            $query->where('part_no', 'like', '%' . $searchValue . '%')
-                ->orWhere('name', 'like', '%' . $searchValue . '%');
+            $query->where('part_no', 'like', '%'.$searchValue.'%')
+                ->orWhere('name', 'like', '%'.$searchValue.'%');
         }
+
         return $query;
     }
 
     public function scopeFilterByCategory($query, $partCategory)
     {
-        if ($partCategory) $query->where('category_id', $partCategory);
+        if ($partCategory) {
+            $query->where('category_id', $partCategory);
+        }
+
         return $query;
     }
 
     public function scopeFilterByDivision($query, $productDivision)
     {
-        if ($productDivision) $query->where('division_id', $productDivision);
+        if ($productDivision) {
+            $query->where('division_id', $productDivision);
+        }
+
         return $query;
     }
 }

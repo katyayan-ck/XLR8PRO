@@ -3,12 +3,21 @@
 /**
  * Path: app/Services/Vehicle/Pricing/InsuranceService.php
  *
- * Builds every company × plan combo available for the vehicle group.
+ * Builds every company x plan combo available for the vehicle group.
  * Standard total = base (OD+TP) + NilDep + Consumables when those addons exist.
+ *
+ * IDV is stored as one row per year-slot in xlr8_vehicle_pricing_ins_idv_slots
+ * (base_rule_id, year_no, idv_basis text, idv_pct parsed percentage) rather
+ * than fixed idv_1..idv_N columns, so a future 5+8 plan needs no schema change.
+ * od = round(idv_sum * od_factor, 3) exactly per the locked Machine Spec —
+ * idv_sum is already an absolute rupee figure (percent-of-invoice resolved
+ * against PricingEngineService::invoiceBase() before this is called), so
+ * od_factor is applied directly, with no further /100.
  */
 
 namespace App\Services\Vehicle\Pricing;
 
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -22,10 +31,10 @@ class InsuranceService
     {
         $out = [
             'default_company' => null,
-            'default_plan'    => null,
-            'standard_combo'  => ['OD', 'TP', 'NILDEP', 'CONSUMABLES'],
-            'selected_total'  => 0.0,
-            'companies'       => [],
+            'default_plan' => null,
+            'standard_combo' => ['OD', 'TP', 'NILDEP', 'CONSUMABLES'],
+            'selected_total' => 0.0,
+            'companies' => [],
         ];
 
         if (! Schema::hasTable('xlr8_vehicle_pricing_ins_base_rules')) {
@@ -40,8 +49,21 @@ class InsuranceService
             if (Schema::hasColumn('xlr8_vehicle_pricing_ins_base_rules', 'is_active')) {
                 $q->where('is_active', 1);
             }
+
             return $q->get();
         });
+
+        $slotsByRule = collect();
+        if (Schema::hasTable('xlr8_vehicle_pricing_ins_idv_slots')) {
+            $slotsByRule = Cache::flexible('pricing.ins.idv_slots', [300, 900], function () {
+                $q = DB::table('xlr8_vehicle_pricing_ins_idv_slots');
+                if (Schema::hasColumn('xlr8_vehicle_pricing_ins_idv_slots', 'deleted_at')) {
+                    $q->whereNull('deleted_at');
+                }
+
+                return $q->orderBy('year_no')->get()->groupBy('base_rule_id');
+            });
+        }
 
         $addons = collect();
         if (Schema::hasTable('xlr8_vehicle_pricing_ins_addon_rates')) {
@@ -50,6 +72,10 @@ class InsuranceService
                 if (Schema::hasColumn('xlr8_vehicle_pricing_ins_addon_rates', 'deleted_at')) {
                     $q->whereNull('deleted_at');
                 }
+                if (Schema::hasColumn('xlr8_vehicle_pricing_ins_addon_rates', 'is_active')) {
+                    $q->where('is_active', 1);
+                }
+
                 return $q->get();
             });
         }
@@ -58,6 +84,7 @@ class InsuranceService
         if (Schema::hasTable('xlr8_vehicle_pricing_ins_defaults')) {
             $defaults = DB::table('xlr8_vehicle_pricing_ins_defaults')
                 ->when(Schema::hasColumn('xlr8_vehicle_pricing_ins_defaults', 'deleted_at'), fn ($q) => $q->whereNull('deleted_at'))
+                ->when(Schema::hasColumn('xlr8_vehicle_pricing_ins_defaults', 'is_active'), fn ($q) => $q->where('is_active', 1))
                 ->get();
         }
 
@@ -68,36 +95,37 @@ class InsuranceService
             if (! $this->scopeMatch($rule, $ctx)) {
                 continue;
             }
-            $co = (string) ($rule->company ?? $rule->insu_co ?? $rule->insurer ?? 'UNKNOWN');
-            $plan = (string) ($rule->plan ?? $rule->plan_name ?? 'PLAN');
-            $permit = (string) ($rule->permit ?? $rule->insu_permit ?? ($ctx['permit'] ?? ''));
 
-            $idvSum = $this->idvSum($rule, $invoice);
+            $co = $this->ruleCompany($rule);
+            $plan = (string) ($rule->plan ?? 'PLAN');
+            $permit = (string) ($rule->permit ?? ($ctx['permit'] ?? ''));
+
+            $idvSum = $this->idvSum($slotsByRule->get($rule->id, collect()), $invoice);
             $odFactor = (float) ($rule->od_factor ?? 0);
-            $od = $odFactor > 0
-                ? round($idvSum * $odFactor / 100, 3)
-                : (float) ($rule->od_premium ?? $rule->od_amount ?? 0);
-            $tp = (float) ($rule->tp_premium ?? $rule->tp_amount ?? 0);
+            $od = round($idvSum * $odFactor, 3);
+            $tp = (float) ($rule->tp_basic ?? 0);
             $base = round($od + $tp, 2);
 
-            $addonRows = $addons->filter(function ($a) use ($co, $plan, $permit) {
-                $aco = (string) ($a->company ?? $a->insu_co ?? '');
-                $ap  = (string) ($a->plan ?? $a->plan_name ?? '');
-                return (strcasecmp($aco, $co) === 0 || $aco === '')
-                    && (strcasecmp($ap, $plan) === 0 || $ap === '');
+            $addonRows = $addons->filter(function ($a) use ($co, $permit) {
+                $aco = (string) ($a->insurance_company ?? '');
+                $ap = (string) ($a->permit ?? '');
+                $coMatch = $aco === '' || strcasecmp($aco, $co) === 0;
+                $permitMatch = $ap === '' || $ap === 'ANY' || strcasecmp($ap, $permit) === 0;
+
+                return $coMatch && $permitMatch;
             });
 
             $addonList = [];
             $nildep = 0.0;
             $cons = 0.0;
             foreach ($addonRows as $a) {
-                $code = strtoupper((string) ($a->addon_code ?? $a->name ?? $a->addon ?? ''));
-                $amt = (float) ($a->amount ?? $a->rate ?? 0);
+                $code = strtoupper((string) ($a->addon_slug ?? $a->addon_name ?? ''));
+                $amt = $this->addonAmount($a, $od, $tp, $base);
                 $addonList[] = [
-                    'code'     => $code,
-                    'amount'   => $amt,
-                    'selected' => in_array($code, ['NILDEP', 'NIL_DEP', 'NIL DEPRECIATION', 'CONSUMABLES', 'CONSUMABLE'], true),
-                    'frozen'   => in_array($code, ['NILDEP', 'NIL_DEP', 'NIL DEPRECIATION', 'CONSUMABLES', 'CONSUMABLE'], true),
+                    'code' => $code,
+                    'amount' => $amt,
+                    'selected' => in_array($code, ['NILDEP', 'NIL_DEP', 'NIL_DEPRECIATION', 'CONSUMABLES', 'CONSUMABLE'], true),
+                    'frozen' => in_array($code, ['NILDEP', 'NIL_DEP', 'NIL_DEPRECIATION', 'CONSUMABLES', 'CONSUMABLE'], true),
                 ];
                 if (str_contains($code, 'NIL')) {
                     $nildep = $amt;
@@ -111,15 +139,16 @@ class InsuranceService
 
             $companies[$co]['company'] = $co;
             $companies[$co]['plans'][] = [
-                'plan'           => $plan,
-                'permit'         => $permit,
-                'od'             => $od,
-                'tp'             => $tp,
-                'base'           => $base,
-                'nildep'         => $nildep,
-                'consumables'    => $cons,
+                'plan' => $plan,
+                'permit' => $permit,
+                'idv_sum' => $idvSum,
+                'od' => $od,
+                'tp' => $tp,
+                'base' => $base,
+                'nildep' => $nildep,
+                'consumables' => $cons,
                 'standard_total' => $standard,
-                'addons'         => $addonList,
+                'addons' => $addonList,
             ];
         }
 
@@ -127,71 +156,140 @@ class InsuranceService
 
         $def = $defaults->firstWhere('is_default', 1) ?? $defaults->first();
         if ($def) {
-            $out['default_company'] = $def->company ?? $def->insu_co ?? null;
-            $out['default_plan'] = $def->plan ?? $def->plan_name ?? null;
-            if (! empty($def->standard_combo)) {
-                $combo = is_string($def->standard_combo) ? json_decode($def->standard_combo, true) : $def->standard_combo;
-                if (is_array($combo) && $combo !== []) {
-                    $out['standard_combo'] = $combo;
-                }
-            }
+            $out['default_company'] = $def->insurance_company ?? $def->company ?? null;
         } elseif ($out['companies'] !== []) {
             $out['default_company'] = $out['companies'][0]['company'];
-            $out['default_plan'] = $out['companies'][0]['plans'][0]['plan'] ?? null;
         }
 
         foreach ($out['companies'] as $co) {
             if (strcasecmp((string) $co['company'], (string) $out['default_company']) !== 0) {
                 continue;
             }
-            foreach ($co['plans'] as $p) {
-                if (strcasecmp((string) $p['plan'], (string) $out['default_plan']) === 0) {
-                    $out['selected_total'] = (float) $p['standard_total'];
-                    break 2;
-                }
-            }
-            $out['selected_total'] = (float) ($co['plans'][0]['standard_total'] ?? 0);
+            $out['default_plan'] = $co['plans'][0]['plan'];
+            $out['selected_total'] = (float) $co['plans'][0]['standard_total'];
+            break;
         }
 
         return $out;
     }
 
-    protected function idvSum(object $rule, float $invoice): float
+    /**
+     * idv_sum: absolute rupee sum across every year-slot on the matched rule.
+     * A slot's idv_pct (already parsed from text like "95% of Invoice" at
+     * import) is resolved against $invoice; a slot with no parseable
+     * percentage is skipped rather than guessed.
+     */
+    protected function idvSum(Collection $slots, float $invoice): float
     {
         $sum = 0.0;
-        foreach (['idv_1', 'idv_2', 'idv_3', 'idv_4', 'idv_5', 'idv1', 'idv2', 'idv3'] as $col) {
-            if (isset($rule->{$col}) && $rule->{$col} !== null && $rule->{$col} !== '') {
-                $v = (float) $rule->{$col};
-                $sum += $v > 0 && $v <= 100 ? $invoice * $v / 100 : $v;
+        foreach ($slots as $slot) {
+            $pct = $slot->idv_pct ?? null;
+            if ($pct === null || $pct === '') {
+                continue;
             }
-        }
-        if ($sum <= 0 && isset($rule->idv_percent)) {
-            $sum = $invoice * (float) $rule->idv_percent / 100;
+            $sum += $invoice * (float) $pct / 100;
         }
 
         return round($sum, 2);
     }
 
+    protected function ruleCompany(object $rule): string
+    {
+        return (string) ($rule->company ?? $rule->insurance_company ?? $rule->insu_co ?? 'UNKNOWN');
+    }
+
+    /**
+     * Insu Premium addon columns are formulas relative to OD/TP/base in the
+     * source workbook (e.g. "=3325/$B4"), which the importer resolves to a
+     * flat rate_value at import time. rate_type distinguishes a flat amount
+     * from a percentage still needing resolution against the base premium.
+     */
+    protected function addonAmount(object $addon, float $od, float $tp, float $base): float
+    {
+        $rate = (float) ($addon->rate_value ?? 0);
+        $type = strtoupper((string) ($addon->rate_type ?? 'FLAT'));
+        $on = strtoupper((string) ($addon->applies_on ?? 'BASE'));
+
+        if ($type !== 'PERCENT' && $type !== 'PCT' && $type !== '%') {
+            return $rate;
+        }
+
+        $base_amount = match ($on) {
+            'OD' => $od,
+            'TP' => $tp,
+            default => $base,
+        };
+
+        return round($base_amount * $rate / 100, 2);
+    }
+
     protected function scopeMatch(object $rule, array $ctx): bool
     {
-        foreach (['segment', 'permit', 'fuel', 'wheels'] as $col) {
-            if (! isset($rule->{$col})) {
+        $dims = [
+            'permit' => 'permit',
+            'fuel_type' => 'fuel',
+            'wheels' => 'wheels',
+        ];
+        foreach ($dims as $ruleCol => $ctxKey) {
+            if (! isset($rule->{$ruleCol})) {
                 continue;
             }
-            $rv = strtoupper(trim((string) $rule->{$col}));
+            $rv = strtoupper(trim((string) $rule->{$ruleCol}));
             if ($rv === '' || $rv === 'ANY' || $rv === 'ALL') {
                 continue;
             }
-            $act = strtoupper(trim((string) ($ctx[$col] ?? '')));
+            $act = strtoupper(trim((string) ($ctx[$ctxKey] ?? '')));
             if ($act !== '' && ! in_array($act, array_map('trim', explode(',', $rv)), true)) {
                 return false;
             }
         }
 
+        if (! $this->rangeMatch($rule->cc_range ?? null, $ctx['cc'] ?? null)) {
+            return false;
+        }
+
+        if (! $this->rangeMatch($rule->gvw_range ?? null, $ctx['gvw'] ?? null)) {
+            return false;
+        }
+
+        if (! $this->rangeMatch($rule->seating ?? null, $ctx['seating'] ?? null)) {
+            return false;
+        }
+
         return true;
     }
 
-        public function calculate(string|array $modelOrCtx, array $options = []): array
+    /**
+     * cc_range/gvw_range/seating are free-text bands from the workbook:
+     * "0-1000", "1001-1500", ">1500", "< 30KW", "30 - 65 KW", ">65 KW",
+     * "1 to 7", "8 to 18". Blank/ANY on the rule, or no actual value to
+     * test, always matches.
+     */
+    protected function rangeMatch(?string $range, mixed $actual): bool
+    {
+        $range = strtoupper(trim((string) $range));
+        if ($range === '' || $range === 'ANY' || $range === 'ALL') {
+            return true;
+        }
+        if ($actual === null || $actual === '') {
+            return true;
+        }
+        $val = (float) $actual;
+
+        if (preg_match('/^([\d.]+)\s*(?:-|TO)\s*([\d.]+)/', $range, $m) === 1) {
+            return $val >= (float) $m[1] && $val <= (float) $m[2];
+        }
+        if (preg_match('/^>\s*([\d.]+)/', $range, $m) === 1) {
+            return $val > (float) $m[1];
+        }
+        if (preg_match('/^<\s*([\d.]+)/', $range, $m) === 1) {
+            return $val < (float) $m[1];
+        }
+
+        return true;
+    }
+
+    public function calculate(string|array $modelOrCtx, array $options = []): array
     {
         if (is_array($modelOrCtx)) {
             return $this->quote(array_merge($modelOrCtx, $options));
@@ -200,9 +298,9 @@ class InsuranceService
         $permit = $options['permit'] ?? (($options['permits'][0] ?? null));
 
         return $this->quote([
-            'model'       => $modelOrCtx,
-            'permit'      => $permit,
-            'invoice'     => (float) ($options['ex_showroom'] ?? $options['invoice'] ?? 0),
+            'model' => $modelOrCtx,
+            'permit' => $permit,
+            'invoice' => (float) ($options['ex_showroom'] ?? $options['invoice'] ?? 0),
             'ex_showroom' => (float) ($options['ex_showroom'] ?? 0),
         ]);
     }

@@ -2,42 +2,35 @@
 
 namespace App\Helpers;
 
-use Illuminate\Support\Str;
-use Carbon\Carbon;
-
+use App\Models\Admin\PinCodes;
 use App\Models\EnumCols;
 use App\Models\EnumMaster;
-
-
-use App\User;
-use App\Models\X_Designation;
-use App\Models\X_Department;
-use App\Models\X_Division;
+use App\Models\Module\Spare\XlSpareClosure;
 use App\Models\X_Branch;
+use App\Models\X_CustomModel;
+use App\Models\X_Department;
+use App\Models\X_Designation;
+use App\Models\X_Division;
 use App\Models\X_Location;
 use App\Models\X_Segment;
-use App\Models\X_CustomModel;
 use App\Models\X_Vertical;
-use App\Models\PinCodes;
 use App\Models\XlFeeCollection;
-use App\Models\XlSpareClosure;
-use Spatie\Permission\Models\IAM\Role;
-use Spatie\Permission\Models\IAM\Permission;
+use App\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
-
-
+use Spatie\Permission\Models\IAM\Permission;
+use Spatie\Permission\Models\IAM\Role;
 
 class XCommonHelper
-
 {
-
-    
     public static function getEnumIdNew(string $keyword, string $value, bool $new = false): ?int
     {
         $col = EnumCols::where('keyword', $keyword)->first();
-        if (!$col) {
-            if (!$new) return null;
-            $col = new EnumCols();
+        if (! $col) {
+            if (! $new) {
+                return null;
+            }
+            $col = new EnumCols;
             $col->keyword = $keyword;
             $col->name = ucwords(str_replace('-', ' ', $keyword));
             $col->status = 1;
@@ -48,75 +41,82 @@ class XCommonHelper
             ->where('value', $value)
             ->whereNull('deleted_at')
             ->first();
-        if (!$enum && $new) {
-            $enum = new EnumMaster();
+        if (! $enum && $new) {
+            $enum = new EnumMaster;
             $enum->master_id = $col->id;
             $enum->value = $value;
             $enum->status = 1;
             $enum->created_by = 1;
             $enum->save();
         }
+
         return $enum ? $enum->id : null;
     }
 
-   
     public static function getAllEnumIds(string $keyword, bool $onlyActive = true): array
     {
         $col = EnumCols::where('keyword', $keyword)->first();
-        if (!$col) return [];
+        if (! $col) {
+            return [];
+        }
 
         $query = EnumMaster::where('master_id', $col->id)->whereNull('parent_id');
         if ($onlyActive) {
             $query->where('status', 1)->whereNull('deleted_at');
         }
+
         return $query->pluck('id')->toArray();
     }
 
     public static function checkOtfNo($otf_no, $excludeId = null)
     {
         $otf_no = trim((string) $otf_no);
-        Log::info('Checking OTF number: ' . $otf_no . ' (Type: ' . gettype($otf_no) . ', Length: ' . strlen($otf_no) . ', Exclude ID: ' . ($excludeId ?? 'None'));
+        Log::info('Checking OTF number: '.$otf_no.' (Type: '.gettype($otf_no).', Length: '.strlen($otf_no).', Exclude ID: '.($excludeId ?? 'None'));
         $query = XlFeeCollection::where('otf_no', $otf_no);
         if ($excludeId) {
             $query->where('id', '!=', $excludeId);
         }
         $record = $query->first();
-        Log::info('Record found: ' . ($record ? json_encode($record->toArray()) : 'None'));
+        Log::info('Record found: '.($record ? json_encode($record->toArray()) : 'None'));
+
         return $record ? 1 : 0;
     }
+
     public static function checkInvoiceNo($invoice_no, $excludeId = null)
     {
         $invoice_no = trim((string) $invoice_no);
-        Log::info('Checking Invoice number: ' . $invoice_no . ' (Type: ' . gettype($invoice_no) . ', Length: ' . strlen($invoice_no) . ', Exclude ID: ' . ($excludeId ?? 'None'));
+        Log::info('Checking Invoice number: '.$invoice_no.' (Type: '.gettype($invoice_no).', Length: '.strlen($invoice_no).', Exclude ID: '.($excludeId ?? 'None'));
         $query = XlFeeCollection::where('inv_no', $invoice_no);
         if ($excludeId) {
             $query->where('id', '!=', $excludeId);
         }
         $record = $query->first();
-        Log::info('Record found: ' . ($record ? json_encode($record->toArray()) : 'None'));
+        Log::info('Record found: '.($record ? json_encode($record->toArray()) : 'None'));
+
         return $record ? 1 : 0;
     }
+
     public static function checkChassisNo($chassis_no, $excludeId = null)
     {
         $chassis_no = trim((string) $chassis_no);
-        Log::info('Checking Chassis number: ' . $chassis_no . ' (Type: ' . gettype($chassis_no) . ', Length: ' . strlen($chassis_no) . ', Exclude ID: ' . ($excludeId ?? 'None'));
+        Log::info('Checking Chassis number: '.$chassis_no.' (Type: '.gettype($chassis_no).', Length: '.strlen($chassis_no).', Exclude ID: '.($excludeId ?? 'None'));
         $query = XlFeeCollection::where('chassis_no', $chassis_no);
         if ($excludeId) {
             $query->where('id', '!=', $excludeId);
         }
         $record = $query->first();
-        Log::info('Record found: ' . ($record ? json_encode($record->toArray()) : 'None'));
+        Log::info('Record found: '.($record ? json_encode($record->toArray()) : 'None'));
+
         return $record ? 1 : 0;
     }
-
-
 
     public static function checkRoNumber($ro_no)
     {
         $ro_no = trim((string) $ro_no);
-        \Log::info('Checking RO number: ' . $ro_no . ' (Type: ' . gettype($ro_no) . ', Length: ' . strlen($ro_no) . ')');
+        \Log::info('Checking RO number: '.$ro_no.' (Type: '.gettype($ro_no).', Length: '.strlen($ro_no).')');
         $record = XlSpareClosure::where('ro_no', $ro_no)->first();
-        \Log::info('Record found: ' . ($record ? json_encode($record->toArray()) : 'None'));
+        \Log::info('Record found: '.($record ? json_encode($record->toArray()) : 'None'));
+
         return $record ? 1 : 0;
     }
 
@@ -138,9 +138,10 @@ class XCommonHelper
 
     public static function getLocationsByState($state_id)
     {
-       
+
         return PinCodes::where('parent', $state_id)->get(['id', 'name']);
     }
+
     public static function createRole($name, $permissions = [])
     {
         $role = Role::create(['name' => $name]);
@@ -149,6 +150,7 @@ class XCommonHelper
                 $role->givePermissionTo($permission);
             }
         }
+
         return $role;
     }
 
@@ -166,10 +168,11 @@ class XCommonHelper
     public static function getRolesPermissions($role)
     {
         $permissions = $role->permissions;
-        $data = array();
+        $data = [];
         foreach ($permissions as $permission) {
             $data[] = $permission->name;
         }
+
         return $data;
     }
 
@@ -186,121 +189,144 @@ class XCommonHelper
 
     public static function desigsId2Names($ids)
     {
-        if (count($ids) == 1 && empty($ids[0]))
-            return array(0 => ["name" => "ALL"]);
-        $data = array();
+        if (count($ids) == 1 && empty($ids[0])) {
+            return [0 => ['name' => 'ALL']];
+        }
+        $data = [];
         $desigs = self::getDesignations();
         foreach ($ids as $id) {
-            if (isset($desigs[$id]))
+            if (isset($desigs[$id])) {
                 $data[$id] = $desigs[$id];
-            else
-                $data[$id] = ["name" => "Unknown Designation"];
+            } else {
+                $data[$id] = ['name' => 'Unknown Designation'];
+            }
         }
+
         return $data;
     }
 
     public static function departsId2Names($ids)
     {
-        if (count($ids) == 1 && empty($ids[0]))
-            return array(0 => ["name" => "ALL"]);
-        $data = array();
+        if (count($ids) == 1 && empty($ids[0])) {
+            return [0 => ['name' => 'ALL']];
+        }
+        $data = [];
         $departs = self::getDepartments();
         foreach ($ids as $id) {
-            if (isset($departs[$id]))
+            if (isset($departs[$id])) {
                 $data[$id] = $departs[$id];
-            else
-                $data[$id] = ["name" => "Unknown Department"]; 
+            } else {
+                $data[$id] = ['name' => 'Unknown Department'];
+            }
         }
+
         return $data;
     }
 
     public static function divisId2Names($ids)
     {
-        if (count($ids) == 1 && empty($ids[0]))
-            return array(0 => "ALL");
-        $data = array();
+        if (count($ids) == 1 && empty($ids[0])) {
+            return [0 => 'ALL'];
+        }
+        $data = [];
         $divis = self::getDivisions();
         foreach ($ids as $id) {
-            if (isset($divis[$id]))
+            if (isset($divis[$id])) {
                 $data[$id] = $divis[$id]['name'];
-            else
-                $data[$id] = "Unknown Division";
+            } else {
+                $data[$id] = 'Unknown Division';
+            }
         }
+
         return $data;
     }
 
     public static function segmentsId2Names($ids)
     {
-        if (count($ids) == 1 && empty($ids[0]))
-            return array(0 => "ALL");
-        $data = array();
+        if (count($ids) == 1 && empty($ids[0])) {
+            return [0 => 'ALL'];
+        }
+        $data = [];
         $segs = self::getSegments();
         foreach ($ids as $id) {
-            if (isset($segs[$id]))
+            if (isset($segs[$id])) {
                 $data[$id] = $segs[$id];
-            else
-                $data[$id] = "Unknown Segment";
+            } else {
+                $data[$id] = 'Unknown Segment';
+            }
         }
+
         return $data;
     }
 
     public static function cmodelsId2Names($ids)
     {
-        if (count($ids) == 1 && empty($ids[0]))
-            return array(0 => "ALL");
-        $data = array();
+        if (count($ids) == 1 && empty($ids[0])) {
+            return [0 => 'ALL'];
+        }
+        $data = [];
         $cms = self::getCustomModels();
         foreach ($ids as $id) {
-            if (isset($cms[$id]))
+            if (isset($cms[$id])) {
                 $data[$id] = $cms[$id]['name'];
-            else
-                $data[$id] = "Unknown Custom Model";
+            } else {
+                $data[$id] = 'Unknown Custom Model';
+            }
         }
+
         return $data;
     }
 
     public static function verticalsId2Names($ids)
     {
-        if (count($ids) == 1 && empty($ids[0]))
-            return array("ALL");
-        $data = array();
+        if (count($ids) == 1 && empty($ids[0])) {
+            return ['ALL'];
+        }
+        $data = [];
         $verticals = self::getVerticals();
         foreach ($ids as $id) {
-            if (isset($verticals[$id]))
+            if (isset($verticals[$id])) {
                 $data[$id] = $verticals[$id];
-            else
-                $data[$id] = "Unknown Vertical";
+            } else {
+                $data[$id] = 'Unknown Vertical';
+            }
         }
+
         return $data;
     }
 
     public static function branchesId2Names($ids)
     {
-       
-        if (count($ids) == 1 && $ids[0] != 0)
-            return array(0 => ['name' => "All"]);
-        $data = array();
+
+        if (count($ids) == 1 && $ids[0] != 0) {
+            return [0 => ['name' => 'All']];
+        }
+        $data = [];
         $branches = self::getBranches();
         foreach ($ids as $id) {
-            if (isset($branches[$id]))
+            if (isset($branches[$id])) {
                 $data[$id] = $branches[$id];
-            else
-                $data[$id] = ['name' => "Unknown"];
+            } else {
+                $data[$id] = ['name' => 'Unknown'];
+            }
         }
+
         return $data;
     }
 
     public static function locsId2Names($ids)
     {
-        if (count($ids) == 1 && empty($ids[0]))
-            return [0 =>  "ALL"];
-        $data = array();
+        if (count($ids) == 1 && empty($ids[0])) {
+            return [0 => 'ALL'];
+        }
+        $data = [];
         $locs = self::getLocations();
         foreach ($ids as $id) {
-            if (isset($locs[$id]))
+            if (isset($locs[$id])) {
                 $data[$id] = $locs[$id]['name'];
-            else
-                $data[$id] = array(999999 => "Unknown");
+            } else {
+                $data[$id] = [999999 => 'Unknown'];
+            }
         }
 
         return $data;
@@ -309,49 +335,55 @@ class XCommonHelper
     public static function getDepartments()
     {
 
-        $data = array();
+        $data = [];
         $tmp = X_Department::select('id', 'name', 'abbr')->where('status', 1)->get()->toArray();
         foreach ($tmp as $arr) {
-            $data[$arr['id']] = array('id' => $arr['id'], 'name' => $arr['name'], 'code' => $arr['abbr']);
+            $data[$arr['id']] = ['id' => $arr['id'], 'name' => $arr['name'], 'code' => $arr['abbr']];
         }
+
         return $data;
     }
 
     public static function getDivisions($dept = false)
     {
         $depts = self::getDepartments();
-        $data = array();
-        if ($dept)
+        $data = [];
+        if ($dept) {
             $tmp = X_Division::select('id', 'name', 'dept_id', 'abbr')->where('dept_id', $dept)->where('status', 1)->get()->toArray();
-        else
+        } else {
             $tmp = X_Division::select('id', 'name', 'dept_id', 'abbr')->where('status', 1)->get()->toArray();
-        foreach ($tmp as $arr) {
-            $data[$arr['id']] = array('id' => $arr['id'], 'name' => $arr['name'], 'dept_id' => $arr['dept_id'], 'department' => $depts[$arr['dept_id']]['name'], 'code' => $arr['abbr']);
         }
+        foreach ($tmp as $arr) {
+            $data[$arr['id']] = ['id' => $arr['id'], 'name' => $arr['name'], 'dept_id' => $arr['dept_id'], 'department' => $depts[$arr['dept_id']]['name'], 'code' => $arr['abbr']];
+        }
+
         return $data;
     }
 
     public static function getBranches()
     {
-        $data = array();
+        $data = [];
         $tmp = X_Branch::select('id', 'name', 'abbr')->where('status', 1)->get()->toArray();
         foreach ($tmp as $arr) {
-            $data[$arr['id']] = array('id' => $arr['id'], 'name' => $arr['name'], 'code' => $arr['abbr']);
+            $data[$arr['id']] = ['id' => $arr['id'], 'name' => $arr['name'], 'code' => $arr['abbr']];
         }
+
         return $data;
     }
 
     public static function getLocations($branch = false)
     {
         $branches = self::getBranches();
-        $data = array();
-        if ($branch)
+        $data = [];
+        if ($branch) {
             $tmp = X_Location::select('id', 'name', 'branch_id', 'abbr', 'demibranch')->where('branch_id', $branch)->where('status', 1)->get()->toArray();
-        else
+        } else {
             $tmp = X_Location::select('id', 'name', 'branch_id', 'abbr', 'demibranch')->where('status', 1)->get()->toArray();
-        foreach ($tmp as $arr) {
-            $data[$arr['id']] = array('id' => $arr['id'], 'name' => $arr['name'], 'branch_id' => $arr['branch_id'], 'branch' => $branches[$arr['branch_id']]['name'], 'code' => $arr['abbr'], 'demibranch' => $arr['demibranch']);
         }
+        foreach ($tmp as $arr) {
+            $data[$arr['id']] = ['id' => $arr['id'], 'name' => $arr['name'], 'branch_id' => $arr['branch_id'], 'branch' => $branches[$arr['branch_id']]['name'], 'code' => $arr['abbr'], 'demibranch' => $arr['demibranch']];
+        }
+
         return $data;
     }
 
@@ -359,24 +391,29 @@ class XCommonHelper
     {
         $tmp = X_Location::select('id', 'name')->where('spare_warehouse', 1)->get()->toArray();
         foreach ($tmp as $arr) {
-            $data[$arr['id']] = array('id' => $arr['id'], 'name' => $arr['name']);
+            $data[$arr['id']] = ['id' => $arr['id'], 'name' => $arr['name']];
         }
+
         return $data;
     }
+
     public static function getSpareConsumption()
     {
         $tmp = X_Location::select('id', 'name')->where('spare_consumption', 1)->get()->toArray();
         foreach ($tmp as $arr) {
-            $data[$arr['id']] = array('id' => $arr['id'], 'name' => $arr['name']);
+            $data[$arr['id']] = ['id' => $arr['id'], 'name' => $arr['name']];
         }
+
         return $data;
     }
+
     public static function getSpareStore()
     {
         $tmp = X_Location::select('id', 'name')->where('spare_store', 1)->get()->toArray();
         foreach ($tmp as $arr) {
-            $data[$arr['id']] = array('id' => $arr['id'], 'name' => $arr['name']);
+            $data[$arr['id']] = ['id' => $arr['id'], 'name' => $arr['name']];
         }
+
         return $data;
     }
 
@@ -387,50 +424,56 @@ class XCommonHelper
         foreach ($tmp as $arr) {
             $data[$arr['id']] = ['id' => $arr['id'], 'name' => $arr['name']];
         }
+
         return $data;
     }
 
     public static function getSegments()
     {
-        $data = array();
+        $data = [];
         $tmp = X_Segment::select('id', 'name')->where('status', 1)->get()->toArray();
         foreach ($tmp as $arr) {
             $data[$arr['id']] = $arr['name'];
         }
+
         return $data;
     }
 
     public static function getDesignations()
     {
-        $data = array();
+        $data = [];
         $tmp = X_Designation::select('id', 'name', 'abbr')->where('status', 1)->get()->toArray();
         foreach ($tmp as $arr) {
-            $data[$arr['id']] = array('id' => $arr['id'], 'name' => $arr['name'], 'code' => $arr['abbr']);
+            $data[$arr['id']] = ['id' => $arr['id'], 'name' => $arr['name'], 'code' => $arr['abbr']];
         }
+
         return $data;
     }
 
     public static function getVerticals()
     {
-        $data = array();
+        $data = [];
         $tmp = X_Vertical::select('id', 'name')->where('status', 1)->get()->toArray();
         foreach ($tmp as $arr) {
             $data[$arr['id']] = $arr['name'];
         }
+
         return $data;
     }
 
     public static function getCustomModels($seg = false)
     {
         $segments = self::getSegments();
-        $data = array();
-        if ($seg)
+        $data = [];
+        if ($seg) {
             $tmp = X_CustomModel::select('id', 'name', 'segment_id')->where('segment_id', $seg)->where('status', 1)->get()->toArray();
-        else
+        } else {
             $tmp = X_CustomModel::select('id', 'name', 'segment_id')->where('status', 1)->get()->toArray();
-        foreach ($tmp as $arr) {
-            $data[$arr['id']] = array('id' => $arr['id'], 'name' => $arr['name'], 'segment_id' => $arr['segment_id'], 'segment' => $segments[$arr['segment_id']]);
         }
+        foreach ($tmp as $arr) {
+            $data[$arr['id']] = ['id' => $arr['id'], 'name' => $arr['name'], 'segment_id' => $arr['segment_id'], 'segment' => $segments[$arr['segment_id']]];
+        }
+
         return $data;
     }
 
@@ -441,15 +484,16 @@ class XCommonHelper
         foreach ($ids as $dept) {
             $tds = X_Division::select('id', 'name', 'dept_id', 'abbr')->where('dept_id', $dept)->where('status', 1)->get()->toArray();
             foreach ($tds as $td) {
-                $divs[$td['id']] = array(
+                $divs[$td['id']] = [
                     'id' => $td['id'],
                     'name' => $td['name'],
                     'dept_id' => $td['dept_id'],
                     'code' => $td['abbr'],
-                    'department' => $depts[$td['dept_id']]
-                );
+                    'department' => $depts[$td['dept_id']],
+                ];
             }
         }
+
         return $divs;
     }
 
@@ -460,19 +504,18 @@ class XCommonHelper
         foreach ($ids as $br) {
             $tls = X_Location::select('id', 'name', 'branch_id', 'abbr')->where('branch_id', $br)->where('status', 1)->get()->toArray();
 
-            
             foreach ($tls as $tl) {
-            
-                $locs[$tl['id']] = array(
+
+                $locs[$tl['id']] = [
                     'id' => $tl['id'],
                     'name' => $tl['name'],
                     'branch_id' => $tl['branch_id'],
                     'code' => $tl['abbr'],
-                    'branch' => $branches[$tl['branch_id']]
-                );
+                    'branch' => $branches[$tl['branch_id']],
+                ];
             }
         }
-       
+
         return $locs;
     }
 
@@ -483,16 +526,13 @@ class XCommonHelper
         foreach ($ids as $seg) {
             $tcs = X_CustomModel::select('id', 'name', 'segment_id')->where('segment_id', $seg)->where('status', 1)->get()->toArray();
             foreach ($tcs as $tc) {
-                $cmodels[$tc['id']] = array('id' => $tc['id'], 'name' =>  $tc['name'], 'segment_id' => $tc['segment_id'], 'segment' => $segments[$tc['segment_id']]);
+                $cmodels[$tc['id']] = ['id' => $tc['id'], 'name' => $tc['name'], 'segment_id' => $tc['segment_id'], 'segment' => $segments[$tc['segment_id']]];
             }
         }
+
         return $cmodels;
     }
 
-
-
-
-    
     public static function getColId($col_name, $new = false)
     {
         $enum_cols = EnumCols::where('keyword', $col_name)->first();
@@ -500,11 +540,13 @@ class XCommonHelper
             return $enum_cols->id;
         } else {
             if ($new == true) {
-                $tr = new EnumCols();
+                $tr = new EnumCols;
                 $tr->name = $col_name;
                 $tr->save();
+
                 return $tr->id;
             }
+
             return false;
         }
     }
@@ -513,23 +555,24 @@ class XCommonHelper
     {
         $kwi = self::getColId($kw);
         if ($kwi) {
-            $vr = EnumMaster::where("master_id", $kwi)->where('value', $val)->first();
-            if ($vr)
+            $vr = EnumMaster::where('master_id', $kwi)->where('value', $val)->first();
+            if ($vr) {
                 return $vr->id;
-            else
+            } else {
                 return false;
+            }
         }
+
         return false;
     }
-
 
     /**
      * Retrieves the enumeration ID based on the column ID and value. If the enumeration does not
      * exist and the $new parameter is true, a new enumeration will be created.
      *
-     * @param int $col_id The ID of the column associated with the enumeration.
-     * @param mixed $value The value of the enumeration to retrieve.
-     * @param bool $new Indicates whether to create a new enumeration if it doesn't exist.
+     * @param  int  $col_id  The ID of the column associated with the enumeration.
+     * @param  mixed  $value  The value of the enumeration to retrieve.
+     * @param  bool  $new  Indicates whether to create a new enumeration if it doesn't exist.
      * @return int|false Returns the enumeration ID or false if not found and $new is false.
      */
     public static function getEnumId($col_id, $value, $new = false)
@@ -539,12 +582,14 @@ class XCommonHelper
             return $enum->id;
         } else {
             if ($new == true) {
-                $tr = new EnumMaster();
+                $tr = new EnumMaster;
                 $tr->value = $value;
                 $tr->master_id = $col_id;
                 $tr->save();
+
                 return $tr->id;
             }
+
             return false;
         }
     }
@@ -553,10 +598,10 @@ class XCommonHelper
      * Retrieves the enumeration ID based on the column ID, value, and parent ID recursively.
      * If the enumeration does not exist and the $new parameter is true, a new enumeration will be created.
      *
-     * @param int $col_id The ID of the column associated with the enumeration.
-     * @param mixed $value The value of the enumeration to retrieve.
-     * @param int $pid The parent ID for recursive retrieval.
-     * @param bool $new Indicates whether to create a new enumeration if it doesn't exist.
+     * @param  int  $col_id  The ID of the column associated with the enumeration.
+     * @param  mixed  $value  The value of the enumeration to retrieve.
+     * @param  int  $pid  The parent ID for recursive retrieval.
+     * @param  bool  $new  Indicates whether to create a new enumeration if it doesn't exist.
      * @return int|false Returns the enumeration ID or false if not found and $new is false.
      */
     public static function getEnumIdRecursive($col_id, $value, $pid = 0, $new = false)
@@ -568,15 +613,17 @@ class XCommonHelper
             $pr = EnumMaster::find($pid);
             if ($pr) {
                 if ($new == true) {
-                    $tr = new EnumMaster();
+                    $tr = new EnumMaster;
                     $tr->value = $value;
                     $tr->master_id = $col_id;
                     $tr->parent_id = $pid;
                     $tr->recursion_level = $pr->recursion_level + 1;
                     $tr->save();
+
                     return $tr->id;
                 }
             }
+
             return false;
         }
     }
@@ -584,7 +631,7 @@ class XCommonHelper
     /**
      * Retrieves the value of an enumeration based on its ID.
      *
-     * @param int $id The ID of the enumeration to retrieve.
+     * @param  int  $id  The ID of the enumeration to retrieve.
      * @return mixed|false Returns the value of the enumeration or false if not found.
      */
     public static function enumValById($id)
@@ -597,11 +644,10 @@ class XCommonHelper
         }
     }
 
-
     /**
      * Retrieves the enumeration data as an array based on its ID.
      *
-     * @param int $id The ID of the enumeration to retrieve.
+     * @param  int  $id  The ID of the enumeration to retrieve.
      * @return array|false Returns the enumeration data as an array or false if not found.
      */
     public static function dataById($id)
@@ -614,11 +660,10 @@ class XCommonHelper
         }
     }
 
-
     /**
      * Retrieves all enumeration values associated with a given keyword.
      *
-     * @param string $kw The keyword to search for in the enumeration columns.
+     * @param  string  $kw  The keyword to search for in the enumeration columns.
      * @return array|false Returns an array of enumeration values indexed by their IDs or false if not found.
      */
     public static function valsByKW($kw)
@@ -630,8 +675,10 @@ class XCommonHelper
             foreach ($enums as $enum) {
                 $data[$enum->id] = $enum->value;
             }
+
             return $data;
-        } else
+        } else {
             return false;
+        }
     }
 }

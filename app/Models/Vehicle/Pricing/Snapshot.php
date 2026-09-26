@@ -27,19 +27,13 @@ class Snapshot extends BaseModel
         'deleted_by',
     ];
 
-    protected $casts;
-
-    public function __construct(array $attributes = [])
+    protected function casts(): array
     {
-        parent::__construct($attributes);
-        $this->casts = array_merge($this->casts ?? [], [
-            'payload'    => 'array',
-            'is_active'  => 'boolean',
-            'wef_date'   => 'date',
+        return array_merge(parent::casts(), [
+            'payload' => 'array',
+            'is_active' => 'boolean',
+            'wef_date' => 'date',
             'expired_on' => 'date',
-            'created_at' => 'datetime',
-            'updated_at' => 'datetime',
-            'deleted_at' => 'datetime',
         ]);
     }
 

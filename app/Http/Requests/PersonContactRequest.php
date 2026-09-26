@@ -3,11 +3,16 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class PersonContactRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
+     *
+     * Permission-level authorization (person.create / person.edit — no
+     * dedicated person_contact.* permission exists) is enforced explicitly
+     * in PersonContactCrudController.
      *
      * @return bool
      */
@@ -19,12 +24,37 @@ class PersonContactRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
+     * Shared between store() and update() — the route's {id} is the
+     * contact's numeric id, used to exclude the current row from the
+     * per-person/data-type/contact-type uniqueness check on update.
+     *
      * @return array
      */
     public function rules()
     {
+        $currentId = $this->route('id');
+
         return [
-            // 'name' => 'required|min:5|max:255'
+            'person_code' => 'required|exists:xlr8_admin_person,person_code',
+
+            'data_type' => 'required|in:Mobile,Email,Landline,Fax',
+
+            'contact_type' => [
+                'required',
+                'in:Primary,Alternate,Office,Home,Emergency',
+
+                Rule::unique('xlr8_admin_person_contacts')
+                    ->ignore($currentId)
+                    ->where(function ($query) {
+                        return $query
+                            ->where('person_code', $this->person_code)
+                            ->where('data_type', $this->data_type)
+                            ->where('contact_type', $this->contact_type)
+                            ->whereNull('deleted_at');
+                    }),
+            ],
+
+            'contact_detail' => 'required|string|max:100',
         ];
     }
 
@@ -36,7 +66,10 @@ class PersonContactRequest extends FormRequest
     public function attributes()
     {
         return [
-            //
+            'person_code' => __('org.fields.person_code'),
+            'data_type' => __('org.fields.data_type'),
+            'contact_type' => __('org.fields.contact_type'),
+            'contact_detail' => __('org.fields.contact_detail'),
         ];
     }
 
@@ -48,7 +81,7 @@ class PersonContactRequest extends FormRequest
     public function messages()
     {
         return [
-            //
+            'contact_type.unique' => 'This contact type already exists for the selected person and data type.',
         ];
     }
 }

@@ -63,7 +63,7 @@ class XlDelivery extends BaseModel  implements HasMedia
         foreach ($collections as $collection) {
             $this->addMediaCollection($collection)
                 ->singleFile()
-                ->registerMediaConversions(function (Media $media = null) {
+                ->registerMediaConversions(function (?Media $media = null) {
                     $this->addMediaConversion('thumb250')
                         ->width(250)
                         ->height(250);

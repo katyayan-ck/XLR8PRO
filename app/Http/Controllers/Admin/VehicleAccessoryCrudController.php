@@ -1,26 +1,25 @@
-<?php 
-
+<?php
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exports\VehicleAccessoriesExport;
+use App\Imports\VehicleAccessoriesImport;
+use App\Models\Core\ExportLog;
+use App\Models\Core\ImportLog;
+use App\Models\Vehicle\Accessory;
+use App\Services\Vehicle\AccessoryExportService;
+use App\Services\Vehicle\AccessoryImportService;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Models\Vehicle\Accessory;
-use App\Models\ImportLog;
-use App\Models\ExportLog;
-use App\Imports\VehicleAccessoriesImport;
-use App\Exports\VehicleAccessoriesExport;
-use App\Services\Vehicle\AccessoryImportService;
-use App\Services\Vehicle\AccessoryExportService;
 
 class VehicleAccessoryCrudController extends CrudController
 {
     public function setup(): void
     {
         CRUD::setModel(Accessory::class);
-        CRUD::setRoute(config('backpack.base.route_prefix') . '/vehicle-accessory');
+        CRUD::setRoute(config('backpack.base.route_prefix').'/vehicle-accessory');
         CRUD::setEntityNameStrings('vehicle accessory', 'vehicle accessories');
     }
 
@@ -65,7 +64,7 @@ class VehicleAccessoryCrudController extends CrudController
 
     public function export(Request $request)
     {
-        $filename = 'vehicle_accessories_' . now()->format('Y_m_d_H_i_s') . '.xlsx';
+        $filename = 'vehicle_accessories_'.now()->format('Y_m_d_H_i_s').'.xlsx';
 
         return Excel::download(
             new VehicleAccessoriesExport(app(AccessoryExportService::class), true),
@@ -81,12 +80,14 @@ class VehicleAccessoryCrudController extends CrudController
     public function importHistory()
     {
         $logs = ImportLog::where('importtype', 'custom')->latest('id')->paginate(20);
+
         return view('admin.vehicle-accessory.import-history', compact('logs'));
     }
 
     public function exportHistory()
     {
         $logs = ExportLog::where('exporttype', 'custom')->latest('id')->paginate(20);
+
         return view('admin.vehicle-accessory.export-history', compact('logs'));
     }
 }

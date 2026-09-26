@@ -2,11 +2,11 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\IAM\DeviceSession;
+use App\Models\IAM\OtpAttemptLog;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
-use App\Models\Core\DeviceSession;
-use App\Models\Core\OtpAttemptLog;
 
 class ValidateDevice
 {
@@ -14,7 +14,7 @@ class ValidateDevice
     {
         $user = $request->user('sanctum');
 
-        if (!$user) {
+        if (! $user) {
             return response()->json([
                 'http_status' => 401,
                 'success' => false,
@@ -25,7 +25,7 @@ class ValidateDevice
 
         $token = $user->currentAccessToken();
 
-        if (!$token) {
+        if (! $token) {
             return response()->json([
                 'http_status' => 401,
                 'success' => false,
@@ -44,7 +44,7 @@ class ValidateDevice
             }
         }
 
-        if (!$deviceId) {
+        if (! $deviceId) {
             return response()->json([
                 'http_status' => 401,
                 'success' => false,
@@ -58,10 +58,10 @@ class ValidateDevice
             ->whereNull('deleted_at')
             ->first();
 
-        if (!$deviceSession) {
+        if (! $deviceSession) {
             OtpAttemptLog::create([
                 'user_id' => $user->id,
-                'mobile' => $user->phone,
+                'mobile' => (string) ($user->primary_mobile ?? ''),
                 'action' => 'locked',
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),

@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Module\Spare;
 
+use App\Models\BaseModel;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class XlSpareConsumed extends BaseModel
@@ -11,6 +12,7 @@ class XlSpareConsumed extends BaseModel
     protected $table = 'xlr8_spare_consumption';
 
     protected $fillable = [];
+
     protected $guarded = ['id'];
 
     public function partMaster()
@@ -32,10 +34,11 @@ class XlSpareConsumed extends BaseModel
     {
         if ($searchValue) {
             $query->whereHas('partMaster', function ($q) use ($searchValue) {
-                $q->where('part_no', 'like', '%' . $searchValue . '%')
-                    ->orWhere('name', 'like', '%' . $searchValue . '%');
+                $q->where('part_no', 'like', '%'.$searchValue.'%')
+                    ->orWhere('name', 'like', '%'.$searchValue.'%');
             });
         }
+
         return $query;
     }
 
@@ -46,6 +49,7 @@ class XlSpareConsumed extends BaseModel
                 $q->where('category_id', $partCategory);
             });
         }
+
         return $query;
     }
 
@@ -56,6 +60,7 @@ class XlSpareConsumed extends BaseModel
                 $q->where('division_id', $productDivision);
             });
         }
+
         return $query;
     }
 }

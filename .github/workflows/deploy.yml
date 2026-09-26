@@ -32,28 +32,27 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
-          script_stop: true # Fails pipeline instantly if any step returns an error code
+          script_stop: true # Fails the pipeline instantly if any console step errors out
           script: |
             echo "Starting deployment loop for target: ${{ steps.env-setup.outputs.env_name }}"
             
-            # Navigate to the environment directory
+            # Navigate to the core project directory (where Git and Composer live)
             cd ${{ steps.env-setup.outputs.dir }}
             
-            # Step A: Enter Maintenance Mode safely to prevent active user traffic errors
+            # Step A: Place site into maintenance mode safely via the public target hook
             php artisan down || true
             
-            # Step B: Sync directory working tree hard against matching GitHub branch
+            # Step B: Synchronize working tree hard against incoming branch commits
             git fetch origin
             git reset --hard origin/${{ github.ref_name }}
             
-            # Step C: Dynamic Composer Updates and Dependency Realignment
+            # Step C: Complete Core Base Composer Installation Engine
             composer install --no-interaction --prefer-dist --optimize-autoloader
-            composer dump-autoload
             
-            # Step D: Run Database Alterations and Clear Compilation Cache Footprints
-            php artisan migrate --force
-            php artisan optimize:clear
+            # Step D: Make the developer hook script executable and trigger it dynamically
+            chmod +x deploy-hook.sh
+            ./deploy-hook.sh
             
-            # Step E: Bring Application back online smoothly
+            # Step E: Bring the server application environment back online smoothly
             php artisan up
             echo "Deployment successfully executed!"

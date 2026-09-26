@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Module\Spare;
 
+use App\Models\BaseModel;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use DataTables, Auth;
 
 class XlSpareClosure extends BaseModel
 {
@@ -13,6 +13,7 @@ class XlSpareClosure extends BaseModel
      * @var string
      */
     use SoftDeletes;
+
     protected $table = 'xlr8_spare_closure';
 
     /**
@@ -22,8 +23,8 @@ class XlSpareClosure extends BaseModel
      *
      * @var array
      */
-
     protected $fillable = [];
+
     protected $guarded = ['id'];
     /**
      * The attributes excluded from the model's JSON form.

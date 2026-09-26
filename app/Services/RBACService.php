@@ -2,18 +2,30 @@
 
 namespace App\Services;
 
+use App\Models\Admin\Branch;
+use App\Models\Admin\Department;
+use App\Models\Admin\Designation;
+use App\Models\Admin\Division;
+use App\Models\Admin\Location;
+use App\Models\Admin\Vertical;
+use App\Models\IAM\UserRoleAssignment;
 use App\Models\User;
-use App\Models\UserDataScope;
-use Illuminate\Database\Eloquent\Builder;
+use App\Models\Vehicle\Brand;
+use App\Models\Vehicle\Color;
+use App\Models\Vehicle\Segment;
+use App\Models\Vehicle\SubSegment;
+use App\Models\Vehicle\Variant;
+use App\Models\Vehicle\VehicleModel;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 /**
  * RBACService - Role-Based Access Control Service
- * 
+ *
  * Centralized RBAC management including permission checking,
  * role assignment, and wildcard access handling.
- * 
- * @package App\Services
  */
 class RBACService
 {
@@ -21,11 +33,9 @@ class RBACService
 
     /**
      * Check if user can access a specific resource/action
-     * 
-     * @param User $user
-     * @param string $resource Resource name (e.g., 'branch', 'employee')
-     * @param string $action Action name (e.g., 'view', 'create', 'edit', 'delete')
-     * @return bool
+     *
+     * @param  string  $resource  Resource name (e.g., 'branch', 'employee')
+     * @param  string  $action  Action name (e.g., 'view', 'create', 'edit', 'delete')
      */
     public function canUserAccess(
         User $user,
@@ -46,8 +56,7 @@ class RBACService
 
     /**
      * Get all permissions for a user from multiple sources
-     * 
-     * @param User $user
+     *
      * @return array Array of permission names
      */
     public function getUserPermissions(User $user): array
@@ -85,7 +94,7 @@ class RBACService
 
                 // From user role assignments (with temporal checking)
                 foreach ($user->userRoleAssignments as $assignment) {
-                    if (!$assignment->isActive()) {
+                    if (! $assignment->isActive()) {
                         continue;
                     }
 
@@ -102,18 +111,16 @@ class RBACService
 
     /**
      * Grant permission to user
-     * 
-     * @param User $user
-     * @param string $permission Permission name (e.g., 'branch.edit')
-     * @param string $grantedBy Who granted this permission
-     * @return bool
+     *
+     * @param  string  $permission  Permission name (e.g., 'branch.edit')
+     * @param  string  $grantedBy  Who granted this permission
      */
     public function grantPermission(
         User $user,
         string $permission,
         string $grantedBy = 'manual'
     ): bool {
-        $perm = \Spatie\Permission\Models\Permission::firstOrCreate(
+        $perm = Permission::firstOrCreate(
             ['name' => $permission, 'guard_name' => 'web']
         );
 
@@ -127,10 +134,6 @@ class RBACService
 
     /**
      * Revoke permission from user
-     * 
-     * @param User $user
-     * @param string $permission
-     * @return bool
      */
     public function revokePermission(User $user, string $permission): bool
     {
@@ -144,9 +147,6 @@ class RBACService
 
     /**
      * Check if user has wildcard access (SuperAdmin)
-     * 
-     * @param User $user
-     * @return bool
      */
     public function hasWildcardAccess(User $user): bool
     {
@@ -154,13 +154,23 @@ class RBACService
     }
 
     /**
-     * Assign role to user with optional date range
-     * 
-     * @param User $user
-     * @param string|\Spatie\Permission\Models\Role $role Role name or instance
-     * @param \DateTime|null $fromDate Start date for role assignment
-     * @param \DateTime|null $toDate End date for role assignment
-     * @return \App\Models\UserRoleAssignment
+     * Assign an ADDITIONAL role to a user for a given date range (e.g. a
+     * temporary "additional charge"), on top of whatever role they already
+     * have — this does not replace their primary role. Was previously a
+     * complete no-op for real access control: it only wrote to
+     * \App\Models\Core\UserRoleAssignment, a class that doesn't exist (the
+     * real model is \App\Models\IAM\UserRoleAssignment), and even if that
+     * were fixed, that table is a separate temporal-history record that
+     * nothing in the permission-checking path reads — see
+     * known-bugs-report.md BUG-071. Now does both: the temporal history
+     * record AND the real Spatie grant that actually affects `->can()`.
+     *
+     * @param  string|Role  $role  Role name or instance
+     * @param  \DateTime|null  $fromDate  Start date for role assignment
+     * @param  \DateTime|null  $toDate  End date for role assignment — NOTE: nothing currently
+     *                                  revokes the real Spatie grant automatically when this date
+     *                                  passes; that would need a scheduled job, not built yet.
+     * @return UserRoleAssignment
      */
     public function assignRole(
         User $user,
@@ -170,10 +180,13 @@ class RBACService
     ) {
         // Get role instance if string provided
         if (is_string($role)) {
-            $role = \Spatie\Permission\Models\Role::where('name', $role)->firstOrFail();
+            $role = Role::where('name', $role)->firstOrFail();
         }
 
-        return \App\Models\Core\UserRoleAssignment::create([
+        $user->assignRole($role);
+        $this->clearUserPermissionCache($user);
+
+        return UserRoleAssignment::create([
             'user_id' => $user->id,
             'role_id' => $role->id,
             'from_date' => $fromDate ?? now(),
@@ -184,10 +197,8 @@ class RBACService
 
     /**
      * Remove role from user
-     * 
-     * @param User $user
-     * @param string|\Spatie\Permission\Models\Role $role
-     * @return bool
+     *
+     * @param  string|Role  $role
      */
     public function removeRole(User $user, $role): bool
     {
@@ -201,10 +212,9 @@ class RBACService
 
     /**
      * Get all accessible resources for user filtered by scopes
-     * 
-     * @param User $user
-     * @param string $resourceType Type of resource (branch, department, etc.)
-     * @return \Illuminate\Database\Eloquent\Collection
+     *
+     * @param  string  $resourceType  Type of resource (branch, department, etc.)
+     * @return Collection
      */
     public function getAccessibleResources(
         User $user,
@@ -212,6 +222,7 @@ class RBACService
     ) {
         if ($user->isSuperAdmin()) {
             $modelClass = $this->getModelClassForResourceType($resourceType);
+
             return $modelClass::active()->get();
         }
 
@@ -239,25 +250,22 @@ class RBACService
 
     /**
      * Get model class for resource type
-     * 
-     * @param string $resourceType
-     * @return string
      */
     private function getModelClassForResourceType(string $resourceType): string
     {
         $mapping = [
-            'branch' => \App\Models\Admin\Branch::class,
-            'location' => \App\Models\Core\Location::class,
-            'department' => \App\Models\Core\Department::class,
-            'division' => \App\Models\Admin\Division::class,
-            'designation' => \App\Models\Admin\Designation::class,
-            'vertical' => \App\Models\Core\Vertical::class,
-            'brand' => \App\Models\Core\Brand::class,
-            'segment' => \App\Models\Core\Segment::class,
-            'subsegment' => \App\Models\Core\SubSegment::class,
-            'vehiclemodel' => \App\Models\Core\VehicleModel::class,
-            'variant' => \App\Models\Core\Variant::class,
-            'color' => \App\Models\Core\Color::class,
+            'branch' => Branch::class,
+            'location' => Location::class,
+            'department' => Department::class,
+            'division' => Division::class,
+            'designation' => Designation::class,
+            'vertical' => Vertical::class,
+            'brand' => Brand::class,
+            'segment' => Segment::class,
+            'subsegment' => SubSegment::class,
+            'vehiclemodel' => VehicleModel::class,
+            'variant' => Variant::class,
+            'color' => Color::class,
         ];
 
         return $mapping[$resourceType] ?? throw new \InvalidArgumentException(
@@ -267,9 +275,6 @@ class RBACService
 
     /**
      * Clear permission cache for user
-     * 
-     * @param User $user
-     * @return void
      */
     public function clearUserPermissionCache(User $user): void
     {
@@ -278,24 +283,20 @@ class RBACService
 
     /**
      * Check if permission exists in system
-     * 
-     * @param string $permission
-     * @return bool
      */
     public function permissionExists(string $permission): bool
     {
-        return \Spatie\Permission\Models\Permission::where('name', $permission)->exists();
+        return Permission::where('name', $permission)->exists();
     }
 
     /**
      * Get all available permissions for a module
-     * 
-     * @param string $module Module name
-     * @return array
+     *
+     * @param  string  $module  Module name
      */
     public function getModulePermissions(string $module): array
     {
-        return \Spatie\Permission\Models\Permission::where('name', 'like', "{$module}.%")
+        return Permission::where('name', 'like', "{$module}.%")
             ->pluck('name')
             ->toArray();
     }

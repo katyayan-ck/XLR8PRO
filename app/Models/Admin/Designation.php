@@ -2,17 +2,17 @@
 
 namespace App\Models\Admin;
 
+use App\Models\Traits\HasColumnTransformations;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
-use Spatie\Permission\Models\Role as SpatieRole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
-use App\Models\Traits\HasColumnTransformations;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Permission\Models\Role as SpatieRole;
 
 class Designation extends SpatieRole implements HasMedia
 {
-    use CrudTrait, HasFactory, InteractsWithMedia, HasColumnTransformations, SoftDeletes;
+    use CrudTrait, HasColumnTransformations, HasFactory, InteractsWithMedia, SoftDeletes;
 
     protected $table = 'xlr8_admin_designation';
 
@@ -33,14 +33,14 @@ class Designation extends SpatieRole implements HasMedia
     ];
 
     protected $casts = [
-        'is_active'   => 'boolean',
+        'is_active' => 'boolean',
         'is_top_mgmt' => 'boolean',
     ];
 
     protected array $columnTransformations = [
-        'code'              => ['trim', 'uppercase_alphanumeric_dash_underscore'],
+        'code' => ['trim', 'uppercase_alphanumeric_dash_underscore'],
         'parent_desig_code' => ['trim', 'uppercase_alphanumeric_dash_underscore'],
-        'name'              => ['trim_spaces', 'title_case'],
+        'name' => ['trim_spaces', 'title_case'],
     ];
 
     public function getRouteKeyName(): string
@@ -54,6 +54,7 @@ class Designation extends SpatieRole implements HasMedia
         if (app()->runningInConsole()) {
             return config('app.system_user_id');
         }
+
         return auth()->check() ? auth()->id() : null;
     }
 
@@ -94,7 +95,7 @@ class Designation extends SpatieRole implements HasMedia
 
         // ── Parent Designation Validation ─────────────────────────────
         static::saving(function (self $model): void {
-            if (!empty($model->parent_desig_code)) {
+            if (! empty($model->parent_desig_code)) {
 
                 // 1. Prevent self-parenting
                 if ($model->parent_desig_code === $model->code) {
@@ -103,10 +104,10 @@ class Designation extends SpatieRole implements HasMedia
 
                 // 2. Check if parent exists
                 $exists = static::where('code', $model->parent_desig_code)
-                    ->when($model->exists, fn($q) => $q->where('id', '!=', $model->id))
+                    ->when($model->exists, fn ($q) => $q->where('id', '!=', $model->id))
                     ->exists();
 
-                if (!$exists) {
+                if (! $exists) {
                     throw new \InvalidArgumentException(
                         "Parent designation code '{$model->parent_desig_code}' does not exist."
                     );
@@ -139,10 +140,14 @@ class Designation extends SpatieRole implements HasMedia
         $depth = 0;
 
         while ($current && $depth < 50) {
-            if (in_array($current, $visited, true)) return true;
+            if (in_array($current, $visited, true)) {
+                return true;
+            }
             $visited[] = $current;
 
-            if ($current === $this->code) return true;
+            if ($current === $this->code) {
+                return true;
+            }
 
             $current = static::where('code', $current)->value('parent_desig_code');
             $depth++;
@@ -158,6 +163,18 @@ class Designation extends SpatieRole implements HasMedia
         $this->addMediaCollection('designation_image')
             ->singleFile()
             ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp'])
+            ->useDisk('public');
+
+        // Designation extends Spatie's Role, not BaseModel, so it doesn't inherit
+        // BaseModel::registerMediaCollections()'s 'documents' collection for free.
+        $this->addMediaCollection('documents')
+            ->acceptsMimeTypes([
+                'application/pdf',
+                'image/jpeg',
+                'image/png',
+                'application/msword',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            ])
             ->useDisk('public');
     }
 
@@ -175,7 +192,7 @@ class Designation extends SpatieRole implements HasMedia
 
     public function employees()
     {
-        return $this->hasMany(\App\Models\Admin\Employee::class, 'designation_code', 'code');
+        return $this->hasMany(Employee::class, 'designation_code', 'code');
     }
 
     // ACCESSORS

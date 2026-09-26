@@ -3,47 +3,40 @@
 namespace App\Services;
 
 use App\Models\User;
-use App\Models\Utilities\Docs\Document;
-use App\Models\Utilities\Docs\DocGroup;
 use App\Models\Utilities\Docs\DocAccess;
-use App\Services\KeywordValueService;
-use App\Services\EntityHistoryService;
-use App\Services\NotificationService;
-use App\Services\RBACService;
-use App\Services\DataScopeService;
-use App\Services\ApprovalService;
-use App\Services\SystemSettingService;
+use App\Models\Utilities\Docs\DocGroup;
+use App\Models\Utilities\Docs\Document;
+use App\Services\Utils\EntityHistoryService;
 use Google\Cloud\Vision\V1\ImageAnnotatorClient;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Laravel\Scout\Searchable;
-use Maatwebsite\Excel\Facades\Excel;
 use Throwable;
 use ZipArchive;
 
 class DocService
 {
     protected $historyService;
+
     protected $notificationService;
+
     protected $rbacService;
-    protected $dataScopeService;
+
     protected $approvalService;
+
     protected $settingService;
 
     public function __construct(
         EntityHistoryService $historyService,
         NotificationService $notificationService,
         RBACService $rbacService,
-        DataScopeService $dataScopeService,
         ApprovalService $approvalService,
         SystemSettingService $settingService
     ) {
         $this->historyService = $historyService;
         $this->notificationService = $notificationService;
         $this->rbacService = $rbacService;
-        $this->dataScopeService = $dataScopeService;
         $this->approvalService = $approvalService;
         $this->settingService = $settingService;
     }
@@ -100,7 +93,7 @@ class DocService
 
     private function getAiTags(string $path): array
     {
-        $client = new ImageAnnotatorClient();
+        $client = new ImageAnnotatorClient;
         $image = file_get_contents($path);
         $response = $client->labelDetection($image);
         $labels = $response->getLabelAnnotations();
@@ -112,21 +105,22 @@ class DocService
             }
         }
         $client->close();
+
         return $tags;
     }
 
     public function hasAccess(User $user, Document $doc): bool
     {
-        if ($doc->created_by === $user->id) return true;
+        if ($doc->created_by === $user->id) {
+            return true;
+        }
 
-        if (DocAccess::where('document_id', $doc->id)->where('user_id', $user->id)->exists()) return true;
+        if (DocAccess::where('document_id', $doc->id)->where('user_id', $user->id)->exists()) {
+            return true;
+        }
 
-        if ($this->rbacService->canUserAccess($user, 'document', 'view')) return true;
-
-        if ($doc->documentable) {
-            $scopes = $this->dataScopeService->getUserScopes($user, get_class($doc->documentable));
-            // Implement combo match logic
-            return true;  // Placeholder
+        if ($this->rbacService->canUserAccess($user, 'document', 'view')) {
+            return true;
         }
 
         if ($doc->documentable && method_exists($doc->documentable, 'hasAccess')) {
@@ -157,7 +151,7 @@ class DocService
 
     public function downloadGroupZip(DocGroup $group): string
     {
-        $zipPath = storage_path('app/temp/' . Str::uuid() . '.zip');
+        $zipPath = storage_path('app/temp/'.Str::uuid().'.zip');
         $zip = new ZipArchive;
         $zip->open($zipPath, ZipArchive::CREATE);
 
@@ -168,6 +162,7 @@ class DocService
         }
 
         $zip->close();
+
         return $zipPath;
     }
 

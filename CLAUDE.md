@@ -1,4 +1,93 @@
 <laravel-boost-guidelines>
+=== .ai/00-project rules ===
+
+# Xceler8 (XLRM) — project context
+
+**What:** BMPL's dealership management system (DMS): enquiries → quotations (with approvals) → bookings
+(KYC, DMS, finance, insurance, RTO, exchange, delivery, refunds, OTF) → accounts, plus vehicle master &
+pricing, org/HR/IAM, spares, and shared platform utilities.
+
+**Two tracks (see `docs/decisions/decision-log.md` DEC-001):**
+- **Track A — this repo (`xlrm`)**: live app, stabilised for UAT. Laravel 12, PHP 8.4, Backpack 7
+  (Tabler, no PRO), MySQL 8.4, Spatie permission/medialibrary, Sanctum API (mobile app consumer).
+  **Do not add Filament here.**
+- **Track B — `D:\laragon\www\xceler8`**: greenfield rebuild (Laravel 13, Filament 5, modular monolith)
+  with an ETL toolkit so this app's data migrates at switch-over.
+
+**Golden rules**
+1. Read the real file before changing it; match existing contracts. Grep before writing new logic —
+   the SSOT services are listed in `.ai/rules/services.md`.
+2. Models own data access, Services own business logic, Controllers stay thin (validate → service → respond).
+3. Business keys are code-based (`person_code`, `branch_code`, `segment_code`…), not integer FKs.
+4. Never query KeyValue/org tables directly — use `KeywordValueService` / `OrgService` (cached).
+5. Never guess a business rule or override a locked spec — stop and ask. Specs: `.ai/knowledge/specs/index.md`.
+6. Every decision is logged in `docs/decisions/decision-log.md` (DEC-NNN) **before** the change.
+7. Tests never touch `xlrm` — they run on `xlrm_testing` (`php artisan testing:refresh-db`).
+
+**Where context lives** (load only what the task needs — see `.ai/README.md`):
+`.ai/rules/` (auto-loaded by path) · `.ai/skills/` (on demand) · `.ai/knowledge/` (read when linked,
+incl. generated DB schema cards in `knowledge/db/`) · `.ai/state/current.md` (active work) ·
+`.ai/state/bugs-index.md` (open bugs; full tracker `docs/refactor/known-bugs-report.md` is grep-only).
+
+=== .ai/10-workflow rules ===
+
+# Workflow (all AI tools)
+
+**Git**
+- Never work on `main`. Branches: `feature/*` or `refactor/*` (current integration branch: `feature/integrations`).
+- Commit at checkpoints with `type(scope): message` (feat, fix, refactor, docs, test, chore, security).
+  **Never push, force-push or rewrite history without explicit approval in that turn.**
+
+**Stop and ask (never decide alone)** — the user approves high-risk items explicitly:
+history rewrite/push · any non-local DB operation · destructive changes to real data (drop tables/columns
+with rows, irreversible type changes, mass remaps) · deleting tracked files outside an approved list ·
+environment/machine changes · new or major-upgraded dependencies · business-rule ambiguity or locked-spec
+conflict · auth/permission/secret changes · UAT-visible behaviour changes beyond an obvious bug fix.
+
+**Logging (mandatory)**
+- Decision → `docs/decisions/decision-log.md` (DEC-NNN, append-only, written before the change).
+- Change → `docs/refactor/ai-changelogs-DD-MM-YYYY.md` (files, before → after, reason, DEC id).
+- New bug found anywhere → `docs/refactor/known-bugs-report.md` immediately (BUG-NNN; never delete
+  entries; update status in place; keep the index table current). Check `.ai/state/bugs-index.md` first.
+
+**Quality gates (every change)**
+1. `php -l` on touched files; `vendor/bin/pint --dirty --format agent`.
+2. Scoped `vendor/bin/phpstan analyse <files> --memory-limit=2G`.
+3. `php artisan test --compact` (or the narrowest relevant `--filter`) — runs on `xlrm_testing`.
+   Known pre-existing failures are listed in `.ai/state/current.md`; don't add new ones.
+4. HTTP smoke of touched screens as superadmin **and** a scoped non-superadmin user.
+
+**Database**
+- Schema changes are **Laravel migrations** (guarded with `Schema::hasColumn/hasTable`, working `down()`),
+  run on local only. Never `dropIfExists` a live table. Other environments get migrations via deploy.
+- Refresh the test copy after local schema/data changes: `php artisan testing:refresh-db --force`.
+
+**Output**
+- Full files when creating; precise edits when changing. No placeholder "rest unchanged" code.
+- Don't create documentation files unless asked or required by this workflow.
+
+=== .ai/20-architecture rules ===
+
+# Architecture essentials
+
+- **Layers:** Controller (FormRequest validation, permission check, call one service, shape response) →
+  Service (`App\Services\{Module}\{Process}\*Service`, business logic, transactions, cross-model work) →
+  Model (extends `App\Models\BaseModel`: soft deletes, audit actor stamping, media, generic scopes).
+- **Hierarchy:** Module → Process → Activity. Permission = `{MOD}_{PROC}_{ACT}` (e.g. `SLS_BKNG_KYC`),
+  minted with `guard_name = 'web'`. Route name `module.process.activity`, URI kebab-case under
+  `/admin/{module}/{process}/…`. Codes and the module table: `.ai/rules/admin-backpack.md`.
+- **Authorization:** inline `if (! backpack_user()->can('CODE')) abort(403);` as the first statement of each
+  admin action (see the hook-timing trap in `.ai/rules/admin-backpack.md`). API: `auth:sanctum` +
+  `validate_device`; Spatie `role`/`permission` middleware aliases are registered. SuperAdmin bypass is a
+  Gate `before` hook in `AppServiceProvider`. Roles **are** designations (`xlr8_admin_designation`).
+- **Data scoping:** `App\Services\IAM\DataScopeService` on `xlr8_admin_user_scopes`; `ScopedQuery`/`ScopedCrud`
+  exist but are not yet switched on (decision pending). Jobs must not depend on a user scope.
+- **API envelope:** `{http_status, success, code, message, data}` via `BaseController` helpers.
+- **Dates:** stored UTC; displayed with `site_date()` / `@sitedate` (site setting `display.date_format`).
+- **Labels:** `resources/lang/en/{module}.php` is the single source for field labels & validation names.
+- **Money:** new columns `DECIMAL(15,2)`; legacy varchar money is being normalised (DEC-003).
+- **Every job** sets `$timeout`, `$tries`, and implements `failed()`.
+
 === foundation rules ===
 
 # Laravel Boost Guidelines
@@ -7,7 +96,7 @@ The Laravel Boost guidelines are specifically curated by Laravel maintainers for
 
 ## Foundational Context
 
-This application is a Laravel application running on PHP 8.3. You are an expert with the Laravel ecosystem. Always use the APIs that match the installed major version of each package — do not assume a version.
+This application is a Laravel application running on PHP 8.4. You are an expert with the Laravel ecosystem. Always use the APIs that match the installed major version of each package — do not assume a version.
 
 Before relying on a package's API, confirm its installed version:
 - PHP packages: run `composer show --direct` to list direct dependencies with versions, or `composer show <vendor/package>` for a single package.
@@ -194,293 +283,9 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 
 === backpack/crud/backpack-crud rules ===
 
-# Backpack for Laravel
+# Backpack (admin panel, Track A)
 
-## Getting Started
-
-- When helping a user set up Backpack for the first time, always check if the storage symlink exists. Run `php artisan storage:link -q` if `public/storage` is missing — otherwise uploads and assets will silently break.
-- If the user reports broken images, missing CSS, or upload fields not working, the storage symlink is the first thing to check.
-
-## Paid Features — Check Before Using
-
-**CRITICAL: Before generating code that uses any PRO or paid feature, check if the required package is installed.** Never assume the user has access to paid packages. If a package is missing, stop and tell the user — do NOT attempt to install it yourself.
-
-### How to check
-
-- Read the project's `composer.json` and look for the package in `require` or `require-dev`.
-- Or check if the vendor directory exists (e.g., `vendor/backpack/pro/composer.json`).
-
-### Paid packages and their features
-
-| Package | Provides |
-|---------|----------|
-| `backpack/pro` | PRO fields (select2, select2_from_ajax, relationship, repeatable, dropzone, etc.), PRO columns, ALL filters, FetchOperation, CloneOperation, BulkDeleteOperation, BulkCloneOperation, InlineCreateOperation, TrashOperation, AjaxUploadOperation, CustomViewOperation, chart widgets |
-| `backpack/editable-columns` | Inline editing in the List view (`MinorUpdateOperation`, `editable_text`, `editable_select`, etc.) |
-| `backpack/dataform-modal` | Modal Create/Update forms (`CreateInModalOperation`, `UpdateInModalOperation`) |
-| `backpack/devtools` | Web UI for generating migrations, models, CRUDs |
-| `backpack/report-operation` | Dashboard with stat/chart metrics per entity |
-| `backpack/test-generators` | Auto-generate tests for CrudControllers |
-| `backpack/calendar-operation` | Calendar interface for date-based entries |
-| `backpack/auto-translate` | Auto-translate content to multiple languages |
-
-### If a paid package is not installed
-
-When a user asks to install a paid package (e.g., "install backpack/pro"), follow this workflow:
-
-1. **Check if `auth.json` exists** — Look for Backpack credentials in:
-   - Windows: `%APPDATA%/Composer/auth.json` (e.g., `C:\Users\<user>\AppData\Roaming\Composer\auth.json`)
-   - Linux/Mac: `~/.composer/auth.json`
-   - Project-level: `<project>/auth.json`
-   Read the file and look for `http-basic` entries with `backpackforlaravel.com` or `repo.backpackforlaravel.com` URLs.
-
-2. **Check if the repository is configured** — Look in the project's `composer.json` under `repositories` for a `backpack` entry pointing to `https://repo.backpackforlaravel.com` or `https://backpackforlaravel.com/packages`.
-
-3. **If credentials exist AND repository is configured** → Proceed to run `composer require <package-name>`.
-
-4. **If credentials exist but repository is NOT configured** → Add the repository first, then install:
-   ```
-   composer config repositories.backpack composer https://repo.backpackforlaravel.com
-   composer require <package-name>
-   ```
-
-5. **If auth.json is missing or lacks Backpack credentials** → Inform the user:
-   - What feature they asked for requires which paid package
-   - How to purchase: `https://backpackforlaravel.com/pricing`
-   - How to set up `auth.json` (credentials are in their Backpack account dashboard)
-   - Offer a FREE alternative if one exists (e.g., use FREE `select` field instead of PRO `select2` field, FREE `upload` field instead of PRO `image` field). **There is no free alternative for filters — all filter types require `backpack/pro`. Do NOT suggest `addClause` as a filter substitute; it permanently scopes the query and is not toggleable.**
-
-## Generating a CRUD
-
-- Scaffold a full CRUD panel with `php artisan backpack:crud ModelName` (singular model name).
-- This generates: CrudController in `app/Http/Controllers/Admin/`, a FormRequest, a route entry in `routes/backpack/custom.php`, and a menu item.
-- Use `--no-interaction` to run without prompts.
-- **After generating the CRUD**, always edit `resources/views/vendor/backpack/ui/inc/menu_items.blade.php` and replace the default `icon="la la-question"` with a meaningful Line Awesome icon. Pick an icon that reflects the model's domain. Common mappings:
-
-  | Model / Domain | Suggested Icon |
-  |---|---|
-  | User, Person, Customer, Client | `la la-user` |
-  | Product, Item, Inventory | `la la-box` or `la la-cube` |
-  | Order, Cart, Purchase, Sale | `la la-shopping-cart` |
-  | Category, Tag, Label | `la la-tag` or `la la-tags` |
-  | Post, Article, Blog, News | `la la-newspaper-o` or `la la-file-text` |
-  | Page, Document | `la la-file` |
-  | Invoice, Receipt, Bill | `la la-file-invoice` |
-  | Contact, Lead, Subscriber | `la la-address-book` |
-  | Event, Calendar, Schedule | `la la-calendar` |
-  | Setting, Configuration | `la la-cog` |
-  | Role, Permission, Access | `la la-lock` or `la la-user-secret` |
-  | Comment, Review, Feedback | `la la-comment` |
-  | Image, Photo, Gallery, Media | `la la-image` |
-  | Video, Media | `la la-video` |
-  | Message, Email, Mail | `la la-envelope` |
-  | Notification, Alert | `la la-bell` |
-  | Report, Analytics, Stats | `la la-chart-bar` |
-  | Subscription, Plan, Billing | `la la-credit-card` |
-  | FAQ, Help, Support | `la la-question-circle` |
-  | Testimonial, Quote | `la la-quote-right` |
-  | Slider, Carousel, Banner | `la la-images` or `la la-sliders` |
-  | Dashboard | `la la-home` |
-  | Team, Group, Department | `la la-users` |
-  | Coupon, Discount, Promo | `la la-percent` |
-  | Location, Address, Place | `la la-map-marker` |
-
-  When unsure, use `la la-file-text` as a safe fallback.
-- **If `backpack/test-generators` is installed** (check `vendor/backpack/test-generators/composer.json`), automatically generate tests for the new CRUD: `php artisan backpack:tests --controller=ModelCrudController`.
-
-## CrudController Structure
-
-- Every CRUD controller extends `CrudController` and uses operation traits: `ListOperation`, `CreateOperation`, `UpdateOperation`, `ShowOperation`, `DeleteOperation`.
-- Configure fields inside `setupCreateOperation()` and `setupUpdateOperation()`.
-- Configure columns inside `setupListOperation()`.
-- Use `CRUD::field([...])` and `CRUD::column([...])`. Both array and fluent syntax work.
-- Always specify `'name'`, `'label'`, and `'type'` in every field and column array.
-
-## Fields
-
-- If `name` matches a model relationship method, Backpack auto-detects it as a relationship field. Use `'entity' => false` to disable.
-- FREE types: text, number, textarea, select, select_multiple, select_from_array, select_grouped, checkbox, switch, radio, checklist, checklist_dependency, date, datetime, time, month, week, email, password, url, color, range, upload, upload_multiple, summernote, view, custom_html, hidden, enum.
-- PRO types: select2, select2_multiple, select2_from_array, select2_from_ajax, select2_from_ajax_multiple, select2_grouped, select2_nested, select2_json_from_api, select_and_order, relationship, repeatable, table, slug, image, dropzone, date_picker, date_range, datetime_picker, address_google, phone, google_map, icon_picker, base64_image, video, code_mirror, easymde.
-- Third-party add-ons: ckeditor, tinymce (separate packages).
-- Field events: `CRUD::field('name')->on('saving', fn($entry) => ...)`.
-- Organize with tabs: `CRUD::field('name')->tab('General')`.
-- Wrappers: `CRUD::field('name')->wrapper(['class' => 'col-md-6'])`.
-- Hints: `CRUD::field('name')->hint('Help text')`.
-
-## Columns
-
-- FREE types: text, number, boolean, checkbox, radio, switch, date, datetime, time, month, week, email, phone, url, password, color, range, image, upload, upload_multiple, select, select_multiple, select_from_array, select_grouped, relationship_count, model_function, model_function_attribute, closure, custom_html, view, row_number, check, json, multidimensional_array, enum, hidden, summernote, textarea, checklist, checklist_dependency.
-- PRO types: select2, select2_multiple, select2_from_ajax, select2_from_ajax_multiple, select2_grouped, select2_nested, select_and_order, array, array_count, relationship, image (enhanced), base64_image, date_picker, date_range, datetime_picker, dropzone, easymde, icon_picker, markdown, slug, table, video, repeatable, browse, browse_multiple, address_google, code_mirror.
-- Visibility: `visibleInTable`, `visibleInModal`, `visibleInExport`, `visibleInShow`. Use `exportOnlyColumn => true` for export-only columns.
-- Search logic: `'searchLogic' => 'text'` or closure. Editable columns need explicit searchLogic.
-- Order logic: `'orderLogic' => function ($query, $column, $direction) { ... }`.
-- Column ordering: `CRUD::column('name')->before('email')`, `->after()`, `->makeFirst()`, `->makeLast()`.
-- Visibility: `visibleInTable`, `visibleInModal`, `visibleInExport`, `visibleInShow`. Use `exportOnlyColumn => true` for export-only columns.
-- Search logic: `'searchLogic' => 'text'` or closure. Editable columns need explicit searchLogic.
-- Order logic: `'orderLogic' => function ($query, $column, $direction) { ... }`.
-- Column ordering: `CRUD::column('name')->before('email')`, `->after()`, `->makeFirst()`, `->makeLast()`.
-
-## Filters (all require backpack/pro)
-
-- Available types: text, select2, select2_multiple, select2_ajax, date, date_range, simple, view, dropdown, range.
-- Always use whenActive for filter logic: `->whenActive(fn($val) => CRUD::addClause('where', ...))`.
-- Use `->else(fn() => ...)` or `->fallbackLogic(...)` for fallback when filter is not active.
-- Reserved names (never use): `length`, `draw`, `start`, `search`, `totalEntryCount`, `columns`, `datatable_id`.
-- Remove: `CRUD::filter('name')->remove()` or `CRUD::removeFilter('name')`.
-
-## Buttons
-
-- Stacks: top (above table), line (per entry row), bottom (below table).
-- Add: `CRUD::button('name')->stack('line')->view('view.path')`.
-- Quick buttons: `CRUD::button('quick')->stack('line')->view('crud::buttons.quick')`.
-- Order: `CRUD::orderButtons('line', ['edit', 'delete'])`.
-- Remove: `CRUD::removeButton('name')`, `CRUD::removeAllButtons()`.
-- Per-entry access: `CRUD::button('name')->stack('line')->view('...')->setAccessCondition(fn($entry) => $entry->user_id === backpack_user()->id)`.
-- **Line buttons as dropdown**: Group line buttons into a dropdown when there are many. Enable with `CRUD::setOperationSetting('lineButtonsAsDropdown', true)`. Control minimum count with `lineButtonsAsDropdownMinimum` (default: 1) and show first N inline with `lineButtonsAsDropdownShowBefore` (default: 0).
-
-## List Operation
-
-- **Line buttons as dropdown**: See Buttons section above.
-- **Export buttons**: `CRUD::enableExportButtons()`. Control per-column with `visibleInExport`, `exportOnlyColumn`.
-- **Responsive table**: `CRUD::setOperationSetting('responsiveTable', true)`.
-- **Persistent table**: `CRUD::setPersistentTable(true)` — saves filters, sorting, page length across visits.
-- **Details row**: `CRUD::enableDetailsRow()` then `Widget::add()->to('details_row')...`.
-- **Custom views**: `CRUD::setListView('path.to.view')`, `CRUD::setCreateView()`, `CRUD::setEditView()`.
-- **Page length**: `CRUD::setDefaultPageLength(25)`. Options: `CRUD::setPageLengthMenu([10, 25, 50, 100])`.
-
-## Operations
-
-- FREE traits: ListOperation, CreateOperation, UpdateOperation, ShowOperation, DeleteOperation, ReorderOperation.
-- PRO traits (in crud, require backpack/pro): CloneOperation, BulkDeleteOperation, BulkCloneOperation, FetchOperation, InlineCreateOperation.
-- PRO-only traits (in backpack/pro): TrashOperation, BulkTrashOperation, CustomViewOperation, AjaxUploadOperation.
-- Add-on traits (require separate paid packages): ReportOperation (backpack/report-operation), MinorUpdateOperation (backpack/editable-columns), CreateInModalOperation + UpdateInModalOperation (backpack/dataform-modal).
-- Each operation has: `setupXxxOperation()` for config, `setupXxxRoutes()` for routes, `setupXxxDefaults()` for defaults.
-- Custom operations: `php artisan backpack:operation OperationName`.
-- **Before using any PRO or add-on operation trait, check the Paid Features section above.**
-
-## Fetch Operation (PRO)
-
-- The Fetch Operation is the recommended way to build AJAX data endpoints for `select2_from_ajax`, `select2_from_ajax_multiple`, and `relationship` fields. Use it instead of creating separate API controllers.
-- Add `use FetchOperation` on the **target** model's CrudController (the model being fetched, not the model with the field).
-- Define methods following the naming convention `fetchEntity()`: `fetchTag()` for entity `tag`, `fetchCategory()` for entity `category`.
-- Always define a `query` closure to activate the save-time security guard and scope results: `'query' => fn($model) => $model->active()`.
-- For select2_ajax filters using FetchOperation, the filter method **must** be `'method' => 'POST'`.
-- Use `'relation_options_query_source' => 'fetchMethodName'` when `data_source` is set manually and the field entity doesn't match the fetch method name.
-- For fully custom endpoints (no FetchOperation), declare the guard with `'relation_options_query' => fn($model) => ...`.
-- Prefer explicit `searchable_attributes` over auto-detection. Set to `[]` when using raw SQL searching in the query closure.
-
-## Uploaders
-
-- Add `->withFiles()` to upload fields for automatic file handling (upload, storage, retrieval, deletion).
-- FREE uploaders: `SingleFile` (upload), `MultipleFiles` (upload_multiple), `SingleBase64Image` (image).
-- PRO uploaders: `DropzoneUploader` (dropzone), `EasyMDEUploader` (easymde), `SummernoteUploader` (summernote) — require `AjaxUploadOperation`.
-- Config: `->withFiles(['disk' => 'public', 'path' => 'uploads'])`.
-- Model must use `CrudTrait`. Always run `php artisan storage:link`.
-- DeleteOperation must define upload fields for auto-deletion on delete.
-- Custom validation: `new ValidUpload('field_name')`, `new ValidUploadMultiple('field_name')`.
-- Temp file cleanup (PRO): schedule `backpack:purge-temporary-folder` daily.
-
-## Translatable Models (multi-language CRUDs)
-
-- Uses `spatie/laravel-translatable`. Requires MySQL 5.7+ or PostgreSQL with JSON columns.
-- Model: use `Backpack\CRUD\app\Models\Traits\SpatieTranslatable\HasTranslations` (NOT spatie's trait).
-- Define `protected $translatable = ['name', 'description']` on the model.
-- DB columns for translatable fields must be JSON or TEXT type.
-- Do NOT cast translatable string columns as array — Eloquent sees them as strings.
-- Config available locales in `config/backpack/crud.php` → `locales`.
-- `spatie/laravel-translatable` is a separate composer package.
-
-## Ecosystem Packages (first-party Backpack add-ons)
-
-- `backpack/pro` — 28+ fields, 10+ filters, 5 extra operations (Clone, BulkDelete, BulkClone, InlineCreate, Fetch), chart widgets. **Paid.**
-- `backpack/permissionmanager` — CRUD interface for users, roles, permissions (spatie/laravel-permission based). Free.
-- `backpack/editable-columns` — inline editing of columns in List view. **Paid.**
-- `backpack/dataform-modal` — Create/Update forms in Bootstrap modals. **Paid.**
-- `backpack/report-operation` — dashboard with stat/chart metrics per entity. **Paid.**
-- `backpack/devtools` — web interface for generating migrations, models, CRUDs. **Paid.**
-- `backpack/test-generators` — auto-generate tests for CrudControllers. **Paid.**
-- `backpack/calendar-operation` — calendar interface for date-based entries. **Paid.**
-- `backpack/translation-manager` — UI to translate multi-language apps. Free.
-- `backpack/settings` — interface for website settings stored as config. Free.
-- `backpack/pagemanager` — admin panel for presentation pages with templates. Free.
-- `backpack/menucrud` — add, edit, reorder, nest menu items. Free.
-- `backpack/newscrud` — news articles, categories, tags CRUD. Free.
-- `backpack/medialibrary-uploaders` — Spatie MediaLibrary integration (use `->withMedia()` instead of `->withFiles()`). Free.
-- `backpack/activity-log` — track who changed what and when. Free.
-- `backpack/filemanager` — admin interface for files & folders (elFinder). Free.
-- `backpack/logmanager` — preview, download, delete Laravel logs. Free.
-- `backpack/backupmanager` — database and file backups via spatie/laravel-backup. Free.
-- `backpack/revise-operation` — audit log with undo via venturecraft/revisionable. Free.
-- `backpack/auto-translate` — auto-translate content to multiple languages. **Paid.**
-- Temp file cleanup (PRO): schedule `backpack:purge-temporary-folder` daily.
-
-## Queries & Access Control
-
-- Eager loading: `CRUD::with(['relation1', 'relation2'])`.
-- Query scoping: `CRUD::addClause('where', 'active', true)`. Base clause: `CRUD::addBaseClause(...)`.
-- Access: `CRUD::allowAccess('list')`, `CRUD::denyAccess('delete')`, `CRUD::hasAccess('update')`.
-- Per-entry: `CRUD::setAccessCondition('update', fn($entry) => ...)`.
-
-## Widgets
-
-- Sections: before_content, after_content, before_filters, after_filters, details_row.
-- Add: `Widget::add()->type('progress')->to('before_content')->value(135)->description('Progress')`.
-- Types: progress, card, chart, view, script, style, chip.
-- Script widget: `Widget::add()->type('script')->content('assets/js/admin/forms/product.js')`.
-- Remove: `Widget::remove('section-name')`. Make hidden: `Widget::make()`.
-
-## Chips (view-based, no PHP class)
-
-- Column: `CRUD::addColumn(['type' => 'chip', 'heading' => fn($e) => ..., 'details' => fn($e) => [...]])`.
-- Widget: `Widget::add()->type('chip')->to('before_content')->heading('...')->details([...])`.
-- Generate custom: `php artisan backpack:chip ChipName`.
-
-## Save Actions
-
-- Default: SaveAndBack, SaveAndEdit, SaveAndNew, SaveAndPreview, SaveAndList.
-- Configure: `CRUD::setSaveActions([...])`, `CRUD::addSaveAction(...)`, `CRUD::orderSaveActions([...])`.
-- Custom: extend AbstractSaveAction, implement `order()` and `getActionButtonHtml()`.
-
-## Testing
-
-- Package: `backpack/test-generators` is a **paid add-on**. If not installed, follow the paid package installation workflow in the Paid Features section.
-- **After generating a CRUD**, if the package is installed, automatically run `php artisan backpack:tests --controller=ModelCrudController` to generate tests for the new CRUD.
-- Generate: `php artisan backpack:tests`.
-- Status: `php artisan backpack:tests:status`.
-- Options: `--controller=Name`, `--operation=list`, `--framework=pest|phpunit`, `--force`.
-- FREE alternative: Write Pest/PHPUnit tests manually — `rules/testing.md` has templates and examples.
-- Requires factories and seeders for models with CrudControllers.
-- Customize stubs: `php artisan vendor:publish --provider="Backpack\CRUD\BackpackServiceProvider" --tag=stubs`.
-
-## JavaScript API (crud.field)
-
-- Selector: `crud.field('field_name')`.
-- Properties: `.name`, `.type`, `.input`, `.value`, `.row`.
-- Events: `.onChange(fn(field) => ...)`, `.change()`.
-- Methods: `.hide()`, `.show()`, `.disable()`, `.enable()`, `.require()`, `.unrequire()`, `.check()`, `.uncheck()`.
-- Subfields: `.subfield('subfield_name')`.
-- Always load scripts via `Widget::add()->type('script')`.
-
-## Artisan Commands
-
-- `php artisan backpack:crud ModelName` — full CRUD scaffold
-- `php artisan backpack:field FieldName` — custom field type
-- `php artisan backpack:column ColumnName` — custom column type
-- `php artisan backpack:filter FilterName` — custom filter
-- `php artisan backpack:operation OperationName` — custom operation
-- `php artisan backpack:button ButtonName` — custom button
-- `php artisan backpack:widget WidgetName` — custom widget
-- `php artisan backpack:page PageName` — custom admin page
-- `php artisan backpack:chart ChartName` — custom chart widget
-- `php artisan backpack:install` — first-time Backpack install
-- `php artisan backpack:tests` — generate CRUD tests
-- `php artisan backpack:tests:status` — check test coverage
-
-## Documentation Search
-
-- If the `search-backpack-docs` MCP tool is available, use it for ALL Backpack questions (fields, columns, filters, operations, widgets, relationships). If not available, use web search instead.
-- Do NOT use the `search-docs` MCP tool for Backpack questions — it does not index Backpack documentation.
-- When using `search-backpack-docs`, pass multiple queries for OR logic: `["relationship field", "select2 belongsTo", "select2_from_ajax"]`.
-- Use `"quoted phrases"` for exact matching.
+Backpack 7 + Tabler, no PRO. For any CrudController/field/column/operation work, **activate the `backpack-crud` skill** (full reference, loaded on demand) and follow `.ai/rules/admin-backpack.md` (permissions, hook-timing trap, routes, menu). Don't use PRO-only fields/filters (`select2`, PRO filters); `storeCrud/updateCrud/deleteCrud` don't exist in v7.
 
 === spatie/laravel-medialibrary/core rules ===
 
@@ -493,54 +298,6 @@ When a user asks to install a paid package (e.g., "install backpack/pro"), follo
 
 # Laradocs
 
-Laradocs (`petebishwhip/laradocs`) turns a folder of markdown files into a
-documentation site served from this application. Pages are `.md` files with YAML
-front-matter under the configured docs path (`laradocs.docs.path`, default
-`docs/`), served at `/docs`.
-
-Use the **`laradocs-development` skill** when authoring documentation or working
-on Laradocs configuration. It covers the full front-matter reference, Artisan
-commands, rich-content syntax, variables and macros, the facade API, publishing,
-SEO, search and feeds.
-
-The rules below apply whenever you touch this application, skill or no skill:
-
-- Create a page with `php artisan make:doc {name}` rather than writing the file
-  by hand — it produces correct front-matter. `name` is the doc path, e.g.
-  `guide/getting-started`.
-- Every page needs a `title` in its front-matter; `php artisan docs:lint`
-  enforces it. Front-matter keys are snake_case (`updated_at`, `search_rank`).
-- Docs files live under the configured docs path (`laradocs.docs.path`, default
-  `base_path('docs')`) and use the `.md` or `.markdown` extension.
-- Nested folders become nested navigation sections, and directory depth maps to
-  URL depth: `docs/guide/routing.md` is served at `/docs/guide/routing`.
-- `_index.md` is a section landing page: `docs/guide/_index.md` →
-  `/docs/guide`, and the root `docs/_index.md` → `/docs` (the docs home). The
-  index filename is configurable via `laradocs.docs.index` (default `_index`).
-- **Never put closures in `config/laradocs.php`** — they break `config:cache`.
-  Register dynamic variables and macros through the `Laradocs` facade in a
-  service provider's `boot()` method instead.
-- Customise the UI by publishing what you need
-  (`php artisan vendor:publish --tag=laradocs-views`), never by editing files
-  under `vendor/`.
-- Run `php artisan laradocs:clear` after changing config, macros or variables,
-  and `php artisan docs:lint` before committing.
-  
-## XCELR8 Project-Specific Rules (read in addition to the above)
-
-Before any task, also read:
-1. `.ai/rules/index.md` — master index and golden rules for this project
-2. The specific rule file relevant to the task (see index.md's table)
-3. `.ai/skills/` — load the matching XCELR8 skill if the task fits one
-
-## Non-negotiable for the standardization refactor
-- Never work directly on `main`. Always a `refactor/*` branch.
-- Never touch Approval Engine code (locked spec, not started).
-- Full files only, one module per change-set.
-- Read the real existing file before regenerating it.
-- Stop and ask if a locked spec, `.ai/rules/*`, or existing convention conflict — never guess.
-- After every change: `./vendor/bin/pint`, `./vendor/bin/phpstan analyse`, `php artisan test` must all pass.
-- Never run migrations or seeders against a non-local database.
-- Never `git commit` or `git push` without being explicitly asked to in that turn.
+Only for dev documentation pages — activate the `laradocs-development` skill when writing docs pages.
 
 </laravel-boost-guidelines>

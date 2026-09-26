@@ -21,7 +21,8 @@
 
     <php>
         <env name="APP_ENV" value="testing"/>
-        <env name="APP_KEY" value="base64:REPLACE_WITH_YOUR_APP_KEY"/>
+        <env name="APP_URL" value="http://localhost"/>
+        <env name="APP_KEY" value="base64:KWrAyT/gvMpLC2UYmT9YKIl79kjg+gCoF8cwi6m0zJc="/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="CACHE_STORE" value="array"/>
         <env name="SESSION_DRIVER" value="array"/>
@@ -30,7 +31,8 @@
         <env name="DB_CONNECTION" value="mysql"/>
         <env name="DB_HOST" value="127.0.0.1"/>
         <env name="DB_PORT" value="3306"/>
-        <env name="DB_DATABASE" value="xlrn"/>
+        <!-- Local copy of the dev DB (php artisan testing:refresh-db). Never point tests at xlrm. See DEC-011. -->
+        <env name="DB_DATABASE" value="xlrm_testing"/>
         <env name="DB_USERNAME" value="root"/>
         <env name="DB_PASSWORD" value=""/>
     </php>

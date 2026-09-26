@@ -2,17 +2,20 @@
 
 namespace App\Models\Admin;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Relations\{HasMany, HasOne};
-use Spatie\MediaLibrary\HasMedia;
-use Spatie\MediaLibrary\InteractsWithMedia;
+use App\Models\Core\Garage;
 use App\Models\User;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Collection;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
 class Person extends Model implements HasMedia
 {
-    use SoftDeletes, InteractsWithMedia, CrudTrait;
+    use CrudTrait, InteractsWithMedia, SoftDeletes;
 
     protected $table = 'xlr8_admin_person';
 
@@ -20,8 +23,8 @@ class Person extends Model implements HasMedia
     |--------------------------------------------------------------------------
     | DESIGN RULES
     |  - person_code is IMMUTABLE. Derived at creation, never changed.
-    |  - Individual: PAN (priority) → Aadhaar → fallback PERS-XXXXXX
-    |    If Aadhaar used at creation and PAN added later → code stays as Aadhaar.
+    |  - Individual: Aadhaar (priority) → PAN → fallback PERS-XXXXXX
+    |    If PAN used at creation and Aadhaar added later → code stays as PAN.
     |  - Legal entity: PAN → TAN → GST → fallback
     |  - All child tables link via person_code, NOT person_id integer FK
     |  - NO mobile_/email_ columns — these live in xlr8_admin_person_contacts
@@ -52,7 +55,7 @@ class Person extends Model implements HasMedia
     ];
 
     protected $casts = [
-        'dob'        => 'date',
+        'dob' => 'date',
         'extra_data' => 'array',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
@@ -85,7 +88,7 @@ class Person extends Model implements HasMedia
         });
 
         static::deleting(function (Person $p) {
-            if (!$p->isForceDeleting() && auth()->check()) {
+            if (! $p->isForceDeleting() && auth()->check()) {
                 $p->deleted_by = auth()->id();
                 $p->saveQuietly();
             }
@@ -101,15 +104,17 @@ class Person extends Model implements HasMedia
                 ?? $p->tan_no
                 ?? static::generateFallbackCode();
         } else {
-            $raw = $p->pan_no ?? $p->aadhaar_no ?? static::generateFallbackCode();
+            $raw = $p->aadhaar_no ?? $p->pan_no ?? static::generateFallbackCode();
         }
+
         return strtoupper(trim($raw));
     }
 
     public static function generateFallbackCode(): string
     {
         $last = static::withTrashed()->max('id') ?? 0;
-        return 'PERS-' . str_pad($last + 1, 6, '0', STR_PAD_LEFT);
+
+        return 'PERS-'.str_pad($last + 1, 6, '0', STR_PAD_LEFT);
     }
 
     // ── Relationships ──────────────────────────────────────────────────────────
@@ -204,23 +209,24 @@ class Person extends Model implements HasMedia
             ->whereNull('deleted_at')
             ->first();
     }
+
     // Add at the end of accessors section
-    public function getAllEmailsAttribute(): \Illuminate\Support\Collection
+    public function getAllEmailsAttribute(): Collection
     {
         return $this->emailContacts()->pluck('contact_detail');
     }
 
-    public function getAllMobilesAttribute(): \Illuminate\Support\Collection
+    public function getAllMobilesAttribute(): Collection
     {
         return $this->mobileContacts()->pluck('contact_detail');
     }
 
-    public function getAllAddressesAttribute(): \Illuminate\Support\Collection
+    public function getAllAddressesAttribute(): Collection
     {
         return $this->addresses;
     }
 
-    public function getAllBankingAttribute(): \Illuminate\Support\Collection
+    public function getAllBankingAttribute(): Collection
     {
         return $this->bankingDetails;
     }
@@ -230,13 +236,13 @@ class Person extends Model implements HasMedia
     public function scopeSearch($q, string $term)
     {
         return $q->where(
-            fn($s) => $s
-                ->where('first_name',    'like', "%{$term}%")
-                ->orWhere('last_name',   'like', "%{$term}%")
+            fn ($s) => $s
+                ->where('first_name', 'like', "%{$term}%")
+                ->orWhere('last_name', 'like', "%{$term}%")
                 ->orWhere('display_name', 'like', "%{$term}%")
                 ->orWhere('person_code', 'like', "%{$term}%")
-                ->orWhere('pan_no',      'like', "%{$term}%")
-                ->orWhere('aadhaar_no',  'like', "%{$term}%")
+                ->orWhere('pan_no', 'like', "%{$term}%")
+                ->orWhere('aadhaar_no', 'like', "%{$term}%")
         );
     }
 
@@ -244,6 +250,7 @@ class Person extends Model implements HasMedia
     {
         return $q->where('entity_type', 'individual');
     }
+
     public function scopeLegalEntities($q)
     {
         return $q->where('entity_type', 'legal_entity');

@@ -1,0 +1,16 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    paths:
+        - app
+        - config
+        - database
+        - routes
+    excludePaths:
+        # dead backup copies (never autoloaded); its duplicate App\Models\User confused Larastan (BUG-140)
+        - app/Models_backup (?)
+    level: 5
+    phpVersion: 80300
+    parallel:
+        maximumNumberOfProcesses: 1

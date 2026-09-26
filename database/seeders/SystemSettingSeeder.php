@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\Core\SystemSetting;
+use App\Models\Utilities\Settings\SystemSetting;
 use Illuminate\Database\Seeder;
 
 class SystemSettingSeeder extends Seeder
@@ -29,5 +29,14 @@ class SystemSettingSeeder extends Seeder
         // Feature Flags
         SystemSetting::ensure('feature.live_chat', 'true', 'boolean', 'Enable Live Chat', 'Enable or disable live chat feature');
         SystemSetting::ensure('feature.notifications', 'true', 'boolean', 'Enable Notifications', 'Enable or disable notifications');
+
+        // Display Settings
+        SystemSetting::ensure(
+            'display.date_format',
+            'd-M-Y',
+            'string',
+            'Date Display Format',
+            'PHP/Carbon format token used for every frontend date display and date picker across the site. Default d-M-Y renders as 23-Sep-2026.'
+        );
     }
 }
