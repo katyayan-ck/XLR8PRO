@@ -151,3 +151,15 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
   - VOTF uses `$booking->branch_code`, falling back to `Enquiry::resolveByAnyReference($booking->enq_no)->dealer_branch` (the same source the display code uses).
   - `dd()` becomes `Log::error` + rethrow, so failures go through Laravel's normal error handling.
 - **Risk:** MED (obvious bug fixes on UAT-critical paths) · **Approved-by:** auto (within the BUG-104 fix the user approved) · **Reversal:** revert.
+
+### DEC-028 | 26-09-2026 18:40 | Track B | Adopt support-utility requirements from `docs/refactor/missing-info-utilities.md`
+- **Decision:**
+  - Add a **Knowledge Base** utility (new phase B2c).
+  - Extend Chat into **conversations** (direct/group/team/ticket plus the entity journal, public/internal visibility, read state, idempotent sends).
+  - Extend **Tickets** (configurable lifecycle, ULID public id, merge/split/links, resolution-on-close, CSAT, dashboards).
+  - SLA calendars use `spatie/opening-hours` 4.2.2 (Packagist-verified).
+  - Add a correlation-ID middleware and per-user timezone.
+- **Deferred:** customer portal and live chat (after B10); inbound email and antivirus (post-UAT).
+- **Noted:** the document's "confirmed packages" (Passport, MS Graph, DataTables, query cache) are not in this repo; it's treated as requirements only.
+- **Open (asked before B2):** SUP-DEC-001/002/003/005/006/010.
+- **Risk:** LOW (plan change) · **Approved-by:** user (instruction to pick the achievable items) · **Reversal:** plan edit.
