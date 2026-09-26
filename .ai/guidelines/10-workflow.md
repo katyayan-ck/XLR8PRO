@@ -1,7 +1,7 @@
 # Workflow (all AI tools)
 
 **Git**
-- Never work on `main`. Branches: `feature/*` or `refactor/*` (current integration branch: `feature/integrations`).
+- Never work on `main`. Branches: `feature/*` or `refactor/*` (working branch: `dev/admin`, kept in sync with `stage`, the shared team branch).
 - Commit at checkpoints with `type(scope): message` (feat, fix, refactor, docs, test, chore, security).
   **Never push, force-push or rewrite history without explicit approval in that turn.**
 

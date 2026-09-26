@@ -1,6 +1,12 @@
 # Current state (keep ≤ 50 lines; update at every checkpoint)
 
-**Branch:** `feature/integrations` (Track A integration branch). **Updated:** 27-09-2026.
+**Branch:** `dev/admin` (our working branch; kept in sync with `stage`). **Updated:** 27-09-2026.
+
+**Booking-team merge done (DEC-041):**
+- `origin/stage` (93 commits) was merged with our Track A work into `stage` (`0116ec0`), then `stage` into `dev/admin` (`f34e2c5`). Both are pushed.
+- `feature/integrations` and `refactor/admin-permissions-formrequest-restructure` were deleted. Local backup tags: `backup/feature-integrations-pre-merge`, `backup/stage-local-pre-merge`.
+- **Pending (needs user OK):** `php artisan migrate` on local `xlrm` for the booking team's 5 migrations + `align_sale_type`, then `testing:refresh-db`. The `sales/booking` list 500s until then (`referee_model` column).
+- Their menu still has ~37 visible links without routes (Sales/CRM/Accounts: `booking/dummy`, `crm-sales/*`, `accounts/manager/*`, …). This is the booking team's area.
 
 **UAT (target ~30-09-2026, with the booking-team merge):**
 - Scope: Org/HR/User admin plus Vehicle master and Pricing (DEC-034). Sales is owned by the other team, so we don't touch it.

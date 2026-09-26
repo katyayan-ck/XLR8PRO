@@ -73,3 +73,14 @@ Branch `feature/integrations`. Decisions DEC-033…038 are in `docs/decisions/de
   - BUG-055 re-verified with its wider impact documented.
   - BUG-090 impact confirmed: 34 users without a role.
   - DEC-039 (ticket intake: staff UI + API).
+
+## Booking-team merge (DEC-041)
+- `origin/stage` (booking team, 93 commits) was merged with `feature/integrations` into `stage` (`0116ec0`, pushed), then `stage` into `dev/admin` (`f34e2c5`, pushed).
+- Branches deleted: `feature/integrations` (local) and `refactor/admin-permissions-formrequest-restructure` (local + origin). Both were fully contained in `stage`.
+- Conflicts and resolutions are listed in DEC-041.
+- Pint was not applied to the booking team's files, so their formatting is unchanged.
+- Tests: 227 passed, 1 skipped.
+- Smoke (user 1):
+  - Sales enquiry/quotation, imports, org, vehicle, IAM and accounts screens return 200.
+  - `sales/booking` returns 500 until their migrations run locally (`referee_model`).
+  - `finance/import` needs local `gscreds.json`.
