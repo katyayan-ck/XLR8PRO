@@ -127,11 +127,12 @@ trait HasColumnTransformations
      */
     public function applyColumnTransformations(): void
     {
-        if (empty($this->columnTransformations)) {
+        $transformations = $this->resolvedColumnTransformations();
+        if ($transformations === []) {
             return;
         }
 
-        foreach ($this->columnTransformations as $column => $transformation) {
+        foreach ($transformations as $column => $transformation) {
             // Skip columns that are neither fillable nor unguarded
             if (! $this->isColumnWritable($column)) {
                 continue;
@@ -147,6 +148,22 @@ trait HasColumnTransformations
 
             $this->attributes[$column] = $this->runTransformation((string) $rawValue, $transformation);
         }
+    }
+
+    /**
+     * The transformation map: from the model's entity service when it declares one
+     * (`protected string $entityService`, DEC-050: single field definition), else the
+     * legacy per-model `$columnTransformations`.
+     *
+     * @return array<string, mixed>
+     */
+    protected function resolvedColumnTransformations(): array
+    {
+        if (! empty($this->entityService)) {
+            return app($this->entityService)->transformations();
+        }
+
+        return $this->columnTransformations ?? [];
     }
 
     /**

@@ -2,16 +2,17 @@
 
 namespace App\Http\Controllers\Admin\Vehicle\SubSegment;
 
-use App\Http\Requests\SubSegmentRequest;
 use App\Models\Vehicle\Segment;
 use App\Models\Vehicle\SubSegment;
 use App\Models\Vehicle\VehicleModel;
+use App\Services\Vehicle\SubSegmentService;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
+use Illuminate\Http\Request;
 
 class SubSegmentCrudController extends CrudController
 {
@@ -117,57 +118,16 @@ class SubSegmentCrudController extends CrudController
         ]);
     }
 
-    public function update(SubSegmentRequest $request, $id)
+    /** Update through SubSegmentService, the only write path (DEC-050). */
+    public function update(Request $request, $id)
     {
         if (! backpack_user()->can('VEH_SEG_EDIT')) {
             abort(403, 'Unauthorized. You do not have permission to edit sub segments.');
         }
 
-        $subsegment = SubSegment::findOrFail($id);
+        app(SubSegmentService::class)->update(SubSegment::findOrFail($id), $request->all());
 
-        $validated = $request->validated();
-
-        if (
-            $subsegment->is_active == 1 &&
-            ! $request->boolean('is_active')
-        ) {
-
-            $activeModelCount = VehicleModel::where(
-                'sub_segment_code',
-                $subsegment->code
-            )
-                ->where('is_active', 1)
-                ->count();
-
-            if ($activeModelCount > 0) {
-
-                \Alert::error(
-                    "Cannot deactivate Sub Segment. {$activeModelCount} active Model(s) exist."
-                )->flash();
-
-                return redirect()->back()->withInput();
-            }
-        }
-
-        // Models carry segment_code too; moving a sub-segment under them would desync them.
-        if ($validated['segment_code'] !== $subsegment->segment_code
-            && VehicleModel::where('sub_segment_code', $subsegment->code)->exists()) {
-            \Alert::error('Cannot move this Sub Segment to another Segment while Vehicle Models use it.')->flash();
-
-            return redirect()->back()->withInput();
-        }
-
-        $validated['is_active'] =
-            $request->boolean('is_active');
-
-        // The code is the key children reference (variants, pricing, enquiries): never re-saved (DEC-048).
-        unset($validated['code']);
-
-        $subsegment->update($validated);
-
-        \Alert::success(
-            'Sub Segment updated successfully!'
-        )->flash();
+        \Alert::success('Sub Segment updated successfully!')->flash();
 
         return redirect(backpack_url('vehicle/sub-segment'));
     }
@@ -186,20 +146,14 @@ class SubSegmentCrudController extends CrudController
         ]);
     }
 
-    /**
-     * Validated create (the Backpack default store() saved unvalidated input: a duplicate
-     * or missing code was a 500, BUG-170).
-     */
-    public function store(SubSegmentRequest $request)
+    /** Create through SubSegmentService, the only write path (DEC-050). */
+    public function store(Request $request)
     {
         if (! backpack_user()->can('VEH_SEG_CREATE')) {
             abort(403, 'Unauthorized. You do not have permission to create sub segments.');
         }
 
-        $validated = $request->validated();
-        $validated['is_active'] = $request->boolean('is_active');
-
-        SubSegment::create($validated);
+        app(SubSegmentService::class)->create($request->all());
 
         \Alert::success('Sub Segment created successfully!')->flash();
 

@@ -17,3 +17,4 @@
 - **Labels:** `resources/lang/en/{module}.php` is the single source for field labels & validation names.
 - **Money:** new columns `DECIMAL(15,2)`; legacy varchar money is being normalised (DEC-003).
 - **Every job** sets `$timeout`, `$tries`, and implements `failed()`.
+- **Entity writes (DEC-050, mandatory):** every create/edit of an entity (CRUD, import, API, job, seeder) goes through that entity's service (`App\Support\Entity\EntityService` subclass). The service's `fields()` is the **single** definition of each field's format, transformation, validation, label and immutability. Never write entity tables with `DB::table()->insert/update` or `Model::create()` outside the service, never re-declare rules in FormRequests/importers, and never correct data ad hoc: fix the field rule instead.

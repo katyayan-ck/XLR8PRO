@@ -2,15 +2,16 @@
 
 namespace App\Http\Controllers\Admin\Vehicle\Segment;
 
-use App\Http\Requests\SegmentRequest;
 use App\Models\Vehicle\Segment;
 use App\Models\Vehicle\SubSegment;
+use App\Services\Vehicle\SegmentService;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
+use Illuminate\Http\Request;
 
 class SegmentCrudController extends CrudController
 {
@@ -106,48 +107,16 @@ class SegmentCrudController extends CrudController
         ]);
     }
 
-    public function update(SegmentRequest $request, $id)
+    /** Update through SegmentService, the only write path (DEC-050). */
+    public function update(Request $request, $id)
     {
         if (! backpack_user()->can('VEH_SEG_EDIT')) {
             abort(403, 'Unauthorized. You do not have permission to edit segments.');
         }
 
-        $segment = Segment::findOrFail($id);
+        app(SegmentService::class)->update(Segment::findOrFail($id), $request->all());
 
-        $validated = $request->validated();
-
-        if (
-            $segment->is_active == 1 &&
-            ! $request->boolean('is_active')
-        ) {
-
-            $activeSubSegmentCount = SubSegment::where(
-                'segment_code',
-                $segment->code
-            )
-                ->where('is_active', 1)
-                ->count();
-
-            if ($activeSubSegmentCount > 0) {
-
-                \Alert::error(
-                    "Cannot deactivate Segment. {$activeSubSegmentCount} active Sub Segment(s) exist."
-                )->flash();
-
-                return redirect()->back()->withInput();
-            }
-        }
-
-        $validated['is_active'] = $request->boolean('is_active');
-
-        // The code is the key children reference (variants, pricing, enquiries): never re-saved (DEC-048).
-        unset($validated['code']);
-
-        $segment->update($validated);
-
-        \Alert::success(
-            'Segment updated successfully!'
-        )->flash();
+        \Alert::success('Segment updated successfully!')->flash();
 
         return redirect(backpack_url('vehicle/segment'));
     }
@@ -165,20 +134,14 @@ class SegmentCrudController extends CrudController
         ]);
     }
 
-    /**
-     * Validated create (the Backpack default store() saved unvalidated input: a duplicate
-     * or missing code was a 500, BUG-170).
-     */
-    public function store(SegmentRequest $request)
+    /** Create through SegmentService, the only write path (DEC-050). */
+    public function store(Request $request)
     {
         if (! backpack_user()->can('VEH_SEG_CREATE')) {
             abort(403, 'Unauthorized. You do not have permission to create segments.');
         }
 
-        $validated = $request->validated();
-        $validated['is_active'] = $request->boolean('is_active');
-
-        Segment::create($validated);
+        app(SegmentService::class)->create($request->all());
 
         \Alert::success('Segment created successfully!')->flash();
 

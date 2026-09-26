@@ -7,6 +7,17 @@ paths:
 ---
 
 # Services — single source of truth
+
+## Entity services (DEC-050, mandatory for writes)
+Every entity has ONE write path: an `App\Support\Entity\EntityService` subclass whose `fields()` (built from
+`App\Support\Entity\Field`: format, transforms, rules, label, `immutable()`, `unique([scope])`) is the only definition of
+those fields. CRUD controllers, importers, APIs, jobs and seeders call `create()` / `update()` / `upsert()`; they never
+validate or transform themselves, never keep FormRequest rules for these fields, and never write the table with
+`DB::table()` or `Model::create()`. Business rules go in `beforeCreate/beforeUpdate` via `fail()`. The model declares
+`protected string $entityService` so its transform backstop reads the same definition.
+Migrated: `Vehicle\SegmentService`, `SubSegmentService`, `VehicleModelService`, `VariantService`.
+Next: Org masters, Person, Employee/User (+ importer), KeyValue, Pricing entities.
+
 Never re-implement a capability below; open the service, match its contract, extend it if needed.
 Full health notes: `docs/reference/Shared-Services-Utilities-Catalog.md`.
 

@@ -6,6 +6,7 @@ use App\Helpers\KeywordHelper;
 use App\Models\BaseModel;
 use App\Models\Traits\HasColumnTransformations;
 use App\Models\Utilities\KeyValue\Keyvalue;
+use App\Services\Vehicle\VariantService;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 
 class Variant extends BaseModel
@@ -64,69 +65,8 @@ class Variant extends BaseModel
         'deleted_at' => 'datetime',
     ];
 
-    protected array $columnTransformations = [
-
-        'segment_code' => [
-            'trim',
-            'uppercase_alphanumeric_dash_underscore',
-        ],
-
-        'sub_segment_code' => [
-            'trim',
-            'uppercase_alphanumeric_dash_underscore',
-        ],
-
-        'model_code' => [
-            'trim',
-            'uppercase_alphanumeric_dash_underscore',
-        ],
-
-        'code' => [
-            'trim',
-            'uppercase_alphanumeric_dash_underscore',
-        ],
-
-        'oem_name' => [
-            'strip_tags',
-            'trim_spaces',
-            'title_case',
-        ],
-
-        'custom_name' => [
-            'strip_tags',
-            'trim_spaces',
-            'title_case',
-        ],
-
-        'display_name' => [
-            'strip_tags',
-            'trim_spaces',
-            'title_case',
-        ],
-
-        'taxi_price' => [
-            'trim',
-        ],
-
-        'cc_capacity' => [
-            'trim',
-        ],
-
-        'transmission' => [
-            'strip_tags',
-            'trim_spaces',
-            'title_case',
-        ],
-
-        'drivetrain' => [
-            'trim',
-            'uppercase',
-        ],
-
-        'csd_index' => [
-            'trim',
-        ],
-    ];
+    /** Field formats, transforms and rules live in the entity service (DEC-050). */
+    protected string $entityService = VariantService::class;
 
     // ── Code-based parent relationships ──────────────────────────
 

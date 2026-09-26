@@ -196,3 +196,21 @@ Branch `feature/integrations`. Decisions DEC-033…038 are in `docs/decisions/de
   - The 29 `CUSTOM-MODEL` keyword codes were hyphenated, with their enquiry and booking references.
 - **Left as they are:** keyword lists whose "codes" are labels or synonyms (pricing header mapping, spare bins, statuses such as `NEW CAR` that code compares literally), and person or company names in `sc_code`, `insurer_code` and `financier_code`.
 - **Tests:** `tests/Feature/Vehicle/VehicleCodeNormaliserTest.php` (9).
+
+## One field-rule set per entity via its service (DEC-050)
+- **Direction (user):** don't correct old data (a fresh import replaces it). Every field has one format, transformation and validation definition, used for every create/edit through the entity's service. This is a project-wide rule.
+- **Withdrawn:** `VehicleCodeNormaliser`, its command and the two data-correction migrations (never deployed; their local `migrations` rows were removed). The IT department migration stays.
+- **Framework (`app/Support/Entity`):**
+  - `Field`, a fluent field definition.
+  - `EntityService`: normalise → validate → guards → persist, plus `upsert` for imports, `describe()` as the field reference, and `transformations()` for the model backstop.
+  - `ValueTransformer`, which shares the `HasColumnTransformations` engine.
+  - `HasColumnTransformations` reads `$entityService` when a model declares it.
+- **Vehicle masters migrated:** `Segment`, `SubSegment`, `VehicleModel` and `VariantService`.
+  - Rules are consolidated from the models, FormRequests and the import.
+  - Column-size conflicts are resolved to the smallest column: segment code max 5, model code max 30.
+  - `taxi_price` must be YES or NO.
+  - The hierarchy is checked: sub-segment ∈ segment; variant ∈ model.
+  - The 4 FormRequests were deleted, and the model form posts `sub_segment_code`.
+  - The vehicle import (`AdminImportController`) writes only through the services, uses the full OEM code for variants, stops writing the legacy colour table, and reports rejected rows.
+- **Rules:** `.ai/guidelines/20-architecture.md` (Entity writes), `.ai/rules/services.md` and `.ai/rules/imports.md`.
+- **Tests:** `VehicleEntityServicesTest` (7) and `VehicleMasterWriteTest` (7).

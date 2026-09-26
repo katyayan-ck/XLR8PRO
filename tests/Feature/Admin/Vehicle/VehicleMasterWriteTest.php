@@ -97,13 +97,13 @@ class VehicleMasterWriteTest extends TestCase
     {
         $sub = DB::table('xlr8_vehicle_subsegment')->where('is_active', 1)->whereNull('deleted_at')->first(['id', 'code', 'segment_code']);
 
-        $this->post('/admin/vehicle/model', ['segment_code' => $sub->segment_code, 'sub_segment_id' => $sub->id, 'code' => 'ZTMODEL', 'name' => 'Zeta Model', 'is_active' => 1])
+        $this->post('/admin/vehicle/model', ['segment_code' => $sub->segment_code, 'sub_segment_code' => $sub->code, 'code' => 'ZTMODEL', 'name' => 'Zeta Model', 'is_active' => 1])
             ->assertRedirect('/admin/vehicle/model');
         $this->assertDatabaseHas('xlr8_vehicle_model', ['code' => 'ZTMODEL', 'sub_segment_code' => $sub->code]);
         $modelId = DB::table('xlr8_vehicle_model')->where('code', 'ZTMODEL')->value('id');
 
         // Code is immutable on edit (DEC-048): a changed code in the request is ignored.
-        $this->put("/admin/vehicle/model/{$modelId}", ['segment_code' => $sub->segment_code, 'sub_segment_id' => $sub->id, 'code' => 'ZTOTHER', 'name' => 'Zeta Model Two', 'is_active' => 1])
+        $this->put("/admin/vehicle/model/{$modelId}", ['segment_code' => $sub->segment_code, 'sub_segment_code' => $sub->code, 'code' => 'ZTOTHER', 'name' => 'Zeta Model Two', 'is_active' => 1])
             ->assertRedirect('/admin/vehicle/model');
         $this->assertDatabaseHas('xlr8_vehicle_model', ['id' => $modelId, 'code' => 'ZTMODEL', 'name' => 'Zeta Model Two']);
 

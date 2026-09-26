@@ -4,6 +4,7 @@ namespace App\Models\Vehicle;
 
 use App\Models\BaseModel;
 use App\Models\Traits\HasColumnTransformations;
+use App\Services\Vehicle\SubSegmentService;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 
 class SubSegment extends BaseModel
@@ -30,24 +31,8 @@ class SubSegment extends BaseModel
         'deleted_at' => 'datetime',
     ];
 
-    protected array $columnTransformations = [
-
-        'segment_code' => [
-            'trim',
-            'uppercase_alphanumeric_dash_underscore',
-        ],
-
-        'code' => [
-            'trim',
-            'uppercase_alphanumeric_dash_underscore',
-        ],
-
-        'name' => [
-            'strip_tags',
-            'trim_spaces',
-            'title_case',
-        ],
-    ];
+    /** Field formats, transforms and rules live in the entity service (DEC-050). */
+    protected string $entityService = SubSegmentService::class;
 
     public function segment()
     {

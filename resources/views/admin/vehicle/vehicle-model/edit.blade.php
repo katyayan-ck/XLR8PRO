@@ -48,7 +48,7 @@
                                 <!-- Sub Segment -->
                                 <div class="col-md-4 mb-3">
                                     <label>Sub Segment <span class="text-muted">(Optional)</span></label>
-                                    <select name="sub_segment_id" id="sub_segment_id" class="form-control form-select">
+                                    <select name="sub_segment_code" id="sub_segment_code" class="form-control form-select">
                                         <option value="">Select Sub Segment</option>
                                     </select>
                                 </div>
@@ -108,10 +108,9 @@ $(document).ready(function () {
 
     $('#segment_code').on('change', function () {
         let segmentCode = $(this).val();
-        let currentSubId = "{{ old('sub_segment_id', $vehiclemodel->sub_segment_code ? 
-            \App\Models\Vehicle\SubSegment::where('code', $vehiclemodel->sub_segment_code)->value('id') : '') }}";
+        let currentSubId = "{{ old('sub_segment_code', $vehiclemodel->sub_segment_code) }}";
 
-        $('#sub_segment_id').html('<option value="">Loading...</option>');
+        $('#sub_segment_code').html('<option value="">Loading...</option>');
 
         if (segmentCode) {
             $.ajax({
@@ -120,18 +119,18 @@ $(document).ready(function () {
                 success: function (response) {
                     let options = '<option value="">Select Sub Segment</option>';
                     $.each(response, function (index, sub) {
-                        options += `<option value="${sub.id}">${sub.name}</option>`;
+                        options += `<option value="${sub.code}">${sub.name} (${sub.code})</option>`;
                     });
-                    $('#sub_segment_id').html(options);
+                    $('#sub_segment_code').html(options);
 
                     // Pre-select saved sub segment
                     if (currentSubId) {
-                        $('#sub_segment_id').val(currentSubId);
+                        $('#sub_segment_code').val(currentSubId);
                     }
                 }
             });
         } else {
-            $('#sub_segment_id').html('<option value="">Select Sub Segment</option>');
+            $('#sub_segment_code').html('<option value="">Select Sub Segment</option>');
         }
     });
 

@@ -2,6 +2,15 @@
 
 namespace App\Http\Controllers\Admin\Import;
 
+use Illuminate\Validation\ValidationException;
+use App\Services\Vehicle\VariantService;
+use App\Services\Vehicle\VehicleModelService;
+use App\Services\Vehicle\SubSegmentService;
+use App\Services\Vehicle\SegmentService;
+use App\Models\Vehicle\Variant;
+use App\Models\Vehicle\VehicleModel;
+use App\Models\Vehicle\SubSegment;
+use App\Models\Vehicle\Segment;
 use App\Http\Controllers\Controller;
 
 use Illuminate\Support\Collection;
@@ -109,15 +118,19 @@ class AdminImportController extends Controller
                 'subsegment' => 0,
                 'model' => 0,
                 'variant' => 0,
-                'color' => 0,
                 'skipped' => 0,
+                'errors' => 0,
             ];
+            $errors = [];
+            $segments = app(SegmentService::class);
+            $subSegments = app(SubSegmentService::class);
+            $models = app(VehicleModelService::class);
+            $variants = app(VariantService::class);
 
             $seenSegments = [];
             $seenSubsegments = [];
             $seenModels = [];
             $seenVariants = [];
-            $seenColors = [];
 
             \Log::info('=== Vehicle Import Started (Google Sheet, Color merged into Variant) ===', [
                 'spreadsheet_id' => $spreadsheetId,
@@ -157,13 +170,10 @@ class AdminImportController extends Controller
                     continue;
                 }
 
-                $variantCode = substr($fullModelCode, 0, -2);
+                // Variant code = the full OEM code; colour code = its last two characters (one row per colour).
+                $variantCode = $fullModelCode;
                 $colorCode = strtoupper(substr($fullModelCode, -2));
-
-                // Canonical hyphenated code (THAR ROXX → THAR-ROXX, DEC-049); matches the admin forms.
-                $modelCode = \App\Services\Vehicle\VehicleCodeNormaliser::canonical(substr($rawOemModel, 0, 30));
-                $segmentCode = $segmentMapping[$rawSegment] ?? strtoupper(substr($rawSegment, 0, 5));
-                $subSegmentCode = ! empty($rawSubSegment) ? \App\Services\Vehicle\VehicleCodeNormaliser::canonical(substr($rawSubSegment, 0, 15)) : null;
+                $segmentCode = $segmentMapping[$rawSegment] ?? $rawSegment;
 
                 $fuelTypeId = $this->getOrCreateKeyValue($fuelMap, 'FUEL_TYPE', $fuelStr, $now);
                 $bodyMakeId = $this->getOrCreateKeyValue($bodyMakeMap, 'BODY_MAKE', $bodyMakeStr, $now);
@@ -171,163 +181,90 @@ class AdminImportController extends Controller
                 $permitId = $this->getOrCreateKeyValue($permitMap, 'PERMIT', $permitStr, $now);
                 $statusId = $this->getOrCreateKeyValue($statusMap, 'VEHICLE_STATUS', $statusStr, $now);
 
-                if ($segmentCode && ! isset($seenSegments[$segmentCode])) {
-                    if (! \DB::table('xlr8_vehicle_segment')->where('code', $segmentCode)->exists()) {
-                        \DB::table('xlr8_vehicle_segment')->insert([
-                            'code' => $segmentCode,
-                            'name' => ucfirst(strtolower($segmentCode)),
-                            'is_active' => 1,
-                            'created_at' => $now,
-                            'updated_at' => $now,
-                        ]);
-                        $stats['segment']++;
+                // Every write goes through the entity service: same formats and rules as the admin forms (DEC-050).
+                try {
+                    $segment = $segments->normalise(['code' => $segmentCode])['code'] ?? null;
+                    if ($segment && ! isset($seenSegments[$segment])) {
+                        if (! Segment::where('code', $segment)->exists()) {
+                            $segments->create(['code' => $segment, 'name' => $segment, 'is_active' => true]);
+                            $stats['segment']++;
+                        }
+                        $seenSegments[$segment] = true;
                     }
-                    $seenSegments[$segmentCode] = true;
-                }
 
-                if ($subSegmentCode && $segmentCode) {
-                    $subKey = "{$segmentCode}|{$subSegmentCode}";
-                    if (! isset($seenSubsegments[$subKey])) {
-                        if (! \DB::table('xlr8_vehicle_subsegment')
-                            ->where('segment_code', $segmentCode)
-                            ->where('code', $subSegmentCode)->exists()) {
-                            \DB::table('xlr8_vehicle_subsegment')->insert([
-                                'segment_code' => $segmentCode,
-                                'code' => $subSegmentCode,
-                                'name' => ucfirst(strtolower($subSegmentCode)),
-                                'is_active' => 1,
-                                'created_at' => $now,
-                                'updated_at' => $now,
-                            ]);
+                    $subSegment = $rawSubSegment !== '' ? ($subSegments->normalise(['code' => $rawSubSegment])['code'] ?? null) : null;
+                    if ($subSegment && ! isset($seenSubsegments[$subSegment])) {
+                        if (! SubSegment::where('code', $subSegment)->exists()) {
+                            $subSegments->create(['segment_code' => $segment, 'code' => $subSegment, 'name' => $rawSubSegment, 'is_active' => true]);
                             $stats['subsegment']++;
                         }
-                        $seenSubsegments[$subKey] = true;
+                        $seenSubsegments[$subSegment] = true;
                     }
-                }
 
-                if (! isset($seenModels[$modelCode])) {
-                    if (! \DB::table('xlr8_vehicle_model')
-                        ->where('code', $modelCode)->exists()) {
-                        \DB::table('xlr8_vehicle_model')->insert([
-                            'segment_code' => $segmentCode,
-                            'sub_segment_code' => $subSegmentCode,
-                            'code' => $modelCode,
-                            'name' => $customModel ?: $modelCode,
-                            'oem_name' => strtoupper($rawOemModel),
-                            'is_active' => 1,
-                            'created_at' => $now,
-                            'updated_at' => $now,
-                        ]);
-                        $stats['model']++;
+                    $modelCode = $models->normalise(['code' => $rawOemModel])['code'];
+                    if (! isset($seenModels[$modelCode])) {
+                        if (! VehicleModel::where('code', $modelCode)->exists()) {
+                            $models->create([
+                                'segment_code' => $segment,
+                                'sub_segment_code' => $subSegment,
+                                'code' => $modelCode,
+                                'name' => $customModel ?: $rawOemModel,
+                                'oem_name' => $rawOemModel,
+                                'is_active' => true,
+                            ]);
+                            $stats['model']++;
+                        }
+                        $seenModels[$modelCode] = true;
                     }
-                    $seenModels[$modelCode] = true;
-                }
 
-                $variantKey = "{$modelCode}|{$variantCode}|{$colorCode}";
-
-                if (isset($seenVariants[$variantKey])) {
-                    \Log::info("Row {$excelRow} — SKIPPED, duplicate within this import: {$variantCode} | {$colorCode}");
-                    $stats['skipped']++;
-                } else {
-                    $exists = \DB::table('xlr8_vehicle_variant')
-                        ->where('model_code', $modelCode)
-                        ->where('code', $variantCode)
-                        ->where('color_code', $colorCode)
-                        ->exists();
-
-                    if ($exists) {
-                        \Log::info("Row {$excelRow} — SKIPPED, already exists in DB: {$variantCode} | {$colorCode}");
+                    $variantKey = "{$variantCode}|{$colorCode}";
+                    if (isset($seenVariants[$variantKey]) || Variant::where('code', $variantCode)->where('color_code', $colorCode)->exists()) {
                         $stats['skipped']++;
                     } else {
-                        \DB::table('xlr8_vehicle_variant')->insert([
-                            'segment_code' => $segmentCode,
-                            'sub_segment_code' => $subSegmentCode,
+                        $variants->create([
+                            'segment_code' => $segment,
+                            'sub_segment_code' => $subSegment,
                             'model_code' => $modelCode,
                             'code' => $variantCode,
-                            'oem_name' => $oemVariant,
-                            'custom_name' => $customVariant ?: null,
-                            'display_name' => $displayName ?: null,
-                            'color' => $colourName ?: null,
+                            'color' => $colourName,
                             'color_code' => $colorCode,
+                            'oem_name' => $oemVariant,
+                            'custom_name' => $customVariant,
+                            'display_name' => $displayName,
                             'fuel_type_id' => $fuelTypeId,
                             'seating_capacity' => is_numeric($seating) ? (int) $seating : null,
                             'wheels' => is_numeric($wheels) ? (int) $wheels : 4,
                             'gvw' => is_numeric($gvw) ? (int) $gvw : null,
-                            'cc_capacity' => ! empty($cc) ? (string) $cc : null,
-                            'transmission' => $transmission ?: null,
-                            'drivetrain' => $drivetrain ?: null,
+                            'cc_capacity' => $cc,
+                            'transmission' => $transmission,
+                            'drivetrain' => $drivetrain,
                             'body_make_id' => $bodyMakeId,
                             'body_type_id' => $bodyTypeId,
                             'permit_id' => $permitId,
                             'taxi_price' => $taxiPrice,
                             'status_id' => $statusId,
-                            'is_csd' => 0,
-                            'is_active' => 1,
-                            'created_at' => $now,
-                            'updated_at' => $now,
+                            'is_csd' => false,
+                            'is_active' => true,
                         ]);
                         $stats['variant']++;
-                        \Log::info("Row {$excelRow} — Variant+Color inserted: {$variantCode} | {$colorCode} ({$colourName})");
                     }
-
                     $seenVariants[$variantKey] = true;
-                }
-
-                // --- Color table upsert (independent of variant dedup) ---
-                // Keyed on model_code + variant_code + code (color code), per xlr8_vehicle_color unique key.
-                // Name is stored exactly as given from the sheet — if colourName is blank,
-                // it stays blank/null forever. We never auto-generate a fallback name here.
-                $colorKey = "{$modelCode}|{$variantCode}|{$colorCode}";
-
-                if (isset($seenColors[$colorKey])) {
-                    \Log::info("Row {$excelRow} — Color SKIPPED, duplicate within this import: {$variantCode} | {$colorCode}");
-                } else {
-                    $existingColor = \DB::table('xlr8_vehicle_color')
-                        ->where('model_code', $modelCode)
-                        ->where('variant_code', $variantCode)
-                        ->where('code', $colorCode)
-                        ->first();
-
-                    if (! $existingColor) {
-                        \DB::table('xlr8_vehicle_color')->insert([
-                            'segment_code' => $segmentCode,
-                            'sub_segment_code' => $subSegmentCode,
-                            'model_code' => $modelCode,
-                            'variant_code' => $variantCode,
-                            'code' => $colorCode,
-                            'name' => $colourName ?: null,
-                            'hex_code' => null,
-                            'image' => null,
-                            'is_active' => 1,
-                            'created_at' => $now,
-                            'updated_at' => $now,
-                        ]);
-                        $stats['color']++;
-                        \Log::info("Row {$excelRow} — Color inserted: {$variantCode} | {$colorCode} ({$colourName})");
-                    } elseif ($colourName && empty($existingColor->name)) {
-                        // Only fill the name in if the sheet now has one AND the stored
-                        // record was blank — never overwrite a name that's already set,
-                        // and never invent one when the sheet also leaves it blank.
-                        \DB::table('xlr8_vehicle_color')
-                            ->where('id', $existingColor->id)
-                            ->update([
-                                'name' => $colourName,
-                                'updated_at' => $now,
-                            ]);
-                        \Log::info("Row {$excelRow} — Color name backfilled: {$variantCode} | {$colorCode} ({$colourName})");
-                    } else {
-                        \Log::info("Row {$excelRow} — Color SKIPPED, already exists in DB: {$variantCode} | {$colorCode}");
-                    }
-
-                    $seenColors[$colorKey] = true;
+                } catch (ValidationException $e) {
+                    $stats['errors']++;
+                    $message = "Row {$excelRow} ({$fullModelCode}): ".implode(' ', $e->validator->errors()->all());
+                    $errors[] = $message;
+                    \Log::warning('Vehicle import row rejected', ['row' => $excelRow, 'errors' => $e->errors()]);
                 }
             }
 
             \Log::info('=== Vehicle Import Completed (Google Sheet) ===', $stats);
 
-            $summary = "Segments: {$stats['segment']} | Subsegments: {$stats['subsegment']} | Models: {$stats['model']} | Variants: {$stats['variant']} | Colors: {$stats['color']} | Skipped: {$stats['skipped']}";
+            $summary = "Segments: {$stats['segment']} | Subsegments: {$stats['subsegment']} | Models: {$stats['model']} | Variants: {$stats['variant']} | Skipped: {$stats['skipped']} | Rejected: {$stats['errors']}";
 
             \Alert::success("Import Completed → {$summary}")->flash();
+            if ($errors !== []) {
+                \Alert::warning('Rejected rows: '.implode(' · ', array_slice($errors, 0, 10)).(count($errors) > 10 ? ' …' : ''))->flash();
+            }
         } catch (\Exception $e) {
             \Log::error('Vehicle Import (Google Sheet) failed', ['error' => $e->getMessage()]);
             \Alert::error('Import failed: ' . $e->getMessage())->flash();

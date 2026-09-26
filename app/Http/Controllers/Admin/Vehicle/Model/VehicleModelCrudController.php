@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers\Admin\Vehicle\Model;
 
-use App\Http\Requests\VehicleModelRequest;
 use App\Models\Vehicle\Segment;
 use App\Models\Vehicle\SubSegment;
 use App\Models\Vehicle\Variant;
 use App\Models\Vehicle\VehicleModel;
+use App\Services\Vehicle\VehicleModelService;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
+use Illuminate\Http\Request;
 
 class VehicleModelCrudController extends CrudController
 {
@@ -94,20 +95,14 @@ class VehicleModelCrudController extends CrudController
         ]);
     }
 
-    public function store(VehicleModelRequest $request)
+    /** Create through VehicleModelService, the only write path (DEC-050). */
+    public function store(Request $request)
     {
         if (! backpack_user()->can('VEH_MDL_CREATE')) {
             abort(403, 'Unauthorized. You do not have permission to create vehicle models.');
         }
 
-        $validated = $request->validated();
-
-        if (! empty($validated['sub_segment_id'])) {
-            $subSegment = SubSegment::find($validated['sub_segment_id']);
-            $validated['sub_segment_code'] = $subSegment?->code;
-        }
-
-        VehicleModel::create($validated);
+        app(VehicleModelService::class)->create($request->all());
 
         \Alert::success('Vehicle Model created successfully!')->flash();
 
@@ -141,59 +136,16 @@ class VehicleModelCrudController extends CrudController
         ]);
     }
 
-    public function update(VehicleModelRequest $request, $id)
+    /** Update through VehicleModelService, the only write path (DEC-050). */
+    public function update(Request $request, $id)
     {
         if (! backpack_user()->can('VEH_MDL_EDIT')) {
             abort(403, 'Unauthorized. You do not have permission to edit vehicle models.');
         }
 
-        $vehiclemodel = VehicleModel::findOrFail($id);
+        app(VehicleModelService::class)->update(VehicleModel::findOrFail($id), $request->all());
 
-        $validated = $request->validated();
-
-        if (
-            $vehiclemodel->is_active == 1 &&
-            ! $request->boolean('is_active')
-        ) {
-
-            $activeVariantCount = Variant::where(
-                'model_code',
-                $vehiclemodel->code
-            )
-                ->where('is_active', 1)
-                ->count();
-
-            if ($activeVariantCount > 0) {
-
-                \Alert::error(
-                    "Cannot deactivate Vehicle Model. {$activeVariantCount} active Variant(s) exist."
-                )->flash();
-
-                return redirect()->back()->withInput();
-            }
-        }
-
-        if (! empty($validated['sub_segment_id'])) {
-
-            $subSegment = SubSegment::find(
-                $validated['sub_segment_id']
-            );
-
-            $validated['sub_segment_code'] =
-                $subSegment?->code;
-        }
-
-        $validated['is_active'] =
-            $request->boolean('is_active');
-
-        // The code is the key children reference (variants, pricing, enquiries): never re-saved (DEC-048).
-        unset($validated['code']);
-
-        $vehiclemodel->update($validated);
-
-        \Alert::success(
-            'Vehicle Model updated successfully!'
-        )->flash();
+        \Alert::success('Vehicle Model updated successfully!')->flash();
 
         return redirect(backpack_url('vehicle/model'));
     }
@@ -212,6 +164,6 @@ class VehicleModelCrudController extends CrudController
         return SubSegment::where('segment_code', $segmentCode)
             ->where('is_active', 1)
             ->orderBy('name')
-            ->get(['id', 'name']);
+            ->get(['code', 'name']);
     }
 }

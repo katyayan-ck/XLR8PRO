@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\Admin\Vehicle\Variant;
 
-use App\Http\Requests\VariantRequest;
 use App\Models\Vehicle\SubSegment;
 use App\Models\Vehicle\Variant;
 use App\Models\Vehicle\VehicleModel;
 use App\Services\OrgService;
+use App\Services\Vehicle\VariantService;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
@@ -143,18 +143,14 @@ class VariantCrudController extends CrudController
         ]);
     }
 
-    public function store(VariantRequest $request)
+    /** Create through VariantService, the only write path (DEC-050). */
+    public function store(Request $request)
     {
         if (! backpack_user()->can('VEH_VAR_CREATE')) {
             abort(403, 'Unauthorized. You do not have permission to create variants.');
         }
 
-        $validated = $request->validated();
-
-        $validated['is_csd'] = $request->boolean('is_csd');
-        $validated['is_active'] = $request->boolean('is_active');
-
-        Variant::create($validated);
+        app(VariantService::class)->create($request->all());
 
         \Alert::success('Variant created successfully!')->flash();
 
@@ -221,32 +217,16 @@ class VariantCrudController extends CrudController
         ]);
     }
 
-    public function update(VariantRequest $request, $id)
+    /** Update through VariantService, the only write path (DEC-050). */
+    public function update(Request $request, $id)
     {
         if (! backpack_user()->can('VEH_VAR_EDIT')) {
             abort(403, 'Unauthorized. You do not have permission to edit variants.');
         }
 
-        $variant = Variant::findOrFail($id);
+        app(VariantService::class)->update(Variant::findOrFail($id), $request->all());
 
-        $validated = $request->validated();
-
-        // Colours are variant rows (DEC-048); the legacy colour-table guard was removed.
-
-        $validated['is_csd'] =
-            $request->boolean('is_csd');
-
-        $validated['is_active'] =
-            $request->boolean('is_active');
-
-        // The code is the key children reference (variants, pricing, enquiries): never re-saved (DEC-048).
-        unset($validated['code']);
-
-        $variant->update($validated);
-
-        \Alert::success(
-            'Variant updated successfully!'
-        )->flash();
+        \Alert::success('Variant updated successfully!')->flash();
 
         return redirect(backpack_url('vehicle/variant'));
     }

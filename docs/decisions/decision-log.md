@@ -420,3 +420,16 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
 - **Keyword (key-value) codes:** new and edited ones follow the rule. Existing ones (about 1,900 with spaces) are converted only after a reference audit, because other tables may store them as plain text.
 - **Not codes:** consultant names (`sc_code`), and insurer and financier names, are left as they are.
 - **Risk:** HIGH (mass remap). **Approved-by:** user. Backup taken before running locally. **Reversal:** the JSON map.
+
+### DEC-050 | 27-09-2026 | A3 / project-wide | One field-rule set per entity, enforced by the entity service (SSOT); no correcting old data
+- **Decision (user, 27-09-2026):**
+  - **Old data:** stop correcting it. A fresh copy from the latest import replaces it.
+  - **Field rules:** every field of an entity has exactly one definition of format, transformation, validation and label. It is enforced for every create/edit, whether from a CRUD screen, an import or an API, only through that entity's service. This is a global project rule.
+- **Design:**
+  - `App\Support\Entity\Field` is the fluent field definition: label, transforms (the `HasColumnTransformations` pipeline names), rules, unique scope, immutable-on-update.
+  - `App\Support\Entity\EntityService` is the base for every entity service. `create()`, `update()` and `upsert()` run normalise → validate (throws `ValidationException`) → business guards → persist through Eloquent, in a transaction.
+  - Models that declare `$entityService` take their transform backstop from the service's fields, so there is no second copy.
+  - Controllers and importers only call the service. FormRequests no longer define rules for migrated entities.
+- **Withdrawn:** the vehicle code normaliser, its command and the two data-correction migrations (DEC-049 data part; never deployed). The DEC-049 hyphen format stays, as a field rule.
+- **Roll-out order:** Vehicle masters (segment, sub-segment, model, variant) first; then Org masters, Person, Employee/User (+ importer), KeyValue, Pricing entities.
+- **Risk:** MED (write paths change) · **Approved-by:** user · **Reversal:** revert per-entity commits.
