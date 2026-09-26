@@ -1,6 +1,7 @@
 {
     "agents": [
-        "claude_code"
+        "claude_code",
+        "codex"
     ],
     "cloud": true,
     "guidelines": true,
@@ -20,6 +21,11 @@
         "tailwindcss-development",
         "backpack-crud",
         "medialibrary-development",
-        "laradocs-development"
+        "laradocs-development",
+        "xcelr8-import-export",
+        "xcelr8-new-module",
+        "xcelr8-pricing",
+        "xcelr8-rbac-debug",
+        "xcelr8-sales-process"
     ]
 }
