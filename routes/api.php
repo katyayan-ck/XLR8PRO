@@ -4,7 +4,6 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\DocController;
 use App\Http\Controllers\Api\V1\EntityHistoryController;
 use App\Http\Controllers\Api\V1\NotificationController;
-use App\Http\Controllers\Api\V1\PricingApiController;
 use App\Http\Controllers\Api\V1\SystemSettingApiController;
 use Illuminate\Support\Facades\Route;
 
@@ -22,10 +21,9 @@ Route::prefix('v1')->group(function () {
             ->name('api.auth.verify-otp');
     });
 
-    Route::group(['middleware' => ['auth:sanctum', 'validate_device']], function () {
-        Route::post('/pricing/calculate-exchange', [PricingApiController::class, 'calculateExchange']);
-        // generate-quote removed: PricingApiController::generateQuote never existed (DEC-020).
-    });
+    // Pricing API removed: calculate-exchange called PricingService::calculateExchangeGap(),
+    // which never existed (PricingService was an empty file), and generate-quote had no
+    // method. Track B rebuilds the pricing API on PricingEngineService (DEC-020, DEC-030).
 
     // ╔════════════════════════════════════════════════════════╗
     // ║ PROTECTED ROUTES (Authentication + Device Validation) ║

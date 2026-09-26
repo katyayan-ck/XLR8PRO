@@ -160,7 +160,7 @@ class OtpNotificationService
                 'app_name' => config('app.name'),
             ];
 
-            Mail::send('emails.verification-success', $data, function ($message) use ($email) {
+            Mail::send('emails.verification_success_email', $data, function ($message) use ($email) {
                 $message
                     ->to($email)
                     ->subject('Login Successful - ' . config('app.name'))
@@ -211,7 +211,7 @@ class OtpNotificationService
                 'app_name' => config('app.name'),
             ];
 
-            Mail::send('emails.account-locked', $data, function ($message) use ($email) {
+            Mail::send('emails.account_locked_email', $data, function ($message) use ($email) {
                 $message
                     ->to($email)
                     ->subject('Account Locked - ' . config('app.name'))

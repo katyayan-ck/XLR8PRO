@@ -10,8 +10,6 @@ use App\Services\EnquiryReferenceService;
 use App\Services\FirebaseService;
 use App\Services\HR\EmployeeJourneyService;
 use App\Services\HR\HRJourneyService;
-use App\Services\IAM\PostService;
-use App\Services\IAM\ReportingService;
 use App\Services\IdentifierService;
 use App\Services\NotificationService;
 use App\Services\OtpNotificationService;
@@ -75,8 +73,6 @@ class AppServiceProvider extends ServiceProvider
         });
 
         // $this->app->singleton(\App\Services\IAM\DataScopeService::class);
-        $this->app->singleton(PostService::class);
-        $this->app->singleton(ReportingService::class);
         $this->app->singleton(HRJourneyService::class);
         $this->app->singleton(EmployeeJourneyService::class);
         $this->app->singleton(IdentifierService::class);
