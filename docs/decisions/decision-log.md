@@ -381,3 +381,19 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
   - BMPL-0365 and BMPL-0630 get primary department and division `IT` plus the matching scopes (dump: Primary Department = IT).
 - **Server PHP:** the user confirmed the cPanel servers run PHP 8.4, which clears the DEC-045 deploy gate.
 - **Approved-by:** user (27-09-2026) · **Reversal:** move the division back to ADM and delete the department.
+
+### DEC-047 | 27-09-2026 | A1 (purge follow-up) | Remove remaining dead IAM/legacy pieces (BUG-006/017/076); close stale tracker items
+- **Remove (reference-checked):**
+  - `CheckPermission` middleware and its `checkPermission` alias: no route uses it, and admin code gates inline.
+  - The `App\Models\Core\ReportingHierarchy` model: no references.
+  - Orphan views `admin/graph-edge/*` and `admin/graph-node/*`: their controllers were deleted earlier.
+  - `RBACService::getAccessibleResources()` and `getModelClassForResourceType()`: never called, and they point at a missing brand table.
+- **Keep:**
+  - `ScopedQuery`, needed if data scoping is switched on (BUG-083 decision).
+  - `ApprovalService` and the Graph models, used by `DocService`.
+  - `BrandCrudController`, referenced by the booking team's `AdminImportController`.
+- **Close as already fixed:**
+  - BUG-080: the suite is fully green (240 passed).
+  - BUG-147 and BUG-155: the dead-route checker finds none.
+  - BUG-017: the listed dead classes are gone; `ScopedQuery` is kept on purpose.
+- **Risk:** LOW · **Approved-by:** auto (plan §2 drop list) · **Reversal:** revert the commit.

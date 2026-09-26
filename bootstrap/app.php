@@ -2,7 +2,6 @@
 
 use App\Console\Commands\ImportRbacMaster;
 use App\Console\Commands\ImportUsersCommand;
-use App\Http\Middleware\CheckPermission;
 use App\Http\Middleware\CheckSuperAdmin;
 use App\Http\Middleware\ValidateDevice;
 use Illuminate\Foundation\Application;
@@ -21,7 +20,6 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'checkPermission' => CheckPermission::class,
             'checkSuperAdmin' => CheckSuperAdmin::class,
             'validate_device' => ValidateDevice::class,
             'role' => RoleMiddleware::class,

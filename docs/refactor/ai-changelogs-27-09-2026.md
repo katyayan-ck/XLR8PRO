@@ -154,3 +154,11 @@ Branch `feature/integrations`. Decisions DEC-033…038 are in `docs/decisions/de
   - Other environments run `php artisan db:seed --class=ItDepartmentSeeder`.
 - **`title_case`:** keeps business acronyms (IT, HR, PDI, CRM, LMM, RTO…) upper-case. Before, it saved "It", and editing HR/PDI in the admin would have produced "Hr"/"Pdi". New `TitleCaseAcronymTest` (8 cases).
 - **Server PHP:** the user confirmed PHP 8.4 on cPanel, which clears the DEC-045 deploy gate.
+
+## Dead IAM/legacy remnants (DEC-047)
+- **Removed:**
+  - The `CheckPermission` middleware and its alias.
+  - The `Core\ReportingHierarchy` model.
+  - Orphan `graph-edge`/`graph-node` views.
+  - The two uncalled `RBACService` methods.
+- **Closed:** BUG-006/017/076/080/147/155.

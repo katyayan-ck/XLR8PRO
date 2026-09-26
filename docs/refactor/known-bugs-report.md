@@ -41,7 +41,7 @@ Entry format:
 | BUG-003 | `UserCrudController::destroy()` used `isSuperAdmin()` as a query scope | Medium | FIXED | 19-09-2026 22:20 | 19-09-2026 22:20 |
 | BUG-004 | Stray `/` in `UserImportExportController.php` blocked `route:list` | High | FIXED | pre-19-09-2026 (reported, not fixed, in an earlier session) | 19-09-2026 23:15 |
 | BUG-005 | `UserCrudController` checked `user.*` (singular) against real `users.*` (plural) permissions | High | FIXED | 19-09-2026 (~23:00) | 19-09-2026 23:45 |
-| BUG-006 | `checkPermission` middleware registered but wired to no route | Medium | OPEN | 19-09-2026 (pre-rollout sweep) | — |
+| BUG-006 | `checkPermission` middleware registered but wired to no route | Medium | FIXED | 19-09-2026 (pre-rollout sweep) | 27-09-2026 |
 | BUG-007 | `/admin/user` — Backpack's `hasAccessOrFail('list')` throws unconditionally | Critical | FIXED | 19-09-2026 (~22:30) | 26-09-2026 |
 | BUG-008 | `EmployeeCrudController` references non-existent columns (`person_id` etc.) | High | MITIGATED (DEC-037) | 20-09-2026 09:45 | 27-09-2026 |
 | BUG-009 | `BrandCrudController` — `xlr8_vehicle_brand` table doesn't exist | High | MITIGATED (DEC-037/038) | 20-09-2026 10:30 | 27-09-2026 |
@@ -52,7 +52,7 @@ Entry format:
 | BUG-014 | PRO-only Backpack features used without `backpack/pro` installed — `SystemSettingCrudController` (filter) and `UserCrudController` (filter + `select2` fields) | Medium | FIXED for `UserCrudController` (its Create/Edit no longer use Backpack fields/filters at all — hand-rolled forms instead, see BUG-040); `SystemSettingCrudController`'s filter left as-is, still OPEN | 20-09-2026 13:00 | 21-09-2026 14:00 (User only) |
 | BUG-015 | `PostCrudController` / `UserTypeCrudController` — entirely unreachable, no routes | Medium | FIXED | 20-09-2026 13:00 | 27-09-2026 |
 | BUG-016 | `RoleRequest` validation references non-existent `xlr8_iam_roles` table | Medium | FIXED | 20-09-2026 13:00 | 27-09-2026 |
-| BUG-017 | Dead/unused traits and classes (`HasAuditFields`, `ScopedQuery`, `AfterImportListener`, `BrandCrudController::import()`) | Low | OPEN | 19-09-2026 / 20-09-2026 (see entry) | — |
+| BUG-017 | Dead/unused traits and classes (`HasAuditFields`, `ScopedQuery`, `AfterImportListener`, `BrandCrudController::import()`) | Low | FIXED | 19-09-2026 / 20-09-2026 (see entry) | 27-09-2026 |
 | BUG-018 | `App\Models\IAM\Role` has a misleading, dead `$table` property | Cosmetic | FIXED | 19-09-2026 22:20 | 27-09-2026 |
 | BUG-019 | Unexplained large external change to `BookingCrudController.php` | Unknown | OPEN — needs owner input | 20-09-2026 13:00 | — |
 | BUG-020 | `PersonAddressCrudController` references columns that don't exist (`type`, `person_id`, `is_primary`) | High | MITIGATED (DEC-037) | 20-09-2026 15:30 | 27-09-2026 |
@@ -100,7 +100,7 @@ Entry format:
 | BUG-073 | `App\Models\Admin\EmployeeHistory` extends `BaseModel`, which forces the `SoftDeletes` trait, but `xlr8_admin_employee_history` has no `deleted_at` column — every query fatals with "Unknown column 'deleted_at'"; the table had 0 rows and had evidently never been queried before | High | FIXED | 21-09-2026 12:00 | 21-09-2026 12:05 |
 | BUG-074 | `Employee::getDesignationCodeAttribute()`/`getDesignationNameAttribute()` had the entire intended fallback expression written INSIDE the array-index string literal (e.g. `$this->attributes['designation_code ?? $this->desig_code']`) instead of as real PHP — both accessors always returned `null` via Eloquent, for every employee, everywhere in the app, silently masked by `??` fallback chains elsewhere (e.g. `OrgService.php`) | Critical | FIXED | 21-09-2026 12:00 | 21-09-2026 12:10 |
 | BUG-075 | `App\Services\Importers\UserImporter::createOrUpdateUser()` builds `$userData` using entirely nonexistent `users` table columns (`personid`, `employeeid`, `usertypeid`, `code`, `name`, `email`, `isactive` — real columns are `person_code`, `employee_code`, `user_type_id`, `username`, `is_active`, no `code`/`name`/`email` at all) — this importer has evidently never successfully created or updated a single real user record | Critical | FIXED | 21-09-2026 13:00 | 26-09-2026 |
-| BUG-076 | `RBACService::getAccessibleResources()`/`getModelClassForResourceType()`/`getUserPermissions()` reference `App\Models\Core\Brand/Color/Department/Location/Segment/SubSegment/Variant/VehicleModel/Vertical` (none exist — same dead `Core` namespace pattern as BUG-071/072/075) plus `$user->employee->posts` and `$user->userRoleAssignments` relations that don't exist on the real models; confirmed unreachable from any controller (`grep` found zero callers) | Medium | PARTIALLY FIXED (imports) — `employee->posts` dead code OPEN | 21-09-2026 13:05 | — |
+| BUG-076 | `RBACService::getAccessibleResources()`/`getModelClassForResourceType()`/`getUserPermissions()` reference `App\Models\Core\Brand/Color/Department/Location/Segment/SubSegment/Variant/VehicleModel/Vertical` (none exist — same dead `Core` namespace pattern as BUG-071/072/075) plus `$user->employee->posts` and `$user->userRoleAssignments` relations that don't exist on the real models; confirmed unreachable from any controller (`grep` found zero callers) | Medium | FIXED | 21-09-2026 13:05 | 27-09-2026 |
 | BUG-025 | `LeadCrudController` sets `created_by`/`updated_by` on Lead records, but `Lead` model's `$fillable` omits both — silently dropped on every save | Medium | FIXED | 20-09-2026 17:30 | 24-09-2026 |
 | BUG-026 | `composer dump-autoload`'s `package:discover` post-script fails (exit code 1) whenever a moved/renamed controller class is still referenced by its old name somewhere still-loaded (e.g. a stale `use`/string route registration) | Low | FIXED (self-resolves once every reference is updated — no code fix needed, just an ordering rule) | 20-09-2026 17:40 | 20-09-2026 17:45 |
 | BUG-027 | `CampaignCrudController` mass-assigned raw `$request->all()` via `fill()`, and `created_by`/`updated_by`/`deleted_by` are all in `Campaign::$fillable` — a POST/PUT body could spoof authorship by including those keys directly | Medium | FIXED (side effect of converting to FormRequest's `->validated()`, not separately scoped) | 20-09-2026 18:00 | 20-09-2026 18:10 |
@@ -115,7 +115,7 @@ Entry format:
 | BUG-077 | `Employee` has no `is_active` column; naive "active dependents" checks against it would silently no-op | Medium | FIXED (avoided) | 21-09-2026 | 21-09-2026 |
 | BUG-078 | `phpunit.xml` misconfigured (typo'd DB name, no `APP_URL` override, placeholder `APP_KEY`) — `php artisan test` was unusable | High | FIXED | 21-09-2026 | 21-09-2026 |
 | BUG-079 | `actingAs($user, $guard)` breaks Spatie permission checks for any non-default guard in tests | Medium | WON'T FIX (worked around in tests) | 21-09-2026 | — |
-| BUG-080 | 32 pre-existing test failures surfaced once BUG-078 was fixed (suite could not run before today) | Medium | OPEN | 21-09-2026 | — |
+| BUG-080 | 32 pre-existing test failures surfaced once BUG-078 was fixed (suite could not run before today) | Medium | FIXED | 21-09-2026 | 27-09-2026 |
 | BUG-081 | `Vertical::employees()`/`employeeAssignments()` point at `xlr8_admin_emp_vertical_pivot`, a table that does not exist | Medium | FIXED | 22-09-2026 | 27-09-2026 |
 | BUG-082 | `Branch::primaryEmployees()` joins on `Branch.branch_code`, a column that is never populated (not fillable, always NULL) — real data uses `Branch.code` instead | Medium | FIXED | 22-09-2026 | 27-09-2026 |
 | BUG-083 | `BranchCrudController`'s own `setupListOperation()` override shadows `ScopedCrud` trait's data-scoping logic — branch data-scoping is silently never applied | Medium | OPEN (pre-existing, carried forward — not introduced or fixed this session) | 22-09-2026 | — |
@@ -182,7 +182,7 @@ Entry format:
 | BUG-144 | `ValidateDevice` middleware imported nonexistent `Core\DeviceSession`/`OtpAttemptLog` and wrote `$user->phone` — every `auth:sanctum` API route failed | Critical | FIXED | 24-09-2026 | 24-09-2026 |
 | BUG-145 | `FirebaseService` called nonexistent `Factory::withDefaultAuth()`; Firebase/Notification/Doc services couldn't construct | High | FIXED | 24-09-2026 | 24-09-2026 |
 | BUG-146 | `BaseModel::resolveActorId()` read the `web` guard, so every admin write was stamped as user 1 | High | FIXED (historic rows not correctable) | 24-09-2026 | 24-09-2026 |
-| BUG-147 | 8 API routes pointed at wrong method names (fixed); 5 point at methods never written | Medium | PARTIALLY FIXED | 24-09-2026 | 24-09-2026 (8 of 13) |
+| BUG-147 | 8 API routes pointed at wrong method names (fixed); 5 point at methods never written | Medium | FIXED | 24-09-2026 | 27-09-2026 |
 | BUG-148 | System Settings admin screen used Backpack PRO features, a nonexistent model, wrong unique table and nonexistent `storeCrud`/`updateCrud` | High | FIXED | 24-09-2026 | 24-09-2026 |
 | BUG-149 | `UserCrudController::destroy()` called nonexistent `parent::deleteCrud()` — user delete always failed | High | FIXED | 24-09-2026 | 24-09-2026 |
 | BUG-150 | `OrgService::getKeyValuesByCode()` returned null for keyword codes with values but no master row (`PERMIT`, …) | Medium | FIXED | 24-09-2026 | 24-09-2026 |
@@ -190,7 +190,7 @@ Entry format:
 | BUG-152 | Accessory import log never written (`AccessoryService`) and double-JSON-encoded (both accessory import services) | Low | FIXED | 24-09-2026 | 24-09-2026 |
 | BUG-153 | `getChassisNumbers` filters on `status = 'available'`, which no stock row has | Low | OPEN (needs business rule) | 24-09-2026 | — |
 | BUG-154 | Employee / Person Address / Person Banking create-edit forms are id-based against the code-based schema | High | MITIGATED (DEC-037) | 24-09-2026 | 27-09-2026 |
-| BUG-155 | Dead routes (no method, no callers) and dead/unloadable files still in the tree | Low | OPEN (cleanup decision) | 24-09-2026 | — |
+| BUG-155 | Dead routes (no method, no callers) and dead/unloadable files still in the tree | Low | FIXED | 24-09-2026 | 27-09-2026 |
 | BUG-156 | Class references in the wrong letter case (`XL_DSA_MASTER` ×8 files, `KeyValue\KeyValue`, `Crm\LeadSource`) — work on Windows, fail to autoload on a case-sensitive (Linux) filesystem | High (if production is Linux) | FIXED | 25-09-2026 | 25-09-2026 |
 | BUG-157 | `FirebaseService` calls `User::deviceTokens()`, which was never defined — sending push to a user, listing and revoking a user's devices all fatal | High | FIXED | 25-09-2026 | 25-09-2026 |
 | BUG-158 | `User::branches/locations/departments` and `Employee::branches/locations/departments` target nonexistent `xlr8_admin_emp_*_pivot` tables; live caller: `UserExporter` (user export POST) | Medium | FIXED | 25-09-2026 | 27-09-2026 |
@@ -273,6 +273,8 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 - **Where:** `bootstrap/app.php` (alias registration); no `routes/*.php` file references it.
 - **Description:** The middleware exists and is aliased, but zero routes use `checkPermission:...` or `permission:...`. Before BUG-001's fix, this meant no route-level permission enforcement existed anywhere.
 - **Proposed solution:** superseded in effect by BUG-001's coarse gate and this rollout's per-controller `abort(403,...)` checks. Once the controller rollout is far enough along, decide whether to (a) leave the ad hoc in-method `abort()` style as the standard (what every controller in this rollout now uses) and remove the unused middleware alias, or (b) formally migrate to `->middleware('checkPermission:...')` on routes instead. Not urgent — no functional gap either way once the rollout finishes.
+
+- **Update 27-09-2026:** `CheckPermission` middleware and its alias removed (DEC-047).
 
 ### BUG-007 — `/admin/user` — Backpack's `hasAccessOrFail('list')` throws unconditionally
 
@@ -395,6 +397,8 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
   - `BrandCrudController::import()` (pre-move code, now at `app/Http/Controllers/Admin/Vehicle/Brand/BrandCrudController.php`) — large bulk Excel-import method; confirmed via repo-wide grep that no route calls it.
 - **Description:** all four are confirmed dead code by direct search, not behavioral bugs — but `ScopedQuery` is concerning because `.ai/rules` documentation asserts it's actively used for job-level data-scope bypassing, when it demonstrably isn't wired into anything. Worth understanding whether data scoping in jobs is actually enforced some other way, or whether this is a real gap the documentation is papering over.
 - **Proposed solution:** safe to delete `HasAuditFields`, `AfterImportListener`, and `BrandCrudController::import()` once confirmed nothing external references them (e.g. no queued job class-name lookup, no scheduled command). `ScopedQuery` needs the data-scoping-in-jobs question answered first, before deciding whether to wire it up for real or delete it as aspirational-but-unused.
+
+- **Update 27-09-2026:** the listed dead classes are gone; `ScopedQuery` is kept on purpose for the data-scoping decision (DEC-047).
 
 ### BUG-018 — `App\Models\IAM\Role` has a misleading, dead `$table` property
 
@@ -1052,6 +1056,8 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
   - `Tests\Unit\RBACPersonEmployeeUserTest` — 1 failing assertion, not yet triaged.
 - **Description:** all of these look like an abandoned or in-progress "Post" (position/reporting line) subsystem plus one missing test fixture — none were touched by, or related to, today's Designation CRUD work. `ReportingService`/`PostService` are bound as singletons in `AppServiceProvider` but the underlying class(es) appear to have moved, been renamed, or never existed.
 - **Proposed solution:** needs its own investigation session — first confirm whether the "Post" subsystem is active/planned work or genuinely abandoned scaffold (similar to BUG-028's dead `FinanceCrudController`/`InsuranceCrudController` scaffolding) before deciding whether to fix, delete, or skip these tests.
+
+- **Update 27-09-2026:** stale — the suite is fully green (240 passed, 1 data-dependent skip).
 
 ### BUG-081 — `Vertical::employees()`/`employeeAssignments()` reference a nonexistent pivot table
 
@@ -1739,6 +1745,8 @@ guessed at.
 - **Description / fix:** repointed to the real methods: `GET /devices` → `getUserDevices`, `DELETE /devices/{id}` → `unregisterDevice`, `/notifications/{id}/read` → `markNotificationAsRead`, `/notifications/mark-all-read` → `markAllNotificationsAsRead`, `GET /messages/user/{user_id}` → `getConversationMessages`, `system-settings/topic/{topic}` → `getByTopic`, `export/json` → `exportSettings`, `import/json` → `importSettings`. The `system-settings/{key}` catch-all also swallowed `export/json` (registered earlier); it now excludes it. Verified by router matching.
 - **Still open:** `NotificationController::revokeAllDevices`, `SystemSettingApiController::siteSettings` / `dealershipSettings` / `pricingSettings`, `PricingApiController::generateQuote` (and its injected `PricingService` is empty). Decision: implement or remove these routes.
 
+- **Update 27-09-2026:** verified: no API route points at a missing method any more (dead-route checker, DEC-047).
+
 ### BUG-148 — System Settings admin screen: list, create and save all 500'd
 
 - **Status:** FIXED
@@ -1815,6 +1823,8 @@ guessed at.
 - **Found:** 24-09-2026, route/method and class-load scans.
 - **Where:** admin routes with no controller method and no callers: `orderVerify`, `editRefund`, quotation `pending`, enquiry `pending`/`erroneous`. Dead or unloadable files: `oldEnquiryCrudController.php`, `Module/Booking/XlInsurance.php` (declares `App\Models`, duplicates the live model), two `RulesUserImporter` copies, `VehicleDefineImporter`, Post controllers, `AppServiceProvider`'s `PostService`/`ReportingService` singletons (cause of `ReportingServiceTest`/`PostServiceTest` failures, BUG-080), `BookingStateService`, `app/Models_backup/` (BUG-140).
 - **Proposed solution:** delete after owner sign-off.
+
+- **Update 27-09-2026:** verified: dead-route checker finds none; remaining dead files removed in DEC-044/047.
 
 ### BUG-156 — Class references in the wrong letter case (fail on case-sensitive filesystems)
 

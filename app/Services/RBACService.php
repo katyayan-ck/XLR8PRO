@@ -3,20 +3,8 @@
 namespace App\Services;
 
 use App\Models\Admin\Branch;
-use App\Models\Admin\Department;
-use App\Models\Admin\Designation;
-use App\Models\Admin\Division;
-use App\Models\Admin\Location;
-use App\Models\Admin\Vertical;
 use App\Models\IAM\UserRoleAssignment;
 use App\Models\User;
-use App\Models\Vehicle\Brand;
-use App\Models\Vehicle\Color;
-use App\Models\Vehicle\Segment;
-use App\Models\Vehicle\SubSegment;
-use App\Models\Vehicle\Variant;
-use App\Models\Vehicle\VehicleModel;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -208,69 +196,6 @@ class RBACService
         $this->clearUserPermissionCache($user);
 
         return true;
-    }
-
-    /**
-     * Get all accessible resources for user filtered by scopes
-     *
-     * @param  string  $resourceType  Type of resource (branch, department, etc.)
-     * @return Collection
-     */
-    public function getAccessibleResources(
-        User $user,
-        string $resourceType
-    ) {
-        if ($user->isSuperAdmin()) {
-            $modelClass = $this->getModelClassForResourceType($resourceType);
-
-            return $modelClass::active()->get();
-        }
-
-        // Get scoped resources
-        $scopeService = app(DataScopeService::class);
-        $accessibleIds = $scopeService->getAccessibleIds($user, $resourceType);
-
-        $modelClass = $this->getModelClassForResourceType($resourceType);
-
-        if ($accessibleIds === null) {
-            // Wildcard - all records
-            return $modelClass::active()->get();
-        }
-
-        if (empty($accessibleIds)) {
-            // No access
-            return collect();
-        }
-
-        // Specific IDs
-        return $modelClass::active()
-            ->whereIn('id', $accessibleIds)
-            ->get();
-    }
-
-    /**
-     * Get model class for resource type
-     */
-    private function getModelClassForResourceType(string $resourceType): string
-    {
-        $mapping = [
-            'branch' => Branch::class,
-            'location' => Location::class,
-            'department' => Department::class,
-            'division' => Division::class,
-            'designation' => Designation::class,
-            'vertical' => Vertical::class,
-            'brand' => Brand::class,
-            'segment' => Segment::class,
-            'subsegment' => SubSegment::class,
-            'vehiclemodel' => VehicleModel::class,
-            'variant' => Variant::class,
-            'color' => Color::class,
-        ];
-
-        return $mapping[$resourceType] ?? throw new \InvalidArgumentException(
-            "Unknown resource type: {$resourceType}"
-        );
     }
 
     /**
