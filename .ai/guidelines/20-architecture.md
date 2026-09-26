@@ -13,7 +13,7 @@
 - **Data scoping:** `App\Services\IAM\DataScopeService` on `xlr8_admin_user_scopes`; `ScopedQuery`/`ScopedCrud`
   exist but are not yet switched on (decision pending). Jobs must not depend on a user scope.
 - **API envelope:** `{http_status, success, code, message, data}` via `BaseController` helpers.
-- **Dates:** stored UTC; displayed with `site_date()` / `@sitedate` (site setting `display.date_format`).
+- **Dates:** app timezone `Asia/Kolkata`: timestamps are stored and compared in IST (DEC-046; rows before 26-09-2026 are UTC and are intentionally not converted). Displayed with `site_date()` / `@sitedate` (site setting `display.date_format`).
 - **Labels:** `resources/lang/en/{module}.php` is the single source for field labels & validation names.
 - **Money:** new columns `DECIMAL(15,2)`; legacy varchar money is being normalised (DEC-003).
 - **Every job** sets `$timeout`, `$tries`, and implements `failed()`.

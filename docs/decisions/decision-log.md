@@ -372,3 +372,12 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
     4. `config.optimize-autoloader: true` forced a full classmap scan on every local dump. Set to `false`: production is unaffected because `deploy.yml` passes `--optimize-autoloader`.
   - **Result:** local `composer dump-autoload` takes about 5s (the optimized one about 30s), where before it hung. No warnings remain.
   - Windows Defender real-time scanning of `vendor/` still adds time. Excluding `D:\laragon` is a machine setting for the user.
+
+### DEC-046 | 27-09-2026 | A3 (UAT) | Timestamps stay IST; add an IT department
+- **Timezone (BUG-169):** keep `Asia/Kolkata`. Timestamps written before the 26-09 switch stay as they are (UTC values, not converted). BUG-169 is closed as accepted, and the architecture rule now says timestamps are stored in IST.
+- **IT department:**
+  - Create department `IT`. Its default division is the existing division `IT`, which moves from Admin (`dept_code ADM → IT`). Division codes are unique, the `IT` code is unchanged, and nothing referenced Admin → IT.
+  - Idempotent `ItDepartmentSeeder`, so other environments run `php artisan db:seed --class=ItDepartmentSeeder`.
+  - BMPL-0365 and BMPL-0630 get primary department and division `IT` plus the matching scopes (dump: Primary Department = IT).
+- **Server PHP:** the user confirmed the cPanel servers run PHP 8.4, which clears the DEC-045 deploy gate.
+- **Approved-by:** user (27-09-2026) · **Reversal:** move the division back to ADM and delete the department.

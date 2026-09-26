@@ -26,9 +26,8 @@ return [
 
     /*
     | Timezone used by PHP date functions and for timestamps written by the app.
-    | The booking team switched this from UTC to Asia/Kolkata on 26-09-2026;
-    | rows written before that are UTC (BUG-169). Changing it again shifts how
-    | every stored timestamp is interpreted, so it needs a data decision first.
+    | IST is the storage timezone (DEC-046); rows written before 26-09-2026 are UTC
+    | and were intentionally left unconverted.
     */
     'timezone' => env('APP_TIMEZONE', 'Asia/Kolkata'),
 

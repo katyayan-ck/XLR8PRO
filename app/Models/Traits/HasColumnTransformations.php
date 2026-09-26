@@ -92,6 +92,7 @@ use Illuminate\Support\Str;
  *      truncate:{n}                      – truncate to n characters (e.g. truncate:255)
  *      pad_left:{n}:{char}               – str_pad left  (e.g. pad_left:6:0 → "000042")
  *      pad_right:{n}:{char}              – str_pad right
+ *
  *      mask_email                        – j***@example.com
  *      mask_phone                        – keep last 4 digits, mask rest
  *      base64_encode / base64_decode     – encode / decode base64
@@ -188,6 +189,7 @@ trait HasColumnTransformations
             foreach ($definition as $step) {
                 $value = $this->applyNamedTransformation($value, $step);
             }
+
             return $value;
         }
 
@@ -213,52 +215,52 @@ trait HasColumnTransformations
 
         return match ($transformation) {
             // ── Uppercase ──────────────────────────────────────────────────
-            'uppercase'                            => strtoupper($value),
-            'uppercase_alphanumeric'               => $this->uppercaseAlphanumeric($value),
-            'uppercase_alphanumeric_dash'          => $this->uppercaseAlphanumericDash($value),
-            'uppercase_alphanumeric_underscore'    => $this->uppercaseAlphanumericUnderscore($value),
+            'uppercase' => strtoupper($value),
+            'uppercase_alphanumeric' => $this->uppercaseAlphanumeric($value),
+            'uppercase_alphanumeric_dash' => $this->uppercaseAlphanumericDash($value),
+            'uppercase_alphanumeric_underscore' => $this->uppercaseAlphanumericUnderscore($value),
             'uppercase_alphanumeric_dash_underscore' => $this->uppercaseAlphanumericDashUnderscore($value),
 
             // ── Lowercase ──────────────────────────────────────────────────
-            'lowercase'                            => strtolower($value),
-            'lowercase_alphanumeric'               => $this->lowercaseAlphanumeric($value),
-            'lowercase_alphanumeric_dash'          => $this->lowercaseAlphanumericDash($value),
-            'lowercase_alphanumeric_underscore'    => $this->lowercaseAlphanumericUnderscore($value),
+            'lowercase' => strtolower($value),
+            'lowercase_alphanumeric' => $this->lowercaseAlphanumeric($value),
+            'lowercase_alphanumeric_dash' => $this->lowercaseAlphanumericDash($value),
+            'lowercase_alphanumeric_underscore' => $this->lowercaseAlphanumericUnderscore($value),
             'lowercase_alphanumeric_dash_underscore' => $this->lowercaseAlphanumericDashUnderscore($value),
-            'lowercase_alphanumeric_dash_dot'      => $this->lowercaseAlphanumericDashDot($value),
+            'lowercase_alphanumeric_dash_dot' => $this->lowercaseAlphanumericDashDot($value),
 
             // ── Case ───────────────────────────────────────────────────────
-            'title_case'      => $this->titleCase($value),
-            'sentence_case'   => $this->sentenceCase($value),
+            'title_case' => $this->titleCase($value),
+            'sentence_case' => $this->sentenceCase($value),
             'capitalize_first' => ucfirst($value),
 
             // ── Alphanumeric filters ───────────────────────────────────────
-            'alphanumeric'    => $this->alphanumeric($value),
-            'numeric'         => $this->numeric($value),
-            'alpha'           => $this->alpha($value),
+            'alphanumeric' => $this->alphanumeric($value),
+            'numeric' => $this->numeric($value),
+            'alpha' => $this->alpha($value),
 
             // ── Slug / identifier formats ──────────────────────────────────
-            'slug'        => Str::slug($value),
-            'snake_case'  => Str::snake($value),
-            'kebab_case'  => Str::kebab($value),
-            'camel_case'  => Str::camel($value),
+            'slug' => Str::slug($value),
+            'snake_case' => Str::snake($value),
+            'kebab_case' => Str::kebab($value),
+            'camel_case' => Str::camel($value),
             'pascal_case' => Str::studly($value),
 
             // ── Whitespace ─────────────────────────────────────────────────
-            'trim'        => trim($value),
+            'trim' => trim($value),
             'trim_spaces' => $this->trimSpaces($value),
 
             // ── Formatting helpers ─────────────────────────────────────────
-            'strip_tags'    => strip_tags($value),
-            'mask_email'    => $this->maskEmail($value),
-            'mask_phone'    => $this->maskPhone($value),
+            'strip_tags' => strip_tags($value),
+            'mask_email' => $this->maskEmail($value),
+            'mask_phone' => $this->maskPhone($value),
             'base64_encode' => base64_encode($value),
             'base64_decode' => base64_decode($value, strict: false) ?: $value,
-            'json_encode'   => json_encode($value, JSON_UNESCAPED_UNICODE),
-            'json_decode'   => $this->jsonDecodeToString($value),
-            'md5'           => md5($value),
-            'sha1'          => sha1($value),
-            'sha256'        => hash('sha256', $value),
+            'json_encode' => json_encode($value, JSON_UNESCAPED_UNICODE),
+            'json_decode' => $this->jsonDecodeToString($value),
+            'md5' => md5($value),
+            'sha1' => sha1($value),
+            'sha256' => hash('sha256', $value),
 
             // ── Passthrough ────────────────────────────────────────────────
             default => $value,
@@ -272,17 +274,17 @@ trait HasColumnTransformations
     protected function applyParameterizedTransformation(string $value, string $definition): string
     {
         $parts = explode(':', $definition);
-        $name  = array_shift($parts);
+        $name = array_shift($parts);
 
         return match ($name) {
-            'truncate'  => mb_substr($value, 0, (int) ($parts[0] ?? 255)),
-            'pad_left'  => str_pad($value, (int) ($parts[0] ?? 0), $parts[1] ?? ' ', STR_PAD_LEFT),
+            'truncate' => mb_substr($value, 0, (int) ($parts[0] ?? 255)),
+            'pad_left' => str_pad($value, (int) ($parts[0] ?? 0), $parts[1] ?? ' ', STR_PAD_LEFT),
             'pad_right' => str_pad($value, (int) ($parts[0] ?? 0), $parts[1] ?? ' ', STR_PAD_RIGHT),
-            'pad_both'  => str_pad($value, (int) ($parts[0] ?? 0), $parts[1] ?? ' ', STR_PAD_BOTH),
-            'prefix'    => implode(':', $parts) . $value,
-            'suffix'    => $value . implode(':', $parts),
-            'replace'   => str_replace($parts[0] ?? '', $parts[1] ?? '', $value),
-            default     => $value,
+            'pad_both' => str_pad($value, (int) ($parts[0] ?? 0), $parts[1] ?? ' ', STR_PAD_BOTH),
+            'prefix' => implode(':', $parts).$value,
+            'suffix' => $value.implode(':', $parts),
+            'replace' => str_replace($parts[0] ?? '', $parts[1] ?? '', $value),
+            default => $value,
         };
     }
 
@@ -295,12 +297,14 @@ trait HasColumnTransformations
         // Regex replacement
         if (isset($config['regex'], $config['replacement'])) {
             $result = preg_replace($config['regex'], $config['replacement'], $value);
+
             return $result ?? $value;
         }
 
         // Callable / Closure
         if (isset($config['callback']) && is_callable($config['callback'])) {
             $result = call_user_func($config['callback'], $value);
+
             return is_string($result) ? $result : (string) $result;
         }
 
@@ -311,6 +315,7 @@ trait HasColumnTransformations
                     $value = preg_replace($step['regex'], $step['replacement'], $value) ?? $value;
                 }
             }
+
             return $value;
         }
 
@@ -379,6 +384,7 @@ trait HasColumnTransformations
     {
         $cleaned = preg_replace('/[^A-Za-z0-9\-]/', '', $value);
         $cleaned = preg_replace('/-+/', '-', $cleaned);
+
         return strtolower(trim($cleaned, '-'));
     }
 
@@ -386,6 +392,7 @@ trait HasColumnTransformations
     {
         $cleaned = preg_replace('/[^A-Za-z0-9_]/', '', $value);
         $cleaned = preg_replace('/_+/', '_', $cleaned);
+
         return strtolower(trim($cleaned, '_'));
     }
 
@@ -403,9 +410,27 @@ trait HasColumnTransformations
     // Case helpers
     // -----------------------------------------------------------------------
 
+    /**
+     * Business acronyms that stay upper-case after title-casing ("IT", "HR", "PDI"…);
+     * plain MB_CASE_TITLE turned the IT department into "It" (DEC-046).
+     *
+     * @var list<string>
+     */
+    public const TITLE_CASE_ACRONYMS = [
+        'AGM', 'API', 'ASM', 'BEV', 'BMPL', 'CEO', 'CFO', 'CNG', 'COO', 'CRM', 'CSD', 'CV', 'DGM', 'DMS', 'DSA',
+        'EV', 'GM', 'GST', 'HO', 'HR', 'ICE', 'IT', 'KYC', 'LMM', 'MIS', 'MWH', 'NC', 'OEM', 'OTF', 'PDI',
+        'PV', 'RTO', 'SUV', 'TCS', 'UC', 'VP', 'XUV',
+    ];
+
     protected function titleCase(string $value): string
     {
-        return mb_convert_case($value, MB_CASE_TITLE, 'UTF-8');
+        $titled = mb_convert_case($value, MB_CASE_TITLE, 'UTF-8');
+
+        return preg_replace_callback(
+            '/\b('.implode('|', self::TITLE_CASE_ACRONYMS).')\b/i',
+            fn (array $m) => strtoupper($m[1]),
+            $titled
+        );
     }
 
     protected function sentenceCase(string $value): string
@@ -452,20 +477,22 @@ trait HasColumnTransformations
         }
         [$local, $domain] = explode('@', $value, 2);
         $visible = mb_substr($local, 0, 1);
-        $masked  = str_repeat('*', max(1, mb_strlen($local) - 1));
-        return $visible . $masked . '@' . $domain;
+        $masked = str_repeat('*', max(1, mb_strlen($local) - 1));
+
+        return $visible.$masked.'@'.$domain;
     }
 
     protected function maskPhone(string $value): string
     {
         $digitsOnly = preg_replace('/\D/', '', $value);
-        $len        = strlen($digitsOnly);
+        $len = strlen($digitsOnly);
         if ($len < 4) {
             return $value;
         }
-        $last4  = substr($digitsOnly, -4);
+        $last4 = substr($digitsOnly, -4);
         $masked = str_repeat('*', $len - 4);
-        return $masked . $last4;
+
+        return $masked.$last4;
     }
 
     // -----------------------------------------------------------------------
@@ -478,6 +505,7 @@ trait HasColumnTransformations
         if (json_last_error() !== JSON_ERROR_NONE) {
             return $value;
         }
+
         return is_string($decoded) ? $decoded : json_encode($decoded, JSON_UNESCAPED_UNICODE);
     }
 

@@ -144,3 +144,13 @@ Branch `feature/integrations`. Decisions DEC-033…038 are in `docs/decisions/de
   - The Google Sheets, Vision, Firebase, Excel and PDF classes all autoload.
 - **Deploy note:** `stage`, `uat` and `main` servers must run PHP ≥ 8.4 before this merges there.
 - **Also:** `bootstrap/cache/packages.php` and `services.php` (generated) and 8 stray `.tmp` files are untracked, and Laravel's standard `bootstrap/cache/.gitignore` is restored. `composer install` regenerates the caches on deploy.
+
+## Decisions applied (DEC-046)
+- **Timezone:** IST is kept; older UTC rows are not converted. BUG-169 is closed, and the architecture rule and `config/app.php` comment are updated.
+- **IT department:**
+  - Added through the idempotent `database/seeders/ItDepartmentSeeder.php`, applied to `xlrm` and `xlrm_testing` with a backup in `storage/app/backups`.
+  - The existing `IT` division moved from Admin to become its default division.
+  - BMPL-0365 and BMPL-0630 now have primary department and division `IT`, with scopes.
+  - Other environments run `php artisan db:seed --class=ItDepartmentSeeder`.
+- **`title_case`:** keeps business acronyms (IT, HR, PDI, CRM, LMM, RTO…) upper-case. Before, it saved "It", and editing HR/PDI in the admin would have produced "Hr"/"Pdi". New `TitleCaseAcronymTest` (8 cases).
+- **Server PHP:** the user confirmed PHP 8.4 on cPanel, which clears the DEC-045 deploy gate.
