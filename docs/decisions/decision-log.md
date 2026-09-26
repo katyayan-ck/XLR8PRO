@@ -397,3 +397,15 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
   - BUG-147 and BUG-155: the dead-route checker finds none.
   - BUG-017: the listed dead classes are gone; `ScopedQuery` is kept on purpose.
 - **Risk:** LOW · **Approved-by:** auto (plan §2 drop list) · **Reversal:** revert the commit.
+
+### DEC-048 | 27-09-2026 | A3 (UAT) | Vehicle masters: codes immutable on edit; variant = one row per colour (BUG-171/172)
+- **Facts:**
+  - Colours are stored as separate variant rows: `code` plus `color`/`color_code`, 2,652 rows for 652 codes (user, 27-09-2026). `xlr8_vehicle_color` and the Colour screen are legacy (its menu is already hidden).
+  - Editing any vehicle master re-saved its `code` through the space-stripping `code` transform. That orphaned children keyed on the old code: 588 variants and 584 legacy colour rows no longer match a model (for example `THAR ROXX` vs `THARROXX`).
+- **Decision:**
+  1. `code` is immutable on update for segment, sub-segment, model, variant and colour (as for the Org masters). The edit forms show it read-only.
+  2. `VariantRequest`: `code` is unique per (`code`, `color_code`) among live rows, not table-wide. Before, every multi-colour variant failed to save with "code already taken".
+  3. Variant form and model accept `color` and `color_code`.
+  4. The variant deactivation guard no longer counts legacy colour-table rows.
+- **Not done (needs the user):** repairing the existing mismatched codes. The canonical form (spaced OEM code vs squashed) is the user's call.
+- **Risk:** MED (UAT-visible fixes) · **Approved-by:** auto (obvious bug fixes in UAT scope) · **Reversal:** revert the commit.

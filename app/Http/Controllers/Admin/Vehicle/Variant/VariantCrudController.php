@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin\Vehicle\Variant;
 
 use App\Http\Requests\VariantRequest;
-use App\Models\Vehicle\Color;
 use App\Models\Vehicle\SubSegment;
 use App\Models\Vehicle\Variant;
 use App\Models\Vehicle\VehicleModel;
@@ -190,12 +189,12 @@ class VariantCrudController extends CrudController
             ->orderBy('name')
             ->get();
 
-        $activeColors = Color::where(
-            'variant_code',
-            $variant->code
-        )
+        // Colours are sibling rows of the same variant code (DEC-048).
+        $activeColors = Variant::where('code', $variant->code)
             ->where('is_active', 1)
-            ->pluck('name')
+            ->whereNotNull('color')
+            ->orderBy('color')
+            ->pluck('color')
             ->toArray();
 
         return view('admin.vehicle.variant.edit', [
@@ -232,33 +231,16 @@ class VariantCrudController extends CrudController
 
         $validated = $request->validated();
 
-        if (
-            $variant->is_active == 1 &&
-            ! $request->boolean('is_active')
-        ) {
-
-            $activeColorCount = Color::where(
-                'variant_code',
-                $variant->code
-            )
-                ->where('is_active', 1)
-                ->count();
-
-            if ($activeColorCount > 0) {
-
-                \Alert::error(
-                    "Cannot deactivate Variant. {$activeColorCount} active Color(s) exist."
-                )->flash();
-
-                return redirect()->back()->withInput();
-            }
-        }
+        // Colours are variant rows (DEC-048); the legacy colour-table guard was removed.
 
         $validated['is_csd'] =
             $request->boolean('is_csd');
 
         $validated['is_active'] =
             $request->boolean('is_active');
+
+        // The code is the key children reference (variants, pricing, enquiries): never re-saved (DEC-048).
+        unset($validated['code']);
 
         $variant->update($validated);
 

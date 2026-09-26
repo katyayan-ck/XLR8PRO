@@ -11,8 +11,6 @@ use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
-use Illuminate\Support\Collection;
-use Revolution\Google\Sheets\Facades\Sheets;
 
 class SegmentCrudController extends CrudController
 {
@@ -24,7 +22,7 @@ class SegmentCrudController extends CrudController
     public function setup()
     {
         CRUD::setModel(Segment::class);
-        CRUD::setRoute(config('backpack.base.route_prefix') . '/vehicle/segment');
+        CRUD::setRoute(config('backpack.base.route_prefix').'/vehicle/segment');
         CRUD::setEntityNameStrings('segment', 'segments');
     }
 
@@ -55,7 +53,7 @@ class SegmentCrudController extends CrudController
 
             $mapped['action'] = '
                 <div class="d-flex gap-2 justify-content-center">
-                    <a href="' . $editUrl . '"
+                    <a href="'.$editUrl.'"
                        class="btn btn-sm btn-primary py-1 px-2"
                        title="Edit">
                          Edit
@@ -102,7 +100,7 @@ class SegmentCrudController extends CrudController
             ->toArray();
 
         return view('admin.vehicle.segment.edit', [
-            'title' => 'Edit Segment - ' . $segment->name,
+            'title' => 'Edit Segment - '.$segment->name,
             'segment' => $segment,
             'activeSubSegments' => $activeSubSegments,
         ]);
@@ -142,6 +140,9 @@ class SegmentCrudController extends CrudController
 
         $validated['is_active'] = $request->boolean('is_active');
 
+        // The code is the key children reference (variants, pricing, enquiries): never re-saved (DEC-048).
+        unset($validated['code']);
+
         $segment->update($validated);
 
         \Alert::success(
@@ -165,10 +166,25 @@ class SegmentCrudController extends CrudController
     }
 
     /**
-     * Gates the default Backpack store() (this controller has no custom store()
-     * override — POST /admin/segment falls through to CreateOperation's default,
-     * which Backpack routes through this same setupCreateOperation() hook).
+     * Validated create (the Backpack default store() saved unvalidated input: a duplicate
+     * or missing code was a 500, BUG-170).
      */
+    public function store(SegmentRequest $request)
+    {
+        if (! backpack_user()->can('VEH_SEG_CREATE')) {
+            abort(403, 'Unauthorized. You do not have permission to create segments.');
+        }
+
+        $validated = $request->validated();
+        $validated['is_active'] = $request->boolean('is_active');
+
+        Segment::create($validated);
+
+        \Alert::success('Segment created successfully!')->flash();
+
+        return redirect(backpack_url('vehicle/segment'));
+    }
+
     protected function setupCreateOperation()
     {
         if (! backpack_user()->can('VEH_SEG_CREATE')) {

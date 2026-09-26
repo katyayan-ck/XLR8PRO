@@ -186,6 +186,9 @@ class VehicleModelCrudController extends CrudController
         $validated['is_active'] =
             $request->boolean('is_active');
 
+        // The code is the key children reference (variants, pricing, enquiries): never re-saved (DEC-048).
+        unset($validated['code']);
+
         $vehiclemodel->update($validated);
 
         \Alert::success(

@@ -44,8 +44,13 @@ class VariantRequest extends FormRequest
                 'required',
                 'string',
                 'max:100',
-                Rule::unique('xlr8_vehicle_variant', 'code')->ignore($currentId),
+                // One row per colour: the code repeats across a variant's colour rows (DEC-048).
+                Rule::unique('xlr8_vehicle_variant', 'code')
+                    ->where(fn ($q) => $q->where('color_code', $this->input('color_code'))->whereNull('deleted_at'))
+                    ->ignore($currentId),
             ],
+            'color' => 'nullable|string|max:255',
+            'color_code' => 'nullable|string|max:10',
             'oem_name' => 'required|string|max:255',
             'custom_name' => 'nullable|string|max:255',
             'display_name' => 'nullable|string|max:255',

@@ -149,8 +149,19 @@ class SubSegmentCrudController extends CrudController
             }
         }
 
+        // Models carry segment_code too; moving a sub-segment under them would desync them.
+        if ($validated['segment_code'] !== $subsegment->segment_code
+            && VehicleModel::where('sub_segment_code', $subsegment->code)->exists()) {
+            \Alert::error('Cannot move this Sub Segment to another Segment while Vehicle Models use it.')->flash();
+
+            return redirect()->back()->withInput();
+        }
+
         $validated['is_active'] =
             $request->boolean('is_active');
+
+        // The code is the key children reference (variants, pricing, enquiries): never re-saved (DEC-048).
+        unset($validated['code']);
 
         $subsegment->update($validated);
 
@@ -176,9 +187,25 @@ class SubSegmentCrudController extends CrudController
     }
 
     /**
-     * Gates the default Backpack store() (no custom store() override exists —
-     * see SegmentCrudController for the same pattern).
+     * Validated create (the Backpack default store() saved unvalidated input: a duplicate
+     * or missing code was a 500, BUG-170).
      */
+    public function store(SubSegmentRequest $request)
+    {
+        if (! backpack_user()->can('VEH_SEG_CREATE')) {
+            abort(403, 'Unauthorized. You do not have permission to create sub segments.');
+        }
+
+        $validated = $request->validated();
+        $validated['is_active'] = $request->boolean('is_active');
+
+        SubSegment::create($validated);
+
+        \Alert::success('Sub Segment created successfully!')->flash();
+
+        return redirect(backpack_url('vehicle/sub-segment'));
+    }
+
     protected function setupCreateOperation()
     {
         if (! backpack_user()->can('VEH_SEG_CREATE')) {

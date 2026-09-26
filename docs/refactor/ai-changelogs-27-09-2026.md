@@ -162,3 +162,16 @@ Branch `feature/integrations`. Decisions DEC-033…038 are in `docs/decisions/de
   - Orphan `graph-edge`/`graph-node` views.
   - The two uncalled `RBACService` methods.
 - **Closed:** BUG-006/017/076/080/147/155.
+
+## Vehicle master write paths (DEC-048, BUG-170/171/172)
+- **New `tests/Feature/Admin/Vehicle/VehicleMasterWriteTest.php` (7 tests):** segment, sub-segment, model and variant colour rows (create, update, delete), plus the regressions below.
+- **Segment / sub-segment:**
+  - Create is now validated; a duplicate code is a form error, not a 500.
+  - The sub-segment edit uses `segment_code`, so segment changes are saved and the current segment is pre-selected. A move is blocked while models use the sub-segment.
+- **All vehicle masters:** `code` is immutable on edit and read-only in the forms. Re-saving through the `code` transform had orphaned 588 variants.
+- **Variants (one row per colour, full OEM code):**
+  - `code` is unique per colour code.
+  - Colour and Colour Code fields are on the form and model.
+  - The edit page lists the variant's colour rows.
+  - The legacy colour-table guard was removed.
+- **Pending decision:** canonical model-code form, for the data repair (BUG-171).

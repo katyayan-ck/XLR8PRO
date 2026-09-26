@@ -205,6 +205,9 @@ Entry format:
 | BUG-167 | System settings show page 500 (route lacked `'operation' => 'show'`, so the show component never loaded) and was ungated; key-value / keyword-master `search` + `details` routes lacked `'operation' => 'list'`, so their only permission check never ran | High | FIXED | 27-09-2026 | 27-09-2026 |
 | BUG-168 | Same route trap in the booking team's area: `accounts/receipt/{id}/show`, `sales/lead*` search/details/destroy, `sales/lead-source*`, `sales/enquiry/{id}` destroy, `sales/campaign/{id}` destroy and `spares/spare-request/{id}` destroy are registered without the `operation` key — hook-only permission checks don't run | High | OPEN (booking team's code — reported, not changed) | 27-09-2026 | — |
 | BUG-169 | App timezone changed from UTC to Asia/Kolkata on origin/stage (booking team, 26-09-2026): timestamps written before are UTC, after are IST, in the same columns; `.ai` architecture rule says "stored UTC" | High | CLOSED — accepted (DEC-046) | 27-09-2026 | 27-09-2026 |
+| BUG-170 | Segment/sub-segment create used Backpack's unvalidated default store (duplicate code = 500); sub-segment edit posted `segment_id` (not a column) so a segment change was silently dropped and the form never pre-selected the current segment | High | FIXED | 27-09-2026 | 27-09-2026 |
+| BUG-171 | Editing any vehicle master re-saved its `code` through the space-stripping transform, orphaning children: 588 variants (+584 legacy colour rows) now reference model codes that no longer exist (`THAR ROXX` vs `THARROXX`, 17 models) | Critical | CODE FIXED (DEC-048); DATA REPAIR needs owner decision | 27-09-2026 | — |
+| BUG-172 | Variant uniqueness was table-wide on `code`, but colours are separate rows sharing the code → every multi-colour variant failed to save; colour fields missing from form/model; deactivation checked the legacy colour table | High | FIXED | 27-09-2026 | 27-09-2026 |
 
 Not a bug (false positive, listed for reference): the original `infer-conventions` sweep flagged
 "`SheetHeaderService`/`SynonymService` not used by importers" — re-investigation on 19-09-2026
@@ -1946,4 +1949,18 @@ guessed at.
 - **Options:** (a) keep IST: convert pre-change rows (+5:30) in a one-off, local-first migration with backup, and update the architecture rule; (b) return to UTC storage and show IST via `site_date()` — then rows written by the booking team since 26-09 need −5:30. Either way the cut-over moment must come from the deploy log of dev.xceler8.in.
 - **BUG-169 closed 27-09-2026 (DEC-046):** owner decision — keep IST; older UTC rows are left as they are.
 - **BUG-166 closed 27-09-2026 (DEC-046):** IT department + default division created (`ItDepartmentSeeder`); BMPL-0365/0630 assigned.
+
+### BUG-170 — Segment/sub-segment writes
+
+- **Status:** FIXED (27-09-2026, DEC-048 batch) — validated `store()` for both; sub-segment request/edit form use `segment_code`; moving a sub-segment is blocked while models use it. Tests: `tests/Feature/Admin/Vehicle/VehicleMasterWriteTest.php`.
+
+### BUG-171 — Vehicle master codes rewritten on edit (orphaned variants)
+
+- **Status:** code fixed (codes immutable on update, read-only in edit forms); **data repair pending owner decision**.
+- **Where the data diverged:** the UI squashes model codes (`uppercase_alphanumeric_dash_underscore` also on `variant.model_code`), the booking team's vehicle import keeps spaces. 17 model codes exist in both forms; variants use the spaced form 588× and the squashed form 58×.
+- **Repair (once the canonical form is chosen):** update `xlr8_vehicle_model.code` and every `model_code` / `model` reference (variant, pricing tables, CRM enquiries/leads/test drives/campaigns, booking stock/accessories) in one transaction with backup; align the import so it applies the same transform.
+
+### BUG-172 — Variant = one row per colour
+
+- **Status:** FIXED (27-09-2026, DEC-048) — `code` unique per (`code`, `color_code`); `color`/`color_code` on the form and model; edit page lists sibling colour rows; the legacy colour-table deactivation guard removed.
 

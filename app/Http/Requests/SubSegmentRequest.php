@@ -23,7 +23,7 @@ class SubSegmentRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * Only used by update() — SubSegmentCrudController has no store() override.
+     * Used by store() and update(). Sub-segments link to segments by code (BUG-170).
      *
      * @return array
      */
@@ -32,7 +32,7 @@ class SubSegmentRequest extends FormRequest
         $currentId = $this->route('id');
 
         return [
-            'segment_id' => 'required|exists:xlr8_vehicle_segment,id',
+            'segment_code' => ['required', 'string', Rule::exists('xlr8_vehicle_segment', 'code')->whereNull('deleted_at')],
             'name' => 'required|string|max:255',
             'code' => [
                 'required',
@@ -56,7 +56,7 @@ class SubSegmentRequest extends FormRequest
             'code' => __('vehicle.fields.code'),
             'name' => __('vehicle.fields.name'),
             'description' => __('vehicle.fields.description'),
-            'segment_id' => __('vehicle.fields.segment_id'),
+            'segment_code' => __('vehicle.fields.segment_code'),
             'is_active' => __('vehicle.fields.is_active'),
         ];
     }

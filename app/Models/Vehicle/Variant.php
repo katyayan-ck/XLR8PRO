@@ -2,11 +2,11 @@
 
 namespace App\Models\Vehicle;
 
-use App\Models\BaseModel;
 use App\Helpers\KeywordHelper;
+use App\Models\BaseModel;
+use App\Models\Traits\HasColumnTransformations;
 use App\Models\Utilities\KeyValue\Keyvalue;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
-use App\Models\Traits\HasColumnTransformations;
 
 class Variant extends BaseModel
 {
@@ -21,6 +21,8 @@ class Variant extends BaseModel
         'model_code',
 
         'code',
+        'color',
+        'color_code',
         'oem_name',
         'custom_name',
         'display_name',
@@ -53,76 +55,76 @@ class Variant extends BaseModel
 
     protected $casts = [
         'seating_capacity' => 'integer',
-        'wheels'           => 'integer',
-        'gvw'              => 'integer',
-        'is_csd'           => 'boolean',
-        'is_active'        => 'boolean',
-        'created_at'       => 'datetime',
-        'updated_at'       => 'datetime',
-        'deleted_at'       => 'datetime',
+        'wheels' => 'integer',
+        'gvw' => 'integer',
+        'is_csd' => 'boolean',
+        'is_active' => 'boolean',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'deleted_at' => 'datetime',
     ];
 
     protected array $columnTransformations = [
 
         'segment_code' => [
             'trim',
-            'uppercase_alphanumeric_dash_underscore'
+            'uppercase_alphanumeric_dash_underscore',
         ],
 
         'sub_segment_code' => [
             'trim',
-            'uppercase_alphanumeric_dash_underscore'
+            'uppercase_alphanumeric_dash_underscore',
         ],
 
         'model_code' => [
             'trim',
-            'uppercase_alphanumeric_dash_underscore'
+            'uppercase_alphanumeric_dash_underscore',
         ],
 
         'code' => [
             'trim',
-            'uppercase_alphanumeric_dash_underscore'
+            'uppercase_alphanumeric_dash_underscore',
         ],
 
         'oem_name' => [
             'strip_tags',
             'trim_spaces',
-            'title_case'
+            'title_case',
         ],
 
         'custom_name' => [
             'strip_tags',
             'trim_spaces',
-            'title_case'
+            'title_case',
         ],
 
         'display_name' => [
             'strip_tags',
             'trim_spaces',
-            'title_case'
+            'title_case',
         ],
 
         'taxi_price' => [
-            'trim'
+            'trim',
         ],
 
         'cc_capacity' => [
-            'trim'
+            'trim',
         ],
 
         'transmission' => [
             'strip_tags',
             'trim_spaces',
-            'title_case'
+            'title_case',
         ],
 
         'drivetrain' => [
             'trim',
-            'uppercase'
+            'uppercase',
         ],
 
         'csd_index' => [
-            'trim'
+            'trim',
         ],
     ];
 
@@ -240,8 +242,7 @@ class Variant extends BaseModel
      */
     public static function codeFromModelCode(
         string $vehicleInfoModelCode
-    ): string
-    {
+    ): string {
         return substr(
             strtoupper(trim($vehicleInfoModelCode)),
             0,
