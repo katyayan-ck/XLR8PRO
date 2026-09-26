@@ -206,16 +206,13 @@ abstract class EntityService
             }
             if (is_string($value) || is_numeric($value)) {
                 $value = trim((string) $value);
-                if ($value === '') {
-                    $out[$name] = null;
-
-                    continue;
-                }
-                if ($field->transforms !== []) {
+                if ($value !== '' && $field->transforms !== []) {
                     $value = $transformer->run($value, $field->transforms);
                 }
             }
-            $out[$name] = $value;
+            // Blank (also after a transform, e.g. "ANY" → all) is null, or the field's default:
+            // a NOT NULL column with a DB default is given that default, never a forced null.
+            $out[$name] = $value === null || $value === '' ? $field->default : $value;
         }
 
         return $out;

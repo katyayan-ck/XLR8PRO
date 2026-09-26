@@ -3,6 +3,7 @@
 namespace App\Models\Vehicle\Pricing;
 
 use App\Models\BaseModel;
+use App\Services\Vehicle\Pricing\Rules\InsBaseRuleService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -10,10 +11,11 @@ class InsBaseRule extends BaseModel
 {
     protected $table = 'xlr8_vehicle_pricing_ins_base_rules';
 
+    /** Columns = the entity service's fields (DEC-050/056); the service owns their rules. */
+    protected string $entityService = InsBaseRuleService::class;
+
     protected $fillable = [
-        'code',
-        'model_code',
-        'variant_code',
+        'import_session_id',
         'company',
         'plan',
         'od_years',
@@ -27,7 +29,6 @@ class InsBaseRule extends BaseModel
         'od_factor',
         'od_surcharge',
         'od_discount_rate',
-        'imt_23_rate',
         'tp_basic',
         'tp_per_passenger',
         'tp_legal_driver',

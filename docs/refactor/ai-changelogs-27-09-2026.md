@@ -300,3 +300,16 @@ Branch `feature/integrations`. Decisions DEC-033…038 are in `docs/decisions/de
 - **Smoke:**
   - The Key Value and Keyword list/create/edit pages return 200 for user 1 and 403 for user 40.
   - `imports/admin` returns 200 for both (BUG-177).
+
+## Pricing rules on entity services (DEC-056)
+- **New:**
+  - `app/Services/Vehicle/Pricing/Rules/`: `RtoRuleService`, `TcsConfigService`, `InsBaseRuleService`, `InsIdvSlotService`, `InsDefaultService`, `InsAddonRateService`, `RuleFields` (wheels), `Concerns/ExpiresActiveRows`.
+  - `Field::number/percent/scope`.
+- **Before → after:**
+  - **`RulesWorkbookService`:** before, `DB::table()->insert/insertGetId` plus `onlyExisting()`, and the expiry via `DB::table()->update`. After, the services' `create()` / `expireActive()`; per-row errors now carry the sheet row.
+  - **`RtoRuleController` / `TcsConfigController`:** before, inline `validate()` plus `Model::create/update` / `fill+save`. After, the services.
+  - **Models `RtoRule`, `TcsConfig`, `InsBaseRule`, `InsIdvSlot`, `InsDefault`, `InsAddonRate`:** `$fillable` equals the real columns, plus `$entityService`.
+- **Tests:**
+  - New: `PricingRuleEntityServicesTest` (4), including a real two-sheet workbook import: expiry, ANY wheels, amounts, row errors, plan years, IDV slots.
+  - Pricing / RTO / insurance tests: 45 passed.
+- **Smoke:** the pricing screens return 200 for user 1 (workflow stages redirect with no open session) and 403 for user 40.

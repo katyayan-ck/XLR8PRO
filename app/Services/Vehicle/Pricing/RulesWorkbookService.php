@@ -6,18 +6,26 @@
  * Insurance + RTO workbook export / import for workflow stage awaiting_rules.
  *
  * If rules already exist the UI asks Keep existing vs Import new.
- * Import expires previous active rows on WEF then inserts the workbook.
+ * Import expires previous active rows on WEF then inserts the workbook — every row through its
+ * entity service (App\Services\Vehicle\Pricing\Rules\*, DEC-056); this class only maps sheet columns.
  */
 
 namespace App\Services\Vehicle\Pricing;
 
 use App\Models\Vehicle\Pricing\ImportSession;
 use App\Services\Utils\SynonymService;
+use App\Services\Vehicle\Pricing\Rules\InsAddonRateService;
+use App\Services\Vehicle\Pricing\Rules\InsBaseRuleService;
+use App\Services\Vehicle\Pricing\Rules\InsDefaultService;
+use App\Services\Vehicle\Pricing\Rules\InsIdvSlotService;
+use App\Services\Vehicle\Pricing\Rules\RtoRuleService;
+use App\Support\Entity\EntityService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\ValidationException;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
@@ -145,21 +153,21 @@ class RulesWorkbookService
         return null;
     }
 
+    /**
+     * RTO sheet → RtoRuleService (DEC-056): the service owns every field rule (synonyms for
+     * Permit/Fuel, ANY wheels = all, numbers, blank amounts = 0); this method only maps columns.
+     */
     protected function importRto(array $matrix, ImportSession $session, string $wef, ?int $userId, PricingProcessLogger $plog): array
     {
-        $table = 'xlr8_vehicle_pricing_rto_rules';
-        if (! Schema::hasTable($table)) {
-            return ['written' => 0, 'skipped' => 0, 'errors' => ['rto table missing']];
-        }
-
         [$idx, $map] = $this->locateHeader($matrix, ['permit', 'wheels', 'tax slab', 'tax factor', 'hypothecation']);
-        $this->expireTable($table, $wef, $userId);
+        $rules = app(RtoRuleService::class);
+        $rules->expireActive($wef);
 
         $written = 0;
         $skipped = 0;
         $errors = [];
-        foreach (array_slice($matrix, $idx + 1) as $row) {
-            $permit = $this->synonyms->resolve('Permit', $this->cell($row, $map, ['permit', 'rto_permit']));
+        foreach (array_slice($matrix, $idx + 1) as $offset => $row) {
+            $permit = $this->cell($row, $map, ['permit', 'rto_permit']);
             $wheels = $this->cell($row, $map, ['wheels']);
             if ($permit === null && $wheels === null) {
                 $skipped++;
@@ -167,48 +175,34 @@ class RulesWorkbookService
                 continue;
             }
             $taxBasis = $this->cell($row, $map, ['tax_factor', 'tax factor']);
-            $taxSlabRaw = $this->cell($row, $map, ['tax_slab', 'tax slab']);
+            $taxSlabNum = $this->num($this->cell($row, $map, ['tax_slab', 'tax slab']));
             $surchargeRaw = $this->cell($row, $map, ['surcharge']);
-            $taxSlabNum = $this->num($taxSlabRaw);
-            $surchargeNum = $this->percentOrNum($surchargeRaw);
-            $payload = $this->onlyExisting($table, [
+
+            $this->writeRow($rules, [
                 'import_session_id' => $session->id,
                 'permit' => $permit,
                 'wheels' => $wheels,
                 'reg_type' => $this->cell($row, $map, ['reg_type', 'reg type']),
                 'body_type' => $this->cell($row, $map, ['body_type', 'body type']),
                 'gvw_range' => $this->cell($row, $map, ['gvw', 'gvw_range']),
-                'seater' => $this->cell($row, $map, ['seater', 'seating']),
-                'fuel_type' => $this->synonyms->resolve('Fuel', $this->cell($row, $map, ['fuel', 'fuel_type'])),
+                'fuel_type' => $this->cell($row, $map, ['fuel', 'fuel_type']),
                 'cc_range' => $this->cell($row, $map, ['cc', 'cc_range']),
                 'tax_basis' => $taxBasis,
                 'tax_slab' => $taxSlabNum,
-                'tax_factor' => is_numeric($taxBasis) ? $this->num($taxBasis) : $taxSlabNum,
-                'surcharge' => $surchargeNum,
+                'tax_factor' => is_numeric($taxBasis) ? $taxBasis : $taxSlabNum,
+                'surcharge' => $surchargeRaw,
                 'surcharge_formula' => $surchargeRaw,
-                'hypothecation' => $this->num($this->cell($row, $map, ['hypothecation'])),
-                'green_tax' => $this->num($this->cell($row, $map, ['green_tax', 'green tax'])),
-                'registration_fee' => $this->num($this->cell($row, $map, ['registration_fee', 'registration fee'])),
-                'duplicate_tax_card' => $this->num($this->cell($row, $map, ['duplicate_tax_card', 'duplicate tax card'])),
-                'fitness' => $this->num($this->cell($row, $map, ['fitness'])),
-                'penalty' => $this->num($this->cell($row, $map, ['penalty'])),
-                'rto_tape' => $this->num($this->cell($row, $map, ['outside state - trc only', 'outside_state_trc_only', 'trc', 'rto_tape'])),
-                'extra_json' => json_encode(['tax_basis' => $taxBasis, 'surcharge_formula' => $surchargeRaw]),
-                'is_active' => 1,
+                'hypothecation' => $this->cell($row, $map, ['hypothecation']),
+                'green_tax' => $this->cell($row, $map, ['green_tax', 'green tax']),
+                'registration_fee' => $this->cell($row, $map, ['registration_fee', 'registration fee']),
+                'duplicate_tax_card' => $this->cell($row, $map, ['duplicate_tax_card', 'duplicate tax card']),
+                'fitness' => $this->cell($row, $map, ['fitness']),
+                'penalty' => $this->cell($row, $map, ['penalty']),
+                'rto_tape' => $this->cell($row, $map, ['outside state - trc only', 'outside_state_trc_only', 'trc', 'rto_tape']),
+                'extra_json' => ['tax_basis' => $taxBasis, 'surcharge_formula' => $surchargeRaw],
+                'is_active' => true,
                 'wef_date' => $wef,
-                'created_by' => $userId,
-                'updated_by' => $userId,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ], $plog);
-            try {
-                DB::table($table)->insert($payload);
-                $written++;
-            } catch (\Throwable $e) {
-                if (count($errors) < 8) {
-                    $errors[] = $e->getMessage();
-                }
-            }
+            ], $idx + $offset + 2, $written, $errors);
         }
 
         $plog->info('RTO import', compact('written', 'skipped'));
@@ -235,20 +229,18 @@ class RulesWorkbookService
         return $this->importInsurancePremium($matrix, $session, $wef, $userId, $plog);
     }
 
+    /** Insurance company sheet → InsDefaultService: one row per listed company, the first is the default. */
     protected function importInsuranceCompanies(array $matrix, ImportSession $session, string $wef, ?int $userId, PricingProcessLogger $plog): array
     {
-        $table = 'xlr8_vehicle_pricing_ins_defaults';
-        if (! Schema::hasTable($table)) {
-            return ['written' => 0, 'skipped' => 0, 'errors' => [$table.' missing']];
-        }
-        $this->expireTable($table, $wef, $userId);
+        $defaults = app(InsDefaultService::class);
+        $defaults->expireActive($wef);
         [$idx, $map] = $this->locateHeader($matrix, ['model', 'permit', 'insu co']);
         $written = 0;
         $skipped = 0;
         $errors = [];
-        foreach (array_slice($matrix, $idx + 1) as $row) {
+        foreach (array_slice($matrix, $idx + 1) as $offset => $row) {
             $model = $this->cell($row, $map, ['model']);
-            $permit = $this->synonyms->resolve('Permit', $this->cell($row, $map, ['permit']));
+            $permit = $this->cell($row, $map, ['permit']);
             $companies = array_values(array_filter([
                 $this->cell($row, $map, ['insu_co_1', 'insu co 1', 'insu co.', 'company', 'insu_co']),
                 $this->cell($row, $map, ['insu_co_2', 'insu co 2']),
@@ -259,31 +251,16 @@ class RulesWorkbookService
 
                 continue;
             }
-            $first = true;
-            foreach ($companies as $co) {
-                try {
-                    DB::table($table)->insert($this->onlyExisting($table, [
-                        'import_session_id' => $session->id,
-                        'model_code' => $model,
-                        'permit' => $permit,
-                        'company' => $co,
-                        'insurance_company' => $co,
-                        'is_default' => $first ? 1 : 0,
-                        'priority' => $first ? 1 : null,
-                        'is_active' => 1,
-                        'wef_date' => $wef,
-                        'created_by' => $userId,
-                        'updated_by' => $userId,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ], $plog));
-                    $written++;
-                    $first = false;
-                } catch (\Throwable $e) {
-                    if (count($errors) < 8) {
-                        $errors[] = $e->getMessage();
-                    }
-                }
+            foreach ($companies as $position => $company) {
+                $this->writeRow($defaults, [
+                    'import_session_id' => $session->id,
+                    'model_code' => $model,
+                    'permit' => $permit,
+                    'insurance_company' => $company,
+                    'is_default' => $position === 0,
+                    'priority' => $position === 0 ? 1 : null,
+                    'is_active' => true,
+                ], $idx + $offset + 2, $written, $errors);
             }
             if ($companies === []) {
                 $skipped++;
@@ -318,6 +295,10 @@ class RulesWorkbookService
         return ['written' => count($pairs), 'skipped' => 0, 'errors' => []];
     }
 
+    /**
+     * Premium sheet → InsBaseRuleService + InsIdvSlotService. A base rule and its IDV slots are
+     * saved together (one transaction), so a rejected slot never leaves a rule without slots.
+     */
     protected function importInsurancePremium(
         array $matrix,
         ImportSession $session,
@@ -325,23 +306,19 @@ class RulesWorkbookService
         ?int $userId,
         PricingProcessLogger $plog
     ): array {
-        $table = 'xlr8_vehicle_pricing_ins_base_rules';
-        $slotTable = 'xlr8_vehicle_pricing_ins_idv_slots';
-        if (! Schema::hasTable($table)) {
-            return ['written' => 0, 'skipped' => 0, 'errors' => [$table.' missing']];
-        }
-        $this->expireTable($table, $wef, $userId);
-        if (Schema::hasTable('xlr8_vehicle_pricing_ins_addon_rates')) {
-            $this->expireTable('xlr8_vehicle_pricing_ins_addon_rates', $wef, $userId);
-        }
+        $baseRules = app(InsBaseRuleService::class);
+        $slots = app(InsIdvSlotService::class);
+        $baseRules->expireActive($wef);
+        app(InsAddonRateService::class)->expireActive($wef);
+
         [$idx, $map] = $this->locateHeader($matrix, ['permit', 'wheels', 'fuel', 'plan', 'insu co']);
         $idvColumns = $this->findIdvColumns($matrix, $idx);
         $written = 0;
         $skipped = 0;
         $errors = [];
         $idvSlotsWritten = 0;
-        foreach (array_slice($matrix, $idx + 1) as $row) {
-            $permit = $this->synonyms->resolve('Permit', $this->cell($row, $map, ['permit']));
+        foreach (array_slice($matrix, $idx + 1) as $offset => $row) {
+            $permit = $this->cell($row, $map, ['permit']);
             $company = $this->cell($row, $map, ['insu_co', 'insu co', 'insu co.', 'company']);
             $plan = $this->cell($row, $map, ['plan']);
             if ($permit === null && $company === null && $plan === null) {
@@ -350,65 +327,69 @@ class RulesWorkbookService
                 continue;
             }
 
-            [$odYears, $tpYears] = $this->parsePlanYears($plan);
-
-            $payload = $this->onlyExisting($table, [
-                'import_session_id' => $session->id,
-                'company' => $company,
-                'plan' => $plan,
-                'od_years' => $odYears,
-                'tp_years' => $tpYears,
-                'permit' => $permit,
-                'wheels' => $this->cell($row, $map, ['wheels']),
-                'fuel_type' => $this->synonyms->resolve('Fuel', $this->cell($row, $map, ['fuel', 'fuel_type'])),
-                'cc_range' => $this->cell($row, $map, ['cc', 'cc_range']),
-                'gvw_range' => $this->cell($row, $map, ['gvw', 'gvw_range']),
-                'seating' => $this->cell($row, $map, ['seatng', 'seating', 'seater']),
-                'od_factor' => $this->num($this->cell($row, $map, ['od_factor', 'od - od factor', 'od od factor'])),
-                'tp_basic' => $this->num($this->cell($row, $map, ['tp_basic', 'tp cover basic'])),
-                'is_active' => 1,
-                'wef_date' => $wef,
-                'created_by' => $userId,
-                'updated_by' => $userId,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ], $plog);
-
             try {
-                $baseRuleId = DB::table($table)->insertGetId($payload);
-                $written++;
+                $idvSlotsWritten += DB::transaction(function () use ($baseRules, $slots, $session, $company, $plan, $permit, $row, $map, $idvColumns, $wef): int {
+                    $rule = $baseRules->create([
+                        'import_session_id' => $session->id,
+                        'company' => $company,
+                        'plan' => $plan,
+                        'permit' => $permit,
+                        'wheels' => $this->cell($row, $map, ['wheels']),
+                        'fuel_type' => $this->cell($row, $map, ['fuel', 'fuel_type']),
+                        'cc_range' => $this->cell($row, $map, ['cc', 'cc_range']),
+                        'gvw_range' => $this->cell($row, $map, ['gvw', 'gvw_range']),
+                        'seating' => $this->cell($row, $map, ['seatng', 'seating', 'seater']),
+                        'od_factor' => $this->cell($row, $map, ['od_factor', 'od - od factor', 'od od factor']),
+                        'tp_basic' => $this->cell($row, $map, ['tp_basic', 'tp cover basic']),
+                        'is_active' => true,
+                        'wef_date' => $wef,
+                    ]);
 
-                if (Schema::hasTable($slotTable)) {
-                    $yearNo = 0;
-                    foreach ($idvColumns as $colIdx) {
-                        $yearNo++;
-                        $raw = $row[$colIdx] ?? null;
-                        if ($raw === null || trim((string) $raw) === '') {
+                    $count = 0;
+                    foreach ($idvColumns as $position => $colIdx) {
+                        $raw = trim((string) ($row[$colIdx] ?? ''));
+                        if ($raw === '') {
                             continue;
                         }
-                        $raw = trim((string) $raw);
-                        DB::table($slotTable)->insert([
-                            'base_rule_id' => $baseRuleId,
-                            'year_no' => $yearNo,
-                            'idv_basis' => $raw,
-                            'idv_pct' => $this->percentOrNum($raw),
-                            'created_by' => $userId,
-                            'updated_by' => $userId,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
-                        $idvSlotsWritten++;
+                        $slots->create(['base_rule_id' => $rule->id, 'year_no' => $position + 1, 'idv_basis' => $raw]);
+                        $count++;
                     }
-                }
+
+                    return $count;
+                });
+                $written++;
             } catch (\Throwable $e) {
-                if (count($errors) < 8) {
-                    $errors[] = $e->getMessage();
-                }
+                $this->collectError($errors, $idx + $offset + 2, $e);
             }
         }
         $plog->info('Insurance premium import', compact('written', 'skipped', 'idvSlotsWritten'));
 
         return compact('written', 'skipped', 'errors');
+    }
+
+    /**
+     * Create one row through its entity service, counting it or recording the reason it was rejected.
+     *
+     * @param  array<string, mixed>  $input
+     * @param  list<string>  $errors
+     */
+    private function writeRow(EntityService $service, array $input, int $sheetRow, int &$written, array &$errors): void
+    {
+        try {
+            $service->create($input);
+            $written++;
+        } catch (\Throwable $e) {
+            $this->collectError($errors, $sheetRow, $e);
+        }
+    }
+
+    /** @param  list<string>  $errors  first 8 problems, each with its sheet row */
+    private function collectError(array &$errors, int $sheetRow, \Throwable $e): void
+    {
+        if (count($errors) < 8) {
+            $message = $e instanceof ValidationException ? collect($e->errors())->flatten()->implode(' ') : $e->getMessage();
+            $errors[] = "Row {$sheetRow}: {$message}";
+        }
     }
 
     /**
@@ -457,103 +438,6 @@ class RulesWorkbookService
         }
 
         return $columns;
-    }
-
-    /**
-     * "1+3" -> [1, 3]. "3+3" -> [3, 3]. Unrecognised/blank -> [null, null].
-     * Never guess a formula for a pattern this doesn't recognise.
-     *
-     * @return array{0:?int,1:?int}
-     */
-    protected function parsePlanYears(?string $plan): array
-    {
-        if ($plan === null || trim($plan) === '') {
-            return [null, null];
-        }
-        if (preg_match('/^\s*(\d+)\s*\+\s*(\d+)\s*$/', $plan, $m)) {
-            return [(int) $m[1], (int) $m[2]];
-        }
-
-        return [null, null];
-    }
-
-    protected function importGeneric(
-        string $table,
-        array $matrix,
-        ImportSession $session,
-        string $wef,
-        ?int $userId,
-        array $wanted
-    ): array {
-        if (! Schema::hasTable($table)) {
-            return ['written' => 0, 'skipped' => 0, 'errors' => [$table.' missing']];
-        }
-        $this->expireTable($table, $wef, $userId);
-        $header = $matrix[0] ?? [];
-        $map = $this->fallbackMap($header);
-        $written = 0;
-        $skipped = 0;
-        $errors = [];
-
-        foreach (array_slice($matrix, 1) as $row) {
-            $payload = [
-                'import_session_id' => $session->id,
-                'is_active' => 1,
-                'wef_date' => $wef,
-                'created_by' => $userId,
-                'updated_by' => $userId,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
-            $any = false;
-            foreach ($wanted as $field) {
-                $val = $this->cell($row, $map, [$field]);
-                if ($val === null) {
-                    continue;
-                }
-                $any = true;
-                if (in_array($field, ['segment'], true)) {
-                    $val = $this->synonyms->resolve('Segment', $val);
-                }
-                if (in_array($field, ['permit'], true)) {
-                    $val = $this->synonyms->resolve('Permit', $val);
-                }
-                if (in_array($field, ['fuel'], true)) {
-                    $val = $this->synonyms->resolve('Fuel', $val);
-                }
-                $payload[$field] = $val;
-            }
-            if (! $any) {
-                $skipped++;
-
-                continue;
-            }
-            try {
-                DB::table($table)->insert($this->onlyExisting($table, $payload));
-                $written++;
-            } catch (\Throwable $e) {
-                if (count($errors) < 8) {
-                    $errors[] = $e->getMessage();
-                }
-            }
-        }
-
-        return compact('written', 'skipped', 'errors');
-    }
-
-    protected function expireTable(string $table, string $wef, ?int $userId): void
-    {
-        if (! Schema::hasTable($table) || ! Schema::hasColumn($table, 'is_active')) {
-            return;
-        }
-        $upd = ['is_active' => 0, 'updated_at' => now()];
-        if (Schema::hasColumn($table, 'expired_on')) {
-            $upd['expired_on'] = $wef;
-        }
-        if (Schema::hasColumn($table, 'updated_by')) {
-            $upd['updated_by'] = $userId;
-        }
-        DB::table($table)->where('is_active', 1)->update($upd);
     }
 
     protected function dumpRtoForOps(): array
@@ -737,59 +621,6 @@ class RulesWorkbookService
         $s = preg_replace('/[^\d.\-]/', '', (string) $v);
 
         return is_numeric($s) ? (float) $s : null;
-    }
-
-    protected function onlyExisting(string $table, array $payload, ?PricingProcessLogger $plog = null): array
-    {
-        $nullable = $this->nullableColumns($table);
-        $out = [];
-        $stripped = [];
-        foreach ($payload as $col => $val) {
-            if (! Schema::hasColumn($table, $col)) {
-                if ($val !== null && $val !== '') {
-                    $stripped[] = $col;
-                }
-
-                continue;
-            }
-
-            // A blank source cell on a NOT NULL column (e.g. "3+3" plans
-            // carry no OD Factor in the sheet at all) must fall through to
-            // the column's own DB default rather than explicitly write NULL
-            // and crash the insert — never guess a value, just don't force one.
-            if ($val === null && ! ($nullable[$col] ?? true)) {
-                continue;
-            }
-
-            $out[$col] = $val;
-        }
-
-        if ($stripped !== [] && $plog !== null) {
-            $plog->warning('onlyExisting() stripped payload keys with no matching column', [
-                'table' => $table,
-                'columns' => $stripped,
-            ]);
-        }
-
-        return $out;
-    }
-
-    /**
-     * @return array<string, bool>
-     */
-    protected function nullableColumns(string $table): array
-    {
-        static $cache = [];
-        if (isset($cache[$table])) {
-            return $cache[$table];
-        }
-
-        $map = [];
-        foreach (Schema::getColumns($table) as $col) {
-            $map[$col['name']] = (bool) $col['nullable'];
-        }
-
-        return $cache[$table] = $map;
     }
 
     protected function countTable(string $table): int

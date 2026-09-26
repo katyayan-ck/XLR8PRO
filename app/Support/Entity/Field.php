@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Support\Entity;
 
 use App\Services\IdentifierService;
+use App\Services\Utils\SynonymService;
 use Carbon\Carbon;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -182,6 +183,58 @@ final class Field
     public static function documents(string $name = 'documents'): self
     {
         return self::make($name)->format('Files, max 10 MB each')->rules('array')->each('file', 'max:10240')->virtual();
+    }
+
+    /**
+     * Number from a form or a sheet cell: currency signs, thousands separators and units are
+     * dropped ("₹1,234.50" → 1234.50). Unparseable text is kept, so `numeric` reports it.
+     */
+    public static function number(string $name, float $min = 0): self
+    {
+        return self::make($name)
+            ->format('Number'.($min > -INF ? ' ≥ '.$min : '').'; ₹ , and units ignored')
+            ->transform(fn (string $v) => self::isBlankMarker($v) ? '' : (self::parseNumber($v) ?? $v))
+            ->rules('numeric', 'min:'.$min);
+    }
+
+    /** Percentage: "95% of Invoice" → 95, "12.5" → 12.5. */
+    public static function percent(string $name): self
+    {
+        return self::make($name)
+            ->format('Percent (e.g. 95 or "95% of Invoice")')
+            ->transform(fn (string $v) => self::isBlankMarker($v) ? '' : (is_numeric($v) ? $v : (preg_match('/([\d.]+)\s*%/', $v, $m) ? $m[1] : (self::parseNumber($v) ?? $v))))
+            ->rules('numeric', 'min:0');
+    }
+
+    /** Pricing-rule scope text (trimmed; synonyms first when a synonym type is given). */
+    public static function scope(string $name, int $max, ?string $synonymType = null): self
+    {
+        $field = self::make($name)->format('Scope value; ANY / blank = all')->transform('trim_spaces');
+        if ($synonymType !== null) {
+            $field->transform(fn (string $v) => (string) app(SynonymService::class)->resolve($synonymType, $v));
+        }
+
+        return $field->rules('string', "max:{$max}");
+    }
+
+    /** Sheet cells that mean "no value" in a number column. */
+    public const BLANK_MARKERS = ['-', '--', '—', 'NA', 'N/A', 'NIL', 'NONE'];
+
+    /** True for a sheet "no value" marker ("-", "NA", "Nil"…). */
+    public static function isBlankMarker(string $value): bool
+    {
+        return in_array(strtoupper(trim($value)), self::BLANK_MARKERS, true);
+    }
+
+    /** The number inside a text, or null ("₹1,234.50" → "1234.50"). */
+    public static function parseNumber(string $value): ?string
+    {
+        if (is_numeric($value)) {
+            return $value;
+        }
+        $digits = (string) preg_replace('/[^\d.\-]/', '', $value);
+
+        return is_numeric($digits) ? $digits : null;
     }
 
     /** JSON object/array: an array as is, or JSON text (a form textarea) decoded to one. */

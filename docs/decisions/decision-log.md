@@ -549,3 +549,32 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
 - **Legacy codes are left as they are** (DEC-050: no correcting old data): 1,903 stored codes contain spaces (mostly `SPARE_BIN`).
 - **Framework — BUG-176:** `HasColumnTransformations` re-ran every column's pipeline on **every update**, so editing any field of a row whose stored code had spaces silently rewrote the code (`OLD BIN A1` → `OLD-BIN-A1`), orphaning references. This is the BUG-171 pattern, and it applied to keyword values and every model with the backstop. Now, on update, only the changed attributes are transformed.
 - **Approved-by:** user (DEC-050 roll-out, "continue") · **Risk:** MED (Key Value screens, vehicle/enquiry imports create keyword values through validation) · **Reversal:** revert; migration `down()` removes the two masters.
+
+### DEC-056 | 27-09-2026 | A3 (UAT) | Pricing rules on entity services (DEC-050 roll-out, pricing group 1 of 4)
+- **Services (`App\Services\Vehicle\Pricing\Rules\`):** `RtoRuleService`, `TcsConfigService`, `InsBaseRuleService`, `InsIdvSlotService`, `InsDefaultService`, `InsAddonRateService`.
+  - **Callers:**
+    - The RTO Rules and TCS screens (their inline validation was removed).
+    - The Insurance + RTO rules workbook (`RulesWorkbookService`), which no longer writes with `DB::table`. It only maps sheet columns; the dead `importGeneric()` and its `onlyExisting()` / `expireTable()` helpers are gone.
+  - WEF expiry of the live set is the services' `expireActive()`: `is_active = 0` and `expired_on = WEF`; history is never deleted (Machine Spec v3.1.1).
+- **Spec-conformant field rules, where screen and import disagreed:**
+  - **`wheels`:** the column is a tinyint. The screen accepted 2–16; the workbook sent scope text such as `ANY`, which failed silently. Now ANY/ALL/`*`/blank = all (null), else a whole number 2–255.
+  - **Permit / Fuel:** synonyms are applied first on the screen too (before, only the import applied them).
+  - **Amounts** (NOT NULL, default 0):
+    - `₹` and separators are ignored ("10,00,000" → 1000000).
+    - Sheet blank markers (`-`, NA, N/A, Nil, None) and blanks count as 0, as before.
+    - **Other text is now reported as a row error** ("Row N: …"). Before, it was silently stored as 0.
+  - **Surcharge / IDV:** percent parsing ("95% of Invoice" → 95), as in the importer.
+  - The importer's sheet interpretation is unchanged: tax factor comes from Tax Basis when numeric, else Tax Slab; one defaults row per listed company, the first is the default; IDV formula columns.
+  - **Plan "OD+TP" → od/tp years:** now derived by the service; an unrecognised plan is still never guessed.
+  - **TCS:** saving an active configuration deactivates the others (the screen's rule is now the service's).
+- **Integrity:** an insurance base rule and its IDV slots are saved in one transaction.
+- **Models aligned to the real columns:** the models' `$fillable` listed non-columns (`InsDefault.default_company`/`company_priority_*`, `InsBaseRule.code`/`model_code`/`imt_23_rate`, `RtoRule.seater`) and missed real ones (`import_session_id`, `tax_basis`, `surcharge_formula`, `extra_json`…).
+- **Framework:**
+  - `Field::number()`, `percent()`, `scope()` (with synonyms), `parseNumber()` / `isBlankMarker()`.
+  - A blank value (or a transform yielding blank) takes the field's default.
+- **Not changed:**
+  - `InsDefault::getCompanies()` / `scopeActive()` reference non-existent columns but have no callers (noted).
+  - Engine-written records stay with the engine: sessions, change flags, affected, snapshots, history.
+  - `PricingResetService` is a local-only reset tool.
+- **Next pricing groups:** add-ons/discounts/dealer charges/CSD, prices + vehicle profiles, accessories.
+- **Approved-by:** user (DEC-050 roll-out, "continue") · **Risk:** MED (rules import now rejects non-numeric amounts per row) · **Reversal:** revert.

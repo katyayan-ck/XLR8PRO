@@ -3,25 +3,31 @@
 namespace App\Models\Vehicle\Pricing;
 
 use App\Models\BaseModel;
+use App\Services\Vehicle\Pricing\Rules\RtoRuleService;
 use Illuminate\Database\Eloquent\Builder;
 
 class RtoRule extends BaseModel
 {
     protected $table = 'xlr8_vehicle_pricing_rto_rules';
 
+    /** Columns = the entity service's fields (DEC-050/056); the service owns their rules. */
+    protected string $entityService = RtoRuleService::class;
+
     protected $fillable = [
+        'import_session_id',
         'code',
         'permit',
         'wheels',
         'reg_type',
         'body_type',
         'gvw_range',
-        'seater',
         'fuel_type',
         'cc_range',
         'tax_factor',
+        'tax_basis',
         'tax_slab',
         'surcharge',
+        'surcharge_formula',
         'hypothecation',
         'green_tax',
         'registration_fee',
@@ -32,24 +38,26 @@ class RtoRule extends BaseModel
         'is_active',
         'wef_date',
         'expired_on',
+        'extra_json',
     ];
 
     protected function casts(): array
     {
         return array_merge(parent::casts(), [
-            'wheels'             => 'integer',
-            'tax_factor'         => 'decimal:6',
-            'surcharge'          => 'decimal:2',
-            'hypothecation'      => 'decimal:2',
-            'green_tax'          => 'decimal:2',
-            'registration_fee'   => 'decimal:2',
+            'wheels' => 'integer',
+            'tax_factor' => 'decimal:6',
+            'surcharge' => 'decimal:2',
+            'hypothecation' => 'decimal:2',
+            'green_tax' => 'decimal:2',
+            'registration_fee' => 'decimal:2',
             'duplicate_tax_card' => 'decimal:2',
-            'fitness'            => 'decimal:2',
-            'penalty'            => 'decimal:2',
-            'rto_tape'           => 'decimal:2',
-            'is_active'          => 'boolean',
-            'wef_date'           => 'date',
-            'expired_on'         => 'date',
+            'fitness' => 'decimal:2',
+            'penalty' => 'decimal:2',
+            'rto_tape' => 'decimal:2',
+            'is_active' => 'boolean',
+            'wef_date' => 'date',
+            'expired_on' => 'date',
+            'extra_json' => 'array',
         ]);
     }
 
@@ -58,11 +66,11 @@ class RtoRule extends BaseModel
         return $query->where('is_active', true)
             ->where(function ($q) {
                 $q->whereNull('expired_on')
-                  ->orWhere('expired_on', '>=', now()->toDateString());
+                    ->orWhere('expired_on', '>=', now()->toDateString());
             })
             ->where(function ($q) {
                 $q->whereNull('wef_date')
-                  ->orWhere('wef_date', '<=', now()->toDateString());
+                    ->orWhere('wef_date', '<=', now()->toDateString());
             });
     }
 
@@ -73,7 +81,7 @@ class RtoRule extends BaseModel
             ->where('permit', $criteria['permit'] ?? null);
 
         foreach (['wheels', 'fuel_type', 'gvw_range', 'seater', 'cc_range', 'reg_type', 'body_type'] as $field) {
-            if (!empty($criteria[$field])) {
+            if (! empty($criteria[$field])) {
                 $query->where(function ($q) use ($field, $criteria) {
                     $q->where($field, $criteria[$field])->orWhereNull($field);
                 });

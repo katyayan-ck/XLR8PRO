@@ -3,13 +3,18 @@
 namespace App\Models\Vehicle\Pricing;
 
 use App\Models\BaseModel;
+use App\Services\Vehicle\Pricing\Rules\InsAddonRateService;
 use Illuminate\Database\Eloquent\Builder;
 
 class InsAddonRate extends BaseModel
 {
     protected $table = 'xlr8_vehicle_pricing_ins_addon_rates';
 
+    /** Columns = the entity service's fields (DEC-050/056); the service owns their rules. */
+    protected string $entityService = InsAddonRateService::class;
+
     protected $fillable = [
+        'import_session_id',
         'insurance_company',
         'permit',
         'addon_slug',
@@ -17,7 +22,6 @@ class InsAddonRate extends BaseModel
         'rate_type',
         'rate_value',
         'applies_on',
-        'conditions',
         'is_active',
         'wef_date',
         'expired_on',
@@ -28,8 +32,8 @@ class InsAddonRate extends BaseModel
         return array_merge(parent::casts(), [
             'rate_value' => 'decimal:4',
             'conditions' => 'array',
-            'is_active'  => 'boolean',
-            'wef_date'   => 'date',
+            'is_active' => 'boolean',
+            'wef_date' => 'date',
             'expired_on' => 'date',
         ]);
     }
@@ -39,17 +43,17 @@ class InsAddonRate extends BaseModel
         return $query->where('is_active', true)
             ->where(function ($q) {
                 $q->whereNull('expired_on')
-                  ->orWhere('expired_on', '>=', now()->toDateString());
+                    ->orWhere('expired_on', '>=', now()->toDateString());
             })
             ->where(function ($q) {
                 $q->whereNull('wef_date')
-                  ->orWhere('wef_date', '<=', now()->toDateString());
+                    ->orWhere('wef_date', '<=', now()->toDateString());
             });
     }
 
     public function scopeForCompanyPermit(Builder $query, string $company, string $permit): Builder
     {
         return $query->where('insurance_company', $company)
-                     ->where('permit', $permit);
+            ->where('permit', $permit);
     }
 }
