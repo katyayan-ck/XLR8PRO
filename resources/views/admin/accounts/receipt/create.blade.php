@@ -193,8 +193,18 @@
                                     <input type="text" id="transaction_date" name="transaction_date" class="form-control" placeholder="YYYY-MM-DD" value="{{ old('transaction_date', $receipt->trans_date ?? '') }}">
                                 </div>
                                 <div class="col-md-4 mb-3 req-instrument" style="display:none;">
-                                    <label class="form-label">Bank Name <span class="text-danger">*</span></label>
-                                    <input type="text" name="bank_name" id="bank_name" class="form-control" value="{{ old('bank_name', $receipt->bank ?? '') }}">
+                                    <label class="form-label">Financier Name <span class="text-danger">*</span></label>
+
+                                    <select name="bank_name" id="bank_name" class="form-control form-select">
+                                        <option value="">Select Financier</option>
+
+                                        @foreach ($financiers ?? [] as $financier)
+                                            <option value="{{ $financier->name }}"
+                                                @selected(old('bank_name', $receipt->bank ?? '') == $financier->name)>
+                                                {{ $financier->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
                                 </div>
                                 <div class="col-md-4 mb-3 req-instrument" style="display:none;">
                                     <label class="form-label">Transaction ID / UTR</label>

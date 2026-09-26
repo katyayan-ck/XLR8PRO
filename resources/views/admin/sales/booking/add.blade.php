@@ -59,7 +59,9 @@
             'total_amount' => 0,
         ];
 
-        $hasPreviousPayment = $bookingPaymentPrefill['has_previous_payment'] ?? false;
+        $bookingPaymentLogs = $data['booking_payment_logs'] ?? collect();
+
+        $hasPreviousPayment = $bookingPaymentLogs->isNotEmpty();
 @endphp
 @extends(backpack_view('blank'))
 
@@ -212,10 +214,14 @@
                                         </div>
                                     </div>
 
-                                    <div class="col-sm-3">
+                                    <div class="col-sm-2">
                                         <div class="form-group">
                                             <label for="coltype">Collection Type <span class="required-mark">*</span></label>
-                                            <select name="{{ $isEdit ? 'col_type' : 'coltype' }}" id="coltype" class="form-control form-select" required>
+                                            <select name="{{ $isEdit ? 'col_type' : 'coltype' }}"
+                                                id="coltype"
+                                                class="form-control form-select"
+                                                required
+                                                @if ($isEdit) disabled @endif>
                                                 <option value="" disabled selected>-- Select Collection Type --</option>
                                                 @php
                                                     $colT = old(
@@ -229,10 +235,13 @@
                                                 <option value="3" {{ $colT == '3' ? 'selected' : '' }}>Field Collection By DSA</option>
                                                 <option value="4" {{ $colT == '4' ? 'selected' : '' }}>Used Car Purchase</option>
                                             </select>
+                                            @if ($isEdit)
+                                                <input type="hidden" name="col_type" value="{{ $colT }}">
+                                            @endif
                                         </div>
                                     </div>
 
-                                    <div class="col-12 col-md-6 col-lg-3">
+                                    <div class="col-sm-2">
                                         <div class="form-group">
                                             <label for="user">
                                                 Collected By <span class="required-mark" style="display:none">*</span>
@@ -258,215 +267,129 @@
                                                     $isEdit ? 'booking_amount' : 'bookingamount',
                                                     $entry?->booking_amount
                                                         ?? ($bookingPaymentPrefill['total_amount'] ?? '')
-                                                ) }}">
+                                                ) }}"
+                                                @if ($isEdit || $hasPreviousPayment) readonly @endif>
                                         </div>
                                     </div>
 
-                                    <div class="col-sm-2">
-                                        <div class="form-group" id="receiptvouchergroup">
-                                            <label id="receiptvoucherlabel">Receipt No. <span
-                                                    class="required-mark">*</span></label>
-                                            <input type="text" name="{{ $isEdit ? 'receipt_no' : 'receiptvoucherno' }}" id="receiptvoucherinput"
-                                                class="form-control" required placeholder="12345"
-                                                value="{{ old(
-                                                    $isEdit ? 'receipt_no' : 'receiptvoucherno',
-                                                    $entry?->receipt_no
-                                                        ?? ($bookingPaymentPrefill['receipt_no'] ?? '')
-                                                ) }}">
-                                            <div id="receiptvoucherwarning" class="text-danger" style="display: none;">Number
-                                                already exists</div>
+                                </div>
+
+                                @if ($bookingPaymentLogs->isNotEmpty())
+
+                                    <div class="mt-1">
+                                        <div class="border rounded bg-light">
+
+                                            <div class="px-3 py-2 border-bottom">
+                                                <h5 class="mb-0 fw-semibold">
+                                                    Previous Receipts / Vouchers
+                                                </h5>
+                                            </div>
+
+                                            <div class="table-responsive">
+                                                <table class="table table-bordered table-hover mb-0 align-middle">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th style="width:70px;">S.No</th>
+                                                            <th>Instrument No.</th>
+                                                            <th>Instrument Type</th>
+                                                            <th>Mode</th>
+                                                            <th>Date</th>
+                                                            <th>Amount</th>
+                                                            <th style="width:100px;">View</th>
+                                                        </tr>
+                                                    </thead>
+
+                                                    <tbody>
+
+                                                        @foreach ($bookingPaymentLogs as $index => $payment)
+
+                                                            @php
+                                                                $isVoucher = (int) $payment->type === 2;
+
+                                                                $paymentNumber = $payment->type_number
+                                                                    ?? $payment->reciept
+                                                                    ?? '—';
+
+                                                                $paymentDate = $payment->date
+                                                                    ? site_date($payment->date)
+                                                                    : '—';
+
+                                                                $paymentAmount = (float) ($payment->amount ?? 0);
+
+                                                                $proofUrl = $payment->getFirstMediaUrl('amount-proof');
+                                                            @endphp
+
+                                                            <tr>
+                                                                <td>
+                                                                    {{ $index + 1 }}
+                                                                </td>
+
+                                                                <td>
+                                                                    <span class="fw-semibold">
+                                                                        {{ $paymentNumber }}
+                                                                    </span>
+                                                                </td>
+
+                                                                <td>
+                                                                    {{ $isVoucher ? 'Voucher' : 'Receipt' }}
+                                                                </td>
+
+                                                                <td>
+                                                                    {{ $payment->mode_name ?? $payment->mode ?? '—' }}
+                                                                </td>
+
+                                                                <td>
+                                                                    {{ $paymentDate }}
+                                                                </td>
+
+                                                                <td>
+                                                                    ₹ {{ number_format($paymentAmount, 2) }}
+                                                                </td>
+
+                                                                <td>
+                                                                    @if ($proofUrl)
+                                                                        <a href="{{ $proofUrl }}"
+                                                                        target="_blank"
+                                                                        class="btn btn-outline-primary btn-sm">
+                                                                            <i class="la la-eye"></i>
+                                                                            View
+                                                                        </a>
+                                                                    @else
+                                                                        <span class="text-muted">
+                                                                            —
+                                                                        </span>
+                                                                    @endif
+                                                                </td>
+                                                            </tr>
+
+                                                        @endforeach
+
+                                                    </tbody>
+
+                                                    <tfoot>
+                                                        <tr>
+                                                            <th colspan="5" class="text-end">
+                                                                Total Amount
+                                                            </th>
+
+                                                            <th>
+                                                                ₹ {{ number_format($bookingPaymentPrefill['total_amount'] ?? 0, 2) }}
+                                                            </th>
+
+                                                            <th></th>
+                                                        </tr>
+                                                    </tfoot>
+
+                                                </table>
+                                            </div>
+
                                         </div>
                                     </div>
 
-                                    <div class="col-sm-2">
-                                        <div class="form-group">
-                                            <label for="receiptdate">Receipt Date <span class="required-mark">*</span></label>
-                                            @php
-                                                $rcDate = $entry?->receipt_date
-                                                    ?? ($bookingPaymentPrefill['receipt_date'] ?? '');
-                                            @endphp
-                                            <input type="text" name="receiptdate" id="receiptdate"
-                                                class="form-control flatpickr" placeholder="dd-mmm-yyyy" required
-                                                value="{{ old('receiptdate', site_date($rcDate, '')) }}">
-                                            <input type="hidden" name="{{ $isEdit ? 'receipt_date_actual' : 'hiddenreceiptdate' }}" id="hiddenreceiptdate"
-                                                value="{{ old($isEdit ? 'receipt_date_actual' : 'hiddenreceiptdate', $rcDate) }}">
-                                        </div>
-                                    </div>
-
-                                    <div class="col-sm-2">
-                                        <div class="form-group">
-                                            <label for="mode">
-                                                Mode <span class="required-mark">*</span>
-                                            </label>
-
-                                            @php
-                                                $paymentMode = old(
-                                                    'mode',
-                                                    $entry?->payment_mode
-                                                        ?? ($bookingPaymentPrefill['payment_mode'] ?? '')
-                                                );
-                                            @endphp
-
-                                            <select name="mode" id="mode" class="form-control form-select" required>
-
-                                                <option value="" disabled {{ $paymentMode === '' ? 'selected' : '' }}>
-                                                    -- Select Mode --
-                                                </option>
-
-                                                <option value="Cash" {{ $paymentMode === 'Cash' ? 'selected' : '' }}>
-                                                    Cash
-                                                </option>
-
-                                                <option value="Cheque" {{ $paymentMode === 'Cheque' ? 'selected' : '' }}>
-                                                    Cheque
-                                                </option>
-
-                                                <option value="Bank Transfer" {{ $paymentMode === 'Bank Transfer' ? 'selected' : '' }}>
-                                                    Bank Transfer
-                                                </option>
-
-                                                <option value="UPI" {{ $paymentMode === 'UPI' ? 'selected' : '' }}>
-                                                    UPI
-                                                </option>
-
-                                            </select>
-                                        </div>
-                                    </div>
-
-                                    @if (!$isEdit)
-                                    <div class="col-sm-3">
-                                        <div class="form-group" id="proofUploadGroup">
-                                            <label for="fdoc">
-                                                Upload Image or PDF
-                                                <span class="required-mark">*</span>
-                                            </label>
-
-                                            <input type="file"
-                                                name="amountproof"
-                                                id="proofInput"
-                                                class="form-control"
-                                                accept=".pdf,.jpg,.jpeg,.png"
-                                                required>
-
-                                            <div id="proofPreview" class="mt-3"></div>
-                                        </div>
-                                    </div>
                                 @endif
-                                </div>
                             </div>
                         </div>
-                        @if (!$isEdit && !empty($data['booking_payment_logs']) && $data['booking_payment_logs']->isNotEmpty())
-
-                        <div class="col-12 mt-4">
-                            <div class="border rounded bg-light">
-
-                                <div class="px-3 py-2 border-bottom">
-                                    <h5 class="mb-0 fw-semibold">
-                                        Previous Receipts / Vouchers
-                                    </h5>
-                                </div>
-
-                                <div class="table-responsive">
-                                    <table class="table table-bordered table-hover mb-0 align-middle">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th style="width:70px;">S.No</th>
-                                                <th>Instrument No.</th>
-                                                <th>Instrument Type</th>
-                                                <th>Date</th>
-                                                <th>Amount</th>
-                                                <th style="width:100px;">View</th>
-                                            </tr>
-                                        </thead>
-
-                                        <tbody>
-
-                                            @foreach ($data['booking_payment_logs'] as $index => $payment)
-
-                                                @php
-                                                    $isVoucher = (int) $payment->type === 4;
-
-                                                    $paymentNumber = $payment->type_number
-                                                        ?? $payment->reciept
-                                                        ?? '—';
-
-                                                    $paymentDate = $payment->date
-                                                        ? site_date($payment->date)
-                                                        : '—';
-
-                                                    $paymentAmount = (float) ($payment->amount ?? 0);
-
-                                                    $proofUrl = $payment->getFirstMediaUrl('amount-proof');
-                                                @endphp
-
-                                                <tr>
-                                                    <td>
-                                                        {{ $index + 1 }}
-                                                    </td>
-
-                                                    <td>
-                                                        <span class="fw-semibold">
-                                                            {{ $paymentNumber }}
-                                                        </span>
-
-                                                        <div class="small text-muted">
-                                                            {{ $isVoucher ? 'Voucher' : 'Receipt' }}
-                                                        </div>
-                                                    </td>
-
-                                                    <td>
-                                                        {{ $payment->mode ?? '—' }}
-                                                    </td>
-
-                                                    <td>
-                                                        {{ $paymentDate }}
-                                                    </td>
-
-                                                    <td>
-                                                        ₹ {{ number_format($paymentAmount, 2) }}
-                                                    </td>
-
-                                                    <td>
-                                                        @if ($proofUrl)
-                                                            <a href="{{ $proofUrl }}"
-                                                            target="_blank"
-                                                            class="btn btn-outline-primary btn-sm">
-                                                                <i class="la la-eye"></i>
-                                                                View
-                                                            </a>
-                                                        @else
-                                                            <span class="text-muted">
-                                                                —
-                                                            </span>
-                                                        @endif
-                                                    </td>
-                                                </tr>
-
-                                            @endforeach
-
-                                        </tbody>
-
-                                        <tfoot>
-                                            <tr>
-                                                <th colspan="4" class="text-end">
-                                                    Total Amount
-                                                </th>
-
-                                                <th>
-                                                    ₹ {{ number_format($bookingPaymentPrefill['total_amount'] ?? 0, 2) }}
-                                                </th>
-
-                                                <th></th>
-                                            </tr>
-                                        </tfoot>
-
-                                    </table>
-                                </div>
-
-                            </div>
-                        </div>
-
-                    @endif
+                        
 
                         {{-- ---------------------------------------------------
                              CARD 2 — Customer Details
@@ -823,7 +746,7 @@
                                                             id="referredby"
                                                             name="referredby"
                                                             value="1"
-                                                            {{ old('referredby', $entry?->referred_by ?? null) ? 'checked' : '' }}> 
+                                                            {{ old('referredby', $enquiry?->referred_by ?? null) ? 'checked' : '' }}> 
                                                             Referred By</label>
                                         </div>
                                     </div>
@@ -832,7 +755,10 @@
                                         <div class="form-group">
                                             <label for="refcustomername">Customer Name <span class="required-mark" style="display: none;">*</span></label>
                                             <input type="text" name="{{ $isEdit ? 'ref_customer_name' : 'refcustomername' }}" id="refcustomername"
-                                                class="form-control" disabled value="{{ old($isEdit ? 'ref_customer_name' : 'refcustomername', $entry?->r_name ?? '') }}">
+                                                class="form-control" disabled value="{{ old(
+                                                $isEdit ? 'ref_customer_name' : 'refcustomername',
+                                                $enquiry?->referee_name ?? ''
+                                            ) }}">
                                         </div>
                                     </div>
 
@@ -840,7 +766,10 @@
                                         <div class="form-group">
                                             <label for="refmobileno">Mobile No. <span class="required-mark" style="display: none;">*</span></label>
                                             <input type="text" name="{{ $isEdit ? 'ref_mobile_no' : 'refmobileno' }}" id="refmobileno" class="form-control"
-                                                disabled value="{{ old($isEdit ? 'ref_mobile_no' : 'refmobileno', $entry?->r_mobile ?? '') }}">
+                                                disabled value="{{ old(
+                                                $isEdit ? 'ref_mobile_no' : 'refmobileno',
+                                                $enquiry?->referee_phone ?? ''
+                                            ) }}">
                                         </div>
                                     </div>
 
@@ -848,7 +777,10 @@
                                         <div class="form-group">
                                             <label for="refexistingmodel">Existing Model <span class="required-mark" style="display: none;">*</span></label>
                                             <input type="text" name="{{ $isEdit ? 'ref_existing_model' : 'refexistingmodel' }}" id="refexistingmodel"
-                                                class="form-control" disabled value="{{ old($isEdit ? 'ref_existing_model' : 'refexistingmodel', $entry?->r_model ?? '') }}">
+                                                class="form-control" disabled value="{{ old(
+                                                $isEdit ? 'ref_existing_model' : 'refexistingmodel',
+                                                $enquiry?->referee_model ?? ''
+                                            ) }}">
                                         </div>
                                     </div>
 
@@ -856,7 +788,10 @@
                                         <div class="form-group">
                                             <label for="refvariant">Variant <span class="required-mark" style="display: none;">*</span></label>
                                             <input type="text" name="{{ $isEdit ? 'ref_variant' : 'refvariant' }}" id="refvariant" class="form-control"
-                                                disabled value="{{ old($isEdit ? 'ref_variant' : 'refvariant', $entry?->r_variant ?? '') }}">
+                                                disabled value="{{ old(
+                                                $isEdit ? 'ref_variant' : 'refvariant',
+                                                $enquiry?->referee_variant ?? ''
+                                            ) }}">
                                         </div>
                                     </div>
 
@@ -864,7 +799,10 @@
                                         <div class="form-group">
                                             <label for="refchassisregno">Chassis No. / Regn. No. <span class="required-mark" style="display: none;">*</span></label>
                                             <input type="text" name="{{ $isEdit ? 'ref_chassis_reg_no' : 'refchassisregno' }}" id="refchassisregno"
-                                                class="form-control" disabled value="{{ old($isEdit ? 'ref_chassis_reg_no' : 'refchassisregno', $entry?->r_chassis ?? '') }}">
+                                                class="form-control" disabled value="{{ old(
+                                                $isEdit ? 'ref_chassis_reg_no' : 'refchassisregno',
+                                                $enquiry?->referee_chassis ?? ''
+                                            ) }}">
                                         </div>
                                     </div>
                                 </div>
@@ -1198,7 +1136,7 @@
                             </div>
                             <div class="booking-card__body">
                                 <div class="row">
-                                    <div class="col-sm-3">
+                                    <div class="col-sm-2">
                                         <div class="form-group">
                                             <label for="bookingmode">Booking Mode <span class="required-mark">*</span></label>
                                             <select name="{{ $isEdit ? 'booking_mode' : 'bookingmode' }}" id="bookingmode" class="form-control form-select" required>
@@ -1246,7 +1184,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="col-sm-2">
+                                    <div class="col-sm-3">
                                         <div class="form-group">
 
                                             <label for="saleconsultant">
@@ -1898,13 +1836,33 @@
                 }
 
                 const bookingPicker = flatpickr('#bookingdate', {
-                    dateFormat: SITE_DATE_FORMAT, maxDate: 'today', allowInput: false,
+                    dateFormat: SITE_DATE_FORMAT,
+                    maxDate: 'today',
+                    allowInput: false,
+
                     onChange: function(selectedDates, dateStr, instance) {
+
                         const bookingDate = selectedDates[0];
-                        $('#hiddenbookingdate').val(instance.formatDate(bookingDate, 'Y-m-d'));
+
+                        $('#hiddenbookingdate').val(
+                            instance.formatDate(bookingDate, 'Y-m-d')
+                        );
+
+                        @if (!$hasPreviousPayment)
+                            if (bookingDate) {
+                                $('#hiddenreceiptdate').val(
+                                    instance.formatDate(bookingDate, 'Y-m-d')
+                                );
+                            }
+                        @endif
+
                         if (bookingDate && window.deliveryPicker) {
                             window.deliveryPicker.set('minDate', bookingDate);
-                            if (window.deliveryPicker.selectedDates[0] && window.deliveryPicker.selectedDates[0] < bookingDate) {
+
+                            if (
+                                window.deliveryPicker.selectedDates[0] &&
+                                window.deliveryPicker.selectedDates[0] < bookingDate
+                            ) {
                                 window.deliveryPicker.clear();
                                 $('#hiddenexpecteddeldate').val('');
                                 alert('Delivery date cannot be earlier than booking date.');
@@ -1920,12 +1878,6 @@
                     }
                 });
 
-                flatpickr('#receiptdate', {
-                    dateFormat: SITE_DATE_FORMAT, maxDate: 'today', allowInput: false,
-                    onChange: function(selectedDates, dateStr, instance) {
-                        $('#hiddenreceiptdate').val(instance.formatDate(selectedDates[0], 'Y-m-d'));
-                    }
-                });
             }
 
             function initNumericOnlyFields() {
@@ -2010,7 +1962,6 @@
                         gstn: { gstnFormat: true, required: function() { return !$('#notrequiredgst').is(':checked'); } },
                         ['{{ $isEdit ? "booking_amount" : "bookingamount" }}']: { required: true, number: true },
                         ['{{ $isEdit ? "receipt_no" : "receiptno" }}']: { required: function() { return $('#coltype').val() === '1'; }, receiptFormat: true },
-                        receiptdate: { required: function() { return $('#coltype').val() === '1' || $('#coltype').val() === '4'; } },
                         mode: { required: function() { return $('#coltype').val() === '1' || $('#coltype').val() === '4'; } },
                         name: { required: true },
                         ['{{ $isEdit ? "care_of" : "careof" }}']: { required: true },
@@ -2381,8 +2332,10 @@
             function toggleCustomerFields(type) {
                 const isDummy = type === 'Dummy';
                 const $coltype = $('#coltype');
-                $coltype.prop('disabled', isDummy);
-                if (isDummy) $coltype.val('').trigger('change');
+                $coltype.prop('disabled', isDummy || {{ $isEdit ? 'true' : 'false' }});
+                if (isDummy && !{{ $isEdit ? 'true' : 'false' }}) {
+                    $coltype.val('').trigger('change');
+                }
 
                 $('#proofInput').prop('disabled', isDummy || {{ $isEdit ? 'true' : 'false' }});
                 if (isDummy) { $('#proofInput').val(''); $('#proofPreview').empty(); }
@@ -2398,9 +2351,9 @@
                     }
                 });
 
-                $('#bookingamount, #receiptvoucherinput, #receiptdate').prop('disabled', isDummy);
+                $('#bookingamount').prop('disabled', isDummy);
                 toggleRequiredMark(
-                    ['#coltype', '#proofInput', '#finmode', '#financier', '#loanstatus'],
+                    ['#coltype', '#finmode', '#financier', '#loanstatus'],
                     !isDummy && !{{ $isEdit ? 'true' : 'false' }}
                 );
                 $('#bookingForm').validate().settings.rules["{{ $isEdit ? 'col_type' : 'coltype' }}"].required = !isDummy;
@@ -2431,38 +2384,17 @@
                 }
 
                 if (isUsedCar) {
-                    $('#bookingamount').siblings('label').html('Received Amount<span class="required-mark">*</span>');
-                    $('#receiptdate').siblings('label').html('Voucher Date<span class="required-mark">*</span>');
+                    $('#bookingamount').siblings('label').html(
+                        'Received Amount<span class="required-mark">*</span>'
+                    );
                 } else {
-                    $('#bookingamount').siblings('label').html('Booking Amount<span class="required-mark">*</span>');
-                    $('#receiptdate').siblings('label').html('Receipt Date<span class="required-mark">*</span>');
+                    $('#bookingamount').siblings('label').html(
+                        'Booking Amount<span class="required-mark">*</span>'
+                    );
                 }
 
-                const input = $('#receiptvoucherinput'), label = $('#receiptvoucherlabel'), warning = $('#receiptvoucherwarning'), group = $('#receiptvouchergroup');
-                let inputName, inputPlaceholder, inputMask, labelText;
+                
 
-                if (isReceipt) {
-                    inputName = '{{ $isEdit ? "receipt_no" : "receiptno" }}'; inputPlaceholder = '12345'; inputMask = '00000'; labelText = 'Receipt No.';
-                    input.unmask().mask(inputMask, { placeholder: inputPlaceholder, reverse: true });
-                    attachDuplicateCheck(input, inputName, 'type1');
-                    input.attr('name', inputName).attr('placeholder', inputPlaceholder).prop('required', true);
-                    label.html(labelText + '<span class="required-mark">*</span>'); group.show();
-                    if (!"{{ $isEdit }}") input.val('');
-                    warning.hide(); input.removeClass('is-invalid');
-                } else if (isUsedCar) {
-                    inputName = '{{ $isEdit ? "voucher_no" : "voucherno" }}'; inputPlaceholder = 'Enter Voucher No.'; labelText = 'Voucher No.';
-                    input.unmask();
-                    attachDuplicateCheck(input, inputName, 'type4');
-                    input.attr('name', inputName).attr('placeholder', inputPlaceholder).prop('required', true);
-                    label.html(labelText + '<span class="required-mark">*</span>'); group.show();
-                    if (!"{{ $isEdit }}") input.val('');
-                    warning.hide(); input.removeClass('is-invalid');
-                } else {
-                    group.hide(); input.val('').prop('required', false);
-                }
-
-                const receiptDatePicker = $('#receiptdate').data('flatpickr');
-                if (isReceipt || isUsedCar) receiptDatePicker?.enable(); else receiptDatePicker?.disable();
 
                 if (isFieldDSA) {
                     $('#bookingsource').val('DSA').prop('disabled', true).trigger('change');
@@ -2471,6 +2403,10 @@
                 } else {
                     $('#bookingsource').prop('disabled', false).trigger('change');
                     $('#user').off('change.syncDSA');
+                }
+                
+                if (@json($hasPreviousPayment) && !{{ $isEdit ? 'true' : 'false' }}) {
+                    $('#bookingamount').prop('readonly', true).addClass('bg-light');
                 }
             }
 
