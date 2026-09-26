@@ -16,7 +16,6 @@ use App\Models\Module\Insurance\XlInsurance;
 use App\Services\OrgService;
 use Carbon\Carbon;
 use Exception;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -50,7 +49,7 @@ class BookingCoreService
      *
      * @param  array<string, mixed>  $input  the raw request payload (all fields store() reads)
      */
-    public function store(array $input, ?UploadedFile $amountProof): Booking
+    public function store(array $input): Booking
     {
         $pending = 0;
         $pendingFields = [];
@@ -58,14 +57,7 @@ class BookingCoreService
         $isDummy = ($input['customertype'] ?? null) === 'Dummy';
 
         if (! $isDummy) {
-            if (empty($input['receiptno'] ?? null)) {
-                $pending++;
-                $pendingFields[] = 'Receipt number needs to be updated';
-            }
-            if (empty($input['hiddenreceiptdate'] ?? null)) {
-                $pending++;
-                $pendingFields[] = 'Receipt date needs to be updated';
-            }
+            
             if (($input['bookingmode'] ?? null) === 'Online') {
                 if (empty($input['refrenceno'] ?? null)) {
                     $pending++;
@@ -131,10 +123,7 @@ class BookingCoreService
         $booking->dsa_id = $input['dsadetails'] ?? null;
         $booking->online_bk_ref_no = $input['refrenceno'] ?? null;
         $booking->booking_date = $input['hiddenbookingdate'] ?? null;
-        $booking->receipt_no = $input['receiptno'] ?? null;
-        $booking->receipt_date = $input['hiddenreceiptdate'] ?? null;
         $booking->booking_amount = $isDummy ? 0 : ($input['bookingamount'] ?? null);
-        $booking->payment_mode = $input['mode'] ?? null;
         $booking->order = $input['makeorder'] ?? null;
 
         $booking->pan_no = $input['panno'] ?? null;
@@ -293,59 +282,6 @@ class BookingCoreService
             }
         } catch (Exception $e) {
             dd($e->getMessage(), $e->getFile(), $e->getLine());
-        }
-
-        $uploadedFilePath = null;
-
-        if ($amountProof && $amountProof->isValid()) {
-            try {
-                $storedName = $amountProof->store('temp', 'public');
-                $uploadedFilePath = public_path('storage/'.$storedName);
-
-                if (! file_exists($uploadedFilePath)) {
-                    throw new Exception('Stored file not found at: '.$uploadedFilePath);
-                }
-            } catch (Exception $e) {
-                Log::error('💥 [FILE] File upload block threw exception', [
-                    'message' => $e->getMessage(),
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine(),
-                ]);
-                $uploadedFilePath = null;
-            }
-        }
-
-        $number = $input['receiptno'] ?? $input['voucherno'] ?? null;
-
-        
-        if (
-            ! $isDummy
-            && $previousEnquiryPayments->isEmpty()
-            && in_array($booking->col_type, [1, 4])
-            && $booking->booking_amount > 0
-            && $number
-        ) {
-            try {
-                $payment = new Bookingamount;
-                $payment->bid = $booking->id;
-                $payment->date = $input['hiddenreceiptdate'] ?? now();
-                $payment->amount = $booking->booking_amount;
-                $payment->type_number = $number;
-                $payment->mode = $input['mode'] ?? null;
-                $payment->voucher = ($booking->col_type == 4) ? 1 : 0;
-                $payment->save();
-
-                if ($uploadedFilePath && file_exists($uploadedFilePath)) {
-                    $payment->addMedia($uploadedFilePath)->toMediaCollection('amount-proof');
-                }
-            } catch (Exception $e) {
-                Log::error('[STORE] Bookingamount save/media failed', [
-                    'booking_id' => $booking->id,
-                    'message' => $e->getMessage(),
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine(),
-                ]);
-            }
         }
 
         if (! $isDummy && ($input['buyertype'] ?? null) === 'Exchange Buy') {

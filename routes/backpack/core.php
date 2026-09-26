@@ -300,6 +300,11 @@ Route::group([
     Route::put('accounts/receipt/{id}', [ReceiptCrudController::class, 'update'])->name('accounts.receipt.update');
     Route::delete('accounts/receipt/{id}', [ReceiptCrudController::class, 'destroy'])->name('accounts.receipt.destroy');
     Route::get('accounts/receipt/{id}/show', [ReceiptCrudController::class, 'show'])->name('accounts.receipt.show');
+    Route::get('accounts/receipt/{id}/print', [ReceiptCrudController::class, 'printReceipt'])->name('accounts.receipt.print');
+        Route::get(
+        'accounts/receipt/{id}/browser-print',
+        [\App\Http\Controllers\Admin\Accounts\Receipt\ReceiptCrudController::class, 'browserPrintReceipt']
+    )->name('accounts.receipt.browser-print');
     Route::get('accounts/receipt/fetch-enquiry', [ReceiptCrudController::class, 'fetchEnquiryDetails'])
         ->name('accounts.receipt.fetch-enquiry');
 

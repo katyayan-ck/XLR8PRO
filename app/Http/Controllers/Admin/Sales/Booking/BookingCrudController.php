@@ -50,6 +50,7 @@ use App\Services\Sales\Booking\BookingKycService;
 use App\Services\Sales\Booking\BookingOtfService;
 use App\Services\Sales\Booking\BookingRefundService;
 use App\Services\Sales\Booking\BookingRtoService;
+use App\Services\DateFormatService;
 use App\Services\SystemSettingService;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
@@ -104,6 +105,7 @@ class BookingCrudController extends CrudController
         protected BookingRefundService $refundService,
         protected BookingOtfService $otfService,
         protected BookingCoreService $coreService,
+        protected DateFormatService $dateFormatService,
     ) {
         parent::__construct();
     }
@@ -135,6 +137,45 @@ class BookingCrudController extends CrudController
         $this->data['customer_categories'] = OrgService::keywordValueByCode('CUSTOMER_TYPE');
 
         $this->data['occupation_types'] = OrgService::keywordValueByCode('OCCUPATION_TYPE');
+        $booking = Booking::findOrFail($id);
+
+        $bookingPaymentLogs = Bookingamount::withTrashed()
+            ->where('bid', $booking->id)
+            ->whereIn('type', [1, 2])
+            ->orderBy('date', 'desc')
+            ->orderBy('id', 'desc')
+            ->get();
+
+
+        $bookingPaymentLogs->each(function ($payment) {
+            if (empty($payment->mode)) {
+                $payment->mode_name = '—';
+                return;
+            }
+
+            if (is_numeric($payment->mode)) {
+                $payment->mode_name =
+                    OrgService::getKeyValueById((int) $payment->mode)?->value
+                    ?? (string) $payment->mode;
+            } else {
+                $payment->mode_name =
+                    OrgService::getKeyValueByCode((string) $payment->mode)?->value
+                    ?? (string) $payment->mode;
+            }
+        });
+
+        $this->data['booking_payment_logs'] = $bookingPaymentLogs;
+
+        $this->data['booking_payment_prefill'] = [
+            'has_previous_payment' => $bookingPaymentLogs->isNotEmpty(),
+            'collection_type' => (string) ($booking->col_type ?? ''),
+            'receipt_no' => $bookingPaymentLogs->first()?->type_number ?? '',
+            'receipt_date' => $bookingPaymentLogs->first()?->date ?? '',
+            'payment_mode' => $bookingPaymentLogs->first()?->mode ?? '',
+            'total_amount' => (float) $bookingPaymentLogs->sum(
+                fn ($payment) => (float) $payment->amount
+            ),
+        ];
 
         return $this->traitEdit($id);
     }
@@ -215,64 +256,6 @@ class BookingCrudController extends CrudController
         $this->data['customer_categories'] = $customer_categories;
         $this->data['occupation_types'] = $occupation_types;
 
-        $bookingPaymentLogs = collect();
-        $bookingPaymentPrefill = [
-            'has_previous_payment' => false,
-            'collection_type'      => '',
-            'receipt_no'           => '',
-            'receipt_date'         => '',
-            'payment_mode'         => '',
-            'total_amount'         => 0,
-        ];
-
-        if (!empty($enquiry)) {
-
-            $bookingPaymentLogs = Bookingamount::query()
-                ->where('enq_id', $enquiry->id)
-                ->whereNull('bid')
-                ->whereNull('deleted_at')
-                ->orderBy('date', 'desc')
-                ->orderBy('id', 'desc')
-                ->get();
-
-            if ($bookingPaymentLogs->isNotEmpty()) {
-
-                $receipts = $bookingPaymentLogs->where('type', 1);
-                $vouchers = $bookingPaymentLogs->where('type', 4);
-
-                $hasReceipt = $receipts->isNotEmpty();
-                $hasVoucher = $vouchers->isNotEmpty();
-
-                // Receipt + Voucher => Receipt remains the collection type
-                $collectionType = $hasReceipt ? '1' : '4';
-
-                // Latest receipt number if receipt exists.
-                // Otherwise latest voucher number.
-                $latestPayment = $hasReceipt
-                    ? $receipts->first()
-                    : $vouchers->first();
-
-                $bookingPaymentPrefill = [
-                    'has_previous_payment' => true,
-
-                    'collection_type' => $collectionType,
-
-                    'receipt_no' => $latestPayment?->type_number,
-
-                    'receipt_date' => $latestPayment?->date,
-
-                    'payment_mode' => $latestPayment?->mode,
-
-                    'total_amount' => (float) $bookingPaymentLogs->sum(
-                        fn ($payment) => (float) $payment->amount
-                    ),
-                ];
-            }
-        }
-
-        $this->data['booking_payment_logs'] = $bookingPaymentLogs;
-        $this->data['booking_payment_prefill'] = $bookingPaymentPrefill;
-
         return $this->traitCreate();
     }
 
@@ -343,9 +326,6 @@ class BookingCrudController extends CrudController
             'bookingamount' => __('booking.fields.booking_amount'),
             'bookingmode' => __('booking.fields.booking_mode'),
             'coltype' => __('booking.fields.collection_type'),
-            'mode' => __('booking.fields.payment_mode'),
-            'receiptno' => __('booking.fields.receipt_number'),
-            'hiddenreceiptdate' => __('booking.fields.receipt_date'),
         ];
 
         $validator = Validator::make($request->all(), [
@@ -414,7 +394,6 @@ class BookingCrudController extends CrudController
                 'bookingamount' => 'required|numeric',
                 'bookingmode' => 'required|string|max:255',
                 'coltype' => 'required',
-                'mode' => 'required|in:Cash,Cheque,Bank Transfer,UPI',
             ], [], $customAttributes);
 
             if ($validator->fails()) {
@@ -426,22 +405,8 @@ class BookingCrudController extends CrudController
             }
         }
 
-        if ($request->coltype === 1) {
-            $validator = Validator::make($request->all(), [
-                'receiptno' => 'required|string|max:255',
-                'hiddenreceiptdate' => 'required|date',
-            ], [], $customAttributes);
 
-            if ($validator->fails()) {
-                Log::warning('[STORE] Receipt validation failed', [
-                    'errors' => $validator->errors()->toArray(),
-                ]);
-
-                return redirect()->back()->withInput()->with('error', $validator->messages()->first());
-            }
-        }
-
-        $this->coreService->store($request->all(), $request->file('amountproof'));
+        $this->coreService->store($request->all());
 
         return redirect(backpack_url('sales/booking'))->with('success', 'Booking added successfully!');
     }
@@ -1433,7 +1398,7 @@ class BookingCrudController extends CrudController
             'alt_mobile' => $booking->alt_mobile ?? 'N/A',
             'gender' => $booking->gender ?? 'N/A',
             'occ' => $booking->occ ?? 'N/A',
-            'c_dob' => $booking->c_dob ?? 'N/A',
+            'c_dob' => $this->dateFormatService->format($booking->c_dob),
 
             'pan_no' => $booking->pan_no ?? 'N/A',
             'adhar_no' => ! empty(trim($booking->adhar_no ?? '')) && strlen(trim($booking->adhar_no ?? '')) > 3
@@ -2597,11 +2562,86 @@ class BookingCrudController extends CrudController
         $data['care_of_type'] = $enquiry?->care_of_type;
         $data['care_of'] = $enquiry?->care_of;
 
+        // ==========================================================
+        // PREVIOUS ENQUIRY PAYMENTS
+        // ==========================================================
+        $bookingPaymentLogs = collect();
+
+        $bookingPaymentPrefill = [
+            'has_previous_payment' => false,
+            'collection_type'      => '',
+            'receipt_no'           => '',
+            'receipt_date'         => '',
+            'payment_mode'         => '',
+            'total_amount'         => 0,
+        ];
+
+        if ($enquiry) {
+
+            $bookingPaymentLogs = Bookingamount::query()
+                ->where('enq_id', $enquiry->id)
+                ->whereNull('bid')
+                ->whereNull('deleted_at')
+                ->orderBy('date', 'desc')
+                ->orderBy('id', 'desc')
+                ->get();
+
+            $bookingPaymentLogs->each(function ($payment) {
+                if (empty($payment->mode)) {
+                    $payment->mode_name = '—';
+                    return;
+                }
+
+                if (is_numeric($payment->mode)) {
+                    $payment->mode_name =
+                        OrgService::getKeyValueById((int) $payment->mode)?->value
+                        ?? (string) $payment->mode;
+                } else {
+                    $payment->mode_name =
+                        OrgService::getKeyValueByCode((string) $payment->mode)?->value
+                        ?? (string) $payment->mode;
+                }
+            });
+
+            if ($bookingPaymentLogs->isNotEmpty()) {
+
+                // type = 1 => Receipt
+                // type = 2 => Journal Voucher
+                $receipts = $bookingPaymentLogs->where('type', 1);
+                $vouchers = $bookingPaymentLogs->where('type', 2);
+
+                $latestPayment = $bookingPaymentLogs
+                    ->filter(fn ($payment) => in_array((int) $payment->type, [1, 2], true))
+                    ->first();
+
+                if ($latestPayment) {
+
+                    // Receipt has priority if both Receipt and Voucher exist.
+                    $collectionType = $receipts->isNotEmpty()
+                        ? '1'
+                        : '4';
+
+                    $bookingPaymentPrefill = [
+                        'has_previous_payment' => true,
+                        'collection_type'      => $collectionType,
+                        'receipt_no'           => $latestPayment->type_number,
+                        'receipt_date'         => $latestPayment->date,
+                        'payment_mode'         => $latestPayment->mode,
+                        'total_amount'         => (float) $bookingPaymentLogs->sum(
+                            fn ($payment) => (float) $payment->amount
+                        ),
+                    ];
+                }
+            }
+        }
+
+        $data['booking_payment_logs'] = $bookingPaymentLogs;
+        $data['booking_payment_prefill'] = $bookingPaymentPrefill;
+
         $data['saleconsultant'] = $enquiry?->x8_sc_code
             ?? $enquiry?->sc_code
             ?? '';
 
-        // ========== QUOTATION / ENQUIRY DATA ARRAY ==========
         $data['q'] = [];
 
         if ($quotation) {
@@ -2739,7 +2779,6 @@ class BookingCrudController extends CrudController
         // ==========================================================
         // 3. DROPDOWN DATA
         // ==========================================================
-        $data = [];
         $data['payment'] = $latestPayment;
         $data['payment_mode'] = $latestPayment?->mode;
 
@@ -2921,11 +2960,43 @@ class BookingCrudController extends CrudController
                 : [];
         }
 
-        // ==========================================================
-        // 11. STORE DATA
-        // ==========================================================
-        $this->data['entry'] = $entry;
-        $this->data['data'] = $data;
+                // ==========================================================
+                // 11. STORE DATA
+                // ==========================================================
+                $this->data['entry'] = $entry;
+
+                // Payment logs + prefill (edit mode me bhi dikhane ke liye)
+                $bookingPaymentLogs = Bookingamount::withTrashed()
+                    ->where('bid', $entry->id)
+                    ->whereIn('type', [1, 2])
+                    ->orderBy('date', 'desc')
+                    ->orderBy('id', 'desc')
+                    ->get();
+
+                $bookingPaymentLogs->each(function ($payment) {
+                    if (empty($payment->mode)) {
+                        $payment->mode_name = '—';
+                        return;
+                    }
+                    if (is_numeric($payment->mode)) {
+                        $payment->mode_name = OrgService::getKeyValueById((int) $payment->mode)?->value ?? (string) $payment->mode;
+                    } else {
+                        $payment->mode_name = OrgService::getKeyValueByCode((string) $payment->mode)?->value ?? (string) $payment->mode;
+                    }
+                });
+
+                $data['booking_payment_logs'] = $bookingPaymentLogs;
+
+                $data['booking_payment_prefill'] = [
+                    'has_previous_payment' => $bookingPaymentLogs->isNotEmpty(),
+                    'collection_type' => (string) ($entry->col_type ?? ''),
+                    'receipt_no' => $bookingPaymentLogs->first()?->type_number ?? '',
+                    'receipt_date' => $bookingPaymentLogs->first()?->date ?? '',
+                    'payment_mode' => $bookingPaymentLogs->first()?->mode ?? '',
+                    'total_amount' => (float) $bookingPaymentLogs->sum(fn ($p) => (float) $p->amount),
+                ];
+
+                $this->data['data'] = $data;
 
         // Also expose enquiry to view
         $this->data['enquiry'] = $linkedEnquiry;
