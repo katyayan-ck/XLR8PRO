@@ -259,7 +259,14 @@ class BookingCoreService
                 Log::error('💥 [HISTORY] Failed', ['message' => $e->getMessage()]);
             }
         } catch (Exception $e) {
-            dd($e->getMessage(), $e->getFile(), $e->getLine());
+            // Was dd(), which dumped internals to the browser (DEC-027).
+            Log::error('BOOKING_STORE_FAILED', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+
+            throw $e;
         }
 
         $uploadedFilePath = null;
@@ -698,7 +705,8 @@ class BookingCoreService
             $linkedEnquiry->save();
         }
 
-        $booking->col_type = $input['col_type'] ?? null;
+        // col_type is NOT NULL; a dummy edit may omit it, so keep the stored value (DEC-027).
+        $booking->col_type = $input['col_type'] ?? $booking->col_type;
         $booking->col_by = $input['user'] ?? null;
         $booking->pending = $pending;
 

@@ -466,7 +466,13 @@ class BookingOtfService
      */
     public function generateVotfNumber(Booking $booking): string
     {
-        $branchCode = strtoupper(trim($booking->branch_code ?? ''));
+        // Bookings have no branch column; the branch lives on the linked enquiry
+        // (the same source getFullBookingData() uses for display) - DEC-027.
+        $branchCode = strtoupper(trim((string) (
+            $booking->branch_code
+            ?? Enquiry::resolveByAnyReference($booking->enq_no)?->dealer_branch
+            ?? ''
+        )));
 
         if ($branchCode === '') {
             throw new \InvalidArgumentException('Branch code is missing for this booking.');

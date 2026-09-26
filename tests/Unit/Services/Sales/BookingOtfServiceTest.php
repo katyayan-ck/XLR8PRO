@@ -2,11 +2,11 @@
 
 namespace Tests\Unit\Services\Sales;
 
+use App\Models\CRM\Enquiry;
 use App\Models\CRM\Quotation;
 use App\Models\Module\Booking\Booking;
 use App\Models\User;
 use App\Services\Sales\Booking\BookingOtfService;
-use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
 
@@ -74,34 +74,36 @@ class BookingOtfServiceTest extends TestCase
         $this->assertArrayHasKey('net_settlement_amount', $result['otfData']);
     }
 
-    public function test_apply_always_crashes_because_final_data_is_not_a_real_column(): void
+    public function test_apply_saves_final_data(): void
     {
-        // BUG-104 (known-bugs-report.md, CRITICAL): xlr8_booking_master has
-        // no final_data column at all (confirmed via SHOW COLUMNS, and
-        // reproduced against a real pre-existing booking row, not just a
-        // test fixture). $booking->final_data is set unconditionally near
-        // the top of apply() (mirroring the original otfSave()), so EVERY
-        // call - regardless of what else is submitted - throws a real
-        // QueryException on save(). This test locks in that (documented,
-        // pre-existing, not introduced by this extraction) behavior rather
-        // than asserting a success path that cannot occur.
+        // Regression for BUG-104: final_data was not a real column, so every OTF
+        // save crashed. Migration 2026_09_26_120000 adds it.
         $booking = $this->makeBooking();
 
-        $this->expectException(QueryException::class);
-        $this->expectExceptionMessageMatches("/Unknown column 'final_data'/");
+        $saved = $this->service->apply($booking, ['pan_no' => 'ABCDE1234F'], null);
 
-        $this->service->apply($booking, ['pan_no' => 'ABCDE1234F'], null);
+        $this->assertIsArray(json_decode((string) $saved->fresh()->final_data, true));
+    }
+
+    public function test_generate_votf_number_uses_the_linked_enquiry_branch(): void
+    {
+        // DEC-027: bookings have no branch column; the branch comes from the
+        // linked enquiry, as it does for display.
+        $enquiry = Enquiry::query()->whereNotNull('dealer_branch')->where('dealer_branch', '!=', '')->first();
+        if (! $enquiry) {
+            $this->markTestSkipped('No enquiry with a dealer_branch in the test database.');
+        }
+
+        $booking = $this->makeBooking(['enq_no' => $enquiry->id]);
+
+        $votf = $this->service->generateVotfNumber($booking);
+
+        $this->assertStringContainsString(strtoupper($enquiry->dealer_branch), $votf);
     }
 
     public function test_generate_votf_number_throws_when_branch_code_missing(): void
     {
-        // Related to BUG-104: xlr8_booking_master also has no branch_code
-        // column (mass-assigning it in makeBooking() silently no-ops, and
-        // direct-property-assignment + save() would independently crash
-        // the same way final_data does) - so in this schema, every booking
-        // reads back branch_code = null and generateVotfNumber() always
-        // takes this path. Covered here rather than a happy-path test,
-        // since no booking can carry a real branch_code in this database.
+        // No branch on the booking and no linked enquiry to take it from.
         $booking = $this->makeBooking(['branch_code' => 'TESTBR']);
 
         $this->expectException(\InvalidArgumentException::class);

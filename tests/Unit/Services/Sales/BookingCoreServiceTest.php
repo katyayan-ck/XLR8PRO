@@ -48,19 +48,18 @@ class BookingCoreServiceTest extends TestCase
     // update() has no such wrapping try/catch, so its crash IS a normal,
     // catchable QueryException - covered below.
 
-    public function test_update_always_crashes_because_sale_type_is_not_a_real_column(): void
+    public function test_update_saves_sale_type(): void
     {
-        // Same root cause as above, reproduced via update()'s path.
-        // sale_type is a required field on the edit form, so this is not
-        // a theoretical edge case - every real edit submission hits this.
+        // Regression for BUG-104: sale_type (a required edit-form field) was not a
+        // real column, so every edit crashed. Migration 2026_09_26_120000 adds it.
         $booking = $this->makeBooking();
-
-        $this->expectException(QueryException::class);
-        $this->expectExceptionMessageMatches("/Unknown column 'sale_type'/");
 
         $this->service->update($booking, [
             'sale_type' => '1',
             'customer_type' => 'Active',
+            'col_type' => '1',
         ]);
+
+        $this->assertSame('1', $booking->fresh()->sale_type);
     }
 }

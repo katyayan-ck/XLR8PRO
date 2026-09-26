@@ -142,3 +142,12 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
   - Machine PATH: replace `D:\xampp\php` and `D:\laragon\bin\php\php-8.3.30-Win32-vs16-x64` with `D:\laragon\bin\php\php-8.4.26-Win32-vs17-x64`. This needs admin; if it's denied, the user runs the given one-liner in an elevated shell.
   - The previous values are saved to `docs/decisions/path-backup-26-09-2026.txt` for reversal.
 - **Risk:** MED (environment) · **Approved-by:** user · **Reversal:** restore from the backup file.
+
+### DEC-027 | 26-09-2026 17:55 | A0 | BUG-104 follow-ups: VOTF branch from the linked enquiry; replace `dd()` in booking store
+- **Findings:**
+  - `xlr8_booking_master` has no branch column. `getFullBookingData()` copies `branch_code` from the linked enquiry's `dealer_branch` for display only, so `generateVotfNumber()` (which loads a fresh booking) always threw "Branch code is missing".
+  - `BookingCoreService::store()` called `dd()` on any save failure: it dumps the message, file and line to the browser and kills the request.
+- **Decision:**
+  - VOTF uses `$booking->branch_code`, falling back to `Enquiry::resolveByAnyReference($booking->enq_no)->dealer_branch` (the same source the display code uses).
+  - `dd()` becomes `Log::error` + rethrow, so failures go through Laravel's normal error handling.
+- **Risk:** MED (obvious bug fixes on UAT-critical paths) · **Approved-by:** auto (within the BUG-104 fix the user approved) · **Reversal:** revert.
