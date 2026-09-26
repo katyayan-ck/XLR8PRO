@@ -44,6 +44,7 @@ After the merge: run `php artisan test --compact` plus a smoke of `sales/*` as u
 **Waiting on the user:**
 - OK to merge `dev/admin` → `stage`? Merging deploys to dev.xceler8.in; PHP 8.4 is confirmed there.
 - Data scoping switch-on (BUG-083).
+- Rotate the Google service-account key once the code is final (user decision; history purge needs approval).
 
 **For the booking team:**
 - BUG-168: routes skipping their permission checks.
