@@ -123,13 +123,35 @@ class DivisionCrudController extends CrudController
     {
         $this->authorizeManage();
 
-        $this->crud->setCreateView('admin.org.division.create');
+        // Updated view reference
+        $this->crud->setCreateView('admin.org.division.form');
 
-        return view('admin.org.division.create', [
+        return view('admin.org.division.form', [
             'title' => 'Add New Division',
             'departments' => Department::where('is_active', 1)
                 ->orderBy('name')
                 ->get(),
+        ]);
+    }
+
+    public function edit($id)
+    {
+        $this->authorizeManage();
+
+        // Updated view reference
+        $this->crud->setEditView('admin.org.division.form');
+
+        $division = Division::with('department')->findOrFail($id);
+
+        $departments = Department::where('is_active', 1)
+            ->orWhere('code', $division->dept_code)
+            ->orderBy('name')
+            ->get();
+
+        return view('admin.org.division.form', [
+            'title' => 'Edit Division - '.$division->name,
+            'division' => $division,
+            'departments' => $departments,
         ]);
     }
 
@@ -142,26 +164,6 @@ class DivisionCrudController extends CrudController
         \Alert::success('Division created successfully!')->flash();
 
         return redirect(backpack_url('org/division'));
-    }
-
-    public function edit($id)
-    {
-        $this->authorizeManage();
-
-        $this->crud->setEditView('admin.org.division.edit');
-
-        $division = Division::with('department')->findOrFail($id);
-
-        $departments = Department::where('is_active', 1)
-            ->orWhere('code', $division->dept_code)
-            ->orderBy('name')
-            ->get();
-
-        return view('admin.org.division.edit', [
-            'title' => 'Edit Division - '.$division->name,
-            'division' => $division,
-            'departments' => $departments,
-        ]);
     }
 
     public function update(DivisionRequest $request, $id)

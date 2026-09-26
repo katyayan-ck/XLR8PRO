@@ -117,8 +117,24 @@ class DepartmentCrudController extends CrudController
     {
         $this->authorizeManage();
 
-        return view('admin.org.department.create', [
+        // Updated view reference
+        return view('admin.org.department.form', [
             'title' => 'Add New Department',
+        ]);
+    }
+
+    public function edit($id)
+    {
+        $this->authorizeManage();
+
+        // Updated view reference
+        $this->crud->setEditView('admin.org.department.form');
+
+        $department = Department::findOrFail($id);
+
+        return view('admin.org.department.form', [
+            'title' => 'Edit Department - '.$department->name,
+            'department' => $department,
         ]);
     }
 
@@ -131,20 +147,6 @@ class DepartmentCrudController extends CrudController
         \Alert::success('Department created successfully!')->flash();
 
         return redirect(backpack_url('org/department'));
-    }
-
-    public function edit($id)
-    {
-        $this->authorizeManage();
-
-        $this->crud->setEditView('admin.org.department.edit');
-
-        $department = Department::findOrFail($id);
-
-        return view('admin.org.department.edit', [
-            'title' => 'Edit Department - '.$department->name,
-            'department' => $department,
-        ]);
     }
 
     public function update(DepartmentRequest $request, $id)

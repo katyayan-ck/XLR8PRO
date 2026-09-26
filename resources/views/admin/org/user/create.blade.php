@@ -408,7 +408,7 @@ function toggleCards() {
     refreshPermissionTree();
 }
 userTypeSelect.addEventListener('change', toggleCards);
-toggleCards();
+// toggleCards();
 
 // ---- 3. Cascading org selects ----
 function populateSelect(select, items, valueKey, labelKey, placeholder) {
@@ -509,7 +509,10 @@ document.getElementById('addon_segment_codes').addEventListener('change', refres
 document.getElementById('primary_sub_segment_code').addEventListener('change', refreshSubSegments);
 
 // ---- 5. Permission tree ----
-const tree = RbacTree.init(document.getElementById('rbacTree'), { mode: 'override' });
+const tree = RbacTree.init(
+    document.getElementById('rbacTree'),
+    { mode: 'override' }
+);
 
 function currentRolePermissions() {
     // Non-employee roles aren't keyed by designation code client-side; start blank, still overridable.
@@ -558,5 +561,6 @@ document.getElementById('userForm').addEventListener('submit', function () {
         container.appendChild(input);
     });
 });
+toggleCards();
 </script>
 @endpush

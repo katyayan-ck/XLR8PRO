@@ -1,18 +1,37 @@
 @extends(backpack_view('blank'))
 
-@section('header')
-@endsection
+@section('title', $title ?? 'All Designations')
+
+@push('after_styles')
+<link rel="stylesheet" href="https://unpkg.com/ag-grid-community/styles/ag-theme-quartz.css">
+<style>
+    .card {
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    }
+    .ag-theme-quartz .center-header .ag-header-cell-label,
+    .ag-theme-quartz .ag-header-group-cell-label {
+        justify-content: center !important;
+    }
+    .ag-theme-quartz .ag-header-group-cell {
+        text-align: center !important;
+        justify-content: center !important;
+    }
+    #columnBubble {
+        width: 320px;
+    }
+</style>
+@endpush
 
 @section('content')
 <div class="row">
     <div class="col-12">
         <div class="card">
-            <div
-                class="card-header bg-gradient-primary d-flex justify-content-between align-items-center flex-nowrap flex-md-nowrap flex-wrap gap-3">
+            <!-- HEADER -->
+            <div class="card-header bg-gradient-primary d-flex justify-content-between align-items-center flex-nowrap flex-md-nowrap flex-wrap gap-3">
                 <h2 class="card-title mb-0 fw-bold text-black text-nowrap">
                     {{ $title ?? 'All Designations' }}
                 </h2>
-
                 <div class="d-flex align-items-center gap-3 flex-nowrap">
                     <a href="{{ backpack_url('org/designation/create') }}" class="btn btn-blue btn-sm fw-bold shadow-sm">
                         <i class="la la-plus me-1"></i> Add New Designation
@@ -20,27 +39,23 @@
                 </div>
             </div>
 
+            <!-- BODY -->
             <div class="card-body p-0" style="background: var(--tblr-bg-surface-secondary)">
-                <div
-                    class="d-flex justify-content-between align-items-center flex-wrap gap-3 p-3 border-bottom bg-white">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 p-3 border-bottom bg-white">
                     <div class="d-flex align-items-center gap-2 flex-nowrap">
-                        <input type="text" id="quickFilter" class="form-control w-100 w-md-auto"
-                            style="width:360px; min-width:260px;" placeholder="Smart Search...">
+                        <input type="text" id="quickFilter" class="form-control w-100 w-md-auto" style="width:360px; min-width:260px;" placeholder="Smart Search...">
                         <button id="resetAll" class="btn btn-outline-danger btn-sm text-nowrap">Reset</button>
                     </div>
 
                     <div class="d-flex gap-2 flex-nowrap justify-content-center">
-                        <button id="btnDefaultHeaders" class="btn btn-secondary btn-sm text-nowrap">Default
-                            Headers</button>
+                        <button id="btnDefaultHeaders" class="btn btn-secondary btn-sm text-nowrap">Default Headers</button>
+
                         <div class="position-relative d-inline-block">
-                            <button id="btnCustomiseHeaders" class="btn btn-red btn-sm text-nowrap">Customise
-                                Headers</button>
-                            <div id="columnBubble"
-                                style="display:none; position:absolute; top:110%; left:0; width:320px; background: var(--tblr-card-bg); border:1px solid #ddd; border-radius:6px; box-shadow:0 8px 20px rgba(0,0,0,.15); z-index:9999;">
+                            <button id="btnCustomiseHeaders" class="btn btn-red btn-sm text-nowrap">Customise Headers</button>
+                            <div id="columnBubble" style="display:none; position:absolute; top:110%; left:0; width:320px; background: var(--tblr-card-bg); border:1px solid #ddd; border-radius:6px; box-shadow:0 8px 20px rgba(0,0,0,.15); z-index:9999;">
                                 <div class="d-flex justify-content-between align-items-center px-2 py-1 border-bottom">
                                     <strong style="font-size:13px;">Customise Headers</strong>
-                                    <button id="closeColumnBubble"
-                                        class="btn btn-sm btn-link text-danger p-0">✕</button>
+                                    <button id="closeColumnBubble" class="btn btn-sm btn-link text-danger p-0">✕</button>
                                 </div>
                                 <div style="max-height:260px; overflow:auto;">
                                     <table class="table table-sm mb-0">
@@ -49,13 +64,13 @@
                                 </div>
                             </div>
                         </div>
+
                         <button id="btnAllHeaders" class="btn btn-blue btn-sm text-nowrap">All Headers</button>
                     </div>
 
                     <div class="d-flex gap-2 flex-nowrap">
                         <button id="exportCsv" class="btn btn-sm text-nowrap d-flex align-items-center gap-2">
-                            <img src="{{ asset('images/export-excel.png') }}" alt="Excel"
-                                style="height:30px; width:auto;">
+                            <img src="{{ asset('images/export-excel.png') }}" alt="Excel" style="height:30px; width:auto;">
                         </button>
                         <button id="exportPdf" class="btn btn-sm text-nowrap d-flex align-items-center gap-2">
                             <img src="{{ asset('images/export-pdf.png') }}" alt="PDF" style="height:30px; width:auto;">
@@ -63,21 +78,13 @@
                     </div>
                 </div>
 
+                <!-- AG Grid -->
                 <div id="myGrid" class="ag-theme-quartz" style="height: calc(93vh - 260px); width:100%;"></div>
             </div>
         </div>
     </div>
 </div>
 @endsection
-
-@push('after_styles')
-<link rel="stylesheet" href="https://unpkg.com/ag-grid-community/styles/ag-theme-quartz.css">
-<style>
-    .ag-theme-quartz .center-header .ag-header-cell-label {
-        justify-content: center !important;
-    }
-</style>
-@endpush
 
 @push('after_scripts')
 <script src="https://unpkg.com/ag-grid-community/dist/ag-grid-community.min.js"></script>
@@ -87,16 +94,31 @@
 
 <script>
     const ALL_COLUMNS = @json($gridConfig['columns'] ?? []);
+
+    function getCols(fields) {
+        return ALL_COLUMNS.filter(col => fields.includes(col.field));
+    }
+
     let gridApi;
 
     const columnDefs = [
-        ...ALL_COLUMNS.filter(col => ['serial_no', 'code', 'name', 'guard_name'].includes(col.field)),
-
-        ...ALL_COLUMNS.filter(col => ['description', 'hierarchy_level', 'rank', 'category', 'is_top_mgmt', 'parent_desig_code'].includes(col.field)),
-
-        ...ALL_COLUMNS.filter(col => ['is_active'].includes(col.field)),
-
-        ...ALL_COLUMNS.filter(col => ['action'].includes(col.field)).map(col => {
+        ...getCols(['image']).map(col => {
+            col.sortable = false;
+            col.filter = false;
+            col.cellRenderer = 'htmlRenderer';
+            return col;
+        }),
+        ...getCols(['serial_no', 'code', 'name']).map(col => {
+            if (['serial_no', 'code'].includes(col.field)) {
+                col.pinned = 'left';
+                col.lockPinned = true;
+            }
+            if (col.field === 'serial_no') col.width = 60;
+            if (col.field === 'code') col.width = 120;
+            return col;
+        }),
+        ...getCols(['rank', 'parent_desig_code', 'is_top_mgmt', 'description', 'is_active']),
+        ...getCols(['action']).map(col => {
             col.pinned = 'right';
             col.width = 140;
             col.sortable = false;
@@ -104,6 +126,10 @@
             col.cellRenderer = 'htmlRenderer';
             return col;
         })
+    ];
+
+    const defaultFields = [
+        'serial_no', 'image', 'code', 'name', 'rank', 'parent_desig_code', 'is_top_mgmt', 'description', 'is_active', 'action'
     ];
 
     const gridOptions = {
@@ -118,58 +144,49 @@
             filter: true,
             resizable: true,
             headerClass: 'center-header',
-            cellStyle: { textAlign: 'center' }
+            cellStyle: { textAlign: 'center' },
+            minWidth: 130,   
+            wrapText: true,  
+            autoHeight: true
         },
         components: {
             htmlRenderer: params => params.value || ''
         },
         onGridReady: params => {
             gridApi = params.api;
-
-            const defaultFields = ['serial_no', 'code', 'name', 'guard_name', 'description', 'hierarchy_level', 'rank', 'category', 'is_top_mgmt', 'parent_desig_code', 'is_active', 'action'];
-
-            const allCols = gridApi.getAllGridColumns().map(col => col.getColId());
-
+            const allCols = [];
+            gridApi.getAllGridColumns().forEach(col => allCols.push(col.getColId()));
             gridApi.setColumnsVisible(allCols, false);
             gridApi.setColumnsVisible(defaultFields, true);
-
             setTimeout(() => gridApi.autoSizeAllColumns(), 300);
         }
     };
-
+        
     function openColumnBubble() {
         const bubble = document.getElementById('columnBubble');
         const tbody = document.getElementById('columnBubbleBody');
         if (!gridApi || !bubble || !tbody) return;
 
         tbody.innerHTML = '';
-
+        
         const allFlatColumns = [
-            ...ALL_COLUMNS.filter(col => ['serial_no', 'code', 'name'].includes(col.field)),
-            ...ALL_COLUMNS.filter(col => ['description'].includes(col.field)),
-            ...ALL_COLUMNS.filter(col => ['is_active'].includes(col.field)),
-            ...ALL_COLUMNS.filter(col => ['action'].includes(col.field))
+            ...getCols(['serial_no', 'image', 'code', 'name', 'rank', 'parent_desig_code', 'is_top_mgmt', 'description', 'is_active', 'action'])
         ];
 
         allFlatColumns.forEach(col => {
             if (!col.field) return;
 
             const tr = document.createElement('tr');
-
             const tdCheck = document.createElement('td');
             tdCheck.style.width = '40px';
 
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
-            checkbox.checked = gridApi.getColumn(col.field)?.isVisible() ?? false;
+            const column = gridApi.getColumn(col.field);
+            checkbox.checked = column ? column.isVisible() : false;
 
-             
-            if (['serial_no', 'code', 'name'].includes(col.field)) {
-                checkbox.disabled = true;
-            }
-
-            
-            if (col.field === 'action') {
+            if (['serial_no', 'code', 'name', 'action'].includes(col.field)) {
+                checkbox.checked = true;
                 checkbox.disabled = true;
             }
 
@@ -180,9 +197,10 @@
             tdCheck.appendChild(checkbox);
 
             const tdLabel = document.createElement('td');
-            tdLabel.textContent = col.headerName || col.field;
+            tdLabel.innerText = col.headerName || col.field;
 
-            tr.append(tdCheck, tdLabel);
+            tr.appendChild(tdCheck);
+            tr.appendChild(tdLabel);
             tbody.appendChild(tr);
         });
 
@@ -193,12 +211,10 @@
         const gridDiv = document.querySelector('#myGrid');
         agGrid.createGrid(gridDiv, gridOptions);
 
-        
         document.getElementById('quickFilter').addEventListener('input', e => {
             gridApi.setGridOption('quickFilterText', e.target.value);
         });
 
-        
         document.getElementById('resetAll').addEventListener('click', () => {
             gridApi.setFilterModel(null);
             document.getElementById('quickFilter').value = '';
@@ -206,7 +222,6 @@
             gridApi.setSortModel(null);
         });
 
-        
         document.getElementById('btnCustomiseHeaders').addEventListener('click', e => {
             e.stopPropagation();
             openColumnBubble();
@@ -218,29 +233,26 @@
 
         document.getElementById('columnBubble').addEventListener('click', e => e.stopPropagation());
 
-        document.addEventListener('click', () => {
+        document.addEventListener('click', e => {
             const bubble = document.getElementById('columnBubble');
-            if (bubble?.style.display === 'block') bubble.style.display = 'none';
+            if (bubble && bubble.style.display === 'block') bubble.style.display = 'none';
         });
 
-        
         document.getElementById('btnAllHeaders').addEventListener('click', () => {
-            const allCols = gridApi.getAllGridColumns().map(c => c.getColId());
+            const allCols = [];
+            gridApi.getAllGridColumns().forEach(col => allCols.push(col.getColId()));
             gridApi.setColumnsVisible(allCols, true);
             setTimeout(() => gridApi.autoSizeAllColumns(), 200);
         });
 
-        
         document.getElementById('btnDefaultHeaders').addEventListener('click', () => {
-            const defaultFields = ['serial_no', 'code', 'name', 'guard_name', 'description', 'hierarchy_level', 'rank', 'category', 'is_top_mgmt', 'parent_desig_code', 'is_active', 'action'];
-            const allCols = gridApi.getAllGridColumns().map(c => c.getColId());
-
+            const allCols = [];
+            gridApi.getAllGridColumns().forEach(col => allCols.push(col.getColId()));
             gridApi.setColumnsVisible(allCols, false);
             gridApi.setColumnsVisible(defaultFields, true);
             setTimeout(() => gridApi.autoSizeAllColumns(), 200);
         });
 
-        
         document.getElementById('exportCsv').addEventListener('click', () => {
             const visibleColumns = gridApi.getAllDisplayedColumns()
                 .map(col => col.getColDef())
@@ -261,7 +273,6 @@
             XLSX.writeFile(wb, `designations-${new Date().toISOString().slice(0,10)}.xlsx`);
         });
 
-        
         document.getElementById('exportPdf').addEventListener('click', () => {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
@@ -274,7 +285,11 @@
 
             const rows = [];
             gridApi.forEachNodeAfterFilterAndSort(node => {
-                rows.push(visibleColumns.map(col => node.data[col.field] ?? ''));
+                const row = [];
+                visibleColumns.forEach(col => {
+                    row.push(node.data[col.field] ?? '');
+                });
+                rows.push(row);
             });
 
             doc.autoTable({

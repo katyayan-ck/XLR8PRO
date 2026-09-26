@@ -3,9 +3,8 @@
 namespace App\Http\Controllers\Admin\Iam\Permission;
 
 use App\Http\Requests\PermissionRequest;
-use App\Models\IAM\Module;
 use App\Models\IAM\Permission;
-use App\Models\IAM\Process;
+use App\Services\IAM\RbacService;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
@@ -44,110 +43,72 @@ class PermissionCrudController extends CrudController
 
         $this->crud->setListView('admin.iam.permission.list');
 
-        $permissions = Permission::with([
-            'module',
-            'process',
-        ])
-            ->orderBy('name')
-            ->get();
+        $permissions = Permission::with(['module', 'process'])->orderBy('name')->get();
 
         $gridData = $permissions->map(function ($permission, $index) {
-
             $mapped = $permission->toArray();
-
-            $mapped['serial_no'] =
-                $index + 1;
-
-            $mapped['module_name'] =
-                $permission->module?->name ?? '—';
-
-            $mapped['process_name'] =
-                $permission->process?->name ?? '—';
-
-            $editUrl =
-                backpack_url(
-                    "iam/permission/{$permission->id}/edit"
-                );
-
+            $mapped['serial_no'] = $index + 1;
+            $mapped['module_name'] = $permission->module?->name ?? '—';
+            $mapped['process_name'] = $permission->process?->name ?? '—';
+            
+            $editUrl = backpack_url("iam/permission/{$permission->id}/edit");
             $mapped['action'] = '
             <div class="d-flex gap-2 justify-content-center">
-                <a href="'.$editUrl.'"
-                   class="btn btn-sm btn-primary py-1 px-2"
-                   title="Edit">
-                    Edit
-                </a>
+                <a href="'.$editUrl.'" class="btn btn-sm btn-primary py-1 px-2" title="Edit">Edit</a>
             </div>
-        ';
-
+            ';
             return $mapped;
-
         })->values();
 
-        return view(
-            'admin.iam.permission.list',
-            [
-                'title' => 'All Permissions',
-
-                'gridConfig' => [
-
-                    'columns' => [
-
-                        [
-                            'field' => 'serial_no',
-                            'headerName' => 'S.No.',
-                        ],
-
-                        [
-                            'field' => 'module_name',
-                            'headerName' => 'Module',
-                        ],
-
-                        [
-                            'field' => 'process_name',
-                            'headerName' => 'Process',
-                        ],
-
-                        [
-                            'field' => 'name',
-                            'headerName' => 'Permission Name',
-                        ],
-
-                        [
-                            'field' => 'guard_name',
-                            'headerName' => 'Guard',
-                        ],
-
-                        [
-                            'field' => 'action',
-                            'headerName' => 'Actions',
-                        ],
-                    ],
-
-                    'data' => $gridData,
+        return view('admin.iam.permission.list', [
+            'title' => 'All Permissions',
+            'gridConfig' => [
+                'columns' => [
+                    ['field' => 'serial_no', 'headerName' => 'S.No.'],
+                    ['field' => 'module_name', 'headerName' => 'Module'],
+                    ['field' => 'process_name', 'headerName' => 'Process'],
+                    ['field' => 'name', 'headerName' => 'Permission Name'],
+                    ['field' => 'guard_name', 'headerName' => 'Guard'],
+                    ['field' => 'action', 'headerName' => 'Actions'],
                 ],
-            ]
-        );
+                'data' => $gridData,
+            ],
+        ]);
     }
 
-    public function create()
+    public function create(RbacService $rbacService)
     {
         if (! backpack_user()->can('IAM_RBAC_MANAGE')) {
             abort(403, 'Unauthorized. You do not have permission to create permissions.');
         }
 
-        return view(
-            'admin.iam.permission.create',
-            [
-                'title' => 'Add Permission',
+        $this->crud->setCreateView('admin.iam.permission.form');
 
-                'modules' => Module::where(
-                    'is_active',
-                    1
-                )
-                    ->orderBy('name')
-                    ->get(),
-            ]
-        );
+        return view('admin.iam.permission.form', [
+            'title' => 'Add Permission',
+            'modules' => $rbacService->getActiveModules(),
+            'processes' => [], // Empty array since none are selected yet
+            'suffix' => '', // Empty for create mode
+        ]);
+    }
+
+    public function edit($id, RbacService $rbacService)
+    {
+        if (! backpack_user()->can('IAM_RBAC_MANAGE')) {
+            abort(403, 'Unauthorized. You do not have permission to edit permissions.');
+        }
+
+        $this->crud->setEditView('admin.iam.permission.form');
+
+        $permission = Permission::findOrFail($id);
+
+        return view('admin.iam.permission.form', [
+            'title' => 'Edit Permission',
+            'permission' => $permission,
+            'modules' => $rbacService->getActiveModules(),
+            'processes' => $rbacService->getActiveProcessesByModule($permission->module_code),
+            'suffix' => $rbacService->extractPermissionSuffix($permission->name),
+        ]);
     }
 
     public function store(PermissionRequest $request)
@@ -158,72 +119,11 @@ class PermissionCrudController extends CrudController
 
         $validated = $request->validated();
 
-        Permission::create(
-            $validated
-        );
+        Permission::create($validated);
 
-        \Alert::success(
-            'Permission created successfully!'
-        )->flash();
+        \Alert::success('Permission created successfully!')->flash();
 
-        return redirect(
-            backpack_url('iam/permission')
-        );
-    }
-
-    public function edit($id)
-    {
-        if (! backpack_user()->can('IAM_RBAC_MANAGE')) {
-            abort(403, 'Unauthorized. You do not have permission to edit permissions.');
-        }
-
-        $permission =
-            Permission::findOrFail($id);
-
-        $parts = explode(
-            '_',
-            $permission->name
-        );
-
-        $suffix = '';
-
-        if (count($parts) > 2) {
-
-            $suffix = implode(
-                '_',
-                array_slice($parts, 2)
-            );
-        }
-
-        return view(
-            'admin.iam.permission.edit',
-            [
-
-                'title' => 'Edit Permission',
-
-                'permission' => $permission,
-
-                'modules' => Module::where(
-                    'is_active',
-                    1
-                )
-                    ->orderBy('name')
-                    ->get(),
-
-                'processes' => Process::where(
-                    'module_code',
-                    $permission->module_code
-                )
-                    ->where(
-                        'is_active',
-                        1
-                    )
-                    ->orderBy('name')
-                    ->get(),
-
-                'suffix' => $suffix,
-            ]
-        );
+        return redirect(backpack_url('iam/permission'));
     }
 
     public function update(PermissionRequest $request, $id)
@@ -232,24 +132,15 @@ class PermissionCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to edit permissions.');
         }
 
-        $permission =
-            Permission::findOrFail(
-                $id
-            );
-
+        $permission = Permission::findOrFail($id);
+        
         $validated = $request->validated();
+        
+        $permission->update($validated);
 
-        $permission->update(
-            $validated
-        );
+        \Alert::success('Permission updated successfully!')->flash();
 
-        \Alert::success(
-            'Permission updated successfully!'
-        )->flash();
-
-        return redirect(
-            backpack_url('iam/permission')
-        );
+        return redirect(backpack_url('iam/permission'));
     }
 
     public function destroy($id)
@@ -261,17 +152,9 @@ class PermissionCrudController extends CrudController
         return $this->crud->delete($id);
     }
 
-    public function getProcesses($moduleCode)
+    public function getProcesses($moduleCode, RbacService $rbacService)
     {
-        return Process::where(
-            'module_code',
-            $moduleCode
-        )
-            ->where('is_active', 1)
-            ->orderBy('name')
-            ->get([
-                'code',
-                'name',
-            ]);
+        // Reused logic through the service to power the AJAX endpoint
+        return $rbacService->getActiveProcessesByModule($moduleCode);
     }
 }
