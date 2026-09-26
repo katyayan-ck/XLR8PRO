@@ -2,15 +2,20 @@
 
 namespace App\Models\Admin;
 
+use App\Models\Admin\Concerns\SwapsPrimarySlot;
+use App\Models\Traits\HasColumnTransformations;
+use App\Services\Person\PersonContactService;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\DB;
 
 class PersonContact extends Model
 {
-    use CrudTrait, SoftDeletes;
+    use CrudTrait, HasColumnTransformations, SoftDeletes, SwapsPrimarySlot;
+
+    /** Field rules and transformations live in the entity service (DEC-050/053). */
+    protected string $entityService = PersonContactService::class;
 
     protected $table = 'xlr8_admin_person_contacts';
 
@@ -94,49 +99,12 @@ class PersonContact extends Model
     // ── Business logic ────────────────────────────────────────────────────────
 
     /**
-     * Promote this contact to Primary for its data_type.
-     * The existing Primary for this (person_code, data_type) is demoted to Alternate.
-     *
-     * contact_type is a fixed 5-value DB ENUM with a unique index on
-     * (person_code, data_type, contact_type) — MySQL checks that constraint per
-     * statement (no deferred checking), so if this row is already 'Alternate' and
-     * the old Primary is about to be demoted to 'Alternate' too, a naive demote-
-     * then-promote sequence would momentarily give both rows the same enum value
-     * and fail. Stage this row through a free contact_type first when that
-     * collision is possible.
+     * Promote this contact to Primary for its data_type; the old Primary takes this row's former slot.
+     * See SwapsPrimarySlot (DEC-053).
      */
     public function makesPrimary(): void
     {
-        DB::transaction(function () {
-            $oldPrimary = static::where('person_code', $this->person_code)
-                ->where('data_type', $this->data_type)
-                ->where('contact_type', 'Primary')
-                ->where('id', '!=', $this->id)
-                ->whereNull('deleted_at')
-                ->first();
-
-            if ($oldPrimary) {
-                if ($this->contact_type === 'Alternate') {
-                    $usedTypes = static::where('person_code', $this->person_code)
-                        ->where('data_type', $this->data_type)
-                        ->whereNull('deleted_at')
-                        ->pluck('contact_type')
-                        ->all();
-
-                    $freeType = collect(self::CONTACT_TYPES)->first(fn ($t) => ! in_array($t, $usedTypes, true));
-
-                    if ($freeType) {
-                        $this->contact_type = $freeType;
-                        $this->save();
-                    }
-                }
-
-                $oldPrimary->update(['contact_type' => 'Alternate', 'updated_by' => auth()->id()]);
-            }
-
-            $this->contact_type = 'Primary';
-            $this->save();
-        });
+        $this->swapIntoPrimary('contact_type', ['person_code', 'data_type'], self::CONTACT_TYPES);
     }
 
     // ── Scopes ────────────────────────────────────────────────────────────────

@@ -2,7 +2,6 @@
 
 namespace App\Imports\Sheets;
 
-use App\Models\Admin\Person;
 use App\Models\IAM\Role;
 use App\Models\User;
 use App\Services\IdentifierService;
@@ -13,6 +12,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
@@ -37,6 +37,9 @@ class StandaloneUsersImport implements ToCollection, WithHeadingRow
 
     private int $rowIndex = 1;
 
+    /** @var list<array{row: int, emp_code: string, message: string, invalid_data: bool}> */
+    private array $failures = [];
+
     /**
      * @return array{success: int, created: int, updated: int, skipped: int, failed: int}
      */
@@ -49,6 +52,16 @@ class StandaloneUsersImport implements ToCollection, WithHeadingRow
             'skipped' => $this->skipped,
             'failed' => $this->failed,
         ];
+    }
+
+    /**
+     * Failed rows; invalid_data = rejected by an entity service's field rules (DEC-050).
+     *
+     * @return list<array{row: int, emp_code: string, message: string, invalid_data: bool}>
+     */
+    public function failures(): array
+    {
+        return $this->failures;
     }
 
     public function collection(Collection $rows)
@@ -84,14 +97,13 @@ class StandaloneUsersImport implements ToCollection, WithHeadingRow
         }
 
         try {
-            // person_code is immutable: an existing employee keeps its person; only a new
-            // employee gets a derived code (Aadhaar → PAN → PERS-###### sequence).
+            // person_code is immutable: an existing employee keeps its person; a new employee's
+            // code is derived by PersonRecordService (Aadhaar → PAN → PERS-###### sequence).
             $existingPersonCode = DB::table('xlr8_admin_employee')->where('code', $empCode)->value('person_code');
-            $personCode = $existingPersonCode ?: $this->derivePersonCode($row);
             $isNew = $existingPersonCode === null;
 
-            // 1. Person (core + contacts + addresses + banking) via PersonService
-            $this->createOrUpdatePerson($row, $personCode, $rowIndex);
+            // 1. Person (core + contacts + addresses + banking) via the person entity services
+            $personCode = $this->createOrUpdatePerson($row, $existingPersonCode, $rowIndex);
 
             // 2. Employee (primary_* columns only — no pivot tables)
             $desigCode = $this->createOrUpdateEmployee($row, $empCode, $personCode, $rowIndex);
@@ -114,6 +126,7 @@ class StandaloneUsersImport implements ToCollection, WithHeadingRow
             echo "[Row {$rowIndex}] ✅ SUCCESS - {$empCode}\n";
         } catch (\Throwable $e) {
             $this->failed++;
+            $this->failures[] = ['row' => $rowIndex, 'emp_code' => $empCode, 'message' => $e->getMessage(), 'invalid_data' => $e instanceof ValidationException];
             $this->logRow($rowIndex, '❌ FAILED', $e->getMessage());
             Log::error("StandaloneUsersImport row {$rowIndex} failed", [
                 'emp_code' => $empCode,
@@ -127,7 +140,12 @@ class StandaloneUsersImport implements ToCollection, WithHeadingRow
     // PERSON (PersonService)
     // ─────────────────────────────────────────────────────────────
 
-    private function createOrUpdatePerson(array $row, string $personCode, int $rowIndex): void
+    /**
+     * Field formats and validation are PersonService's entity services' (DEC-053): a bad value
+     * fails the row with its validation message. Blank person cells are left out, so they keep
+     * the stored value.
+     */
+    private function createOrUpdatePerson(array $row, ?string $personCode, int $rowIndex): string
     {
         $fullName = $this->s($this->getValue($row, ['employee_name', 'Employee Name*']));
 
@@ -200,27 +218,26 @@ class StandaloneUsersImport implements ToCollection, WithHeadingRow
             ];
         }
 
-        $payload = [
+        $payload = array_filter([
             'person_code' => $personCode,
             'entity_type' => 'individual',
-            'display_name' => $fullName,
-            'first_name' => null, // PersonService will split from display_name
-            'gender' => $this->s($this->getValue($row, ['gender', 'Gender'])),
-            'dob' => $this->parseDate($this->getValue($row, ['date_of_birth', 'dob', 'D.O.B.'])),
-            'marital_status' => $this->s($this->getValue($row, ['marital_status', 'Marital Status'])),
+            'display_name' => $fullName, // first/middle/last are split from it by the service
+            'gender' => $this->n($this->getValue($row, ['gender', 'Gender'])),
+            'dob' => $this->n($this->getValue($row, ['date_of_birth', 'dob', 'D.O.B.'])),
+            'marital_status' => $this->n($this->getValue($row, ['marital_status', 'Marital Status'])),
             'pan_no' => $this->n($this->getValue($row, ['pan_no', 'PAN No.'])),
             'aadhaar_no' => $this->n($this->getValue($row, ['aadhaar_no', 'Aadhaar No'])),
+        ], fn ($v) => $v !== null && $v !== '') + [
             'contacts' => $contacts,
             'addresses' => $addresses,
             'banking' => $banking,
         ];
 
-        $person = PersonService::upsert($payload, [
-            'restore' => true,
-            'with' => ['contacts', 'addresses', 'bankingDetails'],
-        ]);
+        $person = PersonService::upsert($payload, ['with' => []]);
 
         $this->logRow($rowIndex, '✅ PERSON', "person_code = {$person->person_code}");
+
+        return $person->person_code;
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -626,27 +643,6 @@ class StandaloneUsersImport implements ToCollection, WithHeadingRow
     // ─────────────────────────────────────────────────────────────
     // PERSON CODE + HELPERS
     // ─────────────────────────────────────────────────────────────
-
-    /**
-     * Delegates to Person::deriveCode() - the model-level SSOT (Aadhaar-first,
-     * PAN-second, PERS-###### fallback) - instead of reimplementing the
-     * priority order and fallback shape independently. See BUG-088 in
-     * known-bugs-report.md: this file previously used its own PAN-first order
-     * and a non-durable in-memory PRSN##### fallback that disagreed with the
-     * model and could collide across separate import runs.
-     */
-    private function derivePersonCode(array $row): string
-    {
-        $pan = $this->n($this->getValue($row, ['pan_no', 'PAN No.']));
-        $aadhaar = $this->n($this->getValue($row, ['aadhaar_no', 'Aadhaar No']));
-
-        $person = new Person([
-            'aadhaar_no' => $aadhaar,
-            'pan_no' => $pan,
-        ]);
-
-        return Person::deriveCode($person);
-    }
 
     private function getValue(array $row, array $keys): ?string
     {

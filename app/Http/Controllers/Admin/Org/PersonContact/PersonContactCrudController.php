@@ -2,15 +2,16 @@
 
 namespace App\Http\Controllers\Admin\Org\PersonContact;
 
-use App\Http\Requests\PersonContactRequest;
 use App\Models\Admin\Person;
 use App\Models\Admin\PersonContact;
+use App\Services\Person\PersonContactService;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
+use Illuminate\Http\Request;
 
 class PersonContactCrudController extends CrudController
 {
@@ -21,6 +22,12 @@ class PersonContactCrudController extends CrudController
         showDetailsRow as traitShowDetailsRow;
     }
     use UpdateOperation;
+
+    /** All writes go through PersonContactService, which owns every field rule (DEC-050/053). */
+    public function __construct(private PersonContactService $contacts)
+    {
+        parent::__construct();
+    }
 
     public function search()
     {
@@ -137,15 +144,13 @@ class PersonContactCrudController extends CrudController
         ]);
     }
 
-    public function store(PersonContactRequest $request)
+    public function store(Request $request)
     {
         if (! backpack_user()->can('ORG_PRSN_CREATE')) {
             abort(403, 'Unauthorized. You do not have permission to create person contacts.');
         }
 
-        $validated = $request->validated();
-
-        PersonContact::create($validated);
+        $this->contacts->create($request->all());
 
         \Alert::success('Person Contact created successfully!')->flash();
 
@@ -176,17 +181,13 @@ class PersonContactCrudController extends CrudController
         ]);
     }
 
-    public function update(PersonContactRequest $request, $id)
+    public function update(Request $request, $id)
     {
         if (! backpack_user()->can('ORG_PRSN_EDIT')) {
             abort(403, 'Unauthorized. You do not have permission to edit person contacts.');
         }
 
-        $contact = PersonContact::findOrFail($id);
-
-        $validated = $request->validated();
-
-        $contact->update($validated);
+        $this->contacts->update(PersonContact::findOrFail($id), $request->all());
 
         \Alert::success('Person Contact updated successfully!')->flash();
 

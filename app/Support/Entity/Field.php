@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace App\Support\Entity;
 
 use App\Services\IdentifierService;
+use Carbon\Carbon;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Exists;
 use Illuminate\Validation\Rules\In;
+use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
+use Throwable;
 
 /**
  * One field of an entity: the single definition of its format, transformation, validation,
@@ -44,7 +47,7 @@ final class Field
 
     public mixed $default = null;
 
-    /** @var array{table: ?string, column: ?string, scope: list<string>}|null */
+    /** @var array{table: ?string, column: ?string, scope: list<string>, trashed: bool}|null */
     public ?array $unique = null;
 
     private function __construct(public readonly string $name)
@@ -123,6 +126,46 @@ final class Field
     public static function coordinate(string $name, int $limit): self
     {
         return self::make($name)->format("Decimal degrees, ±{$limit}")->rules('numeric', "between:-{$limit},{$limit}");
+    }
+
+    /**
+     * One of a fixed list (DB enum): matched case-insensitively and stored in its canonical spelling.
+     *
+     * @param  list<string>  $allowed
+     */
+    public static function choice(string $name, array $allowed): self
+    {
+        return self::make($name)
+            ->format('One of: '.implode(', ', $allowed))
+            ->transform(function (string $value) use ($allowed): string {
+                foreach ($allowed as $option) {
+                    if (strcasecmp($option, $value) === 0) {
+                        return $option;
+                    }
+                }
+
+                return $value;
+            })
+            ->rules(Rule::in($allowed));
+    }
+
+    /** Calendar date stored as Y-m-d; accepts any parseable date or an Excel serial number. */
+    public static function date(string $name): self
+    {
+        return self::make($name)
+            ->format('Date (stored YYYY-MM-DD)')
+            ->transform(function (string $value): string {
+                try {
+                    if (is_numeric($value) && (float) $value > 1000 && (float) $value < 100000) {
+                        return Carbon::instance(ExcelDate::excelToDateTimeObject((float) $value))->format('Y-m-d');
+                    }
+
+                    return Carbon::parse($value)->format('Y-m-d');
+                } catch (Throwable) {
+                    return $value;
+                }
+            })
+            ->rules('date');
     }
 
     /** Single image upload (not a column; the service stores it via media library). */
@@ -205,11 +248,13 @@ final class Field
      * Unique in the entity table (live rows), optionally within the values of other fields
      * (e.g. variant `code` unique per `color_code`).
      *
+     * $includeTrashed: the table's unique index also covers soft-deleted rows, so they count too.
+     *
      * @param  list<string>  $scope
      */
-    public function unique(array $scope = [], ?string $table = null, ?string $column = null): self
+    public function unique(array $scope = [], ?string $table = null, ?string $column = null, bool $includeTrashed = false): self
     {
-        $this->unique = ['table' => $table, 'column' => $column, 'scope' => $scope];
+        $this->unique = ['table' => $table, 'column' => $column, 'scope' => $scope, 'trashed' => $includeTrashed];
 
         return $this;
     }

@@ -118,7 +118,8 @@ class UserRbacWorkbookTest extends TestCase
         foreach (['employees', 'users', 'roles', 'contacts'] as $key) {
             $this->assertEquals($before[$key], $after[$key], "{$key} changed on a no-op round trip");
         }
-        $this->assertSame(0, $workbook->rows()->summary()['failed']);
+        // Rows are rejected only for stored values that break the person field rules (DEC-050/053).
+        $this->assertSame([], array_values(array_filter($workbook->rows()->failures(), fn ($f) => ! $f['invalid_data'])));
         $this->assertSame(0, $workbook->scopes()->summary()['deactivated']);
         $this->assertSame([], array_values(array_diff($before['scopes'], $after['scopes'])), 'no scope removed');
 

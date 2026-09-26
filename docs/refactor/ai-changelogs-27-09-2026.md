@@ -233,3 +233,28 @@ Branch `feature/integrations`. Decisions DEC-033…038 are in `docs/decisions/de
 - **Framework:** `Field::virtual()`, `each()`, and the phone/email/pincode/coordinate/image/documents presets; callable transform steps; `EntityService::afterSave()`.
 - **Retired:** `import:rbac-master` and its sheets, a silent no-op (BUG-174).
 - **Tests:** the Org feature tests (46) pass unchanged.
+
+## Person, contacts, addresses, banking on entity services (DEC-053)
+- **New (`app/Services/Person/`):**
+  - `PersonRecordService`, `PersonContactService`, `PersonAddressService`, `PersonBankingService`.
+  - `Concerns/TypedSlots` handles the type-slot rules; `app/Models/Admin/Concerns/SwapsPrimarySlot` does the Primary swap.
+- **Before → after:**
+  - **`PersonService`:** before, it held its own normalisers (`preparePersonAttributes`, `normalizeEnum`, `splitName`…) and wrote with `updateOrCreate`. Now its write methods delegate to the entity services; reads are unchanged.
+  - **`PersonCrudController`:** before, it used a `PersonRequest` plus inline `$request->validate` for contacts/addresses/banking, and raw `->update()` on edit, which skipped phone cleaning. Now every write goes through the services, and media moved into `PersonRecordService::afterSave`.
+  - **`PersonContactCrudController`:** before, `PersonContact::create/update` with a `PersonContactRequest`. Now it calls the service.
+  - **Employee / PersonAddress / PersonBankingDetail controllers:** the unrouted create/store/edit/update methods were removed.
+  - **FormRequests removed:** `EmployeeRequest`, `PersonRequest`, `PersonContactRequest`, `PersonAddressRequest`, `PersonBankingDetailRequest`.
+  - **Person models:** they declare `$entityService` and use `HasColumnTransformations` (the backstop).
+  - **`StandaloneUsersImport`:** before, it derived `person_code` itself and sent blank strings. Now the service derives the code, blank cells are left out, and `failures()` lists failed rows.
+- **Framework:**
+  - `EntityService::derive()`.
+  - Defaults are applied before validation.
+  - Immutable fields are dropped after normalisation.
+  - `Field::choice()`, `Field::date()`, `unique(includeTrashed:)`.
+- **Bug:** BUG-175 (soft-deleted rows blocked type slots; Primary promotion collisions).
+- **Tests:**
+  - New: `PersonEntityServicesTest` (9).
+  - `PersonCrudTest`: city test data is now proper names ("Jaipur"/"Kota"; "CityTwo" becomes "Citytwo" under Title Case).
+  - `UserRbacWorkbookTest`: the round trip allows only field-rule rejections of bad stored data (2 rows on `xlrm_testing`).
+  - Person/User tests (26) pass.
+- **Smoke:** the Person, Contact, Address, Banking and Employee screens return 200 for user 1 and 403 for user 40 (no Person permission), unchanged.

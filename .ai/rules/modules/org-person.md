@@ -23,7 +23,9 @@ Person (person_code — immutable natural key)
 - Children link by `person_code`, never by `person.id`. Customers, DSAs and referrers are Persons too.
 - "Primary" is encoded as `address_type` / `account_type` / `contact_type = 'Primary'` (there is no `is_primary` column).
 - `Person::primary_mobile` / `primary_email` accessors resolve contacts; `users` has no mobile/email columns.
-- All person writes through `PersonService` (normalisation, primary designation). Formats via `IdentifierService` + `App\Rules\*`.
+- Person writes only through `App\Services\Person\{PersonRecord,PersonContact,PersonAddress,PersonBanking}Service`
+  (or the `PersonService::upsert*` facade that delegates to them) — DEC-053. Child types are slots (`TypedSlots`):
+  blank → Primary if free; Primary promotes (swap); child deletes are permanent (BUG-175).
 - Employee–branch/location/department **pivot tables do not exist**; relations on `User`/`Employee` that
   use them are dead (BUG-158). Use `employee.primary_*_code` and `user_scopes`.
 

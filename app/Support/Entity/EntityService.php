@@ -46,12 +46,12 @@ abstract class EntityService
      */
     public function create(array $input): Model
     {
-        $data = $this->validate($input);
         foreach ($this->fieldMap() as $name => $field) {
-            if (! array_key_exists($name, $data) && $field->default !== null) {
-                $data[$name] = $field->default;
+            if ($field->default !== null && ($input[$name] ?? null) === null) {
+                $input[$name] = $field->default;
             }
         }
+        $data = $this->validate($input);
         $this->beforeCreate($data);
 
         return DB::transaction(function () use ($data, $input) {
@@ -74,11 +74,6 @@ abstract class EntityService
      */
     public function update(Model $model, array $input): Model
     {
-        foreach ($this->fieldMap() as $name => $field) {
-            if ($field->immutable) {
-                unset($input[$name]);
-            }
-        }
         $data = $this->validate($input, $model);
         $this->beforeUpdate($model, $data);
 
@@ -124,6 +119,15 @@ abstract class EntityService
     {
         $data = $this->normalise($input);
 
+        // Immutable fields are set on create only; on update any value for them is ignored.
+        if ($current) {
+            foreach ($this->fieldMap() as $name => $field) {
+                if ($field->immutable) {
+                    unset($data[$name]);
+                }
+            }
+        }
+
         // On update, required fields not being changed are validated against the stored value.
         $subject = $current ? array_merge($this->currentValues($current), $data) : $data;
 
@@ -139,6 +143,15 @@ abstract class EntityService
      * @return array<string, mixed>
      */
     public function normalise(array $input): array
+    {
+        return $this->derive($this->normaliseFields($input), $input);
+    }
+
+    /**
+     * @param  array<string, mixed>  $input
+     * @return array<string, mixed>
+     */
+    private function normaliseFields(array $input): array
     {
         $transformer = new ValueTransformer;
         $out = [];
@@ -172,6 +185,25 @@ abstract class EntityService
     }
 
     /**
+     * Fields computed from other fields after normalisation (e.g. a code derived from an
+     * identifier, a format that depends on a type field). Use normaliseField() for derived values.
+     *
+     * @param  array<string, mixed>  $data  normalised data
+     * @param  array<string, mixed>  $input  raw input
+     * @return array<string, mixed>
+     */
+    protected function derive(array $data, array $input): array
+    {
+        return $data;
+    }
+
+    /** Normalise one value through a field's transforms (for derive()). */
+    protected function normaliseField(string $name, mixed $value): mixed
+    {
+        return $this->normaliseFields([$name => $value])[$name] ?? null;
+    }
+
+    /**
      * Validation rules for the given data.
      *
      * @param  array<string, mixed>  $data
@@ -187,7 +219,7 @@ abstract class EntityService
 
             if ($field->unique !== null) {
                 $unique = Rule::unique($field->unique['table'] ?? $instance->getTable(), $field->unique['column'] ?? $name);
-                if (in_array(SoftDeletes::class, class_uses_recursive($instance), true)) {
+                if (! $field->unique['trashed'] && in_array(SoftDeletes::class, class_uses_recursive($instance), true)) {
                     $unique->whereNull('deleted_at');
                 }
                 foreach ($field->unique['scope'] as $scopeField) {
@@ -236,7 +268,7 @@ abstract class EntityService
             'required' => $f->required,
             'immutable' => $f->immutable,
             'unique' => $f->unique ? ($f->unique['scope'] ? 'per '.implode(', ', $f->unique['scope']) : 'yes') : 'no',
-            'transforms' => implode(' → ', $f->transforms),
+            'transforms' => implode(' → ', array_map(fn ($t) => $t instanceof \Closure ? 'custom' : $t, $f->transforms)),
         ], $this->fieldMap()));
     }
 

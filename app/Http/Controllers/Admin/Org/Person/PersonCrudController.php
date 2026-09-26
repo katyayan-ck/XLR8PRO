@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\Admin\Org\Person;
 
-use App\Http\Requests\PersonRequest;
 use App\Models\Admin\Person;
 use App\Models\Admin\PersonAddress;
 use App\Models\Admin\PersonBankingDetail;
 use App\Models\Admin\PersonContact;
-use App\Services\PersonService;
+use App\Services\Person\PersonAddressService;
+use App\Services\Person\PersonBankingService;
+use App\Services\Person\PersonContactService;
+use App\Services\Person\PersonRecordService;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
@@ -21,8 +23,8 @@ use Illuminate\Http\Request;
  * mobile — person_code is derived automatically, Aadhaar first, then PAN,
  * then a generated PERS-XXXXXX fallback), then manage every other facet of
  * the person — contacts, addresses, banking, media — from a single edit
- * screen. All person/contact/address/banking mutations go through
- * PersonService, per .ai/rules/person-user.md.
+ * screen. Every write goes through the person entity services
+ * (App\Services\Person\*Service, DEC-050/053), which own all field rules.
  */
 class PersonCrudController extends CrudController
 {
@@ -33,6 +35,15 @@ class PersonCrudController extends CrudController
         showDetailsRow as traitShowDetailsRow;
     }
     use UpdateOperation;
+
+    public function __construct(
+        private PersonRecordService $persons,
+        private PersonContactService $contacts,
+        private PersonAddressService $addresses,
+        private PersonBankingService $banking,
+    ) {
+        parent::__construct();
+    }
 
     public function search()
     {
@@ -137,35 +148,15 @@ class PersonCrudController extends CrudController
         return view('admin.org.person.create', ['title' => 'Add New Person']);
     }
 
-    public function store(PersonRequest $request)
+    public function store(Request $request)
     {
         $this->authorizeManage();
 
-        $validated = $request->validated();
+        // Screen policy: a person is created here with a primary mobile (its format is the
+        // contact service's rule). Every field rule lives in PersonRecordService (DEC-053).
+        $request->validate(['mobile' => 'required'], ['mobile.required' => 'A primary mobile number is required.']);
 
-        $person = PersonService::upsert([
-            'entity_type' => $validated['entity_type'] ?? 'individual',
-            'display_name' => $validated['display_name'],
-            'salutation' => $validated['salutation'] ?? null,
-            'first_name' => $validated['first_name'] ?? null,
-            'middle_name' => $validated['middle_name'] ?? null,
-            'last_name' => $validated['last_name'] ?? null,
-            'gender' => $validated['gender'] ?? null,
-            'dob' => $validated['dob'] ?? null,
-            'marital_status' => $validated['marital_status'] ?? null,
-            'spouse_name' => $validated['spouse_name'] ?? null,
-            'occupation' => $validated['occupation'] ?? null,
-            'aadhaar_no' => $validated['aadhaar_no'] ?? null,
-            'pan_no' => $validated['pan_no'] ?? null,
-            'tan_no' => $validated['tan_no'] ?? null,
-            'gst_no' => $validated['gst_no'] ?? null,
-            'contacts' => [[
-                'data_type' => 'Mobile',
-                'contact_type' => 'Primary',
-                'contact_detail' => $validated['mobile'],
-                'is_primary' => true,
-            ]],
-        ]);
+        $person = $this->persons->create($request->all());
 
         \Alert::success('Person created successfully! Add more contacts, addresses, or banking details below.')->flash();
 
@@ -186,34 +177,11 @@ class PersonCrudController extends CrudController
         ]);
     }
 
-    public function update(PersonRequest $request, $id)
+    public function update(Request $request, $id)
     {
         $this->authorizeManage();
 
-        $person = Person::findOrFail($id);
-
-        $validated = $request->validated();
-
-        PersonService::upsert([
-            'person_code' => $person->person_code,
-            'entity_type' => $validated['entity_type'] ?? $person->entity_type,
-            'display_name' => $validated['display_name'],
-            'salutation' => $validated['salutation'] ?? null,
-            'first_name' => $validated['first_name'] ?? null,
-            'middle_name' => $validated['middle_name'] ?? null,
-            'last_name' => $validated['last_name'] ?? null,
-            'gender' => $validated['gender'] ?? null,
-            'dob' => $validated['dob'] ?? null,
-            'marital_status' => $validated['marital_status'] ?? null,
-            'spouse_name' => $validated['spouse_name'] ?? null,
-            'occupation' => $validated['occupation'] ?? null,
-            'aadhaar_no' => $validated['aadhaar_no'] ?? null,
-            'pan_no' => $validated['pan_no'] ?? null,
-            'tan_no' => $validated['tan_no'] ?? null,
-            'gst_no' => $validated['gst_no'] ?? null,
-        ]);
-
-        $this->syncMedia($request, $person);
+        $this->persons->update(Person::findOrFail($id), $request->all());
 
         \Alert::success('Person updated successfully!')->flash();
 
@@ -236,14 +204,7 @@ class PersonCrudController extends CrudController
         $this->authorizeManage();
 
         $person = Person::findOrFail($id);
-
-        $validated = $request->validate([
-            'data_type' => 'required|in:'.implode(',', PersonContact::DATA_TYPES),
-            'contact_type' => 'required|in:'.implode(',', PersonContact::CONTACT_TYPES),
-            'contact_detail' => 'required|string|max:100',
-        ]);
-
-        PersonService::upsertContact($person->person_code, $validated);
+        $this->contacts->upsert(['person_code' => $person->person_code] + $request->all());
 
         \Alert::success('Contact saved.')->flash();
 
@@ -256,17 +217,7 @@ class PersonCrudController extends CrudController
 
         $person = Person::findOrFail($id);
         $contact = PersonContact::where('person_code', $person->person_code)->findOrFail($contactId);
-
-        $validated = $request->validate([
-            'data_type' => 'required|in:'.implode(',', PersonContact::DATA_TYPES),
-            'contact_type' => 'required|in:'.implode(',', PersonContact::CONTACT_TYPES),
-            'contact_detail' => 'required|string|max:100',
-        ]);
-
-        $contact->update($validated);
-        if ($validated['contact_type'] === 'Primary') {
-            $contact->makesPrimary();
-        }
+        $this->contacts->update($contact, $request->all());
 
         \Alert::success('Contact updated.')->flash();
 
@@ -278,7 +229,7 @@ class PersonCrudController extends CrudController
         $this->authorizeManage();
 
         $person = Person::findOrFail($id);
-        PersonContact::where('person_code', $person->person_code)->findOrFail($contactId)->delete();
+        $this->contacts->delete(PersonContact::where('person_code', $person->person_code)->findOrFail($contactId));
 
         \Alert::success('Contact removed.')->flash();
 
@@ -297,19 +248,12 @@ class PersonCrudController extends CrudController
         return redirect(backpack_url("org/person/{$id}/edit").'#contacts');
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // ADDRESSES (one slot per address_type — Primary/Office/Home/Alternate/Permanent)
-    // ─────────────────────────────────────────────────────────────
-
     public function storeAddress(Request $request, $id)
     {
         $this->authorizeManage();
 
         $person = Person::findOrFail($id);
-
-        $validated = $this->validateAddress($request);
-
-        PersonService::upsertAddress($person->person_code, $validated);
+        $this->addresses->upsert(['person_code' => $person->person_code] + $request->all());
 
         \Alert::success('Address saved.')->flash();
 
@@ -322,13 +266,7 @@ class PersonCrudController extends CrudController
 
         $person = Person::findOrFail($id);
         $address = PersonAddress::where('person_code', $person->person_code)->findOrFail($addressId);
-
-        $validated = $this->validateAddress($request);
-
-        $address->update($validated);
-        if ($validated['address_type'] === 'Primary') {
-            $address->makePrimary();
-        }
+        $this->addresses->update($address, $request->all());
 
         \Alert::success('Address updated.')->flash();
 
@@ -340,7 +278,7 @@ class PersonCrudController extends CrudController
         $this->authorizeManage();
 
         $person = Person::findOrFail($id);
-        PersonAddress::where('person_code', $person->person_code)->findOrFail($addressId)->delete();
+        $this->addresses->delete(PersonAddress::where('person_code', $person->person_code)->findOrFail($addressId));
 
         \Alert::success('Address removed.')->flash();
 
@@ -359,35 +297,12 @@ class PersonCrudController extends CrudController
         return redirect(backpack_url("org/person/{$id}/edit").'#addresses');
     }
 
-    private function validateAddress(Request $request): array
-    {
-        return $request->validate([
-            'address_type' => 'required|in:'.implode(',', PersonAddress::ADDRESS_TYPES),
-            'address_line_1' => 'nullable|string|max:255',
-            'address_line_2' => 'nullable|string|max:255',
-            'landmark' => 'nullable|string|max:255',
-            'city' => 'nullable|string|max:100',
-            'taluka' => 'nullable|string|max:100',
-            'district' => 'nullable|string|max:100',
-            'state' => 'nullable|string|max:100',
-            'country' => 'nullable|string|max:100',
-            'pincode' => 'nullable|digits:6',
-        ]);
-    }
-
-    // ─────────────────────────────────────────────────────────────
-    // BANKING (one slot per account_type — Primary/Secondary/Joint/Trust)
-    // ─────────────────────────────────────────────────────────────
-
     public function storeBanking(Request $request, $id)
     {
         $this->authorizeManage();
 
         $person = Person::findOrFail($id);
-
-        $validated = $this->validateBanking($request);
-
-        PersonService::upsertBanking($person->person_code, $validated);
+        $this->banking->upsert(['person_code' => $person->person_code] + $request->all());
 
         \Alert::success('Banking detail saved.')->flash();
 
@@ -400,13 +315,7 @@ class PersonCrudController extends CrudController
 
         $person = Person::findOrFail($id);
         $banking = PersonBankingDetail::where('person_code', $person->person_code)->findOrFail($bankingId);
-
-        $validated = $this->validateBanking($request);
-
-        $banking->update($validated);
-        if ($validated['account_type'] === 'Primary') {
-            $banking->makePrimary();
-        }
+        $this->banking->update($banking, $request->all());
 
         \Alert::success('Banking detail updated.')->flash();
 
@@ -418,7 +327,7 @@ class PersonCrudController extends CrudController
         $this->authorizeManage();
 
         $person = Person::findOrFail($id);
-        PersonBankingDetail::where('person_code', $person->person_code)->findOrFail($bankingId)->delete();
+        $this->banking->delete(PersonBankingDetail::where('person_code', $person->person_code)->findOrFail($bankingId));
 
         \Alert::success('Banking detail removed.')->flash();
 
@@ -435,45 +344,6 @@ class PersonCrudController extends CrudController
         \Alert::success('Primary bank account updated.')->flash();
 
         return redirect(backpack_url("org/person/{$id}/edit").'#banking');
-    }
-
-    private function validateBanking(Request $request): array
-    {
-        return $request->validate([
-            'account_type' => 'required|in:'.implode(',', PersonBankingDetail::ACCOUNT_TYPES),
-            'bank_name' => 'nullable|string|max:255',
-            'branch_name' => 'nullable|string|max:255',
-            'account_number' => 'nullable|string|max:34',
-            'account_holder_name' => 'nullable|string|max:255',
-            'ifsc_code' => 'nullable|string|max:11',
-            'micr_code' => 'nullable|string|max:20',
-            'account_nature' => 'nullable|in:'.implode(',', PersonBankingDetail::ACCOUNT_NATURES),
-        ]);
-    }
-
-    // ─────────────────────────────────────────────────────────────
-    // MEDIA (profile photo + identity documents)
-    // ─────────────────────────────────────────────────────────────
-
-    private function syncMedia(Request $request, Person $person): void
-    {
-        if ($request->boolean('remove_profile_photo')) {
-            $person->clearMediaCollection('profile_photos');
-        }
-
-        if ($request->hasFile('profile_photo')) {
-            $person->addMediaFromRequest('profile_photo')->toMediaCollection('profile_photos');
-        }
-
-        if ($request->hasFile('identity_documents')) {
-            foreach ((array) $request->file('identity_documents') as $file) {
-                $person->addMedia($file)->toMediaCollection('identity_documents');
-            }
-        }
-
-        foreach ((array) $request->input('remove_identity_documents', []) as $mediaId) {
-            $person->media()->where('id', $mediaId)->where('collection_name', 'identity_documents')->first()?->delete();
-        }
     }
 
     private function authorizeView(): void

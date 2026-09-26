@@ -2,6 +2,9 @@
 
 namespace App\Models\Admin;
 
+use App\Models\Admin\Concerns\SwapsPrimarySlot;
+use App\Models\Traits\HasColumnTransformations;
+use App\Services\Person\PersonBankingService;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,7 +13,10 @@ use Illuminate\Support\Facades\DB;
 
 class PersonBankingDetail extends Model
 {
-    use CrudTrait, SoftDeletes;
+    use CrudTrait, HasColumnTransformations, SoftDeletes, SwapsPrimarySlot;
+
+    /** Field rules and transformations live in the entity service (DEC-050/053). */
+    protected string $entityService = PersonBankingService::class;
 
     protected $table = 'xlr8_admin_person_banking_details';
 
@@ -98,43 +104,12 @@ class PersonBankingDetail extends Model
     // ── Business logic ────────────────────────────────────────────────────────
 
     /**
-     * Make this account the Primary. Demotes current Primary to Secondary.
-     *
-     * account_type is a fixed DB ENUM with a unique index on (person_code,
-     * account_type) — see PersonContact::makesPrimary()'s docblock for why a
-     * naive demote-then-promote can collide when this row is already the
-     * 'Secondary' slot the old Primary is about to be demoted into.
+     * Make this account the Primary; the old Primary takes this row's former slot.
+     * See SwapsPrimarySlot (DEC-053).
      */
     public function makePrimary(): void
     {
-        DB::transaction(function () {
-            $oldPrimary = static::where('person_code', $this->person_code)
-                ->where('account_type', 'Primary')
-                ->where('id', '!=', $this->id)
-                ->whereNull('deleted_at')
-                ->first();
-
-            if ($oldPrimary) {
-                if ($this->account_type === 'Secondary') {
-                    $usedTypes = static::where('person_code', $this->person_code)
-                        ->whereNull('deleted_at')
-                        ->pluck('account_type')
-                        ->all();
-
-                    $freeType = collect(self::ACCOUNT_TYPES)->first(fn ($t) => ! in_array($t, $usedTypes, true));
-
-                    if ($freeType) {
-                        $this->account_type = $freeType;
-                        $this->save();
-                    }
-                }
-
-                $oldPrimary->update(['account_type' => 'Secondary', 'updated_by' => auth()->id()]);
-            }
-
-            $this->account_type = 'Primary';
-            $this->save();
-        });
+        $this->swapIntoPrimary('account_type', ['person_code'], self::ACCOUNT_TYPES);
     }
 
     public function markVerified(): void

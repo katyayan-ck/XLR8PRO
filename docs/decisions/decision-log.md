@@ -459,3 +459,38 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
   - None of the sheets implements a Maatwebsite `To*` concern, so the import silently processed nothing while reporting "No errors" (proven on `xlrm_testing`: 0 inserted, 0 updated, data unchanged). `skip()` was also undefined.
   - It was a direct-to-table write path (DEC-050 violation).
   - Replacements: org masters go through the admin screens (entity services); users through `import:users` / Users → Bulk import.
+
+### DEC-053 | 27-09-2026 | A3 (UAT) | Person, contacts, addresses and banking on entity services (DEC-050 roll-out)
+- **Services (`App\Services\Person\`):** `PersonRecordService`, `PersonContactService`, `PersonAddressService`, `PersonBankingService`.
+  - `PersonService` keeps its read API (`find/search/get/setPrimary`). Its `upsert/upsertContact/upsertAddress/upsertBanking` now delegate to these, so existing callers keep working.
+  - Callers: the Person screen (and its inline contacts/addresses/banking), the standalone Contact screen, and the user importer.
+  - 5 FormRequests deleted (`Person`, `PersonContact`, `PersonAddress`, `PersonBankingDetail`, `Employee`).
+  - The unrouted create/store/edit/update methods of the retired Employee/Address/Banking screens (DEC-037) were removed.
+- **Field rules (one set for screen and import):**
+  - Names: Title Case for individuals; a legal entity's display name is kept as typed.
+  - Missing name parts are split from the display name. "A B" → first A, last B; before, B became both middle and last.
+  - `person_code`: derived when not given — individual: Aadhaar → PAN; legal entity: PAN → TAN; else `PERS-######`. Immutable. The importer no longer derives it itself.
+  - Aadhaar: spaces/dashes removed. PAN/TAN/GSTIN: upper-case.
+  - Aadhaar/PAN/TAN/GSTIN are unique across all persons, **including deleted ones**, matching the DB unique keys (was a DB error).
+  - Enums (gender, marital status, salutation, types) are matched case-insensitively.
+  - Dates accept any parseable date or an Excel serial.
+  - `contact_detail` is formatted by type: Mobile 10 digits; Email lower-case and valid; Landline/Fax digits.
+  - Pincode 6 digits; IFSC pattern; MICR 9 digits; account number alphanumeric.
+- **Type slots** (`TypedSlots`; a DB enum plus a unique key per person):
+  - No type given → Primary if free, else the next free type.
+  - Asking for Primary promotes the row and demotes the old one.
+  - Any other used slot is a validation error.
+  - Promotion is a swap: the old Primary takes the promoted row's former slot (`SwapsPrimarySlot`).
+- **Deletes of contacts/addresses/banking are permanent (BUG-175):** the unique keys cover soft-deleted rows, so a trashed row blocked its slot forever.
+- **Kept as screen policy (not a field rule):** the Person create screen requires a primary mobile. Its format is the contact rule.
+- **Importer:**
+  - Blank person cells are left out, so the stored values are kept (as before).
+  - A value breaking a field rule fails the row with the rule's message; `failures()` lists each failed row.
+  - On `xlrm_testing`, 2 existing employees fail the round trip for bad stored data: an 11-digit Aadhaar (BMPL-0557) and an e-mail containing a space (BMPL-0669). Per DEC-050 the old data is not corrected.
+- **Framework:**
+  - `EntityService::derive()` for computed fields.
+  - Defaults are applied before validation.
+  - Immutable fields are dropped after normalisation on update.
+  - `Field::choice()` and `Field::date()`; `unique(includeTrashed:)`.
+  - `describe()` tolerates callable transforms.
+- **Approved-by:** user (DEC-050 roll-out, "continue") · **Risk:** MED (stricter validation on the Person screens and the user import) · **Reversal:** revert.
