@@ -6,12 +6,14 @@ use App\Models\Vehicle\Pricing\ChangeFlag;
 use App\Models\Vehicle\Pricing\ImportSession;
 use App\Models\Vehicle\Pricing\Pricing;
 use App\Models\Vehicle\Pricing\Profile;
+use App\Services\Vehicle\Pricing\Prices\PriceService;
+use App\Support\Entity\Field;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Reader\IReader;
-use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 /**
  * Stage 2: memory-safe OEM price import.
@@ -22,26 +24,27 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 class PriceListPricingImporter
 {
     protected const MAX_COL = 'AZ';
+
     protected const CHUNK = 50;
 
     protected array $fieldToColumn = [
-        'asse_value_freight'   => 'assessable_value_with_freight',
-        'gst_pct'              => 'gst_percent',
-        'gst_amount'           => 'gst_amount',
-        'mm_inv_amt'           => 'mm_invoice_amount',
-        'dealer_margin'        => 'dealer_margin',
-        'dealer_handling'      => 'dealer_margin',
-        'ex_showroom'          => 'ex_showroom_price',
-        'curr_oem_scheme'      => 'curr_oem_scheme',
-        'curr_dealer_cont'     => 'curr_dealer_cont',
-        'curr_cash_discount'   => 'curr_cash_discount',
-        'curr_acc_discount'    => 'curr_acc_discount',
+        'asse_value_freight' => 'assessable_value_with_freight',
+        'gst_pct' => 'gst_percent',
+        'gst_amount' => 'gst_amount',
+        'mm_inv_amt' => 'mm_invoice_amount',
+        'dealer_margin' => 'dealer_margin',
+        'dealer_handling' => 'dealer_margin',
+        'ex_showroom' => 'ex_showroom_price',
+        'curr_oem_scheme' => 'curr_oem_scheme',
+        'curr_dealer_cont' => 'curr_dealer_cont',
+        'curr_cash_discount' => 'curr_cash_discount',
+        'curr_acc_discount' => 'curr_acc_discount',
         'curr_shield_discount' => 'curr_shield_discount',
-        'old_oem_scheme'       => 'old_oem_scheme',
-        'old_dealer_cont'      => 'old_dealer_cont',
-        'old_cash_discount'    => 'old_cash_discount',
-        'old_acc_discount'     => 'old_acc_discount',
-        'old_shield_discount'  => 'old_shield_discount',
+        'old_oem_scheme' => 'old_oem_scheme',
+        'old_dealer_cont' => 'old_dealer_cont',
+        'old_cash_discount' => 'old_cash_discount',
+        'old_acc_discount' => 'old_acc_discount',
+        'old_shield_discount' => 'old_shield_discount',
     ];
 
     public function __construct(
@@ -62,7 +65,7 @@ class PriceListPricingImporter
         ?int $userId = null,
         ?callable $onProgress = null
     ): array {
-        $userId  = $userId ?? Auth::id();
+        $userId = $userId ?? Auth::id();
         $wefDate = $wefDate ?? ($session->wef_date?->format('Y-m-d') ?? now()->toDateString());
         $selectedSheetCodes = array_map('strtoupper', $selectedSheetCodes);
 
@@ -72,17 +75,17 @@ class PriceListPricingImporter
         $plog = new PricingProcessLogger($session->id);
         $plog->info('Price import start', [
             'sheets' => $selectedSheetCodes,
-            'wef'    => $wefDate,
-            'file'   => basename($absolutePath),
+            'wef' => $wefDate,
+            'file' => basename($absolutePath),
         ]);
 
         $stats = [
-            'written'            => 0,
-            'changed'            => 0,
-            'skipped'            => 0,
+            'written' => 0,
+            'changed' => 0,
+            'skipped' => 0,
             'skipped_incomplete' => 0,
-            'skipped_no_price'   => 0,
-            'errors'             => [],
+            'skipped_no_price' => 0,
+            'errors' => [],
         ];
 
         $completeCodes = Profile::query()
@@ -95,9 +98,9 @@ class PriceListPricingImporter
         $plog->info('Complete profiles loaded', ['count' => count($completeCodes)]);
         if ($onProgress) {
             $onProgress([
-                'message' => 'Complete profiles: ' . count($completeCodes),
+                'message' => 'Complete profiles: '.count($completeCodes),
                 'percent' => 5,
-                'logs'    => ['[' . now()->format('H:i:s') . '] Complete profiles: ' . count($completeCodes)],
+                'logs' => ['['.now()->format('H:i:s').'] Complete profiles: '.count($completeCodes)],
             ]);
         }
 
@@ -115,7 +118,7 @@ class PriceListPricingImporter
         }
 
         $plog->info('Sheets selected (names only)', [
-            'count'  => count($wanted),
+            'count' => count($wanted),
             'titles' => array_column($wanted, 'title'),
         ]);
 
@@ -131,9 +134,9 @@ class PriceListPricingImporter
 
             if ($onProgress) {
                 $onProgress([
-                    'message' => "Opening {$title} ({$sheetIndex}/" . count($wanted) . ')…',
-                    'sheet'   => $title,
-                    'logs'    => ['[' . now()->format('H:i:s') . "] Opening sheet {$title} only"],
+                    'message' => "Opening {$title} ({$sheetIndex}/".count($wanted).')…',
+                    'sheet' => $title,
+                    'logs' => ['['.now()->format('H:i:s')."] Opening sheet {$title} only"],
                 ]);
             }
 
@@ -145,10 +148,11 @@ class PriceListPricingImporter
 
             if ($highest < 2) {
                 $this->release($spreadsheet);
+
                 continue;
             }
 
-            $headerProbe = $ws->rangeToArray('A1:' . $colLetter . '20', null, false, false, false);
+            $headerProbe = $ws->rangeToArray('A1:'.$colLetter.'20', null, false, false, false);
             [$headerIdx, $fieldMap] = $this->headers->findHeaderRow($sheetCode, $headerProbe, 20);
 
             if (($headerIdx === null || ! isset($fieldMap['model_code']))
@@ -172,6 +176,7 @@ class PriceListPricingImporter
                 $stats['errors'][] = "{$title}: header/model_code not found";
                 $plog->warning('Price sheet skipped — no model_code', ['sheet' => $title]);
                 $this->release($spreadsheet);
+
                 continue;
             }
 
@@ -181,18 +186,18 @@ class PriceListPricingImporter
             $totalRows += $dataCount;
 
             $plog->info('Price sheet begin', [
-                'sheet'      => $title,
-                'rows'       => $dataCount,
+                'sheet' => $title,
+                'rows' => $dataCount,
                 'header_row' => $headerIdx + 1,
-                'col'        => $colLetter,
-                'fields'     => array_keys($fieldMap),
+                'col' => $colLetter,
+                'fields' => array_keys($fieldMap),
             ]);
 
             $sheetWritten = 0;
 
             for ($from = $dataStart; $from <= $dataEnd; $from += self::CHUNK) {
                 $to = min($from + self::CHUNK - 1, $dataEnd);
-                $chunkRows = $ws->rangeToArray('A' . $from . ':' . $colLetter . $to, null, false, false, false);
+                $chunkRows = $ws->rangeToArray('A'.$from.':'.$colLetter.$to, null, false, false, false);
 
                 $chunkCodes = [];
                 foreach ($chunkRows as $row) {
@@ -227,15 +232,17 @@ class PriceListPricingImporter
 
                 $writtenCodes = [];
 
+                $prices = app(PriceService::class);
                 DB::transaction(function () use (
-                    $chunkRows, $fieldMap, $rowChannel, $wefDate, $session, $userId,
+                    $chunkRows, $fieldMap, $rowChannel, $wefDate, $session, $userId, $prices,
                     &$stats, $existingByCode, $existingSameWef, &$sheetWritten, &$processed,
-                    $completeCodes, &$writtenCodes, $plog, $title
+                    $completeCodes, &$writtenCodes
                 ) {
                     foreach ($chunkRows as $row) {
                         $rawCode = $this->headers->val($row, $fieldMap, 'model_code');
                         if ($rawCode === null || $rawCode === '') {
                             $processed++;
+
                             continue;
                         }
                         $modelCode = strtoupper(preg_replace('/\s+/', '', (string) $rawCode) ?? (string) $rawCode);
@@ -244,31 +251,35 @@ class PriceListPricingImporter
                             $stats['skipped_incomplete']++;
                             $stats['skipped']++;
                             $processed++;
+
                             continue;
                         }
 
                         try {
-                            $payload = [
+                            $input = [
                                 'import_session_id' => $session->id,
-                                'model_code'        => $modelCode,
-                                'channel'           => $rowChannel,
-                                'wef_date'          => $wefDate,
-                                'is_active'         => true,
-                                'updated_by'        => $userId,
+                                'model_code' => $modelCode,
+                                'channel' => $rowChannel,
+                                'wef_date' => $wefDate,
+                                'is_active' => true,
                             ];
 
+                            // Blank / "no value" cells are left out (a same-WEF update keeps the stored
+                            // amount); everything else is parsed and validated by PriceService (DEC-058).
                             foreach ($this->fieldToColumn as $fieldCode => $column) {
                                 if (! isset($fieldMap[$fieldCode])) {
                                     continue;
                                 }
-                                $val = $this->toDecimal($this->headers->val($row, $fieldMap, $fieldCode));
-                                if ($val !== null) {
-                                    if ($fieldCode === 'dealer_handling' && isset($payload['dealer_margin'])) {
-                                        continue;
-                                    }
-                                    $payload[$column] = $val;
+                                $raw = $this->headers->val($row, $fieldMap, $fieldCode);
+                                if ($raw === null || trim((string) $raw) === '' || Field::isBlankMarker((string) $raw)) {
+                                    continue;
                                 }
+                                if ($fieldCode === 'dealer_handling' && isset($input['dealer_margin'])) {
+                                    continue;
+                                }
+                                $input[$column] = $raw;
                             }
+                            $payload = array_intersect_key($prices->normalise($input), $input);
 
                             if (! isset($payload['ex_showroom_price'])) {
                                 $derived = $this->deriveExShowroom($payload);
@@ -281,6 +292,7 @@ class PriceListPricingImporter
                                 $stats['skipped_no_price']++;
                                 $stats['skipped']++;
                                 $processed++;
+
                                 continue;
                             }
 
@@ -289,30 +301,25 @@ class PriceListPricingImporter
                             $changed = $this->hasMaterialChange($previous, $payload);
 
                             if ($sameWef) {
-                                $sameWef->fill($payload);
-                                $sameWef->save();
+                                $prices->update($sameWef, $payload);
                             } else {
                                 if ($previous && $changed) {
-                                    $previous->expired_on = $wefDate;
-                                    $previous->is_active = false;
-                                    $previous->updated_by = $userId;
-                                    $previous->save();
+                                    $prices->expire($previous, $wefDate);
                                 }
-                                $payload['created_by'] = $userId;
-                                Pricing::query()->create($payload);
+                                $prices->create($payload);
                             }
 
                             if ($changed) {
                                 ChangeFlag::query()->create([
                                     'import_session_id' => $session->id,
-                                    'change_type'       => 'pricing',
-                                    'model_code'        => $modelCode,
-                                    'field_name'        => 'ex_showroom_price',
-                                    'old_value'         => $previous?->ex_showroom_price,
-                                    'new_value'         => $payload['ex_showroom_price'],
-                                    'is_processed'      => false,
-                                    'created_by'        => $userId,
-                                    'updated_by'        => $userId,
+                                    'change_type' => 'pricing',
+                                    'model_code' => $modelCode,
+                                    'field_name' => 'ex_showroom_price',
+                                    'old_value' => $previous?->ex_showroom_price,
+                                    'new_value' => $payload['ex_showroom_price'],
+                                    'is_processed' => false,
+                                    'created_by' => $userId,
+                                    'updated_by' => $userId,
                                 ]);
                                 $stats['changed']++;
                             }
@@ -321,7 +328,7 @@ class PriceListPricingImporter
                             $sheetWritten++;
                             $writtenCodes[] = $modelCode;
                         } catch (\Throwable $e) {
-                            $stats['errors'][] = $modelCode . ': ' . $e->getMessage();
+                            $stats['errors'][] = $modelCode.': '.($e instanceof ValidationException ? collect($e->errors())->flatten()->implode(' ') : $e->getMessage());
                         }
 
                         $processed++;
@@ -333,8 +340,8 @@ class PriceListPricingImporter
                         ->whereIn('model_code', array_unique($writtenCodes))
                         ->update([
                             'is_pricing_template_complete' => true,
-                            'updated_by'                   => $userId,
-                            'updated_at'                   => now(),
+                            'updated_by' => $userId,
+                            'updated_at' => now(),
                         ]);
                 }
 
@@ -345,24 +352,24 @@ class PriceListPricingImporter
 
                 if ($onProgress) {
                     $onProgress([
-                        'message'     => "{$title}: chunk {$from}-{$to}",
-                        'percent'     => $percent,
-                        'processed'   => $processed,
-                        'total'       => $totalRows,
-                        'sheet'       => $title,
-                        'last_code'   => $lastCode,
+                        'message' => "{$title}: chunk {$from}-{$to}",
+                        'percent' => $percent,
+                        'processed' => $processed,
+                        'total' => $totalRows,
+                        'sheet' => $title,
+                        'last_code' => $lastCode,
                         'price_stats' => [
-                            'written'            => $stats['written'],
-                            'changed'            => $stats['changed'],
-                            'skipped'            => $stats['skipped'],
+                            'written' => $stats['written'],
+                            'changed' => $stats['changed'],
+                            'skipped' => $stats['skipped'],
                             'skipped_incomplete' => $stats['skipped_incomplete'],
-                            'skipped_no_price'   => $stats['skipped_no_price'],
+                            'skipped_no_price' => $stats['skipped_no_price'],
                         ],
                         'logs' => [
-                            '[' . now()->format('H:i:s') . "] {$title} {$from}-{$to}"
-                            . " written={$stats['written']} skip-inc={$stats['skipped_incomplete']}"
-                            . " skip-price={$stats['skipped_no_price']}"
-                            . ($lastCode ? " last={$lastCode}" : ''),
+                            '['.now()->format('H:i:s')."] {$title} {$from}-{$to}"
+                            ." written={$stats['written']} skip-inc={$stats['skipped_incomplete']}"
+                            ." skip-price={$stats['skipped_no_price']}"
+                            .($lastCode ? " last={$lastCode}" : ''),
                         ],
                     ]);
                 }
@@ -384,17 +391,17 @@ class PriceListPricingImporter
 
         if ($onProgress) {
             $onProgress([
-                'message'     => "Done — written {$stats['written']}, skipped {$stats['skipped']}",
-                'percent'     => 100,
-                'processed'   => $processed,
-                'total'       => $totalRows,
-                'done'        => true,
+                'message' => "Done — written {$stats['written']}, skipped {$stats['skipped']}",
+                'percent' => 100,
+                'processed' => $processed,
+                'total' => $totalRows,
+                'done' => true,
                 'price_stats' => $stats,
-                'logs'        => [
-                    '[' . now()->format('H:i:s') . '] Price import finished',
+                'logs' => [
+                    '['.now()->format('H:i:s').'] Price import finished',
                     "Written: {$stats['written']} | Changed: {$stats['changed']}"
-                    . " | Skip incomplete: {$stats['skipped_incomplete']}"
-                    . " | Skip no-price: {$stats['skipped_no_price']}",
+                    ." | Skip incomplete: {$stats['skipped_incomplete']}"
+                    ." | Skip no-price: {$stats['skipped_no_price']}",
                 ],
             ]);
         }
@@ -496,21 +503,5 @@ class PriceListPricingImporter
         }
 
         return false;
-    }
-
-    protected function toDecimal(mixed $v): ?float
-    {
-        if ($v === null || $v === '') {
-            return null;
-        }
-        if (is_numeric($v)) {
-            return round((float) $v, 2);
-        }
-        $s = preg_replace('/[^\d.\-]/', '', (string) $v);
-        if ($s === '' || $s === null || ! is_numeric($s)) {
-            return null;
-        }
-
-        return round((float) $s, 2);
     }
 }

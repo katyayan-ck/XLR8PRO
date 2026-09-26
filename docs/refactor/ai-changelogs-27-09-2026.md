@@ -327,3 +327,15 @@ Branch `feature/integrations`. Decisions DEC-033…038 are in `docs/decisions/de
 - **Tests:**
   - New: `PricingAddonEntityServicesTest` (3, including a three-sheet workbook import with group expiry, ANY scope, zero-row skip and discount totals).
   - Related groups: 127 passed.
+
+## Price-list vehicles and prices on entity services (DEC-058)
+- **New:** `app/Services/Vehicle/Pricing/Prices/PriceService.php`.
+- **Before → after:**
+  - **`VehicleService`:** before, `Segment/SubSegment/VehicleModel/Variant/Keyvalue::query()->create` and `->save()`. After, the entity services, with canonical-code-first lookups (`codeCandidates()`).
+  - **`PriceListPricingImporter`:** before, `toDecimal()` plus `Pricing::create`, `fill/save`, and a manual expire. After, `PriceService` normalise/create/update/expire.
+  - **`VariantService`:** gains `motor` / `gst_percent` / `shield_pack`, also added to the `Variant` fillable.
+  - **`Pricing` model:** `$fillable` equals the real columns, plus `$entityService`.
+- **Tests:**
+  - New: `PricingVehicleAndPriceServicesTest` (3): canonical stub model reused, Vehicle Info through variant rules, price key/WEF expiry.
+  - Full suite: 288 passed, 1 skipped.
+- **Smoke:** the pricing and vehicle screens return 200 for user 1 (workflow stages 302 with no session).

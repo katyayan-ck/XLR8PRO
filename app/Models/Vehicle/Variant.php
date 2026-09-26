@@ -39,6 +39,9 @@ class Variant extends BaseModel
         'cc_capacity',
         'transmission',
         'drivetrain',
+        'motor',
+        'gst_percent',
+        'shield_pack',
 
         'body_type_id',
         'body_make_id',

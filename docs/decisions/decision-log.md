@@ -597,3 +597,22 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
 - **CSD:** there is no live writer (only the dead legacy `XpricingHelper`), so there is nothing to route.
 - **Found, not changed (needs owner, BUG-178):** `PricingEngineService::dealerCharges()` reads narrow rows (`charge_name` + `amount`). The importer writes the spec's WIDE columns (CP-06: incidental/fastag/trc/rto_tape/cod), so imported dealer charges add 0 to the pricing JSON. `scopeHit()` also checks a `model` column where the table has `model_code`.
 - **Approved-by:** user (DEC-050 roll-out, "continue") · **Risk:** MED · **Reversal:** revert.
+
+### DEC-058 | 27-09-2026 | A3 (UAT) | Price-list vehicles and prices on entity services (pricing group 3 of 4)
+- **`VehicleService`** (price-list detect, Vehicle Info import) wrote segments, sub-segments, models, variants and keyword values directly, which bypassed the vehicle entity services of DEC-050. It now calls `SegmentService`, `SubSegmentService`, `VehicleModelService`, `VariantService` and `KeyvalueService`:
+  - `findOrCreate*` look up by the **canonical code first** (DEC-049 hyphen form, e.g. THAR-ROXX), then the legacy spellings, then the name. New rows get the canonical code; before, they got the spaced code, which the backstop then hyphenated.
+  - **Stubs:** `createStubFromPriceList()` goes through `VariantService` (inactive, taxi NO, colour from the last 2 chars — unchanged).
+  - **Vehicle Info:** `applyVehicleInfo()` updates the model and the variant through their services. Names follow the screens' Title Case; before, they were upper-cased. Completeness is judged on the values as they will be stored. A value that breaks a field rule rejects the row (listed as rejected).
+  - `copySpecifications()` goes through `VariantService`.
+  - `VariantService` gains the three columns this path writes: `motor`, `gst_percent` (percent) and `shield_pack` (upper-case).
+- **Prices:** new `Vehicle\Pricing\Prices\PriceService` (`xlr8_vehicle_pricing`).
+  - Key: (OEM code, channel, WEF), fixed once created, unique including deleted rows (DB key).
+  - Amounts are NOT NULL with default 0; GST is a percent; `expire()` closes the live row at the new WEF.
+  - `PriceListPricingImporter` keeps the spec's WEF logic (same WEF → update; new WEF with a material change → expire, then insert) and the ex-showroom derivation. It now parses through `PriceService::normalise()` and writes through `create/update/expire`.
+  - Blank or "no value" cells are left out, as before: a same-WEF update keeps the stored amount.
+  - Other text in an amount now fails the row with the rule's message; before, it was silently dropped.
+- **Models:** the `Pricing` `$fillable` now equals the real columns (`variant_code`, `*_elg` were non-columns); `Variant` gains the three fields.
+- **Left as engine / pipeline state** (derived, not data entry):
+  - profiles (detect stubs and completeness flags);
+  - change flags, affected rows, snapshots, sessions.
+- **Approved-by:** user (DEC-050 roll-out, "continue") · **Risk:** MED (Vehicle Info names now Title Case; bad cells reject rows) · **Reversal:** revert.
