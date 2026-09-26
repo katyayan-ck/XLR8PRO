@@ -206,7 +206,7 @@ Entry format:
 | BUG-168 | Same route trap in the booking team's area: `accounts/receipt/{id}/show`, `sales/lead*` search/details/destroy, `sales/lead-source*`, `sales/enquiry/{id}` destroy, `sales/campaign/{id}` destroy and `spares/spare-request/{id}` destroy are registered without the `operation` key — hook-only permission checks don't run | High | OPEN (booking team's code — reported, not changed) | 27-09-2026 | — |
 | BUG-169 | App timezone changed from UTC to Asia/Kolkata on origin/stage (booking team, 26-09-2026): timestamps written before are UTC, after are IST, in the same columns; `.ai` architecture rule says "stored UTC" | High | CLOSED — accepted (DEC-046) | 27-09-2026 | 27-09-2026 |
 | BUG-170 | Segment/sub-segment create used Backpack's unvalidated default store (duplicate code = 500); sub-segment edit posted `segment_id` (not a column) so a segment change was silently dropped and the form never pre-selected the current segment | High | FIXED | 27-09-2026 | 27-09-2026 |
-| BUG-171 | Editing any vehicle master re-saved its `code` through the space-stripping transform, orphaning children: 588 variants (+584 legacy colour rows) now reference model codes that no longer exist (`THAR ROXX` vs `THARROXX`, 17 models) | Critical | CODE FIXED (DEC-048); DATA REPAIR needs owner decision | 27-09-2026 | — |
+| BUG-171 | Editing any vehicle master re-saved its `code` through the space-stripping transform, orphaning children: 588 variants (+584 legacy colour rows) now reference model codes that no longer exist (`THAR ROXX` vs `THARROXX`, 17 models) | Critical | FIXED (DEC-048/049) | 27-09-2026 | 27-09-2026 |
 | BUG-172 | Variant uniqueness was table-wide on `code`, but colours are separate rows sharing the code → every multi-colour variant failed to save; colour fields missing from form/model; deactivation checked the legacy colour table | High | FIXED | 27-09-2026 | 27-09-2026 |
 
 Not a bug (false positive, listed for reference): the original `infer-conventions` sweep flagged
@@ -1963,4 +1963,5 @@ guessed at.
 ### BUG-172 — Variant = one row per colour
 
 - **Status:** FIXED (27-09-2026, DEC-048) — `code` unique per (`code`, `color_code`); `color`/`color_code` on the form and model; edit page lists sibling colour rows; the legacy colour-table deactivation guard removed.
+- **BUG-171 fixed 27-09-2026 (DEC-049):** canonical hyphen format (user). The code transform hyphenates spaces. Migrations `normalise_vehicle_codes` + `normalise_model_keywords` converted 64 model codes (families incl. squashed twins), `NON XUV`, and 29 `CUSTOM-MODEL` keyword codes, with every reference (variants 1,436, enquiries 13,943 + 3,310, booking insurance 610, legacy colours, leads, campaigns, scopes). Orphaned variants 588 → 0. Backups in `storage/app/backups`, maps in `storage/logs/*-normalisation-<db>.json`.
 

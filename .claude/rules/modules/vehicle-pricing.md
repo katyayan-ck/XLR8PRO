@@ -13,7 +13,7 @@ paths:
 
 ## Hierarchy
 Segment → SubSegment → Model → Variant (one row per colour). Code-based relations; children store ancestor codes.
-- `vehicle_model.code` = OEM model stem, uppercase, **without** the 2-char colour suffix.
+- `vehicle_model.code` = OEM model stem, uppercase, **without** the 2-char colour suffix; spaces become hyphens (`THAR-ROXX`, `NON-XUV`, `BOLERO-NEO-PLUS`) — DEC-049. Codes are immutable after creation (DEC-048). Match free text through `VehicleCodeNormaliser::canonical()`.
 - `vehicle_variant.code` = **full** OEM code **with** colour; `color_code` = last 2 chars. Colour lives on the
   variant row (no colours/colour-map table). Never strip or re-append colour when matching.
 

@@ -409,3 +409,14 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
   4. The variant deactivation guard no longer counts legacy colour-table rows.
 - **Not done (needs the user):** repairing the existing mismatched codes. The canonical form (spaced OEM code vs squashed) is the user's call.
 - **Risk:** MED (UAT-visible fixes) · **Approved-by:** auto (obvious bug fixes in UAT scope) · **Reversal:** revert the commit.
+
+### DEC-049 | 27-09-2026 | A3 (UAT) | Canonical code format: upper-case with hyphens (THAR-ROXX)
+- **Decision (user, 27-09-2026):** codes of this kind use upper-case letters and digits, with hyphens where the name has spaces: `THAR-ROXX`, `NON-XUV`, `E-ALFA-PLUS`. This applies to keywords and codes alike.
+- **Code:** the shared `uppercase_alphanumeric_dash_underscore` transform (used by 18 models and the global `code` rule) now turns whitespace into a single hyphen instead of deleting it. Codes without spaces are unchanged.
+- **Data (migration + `vehicle:normalise-codes` command, idempotent, dry-run available):**
+  - **Model codes:** each spaced/squashed family (e.g. `THAR ROXX` / `THARROXX`) becomes the hyphenated form, in `xlr8_vehicle_model.code` and every reference column (`model_code` in all tables, `model` in CRM/booking tables, user scopes).
+  - **Sub-segment:** `NON XUV` → `NON-XUV`, in the sub-segment table, every `sub_segment_code` column, user scopes and employees.
+  - Old → new maps are written to `storage/logs/vehicle-code-normalisation-<db>.json` for reversal. The migration aborts if two master rows would collide.
+- **Keyword (key-value) codes:** new and edited ones follow the rule. Existing ones (about 1,900 with spaces) are converted only after a reference audit, because other tables may store them as plain text.
+- **Not codes:** consultant names (`sc_code`), and insurer and financier names, are left as they are.
+- **Risk:** HIGH (mass remap). **Approved-by:** user. Backup taken before running locally. **Reversal:** the JSON map.

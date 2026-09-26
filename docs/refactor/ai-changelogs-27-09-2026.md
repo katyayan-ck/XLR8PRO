@@ -183,3 +183,16 @@ Branch `feature/integrations`. Decisions DEC-033…038 are in `docs/decisions/de
   - It still makes about 350 requests (a few minutes), so run it before merges only.
 - **Cadence:** after each change, smoke only the touched screens (seconds); run the full suite periodically. Rules updated in `.ai/guidelines/10-workflow.md` and `.ai/rules/testing.md`.
 - **Model-code impact analysis (BUG-171):** the spaced OEM form dominates. Enquiries have 3,627 spaced vs 1,874 squashed, booking insurance 114 vs 27, and variants 600 vs 46. Only the model master mostly holds squashed codes (15 of 17).
+
+## Canonical hyphenated codes (DEC-049, BUG-171)
+- **Transform:** the shared code transform now turns spaces into hyphens and `+` into `PLUS` (`THAR ROXX` → `THAR-ROXX`), for all 18 models that use it.
+- **`App\Services\Vehicle\VehicleCodeNormaliser`, command and migrations:**
+  - It groups each code family by spelling (spaced, squashed, hyphenated) and converts the family to the hyphenated form. It touches the masters and every reference column; pricing tables are excluded because their `model_code` holds OEM variant codes.
+  - It aborts on collisions, is idempotent, and writes JSON maps for reversal.
+  - Command: `vehicle:normalise-codes [--dry-run]`.
+  - Migrations: `2026_09_27_120000_normalise_vehicle_codes` and `…130000_normalise_model_keywords`. The IT seeder now also runs via `…121000_seed_it_department`, so deploys apply all three.
+- **Results on `xlrm`:**
+  - 64 model codes and `NON XUV` converted; orphaned variants went from 588 to 0.
+  - The 29 `CUSTOM-MODEL` keyword codes were hyphenated, with their enquiry and booking references.
+- **Left as they are:** keyword lists whose "codes" are labels or synonyms (pricing header mapping, spare bins, statuses such as `NEW CAR` that code compares literally), and person or company names in `sc_code`, `insurer_code` and `financier_code`.
+- **Tests:** `tests/Feature/Vehicle/VehicleCodeNormaliserTest.php` (9).

@@ -366,9 +366,16 @@ trait HasColumnTransformations
         return strtoupper(preg_replace('/[^A-Za-z0-9_]/', '', $value));
     }
 
+    /**
+     * Code format: upper-case A-Z 0-9 - _, with whitespace turned into a single hyphen
+     * ("THAR ROXX" / "Thar - Roxx" → "THAR-ROXX"). Stripping the space instead ("THARROXX")
+     * split one model into two codes and orphaned its variants (BUG-171, DEC-049).
+     */
     protected function uppercaseAlphanumericDashUnderscore(string $value): string
     {
-        return strtoupper(preg_replace('/[^A-Za-z0-9\-_]/', '', $value));
+        $value = preg_replace('/\s*-\s*|\s+/', '-', trim(str_replace('+', ' PLUS ', $value)));
+
+        return trim(strtoupper(preg_replace('/[^A-Za-z0-9\-_]/', '', $value)), '-');
     }
 
     // -----------------------------------------------------------------------
