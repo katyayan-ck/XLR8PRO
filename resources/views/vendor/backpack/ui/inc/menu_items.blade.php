@@ -68,11 +68,7 @@
     {{-- Vehicles Info Section --}}
     @if (backpack_user() && (backpack_user()->can('VEH_BRND_VIEW') || backpack_user()->can('VEH_SEG_VIEW') || backpack_user()->can('VEH_MDL_VIEW') || backpack_user()->can('VEH_VAR_VIEW') || backpack_user()->can('VEH_CLR_VIEW')))
     <x-backpack::menu-dropdown title="Vehicles Info" icon="la la-car" nested="true">
-        @if (backpack_user() && backpack_user()->can('VEH_BRND_VIEW'))
-            <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ backpack_url('vehicle/brand') }}">
-                <span><i class="la la-trademark me-2"></i>Brand</span>
-            </a>
-        @endif
+        {{-- Brand hidden: no xlr8_vehicle_brand table (BUG-009, DEC-037). --}}
         @if (backpack_user() && backpack_user()->can('VEH_SEG_VIEW'))
             <a class="dropdown-item d-flex align-items-center justify-content-between"
                 href="{{ backpack_url('vehicle/segment') }}">
@@ -842,35 +838,7 @@
         </x-backpack::menu-dropdown>
     @endcan
 
-    {{-- Reports --}}
-    @if (backpack_user() && backpack_user()->can('SLS_BKNG_REPORT'))
-        <x-backpack::menu-dropdown title="Reports" icon="la la-file-alt" nested="true">
-            <x-backpack::menu-dropdown title="Stock" icon="la la-boxes" nested="true">
-                <a class="dropdown-item d-flex align-items-center justify-content-between"
-                    href="{{ backpack_url('sales/booking/reports/stock') }}">
-                    <span>Current Stock</span>
-                </a>
-                <a class="dropdown-item d-flex align-items-center justify-content-between"
-                    href="{{ backpack_url('sales/booking/reports/live-order') }}">
-                    <span>Live Order</span>
-                </a>
-            </x-backpack::menu-dropdown>
-            <x-backpack::menu-dropdown title="Booking" icon="la la-book" nested="true">
-                <a class="dropdown-item d-flex align-items-center justify-content-between"
-                    href="{{ backpack_url('sales/booking/reports/consolidated-booking') }}">
-                    <span>Consolidated Booking</span>
-                </a>
-                <a class="dropdown-item d-flex align-items-center justify-content-between"
-                    href="{{ backpack_url('sales/booking/reports/branch-booking') }}">
-                    <span>Branch Booking</span>
-                </a>
-                <a class="dropdown-item d-flex align-items-center justify-content-between"
-                    href="{{ backpack_url('sales/booking/reports/pending-actions') }}">
-                    <span>Pending Actions</span>
-                </a>
-            </x-backpack::menu-dropdown>
-        </x-backpack::menu-dropdown>
-    @endif
+    {{-- Booking Reports hidden for UAT: report screens 500 (BUG-122); Sales-team area (DEC-037). --}}
 
 </x-backpack::menu-dropdown>
 {{-- ====================== ACCOUNTS MODULE ====================== --}}
@@ -970,33 +938,7 @@
 
 </x-backpack::menu-dropdown>
 
-{{-- ====================== SPARES MODULE ====================== --}}
-@if (backpack_user() && backpack_user()->can('SPR_REQ_VIEW'))
-    <x-backpack::menu-dropdown title="Spares" icon="la la-tools">
-        <x-backpack::menu-separator title="Spare Operations" />
-        @if (backpack_user()->can('SPR_REQ_CREATE'))
-            <a class="dropdown-item d-flex align-items-center justify-content-between"
-                href="{{ backpack_url('spares/spare-request/create') }}">
-                <span><i class="la la-plus-circle me-2"></i>Add New</span>
-            </a>
-        @endif
-        <a class="dropdown-item d-flex align-items-center justify-content-between"
-            href="{{ backpack_url('spares/spare-request') }}">
-            <span><i class="la la-list me-2"></i>RO Wise List</span>
-        </a>
-        {{-- 'spare/partwise-requirement' and 'spare/orderingreport' below are pre-existing dead
-            links — see known-bugs-report.md BUG-031, never had routes registered. Left as-is. --}}
-        <a class="dropdown-item d-flex align-items-center justify-content-between"
-            href="{{ backpack_url('spare/partwise-requirement') }}">
-            <span><i class="la la-list-alt me-2"></i>Partwise Requirement</span>
-        </a>
-        <x-backpack::menu-separator title="Reports" />
-        <a class="dropdown-item d-flex align-items-center justify-content-between"
-            href="{{ backpack_url('spare/orderingreport') }}">
-            <span><i class="la la-chart-bar me-2"></i>Parts Ordering Report</span>
-        </a>
-    </x-backpack::menu-dropdown>
-@endif
+{{-- Spares module hidden for UAT: all operations fail (BUG-030/031/032/116); rebuilt in Track B (DEC-037). --}}
 
 {{-- ====================== IMPORTS MODULE ====================== --}}
 <x-backpack::menu-dropdown title="Imports" icon="la la-download">

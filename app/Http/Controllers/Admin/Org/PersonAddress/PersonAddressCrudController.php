@@ -93,13 +93,12 @@ class PersonAddressCrudController extends CrudController
                 ? $address->person->first_name.' '.$address->person->last_name
                 : '—';
 
-            $editUrl = backpack_url("org/person-address/{$address->id}/edit");
-
-            $mapped['action'] = '
-                <div class="d-flex gap-2 justify-content-center">
-                    <a href="'.$editUrl.'" class="btn btn-sm btn-primary py-1 px-2" title="Edit">Edit</a>
-                </div>
-            ';
+            // Standalone create/edit is retired (DEC-037, BUG-154): edit on the Person screen,
+            // whose inline address editing works.
+            $mapped['action'] = $address->person
+                ? '<div class="d-flex gap-2 justify-content-center"><a href="'.backpack_url("org/person/{$address->person->id}/edit")
+                    .'" class="btn btn-sm btn-outline-primary py-1 px-2" title="Open person">Open person</a></div>'
+                : '';
 
             return $mapped;
         })->values();

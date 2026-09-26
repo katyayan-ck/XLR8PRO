@@ -192,6 +192,19 @@ Route::group([
         ['vertical', 'org.vertical', VerticalCrudController::class],
     ] as [$slug, $name, $controller]) {
         $uri = 'org/'.$slug;
+
+        // Standalone create/edit retired for these (id-based forms vs code-based schema, BUG-154):
+        // lists stay; old URLs go back to the list; data via Users → Bulk import / Person screen (DEC-037).
+        if (in_array($slug, ['employee', 'person-address', 'person-banking-detail'], true)) {
+            Route::get($uri, ['uses' => $controller.'@index', 'as' => $name.'.index', 'operation' => 'list']);
+            Route::post($uri.'/search', ['uses' => $controller.'@search', 'as' => $name.'.search', 'operation' => 'list']);
+            Route::get($uri.'/{id}/details', ['uses' => $controller.'@showDetailsRow', 'as' => $name.'.details', 'operation' => 'list']);
+            Route::redirect($uri.'/create', '/'.config('backpack.base.route_prefix').'/'.$uri)->name($name.'.create');
+            Route::redirect($uri.'/{id}/edit', '/'.config('backpack.base.route_prefix').'/'.$uri)->name($name.'.edit');
+
+            continue;
+        }
+
         Route::get($uri, ['uses' => $controller.'@index', 'as' => $name.'.index', 'operation' => 'list']);
         Route::post($uri, ['uses' => $controller.'@store', 'as' => $name.'.store', 'operation' => 'create']);
         Route::get($uri.'/create', ['uses' => $controller.'@create', 'as' => $name.'.create', 'operation' => 'create']);

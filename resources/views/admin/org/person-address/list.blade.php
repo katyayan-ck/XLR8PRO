@@ -262,9 +262,8 @@
                 </h2>
 
                 <div class="d-flex align-items-center gap-3 flex-nowrap">
-                    <a href="{{ backpack_url('org/person-address/create') }}" class="btn btn-blue btn-sm fw-bold shadow-sm">
-                        <i class="la la-plus me-1"></i> Add New Address
-                    </a>
+                    {{-- Standalone create/edit retired (DEC-037): addresses are edited on the Person screen. --}}
+                    <span class="text-body-secondary small">Add or edit addresses from the person's page (Open person).</span>
                 </div>
             </div>
 

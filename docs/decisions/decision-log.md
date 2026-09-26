@@ -267,3 +267,13 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
   - Deleted the broken `App\Services\Importers\UserImporter` (BUG-075; its only caller was replaced). `UserExporter` is kept, dead but pending the BUG-158 decision.
 - **Note:** the import runs inside the request (~450 rows ≈ 1 minute locally). A queued version belongs in Track B.
 - **Risk:** MED · **Approved-by:** user (importer instead of HR forms, DEC-034) · **Reversal:** revert.
+
+### DEC-037 | 27-09-2026 00:30 | A3 (UAT) | Hide broken HR create/edit; hide out-of-scope broken menu links
+- **HR (BUG-154, per DEC-034):**
+  - Employee, Person Address and Person Banking keep their (working) lists.
+  - Create buttons are removed.
+  - Row "Edit" becomes "Open person" (`org/person/{id}/edit`, whose inline contacts/addresses/banking editing works).
+  - The old `create` / `{id}/edit` URLs redirect to the list; `store`/`update` are no longer registered.
+  - Employees are created and updated via Users → Bulk import or the User screen.
+- **Menu:** hide Vehicle → Brand (no table, BUG-009); the 8 booking report links (missing tables, BUG-122; user choice — menu only, Sales code untouched); Spares links (module broken, out of UAT scope: BUG-030/031/032/116).
+- **Risk:** MED (UAT-visible, approved scope) · **Approved-by:** user (DEC-034) · **Reversal:** revert.

@@ -265,9 +265,12 @@
                 </h2>
 
                 <div class="d-flex align-items-center gap-3 flex-nowrap">
-                    <a href="{{ backpack_url('org/employee/create') }}" class="btn btn-blue btn-sm fw-bold shadow-sm">
-                        <i class="la la-plus me-1"></i> Add New Employee
-                    </a>
+                    {{-- Standalone employee create/edit retired (DEC-037): onboard via bulk import. --}}
+                    @if (backpack_user() && backpack_user()->can('ORG_USER_IMPORT'))
+                        <a href="{{ route('org.user.import') }}" class="btn btn-blue btn-sm fw-bold shadow-sm">
+                            <i class="la la-file-upload me-1"></i> Bulk import users
+                        </a>
+                    @endif
                 </div>
             </div>
 

@@ -95,13 +95,12 @@ class EmployeeCrudController extends CrudController
             $mapped['department_name'] = $emp->primary_dept_code ? OrgService::departmentName($emp->primary_dept_code) : '—';
             $mapped['is_active'] = $emp->employment_status === 'active';
 
-            $editUrl = backpack_url("org/employee/{$emp->id}/edit");
-
-            $mapped['action'] = '
-                <div class="d-flex gap-2 justify-content-center">
-                    <a href="'.$editUrl.'" class="btn btn-sm btn-primary py-1 px-2" title="Edit">Edit</a>
-                </div>
-            ';
+            // Standalone create/edit is retired (DEC-037, BUG-154): employees are maintained via
+            // Users → Bulk import / the User screen; person details via the Person screen.
+            $mapped['action'] = $emp->person
+                ? '<div class="d-flex gap-2 justify-content-center"><a href="'.backpack_url("org/person/{$emp->person->id}/edit")
+                    .'" class="btn btn-sm btn-outline-primary py-1 px-2" title="Open person">Open person</a></div>'
+                : '';
 
             return $mapped;
         })->values();
