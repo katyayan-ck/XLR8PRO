@@ -2,11 +2,8 @@
 
 namespace App\Models;
 
-use App\Models\Admin\Branch;
-use App\Models\Admin\Department;
 use App\Models\Admin\Division;
 use App\Models\Admin\Employee;
-use App\Models\Admin\Location;
 use App\Models\Admin\Person;
 use App\Models\Admin\UserScope;
 use App\Models\IAM\UserDeviceToken;
@@ -192,21 +189,6 @@ class User extends Authenticatable
     public function isEmployee(): bool
     {
         return $this->employee()->exists();
-    }
-
-    public function branches()
-    {
-        return $this->belongsToMany(Branch::class, 'xlr8_admin_emp_branch_pivot', 'employee_code', 'branch_code');
-    }
-
-    public function locations()
-    {
-        return $this->belongsToMany(Location::class, 'xlr8_admin_emp_location_pivot', 'employee_code', 'location_code');
-    }
-
-    public function departments()
-    {
-        return $this->belongsToMany(Department::class, 'xlr8_admin_emp_department_pivot', 'employee_code', 'dept_code');
     }
 
     public function divisions()

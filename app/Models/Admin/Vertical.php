@@ -2,15 +2,11 @@
 
 namespace App\Models\Admin;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\BaseModel;
 // use App\Models\BaseModel;
-use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use App\Models\Traits\HasColumnTransformations;
-use Spatie\MediaLibrary\HasMedia;
-use Spatie\MediaLibrary\InteractsWithMedia;
-
+use Backpack\CRUD\app\Models\Traits\CrudTrait;
+use Illuminate\Database\Eloquent\SoftDeletes;
 /**
  * Table: xlr8_admin_vertical
  * Schema has BOTH `code` (varchar 255 unique) AND `vert_code` (varchar 10).
@@ -18,11 +14,11 @@ use Spatie\MediaLibrary\InteractsWithMedia;
  * `vert_code` is a legacy duplicate — import writes both same value.
  */
 
-use App\Models\BaseModel;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
 class Vertical extends BaseModel
 {
-    use SoftDeletes, CrudTrait, HasColumnTransformations, InteractsWithMedia;
+    use CrudTrait, HasColumnTransformations, InteractsWithMedia, SoftDeletes;
 
     protected $table = 'xlr8_admin_vertical';
 
@@ -49,29 +45,14 @@ class Vertical extends BaseModel
             ->acceptsMimeTypes([
                 'image/jpeg',
                 'image/png',
-                'image/webp'
+                'image/webp',
             ])
             ->useDisk('public');
     }
 
     // ── Relations ─────────────────────────────────────────────────────────────
-    /** Employee pivot: emp_vertical_pivot.vertical_code → vertical.code */
-    public function employeeAssignments(): HasMany
-    {
-        return $this->hasMany(EmployeeVerticalAssignment::class, 'vertical_code', 'code');
-    }
-
-    public function employees()
-    {
-        return $this->hasManyThrough(
-            Employee::class,
-            EmployeeVerticalAssignment::class,
-            'vertical_code',
-            'code',
-            'code',
-            'employee_code'
-        );
-    }
+    // employees()/employeeAssignments() removed: xlr8_admin_emp_vertical_pivot does not exist
+    // (BUG-081, DEC-044). Employees carry vertical_code directly.
 
     // ── Scopes ────────────────────────────────────────────────────────────────
     // public function scopeActive($q)
@@ -82,7 +63,7 @@ class Vertical extends BaseModel
     // ── Mutators ──────────────────────────────────────────────────────────────
     public function setCodeAttribute(string $v): void
     {
-        $this->attributes['code']      = strtoupper(trim($v));
+        $this->attributes['code'] = strtoupper(trim($v));
         $this->attributes['vert_code'] = substr(strtoupper(trim($v)), 0, 10);
     }
 }

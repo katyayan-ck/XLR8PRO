@@ -340,3 +340,14 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
 - **Backup:** `storage/app/backups/xlrm-users-disabled-27-09-2026.sql` (gitignored).
 - **Other environments:** set `Login Active = No` for these Emp Codes in the users workbook and import it.
 - **Approved-by:** user (27-09-2026, "disable or remove them permanently") · **Reversal:** set `is_active = 1`, or re-import the backup.
+
+### DEC-044 | 27-09-2026 | A1 (purge follow-up) | Remove dead code the 26-09 purge missed; fix or remove pivot-table relations (BUG-022/024/037/081/082/084/158)
+- **Remove (all reference-checked: no route or caller, or callers removed in the same change):**
+  - `VehicleAccessoryCrudController`: `Route::crud` registered nothing. Also its `vehicle-accessory` route line, 2 views and the export button view, which point at routes that never existed.
+  - `Services/Exporters/UserExporter` (its route was removed in DEC-036).
+  - `Services/Importers/RulesUserImporter` and the deprecated `UserDataScope` model (table missing).
+  - `DesigDeptTreeCrudController` (unrouted; the `DesigDeptTree` model stays).
+  - `DashboardController::getSuperAdminDashboard/getScopedUserDashboard` (never called).
+  - The relations to non-existent `xlr8_admin_emp_*_pivot` tables: `User::branches/locations/departments`, `Employee::branches/locations/departments`, `Vertical::employees/employeeAssignments`, `Location::employeeAssignments`, and the 4 unreferenced `Employee{Branch,Department,Location,Vertical}Assignment` models on those tables.
+- **Fix:** `Location::branch()` and `Branch::primaryEmployees()` join on `Branch.code`; `branch_code` is always NULL.
+- **Risk:** LOW (dead code) · **Approved-by:** auto (plan §2 drop list: unrouted controllers, unused models/services) · **Reversal:** revert the commit.

@@ -2,17 +2,17 @@
 
 namespace App\Models\Admin;
 
-use Backpack\CRUD\app\Models\Traits\CrudTrait;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany};
-use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Models\Traits\HasColumnTransformations;
 use App\Models\BaseModel;
-use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use App\Models\Iam\Post;
+use App\Models\Traits\HasColumnTransformations;
+use Backpack\CRUD\app\Models\Traits\CrudTrait;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Location extends BaseModel
 {
-    use SoftDeletes, CrudTrait, HasColumnTransformations;
+    use CrudTrait, HasColumnTransformations, SoftDeletes;
 
     protected $table = 'xlr8_admin_location';
 
@@ -42,13 +42,13 @@ class Location extends BaseModel
 
     protected array $columnTransformations = [
         'branch_code' => ['trim', 'uppercase_alphanumeric_dash_underscore'],
-        'code'        => ['trim', 'uppercase_alphanumeric_dash_underscore'],
-        'name'        => ['trim_spaces', 'title_case'],
-        'city'        => ['trim_spaces', 'title_case'],
-        'state'       => ['trim_spaces', 'title_case'],
-        'email'       => ['trim', 'lowercase'],
-        'phone'       => 'numeric',
-        'pincode'     => 'numeric',
+        'code' => ['trim', 'uppercase_alphanumeric_dash_underscore'],
+        'name' => ['trim_spaces', 'title_case'],
+        'city' => ['trim_spaces', 'title_case'],
+        'state' => ['trim_spaces', 'title_case'],
+        'email' => ['trim', 'lowercase'],
+        'phone' => 'numeric',
+        'pincode' => 'numeric',
     ];
 
     public function registerMediaCollections(): void
@@ -60,22 +60,22 @@ class Location extends BaseModel
             ->acceptsMimeTypes([
                 'image/jpeg',
                 'image/png',
-                'image/webp'
+                'image/webp',
             ])
             ->useDisk('public');
     }
 
     protected $casts = [
-        'is_active'         => 'boolean',
+        'is_active' => 'boolean',
         'is_sales_location' => 'boolean',
-        'is_workshop'       => 'boolean',
+        'is_workshop' => 'boolean',
         'is_parts_location' => 'boolean',
         'is_stock_location' => 'boolean',
-        'is_office_only'    => 'boolean',
-        'is_mwh'            => 'boolean',
-        'is_lmmws'          => 'boolean',
-        'latitude'          => 'float',
-        'longitude'         => 'float',
+        'is_office_only' => 'boolean',
+        'is_mwh' => 'boolean',
+        'is_lmmws' => 'boolean',
+        'latitude' => 'float',
+        'longitude' => 'float',
     ];
 
     public function getRouteKeyName(): string
@@ -87,18 +87,14 @@ class Location extends BaseModel
     /** branch_code → xlr8_admin_branch.branch_code */
     public function branch(): BelongsTo
     {
-        return $this->belongsTo(Branch::class, 'branch_code', 'branch_code');
+        // Keyed on Branch.code: Branch.branch_code is never populated (BUG-084, DEC-044).
+        return $this->belongsTo(Branch::class, 'branch_code', 'code');
     }
 
     /** Posts anchored to this location: post.loc_code → location.code */
     public function posts(): HasMany
     {
-        return $this->hasMany(\App\Models\Iam\Post::class, 'loc_code', 'code');
-    }
-
-    public function employeeAssignments(): HasMany
-    {
-        return $this->hasMany(EmployeeLocationAssignment::class, 'location_code', 'code');
+        return $this->hasMany(Post::class, 'loc_code', 'code');
     }
 
     // ── Scopes ────────────────────────────────────────────────────────────────
@@ -110,14 +106,17 @@ class Location extends BaseModel
     {
         return $q->where('branch_code', $code);
     }
+
     public function scopeSalesLocations($q)
     {
         return $q->where('is_sales_location', true);
     }
+
     public function scopeWorkshops($q)
     {
         return $q->where('is_workshop', true);
     }
+
     public function scopePartsLocations($q)
     {
         return $q->where('is_parts_location', true);
@@ -127,13 +126,13 @@ class Location extends BaseModel
     public function getTypeTagsAttribute(): array
     {
         return array_keys(array_filter([
-            'Sales'    => $this->is_sales_location,
+            'Sales' => $this->is_sales_location,
             'Workshop' => $this->is_workshop,
-            'Parts'    => $this->is_parts_location,
-            'Stock'    => $this->is_stock_location,
-            'Office'   => $this->is_office_only,
-            'MWH'      => $this->is_mwh,
-            'LMMWS'    => $this->is_lmmws,
+            'Parts' => $this->is_parts_location,
+            'Stock' => $this->is_stock_location,
+            'Office' => $this->is_office_only,
+            'MWH' => $this->is_mwh,
+            'LMMWS' => $this->is_lmmws,
         ]));
     }
 }

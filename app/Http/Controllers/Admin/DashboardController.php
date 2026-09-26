@@ -2,13 +2,8 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Models\Admin\Branch;
-use App\Models\Admin\Department;
-use App\Models\Admin\Employee;
-use App\Models\Admin\Location;
 use App\Models\User;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
-use Illuminate\Support\Facades\Cache;
 
 class DashboardController extends CrudController
 {
@@ -58,49 +53,5 @@ class DashboardController extends CrudController
 
             'all_scopes' => $user->all_access_scopes ?? [],
         ];
-    }
-
-    private function getSuperAdminDashboard(User $user, array $details)
-    {
-        $stats = Cache::remember('dashboard.superadmin.stats', 3600, fn () => [
-            'total_branches' => Branch::count(),
-            'total_locations' => Location::count(),
-            'total_departments' => Department::count(),
-            'total_employees' => Employee::count(),
-            'active_users' => User::where('is_active', true)->count(),
-        ]);
-
-        return view('vendor.backpack.ui.dashboard', [
-            'user' => $user,
-            'user_access_label' => '🔑 Full Access (SuperAdmin)',
-            'current_user_details' => $details,
-            'total_branches' => $stats['total_branches'] ?? 0,
-            'total_locations' => $stats['total_locations'] ?? 0,
-            'total_departments' => $stats['total_departments'] ?? 0,
-            'total_employees' => $stats['total_employees'] ?? 0,
-            'active_users' => $stats['active_users'] ?? 0,
-        ]);
-    }
-
-    private function getScopedUserDashboard(User $user, array $details)
-    {
-        $stats = Cache::remember('dashboard.scoped.'.$user->id, 900, fn () => [
-            'total_branches' => $user->branches()->count(),
-            'total_locations' => $user->locations()->count(),
-            'total_departments' => $user->departments()->count(),
-            'total_employees' => Employee::count(),
-            'active_users' => User::where('is_active', true)->count(),
-        ]);
-
-        return view('vendor.backpack.ui.dashboard', [
-            'user' => $user,
-            'user_access_label' => '👁️ Scoped Access',
-            'current_user_details' => $details,
-            'total_branches' => $stats['total_branches'] ?? 0,
-            'total_locations' => $stats['total_locations'] ?? 0,
-            'total_departments' => $stats['total_departments'] ?? 0,
-            'total_employees' => $stats['total_employees'] ?? 0,
-            'active_users' => $stats['active_users'] ?? 0,
-        ]);
     }
 }

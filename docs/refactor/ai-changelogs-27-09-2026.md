@@ -110,3 +110,15 @@ Branch `feature/integrations`. Decisions DEC-033…038 are in `docs/decisions/de
 - **Dump codes corrected (BUG-166):** `storage/userdata.xlsx` has its branch/location codes fixed, and BEV is no longer used as a division.
   - `xlrm` and `xlrm_testing`: 22 primaries and scopes set, plus the 10 scopes lost to BUG-163 added.
   - Remaining: department `IT` for 2 employees.
+
+## Dead-code follow-up (DEC-044)
+- **Removed:**
+  - `VehicleAccessoryCrudController`, with its route line and 3 orphan views.
+  - `Services/Exporters/UserExporter`, `Services/Importers/RulesUserImporter` and the `UserDataScope` model.
+  - `DesigDeptTreeCrudController`.
+  - The 4 `Employee*Assignment` models.
+  - The two dead dashboard methods.
+  - The pivot relations on `User`, `Employee`, `Vertical` and `Location`.
+- **Fixed:** the `Location::branch()` and `Branch::primaryEmployees()` keys.
+- **Tracker:** BUG-015/022/024/036/037/081/082/084/158 closed.
+- **Verification:** 232 passed, 1 skipped. The full admin smoke (169 screens, users 1 and 40) is identical before and after.

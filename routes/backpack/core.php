@@ -36,7 +36,6 @@ use App\Http\Controllers\Admin\Vehicle\Model\VehicleModelCrudController;
 use App\Http\Controllers\Admin\Vehicle\Segment\SegmentCrudController;
 use App\Http\Controllers\Admin\Vehicle\SubSegment\SubSegmentCrudController;
 use App\Http\Controllers\Admin\Vehicle\Variant\VariantCrudController;
-use App\Http\Controllers\Admin\VehicleAccessoryCrudController;
 use Illuminate\Support\Facades\Route;
 
 Route::group([
@@ -169,7 +168,6 @@ Route::group([
     Route::put('iam/role/{id}', ['uses' => RoleCrudController::class.'@update', 'as' => 'iam.role.update', 'operation' => 'update']);
     Route::get('iam/role/{id}/details', ['uses' => RoleCrudController::class.'@showDetailsRow', 'as' => 'iam.role.details', 'operation' => 'list']);
     Route::get('iam/role/{id}/edit', ['uses' => RoleCrudController::class.'@edit', 'as' => 'iam.role.edit', 'operation' => 'update']);
-    Route::crud('vehicle-accessory', VehicleAccessoryCrudController::class);
 
     // ==================== ORG: Branch/Department/Designation/Division/Employee/Location/Person/PersonAddress/PersonBankingDetail/PersonContact/Vertical ====================
     foreach ([

@@ -92,30 +92,6 @@ class Employee extends BaseModel
 
     // ── Pivot Relations (Organization Structure) ─────────────────
 
-    public function branches(): BelongsToMany
-    {
-        return $this->belongsToMany(Branch::class, 'xlr8_admin_emp_branch_pivot', 'employee_code', 'branch_code')
-            ->withPivot(['from_date', 'to_date'])
-            ->wherePivotNull('to_date')
-            ->whereNull('xlr8_admin_emp_branch_pivot.deleted_at');
-    }
-
-    public function locations(): BelongsToMany
-    {
-        return $this->belongsToMany(Location::class, 'xlr8_admin_emp_location_pivot', 'employee_code', 'location_code')
-            ->withPivot(['from_date', 'to_date'])
-            ->wherePivotNull('to_date')
-            ->whereNull('xlr8_admin_emp_location_pivot.deleted_at');
-    }
-
-    public function departments(): BelongsToMany
-    {
-        return $this->belongsToMany(Department::class, 'xlr8_admin_emp_department_pivot', 'employee_code', 'department_code')
-            ->withPivot(['from_date', 'to_date'])
-            ->wherePivotNull('to_date')
-            ->whereNull('xlr8_admin_emp_department_pivot.deleted_at');
-    }
-
     public function divisions(): BelongsToMany
     {
         return $this->belongsToMany(Division::class, 'xlr8_admin_emp_division_pivot', 'employee_code', 'div_code')
