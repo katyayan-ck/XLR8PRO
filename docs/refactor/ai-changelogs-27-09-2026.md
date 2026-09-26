@@ -100,3 +100,13 @@ Branch `feature/integrations`. Decisions DEC-033…038 are in `docs/decisions/de
   - The `badge` column type isn't available in free Backpack and was replaced with `text`.
   - New `tests/Feature/Admin/SystemSettingScreensTest.php` (4 tests).
 - **BUG-168 recorded for the booking team:** the same route trap exists in Sales, Accounts and Spares routes.
+
+## User decisions applied (DEC-042/043)
+- **BUG-055 fixed (DEC-042):**
+  - The guard-switch middleware is enabled, and `User::$guard_name = 'web'` is pinned. Without the pin, every non-superadmin permission check failed; the pre-change probe caught this.
+  - The full admin smoke (169 screens, users 1 and 40) is identical before and after.
+  - New `AdminAuthGuardTest`.
+- **34 role-less users disabled (DEC-043):** backup taken. They now get 403 on the admin panel and are refused by OTP login.
+- **Dump codes corrected (BUG-166):** `storage/userdata.xlsx` has its branch/location codes fixed, and BEV is no longer used as a division.
+  - `xlrm` and `xlrm_testing`: 22 primaries and scopes set, plus the 10 scopes lost to BUG-163 added.
+  - Remaining: department `IT` for 2 employees.

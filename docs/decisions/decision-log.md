@@ -332,3 +332,11 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
   - Full smoke of all 169 parameter-free admin GET screens, as user 1 and user 40, is identical before and after.
   - 231 tests pass. New `AdminAuthGuardTest`.
 - **Approved-by:** user (27-09-2026, "switch if it broke nothing") · **Reversal:** re-comment the middleware line.
+
+### DEC-043 | 27-09-2026 | A3 (UAT) | Disable the 34 users that have no role (BUG-090/166)
+- **Decision:** set `users.is_active = 0` for the 34 users whose employees carry retired designation codes (`MAN`×18, `CNS`×6, `DSA`×3, `GM`×2, `RTO`×2, `API`, `SWD`, `TST`). None had a role, scopes, or a login ever.
+- **Scope:** disable, not delete. Employee and person rows stay, so bookings, enquiries and reporting-manager references keep resolving. Admin and OTP logins both refuse inactive users.
+- **User ids:** 41,33,34,36,37,48,52,44,45,47,6,7,9,11,15,16,17,18,19,20,21,22,25,26,27,29,30,31,32,38,43,46,39,42.
+- **Backup:** `storage/app/backups/xlrm-users-disabled-27-09-2026.sql` (gitignored).
+- **Other environments:** set `Login Active = No` for these Emp Codes in the users workbook and import it.
+- **Approved-by:** user (27-09-2026, "disable or remove them permanently") · **Reversal:** set `is_active = 1`, or re-import the backup.

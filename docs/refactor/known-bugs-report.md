@@ -125,7 +125,7 @@ Entry format:
 | BUG-087 | `Person::garages()` references `Garage::class` unqualified inside `App\Models\Admin`, but the real model is `App\Models\Core\Garage` — always fatals if called | Medium | FIXED | 22-09-2026 | 22-09-2026 |
 | BUG-088 | 4 importers (`StandaloneUsersImport`, `UsersImportSheet`, `EmployeeSheetImport`, `EmployeeRowDTO`) each computed their own PAN-first person_code independently of `Person::deriveCode()`, with 3 different fallback shapes | Low | FIXED | 22-09-2026 | 22-09-2026 (ai-changelogs-22-09-2026.md) |
 | BUG-089 | `SubSegment::$fillable`/read code referenced a nonexistent `oem_name` column — the real column is `name` | Medium | FIXED | 22-09-2026 | 22-09-2026 |
-| BUG-090 | 36 employees have `designation_code`/`desig_code` values that don't exist in `xlr8_admin_designation`; 30 have an empty `primary_branch_code` — real data-quality gaps | Medium | OPEN (documented only — pre-existing data issue, not caused by this session's code) | 22-09-2026 | — |
+| BUG-090 | 36 employees have `designation_code`/`desig_code` values that don't exist in `xlr8_admin_designation`; 30 have an empty `primary_branch_code` — real data-quality gaps | Medium | MITIGATED (DEC-043: 34 role-less users disabled) | 22-09-2026 | — |
 | BUG-091 | `routes/backpack/booking.php` restructuring dropped the `'operation'` route-meta key, so Backpack never ran `setupUpdateOperation()`/`setupCreateOperation()`/`setupListOperation()` for Booking — Add/Edit rendered as an empty generic form | Critical | FIXED | 22-09-2026 | 22-09-2026 (ai-changelogs-22-09-2026.md) |
 | BUG-092 | Booking list's Segment/Model/Variant/Color columns are sourced only via a join to `xlr8_crm_enquiries` on `bookings.enq_no`; 42/43 existing bookings have an empty `enq_no`, so those columns show N/A regardless of routing | Medium | OPEN (documented only — pre-existing data/design gap, predates today's restructuring) | 22-09-2026 | — |
 | BUG-093 | 33 stale `route(...)` calls inside `BookingCrudController.php` (19 `booking.*`/`quotation.create`, plus 14 in an even older naming scheme) — every hit was a live `RouteNotFoundException`, including the FRS-documented "Missing Quotation at OTF" prompt path | Critical | FIXED | 22-09-2026 | 22-09-2026 (ai-changelogs-22-09-2026.md) |
@@ -201,7 +201,7 @@ Entry format:
 | BUG-163 | User importer lost addon scopes and DOB: it took only the first non-empty scope column and its addon/DOB keys never matched the slugged template headers (`addon_branch`, `add_on_divisions`, `dob`) | High | FIXED | 27-09-2026 | 27-09-2026 |
 | BUG-164 | `OrgScopeService` resolves variants by a `name` column that `xlr8_vehicle_variant` doesn't have — any variant given by name crashes the import row; `ALL` expansion returned duplicate codes | Medium | FIXED | 27-09-2026 | 27-09-2026 |
 | BUG-165 | User importer rewrote data it wasn't given: absent columns nulled/defaulted employee fields, every row forced `employment_status=active` and `users.is_active=1`, and partial-name `LIKE` guesses mapped unknown values to other masters — incl. designation, i.e. the user's role (a stale `MAN` became `ACS_MGR`) | High | FIXED | 27-09-2026 | 27-09-2026 |
-| BUG-166 | `storage/userdata.xlsx` (source of the user import) has values that match no master: old codes `SJN`/`NKH`/`SDS`/`KLY` (DB: `SUJ`/`NOK`/`SDR`/`KOL`), `BEV` entered as a division ×32, department `IT` ×2; 38 DB users are not in the file | Medium | OPEN (data — needs owner fixes in the workbook) | 27-09-2026 | — |
+| BUG-166 | `storage/userdata.xlsx` (source of the user import) has values that match no master: old codes `SJN`/`NKH`/`SDS`/`KLY` (DB: `SUJ`/`NOK`/`SDR`/`KOL`), `BEV` entered as a division ×32, department `IT` ×2; 38 DB users are not in the file | Medium | MOSTLY FIXED (2 users need an IT department decision) | 27-09-2026 | 27-09-2026 |
 | BUG-167 | System settings show page 500 (route lacked `'operation' => 'show'`, so the show component never loaded) and was ungated; key-value / keyword-master `search` + `details` routes lacked `'operation' => 'list'`, so their only permission check never ran | High | FIXED | 27-09-2026 | 27-09-2026 |
 | BUG-168 | Same route trap in the booking team's area: `accounts/receipt/{id}/show`, `sales/lead*` search/details/destroy, `sales/lead-source*`, `sales/enquiry/{id}` destroy, `sales/campaign/{id}` destroy and `spares/spare-request/{id}` destroy are registered without the `operation` key — hook-only permission checks don't run | High | OPEN (booking team's code — reported, not changed) | 27-09-2026 | — |
 
@@ -1137,6 +1137,8 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 
 - **Update 27-09-2026:** impact confirmed — 34 users whose employees carry retired codes (`MAN`×18, `CNS`×6, `DSA`×3, `GM`×2, `RTO`×2, `SWD`, `API`, `TST`) have no Spatie role, hence no permissions and no dashboard; they also have no scopes. The user importer no longer maps these codes to other designations by partial name (BUG-165). See BUG-166.
 
+- **Update 27-09-2026 (DEC-043):** the 34 users with retired designation codes are disabled (`users.is_active = 0`); employee/person rows kept.
+
 ### BUG-091 — Booking Add/Edit rendered as an empty generic form after route restructuring
 
 - **Status:** FIXED
@@ -1889,6 +1891,8 @@ guessed at.
 - **Found:** 27-09-2026 — reconciliation `storage/app/exports/userdata-vs-db-27-09-2026.xlsx` (104 findings; local file, gitignored).
 - **Details:** Branch `SJN` ×6 and locations `SJN` ×5, `NKH` ×5, `SDS` ×4, `KLY` ×2 are old codes (DB uses `SUJ`, `NOK`, `SDR`, `KOL`); `BEV` entered as a division ×32 (it is a segment); department `IT` ×2 (no such department); sub segment `NON XUV` ×6 not in scopes (will be applied on the next import). 38 DB users (BMPL-0011…0058 and the superadmin) are not in the file — 34 of them are the BUG-090 users with retired designation codes and have **no role and no scopes**.
 - **Proposed solution:** fix the codes in the exported workbook (dropdowns prevent new bad values) and re-import; decide what the 34 role-less users should be (new designation, or deactivate via `Login Active = No`).
+
+- **Update 27-09-2026 (user decision):** `storage/userdata.xlsx` corrected — `SJN→SUJ` (branch ×6, location ×5), `NKH→NOK` ×5, `SDS→SDR` ×4, `KLY→KOL` ×2; `BEV` removed from division columns ×32 (all those rows already list BEV under Segment). The newer `docs/reference/pricing/data/userdata.xlsx` already had none of these. In `xlrm`/`xlrm_testing`: 22 missing primaries + scopes set from the corrected codes, and the 10 addon/sub-segment scopes lost to BUG-163 added (backup `storage/app/backups/xlrm-employee-scopes-pre-codefix-27-09-2026.sql`). Reconciliation now: 40 findings — 38 users not in the dump (34 disabled per DEC-043, superadmin, 3 others) and department `IT` for BMPL-0365 and BMPL-0630 (no IT department exists: create one or pick another).
 
 ### BUG-167 — System settings show page and Utils list endpoints bypassed their permission checks
 
