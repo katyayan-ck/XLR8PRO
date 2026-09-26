@@ -163,3 +163,12 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
 - **Noted:** the document's "confirmed packages" (Passport, MS Graph, DataTables, query cache) are not in this repo; it's treated as requirements only.
 - **Open (asked before B2):** SUP-DEC-001/002/003/005/006/010.
 - **Risk:** LOW (plan change) · **Approved-by:** user (instruction to pick the achievable items) · **Reversal:** plan edit.
+
+### DEC-029 | 26-09-2026 19:10 | A / B | User decisions batch
+- **BUG-161 (booking branch):** leave the data as is. VOTF may use the FSC's (sales consultant's) branch when it can be resolved, otherwise stays blank with the existing clear error. No schema change.
+- **Chat variants (SUP-DEC-001):** all of them — direct, group, team, ticket-linked, entity journal and customer live chat (live chat is still sequenced after B10).
+- **Knowledge Base audience (SUP-DEC-002):** both internal and customer-facing, with separate publication controls.
+- **Ticket intake channels (SUP-DEC-003):** unclear to the user; explanation provided, decision still open.
+- **SLA and retention (SUP-DEC-005/006):** on hold until those phases.
+- **Environment:** the user cleaned PATH and switched Laragon to PHP 8.4 (DEC-019 complete).
+- **Approved-by:** user.

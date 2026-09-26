@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Services\Sales;
 
+use App\Models\Admin\Employee;
 use App\Models\CRM\Enquiry;
 use App\Models\CRM\Quotation;
 use App\Models\Module\Booking\Booking;
@@ -99,6 +100,19 @@ class BookingOtfServiceTest extends TestCase
         $votf = $this->service->generateVotfNumber($booking);
 
         $this->assertStringContainsString(strtoupper($enquiry->dealer_branch), $votf);
+    }
+
+    public function test_generate_votf_number_falls_back_to_the_consultant_branch(): void
+    {
+        // DEC-029: no enquiry branch, so use the FSC's primary branch.
+        $employee = Employee::query()->whereNotNull('primary_branch_code')->where('primary_branch_code', '!=', '')->first();
+        if (! $employee) {
+            $this->markTestSkipped('No employee with a primary branch in the test database.');
+        }
+
+        $booking = $this->makeBooking(['consultant' => $employee->person_code]);
+
+        $this->assertStringContainsString(strtoupper($employee->primary_branch_code), $this->service->generateVotfNumber($booking));
     }
 
     public function test_generate_votf_number_throws_when_branch_code_missing(): void

@@ -2,6 +2,7 @@
 
 namespace App\Services\Sales\Booking;
 
+use App\Models\Admin\Employee;
 use App\Models\CRM\Enquiry;
 use App\Models\CRM\Quotation;
 use App\Models\Module\Booking\Booking;
@@ -466,12 +467,16 @@ class BookingOtfService
      */
     public function generateVotfNumber(Booking $booking): string
     {
-        // Bookings have no branch column; the branch lives on the linked enquiry
-        // (the same source getFullBookingData() uses for display) - DEC-027.
+        // Bookings have no branch column: use the linked enquiry's branch (the source
+        // getFullBookingData() uses for display), else the FSC's primary branch
+        // (booking.consultant is the consultant's person_code) - DEC-027, DEC-029.
         $branchCode = strtoupper(trim((string) (
             $booking->branch_code
-            ?? Enquiry::resolveByAnyReference($booking->enq_no)?->dealer_branch
-            ?? ''
+            ?: Enquiry::resolveByAnyReference($booking->enq_no)?->dealer_branch
+            ?: ($booking->consultant
+                ? Employee::where('person_code', $booking->consultant)->value('primary_branch_code')
+                : null)
+            ?: ''
         )));
 
         if ($branchCode === '') {
