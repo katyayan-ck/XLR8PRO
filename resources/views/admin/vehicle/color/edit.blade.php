@@ -89,7 +89,7 @@
 
                                 <div class="col-md-4 mb-3">
                                     <label>Color Code <span class="text-danger">*</span></label>
-                                    <input type="text" name="code" class="form-control text-uppercase"
+                                    <input type="text" name="code" readonly title="The code is referenced by other records and cannot be changed" class="form-control text-uppercase"
                                         value="{{ old('code', $color->code) }}" style="text-transform: uppercase;"
                                         maxlength="5" title="Only alphabets allowed (no numbers or special characters)"
                                         required>

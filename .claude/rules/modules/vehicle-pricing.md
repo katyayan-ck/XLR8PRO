@@ -13,7 +13,7 @@ paths:
 
 ## Hierarchy
 Segment → SubSegment → Model → Variant (one row per colour). Code-based relations; children store ancestor codes.
-- `vehicle_model.code` = OEM model stem, uppercase, **without** the 2-char colour suffix.
+- `vehicle_model.code` = OEM model stem, uppercase, **without** the 2-char colour suffix; spaces become hyphens (`THAR-ROXX`, `NON-XUV`, `BOLERO-NEO-PLUS`) — DEC-049. Codes are immutable after creation (DEC-048). Match free text through `VehicleCodeNormaliser::canonical()`.
 - `vehicle_variant.code` = **full** OEM code **with** colour; `color_code` = last 2 chars. Colour lives on the
   variant row (no colours/colour-map table). Never strip or re-append colour when matching.
 
@@ -36,6 +36,9 @@ add-ons & discounts → insurance & RTO (keep or import) → impact summary → 
   trim + case-insensitive; synonyms first.
 - Calculate skips incomplete vehicles; requires add-ons written > 0 and rules kept or written.
 - Pricing JSON keys never change (unused keys present with 0/null).
+- Rule rows (RTO/TCS/insurance) are written only via `App\Services\Vehicle\Pricing\Rules\*Service` (DEC-056): the workbook
+  importer maps columns, the service owns scope/amount rules and WEF expiry (`expireActive()`).
+  Add-ons / discounts / dealer charges likewise via `...\Pricing\Addons\*Service` (group expiry: `expireActive($wef, ['addon_type' => 'RSA'])`).
 - Pricing admin requires `manage_pricing` / `PRC_*` permissions; `PricingResetService` is destructive — local only.
 - Open spec gaps GAP-01…11 (insurance addon importer, history satellites, insurer master, IDV formula…) —
   do not paper over them without instruction.

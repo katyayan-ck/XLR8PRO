@@ -13,6 +13,14 @@
         </testsuite>
     </testsuites>
 
+    <!-- The full admin-screen sweep (tests/Feature/Admin/AdminScreenSmokeTest.php) takes minutes;
+         run it on demand with the "smoke" group option of php artisan test. -->
+    <groups>
+        <exclude>
+            <group>smoke</group>
+        </exclude>
+    </groups>
+
     <source>
         <include>
             <directory>app</directory>

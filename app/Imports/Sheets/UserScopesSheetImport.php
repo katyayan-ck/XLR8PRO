@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Imports\Sheets;
 
+use App\Services\IAM\UserScopeService;
 use App\Services\OrgScopeService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 
@@ -108,8 +110,14 @@ final class UserScopesSheetImport implements ToCollection, WithHeadingRow
                 continue;
             }
 
-            DB::transaction(fn () => $this->syncUser((int) $userId, $employee, $byType, $types));
-            $this->summary['users']++;
+            try {
+                DB::transaction(fn () => $this->syncUser((int) $userId, $employee, $byType, $types));
+                $this->summary['users']++;
+            } catch (ValidationException $e) {
+                // A code rejected by UserScopeService (e.g. a stale primary code): nothing changed for this user.
+                $this->summary['skipped_users']++;
+                $this->log("⏭️ SCOPES SKIPPED | {$empCode}: {$e->getMessage()}");
+            }
         }
 
         $this->log('✅ User_Scopes: '.json_encode($this->summary));
@@ -121,7 +129,7 @@ final class UserScopesSheetImport implements ToCollection, WithHeadingRow
      */
     private function syncUser(int $userId, ?object $employee, array $byType, array $types): void
     {
-        $today = now()->toDateString();
+        $scopes = app(UserScopeService::class);
 
         foreach ($types as $type) {
             $codes = $byType[$type] ?? [];
@@ -129,39 +137,11 @@ final class UserScopesSheetImport implements ToCollection, WithHeadingRow
             if ($primary) {
                 $codes[] = strtoupper((string) $primary);
             }
-            $codes = array_values(array_unique($codes));
 
-            $existing = DB::table('xlr8_admin_user_scopes')
-                ->where('user_id', $userId)
-                ->where('scope_type', $type)
-                ->get(['id', 'scope_code', 'is_active', 'deleted_at']);
-
-            foreach ($existing as $scope) {
-                $keep = in_array(strtoupper((string) $scope->scope_code), $codes, true);
-                // The unique key includes soft-deleted rows, so a re-granted code is restored.
-                if ($keep && (! $scope->is_active || $scope->deleted_at !== null)) {
-                    DB::table('xlr8_admin_user_scopes')->where('id', $scope->id)
-                        ->update(['is_active' => 1, 'to_date' => null, 'deleted_at' => null, 'updated_at' => now()]);
-                    $this->summary['activated']++;
-                } elseif (! $keep && $scope->is_active && $scope->deleted_at === null) {
-                    DB::table('xlr8_admin_user_scopes')->where('id', $scope->id)
-                        ->update(['is_active' => 0, 'to_date' => $today, 'updated_at' => now()]);
-                    $this->summary['deactivated']++;
-                }
-            }
-
-            $known = $existing->pluck('scope_code')->map(fn ($c) => strtoupper((string) $c))->all();
-            foreach (array_diff($codes, $known) as $code) {
-                DB::table('xlr8_admin_user_scopes')->insert([
-                    'user_id' => $userId,
-                    'scope_type' => $type,
-                    'scope_code' => $code,
-                    'is_active' => 1,
-                    'from_date' => $today,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-                $this->summary['inserted']++;
+            // Grants restore/re-activate existing rows (the unique key covers deleted rows);
+            // codes no longer listed are deactivated (DEC-054).
+            foreach ($scopes->sync($userId, $type, $codes) as $counter => $count) {
+                $this->summary[$counter] += $count;
             }
         }
     }

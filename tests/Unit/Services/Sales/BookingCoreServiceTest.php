@@ -60,6 +60,6 @@ class BookingCoreServiceTest extends TestCase
             'col_type' => '1',
         ]);
 
-        $this->assertSame('1', $booking->fresh()->sale_type);
+        $this->assertSame(1, $booking->fresh()->sale_type); // unsigned tinyint since DEC-041
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Pricing;
 
 use App\Http\Controllers\Controller;
 use App\Models\Vehicle\Pricing\TcsConfig;
+use App\Services\Vehicle\Pricing\Rules\TcsConfigService;
 use Illuminate\Http\Request;
 
 class TcsConfigController extends Controller
@@ -28,25 +29,12 @@ class TcsConfigController extends Controller
             abort(403, 'Unauthorized. You do not have permission to update TCS configuration.');
         }
 
-        $validated = $request->validate([
-            'limit_amount' => 'required|numeric|min:0',
-            'rate_pct' => 'required|numeric|min:0|max:100',
-            'is_active' => 'nullable|boolean',
-        ]);
-
-        $tcs = TcsConfig::current();
-        if (! $tcs->exists) {
-            $tcs = new TcsConfig;
-        }
-
-        TcsConfig::where('is_active', true)->update(['is_active' => false]);
-
-        $tcs->fill([
-            'limit_amount' => $validated['limit_amount'],
-            'rate_pct' => $validated['rate_pct'],
+        // Field rules and the single-active-row rule live in TcsConfigService (DEC-056).
+        app(TcsConfigService::class)->saveCurrent([
+            'limit_amount' => $request->input('limit_amount'),
+            'rate_pct' => $request->input('rate_pct'),
             'is_active' => $request->boolean('is_active', true),
         ]);
-        $tcs->save();
 
         \Alert::success('TCS configuration updated successfully.')->flash();
 

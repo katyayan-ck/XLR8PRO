@@ -24,3 +24,5 @@ paths:
   (`Users_Import` + `User_Scopes`, dropdowns fed by named ranges). The user importer never guesses: unknown values
   are reported (`VALUE SKIPPED`/`ROLE SKIPPED`) and keep the stored code; absent columns are left untouched.
   Keep an unchanged export's re-import a no-op (`UserRbacWorkbookTest`).
+- Importers write entities **only** through the entity service (DEC-050): build the row array, call `create()`/`upsert()`,
+  catch `ValidationException` per row and report it; never insert/update entity tables directly or re-implement field rules.

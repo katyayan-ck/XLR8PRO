@@ -156,18 +156,18 @@ class PersonCrudTest extends TestCase
 
         $this->actingAsBackpackUser($user)->post(backpack_url("org/person/{$person->id}/addresses"), [
             'address_type' => 'Primary',
-            'city' => 'CityOne',
+            'city' => 'Jaipur',
         ]);
         $this->actingAsBackpackUser($user)->post(backpack_url("org/person/{$person->id}/addresses"), [
             'address_type' => 'Alternate',
-            'city' => 'CityTwo',
+            'city' => 'Kota',
         ]);
 
         $altAddress = $person->addresses()->where('address_type', 'Alternate')->first();
         $response = $this->actingAsBackpackUser($user)->post(backpack_url("org/person/{$person->id}/addresses/{$altAddress->id}/primary"));
 
         $response->assertRedirect();
-        $this->assertSame('CityTwo', $person->addresses()->where('address_type', 'Primary')->first()->city);
+        $this->assertSame('Kota', $person->addresses()->where('address_type', 'Primary')->first()->city);
         $this->assertSame(2, $person->addresses()->count());
     }
 

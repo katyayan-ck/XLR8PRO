@@ -3,7 +3,7 @@
 namespace App\Services\HR;
 
 use App\Models\Admin\Employee;
-use App\Models\User;
+use App\Services\Org\EmployeeService;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -15,14 +15,9 @@ class HRJourneyService
      */
     public function onboard(string $empCode, string $designationCode, Carbon|string $fromDate, string $remarks = ''): void
     {
-        DB::transaction(function () use ($empCode, $designationCode, $fromDate, $remarks) {
-            $employee = Employee::where('code', $empCode)->firstOrFail();
-
-            // Update designation
-            $employee->update([
-                'designation_code' => $designationCode,
-                'desig_code'       => $designationCode, // keep legacy in sync
-            ]);
+        DB::transaction(function () use ($empCode, $designationCode) {
+            // EmployeeService validates the code and keeps the legacy desig_code in sync (DEC-054).
+            app(EmployeeService::class)->update(Employee::where('code', $empCode)->firstOrFail(), ['designation_code' => $designationCode]);
 
             // Create initial UserScope records if needed (optional)
             // You can call OrgScopeService here if you want to auto-create scopes on onboarding
@@ -34,13 +29,8 @@ class HRJourneyService
      */
     public function transfer(string $empCode, string $newDesignationCode, Carbon|string $effectiveDate, string $remarks = ''): void
     {
-        DB::transaction(function () use ($empCode, $newDesignationCode, $effectiveDate, $remarks) {
-            $employee = Employee::where('code', $empCode)->firstOrFail();
-
-            $employee->update([
-                'designation_code' => $newDesignationCode,
-                'desig_code'       => $newDesignationCode,
-            ]);
+        DB::transaction(function () use ($empCode, $newDesignationCode) {
+            app(EmployeeService::class)->update(Employee::where('code', $empCode)->firstOrFail(), ['designation_code' => $newDesignationCode]);
         });
     }
 
@@ -60,7 +50,7 @@ class HRJourneyService
         // For now we return basic history. You can enhance this later with audit logs.
         return collect([
             'current_designation' => $this->getCurrentDesignation($empCode),
-            'message' => 'Journey history will be expanded using audit logs in future.'
+            'message' => 'Journey history will be expanded using audit logs in future.',
         ]);
     }
 }

@@ -20,18 +20,20 @@ class UserRequest extends FormRequest
         return backpack_auth()->check();
     }
 
+    /**
+     * Only the onboarding workflow's own inputs and the screen's required placement. Every entity
+     * field's format and existence rule (username, password, org/vehicle codes, joining date, add-on
+     * scope codes) is enforced by EmployeeService / UserService / UserScopeService (DEC-050/054).
+     */
     public function rules()
     {
-        $userId = $this->route('id');
         $isCreate = $this->isMethod('post');
         $isEmployee = strtolower((string) $this->input('user_type_code')) === 'emp';
 
         $rules = [
-            'username' => ['required', 'string', 'max:50', Rule::unique('users', 'username')->ignore($userId)],
-            'password' => [$isCreate ? 'required' : 'nullable', 'string', 'min:8'],
+            'username' => ['required'],
+            'password' => [$isCreate ? 'required' : 'nullable'],
             'user_type_code' => ['required', Rule::exists('xlr8_iam_user_type', 'code')],
-            'date_of_joining' => ['nullable', 'date'],
-            'is_active' => ['nullable', 'boolean'],
             'role_id' => ['nullable', 'exists:xlr8_admin_designation,id'],
             'added_permissions' => ['nullable', 'array'],
             'added_permissions.*' => ['string'],
@@ -40,32 +42,17 @@ class UserRequest extends FormRequest
         ];
 
         if ($isCreate) {
-            $rules['person_code'] = ['required', 'exists:xlr8_admin_person,person_code'];
+            $rules['person_code'] = ['required'];
         }
 
+        // Screen policy: an employee is onboarded with a full org placement.
         if ($isEmployee) {
-            $rules = array_merge($rules, [
-                'designation_code' => ['required', 'exists:xlr8_admin_designation,code'],
-                'primary_branch_code' => ['required', 'exists:xlr8_admin_branch,code'],
-                'addon_branch_codes' => ['nullable', 'array'],
-                'addon_branch_codes.*' => ['exists:xlr8_admin_branch,code'],
-                'primary_loc_code' => ['required', 'exists:xlr8_admin_location,code'],
-                'addon_loc_codes' => ['nullable', 'array'],
-                'addon_loc_codes.*' => ['exists:xlr8_admin_location,code'],
-                'primary_dept_code' => ['required', 'exists:xlr8_admin_department,code'],
-                'addon_dept_codes' => ['nullable', 'array'],
-                'addon_dept_codes.*' => ['exists:xlr8_admin_department,code'],
-                'primary_div_code' => ['required', 'exists:xlr8_admin_division,code'],
-                'addon_div_codes' => ['nullable', 'array'],
-                'addon_div_codes.*' => ['exists:xlr8_admin_division,code'],
-                'vertical_code' => ['nullable', 'exists:xlr8_admin_vertical,code'],
-                'primary_segment_code' => ['nullable', 'exists:xlr8_vehicle_segment,code'],
-                'addon_segment_codes' => ['nullable', 'array'],
-                'addon_segment_codes.*' => ['exists:xlr8_vehicle_segment,code'],
-                'primary_sub_segment_code' => ['nullable', 'exists:xlr8_vehicle_subsegment,code'],
-                'addon_sub_segment_codes' => ['nullable', 'array'],
-                'addon_sub_segment_codes.*' => ['exists:xlr8_vehicle_subsegment,code'],
-            ]);
+            foreach (['designation_code', 'primary_branch_code', 'primary_loc_code', 'primary_dept_code', 'primary_div_code'] as $field) {
+                $rules[$field] = ['required'];
+            }
+            foreach (['addon_branch_codes', 'addon_loc_codes', 'addon_dept_codes', 'addon_div_codes', 'addon_segment_codes', 'addon_sub_segment_codes'] as $field) {
+                $rules[$field] = ['nullable', 'array'];
+            }
         }
 
         if (! $isCreate) {

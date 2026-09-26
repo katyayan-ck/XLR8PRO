@@ -1,0 +1,364 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Support\Entity;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
+
+/**
+ * The only write path for an entity (DEC-050). Every create/edit — CRUD screen, import, API,
+ * job, seeder — calls create(), update() or upsert(), which run the same steps:
+ *
+ *   normalise (field transforms) → validate (field rules; ValidationException) →
+ *   business guards (beforeCreate/beforeUpdate) → persist through Eloquent, in a transaction
+ *
+ * Subclasses declare fields() once; nothing else may define rules for those fields.
+ *
+ * @template TModel of Model
+ */
+abstract class EntityService
+{
+    /** @return class-string<TModel> */
+    abstract protected function model(): string;
+
+    /** @return list<Field> */
+    abstract public function fields(): array;
+
+    /** Key fields used by upsert() when an import does not say otherwise. */
+    protected function naturalKey(): array
+    {
+        return ['code'];
+    }
+
+    /**
+     * Create a record.
+     *
+     * @param  array<string, mixed>  $input
+     * @return TModel
+     *
+     * @throws ValidationException
+     */
+    public function create(array $input): Model
+    {
+        foreach ($this->fieldMap() as $name => $field) {
+            if ($field->default !== null && ($input[$name] ?? null) === null) {
+                $input[$name] = $field->default;
+            }
+        }
+        $data = $this->validate($input);
+        $this->beforeCreate($data);
+
+        return DB::transaction(function () use ($data, $input) {
+            $model = $this->model()::create($this->persistable($data));
+            $this->afterSave($model, $input, true);
+
+            return $model;
+        });
+    }
+
+    /**
+     * Update a record. Immutable fields in the input are ignored; fields absent from the input
+     * keep their stored value.
+     *
+     * @param  TModel  $model
+     * @param  array<string, mixed>  $input
+     * @return TModel
+     *
+     * @throws ValidationException
+     */
+    public function update(Model $model, array $input): Model
+    {
+        $data = $this->validate($input, $model);
+        $this->beforeUpdate($model, $data);
+
+        DB::transaction(function () use ($model, $data, $input) {
+            $model->update($this->persistable($data));
+            $this->afterSave($model, $input, false);
+        });
+
+        return $model->refresh();
+    }
+
+    /**
+     * Create or update by natural key (imports).
+     *
+     * @param  array<string, mixed>  $input
+     * @param  list<string>|null  $key
+     * @return TModel
+     *
+     * @throws ValidationException
+     */
+    public function upsert(array $input, ?array $key = null): Model
+    {
+        $normalised = $this->normalise($input);
+        $match = [];
+        foreach ($key ?? $this->naturalKey() as $field) {
+            $match[$field] = $normalised[$field] ?? null;
+        }
+
+        $existing = $this->model()::query()->where($match)->first();
+
+        return $existing ? $this->update($existing, $input) : $this->create($input);
+    }
+
+    /**
+     * Normalise then validate. Returns only defined fields, transformed.
+     *
+     * @param  array<string, mixed>  $input
+     * @return array<string, mixed>
+     *
+     * @throws ValidationException
+     */
+    public function validate(array $input, ?Model $current = null): array
+    {
+        $data = $this->normalise($input);
+
+        // Immutable fields are set on create only; on update any value for them is ignored.
+        if ($current) {
+            foreach ($this->fieldMap() as $name => $field) {
+                if ($field->immutable) {
+                    unset($data[$name]);
+                }
+            }
+        }
+
+        // On update, required fields not being changed are validated against the stored value.
+        $stored = $current ? $this->currentValues($current) : [];
+        $subject = $current ? array_merge($stored, $data) : $data;
+        $rules = $this->rules($subject, $current);
+
+        // On update only changed values are validated: a stored value that is left as it is (legacy
+        // data) never blocks an edit of another field. Required fields must still be present.
+        if ($current) {
+            foreach ($this->fieldMap() as $name => $field) {
+                if (! array_key_exists($name, $data) || $this->sameValue($data[$name], $stored[$name] ?? null)) {
+                    $rules[$name] = $field->required ? ['required'] : [];
+                    unset($rules["{$name}.*"]);
+                }
+            }
+        }
+
+        Validator::make($subject, $rules, [], $this->labels())->validate();
+
+        return $data;
+    }
+
+    private function sameValue(mixed $new, mixed $stored): bool
+    {
+        if ($new === null || $stored === null) {
+            return $new === $stored;
+        }
+        if (is_array($new) || is_array($stored)) {
+            return $new == $stored;
+        }
+
+        return (string) (is_bool($new) ? (int) $new : $new) === (string) (is_bool($stored) ? (int) $stored : $stored);
+    }
+
+    /**
+     * Apply each field's transformation. Unknown keys are dropped; blank strings become null.
+     *
+     * @param  array<string, mixed>  $input
+     * @return array<string, mixed>
+     */
+    public function normalise(array $input): array
+    {
+        return $this->derive($this->normaliseFields($input), $input);
+    }
+
+    /**
+     * @param  array<string, mixed>  $input
+     * @return array<string, mixed>
+     */
+    private function normaliseFields(array $input): array
+    {
+        $transformer = new ValueTransformer;
+        $out = [];
+
+        foreach ($this->fieldMap() as $name => $field) {
+            if (! array_key_exists($name, $input)) {
+                continue;
+            }
+            $value = $input[$name];
+
+            if ($field->boolean) {
+                $out[$name] = $value === null || $value === '' ? $field->default : (bool) filter_var($value, FILTER_VALIDATE_BOOL);
+
+                continue;
+            }
+            if ($field->json && is_string($value)) {
+                $decoded = trim($value) === '' ? null : json_decode($value, true);
+                // Invalid JSON stays text, so the field's `array` rule reports it.
+                $out[$name] = trim($value) === '' ? null : (is_array($decoded) ? $decoded : $value);
+
+                continue;
+            }
+            if ($field->raw) {
+                $out[$name] = $value === '' ? null : $value;
+
+                continue;
+            }
+            if (is_string($value) || is_numeric($value)) {
+                $value = trim((string) $value);
+                if ($value !== '' && $field->transforms !== []) {
+                    $value = $transformer->run($value, $field->transforms);
+                }
+            }
+            // Blank (also after a transform, e.g. "ANY" → all) is null, or the field's default:
+            // a NOT NULL column with a DB default is given that default, never a forced null.
+            $out[$name] = $value === null || $value === '' ? $field->default : $value;
+        }
+
+        return $out;
+    }
+
+    /**
+     * Fields computed from other fields after normalisation (e.g. a code derived from an
+     * identifier, a format that depends on a type field). Use normaliseField() for derived values.
+     *
+     * @param  array<string, mixed>  $data  normalised data
+     * @param  array<string, mixed>  $input  raw input
+     * @return array<string, mixed>
+     */
+    protected function derive(array $data, array $input): array
+    {
+        return $data;
+    }
+
+    /** Normalise one value through a field's transforms (for derive()). */
+    protected function normaliseField(string $name, mixed $value): mixed
+    {
+        return $this->normaliseFields([$name => $value])[$name] ?? null;
+    }
+
+    /**
+     * Validation rules for the given data.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, list<mixed>>
+     */
+    public function rules(array $data, ?Model $current = null): array
+    {
+        $instance = new ($this->model());
+        $rules = [];
+
+        foreach ($this->fieldMap() as $name => $field) {
+            $fieldRules = [$field->required ? 'required' : 'nullable', ...$field->rules];
+
+            if ($field->unique !== null) {
+                $unique = Rule::unique($field->unique['table'] ?? $instance->getTable(), $field->unique['column'] ?? $name);
+                if (! $field->unique['trashed'] && in_array(SoftDeletes::class, class_uses_recursive($instance), true)) {
+                    $unique->whereNull('deleted_at');
+                }
+                foreach ($field->unique['scope'] as $scopeField) {
+                    $scopeValue = $data[$scopeField] ?? null;
+                    $scopeValue === null ? $unique->whereNull($scopeField) : $unique->where($scopeField, $scopeValue);
+                }
+                if ($current) {
+                    $unique->ignore($current->getKey());
+                }
+                $fieldRules[] = $unique;
+            }
+
+            $rules[$name] = $fieldRules;
+            if ($field->eachRules !== []) {
+                $rules["{$name}.*"] = $field->eachRules;
+            }
+        }
+
+        return $rules;
+    }
+
+    /** @return array<string, string> */
+    public function labels(): array
+    {
+        return array_map(fn (Field $f) => $f->label, $this->fieldMap());
+    }
+
+    /**
+     * Transformation pipelines per field — the model backstop (HasColumnTransformations) reads
+     * these, so there is no second copy on the model.
+     *
+     * @return array<string, list<string>>
+     */
+    public function transformations(): array
+    {
+        return array_filter(array_map(fn (Field $f) => $f->virtual ? [] : $f->transforms, $this->fieldMap()));
+    }
+
+    /** Field reference for documentation (format, rules, flags). @return list<array<string, mixed>> */
+    public function describe(): array
+    {
+        return array_values(array_map(fn (Field $f) => [
+            'field' => $f->name,
+            'label' => $f->label,
+            'format' => $f->format,
+            'required' => $f->required,
+            'immutable' => $f->immutable,
+            'unique' => $f->unique ? ($f->unique['scope'] ? 'per '.implode(', ', $f->unique['scope']) : 'yes') : 'no',
+            'transforms' => implode(' → ', array_map(fn ($t) => $t instanceof \Closure ? 'custom' : $t, $f->transforms)),
+        ], $this->fieldMap()));
+    }
+
+    /**
+     * Business rules beyond single-field validation (throw via fail()).
+     *
+     * @param  array<string, mixed>  $data
+     */
+    protected function beforeCreate(array &$data): void {}
+
+    /**
+     * @param  TModel  $model
+     * @param  array<string, mixed>  $data
+     */
+    protected function beforeUpdate(Model $model, array &$data): void {}
+
+    /**
+     * Side effects after the row is saved, inside the same transaction (media, child rows).
+     * Receives the raw input, so uploads and other virtual fields are available.
+     *
+     * @param  TModel  $model
+     * @param  array<string, mixed>  $input
+     */
+    protected function afterSave(Model $model, array $input, bool $created): void {}
+
+    /**
+     * Validated data minus virtual (non-column) fields.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function persistable(array $data): array
+    {
+        return array_diff_key($data, array_filter($this->fieldMap(), fn (Field $f) => $f->virtual));
+    }
+
+    /** @throws ValidationException */
+    protected function fail(string $field, string $message): never
+    {
+        throw ValidationException::withMessages([$field => $message]);
+    }
+
+    /** @return array<string, Field> */
+    protected function fieldMap(): array
+    {
+        $map = [];
+        foreach ($this->fields() as $field) {
+            $map[$field->name] = $field;
+        }
+
+        return $map;
+    }
+
+    /** @return array<string, mixed> */
+    private function currentValues(Model $current): array
+    {
+        return array_intersect_key($current->getAttributes(), $this->fieldMap());
+    }
+}

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Admin\Org\PersonAddress;
 
-use App\Http\Requests\PersonAddressRequest;
 use App\Models\Admin\Person;
 use App\Models\Admin\PersonAddress;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
@@ -121,73 +120,6 @@ class PersonAddressCrudController extends CrudController
                 'data' => $gridData,
             ],
         ]);
-    }
-
-    public function create()
-    {
-        if (! backpack_user()->can('ORG_PRSN_CREATE')) {
-            abort(403, 'Unauthorized. You do not have permission to create person addresses.');
-        }
-
-        $this->crud->setCreateView('admin.org.person-address.create');
-
-        return view('admin.org.person-address.create', [
-            'title' => 'Add New Person Address',
-            'persons' => Person::select('id', 'first_name', 'last_name')
-                ->orderBy('first_name')
-                ->get(),
-        ]);
-    }
-
-    public function store(PersonAddressRequest $request)
-    {
-        if (! backpack_user()->can('ORG_PRSN_CREATE')) {
-            abort(403, 'Unauthorized. You do not have permission to create person addresses.');
-        }
-
-        $validated = $request->validated();
-
-        PersonAddress::create($validated);
-
-        \Alert::success('Person Address created successfully!')->flash();
-
-        return redirect(backpack_url('org/person-address'));
-    }
-
-    public function edit($id)
-    {
-        if (! backpack_user()->can('ORG_PRSN_EDIT')) {
-            abort(403, 'Unauthorized. You do not have permission to edit person addresses.');
-        }
-
-        $this->crud->setEditView('admin.org.person-address.edit');
-
-        $address = PersonAddress::with('person')->findOrFail($id);
-
-        return view('admin.org.person-address.edit', [
-            'title' => 'Edit Person Address',
-            'address' => $address,
-            'persons' => Person::select('id', 'first_name', 'last_name')
-                ->orderBy('first_name')
-                ->get(),
-        ]);
-    }
-
-    public function update(PersonAddressRequest $request, $id)
-    {
-        if (! backpack_user()->can('ORG_PRSN_EDIT')) {
-            abort(403, 'Unauthorized. You do not have permission to edit person addresses.');
-        }
-
-        $address = PersonAddress::findOrFail($id);
-
-        $validated = $request->validated();
-
-        $address->update($validated);
-
-        \Alert::success('Person Address updated successfully!')->flash();
-
-        return redirect(backpack_url('org/person-address'));
     }
 
     public function destroy($id)

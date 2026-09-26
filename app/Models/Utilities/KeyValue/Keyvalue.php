@@ -3,20 +3,24 @@
 namespace App\Models\Utilities\KeyValue;
 
 use App\Models\BaseModel;
-use Backpack\CRUD\app\Models\Traits\CrudTrait;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use App\Models\Traits\HasTreeStructure;
-use Illuminate\Database\Eloquent\Builder;
 use App\Models\Traits\HasColumnTransformations;
+use App\Models\Traits\HasTreeStructure;
+use App\Services\Utils\KeyvalueService;
+use Backpack\CRUD\app\Models\Traits\CrudTrait;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Keyvalue extends BaseModel
 {
     use CrudTrait,
+        HasColumnTransformations,
         HasFactory,
-        HasTreeStructure,
-        HasColumnTransformations;
+        HasTreeStructure;
 
     protected $table = 'xlr8_utils_keyvalue';
+
+    /** Field rules and transformations live in the entity service (DEC-050/055). */
+    protected string $entityService = KeyvalueService::class;
 
     protected $fillable = [
         'keyword_code',
@@ -29,55 +33,15 @@ class Keyvalue extends BaseModel
         'path',
         'extra_data',
         'status',
-        'is_active'
+        'is_active',
     ];
 
     protected $casts = [
         'extra_data' => 'array',
-        'level'      => 'integer',
-        'status'     => 'integer',
-        'is_active'  => 'boolean',
+        'level' => 'integer',
+        'status' => 'integer',
+        'is_active' => 'boolean',
     ];
-
-    protected array $columnTransformations = [
-
-        'keyword_code' => [
-            'trim',
-            'uppercase_alphanumeric_dash_underscore'
-        ],
-
-        'code' => [
-            'trim',
-            'uppercase_alphanumeric_dash_underscore'
-        ],
-
-        'key' => [
-            'trim_spaces'
-        ],
-
-        'value' => [
-            'trim_spaces'
-        ],
-
-        'details' => [
-            'trim_spaces'
-        ],
-
-        'path' => [
-            'trim_spaces'
-        ],
-    ];
-
-    protected static function booted(): void
-    {
-        parent::booted();
-
-        static::saving(function ($model) {
-            $model->keyword_code = strtoupper(trim($model->keyword_code ?? ''));
-            $model->code         = strtoupper(trim($model->code ?? $model->key ?? ''));
-            $model->key          = strtoupper(trim($model->key ?? ''));
-        });
-    }
 
     public function keywordMaster()
     {

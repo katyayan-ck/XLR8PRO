@@ -1,95 +1,72 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Org;
 
 use App\Models\Admin\Department;
 use App\Models\Admin\Division;
 use App\Models\Admin\Employee;
-use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
+use App\Services\Org\Concerns\OrgEntityConcerns;
+use App\Support\Entity\EntityService;
+use App\Support\Entity\Field;
+use Illuminate\Database\Eloquent\Model;
 
 /**
- * Single source of truth for Division business logic (create/update, code
- * immutability, dependency-checked disable, media, and the pre-existing
- * "can't activate under an inactive Department" cross-entity rule). The
- * controller only handles HTTP concerns and delegates everything else here.
+ * Division — the only write path (DEC-050/052). An active division needs an active department.
+ *
+ * @extends EntityService<Division>
  */
-class DivisionService
+class DivisionService extends EntityService
 {
-    /** Division is a child of Department — Employee (via its primary division) is its only dependent. */
+    use OrgEntityConcerns;
+
     private const DEPENDENTS = [
         [Employee::class, 'primary_div_code', 'employee', 'employment_status', 'active'],
     ];
 
-    public function create(array $validated, Request $request): Division
+    protected function model(): string
     {
-        $this->validateParentDepartmentActive($validated['dept_code'] ?? null, (bool) ($validated['is_active'] ?? false));
-
-        $division = Division::create($validated);
-
-        $this->syncMedia($request, $division);
-
-        return $division;
+        return Division::class;
     }
 
-    /**
-     * @return array{ok: true, division: Division}|array{ok: false, blockers: array<int, string>}
-     */
-    public function update(Division $division, array $validated, Request $request): array
+    public function fields(): array
     {
-        // Code is the real primary key every relation points at by string — never editable.
-        unset($validated['code']);
-
-        $this->validateParentDepartmentActive($validated['dept_code'] ?? null, (bool) ($validated['is_active'] ?? false));
-
-        $wasActive = $division->is_active;
-        $willBeActive = (bool) ($validated['is_active'] ?? false);
-
-        $blockers = OrgEntityGuard::blockersForDisabling($wasActive, $willBeActive, $division->code, self::DEPENDENTS);
-        if ($blockers) {
-            return ['ok' => false, 'blockers' => $blockers];
-        }
-
-        $division->update($validated);
-        $this->syncMedia($request, $division);
-
-        return ['ok' => true, 'division' => $division->fresh()];
+        return [
+            Field::reference('dept_code', 'xlr8_admin_department', 10)->label('Department')->required(),
+            Field::code('code', 10)->label('Division Code')->rules('min:2')->required()->unique()->immutable(),
+            Field::name('name')->label('Division Name')->required(),
+            Field::text('description', 5000)->label('Description'),
+            Field::flag('is_active')->label('Active'),
+            ...$this->mediaFields('division_image'),
+        ];
     }
 
-    /** A Division can't be (re)activated while its parent Department is inactive. */
-    private function validateParentDepartmentActive(?string $deptCode, bool $willBeActive): void
+    protected function beforeCreate(array &$data): void
     {
-        if (! $deptCode || ! $willBeActive) {
+        $this->assertDepartmentActive($data);
+    }
+
+    protected function beforeUpdate(Model $model, array &$data): void
+    {
+        $this->assertDepartmentActive(array_merge($model->only(['dept_code', 'is_active']), $data));
+        $this->guardDisabling($model, $data, self::DEPENDENTS, 'division');
+    }
+
+    protected function afterSave(Model $model, array $input, bool $created): void
+    {
+        $this->syncMedia($model, $input, 'division_image');
+    }
+
+    /** @param array<string, mixed> $data */
+    private function assertDepartmentActive(array $data): void
+    {
+        if (empty($data['dept_code']) || ! ($data['is_active'] ?? true)) {
             return;
         }
-
-        $department = Department::where('code', $deptCode)->first();
-
+        $department = Department::where('code', $data['dept_code'])->first();
         if ($department && ! $department->is_active) {
-            throw ValidationException::withMessages([
-                'is_active' => 'Division cannot be activated because its Department is inactive.',
-            ]);
-        }
-    }
-
-    private function syncMedia(Request $request, Division $division): void
-    {
-        if ($request->boolean('remove_image')) {
-            $division->clearMediaCollection('division_image');
-        }
-
-        if ($request->hasFile('division_image')) {
-            $division->addMediaFromRequest('division_image')->toMediaCollection('division_image');
-        }
-
-        if ($request->hasFile('documents')) {
-            foreach ((array) $request->file('documents') as $file) {
-                $division->addMedia($file)->toMediaCollection('documents');
-            }
-        }
-
-        foreach ((array) $request->input('remove_documents', []) as $mediaId) {
-            $division->media()->where('id', $mediaId)->where('collection_name', 'documents')->first()?->delete();
+            $this->fail('is_active', 'Division cannot be activated because its Department is inactive.');
         }
     }
 }

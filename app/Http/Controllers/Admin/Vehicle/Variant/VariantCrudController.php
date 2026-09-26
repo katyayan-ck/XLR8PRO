@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers\Admin\Vehicle\Variant;
 
-use App\Http\Requests\VariantRequest;
-use App\Models\Vehicle\Color;
 use App\Models\Vehicle\SubSegment;
 use App\Models\Vehicle\Variant;
 use App\Models\Vehicle\VehicleModel;
 use App\Services\OrgService;
+use App\Services\Vehicle\VariantService;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
@@ -144,18 +143,14 @@ class VariantCrudController extends CrudController
         ]);
     }
 
-    public function store(VariantRequest $request)
+    /** Create through VariantService, the only write path (DEC-050). */
+    public function store(Request $request)
     {
         if (! backpack_user()->can('VEH_VAR_CREATE')) {
             abort(403, 'Unauthorized. You do not have permission to create variants.');
         }
 
-        $validated = $request->validated();
-
-        $validated['is_csd'] = $request->boolean('is_csd');
-        $validated['is_active'] = $request->boolean('is_active');
-
-        Variant::create($validated);
+        app(VariantService::class)->create($request->all());
 
         \Alert::success('Variant created successfully!')->flash();
 
@@ -190,12 +185,12 @@ class VariantCrudController extends CrudController
             ->orderBy('name')
             ->get();
 
-        $activeColors = Color::where(
-            'variant_code',
-            $variant->code
-        )
+        // Colours are sibling rows of the same variant code (DEC-048).
+        $activeColors = Variant::where('code', $variant->code)
             ->where('is_active', 1)
-            ->pluck('name')
+            ->whereNotNull('color')
+            ->orderBy('color')
+            ->pluck('color')
             ->toArray();
 
         return view('admin.vehicle.variant.edit', [
@@ -222,49 +217,16 @@ class VariantCrudController extends CrudController
         ]);
     }
 
-    public function update(VariantRequest $request, $id)
+    /** Update through VariantService, the only write path (DEC-050). */
+    public function update(Request $request, $id)
     {
         if (! backpack_user()->can('VEH_VAR_EDIT')) {
             abort(403, 'Unauthorized. You do not have permission to edit variants.');
         }
 
-        $variant = Variant::findOrFail($id);
+        app(VariantService::class)->update(Variant::findOrFail($id), $request->all());
 
-        $validated = $request->validated();
-
-        if (
-            $variant->is_active == 1 &&
-            ! $request->boolean('is_active')
-        ) {
-
-            $activeColorCount = Color::where(
-                'variant_code',
-                $variant->code
-            )
-                ->where('is_active', 1)
-                ->count();
-
-            if ($activeColorCount > 0) {
-
-                \Alert::error(
-                    "Cannot deactivate Variant. {$activeColorCount} active Color(s) exist."
-                )->flash();
-
-                return redirect()->back()->withInput();
-            }
-        }
-
-        $validated['is_csd'] =
-            $request->boolean('is_csd');
-
-        $validated['is_active'] =
-            $request->boolean('is_active');
-
-        $variant->update($validated);
-
-        \Alert::success(
-            'Variant updated successfully!'
-        )->flash();
+        \Alert::success('Variant updated successfully!')->flash();
 
         return redirect(backpack_url('vehicle/variant'));
     }

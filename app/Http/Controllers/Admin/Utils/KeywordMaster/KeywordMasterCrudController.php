@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers\Admin\Utils\KeywordMaster;
 
-use App\Http\Requests\KeywordMasterRequest;
 use App\Models\Utilities\KeyValue\KeywordMaster;
+use App\Services\Utils\KeywordMasterService;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
+use Illuminate\Http\Request;
 
 class KeywordMasterCrudController extends CrudController
 {
@@ -125,15 +126,14 @@ class KeywordMasterCrudController extends CrudController
         );
     }
 
-    public function store(KeywordMasterRequest $request)
+    public function store(Request $request)
     {
         if (! backpack_user()->can('UTL_SETTINGS_MANAGE')) {
             abort(403, 'Unauthorized. You do not have permission to create keywords.');
         }
 
-        $validated = $request->validated();
-
-        KeywordMaster::create($validated);
+        // Every field rule lives in KeywordMasterService (DEC-050/055).
+        app(KeywordMasterService::class)->create($request->all());
 
         \Alert::success(
             'Keyword created successfully!'
@@ -168,7 +168,7 @@ class KeywordMasterCrudController extends CrudController
     }
 
     public function update(
-        KeywordMasterRequest $request,
+        Request $request,
         $id
     ) {
         if (! backpack_user()->can('UTL_SETTINGS_MANAGE')) {
@@ -178,9 +178,7 @@ class KeywordMasterCrudController extends CrudController
         $keyword =
             KeywordMaster::findOrFail($id);
 
-        $validated = $request->validated();
-
-        $keyword->update($validated);
+        app(KeywordMasterService::class)->update($keyword, $request->all());
 
         \Alert::success(
             'Keyword updated successfully!'

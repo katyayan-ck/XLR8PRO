@@ -6,7 +6,8 @@
  * Imports Addon-N-Discounts.xlsx:
  *   Dealer Charges - Segment Wise | Shield | RSA | Exchange | Corporate
  *
- * Writes into the LIVE column set:
+ * Every row is written through its entity service (App\Services\Vehicle\Pricing\Addons\*, DEC-057);
+ * this class maps sheet columns and decides which rows to skip. Writes into the LIVE column set:
  *   dealer_charges: one WIDE row (incidental/fastag/trc/rto_tape/cod)
  *   addons: RSA/SHIELD rows (segment/pack/trans/fuel when columns exist)
  *   discounts: name + discount_category + total_discount (+ scheme_name/category/amount if present)
@@ -14,15 +15,16 @@
 
 namespace App\Services\Vehicle\Pricing;
 
-use App\Models\Vehicle\Pricing\Addon;
-use App\Models\Vehicle\Pricing\DealerCharge;
-use App\Models\Vehicle\Pricing\Discount;
 use App\Models\Vehicle\Pricing\ImportSession;
 use App\Services\Utils\SynonymService;
+use App\Services\Vehicle\Pricing\Addons\AddonService;
+use App\Services\Vehicle\Pricing\Addons\DealerChargeService;
+use App\Services\Vehicle\Pricing\Addons\DiscountService;
+use App\Support\Entity\EntityService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\ValidationException;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class AddonDiscountImportService
@@ -56,7 +58,7 @@ class AddonDiscountImportService
         $wefDate = $wefDate ?? ($session->wef_date?->format('Y-m-d') ?? now()->toDateString());
         $selected = array_map('strtoupper', $selected);
         $plog = new PricingProcessLogger($session->id);
-        $progressKey = 'pricing_addons_progress_' . $session->id;
+        $progressKey = 'pricing_addons_progress_'.$session->id;
 
         $reader = IOFactory::createReaderForFile($absolutePath);
         $reader->setReadDataOnly(true);
@@ -70,7 +72,7 @@ class AddonDiscountImportService
                 continue;
             }
 
-            $this->push($progressKey, 'Importing ' . $title);
+            $this->push($progressKey, 'Importing '.$title);
             $plog->info('Addon sheet begin', ['title' => $title, 'code' => $code]);
 
             $matrix = $ws->toArray(null, true, true, false);
@@ -84,26 +86,27 @@ class AddonDiscountImportService
                 $map = $this->fallbackHeaderMap($matrix[0] ?? []);
             }
             if ($map === []) {
-                $result[$code] = ['written' => 0, 'skipped' => 0, 'errors' => [$title . ': header not found']];
+                $result[$code] = ['written' => 0, 'skipped' => 0, 'errors' => [$title.': header not found']];
+
                 continue;
             }
             $rows = array_slice($matrix, $idx + 1);
 
             $result[$code] = match ($code) {
                 'DEALER_CHARGES' => $this->importDealerCharges($rows, $map, $session, $wefDate, $userId),
-                'RSA'            => $this->importRsa($rows, $map, $session, $wefDate, $userId),
-                'SHIELD'         => $this->importShield($rows, $map, $session, $wefDate, $userId),
-                'EXCHANGE'       => $this->importDiscount($rows, $map, 'EXCHANGE', $session, $wefDate, $userId),
-                'CORPORATE'      => $this->importDiscount($rows, $map, 'CORPORATE', $session, $wefDate, $userId),
-                default          => ['written' => 0, 'skipped' => 0, 'errors' => ['unknown sheet']],
+                'RSA' => $this->importRsa($rows, $map, $session, $wefDate, $userId),
+                'SHIELD' => $this->importShield($rows, $map, $session, $wefDate, $userId),
+                'EXCHANGE' => $this->importDiscount($rows, $map, 'EXCHANGE', $session, $wefDate, $userId),
+                'CORPORATE' => $this->importDiscount($rows, $map, 'CORPORATE', $session, $wefDate, $userId),
+                default => ['written' => 0, 'skipped' => 0, 'errors' => ['unknown sheet']],
             };
         }
 
         $spreadsheet->disconnectWorksheets();
         Cache::put($progressKey, [
-            'done'       => true,
-            'result'     => $this->trimErrors($result),
-            'message'    => 'Addons import finished',
+            'done' => true,
+            'result' => $this->trimErrors($result),
+            'message' => 'Addons import finished',
             'updated_at' => now()->toIso8601String(),
         ], now()->addHours(6));
 
@@ -128,68 +131,56 @@ class AddonDiscountImportService
         return null;
     }
 
+    /**
+     * Dealer charges sheet → DealerChargeService (one wide row per scope). Rows whose charges are
+     * all zero/blank are skipped, as before; the service owns scope and amount rules.
+     */
     protected function importDealerCharges(array $rows, array $map, ImportSession $session, string $wef, ?int $userId): array
     {
         $written = 0;
         $skipped = 0;
         $errors = [];
-
-        DealerCharge::query()->where('is_active', true)->update([
-            'is_active'  => false,
-            'expired_on' => $wef,
-            'updated_by' => $userId,
-            'updated_at' => now(),
-        ]);
-
-        $wide = Schema::hasColumn('xlr8_vehicle_pricing_dealer_charges', 'incidental')
-            || Schema::hasColumn('xlr8_vehicle_pricing_dealer_charges', 'fastag');
+        $charges = app(DealerChargeService::class);
+        $charges->expireActive($wef);
 
         foreach ($rows as $row) {
-            $segment = $this->anyOrValue($this->synonyms->resolve('Segment', $this->str($row, $map, 'segment')));
-            $permit = $this->anyOrValue($this->synonyms->resolve('Permit', $this->str($row, $map, 'permit')));
-            $model = $this->anyOrValue($this->str($row, $map, 'model') ?? $this->str($row, $map, 'oem_model'));
-            if ($segment === null && $model === null) {
+            $segment = $this->str($row, $map, 'segment');
+            $model = $this->str($row, $map, 'model') ?? $this->str($row, $map, 'oem_model');
+            if ($this->anyOrValue($segment) === null && $this->anyOrValue($model) === null) {
                 $skipped++;
+
                 continue;
             }
 
-            $inc = $this->dec($row, $map, 'incidental_charges') ?? 0;
-            $ft = $this->dec($row, $map, 'fast_tag') ?? 0;
-            $trc = $this->dec($row, $map, 'trc') ?? 0;
-            $tape = $this->dec($row, $map, 'rto_tape') ?? 0;
-            $cod = $this->dec($row, $map, 'cod_charges') ?? 0;
-            if ($inc == 0 && $ft == 0 && $trc == 0 && $tape == 0 && $cod == 0) {
+            $amounts = [
+                'incidental' => 'incidental_charges',
+                'fastag' => 'fast_tag',
+                'trc' => 'trc',
+                'rto_tape' => 'rto_tape',
+                'cod' => 'cod_charges',
+            ];
+            $nonZero = false;
+            foreach ($amounts as $field) {
+                $nonZero = $nonZero || (float) ($this->dec($row, $map, $field) ?? 0) != 0.0;
+            }
+            if (! $nonZero) {
                 $skipped++;
+
                 continue;
             }
 
-            try {
-                $payload = [
-                    'import_session_id' => $session->id,
-                    'segment'           => $segment,
-                    'permit'            => $permit,
-                    'model_code'        => $model,
-                    'is_active'         => true,
-                    'wef_date'          => $wef,
-                    'created_by'        => $userId,
-                    'updated_by'        => $userId,
-                ];
-                if ($wide) {
-                    $payload['incidental'] = $inc;
-                    $payload['fastag'] = $ft;
-                    $payload['trc'] = $trc;
-                    $payload['rto_tape'] = $tape;
-                    $payload['cod'] = $cod;
-                } else {
-                    $payload['charge_code'] = 'bundle';
-                    $payload['charge_name'] = 'Dealer charges';
-                    $payload['amount'] = $inc + $ft + $trc + $tape + $cod;
-                }
-                DealerCharge::query()->create($this->onlyFillable(DealerCharge::class, $payload));
-                $written++;
-            } catch (\Throwable $e) {
-                $this->pushError($errors, $e->getMessage());
+            $input = [
+                'import_session_id' => $session->id,
+                'segment' => $segment,
+                'permit' => $this->str($row, $map, 'permit'),
+                'model_code' => $model,
+                'is_active' => true,
+                'wef_date' => $wef,
+            ];
+            foreach ($amounts as $column => $field) {
+                $input[$column] = $this->str($row, $map, $field);
             }
+            $this->write($charges, $input, $written, $errors);
         }
 
         return compact('written', 'skipped', 'errors');
@@ -200,7 +191,8 @@ class AddonDiscountImportService
         $written = 0;
         $skipped = 0;
         $errors = [];
-        $this->expireAddons('RSA', $wef, $userId);
+        $addons = app(AddonService::class);
+        $addons->expireActive($wef, ['addon_type' => 'RSA']);
 
         $yearFields = [
             1 => 'std_plus_1',
@@ -211,41 +203,35 @@ class AddonDiscountImportService
         ];
 
         foreach ($rows as $row) {
-            $segment = $this->anyOrValue($this->synonyms->resolve('Segment', $this->str($row, $map, 'segment')));
-            $model = $this->anyOrValue($this->str($row, $map, 'model') ?? $this->str($row, $map, 'oem_model'));
-            if ($segment === null && $model === null) {
+            $segment = $this->str($row, $map, 'segment');
+            $model = $this->str($row, $map, 'model') ?? $this->str($row, $map, 'oem_model');
+            if ($this->anyOrValue($segment) === null && $this->anyOrValue($model) === null) {
                 $skipped++;
+
                 continue;
             }
             $std = $this->str($row, $map, 'std_coverage');
             $firstPaid = true;
             $any = false;
             foreach ($yearFields as $years => $field) {
-                $amt = $this->dec($row, $map, $field);
-                if ($amt === null) {
+                if ($this->str($row, $map, $field) === null) {
                     continue;
                 }
                 $any = true;
-                try {
-                    Addon::query()->create($this->onlyFillable(Addon::class, [
-                        'import_session_id' => $session->id,
-                        'addon_type'        => 'RSA',
-                        'segment'           => $segment,
-                        'model_code'        => $model ?: 'ANY',
-                        'scheme_name'       => 'Std + ' . $years . ' Year',
-                        'name'              => $std,
-                        'tenure_years'      => $years,
-                        'amount'            => $amt,
-                        'is_default'        => $firstPaid,
-                        'is_active'         => true,
-                        'wef_date'          => $wef,
-                        'created_by'        => $userId,
-                        'updated_by'        => $userId,
-                    ]));
-                    $written++;
+                if ($this->write($addons, [
+                    'import_session_id' => $session->id,
+                    'addon_type' => 'RSA',
+                    'segment' => $segment,
+                    'model_code' => $model,
+                    'scheme_name' => 'Std + '.$years.' Year',
+                    'name' => $std,
+                    'tenure_years' => $years,
+                    'amount' => $this->str($row, $map, $field),
+                    'is_default' => $firstPaid,
+                    'is_active' => true,
+                    'wef_date' => $wef,
+                ], $written, $errors)) {
                     $firstPaid = false;
-                } catch (\Throwable $e) {
-                    $this->pushError($errors, $e->getMessage());
                 }
             }
             if (! $any) {
@@ -261,45 +247,34 @@ class AddonDiscountImportService
         $written = 0;
         $skipped = 0;
         $errors = [];
-        $this->expireAddons('SHIELD', $wef, $userId);
+        $addons = app(AddonService::class);
+        $addons->expireActive($wef, ['addon_type' => 'SHIELD']);
 
         foreach ($rows as $row) {
-            $pack = $this->anyOrValue($this->str($row, $map, 'shield_pack'));
-            $trans = $this->anyOrValue($this->str($row, $map, 'transmission'));
-            $fuel = $this->anyOrValue($this->synonyms->resolve('Fuel', $this->str($row, $map, 'fuel')));
-            $oemModel = $this->anyOrValue($this->str($row, $map, 'oem_model') ?? $this->str($row, $map, 'model'));
-            $oemVariant = $this->anyOrValue($this->str($row, $map, 'oem_variant') ?? $this->str($row, $map, 'variant'));
             $hasAny = false;
 
             for ($i = 1; $i <= 6; $i++) {
-                $name = $this->str($row, $map, 'scheme_' . $i . '_name');
-                $amt = $this->dec($row, $map, 'scheme_' . $i . '_amt');
-                if ($name === null && $amt === null) {
+                $name = $this->str($row, $map, 'scheme_'.$i.'_name');
+                $amount = $this->str($row, $map, 'scheme_'.$i.'_amt');
+                if ($name === null && $amount === null) {
                     continue;
                 }
                 $hasAny = true;
-                try {
-                    Addon::query()->create($this->onlyFillable(Addon::class, [
-                        'import_session_id' => $session->id,
-                        'addon_type'        => 'SHIELD',
-                        'model_code'        => $oemModel ?: 'ANY',
-                        'variant_code'      => $oemVariant,
-                        'scheme_name'       => $name ?: ('Shield Scheme ' . $i),
-                        'name'              => $name,
-                        'amount'            => $amt ?? 0,
-                        'shield_pack'       => $pack,
-                        'transmission'      => $trans,
-                        'fuel'              => $fuel,
-                        'is_default'        => $i === 1,
-                        'is_active'         => true,
-                        'wef_date'          => $wef,
-                        'created_by'        => $userId,
-                        'updated_by'        => $userId,
-                    ]));
-                    $written++;
-                } catch (\Throwable $e) {
-                    $this->pushError($errors, $e->getMessage());
-                }
+                $this->write($addons, [
+                    'import_session_id' => $session->id,
+                    'addon_type' => 'SHIELD',
+                    'model_code' => $this->str($row, $map, 'oem_model') ?? $this->str($row, $map, 'model'),
+                    'variant_code' => $this->str($row, $map, 'oem_variant') ?? $this->str($row, $map, 'variant'),
+                    'scheme_name' => $name ?: ('Shield Scheme '.$i),
+                    'name' => $name,
+                    'amount' => $amount,
+                    'shield_pack' => $this->str($row, $map, 'shield_pack'),
+                    'transmission' => $this->str($row, $map, 'transmission'),
+                    'fuel' => $this->str($row, $map, 'fuel'),
+                    'is_default' => $i === 1,
+                    'is_active' => true,
+                    'wef_date' => $wef,
+                ], $written, $errors);
             }
             if (! $hasAny) {
                 $skipped++;
@@ -320,85 +295,57 @@ class AddonDiscountImportService
         $written = 0;
         $skipped = 0;
         $errors = [];
-        $this->expireDiscounts($type, $wef, $userId);
+        $discounts = app(DiscountService::class);
+        $discounts->expireActive($wef, ['discount_type' => $type]);
 
         foreach ($rows as $row) {
-            $model = $this->anyOrValue($this->str($row, $map, 'model') ?? $this->str($row, $map, 'oem_model'));
-            $variant = $this->anyOrValue($this->str($row, $map, 'variant') ?? $this->str($row, $map, 'oem_variant'));
-            $oem = $this->dec($row, $map, 'oem_share') ?? 0;
-            $dlr = $this->dec($row, $map, 'dealer_share') ?? 0;
-            $total = $this->dec($row, $map, 'total');
+            $model = $this->str($row, $map, 'model') ?? $this->str($row, $map, 'oem_model');
+            $variant = $this->str($row, $map, 'variant') ?? $this->str($row, $map, 'oem_variant');
             $name = $this->str($row, $map, $type === 'CORPORATE' ? 'category' : 'scheme_type');
-            if ($model === null && $variant === null && $name === null && $oem == 0 && $dlr == 0) {
+            if ($this->anyOrValue($model) === null && $this->anyOrValue($variant) === null && $name === null
+                && (float) ($this->dec($row, $map, 'oem_share') ?? 0) == 0.0 && (float) ($this->dec($row, $map, 'dealer_share') ?? 0) == 0.0) {
                 $skipped++;
+
                 continue;
             }
-            $sum = $total ?? round($oem + $dlr, 2);
-            try {
-                Discount::query()->create($this->onlyFillable(Discount::class, [
-                    'import_session_id' => $session->id,
-                    'discount_type'     => $type,
-                    'scheme_name'       => $type === 'EXCHANGE' ? $name : null,
-                    'category'          => $type === 'CORPORATE' ? $name : null,
-                    'discount_category' => $type === 'CORPORATE' ? $name : $type,
-                    'name'              => $name ?: $type,
-                    'model_code'        => $model ?: 'ANY',
-                    'variant_code'      => $variant,
-                    'oem_share'         => $oem,
-                    'dealer_share'      => $dlr,
-                    'amount'            => $sum,
-                    'total_discount'    => $sum,
-                    'is_active'         => true,
-                    'wef_date'          => $wef,
-                    'created_by'        => $userId,
-                    'updated_by'        => $userId,
-                ]));
-                $written++;
-            } catch (\Throwable $e) {
-                $this->pushError($errors, $e->getMessage());
-            }
+            $this->write($discounts, [
+                'import_session_id' => $session->id,
+                'discount_type' => $type,
+                'scheme_name' => $type === 'EXCHANGE' ? $name : null,
+                'category' => $type === 'CORPORATE' ? $name : null,
+                'discount_category' => $type === 'CORPORATE' ? $name : $type,
+                'name' => $name ?: $type,
+                'model_code' => $model,
+                'variant_code' => $variant,
+                'oem_share' => $this->str($row, $map, 'oem_share'),
+                'dealer_share' => $this->str($row, $map, 'dealer_share'),
+                'total_discount' => $this->str($row, $map, 'total'),
+                'is_active' => true,
+                'wef_date' => $wef,
+            ], $written, $errors);
         }
 
         return compact('written', 'skipped', 'errors');
     }
 
-    protected function expireAddons(string $type, string $wef, ?int $userId): void
+    /**
+     * One row through its entity service (DEC-057); a rejected row is reported, not written.
+     *
+     * @param  array<string, mixed>  $input
+     * @param  list<string>  $errors
+     */
+    protected function write(EntityService $service, array $input, int &$written, array &$errors): bool
     {
-        if (! Schema::hasTable('xlr8_vehicle_pricing_addons')) {
-            return;
-        }
-        Addon::query()->ofType($type)->where('is_active', true)->update([
-            'is_active'  => false,
-            'expired_on' => $wef,
-            'updated_by' => $userId,
-            'updated_at' => now(),
-        ]);
-    }
+        try {
+            $service->create($input);
+            $written++;
 
-    protected function expireDiscounts(string $type, string $wef, ?int $userId): void
-    {
-        if (! Schema::hasTable('xlr8_vehicle_pricing_discounts')) {
-            return;
-        }
-        Discount::query()->ofType($type)->where('is_active', true)->update([
-            'is_active'  => false,
-            'expired_on' => $wef,
-            'updated_by' => $userId,
-            'updated_at' => now(),
-        ]);
-    }
+            return true;
+        } catch (\Throwable $e) {
+            $this->pushError($errors, $e instanceof ValidationException ? collect($e->errors())->flatten()->implode(' ') : $e->getMessage());
 
-    protected function onlyFillable(string $modelClass, array $payload): array
-    {
-        $table = (new $modelClass)->getTable();
-        $out = [];
-        foreach ($payload as $k => $v) {
-            if (Schema::hasColumn($table, $k)) {
-                $out[$k] = $v;
-            }
+            return false;
         }
-
-        return $out;
     }
 
     protected function str(array $row, array $map, string $field): ?string
@@ -442,10 +389,10 @@ class AddonDiscountImportService
     {
         $prev = Cache::get($key, []);
         $logs = $prev['logs'] ?? [];
-        $logs[] = '[' . now()->format('H:i:s') . '] ' . $msg;
+        $logs[] = '['.now()->format('H:i:s').'] '.$msg;
         Cache::put($key, array_merge($prev, [
-            'message'    => $msg,
-            'logs'       => array_slice($logs, -40),
+            'message' => $msg,
+            'logs' => array_slice($logs, -40),
             'updated_at' => now()->toIso8601String(),
         ]), now()->addHours(6));
     }

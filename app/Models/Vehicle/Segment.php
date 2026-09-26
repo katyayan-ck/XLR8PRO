@@ -3,15 +3,16 @@
 namespace App\Models\Vehicle;
 
 use App\Models\BaseModel;
-use Backpack\CRUD\app\Models\Traits\CrudTrait;
-use App\Models\Traits\HasCommunications;
 use App\Models\Traits\HasColumnTransformations;
+use App\Models\Traits\HasCommunications;
+use App\Services\Vehicle\SegmentService;
+use Backpack\CRUD\app\Models\Traits\CrudTrait;
 
 class Segment extends BaseModel
 {
     use CrudTrait;
-    use HasCommunications;
     use HasColumnTransformations;
+    use HasCommunications;
 
     protected $table = 'xlr8_vehicle_segment';
 
@@ -22,29 +23,18 @@ class Segment extends BaseModel
         'is_active',
         'created_by',
         'updated_by',
-        'deleted_by'
+        'deleted_by',
     ];
 
     protected $casts = [
-        'is_active'  => 'boolean',
+        'is_active' => 'boolean',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
     ];
 
-    protected array $columnTransformations = [
-
-        'code' => [
-            'trim',
-            'uppercase_alphanumeric_dash_underscore'
-        ],
-
-        'name' => [
-            'strip_tags',
-            'trim_spaces',
-            'title_case'
-        ],
-    ];
+    /** Field formats, transforms and rules live in the entity service (DEC-050). */
+    protected string $entityService = SegmentService::class;
 
     public function subSegments()
     {
@@ -83,10 +73,10 @@ class Segment extends BaseModel
     public static function generateCode(string $name): string
     {
         $map = [
-            'BEV'        => 'BEV',
-            'PERSONAL'   => 'PERSL',
+            'BEV' => 'BEV',
+            'PERSONAL' => 'PERSL',
             'COMMERCIAL' => 'COMML',
-            'LMM'        => 'LMM',
+            'LMM' => 'LMM',
         ];
 
         $upper = strtoupper(trim($name));

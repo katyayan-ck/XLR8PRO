@@ -2,17 +2,17 @@
 
 namespace App\Models\Admin;
 
-use Backpack\CRUD\app\Models\Traits\CrudTrait;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany};
-use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\BaseModel;
+use App\Models\Iam\Post;
 use App\Models\Traits\HasColumnTransformations;
-use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use App\Services\Org\BranchService;
+use Backpack\CRUD\app\Models\Traits\CrudTrait;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Branch extends BaseModel
 {
-    use SoftDeletes, CrudTrait, HasColumnTransformations;
+    use CrudTrait, HasColumnTransformations, SoftDeletes;
 
     protected $table = 'xlr8_admin_branch';
 
@@ -34,14 +34,8 @@ class Branch extends BaseModel
         'is_active',
     ];
 
-    protected array $columnTransformations = [
-        'code'      => ['trim', 'uppercase_alphanumeric_dash_underscore'],
-        'name'      => ['trim_spaces', 'title_case'],
-        'city'      => ['trim_spaces', 'title_case'],
-        'email'     => ['trim', 'lowercase'],
-        'phone'     => 'numeric',
-        'pincode'   => 'numeric',
-    ];
+    /** Field formats, transforms and rules live in the entity service (DEC-050). */
+    protected string $entityService = BranchService::class;
 
     public function registerMediaCollections(): void
     {
@@ -52,7 +46,7 @@ class Branch extends BaseModel
             ->acceptsMimeTypes([
                 'image/jpeg',
                 'image/png',
-                'image/webp'
+                'image/webp',
             ])
             ->useDisk('public');
     }
@@ -68,11 +62,12 @@ class Branch extends BaseModel
     {
         return array_merge(parent::casts(), [
             'is_head_office' => 'boolean',
-            'latitude'       => 'float',
-            'longitude'      => 'float',
+            'latitude' => 'float',
+            'longitude' => 'float',
             // is_active already in BaseModel, no need to repeat
         ]);
     }
+
     public function getRouteKeyName(): string
     {
         return 'code';
@@ -87,12 +82,13 @@ class Branch extends BaseModel
 
     public function primaryEmployees(): HasMany
     {
-        return $this->hasMany(Employee::class, 'primary_branch_code', 'branch_code');
+        // Keyed on code: branch_code is never populated (BUG-082, DEC-044).
+        return $this->hasMany(Employee::class, 'primary_branch_code', 'code');
     }
 
     public function posts(): HasMany
     {
-        return $this->hasMany(\App\Models\Iam\Post::class, 'branch_code', 'branch_code');
+        return $this->hasMany(Post::class, 'branch_code', 'branch_code');
     }
 
     // ── Scopes ────────────────────────────────────────────────────────────────
@@ -104,6 +100,7 @@ class Branch extends BaseModel
     {
         return $q->where('is_head_office', true);
     }
+
     public function scopeByCity($q, $city)
     {
         return $q->where('city', $city);
@@ -125,7 +122,7 @@ class Branch extends BaseModel
         return implode(', ', array_filter([
             $this->address,
             $this->city,
-            $this->pincode
+            $this->pincode,
         ]));
     }
 }

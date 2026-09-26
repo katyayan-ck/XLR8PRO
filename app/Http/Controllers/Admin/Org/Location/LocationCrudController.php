@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Admin\Org\Location;
 
-use App\Http\Requests\LocationRequest;
 use App\Models\Admin\Branch;
 use App\Models\Admin\Location;
 use App\Services\Org\LocationService;
@@ -12,6 +11,7 @@ use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
+use Illuminate\Http\Request;
 
 class LocationCrudController extends CrudController
 {
@@ -184,30 +184,24 @@ class LocationCrudController extends CrudController
         ]);
     }
 
-    public function store(LocationRequest $request)
+    /** Create through LocationService, the only write path (DEC-050/052). */
+    public function store(Request $request)
     {
         $this->authorizeManage();
 
-        $this->locations->create($request->validated(), $request);
+        $this->locations->create($request->all());
 
         \Alert::success('Location created successfully!')->flash();
 
         return redirect(backpack_url('org/location'));
     }
 
-    public function update(LocationRequest $request, $id)
+    /** Update through LocationService (validation and business rules raise field errors). */
+    public function update(Request $request, $id)
     {
         $this->authorizeManage();
 
-        $location = Location::findOrFail($id);
-
-        $result = $this->locations->update($location, $request->validated(), $request);
-
-        if (! $result['ok']) {
-            return back()->withInput()->withErrors([
-                'is_active' => 'Cannot disable this location — it still has '.implode(' and ', $result['blockers']).'. Disable those first.',
-            ]);
-        }
+        $this->locations->update(Location::findOrFail($id), $request->all());
 
         \Alert::success('Location updated successfully!')->flash();
 

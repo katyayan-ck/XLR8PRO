@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Admin\Org\PersonBankingDetail;
 
-use App\Http\Requests\PersonBankingDetailRequest;
 use App\Models\Admin\Person;
 use App\Models\Admin\PersonBankingDetail;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
@@ -130,73 +129,6 @@ class PersonBankingDetailCrudController extends CrudController
                 'data' => $gridData,
             ],
         ]);
-    }
-
-    public function create()
-    {
-        if (! backpack_user()->can('ORG_PRSN_CREATE')) {
-            abort(403, 'Unauthorized. You do not have permission to create person banking details.');
-        }
-
-        $this->crud->setCreateView('admin.org.person-banking-detail.create');
-
-        return view('admin.org.person-banking-detail.create', [
-            'title' => 'Add New Banking Detail',
-            'persons' => Person::select('id', 'first_name', 'last_name')
-                ->orderBy('first_name')
-                ->get(),
-        ]);
-    }
-
-    public function store(PersonBankingDetailRequest $request)
-    {
-        if (! backpack_user()->can('ORG_PRSN_CREATE')) {
-            abort(403, 'Unauthorized. You do not have permission to create person banking details.');
-        }
-
-        $validated = $request->validated();
-
-        PersonBankingDetail::create($validated);
-
-        \Alert::success('Banking Detail created successfully!')->flash();
-
-        return redirect(backpack_url('org/person-banking-detail'));
-    }
-
-    public function edit($id)
-    {
-        if (! backpack_user()->can('ORG_PRSN_EDIT')) {
-            abort(403, 'Unauthorized. You do not have permission to edit person banking details.');
-        }
-
-        $this->crud->setEditView('admin.org.person-banking-detail.edit');
-
-        $banking = PersonBankingDetail::with('person')->findOrFail($id);
-
-        return view('admin.org.person-banking-detail.edit', [
-            'title' => 'Edit Banking Detail',
-            'banking' => $banking,
-            'persons' => Person::select('id', 'first_name', 'last_name')
-                ->orderBy('first_name')
-                ->get(),
-        ]);
-    }
-
-    public function update(PersonBankingDetailRequest $request, $id)
-    {
-        if (! backpack_user()->can('ORG_PRSN_EDIT')) {
-            abort(403, 'Unauthorized. You do not have permission to edit person banking details.');
-        }
-
-        $banking = PersonBankingDetail::findOrFail($id);
-
-        $validated = $request->validated();
-
-        $banking->update($validated);
-
-        \Alert::success('Banking Detail updated successfully!')->flash();
-
-        return redirect(backpack_url('org/person-banking-detail'));
     }
 
     public function destroy($id)

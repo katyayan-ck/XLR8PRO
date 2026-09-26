@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Admin\Org\Division;
 
-use App\Http\Requests\DivisionRequest;
 use App\Models\Admin\Department;
 use App\Models\Admin\Division;
 use App\Services\Org\DivisionService;
@@ -12,6 +11,7 @@ use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
+use Illuminate\Http\Request;
 
 class DivisionCrudController extends CrudController
 {
@@ -155,30 +155,24 @@ class DivisionCrudController extends CrudController
         ]);
     }
 
-    public function store(DivisionRequest $request)
+    /** Create through DivisionService, the only write path (DEC-050/052). */
+    public function store(Request $request)
     {
         $this->authorizeManage();
 
-        $this->divisions->create($request->validated(), $request);
+        $this->divisions->create($request->all());
 
         \Alert::success('Division created successfully!')->flash();
 
         return redirect(backpack_url('org/division'));
     }
 
-    public function update(DivisionRequest $request, $id)
+    /** Update through DivisionService (validation and business rules raise field errors). */
+    public function update(Request $request, $id)
     {
         $this->authorizeManage();
 
-        $division = Division::findOrFail($id);
-
-        $result = $this->divisions->update($division, $request->validated(), $request);
-
-        if (! $result['ok']) {
-            return back()->withInput()->withErrors([
-                'is_active' => 'Cannot disable this division — it still has '.implode(' and ', $result['blockers']).'. Disable those first.',
-            ]);
-        }
+        $this->divisions->update(Division::findOrFail($id), $request->all());
 
         \Alert::success('Division updated successfully!')->flash();
 

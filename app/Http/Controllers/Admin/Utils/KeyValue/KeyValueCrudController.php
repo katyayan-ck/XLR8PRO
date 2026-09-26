@@ -2,14 +2,15 @@
 
 namespace App\Http\Controllers\Admin\Utils\KeyValue;
 
-use App\Http\Requests\KeyvalueRequest;
 use App\Models\Utilities\KeyValue\Keyvalue;
 use App\Models\Utilities\KeyValue\KeywordMaster;
+use App\Services\Utils\KeyvalueService;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
+use Illuminate\Http\Request;
 
 class KeyValueCrudController extends CrudController
 {
@@ -149,15 +150,14 @@ class KeyValueCrudController extends CrudController
         );
     }
 
-    public function store(KeyvalueRequest $request)
+    public function store(Request $request)
     {
         if (! backpack_user()->can('UTL_SETTINGS_MANAGE')) {
             abort(403, 'Unauthorized. You do not have permission to create key values.');
         }
 
-        $validated = $request->validated();
-
-        Keyvalue::create($validated);
+        // Every field rule lives in KeyvalueService (DEC-050/055).
+        app(KeyvalueService::class)->create($request->all());
 
         \Alert::success(
             'Key Value created successfully!'
@@ -201,7 +201,7 @@ class KeyValueCrudController extends CrudController
     }
 
     public function update(
-        KeyvalueRequest $request,
+        Request $request,
         $id
     ) {
         if (! backpack_user()->can('UTL_SETTINGS_MANAGE')) {
@@ -211,11 +211,7 @@ class KeyValueCrudController extends CrudController
         $keyValue =
             Keyvalue::findOrFail($id);
 
-        $validated = $request->validated();
-
-        $keyValue->update(
-            $validated
-        );
+        app(KeyvalueService::class)->update($keyValue, $request->all());
 
         \Alert::success(
             'Key Value updated successfully!'

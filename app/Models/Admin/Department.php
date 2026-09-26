@@ -2,12 +2,16 @@
 
 namespace App\Models\Admin;
 
+use App\Models\BaseModel;
+use App\Models\Iam\Post;
 use App\Models\Traits\HasColumnTransformations;
+use App\Services\Org\DepartmentService;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
-use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany, BelongsToMany};
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\InteractsWithMedia;
-use App\Models\BaseModel;
 
 /**
  * Table: xlr8_admin_department
@@ -16,7 +20,7 @@ use App\Models\BaseModel;
  */
 class Department extends BaseModel
 {
-    use SoftDeletes, CrudTrait, HasColumnTransformations, InteractsWithMedia;
+    use CrudTrait, HasColumnTransformations, InteractsWithMedia, SoftDeletes;
 
     protected $table = 'xlr8_admin_department';
 
@@ -27,10 +31,8 @@ class Department extends BaseModel
         'is_active',
     ];
 
-    protected array $columnTransformations = [
-        'code' => ['trim', 'uppercase_alphanumeric_dash_underscore'],
-        'name' => ['trim_spaces', 'title_case'],
-    ];
+    /** Field formats, transforms and rules live in the entity service (DEC-050). */
+    protected string $entityService = DepartmentService::class;
 
     public function registerMediaCollections(): void
     {
@@ -41,7 +43,7 @@ class Department extends BaseModel
             ->acceptsMimeTypes([
                 'image/jpeg',
                 'image/png',
-                'image/webp'
+                'image/webp',
             ])
             ->useDisk('public');
     }
@@ -95,7 +97,7 @@ class Department extends BaseModel
     /** Posts: xlr8_iam_roles.dept_code → department.code */
     public function posts(): HasMany
     {
-        return $this->hasMany(\App\Models\Iam\Post::class, 'dept_code', 'code');
+        return $this->hasMany(Post::class, 'dept_code', 'code');
     }
 
     /**
@@ -108,10 +110,10 @@ class Department extends BaseModel
         return $this->belongsToMany(
             Employee::class,
             'xlr8_admin_emp_department_pivot',
-            'dept_code',     
-            'employee_code', 
-            'code',          
-            'code'         
+            'dept_code',
+            'employee_code',
+            'code',
+            'code'
         )->withPivot('division_code', 'assignment_type', 'is_current', 'from_date', 'to_date')
             ->withTimestamps();
     }

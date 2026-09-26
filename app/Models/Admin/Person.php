@@ -3,7 +3,9 @@
 namespace App\Models\Admin;
 
 use App\Models\Core\Garage;
+use App\Models\Traits\HasColumnTransformations;
 use App\Models\User;
+use App\Services\Person\PersonRecordService;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -15,7 +17,10 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 
 class Person extends Model implements HasMedia
 {
-    use CrudTrait, InteractsWithMedia, SoftDeletes;
+    use CrudTrait, HasColumnTransformations, InteractsWithMedia, SoftDeletes;
+
+    /** Field rules and transformations live in the entity service (DEC-050/053). */
+    protected string $entityService = PersonRecordService::class;
 
     protected $table = 'xlr8_admin_person';
 

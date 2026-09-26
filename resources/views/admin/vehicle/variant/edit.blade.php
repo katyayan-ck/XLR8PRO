@@ -149,12 +149,23 @@
 
                                         <input
                                             type="text"
-                                            name="code"
+                                            name="code" readonly title="The code is referenced by other records and cannot be changed"
                                             class="form-control"
                                             value="{{ old('code', $variant->code) }}"
                                             required>
 
                                     </div>
+
+                                <div class="col-md-4 mb-3">
+                                    <label for="color">Colour</label>
+                                    <input type="text" id="color" name="color" class="form-control" value="{{ old('color', $variant->color) }}" maxlength="255">
+                                    <small class="text-body-secondary">Each colour is its own variant row with the same variant code.</small>
+                                </div>
+
+                                <div class="col-md-4 mb-3">
+                                    <label for="color_code">Colour Code</label>
+                                    <input type="text" id="color_code" name="color_code" class="form-control text-uppercase" value="{{ old('color_code', $variant->color_code) }}" maxlength="10">
+                                </div>
 
                                     <div class="col-md-4 mb-3">
 

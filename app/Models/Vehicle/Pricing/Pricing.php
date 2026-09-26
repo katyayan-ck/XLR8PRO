@@ -3,43 +3,39 @@
 namespace App\Models\Vehicle\Pricing;
 
 use App\Models\BaseModel;
+use App\Services\Vehicle\Pricing\Prices\PriceService;
 use Illuminate\Database\Eloquent\Builder;
 
 class Pricing extends BaseModel
 {
     protected $table = 'xlr8_vehicle_pricing';
 
+    /** Columns = the entity service's fields (DEC-050/058); the service owns their rules. */
+    protected string $entityService = PriceService::class;
+
     protected $fillable = [
         'import_session_id',
         'model_code',
-        'variant_code',
         'channel',
         'wef_date',
         'expired_on',
         'is_active',
-        'assessable_value_with_freight',
         'gst_percent',
+        'ex_showroom_price',
+        'assessable_value_with_freight',
         'gst_amount',
         'mm_invoice_amount',
         'dealer_margin',
-        'ex_showroom_price',
         'curr_oem_scheme',
         'curr_dealer_cont',
         'curr_cash_discount',
         'curr_acc_discount',
         'curr_shield_discount',
-        'curr_acc_elg',
-        'curr_shield_elg',
         'old_oem_scheme',
         'old_dealer_cont',
         'old_cash_discount',
         'old_acc_discount',
         'old_shield_discount',
-        'old_acc_elg',
-        'old_shield_elg',
-        'created_by',
-        'updated_by',
-        'deleted_by',
     ];
 
     protected function casts(): array

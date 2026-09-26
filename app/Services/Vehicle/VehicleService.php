@@ -14,6 +14,9 @@
  *   All strings trim + UPPERCASE.
  *
  * Completeness (Vehicle Info only) — see isComplete().
+ *
+ * Every write goes through the entity services (Segment/SubSegment/VehicleModel/Variant/Keyvalue,
+ * DEC-050/058), so a price-list stub or a Vehicle Info row follows the same field rules as the screens.
  */
 
 namespace App\Services\Vehicle;
@@ -24,14 +27,19 @@ use App\Models\Vehicle\SubSegment;
 use App\Models\Vehicle\Variant;
 use App\Models\Vehicle\VehicleModel;
 use App\Services\KeywordValueService;
+use App\Services\Utils\KeyvalueService;
+use App\Support\Entity\EntityService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 
 class VehicleService
 {
     public const STATUS_ACTIVE = 'ACTIVE';
+
     public const STATUS_INACTIVE = 'INACTIVE';
+
     public const STATUS_DISCONTINUED = 'DISCONTINUED';
+
     public const STATUS_ALL = 'ALL';
 
     public function norm(mixed $value): string
@@ -42,6 +50,7 @@ class VehicleService
     public function colorFromOemCode(string $oemCode): string
     {
         $code = $this->norm($oemCode);
+
         return strlen($code) >= 2 ? substr($code, -2) : $code;
     }
 
@@ -57,69 +66,43 @@ class VehicleService
         $token = $parts[0] ?? 'PV';
 
         $map = config('pricing.sheet_segment_map', []);
+
         return $this->norm($map[$token] ?? $token);
     }
 
     public function findOrCreateSegment(string $code, ?string $name = null, ?int $userId = null): Segment
     {
-        $code = $this->norm($code);
-        $segment = Segment::query()->where('code', $code)->first();
-        if ($segment) {
-            return $segment;
-        }
+        $segments = app(SegmentService::class);
+        $code = (string) $segments->normalise(['code' => $code])['code'];
 
-        return Segment::query()->create([
-            'code'       => $code,
-            'name'       => $name ? $this->norm($name) : $code,
-            'is_active'  => true,
-            'created_by' => $userId,
-            'updated_by' => $userId,
-        ]);
+        return Segment::query()->where('code', $code)->first()
+            ?? $segments->create(['code' => $code, 'name' => $name ?: $code, 'is_active' => true]);
     }
 
     public function findOrCreateSubSegment(string $segmentCode, ?string $code = null, ?string $name = null, ?int $userId = null): SubSegment
     {
-        $segmentCode = $this->norm($segmentCode);
-        $code = $this->norm($code ?: $segmentCode);
+        $segment = $this->findOrCreateSegment($segmentCode, null, $userId);
+        $code = $this->norm($code ?: $segment->code);
 
-        $this->findOrCreateSegment($segmentCode, null, $userId);
-
-        $candidates = $this->modelCodeCandidates($code);
+        $candidates = $this->codeCandidates(SubSegmentService::class, $code);
         $row = SubSegment::query()
-            ->where('segment_code', $segmentCode)
+            ->where('segment_code', $segment->code)
             ->where(function ($q) use ($candidates, $code) {
                 $q->whereIn('code', $candidates)
                     ->orWhereRaw('UPPER(REPLACE(name, " ", "")) = ?', [preg_replace('/[^A-Z0-9]/', '', $code)]);
             })
             ->first();
 
-        if ($row) {
-            return $row;
-        }
-
-        try {
-            return SubSegment::query()->create([
-                'segment_code' => $segmentCode,
-                'code'         => $candidates[0],
-                'name'         => $name ? $this->norm($name) : $code,
-                'is_active'    => true,
-                'created_by'   => $userId,
-                'updated_by'   => $userId,
-            ]);
-        } catch (\Throwable $e) {
-            $again = SubSegment::query()
-                ->where('segment_code', $segmentCode)
-                ->whereIn('code', $candidates)
-                ->first();
-            if ($again) {
-                return $again;
-            }
-            throw $e;
-        }
+        return $row ?? app(SubSegmentService::class)->create([
+            'segment_code' => $segment->code,
+            'code' => $candidates[0],
+            'name' => $name ?: $code,
+            'is_active' => true,
+        ]);
     }
 
     /**
-     * OEM Model → model.code / name / oem_name. Creates only if missing.
+     * OEM Model → model.code / name / oem_name. Creates only if missing (through VehicleModelService).
      */
     public function findOrCreateModel(
         string $oemModel,
@@ -128,10 +111,7 @@ class VehicleService
         ?int $userId = null
     ): VehicleModel {
         $oemModel = $this->norm($oemModel);
-        $segmentCode = $this->norm($segmentCode);
-        $subSegmentCode = $this->norm($subSegmentCode ?: $segmentCode);
-
-        $this->findOrCreateSubSegment($segmentCode, $subSegmentCode, $subSegmentCode, $userId);
+        $subSegment = $this->findOrCreateSubSegment($segmentCode, $subSegmentCode ?: $segmentCode, $subSegmentCode ?: $segmentCode, $userId);
 
         $candidates = $this->modelCodeCandidates($oemModel);
         $model = VehicleModel::query()
@@ -142,41 +122,38 @@ class VehicleService
             })
             ->first();
 
-        if ($model) {
-            return $model;
-        }
-
-        try {
-            return VehicleModel::query()->create([
-                'segment_code'     => $segmentCode,
-                'sub_segment_code' => $subSegmentCode,
-                'code'             => $candidates[0],
-                'name'             => $oemModel,
-                'oem_name'         => $oemModel,
-                'is_active'        => true,
-                'created_by'       => $userId,
-                'updated_by'       => $userId,
-            ]);
-        } catch (\Throwable $e) {
-            $again = VehicleModel::query()->whereIn('code', $candidates)->first();
-            if ($again) {
-                return $again;
-            }
-            throw $e;
-        }
+        return $model ?? app(VehicleModelService::class)->create([
+            'segment_code' => $subSegment->segment_code,
+            'sub_segment_code' => $subSegment->code,
+            'code' => $candidates[0],
+            'name' => $oemModel,
+            'oem_name' => $oemModel,
+            'is_active' => true,
+        ]);
     }
 
     /**
-     * Legacy rows stored BOLERONEO; Price List + norm() produce BOLERO NEO.
+     * Codes a model may be stored under: the canonical code first (THAR-ROXX, DEC-049), then the
+     * legacy spellings (THAR ROXX, THARROXX) still found in older rows.
      *
      * @return list<string>
      */
     public function modelCodeCandidates(string $oemModel): array
     {
-        $upper = $this->norm($oemModel);
+        return $this->codeCandidates(VehicleModelService::class, $oemModel);
+    }
+
+    /**
+     * @param  class-string<EntityService>  $service
+     * @return list<string>
+     */
+    private function codeCandidates(string $service, string $value): array
+    {
+        $upper = $this->norm($value);
+        $canonical = (string) (app($service)->normalise(['code' => $upper])['code'] ?? $upper);
         $compact = preg_replace('/[^A-Z0-9]/', '', $upper) ?: $upper;
 
-        return array_values(array_unique(array_filter([$upper, $compact])));
+        return array_values(array_unique(array_filter([$canonical, $upper, $compact])));
     }
 
     /**
@@ -202,7 +179,7 @@ class VehicleService
             return [
                 'variant' => $existing,
                 'created' => false,
-                'model'   => $existing->vehicleModel ?? $this->findOrCreateModel(
+                'model' => $existing->vehicleModel ?? $this->findOrCreateModel(
                     $existing->model_code,
                     $existing->segment_code,
                     $existing->sub_segment_code,
@@ -213,34 +190,34 @@ class VehicleService
 
         $model = $this->findOrCreateModel($oemModel, $segmentCode, $segmentCode, $userId);
 
-        $variant = Variant::query()->create([
-            'segment_code'     => $model->segment_code,
+        // Written through VariantService (DEC-050): same field rules as the screen and the vehicle import.
+        $variant = app(VariantService::class)->create([
+            'segment_code' => $model->segment_code,
             'sub_segment_code' => $model->sub_segment_code,
-            'model_code'       => $model->code,
-            'code'             => $oemCode,
-            'oem_name'         => $oemVariant !== '' ? $oemVariant : $oemModel,
-            'custom_name'      => $oemVariant !== '' ? $oemVariant : null,
-            'display_name'     => null,
-            'color'            => $color,
-            'color_code'       => $color,
-            'taxi_price'       => 'NO',
-            'is_csd'           => $segmentCode === 'CSD',
-            'is_active'        => false,
-            'created_by'       => $userId,
-            'updated_by'       => $userId,
+            'model_code' => $model->code,
+            'code' => $oemCode,
+            'oem_name' => $oemVariant !== '' ? $oemVariant : $oemModel,
+            'custom_name' => $oemVariant !== '' ? $oemVariant : null,
+            'color' => $color,
+            'color_code' => $color,
+            'taxi_price' => 'NO',
+            'is_csd' => $segmentCode === 'CSD',
+            'is_active' => false,
         ]);
 
         Log::info('[VehicleService] stub created', [
-            'oem_code'  => $oemCode,
+            'oem_code' => $oemCode,
             'oem_model' => $oemModel,
-            'segment'   => $segmentCode,
+            'segment' => $segmentCode,
         ]);
 
         return ['variant' => $variant, 'created' => true, 'model' => $model];
     }
 
     /**
-     * Apply Vehicle Info row onto an existing variant (matched by OEM Code).
+     * Apply Vehicle Info row onto an existing variant (matched by OEM Code). The model and the
+     * variant are updated through their entity services; a value that breaks a field rule rejects
+     * the row (the importer reports it).
      *
      * @return array{complete:bool,missing:array,active:bool,variant:Variant}
      */
@@ -248,16 +225,18 @@ class VehicleService
     {
         $segmentCode = $this->norm($row['segment'] ?? $variant->segment_code);
         $subCode = $this->norm($row['sub_segment'] ?? $variant->sub_segment_code ?: $segmentCode);
+        $changes = [];
 
         if ($segmentCode !== '') {
-            $this->findOrCreateSubSegment($segmentCode, $subCode, $subCode, $userId);
+            $subSegment = $this->findOrCreateSubSegment($segmentCode, $subCode, $subCode, $userId);
+            $changes['segment_code'] = $subSegment->segment_code;
+            $changes['sub_segment_code'] = $subSegment->code;
         }
 
         if (! empty($row['custom_model'])) {
             $model = null;
             if ($variant->model_code) {
-                $cands = $this->modelCodeCandidates($variant->model_code);
-                $model = VehicleModel::query()->whereIn('code', $cands)->first();
+                $model = VehicleModel::query()->whereIn('code', $this->modelCodeCandidates($variant->model_code))->first();
             }
             if (! $model && ! empty($row['oem_model'])) {
                 $model = $this->findOrCreateModel(
@@ -266,99 +245,80 @@ class VehicleService
                     $subCode ?: $variant->sub_segment_code,
                     $userId
                 );
-                $variant->model_code = $model->code;
+                $changes['model_code'] = $model->code;
             }
             if ($model) {
-                $model->name = $this->norm($row['custom_model']);
+                $modelChanges = ['name' => $row['custom_model']];
                 if (empty($model->oem_name) && ! empty($row['oem_model'])) {
-                    $model->oem_name = $this->norm($row['oem_model']);
+                    $modelChanges['oem_name'] = $row['oem_model'];
                 }
-                $model->segment_code = $segmentCode ?: $model->segment_code;
-                $model->sub_segment_code = $subCode ?: $model->sub_segment_code;
-                $model->updated_by = $userId;
-                $model->save();
+                if (isset($changes['segment_code'])) {
+                    $modelChanges['segment_code'] = $changes['segment_code'];
+                    $modelChanges['sub_segment_code'] = $changes['sub_segment_code'];
+                }
+                $model = app(VehicleModelService::class)->update($model, $modelChanges);
                 $variant->setRelation('vehicleModel', $model);
             }
         }
 
-        $variant->segment_code = $segmentCode ?: $variant->segment_code;
-        $variant->sub_segment_code = $subCode ?: $variant->sub_segment_code;
-
-        if (isset($row['custom_variant']) && $row['custom_variant'] !== '') {
-            $variant->custom_name = $this->norm($row['custom_variant']);
-        }
-        if (isset($row['display_name']) && $row['display_name'] !== '') {
-            $variant->display_name = $this->norm($row['display_name']);
-        }
-        if (isset($row['colour_name']) && $row['colour_name'] !== '') {
-            $variant->color = $this->norm($row['colour_name']);
-        }
-        if (isset($row['taxi_price']) && $row['taxi_price'] !== '') {
-            $variant->taxi_price = $this->norm($row['taxi_price']);
-        }
-        if (isset($row['seating']) && $row['seating'] !== '') {
-            $variant->seating_capacity = (int) $row['seating'];
-        }
-        if (isset($row['wheels']) && $row['wheels'] !== '') {
-            $variant->wheels = (int) $row['wheels'];
-        }
-        if (isset($row['transmission']) && $row['transmission'] !== '') {
-            $variant->transmission = $this->norm($row['transmission']);
-        }
-        if (isset($row['drivetrain']) && $row['drivetrain'] !== '') {
-            $variant->drivetrain = $this->norm($row['drivetrain']);
-        }
-        if (isset($row['cc']) && $row['cc'] !== '') {
-            $variant->cc_capacity = $this->norm($row['cc']);
-        }
-        if (isset($row['motor']) && $row['motor'] !== '') {
-            $variant->motor = $this->norm($row['motor']);
-        }
-        if (isset($row['gvw']) && $row['gvw'] !== '') {
-            $variant->gvw = (int) $row['gvw'];
-        }
-        if (isset($row['gst_percent']) && $row['gst_percent'] !== '') {
-            $raw = $row['gst_percent'];
-            $variant->gst_percent = is_numeric($raw)
-                ? (float) $raw
-                : (float) str_replace(['%', ','], '', (string) $raw);
-        }
-        if (isset($row['shield_pack']) && $row['shield_pack'] !== '') {
-            $variant->shield_pack = $this->norm($row['shield_pack']);
+        foreach ([
+            'custom_variant' => 'custom_name',
+            'display_name' => 'display_name',
+            'colour_name' => 'color',
+            'taxi_price' => 'taxi_price',
+            'seating' => 'seating_capacity',
+            'wheels' => 'wheels',
+            'transmission' => 'transmission',
+            'drivetrain' => 'drivetrain',
+            'cc' => 'cc_capacity',
+            'motor' => 'motor',
+            'gvw' => 'gvw',
+            'gst_percent' => 'gst_percent',
+            'shield_pack' => 'shield_pack',
+        ] as $sheetField => $column) {
+            if (isset($row[$sheetField]) && $row[$sheetField] !== '') {
+                $changes[$column] = $row[$sheetField];
+            }
         }
 
-        $variant->fuel_type_id = $this->kkvId('FUEL_TYPE', $row['fuel'] ?? null, true) ?? $variant->fuel_type_id;
-        $variant->permit_id = $this->kkvId('PERMIT', $row['permit'] ?? null, true) ?? $variant->permit_id;
-        $variant->body_make_id = $this->kkvId('BODY_MAKE', $row['body_make'] ?? null, true) ?? $variant->body_make_id;
-        $variant->body_type_id = $this->kkvId('BODY_TYPE', $row['body_type'] ?? null, true) ?? $variant->body_type_id;
+        foreach (['fuel_type_id' => ['FUEL_TYPE', 'fuel'], 'permit_id' => ['PERMIT', 'permit'], 'body_make_id' => ['BODY_MAKE', 'body_make'], 'body_type_id' => ['BODY_TYPE', 'body_type']] as $column => [$keyword, $sheetField]) {
+            $id = $this->kkvId($keyword, $row[$sheetField] ?? null, true);
+            if ($id !== null) {
+                $changes[$column] = $id;
+            }
+        }
+
+        // Completeness is judged on the values as they will be stored (the service's formats).
+        $variants = app(VariantService::class);
+        $probe = clone $variant;
+        $probe->forceFill(array_intersect_key($variants->normalise($changes), $changes));
 
         $status = $this->norm($row['status'] ?? '');
-        $missing = $this->missingFields($variant);
+        $missing = $this->missingFields($probe);
         $complete = $missing === [];
 
         if (in_array($status, [self::STATUS_ACTIVE, '1', 'Y', 'YES'], true)) {
-            $variant->is_active = $complete;
+            $changes['is_active'] = $complete;
             if ($complete) {
-                $variant->status_id = $this->kkvId('VEHICLE_STATUS', 'ACTIVE') ?? $variant->status_id;
+                $changes['status_id'] = $this->kkvId('VEHICLE_STATUS', 'ACTIVE') ?? $variant->status_id;
             }
         } elseif (in_array($status, [self::STATUS_INACTIVE, '0', 'N', 'NO'], true)) {
-            $variant->is_active = false;
-            $variant->status_id = $this->kkvId('VEHICLE_STATUS', 'INACTIVE') ?? $variant->status_id;
+            $changes['is_active'] = false;
+            $changes['status_id'] = $this->kkvId('VEHICLE_STATUS', 'INACTIVE') ?? $variant->status_id;
         } elseif ($status === self::STATUS_DISCONTINUED) {
-            $variant->is_active = false;
-            $variant->status_id = $this->kkvId('VEHICLE_STATUS', 'DISCONTINUED') ?? $variant->status_id;
+            $changes['is_active'] = false;
+            $changes['status_id'] = $this->kkvId('VEHICLE_STATUS', 'DISCONTINUED') ?? $variant->status_id;
         } else {
-            $variant->is_active = $complete ? (bool) $variant->is_active : false;
+            $changes['is_active'] = $complete ? (bool) $variant->is_active : false;
         }
 
-        $variant->updated_by = $userId;
-        $variant->save();
+        $variant = $variants->update($variant, $changes);
 
         return [
             'complete' => $complete,
-            'missing'  => $missing,
-            'active'   => (bool) $variant->is_active,
-            'variant'  => $variant->fresh(),
+            'missing' => $missing,
+            'active' => (bool) $variant->is_active,
+            'variant' => $variant,
         ];
     }
 
@@ -375,21 +335,21 @@ class VehicleService
         $missing = [];
 
         $checks = [
-            'segment_code'     => $variant->segment_code,
+            'segment_code' => $variant->segment_code,
             'sub_segment_code' => $variant->sub_segment_code,
-            'fuel_type_id'     => $variant->fuel_type_id,
+            'fuel_type_id' => $variant->fuel_type_id,
             'seating_capacity' => $variant->seating_capacity,
-            'wheels'           => $variant->wheels,
-            'transmission'     => $variant->transmission,
-            'drivetrain'       => $variant->drivetrain,
-            'body_make_id'     => $variant->body_make_id,
-            'body_type_id'     => $variant->body_type_id,
-            'gst_percent'      => $variant->gst_percent,
-            'permit_id'        => $variant->permit_id,
-            'taxi_price'       => $variant->taxi_price,
-            'custom_name'      => $variant->custom_name,
-            'display_name'     => $variant->display_name,
-            'color'            => $variant->color,
+            'wheels' => $variant->wheels,
+            'transmission' => $variant->transmission,
+            'drivetrain' => $variant->drivetrain,
+            'body_make_id' => $variant->body_make_id,
+            'body_type_id' => $variant->body_type_id,
+            'gst_percent' => $variant->gst_percent,
+            'permit_id' => $variant->permit_id,
+            'taxi_price' => $variant->taxi_price,
+            'custom_name' => $variant->custom_name,
+            'display_name' => $variant->display_name,
+            'color' => $variant->color,
         ];
 
         foreach ($checks as $field => $value) {
@@ -447,6 +407,7 @@ class VehicleService
             return null;
         }
         $row = Keyvalue::query()->find($variant->permit_id);
+
         return $row ? $this->norm($row->code ?? $row->value) : null;
     }
 
@@ -456,6 +417,7 @@ class VehicleService
             return null;
         }
         $row = Keyvalue::query()->find($variant->fuel_type_id);
+
         return $row ? $this->norm($row->code ?? $row->value) : null;
     }
 
@@ -500,11 +462,11 @@ class VehicleService
         }
 
         try {
-            $row = Keyvalue::query()->create([
+            $row = app(KeyvalueService::class)->create([
                 'keyword_code' => $this->norm($keyword),
-                'code'         => $compact,
-                'value'        => $code,
-                'is_active'    => true,
+                'code' => $compact,
+                'value' => $code,
+                'is_active' => true,
             ]);
 
             return (int) $row->id;
@@ -567,6 +529,7 @@ class VehicleService
     public function descendantsOf(string $level, string $code, string $status = self::STATUS_ACTIVE): Collection
     {
         $code = $this->norm($code);
+
         return match ($this->norm($level)) {
             'SEGMENT' => $this->variantsOf($code, null, null, $status),
             'SUBSEGMENT', 'SUB_SEGMENT' => $this->variantsOf(null, $code, null, $status),
@@ -581,6 +544,7 @@ class VehicleService
         if (! $v) {
             return collect();
         }
+
         return Variant::query()
             ->where('model_code', $v->model_code)
             ->where('oem_name', $v->oem_name)
@@ -615,16 +579,12 @@ class VehicleService
             return null;
         }
 
-        foreach ([
+        $specs = $from->only([
             'permit_id', 'taxi_price', 'fuel_type_id', 'seating_capacity', 'wheels',
             'gvw', 'cc_capacity', 'motor', 'transmission', 'drivetrain',
             'body_type_id', 'body_make_id', 'gst_percent', 'shield_pack',
-        ] as $field) {
-            $to->{$field} = $from->{$field};
-        }
-        $to->updated_by = $userId;
-        $to->save();
+        ]);
 
-        return $to->fresh();
+        return app(VariantService::class)->update($to, $specs);
     }
 }

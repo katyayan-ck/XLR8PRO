@@ -113,7 +113,8 @@ return [
         App\Http\Middleware\CheckIfAdmin::class,
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
         \Backpack\CRUD\app\Http\Middleware\AuthenticateSession::class,
-        // \Backpack\CRUD\app\Http\Middleware\UseBackpackAuthGuardInsteadOfDefaultAuthGuard::class,
+        // Makes auth()/@can/Gate resolve the admin (backpack) user during admin requests (BUG-055, DEC-042).
+        \Backpack\CRUD\app\Http\Middleware\UseBackpackAuthGuardInsteadOfDefaultAuthGuard::class,
     ],
 
     // Alias for that middleware

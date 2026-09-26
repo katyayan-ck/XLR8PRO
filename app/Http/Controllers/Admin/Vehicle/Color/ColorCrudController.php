@@ -176,6 +176,9 @@ class ColorCrudController extends CrudController
         $validated['is_active'] =
             $request->boolean('is_active');
 
+        // The code is the key children reference (variants, pricing, enquiries): never re-saved (DEC-048).
+        unset($validated['code']);
+
         $color->update($validated);
 
         \Alert::success('Color updated successfully!')

@@ -1,77 +1,52 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Org;
 
 use App\Models\Admin\Employee;
 use App\Models\Admin\Vertical;
-use Illuminate\Http\Request;
+use App\Services\Org\Concerns\OrgEntityConcerns;
+use App\Support\Entity\EntityService;
+use App\Support\Entity\Field;
+use Illuminate\Database\Eloquent\Model;
 
 /**
- * Single source of truth for Vertical business logic (create/update, code
- * immutability, dependency-checked disable, media). The controller only
- * handles HTTP concerns and delegates everything else here.
+ * Vertical — the only write path (DEC-050/052).
+ *
+ * @extends EntityService<Vertical>
  */
-class VerticalService
+class VerticalService extends EntityService
 {
-    /**
-     * Vertical is standalone — Employee (via its direct vertical_code column) is its only
-     * dependent. `Vertical::employees()`/`employeeAssignments()` point at
-     * xlr8_admin_emp_vertical_pivot, which doesn't exist (see BUG-081) — using the real,
-     * existing employee.vertical_code column instead, same pattern as the other org entities.
-     */
+    use OrgEntityConcerns;
+
     private const DEPENDENTS = [
         [Employee::class, 'vertical_code', 'employee', 'employment_status', 'active'],
     ];
 
-    public function create(array $validated, Request $request): Vertical
+    protected function model(): string
     {
-        $vertical = Vertical::create($validated);
-
-        $this->syncMedia($request, $vertical);
-
-        return $vertical;
+        return Vertical::class;
     }
 
-    /**
-     * @return array{ok: true, vertical: Vertical}|array{ok: false, blockers: array<int, string>}
-     */
-    public function update(Vertical $vertical, array $validated, Request $request): array
+    public function fields(): array
     {
-        // Code is the real primary key every relation points at by string — never editable.
-        unset($validated['code']);
-
-        $wasActive = $vertical->is_active;
-        $willBeActive = (bool) ($validated['is_active'] ?? false);
-
-        $blockers = OrgEntityGuard::blockersForDisabling($wasActive, $willBeActive, $vertical->code, self::DEPENDENTS);
-        if ($blockers) {
-            return ['ok' => false, 'blockers' => $blockers];
-        }
-
-        $vertical->update($validated);
-        $this->syncMedia($request, $vertical);
-
-        return ['ok' => true, 'vertical' => $vertical->fresh()];
+        return [
+            Field::code('code', 10)->label('Vertical Code')->rules('min:2')->required()->unique()->immutable(),
+            Field::name('name')->label('Vertical Name')->required(),
+            Field::text('description', 5000)->label('Description'),
+            Field::flag('is_active')->label('Active'),
+            ...$this->mediaFields('vertical_image'),
+        ];
     }
 
-    private function syncMedia(Request $request, Vertical $vertical): void
+    protected function beforeUpdate(Model $model, array &$data): void
     {
-        if ($request->boolean('remove_image')) {
-            $vertical->clearMediaCollection('vertical_image');
-        }
+        $this->guardDisabling($model, $data, self::DEPENDENTS, 'vertical');
+    }
 
-        if ($request->hasFile('vertical_image')) {
-            $vertical->addMediaFromRequest('vertical_image')->toMediaCollection('vertical_image');
-        }
-
-        if ($request->hasFile('documents')) {
-            foreach ((array) $request->file('documents') as $file) {
-                $vertical->addMedia($file)->toMediaCollection('documents');
-            }
-        }
-
-        foreach ((array) $request->input('remove_documents', []) as $mediaId) {
-            $vertical->media()->where('id', $mediaId)->where('collection_name', 'documents')->first()?->delete();
-        }
+    protected function afterSave(Model $model, array $input, bool $created): void
+    {
+        $this->syncMedia($model, $input, 'vertical_image');
     }
 }

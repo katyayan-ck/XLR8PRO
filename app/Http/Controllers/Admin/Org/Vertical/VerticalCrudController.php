@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Admin\Org\Vertical;
 
-use App\Http\Requests\VerticalRequest;
 use App\Models\Admin\Vertical;
 use App\Services\Org\VerticalService;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
@@ -11,6 +10,7 @@ use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
+use Illuminate\Http\Request;
 
 class VerticalCrudController extends CrudController
 {
@@ -140,30 +140,24 @@ class VerticalCrudController extends CrudController
         ]);
     }
 
-    public function store(VerticalRequest $request)
+    /** Create through VerticalService, the only write path (DEC-050/052). */
+    public function store(Request $request)
     {
         $this->authorizeManage();
 
-        $this->verticals->create($request->validated(), $request);
+        $this->verticals->create($request->all());
 
         \Alert::success('Vertical created successfully!')->flash();
 
         return redirect(backpack_url('org/vertical'));
     }
 
-    public function update(VerticalRequest $request, $id)
+    /** Update through VerticalService (validation and business rules raise field errors). */
+    public function update(Request $request, $id)
     {
         $this->authorizeManage();
 
-        $vertical = Vertical::findOrFail($id);
-
-        $result = $this->verticals->update($vertical, $request->validated(), $request);
-
-        if (! $result['ok']) {
-            return back()->withInput()->withErrors([
-                'is_active' => 'Cannot disable this vertical — it still has '.implode(' and ', $result['blockers']).'. Disable those first.',
-            ]);
-        }
+        $this->verticals->update(Vertical::findOrFail($id), $request->all());
 
         \Alert::success('Vertical updated successfully!')->flash();
 

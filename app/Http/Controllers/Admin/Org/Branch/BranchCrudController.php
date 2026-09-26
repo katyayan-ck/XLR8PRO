@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin\Org\Branch;
 
 use App\Http\Controllers\Admin\Traits\ScopedCrud;
-use App\Http\Requests\BranchRequest;
 use App\Models\Admin\Branch;
 use App\Services\Org\BranchService;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
@@ -12,6 +11,7 @@ use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
+use Illuminate\Http\Request;
 
 class BranchCrudController extends CrudController
 {
@@ -146,19 +146,12 @@ class BranchCrudController extends CrudController
     //     ]);
     // }
 
-    public function update(BranchRequest $request, $code)
+    /** Update through BranchService (validation and business rules raise field errors). */
+    public function update(Request $request, $code)
     {
         $this->authorizeManage();
 
-        $branch = Branch::where('code', $code)->firstOrFail();
-
-        $result = $this->branches->update($branch, $request->validated(), $request);
-
-        if (! $result['ok']) {
-            return back()->withInput()->withErrors([
-                'is_active' => 'Cannot disable this branch — it still has '.implode(' and ', $result['blockers']).'. Disable those first.',
-            ]);
-        }
+        $this->branches->update(Branch::where('code', $code)->firstOrFail(), $request->all());
 
         \Alert::success('Branch updated successfully!')->flash();
 
@@ -196,11 +189,12 @@ class BranchCrudController extends CrudController
         ]);
     }
 
-    public function store(BranchRequest $request)
+    /** Create through BranchService, the only write path (DEC-050/052). */
+    public function store(Request $request)
     {
         $this->authorizeManage();
 
-        $this->branches->create($request->validated(), $request);
+        $this->branches->create($request->all());
 
         \Alert::success('Branch created successfully!')->flash();
 

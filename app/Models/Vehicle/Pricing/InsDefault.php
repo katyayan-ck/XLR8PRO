@@ -3,27 +3,31 @@
 namespace App\Models\Vehicle\Pricing;
 
 use App\Models\BaseModel;
+use App\Services\Vehicle\Pricing\Rules\InsDefaultService;
 use Illuminate\Database\Eloquent\Builder;
 
 class InsDefault extends BaseModel
 {
     protected $table = 'xlr8_vehicle_pricing_ins_defaults';
 
+    /** Columns = the entity service's fields (DEC-050/056); the service owns their rules. */
+    protected string $entityService = InsDefaultService::class;
+
     protected $fillable = [
+        'import_session_id',
         'model_code',
         'permit',
-        'default_company',
-        'company_priority_2',
-        'company_priority_3',
+        'insurance_company',
+        'priority',
+        'is_default',
         'is_active',
-        'wef_date',
     ];
 
     protected function casts(): array
     {
         return array_merge(parent::casts(), [
             'is_active' => 'boolean',
-            'wef_date'  => 'date',
+            'wef_date' => 'date',
         ]);
     }
 
@@ -32,7 +36,7 @@ class InsDefault extends BaseModel
         return $query->where('is_active', true)
             ->where(function ($q) {
                 $q->whereNull('wef_date')
-                  ->orWhere('wef_date', '<=', now()->toDateString());
+                    ->orWhere('wef_date', '<=', now()->toDateString());
             });
     }
 
@@ -48,7 +52,7 @@ class InsDefault extends BaseModel
             ->orderByDesc('wef_date')
             ->first();
 
-        if (!$row) {
+        if (! $row) {
             return ['USGI'];
         }
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\Pricing;
 use App\Http\Controllers\Controller;
 use App\Models\Vehicle\Pricing\RtoRule;
 use App\Services\Vehicle\Pricing\RtoService;
+use App\Services\Vehicle\Pricing\Rules\RtoRuleService;
 use Illuminate\Http\Request;
 
 class RtoRuleController extends Controller
@@ -49,10 +50,8 @@ class RtoRuleController extends Controller
             abort(403, 'Unauthorized. You do not have permission to create RTO rules.');
         }
 
-        $data = $this->validateRule($request);
-        $data['is_active'] = $request->boolean('is_active', true);
-
-        RtoRule::create($data);
+        // Every field rule (scope synonyms, ANY wheels, amounts) lives in RtoRuleService (DEC-056).
+        app(RtoRuleService::class)->create($request->all() + ['is_active' => $request->boolean('is_active', true)]);
 
         \Alert::success('RTO Rule created successfully.')->flash();
 
@@ -79,11 +78,7 @@ class RtoRuleController extends Controller
             abort(403, 'Unauthorized. You do not have permission to edit RTO rules.');
         }
 
-        $rule = RtoRule::findOrFail($id);
-        $data = $this->validateRule($request);
-        $data['is_active'] = $request->boolean('is_active', true);
-
-        $rule->update($data);
+        app(RtoRuleService::class)->update(RtoRule::findOrFail($id), ['is_active' => $request->boolean('is_active', true)] + $request->all());
 
         \Alert::success('RTO Rule updated successfully.')->flash();
 
@@ -123,32 +118,5 @@ class RtoRuleController extends Controller
                 'message' => $e->getMessage(),
             ], 422);
         }
-    }
-
-    protected function validateRule(Request $request): array
-    {
-        return $request->validate([
-            'code' => 'nullable|string|max:50',
-            'permit' => 'required|string|max:30',
-            'wheels' => 'nullable|integer|min:2|max:16',
-            'reg_type' => 'nullable|string|max:20',
-            'body_type' => 'nullable|string|max:30',
-            'gvw_range' => 'nullable|string|max:30',
-            'seater' => 'nullable|string|max:20',
-            'fuel_type' => 'nullable|string|max:30',
-            'cc_range' => 'nullable|string|max:30',
-            'tax_factor' => 'nullable|numeric|min:0',
-            'tax_slab' => 'nullable|string|max:50',
-            'surcharge' => 'nullable|numeric|min:0',
-            'hypothecation' => 'nullable|numeric|min:0',
-            'green_tax' => 'nullable|numeric|min:0',
-            'registration_fee' => 'nullable|numeric|min:0',
-            'duplicate_tax_card' => 'nullable|numeric|min:0',
-            'fitness' => 'nullable|numeric|min:0',
-            'penalty' => 'nullable|numeric|min:0',
-            'rto_tape' => 'nullable|numeric|min:0',
-            'wef_date' => 'nullable|date',
-            'expired_on' => 'nullable|date',
-        ]);
     }
 }

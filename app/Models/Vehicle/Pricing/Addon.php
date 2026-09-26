@@ -3,6 +3,7 @@
 namespace App\Models\Vehicle\Pricing;
 
 use App\Models\BaseModel;
+use App\Services\Vehicle\Pricing\Addons\AddonService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -12,42 +13,43 @@ class Addon extends BaseModel
 
     protected $table = 'xlr8_vehicle_pricing_addons';
 
+    /** Columns = the entity service's fields (DEC-050/057); the service owns their rules. */
+    protected string $entityService = AddonService::class;
+
     protected $fillable = [
         'import_session_id',
+        'addon_type',
         'segment',
         'model_code',
         'variant_code',
-        'addon_type',
-        'scheme_name',
-        'tenure_years',
-        'name',
-        'amount',
-        'oem_share',
-        'dealer_share',
+        'permit',
         'shield_pack',
         'transmission',
         'fuel',
-        'permit',
+        'scheme_name',
+        'name',
+        'tenure_years',
+        'amount',
+        'oem_share',
+        'dealer_share',
+        'default_allocation',
         'is_default',
         'is_active',
         'wef_date',
         'expired_on',
-        'created_by',
-        'updated_by',
-        'deleted_by',
     ];
 
     protected function casts(): array
     {
         return array_merge(parent::casts(), [
             'tenure_years' => 'integer',
-            'amount'       => 'decimal:2',
-            'oem_share'    => 'decimal:2',
+            'amount' => 'decimal:2',
+            'oem_share' => 'decimal:2',
             'dealer_share' => 'decimal:2',
-            'is_default'   => 'boolean',
-            'is_active'    => 'boolean',
-            'wef_date'     => 'date',
-            'expired_on'   => 'date',
+            'is_default' => 'boolean',
+            'is_active' => 'boolean',
+            'wef_date' => 'date',
+            'expired_on' => 'date',
         ]);
     }
 

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Admin\Org\Designation;
 
-use App\Http\Requests\DesignationRequest;
 use App\Models\Admin\Designation;
 use App\Services\IAM\PermissionTreeService;
 use App\Services\Org\DesignationService;
@@ -147,30 +146,24 @@ class DesignationCrudController extends CrudController
         ]);
     }
 
-    public function store(DesignationRequest $request)
+    /** Create through DesignationService, the only write path (DEC-050/052). */
+    public function store(Request $request)
     {
         $this->authorizeManage();
 
-        $designation = $this->designations->create($request->validated(), $request);
+        $this->designations->create($request->all());
 
         \Alert::success('Designation created successfully!')->flash();
 
         return redirect(backpack_url('org/designation'));
     }
 
-    public function update(DesignationRequest $request, $id)
+    /** Update through DesignationService (validation and business rules raise field errors). */
+    public function update(Request $request, $id)
     {
         $this->authorizeManage();
 
-        $designation = Designation::findOrFail($id);
-
-        $result = $this->designations->update($designation, $request->validated(), $request);
-
-        if (! $result['ok']) {
-            return back()->withInput()->withErrors([
-                'is_active' => 'Cannot disable this designation — it still has '.implode(' and ', $result['blockers']).'. Disable those first.',
-            ]);
-        }
+        $this->designations->update(Designation::findOrFail($id), $request->all());
 
         \Alert::success('Designation updated successfully!')->flash();
 

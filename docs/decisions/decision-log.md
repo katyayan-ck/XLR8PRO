@@ -324,3 +324,295 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
     - Our migration now uses their `sale_type` type.
     - A new migration converts the local varchar `sale_type` (0 rows set) to their type.
 - **Risk:** MED (shared branch) · **Approved-by:** user (27-09-2026, "merge … resolve conflicts") · **Reversal:** local tags `backup/feature-integrations-pre-merge` and `backup/stage-local-pre-merge`; revert the merge commit.
+
+### DEC-042 | 27-09-2026 | A3 (UAT) | Enable Backpack's guard-switch middleware (BUG-055)
+- **Decision:** enable `UseBackpackAuthGuardInsteadOfDefaultAuthGuard` so that `auth()`, `@can` and `Gate` resolve the admin user in admin requests, and pin `User::$guard_name = 'web'`.
+- **Why the guard pin:** with only the middleware on, Spatie resolved permissions against the switched default guard (`backpack`), while every permission is stored under `web`. Every non-superadmin permission check failed. The pin restores the previous permission semantics exactly.
+- **Verified:**
+  - Full smoke of all 169 parameter-free admin GET screens, as user 1 and user 40, is identical before and after.
+  - 231 tests pass. New `AdminAuthGuardTest`.
+- **Approved-by:** user (27-09-2026, "switch if it broke nothing") · **Reversal:** re-comment the middleware line.
+
+### DEC-043 | 27-09-2026 | A3 (UAT) | Disable the 34 users that have no role (BUG-090/166)
+- **Decision:** set `users.is_active = 0` for the 34 users whose employees carry retired designation codes (`MAN`×18, `CNS`×6, `DSA`×3, `GM`×2, `RTO`×2, `API`, `SWD`, `TST`). None had a role, scopes, or a login ever.
+- **Scope:** disable, not delete. Employee and person rows stay, so bookings, enquiries and reporting-manager references keep resolving. Admin and OTP logins both refuse inactive users.
+- **User ids:** 41,33,34,36,37,48,52,44,45,47,6,7,9,11,15,16,17,18,19,20,21,22,25,26,27,29,30,31,32,38,43,46,39,42.
+- **Backup:** `storage/app/backups/xlrm-users-disabled-27-09-2026.sql` (gitignored).
+- **Other environments:** set `Login Active = No` for these Emp Codes in the users workbook and import it.
+- **Approved-by:** user (27-09-2026, "disable or remove them permanently") · **Reversal:** set `is_active = 1`, or re-import the backup.
+
+### DEC-044 | 27-09-2026 | A1 (purge follow-up) | Remove dead code the 26-09 purge missed; fix or remove pivot-table relations (BUG-022/024/037/081/082/084/158)
+- **Remove (all reference-checked: no route or caller, or callers removed in the same change):**
+  - `VehicleAccessoryCrudController`: `Route::crud` registered nothing. Also its `vehicle-accessory` route line, 2 views and the export button view, which point at routes that never existed.
+  - `Services/Exporters/UserExporter` (its route was removed in DEC-036).
+  - `Services/Importers/RulesUserImporter` and the deprecated `UserDataScope` model (table missing).
+  - `DesigDeptTreeCrudController` (unrouted; the `DesigDeptTree` model stays).
+  - `DashboardController::getSuperAdminDashboard/getScopedUserDashboard` (never called).
+  - The relations to non-existent `xlr8_admin_emp_*_pivot` tables: `User::branches/locations/departments`, `Employee::branches/locations/departments`, `Vertical::employees/employeeAssignments`, `Location::employeeAssignments`, and the 4 unreferenced `Employee{Branch,Department,Location,Vertical}Assignment` models on those tables.
+- **Fix:** `Location::branch()` and `Branch::primaryEmployees()` join on `Branch.code`; `branch_code` is always NULL.
+- **Risk:** LOW (dead code) · **Approved-by:** auto (plan §2 drop list: unrouted controllers, unused models/services) · **Reversal:** revert the commit.
+
+### DEC-045 | 27-09-2026 | A0 (platform) | composer.json for PHP 8.4; trim unused packages; env-driven config/app.php
+- **Decision:**
+  - `php` → `^8.4`. Project name/description updated.
+  - **Removed (no usage in app/config/routes/views/tests):** `graphp/graph`, `intervention/image`, `spatie/laravel-translatable`; dev `markwalet/laravel-changelog` and `laravel/sail` (Laragon only).
+  - **Google API services:** only Sheets and Drive are used, so Google's supported `Google\Task\Composer::cleanup` keeps just those. This removes about 37k files and fixes the stalled autoload dump.
+  - **In-constraint updates:** `composer update` (minor/patch only).
+  - **Majors deferred until after UAT, as each is breaking for both teams' code:** Laravel 13, maatwebsite/excel 4, spatie/laravel-permission 8, kreait/firebase-php 8, PHPUnit 12/13, l5-swagger 11, tinker 3, kalnoy/nestedset 7.
+  - `config/app.php`: every value env-driven with sane defaults; `faker_locale` en_IN. The timezone is unchanged (Asia/Kolkata, the booking team's value), but see BUG-169.
+- **Deploy risk:** `stage`, `uat` and `main` auto-deploy with `composer install` on cPanel. These servers must run PHP ≥ 8.4 before this reaches them, or the install fails after `artisan down`. Held on `dev/admin` (which doesn't deploy) until confirmed.
+- **Approved-by:** user (27-09-2026, "add/upgrade/remove packages as and where seems fit") · **Reversal:** revert `composer.json`/`composer.lock`.
+- **Addendum (autoload speed, user request):**
+  - **Root causes of the slow or stalled `dump-autoload`:**
+    1. `google/apiclient-services` shipped 37k files. The cleanup now keeps 2 services.
+    2. Four ambiguous vendor classes were duplicated in `laravel/pint/app` and in `league/flysystem/src/Local`. Both paths are now in `exclude-from-classmap`.
+    3. Three of our files broke PSR-4:
+       - `XlInsurer` ×2 declared `class Xlinsurer`. Fixed the case, which is also a latent Linux autoload bug.
+       - `tests/Unit/Services/HRJourneyServiceTest.php` declared an `App\…` namespace and targeted the retired Post model. It never ran ("No tests found") and is removed.
+    4. `config.optimize-autoloader: true` forced a full classmap scan on every local dump. Set to `false`: production is unaffected because `deploy.yml` passes `--optimize-autoloader`.
+  - **Result:** local `composer dump-autoload` takes about 5s (the optimized one about 30s), where before it hung. No warnings remain.
+  - Windows Defender real-time scanning of `vendor/` still adds time. Excluding `D:\laragon` is a machine setting for the user.
+
+### DEC-046 | 27-09-2026 | A3 (UAT) | Timestamps stay IST; add an IT department
+- **Timezone (BUG-169):** keep `Asia/Kolkata`. Timestamps written before the 26-09 switch stay as they are (UTC values, not converted). BUG-169 is closed as accepted, and the architecture rule now says timestamps are stored in IST.
+- **IT department:**
+  - Create department `IT`. Its default division is the existing division `IT`, which moves from Admin (`dept_code ADM → IT`). Division codes are unique, the `IT` code is unchanged, and nothing referenced Admin → IT.
+  - Idempotent `ItDepartmentSeeder`, so other environments run `php artisan db:seed --class=ItDepartmentSeeder`.
+  - BMPL-0365 and BMPL-0630 get primary department and division `IT` plus the matching scopes (dump: Primary Department = IT).
+- **Server PHP:** the user confirmed the cPanel servers run PHP 8.4, which clears the DEC-045 deploy gate.
+- **Approved-by:** user (27-09-2026) · **Reversal:** move the division back to ADM and delete the department.
+
+### DEC-047 | 27-09-2026 | A1 (purge follow-up) | Remove remaining dead IAM/legacy pieces (BUG-006/017/076); close stale tracker items
+- **Remove (reference-checked):**
+  - `CheckPermission` middleware and its `checkPermission` alias: no route uses it, and admin code gates inline.
+  - The `App\Models\Core\ReportingHierarchy` model: no references.
+  - Orphan views `admin/graph-edge/*` and `admin/graph-node/*`: their controllers were deleted earlier.
+  - `RBACService::getAccessibleResources()` and `getModelClassForResourceType()`: never called, and they point at a missing brand table.
+- **Keep:**
+  - `ScopedQuery`, needed if data scoping is switched on (BUG-083 decision).
+  - `ApprovalService` and the Graph models, used by `DocService`.
+  - `BrandCrudController`, referenced by the booking team's `AdminImportController`.
+- **Close as already fixed:**
+  - BUG-080: the suite is fully green (240 passed).
+  - BUG-147 and BUG-155: the dead-route checker finds none.
+  - BUG-017: the listed dead classes are gone; `ScopedQuery` is kept on purpose.
+- **Risk:** LOW · **Approved-by:** auto (plan §2 drop list) · **Reversal:** revert the commit.
+
+### DEC-048 | 27-09-2026 | A3 (UAT) | Vehicle masters: codes immutable on edit; variant = one row per colour (BUG-171/172)
+- **Facts:**
+  - Colours are stored as separate variant rows: `code` plus `color`/`color_code`, 2,652 rows for 652 codes (user, 27-09-2026). `xlr8_vehicle_color` and the Colour screen are legacy (its menu is already hidden).
+  - Editing any vehicle master re-saved its `code` through the space-stripping `code` transform. That orphaned children keyed on the old code: 588 variants and 584 legacy colour rows no longer match a model (for example `THAR ROXX` vs `THARROXX`).
+- **Decision:**
+  1. `code` is immutable on update for segment, sub-segment, model, variant and colour (as for the Org masters). The edit forms show it read-only.
+  2. `VariantRequest`: `code` is unique per (`code`, `color_code`) among live rows, not table-wide. Before, every multi-colour variant failed to save with "code already taken".
+  3. Variant form and model accept `color` and `color_code`.
+  4. The variant deactivation guard no longer counts legacy colour-table rows.
+- **Not done (needs the user):** repairing the existing mismatched codes. The canonical form (spaced OEM code vs squashed) is the user's call.
+- **Risk:** MED (UAT-visible fixes) · **Approved-by:** auto (obvious bug fixes in UAT scope) · **Reversal:** revert the commit.
+
+### DEC-049 | 27-09-2026 | A3 (UAT) | Canonical code format: upper-case with hyphens (THAR-ROXX)
+- **Decision (user, 27-09-2026):** codes of this kind use upper-case letters and digits, with hyphens where the name has spaces: `THAR-ROXX`, `NON-XUV`, `E-ALFA-PLUS`. This applies to keywords and codes alike.
+- **Code:** the shared `uppercase_alphanumeric_dash_underscore` transform (used by 18 models and the global `code` rule) now turns whitespace into a single hyphen instead of deleting it. Codes without spaces are unchanged.
+- **Data (migration + `vehicle:normalise-codes` command, idempotent, dry-run available):**
+  - **Model codes:** each spaced/squashed family (e.g. `THAR ROXX` / `THARROXX`) becomes the hyphenated form, in `xlr8_vehicle_model.code` and every reference column (`model_code` in all tables, `model` in CRM/booking tables, user scopes).
+  - **Sub-segment:** `NON XUV` → `NON-XUV`, in the sub-segment table, every `sub_segment_code` column, user scopes and employees.
+  - Old → new maps are written to `storage/logs/vehicle-code-normalisation-<db>.json` for reversal. The migration aborts if two master rows would collide.
+- **Keyword (key-value) codes:** new and edited ones follow the rule. Existing ones (about 1,900 with spaces) are converted only after a reference audit, because other tables may store them as plain text.
+- **Not codes:** consultant names (`sc_code`), and insurer and financier names, are left as they are.
+- **Risk:** HIGH (mass remap). **Approved-by:** user. Backup taken before running locally. **Reversal:** the JSON map.
+
+### DEC-050 | 27-09-2026 | A3 / project-wide | One field-rule set per entity, enforced by the entity service (SSOT); no correcting old data
+- **Decision (user, 27-09-2026):**
+  - **Old data:** stop correcting it. A fresh copy from the latest import replaces it.
+  - **Field rules:** every field of an entity has exactly one definition of format, transformation, validation and label. It is enforced for every create/edit, whether from a CRUD screen, an import or an API, only through that entity's service. This is a global project rule.
+- **Design:**
+  - `App\Support\Entity\Field` is the fluent field definition: label, transforms (the `HasColumnTransformations` pipeline names), rules, unique scope, immutable-on-update.
+  - `App\Support\Entity\EntityService` is the base for every entity service. `create()`, `update()` and `upsert()` run normalise → validate (throws `ValidationException`) → business guards → persist through Eloquent, in a transaction.
+  - Models that declare `$entityService` take their transform backstop from the service's fields, so there is no second copy.
+  - Controllers and importers only call the service. FormRequests no longer define rules for migrated entities.
+- **Withdrawn:** the vehicle code normaliser, its command and the two data-correction migrations (DEC-049 data part; never deployed). The DEC-049 hyphen format stays, as a field rule.
+- **Roll-out order:** Vehicle masters (segment, sub-segment, model, variant) first; then Org masters, Person, Employee/User (+ importer), KeyValue, Pricing entities.
+- **Risk:** MED (write paths change) · **Approved-by:** user · **Reversal:** revert per-entity commits.
+
+### DEC-051 | 27-09-2026 | A3 (UAT) | Purge the local vehicle master data before a fresh import
+- **Decision (user, option 1):** hard-delete all rows of `xlr8_vehicle_segment`, `xlr8_vehicle_subsegment`, `xlr8_vehicle_model`, `xlr8_vehicle_variant` and the legacy `xlr8_vehicle_color` in the **local** `xlrm` only. The data is reloaded through the vehicle import, which now writes only through the entity services (DEC-050).
+- **Not touched:**
+  - Pricing tables, CRM/booking references and key-values.
+  - `xlrm_testing`: it keeps its copy so the vehicle tests have data. Don't `testing:refresh-db` until the fresh import is in.
+- **Backup:** `storage/app/backups/xlrm-vehicle-masters-pre-purge-27-09-2026.sql`. No foreign keys reference these tables.
+- **Risk:** HIGH (destructive, local) · **Approved-by:** user · **Reversal:** restore the backup.
+
+### DEC-052 | 27-09-2026 | A3 (UAT) | Org masters on entity services (DEC-050 roll-out)
+- **Scope:** Branch, Location, Department, Division, Vertical and Designation.
+  - Their services become `EntityService` subclasses. The FormRequests and model `$columnTransformations` are removed; the rules live in `fields()`.
+  - Dependency guards, head office, the reports-to rank check, the default division and media move into `beforeCreate` / `beforeUpdate` / `afterSave`.
+  - The RBAC master import sheets (department, division) write through the services.
+- **One rule per field where the old copies disagreed:**
+  - `phone`: cleaned by `IdentifierService::cleanMobile()` (+91 / 0 prefixes removed), must be 10 digits, on create **and** edit. Before, Branch accepted any string on edit.
+  - Department `is_active`: the same rule on create and edit.
+- **Framework additions:**
+  - `Field::virtual()` for validated non-column inputs (image/documents uploads).
+  - Callable transform steps.
+  - The `afterSave` hook.
+- **Approved-by:** user (DEC-050 roll-out order) · **Reversal:** revert.
+- **Addendum (DEC-052):** retired `import:rbac-master` (`ImportRbacMaster`, `RbacMasterImport`, `BaseSheetImport` and its Branch/Department/Division/DesignationTree/Post/UsersImport sheets).
+  - None of the sheets implements a Maatwebsite `To*` concern, so the import silently processed nothing while reporting "No errors" (proven on `xlrm_testing`: 0 inserted, 0 updated, data unchanged). `skip()` was also undefined.
+  - It was a direct-to-table write path (DEC-050 violation).
+  - Replacements: org masters go through the admin screens (entity services); users through `import:users` / Users → Bulk import.
+
+### DEC-053 | 27-09-2026 | A3 (UAT) | Person, contacts, addresses and banking on entity services (DEC-050 roll-out)
+- **Services (`App\Services\Person\`):** `PersonRecordService`, `PersonContactService`, `PersonAddressService`, `PersonBankingService`.
+  - `PersonService` keeps its read API (`find/search/get/setPrimary`). Its `upsert/upsertContact/upsertAddress/upsertBanking` now delegate to these, so existing callers keep working.
+  - Callers: the Person screen (and its inline contacts/addresses/banking), the standalone Contact screen, and the user importer.
+  - 5 FormRequests deleted (`Person`, `PersonContact`, `PersonAddress`, `PersonBankingDetail`, `Employee`).
+  - The unrouted create/store/edit/update methods of the retired Employee/Address/Banking screens (DEC-037) were removed.
+- **Field rules (one set for screen and import):**
+  - Names: Title Case for individuals; a legal entity's display name is kept as typed.
+  - Missing name parts are split from the display name. "A B" → first A, last B; before, B became both middle and last.
+  - `person_code`: derived when not given — individual: Aadhaar → PAN; legal entity: PAN → TAN; else `PERS-######`. Immutable. The importer no longer derives it itself.
+  - Aadhaar: spaces/dashes removed. PAN/TAN/GSTIN: upper-case.
+  - Aadhaar/PAN/TAN/GSTIN are unique across all persons, **including deleted ones**, matching the DB unique keys (was a DB error).
+  - Enums (gender, marital status, salutation, types) are matched case-insensitively.
+  - Dates accept any parseable date or an Excel serial.
+  - `contact_detail` is formatted by type: Mobile 10 digits; Email lower-case and valid; Landline/Fax digits.
+  - Pincode 6 digits; IFSC pattern; MICR 9 digits; account number alphanumeric.
+- **Type slots** (`TypedSlots`; a DB enum plus a unique key per person):
+  - No type given → Primary if free, else the next free type.
+  - Asking for Primary promotes the row and demotes the old one.
+  - Any other used slot is a validation error.
+  - Promotion is a swap: the old Primary takes the promoted row's former slot (`SwapsPrimarySlot`).
+- **Deletes of contacts/addresses/banking are permanent (BUG-175):** the unique keys cover soft-deleted rows, so a trashed row blocked its slot forever.
+- **Kept as screen policy (not a field rule):** the Person create screen requires a primary mobile. Its format is the contact rule.
+- **Importer:**
+  - Blank person cells are left out, so the stored values are kept (as before).
+  - A value breaking a field rule fails the row with the rule's message; `failures()` lists each failed row.
+  - On `xlrm_testing`, 2 existing employees fail the round trip for bad stored data: an 11-digit Aadhaar (BMPL-0557) and an e-mail containing a space (BMPL-0669). Per DEC-050 the old data is not corrected.
+- **Framework:**
+  - `EntityService::derive()` for computed fields.
+  - Defaults are applied before validation.
+  - Immutable fields are dropped after normalisation on update.
+  - `Field::choice()` and `Field::date()`; `unique(includeTrashed:)`.
+  - `describe()` tolerates callable transforms.
+- **Approved-by:** user (DEC-050 roll-out, "continue") · **Risk:** MED (stricter validation on the Person screens and the user import) · **Reversal:** revert.
+
+### DEC-054 | 27-09-2026 | A3 (UAT) | Employees, login accounts and data scopes on entity services (DEC-050 roll-out)
+- **Services:** `Org\EmployeeService`, `IAM\UserService`, `IAM\UserScopeService`.
+  - **Callers:**
+    - The User screen: create, edit, suspend, revoke, activate, add-on scopes.
+    - The `Users_Import` sheet (`StandaloneUsersImport`): it no longer writes `xlr8_admin_employee`, `users`, `xlr8_admin_user_scopes` or `xlr8_admin_person_user_types` with `DB::table`; person user types go through `PersonUserTypeService::assign`.
+    - The `User_Scopes` sheet.
+    - `HRJourneyService` (designation changes).
+  - `UserRequest` keeps only the workflow's inputs (user type, role, permission overrides, change reason/date/remarks) and the screen policy that an employee is onboarded with a full org placement. Every field format and existence rule is in the services.
+  - The Employee model's `$fillable` now lists every column. `employment_status`, `oem_id` and others were missing; this only worked before because the importer bypassed Eloquent.
+- **Field rules:**
+  - **Employee:**
+    - `code` must be `BMPL-####`; it's generated when blank and is immutable.
+    - `person_code` is fixed at create.
+    - Org/vehicle placement codes must exist (live rows).
+    - `desig_code` always mirrors `designation_code`.
+    - The employment enums are matched case-insensitively.
+    - UAN is 12 digits and unique; the ESI number is unique.
+  - **User:**
+    - The username is lower-case (a-z 0-9 . _ - @) and unique, including deleted accounts.
+    - The password is taken exactly as typed (not trimmed), minimum 8, stored hashed; blank on edit keeps it.
+    - Roles, permission overrides and `bypass_data_scoping` stay IAM decisions of the calling workflow, not data fields.
+  - **Scope:**
+    - Type ∈ branch/location/department/division/vertical/segment/sub_segment/model/variant.
+    - The code must exist in that type's master.
+- **One revoke semantics:**
+  - Before, the User screen soft-deleted dropped add-on scopes while the User_Scopes sheet deactivated them.
+  - Now both deactivate (`is_active = 0`, `to_date` = today) and keep the row. Granting reuses the row (restoring a deleted one).
+  - Readers already use active rows only. Before, the importer's grant also failed with a duplicate key on a soft-deleted row.
+- **Framework (applies to all entity services):**
+  - **On update only changed values are validated.** A stored value left as it is (legacy data, e.g. the 36 employees whose designation code is missing from the designation table, BUG-090) no longer blocks an edit of another field. Required fields must still be present.
+  - Consequence: re-importing an unchanged export is again a strict no-op (0 failed rows), including the two persons with bad stored Aadhaar/e-mail noted in DEC-053.
+  - New `Field::raw()`: no trimming or transforms, used for passwords.
+- **Atomic writes:**
+  - Each `Users_Import` row is one transaction (person, employee, user, scopes, role).
+  - User-screen onboarding and edit are one transaction.
+  - A rejected value leaves nothing half-written; before, a person and employee could be saved without their user.
+- **Approved-by:** user (DEC-050 roll-out, "continue") · **Risk:** MED (User screen and user import validation; IAM orchestration unchanged) · **Reversal:** revert.
+
+### DEC-055 | 27-09-2026 | A3 (UAT) | Keyword masters and values on entity services (DEC-050 roll-out); backstop transforms only changed attributes
+- **Services:** `Utils\KeywordMasterService`, `Utils\KeyvalueService`. Reads stay on the cached `KeywordValueService`; its cache for the keyword is cleared after each write.
+  - **Callers:**
+    - The Keyword and Key Value screens (`KeyvalueRequest` / `KeywordMasterRequest` deleted).
+    - The vehicle import (`AdminImportController::getOrCreateKeyValue`, was `DB::table()->insertGetId`).
+    - The enquiry import (`ImportEnquiriesJob`, booking team's file, minimal change: its insert and its parent-list `UPDATE` now call the service; matching/caching untouched).
+  - The models' `$columnTransformations` and the `Keyvalue` save hook (upper-casing `key`, code fallback to key) moved into the service.
+- **One rule set where the copies disagreed:**
+  - **Code uniqueness:** the screen rule was table-wide, while the data and the enquiry import use one code per keyword (the same code exists under several keywords). It is now unique **within its keyword**.
+  - **`parent_id`:** the screen allowed one integer, while the enquiry import stores a comma-separated parent list. Now a comma-separated id list, with `addParent()` appending one.
+  - **`extra_data`:** the screen posted JSON text but validated `array`, so any filled-in value failed. Now JSON text is decoded (`Field::json()`), and invalid JSON is reported.
+  - **Codes:** the standard code format (DEC-049), fixed once created. The vehicle import looks existing values up by the normalised code before creating one.
+  - **A value's keyword must exist.** Two keywords were in use without a master row: `PERMIT` (vehicle import, 4 values) and `FOLLOW_UP_REMARKS_TYPE` (19 values). Migration `2026_09_27_130000_add_missing_keyword_masters` adds them (idempotent, through the service). It has run on local `xlrm` and `xlrm_testing`; other environments get it on deploy.
+- **Legacy codes are left as they are** (DEC-050: no correcting old data): 1,903 stored codes contain spaces (mostly `SPARE_BIN`).
+- **Framework — BUG-176:** `HasColumnTransformations` re-ran every column's pipeline on **every update**, so editing any field of a row whose stored code had spaces silently rewrote the code (`OLD BIN A1` → `OLD-BIN-A1`), orphaning references. This is the BUG-171 pattern, and it applied to keyword values and every model with the backstop. Now, on update, only the changed attributes are transformed.
+- **Approved-by:** user (DEC-050 roll-out, "continue") · **Risk:** MED (Key Value screens, vehicle/enquiry imports create keyword values through validation) · **Reversal:** revert; migration `down()` removes the two masters.
+
+### DEC-056 | 27-09-2026 | A3 (UAT) | Pricing rules on entity services (DEC-050 roll-out, pricing group 1 of 4)
+- **Services (`App\Services\Vehicle\Pricing\Rules\`):** `RtoRuleService`, `TcsConfigService`, `InsBaseRuleService`, `InsIdvSlotService`, `InsDefaultService`, `InsAddonRateService`.
+  - **Callers:**
+    - The RTO Rules and TCS screens (their inline validation was removed).
+    - The Insurance + RTO rules workbook (`RulesWorkbookService`), which no longer writes with `DB::table`. It only maps sheet columns; the dead `importGeneric()` and its `onlyExisting()` / `expireTable()` helpers are gone.
+  - WEF expiry of the live set is the services' `expireActive()`: `is_active = 0` and `expired_on = WEF`; history is never deleted (Machine Spec v3.1.1).
+- **Spec-conformant field rules, where screen and import disagreed:**
+  - **`wheels`:** the column is a tinyint. The screen accepted 2–16; the workbook sent scope text such as `ANY`, which failed silently. Now ANY/ALL/`*`/blank = all (null), else a whole number 2–255.
+  - **Permit / Fuel:** synonyms are applied first on the screen too (before, only the import applied them).
+  - **Amounts** (NOT NULL, default 0):
+    - `₹` and separators are ignored ("10,00,000" → 1000000).
+    - Sheet blank markers (`-`, NA, N/A, Nil, None) and blanks count as 0, as before.
+    - **Other text is now reported as a row error** ("Row N: …"). Before, it was silently stored as 0.
+  - **Surcharge / IDV:** percent parsing ("95% of Invoice" → 95), as in the importer.
+  - The importer's sheet interpretation is unchanged: tax factor comes from Tax Basis when numeric, else Tax Slab; one defaults row per listed company, the first is the default; IDV formula columns.
+  - **Plan "OD+TP" → od/tp years:** now derived by the service; an unrecognised plan is still never guessed.
+  - **TCS:** saving an active configuration deactivates the others (the screen's rule is now the service's).
+- **Integrity:** an insurance base rule and its IDV slots are saved in one transaction.
+- **Models aligned to the real columns:** the models' `$fillable` listed non-columns (`InsDefault.default_company`/`company_priority_*`, `InsBaseRule.code`/`model_code`/`imt_23_rate`, `RtoRule.seater`) and missed real ones (`import_session_id`, `tax_basis`, `surcharge_formula`, `extra_json`…).
+- **Framework:**
+  - `Field::number()`, `percent()`, `scope()` (with synonyms), `parseNumber()` / `isBlankMarker()`.
+  - A blank value (or a transform yielding blank) takes the field's default.
+- **Not changed:**
+  - `InsDefault::getCompanies()` / `scopeActive()` reference non-existent columns but have no callers (noted).
+  - Engine-written records stay with the engine: sessions, change flags, affected, snapshots, history.
+  - `PricingResetService` is a local-only reset tool.
+- **Next pricing groups:** add-ons/discounts/dealer charges/CSD, prices + vehicle profiles, accessories.
+- **Approved-by:** user (DEC-050 roll-out, "continue") · **Risk:** MED (rules import now rejects non-numeric amounts per row) · **Reversal:** revert.
+
+### DEC-057 | 27-09-2026 | A3 (UAT) | Add-ons, discounts and dealer charges on entity services (pricing group 2 of 4)
+- **Services (`App\Services\Vehicle\Pricing\Addons\`):** `DealerChargeService`, `AddonService` (RSA / Shield), `DiscountService` (Exchange / Corporate…).
+  - `AddonDiscountImportService` writes only through them. It keeps the sheet mapping and its skip decisions (no scope; all-zero dealer charges; no year amounts). Its `onlyFillable()` / `expireAddons()` / `expireDiscounts()` are gone.
+  - **Group expiry** (`expireActive($wef, ['addon_type' => 'RSA'])`): an RSA import never expires Shield rows, and vice versa (spec pitfall).
+- **Field rules (Machine Spec):**
+  - **Scope:** ANY / ALL / blank = all, synonyms first (Segment, Permit, Fuel). On NOT NULL scope columns "all" is stored as `ANY` (addon/discount `model_code` as before, dealer-charge `segment`); elsewhere as null.
+    - Before, an ANY-segment dealer charge failed on the NOT NULL column and was lost. Now it is saved. The engine treats ANY, blank and null alike.
+  - **Amounts:** as DEC-056 (₹ and separators ignored, blank markers = 0, other text reported).
+  - A dealer-charge row with only zero amounts is refused ("never seed zero-value rows"). The importer already skipped such rows.
+  - **Discount total:** a blank total = OEM share + dealer share, and `amount` follows the total, as the importer computed.
+- **Models:** `DealerCharge` / `Addon` / `Discount` `$fillable` now equal the real columns (`Discount.segment` is not a column; `default_allocation`, `is_conditional`, `linked_to` were missing).
+- **Framework:**
+  - `Field::scope(..., anyIsBlank: true)`.
+  - `expireActive()` group filter.
+  - The model backstop keeps a value when its pipeline would blank it (the service already resolved it to the field default, e.g. `ANY`).
+- **CSD:** there is no live writer (only the dead legacy `XpricingHelper`), so there is nothing to route.
+- **Found, not changed (needs owner, BUG-178):** `PricingEngineService::dealerCharges()` reads narrow rows (`charge_name` + `amount`). The importer writes the spec's WIDE columns (CP-06: incidental/fastag/trc/rto_tape/cod), so imported dealer charges add 0 to the pricing JSON. `scopeHit()` also checks a `model` column where the table has `model_code`.
+- **Approved-by:** user (DEC-050 roll-out, "continue") · **Risk:** MED · **Reversal:** revert.
+
+### DEC-058 | 27-09-2026 | A3 (UAT) | Price-list vehicles and prices on entity services (pricing group 3 of 4)
+- **`VehicleService`** (price-list detect, Vehicle Info import) wrote segments, sub-segments, models, variants and keyword values directly, which bypassed the vehicle entity services of DEC-050. It now calls `SegmentService`, `SubSegmentService`, `VehicleModelService`, `VariantService` and `KeyvalueService`:
+  - `findOrCreate*` look up by the **canonical code first** (DEC-049 hyphen form, e.g. THAR-ROXX), then the legacy spellings, then the name. New rows get the canonical code; before, they got the spaced code, which the backstop then hyphenated.
+  - **Stubs:** `createStubFromPriceList()` goes through `VariantService` (inactive, taxi NO, colour from the last 2 chars — unchanged).
+  - **Vehicle Info:** `applyVehicleInfo()` updates the model and the variant through their services. Names follow the screens' Title Case; before, they were upper-cased. Completeness is judged on the values as they will be stored. A value that breaks a field rule rejects the row (listed as rejected).
+  - `copySpecifications()` goes through `VariantService`.
+  - `VariantService` gains the three columns this path writes: `motor`, `gst_percent` (percent) and `shield_pack` (upper-case).
+- **Prices:** new `Vehicle\Pricing\Prices\PriceService` (`xlr8_vehicle_pricing`).
+  - Key: (OEM code, channel, WEF), fixed once created, unique including deleted rows (DB key).
+  - Amounts are NOT NULL with default 0; GST is a percent; `expire()` closes the live row at the new WEF.
+  - `PriceListPricingImporter` keeps the spec's WEF logic (same WEF → update; new WEF with a material change → expire, then insert) and the ex-showroom derivation. It now parses through `PriceService::normalise()` and writes through `create/update/expire`.
+  - Blank or "no value" cells are left out, as before: a same-WEF update keeps the stored amount.
+  - Other text in an amount now fails the row with the rule's message; before, it was silently dropped.
+- **Models:** the `Pricing` `$fillable` now equals the real columns (`variant_code`, `*_elg` were non-columns); `Variant` gains the three fields.
+- **Left as engine / pipeline state** (derived, not data entry):
+  - profiles (detect stubs and completeness flags);
+  - change flags, affected rows, snapshots, sessions.
+- **Approved-by:** user (DEC-050 roll-out, "continue") · **Risk:** MED (Vehicle Info names now Title Case; bad cells reject rows) · **Reversal:** revert.

@@ -2,15 +2,14 @@
 
 namespace App\Models;
 
-use App\Models\Admin\Branch;
-use App\Models\Admin\Department;
 use App\Models\Admin\Division;
 use App\Models\Admin\Employee;
-use App\Models\Admin\Location;
 use App\Models\Admin\Person;
 use App\Models\Admin\UserScope;
 use App\Models\IAM\UserDeviceToken;
 use App\Models\IAM\UserPermissionDenial;
+use App\Models\Traits\HasColumnTransformations;
+use App\Services\IAM\UserService;
 use App\Services\OrgService;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -22,9 +21,18 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use CrudTrait, HasApiTokens, HasFactory, HasRoles, Notifiable, SoftDeletes;
+    use CrudTrait, HasApiTokens, HasColumnTransformations, HasFactory, HasRoles, Notifiable, SoftDeletes;
+
+    /** Field rules and transformations live in the entity service (DEC-050/054). */
+    protected string $entityService = UserService::class;
 
     protected $table = 'users';
+
+    /**
+     * Roles and permissions are minted with guard `web`. Admin requests switch the default
+     * guard to `backpack` (BUG-055), so Spatie must not derive the guard from the default.
+     */
+    protected string $guard_name = 'web';
 
     protected $fillable = [
         'username',
@@ -186,21 +194,6 @@ class User extends Authenticatable
     public function isEmployee(): bool
     {
         return $this->employee()->exists();
-    }
-
-    public function branches()
-    {
-        return $this->belongsToMany(Branch::class, 'xlr8_admin_emp_branch_pivot', 'employee_code', 'branch_code');
-    }
-
-    public function locations()
-    {
-        return $this->belongsToMany(Location::class, 'xlr8_admin_emp_location_pivot', 'employee_code', 'location_code');
-    }
-
-    public function departments()
-    {
-        return $this->belongsToMany(Department::class, 'xlr8_admin_emp_department_pivot', 'employee_code', 'dept_code');
     }
 
     public function divisions()

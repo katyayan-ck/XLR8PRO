@@ -2,10 +2,6 @@
 
 namespace App\Http\Controllers\Admin\Org\Employee;
 
-use App\Http\Requests\EmployeeRequest;
-use App\Models\Admin\Branch;
-use App\Models\Admin\Department;
-use App\Models\Admin\Designation;
 use App\Models\Admin\Employee;
 use App\Models\Admin\Person;
 use App\Services\OrgService;
@@ -122,75 +118,6 @@ class EmployeeCrudController extends CrudController
                 'data' => $gridData,
             ],
         ]);
-    }
-
-    public function create()
-    {
-        if (! backpack_user()->can('ORG_EMPL_CREATE')) {
-            abort(403, 'Unauthorized. You do not have permission to create employees.');
-        }
-
-        $this->crud->setCreateView('admin.org.employee.create');
-
-        return view('admin.org.employee.create', [
-            'title' => 'Add New Employee',
-            'persons' => Person::select('id', 'first_name', 'last_name')->orderBy('first_name')->get(),
-            'designations' => Designation::orderBy('name')->get(),
-            'branches' => Branch::orderBy('name')->get(),
-            'departments' => Department::orderBy('name')->get(),
-        ]);
-    }
-
-    public function store(EmployeeRequest $request)
-    {
-        if (! backpack_user()->can('ORG_EMPL_CREATE')) {
-            abort(403, 'Unauthorized. You do not have permission to create employees.');
-        }
-
-        $validated = $request->validated();
-
-        Employee::create($validated);
-
-        \Alert::success('Employee created successfully!')->flash();
-
-        return redirect(backpack_url('org/employee'));
-    }
-
-    public function edit($id)
-    {
-        if (! backpack_user()->can('ORG_EMPL_EDIT')) {
-            abort(403, 'Unauthorized. You do not have permission to edit employees.');
-        }
-
-        $this->crud->setEditView('admin.org.employee.edit');
-
-        $employee = Employee::with(['person', 'designation', 'primaryBranch', 'primaryDepartment'])->findOrFail($id);
-
-        return view('admin.org.employee.edit', [
-            'title' => 'Edit Employee',
-            'employee' => $employee,
-            'persons' => Person::select('id', 'first_name', 'last_name')->orderBy('first_name')->get(),
-            'designations' => Designation::orderBy('name')->get(),
-            'branches' => Branch::orderBy('name')->get(),
-            'departments' => Department::orderBy('name')->get(),
-        ]);
-    }
-
-    public function update(EmployeeRequest $request, $id)
-    {
-        if (! backpack_user()->can('ORG_EMPL_EDIT')) {
-            abort(403, 'Unauthorized. You do not have permission to edit employees.');
-        }
-
-        $employee = Employee::findOrFail($id);
-
-        $validated = $request->validated();
-
-        $employee->update($validated);
-
-        \Alert::success('Employee updated successfully!')->flash();
-
-        return redirect(backpack_url('org/employee'));
     }
 
     public function destroy($id)

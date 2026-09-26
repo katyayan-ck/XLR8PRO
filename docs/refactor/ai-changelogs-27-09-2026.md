@@ -73,3 +73,341 @@ Branch `feature/integrations`. Decisions DEC-033…038 are in `docs/decisions/de
   - BUG-055 re-verified with its wider impact documented.
   - BUG-090 impact confirmed: 34 users without a role.
   - DEC-039 (ticket intake: staff UI + API).
+
+## Booking-team merge (DEC-041)
+- `origin/stage` (booking team, 93 commits) was merged with `feature/integrations` into `stage` (`0116ec0`, pushed), then `stage` into `dev/admin` (`f34e2c5`, pushed).
+- Branches deleted: `feature/integrations` (local) and `refactor/admin-permissions-formrequest-restructure` (local + origin). Both were fully contained in `stage`.
+- Conflicts and resolutions are listed in DEC-041.
+- Pint was not applied to the booking team's files, so their formatting is unchanged.
+- Tests: 227 passed, 1 skipped.
+- Smoke (user 1):
+  - Sales enquiry/quotation, imports, org, vehicle, IAM and accounts screens return 200.
+  - `sales/booking` returns 500 until their migrations run locally (`referee_model`).
+  - `finance/import` needs local `gscreds.json`.
+
+## After the merge: local migrations and the ID-route smoke (BUG-167/168)
+- **Local DB:**
+  - Took a backup of `xlr8_booking_master`, `xlr8_booking_amount`, `xlr8_crm_enquiries` and `migrations` to `storage/app/backups/` (gitignored).
+  - `php artisan migrate` ran the booking team's 5 migrations plus `align_sale_type`.
+  - `xlrm_testing` was refreshed. `sales/booking` now returns 200.
+- **Tests:**
+  - `BookingCoreServiceTest` now expects `sale_type` as an int.
+  - `UserRbacWorkbookTest` scope-replacement test now creates its own precondition.
+- **Smoke with real IDs:** 52 edit/details/show GET routes (Org, Vehicle, Pricing, IAM, Utils) as superadmin. Everything returned 200/302 except the settings show page (500). The branch edit URL takes the branch code (`org/branch/BKN/edit`, 200).
+- **BUG-167 fixed:**
+  - The settings show route was missing its `operation` key, and `show()` was ungated.
+  - The key-value and keyword-master search/details routes were missing their `operation` key, so their permission check never ran.
+  - The `badge` column type isn't available in free Backpack and was replaced with `text`.
+  - New `tests/Feature/Admin/SystemSettingScreensTest.php` (4 tests).
+- **BUG-168 recorded for the booking team:** the same route trap exists in Sales, Accounts and Spares routes.
+
+## User decisions applied (DEC-042/043)
+- **BUG-055 fixed (DEC-042):**
+  - The guard-switch middleware is enabled, and `User::$guard_name = 'web'` is pinned. Without the pin, every non-superadmin permission check failed; the pre-change probe caught this.
+  - The full admin smoke (169 screens, users 1 and 40) is identical before and after.
+  - New `AdminAuthGuardTest`.
+- **34 role-less users disabled (DEC-043):** backup taken. They now get 403 on the admin panel and are refused by OTP login.
+- **Dump codes corrected (BUG-166):** `storage/userdata.xlsx` has its branch/location codes fixed, and BEV is no longer used as a division.
+  - `xlrm` and `xlrm_testing`: 22 primaries and scopes set, plus the 10 scopes lost to BUG-163 added.
+  - Remaining: department `IT` for 2 employees.
+
+## Dead-code follow-up (DEC-044)
+- **Removed:**
+  - `VehicleAccessoryCrudController`, with its route line and 3 orphan views.
+  - `Services/Exporters/UserExporter`, `Services/Importers/RulesUserImporter` and the `UserDataScope` model.
+  - `DesigDeptTreeCrudController`.
+  - The 4 `Employee*Assignment` models.
+  - The two dead dashboard methods.
+  - The pivot relations on `User`, `Employee`, `Vertical` and `Location`.
+- **Fixed:** the `Location::branch()` and `Branch::primaryEmployees()` keys.
+- **Tracker:** BUG-015/022/024/036/037/081/082/084/158 closed.
+- **Verification:** 232 passed, 1 skipped. The full admin smoke (169 screens, users 1 and 40) is identical before and after.
+
+## composer.json and config/app.php for PHP 8.4 (DEC-045)
+- **composer.json:**
+  - `php ^8.4`. The project is now named `bmpl/xceler8`, with a description and a `lint` script; stale plugin permissions were removed.
+  - **Removed as unused:** `graphp/graph`, `intervention/image` (with `intervention/gif`), `spatie/laravel-translatable`, dev `laravel/sail` and `markwalet/laravel-changelog`.
+  - Google services trimmed to Drive and Sheets via `Google\Task\Composer::cleanup`.
+  - `composer update` brought 21 in-range updates. No vulnerabilities.
+  - Majors deferred until after UAT: Laravel 13, Excel 4, Permission 8, Firebase 8, PHPUnit 12/13, Swagger 11, Tinker 3, nestedset 7.
+- **Autoload:**
+  - Vendor duplicates excluded from the classmap.
+  - `XlInsurer` class case fixed.
+  - The dead `HRJourneyServiceTest` removed.
+  - `optimize-autoloader` is off locally; `deploy.yml` still optimizes.
+  - Dump time is about 5s, where before it hung. BUG-034 fixed.
+- **config/app.php:** every value is env-driven (`APP_TIMEZONE` default Asia/Kolkata, `faker_locale` en_IN), with notes on key rotation and multi-server maintenance mode. `.env.example` is aligned.
+- **BUG-169 recorded:** mixed UTC/IST timestamps after the booking team's timezone change. Needs a decision.
+- **Verification:**
+  - 232 passed, 1 skipped.
+  - Full smoke (169 screens, users 1 and 40) is identical.
+  - The Google Sheets, Vision, Firebase, Excel and PDF classes all autoload.
+- **Deploy note:** `stage`, `uat` and `main` servers must run PHP ≥ 8.4 before this merges there.
+- **Also:** `bootstrap/cache/packages.php` and `services.php` (generated) and 8 stray `.tmp` files are untracked, and Laravel's standard `bootstrap/cache/.gitignore` is restored. `composer install` regenerates the caches on deploy.
+
+## Decisions applied (DEC-046)
+- **Timezone:** IST is kept; older UTC rows are not converted. BUG-169 is closed, and the architecture rule and `config/app.php` comment are updated.
+- **IT department:**
+  - Added through the idempotent `database/seeders/ItDepartmentSeeder.php`, applied to `xlrm` and `xlrm_testing` with a backup in `storage/app/backups`.
+  - The existing `IT` division moved from Admin to become its default division.
+  - BMPL-0365 and BMPL-0630 now have primary department and division `IT`, with scopes.
+  - Other environments run `php artisan db:seed --class=ItDepartmentSeeder`.
+- **`title_case`:** keeps business acronyms (IT, HR, PDI, CRM, LMM, RTO…) upper-case. Before, it saved "It", and editing HR/PDI in the admin would have produced "Hr"/"Pdi". New `TitleCaseAcronymTest` (8 cases).
+- **Server PHP:** the user confirmed PHP 8.4 on cPanel, which clears the DEC-045 deploy gate.
+
+## Dead IAM/legacy remnants (DEC-047)
+- **Removed:**
+  - The `CheckPermission` middleware and its alias.
+  - The `Core\ReportingHierarchy` model.
+  - Orphan `graph-edge`/`graph-node` views.
+  - The two uncalled `RBACService` methods.
+- **Closed:** BUG-006/017/076/080/147/155.
+
+## Vehicle master write paths (DEC-048, BUG-170/171/172)
+- **New `tests/Feature/Admin/Vehicle/VehicleMasterWriteTest.php` (7 tests):** segment, sub-segment, model and variant colour rows (create, update, delete), plus the regressions below.
+- **Segment / sub-segment:**
+  - Create is now validated; a duplicate code is a form error, not a 500.
+  - The sub-segment edit uses `segment_code`, so segment changes are saved and the current segment is pre-selected. A move is blocked while models use the sub-segment.
+- **All vehicle masters:** `code` is immutable on edit and read-only in the forms. Re-saving through the `code` transform had orphaned 588 variants.
+- **Variants (one row per colour, full OEM code):**
+  - `code` is unique per colour code.
+  - Colour and Colour Code fields are on the form and model.
+  - The edit page lists the variant's colour rows.
+  - The legacy colour-table guard was removed.
+- **Pending decision:** canonical model-code form, for the data repair (BUG-171).
+
+## Faster verification (user request)
+- The per-process full smoke (~10 min) is replaced by `tests/Feature/Admin/AdminScreenSmokeTest.php`:
+  - It is one in-process sweep of every parameter-free admin screen, as superadmin and as a non-superadmin user, with a documented `KNOWN_BROKEN` list.
+  - It is group `smoke` and excluded from the default suite via `phpunit.xml`.
+  - It still makes about 350 requests (a few minutes), so run it before merges only.
+- **Cadence:** after each change, smoke only the touched screens (seconds); run the full suite periodically. Rules updated in `.ai/guidelines/10-workflow.md` and `.ai/rules/testing.md`.
+- **Model-code impact analysis (BUG-171):** the spaced OEM form dominates. Enquiries have 3,627 spaced vs 1,874 squashed, booking insurance 114 vs 27, and variants 600 vs 46. Only the model master mostly holds squashed codes (15 of 17).
+
+## Canonical hyphenated codes (DEC-049, BUG-171)
+- **Transform:** the shared code transform now turns spaces into hyphens and `+` into `PLUS` (`THAR ROXX` → `THAR-ROXX`), for all 18 models that use it.
+- **`App\Services\Vehicle\VehicleCodeNormaliser`, command and migrations:**
+  - It groups each code family by spelling (spaced, squashed, hyphenated) and converts the family to the hyphenated form. It touches the masters and every reference column; pricing tables are excluded because their `model_code` holds OEM variant codes.
+  - It aborts on collisions, is idempotent, and writes JSON maps for reversal.
+  - Command: `vehicle:normalise-codes [--dry-run]`.
+  - Migrations: `2026_09_27_120000_normalise_vehicle_codes` and `…130000_normalise_model_keywords`. The IT seeder now also runs via `…121000_seed_it_department`, so deploys apply all three.
+- **Results on `xlrm`:**
+  - 64 model codes and `NON XUV` converted; orphaned variants went from 588 to 0.
+  - The 29 `CUSTOM-MODEL` keyword codes were hyphenated, with their enquiry and booking references.
+- **Left as they are:** keyword lists whose "codes" are labels or synonyms (pricing header mapping, spare bins, statuses such as `NEW CAR` that code compares literally), and person or company names in `sc_code`, `insurer_code` and `financier_code`.
+- **Tests:** `tests/Feature/Vehicle/VehicleCodeNormaliserTest.php` (9).
+
+## One field-rule set per entity via its service (DEC-050)
+- **Direction (user):** don't correct old data (a fresh import replaces it). Every field has one format, transformation and validation definition, used for every create/edit through the entity's service. This is a project-wide rule.
+- **Withdrawn:** `VehicleCodeNormaliser`, its command and the two data-correction migrations (never deployed; their local `migrations` rows were removed). The IT department migration stays.
+- **Framework (`app/Support/Entity`):**
+  - `Field`, a fluent field definition.
+  - `EntityService`: normalise → validate → guards → persist, plus `upsert` for imports, `describe()` as the field reference, and `transformations()` for the model backstop.
+  - `ValueTransformer`, which shares the `HasColumnTransformations` engine.
+  - `HasColumnTransformations` reads `$entityService` when a model declares it.
+- **Vehicle masters migrated:** `Segment`, `SubSegment`, `VehicleModel` and `VariantService`.
+  - Rules are consolidated from the models, FormRequests and the import.
+  - Column-size conflicts are resolved to the smallest column: segment code max 5, model code max 30.
+  - `taxi_price` must be YES or NO.
+  - The hierarchy is checked: sub-segment ∈ segment; variant ∈ model.
+  - The 4 FormRequests were deleted, and the model form posts `sub_segment_code`.
+  - The vehicle import (`AdminImportController`) writes only through the services, uses the full OEM code for variants, stops writing the legacy colour table, and reports rejected rows.
+- **Rules:** `.ai/guidelines/20-architecture.md` (Entity writes), `.ai/rules/services.md` and `.ai/rules/imports.md`.
+- **Tests:** `VehicleEntityServicesTest` (7) and `VehicleMasterWriteTest` (7).
+
+## Vehicle master purge before a fresh import (DEC-051)
+- **Local `xlrm` only:** deleted 7 segments, 7 sub-segments, 50 models, 2,652 variant rows and 2,548 legacy colour rows, after a backup to `storage/app/backups/xlrm-vehicle-masters-pre-purge-27-09-2026.sql`.
+- **Not touched:** pricing tables, CRM/booking references and `xlrm_testing`. Don't refresh the test copy until the fresh import is in.
+- **Smoke:** the vehicle lists, create forms, `imports/admin` and the dashboard all return 200 on the empty tables.
+- **Next:** reload through Imports → Admin → Vehicle import. It reads a Google Sheet, so a local `gscreds.json` is required. Every row goes through the entity services, and rejected rows are listed after the import.
+
+## Org masters on entity services (DEC-052)
+- **Six services:** `Org\{Branch,Location,Department,Division,Vertical,Designation}Service` now extend `EntityService`.
+  - `fields()` is the only rule set; the 6 FormRequests and the models' `$columnTransformations` are gone.
+  - The shared `Org\Concerns\OrgEntityConcerns` provides the media fields, media sync and the dependency-checked disable.
+  - Business rules are kept: head office, default division (created through `DivisionService`), active department, reports-to rank, and `guard_name = web`.
+- **Unified rules:**
+  - `phone` is cleaned by `cleanMobile` and must be 10 digits on create and edit.
+  - Code minimum length is 2 where real codes like HR, IT or NC exist.
+  - `parent_desig_code` must exist.
+- **Framework:** `Field::virtual()`, `each()`, and the phone/email/pincode/coordinate/image/documents presets; callable transform steps; `EntityService::afterSave()`.
+- **Retired:** `import:rbac-master` and its sheets, a silent no-op (BUG-174).
+- **Tests:** the Org feature tests (46) pass unchanged.
+
+## Person, contacts, addresses, banking on entity services (DEC-053)
+- **New (`app/Services/Person/`):**
+  - `PersonRecordService`, `PersonContactService`, `PersonAddressService`, `PersonBankingService`.
+  - `Concerns/TypedSlots` handles the type-slot rules; `app/Models/Admin/Concerns/SwapsPrimarySlot` does the Primary swap.
+- **Before → after:**
+  - **`PersonService`:** before, it held its own normalisers (`preparePersonAttributes`, `normalizeEnum`, `splitName`…) and wrote with `updateOrCreate`. Now its write methods delegate to the entity services; reads are unchanged.
+  - **`PersonCrudController`:** before, it used a `PersonRequest` plus inline `$request->validate` for contacts/addresses/banking, and raw `->update()` on edit, which skipped phone cleaning. Now every write goes through the services, and media moved into `PersonRecordService::afterSave`.
+  - **`PersonContactCrudController`:** before, `PersonContact::create/update` with a `PersonContactRequest`. Now it calls the service.
+  - **Employee / PersonAddress / PersonBankingDetail controllers:** the unrouted create/store/edit/update methods were removed.
+  - **FormRequests removed:** `EmployeeRequest`, `PersonRequest`, `PersonContactRequest`, `PersonAddressRequest`, `PersonBankingDetailRequest`.
+  - **Person models:** they declare `$entityService` and use `HasColumnTransformations` (the backstop).
+  - **`StandaloneUsersImport`:** before, it derived `person_code` itself and sent blank strings. Now the service derives the code, blank cells are left out, and `failures()` lists failed rows.
+- **Framework:**
+  - `EntityService::derive()`.
+  - Defaults are applied before validation.
+  - Immutable fields are dropped after normalisation.
+  - `Field::choice()`, `Field::date()`, `unique(includeTrashed:)`.
+- **Bug:** BUG-175 (soft-deleted rows blocked type slots; Primary promotion collisions).
+- **Tests:**
+  - New: `PersonEntityServicesTest` (9).
+  - `PersonCrudTest`: city test data is now proper names ("Jaipur"/"Kota"; "CityTwo" becomes "Citytwo" under Title Case).
+  - `UserRbacWorkbookTest`: the round trip allows only field-rule rejections of bad stored data (2 rows on `xlrm_testing`).
+  - Person/User tests (26) pass.
+- **Smoke:** the Person, Contact, Address, Banking and Employee screens return 200 for user 1 and 403 for user 40 (no Person permission), unchanged.
+
+## Employees, users and scopes on entity services (DEC-054)
+- **New:** `app/Services/Org/EmployeeService.php`, `app/Services/IAM/UserService.php`, `app/Services/IAM/UserScopeService.php` (`grant` / `revoke` / `sync`).
+- **Before → after:**
+  - **`UserCrudController`:**
+    - Before: `Employee::create`, `User::create`, `$user->update` / `$employee->save`, a `generateEmployeeCode()` helper, and add-on scopes via `UserScope::updateOrCreate` plus soft deletes.
+    - After: all writes go through the services inside one transaction per save. Service errors are shown on the form's field names.
+  - **`UserRequest`:** entity field rules were removed; only workflow inputs and required placement remain.
+  - **`StandaloneUsersImport`:**
+    - Before: `DB::table` insert/update on employee, users, user_scopes and person_user_types, plus a local `parseDate`.
+    - After: `EmployeeService` / `UserService` / `UserScopeService::grant` / `PersonUserTypeService::assign`, with one transaction per row.
+  - **`UserScopesSheetImport`:** the hand-written sync became `UserScopeService::sync`. A code rejected by the service skips that user and reports it.
+  - **`HRJourneyService`:** `$employee->update` became `EmployeeService::update`.
+  - **Models:**
+    - `Employee`: complete `$fillable` plus `$entityService`.
+    - `User`: `HasColumnTransformations` plus `$entityService`.
+    - `UserScope`: `$entityService`.
+- **Framework:** only changed values are validated on update; `Field::raw()`.
+- **Tests:**
+  - New: `EmployeeUserEntityServicesTest` (8), and `UserOnboardingTest::test_a_rejected_addon_code_creates_nothing_and_is_reported_on_its_field`.
+  - `UserRbacWorkbookTest` is back to strict: the unchanged round trip has 0 failed rows.
+  - User, Person and Org tests pass.
+- **Smoke:** the User list/create/edit/show pages, the bulk-import page and the Employee list return 200 for user 1 and 403 for user 40, unchanged.
+
+## Keyword masters and values on entity services (DEC-055)
+- **New:**
+  - `app/Services/Utils/KeywordMasterService.php`
+  - `app/Services/Utils/KeyvalueService.php` (with `addParent()`)
+  - Migration `2026_09_27_130000_add_missing_keyword_masters.php` (`PERMIT`, `FOLLOW_UP_REMARKS_TYPE`)
+  - `Field::json()`
+- **Before → after:**
+  - **Key Value / Keyword controllers:** before, `Model::create/update` with FormRequests. After, the services; both requests are deleted.
+  - **`AdminImportController::getOrCreateKeyValue`:** before, `DB::table()->insertGetId`. After, a lookup by normalised code, then `KeyvalueService::create`.
+  - **`ImportEnquiriesJob`:** before, `DB::table` insert plus a parent-list `update`. After, `KeyvalueService::create` / `addParent`. A duplicate race (DB 23000 or unique validation) still reuses the existing row.
+  - **`Keyvalue` / `KeywordMaster` models:** `$columnTransformations` and the save hook were removed; each model now declares `$entityService`.
+  - **`HasColumnTransformations`:** on update, only dirty attributes are transformed (BUG-176).
+- **Not changed:** `BrandCrudController` still has direct keyvalue inserts, but it is not routed at all (Brand retired, DEC-038). It's a purge candidate.
+- **Bugs:** BUG-176 (fixed), BUG-177 (logged, open).
+- **Tests:** new `KeywordEntityServicesTest` (6). Full suite: 278 passed, 1 skipped.
+- **Smoke:**
+  - The Key Value and Keyword list/create/edit pages return 200 for user 1 and 403 for user 40.
+  - `imports/admin` returns 200 for both (BUG-177).
+
+## Pricing rules on entity services (DEC-056)
+- **New:**
+  - `app/Services/Vehicle/Pricing/Rules/`: `RtoRuleService`, `TcsConfigService`, `InsBaseRuleService`, `InsIdvSlotService`, `InsDefaultService`, `InsAddonRateService`, `RuleFields` (wheels), `Concerns/ExpiresActiveRows`.
+  - `Field::number/percent/scope`.
+- **Before → after:**
+  - **`RulesWorkbookService`:** before, `DB::table()->insert/insertGetId` plus `onlyExisting()`, and the expiry via `DB::table()->update`. After, the services' `create()` / `expireActive()`; per-row errors now carry the sheet row.
+  - **`RtoRuleController` / `TcsConfigController`:** before, inline `validate()` plus `Model::create/update` / `fill+save`. After, the services.
+  - **Models `RtoRule`, `TcsConfig`, `InsBaseRule`, `InsIdvSlot`, `InsDefault`, `InsAddonRate`:** `$fillable` equals the real columns, plus `$entityService`.
+- **Tests:**
+  - New: `PricingRuleEntityServicesTest` (4), including a real two-sheet workbook import: expiry, ANY wheels, amounts, row errors, plan years, IDV slots.
+  - Pricing / RTO / insurance tests: 45 passed.
+- **Smoke:** the pricing screens return 200 for user 1 (workflow stages redirect with no open session) and 403 for user 40.
+
+## Add-ons, discounts, dealer charges on entity services (DEC-057)
+- **New:** `app/Services/Vehicle/Pricing/Addons/{DealerCharge,Addon,Discount}Service.php`.
+- **Before → after:**
+  - **`AddonDiscountImportService`:**
+    - Before: `Model::query()->create(onlyFillable(...))` plus a bulk `update` per group.
+    - After: the services' `create()` / `expireActive($wef, group)`. Rejected rows are reported with the field message.
+  - **`HasColumnTransformations`:** never blanks a non-empty value.
+  - **`Field::scope`:** gains `anyIsBlank`.
+  - **Models:** `$fillable` aligned to the real columns, plus `$entityService`.
+- **Bug:** BUG-178 logged (engine ignores WIDE dealer charges; model scope column mismatch).
+- **Tests:**
+  - New: `PricingAddonEntityServicesTest` (3, including a three-sheet workbook import with group expiry, ANY scope, zero-row skip and discount totals).
+  - Related groups: 127 passed.
+
+## Price-list vehicles and prices on entity services (DEC-058)
+- **New:** `app/Services/Vehicle/Pricing/Prices/PriceService.php`.
+- **Before → after:**
+  - **`VehicleService`:** before, `Segment/SubSegment/VehicleModel/Variant/Keyvalue::query()->create` and `->save()`. After, the entity services, with canonical-code-first lookups (`codeCandidates()`).
+  - **`PriceListPricingImporter`:** before, `toDecimal()` plus `Pricing::create`, `fill/save`, and a manual expire. After, `PriceService` normalise/create/update/expire.
+  - **`VariantService`:** gains `motor` / `gst_percent` / `shield_pack`, also added to the `Variant` fillable.
+  - **`Pricing` model:** `$fillable` equals the real columns, plus `$entityService`.
+- **Tests:**
+  - New: `PricingVehicleAndPriceServicesTest` (3): canonical stub model reused, Vehicle Info through variant rules, price key/WEF expiry.
+  - Full suite: 288 passed, 1 skipped.
+- **Smoke:** the pricing and vehicle screens return 200 for user 1 (workflow stages 302 with no session).
+
+## Accessories (pricing group 4) — paused
+- The roll-out is paused on BUG-179 (two divergent accessory importers; the spec forbids rewriting `AccessoryService`). No code change.
+
+## Release: dev/admin → stage (27-09-2026)
+
+This section consolidates everything on `dev/admin` since the booking-team merge (`f34e2c5`). The sections above hold the per-change detail.
+
+### Commits (oldest first)
+| Commit | Change | Decision / bug |
+|---|---|---|
+| `f34e2c5` | Merge stage (booking team + Track A UAT work) into dev/admin | DEC-041 |
+| `b01d139`, `6038de3` | State after the merge; tests follow `sale_type` tinyint | DEC-041 |
+| `c598008` | Settings show and key-value/keyword search/details now check permissions | BUG-167 |
+| `541440a` | Admin requests resolve the Backpack user for `auth()` / `@can` / Gate; `User::$guard_name = web` | DEC-042, BUG-055 |
+| `a200a13` | Local data: dump branch/location codes corrected, BEV is not a division, 34 role-less users disabled | DEC-043, BUG-166/090 |
+| `0acc384` | Dead code the purge missed; branch/location relation keys | DEC-044 |
+| `da905bd` | PHP 8.4 `composer.json`, unused packages trimmed, fast autoload; env-driven `config/app.php` | DEC-045 |
+| `6cf6bf6` | IT department with default division; IST timestamps accepted | DEC-046 |
+| `d6b7021` | Dead CheckPermission / ReportingHierarchy / graph views / uncalled RBACService methods removed | DEC-047 |
+| `b1e2d81`, `3394327` | State notes (Google key rotation reminder kept) | — |
+| `6bcce1d` | Vehicle masters: validated create, code-based sub-segment edit, immutable codes, one variant row per colour | DEC-048, BUG-170/171/172 |
+| `efc60e2` | Opt-in `smoke` test group; targeted-smoke cadence | — |
+| `279b2a8`, `e2e4393` | Canonical hyphenated codes (THAR-ROXX); the vehicle import writes them | DEC-049, BUG-171/173 |
+| `bf6ef76` | **Entity services:** one field-rule set per entity enforced by its service; vehicle masters migrated; the code normaliser and migrations withdrawn in favour of a fresh import | DEC-050 |
+| `88f2df6` | Local vehicle master purge before a fresh import (local only) | DEC-051 |
+| `5e15c12` | Org masters on entity services; no-op `import:rbac-master` retired | DEC-052, BUG-174 |
+| `2f680dc` | Person, contacts, addresses, banking on entity services; type slots | DEC-053, BUG-175 |
+| `bd8288d` | Employees, users, data scopes on entity services; one scope-revoke rule; atomic onboarding and import rows | DEC-054 |
+| `affa9ff` | Keyword masters and values on entity services; the backstop transforms only changed attributes | DEC-055, BUG-176 |
+| `bbefc88` | Pricing rules (RTO, TCS, insurance) on entity services | DEC-056 |
+| `f2a2660` | Add-ons, discounts, dealer charges on entity services | DEC-057 |
+| `ac50c44` | Price-list vehicles (`VehicleService`) and prices on entity services | DEC-058 |
+| `731a9aa` | BUG-179 logged; accessories roll-out paused | BUG-179 |
+
+### What changes for users
+- **Every create and edit screen, and every importer, applies one rule set per entity.** This covers Org masters, Person (plus contacts, addresses, banking), Employee, User, user scopes, keyword masters/values, vehicle masters, and pricing rules, add-ons, discounts, dealer charges and prices. A bad value is reported (a form error, or an import row error with its message) instead of being stored or silently zeroed.
+- **Formats applied everywhere:**
+  - codes upper-case and hyphenated (THAR-ROXX);
+  - names in Title Case;
+  - phones as 10 digits; e-mails and usernames lower-case; PAN/GSTIN upper-case; Aadhaar as digits;
+  - pricing amounts accept ₹ and separators; "-", "NA" and "Nil" count as blank.
+- **On edit, only changed values are validated.** Existing (legacy) values never block an edit of another field, and an unchanged export re-imports as a no-op.
+- **One write per unit:** User onboarding/edit, each Users_Import row, and each insurance rule with its IDV slots are saved all-or-nothing.
+- **Person child records:** a blank type takes Primary if it is free; choosing Primary promotes the record and demotes the old one (a swap); deleted contacts, addresses and bank accounts free their slot.
+- **Scopes:** removed scopes are deactivated (history kept), on both the User screen and the scope sheet.
+
+### Deploy notes (stage → dev.xceler8.in runs `migrate --force`)
+- **New migrations:**
+  - `2026_09_27_121000_seed_it_department`: the IT department and its IT division (if missing), and places BMPL-0365 / BMPL-0630 in IT (DEC-046).
+  - `2026_09_27_130000_add_missing_keyword_masters`: the `PERMIT` and `FOLLOW_UP_REMARKS_TYPE` keyword masters (DEC-055).
+  - Both are idempotent.
+- **No schema changes; no destructive data changes on the server.** The local-only operations (DEC-043 data corrections, DEC-051 vehicle master purge) do not run on deploy.
+- `composer install --optimize-autoloader` picks up the trimmed PHP 8.4 `composer.json` (DEC-045); the server runs PHP 8.4.
+
+### Bugs fixed in this release
+BUG-055, 090 (partly), 166, 167, 170, 171, 172, 174, 175, 176.
+
+### Open, left as they are (owner decisions)
+- **BUG-173:** variant code convention in legacy rows. A fresh vehicle import is pending.
+- **BUG-177:** the Imports menu and `imports/admin` page have no permission gate.
+- **BUG-178:** the pricing engine reads dealer charges as narrow rows, while the importer writes the spec's WIDE columns (price-changing fix); the model scope column also mismatches.
+- **BUG-179:** two divergent accessory importers; the accessories entity-service roll-out waits for this decision.
+
+### Not converted yet
+- Seeders (they write directly).
+- `BrandCrudController` (unrouted, dead).
+- Engine/pipeline records (sessions, change flags, snapshots, history, completeness profiles) stay engine-written by design.
+
+### Verification
+- Full suite: 288 passed, 1 skipped (VOTF data-dependent).
+- Targeted smoke of the touched screens as superadmin (200) and user 40 (403 where they lack permission).

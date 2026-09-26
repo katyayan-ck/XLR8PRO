@@ -3,10 +3,14 @@
 namespace App\Models\Vehicle\Pricing;
 
 use App\Models\BaseModel;
+use App\Services\Vehicle\Pricing\Rules\TcsConfigService;
 
 class TcsConfig extends BaseModel
 {
     protected $table = 'xlr8_vehicle_pricing_tcs_config';
+
+    /** Columns = the entity service's fields (DEC-050/056); the service owns their rules. */
+    protected string $entityService = TcsConfigService::class;
 
     protected $fillable = [
         'limit_amount',
@@ -18,8 +22,8 @@ class TcsConfig extends BaseModel
     {
         return array_merge(parent::casts(), [
             'limit_amount' => 'decimal:2',
-            'rate_pct'     => 'decimal:2',
-            'is_active'    => 'boolean',
+            'rate_pct' => 'decimal:2',
+            'is_active' => 'boolean',
         ]);
     }
 
@@ -31,8 +35,8 @@ class TcsConfig extends BaseModel
             ->first()
             ?? new self([
                 'limit_amount' => 1000000.00,
-                'rate_pct'     => 1.00,
-                'is_active'    => true,
+                'rate_pct' => 1.00,
+                'is_active' => true,
             ]);
     }
 }

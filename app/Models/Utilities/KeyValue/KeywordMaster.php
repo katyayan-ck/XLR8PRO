@@ -4,15 +4,19 @@ namespace App\Models\Utilities\KeyValue;
 
 use App\Models\BaseModel;
 use App\Models\Traits\HasColumnTransformations;
+use App\Services\Utils\KeywordMasterService;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class KeywordMaster extends BaseModel
 {
-    use CrudTrait, HasFactory, HasColumnTransformations;
+    use CrudTrait, HasColumnTransformations, HasFactory;
 
     protected $table = 'xlr8_utils_keyword_master';
+
+    /** Field rules and transformations live in the entity service (DEC-050/055). */
+    protected string $entityService = KeywordMasterService::class;
 
     protected $fillable = [
         'code',
@@ -37,34 +41,10 @@ class KeywordMaster extends BaseModel
 
     ];
 
-    protected array $columnTransformations = [
-
-        'code' => [
-            'trim',
-            'uppercase_alphanumeric_dash_underscore'
-        ],
-
-        'keyword' => [
-            'trim_spaces',
-            'title_case'
-        ],
-
-        'description' => [
-            'trim_spaces'
-        ],
-
-        'details' => [
-            'trim_spaces'
-        ],
-    ];
-
     public function keyvalues()
     {
         return $this->hasMany(Keyvalue::class, 'keyword_code', 'code');
     }
-
-
-
 
     public function scopeRecursive(Builder $query): Builder
     {

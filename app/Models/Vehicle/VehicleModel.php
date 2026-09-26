@@ -3,8 +3,9 @@
 namespace App\Models\Vehicle;
 
 use App\Models\BaseModel;
-use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use App\Models\Traits\HasColumnTransformations;
+use App\Services\Vehicle\VehicleModelService;
+use Backpack\CRUD\app\Models\Traits\CrudTrait;
 
 class VehicleModel extends BaseModel
 {
@@ -28,47 +29,14 @@ class VehicleModel extends BaseModel
     ];
 
     protected $casts = [
-        'is_active'  => 'boolean',
+        'is_active' => 'boolean',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
     ];
 
-    protected array $columnTransformations = [
-
-        'segment_code' => [
-            'trim',
-            'uppercase_alphanumeric_dash_underscore'
-        ],
-
-        'sub_segment_code' => [
-            'trim',
-            'uppercase_alphanumeric_dash_underscore'
-        ],
-
-        'code' => [
-            'trim',
-            'uppercase_alphanumeric_dash_underscore'
-        ],
-
-        'name' => [
-            'strip_tags',
-            'trim_spaces',
-            'title_case'
-        ],
-
-        'oem_name' => [
-            'strip_tags',
-            'trim_spaces',
-            'title_case'
-        ],
-
-        'custom_name' => [
-            'strip_tags',
-            'trim_spaces',
-            'title_case'
-        ],
-    ];
+    /** Field formats, transforms and rules live in the entity service (DEC-050). */
+    protected string $entityService = VehicleModelService::class;
 
     // ── Relationships ─────────────────────────────────────────────
 

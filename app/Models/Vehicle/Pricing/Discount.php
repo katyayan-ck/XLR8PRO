@@ -3,6 +3,7 @@
 namespace App\Models\Vehicle\Pricing;
 
 use App\Models\BaseModel;
+use App\Services\Vehicle\Pricing\Addons\DiscountService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -12,41 +13,42 @@ class Discount extends BaseModel
 
     protected $table = 'xlr8_vehicle_pricing_discounts';
 
+    /** Columns = the entity service's fields (DEC-050/057); the service owns their rules. */
+    protected string $entityService = DiscountService::class;
+
     protected $fillable = [
         'import_session_id',
         'discount_type',
+        'model_code',
+        'variant_code',
         'scheme_name',
         'category',
         'discount_category',
         'name',
-        'segment',
-        'model_code',
-        'variant_code',
         'oem_share',
         'dealer_share',
         'amount',
         'total_discount',
         'allocation_type',
+        'is_conditional',
+        'linked_to',
         'extra_json',
         'is_active',
         'wef_date',
         'expired_on',
-        'created_by',
-        'updated_by',
-        'deleted_by',
     ];
 
     protected function casts(): array
     {
         return array_merge(parent::casts(), [
-            'oem_share'      => 'decimal:2',
-            'dealer_share'   => 'decimal:2',
-            'amount'         => 'decimal:2',
+            'oem_share' => 'decimal:2',
+            'dealer_share' => 'decimal:2',
+            'amount' => 'decimal:2',
             'total_discount' => 'decimal:2',
-            'extra_json'     => 'array',
-            'is_active'      => 'boolean',
-            'wef_date'       => 'date',
-            'expired_on'     => 'date',
+            'extra_json' => 'array',
+            'is_active' => 'boolean',
+            'wef_date' => 'date',
+            'expired_on' => 'date',
         ]);
     }
 

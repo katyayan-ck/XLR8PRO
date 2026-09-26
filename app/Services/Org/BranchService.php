@@ -1,90 +1,69 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Org;
 
 use App\Models\Admin\Branch;
 use App\Models\Admin\Employee;
 use App\Models\Admin\Location;
-use Illuminate\Http\Request;
+use App\Services\Org\Concerns\OrgEntityConcerns;
+use App\Support\Entity\EntityService;
+use App\Support\Entity\Field;
+use Illuminate\Database\Eloquent\Model;
 
 /**
- * Single source of truth for Branch business logic (create/update, code
- * immutability, dependency-checked disable, media, single-head-office
- * enforcement). The controller only handles HTTP concerns and delegates
- * everything else here.
+ * Branch — the only write path (DEC-050/052): field rules, immutable code, dependency-checked
+ * disable, single head office, media.
+ *
+ * @extends EntityService<Branch>
  */
-class BranchService
+class BranchService extends EntityService
 {
-    /**
-     * Branch is the parent of Location and (via primary_branch_code) of Employee.
-     * `Branch::primaryEmployees()` joins on the model's own `branch_code` column,
-     * which is never populated (not fillable, always NULL in real data — see
-     * BUG-082) — every real primary_branch_code value actually matches Branch's
-     * `code` column instead, so the dependents list below uses `code` directly,
-     * same as Location's own (correctly-written) relation already does.
-     */
+    use OrgEntityConcerns;
+
+    /** Branch is the parent of Location and (via primary_branch_code) of Employee; both key on `code` (BUG-082). */
     private const DEPENDENTS = [
         [Location::class, 'branch_code', 'location'],
         [Employee::class, 'primary_branch_code', 'employee', 'employment_status', 'active'],
     ];
 
-    public function create(array $validated, Request $request): Branch
+    protected function model(): string
     {
-        if ($validated['is_head_office'] ?? false) {
-            Branch::where('is_head_office', true)->update(['is_head_office' => false]);
-        }
-
-        $branch = Branch::create($validated);
-
-        $this->syncMedia($request, $branch);
-
-        return $branch;
+        return Branch::class;
     }
 
-    /**
-     * @return array{ok: true, branch: Branch}|array{ok: false, blockers: array<int, string>}
-     */
-    public function update(Branch $branch, array $validated, Request $request): array
+    public function fields(): array
     {
-        // Code is the real primary key every relation points at by string — never editable.
-        unset($validated['code']);
-
-        $wasActive = $branch->is_active;
-        $willBeActive = (bool) ($validated['is_active'] ?? false);
-
-        $blockers = OrgEntityGuard::blockersForDisabling($wasActive, $willBeActive, $branch->code, self::DEPENDENTS);
-        if ($blockers) {
-            return ['ok' => false, 'blockers' => $blockers];
-        }
-
-        if ($validated['is_head_office'] ?? false) {
-            Branch::where('id', '!=', $branch->id)->where('is_head_office', true)->update(['is_head_office' => false]);
-        }
-
-        $branch->update($validated);
-        $this->syncMedia($request, $branch);
-
-        return ['ok' => true, 'branch' => $branch->fresh()];
+        return [
+            Field::code('code', 10)->label('Branch Code')->rules('min:3')->required()->unique()->immutable(),
+            Field::name('name')->label('Branch Name')->required(),
+            Field::text('description', 5000)->label('Description'),
+            Field::phone()->label('Phone'),
+            Field::email()->label('Email'),
+            Field::text('address', 5000)->label('Address'),
+            Field::name('city', 100)->label('City'),
+            Field::name('state', 100)->label('State'),
+            Field::pincode()->label('Pincode'),
+            Field::coordinate('latitude', 90)->label('Latitude'),
+            Field::coordinate('longitude', 180)->label('Longitude'),
+            Field::flag('is_head_office', false)->label('Head Office'),
+            Field::flag('is_active')->label('Active'),
+            ...$this->mediaFields('branch_image'),
+        ];
     }
 
-    private function syncMedia(Request $request, Branch $branch): void
+    protected function beforeUpdate(Model $model, array &$data): void
     {
-        if ($request->boolean('remove_image')) {
-            $branch->clearMediaCollection('branch_image');
+        $this->guardDisabling($model, $data, self::DEPENDENTS, 'branch');
+    }
+
+    protected function afterSave(Model $model, array $input, bool $created): void
+    {
+        if ($model->is_head_office) {
+            Branch::where('id', '!=', $model->id)->where('is_head_office', true)->update(['is_head_office' => false]);
         }
 
-        if ($request->hasFile('branch_image')) {
-            $branch->addMediaFromRequest('branch_image')->toMediaCollection('branch_image');
-        }
-
-        if ($request->hasFile('documents')) {
-            foreach ((array) $request->file('documents') as $file) {
-                $branch->addMedia($file)->toMediaCollection('documents');
-            }
-        }
-
-        foreach ((array) $request->input('remove_documents', []) as $mediaId) {
-            $branch->media()->where('id', $mediaId)->where('collection_name', 'documents')->first()?->delete();
-        }
+        $this->syncMedia($model, $input, 'branch_image');
     }
 }

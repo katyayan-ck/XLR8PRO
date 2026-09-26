@@ -13,7 +13,8 @@
 - **Data scoping:** `App\Services\IAM\DataScopeService` on `xlr8_admin_user_scopes`; `ScopedQuery`/`ScopedCrud`
   exist but are not yet switched on (decision pending). Jobs must not depend on a user scope.
 - **API envelope:** `{http_status, success, code, message, data}` via `BaseController` helpers.
-- **Dates:** stored UTC; displayed with `site_date()` / `@sitedate` (site setting `display.date_format`).
+- **Dates:** app timezone `Asia/Kolkata`: timestamps are stored and compared in IST (DEC-046; rows before 26-09-2026 are UTC and are intentionally not converted). Displayed with `site_date()` / `@sitedate` (site setting `display.date_format`).
 - **Labels:** `resources/lang/en/{module}.php` is the single source for field labels & validation names.
 - **Money:** new columns `DECIMAL(15,2)`; legacy varchar money is being normalised (DEC-003).
 - **Every job** sets `$timeout`, `$tries`, and implements `failed()`.
+- **Entity writes (DEC-050, mandatory):** every create/edit of an entity (CRUD, import, API, job, seeder) goes through that entity's service (`App\Support\Entity\EntityService` subclass). The service's `fields()` is the **single** definition of each field's format, transformation, validation, label and immutability. Never write entity tables with `DB::table()->insert/update` or `Model::create()` outside the service, never re-declare rules in FormRequests/importers, and never correct data ad hoc: fix the field rule instead.
