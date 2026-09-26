@@ -15,7 +15,9 @@ class SystemSettingCrudController extends CrudController
     use CreateOperation;
     use DeleteOperation;
     use ListOperation;
-    use ShowOperation;
+    use ShowOperation {
+        show as traitShow;
+    }
     use UpdateOperation;
 
     public function setup()
@@ -45,6 +47,16 @@ class SystemSettingCrudController extends CrudController
         $id = $this->crud->getCurrentEntryId() ?? $id;
 
         return $this->crud->delete($id);
+    }
+
+    /** The trait's show() had no permission check (BUG-167). */
+    public function show($id)
+    {
+        if (! backpack_user()->can('UTL_SETTINGS_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view system settings.');
+        }
+
+        return $this->traitShow($id);
     }
 
     protected function setupListOperation()
@@ -84,18 +96,11 @@ class SystemSettingCrudController extends CrudController
             'limit' => 100,
         ]);
 
+        // `badge` is not a column type in free Backpack 7 (no view to render it, BUG-167).
         $this->crud->addColumn([
             'name' => 'type',
             'label' => 'Type',
-            'type' => 'badge',
-            'badge_color' => [
-                'string' => 'info',
-                'integer' => 'warning',
-                'boolean' => 'success',
-                'json' => 'primary',
-                'file' => 'secondary',
-                'image' => 'secondary',
-            ],
+            'type' => 'text',
         ]);
 
         $this->crud->addColumn([

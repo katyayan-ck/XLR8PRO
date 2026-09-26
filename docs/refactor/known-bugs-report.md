@@ -202,6 +202,8 @@ Entry format:
 | BUG-164 | `OrgScopeService` resolves variants by a `name` column that `xlr8_vehicle_variant` doesn't have — any variant given by name crashes the import row; `ALL` expansion returned duplicate codes | Medium | FIXED | 27-09-2026 | 27-09-2026 |
 | BUG-165 | User importer rewrote data it wasn't given: absent columns nulled/defaulted employee fields, every row forced `employment_status=active` and `users.is_active=1`, and partial-name `LIKE` guesses mapped unknown values to other masters — incl. designation, i.e. the user's role (a stale `MAN` became `ACS_MGR`) | High | FIXED | 27-09-2026 | 27-09-2026 |
 | BUG-166 | `storage/userdata.xlsx` (source of the user import) has values that match no master: old codes `SJN`/`NKH`/`SDS`/`KLY` (DB: `SUJ`/`NOK`/`SDR`/`KOL`), `BEV` entered as a division ×32, department `IT` ×2; 38 DB users are not in the file | Medium | OPEN (data — needs owner fixes in the workbook) | 27-09-2026 | — |
+| BUG-167 | System settings show page 500 (route lacked `'operation' => 'show'`, so the show component never loaded) and was ungated; key-value / keyword-master `search` + `details` routes lacked `'operation' => 'list'`, so their only permission check never ran | High | FIXED | 27-09-2026 | 27-09-2026 |
+| BUG-168 | Same route trap in the booking team's area: `accounts/receipt/{id}/show`, `sales/lead*` search/details/destroy, `sales/lead-source*`, `sales/enquiry/{id}` destroy, `sales/campaign/{id}` destroy and `spares/spare-request/{id}` destroy are registered without the `operation` key — hook-only permission checks don't run | High | OPEN (booking team's code — reported, not changed) | 27-09-2026 | — |
 
 Not a bug (false positive, listed for reference): the original `infer-conventions` sweep flagged
 "`SheetHeaderService`/`SynonymService` not used by importers" — re-investigation on 19-09-2026
@@ -1885,3 +1887,17 @@ guessed at.
 - **Found:** 27-09-2026 — reconciliation `storage/app/exports/userdata-vs-db-27-09-2026.xlsx` (104 findings; local file, gitignored).
 - **Details:** Branch `SJN` ×6 and locations `SJN` ×5, `NKH` ×5, `SDS` ×4, `KLY` ×2 are old codes (DB uses `SUJ`, `NOK`, `SDR`, `KOL`); `BEV` entered as a division ×32 (it is a segment); department `IT` ×2 (no such department); sub segment `NON XUV` ×6 not in scopes (will be applied on the next import). 38 DB users (BMPL-0011…0058 and the superadmin) are not in the file — 34 of them are the BUG-090 users with retired designation codes and have **no role and no scopes**.
 - **Proposed solution:** fix the codes in the exported workbook (dropdowns prevent new bad values) and re-import; decide what the 34 role-less users should be (new designation, or deactivate via `Login Active = No`).
+
+### BUG-167 — System settings show page and Utils list endpoints bypassed their permission checks
+
+- **Status:** FIXED
+- **Severity:** High — any logged-in admin user could read key-value / keyword data through `…/search` and `…/{id}/details`; settings show was reachable without `UTL_SETTINGS_VIEW` (and returned 500).
+- **Found / Fixed:** 27-09-2026, smoke of in-scope edit/detail routes with real ids — [ai-changelogs-27-09-2026.md](ai-changelogs-27-09-2026.md)
+- **Fix:** `'operation'` key on the show/search/details routes; `SystemSettingCrudController::show()` gated with `UTL_SETTINGS_VIEW`; unsupported `badge` column → `text`. Tests: `tests/Feature/Admin/SystemSettingScreensTest.php`.
+
+### BUG-168 — Booking-team routes that skip hook-only permission checks
+
+- **Status:** OPEN (reported to the booking team; not changed by us)
+- **Where:** `routes/backpack/core.php` — `accounts/receipt/{id}/show`, `sales/lead` + `sales/lead-source` search/details/destroy, `sales/enquiry/{id}`, `sales/campaign/{id}` and `spares/spare-request/{id}` destroy.
+- **Fix:** register with `['uses' => …, 'as' => …, 'operation' => 'list'|'show'|'delete']`, or gate the action inline (see `.ai/rules/admin-backpack.md`).
+

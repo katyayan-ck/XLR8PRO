@@ -84,3 +84,19 @@ Branch `feature/integrations`. Decisions DEC-033…038 are in `docs/decisions/de
   - Sales enquiry/quotation, imports, org, vehicle, IAM and accounts screens return 200.
   - `sales/booking` returns 500 until their migrations run locally (`referee_model`).
   - `finance/import` needs local `gscreds.json`.
+
+## After the merge: local migrations and the ID-route smoke (BUG-167/168)
+- **Local DB:**
+  - Took a backup of `xlr8_booking_master`, `xlr8_booking_amount`, `xlr8_crm_enquiries` and `migrations` to `storage/app/backups/` (gitignored).
+  - `php artisan migrate` ran the booking team's 5 migrations plus `align_sale_type`.
+  - `xlrm_testing` was refreshed. `sales/booking` now returns 200.
+- **Tests:**
+  - `BookingCoreServiceTest` now expects `sale_type` as an int.
+  - `UserRbacWorkbookTest` scope-replacement test now creates its own precondition.
+- **Smoke with real IDs:** 52 edit/details/show GET routes (Org, Vehicle, Pricing, IAM, Utils) as superadmin. Everything returned 200/302 except the settings show page (500). The branch edit URL takes the branch code (`org/branch/BKN/edit`, 200).
+- **BUG-167 fixed:**
+  - The settings show route was missing its `operation` key, and `show()` was ungated.
+  - The key-value and keyword-master search/details routes were missing their `operation` key, so their permission check never ran.
+  - The `badge` column type isn't available in free Backpack and was replaced with `text`.
+  - New `tests/Feature/Admin/SystemSettingScreensTest.php` (4 tests).
+- **BUG-168 recorded for the booking team:** the same route trap exists in Sales, Accounts and Spares routes.

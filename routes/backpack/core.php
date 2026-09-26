@@ -258,7 +258,7 @@ Route::group([
     Route::delete('utils/system-setting/{id}', [SystemSettingCrudController::class, 'destroy'])->name('utils.system-setting.destroy');
     Route::post('utils/system-setting/search', ['uses' => SystemSettingCrudController::class.'@search', 'as' => 'utils.system-setting.search', 'operation' => 'list']);
     Route::get('utils/system-setting/{id}/details', ['uses' => SystemSettingCrudController::class.'@showDetailsRow', 'as' => 'utils.system-setting.details', 'operation' => 'list']);
-    Route::get('utils/system-setting/{id}/show', [SystemSettingCrudController::class, 'show'])->name('utils.system-setting.show');
+    Route::get('utils/system-setting/{id}/show', ['uses' => SystemSettingCrudController::class.'@show', 'as' => 'utils.system-setting.show', 'operation' => 'show']);
 
     // =========== UTILS: KEY VALUE ==========
     Route::get('utils/key-value', [KeyValueCrudController::class, 'index'])->name('utils.key-value.index');
@@ -266,8 +266,8 @@ Route::group([
     Route::get('utils/key-value/create', [KeyValueCrudController::class, 'create'])->name('utils.key-value.create');
     Route::get('utils/key-value/{id}/edit', [KeyValueCrudController::class, 'edit'])->name('utils.key-value.edit');
     Route::put('utils/key-value/{id}', [KeyValueCrudController::class, 'update'])->name('utils.key-value.update');
-    Route::post('utils/key-value/search', [KeyValueCrudController::class, 'search'])->name('utils.key-value.search');
-    Route::get('utils/key-value/{id}/details', [KeyValueCrudController::class, 'showDetailsRow'])->name('utils.key-value.details');
+    Route::post('utils/key-value/search', ['uses' => KeyValueCrudController::class.'@search', 'as' => 'utils.key-value.search', 'operation' => 'list']);
+    Route::get('utils/key-value/{id}/details', ['uses' => KeyValueCrudController::class.'@showDetailsRow', 'as' => 'utils.key-value.details', 'operation' => 'list']);
 
     // =========== UTILS: KEYWORD MASTER ==========
     Route::get('utils/keyword-master', [KeywordMasterCrudController::class, 'index'])->name('utils.keyword-master.index');
@@ -275,8 +275,8 @@ Route::group([
     Route::get('utils/keyword-master/create', [KeywordMasterCrudController::class, 'create'])->name('utils.keyword-master.create');
     Route::get('utils/keyword-master/{id}/edit', [KeywordMasterCrudController::class, 'edit'])->name('utils.keyword-master.edit');
     Route::put('utils/keyword-master/{id}', [KeywordMasterCrudController::class, 'update'])->name('utils.keyword-master.update');
-    Route::post('utils/keyword-master/search', [KeywordMasterCrudController::class, 'search'])->name('utils.keyword-master.search');
-    Route::get('utils/keyword-master/{id}/details', [KeywordMasterCrudController::class, 'showDetailsRow'])->name('utils.keyword-master.details');
+    Route::post('utils/keyword-master/search', ['uses' => KeywordMasterCrudController::class.'@search', 'as' => 'utils.keyword-master.search', 'operation' => 'list']);
+    Route::get('utils/keyword-master/{id}/details', ['uses' => KeywordMasterCrudController::class.'@showDetailsRow', 'as' => 'utils.keyword-master.details', 'operation' => 'list']);
 
     // =========== SPARES: SPARE REQUEST ==========
     // Same 'operation' key requirement as system-setting above — see BUG-064.
