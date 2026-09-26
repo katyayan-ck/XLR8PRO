@@ -494,3 +494,41 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
   - `Field::choice()` and `Field::date()`; `unique(includeTrashed:)`.
   - `describe()` tolerates callable transforms.
 - **Approved-by:** user (DEC-050 roll-out, "continue") · **Risk:** MED (stricter validation on the Person screens and the user import) · **Reversal:** revert.
+
+### DEC-054 | 27-09-2026 | A3 (UAT) | Employees, login accounts and data scopes on entity services (DEC-050 roll-out)
+- **Services:** `Org\EmployeeService`, `IAM\UserService`, `IAM\UserScopeService`.
+  - **Callers:**
+    - The User screen: create, edit, suspend, revoke, activate, add-on scopes.
+    - The `Users_Import` sheet (`StandaloneUsersImport`): it no longer writes `xlr8_admin_employee`, `users`, `xlr8_admin_user_scopes` or `xlr8_admin_person_user_types` with `DB::table`; person user types go through `PersonUserTypeService::assign`.
+    - The `User_Scopes` sheet.
+    - `HRJourneyService` (designation changes).
+  - `UserRequest` keeps only the workflow's inputs (user type, role, permission overrides, change reason/date/remarks) and the screen policy that an employee is onboarded with a full org placement. Every field format and existence rule is in the services.
+  - The Employee model's `$fillable` now lists every column. `employment_status`, `oem_id` and others were missing; this only worked before because the importer bypassed Eloquent.
+- **Field rules:**
+  - **Employee:**
+    - `code` must be `BMPL-####`; it's generated when blank and is immutable.
+    - `person_code` is fixed at create.
+    - Org/vehicle placement codes must exist (live rows).
+    - `desig_code` always mirrors `designation_code`.
+    - The employment enums are matched case-insensitively.
+    - UAN is 12 digits and unique; the ESI number is unique.
+  - **User:**
+    - The username is lower-case (a-z 0-9 . _ - @) and unique, including deleted accounts.
+    - The password is taken exactly as typed (not trimmed), minimum 8, stored hashed; blank on edit keeps it.
+    - Roles, permission overrides and `bypass_data_scoping` stay IAM decisions of the calling workflow, not data fields.
+  - **Scope:**
+    - Type ∈ branch/location/department/division/vertical/segment/sub_segment/model/variant.
+    - The code must exist in that type's master.
+- **One revoke semantics:**
+  - Before, the User screen soft-deleted dropped add-on scopes while the User_Scopes sheet deactivated them.
+  - Now both deactivate (`is_active = 0`, `to_date` = today) and keep the row. Granting reuses the row (restoring a deleted one).
+  - Readers already use active rows only. Before, the importer's grant also failed with a duplicate key on a soft-deleted row.
+- **Framework (applies to all entity services):**
+  - **On update only changed values are validated.** A stored value left as it is (legacy data, e.g. the 36 employees whose designation code is missing from the designation table, BUG-090) no longer blocks an edit of another field. Required fields must still be present.
+  - Consequence: re-importing an unchanged export is again a strict no-op (0 failed rows), including the two persons with bad stored Aadhaar/e-mail noted in DEC-053.
+  - New `Field::raw()`: no trimming or transforms, used for passwords.
+- **Atomic writes:**
+  - Each `Users_Import` row is one transaction (person, employee, user, scopes, role).
+  - User-screen onboarding and edit are one transaction.
+  - A rejected value leaves nothing half-written; before, a person and employee could be saved without their user.
+- **Approved-by:** user (DEC-050 roll-out, "continue") · **Risk:** MED (User screen and user import validation; IAM orchestration unchanged) · **Reversal:** revert.

@@ -258,3 +258,26 @@ Branch `feature/integrations`. Decisions DEC-033…038 are in `docs/decisions/de
   - `UserRbacWorkbookTest`: the round trip allows only field-rule rejections of bad stored data (2 rows on `xlrm_testing`).
   - Person/User tests (26) pass.
 - **Smoke:** the Person, Contact, Address, Banking and Employee screens return 200 for user 1 and 403 for user 40 (no Person permission), unchanged.
+
+## Employees, users and scopes on entity services (DEC-054)
+- **New:** `app/Services/Org/EmployeeService.php`, `app/Services/IAM/UserService.php`, `app/Services/IAM/UserScopeService.php` (`grant` / `revoke` / `sync`).
+- **Before → after:**
+  - **`UserCrudController`:**
+    - Before: `Employee::create`, `User::create`, `$user->update` / `$employee->save`, a `generateEmployeeCode()` helper, and add-on scopes via `UserScope::updateOrCreate` plus soft deletes.
+    - After: all writes go through the services inside one transaction per save. Service errors are shown on the form's field names.
+  - **`UserRequest`:** entity field rules were removed; only workflow inputs and required placement remain.
+  - **`StandaloneUsersImport`:**
+    - Before: `DB::table` insert/update on employee, users, user_scopes and person_user_types, plus a local `parseDate`.
+    - After: `EmployeeService` / `UserService` / `UserScopeService::grant` / `PersonUserTypeService::assign`, with one transaction per row.
+  - **`UserScopesSheetImport`:** the hand-written sync became `UserScopeService::sync`. A code rejected by the service skips that user and reports it.
+  - **`HRJourneyService`:** `$employee->update` became `EmployeeService::update`.
+  - **Models:**
+    - `Employee`: complete `$fillable` plus `$entityService`.
+    - `User`: `HasColumnTransformations` plus `$entityService`.
+    - `UserScope`: `$entityService`.
+- **Framework:** only changed values are validated on update; `Field::raw()`.
+- **Tests:**
+  - New: `EmployeeUserEntityServicesTest` (8), and `UserOnboardingTest::test_a_rejected_addon_code_creates_nothing_and_is_reported_on_its_field`.
+  - `UserRbacWorkbookTest` is back to strict: the unchanged round trip has 0 failed rows.
+  - User, Person and Org tests pass.
+- **Smoke:** the User list/create/edit/show pages, the bulk-import page and the Employee list return 200 for user 1 and 403 for user 40, unchanged.

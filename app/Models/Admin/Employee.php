@@ -3,6 +3,7 @@
 namespace App\Models\Admin;
 
 use App\Models\BaseModel;
+use App\Services\Org\EmployeeService;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,11 +15,14 @@ class Employee extends BaseModel
 
     protected $table = 'xlr8_admin_employee';
 
+    /** Field rules and transformations live in the entity service (DEC-050/054). */
+    protected string $entityService = EmployeeService::class;
+
     protected $fillable = [
         'code',
         'person_code',
-        'desig_code',           // Legacy - kept for backward compatibility
-        'designation_code',     // New clean column (preferred going forward)
+        'desig_code',
+        'designation_code',
         'primary_branch_code',
         'primary_loc_code',
         'primary_dept_code',
@@ -26,24 +30,45 @@ class Employee extends BaseModel
         'vertical_code',
         'segment_code',
         'sub_segment_code',
+        'reporting_manager_code',
+        'reporting_emp_code',
+        'oem_id',
         'mile_id',
-        'father_name',
         'employment_type',
+        'employment_status',
         'joining_date',
         'confirmation_date',
         'separation_date',
-        'reporting_manager_code',
-        'week_off',
-        'shift_type',
-        'shift_name',
+        'separation_reason',
+        'blood_group',
+        'nationality',
+        'father_name',
+        'mother_name',
+        'passport_no',
+        'no_of_children',
+        'marriage_date',
         'biometric_id',
         'pf_eligible',
+        'pf_reg_type',
         'pf_number',
         'uan_number',
+        'pf_joining_date',
+        'eps_membership',
+        'abry_eligible',
         'esi_eligible',
         'esi_number',
+        'pt_establishment_id',
         'lwf_eligible',
-        'is_active',
+        'salary_payment_mode',
+        'salary_structure_type',
+        'shift_type',
+        'shift_name',
+        'late_arrival_window',
+        'early_going_window',
+        'leave_rule',
+        'week_off',
+        'wo_work_compensation',
+        'comp_off_applicable',
         'created_by',
         'updated_by',
         'deleted_by',

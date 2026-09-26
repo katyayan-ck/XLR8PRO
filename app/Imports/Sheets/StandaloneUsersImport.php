@@ -2,20 +2,22 @@
 
 namespace App\Imports\Sheets;
 
+use App\Models\Admin\Employee;
 use App\Models\IAM\Role;
 use App\Models\User;
+use App\Services\IAM\UserScopeService;
+use App\Services\IAM\UserService;
 use App\Services\IdentifierService;
+use App\Services\Org\EmployeeService;
 use App\Services\OrgScopeService;
 use App\Services\PersonService;
-use Carbon\Carbon;
+use App\Services\PersonUserTypeService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
 use Spatie\Permission\PermissionRegistrar;
 
 /**
@@ -102,24 +104,27 @@ class StandaloneUsersImport implements ToCollection, WithHeadingRow
             $existingPersonCode = DB::table('xlr8_admin_employee')->where('code', $empCode)->value('person_code');
             $isNew = $existingPersonCode === null;
 
-            // 1. Person (core + contacts + addresses + banking) via the person entity services
-            $personCode = $this->createOrUpdatePerson($row, $existingPersonCode, $rowIndex);
+            // One row is all-or-nothing: a value rejected at any step leaves nothing half-written.
+            DB::transaction(function () use ($row, $empCode, $existingPersonCode, $rowIndex) {
+                // 1. Person (core + contacts + addresses + banking) via the person entity services
+                $personCode = $this->createOrUpdatePerson($row, $existingPersonCode, $rowIndex);
 
-            // 2. Employee (primary_* columns only — no pivot tables)
-            $desigCode = $this->createOrUpdateEmployee($row, $empCode, $personCode, $rowIndex);
+                // 2. Employee (primary_* columns only — no pivot tables) via EmployeeService
+                $desigCode = $this->createOrUpdateEmployee($row, $empCode, $personCode, $rowIndex);
 
-            // 3. User account
-            $userId = $this->createOrUpdateUser($row, $empCode, $personCode, $rowIndex, $desigCode);
+                // 3. User account via UserService
+                $userId = $this->createOrUpdateUser($row, $empCode, $personCode, $rowIndex, $desigCode);
 
-            // 4. Scopes → xlr8_admin_user_scopes (primary + expanded ALL)
-            $this->syncUserScopes($row, $userId, $rowIndex);
+                // 4. Scopes → xlr8_admin_user_scopes (primary + expanded ALL) via UserScopeService
+                $this->syncUserScopes($row, $userId, $rowIndex);
 
-            // 5. person ↔ user_type link
-            $this->syncPersonUserType($personCode, $userId, $desigCode);
+                // 5. person ↔ user_type link
+                $this->syncPersonUserType($personCode, $userId, $desigCode);
 
-            // 6. Designation → Spatie role (the Employee's Designation IS the role — see
-            // config/permission.php's 'roles' table mapping to xlr8_admin_designation)
-            $this->syncUserRole($userId, $desigCode, $rowIndex);
+                // 6. Designation → Spatie role (the Employee's Designation IS the role — see
+                // config/permission.php's 'roles' table mapping to xlr8_admin_designation)
+                $this->syncUserRole($userId, $desigCode, $rowIndex);
+            });
 
             $this->success++;
             $isNew ? $this->created++ : $this->updated++;
@@ -246,27 +251,25 @@ class StandaloneUsersImport implements ToCollection, WithHeadingRow
 
     private function createOrUpdateEmployee(array $row, string $empCode, string $personCode, int $rowIndex): ?string
     {
-        $now = Carbon::now();
-
         $desigCode = $this->resolveDesignationCode(
             $this->getValue($row, ['designation', 'Designation*'])
         );
 
-        $exists = DB::table('xlr8_admin_employee')->where('code', $empCode)->exists();
+        // A deleted employee row keeps its code (unique key), so it is updated in place as before.
+        $employee = Employee::withTrashed()->where('code', $empCode)->first();
+        $exists = $employee !== null;
 
         $data = [
             'code' => $empCode,
             'person_code' => $personCode,
-            'updated_at' => $now,
         ];
 
         // An unresolvable designation never erases the stored one (some employees carry codes
         // missing from xlr8_admin_designation, BUG-090); the role step reports the row.
         if ($desigCode !== null || ! $exists) {
-            $data['desig_code'] = $desigCode;          // legacy
-            $data['designation_code'] = $desigCode;    // preferred
+            $data['designation_code'] = $desigCode;
         } else {
-            $desigCode = DB::table('xlr8_admin_employee')->where('code', $empCode)->value('designation_code');
+            $desigCode = $employee->designation_code;
         }
 
         // A column missing from the sheet leaves the stored value untouched; a present but
@@ -281,7 +284,7 @@ class StandaloneUsersImport implements ToCollection, WithHeadingRow
             'sub_segment_code' => [['sub_segment', 'Sub Segment'], fn ($v) => $this->resolveOrgCode('sub_segment', $v)],
             'mile_id' => [['oem_mile_id', 'OEM Mile ID', 'mile_id', 'Mile ID'], fn ($v) => $this->n($v)],
             'father_name' => [['father_name', 'Father Name'], fn ($v) => $this->n($v)],
-            'joining_date' => [['date_of_joining', 'Date of Joining'], fn ($v) => $this->parseDate($v)],
+            'joining_date' => [['date_of_joining', 'Date of Joining'], fn ($v) => $this->n($v)],
             'reporting_manager_code' => [['reporting_manager', 'Reporting Manager'], fn ($v) => $this->parseReportingManager($v)],
         ];
         $lookedUp = ['primary_branch_code', 'primary_loc_code', 'primary_dept_code', 'primary_div_code', 'vertical_code', 'segment_code', 'sub_segment_code'];
@@ -305,28 +308,17 @@ class StandaloneUsersImport implements ToCollection, WithHeadingRow
             $data[$column] = $value;
         }
 
-        // employment_type / employment_status are ENUM NOT NULL: set from a valid value,
-        // default only for a new employee, otherwise keep what is stored.
-        $empType = strtolower((string) $this->n($this->getValue($row, ['employment_type', 'Employment Type'])));
-        if (in_array($empType, ['permanent', 'probation', 'apprentice', 'contract', 'temporary'], true)) {
-            $data['employment_type'] = $empType;
-        } elseif (! $exists) {
-            $data['employment_type'] = 'permanent';
+        // Blank keeps the stored value (a new employee gets the service default); any other value
+        // must be one of the allowed ones (EmployeeService field rule).
+        foreach (['employment_type' => ['employment_type', 'Employment Type'], 'employment_status' => ['employee_status', 'Employee Status']] as $column => $keys) {
+            $value = $this->n($this->getValue($row, $keys));
+            if ($value !== null) {
+                $data[$column] = $value;
+            }
         }
 
-        $empStatus = strtolower((string) $this->n($this->getValue($row, ['employee_status', 'Employee Status'])));
-        if (in_array($empStatus, ['active', 'inactive', 'separated', 'terminated', 'absconded'], true)) {
-            $data['employment_status'] = $empStatus;
-        } elseif (! $exists) {
-            $data['employment_status'] = 'active';
-        }
-
-        if ($exists) {
-            DB::table('xlr8_admin_employee')->where('code', $empCode)->update($data);
-        } else {
-            $data['created_at'] = $now;
-            DB::table('xlr8_admin_employee')->insert($data);
-        }
+        $employees = app(EmployeeService::class);
+        $exists ? $employees->update($employee, $data) : $employees->create($data);
 
         // NOTE: No emp_*_pivot tables in this schema.
         // Primary values live on employee columns; all scopes (primary + addon) go to xlr8_admin_user_scopes after user is created.
@@ -342,47 +334,43 @@ class StandaloneUsersImport implements ToCollection, WithHeadingRow
 
     private function createOrUpdateUser(array $row, string $empCode, string $personCode, int $rowIndex, ?string $desigCode): int
     {
-        $now = Carbon::now();
         $username = strtolower($empCode);
         // Resolved designation code, not the raw cell (an export label is "Name (CODE)").
         $userType = in_array(strtoupper((string) $desigCode), ['RTO', 'DSA'], true) ? 'Associate' : 'Emp';
 
-        $mobile = $this->cleanPhone($this->getValue($row, ['personal_contact_number', 'Personal Contact Number*'])) ?? '1234567890';
-        $password = Hash::make($mobile);
-
         $data = [
             'username' => $username,
-            'password' => $password,
             'user_type' => $userType,
             'person_code' => $personCode,
             'employee_code' => $empCode,
-            'is_active' => 1,
-            'updated_at' => $now,
         ];
 
+        // Blank keeps the stored login flag (a new account is active).
         $loginActive = $this->yesNo($this->getValue($row, ['login_active', 'Login Active']));
-
-        $existingId = DB::table('users')->where('username', $username)->value('id');
-        if ($existingId) {
-            // Do not overwrite password on update; keep the login flag unless the sheet sets it.
-            unset($data['password']);
-            $data['is_active'] = $loginActive ?? DB::table('users')->where('id', $existingId)->value('is_active');
-            DB::table('users')->where('id', $existingId)->update($data);
-            $this->logRow($rowIndex, '🔄 USER UPDATED', "username = {$username} | type = {$userType}");
-
-            return (int) $existingId;
+        if ($loginActive !== null) {
+            $data['is_active'] = $loginActive;
         }
 
-        $data['created_at'] = $now;
-        $data['is_active'] = $loginActive ?? 1;
-        $userId = DB::table('users')->insertGetId($data);
+        $users = app(UserService::class);
+        $user = User::where('username', $username)->first();
+        if ($user) {
+            // The password is never changed by an import.
+            $users->update($user, $data);
+            $this->logRow($rowIndex, '🔄 USER UPDATED', "username = {$username} | type = {$userType}");
+
+            return (int) $user->id;
+        }
+
+        // Initial password: the personal mobile number.
+        $data['password'] = $this->cleanPhone($this->getValue($row, ['personal_contact_number', 'Personal Contact Number*'])) ?? '1234567890';
+        $user = $users->create($data);
         $this->logRow($rowIndex, '✅ USER CREATED', "username = {$username} | type = {$userType}");
 
-        return (int) $userId;
+        return (int) $user->id;
     }
 
     // ─────────────────────────────────────────────────────────────
-    // USER SCOPES  (xlr8_admin_user_scopes) — matches successful DB
+    // USER SCOPES  (xlr8_admin_user_scopes) via UserScopeService
     // ─────────────────────────────────────────────────────────────
 
     private function syncUserScopes(array $row, int $userId, int $rowIndex): void
@@ -390,9 +378,6 @@ class StandaloneUsersImport implements ToCollection, WithHeadingRow
         if (! $userId) {
             return;
         }
-
-        $fromDate = now()->toDateString();
-        $now = now();
 
         // Excel columns → scope_type. Every listed column adds codes (primary + addon): the old
         // lookup stopped at the first non-empty column and its addon keys never matched the
@@ -411,6 +396,7 @@ class StandaloneUsersImport implements ToCollection, WithHeadingRow
         ];
 
         $inserted = 0;
+        $scopes = app(UserScopeService::class);
 
         foreach ($scopeColumns as $type => $keys) {
             $codes = [];
@@ -426,35 +412,8 @@ class StandaloneUsersImport implements ToCollection, WithHeadingRow
                     continue;
                 }
 
-                $exists = DB::table('xlr8_admin_user_scopes')
-                    ->where('user_id', $userId)
-                    ->where('scope_type', $type)
-                    ->where('scope_code', $code)
-                    ->whereNull('deleted_at')
-                    ->exists();
-
-                if ($exists) {
-                    DB::table('xlr8_admin_user_scopes')
-                        ->where('user_id', $userId)
-                        ->where('scope_type', $type)
-                        ->where('scope_code', $code)
-                        ->whereNull('deleted_at')
-                        ->update([
-                            'is_active' => 1,
-                            'to_date' => null,
-                            'updated_at' => $now,
-                        ]);
-                } else {
-                    DB::table('xlr8_admin_user_scopes')->insert([
-                        'user_id' => $userId,
-                        'scope_type' => $type,
-                        'scope_code' => $code,
-                        'is_active' => 1,
-                        'from_date' => $fromDate,
-                        'to_date' => null,
-                        'created_at' => $now,
-                        'updated_at' => $now,
-                    ]);
+                // Grants only: removing scopes is the User_Scopes sheet's job.
+                if ($scopes->grant($userId, $type, $code) === 'inserted') {
                     $inserted++;
                 }
             }
@@ -476,44 +435,15 @@ class StandaloneUsersImport implements ToCollection, WithHeadingRow
     }
 
     // ─────────────────────────────────────────────────────────────
-    // PERSON USER TYPE  (xlr8_admin_person_user_types)
+    // PERSON USER TYPE  (xlr8_admin_person_user_types) via PersonUserTypeService
     // ─────────────────────────────────────────────────────────────
 
     private function syncPersonUserType(string $personCode, int $userId, ?string $desigCode): void
     {
         // Resolved designation code, not the raw cell (an export label is "Name (CODE)").
         $userType = in_array(strtoupper((string) $desigCode), ['RTO', 'DSA'], true) ? 'Associate' : 'Emp';
-        $now = now();
 
-        $exists = DB::table('xlr8_admin_person_user_types')
-            ->where('person_code', $personCode)
-            ->where('user_type', $userType)
-            ->whereNull('deleted_at')
-            ->exists();
-
-        if ($exists) {
-            DB::table('xlr8_admin_person_user_types')
-                ->where('person_code', $personCode)
-                ->where('user_type', $userType)
-                ->whereNull('deleted_at')
-                ->update([
-                    'user_id' => $userId,
-                    'is_primary' => 1,
-                    'is_active' => 1,
-                    'updated_at' => $now,
-                ]);
-        } else {
-            DB::table('xlr8_admin_person_user_types')->insert([
-                'person_code' => $personCode,
-                'user_id' => $userId,
-                'user_type' => $userType,
-                'is_primary' => 1,
-                'is_active' => 1,
-                'meta' => json_encode(['source' => 'standalone_users_import']),
-                'created_at' => $now,
-                'updated_at' => $now,
-            ]);
-        }
+        PersonUserTypeService::assign($personCode, $userType, $userId, true, ['source' => 'standalone_users_import']);
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -686,23 +616,6 @@ class StandaloneUsersImport implements ToCollection, WithHeadingRow
         $v = trim((string) ($v ?? ''));
 
         return in_array(strtolower($v), ['', 'null', 'n/a', 'na', '-', '?'], true) ? null : $v;
-    }
-
-    private function parseDate(mixed $v): ?string
-    {
-        if (! $v || trim((string) $v) === '') {
-            return null;
-        }
-        try {
-            // An edited Excel date cell arrives as a serial number (e.g. 45567).
-            if (is_numeric($v) && (float) $v > 1000 && (float) $v < 100000) {
-                return Carbon::instance(ExcelDate::excelToDateTimeObject((float) $v))->format('Y-m-d');
-            }
-
-            return Carbon::parse($v)->format('Y-m-d');
-        } catch (\Throwable) {
-            return null;
-        }
     }
 
     private function cleanPhone(?string $v): ?string

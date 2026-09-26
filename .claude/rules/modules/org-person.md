@@ -26,6 +26,8 @@ Person (person_code — immutable natural key)
 - Person writes only through `App\Services\Person\{PersonRecord,PersonContact,PersonAddress,PersonBanking}Service`
   (or the `PersonService::upsert*` facade that delegates to them) — DEC-053. Child types are slots (`TypedSlots`):
   blank → Primary if free; Primary promotes (swap); child deletes are permanent (BUG-175).
+- Employee / User / UserScope writes only through `Org\EmployeeService`, `IAM\UserService`, `IAM\UserScopeService` (DEC-054);
+  the User screen and user importer orchestrate roles/overrides/journey around them, one transaction per save/row.
 - Employee–branch/location/department **pivot tables do not exist**; relations on `User`/`Employee` that
   use them are dead (BUG-158). Use `employee.primary_*_code` and `user_scopes`.
 

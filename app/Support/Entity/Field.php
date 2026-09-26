@@ -42,6 +42,8 @@ final class Field
     /** Validated but not a column (uploads, remove flags): excluded from persisted data. */
     public bool $virtual = false;
 
+    public bool $raw = false;
+
     /** @var list<mixed> rules applied to each item of an array input ("name.*") */
     public array $eachRules = [];
 
@@ -178,6 +180,14 @@ final class Field
     public static function documents(string $name = 'documents'): self
     {
         return self::make($name)->format('Files, max 10 MB each')->rules('array')->each('file', 'max:10240')->virtual();
+    }
+
+    /** Stored exactly as given — no trimming or transforms (passwords). */
+    public function raw(): self
+    {
+        $this->raw = true;
+
+        return $this;
     }
 
     public function virtual(): self

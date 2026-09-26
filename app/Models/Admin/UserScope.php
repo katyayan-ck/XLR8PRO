@@ -3,6 +3,8 @@
 namespace App\Models\Admin;
 
 use App\Models\BaseModel;
+use App\Models\User;
+use App\Services\IAM\UserScopeService;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,6 +14,9 @@ class UserScope extends BaseModel
     use CrudTrait, HasFactory;
 
     protected $table = 'xlr8_admin_user_scopes';
+
+    /** Field rules and transformations live in the entity service (DEC-050/054). */
+    protected string $entityService = UserScopeService::class;
 
     protected $fillable = [
         'user_id',
@@ -23,9 +28,9 @@ class UserScope extends BaseModel
     ];
 
     protected $casts = [
-        'is_active'  => 'boolean',
-        'from_date'  => 'date',
-        'to_date'    => 'date',
+        'is_active' => 'boolean',
+        'from_date' => 'date',
+        'to_date' => 'date',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
@@ -34,7 +39,7 @@ class UserScope extends BaseModel
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\User::class);
+        return $this->belongsTo(User::class);
     }
 
     // Scopes

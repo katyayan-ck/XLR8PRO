@@ -129,11 +129,36 @@ abstract class EntityService
         }
 
         // On update, required fields not being changed are validated against the stored value.
-        $subject = $current ? array_merge($this->currentValues($current), $data) : $data;
+        $stored = $current ? $this->currentValues($current) : [];
+        $subject = $current ? array_merge($stored, $data) : $data;
+        $rules = $this->rules($subject, $current);
 
-        Validator::make($subject, $this->rules($subject, $current), [], $this->labels())->validate();
+        // On update only changed values are validated: a stored value that is left as it is (legacy
+        // data) never blocks an edit of another field. Required fields must still be present.
+        if ($current) {
+            foreach ($this->fieldMap() as $name => $field) {
+                if (! array_key_exists($name, $data) || $this->sameValue($data[$name], $stored[$name] ?? null)) {
+                    $rules[$name] = $field->required ? ['required'] : [];
+                    unset($rules["{$name}.*"]);
+                }
+            }
+        }
+
+        Validator::make($subject, $rules, [], $this->labels())->validate();
 
         return $data;
+    }
+
+    private function sameValue(mixed $new, mixed $stored): bool
+    {
+        if ($new === null || $stored === null) {
+            return $new === $stored;
+        }
+        if (is_array($new) || is_array($stored)) {
+            return $new == $stored;
+        }
+
+        return (string) (is_bool($new) ? (int) $new : $new) === (string) (is_bool($stored) ? (int) $stored : $stored);
     }
 
     /**
@@ -164,6 +189,11 @@ abstract class EntityService
 
             if ($field->boolean) {
                 $out[$name] = $value === null || $value === '' ? $field->default : (bool) filter_var($value, FILTER_VALIDATE_BOOL);
+
+                continue;
+            }
+            if ($field->raw) {
+                $out[$name] = $value === '' ? null : $value;
 
                 continue;
             }

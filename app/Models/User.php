@@ -8,6 +8,8 @@ use App\Models\Admin\Person;
 use App\Models\Admin\UserScope;
 use App\Models\IAM\UserDeviceToken;
 use App\Models\IAM\UserPermissionDenial;
+use App\Models\Traits\HasColumnTransformations;
+use App\Services\IAM\UserService;
 use App\Services\OrgService;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -19,7 +21,10 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use CrudTrait, HasApiTokens, HasFactory, HasRoles, Notifiable, SoftDeletes;
+    use CrudTrait, HasApiTokens, HasColumnTransformations, HasFactory, HasRoles, Notifiable, SoftDeletes;
+
+    /** Field rules and transformations live in the entity service (DEC-050/054). */
+    protected string $entityService = UserService::class;
 
     protected $table = 'users';
 

@@ -112,6 +112,34 @@ class UserOnboardingTest extends TestCase
         $this->assertSame($fixture['branch']->code, $history->primary_branch_code);
     }
 
+    public function test_a_rejected_addon_code_creates_nothing_and_is_reported_on_its_field(): void
+    {
+        $fixture = $this->orgFixture();
+        $person = PersonService::upsert([
+            'display_name' => 'Rejected Addon Person',
+            'contacts' => [['data_type' => 'Mobile', 'contact_type' => 'Primary', 'contact_detail' => '9800011129', 'is_primary' => true]],
+        ]);
+        $admin = $this->adminUser(['ORG_USER_CREATE']);
+        $employeesBefore = Employee::count();
+
+        $response = $this->actingAsBackpackUser($admin)->post(backpack_url('org/user'), [
+            'person_code' => $person->person_code,
+            'user_type_code' => 'emp',
+            'username' => 'rejected_addon_user',
+            'password' => 'password123',
+            'designation_code' => $fixture['designation']->code,
+            'primary_branch_code' => $fixture['branch']->code,
+            'primary_loc_code' => $fixture['location']->code,
+            'primary_dept_code' => $fixture['department']->code,
+            'primary_div_code' => $fixture['division']->code,
+            'addon_branch_codes' => ['NO-SUCH-BR'],
+        ]);
+
+        $response->assertSessionHasErrors('addon_branch_codes');
+        $this->assertNull(User::where('username', 'rejected_addon_user')->first());
+        $this->assertSame($employeesBefore, Employee::count(), 'onboarding is one transaction');
+    }
+
     public function test_addon_branches_and_permission_overrides_are_applied_on_create(): void
     {
         $fixture = $this->orgFixture();

@@ -27,6 +27,9 @@ use App\Models\Vehicle\VehicleModel;
 use App\Services\AuthService;
 use App\Services\HR\EmployeeJourneyService;
 use App\Services\IAM\PermissionTreeService;
+use App\Services\IAM\UserScopeService;
+use App\Services\IAM\UserService;
+use App\Services\Org\EmployeeService;
 use App\Services\RBACService;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
@@ -37,8 +40,9 @@ use Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 use Spatie\Permission\PermissionRegistrar;
 
 /**
@@ -293,7 +297,7 @@ class UserCrudController extends CrudController
             return back()->withError('Cannot suspend a SuperAdmin account.');
         }
 
-        $user->update(['is_active' => false]);
+        $this->users->update($user, ['is_active' => false]);
 
         Log::warning('User suspended', ['suspended_by' => backpack_user()->id, 'user_id' => $user->id]);
 
@@ -320,7 +324,7 @@ class UserCrudController extends CrudController
             return back()->withError('Cannot revoke a SuperAdmin account.');
         }
 
-        $user->update(['is_active' => false]);
+        $this->users->update($user, ['is_active' => false]);
         $user->syncRoles([]);
         $user->syncPermissions([]);
         UserPermissionDenial::where('user_id', $user->id)->delete();
@@ -345,7 +349,7 @@ class UserCrudController extends CrudController
         }
 
         $user = User::findOrFail($id);
-        $user->update(['is_active' => true]);
+        $this->users->update($user, ['is_active' => true]);
 
         Log::info('User activated', ['activated_by' => backpack_user()->id, 'user_id' => $user->id]);
 
@@ -367,9 +371,22 @@ class UserCrudController extends CrudController
         protected AuthService $authService,
         protected EmployeeJourneyService $journeyService,
         protected PermissionTreeService $permissionTree,
+        protected EmployeeService $employees,
+        protected UserService $users,
+        protected UserScopeService $scopes,
     ) {
         parent::__construct();
     }
+
+    /** UserScope scope_type => the onboarding form's add-on input. */
+    private const ADDON_FIELDS = [
+        'branch' => 'addon_branch_codes',
+        'location' => 'addon_loc_codes',
+        'department' => 'addon_dept_codes',
+        'division' => 'addon_div_codes',
+        'segment' => 'addon_segment_codes',
+        'sub_segment' => 'addon_sub_segment_codes',
+    ];
 
     /** UserType.code (as seeded/entered) => users.user_type ENUM value ('Emp','Cust','DSA','Insurer','Associate'). */
     private const USER_TYPE_ENUM_MAP = [
@@ -498,77 +515,53 @@ class UserCrudController extends CrudController
         }
 
         $validated = $request->validated();
+        $input = $request->all();
         $isEmployee = strtolower($validated['user_type_code']) === 'emp';
 
-        $person = Person::where('person_code', $validated['person_code'])->firstOrFail();
-        $employee = null;
-        $addonScopeSnapshot = null;
-
-        if ($isEmployee) {
-            $employee = Employee::create([
-                'code' => $this->generateEmployeeCode(),
-                'person_code' => $person->person_code,
-                'designation_code' => $validated['designation_code'],
-                'primary_branch_code' => $validated['primary_branch_code'],
-                'primary_loc_code' => $validated['primary_loc_code'],
-                'primary_dept_code' => $validated['primary_dept_code'],
-                'primary_div_code' => $validated['primary_div_code'],
-                'vertical_code' => $validated['vertical_code'] ?? null,
-                'segment_code' => $validated['primary_segment_code'] ?? null,
-                'sub_segment_code' => $validated['primary_sub_segment_code'] ?? null,
+        // Field rules live in EmployeeService / UserService / UserScopeService (DEC-054); the whole
+        // onboarding is one transaction, so a rejected value leaves no half-created employee.
+        $user = $this->withFormErrorKeys(fn () => DB::transaction(function () use ($validated, $input, $isEmployee, $request) {
+            $employee = $isEmployee ? $this->employees->create($this->employeeInput($input) + [
+                'person_code' => $input['person_code'] ?? null,
                 'employment_type' => 'permanent',
                 'employment_status' => 'active',
-                'joining_date' => $validated['date_of_joining'] ?? now()->toDateString(),
-            ]);
-        }
+                'joining_date' => ($input['date_of_joining'] ?? null) ?: now()->toDateString(),
+            ]) : null;
 
-        $user = User::create([
-            'username' => $validated['username'],
-            'password' => Hash::make($validated['password']),
-            'user_type' => $this->resolveUserTypeEnum($validated['user_type_code']),
-            'person_code' => $person->person_code,
-            'employee_code' => $employee?->code,
-            'is_active' => $request->boolean('is_active', true),
-        ]);
-
-        $roleCode = $isEmployee ? $validated['designation_code'] : null;
-        $role = $roleCode ? Role::where('code', $roleCode)->where('guard_name', 'web')->first() : ($validated['role_id'] ?? null ? Role::find($validated['role_id']) : null);
-        if ($role) {
-            $user->syncRoles([$role]);
-        }
-
-        $permissionsSnapshot = $this->applyPermissionOverrides($user, $validated['added_permissions'] ?? [], $validated['removed_permissions'] ?? [], $role);
-
-        if ($employee) {
-            $addonScopeSnapshot = $this->syncAddonScopes($user, [
-                'branch' => $validated['addon_branch_codes'] ?? [],
-                'location' => $validated['addon_loc_codes'] ?? [],
-                'department' => $validated['addon_dept_codes'] ?? [],
-                'division' => $validated['addon_div_codes'] ?? [],
-                'segment' => $validated['addon_segment_codes'] ?? [],
-                'sub_segment' => $validated['addon_sub_segment_codes'] ?? [],
+            $user = $this->users->create([
+                'username' => $input['username'] ?? null,
+                'password' => $input['password'] ?? null,
+                'user_type' => $this->resolveUserTypeEnum($validated['user_type_code']),
+                'person_code' => $input['person_code'] ?? null,
+                'employee_code' => $employee?->code,
+                'is_active' => $request->boolean('is_active', true),
             ]);
 
-            $this->journeyService->recordChange(
-                employee: $employee,
-                primary: [
-                    'designation_code' => $employee->designation_code,
-                    'primary_branch_code' => $employee->primary_branch_code,
-                    'primary_loc_code' => $employee->primary_loc_code,
-                    'primary_dept_code' => $employee->primary_dept_code,
-                    'primary_div_code' => $employee->primary_div_code,
-                    'vertical_code' => $employee->vertical_code,
-                    'segment_code' => $employee->segment_code,
-                    'sub_segment_code' => $employee->sub_segment_code,
-                ],
-                changeReason: 'other',
-                effectiveFrom: $employee->joining_date ?? now(),
-                notes: 'Initial onboarding via New User form',
-                addonScopes: $addonScopeSnapshot,
-                permissionsSnapshot: $permissionsSnapshot,
-                actorId: backpack_user()->id,
-            );
-        }
+            $roleCode = $isEmployee ? $employee->designation_code : null;
+            $role = $roleCode ? Role::where('code', $roleCode)->where('guard_name', 'web')->first() : ($validated['role_id'] ?? null ? Role::find($validated['role_id']) : null);
+            if ($role) {
+                $user->syncRoles([$role]);
+            }
+
+            $permissionsSnapshot = $this->applyPermissionOverrides($user, $validated['added_permissions'] ?? [], $validated['removed_permissions'] ?? [], $role);
+
+            if ($employee) {
+                $addonScopeSnapshot = $this->syncAddonScopes($user, $this->addonInput($input));
+
+                $this->journeyService->recordChange(
+                    employee: $employee,
+                    primary: $this->primarySnapshot($employee),
+                    changeReason: 'other',
+                    effectiveFrom: $employee->joining_date ?? now(),
+                    notes: 'Initial onboarding via New User form',
+                    addonScopes: $addonScopeSnapshot,
+                    permissionsSnapshot: $permissionsSnapshot,
+                    actorId: backpack_user()->id,
+                );
+            }
+
+            return $user;
+        }));
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
@@ -619,53 +612,20 @@ class UserCrudController extends CrudController
 
         $user = User::findOrFail($id);
         $validated = $request->validated();
+        $input = $request->all();
         $isEmployee = strtolower($validated['user_type_code']) === 'emp';
-
-        $userData = [
-            'username' => $validated['username'],
-            'user_type' => $this->resolveUserTypeEnum($validated['user_type_code']),
-            'is_active' => $request->boolean('is_active'),
-        ];
-        if (! empty($validated['password'])) {
-            $userData['password'] = Hash::make($validated['password']);
-        }
-        $user->update($userData);
-
         $employee = $user->employee_code ? Employee::where('code', $user->employee_code)->first() : null;
 
-        $roleCode = $isEmployee ? ($validated['designation_code'] ?? null) : null;
-        $role = $roleCode ? Role::where('code', $roleCode)->where('guard_name', 'web')->first() : ($validated['role_id'] ?? null ? Role::find($validated['role_id']) : null);
-        $user->syncRoles($role ? [$role] : []);
-
-        $permissionsSnapshot = $this->applyPermissionOverrides($user, $validated['added_permissions'] ?? [], $validated['removed_permissions'] ?? [], $role);
-
+        // Org/vehicle/scope change detection compares normalised values (the service's formats).
+        $employeeInput = $this->employeeInput($input);
+        $newAddons = $this->addonInput($input);
         $orgChanged = false;
-        $addonScopeSnapshot = null;
-
         if ($employee) {
-            $orgFields = [
-                'designation_code', 'primary_branch_code', 'primary_loc_code', 'primary_dept_code',
-                'primary_div_code', 'vertical_code',
-            ];
-
-            foreach ($orgFields as $field) {
-                if (($validated[$field] ?? null) !== $employee->{$field}) {
+            foreach ($this->employees->normalise($employeeInput) as $field => $value) {
+                if ($value !== $employee->{$field}) {
                     $orgChanged = true;
                 }
             }
-            if (($validated['primary_segment_code'] ?? null) !== $employee->segment_code
-                || ($validated['primary_sub_segment_code'] ?? null) !== $employee->sub_segment_code) {
-                $orgChanged = true;
-            }
-
-            $newAddons = [
-                'branch' => $validated['addon_branch_codes'] ?? [],
-                'location' => $validated['addon_loc_codes'] ?? [],
-                'department' => $validated['addon_dept_codes'] ?? [],
-                'division' => $validated['addon_div_codes'] ?? [],
-                'segment' => $validated['addon_segment_codes'] ?? [],
-                'sub_segment' => $validated['addon_sub_segment_codes'] ?? [],
-            ];
             $currentAddons = $user->getAllScopes();
             foreach ($newAddons as $type => $codes) {
                 if (array_values(array_map('strtoupper', $codes)) !== array_values(array_map('strtoupper', $currentAddons[$type] ?? []))) {
@@ -678,34 +638,33 @@ class UserCrudController extends CrudController
                     'change_reason' => 'A reason and effective date are required whenever org, vehicle, or scope info changes.',
                 ]);
             }
+        }
+
+        $this->withFormErrorKeys(fn () => DB::transaction(function () use ($user, $employee, $validated, $input, $isEmployee, $request, $orgChanged, $employeeInput, $newAddons) {
+            $this->users->update($user, [
+                'username' => $input['username'] ?? null,
+                'password' => $input['password'] ?? null,
+                'user_type' => $this->resolveUserTypeEnum($validated['user_type_code']),
+                'is_active' => $request->boolean('is_active'),
+            ]);
+
+            $roleCode = $isEmployee ? ($input['designation_code'] ?? null) : null;
+            $role = $roleCode ? Role::where('code', strtoupper(trim((string) $roleCode)))->where('guard_name', 'web')->first() : ($validated['role_id'] ?? null ? Role::find($validated['role_id']) : null);
+            $user->syncRoles($role ? [$role] : []);
+
+            $permissionsSnapshot = $this->applyPermissionOverrides($user, $validated['added_permissions'] ?? [], $validated['removed_permissions'] ?? [], $role);
+
+            if (! $employee) {
+                return;
+            }
 
             if ($orgChanged) {
-                $employee->fill([
-                    'designation_code' => $validated['designation_code'],
-                    'primary_branch_code' => $validated['primary_branch_code'],
-                    'primary_loc_code' => $validated['primary_loc_code'],
-                    'primary_dept_code' => $validated['primary_dept_code'],
-                    'primary_div_code' => $validated['primary_div_code'],
-                    'vertical_code' => $validated['vertical_code'] ?? null,
-                    'segment_code' => $validated['primary_segment_code'] ?? null,
-                    'sub_segment_code' => $validated['primary_sub_segment_code'] ?? null,
-                ]);
-                $employee->save();
-
+                $employee = $this->employees->update($employee, $employeeInput);
                 $addonScopeSnapshot = $this->syncAddonScopes($user, $newAddons);
 
                 $this->journeyService->recordChange(
                     employee: $employee,
-                    primary: [
-                        'designation_code' => $employee->designation_code,
-                        'primary_branch_code' => $employee->primary_branch_code,
-                        'primary_loc_code' => $employee->primary_loc_code,
-                        'primary_dept_code' => $employee->primary_dept_code,
-                        'primary_div_code' => $employee->primary_div_code,
-                        'vertical_code' => $employee->vertical_code,
-                        'segment_code' => $employee->segment_code,
-                        'sub_segment_code' => $employee->sub_segment_code,
-                    ],
+                    primary: $this->primarySnapshot($employee),
                     changeReason: $validated['change_reason'],
                     effectiveFrom: $validated['effective_date'],
                     notes: $validated['remarks'] ?? null,
@@ -723,7 +682,7 @@ class UserCrudController extends CrudController
                     actorId: backpack_user()->id,
                 );
             }
-        }
+        }));
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
@@ -732,6 +691,78 @@ class UserCrudController extends CrudController
         \Alert::success('User updated successfully!')->flash();
 
         return redirect(backpack_url('org/user/'.$user->id.'/show'));
+    }
+
+    /**
+     * The onboarding form's org/vehicle placement, keyed by EmployeeService field names.
+     *
+     * @param  array<string, mixed>  $input
+     * @return array<string, mixed>
+     */
+    private function employeeInput(array $input): array
+    {
+        return [
+            'designation_code' => $input['designation_code'] ?? null,
+            'primary_branch_code' => $input['primary_branch_code'] ?? null,
+            'primary_loc_code' => $input['primary_loc_code'] ?? null,
+            'primary_dept_code' => $input['primary_dept_code'] ?? null,
+            'primary_div_code' => $input['primary_div_code'] ?? null,
+            'vertical_code' => $input['vertical_code'] ?? null,
+            'segment_code' => $input['primary_segment_code'] ?? null,
+            'sub_segment_code' => $input['primary_sub_segment_code'] ?? null,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $input
+     * @return array<string, list<string>>
+     */
+    private function addonInput(array $input): array
+    {
+        $addons = [];
+        foreach (self::ADDON_FIELDS as $type => $field) {
+            $addons[$type] = array_values((array) ($input[$field] ?? []));
+        }
+
+        return $addons;
+    }
+
+    /** @return array<string, ?string> */
+    private function primarySnapshot(Employee $employee): array
+    {
+        return [
+            'designation_code' => $employee->designation_code,
+            'primary_branch_code' => $employee->primary_branch_code,
+            'primary_loc_code' => $employee->primary_loc_code,
+            'primary_dept_code' => $employee->primary_dept_code,
+            'primary_div_code' => $employee->primary_div_code,
+            'vertical_code' => $employee->vertical_code,
+            'segment_code' => $employee->segment_code,
+            'sub_segment_code' => $employee->sub_segment_code,
+        ];
+    }
+
+    /**
+     * Runs a write and re-labels service validation errors with this form's input names.
+     *
+     * @template T
+     *
+     * @param  callable(): T  $write
+     * @return T
+     */
+    private function withFormErrorKeys(callable $write): mixed
+    {
+        try {
+            return $write();
+        } catch (ValidationException $e) {
+            $map = ['segment_code' => 'primary_segment_code', 'sub_segment_code' => 'primary_sub_segment_code', 'joining_date' => 'date_of_joining', 'user_type' => 'user_type_code'];
+            $errors = [];
+            foreach ($e->errors() as $key => $messages) {
+                $errors[$map[$key] ?? $key] = $messages;
+            }
+
+            throw ValidationException::withMessages($errors);
+        }
     }
 
     /**
@@ -791,11 +822,9 @@ class UserCrudController extends CrudController
     }
 
     /**
-     * Replaces a user's addon scopes of each given type with the new
-     * selection — soft-deletes rows no longer selected, restores/updates
-     * (rather than re-inserting, since (user_id, scope_type, scope_code) is
-     * DB-unique even across soft-deleted rows — same pitfall as BUG-086)
-     * any that are.
+     * Makes each given scope type's active codes exactly the new selection via UserScopeService
+     * (dropped codes are deactivated, re-selected ones re-activated — DEC-054). Errors are
+     * reported against the form's add-on field of that type.
      *
      * @param  array<string, array<int,string>>  $addonsByType  scope_type => codes
      * @return array<string, array<int,string>>
@@ -808,16 +837,10 @@ class UserCrudController extends CrudController
             $codes = array_values(array_unique(array_filter($codes)));
             $snapshot[$scopeType] = $codes;
 
-            UserScope::where('user_id', $user->id)
-                ->where('scope_type', $scopeType)
-                ->whereNotIn('scope_code', $codes)
-                ->delete();
-
-            foreach ($codes as $code) {
-                UserScope::withTrashed()->updateOrCreate(
-                    ['user_id' => $user->id, 'scope_type' => $scopeType, 'scope_code' => $code],
-                    ['is_active' => true, 'from_date' => now()->toDateString(), 'to_date' => null, 'deleted_at' => null]
-                );
+            try {
+                $this->scopes->sync($user->id, $scopeType, $codes);
+            } catch (ValidationException $e) {
+                throw ValidationException::withMessages([self::ADDON_FIELDS[$scopeType] => collect($e->errors())->flatten()->all()]);
             }
         }
 
@@ -827,16 +850,6 @@ class UserCrudController extends CrudController
     private function resolveUserTypeEnum(string $userTypeCode): string
     {
         return self::USER_TYPE_ENUM_MAP[strtoupper($userTypeCode)] ?? 'Emp';
-    }
-
-    /** Next sequential BMPL-#### employee code. */
-    private function generateEmployeeCode(): string
-    {
-        $max = Employee::where('code', 'like', 'BMPL-%')
-            ->selectRaw("MAX(CAST(SUBSTRING_INDEX(code, '-', -1) AS UNSIGNED)) as max_num")
-            ->value('max_num') ?? 0;
-
-        return 'BMPL-'.str_pad($max + 1, 4, '0', STR_PAD_LEFT);
     }
 
     /**
