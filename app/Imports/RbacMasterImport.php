@@ -1,13 +1,13 @@
 <?php
+
 namespace App\Imports;
 
+use App\Imports\Sheets\DepartmentSheet;
+use App\Imports\Sheets\DesignationTreeSheet;
+use App\Imports\Sheets\DivisionSheet;
+use App\Imports\Sheets\PostSheet;
+use App\Imports\Sheets\UsersImportSheet;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
-use App\Imports\Sheets\{
-    BranchSheet, LocationSheet, DesignationSheet, DepartmentSheet,
-    DivisionSheet, DesignationTreeSheet, PostSheet,
-    VerticalSheet, SegmentSheet, SubSegmentSheet, ModelSheet,
-    UsersImportSheet
-};
 
 /**
  * Master RBAC Import — processes all 12 sheets in strict FK-safe order.
@@ -28,18 +28,30 @@ class RbacMasterImport implements WithMultipleSheets
     public function sheets(): array
     {
         return [
-            
-            'M_Department'      => new DepartmentSheet($this),
-            'M_Division'        => new DivisionSheet($this),
+
+            'M_Department' => new DepartmentSheet($this),
+            'M_Division' => new DivisionSheet($this),
             'M_DesignationTree' => new DesignationTreeSheet($this),
-            'M_Post'            => new PostSheet($this),           
-            'Users_Import'      => new UsersImportSheet($this),
+            // 'M_Post' disabled: the Post concept was retired and its xlr8_iam_roles table never existed (DEC-018, BUG-080).
+            // 'M_Post'            => new PostSheet($this),
+            'Users_Import' => new UsersImportSheet($this),
         ];
     }
 
-    public function recordInsert(): void  { $this->log['inserted']++; }
-    public function recordUpdate(): void  { $this->log['updated']++; }
-    public function recordSkip(): void    { $this->log['skipped']++; }
+    public function recordInsert(): void
+    {
+        $this->log['inserted']++;
+    }
+
+    public function recordUpdate(): void
+    {
+        $this->log['updated']++;
+    }
+
+    public function recordSkip(): void
+    {
+        $this->log['skipped']++;
+    }
 
     public function recordError(string $sheet, int $row, string $msg): void
     {
@@ -48,5 +60,8 @@ class RbacMasterImport implements WithMultipleSheets
         \Log::warning("RbacMasterImport | {$key} | {$msg}");
     }
 
-    public function summary(): array { return $this->log; }
+    public function summary(): array
+    {
+        return $this->log;
+    }
 }

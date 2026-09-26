@@ -32,7 +32,6 @@ class RoleCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view roles.');
         }
 
-        $this->crud->addClause('where', 'is_post', false);
         $this->crud->setListView('admin.iam.role.list');
     }
 
@@ -42,50 +41,9 @@ class RoleCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view roles.');
         }
 
-        $this->crud->setListView('admin.iam.role.list');
-
-        $roles = Role::withCount('permissions')
-            ->select([
-                'id',
-                'name',
-                'guard_name',
-                'created_at',
-                'updated_at',
-            ])
-            ->orderBy('id', 'desc')
-            ->get();
-
-        $gridData = $roles->map(function ($role, $index) {
-            $mapped = $role->toArray();
-            $mapped['serial_no'] = $index + 1;
-            $mapped['created_at'] = site_date($role->created_at);
-            $mapped['permissions_count'] = $role->permissions_count.' permissions';
-
-            $editUrl = backpack_url("iam/role/{$role->id}/edit");
-
-            $mapped['action'] = '
-                <div class="d-flex gap-2 justify-content-center">
-                    <a href="'.$editUrl.'" class="btn btn-sm btn-primary py-1 px-2" title="Edit">Edit</a>
-                </div>
-            ';
-
-            return $mapped;
-        })->values();
-
-        return view('admin.iam.role.list', [
-            'title' => 'All Roles',
-            'gridConfig' => [
-                'columns' => [
-                    ['field' => 'serial_no',          'headerName' => 'S.No.'],
-                    ['field' => 'name',               'headerName' => 'Role Name'],
-                    ['field' => 'guard_name',         'headerName' => 'Guard'],
-                    ['field' => 'permissions_count',  'headerName' => 'Permissions'],
-                    ['field' => 'created_at',         'headerName' => 'Created At'],
-                    ['field' => 'action',             'headerName' => 'Actions'],
-                ],
-                'data' => $gridData,
-            ],
-        ]);
+        // Spatie roles are stored in the designation table (config/permission.php), so the
+        // Designation screen is the one place to manage them and their permissions (DEC-018).
+        return redirect(backpack_url('org/designation'));
     }
 
     public function create()

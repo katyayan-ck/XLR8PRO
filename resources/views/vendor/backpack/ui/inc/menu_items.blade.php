@@ -190,9 +190,7 @@
                 href="{{ backpack_url('iam/process') }}">
                 <span><i class="la la-cogs me-2"></i>Process</span>
             </a>
-            <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ backpack_url('iam/role') }}">
-                <span><i class="la la-users me-2"></i>Role</span>
-            </a>
+            {{-- Role screen removed (DEC-018): Spatie roles are designations; manage them and their permissions under Org → Designation. --}}
             <a class="dropdown-item d-flex align-items-center justify-content-between"
                 href="{{ backpack_url('iam/permission') }}">
                 <span><i class="la la-key me-2"></i>Permission</span>

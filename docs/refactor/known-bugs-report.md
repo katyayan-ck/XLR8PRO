@@ -194,6 +194,8 @@ Entry format:
 | BUG-156 | Class references in the wrong letter case (`XL_DSA_MASTER` ×8 files, `KeyValue\KeyValue`, `Crm\LeadSource`) — work on Windows, fail to autoload on a case-sensitive (Linux) filesystem | High (if production is Linux) | FIXED | 25-09-2026 | 25-09-2026 |
 | BUG-157 | `FirebaseService` calls `User::deviceTokens()`, which was never defined — sending push to a user, listing and revoking a user's devices all fatal | High | FIXED | 25-09-2026 | 25-09-2026 |
 | BUG-158 | `User::branches/locations/departments` and `Employee::branches/locations/departments` target nonexistent `xlr8_admin_emp_*_pivot` tables; live caller: `UserExporter` (user export POST) | Medium | OPEN (needs design decision) | 25-09-2026 | — |
+| BUG-159 | `NotificationController` and `SystemSettingApiController` called `$this->middleware()` in their constructors (removed in Laravel 11+) — every notifications and settings API request fataled | Critical | FIXED | 26-09-2026 | 26-09-2026 |
+| BUG-160 | Only 1 of 201 users has `admin.dashboard`, so the post-login dashboard returns 403 for almost everyone | High | OPEN (needs decision) | 26-09-2026 | — |
 
 Not a bug (false positive, listed for reference): the original `infer-conventions` sweep flagged
 "`SheetHeaderService`/`SynonymService` not used by importers" — re-investigation on 19-09-2026
@@ -1772,3 +1774,20 @@ guessed at.
 - **Found:** 25-09-2026, following PHPStan relation findings in `OrgService`/`DashboardController`.
 - **Where:** `User::branches()`, `locations()`, `departments()`; `Employee::branches()`, `locations()`, `departments()` — all `belongsToMany` through `xlr8_admin_emp_{branch,location,department}_pivot`, which don't exist (same root cause as BUG-108). Callers: `UserExporter` (reached by `POST org/user/export`) — **live, crashes on the first user**; `DashboardController::getSuperAdminDashboard()`/`getScopedUserDashboard()` — dead (never called by `index()`); `OrgService::usersByPost()` — dead (BUG-049); the two `RulesUserImporter` copies — unrouted (BUG-155).
 - **Proposed solution:** decide what the user export's "assignments" sheet should contain now that assignments are code-based — likely primary codes from `employee` plus additional scopes from `user_scopes` (the live scope store, BUG-136). Then rewrite `UserExporter` on that and remove the six pivot relations with the dead callers.
+
+### BUG-159 — API controllers called removed `$this->middleware()`
+
+- **Status:** FIXED
+- **Severity:** Critical — all `/api/v1/notifications*`, `/devices*`, `/messages*`, `/alerts*` and `/system-settings*` requests fataled in the controller constructor.
+- **Found:** 26-09-2026, verifying DEC-012 with a device-bound Sanctum token.
+- **Fixed:** 26-09-2026 — removed the calls; `auth:sanctum` is applied by the route group (DEC-017). Verified: notifications, devices and me return 200; settings export returns 403 without permission and 200 for superadmin.
+- **Where:** `app/Http/Controllers/Api/V1/{NotificationController,SystemSettingApiController}.php`.
+
+### BUG-160 — Dashboard (post-login landing page) is 403 for 200 of 201 users
+
+- **Status:** OPEN (needs a decision — security/UAT-visible)
+- **Severity:** High
+- **Found:** 26-09-2026, non-superadmin smoke test (user 40, Accounts Executive).
+- **Where:** `DashboardController::index()` requires `admin.dashboard`; only 1 user holds it (via any role).
+- **Options:** (a) grant `admin.dashboard` to every designation (data change); (b) allow any authenticated admin user to see the dashboard, keeping per-widget permission checks (code change).
+

@@ -31,14 +31,9 @@ class RoleRequest extends FormRequest
      * numeric id, used to exclude the current row from the unique check on
      * update.
      *
-     * IMPORTANT: `unique:xlr8_iam_roles,name` is preserved verbatim from the
-     * original controller's inline validation, even though `xlr8_iam_roles` is
-     * known (from this session's earlier isSuperAdmin() investigation) to not
-     * exist as an actual table — Role's real table is `xlr8_admin_designation`.
-     * This means role creation/update likely already fails with a DB error
-     * today. Not corrected here — see ai-findings for why (consistency with
-     * how every other pre-existing bug in this rollout was handled: flagged,
-     * not silently fixed, even where the correct fix is already known).
+     * The unique check uses the configured Spatie roles table (the designation
+     * table). It used to name `xlr8_iam_roles`, which never existed, so every
+     * role save failed (DEC-018).
      *
      * @return array
      */
@@ -50,7 +45,7 @@ class RoleRequest extends FormRequest
             'name' => [
                 'required',
                 'max:255',
-                Rule::unique('xlr8_iam_roles', 'name')->ignore($currentId),
+                Rule::unique(config('permission.table_names.roles'), 'name')->ignore($currentId),
             ],
             'guard_name' => 'required|in:web,api',
             'permissions' => 'array',

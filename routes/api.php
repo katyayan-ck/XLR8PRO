@@ -22,7 +22,7 @@ Route::prefix('v1')->group(function () {
             ->name('api.auth.verify-otp');
     });
 
-    Route::group(['middleware' => ['auth:api']], function () {
+    Route::group(['middleware' => ['auth:sanctum', 'validate_device']], function () {
         Route::post('/pricing/calculate-exchange', [PricingApiController::class, 'calculateExchange']);
         Route::post('/pricing/generate-quote', [PricingApiController::class, 'generateQuote']);
     });
@@ -106,7 +106,7 @@ Route::prefix('v1')->group(function () {
         });
 
         // Admin-only routes
-        Route::middleware('role:admin|super_admin')->group(function () {
+        Route::middleware('permission:UTL_SETTINGS_MANAGE')->group(function () {
             Route::prefix('system-settings')->group(function () {
 
                 // Export/Import

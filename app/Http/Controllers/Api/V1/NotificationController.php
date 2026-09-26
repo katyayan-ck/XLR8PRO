@@ -2,20 +2,18 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Enums\ErrorCodeEnum;
-use App\Exceptions\ApplicationException;
-use App\Exceptions\AuthorizationException;
 use App\Http\Controllers\BaseController;
 use App\Http\Resources\AlertResource;
 use App\Http\Resources\MessageResource;
 use App\Http\Resources\NotificationResource;
+use App\Models\IAM\UserDeviceToken;
+use App\Models\User;
 use App\Models\Utilities\Noty\Alert;
 use App\Models\Utilities\Noty\Message;
 use App\Models\Utilities\Noty\Notification;
-use App\Models\User;
-use App\Models\IAM\UserDeviceToken;
 use App\Services\FirebaseService;
 use App\Services\NotificationService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator;
@@ -32,15 +30,13 @@ class NotificationController extends BaseController
 {
     /**
      * Constructor with service injection
-     *
-     * @param NotificationService $notificationService
-     * @param FirebaseService $firebaseService
      */
     public function __construct(
         private NotificationService $notificationService,
         private FirebaseService $firebaseService
     ) {
-        $this->middleware('auth:sanctum')->except([]);
+        // Auth is applied by the auth:sanctum route group; controller-level
+        // middleware() no longer exists in Laravel 11+ (BUG-159).
     }
 
     /**
@@ -57,10 +53,13 @@ class NotificationController extends BaseController
      *     summary="Register device for push notifications",
      *     description="Register FCM token for device",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"device_id","device_name","platform","fcm_token"},
+     *
      *             @OA\Property(property="device_id", type="string", description="Unique device identifier"),
      *             @OA\Property(property="device_name", type="string", description="Device model/name"),
      *             @OA\Property(property="platform", type="string", enum={"android","ios","web"}),
@@ -69,10 +68,13 @@ class NotificationController extends BaseController
      *             @OA\Property(property="metadata", type="object", description="Additional device info")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Device registered",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="http_status", type="integer", example=201),
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="code", type="string", example="S201"),
@@ -83,19 +85,17 @@ class NotificationController extends BaseController
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(response=400, description="Invalid input"),
      *     @OA\Response(response=401, description="Unauthorized"),
      *     @OA\Response(response=500, description="Internal server error")
      * )
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function registerDevice(Request $request): JsonResponse
     {
         try {
             $validated = $request->validate([
-                'device_id' => 'required|string|max:255|unique:user_device_tokens,device_id,NULL,id,user_id,' . auth('sanctum')->id(),
+                'device_id' => 'required|string|max:255|unique:user_device_tokens,device_id,NULL,id,user_id,'.auth('sanctum')->id(),
                 'device_name' => 'required|string|max:255',
                 'platform' => 'required|string|in:android,Android,ios,iOS,web,Web',
                 'platform_version' => 'string|max:50',
@@ -114,7 +114,7 @@ class NotificationController extends BaseController
                 auth('sanctum')->user(),
                 $validated['device_id'],
                 $validated['device_name'],
-                strtolower($validated['platform']), 
+                strtolower($validated['platform']),
                 $validated['fcm_token'],
                 $validated['metadata'] ?? []
             );
@@ -159,25 +159,33 @@ class NotificationController extends BaseController
      *     summary="Update device FCM token",
      *     description="Refresh FCM token for registered device",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="deviceId",
      *         in="path",
      *         required=true,
      *         description="Device ID",
+     *
      *         @OA\Schema(type="string")
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"fcm_token"},
+     *
      *             @OA\Property(property="fcm_token", type="string", description="New FCM token"),
      *             @OA\Property(property="metadata", type="object", description="Updated metadata")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Device updated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="http_status", type="integer", example=200),
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="code", type="string", example="S200"),
@@ -188,14 +196,11 @@ class NotificationController extends BaseController
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(response=404, description="Device not found"),
      *     @OA\Response(response=401, description="Unauthorized"),
      *     @OA\Response(response=500, description="Internal server error")
      * )
-     *
-     * @param Request $request
-     * @param string $deviceId
-     * @return JsonResponse
      */
     public function updateDeviceToken(Request $request, string $deviceId): JsonResponse
     {
@@ -234,7 +239,7 @@ class NotificationController extends BaseController
                 'Device token updated',
                 200
             );
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ModelNotFoundException $e) {
             return $this->notFoundResponse('Device', $deviceId);
         } catch (Throwable $e) {
             return $this->handleException($e, 'Update Device Token', [
@@ -257,30 +262,33 @@ class NotificationController extends BaseController
      *     summary="Unregister device",
      *     description="Remove device from notifications",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="deviceId",
      *         in="path",
      *         required=true,
      *         description="Device ID",
+     *
      *         @OA\Schema(type="string")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Device unregistered",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="http_status", type="integer", example=200),
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="code", type="string", example="S200"),
      *             @OA\Property(property="message", type="string", example="Device unregistered successfully")
      *         )
      *     ),
+     *
      *     @OA\Response(response=404, description="Device not found"),
      *     @OA\Response(response=401, description="Unauthorized"),
      *     @OA\Response(response=500, description="Internal server error")
      * )
-     *
-     * @param string $deviceId
-     * @return JsonResponse
      */
     public function unregisterDevice(string $deviceId): JsonResponse
     {
@@ -310,7 +318,7 @@ class NotificationController extends BaseController
                 'Device unregistered',
                 200
             );
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ModelNotFoundException $e) {
             return $this->notFoundResponse('Device', $deviceId);
         } catch (Throwable $e) {
             return $this->handleException($e, 'Unregister Device', [
@@ -332,17 +340,22 @@ class NotificationController extends BaseController
      *     summary="Get user devices",
      *     description="List registered devices",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Devices retrieved",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="http_status", type="integer", example=200),
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="code", type="string", example="S200"),
      *             @OA\Property(property="message", type="string", example="Devices retrieved"),
      *             @OA\Property(property="data", type="array",
+     *
      *                 @OA\Items(
      *                     type="object",
+     *
      *                     @OA\Property(property="id", type="integer"),
      *                     @OA\Property(property="device_id", type="string"),
      *                     @OA\Property(property="device_name", type="string"),
@@ -353,12 +366,10 @@ class NotificationController extends BaseController
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Unauthorized"),
      *     @OA\Response(response=500, description="Internal server error")
      * )
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function getUserDevices(Request $request): JsonResponse
     {
@@ -379,7 +390,6 @@ class NotificationController extends BaseController
         }
     }
 
-
     /**
      * Get unread notifications count
      *
@@ -392,10 +402,13 @@ class NotificationController extends BaseController
      *     summary="Get unread notifications count",
      *     description="Retrieve count of unread items",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Unread count retrieved",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="http_status", type="integer", example=200),
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="code", type="string", example="S200"),
@@ -408,12 +421,10 @@ class NotificationController extends BaseController
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Unauthorized"),
      *     @OA\Response(response=500, description="Internal server error")
      * )
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function getUnreadCount(Request $request): JsonResponse
     {
@@ -463,58 +474,77 @@ class NotificationController extends BaseController
      *     summary="Get user notifications",
      *     description="Retrieve paginated notifications",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="page",
      *         in="query",
      *         description="Page number",
+     *
      *         @OA\Schema(type="integer", default=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Items per page",
+     *
      *         @OA\Schema(type="integer", default=20, maximum=100)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_by",
      *         in="query",
      *         description="Sort field",
+     *
      *         @OA\Schema(type="string", default="created_at")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_order",
      *         in="query",
      *         description="Sort order",
+     *
      *         @OA\Schema(type="string", enum={"asc","desc"}, default="desc")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="type",
      *         in="query",
      *         description="Filter by type",
+     *
      *         @OA\Schema(type="string")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="category",
      *         in="query",
      *         description="Filter by category",
+     *
      *         @OA\Schema(type="string")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="priority",
      *         in="query",
      *         description="Filter by priority",
+     *
      *         @OA\Schema(type="string", enum={"low","normal","high","critical"})
      *     ),
+     *
      *     @OA\Parameter(
      *         name="read_status",
      *         in="query",
      *         description="Filter by read status",
+     *
      *         @OA\Schema(type="string", enum={"all","read","unread"}, default="all")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Notifications retrieved",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="http_status", type="integer", example=200),
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="code", type="string", example="S200"),
@@ -523,8 +553,10 @@ class NotificationController extends BaseController
      *                 @OA\Property(
      *                     property="notifications",
      *                     type="array",
+     *
      *                     @OA\Items(ref="#/components/schemas/NotificationResource")
      *                 ),
+     *
      *                 @OA\Property(property="pagination", type="object",
      *                     @OA\Property(property="current_page", type="integer"),
      *                     @OA\Property(property="per_page", type="integer"),
@@ -534,12 +566,10 @@ class NotificationController extends BaseController
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Unauthorized"),
      *     @OA\Response(response=500, description="Internal server error")
      * )
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function getNotifications(Request $request): JsonResponse
     {
@@ -619,34 +649,45 @@ class NotificationController extends BaseController
      *     summary="Get unread notifications",
      *     description="Retrieve paginated unread notifications",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="page",
      *         in="query",
      *         description="Page number",
+     *
      *         @OA\Schema(type="integer", default=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Items per page",
+     *
      *         @OA\Schema(type="integer", default=20, maximum=100)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_by",
      *         in="query",
      *         description="Sort field",
+     *
      *         @OA\Schema(type="string", default="created_at")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_order",
      *         in="query",
      *         description="Sort order",
+     *
      *         @OA\Schema(type="string", enum={"asc","desc"}, default="desc")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Unread notifications retrieved",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="http_status", type="integer", example=200),
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="code", type="string", example="S200"),
@@ -655,8 +696,10 @@ class NotificationController extends BaseController
      *                 @OA\Property(
      *                     property="notifications",
      *                     type="array",
+     *
      *                     @OA\Items(ref="#/components/schemas/NotificationResource")
      *                 ),
+     *
      *                 @OA\Property(property="pagination", type="object",
      *                     @OA\Property(property="current_page", type="integer"),
      *                     @OA\Property(property="per_page", type="integer"),
@@ -666,12 +709,10 @@ class NotificationController extends BaseController
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Unauthorized"),
      *     @OA\Response(response=500, description="Internal server error")
      * )
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function getUnreadNotifications(Request $request): JsonResponse
     {
@@ -736,46 +777,61 @@ class NotificationController extends BaseController
      *     summary="Get user alerts",
      *     description="Retrieve paginated alerts",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="page",
      *         in="query",
      *         description="Page number",
+     *
      *         @OA\Schema(type="integer", default=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Items per page",
+     *
      *         @OA\Schema(type="integer", default=20, maximum=100)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_by",
      *         in="query",
      *         description="Sort field",
+     *
      *         @OA\Schema(type="string", default="created_at")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_order",
      *         in="query",
      *         description="Sort order",
+     *
      *         @OA\Schema(type="string", enum={"asc","desc"}, default="desc")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="severity",
      *         in="query",
      *         description="Filter by severity",
+     *
      *         @OA\Schema(type="string", enum={"info","warning","critical"})
      *     ),
+     *
      *     @OA\Parameter(
      *         name="read_status",
      *         in="query",
      *         description="Filter by read status",
+     *
      *         @OA\Schema(type="string", enum={"all","read","unread"}, default="all")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Alerts retrieved",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="http_status", type="integer", example=200),
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="code", type="string", example="S200"),
@@ -784,8 +840,10 @@ class NotificationController extends BaseController
      *                 @OA\Property(
      *                     property="alerts",
      *                     type="array",
+     *
      *                     @OA\Items(ref="#/components/schemas/AlertResource")
      *                 ),
+     *
      *                 @OA\Property(property="pagination", type="object",
      *                     @OA\Property(property="current_page", type="integer"),
      *                     @OA\Property(property="per_page", type="integer"),
@@ -795,12 +853,10 @@ class NotificationController extends BaseController
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Unauthorized"),
      *     @OA\Response(response=500, description="Internal server error")
      * )
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function getAlerts(Request $request): JsonResponse
     {
@@ -875,52 +931,69 @@ class NotificationController extends BaseController
      *     summary="Get user messages",
      *     description="Retrieve paginated messages",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="page",
      *         in="query",
      *         description="Page number",
+     *
      *         @OA\Schema(type="integer", default=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Items per page",
+     *
      *         @OA\Schema(type="integer", default=20, maximum=100)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_by",
      *         in="query",
      *         description="Sort field",
+     *
      *         @OA\Schema(type="string", default="created_at")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_order",
      *         in="query",
      *         description="Sort order",
+     *
      *         @OA\Schema(type="string", enum={"asc","desc"}, default="desc")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="type",
      *         in="query",
      *         description="Filter by type",
+     *
      *         @OA\Schema(type="string", enum={"text","image","document"})
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sender_id",
      *         in="query",
      *         description="Filter by sender ID",
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="read_status",
      *         in="query",
      *         description="Filter by read status",
+     *
      *         @OA\Schema(type="string", enum={"all","read","unread"}, default="all")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Messages retrieved",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="http_status", type="integer", example=200),
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="code", type="string", example="S200"),
@@ -929,8 +1002,10 @@ class NotificationController extends BaseController
      *                 @OA\Property(
      *                     property="messages",
      *                     type="array",
+     *
      *                     @OA\Items(ref="#/components/schemas/MessageResource")
      *                 ),
+     *
      *                 @OA\Property(property="pagination", type="object",
      *                     @OA\Property(property="current_page", type="integer"),
      *                     @OA\Property(property="per_page", type="integer"),
@@ -940,12 +1015,10 @@ class NotificationController extends BaseController
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Unauthorized"),
      *     @OA\Response(response=500, description="Internal server error")
      * )
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function getMessages(Request $request): JsonResponse
     {
@@ -1015,29 +1088,38 @@ class NotificationController extends BaseController
      *     summary="Get conversation messages",
      *     description="Retrieve messages with specific user",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="userId",
      *         in="path",
      *         required=true,
      *         description="Other user ID",
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="page",
      *         in="query",
      *         description="Page number",
+     *
      *         @OA\Schema(type="integer", default=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Items per page",
+     *
      *         @OA\Schema(type="integer", default=20, maximum=100)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Conversation retrieved",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="http_status", type="integer", example=200),
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="code", type="string", example="S200"),
@@ -1046,8 +1128,10 @@ class NotificationController extends BaseController
      *                 @OA\Property(
      *                     property="messages",
      *                     type="array",
+     *
      *                     @OA\Items(ref="#/components/schemas/MessageResource")
      *                 ),
+     *
      *                 @OA\Property(property="pagination", type="object",
      *                     @OA\Property(property="current_page", type="integer"),
      *                     @OA\Property(property="per_page", type="integer"),
@@ -1057,13 +1141,10 @@ class NotificationController extends BaseController
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Unauthorized"),
      *     @OA\Response(response=500, description="Internal server error")
      * )
-     *
-     * @param Request $request
-     * @param int $userId
-     * @return JsonResponse
      */
     public function getConversationMessages(Request $request, int $userId): JsonResponse
     {
@@ -1121,26 +1202,34 @@ class NotificationController extends BaseController
      *     summary="Send message to user",
      *     description="Send text or attachment message",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="receiverId",
      *         in="path",
      *         required=true,
      *         description="Receiver user ID",
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"message_text"},
+     *
      *             @OA\Property(property="message_text", type="string", maxLength=2000, example="Hello, how are you?"),
      *             @OA\Property(property="message_type", type="string", enum={"text","image","document"}, example="text"),
      *             @OA\Property(property="attachments", type="array", nullable=true, @OA\Items(type="string"), description="Array of attachment URLs")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Message sent",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="http_status", type="integer", example=201),
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="code", type="string", example="S201"),
@@ -1148,15 +1237,12 @@ class NotificationController extends BaseController
      *             @OA\Property(property="data", ref="#/components/schemas/MessageResource")
      *         )
      *     ),
+     *
      *     @OA\Response(response=400, description="Invalid input"),
      *     @OA\Response(response=404, description="User not found"),
      *     @OA\Response(response=401, description="Unauthorized"),
      *     @OA\Response(response=500, description="Internal server error")
      * )
-     *
-     * @param Request $request
-     * @param int $receiverId
-     * @return JsonResponse
      */
     public function sendMessage(Request $request, int $receiverId): JsonResponse
     {
@@ -1198,7 +1284,7 @@ class NotificationController extends BaseController
                 'Message sent',
                 201
             );
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ModelNotFoundException $e) {
             return $this->notFoundResponse('User', $receiverId);
         } catch (Throwable $e) {
             return $this->handleException($e, 'Send Message', [
@@ -1220,17 +1306,22 @@ class NotificationController extends BaseController
      *     summary="Mark notification as read",
      *     description="Update notification read status",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
      *         description="Notification ID",
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Notification marked as read",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="http_status", type="integer", example=200),
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="code", type="string", example="S200"),
@@ -1238,14 +1329,12 @@ class NotificationController extends BaseController
      *             @OA\Property(property="data", ref="#/components/schemas/NotificationResource")
      *         )
      *     ),
+     *
      *     @OA\Response(response=404, description="Notification not found"),
      *     @OA\Response(response=403, description="Forbidden"),
      *     @OA\Response(response=401, description="Unauthorized"),
      *     @OA\Response(response=500, description="Internal server error")
      * )
-     *
-     * @param int $id
-     * @return JsonResponse
      */
     public function markNotificationAsRead(int $id): JsonResponse
     {
@@ -1284,7 +1373,7 @@ class NotificationController extends BaseController
                 'Notification marked as read',
                 200
             );
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ModelNotFoundException $e) {
             return $this->notFoundResponse('Notification', $id);
         } catch (Throwable $e) {
             return $this->handleException($e, 'Mark Notification As Read', [
@@ -1306,10 +1395,13 @@ class NotificationController extends BaseController
      *     summary="Mark all notifications as read",
      *     description="Update all unread notifications to read",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Response(
      *         response=200,
      *         description="All notifications marked as read",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="http_status", type="integer", example=200),
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="code", type="string", example="S200"),
@@ -1319,12 +1411,10 @@ class NotificationController extends BaseController
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(response=401, description="Unauthorized"),
      *     @OA\Response(response=500, description="Internal server error")
      * )
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function markAllNotificationsAsRead(Request $request): JsonResponse
     {
@@ -1370,31 +1460,34 @@ class NotificationController extends BaseController
      *     summary="Delete notification",
      *     description="Remove notification",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
      *         description="Notification ID",
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Notification deleted",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="http_status", type="integer", example=200),
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="code", type="string", example="S200"),
      *             @OA\Property(property="message", type="string", example="Notification deleted successfully")
      *         )
      *     ),
+     *
      *     @OA\Response(response=404, description="Notification not found"),
      *     @OA\Response(response=403, description="Forbidden"),
      *     @OA\Response(response=401, description="Unauthorized"),
      *     @OA\Response(response=500, description="Internal server error")
      * )
-     *
-     * @param int $id
-     * @return JsonResponse
      */
     public function deleteNotification(int $id): JsonResponse
     {
@@ -1433,7 +1526,7 @@ class NotificationController extends BaseController
                 'Notification deleted',
                 200
             );
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ModelNotFoundException $e) {
             return $this->notFoundResponse('Notification', $id);
         } catch (Throwable $e) {
             return $this->handleException($e, 'Delete Notification', [
@@ -1455,17 +1548,22 @@ class NotificationController extends BaseController
      *     summary="Mark alert as read",
      *     description="Update alert read status",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
      *         description="Alert ID",
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Alert marked as read",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="http_status", type="integer", example=200),
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="code", type="string", example="S200"),
@@ -1473,14 +1571,12 @@ class NotificationController extends BaseController
      *             @OA\Property(property="data", ref="#/components/schemas/AlertResource")
      *         )
      *     ),
+     *
      *     @OA\Response(response=404, description="Alert not found"),
      *     @OA\Response(response=403, description="Forbidden"),
      *     @OA\Response(response=401, description="Unauthorized"),
      *     @OA\Response(response=500, description="Internal server error")
      * )
-     *
-     * @param int $id
-     * @return JsonResponse
      */
     public function markAlertAsRead(int $id): JsonResponse
     {
@@ -1519,7 +1615,7 @@ class NotificationController extends BaseController
                 'Alert marked as read',
                 200
             );
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ModelNotFoundException $e) {
             return $this->notFoundResponse('Alert', $id);
         } catch (Throwable $e) {
             return $this->handleException($e, 'Mark Alert As Read', [
@@ -1542,17 +1638,22 @@ class NotificationController extends BaseController
      *     summary="Mark message as read",
      *     description="Update message read status",
      *     security={{"sanctum":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
      *         description="Message ID",
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Message marked as read",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="http_status", type="integer", example=200),
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="code", type="string", example="S200"),
@@ -1560,14 +1661,12 @@ class NotificationController extends BaseController
      *             @OA\Property(property="data", ref="#/components/schemas/MessageResource")
      *         )
      *     ),
+     *
      *     @OA\Response(response=404, description="Message not found"),
      *     @OA\Response(response=403, description="Forbidden"),
      *     @OA\Response(response=401, description="Unauthorized"),
      *     @OA\Response(response=500, description="Internal server error")
      * )
-     *
-     * @param int $id
-     * @return JsonResponse
      */
     public function markMessageAsRead(int $id): JsonResponse
     {
@@ -1606,7 +1705,7 @@ class NotificationController extends BaseController
                 'Message marked as read',
                 200
             );
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ModelNotFoundException $e) {
             return $this->notFoundResponse('Message', $id);
         } catch (Throwable $e) {
             return $this->handleException($e, 'Mark Message As Read', [
