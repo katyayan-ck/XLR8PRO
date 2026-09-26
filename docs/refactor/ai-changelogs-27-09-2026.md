@@ -342,3 +342,72 @@ Branch `feature/integrations`. Decisions DEC-033…038 are in `docs/decisions/de
 
 ## Accessories (pricing group 4) — paused
 - The roll-out is paused on BUG-179 (two divergent accessory importers; the spec forbids rewriting `AccessoryService`). No code change.
+
+## Release: dev/admin → stage (27-09-2026)
+
+This section consolidates everything on `dev/admin` since the booking-team merge (`f34e2c5`). The sections above hold the per-change detail.
+
+### Commits (oldest first)
+| Commit | Change | Decision / bug |
+|---|---|---|
+| `f34e2c5` | Merge stage (booking team + Track A UAT work) into dev/admin | DEC-041 |
+| `b01d139`, `6038de3` | State after the merge; tests follow `sale_type` tinyint | DEC-041 |
+| `c598008` | Settings show and key-value/keyword search/details now check permissions | BUG-167 |
+| `541440a` | Admin requests resolve the Backpack user for `auth()` / `@can` / Gate; `User::$guard_name = web` | DEC-042, BUG-055 |
+| `a200a13` | Local data: dump branch/location codes corrected, BEV is not a division, 34 role-less users disabled | DEC-043, BUG-166/090 |
+| `0acc384` | Dead code the purge missed; branch/location relation keys | DEC-044 |
+| `da905bd` | PHP 8.4 `composer.json`, unused packages trimmed, fast autoload; env-driven `config/app.php` | DEC-045 |
+| `6cf6bf6` | IT department with default division; IST timestamps accepted | DEC-046 |
+| `d6b7021` | Dead CheckPermission / ReportingHierarchy / graph views / uncalled RBACService methods removed | DEC-047 |
+| `b1e2d81`, `3394327` | State notes (Google key rotation reminder kept) | — |
+| `6bcce1d` | Vehicle masters: validated create, code-based sub-segment edit, immutable codes, one variant row per colour | DEC-048, BUG-170/171/172 |
+| `efc60e2` | Opt-in `smoke` test group; targeted-smoke cadence | — |
+| `279b2a8`, `e2e4393` | Canonical hyphenated codes (THAR-ROXX); the vehicle import writes them | DEC-049, BUG-171/173 |
+| `bf6ef76` | **Entity services:** one field-rule set per entity enforced by its service; vehicle masters migrated; the code normaliser and migrations withdrawn in favour of a fresh import | DEC-050 |
+| `88f2df6` | Local vehicle master purge before a fresh import (local only) | DEC-051 |
+| `5e15c12` | Org masters on entity services; no-op `import:rbac-master` retired | DEC-052, BUG-174 |
+| `2f680dc` | Person, contacts, addresses, banking on entity services; type slots | DEC-053, BUG-175 |
+| `bd8288d` | Employees, users, data scopes on entity services; one scope-revoke rule; atomic onboarding and import rows | DEC-054 |
+| `affa9ff` | Keyword masters and values on entity services; the backstop transforms only changed attributes | DEC-055, BUG-176 |
+| `bbefc88` | Pricing rules (RTO, TCS, insurance) on entity services | DEC-056 |
+| `f2a2660` | Add-ons, discounts, dealer charges on entity services | DEC-057 |
+| `ac50c44` | Price-list vehicles (`VehicleService`) and prices on entity services | DEC-058 |
+| `731a9aa` | BUG-179 logged; accessories roll-out paused | BUG-179 |
+
+### What changes for users
+- **Every create and edit screen, and every importer, applies one rule set per entity.** This covers Org masters, Person (plus contacts, addresses, banking), Employee, User, user scopes, keyword masters/values, vehicle masters, and pricing rules, add-ons, discounts, dealer charges and prices. A bad value is reported (a form error, or an import row error with its message) instead of being stored or silently zeroed.
+- **Formats applied everywhere:**
+  - codes upper-case and hyphenated (THAR-ROXX);
+  - names in Title Case;
+  - phones as 10 digits; e-mails and usernames lower-case; PAN/GSTIN upper-case; Aadhaar as digits;
+  - pricing amounts accept ₹ and separators; "-", "NA" and "Nil" count as blank.
+- **On edit, only changed values are validated.** Existing (legacy) values never block an edit of another field, and an unchanged export re-imports as a no-op.
+- **One write per unit:** User onboarding/edit, each Users_Import row, and each insurance rule with its IDV slots are saved all-or-nothing.
+- **Person child records:** a blank type takes Primary if it is free; choosing Primary promotes the record and demotes the old one (a swap); deleted contacts, addresses and bank accounts free their slot.
+- **Scopes:** removed scopes are deactivated (history kept), on both the User screen and the scope sheet.
+
+### Deploy notes (stage → dev.xceler8.in runs `migrate --force`)
+- **New migrations:**
+  - `2026_09_27_121000_seed_it_department`: the IT department and its IT division (if missing), and places BMPL-0365 / BMPL-0630 in IT (DEC-046).
+  - `2026_09_27_130000_add_missing_keyword_masters`: the `PERMIT` and `FOLLOW_UP_REMARKS_TYPE` keyword masters (DEC-055).
+  - Both are idempotent.
+- **No schema changes; no destructive data changes on the server.** The local-only operations (DEC-043 data corrections, DEC-051 vehicle master purge) do not run on deploy.
+- `composer install --optimize-autoloader` picks up the trimmed PHP 8.4 `composer.json` (DEC-045); the server runs PHP 8.4.
+
+### Bugs fixed in this release
+BUG-055, 090 (partly), 166, 167, 170, 171, 172, 174, 175, 176.
+
+### Open, left as they are (owner decisions)
+- **BUG-173:** variant code convention in legacy rows. A fresh vehicle import is pending.
+- **BUG-177:** the Imports menu and `imports/admin` page have no permission gate.
+- **BUG-178:** the pricing engine reads dealer charges as narrow rows, while the importer writes the spec's WIDE columns (price-changing fix); the model scope column also mismatches.
+- **BUG-179:** two divergent accessory importers; the accessories entity-service roll-out waits for this decision.
+
+### Not converted yet
+- Seeders (they write directly).
+- `BrandCrudController` (unrouted, dead).
+- Engine/pipeline records (sessions, change flags, snapshots, history, completeness profiles) stay engine-written by design.
+
+### Verification
+- Full suite: 288 passed, 1 skipped (VOTF data-dependent).
+- Targeted smoke of the touched screens as superadmin (200) and user 40 (403 where they lack permission).
