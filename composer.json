@@ -1,23 +1,23 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "bmpl/xceler8",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
+    "description": "Xceler8 — BMPL dealership management system (enquiry, quotation, booking, pricing, org/IAM).",
     "keywords": [
+        "dms",
+        "dealership",
         "laravel",
-        "framework"
+        "backpack"
     ],
-    "license": "MIT",
+    "license": "proprietary",
     "require": {
-        "php": "^8.2",
+        "php": "^8.4",
         "backpack/crud": "^7.0",
         "backpack/theme-tabler": "^2.0",
         "barryvdh/laravel-dompdf": "^3.1",
         "darkaonline/l5-swagger": "^9.0",
         "google/apiclient": "^2.19",
         "google/cloud-vision": "^2.1",
-        "graphp/graph": "^0.9.3",
-        "intervention/image": "^3.11",
         "kalnoy/nestedset": "^6.0",
         "kreait/firebase-php": "^7.24",
         "laravel/framework": "^12.0",
@@ -27,8 +27,7 @@
         "owen-it/laravel-auditing": "^14.0",
         "revolution/laravel-google-sheets": "^7.2",
         "spatie/laravel-medialibrary": "^11.17",
-        "spatie/laravel-permission": "^6.23",
-        "spatie/laravel-translatable": "^6.12"
+        "spatie/laravel-permission": "^6.23"
     },
     "require-dev": {
         "backpack/generators": "^4.1",
@@ -37,8 +36,6 @@
         "laravel/boost": "^2.9",
         "laravel/pail": "^1.2.2",
         "laravel/pint": "^1.24",
-        "laravel/sail": "^1.41",
-        "markwalet/laravel-changelog": "^1.13",
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.6",
         "petebishwhip/laradocs": "^1.0",
@@ -49,7 +46,11 @@
             "App\\": "app/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
-        }
+        },
+        "exclude-from-classmap": [
+            "vendor/laravel/pint/app/",
+            "vendor/league/flysystem/src/Local/"
+        ]
     },
     "autoload-dev": {
         "psr-4": {
@@ -57,7 +58,12 @@
         }
     },
     "scripts": {
-		"analyse": "phpstan analyse --memory-limit=2G",
+        "analyse": "phpstan analyse --memory-limit=2G",
+        "lint": "pint --dirty",
+        "test": [
+            "@php artisan config:clear --ansi",
+            "@php artisan test"
+        ],
         "setup": [
             "composer install",
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
@@ -70,13 +76,13 @@
             "Composer\\Config::disableProcessTimeout",
             "npx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74\" \"php artisan serve\" \"php artisan queue:listen --tries=1\" \"php artisan pail --timeout=0\" \"npm run dev\" --names=server,queue,logs,vite --kill-others"
         ],
-        "test": [
-            "@php artisan config:clear --ansi",
-            "@php artisan test"
-        ],
+        "pre-autoload-dump": "Google\\Task\\Composer::cleanup",
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi"
+        ],
+        "post-install-cmd": [
+            "@php artisan basset:cache"
         ],
         "post-update-cmd": [
             "@php artisan vendor:publish --tag=laravel-assets --ansi --force",
@@ -87,27 +93,26 @@
         ],
         "post-create-project-cmd": [
             "@php artisan key:generate --ansi",
-            "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
             "@php artisan migrate --graceful --ansi"
         ],
         "pre-package-uninstall": [
             "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
-        ],
-        "post-install-cmd": [
-            "@php artisan basset:cache"
         ]
     },
     "extra": {
+        "google/apiclient-services": [
+            "Drive",
+            "Sheets"
+        ],
         "laravel": {
             "dont-discover": []
         }
     },
     "config": {
-        "optimize-autoloader": true,
+        "optimize-autoloader": false,
         "preferred-install": "dist",
         "sort-packages": true,
         "allow-plugins": {
-            "pestphp/pest-plugin": true,
             "php-http/discovery": true
         }
     },

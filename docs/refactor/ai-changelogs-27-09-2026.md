@@ -122,3 +122,25 @@ Branch `feature/integrations`. Decisions DEC-033…038 are in `docs/decisions/de
 - **Fixed:** the `Location::branch()` and `Branch::primaryEmployees()` keys.
 - **Tracker:** BUG-015/022/024/036/037/081/082/084/158 closed.
 - **Verification:** 232 passed, 1 skipped. The full admin smoke (169 screens, users 1 and 40) is identical before and after.
+
+## composer.json and config/app.php for PHP 8.4 (DEC-045)
+- **composer.json:**
+  - `php ^8.4`. The project is now named `bmpl/xceler8`, with a description and a `lint` script; stale plugin permissions were removed.
+  - **Removed as unused:** `graphp/graph`, `intervention/image` (with `intervention/gif`), `spatie/laravel-translatable`, dev `laravel/sail` and `markwalet/laravel-changelog`.
+  - Google services trimmed to Drive and Sheets via `Google\Task\Composer::cleanup`.
+  - `composer update` brought 21 in-range updates. No vulnerabilities.
+  - Majors deferred until after UAT: Laravel 13, Excel 4, Permission 8, Firebase 8, PHPUnit 12/13, Swagger 11, Tinker 3, nestedset 7.
+- **Autoload:**
+  - Vendor duplicates excluded from the classmap.
+  - `XlInsurer` class case fixed.
+  - The dead `HRJourneyServiceTest` removed.
+  - `optimize-autoloader` is off locally; `deploy.yml` still optimizes.
+  - Dump time is about 5s, where before it hung. BUG-034 fixed.
+- **config/app.php:** every value is env-driven (`APP_TIMEZONE` default Asia/Kolkata, `faker_locale` en_IN), with notes on key rotation and multi-server maintenance mode. `.env.example` is aligned.
+- **BUG-169 recorded:** mixed UTC/IST timestamps after the booking team's timezone change. Needs a decision.
+- **Verification:**
+  - 232 passed, 1 skipped.
+  - Full smoke (169 screens, users 1 and 40) is identical.
+  - The Google Sheets, Vision, Firebase, Excel and PDF classes all autoload.
+- **Deploy note:** `stage`, `uat` and `main` servers must run PHP ≥ 8.4 before this merges there.
+- **Also:** `bootstrap/cache/packages.php` and `services.php` (generated) and 8 stray `.tmp` files are untracked, and Laravel's standard `bootstrap/cache/.gitignore` is restored. `composer install` regenerates the caches on deploy.

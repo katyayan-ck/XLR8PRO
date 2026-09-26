@@ -351,3 +351,24 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
   - The relations to non-existent `xlr8_admin_emp_*_pivot` tables: `User::branches/locations/departments`, `Employee::branches/locations/departments`, `Vertical::employees/employeeAssignments`, `Location::employeeAssignments`, and the 4 unreferenced `Employee{Branch,Department,Location,Vertical}Assignment` models on those tables.
 - **Fix:** `Location::branch()` and `Branch::primaryEmployees()` join on `Branch.code`; `branch_code` is always NULL.
 - **Risk:** LOW (dead code) · **Approved-by:** auto (plan §2 drop list: unrouted controllers, unused models/services) · **Reversal:** revert the commit.
+
+### DEC-045 | 27-09-2026 | A0 (platform) | composer.json for PHP 8.4; trim unused packages; env-driven config/app.php
+- **Decision:**
+  - `php` → `^8.4`. Project name/description updated.
+  - **Removed (no usage in app/config/routes/views/tests):** `graphp/graph`, `intervention/image`, `spatie/laravel-translatable`; dev `markwalet/laravel-changelog` and `laravel/sail` (Laragon only).
+  - **Google API services:** only Sheets and Drive are used, so Google's supported `Google\Task\Composer::cleanup` keeps just those. This removes about 37k files and fixes the stalled autoload dump.
+  - **In-constraint updates:** `composer update` (minor/patch only).
+  - **Majors deferred until after UAT, as each is breaking for both teams' code:** Laravel 13, maatwebsite/excel 4, spatie/laravel-permission 8, kreait/firebase-php 8, PHPUnit 12/13, l5-swagger 11, tinker 3, kalnoy/nestedset 7.
+  - `config/app.php`: every value env-driven with sane defaults; `faker_locale` en_IN. The timezone is unchanged (Asia/Kolkata, the booking team's value), but see BUG-169.
+- **Deploy risk:** `stage`, `uat` and `main` auto-deploy with `composer install` on cPanel. These servers must run PHP ≥ 8.4 before this reaches them, or the install fails after `artisan down`. Held on `dev/admin` (which doesn't deploy) until confirmed.
+- **Approved-by:** user (27-09-2026, "add/upgrade/remove packages as and where seems fit") · **Reversal:** revert `composer.json`/`composer.lock`.
+- **Addendum (autoload speed, user request):**
+  - **Root causes of the slow or stalled `dump-autoload`:**
+    1. `google/apiclient-services` shipped 37k files. The cleanup now keeps 2 services.
+    2. Four ambiguous vendor classes were duplicated in `laravel/pint/app` and in `league/flysystem/src/Local`. Both paths are now in `exclude-from-classmap`.
+    3. Three of our files broke PSR-4:
+       - `XlInsurer` ×2 declared `class Xlinsurer`. Fixed the case, which is also a latent Linux autoload bug.
+       - `tests/Unit/Services/HRJourneyServiceTest.php` declared an `App\…` namespace and targeted the retired Post model. It never ran ("No tests found") and is removed.
+    4. `config.optimize-autoloader: true` forced a full classmap scan on every local dump. Set to `false`: production is unaffected because `deploy.yml` passes `--optimize-autoloader`.
+  - **Result:** local `composer dump-autoload` takes about 5s (the optimized one about 30s), where before it hung. No warnings remain.
+  - Windows Defender real-time scanning of `vendor/` still adds time. Excluding `D:\laragon` is a machine setting for the user.

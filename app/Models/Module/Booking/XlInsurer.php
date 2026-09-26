@@ -10,7 +10,7 @@ use App\Models\Traits\HasHashedMediaTrait;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use App\Models\BaseModel;
 
-class Xlinsurer extends  BaseModel  implements HasMedia
+class XlInsurer extends  BaseModel  implements HasMedia
 {
     /**
      * The database table used by the model.
