@@ -90,3 +90,15 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
   - `IAM\Role` drops its misleading `$table` and documents the designation mapping.
   - Disable the `M_Post` sheet in the live `RbacMasterImport` (it was already disabled in the duplicate copy).
 - **Risk:** HIGH (permission model, UAT-visible menu change) · **Approved-by:** user (option "Point Role at designation table") · **Reversal:** revert the commit.
+
+### DEC-019 | 26-09-2026 16:20 | A0 | PHP 8.4.26 installed side by side; the switch happens from Laragon's menu; composer constraint unchanged for now
+- **Done:**
+  - Official `php-8.4.26-Win32-vs17-x64` (TS, SHA-256 verified) extracted to `D:\laragon\bin\php\`.
+  - `php.ini` mirrors 8.3.30 (same extensions and limits); the deprecated `session.sid_*` keys are commented out.
+  - phpredis 6.3.0 added.
+  - Full suite on 8.4: 212 passed / 31 known failures (same as 8.3).
+  - The 6 implicit-nullable parameters fixed; the rescan finds 0.
+- **Not done, and why:**
+  - I didn't edit `laragon.ini` or the Windows PATH. Laragon rewrites its ini on exit, and PATH also serves WAMP (8.3.14) and XAMPP installs, whose order would change. The user switches via Laragon → PHP → Version (one click), then Tools → Path → Add Laragon to Path.
+  - `composer.json` stays `php ^8.2`. Bumping it to `^8.4` would break deploys if staging or production still runs 8.3. Bump it once the servers are on 8.4. The code is now clean on both versions.
+- **Risk:** MED · **Approved-by:** user (DEC-014) · **Reversal:** switch Laragon back to 8.3.30 (still installed).

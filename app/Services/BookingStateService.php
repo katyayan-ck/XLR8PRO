@@ -22,7 +22,7 @@ class BookingStateService
     /**
      * Transition a booking to a new state with strict enforcement and audit logging.
      */
-    public function transitionTo(Booking $booking, string $newState, string $remarks = null): bool
+    public function transitionTo(Booking $booking, string $newState, ?string $remarks = null): bool
     {
         $currentState = $booking->status_kw ?? 'Draft';
 

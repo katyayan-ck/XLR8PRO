@@ -10,7 +10,7 @@ use App\Jobs\SendHistoryNotification;
 
 class EntityHistoryService
 {
-    public function createMaster($entity, string $title = null): CommMaster
+    public function createMaster($entity, ?string $title = null): CommMaster
     {
         return CommMaster::firstOrCreate([
             'entityable_type' => get_class($entity),

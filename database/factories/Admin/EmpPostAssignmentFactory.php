@@ -24,7 +24,7 @@ class EmpPostAssignmentFactory extends Factory
         ];
     }
 
-    public function closed(string $toDate = null): static
+    public function closed(?string $toDate = null): static
     {
         return $this->state([
             'to_date'        => $toDate ?? now()->subMonth()->toDateString(),

@@ -16,7 +16,7 @@ class OtpNotificationService
      * @param string $mobile
      * @return bool
      */
-    public function sendViaEmail(string $email, string $otp, string $mobile = null): bool
+    public function sendViaEmail(string $email, string $otp, ?string $mobile = null): bool
     {
         try {
             // Validate email

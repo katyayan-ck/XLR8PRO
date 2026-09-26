@@ -77,7 +77,7 @@ class SystemSettingService
     /**
      * Get grouped settings for admin UI
      */
-    public function getForAdmin(string $topic = null): array
+    public function getForAdmin(?string $topic = null): array
     {
         $query = SystemSetting::where('is_visible', true)
             ->orderBy('topic')
