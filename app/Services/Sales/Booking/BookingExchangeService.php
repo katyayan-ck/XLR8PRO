@@ -294,7 +294,7 @@ class BookingExchangeService
         $exchangeEntry = XExchange::where('bid', $booking->id)->first();
 
         $exchangePayload = [
-            'vh_id' => $validated['enum_master1'] ?? 0,
+            'vh_id' => 0,
             'enum_master1' => $validated['enum_master1'] ?? null,
             'enum_master2' => $validated['enum_master2'] ?? null,
             'vehicle_details' => $validated['vehicle_details'] ?? null,

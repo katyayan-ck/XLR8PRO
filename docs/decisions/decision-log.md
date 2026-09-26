@@ -308,3 +308,19 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
   - `Employee Status` and `Login Active` are honoured when present.
   - Excel date serials are parsed.
 - **Risk:** MED: it changes how the bulk importer treats missing columns (safer) and adds scope removal (only via the new sheet). **Approved-by:** user request (27-09-2026) · **Reversal:** revert the commit.
+
+### DEC-041 | 27-09-2026 03:30 | A3 (UAT) | Merge the booking team's origin/stage with feature/integrations
+- **Decision:**
+  - Merge `origin/stage` (93 commits, booking team) into `stage` with our 18 Track A commits.
+  - Conflict rules: their Sales / booking / import work wins; our Track A fixes are kept or re-applied on top.
+- **Resolutions:**
+  - `app/Jobs/oldImportEnquiriesJob.php`: stays deleted. It had no references; they had moved its logic into `ImportEnquiriesJob`.
+  - `routes/backpack/core.php`:
+    - Import routes: theirs, via the new `Admin/Import/*` controllers. The `org-demo` route is dropped (its controller was deleted, DEC-038).
+    - Brand redirect (DEC-038), sub-segment routes and HR create/edit retirement (DEC-037): ours. Their side only reformatted these.
+  - `menu_items.blade.php`: their reformatted version, with our hides re-applied: Price List (DEC-038), Erroneous Entries and Pending Quotations (DEC-023; still no routes). Brand and Role are already hidden in their version. Reports and Spares are decided by smoke results.
+  - Booking migrations:
+    - Their `sale_type` (unsigned tinyint, codes 1/2) and `final_data`/`votf_no` migrations are guarded with `hasColumn`, because our DEC-026 migration already added `sale_type`/`final_data` on local DBs.
+    - Our migration now uses their `sale_type` type.
+    - A new migration converts the local varchar `sale_type` (0 rows set) to their type.
+- **Risk:** MED (shared branch) · **Approved-by:** user (27-09-2026, "merge … resolve conflicts") · **Reversal:** local tags `backup/feature-integrations-pre-merge` and `backup/stage-local-pre-merge`; revert the merge commit.

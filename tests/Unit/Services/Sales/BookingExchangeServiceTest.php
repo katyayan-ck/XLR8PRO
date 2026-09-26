@@ -65,7 +65,8 @@ class BookingExchangeServiceTest extends TestCase
 
         $this->assertSame($booking->id, $result['exchange']->bid);
         $this->assertSame('Exchange Buy', $result['exchange']->purchase_type);
-        $this->assertSame(5, $result['exchange']->vh_id);
+        // Booking team (origin/stage, 27-09-2026): vh_id is no longer taken from enum_master1.
+        $this->assertSame(0, $result['exchange']->vh_id);
         $this->assertStringContainsString('New exchange entry created', implode(' ', $result['changes']));
     }
 

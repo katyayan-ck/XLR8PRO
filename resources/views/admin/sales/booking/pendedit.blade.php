@@ -512,7 +512,9 @@
 
         function initMasks() {
             $('#pan_no').mask('AAAAA0000A', { placeholder: 'ABCDE1234F' });
-            $('#adhar_no').mask('0000-0000-0000', { placeholder: '1234-5678-9012' });
+            $('#adhar_no').mask('0000-0000-0000', {
+                placeholder: '2345-6789-0123'
+            });
             $('#dms_no').mask('B-00000000', { placeholder: 'B-12345678' });
             $('#dms_otf').mask('OTF00A000000', { placeholder: 'OTF00A123456' });
             if ($('#invoice_number').length) {
@@ -538,8 +540,8 @@
             }, 'Please enter a valid PAN (e.g., ABCDE1234F)');
 
             $.validator.addMethod('udaiFormat', function(value, element) {
-                return this.optional(element) || /^\d{4}-\d{4}-\d{4}$/.test(value);
-            }, 'Please enter a valid Aadhar (e.g., 1234-5678-9012)');
+                return this.optional(element) || /^[2-9]\d{3}-\d{4}-\d{4}$/.test(value);
+            }, 'Please enter a valid Aadhaar (e.g., 2345-6789-0123)');
 
             $.validator.addMethod('dmsFormat', function(value, element) {
                 return this.optional(element) || /^B-\d{8}$/.test(value);

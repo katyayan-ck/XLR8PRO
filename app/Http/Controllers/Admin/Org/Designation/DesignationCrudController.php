@@ -122,9 +122,28 @@ class DesignationCrudController extends CrudController
     {
         $this->authorizeManage();
 
-        return view('admin.org.designation.create', [
+        // Updated view reference
+        return view('admin.org.designation.form', [
             'title' => 'Add New Designation',
             'designations' => Designation::orderBy('name')->get(),
+        ]);
+    }
+
+    public function edit($id)
+    {
+        $this->authorizeManage();
+
+        // Updated view reference
+        $this->crud->setEditView('admin.org.designation.form');
+
+        $designation = Designation::findOrFail($id);
+
+        return view('admin.org.designation.form', [
+            'title' => 'Edit Designation - '.$designation->name,
+            'designation' => $designation,
+            'designations' => Designation::orderBy('name')->get(),
+            'permissionTree' => $this->permissionTree->buildTree(),
+            'assignedPermissions' => $this->designations->currentPermissionCodes($designation),
         ]);
     }
 
@@ -137,23 +156,6 @@ class DesignationCrudController extends CrudController
         \Alert::success('Designation created successfully!')->flash();
 
         return redirect(backpack_url('org/designation'));
-    }
-
-    public function edit($id)
-    {
-        $this->authorizeManage();
-
-        $this->crud->setEditView('admin.org.designation.edit');
-
-        $designation = Designation::findOrFail($id);
-
-        return view('admin.org.designation.edit', [
-            'title' => 'Edit Designation - '.$designation->name,
-            'designation' => $designation,
-            'designations' => Designation::orderBy('name')->get(),
-            'permissionTree' => $this->permissionTree->buildTree(),
-            'assignedPermissions' => $this->designations->currentPermissionCodes($designation),
-        ]);
     }
 
     public function update(DesignationRequest $request, $id)

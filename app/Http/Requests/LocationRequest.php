@@ -33,12 +33,17 @@ class LocationRequest extends FormRequest
         $currentId = $this->route('id');
 
         return [
-            'branch_code' => 'required|exists:xlr8_admin_branch,code',
+            'branch_code' => [
+                'required',
+                Rule::exists('xlr8_admin_branch', 'code')->whereNull('deleted_at'),
+            ],
             'code' => [
                 'required',
                 'string',
                 'max:100',
-                Rule::unique('xlr8_admin_location', 'code')->ignore($currentId),
+                Rule::unique('xlr8_admin_location', 'code')
+                    ->ignore($currentId)
+                    ->whereNull('deleted_at'),
             ],
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -47,8 +52,9 @@ class LocationRequest extends FormRequest
             'address' => 'nullable|string',
             'city' => 'nullable|string|max:100',
             'pincode' => 'nullable|digits:6',
-            'latitude' => 'nullable|numeric',
-            'longitude' => 'nullable|numeric',
+            // Enforce valid geographic bounds before hitting the database
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
             'location_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'is_active' => 'nullable|boolean',
             'is_sales_location' => 'nullable|boolean',

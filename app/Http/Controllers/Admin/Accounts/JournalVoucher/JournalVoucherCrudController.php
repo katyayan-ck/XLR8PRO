@@ -209,7 +209,10 @@ class JournalVoucherCrudController extends Controller
 
         $cleanEnqId = app(EnquiryReferenceService::class)->fromReference($request->xceler8_enq_no);
         $voucher->enq_id = $cleanEnqId;
-        $voucher->bid = $request->xceler8_booking_no;
+
+        $bookingNo = str_replace('XB-', '', strtoupper(trim($request->xceler8_booking_no)));
+        $voucher->bid = is_numeric($bookingNo) ? (int) $bookingNo : null;
+
         $voucher->otf_no = $request->votf_no;
 
         // JV Category & Specifics

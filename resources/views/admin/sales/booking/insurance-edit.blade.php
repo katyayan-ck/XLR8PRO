@@ -96,9 +96,6 @@
                 <label class="readonly-label">Customer Name</label>
                 <div class="readonly-value">
                     {{ $booking->name ?? '—' }}
-                    @if($booking->care_of)
-                    (C/o: {{ $booking->care_of }})
-                    @endif
                 </div>
             </div>
 
@@ -172,7 +169,7 @@
 
             <div class="row g-3">
 
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label">
                         Insurance Source
                         <span class="required-mark">*</span>
@@ -195,7 +192,7 @@
                     @error('insurance_category') <span class="text-danger small">{{ $message }}</span> @enderror
                 </div>
 
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label">
                         Insurance Company
                         <span class="required-mark">*</span>
@@ -212,12 +209,12 @@
                     @error('insurance_company') <span class="text-danger small">{{ $message }}</span> @enderror
                 </div>
 
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label">Short Name</label>
                     <input type="text" id="insurance_short_name" class="form-control" readonly>
                 </div>
 
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label">
                         Policy No.
                         <span class="required-mark">*</span>
@@ -227,7 +224,7 @@
                     @error('policy_no') <span class="text-danger small">{{ $message }}</span> @enderror
                 </div>
 
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label">
                         Policy Date
                         <span class="required-mark">*</span>
@@ -240,7 +237,7 @@
                     @error('hidden_policy_date') <span class="text-danger small">{{ $message }}</span> @enderror
                 </div>
 
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label">
                         Policy Type
                         <span class="required-mark">*</span>

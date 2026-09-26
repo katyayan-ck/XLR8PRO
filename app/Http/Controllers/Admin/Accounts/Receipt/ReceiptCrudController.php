@@ -7,11 +7,13 @@ use App\Models\CRM\Enquiry;
 use App\Models\Module\Booking\Bookingamount;
 use App\Services\EnquiryReferenceService;
 use App\Services\OrgService;
+use App\Models\Module\Booking\XlFinancier;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Prologue\Alerts\Facades\Alert;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 /**
  * No "receipt.*" permission existed in xlr8_iam_permissions before this
@@ -79,9 +81,25 @@ class ReceiptCrudController extends Controller
 
                 // Action Buttons for the Data Grid
                 'action' => '<div class="d-flex gap-2 justify-content-center">'.
-                            '<a href="'.backpack_url('accounts/receipt/'.$receipt->id.'/show').'" class="btn btn-sm btn-info text-white"><i class="la la-eye"></i> View</a>'.
-                            '<a href="'.backpack_url('accounts/receipt/'.$receipt->id.'/edit').'" class="btn btn-sm btn-primary text-white"><i class="la la-edit"></i> Edit</a>'.
-                            '</div>',
+                    '<a href="'.backpack_url('accounts/receipt/'.$receipt->id.'/show').'"
+                        class="btn btn-sm btn-info text-white">
+                        <i class="la la-eye"></i> View
+                    </a>'.
+                    '<a href="'.backpack_url('accounts/receipt/'.$receipt->id.'/edit').'"
+                        class="btn btn-sm btn-primary text-white">
+                        <i class="la la-edit"></i> Edit
+                    </a>'.
+                    // '<a href="'.backpack_url('accounts/receipt/'.$receipt->id.'/print').'"
+                    //     class="btn btn-sm btn-success text-white"
+                    //     target="_blank">
+                    //     <i class="la la-print"></i> Print
+                    // </a>'.
+                    '<a href="'.backpack_url('accounts/receipt/'.$receipt->id.'/browser-print').'"
+                        class="btn btn-sm btn-success text-white"
+                        target="_blank">
+                        <i class="la la-print"></i> Print
+                    </a>'.
+                '</div>',
             ];
         })->values();
 
@@ -124,6 +142,7 @@ class ReceiptCrudController extends Controller
             'type' => self::TYPE_RECEIPT,
             'onAccountOfOptions' => $this->getKeyValueOptions(['ACC_OF', 'ON_ACCOUNT_OF', 'ACCOUNT']),
             'paymentModeOptions' => $this->getKeyValueOptions(['PAYMENT_MODE', 'MODE_OF_PAYMENT', 'PAYMENT', 'MOP']),
+            'financiers' => XlFinancier::select('id', 'name', 'short_name')->get(),
             'userBranch' => $user['primary_branch_code'] ?? 'UNKNOWN',
             'userLocation' => $user['primary_loc_code'] ?? 'UNKNOWN',
         ]);
@@ -153,7 +172,8 @@ class ReceiptCrudController extends Controller
 
             $cleanEnqId = app(EnquiryReferenceService::class)->fromReference($request->xceler8_enq_no);
             $receipt->enq_id = $cleanEnqId;
-            $receipt->bid = $request->xceler8_booking_no;
+            $bookingNo = str_replace('XB-', '', strtoupper(trim($request->xceler8_booking_no)));
+            $receipt->bid = is_numeric($bookingNo) ? (int) $bookingNo : null;
             $receipt->otf_no = $request->votf_no;
             $receipt->inv_no = $request->invoice_no;
 
@@ -215,6 +235,7 @@ class ReceiptCrudController extends Controller
             'receipt' => $receipt,
             'onAccountOfOptions' => $this->getKeyValueOptions(['ACC_OF', 'ON_ACCOUNT_OF', 'ACCOUNT']),
             'paymentModeOptions' => $this->getKeyValueOptions(['PAYMENT_MODE', 'MODE_OF_PAYMENT', 'PAYMENT', 'MOP']),
+            'financiers' => XlFinancier::select('id', 'name', 'short_name')->get(),
             'isEdit' => true,
             'userBranch' => $user['primary_branch_code'] ?? 'UNKNOWN',
             'userLocation' => $user['primary_loc_code'] ?? 'UNKNOWN',
@@ -245,7 +266,9 @@ class ReceiptCrudController extends Controller
             // Xceler8 References
             $cleanEnqId = app(EnquiryReferenceService::class)->fromReference($request->xceler8_enq_no);
             $receipt->enq_id = $cleanEnqId;
-            $receipt->bid = $request->xceler8_booking_no;
+            $bookingNo = str_replace('XB-', '', strtoupper(trim($request->xceler8_booking_no)));
+
+$receipt->bid = is_numeric($bookingNo) ? (int) $bookingNo : null;
             $receipt->otf_no = $request->votf_no;
             $receipt->inv_no = $request->invoice_no;
 
@@ -450,5 +473,49 @@ class ReceiptCrudController extends Controller
     private function formatDate($date): string
     {
         return site_date($date, '');
+    }
+
+    public function printReceipt($id)
+    {
+        if (!backpack_user()->can('ACC_RCPT_VIEW')) {
+            abort(403, 'Unauthorized to print receipt.');
+        }
+
+        $receipt = Bookingamount::query()
+            ->where('type', self::TYPE_RECEIPT)
+            ->findOrFail($id);
+
+        $pdf = Pdf::loadView(
+            'admin.pdf.receipt',
+            compact('receipt')
+        );
+
+        $pdf->setPaper('a4', 'landscape');
+
+        $pdf->setOptions([
+            'isHtml5ParserEnabled' => true,
+            'isPhpEnabled' => false,
+            'dpi' => 150,
+            'defaultFont' => 'DejaVu Sans',
+            'isRemoteEnabled' => true,
+        ]);
+
+        return $pdf->stream(
+            'Receipt-' . $receipt->type_number . '.pdf'
+        );
+    }
+    public function browserPrintReceipt($id)
+    {
+        if (!backpack_user()->can('ACC_RCPT_VIEW')) {
+            abort(403, 'Unauthorized to print receipt.');
+        }
+
+        $receipt = Bookingamount::query()
+            ->where('type', self::TYPE_RECEIPT)
+            ->findOrFail($id);
+
+        return view('admin.pdf.browser-print', [
+            'receipt' => $receipt,
+        ]);
     }
 }

@@ -23,7 +23,7 @@ return new class extends Migration
         Schema::table(self::TABLE, function (Blueprint $table) {
             if (! Schema::hasColumn(self::TABLE, 'sale_type')) {
                 // Form codes: '1' Within State, '2' Outside State.
-                $table->string('sale_type', 15)->nullable();
+                $table->unsignedTinyInteger('sale_type')->nullable(); // same type as the booking team's 2026_09_23 migration (DEC-041)
             }
             if (! Schema::hasColumn(self::TABLE, 'final_data')) {
                 // OTF form snapshot (BookingOtfService json_encode/json_decode).

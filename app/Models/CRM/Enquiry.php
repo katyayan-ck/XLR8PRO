@@ -373,12 +373,9 @@ class Enquiry extends BaseModel
                 });
 
                 $oemQuery->whereExists(function ($subquery) {
-                    // Raw-SQL equivalent of App\Services\EnquiryReferenceService::toReference() -
-                    // can't call the PHP service from inside a whereRaw() string, so the 'XENQ-'
-                    // prefix is intentionally hardcoded here too; keep both in sync if it ever changes.
                     $subquery->select(DB::raw(1))
                         ->from('xlr8_cre_enquiry_fup')
-                        ->whereRaw("xlr8_cre_enquiry_fup.x8_enq_no = CONCAT('XENQ-', xlr8_crm_enquiries.id)")
+                        ->whereRaw("(xlr8_cre_enquiry_fup.x8_enq_no = CAST(xlr8_crm_enquiries.id AS CHAR) OR xlr8_cre_enquiry_fup.x8_enq_no = CONCAT('XENQ-', xlr8_crm_enquiries.id))")
                         ->whereNotNull('cre_enq_stage')->where('cre_enq_stage', '!=', '')
                         ->whereNotNull('cre_customer_stage')->where('cre_customer_stage', '!=', '')
                         ->whereNotNull('cre_fup_remarks')->where('cre_fup_remarks', '!=', '')

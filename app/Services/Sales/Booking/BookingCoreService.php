@@ -16,7 +16,6 @@ use App\Models\Module\Insurance\XlInsurance;
 use App\Services\OrgService;
 use Carbon\Carbon;
 use Exception;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -50,7 +49,7 @@ class BookingCoreService
      *
      * @param  array<string, mixed>  $input  the raw request payload (all fields store() reads)
      */
-    public function store(array $input, ?UploadedFile $amountProof): Booking
+    public function store(array $input): Booking
     {
         $pending = 0;
         $pendingFields = [];
@@ -58,14 +57,7 @@ class BookingCoreService
         $isDummy = ($input['customertype'] ?? null) === 'Dummy';
 
         if (! $isDummy) {
-            if (empty($input['receiptno'] ?? null)) {
-                $pending++;
-                $pendingFields[] = 'Receipt number needs to be updated';
-            }
-            if (empty($input['hiddenreceiptdate'] ?? null)) {
-                $pending++;
-                $pendingFields[] = 'Receipt date needs to be updated';
-            }
+            
             if (($input['bookingmode'] ?? null) === 'Online') {
                 if (empty($input['refrenceno'] ?? null)) {
                     $pending++;
@@ -105,8 +97,10 @@ class BookingCoreService
         $booking = new Booking;
         $quotation = null;
 
-        if (! empty($input['quotation_no'] ?? null)) {
-            $quotation = Quotation::where('id', $input['quotation_no'])->first();
+        $quotationId = $input['quotation_id'] ?? $input['quotation_no'] ?? null;
+
+        if (! empty($quotationId)) {
+            $quotation = Quotation::find($quotationId);
         }
 
         if ($quotation) {
@@ -129,10 +123,7 @@ class BookingCoreService
         $booking->dsa_id = $input['dsadetails'] ?? null;
         $booking->online_bk_ref_no = $input['refrenceno'] ?? null;
         $booking->booking_date = $input['hiddenbookingdate'] ?? null;
-        $booking->receipt_no = $input['receiptno'] ?? null;
-        $booking->receipt_date = $input['hiddenreceiptdate'] ?? null;
         $booking->booking_amount = $isDummy ? 0 : ($input['bookingamount'] ?? null);
-        $booking->payment_mode = $input['mode'] ?? null;
         $booking->order = $input['makeorder'] ?? null;
 
         $booking->pan_no = $input['panno'] ?? null;
@@ -182,6 +173,9 @@ class BookingCoreService
                     'x8_sc_code' => $input['saleconsultant'] ?? null,
                     'referee_name' => $input['refcustomername'] ?? null,
                     'referee_phone' => $input['refmobileno'] ?? null,
+                    'referee_model' => $input['refexistingmodel'] ?? null,
+                    'referee_variant' => $input['refvariant'] ?? null,
+                    'referee_chassis' => $input['refchassisregno'] ?? null,
                     'referred_by' => $input['referredby'] ?? null,
                     'remarks' => $input['details'] ?? null,
                 ]);
@@ -205,6 +199,34 @@ class BookingCoreService
 
         try {
             $booking->save();
+
+             $previousEnquiryPayments = collect();
+
+            if (!empty($booking->enq_no)) {
+
+                $previousEnquiryPayments = Bookingamount::query()
+                    ->where('enq_id', $booking->enq_no)
+                    ->whereNull('bid')
+                    ->whereNull('deleted_at')
+                    ->get();
+
+                if ($previousEnquiryPayments->isNotEmpty()) {
+
+                    Bookingamount::whereIn(
+                        'id',
+                        $previousEnquiryPayments->pluck('id')
+                    )->update([
+                        'bid' => $booking->id,
+                    ]);
+
+                    Log::info('[PAYMENT] Previous enquiry payments linked to booking', [
+                        'booking_id' => $booking->id,
+                        'enquiry_id' => $booking->enq_no,
+                        'payment_ids' => $previousEnquiryPayments->pluck('id')->values()->all(),
+                        'total_amount' => $previousEnquiryPayments->sum('amount'),
+                    ]);
+                }
+            }
 
             if ($quotation) {
                 $quotation->status = 'booked';
@@ -267,57 +289,6 @@ class BookingCoreService
             ]);
 
             throw $e;
-        }
-
-        $uploadedFilePath = null;
-
-        if ($amountProof && $amountProof->isValid()) {
-            try {
-                $storedName = $amountProof->store('temp', 'public');
-                $uploadedFilePath = public_path('storage/'.$storedName);
-
-                if (! file_exists($uploadedFilePath)) {
-                    throw new Exception('Stored file not found at: '.$uploadedFilePath);
-                }
-            } catch (Exception $e) {
-                Log::error('💥 [FILE] File upload block threw exception', [
-                    'message' => $e->getMessage(),
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine(),
-                ]);
-                $uploadedFilePath = null;
-            }
-        }
-
-        $number = $input['receiptno'] ?? $input['voucherno'] ?? null;
-
-        if (
-            ! $isDummy
-            && in_array($booking->col_type, [1, 4])
-            && $booking->booking_amount > 0
-            && $number
-        ) {
-            try {
-                $payment = new Bookingamount;
-                $payment->bid = $booking->id;
-                $payment->date = $input['hiddenreceiptdate'] ?? now();
-                $payment->amount = $booking->booking_amount;
-                $payment->type_number = $number;
-                $payment->mode = $input['mode'] ?? null;
-                $payment->voucher = ($booking->col_type == 4) ? 1 : 0;
-                $payment->save();
-
-                if ($uploadedFilePath && file_exists($uploadedFilePath)) {
-                    $payment->addMedia($uploadedFilePath)->toMediaCollection('amount-proof');
-                }
-            } catch (Exception $e) {
-                Log::error('[STORE] Bookingamount save/media failed', [
-                    'booking_id' => $booking->id,
-                    'message' => $e->getMessage(),
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine(),
-                ]);
-            }
         }
 
         if (! $isDummy && ($input['buyertype'] ?? null) === 'Exchange Buy') {
@@ -417,6 +388,15 @@ class BookingCoreService
         if ($booking->b_type != ($input['customer_type'] ?? null)) {
             $rem[] = 'Customer Type Changed from '.($booking->b_type ?? 'null').' to '.($input['customer_type'] ?? null);
             $booking->b_type = $input['customer_type'] ?? null;
+        }
+
+        if ($booking->b_cat != ($input['customercat'] ?? null)) {
+            $rem[] = 'Customer Category Changed from '
+                .($booking->b_cat ?? 'null')
+                .' to '
+                .($input['customercat'] ?? null);
+
+            $booking->b_cat = $input['customercat'] ?? null;
         }
 
         if ($booking->booking_date != ($input['booking_date_actual'] ?? null)) {
@@ -694,6 +674,26 @@ class BookingCoreService
         if ($linkedEnquiry && $linkedEnquiry->referee_phone != ($input['ref_mobile_no'] ?? null)) {
             $rem[] = 'Referred Mobile Changed';
             $linkedEnquiry->referee_phone = $input['ref_mobile_no'] ?? null;
+        }
+
+        if ($linkedEnquiry && $linkedEnquiry->referee_model != ($input['ref_existing_model'] ?? null)) {
+            $rem[] = 'Referred Existing Model Changed';
+            $linkedEnquiry->referee_model = $input['ref_existing_model'] ?? null;
+        }
+
+        if ($linkedEnquiry && $linkedEnquiry->referee_variant != ($input['ref_variant'] ?? null)) {
+            $rem[] = 'Referred Variant Changed';
+            $linkedEnquiry->referee_variant = $input['ref_variant'] ?? null;
+        }
+
+        if ($linkedEnquiry && $linkedEnquiry->referee_chassis != ($input['ref_chassis_reg_no'] ?? null)) {
+            $rem[] = 'Referred Chassis/Registration No. Changed';
+            $linkedEnquiry->referee_chassis = $input['ref_chassis_reg_no'] ?? null;
+        }
+
+        if ($linkedEnquiry && $linkedEnquiry->referred_by != ($input['referredby'] ?? null)) {
+            $rem[] = 'Referred By Changed';
+            $linkedEnquiry->referred_by = $input['referredby'] ?? null;
         }
 
         if ($linkedEnquiry && $linkedEnquiry->remarks != ($input['details'] ?? null)) {

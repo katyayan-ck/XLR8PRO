@@ -131,20 +131,20 @@ class BranchCrudController extends CrudController
         ]);
     }
 
-    public function edit($code)
-    {
-        $this->authorizeManage();
+    // public function edit($code)
+    // {
+    //     $this->authorizeManage();
 
-        $this->crud->setEditView('admin.org.branch.edit');
+    //     $this->crud->setEditView('admin.org.branch.edit');
 
-        $branch = Branch::where('code', $code)->firstOrFail();
+    //     $branch = Branch::where('code', $code)->firstOrFail();
 
-        return view('admin.org.branch.edit', [
-            'title' => 'Edit Branch - '.$branch->name,
-            'branch' => $branch,
-            'headOffice' => Branch::where('is_head_office', true)->first(),
-        ]);
-    }
+    //     return view('admin.org.branch.edit', [
+    //         'title' => 'Edit Branch - '.$branch->name,
+    //         'branch' => $branch,
+    //         'headOffice' => Branch::where('is_head_office', true)->first(),
+    //     ]);
+    // }
 
     public function update(BranchRequest $request, $code)
     {
@@ -171,9 +171,28 @@ class BranchCrudController extends CrudController
 
         $headOffice = Branch::where('is_head_office', true)->first();
 
-        return view('admin.org.branch.create', [
+        // Updated view reference
+        $this->crud->setCreateView('admin.org.branch.form');
+
+        return view('admin.org.branch.form', [
             'title' => 'Add New Branch',
             'headOffice' => $headOffice,
+        ]);
+    }
+
+    public function edit($code)
+    {
+        $this->authorizeManage();
+
+        // Updated view reference
+        $this->crud->setEditView('admin.org.branch.form');
+
+        $branch = Branch::where('code', $code)->firstOrFail();
+
+        return view('admin.org.branch.form', [
+            'title' => 'Edit Branch - '.$branch->name,
+            'branch' => $branch,
+            'headOffice' => Branch::where('is_head_office', true)->first(),
         ]);
     }
 

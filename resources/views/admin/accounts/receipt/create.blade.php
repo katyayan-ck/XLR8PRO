@@ -193,8 +193,18 @@
                                     <input type="text" id="transaction_date" name="transaction_date" class="form-control" placeholder="YYYY-MM-DD" value="{{ old('transaction_date', $receipt->trans_date ?? '') }}">
                                 </div>
                                 <div class="col-md-4 mb-3 req-instrument" style="display:none;">
-                                    <label class="form-label">Bank Name <span class="text-danger">*</span></label>
-                                    <input type="text" name="bank_name" id="bank_name" class="form-control" value="{{ old('bank_name', $receipt->bank ?? '') }}">
+                                    <label class="form-label">Financier Name <span class="text-danger">*</span></label>
+
+                                    <select name="bank_name" id="bank_name" class="form-control form-select">
+                                        <option value="">Select Financier</option>
+
+                                        @foreach ($financiers ?? [] as $financier)
+                                            <option value="{{ $financier->name }}"
+                                                @selected(old('bank_name', $receipt->bank ?? '') == $financier->name)>
+                                                {{ $financier->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
                                 </div>
                                 <div class="col-md-4 mb-3 req-instrument" style="display:none;">
                                     <label class="form-label">Transaction ID / UTR</label>
@@ -266,7 +276,8 @@
             });
 
             function handleOnAccountOf() {
-                let selectedText = $('#on_account_of option:selected').data('text') || '';
+                let selectedText = $('#on_account_of option:selected').text().trim().toUpperCase();
+                
                 $('.conditional-section').hide();
                 $('#invoice-no-section').hide();
                 
@@ -274,7 +285,7 @@
                 $('#invoice_no').prop('required', false); 
                 $('.req-reg-asterisk, .req-chassis-asterisk').hide();
 
-                if (['NEW VEHICLE SALES', 'USED VEHICLE SALES'].includes(selectedText)) {
+                if (selectedText.includes('SALES')) {
                     $('#vehicle-sales-section').show();
                     $('#xceler8_enq_no').prop('required', true);
                     $('#req_enq_asterisk').show();
@@ -393,7 +404,7 @@
             $('#xceler8_enq_no, #xceler8_booking_no, #votf_no').on('blur', fetchEnquiryData);
             $('#fetch_enquiry_btn').on('click', fetchEnquiryData);
 
-           / const a = ['', 'One ', 'Two ', 'Three ', 'Four ', 'Five ', 'Six ', 'Seven ', 'Eight ', 'Nine ', 'Ten ', 'Eleven ', 'Twelve ', 'Thirteen ', 'Fourteen ', 'Fifteen ', 'Sixteen ', 'Seventeen ', 'Eighteen ', 'Nineteen '];
+           const a = ['', 'One ', 'Two ', 'Three ', 'Four ', 'Five ', 'Six ', 'Seven ', 'Eight ', 'Nine ', 'Ten ', 'Eleven ', 'Twelve ', 'Thirteen ', 'Fourteen ', 'Fifteen ', 'Sixteen ', 'Seventeen ', 'Eighteen ', 'Nineteen '];
             const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
 
             function inWords (num) {
@@ -421,5 +432,5 @@
                 $('#amount').trigger('input');
             }
         });
-    </script>\-*
-@endpush-*9*/-
+    </script>
+@endpush
