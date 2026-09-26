@@ -31,18 +31,27 @@ After the merge: run `php artisan test --compact` plus a smoke of `sales/*` as u
 
 **Users & RBAC workbook (DEC-040):** run `php artisan users:export-rbac` or use Users → Bulk import → Export. Edit the file, then re-import it. An unchanged re-import is a no-op.
 
-**Waiting on the user:**
-- BUG-055: approve enabling Backpack's guard-switch middleware.
-- 34 role-less users (BUG-090/166).
-- Fix the dump codes (BUG-166).
-- SLA/retention (later).
-- Enabling data scoping.
-- Approval scope dimensions.
+**Done 27-09 (DEC-042…047):**
+- BUG-055 guard fix.
+- 34 role-less users disabled.
+- Dump codes corrected.
+- IT department.
+- IST kept.
+- composer.json trimmed for PHP 8.4 (fast autoload).
+- Dead-code follow-ups.
+- `dev/admin` is ahead of `stage` with all of this.
 
-**Deferred by the user:**
-- Google key rotation, until the code is fixed.
-- `userdata.xlsx` holds dummy data, so it is not a PII concern.
-- Ticket intake is decided: staff UI + API (DEC-039).
+**Waiting on the user:**
+- OK to merge `dev/admin` → `stage`? Merging deploys to dev.xceler8.in; PHP 8.4 is confirmed there.
+- Data scoping switch-on (BUG-083).
+
+**For the booking team:**
+- BUG-168: routes skipping their permission checks.
+- About 37 visible menu links with no routes.
+- BUG-153: chassis status rule.
+- BUG-030: XCommonHelper.
+
+**Deferred until after UAT:** Laravel 13, Excel 4, Permission 8, Firebase 8, PHPUnit 12/13, Swagger 11.
 
 **Environment:** Laragon, PHP 8.4.26 (+redis), MySQL 8.4.3, Redis + Mailpit available.
 After local schema or data changes, run `php artisan testing:refresh-db --force --bin-dir="D:\laragon\bin\mysql\mysql-8.4.3-winx64\bin"`.
