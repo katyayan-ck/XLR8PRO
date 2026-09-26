@@ -28,8 +28,9 @@ Person (person_code — immutable natural key)
   use them are dead (BUG-158). Use `employee.primary_*_code` and `user_scopes`.
 
 ## Org masters
-- Branch, Location, Department, Division, Vertical, Designation: thin controllers + `App\Services\Org\*Service`
-  + `OrgEntityGuard`, FormRequests, feature tests — the reference pattern for admin CRUD.
+- Branch, Location, Department, Division, Vertical, Designation: thin controllers → `App\Services\Org\*Service`
+  (`EntityService` subclasses: `fields()` is the only rule set; disable guard via `OrgEntityConcerns`/`OrgEntityGuard`;
+  media in `afterSave`) + feature tests — the reference pattern for admin CRUD (DEC-050/052). No FormRequests.
 - Read org data through `OrgService` (cached 3600s): `usersByDesignation()`, `getUpline()`, `branches()`…
 - Designations double as Spatie roles (see `.ai/rules/modules/iam-rbac.md`).
 - Retired concepts: Posts / post assignments (BUG-080), reporting & approval hierarchies (legacy graph), emp pivots.

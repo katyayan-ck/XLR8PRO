@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Admin\Org\Department;
 
-use App\Http\Requests\DepartmentRequest;
 use App\Models\Admin\Department;
 use App\Services\Org\DepartmentService;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
@@ -11,6 +10,7 @@ use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
+use Illuminate\Http\Request;
 
 class DepartmentCrudController extends CrudController
 {
@@ -138,30 +138,24 @@ class DepartmentCrudController extends CrudController
         ]);
     }
 
-    public function store(DepartmentRequest $request)
+    /** Create through DepartmentService, the only write path (DEC-050/052). */
+    public function store(Request $request)
     {
         $this->authorizeManage();
 
-        $this->departments->create($request->validated(), $request);
+        $this->departments->create($request->all());
 
         \Alert::success('Department created successfully!')->flash();
 
         return redirect(backpack_url('org/department'));
     }
 
-    public function update(DepartmentRequest $request, $id)
+    /** Update through DepartmentService (validation and business rules raise field errors). */
+    public function update(Request $request, $id)
     {
         $this->authorizeManage();
 
-        $department = Department::findOrFail($id);
-
-        $result = $this->departments->update($department, $request->validated(), $request);
-
-        if (! $result['ok']) {
-            return back()->withInput()->withErrors([
-                'is_active' => 'Cannot disable this department — it still has '.implode(' and ', $result['blockers']).'. Disable those first.',
-            ]);
-        }
+        $this->departments->update(Department::findOrFail($id), $request->all());
 
         \Alert::success('Department updated successfully!')->flash();
 

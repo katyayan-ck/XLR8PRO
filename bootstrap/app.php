@@ -1,6 +1,5 @@
 <?php
 
-use App\Console\Commands\ImportRbacMaster;
 use App\Console\Commands\ImportUsersCommand;
 use App\Http\Middleware\CheckSuperAdmin;
 use App\Http\Middleware\ValidateDevice;
@@ -28,7 +27,6 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withCommands([
-        ImportRbacMaster::class,
         ImportUsersCommand::class,
     ])
     ->withExceptions(function (Exceptions $exceptions): void {

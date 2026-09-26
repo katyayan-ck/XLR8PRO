@@ -441,3 +441,21 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
   - `xlrm_testing`: it keeps its copy so the vehicle tests have data. Don't `testing:refresh-db` until the fresh import is in.
 - **Backup:** `storage/app/backups/xlrm-vehicle-masters-pre-purge-27-09-2026.sql`. No foreign keys reference these tables.
 - **Risk:** HIGH (destructive, local) · **Approved-by:** user · **Reversal:** restore the backup.
+
+### DEC-052 | 27-09-2026 | A3 (UAT) | Org masters on entity services (DEC-050 roll-out)
+- **Scope:** Branch, Location, Department, Division, Vertical and Designation.
+  - Their services become `EntityService` subclasses. The FormRequests and model `$columnTransformations` are removed; the rules live in `fields()`.
+  - Dependency guards, head office, the reports-to rank check, the default division and media move into `beforeCreate` / `beforeUpdate` / `afterSave`.
+  - The RBAC master import sheets (department, division) write through the services.
+- **One rule per field where the old copies disagreed:**
+  - `phone`: cleaned by `IdentifierService::cleanMobile()` (+91 / 0 prefixes removed), must be 10 digits, on create **and** edit. Before, Branch accepted any string on edit.
+  - Department `is_active`: the same rule on create and edit.
+- **Framework additions:**
+  - `Field::virtual()` for validated non-column inputs (image/documents uploads).
+  - Callable transform steps.
+  - The `afterSave` hook.
+- **Approved-by:** user (DEC-050 roll-out order) · **Reversal:** revert.
+- **Addendum (DEC-052):** retired `import:rbac-master` (`ImportRbacMaster`, `RbacMasterImport`, `BaseSheetImport` and its Branch/Department/Division/DesignationTree/Post/UsersImport sheets).
+  - None of the sheets implements a Maatwebsite `To*` concern, so the import silently processed nothing while reporting "No errors" (proven on `xlrm_testing`: 0 inserted, 0 updated, data unchanged). `skip()` was also undefined.
+  - It was a direct-to-table write path (DEC-050 violation).
+  - Replacements: org masters go through the admin screens (entity services); users through `import:users` / Users → Bulk import.

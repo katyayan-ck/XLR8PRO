@@ -204,7 +204,10 @@ trait HasColumnTransformations
         // Ordered pipeline: array of string transformation names
         if (is_array($definition) && array_is_list($definition)) {
             foreach ($definition as $step) {
-                $value = $this->applyNamedTransformation($value, $step);
+                // A step may be a callable (e.g. IdentifierService::cleanMobile) — DEC-052.
+                $value = $step instanceof \Closure
+                    ? (string) ($step($value) ?? '')
+                    : $this->applyNamedTransformation($value, $step);
             }
 
             return $value;

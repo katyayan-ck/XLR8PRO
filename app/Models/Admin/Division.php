@@ -2,13 +2,16 @@
 
 namespace App\Models\Admin;
 
-use Backpack\CRUD\app\Models\Traits\CrudTrait;
-use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany};
-use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\BaseModel;
+use App\Models\Iam\Post;
 use App\Models\Traits\HasColumnTransformations;
+use App\Services\Org\DivisionService;
+use Backpack\CRUD\app\Models\Traits\CrudTrait;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
-use App\Models\BaseModel;
 
 /**
  * Table: xlr8_admin_division
@@ -17,10 +20,10 @@ use App\Models\BaseModel;
  */
 class Division extends BaseModel implements HasMedia
 {
-    use SoftDeletes,
-        CrudTrait,
+    use CrudTrait,
         HasColumnTransformations,
-        InteractsWithMedia;
+        InteractsWithMedia,
+        SoftDeletes;
 
     protected $table = 'xlr8_admin_division';
 
@@ -32,10 +35,8 @@ class Division extends BaseModel implements HasMedia
         'is_active',
     ];
 
-    protected array $columnTransformations = [
-        'code' => ['trim', 'uppercase_alphanumeric_dash_underscore'],
-        'name' => ['trim_spaces', 'title_case'],
-    ];
+    /** Field formats, transforms and rules live in the entity service (DEC-050). */
+    protected string $entityService = DivisionService::class;
 
     public function registerMediaCollections(): void
     {
@@ -80,7 +81,7 @@ class Division extends BaseModel implements HasMedia
     /** Posts: xlr8_iam_roles.div_code → division.code */
     public function posts(): HasMany
     {
-        return $this->hasMany(\App\Models\Iam\Post::class, 'div_code', 'code');
+        return $this->hasMany(Post::class, 'div_code', 'code');
     }
 
     // ── Scopes ────────────────────────────────────────────────────────────────
@@ -98,6 +99,7 @@ class Division extends BaseModel implements HasMedia
     {
         $this->attributes['code'] = strtoupper(trim($v));
     }
+
     public function setDeptCodeAttribute(?string $v): void
     {
         $this->attributes['dept_code'] = $v ? strtoupper(trim($v)) : null;

@@ -1,123 +1,94 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Org;
 
 use App\Models\Admin\Designation;
 use App\Models\Admin\Employee;
 use App\Services\IAM\RolePermissionService;
-use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
+use App\Services\Org\Concerns\OrgEntityConcerns;
+use App\Support\Entity\EntityService;
+use App\Support\Entity\Field;
+use Illuminate\Database\Eloquent\Model;
 
 /**
- * Single source of truth for Designation business logic (create/update, code
- * immutability, dependency-checked disable, media, and its role-permission
- * assignment — Designation doubles as a Spatie role). The controller only
- * handles HTTP concerns (auth checks, request validation, redirects) and
- * delegates everything else here.
+ * Designation (= Spatie role) — the only write path (DEC-050/052): field rules, immutable code,
+ * reports-to rank rule, dependency-checked disable, media; permission sync.
+ *
+ * @extends EntityService<Designation>
  */
-class DesignationService
+class DesignationService extends EntityService
 {
-    /**
-     * Designation is a standalone org entity — Employee is its only dependent.
-     * Employee has no is_active column; "active" there is employment_status = 'active'.
-     */
+    use OrgEntityConcerns;
+
     private const DEPENDENTS = [
         [Employee::class, 'designation_code', 'employee', 'employment_status', 'active'],
     ];
 
     public function __construct(private RolePermissionService $rolePermissions) {}
 
-    public function create(array $validated, Request $request): Designation
+    protected function model(): string
     {
-        $validated['rank'] = $validated['rank'] ?? 0;
-        $validated['guard_name'] = 'web';
-
-        $this->validateReportsTo($validated['parent_desig_code'] ?? null, (int) $validated['rank']);
-
-        $designation = Designation::create($validated);
-
-        $this->syncMedia($request, $designation);
-
-        return $designation;
+        return Designation::class;
     }
 
-    /**
-     * @return array{ok: true, designation: Designation}|array{ok: false, blockers: array<int, string>}
-     */
-    public function update(Designation $designation, array $validated, Request $request): array
+    public function fields(): array
     {
-        // Code is the real primary key every relation points at by string — never editable.
-        unset($validated['code']);
-
-        $validated['rank'] = $validated['rank'] ?? 0;
-        $validated['guard_name'] = 'web';
-
-        $this->validateReportsTo($validated['parent_desig_code'] ?? null, (int) $validated['rank']);
-
-        $wasActive = $designation->is_active;
-        $willBeActive = (bool) ($validated['is_active'] ?? false);
-
-        $blockers = OrgEntityGuard::blockersForDisabling($wasActive, $willBeActive, $designation->code, self::DEPENDENTS);
-        if ($blockers) {
-            return ['ok' => false, 'blockers' => $blockers];
-        }
-
-        $designation->update($validated);
-        $this->syncMedia($request, $designation);
-
-        return ['ok' => true, 'designation' => $designation->fresh()];
+        return [
+            Field::code('code', 50)->label('Designation Code')->required()->unique()->immutable(),
+            Field::name('name')->label('Designation Name')->required(),
+            Field::text('description', 5000)->label('Description'),
+            Field::make('rank')->label('Rank')->format('0 (none) or 1 (A, highest) … 5 (E, lowest)')->rules('integer', 'between:0,5')->default(0),
+            Field::flag('is_top_mgmt', false)->label('Top Management'),
+            Field::reference('parent_desig_code', 'xlr8_admin_designation', 50)->label('Reports To'),
+            Field::flag('is_active')->label('Active'),
+            ...$this->mediaFields('designation_image'),
+        ];
     }
 
-    /** @param  array<int, string>  $permissionCodes */
+    protected function beforeCreate(array &$data): void
+    {
+        $data['guard_name'] = 'web';
+        $this->assertReportsTo($data);
+    }
+
+    protected function beforeUpdate(Model $model, array &$data): void
+    {
+        $data['guard_name'] = 'web';
+        $this->assertReportsTo(array_merge($model->only(['parent_desig_code', 'rank']), $data));
+        $this->guardDisabling($model, $data, self::DEPENDENTS, 'designation');
+    }
+
+    protected function afterSave(Model $model, array $input, bool $created): void
+    {
+        $this->syncMedia($model, $input, 'designation_image');
+    }
+
     public function syncPermissions(Designation $designation, array $permissionCodes): void
     {
         $this->rolePermissions->syncRolePermissions($designation, $permissionCodes);
     }
 
-    /** @return array<int, string> */
     public function currentPermissionCodes(Designation $designation): array
     {
         return $this->rolePermissions->currentPermissionCodes($designation);
     }
 
     /**
-     * A designation can only report to an existing designation of the same or
-     * higher rank (rank 1/A is the highest, rank 5/E the lowest — so "same or
-     * higher" means the parent's rank number must be <= this designation's).
+     * The designation reported to must be of the same or higher rank (1/A is highest, 5/E lowest).
+     *
+     * @param  array<string, mixed>  $data
      */
-    private function validateReportsTo(?string $parentCode, int $rank): void
+    private function assertReportsTo(array $data): void
     {
-        if (! $parentCode || $rank <= 0) {
+        $rank = (int) ($data['rank'] ?? 0);
+        if (empty($data['parent_desig_code']) || $rank <= 0) {
             return;
         }
-
-        $parent = Designation::where('code', $parentCode)->first();
-
+        $parent = Designation::where('code', $data['parent_desig_code'])->first();
         if ($parent && (int) $parent->rank > 0 && (int) $parent->rank > $rank) {
-            throw ValidationException::withMessages([
-                'parent_desig_code' => 'The designation reported to must be of the same or higher rank (A is highest, E is lowest).',
-            ]);
-        }
-    }
-
-    private function syncMedia(Request $request, Designation $designation): void
-    {
-        if ($request->boolean('remove_image')) {
-            $designation->clearMediaCollection('designation_image');
-        }
-
-        if ($request->hasFile('designation_image')) {
-            $designation->addMediaFromRequest('designation_image')->toMediaCollection('designation_image');
-        }
-
-        if ($request->hasFile('documents')) {
-            foreach ((array) $request->file('documents') as $file) {
-                $designation->addMedia($file)->toMediaCollection('documents');
-            }
-        }
-
-        foreach ((array) $request->input('remove_documents', []) as $mediaId) {
-            $designation->media()->where('id', $mediaId)->where('collection_name', 'documents')->first()?->delete();
+            $this->fail('parent_desig_code', 'The designation reported to must be of the same or higher rank (A is highest, E is lowest).');
         }
     }
 }

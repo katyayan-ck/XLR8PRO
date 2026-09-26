@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Support\Entity;
 
+use App\Services\IdentifierService;
+use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Exists;
@@ -18,7 +20,7 @@ use Illuminate\Validation\Rules\In;
  */
 final class Field
 {
-    /** @var list<string> transformation pipeline (HasColumnTransformations names) */
+    /** @var list<string|Closure> transformation pipeline (HasColumnTransformations names or callables) */
     public array $transforms = [];
 
     /** @var list<string|ValidationRule|Exists|In> */
@@ -33,6 +35,12 @@ final class Field
     public bool $immutable = false;
 
     public bool $boolean = false;
+
+    /** Validated but not a column (uploads, remove flags): excluded from persisted data. */
+    public bool $virtual = false;
+
+    /** @var list<mixed> rules applied to each item of an array input ("name.*") */
+    public array $eachRules = [];
 
     public mixed $default = null;
 
@@ -93,6 +101,56 @@ final class Field
         return self::code($name, $max)->rules(Rule::exists($table, $column)->whereNull('deleted_at'));
     }
 
+    /** Phone: +91 / leading 0 removed (IdentifierService::cleanMobile), 10 digits. */
+    public static function phone(string $name = 'phone'): self
+    {
+        return self::make($name)
+            ->format('10-digit phone; +91 or leading 0 is removed')
+            ->transform(fn (string $v) => app(IdentifierService::class)->cleanMobile($v) ?? $v)
+            ->rules('digits:10');
+    }
+
+    public static function email(string $name = 'email'): self
+    {
+        return self::make($name)->format('E-mail, lower-case')->transform('trim', 'lowercase')->rules('email', 'max:255');
+    }
+
+    public static function pincode(string $name = 'pincode'): self
+    {
+        return self::make($name)->format('6-digit PIN code')->transform('trim')->rules('digits:6');
+    }
+
+    public static function coordinate(string $name, int $limit): self
+    {
+        return self::make($name)->format("Decimal degrees, ±{$limit}")->rules('numeric', "between:-{$limit},{$limit}");
+    }
+
+    /** Single image upload (not a column; the service stores it via media library). */
+    public static function image(string $name): self
+    {
+        return self::make($name)->format('Image jpg/png/webp, max 2 MB')->rules('image', 'mimes:jpg,jpeg,png,webp', 'max:2048')->virtual();
+    }
+
+    /** Multiple document uploads (not a column). */
+    public static function documents(string $name = 'documents'): self
+    {
+        return self::make($name)->format('Files, max 10 MB each')->rules('array')->each('file', 'max:10240')->virtual();
+    }
+
+    public function virtual(): self
+    {
+        $this->virtual = true;
+
+        return $this;
+    }
+
+    public function each(mixed ...$rules): self
+    {
+        $this->eachRules = array_values(array_merge($this->eachRules, $rules));
+
+        return $this;
+    }
+
     public function label(string $label): self
     {
         $this->label = $label;
@@ -107,7 +165,7 @@ final class Field
         return $this;
     }
 
-    public function transform(string ...$steps): self
+    public function transform(string|Closure ...$steps): self
     {
         $this->transforms = array_values(array_merge($this->transforms, $steps));
 

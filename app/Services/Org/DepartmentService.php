@@ -1,88 +1,64 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Org;
 
 use App\Models\Admin\Department;
 use App\Models\Admin\Division;
 use App\Models\Admin\Employee;
-use Illuminate\Http\Request;
+use App\Services\Org\Concerns\OrgEntityConcerns;
+use App\Support\Entity\EntityService;
+use App\Support\Entity\Field;
+use Illuminate\Database\Eloquent\Model;
 
 /**
- * Single source of truth for Department business logic (create/update, code
- * immutability, dependency-checked disable, media). The controller only
- * handles HTTP concerns (auth checks, request validation, redirects) and
- * delegates everything else here.
+ * Department — the only write path (DEC-050/052). A new department gets a same-coded default
+ * division, created through DivisionService.
+ *
+ * @extends EntityService<Department>
  */
-class DepartmentService
+class DepartmentService extends EntityService
 {
-    /**
-     * Department is the parent of Division and (via primary_dept_code) of
-     * Employee. Employee has no is_active column — "active" there is
-     * employment_status = 'active'.
-     */
+    use OrgEntityConcerns;
+
     private const DEPENDENTS = [
         [Division::class, 'dept_code', 'division'],
         [Employee::class, 'primary_dept_code', 'employee', 'employment_status', 'active'],
     ];
 
-    public function create(array $validated, Request $request): Department
+    protected function model(): string
     {
-        $department = Department::create($validated);
-
-        $this->syncMedia($request, $department);
-
-        // Every new Department starts with a same-coded default Division — pre-existing
-        // behaviour, kept as-is; out of scope for the code-immutability/dependency-guard work.
-        Division::create([
-            'dept_code' => $department->code,
-            'code' => $department->code,
-            'name' => $department->name,
-            'is_active' => true,
-        ]);
-
-        return $department;
+        return Department::class;
     }
 
-    /**
-     * @return array{ok: true, department: Department}|array{ok: false, blockers: array<int, string>}
-     */
-    public function update(Department $department, array $validated, Request $request): array
+    public function fields(): array
     {
-        // Code is the real primary key every relation points at by string — never editable.
-        unset($validated['code']);
-
-        $wasActive = $department->is_active;
-        $willBeActive = (bool) ($validated['is_active'] ?? false);
-
-        $blockers = OrgEntityGuard::blockersForDisabling($wasActive, $willBeActive, $department->code, self::DEPENDENTS);
-        if ($blockers) {
-            return ['ok' => false, 'blockers' => $blockers];
-        }
-
-        $department->update($validated);
-        $this->syncMedia($request, $department);
-
-        return ['ok' => true, 'department' => $department->fresh()];
+        return [
+            Field::code('code', 10)->label('Department Code')->rules('min:2')->required()->unique()->immutable(),
+            Field::name('name')->label('Department Name')->required(),
+            Field::text('description', 5000)->label('Description'),
+            Field::flag('is_active')->label('Active'),
+            ...$this->mediaFields('department_image'),
+        ];
     }
 
-    private function syncMedia(Request $request, Department $department): void
+    protected function beforeUpdate(Model $model, array &$data): void
     {
-        if ($request->boolean('remove_image')) {
-            $department->clearMediaCollection('department_image');
-        }
+        $this->guardDisabling($model, $data, self::DEPENDENTS, 'department');
+    }
 
-        if ($request->hasFile('department_image')) {
-            $department->addMediaFromRequest('department_image')->toMediaCollection('department_image');
-        }
+    protected function afterSave(Model $model, array $input, bool $created): void
+    {
+        $this->syncMedia($model, $input, 'department_image');
 
-        if ($request->hasFile('documents')) {
-            foreach ((array) $request->file('documents') as $file) {
-                $department->addMedia($file)->toMediaCollection('documents');
-            }
-        }
-
-        foreach ((array) $request->input('remove_documents', []) as $mediaId) {
-            $department->media()->where('id', $mediaId)->where('collection_name', 'documents')->first()?->delete();
+        if ($created && ! Division::withTrashed()->where('code', $model->code)->exists()) {
+            app(DivisionService::class)->create([
+                'dept_code' => $model->code,
+                'code' => $model->code,
+                'name' => $model->name,
+                'is_active' => true,
+            ]);
         }
     }
 }

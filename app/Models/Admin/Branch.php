@@ -5,6 +5,7 @@ namespace App\Models\Admin;
 use App\Models\BaseModel;
 use App\Models\Iam\Post;
 use App\Models\Traits\HasColumnTransformations;
+use App\Services\Org\BranchService;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -33,14 +34,8 @@ class Branch extends BaseModel
         'is_active',
     ];
 
-    protected array $columnTransformations = [
-        'code' => ['trim', 'uppercase_alphanumeric_dash_underscore'],
-        'name' => ['trim_spaces', 'title_case'],
-        'city' => ['trim_spaces', 'title_case'],
-        'email' => ['trim', 'lowercase'],
-        'phone' => 'numeric',
-        'pincode' => 'numeric',
-    ];
+    /** Field formats, transforms and rules live in the entity service (DEC-050). */
+    protected string $entityService = BranchService::class;
 
     public function registerMediaCollections(): void
     {

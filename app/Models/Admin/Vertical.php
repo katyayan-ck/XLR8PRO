@@ -5,8 +5,8 @@ namespace App\Models\Admin;
 use App\Models\BaseModel;
 // use App\Models\BaseModel;
 use App\Models\Traits\HasColumnTransformations;
+use App\Services\Org\VerticalService;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
-use Illuminate\Database\Eloquent\SoftDeletes;
 /**
  * Table: xlr8_admin_vertical
  * Schema has BOTH `code` (varchar 255 unique) AND `vert_code` (varchar 10).
@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * `vert_code` is a legacy duplicate — import writes both same value.
  */
 
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
 class Vertical extends BaseModel
@@ -31,10 +32,8 @@ class Vertical extends BaseModel
         return 'code';
     }
 
-    protected array $columnTransformations = [
-        'code' => ['trim', 'uppercase_alphanumeric_dash_underscore'],
-        'name' => ['trim_spaces', 'title_case'],
-    ];
+    /** Field formats, transforms and rules live in the entity service (DEC-050). */
+    protected string $entityService = VerticalService::class;
 
     public function registerMediaCollections(): void
     {

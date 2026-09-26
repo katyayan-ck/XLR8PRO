@@ -209,6 +209,7 @@ Entry format:
 | BUG-171 | Editing any vehicle master re-saved its `code` through the space-stripping transform, orphaning children: 588 variants (+584 legacy colour rows) now reference model codes that no longer exist (`THAR ROXX` vs `THARROXX`, 17 models) | Critical | FIXED (DEC-048/049) | 27-09-2026 | 27-09-2026 |
 | BUG-172 | Variant uniqueness was table-wide on `code`, but colours are separate rows sharing the code → every multi-colour variant failed to save; colour fields missing from form/model; deactivation checked the legacy colour table | High | FIXED | 27-09-2026 | 27-09-2026 |
 | BUG-173 | Variant code convention split: 2,548 colour rows store the OEM code WITHOUT its 2-char colour suffix (booking team's vehicle import cuts it), while pricing profiles and the spec use the full OEM code (code + colour); 104 rows created 23-09 hold full codes with no colour, 103 of them duplicating an existing code+colour row | High | OPEN (needs owner decision) | 27-09-2026 | — |
+| BUG-174 | `import:rbac-master` silently imported nothing: its sheet classes implement no Maatwebsite `To*` concern (and call an undefined `skip()`), yet the command printed "No errors. All rows processed cleanly" | Medium | FIXED (retired, DEC-052) | 27-09-2026 | 27-09-2026 |
 
 Not a bug (false positive, listed for reference): the original `infer-conventions` sweep flagged
 "`SheetHeaderService`/`SynonymService` not used by importers" — re-investigation on 19-09-2026
@@ -1971,4 +1972,8 @@ guessed at.
 - **Status:** OPEN (needs owner decision)
 - **Evidence (27-09-2026):** `xlr8_vehicle_variant`: 2,548 rows with `color_code` whose `code` does not end with it (548 distinct codes, created 05-08); 104 rows without colour (23-09 20:36–20:48), 103 of which equal an existing `code`+`color_code`. `xlr8_vehicle_pricing_profile.model_code` = `variant.code` + `color_code` for 53 of 54 profiles. `AdminImportController` line ~160 builds `$variantCode = substr($fullModelCode, 0, -2)`.
 - **Proposed:** migrate to the full OEM code (code + colour) for the 2,548 rows, merge the 103 duplicate stubs into them, update references (accessory scopes, enquiries/bookings `variant` where they hold codes), and stop the import from cutting the suffix.
+
+### BUG-174 — RBAC master import was a silent no-op
+
+- **Status:** FIXED 27-09-2026 (retired, DEC-052) — proven on `xlrm_testing`: 0 inserted/updated, data unchanged, "No errors" reported. Org masters are maintained through the admin screens (entity services), users through `import:users`.
 

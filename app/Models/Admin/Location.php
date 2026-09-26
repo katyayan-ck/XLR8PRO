@@ -5,6 +5,7 @@ namespace App\Models\Admin;
 use App\Models\BaseModel;
 use App\Models\Iam\Post;
 use App\Models\Traits\HasColumnTransformations;
+use App\Services\Org\LocationService;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -40,16 +41,8 @@ class Location extends BaseModel
         'is_lmmws',
     ];
 
-    protected array $columnTransformations = [
-        'branch_code' => ['trim', 'uppercase_alphanumeric_dash_underscore'],
-        'code' => ['trim', 'uppercase_alphanumeric_dash_underscore'],
-        'name' => ['trim_spaces', 'title_case'],
-        'city' => ['trim_spaces', 'title_case'],
-        'state' => ['trim_spaces', 'title_case'],
-        'email' => ['trim', 'lowercase'],
-        'phone' => 'numeric',
-        'pincode' => 'numeric',
-    ];
+    /** Field formats, transforms and rules live in the entity service (DEC-050). */
+    protected string $entityService = LocationService::class;
 
     public function registerMediaCollections(): void
     {

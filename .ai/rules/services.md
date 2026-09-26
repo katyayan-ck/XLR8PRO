@@ -15,8 +15,8 @@ those fields. CRUD controllers, importers, APIs, jobs and seeders call `create()
 validate or transform themselves, never keep FormRequest rules for these fields, and never write the table with
 `DB::table()` or `Model::create()`. Business rules go in `beforeCreate/beforeUpdate` via `fail()`. The model declares
 `protected string $entityService` so its transform backstop reads the same definition.
-Migrated: `Vehicle\SegmentService`, `SubSegmentService`, `VehicleModelService`, `VariantService`.
-Next: Org masters, Person, Employee/User (+ importer), KeyValue, Pricing entities.
+Migrated: `Vehicle\{Segment,SubSegment,VehicleModel,Variant}Service`, `Org\{Branch,Location,Department,Division,Vertical,Designation}Service`.
+Next: Person, Employee/User (+ importer), KeyValue, Pricing entities.
 
 Never re-implement a capability below; open the service, match its contract, extend it if needed.
 Full health notes: `docs/reference/Shared-Services-Utilities-Catalog.md`.

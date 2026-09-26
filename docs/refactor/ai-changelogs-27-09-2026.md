@@ -220,3 +220,16 @@ Branch `feature/integrations`. Decisions DEC-033…038 are in `docs/decisions/de
 - **Not touched:** pricing tables, CRM/booking references and `xlrm_testing`. Don't refresh the test copy until the fresh import is in.
 - **Smoke:** the vehicle lists, create forms, `imports/admin` and the dashboard all return 200 on the empty tables.
 - **Next:** reload through Imports → Admin → Vehicle import. It reads a Google Sheet, so a local `gscreds.json` is required. Every row goes through the entity services, and rejected rows are listed after the import.
+
+## Org masters on entity services (DEC-052)
+- **Six services:** `Org\{Branch,Location,Department,Division,Vertical,Designation}Service` now extend `EntityService`.
+  - `fields()` is the only rule set; the 6 FormRequests and the models' `$columnTransformations` are gone.
+  - The shared `Org\Concerns\OrgEntityConcerns` provides the media fields, media sync and the dependency-checked disable.
+  - Business rules are kept: head office, default division (created through `DivisionService`), active department, reports-to rank, and `guard_name = web`.
+- **Unified rules:**
+  - `phone` is cleaned by `cleanMobile` and must be 10 digits on create and edit.
+  - Code minimum length is 2 where real codes like HR, IT or NC exist.
+  - `parent_desig_code` must exist.
+- **Framework:** `Field::virtual()`, `each()`, and the phone/email/pincode/coordinate/image/documents presets; callable transform steps; `EntityService::afterSave()`.
+- **Retired:** `import:rbac-master` and its sheets, a silent no-op (BUG-174).
+- **Tests:** the Org feature tests (46) pass unchanged.

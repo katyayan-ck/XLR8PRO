@@ -1,78 +1,68 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Org;
 
 use App\Models\Admin\Employee;
 use App\Models\Admin\Location;
-use Illuminate\Http\Request;
+use App\Services\Org\Concerns\OrgEntityConcerns;
+use App\Support\Entity\EntityService;
+use App\Support\Entity\Field;
+use Illuminate\Database\Eloquent\Model;
 
 /**
- * Single source of truth for Location business logic (create/update, code
- * immutability, dependency-checked disable, media). The controller only
- * handles HTTP concerns and delegates everything else here.
+ * Location — the only write path (DEC-050/052).
+ *
+ * @extends EntityService<Location>
  */
-class LocationService
+class LocationService extends EntityService
 {
-    /**
-     * Location is the leaf of the Branch -> Location hierarchy — Employee (via its
-     * primary_loc_code column) is its only dependent. `Location::employeeAssignments()`
-     * points at xlr8_admin_emp_location_pivot, which doesn't exist (same dead-pivot
-     * pattern as Vertical's BUG-081) — using the real, populated employee.primary_loc_code
-     * column directly instead.
-     */
+    use OrgEntityConcerns;
+
     private const DEPENDENTS = [
         [Employee::class, 'primary_loc_code', 'employee', 'employment_status', 'active'],
     ];
 
-    public function create(array $validated, Request $request): Location
+    protected function model(): string
     {
-        $location = Location::create($validated);
-
-        $this->syncMedia($request, $location);
-
-        return $location;
+        return Location::class;
     }
 
-    /**
-     * @return array{ok: true, location: Location}|array{ok: false, blockers: array<int, string>}
-     */
-    public function update(Location $location, array $validated, Request $request): array
+    public function fields(): array
     {
-        // Code is the real primary key every relation points at by string — never editable.
-        unset($validated['code']);
-
-        $wasActive = $location->is_active;
-        $willBeActive = (bool) ($validated['is_active'] ?? false);
-
-        $blockers = OrgEntityGuard::blockersForDisabling($wasActive, $willBeActive, $location->code, self::DEPENDENTS);
-        if ($blockers) {
-            return ['ok' => false, 'blockers' => $blockers];
-        }
-
-        $location->update($validated);
-        $this->syncMedia($request, $location);
-
-        return ['ok' => true, 'location' => $location->fresh()];
+        return [
+            Field::reference('branch_code', 'xlr8_admin_branch', 10)->label('Branch')->required(),
+            Field::code('code', 100)->label('Location Code')->required()->unique()->immutable(),
+            Field::name('name')->label('Location Name')->required(),
+            Field::text('description', 5000)->label('Description'),
+            Field::phone()->label('Phone'),
+            Field::email()->label('Email'),
+            Field::text('address', 5000)->label('Address'),
+            Field::name('city', 100)->label('City'),
+            Field::name('state', 100)->label('State'),
+            Field::pincode()->label('Pincode'),
+            Field::coordinate('latitude', 90)->label('Latitude'),
+            Field::coordinate('longitude', 180)->label('Longitude'),
+            Field::flag('is_active')->label('Active'),
+            Field::flag('is_sales_location', false)->label('Sales Location'),
+            Field::flag('is_workshop', false)->label('Workshop'),
+            Field::flag('is_parts_location', false)->label('Parts Location'),
+            Field::flag('is_stock_location', false)->label('Stock Location'),
+            Field::flag('is_office_only', false)->label('Office Only'),
+            Field::flag('is_mwh', false)->label('Mother Warehouse'),
+            Field::flag('is_lmmws', false)->label('LMM Workshop'),
+            ...$this->mediaFields('location_image'),
+        ];
     }
 
-    private function syncMedia(Request $request, Location $location): void
+    protected function beforeUpdate(Model $model, array &$data): void
     {
-        if ($request->boolean('remove_image')) {
-            $location->clearMediaCollection('location_image');
-        }
+        $this->guardDisabling($model, $data, self::DEPENDENTS, 'location');
+    }
 
-        if ($request->hasFile('location_image')) {
-            $location->addMediaFromRequest('location_image')->toMediaCollection('location_image');
-        }
-
-        if ($request->hasFile('documents')) {
-            foreach ((array) $request->file('documents') as $file) {
-                $location->addMedia($file)->toMediaCollection('documents');
-            }
-        }
-
-        foreach ((array) $request->input('remove_documents', []) as $mediaId) {
-            $location->media()->where('id', $mediaId)->where('collection_name', 'documents')->first()?->delete();
-        }
+    protected function afterSave(Model $model, array $input, bool $created): void
+    {
+        $this->syncMedia($model, $input, 'location_image');
     }
 }

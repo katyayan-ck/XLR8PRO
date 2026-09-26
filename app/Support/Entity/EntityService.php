@@ -54,7 +54,12 @@ abstract class EntityService
         }
         $this->beforeCreate($data);
 
-        return DB::transaction(fn () => $this->model()::create($data));
+        return DB::transaction(function () use ($data, $input) {
+            $model = $this->model()::create($this->persistable($data));
+            $this->afterSave($model, $input, true);
+
+            return $model;
+        });
     }
 
     /**
@@ -77,7 +82,10 @@ abstract class EntityService
         $data = $this->validate($input, $model);
         $this->beforeUpdate($model, $data);
 
-        DB::transaction(fn () => $model->update($data));
+        DB::transaction(function () use ($model, $data, $input) {
+            $model->update($this->persistable($data));
+            $this->afterSave($model, $input, false);
+        });
 
         return $model->refresh();
     }
@@ -193,6 +201,9 @@ abstract class EntityService
             }
 
             $rules[$name] = $fieldRules;
+            if ($field->eachRules !== []) {
+                $rules["{$name}.*"] = $field->eachRules;
+            }
         }
 
         return $rules;
@@ -212,7 +223,7 @@ abstract class EntityService
      */
     public function transformations(): array
     {
-        return array_filter(array_map(fn (Field $f) => $f->transforms, $this->fieldMap()));
+        return array_filter(array_map(fn (Field $f) => $f->virtual ? [] : $f->transforms, $this->fieldMap()));
     }
 
     /** Field reference for documentation (format, rules, flags). @return list<array<string, mixed>> */
@@ -241,6 +252,26 @@ abstract class EntityService
      * @param  array<string, mixed>  $data
      */
     protected function beforeUpdate(Model $model, array &$data): void {}
+
+    /**
+     * Side effects after the row is saved, inside the same transaction (media, child rows).
+     * Receives the raw input, so uploads and other virtual fields are available.
+     *
+     * @param  TModel  $model
+     * @param  array<string, mixed>  $input
+     */
+    protected function afterSave(Model $model, array $input, bool $created): void {}
+
+    /**
+     * Validated data minus virtual (non-column) fields.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function persistable(array $data): array
+    {
+        return array_diff_key($data, array_filter($this->fieldMap(), fn (Field $f) => $f->virtual));
+    }
 
     /** @throws ValidationException */
     protected function fail(string $field, string $message): never
