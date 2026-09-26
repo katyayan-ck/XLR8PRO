@@ -257,3 +257,13 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
   - A clear end summary: created / updated / skipped / failed.
   - The test proves idempotency and identity stability on a fresh `xlrm_testing` copy.
 - **Risk:** MED (import path used for UAT onboarding) · **Approved-by:** auto (clear data-integrity bug fix inside the user-approved importer scope) · **Reversal:** revert.
+
+### DEC-036 | 26-09-2026 23:55 | A3 (UAT) | Web user import rebuilt on the fixed importer; export and history routes removed
+- **Decision:**
+  - `org/user/import` (form, template, POST) now runs `UsersImportWorkbook` / `StandaloneUsersImport` (DEC-035) and shows created/updated/skipped/failed plus row issues.
+  - The template matches the `Users_Import` columns.
+  - A "Bulk import" button on the Users list is shown only with `ORG_USER_IMPORT`.
+  - Removed `org/user/export*` and `org/user/import/history` routes and methods: their views were never built (BUG-043) and the exporter crashes on missing pivots (BUG-158). Export isn't needed for UAT.
+  - Deleted the broken `App\Services\Importers\UserImporter` (BUG-075; its only caller was replaced). `UserExporter` is kept, dead but pending the BUG-158 decision.
+- **Note:** the import runs inside the request (~450 rows ≈ 1 minute locally). A queued version belongs in Track B.
+- **Risk:** MED · **Approved-by:** user (importer instead of HR forms, DEC-034) · **Reversal:** revert.

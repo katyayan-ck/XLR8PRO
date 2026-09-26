@@ -1,256 +1,114 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Admin\Org\User;
 
 use App\Http\Controllers\Controller;
-use App\Services\Exporters\UserExporter;
-use App\Services\Importers\UserImporter;
-use Exception;
+use App\Imports\Sheets\StandaloneUsersImport;
+use App\Imports\UsersImportWorkbook;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\View\View;
+use Maatwebsite\Excel\Facades\Excel;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
-use PhpOffice\PhpSpreadsheet\Style\Font;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Throwable;
 
 /**
- * No "users.import"/"users.export" permissions existed in xlr8_iam_permissions
- * before this change. Minted 2 new permissions following the app's
- * `resource.action` convention — kept distinct from `users.create` since bulk
- * import is a materially higher-risk operation than creating one user.
- *
- * See known-bugs-report.md BUG-041/BUG-042: this controller's routes
- * (routes/web.php) previously used ['auth', 'verified'] middleware instead of
- * the 'admin' group every other admin route uses — bypassing the emergency
- * CheckIfAdmin gate entirely — and export() called `new UserExporter` without
- * importing it, resolving to a nonexistent class in this namespace. Both
- * fixed as part of this change.
+ * Bulk user onboarding (create/update person, employee, user, scopes, role) through the
+ * same importer as `php artisan import:users` (DEC-035/036). Export and history were
+ * removed: their views never existed and the exporter is broken (BUG-043/158).
  */
 class UserImportExportController extends Controller
 {
-    public function showImportForm()
+    /** Columns of the Users_Import sheet understood by StandaloneUsersImport (* = mandatory). */
+    private const TEMPLATE_HEADERS = [
+        'Emp Code*', 'OEM Emp Code', 'Employee Name*', 'Employee Status', 'Personal Mail Id', 'Official Mail Id',
+        'Personal Contact Number*', 'Official Contact Number*', 'PAN No.', 'Aadhaar No', 'Designation*',
+        'Primary Department*', 'Addon Department', 'Primary Division', 'Add On Divisions', 'Primary Branch*',
+        'Addon Branch', 'Primary Location*', 'AddOn Location', 'Vertical', 'Segment', 'Sub Segment', 'Models',
+        'Reporting Manager', 'Gender', 'D.O.B.', 'Address Line 1', 'Address Line 2', 'City', 'State', 'Pincode',
+        'Bank Name', 'Account Number', 'IFSC Code',
+    ];
+
+    public function showImportForm(): View
     {
         if (! backpack_user()->can('ORG_USER_IMPORT')) {
             abort(403, 'Unauthorized. You do not have permission to import users.');
         }
 
-        return view('admin.users.import');
+        return view('admin.org.user.import', ['result' => null]);
     }
 
-    public function import(Request $request)
+    public function import(Request $request): View
     {
         if (! backpack_user()->can('ORG_USER_IMPORT')) {
             abort(403, 'Unauthorized. You do not have permission to import users.');
         }
 
-        try {
-            $request->validate([
-                'file' => 'required|file|mimes:xlsx,xls,csv|max:10240',
-            ]);
+        $request->validate(['file' => 'required|file|mimes:xlsx,xls|max:10240'], [], ['file' => 'import file']);
 
-            $file = $request->file('file');
-            $filename = 'import_'.Str::random(10).'.'.$file->getClientOriginalExtension();
-            $path = $file->storeAs('imports', $filename, 'local');
+        $path = $request->file('file')->storeAs('imports', 'users_'.Str::random(10).'.xlsx', 'local');
+        $fullPath = storage_path('app/private/'.$path);
+        if (! is_file($fullPath)) {
             $fullPath = storage_path('app/'.$path);
-
-            $importer = new UserImporter($fullPath);
-            $result = $importer->execute();
-
-            if (file_exists($fullPath)) {
-                unlink($fullPath);
-            }
-
-            if ($result['success']) {
-                return response()->json([
-                    'success' => true,
-                    'message' => $result['message'],
-                    'data' => $result,
-                ], 200);
-            } else {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Import completed with errors',
-                    'data' => $result,
-                ], 422);
-            }
-        } catch (Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Import failed: '.$e->getMessage(),
-                'error' => $e->getMessage(),
-            ], 500);
-        }
-    }
-
-    public function showExportForm()
-    {
-        if (! backpack_user()->can('ORG_USER_EXPORT')) {
-            abort(403, 'Unauthorized. You do not have permission to export users.');
         }
 
-        return view('admin.users.export');
-    }
+        $rows = new StandaloneUsersImport;
+        $issues = [];
+        $error = null;
 
-    public function export(Request $request)
-    {
-        if (! backpack_user()->can('ORG_USER_EXPORT')) {
-            abort(403, 'Unauthorized. You do not have permission to export users.');
-        }
-
+        ob_start();
         try {
-            $request->validate([
-                'branch_id' => 'nullable|exists:branches,id',
-                'department_id' => 'nullable|exists:departments,id',
-                'designation_id' => 'nullable|exists:designations,id',
-                'status' => 'nullable|in:active,inactive,all',
-            ]);
+            $sheets = IOFactory::createReaderForFile($fullPath)->listWorksheetNames($fullPath);
 
-            $filters = [];
-            if ($request->branch_id) {
-                $filters['branch_id'] = $request->branch_id;
-            }
-            if ($request->department_id) {
-                $filters['department_id'] = $request->department_id;
-            }
-            if ($request->designation_id) {
-                $filters['designation_id'] = $request->designation_id;
-            }
-            if ($request->status && $request->status !== 'all') {
-                $filters['is_active'] = ($request->status === 'active');
-            }
-
-            $exporter = new UserExporter;
-            $exporter->withFilters($filters);
-            $result = $exporter->execute();
-
-            if ($result['success']) {
-                return response()->download($result['path'], $result['filename']);
+            if (in_array(UsersImportWorkbook::SHEET, $sheets, true)) {
+                Excel::import(new UsersImportWorkbook($rows), $fullPath);
+            } elseif (count($sheets) === 1) {
+                Excel::import($rows, $fullPath);
             } else {
-                return back()->with('error', 'Export failed: '.$result['message']);
+                $error = 'The workbook has no '.UsersImportWorkbook::SHEET.' sheet (found: '.implode(', ', $sheets).').';
             }
-        } catch (Exception $e) {
-            return back()->with('error', 'Export failed: '.$e->getMessage());
+        } catch (Throwable $e) {
+            report($e);
+            $error = 'The file could not be imported: '.$e->getMessage();
+        } finally {
+            $log = (string) ob_get_clean();
+            @unlink($fullPath);
         }
+
+        // Row-level problems the importer printed (skipped or failed rows).
+        foreach (preg_split('/\R/', $log) as $line) {
+            if (str_contains($line, 'SKIPPED') || str_contains($line, 'FAILED')) {
+                $issues[] = trim(preg_replace('/[^\PC\s]/u', '', $line));
+            }
+        }
+
+        return view('admin.org.user.import', [
+            'result' => ['summary' => $rows->summary(), 'issues' => array_slice($issues, 0, 200), 'error' => $error],
+        ]);
     }
 
-    public function downloadTemplate()
+    public function downloadTemplate(): BinaryFileResponse
     {
         if (! backpack_user()->can('ORG_USER_IMPORT')) {
             abort(403, 'Unauthorized. You do not have permission to import users.');
         }
 
-        $filename = 'user_import_template.xlsx';
-        $path = resource_path('templates/'.$filename);
-
-        if (! file_exists($path)) {
-            $this->generateTemplate($path);
-        }
-
-        return response()->download($path, 'vdms_user_import_template.xlsx');
-    }
-
-    private function generateTemplate($path)
-    {
-        $spreadsheet = new Spreadsheet;
-        $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setTitle('Users');
-
-        $headers = [
-            'Person Code',
-            'First Name',
-            'Middle Name',
-            'Last Name',
-            'Gender',
-            'D.O.B.',
-            'Marital Status',
-            'Email',
-            'Phone',
-            'Employee Code',
-            'Designation',
-            'Department',
-            'Branch',
-            'Location',
-            'Division',
-            'Vertical',
-            'Post',
-            'Date of Joining',
-            'Employment Type',
-            'Employment Status',
-            'Username',
-            'Email Login',
-            'User Type',
-            'User Status',
-            'Accessible Branches',
-            'Accessible Departments',
-            'Accessible Locations',
-        ];
-
-        foreach ($headers as $col => $header) {
-            $cell = $sheet->getCellByColumnAndRow($col + 1, 1);
-            $cell->setValue($header);
-            $cell->getStyle()->setFont(new Font([
-                'bold' => true,
-                'color' => 'FFFFFF',
-            ]));
-            $cell->getStyle()->setFill(new Fill([
-                'fillType' => 'solid',
-                'startColor' => '366092',
-            ]));
-        }
-
-        $sheet->setCellValue('A'. 3, 'INSTRUCTIONS:');
-        $sheet->getStyle('A3')->setFont(new Font(['bold' => true, 'italic' => true]));
-
-        $instructions = [
-            '- Person Code: Auto-generated if left blank',
-            '- Date fields: Use DD-MM-YYYY format',
-            '- Gender: male, female, other, prefernottosay',
-            '- Employment Type: permanent, contract, temporary, probation',
-            '- Employment Status: active, inactive, resigned',
-            '- User Status: Active or Inactive',
-            '- Designation, Department, Branch, etc: Must match existing codes',
-            '- Multiple assignments: Separate with commas (e.g., BR001, BR002)',
-            '- Leave optional fields blank if not applicable',
-            '- Email must be unique per user',
-            '- Username must be unique per user',
-        ];
-
-        foreach ($instructions as $idx => $instruction) {
-            $sheet->setCellValue('A'.(4 + $idx), $instruction);
-        }
-
-        foreach (range(1, count($headers)) as $col) {
+        $book = new Spreadsheet;
+        $sheet = $book->getActiveSheet()->setTitle(UsersImportWorkbook::SHEET);
+        $sheet->fromArray([self::TEMPLATE_HEADERS]);
+        $sheet->getStyle('1:1')->getFont()->setBold(true);
+        foreach (range(1, count(self::TEMPLATE_HEADERS)) as $col) {
             $sheet->getColumnDimensionByColumn($col)->setAutoSize(true);
         }
 
-        @mkdir(dirname($path), 0755, true);
-        $writer = new Xlsx($spreadsheet);
-        $writer->save($path);
-    }
+        $path = storage_path('app/user_import_template.xlsx');
+        (new Xlsx($book))->save($path);
 
-    public function importHistory()
-    {
-        if (! backpack_user()->can('ORG_USER_IMPORT')) {
-            abort(403, 'Unauthorized. You do not have permission to import users.');
-        }
-
-        $imports = \DB::table('import_logs')
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
-
-        return view('admin.users.import-history', compact('imports'));
-    }
-
-    public function exportHistory()
-    {
-        if (! backpack_user()->can('ORG_USER_EXPORT')) {
-            abort(403, 'Unauthorized. You do not have permission to export users.');
-        }
-
-        $exports = \DB::table('export_logs')
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
-
-        return view('admin.users.export-history', compact('exports'));
+        return response()->download($path, 'user_import_template.xlsx')->deleteFileAfterSend();
     }
 }

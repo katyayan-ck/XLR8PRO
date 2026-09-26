@@ -30,16 +30,11 @@ Route::middleware(array_merge(
     (array) config('backpack.base.middleware_key', 'admin')
 ))->group(function () {
     Route::prefix('admin/org/user')->group(function () {
-        // Import routes
+        // Bulk import (DEC-035/036). Export and import/export history were removed: their views
+        // never existed and the exporter is broken (BUG-043, BUG-158).
         Route::get('/import', [UserImportExportController::class, 'showImportForm'])->name('org.user.import');
         Route::post('/import', [UserImportExportController::class, 'import'])->name('org.user.import.process');
-        Route::get('/import/history', [UserImportExportController::class, 'importHistory'])->name('org.user.import.history');
         Route::get('/import/template', [UserImportExportController::class, 'downloadTemplate'])->name('org.user.import.template');
-
-        // Export routes
-        Route::get('/export', [UserImportExportController::class, 'showExportForm'])->name('org.user.export');
-        Route::post('/export', [UserImportExportController::class, 'export'])->name('org.user.export.process');
-        Route::get('/export/history', [UserImportExportController::class, 'exportHistory'])->name('org.user.export.history');
     });
 });
 

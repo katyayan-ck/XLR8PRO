@@ -15,6 +15,11 @@
                 </h2>
 
                 <div class="d-flex align-items-center gap-3 flex-nowrap">
+                    @if (backpack_user() && backpack_user()->can('ORG_USER_IMPORT'))
+                        <a href="{{ route('org.user.import') }}" class="btn btn-outline-primary btn-sm fw-bold">
+                            <i class="la la-file-upload me-1"></i> Bulk import
+                        </a>
+                    @endif
                     @if (backpack_user() && backpack_user()->can('ORG_USER_CREATE'))
                         <a href="{{ backpack_url('org/user/create') }}" class="btn btn-blue btn-sm fw-bold shadow-sm">
                             <i class="la la-plus me-1"></i> New User
