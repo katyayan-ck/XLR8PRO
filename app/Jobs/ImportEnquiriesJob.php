@@ -106,7 +106,14 @@ class ImportEnquiriesJob implements ShouldQueue
             foreach ($sheetHandlers as $sheetName => $handler) {
                 $sheet = $spreadsheet->getSheetByName($sheetName);
                 if ($sheet) {
-                    $totalRows += max(0, $sheet->getHighestRow() - 1);
+                    // NOTE: getHighestRow() reports Excel's "used range", which can be far
+                    // larger than the real data (leftover formatting/borders on rows that
+                    // were later cleared, old data that was deleted, etc.). Relying on it
+                    // directly makes totals (and therefore every downstream stat) count
+                    // thousands of phantom blank rows that don't exist as real enquiries.
+                    // So we count only rows that actually contain data.
+                    $sheetRows = array_slice($sheet->toArray(null, true, true, false), 1);
+                    $totalRows += count($this->filterNonEmptyRows($sheetRows));
                 }
             }
             $log->update(['total_rows' => $totalRows]);
@@ -176,7 +183,7 @@ class ImportEnquiriesJob implements ShouldQueue
     {
         $stats = ['inserted' => 0, 'updated' => 0, 'skipped' => 0, 'merged_duplicates_in_file' => 0];
         $headerMap = $this->getSheetHeaderMap($sheet);
-        $rows = array_slice($sheet->toArray(null, true, true, false), 1);
+        $rows = $this->filterNonEmptyRows(array_slice($sheet->toArray(null, true, true, false), 1));
 
         $byMobile = [];
         $noMobileEntries = [];
@@ -265,7 +272,7 @@ class ImportEnquiriesJob implements ShouldQueue
         DB::table('xlr8_crm_enquiries')->where('origin', 'HYPERLOCAL')->delete();
 
         $headerMap = $this->getSheetHeaderMap($sheet);
-        $rows = array_slice($sheet->toArray(null, true, true, false), 1);
+        $rows = $this->filterNonEmptyRows(array_slice($sheet->toArray(null, true, true, false), 1));
 
         foreach (array_chunk($rows, self::CHUNK_SIZE, true) as $chunk) {
             DB::transaction(function () use ($chunk, $headerMap, $now, &$stats) {
@@ -344,7 +351,7 @@ class ImportEnquiriesJob implements ShouldQueue
     {
         $stats = ['inserted' => 0, 'updated' => 0, 'skipped' => 0];
         $headerMap = $this->getSheetHeaderMap($sheet);
-        $rows = array_slice($sheet->toArray(null, true, true, false), 1);
+        $rows = $this->filterNonEmptyRows(array_slice($sheet->toArray(null, true, true, false), 1));
 
         foreach (array_chunk($rows, self::CHUNK_SIZE, true) as $chunk) {
             DB::transaction(function () use ($chunk, $headerMap, $now, &$stats) {
@@ -469,7 +476,7 @@ class ImportEnquiriesJob implements ShouldQueue
     {
         $stats = ['inserted' => 0, 'updated' => 0, 'skipped' => 0];
         $headerMap = $this->getSheetHeaderMap($sheet);
-        $rows = array_slice($sheet->toArray(null, true, true, false), 1);
+        $rows = $this->filterNonEmptyRows(array_slice($sheet->toArray(null, true, true, false), 1));
 
         foreach (array_chunk($rows, self::CHUNK_SIZE, true) as $chunk) {
             DB::transaction(function () use ($chunk, $headerMap, $now, &$stats) {
@@ -583,7 +590,7 @@ class ImportEnquiriesJob implements ShouldQueue
     {
         $stats = ['inserted' => 0, 'updated' => 0, 'skipped' => 0];
         $headerMap = $this->getSheetHeaderMap($sheet);
-        $rows = array_slice($sheet->toArray(null, true, true, false), 1);
+        $rows = $this->filterNonEmptyRows(array_slice($sheet->toArray(null, true, true, false), 1));
 
         foreach (array_chunk($rows, self::CHUNK_SIZE, true) as $chunk) {
             DB::transaction(function () use ($chunk, $headerMap, $now, &$stats) {
@@ -652,7 +659,7 @@ class ImportEnquiriesJob implements ShouldQueue
     {
         $stats = ['inserted' => 0, 'updated' => 0, 'skipped' => 0];
         $headerMap = $this->getSheetHeaderMap($sheet);
-        $rows = array_slice($sheet->toArray(null, true, true, false), 1);
+        $rows = $this->filterNonEmptyRows(array_slice($sheet->toArray(null, true, true, false), 1));
 
         foreach (array_chunk($rows, self::CHUNK_SIZE, true) as $chunk) {
             DB::transaction(function () use ($chunk, $headerMap, $now, &$stats) {
@@ -723,7 +730,7 @@ class ImportEnquiriesJob implements ShouldQueue
     {
         $stats = ['inserted' => 0, 'updated' => 0, 'skipped' => 0];
         $headerMap = $this->getSheetHeaderMap($sheet);
-        $rows = array_slice($sheet->toArray(null, true, true, false), 1);
+        $rows = $this->filterNonEmptyRows(array_slice($sheet->toArray(null, true, true, false), 1));
 
         foreach (array_chunk($rows, self::CHUNK_SIZE, true) as $chunk) {
             DB::transaction(function () use ($chunk, $headerMap, $now, &$stats) {
@@ -801,7 +808,7 @@ class ImportEnquiriesJob implements ShouldQueue
     {
         $stats = ['inserted' => 0, 'updated' => 0, 'skipped' => 0];
         $headerMap = $this->getSheetHeaderMap($sheet);
-        $rows = array_slice($sheet->toArray(null, true, true, false), 1);
+        $rows = $this->filterNonEmptyRows(array_slice($sheet->toArray(null, true, true, false), 1));
 
         foreach (array_chunk($rows, self::CHUNK_SIZE, true) as $chunk) {
             DB::transaction(function () use ($chunk, $headerMap, $now, &$stats) {
@@ -872,7 +879,7 @@ class ImportEnquiriesJob implements ShouldQueue
     {
         $stats = ['inserted' => 0, 'updated' => 0, 'skipped' => 0];
         $headerMap = $this->getSheetHeaderMap($sheet);
-        $rows = array_slice($sheet->toArray(null, true, true, false), 1);
+        $rows = $this->filterNonEmptyRows(array_slice($sheet->toArray(null, true, true, false), 1));
 
         foreach (array_chunk($rows, self::CHUNK_SIZE, true) as $chunk) {
             DB::transaction(function () use ($chunk, $headerMap, $now, &$stats) {
@@ -1207,7 +1214,7 @@ class ImportEnquiriesJob implements ShouldQueue
             $this->keyvalueIdCache[$keywordCode][$newCode] = (int) $created->id;
 
             return $newCode;
-        } catch (\Illuminate\Database\QueryException|\Illuminate\Validation\ValidationException $e) {
+        } catch (\Illuminate\Database\QueryException | \Illuminate\Validation\ValidationException $e) {
             // Created meanwhile by another run (duplicate): use that row.
             if ($e instanceof \Illuminate\Validation\ValidationException || $e->getCode() == 23000) {
                 $existing = DB::table('xlr8_utils_keyvalue')
@@ -1313,6 +1320,39 @@ class ImportEnquiriesJob implements ShouldQueue
         }
 
         return $map;
+    }
+
+    /**
+     * NEW: Excel/PhpSpreadsheet's getHighestRow() reflects the sheet's "used range",
+     * which frequently extends far past the last row that actually has data —
+     * e.g. formatting/borders applied to thousands of rows, or old rows that were
+     * cleared but not truly deleted. $sheet->toArray() then returns one array
+     * entry per row in that inflated range, so every sheet handler ends up
+     * iterating (and counting as "skipped") huge numbers of phantom blank rows
+     * that don't correspond to real enquiries.
+     *
+     * This filters those blank rows out, while preserving original array keys
+     * (via array_filter, no reindex) so excelRow = $i + 2 math elsewhere keeps
+     * pointing at the correct physical row in the spreadsheet.
+     */
+    private function filterNonEmptyRows(array $rows): array
+    {
+        return array_filter($rows, [$this, 'rowHasData']);
+    }
+
+    private function rowHasData(array $row): bool
+    {
+        foreach ($row as $value) {
+            if ($value === null) {
+                continue;
+            }
+            if (is_string($value) && trim($value) === '') {
+                continue;
+            }
+            return true;
+        }
+
+        return false;
     }
 
     private function cell(array $row, array $headerMap, string $header)
