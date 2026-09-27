@@ -1,5 +1,7 @@
 <?php
 
+use App\Jobs\Platform\AutoCloseResolvedTickets;
+use App\Jobs\Platform\FlagTicketSlaBreaches;
 use App\Jobs\Platform\PurgeDeletedDocuments;
 use App\Services\Platform\Settings\SettingsService;
 use Illuminate\Foundation\Inspiring;
@@ -23,3 +25,5 @@ Artisan::command('settings:clear', function (SettingsService $settings) {
 
 // Platform utilities schedule (DEC-061+)
 Schedule::job(new PurgeDeletedDocuments)->dailyAt('02:30')->name('docs-purge')->withoutOverlapping();
+Schedule::job(new FlagTicketSlaBreaches)->hourly()->name('ticket-sla-breaches')->withoutOverlapping();
+Schedule::job(new AutoCloseResolvedTickets)->dailyAt('03:00')->name('ticket-autoclose')->withoutOverlapping();

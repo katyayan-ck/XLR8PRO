@@ -683,3 +683,40 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
   - Access follows the record. Each `config('platform.entities')` row names its view permission (e.g. BOOKING → `SLS_BKNG_VIEW`); a model may refine it with `chatCanView()`. A document attached to a record with no explicit entitlements follows that record; only an unattached library document falls back to `UTL_DOCS_VIEW`.
   - UAT-visible: the topbar alerts / notifications / messages dropdowns showed hard-coded sample data and now show the user's real inbox (`<x-notify.bell>`). The Utilities menu gains My Inbox (everyone), Documents (`UTL_DOCS_VIEW`) and Settings (`UTL_SETTINGS_VIEW`).
   - `NotificationService` and `DocService` are now adapters over Notify and Docs (the legacy Google Vision tag path is removed). The v1 envelope and routes are unchanged.
+
+### DEC-062 | 28-09-2026 | A (platform) | Task and Ticket utilities (FRS §5–6)
+- **Tables:**
+  - `xlr8_utils_task` and `xlr8_utils_task_person` (role OWNER / ASSIGNEE / FOLLOWER / SNOOPER; unique per task, user and role).
+  - `xlr8_utils_ticket` and `xlr8_utils_ticket_person` (role REQUESTER / OWNER / ASSIGNEE / FOLLOWER / SNOOPER).
+  - `xlr8_utils_ticket_counter` (branch × FY sequence, taken with `lockForUpdate`).
+  - The six audit columns and soft deletes on task and ticket.
+- **Writers:** `App\Services\Platform\Task\TaskService` and `App\Services\Platform\Ticket\TicketService` are the only writers (`Task` / `Ticket` facades). Models `App\Models\Utilities\{Task,Ticket}\*` use `HasCommunications` and `HasDocuments`, and define `chatCanView` / `chatCanRemark`, so snoopers read but never post.
+- **Task:**
+  - Types come from KeyValue `TASK_TYPE`. `ASSIGNED_TASK` and `SELF_TASK` are added; the existing `GENERAL` / `SELF` values stay and are treated as ASSIGNED / SELF.
+  - The rights matrix of FRS §5.3 is one table in the service. Where the FRS is silent, `REOPENED` counts as an open state for INPROGRESS / HOLD / SUBMIT.
+  - Group flag is derived. People edits rebuild associations and notify those added and removed.
+  - Four inboxes: CREATED (owner), ASSIGNED, FOLLOWED, SNOOPED.
+- **Ticket:**
+  - Number `TCK/{branch}/{fy}/{seq:05d}`: FY as `26-27`; branch is the requester's primary branch, else `HO`.
+  - Categories come from KeyValue `TICKET_CATEGORY` (HARDWARE, ACCESS, DATA, BUG, ENHANCEMENT, PROCESS); priorities from `TICKET_PRIORITY` (P1–P4). SLA hours come from `sla.ticket.p{n}_hours`.
+  - Legal edges:
+    - NEW → ACKNOWLEDGED / INPROGRESS
+    - ACKNOWLEDGED / INPROGRESS / REOPENED → INPROGRESS / WAITING_USER / RESOLVED
+    - WAITING_USER → INPROGRESS / RESOLVED
+    - RESOLVED → CLOSED / REOPENED
+    - CLOSED → REOPENED
+    - Force-close from any open state by the owner, with a reason.
+  - Who may move it:
+    - Owner, assignees or the desk (`UTL_TCKT_DESK`) move work states.
+    - RESOLVED: owner or assignee only.
+    - CLOSED from RESOLVED: the requester (or owner). REOPENED: the requester or owner.
+  - SLA clock:
+    - `due_at` is set at open and on a priority change.
+    - WAITING_USER pauses the clock, and the paused time is added back when it leaves.
+    - An hourly job flags breaches once (Alert to owner, assignees and desk, plus a Chat event).
+    - A daily job auto-closes RESOLVED tickets after `ticket.autoclose_days` when `ticket.autoclose_enabled` is on.
+  - Inboxes: REQUESTED, ASSIGNED (assignee or owner), FOLLOWED, SNOOPED, plus QUEUE (NEW tickets with no assignee, desk only).
+  - Report: open by category, breached, mean time to resolve.
+- **Team picker:** `OrgService::teamOptions()` lists active users who have an employee record; the picker never lists every user.
+- **Screens:** `utils/tasks*` and `utils/tickets*` (inboxes, create, edit, view with follow-up / transition, report), menu under Utilities, and components `x-task.inbox`, `x-task.composer`, `x-ticket.inbox`, `x-ticket.sla-badge`.
+- **Approved-by:** user (28-09 plan) · **Risk:** MED (new tables and screens; no existing flow changes) · **Reversal:** migration `down()` plus revert.

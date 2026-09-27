@@ -61,3 +61,34 @@
   - 49/49 functional checks on `xlrm_testing` (settings scope/type/reset, notify idempotency / self / audience / mark, chat event / remark / edit / delete / access, docs attach / entitle / library / card / cart / pack / zip, legacy adapters).
   - v1 API, 15 endpoints as users 1 and 40: all 200/201 with the unchanged envelope.
   - Admin GET smoke: inbox / docs / settings return 200 for user 1; user 40 gets 200 on inbox / docs and 403 on settings.
+
+## Task and Ticket utilities (DEC-062)
+- **Migrations (local, then `xlrm_testing`):**
+  - `2026_09_28_110000_platform_task_ticket_tables`: `xlr8_utils_task`, `_task_person`, `xlr8_utils_ticket`, `_ticket_person`, `_ticket_counter`.
+  - `2026_09_28_110100_platform_task_ticket_keywords` (through the keyword services, idempotent):
+    - `TASK_TYPE` gains `ASSIGNED_TASK` / `SELF_TASK` (GENERAL / SELF are kept and treated as ASSIGNED / SELF).
+    - New `TICKET_CATEGORY` (6 values) and `TICKET_PRIORITY` (P1–P4).
+- **Services:**
+  - `App\Services\Platform\Task\TaskService`: `create`, `update` (people rebuild plus added / removed notices), `followUp` (rights matrix, FORBIDDEN_TRANSITION), `inbox` / `inboxCounts`, `get` (role, rights, deadline math; UNAUTHORISED strips data), `delete`, `rights`, `role`.
+  - `App\Services\Platform\Ticket\TicketService`: `open` (numbering with `lockForUpdate`), `transition` (legal edges plus roles, force-close reason, SLA pause / resume), `update` (priority change recomputes SLA), `remark`, `inbox` (4 plus QUEUE), `get`, `rights`, `flagBreaches`, `autoClose`, `report`, `sla`.
+- **Models:** `Utilities\Task\{Task,TaskPerson}` and `Utilities\Ticket\{Ticket,TicketPerson}`, with Chat and Docs traits and `chatCanView` / `chatCanRemark` (snoopers read only).
+- **Other code:**
+  - Events `TaskChanged` and `TicketChanged`.
+  - Jobs `FlagTicketSlaBreaches` (hourly) and `AutoCloseResolvedTickets` (03:00).
+  - `OrgService::teamOptions()` (people picker).
+- **Screens** (`routes/backpack/utils.php`, `admin/utils/platform/{tasks,tickets}`):
+  - Task inboxes, create / edit, and a view with follow-up, timeline and attachments.
+  - Ticket inboxes plus desk queue, open, view (transition, reply, desk management, SLA badge) and report.
+  - Components `x-task.inbox`, `x-task.composer`, `x-ticket.inbox`, `x-ticket.sla-badge`.
+  - Menu: Tasks (`UTL_TASK_VIEW`) and Tickets (`UTL_TCKT_VIEW`).
+- **Fix to DEC-061 Settings:** a declared config seed now wins over the caller's fallback in `get()` / `flag()`. `flag('ticket.autoclose_enabled')` returned the `false` fallback even though the seed is `true`.
+- **Verification:**
+  - 66/66 Task / Ticket functional checks on `xlrm_testing` covering:
+    - SELF / ASSIGNED rules, group flag, distinct per-role copy, the four inboxes;
+    - every rights-matrix cell exercised; UNAUTHORISED; people rebuild with no orphans; soft delete keeps the timeline;
+    - ticket number / sequence, SLA 8h / 4h, pause extends due time, breach flagged once, resolve / reopen / close, force-close needs a reason, auto-close, report.
+  - Sprint 2 checks still 49/49.
+  - GET smoke:
+    - Live, all screens: 200 for user 1. User 40 gets 403 on the desk queue and the report.
+    - `xlrm_testing` show pages: owner 200; outsider and snooper-less 403; edit owner-only.
+  - Pint clean; PHPStan clean apart from the pre-existing untyped `User::employee()`.

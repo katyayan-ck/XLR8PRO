@@ -21,6 +21,18 @@
                 href="{{ route('utils.inbox.index') }}">
                 <span><i class="la la-inbox me-2"></i>My Inbox</span>
             </a>
+            @if (backpack_user()->can('UTL_TASK_VIEW'))
+                <a class="dropdown-item d-flex align-items-center justify-content-between"
+                    href="{{ route('utils.tasks.index') }}">
+                    <span><i class="la la-tasks me-2"></i>Tasks</span>
+                </a>
+            @endif
+            @if (backpack_user()->can('UTL_TCKT_VIEW'))
+                <a class="dropdown-item d-flex align-items-center justify-content-between"
+                    href="{{ route('utils.tickets.index') }}">
+                    <span><i class="la la-life-ring me-2"></i>Tickets</span>
+                </a>
+            @endif
             @if (backpack_user()->can('UTL_DOCS_VIEW'))
                 <a class="dropdown-item d-flex align-items-center justify-content-between"
                     href="{{ route('utils.docs.index') }}">

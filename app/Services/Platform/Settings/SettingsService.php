@@ -304,8 +304,11 @@ final class SettingsService
         return $validator->fails() ? implode(' ', $validator->errors()->all()) : null;
     }
 
+    /** A declared seed (config/platform.php) wins over the caller's fallback, which only covers undeclared keys. */
     private function configDefault(string $key, mixed $default): mixed
     {
-        return $default ?? ($this->seed($key)['value'] ?? null);
+        $seed = $this->seed($key);
+
+        return array_key_exists('value', $seed) ? $seed['value'] : $default;
     }
 }

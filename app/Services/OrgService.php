@@ -151,6 +151,28 @@ class OrgService
             ->all();
     }
 
+    /**
+     * People picker for tasks / tickets (FRS §5.2 "team picker sourced from Org"): active users who
+     * have an employee record, labelled "Name (Branch · Designation)", sorted by name.
+     *
+     * @return array<int, string> user id => label
+     */
+    public static function teamOptions(): array
+    {
+        return Cache::remember('org.team_options', self::CACHE_TTL, fn () => User::query()
+            ->with(['person', 'employee'])
+            ->where('is_active', true)
+            ->whereHas('employee')
+            ->get(['id', 'username', 'person_code', 'employee_code'])
+            ->mapWithKeys(function (User $u) {
+                $context = implode(' · ', array_filter([$u->employee?->primary_branch_code, $u->employee?->designation_code]));
+
+                return [$u->id => $context === '' ? $u->display_name : "{$u->display_name} ({$context})"];
+            })
+            ->sort()
+            ->all());
+    }
+
     public static function departments(): array
     {
         return Cache::remember(

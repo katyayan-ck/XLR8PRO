@@ -43,6 +43,9 @@ Full health notes: `docs/reference/Shared-Services-Utilities-Catalog.md`.
 | Chat / timeline | `App\Services\Platform\Chat\ChatService` (`Chat` facade), `HasCommunications`, `<x-chat.thread>` | EVENT vs REMARK; access = `canView()` (entity permission in `config('platform.entities')` or model `chatCanView`); `EntityHistoryService` is the v1 adapter |
 | Notifications / push | `App\Services\Platform\Notify\NotifyService` (`Notify::to()->…->send()`), `<x-notify.bell>` | inbox rows + queued FCM; idempotency key; `NotificationService` is the v1 adapter |
 | Documents | `App\Services\Platform\Docs\DocsService` (`Docs` facade), `HasDocuments`, `<x-docs.uploader>` | only writer of docs tables; `canView()` is the only visibility check; `DocService` is the v1 adapter |
+| Tasks | `App\Services\Platform\Task\TaskService` (`Task` facade), `<x-task.inbox>`, `<x-task.composer>` | rights matrix FRS §5.3 in `rights()`; `create/update/followUp/inbox/get/delete`; link with `ref_type/ref_id` |
+| Tickets | `App\Services\Platform\Ticket\TicketService` (`Ticket` facade), `<x-ticket.inbox>`, `<x-ticket.sla-badge>` | `open/transition/update/inbox`; SLA from `sla.ticket.p{n}_hours`; desk = `UTL_TCKT_DESK` |
+| People pickers | `OrgService::teamOptions()` | active users with an employee record, never all users |
 
 Removed 26-09-2026 (dead, DEC-030): AuthenticationService, BookingStateService, VehicleMasterService,
 SegmentService, PricingService, legacy Chat/Quotes/Task/Docs/Notification/Vehicle helpers. 28-09-2026 (DEC-060): the

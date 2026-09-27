@@ -82,3 +82,23 @@ Indexes: (action), (created_by), (setting_id,created_at), (updated_by), (user_id
 ## `xlr8_utils_system_setting_topic` · ~0 rows · model: —
 id bigint unsigned PK, code varchar(255), label varchar(255), description text?, sort_order int, is_active tinyint(1), created_by bigint unsigned?, updated_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, is_deleted tinyint(1), deleted_at timestamp?
 Indexes: (code), UNIQUE (code), (created_by), (is_active), (updated_by)
+
+## `xlr8_utils_task` · ~0 rows · model: App\Models\Utilities\Task\Task
+id bigint unsigned PK, title varchar(250), type varchar(50), priority varchar(50)?, status varchar(20), owner_id bigint unsigned, details text?, deadline datetime?, ref_type varchar(30)?, ref_id bigint unsigned?, is_group tinyint(1), submitted_at timestamp?, closed_at timestamp?, created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?
+Indexes: (deadline), (owner_id), (ref_type,ref_id), (status)
+
+## `xlr8_utils_task_person` · ~0 rows · model: App\Models\Utilities\Task\TaskPerson
+id bigint unsigned PK, task_id bigint unsigned, user_id bigint unsigned, role varchar(10), created_at timestamp?, updated_at timestamp?
+Indexes: UNIQUE (task_id,user_id,role), (user_id)
+
+## `xlr8_utils_ticket` · ~0 rows · model: App\Models\Utilities\Ticket\Ticket
+id bigint unsigned PK, number varchar(40), branch_code varchar(20), fy varchar(5), seq int unsigned, category varchar(50), priority varchar(5), status varchar(20), title varchar(250), details text?, requester_id bigint unsigned, owner_id bigint unsigned?, ref_type varchar(30)?, ref_id bigint unsigned?, due_at datetime?, sla_paused_at datetime?, sla_paused_minutes int unsigned, breached_at datetime?, acknowledged_at datetime?, resolved_at datetime?, closed_at datetime?, close_reason varchar(500)?, created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?
+Indexes: (due_at), UNIQUE (number), (owner_id), (ref_type,ref_id), (requester_id), (status)
+
+## `xlr8_utils_ticket_counter` · ~0 rows · model: —
+id bigint unsigned PK, branch_code varchar(20), fy varchar(5), last_seq int unsigned, created_at timestamp?, updated_at timestamp?
+Indexes: UNIQUE (branch_code,fy)
+
+## `xlr8_utils_ticket_person` · ~0 rows · model: App\Models\Utilities\Ticket\TicketPerson
+id bigint unsigned PK, ticket_id bigint unsigned, user_id bigint unsigned, role varchar(10), created_at timestamp?, updated_at timestamp?
+Indexes: UNIQUE (ticket_id,user_id,role), (user_id)

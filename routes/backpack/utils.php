@@ -4,6 +4,8 @@ use App\Http\Controllers\Admin\Utils\Platform\ChatController;
 use App\Http\Controllers\Admin\Utils\Platform\DocsLibraryController;
 use App\Http\Controllers\Admin\Utils\Platform\NotificationInboxController;
 use App\Http\Controllers\Admin\Utils\Platform\SettingsAdminController;
+use App\Http\Controllers\Admin\Utils\Platform\TaskController;
+use App\Http\Controllers\Admin\Utils\Platform\TicketController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -45,4 +47,24 @@ Route::group([
     Route::get('settings', [SettingsAdminController::class, 'index'])->name('utils.settings.index');
     Route::put('settings', [SettingsAdminController::class, 'update'])->name('utils.settings.update');
     Route::post('settings/reset', [SettingsAdminController::class, 'reset'])->name('utils.settings.reset');
+
+    // Tasks (DEC-062)
+    Route::get('tasks', [TaskController::class, 'index'])->name('utils.tasks.index');
+    Route::get('tasks/create', [TaskController::class, 'create'])->name('utils.tasks.create');
+    Route::post('tasks', [TaskController::class, 'store'])->name('utils.tasks.store');
+    Route::get('tasks/{id}', [TaskController::class, 'show'])->whereNumber('id')->name('utils.tasks.show');
+    Route::get('tasks/{id}/edit', [TaskController::class, 'edit'])->whereNumber('id')->name('utils.tasks.edit');
+    Route::put('tasks/{id}', [TaskController::class, 'update'])->whereNumber('id')->name('utils.tasks.update');
+    Route::post('tasks/{id}/follow-up', [TaskController::class, 'followUp'])->whereNumber('id')->name('utils.tasks.follow-up');
+    Route::delete('tasks/{id}', [TaskController::class, 'destroy'])->whereNumber('id')->name('utils.tasks.destroy');
+
+    // Tickets (DEC-062)
+    Route::get('tickets', [TicketController::class, 'index'])->name('utils.tickets.index');
+    Route::get('tickets/create', [TicketController::class, 'create'])->name('utils.tickets.create');
+    Route::get('tickets/report', [TicketController::class, 'report'])->name('utils.tickets.report');
+    Route::post('tickets', [TicketController::class, 'store'])->name('utils.tickets.store');
+    Route::get('tickets/{id}', [TicketController::class, 'show'])->whereNumber('id')->name('utils.tickets.show');
+    Route::put('tickets/{id}', [TicketController::class, 'update'])->whereNumber('id')->name('utils.tickets.update');
+    Route::post('tickets/{id}/transition', [TicketController::class, 'transition'])->whereNumber('id')->name('utils.tickets.transition');
+    Route::post('tickets/{id}/remark', [TicketController::class, 'remark'])->whereNumber('id')->name('utils.tickets.remark');
 });
