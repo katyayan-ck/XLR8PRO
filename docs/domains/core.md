@@ -8,7 +8,7 @@ The foundation every module builds on. Read this first; the domain guides assume
 | `User` | `app/Models/User.php` | login account (Backpack + Sanctum), roles = designations, scopes, person / employee links |
 | `HasColumnTransformations` | `app/Models/Traits/` | declarative cleanup of column values on write (and optionally read) |
 | `HasTreeStructure` | `app/Models/Traits/` | parent / children / materialised path for tree tables |
-| `ScopedQuery` | `app/Models/Traits/` | row-level data scope global scope — **not switched on yet** (BUG-083) |
+| `HasDataScope` | `app/Models/Traits/` | automatic user data scoping (DEC-071); columns in `config/data_scope.php`; `withoutDataScope()` |
 | `HasCommunications`, `HasDocuments` | `app/Models/Traits/` | opt a model into Chat / Docs — `commMaster()`, `getOrCreateCommMaster()`, `recordEvent($action, $summary, $meta = [], ?$body = null)`, `addRemark()`, `history()`, `addHistory()` (legacy) / `documents()`, `attachDocument()`, `documentsList()`, one-file slots `replaceDocument()`, `documentFor()`, `documentUrl()`, `hasDocumentIn()`, `removeDocuments()`; see `docs/utilities/03-chat.md`, `04-docs.md` |
 | `EntityService` + `Field` | `app/Support/Entity/` | **the only write path** for master / entry data (DEC-050) |
 | `Result` | `app/Support/Result.php` | return value of platform services |
@@ -171,10 +171,11 @@ The transformer never blanks a value: if a step produces an empty string the ori
 | `static tree()` | nested array of the whole table |
 | scopes `roots()`, `byLevel($n)` | level filters |
 
-## ScopedQuery (data scoping — dormant)
-`bootScopedQuery()` adds a global scope filtering rows by the user's `UserScope` grants. **Not enabled on any model yet** (decision pending,
-BUG-083). `Model::withoutDataScope()` gives an unscoped query; `shouldBypassDataScope()` is true for superadmin /
-`bypass_data_scoping`. Jobs must never depend on a user scope.
+## HasDataScope (automatic data scoping, DEC-071)
+`use HasDataScope;` adds the `DataScopeFilter` global scope; the model must also be listed in `config/data_scope.php`
+`entities` (columns per scope level, or `via` a parent). `Model::withoutDataScope()` gives an unscoped query;
+`DataScope::off(fn, 'reason')` and route middleware `data-scope:off` switch it off wider. Rules, API and examples:
+`docs/domains/iam-auth.md` → "Data scoping". Jobs and console run without a user and are never scoped.
 
 ---
 

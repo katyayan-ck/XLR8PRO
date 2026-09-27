@@ -3,12 +3,14 @@
 namespace App\Models\Module\Insurance;
 
 use App\Models\BaseModel;
+use App\Models\Traits\HasDataScope;
 use App\Models\Traits\HasDocuments;
 use App\Models\User;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class XlInsurance extends BaseModel
 {
+    use HasDataScope;   // DEC-071: filtered by the signed-in user's data scope (config/data_scope.php)
     use HasDocuments;
 
     /**

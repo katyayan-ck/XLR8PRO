@@ -486,3 +486,39 @@ HTTP smoke as users 1 and 40 on the touched screens. `--group=smoke` not rerun (
 
 **Owner decisions pending (D1–D29):** security / API (D1–D4), deletions (D5–D12), UAT-visible (D13–D17), business / data
 (D18–D29) — full list with recommendations in `.ai/state/current.md` and the approved plan.
+
+## Automatic user data scoping (DEC-071)
+Plan: `docs/plans/2026-09-28-data-scoping-DEC-071.md`. User decisions 28-09: empty codes visible until backfilled, pickers
+unscoped, department / division / vertical only where a column exists, bookings get their own codes.
+
+- **Engine** (`app/Services/IAM/DataScope/`): `ScopeResolver` → `ScopeSet` (codes per level, `null` = unrestricted) from
+  the user's active, in-date scope rows and the master trees in `config/data_scope.php` (Branch → Location,
+  Department → Division, Segment → Sub-segment → Model → Variant, Vertical). A parent covers all children unless a child
+  is assigned within the nearest assigned ancestor; `ALL` rows = no restriction; superadmin / bypass = everything.
+  Masters cached 10 min, scopes memoised per request.
+- **Filter:** `HasDataScope` trait + `DataScopeFilter` global scope → `DataScopeManager` (most specific column decides,
+  empty value falls back upward, unassigned rows per `scope.unassigned_rows`; satellites `via` their parent; alias-safe;
+  admin + API user; never in jobs / console). Opt-out: `withoutDataScope()`, `DataScope::off(fn, reason)`, route
+  middleware `data-scope:off,<reason>`; raw queries `DataScope::apply()`. Settings `scope.enabled`, `scope.unassigned_rows`.
+- **Scoped models:** Enquiry, Lead, Campaign, Quotation (via enquiry), Booking, Bookingamount, XFinance, XExchange,
+  XlDelivery, XlInsurance, XlRto, Xl_Refunds (via booking).
+- **Opt-outs added:** booking create duplicate checks, duplicate-enquiry check, receipt-number check, VOTF numbering /
+  holder lookup. `withoutGlobalScopes()` in three booking lists (it also dropped the data scope) → only soft deletes lifted.
+  Menu and highlight enquiry counts are cached per scope hash.
+- **Booking codes** (D22 / BUG-161 / BUG-092): migration `2026_09_28_160000_add_scope_codes_to_xlr8_booking_master_table`
+  (5 nullable code columns + 3 indexes; run on `xlrm` and `xlrm_testing`, rollback verified). `ScopeCodeFiller` fills empty
+  codes on every Booking / Enquiry save (`saving` hooks) from enquiry, quotation snapshot, acting employee, masters.
+- **Backfill:** `php artisan data-scope:backfill [--entity=] [--apply]` — report-only by default. Local report: bookings
+  and enquiries have no source codes yet; 17,821 enquiries would get `BKN` from follow-up names; 6 follow-up location
+  names need "Location" synonyms (RATANGARH RD, CHURU · NOKHA_SZZ · RAJGARH_SZZ · RATANGARH_SZZ · SHRIDUNGARGARH_SZZ ·
+  SUJANGARH_SZ). Not applied.
+- **Removed (replaced):** `DataScopeService`, `ScopedQuery`, `ScopedCrud` and their test; the dead id-based scope
+  properties on Booking, Stock, XlSpareRequest (Stock / Spares not scoped until they store codes).
+- **User screen:** read-only "Effective data access" panel (resolved codes per level).
+- **Tests:** `ScopeResolverTest` (7), `DataScopeFilterTest` (9), `ScopeCodeFillerTest` (2); full suite 364 passed, 1 skipped.
+  HTTP smoke (xlrm_testing) as superadmin and scoped user 4 (BKN / PV / NON-XUV): 13 Sales / Accounts screens and data
+  endpoints 200; the generated SQL keeps BKN's 10 locations and PV NON-XUV variants.
+- **Tracker:** BUG-136 FIXED, BUG-083 CLOSED (masters unscoped by decision), BUG-161 / BUG-092 FIXED; new BUG-197
+  (division PRSNL under ADM while 42 users hold it with SLS).
+- **Guides / rules:** `docs/domains/{iam-auth,core,sales-booking,crm-enquiry-quotation,spares,README,reference}.md`,
+  `docs/utilities/{01-settings,16-reference}.md`, `.ai/rules/{services,modules/iam-rbac,modules/sales}.md`.

@@ -40,6 +40,11 @@ Guarded model. Status constants: `new`, `in_followup`, `quotation_sent`, `quotat
 `otf_generated`, `lost`, `cancelled`. Long-form fields: `LONG_FORM_PAIRED_FIELDS` (segment / model / variant code ↔
 name) and `LONG_FORM_SINGLE_FIELDS` (name, mobile, email, gender, enquiry_type, source_code, likely_purchase_date,
 fuel_type, transmission, drivetrain, seating, color_code, tehsil, district, …).
+**Data scoping (DEC-071):** `HasDataScope` — every query is filtered by the user's scope on `dealer_branch`,
+`dealer_location`, `segment_code`, `model_code`, `variant_code`; a `saving` hook (`ScopeCodeFiller::fillEnquiry`) fills
+empty branch / location from the acting employee's primary branch / location and vehicle parents from the masters.
+`Quotation` and `Lead` / `Campaign` are scoped too (quotation via its enquiry). The duplicate-enquiry check uses
+`withoutDataScope()`; menu / highlight counts are cached per scope. Existing rows: `php artisan data-scope:backfill`.
 
 | Member | Returns |
 |---|---|

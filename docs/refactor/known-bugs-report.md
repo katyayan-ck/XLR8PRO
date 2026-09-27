@@ -118,7 +118,7 @@ Entry format:
 | BUG-080 | 32 pre-existing test failures surfaced once BUG-078 was fixed (suite could not run before today) | Medium | FIXED | 21-09-2026 | 27-09-2026 |
 | BUG-081 | `Vertical::employees()`/`employeeAssignments()` point at `xlr8_admin_emp_vertical_pivot`, a table that does not exist | Medium | FIXED | 22-09-2026 | 27-09-2026 |
 | BUG-082 | `Branch::primaryEmployees()` joins on `Branch.branch_code`, a column that is never populated (not fillable, always NULL) — real data uses `Branch.code` instead | Medium | FIXED | 22-09-2026 | 27-09-2026 |
-| BUG-083 | `BranchCrudController`'s own `setupListOperation()` override shadows `ScopedCrud` trait's data-scoping logic — branch data-scoping is silently never applied | Medium | OPEN (deferred — D27) | 22-09-2026 | — |
+| BUG-083 | `BranchCrudController`'s own `setupListOperation()` override shadows `ScopedCrud` trait's data-scoping logic — branch data-scoping is silently never applied | Medium | CLOSED (DEC-071) — masters are not scoped by decision | 22-09-2026 | — |
 | BUG-084 | `Location::branch()` joins on `Branch.branch_code` (always NULL, same root cause as BUG-082) and `Location::employeeAssignments()` points at a nonexistent pivot table (same pattern as BUG-081) | Medium | FIXED | 22-09-2026 | 27-09-2026 |
 | BUG-085 | `vendor/bin/phpstan analyse` (Larastan) OOMs on a full-project run in this dev environment (Windows paging file too small) | Low | OPEN (environment only — no code action) | 22-09-2026 | — |
 | BUG-086 | `PersonContact::makesPrimary()`/`PersonAddress::makePrimary()`/`PersonBankingDetail::makePrimary()` all fatal with a unique-constraint violation when promoting the specific "Alternate"/"Secondary" row while another Primary exists | High | FIXED | 22-09-2026 | 22-09-2026 |
@@ -127,7 +127,7 @@ Entry format:
 | BUG-089 | `SubSegment::$fillable`/read code referenced a nonexistent `oem_name` column — the real column is `name` | Medium | FIXED | 22-09-2026 | 22-09-2026 |
 | BUG-090 | 36 employees have `designation_code`/`desig_code` values that don't exist in `xlr8_admin_designation`; 30 have an empty `primary_branch_code` — real data-quality gaps | Medium | DUPLICATE of BUG-183 | 22-09-2026 | — |
 | BUG-091 | `routes/backpack/booking.php` restructuring dropped the `'operation'` route-meta key, so Backpack never ran `setupUpdateOperation()`/`setupCreateOperation()`/`setupListOperation()` for Booking — Add/Edit rendered as an empty generic form | Critical | FIXED | 22-09-2026 | 22-09-2026 (ai-changelogs-22-09-2026.md) |
-| BUG-092 | Booking list's Segment/Model/Variant/Color columns are sourced only via a join to `xlr8_crm_enquiries` on `bookings.enq_no`; 42/43 existing bookings have an empty `enq_no`, so those columns show N/A regardless of routing | Medium | OPEN (needs decision — D22) | 22-09-2026 | — |
+| BUG-092 | Booking list's Segment/Model/Variant/Color columns are sourced only via a join to `xlr8_crm_enquiries` on `bookings.enq_no`; 42/43 existing bookings have an empty `enq_no`, so those columns show N/A regardless of routing | Medium | FIXED (DEC-071) — booking vehicle codes on the booking | 22-09-2026 | — |
 | BUG-093 | 33 stale `route(...)` calls inside `BookingCrudController.php` (19 `booking.*`/`quotation.create`, plus 14 in an even older naming scheme) — every hit was a live `RouteNotFoundException`, including the FRS-documented "Missing Quotation at OTF" prompt path | Critical | FIXED | 22-09-2026 | 22-09-2026 (ai-changelogs-22-09-2026.md) |
 | BUG-094 | `EnquiryCrudController::search()`/`showDetailsRow()` delegate to Backpack's `ListOperation` trait methods but their routes in `routes/backpack/core.php` lacked the `'operation'` key — same bug class as BUG-064/BUG-091, so `setupListOperation()`/`setListView('admin.enquiry.list')` never ran for them | Medium | FIXED | 22-09-2026 | 22-09-2026 (ai-changelogs-22-09-2026.md) |
 | BUG-095 | 3 hardcoded user-ID whitelists (`[5, 23, 123]`, one also adds `$user->id`) gate Order Verification / Pending DMS action buttons in `BookingCrudController.php`, bypassing the app's normal `SLS_BKNG_*` Spatie-permission gating | Medium | OPEN (access change — D16) | 22-09-2026 | — |
@@ -171,7 +171,7 @@ Entry format:
 | BUG-133 | `AccessoryService::normalizeTypeFilter()` referenced `Accessory::ALL_TYPES`/`Accessory::BUNDLE_TYPES`, neither of which existed — same undefined-constant crash pattern as BUG-128, on the same model, surfaced only after BUG-132's fix let the accessories code path run far enough to reach it | Critical | FIXED | 24-09-2026 | 24-09-2026 (ai-changelogs-24-09-2026.md) |
 | BUG-134 | `Accessory::$fillable` was missing `type`, `set_qty`, `discount` — but `AccessoryService`'s real import write path (`Accessory::updateOrCreate([...], ['type' => $type, 'set_qty' => 1, ...])`) mass-assigns exactly those fields, meaning every accessory import silently stored `type` as the DB default (`'Accessory'`) regardless of the row's real type (Ceramic/PPF/Maxicare/GPS_VLTD/RTO_Tape/Kazam) | Critical | FIXED | 24-09-2026 | 24-09-2026 (ai-changelogs-24-09-2026.md) |
 | BUG-135 | `Snapshot` (used by `PricingEngineService::calculateAndPublish()`, the "Publish" half of "Calculate & Publish") redeclared `protected $casts;` with no default, shadowing `BaseModel`'s array default with `null` — crashed on `array_merge(): Argument #1 must be of type array, null given` the instant the model was instantiated, meaning `calculateAndPublish()` had never worked for any vehicle, ever | Critical | FIXED | 24-09-2026 | 24-09-2026 (ai-changelogs-24-09-2026.md) |
-| BUG-136 | Data-scoping enforcement layer (`DataScopeFilter`, `ScopedCrud`, `RBACService::getAccessibleResources()`) was built against a model (`UserDataScope`) whose table doesn't exist and a service (`App\Services\IAM\DataScopeService`) that was never written, plus undefined `User::userDataScopes()`/`getScopedIds()` and wrong `scopeColumn`s on `Stock`/`XlSpareRequest`. Not live-reachable, but it means **no row-level data scoping is enforced anywhere** | High | FIXED (code); enforcement switch-on OPEN — needs decision | 24-09-2026 | 24-09-2026 (ai-changelogs-24-09-2026.md) |
+| BUG-136 | Data-scoping enforcement layer (`DataScopeFilter`, `ScopedCrud`, `RBACService::getAccessibleResources()`) was built against a model (`UserDataScope`) whose table doesn't exist and a service (`App\Services\IAM\DataScopeService`) that was never written, plus undefined `User::userDataScopes()`/`getScopedIds()` and wrong `scopeColumn`s on `Stock`/`XlSpareRequest`. Not live-reachable, but it means **no row-level data scoping is enforced anywhere** | High | FIXED (DEC-071) — enforcement switched on | 24-09-2026 | 24-09-2026 (ai-changelogs-24-09-2026.md) |
 | BUG-137 | `UserImporter::createDataScopes()` inserted scope rows via `UserDataScope::insert()` with keys `userid`/`scopetype`/`scopevalue`/`status` into a nonexistent table — any bulk-user-import row with an "Accessible Branches/Departments/Locations" value failed | High | FIXED | 24-09-2026 | 24-09-2026 (ai-changelogs-24-09-2026.md) |
 | BUG-138 | `DocService::hasAccess()` returned `true` for every document attached to an entity (a "Placeholder" that discarded the scope lookup) — any user passing the earlier checks' fall-through got access | High (unreachable today: `DocService` can't construct) | FIXED | 24-09-2026 | 24-09-2026 (ai-changelogs-24-09-2026.md) |
 | BUG-139 | `DocService`: `search()` return type `Collection` is unimported (resolves to nonexistent `App\Services\Collection`); `approve()` calls `ApprovalService::approve()`, which doesn't exist; `getAiTags()` needs the uninstalled `google/cloud-vision` package | Medium (unreachable today) | FIXED (DEC-061) | 24-09-2026 | 28-09-2026 |
@@ -196,7 +196,7 @@ Entry format:
 | BUG-158 | `User::branches/locations/departments` and `Employee::branches/locations/departments` target nonexistent `xlr8_admin_emp_*_pivot` tables; live caller: `UserExporter` (user export POST) | Medium | FIXED | 25-09-2026 | 27-09-2026 |
 | BUG-159 | `NotificationController` and `SystemSettingApiController` called `$this->middleware()` in their constructors (removed in Laravel 11+) — every notifications and settings API request fataled | Critical | FIXED | 26-09-2026 | 26-09-2026 |
 | BUG-160 | Only 1 of 201 users has `admin.dashboard`, so the post-login dashboard returns 403 for almost everyone | High | FIXED | 26-09-2026 | 26-09-2026 |
-| BUG-161 | Bookings have no branch: xlr8_booking_master has no branch column and the enquiry fallback (dealer_branch) is empty on all 60,923 enquiries, so VOTF numbers can never be generated | High | OPEN (needs decision — D22); VOTF branch now picked on the form | 26-09-2026 | — |
+| BUG-161 | Bookings have no branch: xlr8_booking_master has no branch column and the enquiry fallback (dealer_branch) is empty on all 60,923 enquiries, so VOTF numbers can never be generated | High | FIXED (DEC-071) — booking has its own branch / location | 26-09-2026 | — |
 | BUG-162 | User bulk import read every workbook sheet: Reporting-sheet rows (Emp Code, no name) created nameless persons each run and re-pointed existing employees/users to them | Critical | FIXED | 26-09-2026 | 26-09-2026 |
 | BUG-163 | User importer lost addon scopes and DOB: it took only the first non-empty scope column and its addon/DOB keys never matched the slugged template headers (`addon_branch`, `add_on_divisions`, `dob`) | High | FIXED | 27-09-2026 | 27-09-2026 |
 | BUG-164 | `OrgScopeService` resolves variants by a `name` column that `xlr8_vehicle_variant` doesn't have — any variant given by name crashes the import row; `ALL` expansion returned duplicate codes | Medium | FIXED | 27-09-2026 | 27-09-2026 |
@@ -232,6 +232,7 @@ Entry format:
 | BUG-194 | `BookingCrudController::fetchPendBkData()` and `fetchCbrData()` call `Cache::remember()` but the file has no `use Illuminate\Support\Facades\Cache;` — in a namespaced class this resolves to `App\Http\Controllers\Admin\Sales\Booking\Cache` and fatals | Medium | FIXED | 28-09-2026 | 28-09-2026 |
 | BUG-195 | `BookingKycService::apply()` recorded the customer's full Aadhaar (and PAN) in the booking history meta, which every booking viewer and the mobile history API can read | Medium | FIXED for new entries (PAN + Aadhaar, DEC-070); existing timeline rows unchanged (D26) | 28-09-2026 | — |
 | BUG-196 | Two insurance policy copies sit in `media` with `model_type = App\Models\Module\Insurance\Xlinsurer` (lower-case i, a class that does not exist); the insurance screen reads `XlInsurance` and never shows them | Low | FIXED by the DEC-069 migration | 28-09-2026 | — |
+| BUG-197 | Division `PRSNL` belongs to department `ADM` in the master, but 42 users hold scopes department `SLS` + division `PRSNL` — the division can't narrow the SLS department, so those users resolve to every SLS division | Low | OPEN (data — owner to confirm PRSNL's department) | 28-09-2026 | — |
 
 Not a bug (false positive, listed for reference): the original `infer-conventions` sweep flagged
 "`SheetHeaderService`/`SynonymService` not used by importers" — re-investigation on 19-09-2026
@@ -1126,7 +1127,7 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 
 ### BUG-083 — `BranchCrudController`'s custom `setupListOperation()` shadows `ScopedCrud`'s data-scoping
 
-- **Status:** OPEN (deferred — D27)
+- **Status:** CLOSED (DEC-071) — masters are not scoped by decision
 - **Severity:** Medium — if branch-level data scoping is actually relied on anywhere (the `ScopedCrud` trait exists specifically to restrict which branches a non-superadmin user's list view shows), it currently has zero effect for the Branch list.
 - **Found:** 22-09-2026, while rewriting `BranchCrudController` to delegate to `BranchService` — noticed `use ScopedCrud;` is declared, and the trait defines its own `setupListOperation()` that calls `parent::setupListOperation()` then `$this->applyDataScope()`, but `BranchCrudController` **also** defines its own `setupListOperation()` (for the `ORG_ENTITY_MANAGE` permission check) — in PHP, a class's own method always wins over a trait's method of the same name, so the trait's version (and therefore `applyDataScope()`) never runs.
 - **Modified:** 24-09-2026 22:00 — `ScopedCrud` itself now works (BUG-136). This controller still never calls `applyDataScope()`; turning it on is part of the open "enable data scoping" decision in BUG-136.
@@ -1134,6 +1135,7 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 - **Description:** this shadowing existed identically before today's refactor (the pre-existing controller had the exact same pattern with `ORG_BRCH_VIEW` in place of `ORG_ENTITY_MANAGE`) — not a regression introduced by this session's changes, just carried forward as-is since fixing branch-level data scoping is a distinct, larger concern from the code-immutability/dependency-guard/media/permission work this phase covers.
 - **Proposed solution:** either call `$this->applyDataScope()` explicitly at the end of `BranchCrudController::setupListOperation()`, or restructure `ScopedCrud` to hook in a way that doesn't require the consuming controller to remember to call it. Needs a decision from whoever owns the branch-scoping feature on whether it's still meant to be active before touching this.
 - **Resolution (28-09-2026):** Triage 28-09: `BranchCrudController::index()` builds its own unscoped `Branch::select()` query, so the Backpack clause wouldn't reach the grid; switching scoping on needs `DataScopeService::getAccessibleIds()` on that query. Proposal D27: switch scoping on everywhere at once.
+- **Resolution (28-09-2026):** `BranchCrudController` no longer uses the retired `ScopedCrud`. Per the user's decision (28-09), master lists and pickers stay unscoped; business data is scoped automatically (`HasDataScope`).
 
 ### BUG-084 — `Location::branch()` and `Location::employeeAssignments()` both point at broken relations
 
@@ -1223,7 +1225,7 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 
 ### BUG-092 — Booking list's vehicle-detail columns (Segment/Model/Variant/Color) show N/A for almost all bookings
 
-- **Status:** OPEN (needs decision — D22)
+- **Status:** FIXED (DEC-071) — booking vehicle codes on the booking
 - **Severity:** Medium — cosmetic/reporting gap in the booking list grid, not a functional blocker; the underlying booking data isn't lost, it's just not resolvable through this particular join for records with no linked enquiry.
 - **Found:** 22-09-2026, investigating the same user report as BUG-091 (second screenshot showed N/A across the whole Segment/Model/Variant/Color columns).
 - **Modified:** —
@@ -1231,6 +1233,7 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 - **Description:** `xlr8_booking_master` has no vehicle-detail columns of its own (confirmed via `Schema::getColumnListing`) — Segment/Model/Variant/Color are only ever available through the joined Enquiry row. `DB::table('xlr8_booking_master')->whereNull('enq_no')->orWhere('enq_no','')->count()` → 42 of 43 existing bookings, with `created_at` dates going back to at least 2026-06-03 — long before today's `ec768c9` restructuring, so this is **not** a regression from today's cleanup or from BUG-091, just a pre-existing consequence of how these bookings were created (without an enquiry link) colliding with a join-dependent list design. Ruled out routing as a factor: `index()`/`renderBookingListing()` are fully custom methods that never depended on Backpack's `setupListOperation()` dispatch, and the list page returned 200 both before and after the BUG-091 fix.
 - **Proposed solution:** needs a product decision, not a code guess: either (a) backfill `enq_no` on legacy bookings that do have a resolvable enquiry, (b) have `xlr8_booking_master` store its own `segment_code`/`model_code`/`variant_code`/`color_code` directly at booking time instead of depending on the enquiry join (would need a migration + populating `store()`/`update()`), or (c) accept N/A as expected for bookings created without an enquiry and leave the design as-is.
 - **Resolution (28-09-2026):** Triage 28-09: 44 of 45 local bookings have no `enq_no`, so the enquiry join returns nothing. See D22.
+- **Resolution (28-09-2026):** The booking stores `segment_code` / `sub_segment_code` / `model_code` / `variant_code` (filled on save from the quotation snapshot / enquiry, parents from the masters). The list's legacy enquiry join remains for display until it is switched to these columns.
 
 ### BUG-093 — 33 stale route names inside `BookingCrudController.php` throwing `RouteNotFoundException`
 
@@ -1684,13 +1687,14 @@ guessed at.
 
 ### BUG-136 — Data-scoping enforcement layer built against a nonexistent model and service
 
-- **Status:** FIXED (code). Enforcement switch-on: OPEN, needs a decision.
+- **Status:** FIXED (DEC-071) — enforcement switched on
 - **Severity:** High — not because anything crashed, but because the app has had no working row-level data scoping at all.
 - **Found:** 24-09-2026, during the shared-services audit (`docs/reference/Shared-Services-Utilities-Catalog.md` §4).
 - **Where:** `app/Http/Scopes/DataScopeFilter.php`, `app/Http/Controllers/Admin/Traits/ScopedCrud.php`, `app/Services/RBACService.php` (`getAccessibleResources()`), `app/Models/UserDataScope.php`, `app/Models/Module/Booking/Stock.php`, `app/Models/Module/Spare/XlSpareRequest.php`.
 - **Description:** `DataScopeFilter` resolved `App\Services\IAM\DataScopeService`, which was never written (its `AppServiceProvider` registration is commented out). `ScopedCrud` called `User::userDataScopes()` / `getScopedIds()`, which don't exist. `UserDataScope` maps to `user_data_scopes`, which doesn't exist and has no migration. `Stock::$scopeColumn = 'branchid'` and `XlSpareRequest::$scopeColumn = 'branch_code'` name columns that aren't on those tables. None of it was reachable: `Stock` imports but never applies `ScopedQuery`; `XlSpareRequest` can't autoload (BUG-141); the 4 `ScopedCrud` controllers return `''` from `getScopeType()` or override `setupListOperation()` without calling the trait; `getAccessibleResources()` has no callers. The live scope store is `App\Models\Admin\UserScope` (`xlr8_admin_user_scopes`, `scope_code`, 1,465 rows).
 - **Fix (option A, user-approved):** new `App\Services\IAM\DataScopeService` built on `User::getScopeCodes()`, translating scope codes to entity ids via a fixed type map (the 7 `scope_type` values in live data); `null` = unrestricted, `[]` = no access (fails closed). `ScopedCrud` rewired to it (also now honours `bypass_data_scoping` and fails closed in its hierarchy fallback). `DataScopeFilter` docs/default corrected. `Stock`/`XlSpareRequest` declarations corrected to `location`/`location_id` and `branch`/`srv_brnch_id`. `UserDataScope` marked `@deprecated` (still referenced by the two unrouted `RulesUserImporter` copies). Verified against a real scoped user; 7 tests in `tests/Unit/Services/IAM/DataScopeServiceTest.php`.
 - **Still open (behaviour changes, need a decision):** applying `ScopedQuery` to `Stock`; enabling scoping in the 4 `ScopedCrud` controllers; fixing `XlSpareRequest`'s namespace; `User::activeScopes()` ignoring `from_date`/`to_date`; deleting the unrouted `RulesUserImporter` copies and then `UserDataScope`.
+- **Resolution (28-09-2026):** Replaced by the code-based, hierarchical engine: `ScopeResolver` / `ScopeSet` / `DataScopeManager` (`App\Services\IAM\DataScope`), global scope via `HasDataScope`, config `config/data_scope.php`. `DataScopeService`, `ScopedQuery`, `ScopedCrud` deleted. Scope rows' `from_date` / `to_date` now count. Tests `tests/Unit/Services/IAM/ScopeResolverTest.php`, `tests/Feature/IAM/DataScopeFilterTest.php`.
 
 ### BUG-137 — `UserImporter` scope writes targeted a nonexistent table with wrong column names
 
@@ -1934,13 +1938,14 @@ guessed at.
 
 ### BUG-161 — Bookings have no branch, so VOTF numbers can never be generated
 
-- **Status:** OPEN (needs decision — D22); VOTF branch now picked on the form
+- **Status:** FIXED (DEC-071) — booking has its own branch / location
 - **Severity:** High — OTF/VOTF numbering is part of the booking flow.
 - **Found:** 26-09-2026, while fixing BUG-104.
 - **Where:** `BookingOtfService::generateVotfNumber()`; `xlr8_booking_master` (no branch/location column); `xlr8_crm_enquiries.dealer_branch` / `dealer_location` (0 of 60,923 filled); only 1 of 45 local bookings has an `enq_no`.
 - **Description:** VOTF numbers embed the branch code. The booking has no branch of its own; the display code copies it from the linked enquiry, which has none either. The code now falls back to the enquiry (DEC-027), but the data never provides it.
 - **Decision needed:** where a booking's branch comes from — (a) a new `branch_code` column on the booking, set at creation from the creating user's primary branch; (b) the consultant's primary branch; (c) populate enquiry `dealer_branch` from its source data.
 - **Resolution (28-09-2026):** Triage 28-09: since 27-09 the user picks the branch on the OTF form; `Booking::branch()` still reads a `branch_code` column that doesn't exist. Proposal D22 (with BUG-092): add `branch_code`, `model_code`, `variant_code`, `color_code` to the booking, set on create / OTF save, backfilled from the enquiry.
+- **Resolution (28-09-2026):** Migration `2026_09_28_160000_add_scope_codes_to_xlr8_booking_master_table` adds `branch_code`, `location_code`, `sub_segment_code`, `model_code`, `variant_code`; `Booking::branch()` / `location()` now resolve. Filled on save from the enquiry / quotation / masters and from the OTF branch; old rows need `php artisan data-scope:backfill` (local: their enquiries carry no codes, so nothing to derive yet).
 
 ### BUG-162 — User bulk import corrupted identities (fed every sheet)
 
@@ -2243,4 +2248,12 @@ guessed at.
 
 - **Status:** FIXED — view deleted
 - **Resolution (28-09-2026):** The orphan `pending-delivery.blade.php` no longer exists.
+
+### BUG-197 — Scope division PRSNL sits under ADM while users hold it with SLS
+
+- **Status:** OPEN (data — owner to confirm PRSNL's department)
+- **Severity:** Low — no business table carries a division column yet, so no data rows are affected today.
+- **Found:** 28-09-2026, DEC-071 effective-access preview (user 4).
+- **Evidence:** `xlr8_admin_division` PRSNL → `dept_code` ADM; 42 active `xlr8_admin_user_scopes` rows division PRSNL, held with department SLS. The resolver applies a child restriction only within its assigned parent, so SLS resolves to all 7 SLS divisions.
+- **Proposed solution:** if PRSNL is a Sales division, set its `dept_code` to SLS through `DivisionService`; otherwise re-map those users' division scopes.
 

@@ -3,6 +3,7 @@
 namespace App\Models\CRM;
 
 use App\Models\BaseModel;
+use App\Models\Traits\HasDataScope;
 use App\Models\User;
 use App\Models\Vehicle\Segment;
 use App\Models\Vehicle\VehicleModel;
@@ -10,6 +11,8 @@ use Illuminate\Support\Facades\Cache;
 
 class Campaign extends BaseModel
 {
+    use HasDataScope;   // DEC-071: filtered by the signed-in user's data scope (config/data_scope.php)
+
     protected $table = 'xlr8_crm_campaigns';
 
     protected $fillable = [
@@ -34,16 +37,16 @@ class Campaign extends BaseModel
 
         $this->casts = array_merge($this->casts, [
             'start_date' => 'date',
-            'end_date'   => 'date',
+            'end_date' => 'date',
         ]);
     }
 
     protected array $columnTransformations = [
-        'name'          => 'trim|ucwords',
-        'segment_code'  => 'uppercase|trim',
-        'model_code'    => 'uppercase|trim',
+        'name' => 'trim|ucwords',
+        'segment_code' => 'uppercase|trim',
+        'model_code' => 'uppercase|trim',
         'activity_code' => 'uppercase|trim',
-        'branch_code'   => 'uppercase|trim',
+        'branch_code' => 'uppercase|trim',
         'location_code' => 'uppercase|trim',
     ];
 

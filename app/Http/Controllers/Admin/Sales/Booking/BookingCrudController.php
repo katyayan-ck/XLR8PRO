@@ -219,7 +219,8 @@ class BookingCrudController extends CrudController
         if ($enquiryId = request('enquiry_id')) {
             $enquiry = Enquiry::find($enquiryId);
             if ($enquiry) {
-                $existingBooking = Booking::where(function ($q) use ($enquiry) {
+                // duplicate check across every branch, not just the user's scope (DEC-071)
+                $existingBooking = Booking::withoutDataScope()->where(function ($q) use ($enquiry) {
                     $q->where('enq_no', $enquiry->id)
                         ->orWhere('enq_no', $this->enquiryRef->toReference($enquiry->id));
 
@@ -243,7 +244,8 @@ class BookingCrudController extends CrudController
         }
 
         if ($quotationId = request('quotation_id')) {
-            $existingBooking = Booking::where('quotation_id', $quotationId)->first();
+            // duplicate check across every branch, not just the user's scope (DEC-071)
+            $existingBooking = Booking::withoutDataScope()->where('quotation_id', $quotationId)->first();
 
             if ($existingBooking) {
                 \Alert::warning('Booking already exists with this quotation.')->flash();
@@ -4016,8 +4018,8 @@ class BookingCrudController extends CrudController
         $this->data['crud'] = $this->crud;
         $this->data['title'] = 'Ordered Verification';
 
+        // include soft-deleted rows; the user's data scope still applies (DEC-071)
         $query = $this->getBaseQuery()
-            ->withoutGlobalScopes()
             ->withoutGlobalScope(SoftDeletingScope::class);
 
         $query->whereIn('enq.segment_code', ['BEV', 'PERSL'])
@@ -8405,8 +8407,8 @@ class BookingCrudController extends CrudController
         $this->data['crud'] = $this->crud;
         $this->data['title'] = 'Erroneous Booking Entries';
 
+        // include soft-deleted rows; the user's data scope still applies (DEC-071)
         $query = $this->getBaseQuery()
-            ->withoutGlobalScopes()
             ->withoutGlobalScope(SoftDeletingScope::class);
 
         $query->where('bookings.status', 1);
@@ -8487,8 +8489,8 @@ class BookingCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to perform this action.');
         }
 
+        // include soft-deleted rows; the user's data scope still applies (DEC-071)
         $query = $this->getBaseQuery()
-            ->withoutGlobalScopes()
             ->withoutGlobalScope(SoftDeletingScope::class)
             ->where('bookings.status', 1)
             ->orderBy('bookings.id', 'DESC');

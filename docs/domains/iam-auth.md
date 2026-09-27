@@ -10,7 +10,7 @@ with Backpack (username + password); the mobile app logs in with a mobile OTP an
 | give / take / set data scopes | `App\Services\IAM\UserScopeService::grant()`, `revoke()`, `sync()` |
 | a designation's permissions | `Org\DesignationService::syncPermissions()` → `RolePermissionService` |
 | permission tree for a screen | `PermissionTreeService::buildTree()` |
-| scope → ids for a filter | `DataScopeService::getAccessibleIds()` |
+| a user's effective scope / filter rows by it | `DataScope::current()` / `HasDataScope` (automatic, DEC-071) |
 | mobile OTP login | `AuthService` (API v1) |
 | RBAC workbook export | `UserRbacExportService` (+ `php artisan` export command) |
 
@@ -24,8 +24,8 @@ with Backpack (username + password); the mobile app logs in with a mobile OTP an
 - **User-level overrides**: extra direct permissions ("added") and `UserPermissionDenial` rows ("removed") checked by a
   Gate `before` hook. See `User::permissionOverrides()`.
 - **Data scopes** (`xlr8_admin_user_scopes`): rows `(user_id, scope_type, scope_code)` for `branch`, `location`,
-  `department`, `division`, `vertical`, `segment`, `sub_segment`, `model`, `variant`. **Enforcement is not switched on**
-  (`ScopedQuery` / `ScopedCrud` dormant, BUG-083) — screens that filter call `DataScopeService` explicitly.
+  `department`, `division`, `vertical`, `segment`, `sub_segment`, `model`, `variant`. **Applied automatically** to the
+  business models (DEC-071) — see "Data scoping" below.
 - `bypass_data_scoping` on a user = sees all rows; distinct from `superadmin` (P-16).
 
 ## Models
@@ -84,16 +84,48 @@ $tree = app(PermissionTreeService::class)->buildTree();          // Designation 
 app(DesignationService::class)->syncPermissions($designation, $request->input('permissions', []));
 ```
 
-## DataScopeService (`App\Services\IAM\DataScopeService`)
-| Method | Returns |
+## Data scoping (DEC-071) — automatic, hierarchical, with opt-out
+Every business model listed in `config/data_scope.php` `entities` **and** using `App\Models\Traits\HasDataScope` is
+filtered by the signed-in user's scope on every query — admin (Backpack guard) and API (Sanctum) alike. Jobs, console
+commands and imports run without a user and are never filtered. Scoped today: `CRM\{Enquiry, Lead, Campaign, Quotation}`,
+`Module\Booking\{Booking, Bookingamount, XExchange, XlDelivery, XlRto, Xl_Refunds}`, `Module\Finance\XFinance`,
+`Module\Insurance\XlInsurance`. Masters and pickers are **not** scoped (user decision 28-09).
+
+**Rules** (`ScopeResolver`): no rows for a tree = everything; a parent covers all children down to the last level unless
+the user holds codes at a child level; a child restriction applies within the nearest assigned ancestor
+(PV + THAR → only THAR; PV + CV + THAR → THAR under PV plus every CV model); `ALL` / `ANY` rows = no restriction at that
+level; only active rows inside `from_date` / `to_date` count; superadmin / `bypass_data_scoping` = everything.
+Trees (`config/data_scope.php` `trees`): Branch → Location, Department → Division, Segment → Sub-segment → Model → Variant,
+Vertical (flat). A child code that isn't under the assigned parent can't narrow it (e.g. division PRSNL is an ADM division).
+
+**Filter** (`DataScopeManager`): per tree the most specific column the table has decides; an empty value falls back to the
+next level up; a row empty on every level is "unassigned" and shows only while setting `scope.unassigned_rows` is
+`visible` (default until backfilled). Satellites filter `via` their parent (`bid` → Booking, `enquiry_no` → Enquiry).
+Master switch: setting `scope.enabled`.
+
+| Call | Returns / does |
 |---|---|
-| `getAccessibleIds(User $user, string $type)` | `null` = **unrestricted** (superadmin / bypass); `[]` = nothing; else primary-key **ids** of the scoped master rows (`TYPE_MODELS` maps type → model) |
-| `getOrgScope($user, $type)` / `getVehicleScope($user, $type)` | aliases of the above |
+| `DataScope::current()` | `ScopeSet` of the signed-in user (unrestricted when scoping doesn't apply) |
+| `DataScope::for(User $u)` / `app(ScopeResolver::class)->for($u)` | `ScopeSet` of any user |
+| `ScopeSet::allowed(string $level)` | `list<string>` codes, or `null` = unrestricted; also `isUnrestricted()`, `toArray()`, `hash()` (cache keys) |
+| `Model::withoutDataScope()` | one query sees every row |
+| `DataScope::off(fn () => …, 'reason')` | everything inside the closure sees every row |
+| route `->middleware('data-scope:off,<reason>')` | the whole request sees every row |
+| `DataScope::apply(DB::table('x as b'), Booking::class, 'b')` | same filter on a raw query |
+| `DataScope::enabled()`, `unassignedVisible()`, `user()` | state; `refreshSettings()` after changing `scope.*` in the same request |
+| `ScopeResolver::flush(?int $userId)`, `flushMasters()` | forget memoised scopes / cached master trees (10 min) |
+| `DataScopeManager::offForRequest(string $reason)` | switch scoping off for the rest of the request (what `data-scope:off` calls) |
+| `DataScopeManager::applyToEloquent(Builder, Model)` / `HasDataScope::bootHasDataScope()` | internals: the global scope hands every query to the manager |
+| `ScopeCodeFiller::fillBooking(Booking)` / `fillEnquiry(Enquiry, ?User)` | fill **empty** codes (enquiry / quotation links, the actor's primary branch / location, master parents); returns the columns set. Called by the models' `saving` hooks. |
+
 ```php
-$ids = app(DataScopeService::class)->getAccessibleIds(backpack_user(), 'branch');
-$query->when($ids !== null, fn ($q) => $q->whereIn('branch_id', $ids));   // null → no filter
+$bookings = Booking::query()->where('status', 1)->get();                    // already scoped
+$exists = Booking::withoutDataScope()->where('quotation_id', $id)->exists(); // duplicate check across branches
+$next = DataScope::off(fn () => $this->nextSequence(), 'VOTF numbering');
+Cache::remember('counts:'.DataScope::current()->hash(), 60, fn () => …);    // per-scope cache key
 ```
-Codes (not ids) are on the user: `$user->getScopeCodes('branch')`.
+Backfill existing rows: `php artisan data-scope:backfill [--entity=booking|enquiry] [--apply]` (report first).
+The User edit screen shows the resolved "Effective data access".
 
 ## AuthService (mobile OTP login, API v1)
 Called by `Api\V1\AuthController`; responses are wrapped in the API envelope by the controller.
@@ -126,11 +158,9 @@ Injected into `UserCrudController` but not called. `canUserAccess()` builds `res
 module / process codes (see `2026_09_28_100000_platform_permissions` for the pattern), then grant it to designations with
 `DesignationService::syncPermissions()` or the Designation → Permissions screen.
 
-**"Only my branches" list filter**
-```php
-$codes = backpack_user()->isSuperAdmin() || backpack_user()->bypassesDataScoping() ? null : backpack_user()->getScopeCodes('branch');
-$query->when($codes !== null, fn ($q) => $q->whereIn('branch_code', $codes));
-```
+**"Only my branches" on a new table** — add a `branch_code` (and `location_code`) column, add `use HasDataScope;` to the
+model and one line to `config/data_scope.php` `entities`; no controller code. For a raw report query use
+`DataScope::apply($query, Entity::class, 'alias')`.
 
 ## Gotchas
 - Never mint permissions with `guard_name = 'backpack'` — they silently never match.

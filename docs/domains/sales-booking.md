@@ -26,7 +26,12 @@ history entry for every completed step (through the Chat timeline — `HasCommun
 ---
 
 ## Booking model (`App\Models\Module\Booking\Booking`, `xlr8_booking_master`)
-Guarded model (no `$fillable` — the services set columns explicitly). Traits: `HasCommunications`, media, soft deletes.
+Guarded model (no `$fillable` — the services set columns explicitly). Traits: `HasCommunications`, `HasDocuments`,
+`HasDataScope` (DEC-071), media, soft deletes. **Scope codes** `branch_code`, `location_code`, `segment_code`,
+`sub_segment_code`, `model_code`, `variant_code` are filled on every save by a `saving` hook (`ScopeCodeFiller::fillBooking`:
+linked enquiry, quotation snapshot, master parents; empty codes only); the OTF branch the user picks becomes `branch_code`
+when empty. Every `Booking` query is filtered by the user's data scope; duplicate / VOTF checks use `withoutDataScope()`.
+Satellites (`Bookingamount`, `XFinance`, `XExchange`, `XlDelivery`, `XlInsurance`, `XlRto`, `Xl_Refunds`) follow their booking.
 
 `status` is a varchar `'1'`–`'8'`; `consultant` holds a person code. **Status codes** (`status`): `1` live · `8` live, pending data · `2` invoiced · `3` cancelled · `4` refund queued ·
 `5` refunded · `6` on hold · `7` refund rejected. **Order** (`order`): `1` requested · `2` verified · `3` ordered.
@@ -36,7 +41,7 @@ Guarded model (no `$fillable` — the services set columns explicitly). Traits: 
 | Member | Returns |
 |---|---|
 | `segment()` | by `segment_code` |
-| `branch()`, `location()` | **always null** — the table has no `branch_code` / `location_code`; the branch comes from the linked enquiry (`dealer_branch`) or the consultant's employee record (BUG-161, DEC-029). `resolve*EditData()` fills `branch_code` etc. onto the model as display-only attributes |
+| `branch()`, `location()` | by `branch_code` / `location_code` (columns since DEC-071; empty on old rows until `data-scope:backfill`) |
 | `bookingAmounts()` | `Bookingamount` receipts (`bid`) |
 | `finances()`, `exchanges()` | `hasMany` on `bid` (BUG-193 fixed) |
 | `vehicle()` | legacy `XVehicleMaster` link |

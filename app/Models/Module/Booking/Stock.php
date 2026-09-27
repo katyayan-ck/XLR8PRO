@@ -3,7 +3,6 @@
 namespace App\Models\Module\Booking;
 
 use App\Models\BaseModel;
-use App\Models\Traits\ScopedQuery;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Stock extends BaseModel
@@ -17,14 +16,8 @@ class Stock extends BaseModel
 
     protected $table = 'xlr8_booking_stock_master';
 
-    // DataScopeFilter config. Not active: ScopedQuery is imported above but
-    // not applied in the class body. The table has no branch column — stock
-    // is scoped by location_id.
-    public string $scopeType = 'location';
-
-    public string $scopeColumn = 'location_id';
-
-    public string $scopeGroup = 'org';
+    // Not data-scoped yet (DEC-071): location_id holds legacy ids (1, 2, 5) whose mapping to location codes is
+    // unverified; add a location_code, then list the model in config/data_scope.php.
 
     /**
      * The attributes to be fillable from the model.

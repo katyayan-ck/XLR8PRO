@@ -978,7 +978,8 @@ class OrgService
 
     public static function checkReceiptX($rn)
     {
-        return Bookingamount::where('type_number', $rn)->exists() ? 1 : 0;
+        // receipt numbers are unique across every branch (DEC-071)
+        return Bookingamount::withoutDataScope()->where('type_number', $rn)->exists() ? 1 : 0;
     }
 
     public static function getReferenceUsers(string $type, string $mobile): array

@@ -6,8 +6,10 @@ use App\Models\Admin\Branch;
 use App\Models\BaseModel;
 use App\Models\Module\Finance\XFinance;
 use App\Models\Traits\HasCommunications;
+use App\Models\Traits\HasDataScope;
 use App\Models\Traits\HasDocuments;
 use App\Models\Vehicle\Segment;
+use App\Services\IAM\DataScope\ScopeCodeFiller;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
@@ -16,8 +18,19 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 
 class Booking extends BaseModel implements HasMedia
 {
+    // DEC-071: filtered by the signed-in user's data scope (config/data_scope.php)
     use CrudTrait;
     use HasCommunications;
+    use HasDataScope;
+
+    /** Fill empty branch / location / vehicle codes before every save so data scoping can filter the row (DEC-071). */
+    protected static function booted(): void
+    {
+        parent::booted();
+
+        static::saving(fn (self $record) => app(ScopeCodeFiller::class)->fillBooking($record));
+    }
+
     use HasDocuments;
     use InteractsWithMedia;
     use SoftDeletes;
@@ -28,12 +41,6 @@ class Booking extends BaseModel implements HasMedia
     protected $fillable = [];
 
     protected $guarded = ['id'];
-
-    public string $scopeType = 'branch';
-
-    public string $scopeColumn = 'branchid';   // existing column name on xlr8_booking_master
-
-    public string $scopeGroup = 'org';
 
     public function segment()
     {

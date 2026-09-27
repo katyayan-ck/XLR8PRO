@@ -11,6 +11,7 @@ use App\Models\Module\Booking\XlFinancier;
 use App\Models\Module\Finance\XFinance;
 use App\Services\EnquiryReferenceService;
 use App\Services\OrgService;
+use App\Support\Facades\DataScope;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
@@ -461,16 +462,17 @@ class EnquiryCrudController extends CrudController
             'lost_verif',
         ];
 
-        $highlightCounts = Cache::remember('enquiry_highlight_counts', now()->addMinutes(2), function () use ($filters) {
-            $counts = [];
-            foreach ($filters as $filter) {
-                $query = Enquiry::query();
-                OrgService::applyHighlightFilter($query, $filter);
-                $counts[$filter] = $query->count();
-            }
+        $highlightCounts = Cache::remember('enquiry_highlight_counts:'.DataScope::current()->hash(), now()->addMinutes(2),   // per data scope (DEC-071)
+            function () use ($filters) {
+                $counts = [];
+                foreach ($filters as $filter) {
+                    $query = Enquiry::query();
+                    OrgService::applyHighlightFilter($query, $filter);
+                    $counts[$filter] = $query->count();
+                }
 
-            return $counts;
-        });
+                return $counts;
+            });
 
         return view('admin.sales.enquiry.list', [
             'title' => 'Master Enquiry List',
@@ -2672,7 +2674,8 @@ class EnquiryCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
-        $enquiry = Enquiry::where('mobile', $request->mobile)->where('segment_code', $request->segment_code)->first();
+        // duplicate check across every branch, not just the user's scope (DEC-071)
+        $enquiry = Enquiry::withoutDataScope()->where('mobile', $request->mobile)->where('segment_code', $request->segment_code)->first();
 
         return response()->json([
             'exists' => (bool) $enquiry,

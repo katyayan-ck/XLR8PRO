@@ -5,10 +5,11 @@ namespace App\Providers;
 use App\Services\AuthService;
 use App\Services\DateFormatService;
 use App\Services\EnquiryReferenceService;
-// use App\Services\DataScopeService;
 use App\Services\FirebaseService;
 use App\Services\HR\EmployeeJourneyService;
 use App\Services\HR\HRJourneyService;
+use App\Services\IAM\DataScope\DataScopeManager;
+use App\Services\IAM\DataScope\ScopeResolver;
 use App\Services\IdentifierService;
 use App\Services\NotificationService;
 use App\Services\OtpNotificationService;
@@ -42,10 +43,6 @@ class AppServiceProvider extends ServiceProvider
             return new RBACService;
         });
 
-        // $this->app->singleton(DataScopeService::class, function ($app) {
-        //     return new DataScopeService();
-        // });
-
         $this->app->bind(AuthService::class, function ($app) {
             return new AuthService(
                 $app->make(Request::class),
@@ -61,7 +58,9 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->singleton(NotificationService::class);
 
-        // $this->app->singleton(\App\Services\IAM\DataScopeService::class);
+        // DEC-071: one scope resolver / manager per request (memoised scopes, opt-out state)
+        $this->app->scoped(ScopeResolver::class);
+        $this->app->scoped(DataScopeManager::class);
         $this->app->singleton(HRJourneyService::class);
         $this->app->singleton(EmployeeJourneyService::class);
         $this->app->singleton(IdentifierService::class);

@@ -370,7 +370,8 @@ class BookingOtfService
     /** Id of another booking whose saved OTF data carries this VOTF number, or null. */
     public function bookingHoldingVotf(string $votfNo, int $exceptBookingId): ?int
     {
-        $candidates = Booking::query()
+        // VOTF numbers are unique across every branch (DEC-071)
+        $candidates = Booking::withoutDataScope()
             ->whereKeyNot($exceptBookingId)
             ->where('final_data', 'like', '%'.addcslashes($votfNo, '%_\\').'%')
             ->get(['id', 'final_data']);
@@ -537,6 +538,12 @@ class BookingOtfService
             );
         }
 
+        // the branch picked on the OTF form is the booking's branch when it has none yet; the other codes are
+        // filled by Booking's saving hook (DEC-071)
+        if (empty($booking->branch_code) && ! empty($formData['votf_branch'])) {
+            $booking->branch_code = strtoupper(trim((string) $formData['votf_branch']));
+        }
+
         $booking->save();
 
         $booking->recordEvent(
@@ -579,7 +586,8 @@ class BookingOtfService
             ? $now->copy()->addYear()->format('y')
             : $now->format('y');
 
-        $records = Booking::query()
+        // the sequence spans every booking, not just the user's scope (DEC-071)
+        $records = Booking::withoutDataScope()
             ->whereNotNull('final_data')
             ->where('final_data', '!=', '')
             ->get(['id', 'final_data']);

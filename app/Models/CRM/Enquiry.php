@@ -5,19 +5,33 @@ namespace App\Models\CRM;
 use App\Models\Admin\Person;
 use App\Models\BaseModel;
 use App\Models\Traits\HasCommunications;
+use App\Models\Traits\HasDataScope;
 use App\Models\User;
 use App\Models\Vehicle\Color;
 use App\Models\Vehicle\Segment;
 use App\Models\Vehicle\Variant;
 use App\Models\Vehicle\VehicleModel;
+use App\Services\IAM\DataScope\ScopeCodeFiller;
+use App\Support\Facades\DataScope;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class Enquiry extends BaseModel
 {
+    // DEC-071: filtered by the signed-in user's data scope (config/data_scope.php)
+
     // Timeline via the Chat utility (DEC-068). HasColumnTransformations stays off: it would change stored values.
     use HasCommunications;
+    use HasDataScope;
+
+    /** Fill empty branch / location / vehicle codes before every save so data scoping can filter the row (DEC-071). */
+    protected static function booted(): void
+    {
+        parent::booted();
+
+        static::saving(fn (self $record) => app(ScopeCodeFiller::class)->fillEnquiry($record, DataScope::user()));
+    }
 
     protected $table = 'xlr8_crm_enquiries';
 

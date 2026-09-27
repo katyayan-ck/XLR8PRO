@@ -913,3 +913,26 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
 - **Not in wave 1 (owner decisions D1–D29 in the plan):** mobile login repair, OTP randomness, v1 entity access,
   deletions of tracked files, menu / permission changes, pricing, data mappings and migrations.
 - **Approved-by:** user (plan approval 28-09). · **Risk:** LOW · **Reversal:** revert the wave-1 commits.
+
+### DEC-071 | 28-09-2026 | A (IAM, all modules) | Automatic, hierarchical data scoping with a code-level opt-out
+- **Why:** the user wants every screen, function and API to show a user only the data inside their assigned scope,
+  applied automatically, with a manual switch-off in code. The dormant scoping (BUG-083 / BUG-136, D27) filtered by id,
+  failed closed, had no hierarchy and was switched on nowhere. Plan: `docs/plans/2026-09-28-data-scoping-DEC-071.md`.
+- **Rules (user, 28-09):**
+  - No scope rows for a dimension = full access on it.
+  - A parent covers all its children down to the last level unless the user is restricted at a child level; a child
+    restriction applies within the nearest assigned ancestor (PV + Thar → only Thar variants; PV + CV + Thar → Thar
+    under PV and every CV model). Trees: Branch → Location; Department → Division; Segment → Sub-segment → Model →
+    Variant. Vertical is standalone.
+  - Applies to booking, quotation, enquiry and every other business entity.
+- **Decisions (user, 28-09):**
+  1. Rows whose dimension is empty stay visible (`scope.unassigned_rows = visible`) until backfilled; then `hidden`.
+  2. Pickers / master lists are not scoped; only business data rows.
+  3. Department / division / vertical filter only where a table carries the column (declared per entity).
+  4. Bookings get `branch_code`, `location_code`, `sub_segment_code`, `model_code`, `variant_code`, set on save and
+     backfilled (covers D22 / BUG-161 / BUG-092).
+- **Mechanism:** one code-based resolver (`ScopeResolver` → `ScopeSet`), a global scope via `HasDataScope` driven by
+  `config/data_scope.php`, opt-out per query (`withoutDataScope()`), per block (`DataScope::off()`), per route
+  (`data-scope:off`); master switch `scope.enabled`. Jobs / console (no user) are never scoped.
+- **Approved-by:** user (28-09: "start", plan saved to docs/plans). · **Risk:** HIGH (changes what users see) — mitigated
+  by the master switch and visible-unassigned default. · **Reversal:** setting `scope.enabled = false`, then revert commits.

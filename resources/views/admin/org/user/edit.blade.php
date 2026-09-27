@@ -293,6 +293,42 @@
                             <div id="permissionOverrideInputs"></div>
                         </div>
 
+                        {{-- DEC-071: what the saved scopes resolve to — a parent covers its children unless a child is assigned --}}
+                        @isset($effectiveScope)
+                            <hr class="my-4">
+                            <details class="mb-2">
+                                <summary class="fw-semibold">Effective data access (saved scopes)</summary>
+                                @if ($effectiveScope->isUnrestricted())
+                                    <p class="text-body-secondary small mt-2 mb-0">Sees all data (no scope restriction, superadmin or bypass).</p>
+                                @else
+                                    <div class="table-responsive mt-2">
+                                        <table class="table table-sm table-vcenter mb-0">
+                                            <tbody>
+                                                @foreach (['branch' => 'Branch', 'location' => 'Location', 'department' => 'Department', 'division' => 'Division', 'vertical' => 'Vertical', 'segment' => 'Segment', 'sub_segment' => 'Sub-segment', 'model' => 'Model', 'variant' => 'Variant'] as $level => $label)
+                                                    @php($codes = $effectiveScope->allowed($level))
+                                                    <tr>
+                                                        <th scope="row" class="text-nowrap w-25">{{ $label }}</th>
+                                                        <td>
+                                                            @if ($codes === null)
+                                                                <span class="badge bg-success-lt">All</span>
+                                                            @elseif ($codes === [])
+                                                                <span class="badge bg-danger-lt">None</span>
+                                                            @else
+                                                                <span class="text-body-secondary small">{{ count($codes) }}:</span>
+                                                                {{ implode(', ', array_slice($codes, 0, 12)) }}@if (count($codes) > 12) … @endif
+                                                            @endif
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <p class="text-body-secondary small mt-2 mb-0">Records with an empty code on a level are
+                                        {{ \App\Support\Facades\DataScope::unassignedVisible() ? 'shown' : 'hidden' }} (setting scope.unassigned_rows).</p>
+                                @endif
+                            </details>
+                        @endisset
+
                         <div class="d-flex justify-content-end gap-2 mt-4">
                             <a href="{{ backpack_url('org/user') }}" class="btn btn-outline-secondary">Cancel</a>
                             <button type="submit" class="btn btn-primary">Save Changes</button>

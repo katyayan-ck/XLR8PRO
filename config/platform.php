@@ -79,6 +79,9 @@ return [
         'sla.ticket.p4_hours' => ['value' => 72, 'type' => 'int', 'label' => 'Ticket SLA P4 (hours)'],
         'ticket.autoclose_days' => ['value' => 3, 'type' => 'int', 'label' => 'Ticket auto-close after resolved (days)'],
         'ticket.autoclose_enabled' => ['value' => true, 'type' => 'bool', 'label' => 'Auto-close resolved tickets'],
+        // DEC-071 user data scoping
+        'scope.enabled' => ['value' => true, 'type' => 'bool', 'label' => 'Filter data by each user\'s scope (branch / location / department / division / vertical / vehicle)'],
+        'scope.unassigned_rows' => ['value' => 'visible', 'type' => 'string', 'label' => 'Rows without a scope code: visible or hidden'],
         'approval.auto_accept_own_power' => ['value' => true, 'type' => 'bool', 'label' => 'Auto-accept asks within own power'],
         'mail.driver' => ['value' => 'laravel', 'type' => 'string', 'label' => 'Email driver (laravel|log)'],
         'mail.identities' => ['value' => ['default' => null], 'type' => 'json', 'label' => 'Email sender identities (alias => address)'],
