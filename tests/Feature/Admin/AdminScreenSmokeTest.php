@@ -34,8 +34,7 @@ class AdminScreenSmokeTest extends TestCase
         'sales/booking/reports/pending-actions/list' => 'BUG-122',
         'sales/booking/reports/stock' => 'BUG-122',
         'sales/booking/reports/stock/list' => 'BUG-122',
-        'spares/spare-request' => 'BUG-030/032 spares module',
-        'spares/spare-request/create' => 'BUG-030/032 spares module',
+        'spares/spare-request' => 'BUG-031 list calls the unregistered spare-request.data route (module rebuild: D28)',
     ];
 
     /** @return list<string> */

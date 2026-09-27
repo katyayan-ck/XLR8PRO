@@ -895,3 +895,44 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
   - The list toolbars wrap instead of using fixed widths.
   - A fresh clone is installed and booted in a temporary directory against the local database.
 - **Approved-by:** user (28-09: "fix all issues marked for later"). A backup of `media` and the docs tables is taken before the migration. · **Risk:** MED (data re-pointing on local; reversible) · **Reversal:** `php artisan migrate:rollback --step=1`, then revert the commit.
+
+### DEC-070 | 28-09-2026 | A (all modules) | Bug-fix sprint, wave 1: fixes that need no owner decision
+- **Why:** the user asked to clear all bugs one by one after triaging each against the code (plan approved 28-09).
+  The triage found mobile OTP login broken (`users` has no `mobile` column) and the login OTP written to the log in
+  plain text; both are in scope here only as far as no auth behaviour changes.
+- **Decision (wave 1, no business / auth choice):**
+  - BUG-189: never log an OTP; log user id and masked numbers only. `AuthService` gets its missing imports.
+  - BUG-184 audit names via `display_name`; BUG-185 unused `onlyRestored()` scope removed; BUG-186 `variantName()` returns the name.
+  - BUG-192 / 193 relation keys (`id`, `bid`); BUG-102 dead exchange payload keys dropped (nothing saved changes).
+  - BUG-097: OTF save rejects a VOTF number another booking already holds (row lock in a transaction).
+  - BUG-195: PAN masked in new KYC history entries, like the Aadhaar.
+  - BUG-168: Lead / Lead Source search and details routes carry `'operation' => 'list'`.
+  - BUG-029 / 055 pattern: imports record the real actor, not user 1. BUG-179: importer debug output removed.
+  - BUG-008 / 020 / 021: unused Create / Update traits removed (screens stay list-only; no files deleted).
+  - Tracker, state and smoke-test citations corrected; fixed bugs closed with evidence.
+- **Not in wave 1 (owner decisions D1–D29 in the plan):** mobile login repair, OTP randomness, v1 entity access,
+  deletions of tracked files, menu / permission changes, pricing, data mappings and migrations.
+- **Approved-by:** user (plan approval 28-09). · **Risk:** LOW · **Reversal:** revert the wave-1 commits.
+
+### DEC-071 | 28-09-2026 | A (IAM, all modules) | Automatic, hierarchical data scoping with a code-level opt-out
+- **Why:** the user wants every screen, function and API to show a user only the data inside their assigned scope,
+  applied automatically, with a manual switch-off in code. The dormant scoping (BUG-083 / BUG-136, D27) filtered by id,
+  failed closed, had no hierarchy and was switched on nowhere. Plan: `docs/plans/2026-09-28-data-scoping-DEC-071.md`.
+- **Rules (user, 28-09):**
+  - No scope rows for a dimension = full access on it.
+  - A parent covers all its children down to the last level unless the user is restricted at a child level; a child
+    restriction applies within the nearest assigned ancestor (PV + Thar → only Thar variants; PV + CV + Thar → Thar
+    under PV and every CV model). Trees: Branch → Location; Department → Division; Segment → Sub-segment → Model →
+    Variant. Vertical is standalone.
+  - Applies to booking, quotation, enquiry and every other business entity.
+- **Decisions (user, 28-09):**
+  1. Rows whose dimension is empty stay visible (`scope.unassigned_rows = visible`) until backfilled; then `hidden`.
+  2. Pickers / master lists are not scoped; only business data rows.
+  3. Department / division / vertical filter only where a table carries the column (declared per entity).
+  4. Bookings get `branch_code`, `location_code`, `sub_segment_code`, `model_code`, `variant_code`, set on save and
+     backfilled (covers D22 / BUG-161 / BUG-092).
+- **Mechanism:** one code-based resolver (`ScopeResolver` → `ScopeSet`), a global scope via `HasDataScope` driven by
+  `config/data_scope.php`, opt-out per query (`withoutDataScope()`), per block (`DataScope::off()`), per route
+  (`data-scope:off`); master switch `scope.enabled`. Jobs / console (no user) are never scoped.
+- **Approved-by:** user (28-09: "start", plan saved to docs/plans). · **Risk:** HIGH (changes what users see) — mitigated
+  by the master switch and visible-unassigned default. · **Reversal:** setting `scope.enabled = false`, then revert commits.

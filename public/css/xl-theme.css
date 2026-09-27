@@ -17,6 +17,8 @@
 [data-bs-theme=dark] .xl-sidebar .navbar-brand img,
 [data-bs-theme=dark] .xl-shell-top .nav-brand img,
 .xl-sidebar[data-bs-theme=dark] .navbar-brand img { filter: brightness(0) invert(1); opacity: .92; }
+/* nested menu dropdowns: push the caret to the right edge (was an inline <style> in menu_items, DEC-070) */
+.sidebar .dropdown-toggle::after { margin-left: auto !important; }
 
 /* user block */
 .xl-avatar { position: relative; font-weight: 600; overflow: visible; }

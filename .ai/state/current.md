@@ -28,23 +28,21 @@
 **UI / design (DEC-066…068):** Sales / booking converted 28-09; the shared UI layer, the Appearance panel (mode / colour / font /
 radius / layout), AG-Grid themed via the global hook, and the dev UI kit `/admin/dev/ui`. The resume list and how to verify are in
 `docs/refactor/ui-design-progress.md` (remaining: hex outside Sales, real dashboard).
-**DEC-069 (28-09, dev/admin, not yet on stage):** booking proofs are Docs one-file slots (migration run on both DBs), AG-Grid pinned in all 87 views, phone list toolbars fixed. Next: bug fixing one by one (`.ai/state/bugs-index.md`).
+**DEC-069 (on stage 0386230):** booking proofs in Docs, AG-Grid pinned in all 87 views, phone toolbars. **DEC-070 (dev/admin, not pushed):** bug-fix wave 1 done (OTP no longer logged, relation keys, VOTF duplicate guard, PAN masking, tracker triage); decisions D1–D29 await the owner — list in `~/.claude/plans/shiny-hopping-sky.md` / the DEC-070 changelog. Mobile OTP login is broken until D1 (BUG-187).
+**DEC-071 (dev/admin, not pushed):** automatic user data scoping is live (`HasDataScope`, `config/data_scope.php`, `DataScope` facade; settings `scope.enabled`, `scope.unassigned_rows` = visible). Bookings carry branch / vehicle codes. Next: add 6 "Location" synonyms, run `php artisan data-scope:backfill --apply`, then flip unassigned to hidden.
 
-**Waiting on the user (left as they are, 27-09):**
-- BUG-173: variant code convention; a fresh vehicle import is pending and needs `gscreds.json`.
-- BUG-177: which permission gates the Imports menu / `imports/admin`.
-- BUG-178: the engine ignores WIDE dealer charges and the model-scope column (price-changing fix).
-- BUG-179: which accessory importer is authoritative. The accessories entity services wait on this.
-- `ProductionRBACSeeder` test users are broken (DEC-059).
-- Data scoping switch-on (BUG-083).
-- Google service-account key rotation (history purge needs approval).
+**Waiting on the owner (DEC-070 decisions, details in the 28-09 changelog):**
+- Security / API: D1 repair mobile login (BUG-187), D2 `random_int` OTP (BUG-188), D3 v1 entity access (BUG-182), D4 lead lookups.
+- Deletions: D5 Brand, D6 ExportController, D7 RBACService, D8 Core graph models, D9 getChassisNumbers, D10 dead Org views, D11 seeder test users, D12 Booking scopes.
+- UAT: D13 52 dead menu links, D14 import permissions (BUG-177), D15 Pricing menu, D16 order-approve permission (BUG-095), D17 avatar.
+- Business / data: D18 pricing (BUG-178), D19 accessory importer, D20 RTO sheet id, D21 BEV SO rule, D23 reports, D24 designations, D25 variant import, D26 mask old KYC rows, D28 Spares (D22 / D27 done in DEC-071; BUG-197 PRSNL division), D29 Google key rotation.
 
-**For the booking team:** BUG-168 (routes skipping permission checks), about 37 menu links with no routes, BUG-153 (chassis status rule), BUG-030 (XCommonHelper).
+**For the booking team:** 52 dead menu links (D13, incl. BUG-056 / 062), BUG-095 hardcoded user ids (D16), BUG-122 reports (D23), BUG-161 / 092 booking columns (D22), BUG-191 dead scopes (D12).
 
 **Local data:** vehicle master tables in `xlrm` purged (DEC-051), awaiting a fresh import. Keep `xlrm_testing` as is until then; both have the DEC-055 keyword masters migrated.
 
 **Track B:** paused after B0 (DEC-033); resume from xceler8 `d9009db`. **Deferred until after UAT:** Laravel 13, Excel 4, Permission 8, Firebase 8, PHPUnit 12/13, Swagger 11.
 
-**Verification cadence:** targeted smoke per change; full suite periodically (338 passed, 2 skipped on 28-09); `--group=smoke` sweep before merges.
+**Verification cadence:** targeted smoke per change; full suite periodically (342 passed, 1 skipped on 28-09 before DEC-070; the one fixed skip is the MSG91 SMS test); `--group=smoke` sweep before merges.
 
 **Environment:** Laragon, PHP 8.4.26 (+redis), MySQL 8.4.3. After a migration, run `DB_DATABASE=xlrm_testing php artisan migrate`. Do not `testing:refresh-db` until the vehicle import is in (DEC-051); it copies the empty vehicle tables over the test data.

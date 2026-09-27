@@ -19,7 +19,9 @@ use App\Models\Vehicle\Variant;
 use App\Models\Vehicle\VehicleModel;
 use App\Services\OrgService;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Business logic for the Booking OTF/VOTF sub-domain (otfProcess() ->
@@ -338,9 +340,54 @@ class BookingOtfService
      * linked Enquiry's address fields, and upserts RTO/Finance/Insurance
      * records from the same submission. Returns the saved Booking.
      *
+     * BUG-097 (DEC-070): a VOTF number is previewed in one request and saved in another. The check that no other
+     * booking already holds the submitted number and the save run under one lock, so a second save of the same
+     * number fails with a `votf_no` validation error instead of creating a duplicate.
+     *
      * @param  array<string, mixed>  $formData  the raw request payload, already stripped of _token/_method/chassis_image
+     *
+     * @throws ValidationException when another booking already holds the submitted VOTF number
      */
     public function apply(Booking $booking, array $formData, ?UploadedFile $chassisImage): Booking
+    {
+        $votfNo = trim((string) ($formData['votf_no'] ?? ''));
+        if ($votfNo === '') {
+            return $this->applyForm($booking, $formData, $chassisImage);
+        }
+
+        return Cache::lock('sales:booking:votf', 15)->block(10, function () use ($booking, $formData, $chassisImage, $votfNo) {
+            $holder = $this->bookingHoldingVotf($votfNo, $booking->id);
+            if ($holder !== null) {
+                throw ValidationException::withMessages([
+                    'votf_no' => "VOTF number {$votfNo} is already used by booking #{$holder}. Generate a new number and save again.",
+                ]);
+            }
+
+            return $this->applyForm($booking, $formData, $chassisImage);
+        });
+    }
+
+    /** Id of another booking whose saved OTF data carries this VOTF number, or null. */
+    public function bookingHoldingVotf(string $votfNo, int $exceptBookingId): ?int
+    {
+        // VOTF numbers are unique across every branch (DEC-071)
+        $candidates = Booking::withoutDataScope()
+            ->whereKeyNot($exceptBookingId)
+            ->where('final_data', 'like', '%'.addcslashes($votfNo, '%_\\').'%')
+            ->get(['id', 'final_data']);
+
+        foreach ($candidates as $candidate) {
+            $data = is_array($candidate->final_data) ? $candidate->final_data : json_decode((string) $candidate->final_data, true);
+            if (is_array($data) && trim((string) ($data['votf_no'] ?? '')) === $votfNo) {
+                return (int) $candidate->id;
+            }
+        }
+
+        return null;
+    }
+
+    /** @param  array<string, mixed>  $formData */
+    private function applyForm(Booking $booking, array $formData, ?UploadedFile $chassisImage): Booking
     {
         if ($chassisImage) {
             $booking->replaceDocument('chassis_image', $chassisImage, [], 'chassis_image');   // Docs (DEC-069)
@@ -491,6 +538,12 @@ class BookingOtfService
             );
         }
 
+        // the branch picked on the OTF form is the booking's branch when it has none yet; the other codes are
+        // filled by Booking's saving hook (DEC-071)
+        if (empty($booking->branch_code) && ! empty($formData['votf_branch'])) {
+            $booking->branch_code = strtoupper(trim((string) $formData['votf_branch']));
+        }
+
         $booking->save();
 
         $booking->recordEvent(
@@ -512,10 +565,9 @@ class BookingOtfService
      * year's highest global and branch-scoped sequence numbers. Format:
      * "{FY}/{BRANCH}{branch_seq:04d}/{global_seq:04d}".
      *
-     * BUG-097 (known-bugs-report.md, already documented): this scan-then-
-     * increment has no lock, so two concurrent saves can race onto the
-     * same number - unchanged by this extraction, still needs the same
-     * design decision noted there.
+     * This is a preview only: two users can be shown the same number. The
+     * save in apply() rejects a number another booking already holds
+     * (BUG-097, DEC-070), so the second user regenerates.
      */
     public function generateVotfNumber(
         Booking $booking,
@@ -534,7 +586,8 @@ class BookingOtfService
             ? $now->copy()->addYear()->format('y')
             : $now->format('y');
 
-        $records = Booking::query()
+        // the sequence spans every booking, not just the user's scope (DEC-071)
+        $records = Booking::withoutDataScope()
             ->whereNotNull('final_data')
             ->where('final_data', '!=', '')
             ->get(['id', 'final_data']);

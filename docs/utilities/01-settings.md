@@ -21,6 +21,9 @@ Service `App\Services\Platform\Settings\SettingsService` · facade `Settings` ·
 | `Settings::set($key, $value, $scopeType = null, $scopeCode = null, $actorId = null)` | Result | `READ_ONLY`, `INVALID_VALUE`, `INVALID_SCOPE` |
 | `Settings::reset($key)` | Result | back to `default_value` / seed |
 | `Settings::clearScope($key, $scopeType, $scopeCode)` | Result | remove one override |
+
+Data-scoping settings (DEC-071): `scope.enabled` (bool, master switch) and `scope.unassigned_rows` (`visible` / `hidden`) —
+see `docs/domains/iam-auth.md` → "Data scoping".
 | `Settings::adminList($search)` | array | what the admin screen shows |
 | `setting($key, $default)` / `feature($key)` | helpers | same as `get` / `flag` |
 

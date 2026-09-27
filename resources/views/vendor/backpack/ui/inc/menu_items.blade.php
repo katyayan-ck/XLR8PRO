@@ -1,8 +1,3 @@
-<style>
-    .sidebar .dropdown-toggle::after {
-        margin-left: auto !important;
-    }
-</style>
 {{-- MAIN ADMIN MENU - ALL ITEMS NESTED --}}
 <x-backpack::menu-dropdown title="Admin" icon="la la-th">
 
@@ -312,7 +307,7 @@
         {{-- FETCH ENQUIRY COUNTS (Cached for 60 seconds to prevent slow page loads) --}}
         {{-- ========================================================================= --}}
         @php
-            $enqCounts = \Illuminate\Support\Facades\Cache::remember('menu_enquiry_counts', 60, function () {
+            $enqCounts = \Illuminate\Support\Facades\Cache::remember('menu_enquiry_counts:'.\App\Support\Facades\DataScope::current()->hash(), 60, function () {   // per data scope (DEC-071)
                 return [
                     'all' => \App\Models\CRM\Enquiry::mainListing()->count(),
                     'xceler8' => \App\Models\CRM\Enquiry::xceler8()->count(),

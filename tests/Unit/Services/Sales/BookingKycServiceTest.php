@@ -4,6 +4,7 @@ namespace Tests\Unit\Services\Sales;
 
 use App\Models\Module\Booking\Booking;
 use App\Models\User;
+use App\Models\Utilities\CommHistory\CommThread;
 use App\Services\Sales\Booking\BookingKycService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
@@ -53,6 +54,27 @@ class BookingKycServiceTest extends TestCase
         $this->assertSame('ABCDE1234F', $updated->pan_no);
         $this->assertSame('234567890123', $updated->adhar_no);
         $this->assertSame('27ABCDE1234F1Z5', $updated->gstn);
+    }
+
+    public function test_the_kyc_history_entry_masks_pan_and_aadhaar(): void
+    {
+        // BUG-195: the booking timeline is visible to every booking viewer and the mobile app.
+        $booking = $this->makeBooking();
+
+        $this->service->apply($booking, [
+            'pan_no' => 'ABCDE1234F',
+            'adhar_no' => '234567890123',
+            'gst_no' => null,
+        ], true);
+
+        $meta = CommThread::where('comm_master_id', $booking->getOrCreateCommMaster()->id)
+            ->latest('id')->firstOrFail()->extra_data;
+        $stored = json_encode($meta);
+
+        $this->assertStringNotContainsString('ABCDE1234F', $stored);
+        $this->assertStringNotContainsString('234567890123', $stored);
+        $this->assertStringContainsString('XXXXXX234F', $stored);
+        $this->assertStringContainsString('XXXXXXXX0123', $stored);
     }
 
     public function test_apply_sets_gstn_to_zero_when_gst_not_required(): void

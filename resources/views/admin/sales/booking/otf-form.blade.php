@@ -901,6 +901,9 @@ use App\Services\OrgService;
                 </select>
 
             </div>
+            @error('votf_no')
+                <div class="text-danger small mt-1" role="alert">{{ $message }}</div>
+            @enderror
         </td>
     </tr>
 

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\ErrorCodeEnum;
 use App\Exceptions\AccountLockedException;
 use App\Exceptions\AuthenticationException;
 use App\Exceptions\RateLimitException;
@@ -10,26 +11,24 @@ use App\Models\IAM\DeviceSession;
 use App\Models\IAM\OtpAttemptLog;
 use App\Models\IAM\OtpToken;
 use App\Models\User;
-use App\Services\OtpNotificationService;
-use Carbon\Carbon;
+use App\Services\Platform\Comms\ContactService;
 use Illuminate\Cache\CacheManager;
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use App\Enums\ErrorCodeEnum;
-use Illuminate\Support\Str;
+use Throwable;
 
 /**
  * Authentication Service
- * 
+ *
  * Handles OTP-based authentication flow:
  * 1. Request OTP - Validates mobile, generates OTP, sends via email/SMS
  * 2. Verify OTP - Validates OTP, creates device session, issues Sanctum token
  * 3. User Details - Retrieves authenticated user profile
  * 4. Logout - Revokes authentication token
- * 
+ *
  * Features:
  * - Rate limiting (3 OTP requests per 15 minutes)
  * - Account locking (after 5 failed attempts, locked for 30 minutes)
@@ -43,16 +42,25 @@ class AuthService
      * OTP Configuration
      */
     private const OTP_LENGTH = 6;
+
     private const OTP_EXPIRY_MINUTES = 10;
+
     private const MAX_OTP_REQUESTS = 5;
+
     private const OTP_REQUEST_WINDOW_MINUTES = 15;
+
     private const MAX_OTP_ATTEMPTS = 5;
+
     private const OTP_ATTEMPT_WINDOW_MINUTES = 15;
+
     private const ACCOUNT_LOCK_DURATION_MINUTES = 30;
+
     private const DEVICE_LIMIT = 5;
 
     protected Request $request;
+
     protected CacheManager $cache;
+
     protected OtpNotificationService $notificationService;
 
     public function __construct(
@@ -67,13 +75,14 @@ class AuthService
 
     /**
      * Request OTP
-     * 
+     *
      * Validates mobile, checks registration, rate limits, generates OTP,
      * sends via email/SMS, and logs the attempt.
-     * 
-     * @param string $mobile Mobile number
-     * @param Request $request HTTP request for IP/user agent
+     *
+     * @param  string  $mobile  Mobile number
+     * @param  Request  $request  HTTP request for IP/user agent
      * @return array Response data
+     *
      * @throws ValidationException Invalid mobile format
      * @throws AuthenticationException User not found/inactive
      * @throws RateLimitException Too many requests
@@ -82,7 +91,7 @@ class AuthService
     {
         try {
             // Validate mobile format
-            if (!$this->isValidMobile($mobile)) {
+            if (! $this->isValidMobile($mobile)) {
                 throw new ValidationException(
                     'Invalid mobile number format. Must be 10-digit number.',
                     ['mobile' => ['Invalid format']],
@@ -96,14 +105,14 @@ class AuthService
             // Find user by mobile
             $user = User::where('mobile', $mobile)->first();
 
-            if (!$user) {
+            if (! $user) {
                 throw new AuthenticationException(
                     ErrorCodeEnum::AUTH_USER_NOT_FOUND,
-                    "Mobile number '{$mobile}' not registered in system"
+                    'Mobile number not registered in system'
                 );
             }
 
-            if (!$user->is_active) {
+            if (! $user->is_active) {
                 throw new AuthenticationException(
                     ErrorCodeEnum::AUTH_USER_INACTIVE,
                     'User account is inactive. Contact support.'
@@ -135,7 +144,7 @@ class AuthService
             Log::info('OTP notification sent', [
                 'email_sent' => $emailSent,
                 'sms_sent' => $smsSent,
-                'mobile' => $mobile,
+                'mobile' => $this->maskMobile($mobile),
             ]);
 
             // Log attempt
@@ -151,7 +160,7 @@ class AuthService
 
             Log::info('OTP requested successfully', [
                 'user_id' => $user->id,
-                'mobile' => $mobile,
+                'mobile' => $this->maskMobile($mobile),
                 'expires_at' => $token->expires_at->toIso8601String(),
             ]);
 
@@ -173,31 +182,26 @@ class AuthService
             ];
         } catch (Throwable $e) {
             Log::error('Error requesting OTP', [
-                'mobile' => $mobile,
+                'mobile' => $this->maskMobile($mobile),
                 'error' => $e->getMessage(),
             ]);
             throw $e;
         }
     }
 
-
     /**
      * Verify OTP
-     * 
+     *
      * Validates OTP, checks expiration, rate limits attempts,
      * binds device, issues Sanctum token, and logs the session.
-     * 
-     * @param string $mobile
-     * @param string $otp
-     * @param string $deviceId
-     * @param string $deviceName
-     * @param string $platform
-     * @param Request $request HTTP request for IP/user agent
+     *
+     * @param  Request  $request  HTTP request for IP/user agent
      * @return array Response data with token and user details
+     *
      * @throws AuthenticationException Invalid/expired OTP or user issues
      * @throws RateLimitException Too many attempts
      * @throws AccountLockedException Account locked
-     * @throws ApplicationException Device limit exceeded or binding failed
+     * @throws AuthenticationException Device limit exceeded or binding failed
      */
     public function verifyOtp(
         string $mobile,
@@ -219,7 +223,7 @@ class AuthService
                 ->latest('created_at')
                 ->first();
 
-            if (!$token) {
+            if (! $token) {
                 $this->logFailedAttempt($mobile, 'verification', 'No OTP found', $request);
                 throw new AuthenticationException(
                     ErrorCodeEnum::AUTH_OTP_INVALID,
@@ -237,7 +241,7 @@ class AuthService
             }
 
             // Verify OTP hash
-            if (!Hash::check($otp, $token->otp_hash)) {
+            if (! Hash::check($otp, $token->otp_hash)) {
                 $this->logFailedAttempt($mobile, 'verification', 'Invalid OTP', $request, $token->user_id);
                 $this->checkFailedAttemptsLock($mobile);
                 throw new AuthenticationException(
@@ -297,7 +301,7 @@ class AuthService
 
             Log::info('OTP verified successfully', [
                 'user_id' => $user->id,
-                'mobile' => $mobile,
+                'mobile' => $this->maskMobile($mobile),
                 'device_id' => $deviceId,
             ]);
 
@@ -316,14 +320,14 @@ class AuthService
                     ],
                 ],
             ];
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ModelNotFoundException $e) {
             throw new AuthenticationException(
                 ErrorCodeEnum::AUTH_USER_NOT_FOUND,
                 'User not found'
             );
         } catch (Throwable $e) {
             Log::error('Error verifying OTP', [
-                'mobile' => $mobile,
+                'mobile' => $this->maskMobile($mobile),
                 'device_id' => $deviceId,
                 'error' => $e->getMessage(),
             ]);
@@ -331,13 +335,12 @@ class AuthService
         }
     }
 
-
     /**
      * Get user details
-     * 
+     *
      * Retrieves authenticated user profile with roles and permissions.
-     * 
-     * @param User $user Authenticated user
+     *
+     * @param  User  $user  Authenticated user
      * @return array User data
      */
     public function getUserDetails(User $user): array
@@ -358,10 +361,10 @@ class AuthService
 
     /**
      * Logout user
-     * 
+     *
      * Revokes current authentication token and logs the action.
-     * 
-     * @param User $user Authenticated user
+     *
+     * @param  User  $user  Authenticated user
      * @return array Response data
      */
     public function logout(User $user): array
@@ -387,7 +390,6 @@ class AuthService
 
             Log::info('User logged out', [
                 'user_id' => $user->id,
-                'mobile' => $mobile,
             ]);
 
             return [
@@ -405,10 +407,10 @@ class AuthService
 
     /**
      * Validate mobile number format
-     * 
+     *
      * Checks if mobile is 10-digit numeric (Indian format)
-     * 
-     * @param string $mobile Mobile number
+     *
+     * @param  string  $mobile  Mobile number
      * @return bool True if valid format
      */
     private function isValidMobile(string $mobile): bool
@@ -422,7 +424,7 @@ class AuthService
 
     /**
      * Generate random OTP
-     * 
+     *
      * @return string OTP code
      */
     private function generateOtp(): string
@@ -432,8 +434,7 @@ class AuthService
 
     /**
      * Check OTP request rate limit
-     * 
-     * @param string $mobile
+     *
      * @throws RateLimitException
      */
     private function checkOtpRequestRateLimit(string $mobile): void
@@ -454,8 +455,7 @@ class AuthService
 
     /**
      * Check OTP attempt rate limit
-     * 
-     * @param string $mobile
+     *
      * @throws RateLimitException
      */
     private function checkOtpAttemptRateLimit(string $mobile): void
@@ -476,8 +476,7 @@ class AuthService
 
     /**
      * Check if account is locked
-     * 
-     * @param string $mobile
+     *
      * @throws AccountLockedException
      */
     private function checkAccountLock(string $mobile): void
@@ -493,10 +492,15 @@ class AuthService
 
     /**
      * Lock account
-     * 
-     * @param string $mobile
+     *
      * @return void
      */
+    /** Masked number for logs (BUG-189: never log a full phone number or an OTP). */
+    private function maskMobile(?string $mobile): string
+    {
+        return app(ContactService::class)->mask($mobile);
+    }
+
     private function lockAccount(string $mobile): void
     {
         $lockKey = "account_lock_{$mobile}";
@@ -512,18 +516,11 @@ class AuthService
             );
         }
 
-        Log::warning('Account locked', ['mobile' => $mobile]);
+        Log::warning('Account locked', ['mobile' => $this->maskMobile($mobile)]);
     }
 
     /**
      * Log failed OTP attempt
-     * 
-     * @param string $mobile
-     * @param string $action
-     * @param string $reason
-     * @param Request $request
-     * @param int|null $userId
-     * @return void
      */
     private function logFailedAttempt(
         string $mobile,
@@ -545,16 +542,13 @@ class AuthService
         ]);
 
         Log::warning('Failed OTP attempt', [
-            'mobile' => $mobile,
+            'mobile' => $this->maskMobile($mobile),
             'reason' => $reason,
         ]);
     }
 
     /**
      * Check failed attempts and lock if exceeded
-     * 
-     * @param string $mobile
-     * @return void
      */
     private function checkFailedAttemptsLock(string $mobile): void
     {
@@ -568,9 +562,6 @@ class AuthService
 
     /**
      * Clear failed attempts cache
-     * 
-     * @param string $mobile
-     * @return void
      */
     private function clearFailedAttemptsCache(string $mobile): void
     {
@@ -579,9 +570,8 @@ class AuthService
 
     /**
      * Check device limit
-     * 
-     * @param User $user
-     * @throws ApplicationException
+     *
+     * @throws AuthenticationException
      */
     private function checkDeviceLimit(User $user): void
     {
@@ -590,9 +580,9 @@ class AuthService
             ->count();
 
         if ($activeSessions >= self::DEVICE_LIMIT) {
-            throw new ApplicationException(
-                'Device limit exceeded. Maximum ' . self::DEVICE_LIMIT . ' devices allowed.',
+            throw new AuthenticationException(
                 ErrorCodeEnum::AUTH_DEVICE_BINDING_FAILED,
+                'Device limit exceeded. Maximum '.self::DEVICE_LIMIT.' devices allowed.',
                 403
             );
         }
@@ -600,12 +590,6 @@ class AuthService
 
     /**
      * Create device session
-     * 
-     * @param User $user
-     * @param string $deviceId
-     * @param string $deviceName
-     * @param string $platform
-     * @return DeviceSession
      */
     private function createDeviceSession(User $user, string $deviceId, string $deviceName, string $platform): DeviceSession
     {

@@ -2,24 +2,19 @@
 
 namespace App\Http\Controllers\Admin\Org\PersonAddress;
 
-use App\Models\Admin\Person;
 use App\Models\Admin\PersonAddress;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
-use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
-use Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
 
 class PersonAddressCrudController extends CrudController
 {
-    use CreateOperation;
     use DeleteOperation;
     use ListOperation {
         search as traitSearch;
         showDetailsRow as traitShowDetailsRow;
     }
-    use UpdateOperation;
 
     public function search()
     {

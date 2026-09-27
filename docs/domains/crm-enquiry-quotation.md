@@ -40,13 +40,18 @@ Guarded model. Status constants: `new`, `in_followup`, `quotation_sent`, `quotat
 `otf_generated`, `lost`, `cancelled`. Long-form fields: `LONG_FORM_PAIRED_FIELDS` (segment / model / variant code ↔
 name) and `LONG_FORM_SINGLE_FIELDS` (name, mobile, email, gender, enquiry_type, source_code, likely_purchase_date,
 fuel_type, transmission, drivetrain, seating, color_code, tehsil, district, …).
+**Data scoping (DEC-071):** `HasDataScope` — every query is filtered by the user's scope on `dealer_branch`,
+`dealer_location`, `segment_code`, `model_code`, `variant_code`; a `saving` hook (`ScopeCodeFiller::fillEnquiry`) fills
+empty branch / location from the acting employee's primary branch / location and vehicle parents from the masters.
+`Quotation` and `Lead` / `Campaign` are scoped too (quotation via its enquiry). The duplicate-enquiry check uses
+`withoutDataScope()`; menu / highlight counts are cached per scope. Existing rows: `php artisan data-scope:backfill`.
 
 | Member | Returns |
 |---|---|
 | `static resolveByAnyReference($ref)` | `?Enquiry` by id **or** `enquiry_no` **or** `quick_enquiry_no` |
 | `lead()`, `person()`, `salesConsultant()` (`sc_name` → user), `campaign()` (`planned_campaign` → name) | relations |
 | `model()`, `segment()`, `variant()`, `color()`, `vehicleModel()` | vehicle relations |
-| `quotations()` | **broken** — joins on `enquiry_no` instead of `id` (BUG-192); query `Quotation::where('enquiry_no', $enquiry->id)` |
+| `quotations()` | `hasMany(Quotation, 'enquiry_no', 'id')` — quotations store the enquiry id (BUG-192 fixed) |
 | scopes `formComplete()` / `formIncomplete()` | long form filled / not |
 | scopes `mainListing()`, `xceler8()` (created in the CRM), `hyperlocal()`, `currentOrigin($origin)`, `quick()`, `long()`, `reference()`, `virtual()`, `whatsapp()` | list sources |
 | scopes `open()`, `forConsultant($userId)`, `assigned()`, `unassigned()`, `assignedQuick()`, `unassignedQuick()`, `assignedLong()`, `unassignedLong()` | work lists |
@@ -98,7 +103,7 @@ $enquiry = Enquiry::resolveByAnyReference(app(EnquiryReferenceService::class)->f
 **Quote history** → `$quotation->actions()->latest()->get()` (who requested / approved which on-road, per revision).
 
 ## Gotchas
-- `Quotation.enquiry_no` is the enquiry **id**, not its `enquiry_no` (BUG-192).
+- `Quotation.enquiry_no` is the enquiry **id**, not its `enquiry_no` (`Enquiry::quotations()` joins on it).
 - Status strings are constants on the models — compare with `Enquiry::STATUS_LOST`, never string literals.
 - Enquiry, TestDrive and Booking are guarded (no `$fillable`); controllers set attributes explicitly — don't mass-assign
   request input.

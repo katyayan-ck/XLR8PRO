@@ -6,6 +6,7 @@ use App\Models\Admin\Person;
 use App\Models\BaseModel;
 use App\Models\Traits\HasColumnTransformations;
 use App\Models\Traits\HasCommunications;
+use App\Models\Traits\HasDataScope;
 use App\Models\User;
 use App\Models\Vehicle\Color;
 use App\Models\Vehicle\Variant;
@@ -14,7 +15,9 @@ use App\Services\KeywordValueService;
 
 class Quotation extends BaseModel
 {
+    // DEC-071: filtered by the signed-in user's data scope (config/data_scope.php)
     use HasColumnTransformations, HasCommunications;
+    use HasDataScope;
 
     protected $table = 'xlr8_crm_quotations';
 

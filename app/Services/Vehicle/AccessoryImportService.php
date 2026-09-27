@@ -102,23 +102,15 @@ class AccessoryImportService
     {
         $this->total++;
 
-        echo "\n=== ROW {$rowNo} ===\n";
-        print_r($row);   // full row with header keys
-
         $partNo = strtoupper(trim((string) ($row['part no.'] ?? $row['part no'] ?? $row['part_no'] ?? $row['partno'] ?? '')));
         $item = trim((string) ($row['item name'] ?? $row['item_name'] ?? $row['item'] ?? ''));
 
-        echo "[PART NO] '{$partNo}' | [ITEM NAME] '{$item}'\n";
-
         if ($partNo === '' || $item === '') {
             $this->skipped++;
-            echo "→ SKIPPED (part/item missing)\n";
             $this->warnings[] = "Row {$rowNo}: skipped (part/item missing)";
 
             return;
         }
-
-        echo "→ PROCESSING\n";
 
         DB::transaction(function () use ($partNo, $item, $row, $rowNo) {
             $disp = trim((string) ($row['display name'] ?? ''));

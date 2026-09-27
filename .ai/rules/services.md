@@ -33,7 +33,7 @@ Full health notes: `docs/reference/Shared-Services-Utilities-Catalog.md`.
 | Keyword/lookup values | reads: `App\Services\KeywordValueService` (cached); writes: `Utils\KeyvalueService` / `KeywordMasterService` | never query or write `Keyvalue` directly |
 | Synonyms before matching imported values | `App\Services\Utils\SynonymService` | |
 | RBAC helpers | `App\Services\RBACService`, `App\Services\IAM\{PermissionTreeService,RolePermissionService}` | |
-| Row-level data scope | `App\Services\IAM\DataScopeService`, `OrgScopeService` | enforcement not yet switched on |
+| Row-level data scope | `HasDataScope` + `config/data_scope.php`, `DataScope` facade (`App\Services\IAM\DataScope\*`), `OrgScopeService` (code resolution) | automatic (DEC-071); opt out with `withoutDataScope()` / `DataScope::off()` / `data-scope:off` |
 | OTP login, devices, tokens | `App\Services\AuthService` | Sanctum tokens (User has `HasApiTokens`) |
 | Vehicle completeness/status, dropdown options | `App\Services\Vehicle\VehicleService` | `segmentOptions()`, `modelOptions(For)()`, `variantOptions()`, `colorOptions()` (colour rows, DEC-060) |
 | Pricing pipeline & engine | `App\Services\Vehicle\Pricing\*` (`PricingEngineService::getPricingPayload($oemCode, $options)`) | see `.ai/rules/modules/vehicle-pricing.md` |
