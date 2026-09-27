@@ -206,7 +206,11 @@
             }
         }
         (function() {
-            const statusUrlBase = "{{ url('/' . config('backpack.base.route_prefix') . '/enquiry/import/status') }}";
+            // Built from the named route (with a placeholder id) instead of manually
+            // concatenating config('backpack.base.route_prefix') — the manual version
+            // was missing the "sales/" path segment that the actual route
+            // (sales/enquiry/import/status/{id}) requires, so every poll 404'd.
+            const statusUrlTemplate = "{{ route('sales.enquiry.import.status', ['id' => '__ID__']) }}";
             const historyUrl = "{{ route('sales.enquiry.import.history') }}";
             let pollTimer = null;
 
@@ -241,7 +245,13 @@
                 if (pollTimer) clearInterval(pollTimer);
 
                 function tick() {
-                    fetch(`${statusUrlBase}/${id}`).then(r => r.json()).then(data => {
+                    const url = statusUrlTemplate.replace('__ID__', id);
+                    fetch(url).then(r => {
+                        if (!r.ok) {
+                            throw new Error(`Status endpoint returned ${r.status}`);
+                        }
+                        return r.json();
+                    }).then(data => {
                         document.getElementById('importProgressBar').style.width = data.percent + '%';
                         document.getElementById('importStatusPercent').innerText = data.percent + '%';
                         document.getElementById('importStatusDetail').innerText =
@@ -257,7 +267,12 @@
                                 'Unknown error';
                             clearInterval(pollTimer);
                         }
-                    }).catch(() => {});
+                    }).catch(err => {
+                        // Surfaced instead of silently swallowed, so a wrong status
+                        // URL / auth redirect / 500 shows up in the console instead
+                        // of just looking like "it's not updating".
+                        console.error('Import status poll failed:', err);
+                    });
                 }
 
                 tick();
