@@ -4,10 +4,12 @@ use App\Http\Controllers\Admin\Utils\Platform\ApprovalAdminController;
 use App\Http\Controllers\Admin\Utils\Platform\ApprovalController;
 use App\Http\Controllers\Admin\Utils\Platform\ApprovalReportController;
 use App\Http\Controllers\Admin\Utils\Platform\ChatController;
+use App\Http\Controllers\Admin\Utils\Platform\CommsController;
 use App\Http\Controllers\Admin\Utils\Platform\DocsLibraryController;
 use App\Http\Controllers\Admin\Utils\Platform\NotificationInboxController;
 use App\Http\Controllers\Admin\Utils\Platform\SettingsAdminController;
 use App\Http\Controllers\Admin\Utils\Platform\TaskController;
+use App\Http\Controllers\Admin\Utils\Platform\TemplateAdminController;
 use App\Http\Controllers\Admin\Utils\Platform\TicketController;
 use Illuminate\Support\Facades\Route;
 
@@ -95,4 +97,30 @@ Route::group([
     Route::get('approvals/admin/import/errors', [ApprovalAdminController::class, 'importErrors'])->name('utils.approvals.admin.import.errors');
     Route::get('approvals/admin/import/template', [ApprovalAdminController::class, 'template'])->name('utils.approvals.admin.import.template');
     Route::get('approvals/admin/simulate', [ApprovalAdminController::class, 'simulate'])->name('utils.approvals.admin.simulate');
+
+    // Templates (DEC-064)
+    Route::get('templates', [TemplateAdminController::class, 'index'])->name('utils.templates.index');
+    Route::get('templates/create', [TemplateAdminController::class, 'edit'])->name('utils.templates.create');
+    Route::get('templates/export', [TemplateAdminController::class, 'export'])->name('utils.templates.export');
+    Route::post('templates/import', [TemplateAdminController::class, 'import'])->name('utils.templates.import');
+    Route::post('templates', [TemplateAdminController::class, 'saveDraft'])->name('utils.templates.save');
+    Route::get('templates/{id}', [TemplateAdminController::class, 'edit'])->whereNumber('id')->name('utils.templates.edit');
+    Route::post('templates/versions/{versionId}/submit', [TemplateAdminController::class, 'submit'])->whereNumber('versionId')->name('utils.templates.submit');
+    Route::post('templates/versions/{versionId}/approve', [TemplateAdminController::class, 'approve'])->whereNumber('versionId')->name('utils.templates.approve');
+    Route::post('templates/versions/{versionId}/activate', [TemplateAdminController::class, 'activate'])->whereNumber('versionId')->name('utils.templates.activate');
+    Route::post('templates/versions/{versionId}/preview', [TemplateAdminController::class, 'preview'])->whereNumber('versionId')->name('utils.templates.preview');
+
+    // Comms operations (DEC-064)
+    Route::get('comms/outbox', [CommsController::class, 'outbox'])->name('utils.comms.outbox');
+    Route::get('comms/outbox/{id}', [CommsController::class, 'outboxShow'])->whereNumber('id')->name('utils.comms.outbox.show');
+    Route::post('comms/outbox/{id}/resend', [CommsController::class, 'resend'])->whereNumber('id')->name('utils.comms.outbox.resend');
+    Route::post('comms/email', [CommsController::class, 'sendEmail'])->name('utils.comms.email.send');
+    Route::get('whatsapp', [CommsController::class, 'whatsapp'])->name('utils.whatsapp.index');
+    Route::get('whatsapp/{threadId}', [CommsController::class, 'whatsapp'])->whereNumber('threadId')->name('utils.whatsapp.show');
+    Route::post('whatsapp/{threadId}/send', [CommsController::class, 'whatsappSend'])->whereNumber('threadId')->name('utils.whatsapp.send');
+    Route::post('whatsapp/{threadId}/manage', [CommsController::class, 'whatsappManage'])->whereNumber('threadId')->name('utils.whatsapp.manage');
+    Route::get('calls', [CommsController::class, 'calls'])->name('utils.calls.index');
+    Route::post('calls/dial', [CommsController::class, 'dial'])->name('utils.calls.dial');
+    Route::post('calls/{callId}/dispose', [CommsController::class, 'dispose'])->whereNumber('callId')->name('utils.calls.dispose');
+    Route::get('calls/{callId}/recording', [CommsController::class, 'recording'])->whereNumber('callId')->name('utils.calls.recording');
 });

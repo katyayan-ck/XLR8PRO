@@ -47,6 +47,8 @@ Full health notes: `docs/reference/Shared-Services-Utilities-Catalog.md`.
 | Tickets | `App\Services\Platform\Ticket\TicketService` (`Ticket` facade), `<x-ticket.inbox>`, `<x-ticket.sla-badge>` | `open/transition/update/inbox`; SLA from `sla.ticket.p{n}_hours`; desk = `UTL_TCKT_DESK` |
 | People pickers | `OrgService::teamOptions()` | active users with an employee record, never all users |
 | Approvals | `App\Services\Platform\Approval\ApprovalService` (`Approval` facade), `TopicService` (`Topics`), `RuleService` (`Rules`), `<x-approval.panel>` | callers only `open/counter/effective/reviseAsk/close`; never compute \"who is next\"; topics/rules via `Entities\Approval{Topic,Rule}Service`; power sheet via `PowerSheetImportService` |
+| Message copy | `App\Services\Platform\Templates\TemplateService` (`Templates` facade), `<x-template.preview>` | only ACTIVE versions send; drafts via `saveDraft`, go live via approval `COMMS.TEMPLATE` + `activate` |
+| Email / SMS / WhatsApp / calls | `App\Services\Platform\Comms\{Email,Sms,WhatsApp,Telephony}Service` (facades), outbox via `OutboxService`, Notify channels via `CommsRouter` | never `Mail::` / vendor SDKs in feature code (only `Comms\Drivers\*`); customer copy only from templates; OTP via `Sms::otp/verify` |
 
 Removed 26-09-2026 (dead, DEC-030): AuthenticationService, BookingStateService, VehicleMasterService,
 SegmentService, PricingService, legacy Chat/Quotes/Task/Docs/Notification/Vehicle helpers. 28-09-2026 (DEC-060): the

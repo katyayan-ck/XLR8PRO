@@ -1,6 +1,7 @@
 <?php
 
 use App\Jobs\Platform\AutoCloseResolvedTickets;
+use App\Jobs\Platform\FlagMissingCallRecordings;
 use App\Jobs\Platform\FlagTicketSlaBreaches;
 use App\Jobs\Platform\PurgeDeletedDocuments;
 use App\Services\Platform\Settings\SettingsService;
@@ -27,3 +28,4 @@ Artisan::command('settings:clear', function (SettingsService $settings) {
 Schedule::job(new PurgeDeletedDocuments)->dailyAt('02:30')->name('docs-purge')->withoutOverlapping();
 Schedule::job(new FlagTicketSlaBreaches)->hourly()->name('ticket-sla-breaches')->withoutOverlapping();
 Schedule::job(new AutoCloseResolvedTickets)->dailyAt('03:00')->name('ticket-autoclose')->withoutOverlapping();
+Schedule::job(new FlagMissingCallRecordings)->everyFifteenMinutes()->name('call-recordings-sweep')->withoutOverlapping();

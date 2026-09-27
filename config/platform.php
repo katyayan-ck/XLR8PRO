@@ -2,6 +2,9 @@
 
 use App\Models\Admin\Person;
 use App\Models\Approval\ApprovalRequest;
+use App\Models\Comms\CommCall;
+use App\Models\Comms\CommTemplate;
+use App\Models\Comms\WaThread;
 use App\Models\CRM\Enquiry;
 use App\Models\CRM\Quotation;
 use App\Models\Module\Booking\Booking;
@@ -34,6 +37,9 @@ return [
         'VEHICLE' => ['model' => Variant::class, 'url' => 'vehicle/variant/{id}/edit', 'label' => 'Vehicle', 'permission' => 'VEH_VAR_VIEW'],
         'PERSON' => ['model' => Person::class, 'url' => 'org/person/{id}/edit', 'label' => 'Person', 'permission' => 'ORG_PRSN_VIEW'],
         'PRICING' => ['model' => ImportSession::class, 'url' => 'pricing/workflow', 'label' => 'Price list session', 'permission' => 'PRC_WKFL_VIEW'],
+        'TEMPLATE' => ['model' => CommTemplate::class, 'url' => 'utils/templates/{id}', 'label' => 'Template', 'permission' => 'UTL_TPL_VIEW'],
+        'WA_THREAD' => ['model' => WaThread::class, 'url' => 'utils/whatsapp/{id}', 'label' => 'WhatsApp conversation', 'permission' => 'UTL_COMM_WA_INBOX'],
+        'CALL' => ['model' => CommCall::class, 'url' => 'utils/calls?call={id}', 'label' => 'Call', 'permission' => 'UTL_COMM_VIEW'],
         'CHAT' => ['model' => CommMaster::class, 'url' => null, 'label' => 'Conversation'],
         'SYSTEM' => ['model' => null, 'url' => null, 'label' => 'System'],
     ],
@@ -84,6 +90,12 @@ return [
         'telephony.recording_grace_minutes' => ['value' => 30, 'type' => 'int', 'label' => 'Recording grace period (minutes)'],
         'comms.promo_window' => ['value' => '10:00-18:00', 'type' => 'string', 'label' => 'Promotional send window'],
         'comms.webhook_secret' => ['value' => '', 'type' => 'encrypted', 'label' => 'Comms webhook signing secret'],
+        'mail.redirect_to' => ['value' => '', 'type' => 'string', 'label' => 'Redirect every email to (dev safety; blank = off)'],
+        'mail.allowed_from' => ['value' => '', 'type' => 'string', 'label' => 'Extra allowed From addresses (comma separated)'],
+        'sms.dlt_required' => ['value' => true, 'type' => 'bool', 'label' => 'Require DLT mapping for transactional SMS'],
+        'sms.default_header' => ['value' => 'BMPLTX', 'type' => 'string', 'label' => 'Default SMS sender header'],
+        'whatsapp.session_hours' => ['value' => 24, 'type' => 'int', 'label' => 'WhatsApp customer-care window (hours)'],
+        'comms.max_attempts' => ['value' => 3, 'type' => 'int', 'label' => 'Send attempts before an outbox row fails'],
         'templates.strict_locale' => ['value' => false, 'type' => 'bool', 'label' => 'Fail when a template locale is missing'],
     ],
 ];

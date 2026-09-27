@@ -2,12 +2,16 @@
 
 namespace App\Providers;
 
+use App\Events\Platform\ApprovalChanged;
 use App\Services\Platform\Approval\ApprovalService;
 use App\Services\Platform\Approval\RuleService;
 use App\Services\Platform\Approval\TopicService;
 use App\Services\Platform\Chat\ChatService;
 use App\Services\Platform\Comms\CommsRouter;
+use App\Services\Platform\Comms\ContactService;
+use App\Services\Platform\Comms\Drivers\DriverRegistry;
 use App\Services\Platform\Comms\EmailService;
+use App\Services\Platform\Comms\OutboxService;
 use App\Services\Platform\Comms\SmsService;
 use App\Services\Platform\Comms\TelephonyService;
 use App\Services\Platform\Comms\WhatsAppService;
@@ -18,6 +22,7 @@ use App\Services\Platform\Task\TaskService;
 use App\Services\Platform\Templates\TemplateService;
 use App\Services\Platform\Ticket\TicketService;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -39,6 +44,9 @@ class PlatformServiceProvider extends ServiceProvider
         ApprovalService::class,
         TemplateService::class,
         CommsRouter::class,
+        OutboxService::class,
+        ContactService::class,
+        DriverRegistry::class,
         EmailService::class,
         SmsService::class,
         WhatsAppService::class,
@@ -58,5 +66,12 @@ class PlatformServiceProvider extends ServiceProvider
     {
         Blade::directive('setting', fn (string $expression) => "<?php echo e(setting({$expression})); ?>");
         Blade::if('feature', fn (string $key) => feature($key));
+
+        // An accepted COMMS.TEMPLATE approval approves its template version (FRS TPL-05)
+        Event::listen(ApprovalChanged::class, function (ApprovalChanged $event) {
+            if ($event->change === ApprovalService::ACCEPTED) {
+                app(TemplateService::class)->onApprovalAccepted($event->requestId);
+            }
+        });
     }
 }

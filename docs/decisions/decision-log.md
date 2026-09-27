@@ -745,3 +745,36 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
 - **Legacy:** `App\Services\ApprovalService` (graph approve / reject; no callers, no routes) and its binding are removed. `App\Models\Core\{ApprovalHierarchy, GraphNode, GraphEdge}` are also dead (their tables do not exist) but are left for owner sign-off.
 - **Permissions:** `UTL_APPR_VIEW` / `REQUEST` go to all designations; `UTL_APPR_ADMIN` (topics, rules, import, simulation, force close) and `UTL_APPR_REPORT` are admin-only.
 - **Approved-by:** user (28-09 plan) · **Risk:** MED (new tables; no Sales flow wired yet — Quote / Booking call `Approval::open` in a later change) · **Reversal:** migration `down()` plus revert.
+
+### DEC-064 | 28-09-2026 | A (platform) | Comms plane: Templates, outbox, Email / SMS / WhatsApp / Telephony (FRS §12–17)
+- **Tables** (`xlr8_comm_*`):
+  - `template` (family per code × channel × locale) and `template_version` (DRAFT → IN_REVIEW → APPROVED → ACTIVE → RETIRED, plus PENDING_PROVIDER / REJECTED).
+  - `outbox`, with the payload snapshot stored encrypted for exact resend; the visible body has PII masked.
+  - `sandbox`, `consent` (person_code × channel), `suppression`, `otp` (hashed), `wa_thread` / `wa_message`, `call`, `webhook_event` (idempotency).
+- **Services** (`App\Services\Platform\{Templates, Comms}`), each with a driver interface and a registry keyed by Settings:
+  - `TemplateService`: `get` / `render` (safe `{{var}}` renderer; HTML vars escaped; missing required or unknown placeholder is an error, highlighted in preview; locale fallback, strict by setting), `saveDraft` (never touches ACTIVE), `submit` (Approval topic `COMMS.TEMPLATE`; ACCEPTED → APPROVED through an `ApprovalChanged` listener), `activate` (requires APPROVED; previous ACTIVE → RETIRED), `export` / `import` JSON (drafts only).
+    - When no approval rule covers `COMMS.TEMPLATE`, a `UTL_TPL_ACTIVATE` holder may approve directly (audited as an event). Otherwise no template could go live until the power sheet has that topic.
+  - `EmailService`: the locked option shape. Identity aliases come from `mail.identities`, with an allow-list. Also suppression, Docs attachments and `.ics`, `status`, `resend`. Drivers `laravel` (Laravel mailer — the only place `Mail::` is used) and `log` (sandbox).
+    - `mail.redirect_to`: when set, every mail goes to that address. This is a dev safety valve; the local `.env` mailer is a real SMTP host.
+  - `SmsService`:
+    - E.164 normalisation; consent for PROMOTIONAL; the promotional window; `raw` only with `UTL_COMM_SMS_RAW`.
+    - DLT mapping required for transactional sends when `sms.dlt_required`.
+    - `otp` / `verify`: hashed code, rate limit; the code never reaches the outbox.
+    - Failover driver.
+  - `WhatsAppService`:
+    - Template vs session send; SESSION_CLOSED outside the 24h window; a template send refuses extra text; polls degrade to a numbered list.
+    - Inbound media goes to Docs `wa-inbound`; STOP flips consent.
+    - Also `thread`, `history`, `markRead`, and link / assign / label.
+  - `TelephonyService`: `dial` (the call row exists before the vendor returns; numbers masked towards the browser), webhook call events, recording to Docs `call-recordings` plus a Chat `CALL_RECORDED` event, `dispose` (KeyValue `CALL_DISPOSITION`), and a missing-recording sweep.
+  - `CommsRouter::fromNotify` maps Notify EMAIL / SMS / WHATSAPP channel options onto the services. Plain `true` uses the `notify.generic` templates.
+- **Sending:** outbox first, then the queued `SendOutboxMessage` job (timeout, tries, `failed()`). Idempotency is on every send (explicit key, or a hash of channel + recipient + template + vars + ref).
+- **Drivers today:**
+  - SMS / WhatsApp / telephony: sandbox only (writes `comm_sandbox` and the log; simulates delivery).
+  - Mail: `laravel` or `log`.
+  - Vendor drivers are added later as one class plus a Settings value.
+- **Webhooks:** `POST /api/webhooks/comms/{channel}`, HMAC-SHA256 of the body with `comms.webhook_secret` (header `X-Signature`), idempotent on the provider event id. An unsigned call is accepted only while the secret is blank in local / testing environments.
+- **Seeds:**
+  - System templates `notify.generic` (EMAIL / SMS / WHATSAPP), `otp.sms` and `sms.stop.ack`, seeded ACTIVE as system-owned copy.
+  - KeyValue `CALL_DISPOSITION` (CONNECTED, NO_ANSWER, BUSY, WRONG_NUMBER, VOICEMAIL, CALLBACK_REQUESTED).
+- **Screens:** templates admin (list, draft editor, preview, version diff, submit / approve / activate), outbox + sandbox viewer with resend, WhatsApp inbox, call log. Components `x-template.preview`, `x-telephony.click-to-call`, `x-whatsapp.inbox|thread|composer`, `x-email.send-panel`.
+- **Approved-by:** user (28-09 plan: sandbox SMS / WhatsApp / telephony, real mail) · **Risk:** MED (new tables; no vendor credentials; the mail default stays the Laravel mailer as decided) · **Reversal:** migration `down()` plus revert.

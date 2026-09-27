@@ -39,6 +39,30 @@
                     <span><i class="la la-gavel me-2"></i>Approvals</span>
                 </a>
             @endif
+            @if (backpack_user()->can('UTL_COMM_WA_INBOX'))
+                <a class="dropdown-item d-flex align-items-center justify-content-between"
+                    href="{{ route('utils.whatsapp.index') }}">
+                    <span><i class="la la-whatsapp me-2"></i>WhatsApp</span>
+                </a>
+            @endif
+            @if (backpack_user()->can('UTL_COMM_CALL'))
+                <a class="dropdown-item d-flex align-items-center justify-content-between"
+                    href="{{ route('utils.calls.index') }}">
+                    <span><i class="la la-phone me-2"></i>Calls</span>
+                </a>
+            @endif
+            @if (backpack_user()->can('UTL_COMM_VIEW'))
+                <a class="dropdown-item d-flex align-items-center justify-content-between"
+                    href="{{ route('utils.comms.outbox') }}">
+                    <span><i class="la la-paper-plane me-2"></i>Outbox</span>
+                </a>
+            @endif
+            @if (backpack_user()->can('UTL_TPL_VIEW'))
+                <a class="dropdown-item d-flex align-items-center justify-content-between"
+                    href="{{ route('utils.templates.index') }}">
+                    <span><i class="la la-file-alt me-2"></i>Message templates</span>
+                </a>
+            @endif
             @if (backpack_user()->can('UTL_DOCS_VIEW'))
                 <a class="dropdown-item d-flex align-items-center justify-content-between"
                     href="{{ route('utils.docs.index') }}">

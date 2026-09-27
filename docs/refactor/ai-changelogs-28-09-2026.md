@@ -120,3 +120,46 @@
   - GET smoke: every approval screen returns 200 for user 1. User 40 gets 403 on admin / report and on requests they cannot see; requester and level holder get 200.
   - Pint clean. PHPStan: nothing new beyond Larastan not resolving `User` relations (pre-existing).
 
+## Regression fixed: `User::employee()` / `person()` (commit 078ef47)
+- **Before:** `ce3704b` added `BelongsTo` return types without importing the class, because the `sed` did not match a CRLF line. The hint resolved to `App\Models\BelongsTo`, so every `$user->employee` / `->person` call threw a TypeError.
+- **After:** `Illuminate\Database\Eloquent\Relations\BelongsTo` is imported. Found by the Sprint 5 functional run and fixed as its own commit.
+- **Lesson:** shell `sed` on CRLF files can silently not match; edits are now verified by grep or made with the editor. Every earlier `sed` edit this session was re-checked.
+
+## Comms plane: Templates, outbox, Email / SMS / WhatsApp / Telephony (DEC-064)
+- **Migrations (local, then `xlrm_testing`):**
+  - `2026_09_28_130000_comms_plane_tables`: `xlr8_comm_{template, template_version, outbox, sandbox, consent, suppression, otp, wa_thread, wa_message, call, webhook_event}`.
+  - `2026_09_28_130100_comms_seed`:
+    - System templates `notify.generic` for EMAIL / SMS / WHATSAPP, `otp.sms` and `sms.stop.ack`, seeded ACTIVE and marked `is_system`.
+    - KeyValue `CALL_DISPOSITION`.
+- **Models:** `App\Models\Comms\{CommTemplate, CommTemplateVersion, CommOutbox (payload encrypted), WaThread, WaMessage, CommCall}`.
+- **Services:**
+  - `Platform\Templates\TemplateService`: get, render, renderVersion / preview, saveDraft, submit (approval `COMMS.TEMPLATE`), approveDirect, activate, seedSystem, export, import, diff, usage ledger.
+  - `Platform\Comms\{ContactService, OutboxService, EmailService, SmsService, WhatsAppService, TelephonyService, CommsRouter}`.
+  - Drivers: `ChannelDriver` / `TelephonyDriver` interfaces, `DriverRegistry`, `SandboxDriver` (OTP masked), `LaravelMailDriver` (the only `Mail::` use), `SandboxTelephonyDriver`.
+- **Jobs and events:**
+  - Jobs `SendOutboxMessage` (queued, backoff) and `FlagMissingCallRecordings` (every 15 minutes).
+  - Events `OutboxAccepted`, `CallRecorded`, `ChannelLinked`. An `ApprovalChanged` listener approves template versions.
+- **API:** `POST /api/webhooks/comms/{email|sms|whatsapp|telephony}`, HMAC signed with `comms.webhook_secret` and idempotent on `event_id`. `CommsWebhookController` redacts media from its log.
+- **Screens and components:**
+  - Screens: templates (list, editor, versions, diff, preview, submit / approve / activate, JSON import / export), outbox + sandbox viewer + resend, WhatsApp inbox, call log with dispositions and recording play / download (download gated).
+  - Menu entries gated by `UTL_TPL_VIEW`, `UTL_COMM_VIEW`, `UTL_COMM_WA_INBOX`, `UTL_COMM_CALL`.
+  - Components `x-template.preview`, `x-telephony.click-to-call`, `x-whatsapp.{inbox, thread, composer}`, `x-email.send-panel`.
+- **Config:** entity types TEMPLATE / WA_THREAD / CALL. New settings `mail.redirect_to`, `mail.allowed_from`, `sms.dlt_required`, `sms.default_header`, `whatsapp.session_hours`, `comms.max_attempts`.
+- **Note:** the local `.env` mailer is a real SMTP host (`mail.xceler8.in`), not Mailpit. Every verification used the `log` driver or `Mail::fake`; `mail.redirect_to` exists as a dev safety valve.
+- **Verification:**
+  - 54/54 functional checks on `xlrm_testing` (queue sync; mail log or fake). FRS acceptance items covered:
+    - #9: Notify EMAIL options → one outbox row → resend after a driver swap with the same snapshot.
+    - #11: template outside the window works; free-form returns SESSION_CLOSED.
+    - #12: inbound WA image → Docs row in the thread.
+    - #13: dial → call row → recording Doc → `CALL_RECORDED` on the Enquiry.
+    - #14: a draft cannot be sent; activating v2 leaves v1 snapshots untouched.
+    - #15: SMS and WA STOP flip consent and are honoured on the next send.
+  - Also checked:
+    - templates: approval-driven APPROVED, HTML escaping, render errors;
+    - email: FROM allow-list, suppression → sent 0, missing attachment, idempotency, BCC kept out of the timeline, PII masked;
+    - SMS: DLT and consent rules; OTP hashed, never in the outbox or sandbox, rate-limited, not resendable;
+    - WhatsApp: poll degrade and parsed answer; CHANNEL_LINKED and inbound events on the record;
+    - webhooks: bad signature 401, duplicate event.
+  - GET smoke: every new screen returns 200 for user 1 and 403 for user 40.
+  - Pint clean. PHPStan: two cosmetic notes only.
+

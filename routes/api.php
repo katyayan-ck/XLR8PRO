@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\CommsWebhookController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\DocController;
 use App\Http\Controllers\Api\V1\EntityHistoryController;
@@ -122,3 +123,9 @@ Route::prefix('v1')->group(function () {
         });
     });
 });
+
+// Inbound comms webhooks (DEC-064): HMAC-signed, idempotent on event_id; no session or token auth.
+Route::post('webhooks/comms/{channel}', [CommsWebhookController::class, 'handle'])
+    ->whereIn('channel', ['email', 'sms', 'whatsapp', 'telephony'])
+    ->middleware('throttle:600,1')
+    ->name('api.webhooks.comms');
