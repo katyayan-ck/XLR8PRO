@@ -92,3 +92,31 @@
     - Live, all screens: 200 for user 1. User 40 gets 403 on the desk queue and the report.
     - `xlrm_testing` show pages: owner 200; outsider and snooper-less 403; edit owner-only.
   - Pint clean; PHPStan clean apart from the pre-existing untyped `User::employee()`.
+
+## Approval engine, topics / rules / power sheet / reports (DEC-063)
+- **Migrations (local, then `xlrm_testing`):**
+  - `2026_09_28_120000_approval_engine_tables`: `xlr8_approval_{topic, rule, rule_level, request, counter, event}`.
+  - `2026_09_28_120100_approval_topic_seed`: a starter tree from the FRS examples, with no rules: DISCOUNT.EXTRA `extra_disc`, ACCESSORIES.PACK `apack_disc`, INSURANCE.WAIVER `ins_waiver`, RTO.EXEMPT `rto_exempt`, DOCS.APPROVAL, COMMS.TEMPLATE.
+- **Models:** `App\Models\Approval\{ApprovalTopic, ApprovalRule, ApprovalRuleLevel, ApprovalRequest, ApprovalCounter, ApprovalEvent}`. The request has Chat and Docs and access through `canSee()`.
+- **Services (`App\Services\Platform\Approval`):**
+  - `Entities\ApprovalTopicService` and `Entities\ApprovalRuleService` (the DEC-050 write path; levels are validated against the designation master and written with their rule).
+  - `TopicService` (`Topics::resolve` / tree) and `RuleService` (`Rules::match`: deepest node, then specificity weights, then latest id; effective-dated).
+  - `ApprovalService`: open (snapshot), counter (visibility, own level, max, LINEAR turn), effective (highest level, then latest), reviseAsk (stale counters), close, visibleTo, inbox (TO_ACT / RAISED / TEAM / CLOSED), authorize, preview, panel, auto-accept (setting).
+  - `PowerSheetImportService` (header synonyms, dry-run, purge-replace per topic, error rows).
+  - `ApprovalReportService` (projection plus counters only).
+- **Other code:** facade `Rules`; event `ApprovalChanged`; `App\Exports\Platform\RowsExport`.
+- **Screens:**
+  - `utils/approvals` inboxes, raise form, request view (`<x-approval.panel>` plus timeline).
+  - Admin topics (`<x-approval.topic-tree>`), rules and rule form with levels, power-sheet import (template / dry-run / apply / error sheet), simulation.
+  - Report with xlsx export. Menu: Approvals (`UTL_APPR_VIEW`).
+- **Removed:** `App\Services\ApprovalService` (legacy graph approve / reject: no callers, no routes) and its `AppServiceProvider` binding. `App\Models\Core\{ApprovalHierarchy, GraphNode, GraphEdge}` are also dead (their tables do not exist) and are left for owner sign-off.
+- **Models:** `User::employee()` / `person()` now declare their `BelongsTo` return types.
+- **Bugs:** BUG-183 logged (36 employees on designation codes missing from the master).
+- **Verification:**
+  - 53/53 functional checks on `xlrm_testing`:
+    - precedence (item > main, model > segment + branch, non-matching dimension excluded, tie → latest, expired skipped);
+    - every FRS §7.5 example, UC-APR-1 / 3 / 5, two topics independent, LINEAR turn, auto-accept flag, snapshot freeze;
+    - import dry-run / apply / purge-replace / skip-bad-topic; report totals and levels.
+  - GET smoke: every approval screen returns 200 for user 1. User 40 gets 403 on admin / report and on requests they cannot see; requester and level holder get 200.
+  - Pint clean. PHPStan: nothing new beyond Larastan not resolving `User` relations (pre-existing).
+

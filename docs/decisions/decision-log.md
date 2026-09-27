@@ -720,3 +720,28 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
 - **Team picker:** `OrgService::teamOptions()` lists active users who have an employee record; the picker never lists every user.
 - **Screens:** `utils/tasks*` and `utils/tickets*` (inboxes, create, edit, view with follow-up / transition, report), menu under Utilities, and components `x-task.inbox`, `x-task.composer`, `x-ticket.inbox`, `x-ticket.sla-badge`.
 - **Approved-by:** user (28-09 plan) · **Risk:** MED (new tables and screens; no existing flow changes) · **Reversal:** migration `down()` plus revert.
+
+### DEC-063 | 28-09-2026 | A (platform) | Approval engine, topic tree, power sheet and reports (FRS §7–8)
+- **Tables** (the reserved `xlr8_approval_*` prefix):
+  - `topic`: tree; stable dotted `code`; `item_key` on items; `mode` inherited when null.
+  - `rule`: topic plus scope tuple company / zone / state / branch / desk / segment / model / variant / permit / channel, where NULL means ANY; `valid_from` / `valid_to`.
+  - `rule_level`: level no, designation, value type AMOUNT / PERCENTAGE / FLAG, std / min / max as DECIMAL(15,2); `user_ids` for STATIC.
+  - `request`: a projection with a frozen snapshot of topic plus matched rule plus levels; `ask_revision`; the effective grant; branch and FY for reports.
+  - `counter`: bound to an ask revision.
+  - `event`: append-only.
+- **Writers:**
+  - Topics and rules are master data written through `EntityService` subclasses (DEC-050): `Platform\Approval\Entities\{ApprovalTopicService, ApprovalRuleService}`. Rule levels are written with their rule.
+  - Requests, counters and events are written only by `Platform\Approval\ApprovalService`.
+- **Behaviour (FRS law):**
+  - `Topics::resolve` gives the chain Main / Sub / Item and the effective mode (inherited; VARIABLE with no resolver falls back to OPEN_TO_ALL and logs a warning).
+  - `Rules::match`: deepest topic node that has a valid rule, then scope specificity variant > model > segment > permit > desk > branch > zone > company (channel / state count after company), then latest id. A rule matches only when every non-ANY dimension equals the request scope.
+  - `open` snapshots the rule. Visibility is live: holders of a snapshot designation whose org (branch, via the employee) fits the rule scope, plus the requester; STATIC levels list users. `counter` requires visibility plus a level on the snapshot; LINEAR accepts only `current_level`.
+  - Highest level wins on the current ask revision; the latest counter wins at the same level. `reviseAsk` (requester) makes older counters stale. `close` ACCEPTED / WITHDRAWN by the requester or a user holding `UTL_APPR_ADMIN`. No approver "reject".
+  - Auto-accept within the requester's own power is behind the `approval.auto_accept_own_power` setting (APR-08) and is still snapshotted.
+  - `authorize` and `preview` answer the simulation questions.
+  - Scope dimensions company / zone / state / desk / channel are stored and matched as given; they only take effect once callers pass them (org entities for zone / desk do not exist yet — blueprint §7.4, still open).
+- **Power-sheet import** (xlsx / csv): one row per level. Topic code, item key, scope columns, level, designation, value type, std / min / max, valid from / to. Synonyms are applied to scope values. Dry-run reports without writing; apply purges and replaces the rules of each topic in the sheet. Unknown designations or topics go to a downloadable error sheet.
+- **Report:** from the request projection and events (never re-matching). Filters FY / branch / topic / level / actor / source. Figures: opened / accepted / withdrawn / open, granted vs asked, counters per level, auto-approved share, time to close. Export as xlsx.
+- **Legacy:** `App\Services\ApprovalService` (graph approve / reject; no callers, no routes) and its binding are removed. `App\Models\Core\{ApprovalHierarchy, GraphNode, GraphEdge}` are also dead (their tables do not exist) but are left for owner sign-off.
+- **Permissions:** `UTL_APPR_VIEW` / `REQUEST` go to all designations; `UTL_APPR_ADMIN` (topics, rules, import, simulation, force close) and `UTL_APPR_REPORT` are admin-only.
+- **Approved-by:** user (28-09 plan) · **Risk:** MED (new tables; no Sales flow wired yet — Quote / Booking call `Approval::open` in a later change) · **Reversal:** migration `down()` plus revert.

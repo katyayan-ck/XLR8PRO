@@ -217,6 +217,7 @@ Entry format:
 | BUG-180 | `/export/vehicle-data` (`ExportController::vehicleDataExcel`) references `App\Exports\VehicleDataExport`, which does not exist — the route 500s | Low | OPEN | 28-09-2026 | — |
 | BUG-181 | `User::getOrCreateNotificationsMaster()` and the `NotificationsMaster` model did not exist, so the v1 notification endpoints (unread count, mark-all-read) and every legacy `NotificationService` send 500'd; the docs models pointed at non-existent tables (`xlr8_docs_*`, pivot `doc_group_documents`) and the v1 add-to-group rule validated against `documents` | High | FIXED (DEC-061) | 28-09-2026 | 28-09-2026 |
 | BUG-182 | v1 `docs/upload` and `history/{entityType}/{entityId}` (+ `/thread`) resolve `App\Models\{entityType}` straight from request input and never check the caller may see that record — any signed-in mobile user can read or append history on, or attach files to, any model row | High | OPEN (auth change — owner approval) | 28-09-2026 | — |
+| BUG-183 | 36 active employees hold designation codes that are not in the designation master (GM ×4, MAN ×18, CNS ×6, DSA ×3, RTO ×2, SWD, API, TST) — no approval rule (or designation-based notification / docs entitlement) can reach them | Medium | OPEN (data — owner to map codes) | 28-09-2026 | — |
 | BUG-175 | Person contacts/addresses/banking: the per-person type-slot unique keys include soft-deleted rows, so re-adding a deleted slot (e.g. a new Primary address after deleting one) failed with a duplicate-key 500; promoting a non-Alternate row to Primary while Alternate was used also collided | High | FIXED (DEC-053) | 27-09-2026 | 27-09-2026 |
 
 Not a bug (false positive, listed for reference): the original `infer-conventions` sweep flagged
@@ -2056,3 +2057,11 @@ guessed at.
 - **Where:** `app/Http/Controllers/Api/V1/EntityHistoryController.php` (`getHistory`, `addThread`), `app/Http/Controllers/Api/V1/DocController.php` (`upload`).
 - **Description:** `app("App\\Models\\{$entityType}")->findOrFail($entityId)` builds any class under `App\Models` from the URL/body and loads the row with no permission or scope check, so a user can read the timeline of, post to, or attach files to records they cannot open in the admin.
 - **Proposed solution:** accept only entity codes from `config('platform.entities')` (with the legacy class names mapped to them for the app) and gate with `ChatService::canView()` — the same rule the admin chat/docs endpoints already use. Needs the mobile team to confirm the `entityType` values the app sends.
+
+### BUG-183 — Employees on designation codes missing from the designation master
+
+- **Status:** OPEN (28-09-2026) — data fix; the owner decides the mapping.
+- **Severity:** Medium — these people are invisible to designation-based features: approval levels (DEC-063), `Audience::designation()`, DESIGNATION document entitlements, and Spatie role = designation.
+- **Found:** 28-09-2026, approval engine verification (a rule with level designation GM was rejected as unknown).
+- **Evidence:** `select e.designation_code, count(*) from xlr8_admin_employee e left join xlr8_admin_designation d on d.code = e.designation_code where d.code is null and e.deleted_at is null group by 1` → GM 4, MAN 18, CNS 6, DSA 3, RTO 2, SWD 1, API 1, TST 1.
+- **Proposed solution:** map each legacy code to a real designation (or add the missing designations) through `EmployeeService` / `DesignationService`; the power-sheet import already rejects unknown designations, so rules stay consistent.

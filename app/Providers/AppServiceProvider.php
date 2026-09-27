@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use App\Services\ApprovalService;
 use App\Services\AuthService;
 use App\Services\DateFormatService;
 use App\Services\EnquiryReferenceService;
@@ -53,10 +52,6 @@ class AppServiceProvider extends ServiceProvider
                 $app->make(CacheManager::class),
                 $app->make(OtpNotificationService::class)
             );
-        });
-
-        $this->app->singleton(ApprovalService::class, function ($app) {
-            return new ApprovalService;
         });
 
         // Firebase Services

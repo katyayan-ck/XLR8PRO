@@ -47,5 +47,29 @@ Indexes: (employee_code), (person_code), (bypass_data_scoping), (employee_code),
 id bigint unsigned PK, variant_id bigint unsigned, color_id bigint unsigned, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?, created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?
 Indexes: (color_id), (created_by), (variant_id)
 
+## `xlr8_approval_counter` · ~0 rows · model: App\Models\Approval\ApprovalCounter
+id bigint unsigned PK, request_id bigint unsigned, ask_revision int unsigned, level_no smallint unsigned, actor_id bigint unsigned, value decimal(15,2), remark varchar(1000)?, is_system tinyint(1), created_at timestamp?
+Indexes: (request_id,ask_revision), (request_id)
+
+## `xlr8_approval_event` · ~0 rows · model: App\Models\Approval\ApprovalEvent
+id bigint unsigned PK, request_id bigint unsigned, type varchar(20), actor_id bigint unsigned?, ask_revision int unsigned?, level_no smallint unsigned?, value decimal(15,2)?, data json?, created_at timestamp?
+Indexes: (request_id), (type,created_at)
+
+## `xlr8_approval_request` · ~0 rows · model: App\Models\Approval\ApprovalRequest
+id bigint unsigned PK, topic_id bigint unsigned, topic_code varchar(100), topic_title varchar(150), item_key varchar(60)?, mode varchar(15), source_type varchar(30)?, source_id bigint unsigned?, requester_id bigint unsigned, value_type varchar(12), asked decimal(15,2), ask_revision int unsigned, scope json?, snapshot json, status varchar(12), effective_level smallint unsigned?, effective_value decimal(15,2)?, effective_actor_id bigint unsigned?, current_level smallint unsigned?, auto_accepted tinyint(1), branch_code varchar(20)?, fy varchar(5)?, closed_at timestamp?, closed_by bigint unsigned?, created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?
+Indexes: (branch_code), (fy), (item_key), (requester_id), (source_type,source_id), (status), (topic_code), (topic_id)
+
+## `xlr8_approval_rule` · ~0 rows · model: App\Models\Approval\ApprovalRule
+id bigint unsigned PK, topic_id bigint unsigned, company_code varchar(50)?, zone_code varchar(50)?, state_code varchar(50)?, branch_code varchar(50)?, desk_code varchar(50)?, segment_code varchar(50)?, model_code varchar(50)?, variant_code varchar(50)?, permit_code varchar(50)?, channel_code varchar(50)?, valid_from date?, valid_to date?, is_active tinyint(1), note varchar(250)?, import_batch varchar(40)?, created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?
+Indexes: (topic_id), (topic_id,is_active)
+
+## `xlr8_approval_rule_level` · ~0 rows · model: App\Models\Approval\ApprovalRuleLevel
+id bigint unsigned PK, rule_id bigint unsigned, level_no smallint unsigned, designation_code varchar(50)?, user_ids json?, value_type varchar(12), std_value decimal(15,2)?, min_value decimal(15,2)?, max_value decimal(15,2)?, created_at timestamp?, updated_at timestamp?
+Indexes: UNIQUE (rule_id,level_no), (rule_id)
+
+## `xlr8_approval_topic` · ~12 rows · model: App\Models\Approval\ApprovalTopic
+id bigint unsigned PK, code varchar(100), parent_id bigint unsigned?, title varchar(150), item_key varchar(60)?, mode varchar(15)?, value_type varchar(12)?, is_mandatory tinyint(1), is_active tinyint(1), description text?, created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?
+Indexes: UNIQUE (code), UNIQUE (item_key), (parent_id)
+
 ## `xlr8_user_branches` · ~279 rows · model: —
 user_id bigint unsigned PK, branch_id bigint unsigned PK

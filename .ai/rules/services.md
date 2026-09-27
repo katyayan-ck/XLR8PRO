@@ -46,12 +46,13 @@ Full health notes: `docs/reference/Shared-Services-Utilities-Catalog.md`.
 | Tasks | `App\Services\Platform\Task\TaskService` (`Task` facade), `<x-task.inbox>`, `<x-task.composer>` | rights matrix FRS §5.3 in `rights()`; `create/update/followUp/inbox/get/delete`; link with `ref_type/ref_id` |
 | Tickets | `App\Services\Platform\Ticket\TicketService` (`Ticket` facade), `<x-ticket.inbox>`, `<x-ticket.sla-badge>` | `open/transition/update/inbox`; SLA from `sla.ticket.p{n}_hours`; desk = `UTL_TCKT_DESK` |
 | People pickers | `OrgService::teamOptions()` | active users with an employee record, never all users |
+| Approvals | `App\Services\Platform\Approval\ApprovalService` (`Approval` facade), `TopicService` (`Topics`), `RuleService` (`Rules`), `<x-approval.panel>` | callers only `open/counter/effective/reviseAsk/close`; never compute \"who is next\"; topics/rules via `Entities\Approval{Topic,Rule}Service`; power sheet via `PowerSheetImportService` |
 
 Removed 26-09-2026 (dead, DEC-030): AuthenticationService, BookingStateService, VehicleMasterService,
 SegmentService, PricingService, legacy Chat/Quotes/Task/Docs/Notification/Vehicle helpers. 28-09-2026 (DEC-060): the
 last helpers (`CommonHelper`, `XCommonHelper`, `XpricingHelper`) — `app/Helpers/` no longer exists; never add helper
-classes: put logic in a service, and only one-line aliases in `app/Support/helpers.php`. Legacy
-`ApprovalService` (graph approve/reject) is deprecated — the FRS approval engine replaces it (DEC-063).
+classes: put logic in a service, and only one-line aliases in `app/Support/helpers.php`. The legacy graph
+`App\Services\ApprovalService` was removed 28-09-2026 (DEC-063); approvals go through the platform engine.
 Platform services (DEC-061) return `App\Support\Result`; a state change goes persist → `Chat::event` → `Notify` → domain event.
 
 ## Anti-patterns

@@ -14,7 +14,7 @@ class KeywordValueServiceProvider extends ServiceProvider
     {
         // Register singleton instance
         $this->app->singleton('keyword-value', function ($app) {
-            return new KeywordValueService();
+            return new KeywordValueService;
         });
 
         // Alias for easier access (optional)

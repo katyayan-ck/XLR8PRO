@@ -66,7 +66,8 @@ class User extends Authenticatable
         'deleted_at' => 'datetime',
     ];
 
-    public function employee()
+    /** @return BelongsTo<Employee, $this> */
+    public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class, 'employee_code', 'code');
     }
@@ -112,7 +113,8 @@ class User extends Authenticatable
         ];
     }
 
-    public function person()
+    /** @return BelongsTo<Person, $this> */
+    public function person(): BelongsTo
     {
         return $this->belongsTo(Person::class, 'person_code', 'person_code');
     }

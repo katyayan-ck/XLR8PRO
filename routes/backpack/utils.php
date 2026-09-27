@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\Admin\Utils\Platform\ApprovalAdminController;
+use App\Http\Controllers\Admin\Utils\Platform\ApprovalController;
+use App\Http\Controllers\Admin\Utils\Platform\ApprovalReportController;
 use App\Http\Controllers\Admin\Utils\Platform\ChatController;
 use App\Http\Controllers\Admin\Utils\Platform\DocsLibraryController;
 use App\Http\Controllers\Admin\Utils\Platform\NotificationInboxController;
@@ -67,4 +70,29 @@ Route::group([
     Route::put('tickets/{id}', [TicketController::class, 'update'])->whereNumber('id')->name('utils.tickets.update');
     Route::post('tickets/{id}/transition', [TicketController::class, 'transition'])->whereNumber('id')->name('utils.tickets.transition');
     Route::post('tickets/{id}/remark', [TicketController::class, 'remark'])->whereNumber('id')->name('utils.tickets.remark');
+
+    // Approvals (DEC-063)
+    Route::get('approvals', [ApprovalController::class, 'index'])->name('utils.approvals.index');
+    Route::get('approvals/create', [ApprovalController::class, 'create'])->name('utils.approvals.create');
+    Route::post('approvals', [ApprovalController::class, 'store'])->name('utils.approvals.store');
+    Route::get('approvals/report', [ApprovalReportController::class, 'index'])->name('utils.approvals.report');
+    Route::get('approvals/report/export', [ApprovalReportController::class, 'export'])->name('utils.approvals.report.export');
+    Route::get('approvals/{id}', [ApprovalController::class, 'show'])->whereNumber('id')->name('utils.approvals.show');
+    Route::post('approvals/{id}/counter', [ApprovalController::class, 'counter'])->whereNumber('id')->name('utils.approvals.counter');
+    Route::post('approvals/{id}/revise', [ApprovalController::class, 'revise'])->whereNumber('id')->name('utils.approvals.revise');
+    Route::post('approvals/{id}/close', [ApprovalController::class, 'close'])->whereNumber('id')->name('utils.approvals.close');
+
+    Route::get('approvals/admin/topics', [ApprovalAdminController::class, 'topics'])->name('utils.approvals.admin.topics');
+    Route::post('approvals/admin/topics', [ApprovalAdminController::class, 'saveTopic'])->name('utils.approvals.admin.topics.save');
+    Route::get('approvals/admin/rules', [ApprovalAdminController::class, 'rules'])->name('utils.approvals.admin.rules');
+    Route::get('approvals/admin/rules/create', [ApprovalAdminController::class, 'editRule'])->name('utils.approvals.admin.rules.create');
+    Route::post('approvals/admin/rules', [ApprovalAdminController::class, 'saveRule'])->name('utils.approvals.admin.rules.store');
+    Route::get('approvals/admin/rules/{id}/edit', [ApprovalAdminController::class, 'editRule'])->whereNumber('id')->name('utils.approvals.admin.rules.edit');
+    Route::put('approvals/admin/rules/{id}', [ApprovalAdminController::class, 'saveRule'])->whereNumber('id')->name('utils.approvals.admin.rules.update');
+    Route::delete('approvals/admin/rules/{id}', [ApprovalAdminController::class, 'deleteRule'])->whereNumber('id')->name('utils.approvals.admin.rules.destroy');
+    Route::get('approvals/admin/import', [ApprovalAdminController::class, 'importForm'])->name('utils.approvals.admin.import');
+    Route::post('approvals/admin/import', [ApprovalAdminController::class, 'import'])->name('utils.approvals.admin.import.run');
+    Route::get('approvals/admin/import/errors', [ApprovalAdminController::class, 'importErrors'])->name('utils.approvals.admin.import.errors');
+    Route::get('approvals/admin/import/template', [ApprovalAdminController::class, 'template'])->name('utils.approvals.admin.import.template');
+    Route::get('approvals/admin/simulate', [ApprovalAdminController::class, 'simulate'])->name('utils.approvals.admin.simulate');
 });

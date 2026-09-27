@@ -33,6 +33,12 @@
                     <span><i class="la la-life-ring me-2"></i>Tickets</span>
                 </a>
             @endif
+            @if (backpack_user()->can('UTL_APPR_VIEW'))
+                <a class="dropdown-item d-flex align-items-center justify-content-between"
+                    href="{{ route('utils.approvals.index') }}">
+                    <span><i class="la la-gavel me-2"></i>Approvals</span>
+                </a>
+            @endif
             @if (backpack_user()->can('UTL_DOCS_VIEW'))
                 <a class="dropdown-item d-flex align-items-center justify-content-between"
                     href="{{ route('utils.docs.index') }}">
