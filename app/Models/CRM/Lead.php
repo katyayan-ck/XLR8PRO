@@ -3,18 +3,19 @@
 namespace App\Models\CRM;
 
 use App\Models\BaseModel;
-use App\Models\User;
-use App\Models\Traits\HasCommunications;
 use App\Models\Traits\HasColumnTransformations;
-use Illuminate\Support\Facades\Cache;
-use App\Models\Vehicle\VehicleModel;
+use App\Models\Traits\HasCommunications;
+use App\Models\User;
+use App\Models\Vehicle\Color;
 use App\Models\Vehicle\Segment;
 use App\Models\Vehicle\Variant;
-use App\Models\Vehicle\Color;
+use App\Models\Vehicle\VehicleModel;
+use Illuminate\Support\Facades\Cache;
 
 class Lead extends BaseModel
 {
-    // use HasCommunications, HasColumnTransformations;
+    // Timeline via the Chat utility (DEC-068). HasColumnTransformations stays off: it would change stored values.
+    use HasCommunications;
 
     protected $table = 'xlr8_crm_leads';
 
@@ -69,11 +70,17 @@ class Lead extends BaseModel
     ];
 
     public const STATUS_NEW = 'new';
+
     public const STATUS_IN_FOLLOWUP = 'in_followup';
+
     public const STATUS_QUOTATION_SENT = 'quotation_sent';
+
     public const STATUS_BOOKING_DONE = 'booking_done';
+
     public const STATUS_OTF_GENERATED = 'otf_generated';
+
     public const STATUS_LOST = 'lost';
+
     public const STATUS_CANCELLED = 'cancelled';
 
     // ==================== RELATIONSHIPS (Code-based) ====================
@@ -116,7 +123,7 @@ class Lead extends BaseModel
     // ==================== ACCESSORS ====================
     public function getFullNameAttribute(): string
     {
-        return trim($this->first_name . ' ' . ($this->last_name ?? ''));
+        return trim($this->first_name.' '.($this->last_name ?? ''));
     }
 
     // public function getStatusLabelAttribute(): string

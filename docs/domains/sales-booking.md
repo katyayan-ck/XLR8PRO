@@ -154,8 +154,11 @@ OTF / quote JSON — see [pricing.md](pricing.md)).
 - `resolve*EditData()` methods **mutate the booking** on purpose; don't pass a model you will save afterwards unless you
   mean to persist those fallbacks.
 - Receipts belong to Accounts (`Bookingamount`); never sum amounts in a view.
-- Booking history today goes through `HasCommunications::addHistory()` (the legacy name for a Chat EVENT); new code uses
-  `Chat::event()` / `$booking->recordEvent()` (docs/utilities/03-chat.md).
+- Booking history is written with `$booking->recordEvent(ACTION, $title, $meta, $body)` (DEC-068; before, `addHistory('commented', …)`).
+  Actions: `CREATED`, `STATUS_CHANGED` (hold / resume / restore / refund moves), `UPDATED` (everything else). Never put full
+  Aadhaar / account numbers into `$meta` — the timeline is widely visible (BUG-195).
+- Proofs (receipts, policy, TRC, pay proof, delivery photos, chassis image) still live on the satellite models' own media
+  collections, not in Docs — moving them needs a data migration (open follow-up).
 - Booking tests exist per sub-domain (`tests/Unit/Services/Sales/Booking*ServiceTest.php`, 9 files — no RTO test yet); keep them green when touching a service.
 
 ## Testing

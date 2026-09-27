@@ -306,3 +306,22 @@
     - the booking list, create, OTF list, pending KYC / DMS / insurance / deliveries, quotation create, sales import, receipts and dashboard return 200;
     - they return 403 for user 40, who has no booking permissions;
     - OTF for a booking without a quotation returns its `quotation_missing` gate.
+
+## Sales / booking parity — backend (DEC-068, step 4a)
+- **History:** 32 `addHistory('commented', …)` calls (10 booking services and the booking controller) became `$booking->recordEvent(ACTION, $title, $meta, $body)`.
+  - Actions are registered codes instead of the unregistered `COMMENTED`: `CREATED`, `STATUS_CHANGED` (hold / resume / restore / dummy→active / refund moves) and `UPDATED`.
+  - The timeline content is the same; the label now names the kind of change.
+  - `HasCommunications::recordEvent()` gains an optional `$body` (backward compatible).
+- **Privacy:** the KYC history meta now masks the Aadhaar (`XXXXXXXX1234`). BUG-195 is fixed for new entries; masking existing rows needs approval.
+- **BUG-194 fixed:** `Cache` facade imported in `BookingCrudController`.
+- **Dates:** 13 display dates in Sales PHP now use `site_date()` / `site_datetime()`: campaign list, enquiry list (IST kept), booking change logs, refund details.
+- **Chat:** `Enquiry`, `Lead`, `Quotation` use `HasCommunications`. The entity registry already had `QUOTE`, `ENQUIRY` and `BOOKING`, and their deep links resolve.
+- **Not changed, on purpose:**
+  - Proof uploads stay on the satellite models' own media collections. Moving them to Docs needs a data migration and reader changes, so it is a follow-up.
+  - The two importer `Keyvalue::` reads stay: an uncached lookup before a write avoids duplicates.
+  - No `NotificationService` use existed in Sales.
+- **Guides and rules:** `docs/domains/{core,sales-booking,crm-enquiry-quotation}.md`, `docs/utilities/03-chat.md` and `.ai/rules/modules/sales.md` (history API, VOTF branch).
+- **Verification:**
+  - lint, Pint;
+  - PHPStan: no runtime-risk findings left in the touched files;
+  - Sales service and platform tests: 99 passed, 1 skipped.

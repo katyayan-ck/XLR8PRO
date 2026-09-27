@@ -25,10 +25,16 @@ trait HasCommunications
         return app(ChatService::class)->master($this, $this->getCommMasterTitle());
     }
 
-    /** @param  array<string, mixed>  $meta */
-    public function recordEvent(string $action, string $summary, array $meta = []): CommThread
+    /**
+     * System event on this record's timeline; `$body` adds the detail line shown under the summary (DEC-068).
+     *
+     * @param  array<string, mixed>  $meta
+     */
+    public function recordEvent(string $action, string $summary, array $meta = [], ?string $body = null): CommThread
     {
-        return app(ChatService::class)->event($this, $action, $summary, $meta);
+        return $body === null
+            ? app(ChatService::class)->event($this, $action, $summary, $meta)
+            : app(ChatService::class)->eventOnMaster($this->getOrCreateCommMaster(), $action, $summary, $body, $meta);
     }
 
     public function addRemark(string $body, ?UploadedFile $file = null, ?int $parentId = null, bool $internal = false): Result

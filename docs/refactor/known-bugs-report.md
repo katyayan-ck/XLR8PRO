@@ -229,7 +229,8 @@ Entry format:
 | BUG-191 | `Booking` scopes `pendingPayment`, `pendingInsurance`, `pendingRTO`, `pendingDeliveries`, `pendingDO` and the static count helpers (`getDynamicBookingCounts`, finance / exchange MTD-YTD) reference `xcelr8_booking_*` / `bookings` tables, a missing `Branches` class and old `branch_id` / `abbr` columns — every call throws; no caller found today | Low | OPEN (booking team) | 28-09-2026 | — |
 | BUG-192 | `Enquiry::quotations()` is `hasMany(Quotation, 'enquiry_no', 'enquiry_no')` but quotations store the enquiry **id** in `enquiry_no` (the inverse `Quotation::enquiry()` uses `enquiry_no → id`) — the relation returns no rows; no caller today | Low | OPEN (booking team) | 28-09-2026 | — |
 | BUG-193 | `Booking::finances()` / `exchanges()` and `XExchange::booking()` / `XFinance::booking()` join on `booking_id`, but both tables key on `bid`; `Booking::finances()` also names `App\Models\Module\Booking\XFinance` (the class is in `Module\Finance`); the `getVerifiedCounts()` / `getPendingCounts()` helpers fail the same way — no caller today | Low | OPEN (booking team) | 28-09-2026 | — |
-| BUG-194 | `BookingCrudController::fetchPendBkData()` and `fetchCbrData()` call `Cache::remember()` but the file has no `use Illuminate\Support\Facades\Cache;` — in a namespaced class this resolves to `App\Http\Controllers\Admin\Sales\Booking\Cache` and fatals | Medium | OPEN — fix scheduled in the Sales parity step (DEC-068) | 28-09-2026 | — |
+| BUG-194 | `BookingCrudController::fetchPendBkData()` and `fetchCbrData()` call `Cache::remember()` but the file has no `use Illuminate\Support\Facades\Cache;` — in a namespaced class this resolves to `App\Http\Controllers\Admin\Sales\Booking\Cache` and fatals | Medium | FIXED | 28-09-2026 | 28-09-2026 |
+| BUG-195 | `BookingKycService::apply()` recorded the customer's full Aadhaar (and PAN) in the booking history meta, which every booking viewer and the mobile history API can read | Medium | FIXED for new entries (28-09-2026); existing timeline rows unchanged | 28-09-2026 | — |
 
 Not a bug (false positive, listed for reference): the original `infer-conventions` sweep flagged
 "`SheetHeaderService`/`SynonymService` not used by importers" — re-investigation on 19-09-2026
@@ -2159,8 +2160,16 @@ guessed at.
 
 ### BUG-194 — BookingCrudController uses Cache without importing it
 
-- **Status:** OPEN — fix scheduled in the Sales parity step (DEC-068) (28-09-2026).
+- **Status:** FIXED (28-09-2026) — Cache facade imported in BookingCrudController (DEC-068).
 - **Severity:** Medium.
 - **Found:** 28-09-2026, PHPStan sweep of the files merged from stage.
 - **Evidence:** PHPStan `class.notFound` at lines ~5329 and ~9092; the import is missing on origin/stage, dev/admin and 6ed4a45 alike (pre-existing).
 - **Proposed solution:** add the facade import; smoke both AJAX endpoints.
+
+### BUG-195 — Full Aadhaar number written into the booking timeline
+
+- **Status:** FIXED for new entries (28-09-2026); existing timeline rows unchanged (28-09-2026).
+- **Severity:** Medium.
+- **Found:** 28-09-2026, Sales parity refactor (DEC-068).
+- **Evidence:** `BookingKycService.php` history meta `'adhar_no' => $adharNo` (12 digits); the value is also on the booking row itself, so the timeline copy added exposure without purpose.
+- **Proposed solution:** New entries store `XXXXXXXX1234`. Existing rows: a one-off masking of `xlr8_utils_comm_thread.extra_data->adhar_no` on booking masters — needs owner approval (data change).
