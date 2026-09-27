@@ -43,7 +43,7 @@
                     </div>
                     <div class="col-12">
                         <label class="form-label">Screenshot / file</label>
-                        <input type="file" name="file" class="form-control">
+                        <x-ui.upload name="file" />
                     </div>
                 </div>
                 <div class="card-footer d-flex justify-content-between">

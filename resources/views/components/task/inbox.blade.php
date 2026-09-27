@@ -25,7 +25,7 @@
                     <td>{{ $task->priority }}</td>
                     <td class="small">{{ $task->owner?->display_name }}</td>
                     <td class="small {{ $overdue ? 'text-danger fw-bold' : '' }}">
-                        {{ $task->deadline ? site_date($task->deadline) : '—' }}
+                        {{ site_datetime($task->deadline, '—') }}
                         @if ($overdue) <div>overdue</div> @endif
                     </td>
                 </tr>

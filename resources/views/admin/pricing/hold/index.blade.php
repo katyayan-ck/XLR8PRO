@@ -33,7 +33,7 @@
                                             <span class="badge bg-success">OPEN</span>
                                         @endif
                                     </td>
-                                    <td>{{ $hold?->held_at?->format('d-M-Y H:i') ?? '—' }}</td>
+                                    <td>{{ site_datetime($hold?->held_at, '—') }}</td>
                                     <td>{{ $hold?->hold_reason ?? '—' }}</td>
                                     <td>
                                         @if($hold && $hold->is_held)

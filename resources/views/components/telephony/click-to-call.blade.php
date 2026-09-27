@@ -13,7 +13,7 @@
         @if ($personCode)
             <input type="hidden" name="to" value="{{ $personCode }}">
         @else
-            <input type="tel" name="to" required class="form-control form-control-sm" style="max-width: 150px;" placeholder="Mobile">
+            <input type="tel" name="to" required class="form-control form-control-sm" placeholder="Mobile">
         @endif
         @if ($refType)
             <input type="hidden" name="ref_type" value="{{ $refType }}">

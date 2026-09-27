@@ -12,4 +12,4 @@
         default => ['green', 'Due in '.$human],
     };
 @endphp
-<span class="badge bg-{{ $color }}-lt" title="{{ $sla['due_at'] ? 'Due '.site_date($sla['due_at']) : '' }}"><i class="la la-clock me-1"></i>{{ $text }}</span>
+<span class="badge bg-{{ $color }}-lt" title="{{ $sla['due_at'] ? 'Due '.site_datetime($sla['due_at']) : '' }}"><i class="la la-clock me-1"></i>{{ $text }}</span>

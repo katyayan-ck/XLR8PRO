@@ -37,7 +37,7 @@
                                     <div>L{{ $l->level_no }} {{ $l->designation_code ?? 'users' }} · {{ $l->value_type }} max {{ $l->max_value !== null ? (float) $l->max_value : '∞' }}</div>
                                 @endforeach
                             </td>
-                            <td class="small">{{ $rule->valid_from?->format('d-m-Y') ?? '…' }} → {{ $rule->valid_to?->format('d-m-Y') ?? '…' }}</td>
+                            <td class="small">{{ $rule->valid_from ? site_date($rule->valid_from) : '…' }} → {{ $rule->valid_to ? site_date($rule->valid_to) : '…' }}</td>
                             <td class="text-end">
                                 <a href="{{ route('utils.approvals.admin.rules.edit', $rule->id) }}" class="btn btn-sm btn-ghost-primary"><i class="la la-edit"></i></a>
                                 <form method="POST" action="{{ route('utils.approvals.admin.rules.destroy', $rule->id) }}" class="d-inline" onsubmit="return confirm('Remove rule #{{ $rule->id }}? Open requests keep their snapshot.')">

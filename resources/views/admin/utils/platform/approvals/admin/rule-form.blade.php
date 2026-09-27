@@ -22,8 +22,8 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-2"><label class="form-label">Valid from</label><input type="date" name="valid_from" class="form-control" value="{{ old('valid_from', $rule?->valid_from?->format('Y-m-d')) }}"></div>
-            <div class="col-md-2"><label class="form-label">Valid to</label><input type="date" name="valid_to" class="form-control" value="{{ old('valid_to', $rule?->valid_to?->format('Y-m-d')) }}"></div>
+            <div class="col-md-2 col-6"><label class="form-label">Valid from</label><x-ui.date name="valid_from" :value="$rule?->valid_from" /></div>
+            <div class="col-md-2 col-6"><label class="form-label">Valid to</label><x-ui.date name="valid_to" :value="$rule?->valid_to" /></div>
             <div class="col-md-2 d-flex align-items-end"><label class="form-check"><input type="checkbox" name="is_active" value="1" class="form-check-input" @checked(old('is_active', $rule?->is_active ?? true))> <span class="form-check-label">Active</span></label></div>
 
             <div class="col-12 mt-2"><div class="text-muted small">Scope — leave blank for ANY. Precedence: variant › model › segment › permit › desk › branch › zone › company.</div></div>
@@ -37,7 +37,7 @@
 
             <div class="col-12 mt-3">
                 <table class="table table-sm">
-                    <thead><tr><th style="width: 80px;">Level</th><th>Designation</th><th>Value type</th><th>Std</th><th>Min</th><th>Max</th></tr></thead>
+                    <thead><tr><th class="w-1">Level</th><th>Designation</th><th>Value type</th><th>Std</th><th>Min</th><th>Max</th></tr></thead>
                     <tbody>
                         @foreach ($levels as $i => $l)
                             <tr>

@@ -35,7 +35,7 @@
                         <form method="POST" action="{{ route('utils.tickets.transition', $ticket['id']) }}" class="border rounded p-2 mb-3">
                             @csrf
                             <div class="d-flex flex-wrap gap-2 align-items-center">
-                                <select name="to" class="form-select form-select-sm" style="max-width: 240px;" required>
+                                <select name="to" class="form-select form-select-sm" required>
                                     @foreach ($targets as $to)
                                         <option value="{{ $to }}">{{ $labels[$to] ?? $to }}{{ $to === 'CLOSED' && $ticket['status'] !== 'RESOLVED' ? ' (force, reason required)' : '' }}</option>
                                     @endforeach
@@ -50,7 +50,7 @@
                             @csrf
                             <textarea name="body" rows="2" maxlength="5000" class="form-control mb-2" placeholder="Reply… (@username to mention)"></textarea>
                             <div class="d-flex gap-2">
-                                <input type="file" name="file" class="form-control form-control-sm" style="max-width: 260px;">
+                                <div class="flex-grow-1"><x-ui.upload name="file" /></div>
                                 <button class="btn btn-sm btn-outline-primary ms-auto"><i class="la la-reply me-1"></i>Post reply</button>
                             </div>
                         </form>
@@ -72,7 +72,7 @@
                             <dt class="col-5">{{ $label }}</dt>
                             <dd class="col-7">{{ collect($ticket['people'][$key])->pluck('name')->join(', ') ?: '—' }}</dd>
                         @endforeach
-                        <dt class="col-5">SLA due</dt><dd class="col-7">{{ $ticket['sla']['due_at'] ? site_date($ticket['sla']['due_at']) : '—' }}</dd>
+                        <dt class="col-5">SLA due</dt><dd class="col-7">{{ site_datetime($ticket['sla']['due_at'], '—') }}</dd>
                         @if ($ticket['ref_type'])
                             <dt class="col-5">Linked to</dt>
                             <dd class="col-7">
@@ -110,7 +110,7 @@
                         </div>
                         <div class="col-12">
                             <label class="form-label small">Owner</label>
-                            <select name="owner_id" class="form-select form-select-sm">
+                            <select name="owner_id" class="form-select form-select-sm" data-xl="select2" data-placeholder="Unassigned">
                                 <option value="">Unassigned</option>
                                 @foreach ($team as $id => $label)
                                     <option value="{{ $id }}" @selected(($ticket['owner']['id'] ?? null) === $id)>{{ $label }}</option>
@@ -120,11 +120,7 @@
                         @foreach (['assignees' => 'Assignees', 'followers' => 'Followers', 'snoopers' => 'Snoopers'] as $key => $label)
                             <div class="col-12">
                                 <label class="form-label small">{{ $label }}</label>
-                                <select name="{{ $key }}[]" multiple size="4" class="form-select form-select-sm">
-                                    @foreach ($team as $id => $name)
-                                        <option value="{{ $id }}" @selected(in_array($id, $ids($key), true))>{{ $name }}</option>
-                                    @endforeach
-                                </select>
+                                <x-ui.select :name="$key.'[]'" :options="$team" :selected="$ids($key)" multiple class="form-select-sm" />
                             </div>
                         @endforeach
                     </div>

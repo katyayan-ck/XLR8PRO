@@ -32,7 +32,7 @@
                                     <td>{{ $d->default_company }}</td>
                                     <td>{{ $d->company_priority_2 ?? '—' }}</td>
                                     <td>{{ $d->company_priority_3 ?? '—' }}</td>
-                                    <td>{{ $d->wef_date?->format('Y-m-d') ?? '—' }}</td>
+                                    <td>{{ site_date($d->wef_date, '—') }}</td>
                                     <td>
                                         @if($d->is_active)
                                             <span class="badge bg-success">Yes</span>

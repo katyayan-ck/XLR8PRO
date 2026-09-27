@@ -7,7 +7,7 @@
 <div class="container-fluid">
     <div class="card">
         <div class="card-header d-flex flex-wrap gap-2 justify-content-between align-items-center">
-            <form method="GET" action="{{ route('utils.templates.index') }}" class="d-flex flex-wrap gap-2">
+            <form method="GET" action="{{ route('utils.templates.index') }}" class="xl-toolbar flex-grow-1">
                 <select name="channel" class="form-select form-select-sm"><option value="">Any channel</option>
                     @foreach (\App\Models\Comms\CommTemplate::CHANNELS as $c) <option value="{{ $c }}" @selected(($filters['channel'] ?? '') === $c)>{{ $c }}</option> @endforeach
                 </select>
@@ -23,9 +23,9 @@
             <div class="d-flex gap-2">
                 <a href="{{ route('utils.templates.export') }}" class="btn btn-sm btn-outline-secondary"><i class="la la-download"></i> Export JSON</a>
                 @can('UTL_TPL_EDIT')
-                    <form method="POST" action="{{ route('utils.templates.import') }}" enctype="multipart/form-data" class="d-flex gap-1">
+                    <form method="POST" action="{{ route('utils.templates.import') }}" enctype="multipart/form-data" class="d-flex flex-column gap-1">
                         @csrf
-                        <input type="file" name="file" accept=".json" class="form-control form-control-sm" style="max-width: 200px;" required>
+                        <x-ui.upload name="file" accept=".json" required />
                         <button class="btn btn-sm btn-outline-secondary">Import drafts</button>
                     </form>
                     <a href="{{ route('utils.templates.create') }}" class="btn btn-sm btn-primary"><i class="la la-plus"></i> New template</a>
@@ -51,7 +51,7 @@
                                 @endforeach
                             </td>
                             <td class="text-end">{{ $t->versions->sum('usage_count') }}</td>
-                            <td class="small">{{ $active?->last_used_at ? site_date($active->last_used_at) : '—' }}</td>
+                            <td class="small">{{ site_datetime($active?->last_used_at, '—') }}</td>
                         </tr>
                     @empty
                         <tr><td colspan="6" class="text-center text-muted py-4">No templates.</td></tr>

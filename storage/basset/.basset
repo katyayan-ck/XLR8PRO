@@ -577,5 +577,29 @@
         "asset_path": "C:\\laragon\\www\\XLR8PRO\\vendor/backpack/theme-tabler/resources/assets/js/tabler.js",
         "asset_disk_path": "basset/vendor/backpack/theme-tabler/resources/assets/js/tabler.js",
         "asset_attributes": []
+    },
+    "https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css": {
+        "asset_name": "https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css",
+        "asset_path": "https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css",
+        "asset_disk_path": "basset/cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css",
+        "asset_attributes": []
+    },
+    "https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css": {
+        "asset_name": "https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css",
+        "asset_path": "https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css",
+        "asset_disk_path": "basset/cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css",
+        "asset_attributes": []
+    },
+    "https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js": {
+        "asset_name": "https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js",
+        "asset_path": "https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js",
+        "asset_disk_path": "basset/cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js",
+        "asset_attributes": []
+    },
+    "https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js": {
+        "asset_name": "https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js",
+        "asset_path": "https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js",
+        "asset_disk_path": "basset/cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js",
+        "asset_attributes": []
     }
 }

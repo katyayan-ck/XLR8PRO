@@ -17,7 +17,7 @@
                         Open requests keep their snapshot.
                     </p>
                     <a href="{{ route('utils.approvals.admin.import.template') }}" class="small"><i class="la la-download"></i> Download the template</a>
-                    <input type="file" name="file" accept=".xlsx,.xls,.csv" required class="form-control mt-3">
+                    <div class="mt-3"><x-ui.upload name="file" accept=".xlsx,.xls,.csv" required /></div>
                     <div class="mt-3">
                         <label class="form-check"><input type="radio" name="mode" value="dry" class="form-check-input" checked> <span class="form-check-label">Dry run (nothing is written)</span></label>
                         <label class="form-check"><input type="radio" name="mode" value="apply" class="form-check-input"> <span class="form-check-label">Apply (purge and replace per topic)</span></label>

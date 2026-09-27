@@ -51,7 +51,7 @@
                     <dl class="row mb-0 small">
                         <dt class="col-5">Deadline</dt>
                         <dd class="col-7 {{ $task['is_overdue'] ? 'text-danger fw-bold' : '' }}">
-                            {{ $task['deadline'] ? site_date($task['deadline']) : '—' }}
+                            {{ site_datetime($task['deadline'], '—') }}
                             @if ($task['days_left'] !== null && $task['status'] !== 'CLOSED')
                                 <div>{{ $task['is_overdue'] ? abs($task['days_left']).' day(s) overdue' : $task['days_left'].' day(s) left' }}</div>
                             @endif

@@ -24,10 +24,10 @@
                 <div class="mb-2"><span class="text-muted small">Subject</span><div class="fw-medium">{{ $render->get('subject') }}</div></div>
             @endif
             @if ($render->get('html'))
-                <div class="border rounded p-2 mb-2 bg-white text-dark" style="max-height: 360px; overflow: auto;">{!! $render->get('html') !!}</div>
+                <div class="border rounded p-2 mb-2 bg-body xl-scroll-y">{!! $render->get('html') !!}</div>
             @endif
             @if ($render->get('text'))
-                <pre class="border rounded p-2 small mb-0" style="white-space: pre-wrap;">{{ $render->get('text') }}</pre>
+                <pre class="border rounded p-2 small mb-0 xl-pre">{{ $render->get('text') }}</pre>
             @endif
             @if ($version->template->channel === 'SMS' && $render->get('text'))
                 @php $len = mb_strlen($render->get('text')); $unicode = preg_match('/[^\x00-\x7F]/', $render->get('text')); @endphp

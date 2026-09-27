@@ -128,5 +128,18 @@ class AppServiceProvider extends ServiceProvider
         Blade::directive('sitedate', function ($expression) {
             return "<?php echo app(\App\Services\DateFormatService::class)->format({$expression}); ?>";
         });
+        Blade::directive('sitedatetime', function ($expression) {
+            return "<?php echo app(\App\Services\DateFormatService::class)->formatDateTime({$expression}); ?>";
+        });
+
+        // Backpack's own date / datetime columns follow the same site setting (DEC-066). Skipped when
+        // the database is not reachable (package discovery, fresh installs).
+        rescue(function () {
+            $dates = $this->app->make(DateFormatService::class);
+            config([
+                'backpack.ui.default_date_format' => $dates->isoFormat(),
+                'backpack.ui.default_datetime_format' => $dates->isoFormat(true),
+            ]);
+        }, null, false);
     }
 }

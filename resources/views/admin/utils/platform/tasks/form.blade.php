@@ -43,7 +43,7 @@
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Deadline</label>
-                        <input type="datetime-local" name="deadline" class="form-control" value="{{ old('deadline', isset($task['deadline']) ? \Illuminate\Support\Carbon::parse($task['deadline'])->format('Y-m-d\TH:i') : '') }}">
+                        <x-ui.date name="deadline" :value="$task['deadline'] ?? null" time />
                     </div>
                     @if ($ref && $ref['type'])
                         <div class="col-md-4">
@@ -52,28 +52,16 @@
                         </div>
                     @endif
                     <div class="col-md-4" id="assignees-box">
-                        <label class="form-label">Assignees <span class="text-muted small">(ctrl-click for several)</span></label>
-                        <select name="assignees[]" multiple size="8" class="form-select">
-                            @foreach ($team as $id => $label)
-                                <option value="{{ $id }}" @selected(in_array($id, $assigneeIds, true))>{{ $label }}</option>
-                            @endforeach
-                        </select>
+                        <label class="form-label">Assignees</label>
+                        <x-ui.select name="assignees[]" :options="$team" :selected="$assigneeIds" multiple placeholder="Pick assignees" />
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Followers <span class="text-muted small">(may remark)</span></label>
-                        <select name="followers[]" multiple size="8" class="form-select">
-                            @foreach ($team as $id => $label)
-                                <option value="{{ $id }}" @selected(in_array($id, $followerIds, true))>{{ $label }}</option>
-                            @endforeach
-                        </select>
+                        <x-ui.select name="followers[]" :options="$team" :selected="$followerIds" multiple placeholder="Pick followers" />
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Snoopers <span class="text-muted small">(read only)</span></label>
-                        <select name="snoopers[]" multiple size="8" class="form-select">
-                            @foreach ($team as $id => $label)
-                                <option value="{{ $id }}" @selected(in_array($id, $snooperIds, true))>{{ $label }}</option>
-                            @endforeach
-                        </select>
+                        <x-ui.select name="snoopers[]" :options="$team" :selected="$snooperIds" multiple placeholder="Pick snoopers" />
                     </div>
                     <div class="col-12">
                         <label class="form-label">Details</label>

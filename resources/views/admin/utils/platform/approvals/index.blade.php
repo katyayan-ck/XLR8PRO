@@ -46,7 +46,7 @@
                             <td class="text-end">{{ $r->value_type === 'PERCENTAGE' ? (float) $r->asked.'%' : number_format((float) $r->asked, 0) }}</td>
                             <td class="text-end">{{ $r->effective_value !== null ? number_format((float) $r->effective_value, 0).' · L'.$r->effective_level : '—' }}</td>
                             <td><span class="badge bg-{{ $statusColor[$r->status] ?? 'secondary' }}-lt">{{ $r->status }}</span></td>
-                            <td class="small">{{ site_date($r->created_at) }}</td>
+                            <td class="small">{{ site_datetime($r->created_at) }}</td>
                         </tr>
                     @empty
                         <tr><td colspan="6" class="text-center text-muted py-4">Nothing here.</td></tr>

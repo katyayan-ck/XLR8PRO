@@ -8,7 +8,7 @@
     @if (! $open)
         <div class="alert alert-warning py-2 small mb-2">The 24-hour window is closed — only an approved template can be sent.</div>
     @else
-        <div class="small text-muted mb-2">Session open until {{ $thread->session_expires_at->format('d M H:i') }}.</div>
+        <div class="small text-muted mb-2">Session open until {{ site_datetime($thread->session_expires_at) }}.</div>
     @endif
     <ul class="nav nav-tabs mb-2" role="tablist">
         @if ($open)

@@ -22,7 +22,7 @@
             <div class="table-responsive">
                 <table class="table table-vcenter card-table">
                     <thead>
-                        <tr><th style="width: 30%;">Setting</th><th>Value</th><th style="width: 16%;">Last changed</th></tr>
+                        <tr><th>Setting</th><th>Value</th><th>Last changed</th></tr>
                     </thead>
                     <tbody>
                         @foreach ($settings as $setting)
@@ -68,12 +68,12 @@
                                             <form method="POST" action="{{ route('utils.settings.update') }}" class="d-flex gap-2 mt-2">
                                                 @csrf @method('PUT')
                                                 <input type="hidden" name="key" value="{{ $setting['key'] }}">
-                                                <select name="scope_type" class="form-select form-select-sm" style="max-width: 120px;">
+                                                <select name="scope_type" class="form-select form-select-sm">
                                                     <option value="COMPANY">Company</option>
                                                     <option value="BRANCH">Branch</option>
                                                     <option value="DESK">Desk</option>
                                                 </select>
-                                                <input type="text" name="scope_code" required maxlength="50" class="form-control form-control-sm" placeholder="Code" style="max-width: 120px;">
+                                                <input type="text" name="scope_code" required maxlength="50" class="form-control form-control-sm" placeholder="Code">
                                                 <input type="{{ $secret ? 'password' : 'text' }}" name="value" class="form-control form-control-sm" placeholder="Value">
                                                 <button class="btn btn-sm btn-outline-primary">Add</button>
                                             </form>
@@ -90,7 +90,7 @@
                                         @endif
                                     @endif
                                 </td>
-                                <td class="small text-muted">{{ $setting['updated_at'] ? site_date($setting['updated_at']) : 'default' }}</td>
+                                <td class="small text-muted">{{ $setting['updated_at'] ? site_datetime($setting['updated_at']) : 'default' }}</td>
                             </tr>
                         @endforeach
                     </tbody>

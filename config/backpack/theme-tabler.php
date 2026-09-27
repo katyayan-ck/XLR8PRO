@@ -38,6 +38,9 @@ return [
      *   - replace "base_path('vendor/backpack/theme-tabler/resources/assets/css/backpack-color-palette.css')," with the path to the file created above
      */
     'styles' => [
+        // Shared UI layer (DEC-066): version-pinned, cached locally by Basset
+        'https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css',
+        'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css',
         // base_path('vendor/backpack/theme-tabler/resources/assets/css/skins/backpack-color-palette.css'),
         // base_path('vendor/backpack/theme-tabler/resources/assets/css/skins/glass.css'),
         // base_path('vendor/backpack/theme-tabler/resources/assets/css/skins/fuzzy-background.css'),

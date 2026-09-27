@@ -6,8 +6,8 @@
 <div class="container-fluid">
     <form method="GET" action="{{ route('utils.tickets.report') }}" class="card mb-3">
         <div class="card-body d-flex flex-wrap gap-2 align-items-end">
-            <div><label class="form-label small">From</label><input type="date" name="from" value="{{ $filters['from'] ?? '' }}" class="form-control form-control-sm"></div>
-            <div><label class="form-label small">To</label><input type="date" name="to" value="{{ $filters['to'] ?? '' }}" class="form-control form-control-sm"></div>
+            <div><label class="form-label small">From</label><x-ui.date name="from" :value="$filters['from'] ?? null" class="form-control-sm" /></div>
+            <div><label class="form-label small">To</label><x-ui.date name="to" :value="$filters['to'] ?? null" class="form-control-sm" /></div>
             <div>
                 <label class="form-label small">Branch</label>
                 <select name="branch" class="form-select form-select-sm">

@@ -51,7 +51,7 @@
                                     <div class="col-md-3">
                                         <label class="form-label fw-bold">Created At</label>
                                         <div class="readonly-value">
-                                            {{ $employee->created_at?->format('d-m-Y H:i') ?? '—' }}
+                                            {{ site_datetime($employee->created_at, '—') }}
                                         </div>
                                     </div>
                                 </div>

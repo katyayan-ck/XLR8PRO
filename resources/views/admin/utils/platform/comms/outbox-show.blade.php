@@ -28,13 +28,13 @@
                         @if (! empty($envelope['header'])) <dt class="col-3">Header</dt><dd class="col-9">{{ $envelope['header'] }}</dd> @endif
                         <dt class="col-3">Template</dt><dd class="col-9">{{ $row->template_code ? $row->template_code.' v'.$row->template_version : 'raw' }} · {{ $row->category }}</dd>
                         <dt class="col-3">Driver</dt><dd class="col-9">{{ $row->driver }} · attempts {{ $row->attempts }} · provider id {{ $row->provider_message_id ?? '—' }}</dd>
-                        <dt class="col-3">Timing</dt><dd class="col-9">queued {{ site_date($row->created_at) }} · sent {{ $row->sent_at ? site_date($row->sent_at) : '—' }} · delivered {{ $row->delivered_at ? site_date($row->delivered_at) : '—' }}</dd>
+                        <dt class="col-3">Timing</dt><dd class="col-9">queued {{ site_datetime($row->created_at) }} · sent {{ site_datetime($row->sent_at, '—') }} · delivered {{ site_datetime($row->delivered_at, '—') }}</dd>
                         @if ($row->ref_type) <dt class="col-3">Record</dt><dd class="col-9">{{ $row->ref_type }} #{{ $row->ref_id }}</dd> @endif
                         @if ($row->error) <dt class="col-3">Error</dt><dd class="col-9 text-danger">{{ $row->error }}</dd> @endif
                         <dt class="col-3">Idempotency</dt><dd class="col-9"><code class="small">{{ $row->idempotency_key }}</code></dd>
                     </dl>
                     @if ($row->subject) <div class="fw-medium mb-1">{{ $row->subject }}</div> @endif
-                    <pre class="border rounded p-2 small" style="white-space: pre-wrap;">{{ $row->body_preview }}</pre>
+                    <pre class="border rounded p-2 small xl-pre">{{ $row->body_preview }}</pre>
                     <div class="small text-muted">Preview with personal data masked. The full snapshot is stored encrypted for resend.</div>
                 </div>
             </div>

@@ -11,7 +11,7 @@
 @endphp
 <div class="d-flex align-items-start gap-2 {{ $compact ? 'mt-1' : 'border rounded p-2 mb-2' }}">
     @if (! $compact && ($doc['is_image'] ?? false) && ($doc['url'] ?? null))
-        <img src="{{ $doc['url'] }}" alt="" class="rounded" style="width: 56px; height: 56px; object-fit: cover;">
+        <img src="{{ $doc['url'] }}" alt="" class="rounded xl-thumb">
     @else
         <i class="la {{ $icon }} fs-2"></i>
     @endif

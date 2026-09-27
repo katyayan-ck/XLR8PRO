@@ -788,3 +788,27 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
 - **Settings:** a key that is not in the seed pack now takes its type from its first value (bool / int / decimal / json / string). A flag such as `quote.csd_enabled` can be created from the admin screen or by code without a deploy (acceptance item 5).
 - **Rules:** a new `.ai/rules/modules/platform.md` (laws, traps, permissions, tests), loaded by path for all platform code.
 - **Approved-by:** user (28-09 plan) · **Risk:** LOW · **Reversal:** revert.
+
+### DEC-066 | 28-09-2026 | A (UI) | Project-wide UI standards and the shared UI layer
+- **Why:** the user asked for four standards everywhere: the site date format (display, lists, pickers), Select2 for multi-selects, drop-zone uploads, and modern / minimal / responsive screens (360 / 768 / desktop).
+  - A scan showed they were not followed: 65 views hard-coded date formats, 33 used native date pickers, 17 flatpickr pickers ignored the site format, 9 used list boxes, 31 had bare file inputs, 88 used fixed pixel widths, and 25 had tables without a responsive wrapper.
+  - The existing `.ai/rules/ui.md` rules (dates, colours) were also ignored, including by the platform sprints.
+  - Rules recorded on request (`.ai/rules/ui.md`, 4 new sections).
+- **Decision (user: "continue as per your best recommended plan"):**
+  - One shared layer, `public/js/xl-ui.js` + `public/css/xl-ui.css`, loaded on every admin page (`header_metas`). It progressively enhances every screen: native date inputs → flatpickr in the site format (submitting ISO), `select[multiple]` → Select2, file inputs → drop-zone, bare tables → `.table-responsive`, plus a responsive safety net. Opt out with `data-xl="off"`.
+  - An inline hook wraps `agGrid.createGrid` so AG-Grid date columns use the site format.
+  - Backpack's date / datetime column formats are set from the setting at boot.
+  - Why this approach: Sales (booking team) and other legacy screens comply without editing them.
+- **Libraries:** the flatpickr and Select2 already used by 25 and 12 screens become the single approved versions (flatpickr 4.6.13, Select2 4.1.0-rc.0), pinned and cached by Basset from `config/backpack`. No new package.
+  - The drop-zone is in-house, with no Dropzone.js / FilePond dependency.
+  - Select2 is used as the library, not Backpack PRO fields.
+- **Components for new code:** `x-ui.date`, `x-ui.select`, `x-ui.upload` (form or AJAX mode with per-file progress). New helpers `site_datetime()` / `@sitedatetime` and `DateFormatService::{phpDateTimeFormat, formatDateTime, isoFormat}`. New setting `display.time_format` (default `H:i`).
+- **Converted now:**
+  - All platform-utility screens and components.
+  - The notification centre: a single bell with a combined badge and N / A / M tabs, replacing three hard-coded dropdowns.
+  - Server-side display dates in 28 non-Sales views (to `site_date` / `site_datetime`).
+- **Not converted in source (enhanced at runtime only):**
+  - Sales / booking / PDF views (booking team) — about 250 violations.
+  - Hex colours and inline `<style>` in legacy views (227 files).
+  - These are the follow-up work.
+- **Approved-by:** user (28-09) · **Risk:** MED (global JS on every page; guarded, idempotent, opt-out) · **Reversal:** remove the `header_metas` include / config entries.

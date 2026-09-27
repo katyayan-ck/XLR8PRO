@@ -67,9 +67,9 @@
             <form method="POST" action="{{ route('utils.approvals.counter', $request->id) }}" class="d-flex flex-wrap gap-2 mb-2">
                 @csrf
                 @if ($request->value_type === 'FLAG')
-                    <select name="value" class="form-select form-select-sm" style="max-width: 140px;"><option value="1">Yes</option><option value="0">No</option></select>
+                    <select name="value" class="form-select form-select-sm"><option value="1">Yes</option><option value="0">No</option></select>
                 @else
-                    <input type="number" step="0.01" min="0" max="{{ $p['viewer_level']['max'] ?? '' }}" name="value" required class="form-control form-control-sm" style="max-width: 160px;" placeholder="Your counter" value="{{ $request->asked }}">
+                    <input type="number" step="0.01" min="0" max="{{ $p['viewer_level']['max'] ?? '' }}" name="value" required class="form-control form-control-sm" placeholder="Your counter" value="{{ $request->asked }}">
                 @endif
                 <input type="text" name="remark" maxlength="1000" class="form-control form-control-sm flex-grow-1" placeholder="Remark (optional)">
                 <button class="btn btn-sm btn-primary">Counter as L{{ $p['viewer_level']['level_no'] }}</button>
@@ -79,7 +79,7 @@
         @if ($p['is_requester'] && $request->status === 'OPEN')
             <form method="POST" action="{{ route('utils.approvals.revise', $request->id) }}" class="d-flex flex-wrap gap-2 mb-2">
                 @csrf
-                <input type="number" step="0.01" min="0" name="asked" required class="form-control form-control-sm" style="max-width: 160px;" placeholder="New ask">
+                <input type="number" step="0.01" min="0" name="asked" required class="form-control form-control-sm" placeholder="New ask">
                 <input type="text" name="remark" maxlength="1000" class="form-control form-control-sm flex-grow-1" placeholder="Why the ask changed">
                 <button class="btn btn-sm btn-outline-primary">Revise ask</button>
             </form>

@@ -17,7 +17,7 @@
                     <div class="col-md-3"><label>Post</label><p class="form-control-plaintext"><code>{{ $line->post_code }}</code></p></div>
                     <div class="col-md-3"><label>Reports To</label><p class="form-control-plaintext"><code>{{ $line->reports_to_post_code }}</code></p></div>
                     <div class="col-md-3"><label>Topic</label><p class="form-control-plaintext">{{ $line->topic }}</p></div>
-                    <div class="col-md-3"><label>From Date</label><p class="form-control-plaintext">{{ $line->from_date?->format('d-M-Y') }}</p></div>
+                    <div class="col-md-3"><label>From Date</label><p class="form-control-plaintext">{{ site_date($line->from_date, '—') }}</p></div>
                 </div>
                 <hr>
                 <div class="row">

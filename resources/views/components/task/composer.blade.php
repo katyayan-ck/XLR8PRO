@@ -10,13 +10,13 @@
         @csrf
         <textarea name="remark" rows="2" maxlength="5000" class="form-control mb-2" placeholder="Follow-up remark… (@username to mention)"></textarea>
         <div class="d-flex flex-wrap gap-2 align-items-center">
-            <select name="status" class="form-select form-select-sm" style="max-width: 220px;">
+            <select name="status" class="form-select form-select-sm">
                 <option value="NO_CHANGE">Status: no change ({{ $task['status'] }})</option>
                 @foreach ($targets as $to)
                     <option value="{{ $to }}">{{ $labels[$to] ?? $to }}</option>
                 @endforeach
             </select>
-            <input type="file" name="file" class="form-control form-control-sm" style="max-width: 260px;">
+            <div class="w-100"><x-ui.upload name="file" /></div>
             <button class="btn btn-sm btn-primary ms-auto"><i class="la la-paper-plane me-1"></i>Save follow-up</button>
         </div>
     </form>

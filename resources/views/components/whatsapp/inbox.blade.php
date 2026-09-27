@@ -13,7 +13,7 @@
             @endforeach
         </ul>
     </div>
-    <div class="list-group list-group-flush" style="max-height: 70vh; overflow-y: auto;">
+    <div class="list-group list-group-flush xl-scroll-y">
         @forelse ($threads as $t)
             <a href="{{ route('utils.whatsapp.show', ['threadId' => $t->id, 'box' => $box]) }}" class="list-group-item list-group-item-action {{ $active === $t->id ? 'active' : '' }}">
                 <div class="d-flex justify-content-between">

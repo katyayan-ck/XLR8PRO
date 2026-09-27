@@ -53,8 +53,7 @@
                                     <div class="col-md-3">
                                         <label class="form-label fw-bold">Created At</label>
                                         <div class="readonly-value">
-                                            {{ $subsegment->created_at ? $subsegment->created_at->format('d-m-Y H:i') :
-                                            '—' }}
+                                            {{ site_datetime($subsegment->created_at, '—') }}
                                         </div>
                                     </div>
                                 </div>

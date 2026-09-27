@@ -179,3 +179,28 @@
 - **Verification:**
   - Platform tests 44 passed / 1 skipped.
   - Full suite 333 passed / 2 skipped / 0 failed.
+
+## UI standards: shared layer, platform screens, developer guides (DEC-066)
+- **Rules:** `.ai/rules/ui.md` gains four recorded standards and a shared-layer section (synced to `.claude/rules`).
+- **New files:** `public/js/xl-ui.js`, `public/css/xl-ui.css`; components `x-ui.date`, `x-ui.select`, `x-ui.upload`.
+- **Config and wiring:**
+  - pinned flatpickr / Select2 in `config/backpack/{ui,theme-tabler}.php`;
+  - meta tags (site formats, upload limits) and the AG-Grid date hook in `vendor/backpack/ui/inc/header_metas.blade.php`.
+- **Dates:**
+  - `DateFormatService` gains datetime and ISO formats; helper `site_datetime()`; directive `@sitedatetime`.
+  - `AppServiceProvider` points Backpack's date formats at the setting.
+  - 28 non-Sales views now display dates through `site_date` / `site_datetime`, including the receipt show fields.
+- **Notification centre:** `x-notify.bell` rewritten as a single bell with tabs, mark-read and an empty state; `topbar_right_content` renders it.
+- **Platform screens:**
+  - 26 files use the components (no list boxes, native pickers, bare file inputs, fixed widths or `bg-white`).
+  - The chat timeline and WhatsApp bubbles are redesigned.
+  - The docs uploader uses an AJAX drop-zone with progress.
+- **Guides:** `docs/utilities/` — README, one per utility (01–13) and `ui-kit.md`.
+- **Verification:**
+  - Every Blade template compiles (`view:cache`).
+  - The 22 platform screens return 200 or 403 as expected for users 1 and 40.
+  - Headless Chrome at 390, 768 and 1366 px:
+    - Select2 and site-format flatpickr render;
+    - the drop-zone previews a file and removes it before upload, and refuses a second file on a single-file input;
+    - the bell panel renders;
+    - a legacy screen (user create) is enhanced with no JS errors.

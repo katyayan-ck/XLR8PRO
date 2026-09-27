@@ -7,13 +7,13 @@
 <div class="container-fluid">
     <div class="card">
         <div class="card-header d-flex flex-wrap gap-2 justify-content-between align-items-center">
-            <form method="GET" action="{{ route('utils.calls.index') }}" class="d-flex flex-wrap gap-2">
-                <input type="text" name="person" value="{{ $filters['person'] ?? '' }}" class="form-control form-control-sm" style="max-width: 140px;" placeholder="Person code">
-                <select name="status" class="form-select form-select-sm" style="max-width: 140px;"><option value="">Any status</option>
+            <form method="GET" action="{{ route('utils.calls.index') }}" class="xl-toolbar flex-grow-1">
+                <input type="text" name="person" value="{{ $filters['person'] ?? '' }}" class="form-control form-control-sm" placeholder="Person code">
+                <select name="status" class="form-select form-select-sm"><option value="">Any status</option>
                     @foreach (array_keys($statusColor) as $s) <option value="{{ $s }}" @selected(($filters['status'] ?? '') === $s)>{{ $s }}</option> @endforeach
                 </select>
-                <input type="date" name="from" value="{{ $filters['from'] ?? '' }}" class="form-control form-control-sm">
-                <input type="date" name="to" value="{{ $filters['to'] ?? '' }}" class="form-control form-control-sm">
+                <x-ui.date name="from" :value="$filters['from'] ?? null" class="form-control-sm" placeholder="From" />
+                <x-ui.date name="to" :value="$filters['to'] ?? null" class="form-control-sm" placeholder="To" />
                 <button class="btn btn-sm btn-outline-primary">Filter</button>
             </form>
             <x-telephony.click-to-call label="New call" />
@@ -24,14 +24,14 @@
                 <tbody>
                     @forelse ($calls as $call)
                         <tr>
-                            <td>{{ $call->id }}<div class="small text-muted">{{ $call->direction }} · {{ $call->started_at?->format('d M H:i') }}</div></td>
+                            <td>{{ $call->id }}<div class="small text-muted">{{ $call->direction }} · {{ site_datetime($call->started_at, '—') }}</div></td>
                             <td class="small">{{ $telephony->display($call->direction === 'OUT' ? $call->to_number : $call->from_number) }}@if ($call->person_code)<div class="text-muted">{{ $call->person_code }}</div>@endif @if ($call->ref_type)<div class="text-muted">{{ $call->ref_type }} #{{ $call->ref_id }}</div>@endif</td>
                             <td class="small">{{ $call->agent?->display_name ?? '—' }}</td>
                             <td><span class="badge bg-{{ $statusColor[$call->status] ?? 'secondary' }}-lt">{{ $call->status }}</span></td>
                             <td class="small">{{ $call->duration_seconds !== null ? gmdate('i:s', $call->duration_seconds) : '—' }}</td>
                             <td>
                                 @if ($call->recording_doc_id)
-                                    <audio controls preload="none" style="height: 32px; max-width: 220px;"><source src="{{ route('utils.calls.recording', $call->id) }}"></audio>
+                                    <audio controls preload="none" class="w-100" style="height: 32px;"><source src="{{ route('utils.calls.recording', $call->id) }}"></audio>
                                     @can('UTL_COMM_RECORDING_DOWNLOAD') <a href="{{ route('utils.calls.recording', ['callId' => $call->id, 'download' => 1]) }}" class="small">download</a> @endcan
                                 @elseif ($call->recording_missing)
                                     <span class="badge bg-red-lt">missing</span>
@@ -40,13 +40,13 @@
                                 @endif
                             </td>
                             <td>
-                                <form method="POST" action="{{ route('utils.calls.dispose', $call->id) }}" class="d-flex gap-1">
+                                <form method="POST" action="{{ route('utils.calls.dispose', $call->id) }}" class="xl-toolbar">
                                     @csrf
-                                    <select name="disposition" class="form-select form-select-sm" style="max-width: 170px;">
+                                    <select name="disposition" class="form-select form-select-sm">
                                         <option value="">—</option>
                                         @foreach ($dispositions as $code => $label) <option value="{{ $code }}" @selected($call->disposition === $code)>{{ $label }}</option> @endforeach
                                     </select>
-                                    <input type="text" name="remark" maxlength="500" value="{{ $call->disposition_remark }}" class="form-control form-control-sm" style="max-width: 160px;" placeholder="Remark">
+                                    <input type="text" name="remark" maxlength="500" value="{{ $call->disposition_remark }}" class="form-control form-control-sm" placeholder="Remark">
                                     <button class="btn btn-sm btn-outline-primary">Save</button>
                                 </form>
                             </td>

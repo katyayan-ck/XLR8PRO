@@ -10,7 +10,7 @@
         @endif
         <textarea name="body" rows="2" maxlength="5000" class="form-control mb-2" placeholder="{{ $parentId ? 'Write a reply…' : 'Write a remark… (@username to mention)' }}"></textarea>
         <div class="d-flex flex-wrap align-items-center gap-2">
-            <input type="file" name="file" class="form-control form-control-sm" style="max-width: 260px;">
+            <div class="flex-grow-1"><x-ui.upload name="file" /></div>
             @if ($allowInternal)
                 <label class="form-check mb-0"><input type="checkbox" name="internal" value="1" class="form-check-input"> <span class="form-check-label small">Internal</span></label>
             @endif

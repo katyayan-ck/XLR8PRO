@@ -23,6 +23,14 @@ if (! function_exists('site_date')) {
     }
 }
 
+if (! function_exists('site_datetime')) {
+    /** Date + time in the site format (`display.date_format` + `display.time_format`); function form of @sitedatetime. */
+    function site_datetime(mixed $date, string $fallback = 'N/A'): string
+    {
+        return app(DateFormatService::class)->formatDateTime($date, $fallback);
+    }
+}
+
 if (! function_exists('setting')) {
     /** Effective setting value (FRS SET-10) — alias of Settings::get(). */
     function setting(string $key, mixed $default = null): mixed
