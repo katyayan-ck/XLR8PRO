@@ -6,7 +6,6 @@
 <style>
     :root { --rbac-inherited: #0d6efd; --rbac-added: #198754; --rbac-removed: #dc3545; }
     .card { border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,.08); }
-    .form-control:focus, .form-select:focus { border-color: #80bdff; box-shadow: 0 0 0 .2rem rgba(0,123,255,.25); }
     .hidden-card { display: none; }
     #orgChangeBlock { display: none; border: 1px dashed #fd7e14; border-radius: 8px; padding: 1rem; background: #fff8f0; }
 

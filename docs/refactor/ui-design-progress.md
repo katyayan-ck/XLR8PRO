@@ -69,8 +69,9 @@ dev UI kit). Commits on `dev/admin`: `080c15c` (DEC-066), `15415ed` (DEC-067). N
    - fixed pixel widths → grid classes.
 3. **Hex colours and inline `<style>` outside Sales** (org, vehicle, pricing, utils legacy views); Sales done. (The safety net only covers the common cases.)
    - move shared styles to `xl-ui.css` / `xl-theme.css`, colours to tokens;
-   - the most frequent value is `border-color:#80bdff` (84 times; an old focus colour → remove).
-4. **`menu_items.blade.php`** has an inline `<style>` block. Nested dropdown menus should be checked in the vertical layouts on real data (checked only at a glance).
+   - ~~`border-color:#80bdff`~~ — the Bootstrap-4 `.form-control:focus` override was removed from all 69 views (DEC-070);
+     inputs now show Tabler's focus ring in the theme colour. Other hex values in ~107 non-Sales views remain.
+4. ~~`menu_items.blade.php` inline `<style>`~~ — moved to `xl-theme.css` (DEC-070). Nested dropdown menus should still be checked in the vertical layouts on real data.
 5. **Logo in dark mode:** `xl-theme.css` inverts the logo image to white in dark mode / dark sidebar. This is unverified, because the image did not load in the preview harness. Check it on the real site; a dedicated light logo file may be better.
 6. **Real CRM dashboard:** the kit dashboard is static. The real `/admin/dashboard` should reuse its cards and chart pattern with data from services.
 7. **Mobile header:** on phones the Appearance button is only in the user menu (by design). Confirm with users.

@@ -456,3 +456,9 @@ Triage of every open bug against HEAD `0386230` (plan approved 28-09); decisions
   178, 180, 182, 183, 188, 190, 191); BUG-106 / 109 got entries (they only had index rows).
 - `AdminScreenSmokeTest::KNOWN_BROKEN`: `spares/spare-request/create` removed (it returns 200 now); the list cites BUG-031.
 - `.ai/state/current.md` and the generated bugs index (`ai:refresh-context`): 35 open.
+
+**W16 — UI debt:**
+- Removed the Bootstrap-4 `.form-control:focus { border-color: #80bdff; box-shadow: … }` override from 69 non-Sales views
+  (268 lines); inputs use Tabler's themed focus ring (follows the primary colour and dark mode).
+- `menu_items.blade.php` inline `<style>` → `public/css/xl-theme.css` (shell section).
+- Verified: `view:cache`; segment create in dark mode at 1366 px. Remaining hex in ~107 legacy views stays a follow-up.

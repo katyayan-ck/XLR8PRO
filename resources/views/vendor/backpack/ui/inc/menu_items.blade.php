@@ -1,8 +1,3 @@
-<style>
-    .sidebar .dropdown-toggle::after {
-        margin-left: auto !important;
-    }
-</style>
 {{-- MAIN ADMIN MENU - ALL ITEMS NESTED --}}
 <x-backpack::menu-dropdown title="Admin" icon="la la-th">
 
