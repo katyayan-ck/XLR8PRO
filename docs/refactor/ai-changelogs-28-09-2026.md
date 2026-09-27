@@ -462,3 +462,27 @@ Triage of every open bug against HEAD `0386230` (plan approved 28-09); decisions
   (268 lines); inputs use Tabler's themed focus ring (follows the primary colour and dark mode).
 - `menu_items.blade.php` inline `<style>` → `public/css/xl-theme.css` (shell section).
 - Verified: `view:cache`; segment create in dark mode at 1366 px. Remaining hex in ~107 legacy views stays a follow-up.
+
+**Index clean-up:** `RefreshAiContext` now treats `CLOSED…` and `DUPLICATE…` statuses as closed (before, only `FIXED` /
+`WON'T FIX`), so the generated `.ai/state/bugs-index.md` lists only open work: **31 open** (was 55). BUG-031 / 032 / 116 /
+154 / 085 got decision references; the state file's waiting list is the D1–D29 list.
+
+## Sprint summary — bug-fix sprint wave 1 (DEC-070), 28-09-2026
+Range `0386230..dev/admin` (on top of stage): 8 commits, 110 files, +725 / −670 lines. Not pushed.
+
+| Result | Bugs |
+|---|---|
+| Fixed in code | 097 (VOTF duplicates), 102, 184, 185, 186, 189 (OTP in logs — security), 192, 193, 195 (PAN in new entries) |
+| Fixed in part | 008 / 020 / 021 (controller leftovers), 029 (import actor), 168 (route keys), 179 (debug output) |
+| Closed after triage (already fixed or superseded) | 019, 028, 030, 033, 045, 061, 106, 107, 109, 111, 119; 090 duplicate of 183 |
+| Open, each with a decision id | 31 (see `.ai/state/bugs-index.md`) |
+
+**New findings during triage:** mobile OTP login is broken (`users.mobile` doesn't exist — BUG-187, D1); the login OTP was
+written to the log (fixed); BUG-178 also mis-scopes add-ons and discounts; BUG-153's endpoint now errors; 52 dead menu links.
+
+**Tests:** +5 test files / cases (`OtpLoggingTest`, `BaseModelAuditDetailsTest`, `OrgServiceNameLookupTest`,
+`BookingRelationsTest`, OTF duplicate + KYC masking cases). Full suite **353 passed, 1 skipped** (was 342 / 1).
+HTTP smoke as users 1 and 40 on the touched screens. `--group=smoke` not rerun (no merge in this sprint).
+
+**Owner decisions pending (D1–D29):** security / API (D1–D4), deletions (D5–D12), UAT-visible (D13–D17), business / data
+(D18–D29) — full list with recommendations in `.ai/state/current.md` and the approved plan.
