@@ -214,6 +214,7 @@ Entry format:
 | BUG-177 | Imports menu and the `imports/admin` landing page have no permission check (a user with no import permission opens it; the vehicle import POST itself is gated on `VEH_SEG_CREATE`) | Low | OPEN (permission choice needs owner) | 27-09-2026 | — |
 | BUG-178 | Pricing engine ignores imported dealer charges: `dealerCharges()` reads narrow rows (`charge_name`/`amount`) while the importer writes the spec's WIDE columns (CP-06), so the pricing JSON's dealer charges total 0; `scopeHit()` checks a `model` column (table has `model_code`), so model scope is never applied | High | OPEN (price-changing fix — owner approval) | 27-09-2026 | — |
 | BUG-179 | Two divergent accessory importers: the wired one (`import:vehicle-accessories` → `AccessoryImportService`) reads one sheet without type/discount/permit, soft-disables the whole catalogue and echoes every row; the spec-shaped one (`AccessoryService::importExcel*`: typed sheets, discount, permit, hard purge) has no caller | Medium | OPEN (owner: which importer is authoritative) | 27-09-2026 | — |
+| BUG-180 | `/export/vehicle-data` (`ExportController::vehicleDataExcel`) references `App\Exports\VehicleDataExport`, which does not exist — the route 500s | Low | OPEN | 28-09-2026 | — |
 | BUG-175 | Person contacts/addresses/banking: the per-person type-slot unique keys include soft-deleted rows, so re-adding a deleted slot (e.g. a new Primary address after deleting one) failed with a duplicate-key 500; promoting a non-Alternate row to Primary while Alternate was used also collided | High | FIXED (DEC-053) | 27-09-2026 | 27-09-2026 |
 
 Not a bug (false positive, listed for reference): the original `infer-conventions` sweep flagged
@@ -2029,3 +2030,8 @@ guessed at.
     - it hard-deletes both tables inside a transaction.
   - The Machine Spec says "AccessoryService — existing packs/discounts (DO NOT rewrite)".
 - **Decision needed:** which importer (and which purge semantics) is authoritative. Then both entity services (accessory, accessory scope) are added and the chosen importer writes through them, and the other is removed.
+
+### BUG-180 — Vehicle data export class missing
+
+- **Status:** OPEN (28-09-2026). Found by the DEC-060 class-resolution sweep.
+- **Evidence:** `routes/web.php` `export/vehicle-data` → `ExportController::vehicleDataExcel()` → `new VehicleDataExport`. No such class exists under `app/Exports`.

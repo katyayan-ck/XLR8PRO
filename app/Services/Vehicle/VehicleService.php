@@ -538,6 +538,67 @@ class VehicleService
         };
     }
 
+    /**
+     * Dropdown options (DEC-060, replaced CommonHelper/XpricingHelper). Eloquent rows, so callers
+     * may read `$row->code` or `$row['code']` as before.
+     */
+    public function segmentOptions(): Collection
+    {
+        return Segment::query()->select('code', 'name')->where('is_active', true)->orderBy('name')->get();
+    }
+
+    /** Models of a segment (all segments when null); `$activeOnly = false` includes inactive ones. */
+    public function modelOptions(?string $segmentCode = null, bool $activeOnly = true): Collection
+    {
+        return VehicleModel::query()
+            ->select('id', 'code', 'name')
+            ->when($activeOnly, fn ($q) => $q->where('is_active', true))
+            ->when($segmentCode !== null, fn ($q) => $q->where('segment_code', $this->norm($segmentCode)))
+            ->orderBy('name')
+            ->get();
+    }
+
+    /** Active models of exactly this segment; none when no segment is chosen yet (dependent dropdowns). */
+    public function modelOptionsFor(?string $segmentCode): Collection
+    {
+        return trim((string) $segmentCode) === '' ? collect() : $this->modelOptions($segmentCode);
+    }
+
+    /** Variant rows of a model: `id, code, name` (custom name), `seating_capacity`. */
+    public function variantOptions(?string $modelCode): Collection
+    {
+        return Variant::query()
+            ->select('id', 'code', 'custom_name as name', 'seating_capacity')
+            ->where('is_active', true)
+            ->where('model_code', $this->norm($modelCode))
+            ->orderBy('custom_name')
+            ->get();
+    }
+
+    /**
+     * Colours available for a variant: its sibling colour rows (one variant row per colour,
+     * DEC-048) as `code` (= colour code), `name` (= colour), `variant_code`. Replaces the retired
+     * colour table, which new imports no longer fill.
+     */
+    public function colorOptions(?string $variantCode): Collection
+    {
+        $variant = Variant::query()->where('code', $this->norm($variantCode))->first(['model_code', 'oem_name']);
+        if (! $variant) {
+            return collect();
+        }
+
+        return Variant::query()
+            ->select('color_code as code', 'color as name', 'code as variant_code')
+            ->where('is_active', true)
+            ->where('model_code', $variant->model_code)
+            ->where('oem_name', $variant->oem_name)
+            ->whereNotNull('color_code')
+            ->orderBy('color')
+            ->get()
+            ->unique('code')
+            ->values();
+    }
+
     public function colorsOfVariant(string $variantOemCode): Collection
     {
         $v = Variant::query()->where('code', $this->norm($variantOemCode))->first();

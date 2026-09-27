@@ -67,19 +67,6 @@ class RBACService
                     );
                 }
 
-                // From post assignments (if employee)
-                if ($user->employee) {
-                    foreach ($user->employee->posts as $post) {
-                        $permissions = array_merge(
-                            $permissions,
-                            $post->permissions
-                                ->where('is_active', true)
-                                ->pluck('name')
-                                ->toArray()
-                        );
-                    }
-                }
-
                 // From user role assignments (with temporal checking)
                 foreach ($user->userRoleAssignments as $assignment) {
                     if (! $assignment->isActive()) {

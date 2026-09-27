@@ -2,7 +2,7 @@
 
 namespace App\Services\Sales\Booking;
 
-use App\Helpers\CommonHelper;
+use App\Services\Vehicle\VehicleService;
 use App\Models\Admin\Branch;
 use App\Models\Admin\Location;
 use App\Models\CRM\Enquiry;
@@ -81,10 +81,10 @@ class BookingRtoService
 
         $data = [];
         $data['permit_map'] = $this->permitMap();
-        $data['segments'] = CommonHelper::getVehicleSegments() ?? [];
-        $data['models'] = CommonHelper::getVehicleModels($booking->segment_code ?? null) ?? [];
-        $data['variants'] = CommonHelper::getVehicleVariants($booking->model_code ?? null) ?? [];
-        $data['colors'] = CommonHelper::getVehicleColors($booking->variant_code ?? null) ?? [];
+        $data['segments'] = app(VehicleService::class)->segmentOptions() ?? [];
+        $data['models'] = app(VehicleService::class)->modelOptionsFor($booking->segment_code ?? null) ?? [];
+        $data['variants'] = app(VehicleService::class)->variantOptions($booking->model_code ?? null) ?? [];
+        $data['colors'] = app(VehicleService::class)->colorOptions($booking->variant_code ?? null) ?? [];
 
         $data['branch'] = Branch::where('code', $booking->branch_code)->value('name') ?? 'N/A';
         $data['location'] = $booking->location_code

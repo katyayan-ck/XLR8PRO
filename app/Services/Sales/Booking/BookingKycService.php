@@ -2,7 +2,7 @@
 
 namespace App\Services\Sales\Booking;
 
-use App\Helpers\CommonHelper;
+use App\Services\Vehicle\VehicleService;
 use App\Models\Admin\Branch;
 use App\Models\Admin\Location;
 use App\Models\CRM\Enquiry;
@@ -123,7 +123,7 @@ class BookingKycService
         return [
             'branches' => Branch::pluck('name', 'id')->toArray(),
             'locations' => Location::pluck('name', 'id')->toArray(),
-            'segments' => CommonHelper::getVehicleSegments(),
+            'segments' => app(VehicleService::class)->segmentOptions(),
             'saleConsultants' => OrgService::usersByDesignation('CNS') ?? [],
             'customer_name' => $customerName,
             'branch_name' => $branchName,

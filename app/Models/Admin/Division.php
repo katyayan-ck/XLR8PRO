@@ -3,7 +3,6 @@
 namespace App\Models\Admin;
 
 use App\Models\BaseModel;
-use App\Models\Iam\Post;
 use App\Models\Traits\HasColumnTransformations;
 use App\Services\Org\DivisionService;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
@@ -76,12 +75,6 @@ class Division extends BaseModel implements HasMedia
     public function designationTree(): HasMany
     {
         return $this->hasMany(DesigDeptTree::class, 'div_code', 'code');
-    }
-
-    /** Posts: xlr8_iam_roles.div_code → division.code */
-    public function posts(): HasMany
-    {
-        return $this->hasMany(Post::class, 'div_code', 'code');
     }
 
     // ── Scopes ────────────────────────────────────────────────────────────────

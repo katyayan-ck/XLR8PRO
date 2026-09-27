@@ -2,7 +2,6 @@
 
 namespace App\Models\Admin;
 
-use App\Models\Iam\Post;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -61,12 +60,6 @@ class DesigDeptTree extends Model
     public function directReports(): HasMany
     {
         return $this->hasMany(static::class, 'reports_to_code', 'tree_code');
-    }
-
-    /** Posts anchored to this tree node */
-    public function posts(): HasMany
-    {
-        return $this->hasMany(Post::class, 'tree_code', 'tree_code');
     }
 
     // ── Scopes ────────────────────────────────────────────────────────────────

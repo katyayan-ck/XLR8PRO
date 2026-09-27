@@ -9,8 +9,6 @@ use App\Models\Vehicle\Color;
 use App\Models\Vehicle\Segment;
 use App\Models\Vehicle\Variant;
 use App\Models\Vehicle\VehicleModel;
-use App\Traits\HasColumnTransformations;
-use App\Traits\HasCommunications;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;

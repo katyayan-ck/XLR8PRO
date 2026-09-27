@@ -24,7 +24,7 @@ Full health notes: `docs/reference/Shared-Services-Utilities-Catalog.md`.
 
 | Capability | Service | Notes |
 |---|---|---|
-| Org lookups, hierarchy, users by designation/branch | `App\Services\OrgService` (static, cached 3600s) | Branch filter uses `employee.primary_branch_code` |
+| Org lookups, hierarchy, users by designation/branch | `App\Services\OrgService` (static, cached 3600s) | Branch filter uses `employee.primary_branch_code`; dropdown rows: `branchRows()`, `locationRows()`, `locationsByState()`, `serviceBranches()` |
 | Org entity CRUD | `App\Services\Org\*Service` + `OrgEntityGuard` | |
 | Person / contacts / addresses / banking | writes: `App\Services\Person\*Service`; lookups + aggregate upsert: `App\Services\PersonService` | never hand-roll phone/PAN/Aadhaar cleanup |
 | Identifier formats & normalisation | `App\Services\IdentifierService` + `App\Rules\*` | Aadhaar, PAN, mobile, GSTIN, chassis, OTF/DMS/invoice |
@@ -34,7 +34,7 @@ Full health notes: `docs/reference/Shared-Services-Utilities-Catalog.md`.
 | RBAC helpers | `App\Services\RBACService`, `App\Services\IAM\{PermissionTreeService,RolePermissionService}` | |
 | Row-level data scope | `App\Services\IAM\DataScopeService`, `OrgScopeService` | enforcement not yet switched on |
 | OTP login, devices, tokens | `App\Services\AuthService` | Sanctum tokens (User has `HasApiTokens`) |
-| Vehicle completeness/status | `App\Services\Vehicle\VehicleService` | |
+| Vehicle completeness/status, dropdown options | `App\Services\Vehicle\VehicleService` | `segmentOptions()`, `modelOptions(For)()`, `variantOptions()`, `colorOptions()` (colour rows, DEC-060) |
 | Pricing pipeline & engine | `App\Services\Vehicle\Pricing\*` (`PricingEngineService::getPricing()`) | see `.ai/rules/modules/vehicle-pricing.md` |
 | Accessories | `App\Services\Vehicle\AccessoryService` | |
 | Booking sub-domains | `App\Services\Sales\Booking\Booking{Core,Kyc,Dms,Insurance,Rto,Delivery,Finance,Exchange,Refund,Otf}Service` | each tested |
@@ -45,7 +45,9 @@ Full health notes: `docs/reference/Shared-Services-Utilities-Catalog.md`.
 | Documents | `DocService` | partly broken (BUG-139); rebuilt in Track B |
 
 Removed 26-09-2026 (dead, DEC-030): AuthenticationService, BookingStateService, VehicleMasterService,
-SegmentService, PricingService, legacy Chat/Quotes/Task/Docs/Notification/Vehicle helpers. Legacy
+SegmentService, PricingService, legacy Chat/Quotes/Task/Docs/Notification/Vehicle helpers. 28-09-2026 (DEC-060): the
+last helpers (`CommonHelper`, `XCommonHelper`, `XpricingHelper`) — `app/Helpers/` no longer exists; never add helper
+classes: put logic in a service, and only one-line aliases in `app/Support/helpers.php`. Legacy
 `ApprovalService` (graph approve/reject) is deprecated — the FRS approval engine is built in Track B.
 
 ## Anti-patterns

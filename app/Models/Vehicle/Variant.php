@@ -2,10 +2,10 @@
 
 namespace App\Models\Vehicle;
 
-use App\Helpers\KeywordHelper;
 use App\Models\BaseModel;
 use App\Models\Traits\HasColumnTransformations;
 use App\Models\Utilities\KeyValue\Keyvalue;
+use App\Services\KeywordValueService;
 use App\Services\Vehicle\VariantService;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 
@@ -156,27 +156,27 @@ class Variant extends BaseModel
 
     public static function getPermitOptions(): array
     {
-        return KeywordHelper::options('permit');
+        return KeywordValueService::getEnum('permit');
     }
 
     public static function getFuelTypeOptions(): array
     {
-        return KeywordHelper::options('fuel_type');
+        return KeywordValueService::getEnum('fuel_type');
     }
 
     public static function getBodyTypeOptions(): array
     {
-        return KeywordHelper::options('body_type');
+        return KeywordValueService::getEnum('body_type');
     }
 
     public static function getBodyMakeOptions(): array
     {
-        return KeywordHelper::options('body_make');
+        return KeywordValueService::getEnum('body_make');
     }
 
     public static function getStatusOptions(): array
     {
-        return KeywordHelper::options('vehicle_status');
+        return KeywordValueService::getEnum('vehicle_status');
     }
 
     /**

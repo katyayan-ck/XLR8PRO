@@ -2,7 +2,7 @@
 
 namespace App\Services\Sales\Booking;
 
-use App\Helpers\CommonHelper;
+use App\Services\Vehicle\VehicleService;
 use App\Models\Admin\Branch;
 use App\Models\Admin\Location;
 use App\Models\CRM\Enquiry;
@@ -169,7 +169,7 @@ class BookingExchangeService
 
         $chassis = Stock::find($booking->chassis_no);
         $data['bchasis'] = $chassis ? $chassis->chassis_no : 'N/A';
-        $data['segments'] = CommonHelper::getVehicleSegments();
+        $data['segments'] = app(VehicleService::class)->segmentOptions();
         $data['remark'] = 0;
         $data['saleconsultants'] = OrgService::usersByDesignation('CNS') ?? [];
 

@@ -630,3 +630,24 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
 - **Verified:** each seeder was run twice inside a rolled-back transaction on `xlrm_testing`. Both passes succeed and the second creates nothing.
 - **Not converted:** `ProductionRBACSeeder::createTestUsers()`. It writes columns and pivot tables that no longer exist (`email_primary`, `person_id`, `designation_id`, users `email`, employee branch/department pivots) and hard-codes real names and phone numbers, so it cannot run. Rewriting it means designing new demo users (owner's call). The IAM seeders (permissions/roles) are outside the entity rule.
 - **Approved-by:** user ("continue" — DEC-050 roll-out) · **Risk:** LOW (seeders are fresh-install / idempotent) · **Reversal:** revert.
+### DEC-060 | 28-09-2026 | A3 | Legacy helpers removed; every call goes through a service
+- **Decision (user, 28-09):** there must be no call or wiring to `app/Helpers`. Each live call moves to the relevant service, which is extended where needed. Models are fixed, then all helpers are deleted.
+- **New service reads (same shapes the callers and views use today):**
+  - `OrgService`: `branchRows()`, `locationRows()`, `locationsByState()`, `serviceBranches()`.
+  - `VehicleService`: `segmentOptions()`, `modelOptions()`, `variantOptions()`, `colorOptions()`.
+- **Colours:** read from the variant's sibling colour rows (one variant row per colour, DEC-048). Before, they came from the retired `xlr8_vehicle_color` table, which new imports no longer fill, so the booking colour dropdown was going stale or empty.
+- **Spares "service branch":** `XCommonHelper::getServiceBranch()` read a non-existent `X_Location.service_branch` and crashed (BUG-030). It is interpreted as **locations flagged `is_workshop`** (2 rows locally). This is a reversible interpretation; say if spares should use another flag.
+- **`site_date()`** moves to `app/Support/helpers.php`, loaded through composer `autoload.files`. That file also hosts the FRS thin aliases (`setting()`, `feature()`). `app/Helpers/` is deleted.
+- **Scope:** minimal edits in Sales/Booking and Spares (call replacement only, no flow change), approved by the user in the 28-09 plan.
+- **Reversal:** revert.
+- **Model double-check (class-resolution sweep of `app/`):** models no longer reference missing classes.
+  - Removed `posts()` relations to the retired `Post` model (BUG-080) from Branch, Department, DesigDeptTree, Division and Location.
+  - Deleted the unreferenced `EmpPostAssignment` model.
+  - `Booking::segment()` now points at the vehicle `Segment` by `segment_code`; it used to point at a missing `EnumMaster` via a non-existent `segment_id`.
+  - Removed unused imports of missing classes: `HasHashedMediaTrait` ×7 and Enquiry's `App\Traits\*`.
+  - `Variant::get*Options()` now use `KeywordValueService::getEnum()`; the `KeywordHelper` class they called did not exist.
+- **Retired-Posts code paths:** `OrgService::usersByPost()` (no callers) was removed. So was the posts loop in `RBACService::getUserPermissions()`, which read a relation that does not exist.
+- **Sweep leftovers:**
+  - comment-only or `class_exists`-guarded mentions (RBACService, SystemSettingServiceProvider, AccessoryExportService);
+  - `ApprovalService` (retired in DEC-063);
+  - `ExportController` (BUG-180, logged).
