@@ -105,8 +105,9 @@ Called by `Api\V1\AuthController`; responses are wrapped in the API envelope by 
 | `getUserDetails(User $user)` | `['success', 'message', 'data' => ['id', 'name', 'email', 'mobile', 'role', 'permissions']]` |
 | `logout(User $user)` | revokes the current token; `['success' => true, 'message' => 'Logged out successfully']` |
 
-**Known issues:** `name` / `email` / `mobile` in these responses are always null (BUG-187); the OTP uses `rand()`
-(BUG-188); full mobile numbers are logged (BUG-189). New OTP flows should use `Sms::otp()` / `Sms::verify()`
+**Known issues:** mobile login fails today — the user lookup queries `users.mobile`, which doesn't exist, and
+`name` / `email` / `mobile` in the responses are always null (BUG-187, repair awaits approval); the OTP uses `rand()`
+(BUG-188). Logs carry masked numbers and never the OTP (BUG-189 fixed, DEC-070). New OTP flows should use `Sms::otp()` / `Sms::verify()`
 (docs/utilities/11-sms.md), which are hashed, rate-limited and never logged.
 
 ## UserRbacExportService (DEC-040 workbook)
