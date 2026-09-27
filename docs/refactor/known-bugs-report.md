@@ -232,7 +232,7 @@ Entry format:
 | BUG-194 | `BookingCrudController::fetchPendBkData()` and `fetchCbrData()` call `Cache::remember()` but the file has no `use Illuminate\Support\Facades\Cache;` — in a namespaced class this resolves to `App\Http\Controllers\Admin\Sales\Booking\Cache` and fatals | Medium | FIXED | 28-09-2026 | 28-09-2026 |
 | BUG-195 | `BookingKycService::apply()` recorded the customer's full Aadhaar (and PAN) in the booking history meta, which every booking viewer and the mobile history API can read | Medium | FIXED for new entries (PAN + Aadhaar, DEC-070); existing timeline rows unchanged (D26) | 28-09-2026 | — |
 | BUG-196 | Two insurance policy copies sit in `media` with `model_type = App\Models\Module\Insurance\Xlinsurer` (lower-case i, a class that does not exist); the insurance screen reads `XlInsurance` and never shows them | Low | FIXED by the DEC-069 migration | 28-09-2026 | — |
-| BUG-197 | Division `PRSNL` belongs to department `ADM` in the master, but 42 users hold scopes department `SLS` + division `PRSNL` — the division can't narrow the SLS department, so those users resolve to every SLS division | Low | OPEN (data — owner to confirm PRSNL's department) | 28-09-2026 | — |
+| BUG-197 | Division `PRSNL` belongs to department `ADM` in the master, but 42 users hold scopes department `SLS` + division `PRSNL` — the division can't narrow the SLS department, so those users resolve to every SLS division | Low | FIXED (DEC-071, data) — PRSNL moved to SLS | 28-09-2026 | — |
 
 Not a bug (false positive, listed for reference): the original `infer-conventions` sweep flagged
 "`SheetHeaderService`/`SynonymService` not used by importers" — re-investigation on 19-09-2026
@@ -2251,9 +2251,10 @@ guessed at.
 
 ### BUG-197 — Scope division PRSNL sits under ADM while users hold it with SLS
 
-- **Status:** OPEN (data — owner to confirm PRSNL's department)
+- **Status:** FIXED (DEC-071, data) — PRSNL moved to SLS
 - **Severity:** Low — no business table carries a division column yet, so no data rows are affected today.
 - **Found:** 28-09-2026, DEC-071 effective-access preview (user 4).
 - **Evidence:** `xlr8_admin_division` PRSNL → `dept_code` ADM; 42 active `xlr8_admin_user_scopes` rows division PRSNL, held with department SLS. The resolver applies a child restriction only within its assigned parent, so SLS resolves to all 7 SLS divisions.
 - **Proposed solution:** if PRSNL is a Sales division, set its `dept_code` to SLS through `DivisionService`; otherwise re-map those users' division scopes.
+- **Resolution (28-09-2026):** User 28-09: PRSNL is a Sales division. `DivisionService::update()` set `xlr8_admin_division.dept_code` PRSNL → SLS on local `xlrm` (backup `storage/app/backups/xlrm-synonyms-division-pre-DEC071-28-09-2026.sql`); other environments need the same master change. The 42 users now resolve to Sales › PRSNL.
 

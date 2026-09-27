@@ -522,3 +522,10 @@ unscoped, department / division / vertical only where a column exists, bookings 
   (division PRSNL under ADM while 42 users hold it with SLS).
 - **Guides / rules:** `docs/domains/{iam-auth,core,sales-booking,crm-enquiry-quotation,spares,README,reference}.md`,
   `docs/utilities/{01-settings,16-reference}.md`, `.ai/rules/{services,modules/iam-rbac,modules/sales}.md`.
+- **Data follow-up (user answers 28-09, local `xlrm` only; backups in `storage/app/backups/*DEC071*`):**
+  - "Location" synonyms: NOKHA_SZZ → NOK, RAJGARH_SZZ → RJG, RATANGARH_SZZ → RTN, SHRIDUNGARGARH_SZZ → DNG,
+    SUJANGARH_SZ → SUJ, "RATANGARH RD, CHURU" → RTN (written as a row: the service's CSV parser would split the comma).
+  - `php artisan data-scope:backfill --apply`: 24,070 enquiries got `dealer_location` + `dealer_branch` (39.5%); bookings
+    unchanged (no source codes). The rest stay unassigned (visible) until consultants' `mile_id` / vehicle masters exist.
+  - BUG-197: division PRSNL moved to department SLS (`DivisionService`). Other environments need the same master edit
+    and synonyms, then the backfill command.
