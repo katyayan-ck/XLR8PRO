@@ -173,10 +173,7 @@ class BookingInsuranceService
         }
 
         if ($policyCopy && $policyCopy->isValid()) {
-            $insurance->clearMediaCollection('policy_copy');
-            $insurance->addMedia($policyCopy)
-                ->usingFileName("policy_{$bookingId}_".time().'.pdf')
-                ->toMediaCollection('policy_copy');
+            $insurance->replaceDocument('policy_copy', $policyCopy, [], 'policy_copy');   // Docs (DEC-069)
         }
 
         return $insurance;

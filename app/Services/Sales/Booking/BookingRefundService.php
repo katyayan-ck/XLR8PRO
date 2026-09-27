@@ -61,10 +61,10 @@ class BookingRefundService
         if ($refund) {
             $deduction = ($booking->booking_amount ?? 0) - ($refund->amount ?? 0);
 
-            $accProof = $refund->getFirstMediaUrl('acc-proof') ?: $refund->getFirstMediaUrl('acc_proof') ?: '';
-            $aadhar = $refund->getFirstMediaUrl('aadhar') ?: $refund->getFirstMediaUrl('aadhaar') ?: '';
-            $pan = $refund->getFirstMediaUrl('pan') ?: '';
-            $payProof = $refund->getFirstMediaUrl('pay-proof') ?: $refund->getFirstMediaUrl('pay_proof') ?: '';
+            $accProof = $refund->documentUrl('acc-proof');
+            $aadhar = $refund->documentUrl('aadhar');
+            $pan = $refund->documentUrl('pan');
+            $payProof = $refund->documentUrl('pay-proof');
 
             $refundDetails = [
                 'remaining_amount' => $refund->amount ?? 0,
@@ -123,9 +123,7 @@ class BookingRefundService
 
             if ($file && $file->isValid()) {
                 try {
-                    $refund->addMedia($file)
-                        ->withCustomProperties(['document_type' => $field])
-                        ->toMediaCollection($collection, 'public');
+                    $refund->replaceDocument($collection, $file, ['description' => $field], $field);   // Docs (DEC-069)
                 } catch (\Exception $mediaEx) {
                     Log::error('REFUND_MEDIA_UPLOAD_FAILED', [
                         'refund_id' => $refund->id,
@@ -237,8 +235,7 @@ class BookingRefundService
         ]);
 
         if ($payProof && $payProof->isValid()) {
-            $refund->clearMediaCollection('pay-proof');
-            $refund->addMedia($payProof)->toMediaCollection('pay-proof');
+            $refund->replaceDocument('pay-proof', $payProof, [], 'pay_proof');
         }
 
         $oldStatus = $booking->status;
@@ -305,8 +302,7 @@ class BookingRefundService
         }
 
         if ($payProof && $payProof->isValid()) {
-            $refund->clearMediaCollection('pay-proof');
-            $refund->addMedia($payProof)->toMediaCollection('pay-proof');
+            $refund->replaceDocument('pay-proof', $payProof, [], 'pay_proof');
             $changes[] = 'Payment Proof updated';
         }
 

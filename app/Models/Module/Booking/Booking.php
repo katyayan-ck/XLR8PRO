@@ -4,8 +4,9 @@ namespace App\Models\Module\Booking;
 
 use App\Models\Admin\Branch;
 use App\Models\BaseModel;
-use App\Models\Vehicle\Segment;
 use App\Models\Traits\HasCommunications;
+use App\Models\Traits\HasDocuments;
+use App\Models\Vehicle\Segment;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +17,7 @@ class Booking extends BaseModel implements HasMedia
 {
     use CrudTrait;
     use HasCommunications;
+    use HasDocuments;
     use InteractsWithMedia;
     use SoftDeletes;
 

@@ -355,3 +355,28 @@
   - `view:cache` OK.
   - Headless Chrome, JS-error capture: 0 errors on the booking list, booking add, OTF list, pending KYC, quotation create, enquiry create, receipt create, campaign create and lead create.
   - Screenshots: booking list and quotation (dark, teal), enquiry (dark), booking add (light, purple), booking list and add at 390 px.
+
+## "Later" list cleared: booking proofs in Docs, AG-Grid pinned everywhere, phone toolbars (DEC-069)
+- **Booking proofs → Docs.** Receipt `amount-proof`, finance `instrument_proof`, insurance `policy_copy`, RTO `trc_copy` /
+  `tax_receipt_copy`, refund `acc-proof` / `aadhar` / `pan` / `pay-proof`, delivery photos and booking `chassis_image` are now
+  Docs one-file slots on the record.
+  - `DocsService`: `latestFor()`, `supersede()`. `HasDocuments`: `replaceDocument()`, `documentFor()`, `documentUrl()`,
+    `hasDocumentIn()`, `removeDocuments()`. `DocsLibraryController::download` serves `?inline=1` previews.
+  - `HasDocuments` + `chatCanView()` (`SLS_BKNG_VIEW`; receipts also `ACC_RCPT_VIEW`) on `Bookingamount`, `XlDelivery`, `XlRto`,
+    `Xl_Refunds`, `XFinance`, `XlInsurance`; `Booking` uses the BOOKING entity.
+  - Writers: `BookingCrudController`, `EnquiryCrudController`, `Booking{Delivery,Finance,Insurance,Otf,Refund,Rto}Service`
+    (before: `addMedia()` / temp `public/Uploads` moves; after: `replaceDocument()` with the form field as error key).
+  - 13 views: `getFirstMediaUrl` / `getFirstMedia` / `hasMedia` → `documentUrl` / `documentFor` / `hasDocumentIn` (42 places).
+  - Migration `2026_09_28_150000_move_booking_proofs_to_docs` re-points the existing media rows to new documents (no file
+    moves; reversible, original owner kept in `tags.migrated_from`). Run on `xlrm` and `xlrm_testing`: 91 documents each;
+    rollback and re-apply verified. Backup: `storage/app/backups/*-media-docs-pre-DEC069-28-09-2026.sql`.
+  - BUG-196 (policy copies under the misspelled `…\Insurance\Xlinsurer`) fixed by the migration.
+  - Security gain: proofs are no longer public `/storage` URLs; every link checks access.
+- **AG-Grid:** the remaining 37 views pinned to `ag-grid-community@36.2.0` (all 87); legacy grid CSS links dropped.
+  `public/css/ag-grid-tabler-theme.css` is now unused (deletion needs approval).
+- **Phone toolbars:** `xl-ui.css` lets the `#quickFilter` group take the row and the box shrink below 768px (~85 list views had
+  fixed 220–360px widths); booking list header wraps and its status select lost its fixed width. Verified at 390px.
+- **Other:** `Document` model `@property` docs; stale `BookingCoreService::store()` docblock corrected.
+- **Tests:** 4 unit tests updated to the Docs API; new `tests/Feature/Platform/BookingProofDocsTest.php` (supersede, invalid file →
+  field error, inline preview, 403 without booking access).
+- **Guides:** `docs/utilities/04-docs.md`, `ui-kit.md`, `docs/domains/{sales-booking,accounts,core}.md`, `ui-design-progress.md`.

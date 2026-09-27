@@ -221,9 +221,9 @@
                                 <!-- Chip Preview -->
                                 <div id="instrumentProofPreview" class="mt-3"></div>
 
-                                @if($finance && $finance->getFirstMediaUrl('instrument_proof'))
+                                @if($finance && $finance->documentUrl('instrument_proof'))
                                 <div class="mt-2">
-                                    <a href="{{ $finance->getFirstMediaUrl('instrument_proof') }}" target="_blank"
+                                    <a href="{{ $finance->documentUrl('instrument_proof') }}" target="_blank"
                                         class="btn btn-sm btn-info">
                                         <i class="la la-paperclip"></i> View Current Proof
                                     </a>
@@ -485,8 +485,8 @@
         'use strict';
 
         const originalFinMode = "{{ $finance->fin_mode ?? $booking->fin_mode ?? '' }}".trim();
-        let currentMediaUrl   = "{{ $finance && $finance->getFirstMediaUrl('instrument_proof') ? $finance->getFirstMediaUrl('instrument_proof') : '' }}".trim();
-        let isExistingFile    = {{ $finance && $finance->getFirstMediaUrl('instrument_proof') ? 'true' : 'false' }};
+        let currentMediaUrl   = "{{ $finance && $finance->documentUrl('instrument_proof') ? $finance->documentUrl('instrument_proof') : '' }}".trim();
+        let isExistingFile    = {{ $finance && $finance->documentUrl('instrument_proof') ? 'true' : 'false' }};
 
         function previewInstrumentProof(input) {
             const file = input.files[0];

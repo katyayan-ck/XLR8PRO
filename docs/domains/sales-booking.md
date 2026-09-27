@@ -59,7 +59,7 @@ combination), `XlDelivery` (`xlr8_booking_delivered`, photo collections), `Xl_Re
 ### BookingCoreService
 - `store(array $input): Booking` — creates the booking from the raw request; converts the linked quotation (status,
   `QuoteAction` history, seeded insurance / RTO rows from the quote's `standard_data`), syncs or creates the enquiry,
-  records history, stores the optional amount-proof, creates the first `Bookingamount` receipt, seeds `XExchange` /
+  records history, creates the first `Bookingamount` receipt (no file — proofs come from the receipt screens), seeds `XExchange` /
   `XFinance` when the purchase type / finance mode needs them.
 - `update(Booking $b, array $input): Booking` — diffs every field into a readable change log, updates booking and
   enquiry fields, seeds `XExchange` on the first switch to "Exchange Buy", upserts finance **without nulling fields
@@ -119,7 +119,7 @@ combination), `XlDelivery` (`xlr8_booking_delivered`, photo collections), `Xl_Re
 - `resolveEditData($b)` → `['insurance' => ?XlInsurance, 'rto' => ?XlRto, 'data']`.
 - `apply(int $bookingId, string $remarks, bool $chassisNoVerified, array $photos): XlDelivery` — `$photos` keyed by
   `PHOTO_COLLECTIONS` (`delivery_ceremony_with_customer`, `bonnet`, `windshield_glass`, `vehicle_driver_side`, …); each
-  goes to its own media collection; "Delivery Process Completed".
+  goes to its own Docs slot on the delivery (`replaceDocument`, error field `photos.{collection}`); "Delivery Process Completed".
 
 ### BookingRefundService
 - `resolveRefundDisplayData($b)` → `['refund' => ?Xl_Refunds, 'amount', 'deduction', 'acc_proof', 'aadhar', 'pan',
@@ -157,8 +157,12 @@ OTF / quote JSON — see [pricing.md](pricing.md)).
 - Booking history is written with `$booking->recordEvent(ACTION, $title, $meta, $body)` (DEC-068; before, `addHistory('commented', …)`).
   Actions: `CREATED`, `STATUS_CHANGED` (hold / resume / restore / refund moves), `UPDATED` (everything else). Never put full
   Aadhaar / account numbers into `$meta` — the timeline is widely visible (BUG-195).
-- Proofs (receipts, policy, TRC, pay proof, delivery photos, chassis image) still live on the satellite models' own media
-  collections, not in Docs — moving them needs a data migration (open follow-up).
+- Proofs (receipt `amount-proof`, finance `instrument_proof`, insurance `policy_copy`, RTO `trc_copy` / `tax_receipt_copy`,
+  refund `acc-proof` / `aadhar` / `pan` / `pay-proof`, delivery photos, booking `chassis_image`) are Docs one-file slots on
+  the satellite record (DEC-069): write with `$record->replaceDocument($collection, $file, [], $field)`, read with
+  `documentFor()` / `documentUrl()` / `hasDocumentIn()`, clear with `removeDocuments()`. Links go through the
+  access-checked download route — never `getFirstMediaUrl()`. Migration `2026_09_28_150000_move_booking_proofs_to_docs`
+  moved the old media rows (reversible; BUG-196 misspelled insurer type folded in).
 - Booking tests exist per sub-domain (`tests/Unit/Services/Sales/Booking*ServiceTest.php`, 9 files — no RTO test yet); keep them green when touching a service.
 
 ## Testing

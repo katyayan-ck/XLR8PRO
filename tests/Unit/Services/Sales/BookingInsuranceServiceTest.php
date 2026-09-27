@@ -67,7 +67,7 @@ class BookingInsuranceServiceTest extends TestCase
         $insurance = $this->service->apply($booking->id, $this->validPayload(), $file);
 
         $this->assertSame(2, $insurance->status);
-        $this->assertTrue($insurance->getMedia('policy_copy')->isNotEmpty());
+        $this->assertTrue($insurance->hasDocumentIn('policy_copy'));
     }
 
     public function test_apply_updates_the_same_row_on_a_second_call(): void

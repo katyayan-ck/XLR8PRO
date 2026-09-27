@@ -15,7 +15,7 @@ Columns: `bid` (booking id), `enq_id` (enquiry reference), `date`, `type`, `type
 `jv_cat`, `account_of`, `mode`, `amount`, `trans_date`, `trans_no`, `instrument_no`, `bank`, `hypo`, `chassis_no`,
 `vh_rgn_no`, `otf_no`, `inv_no`, `location`, customer fields (`name`, `care_of_type`, `care_of`, `address`, `mobile`,
 `alternate_mobile`), `used_model`, `used_rgn_no`, `from_dept`, `to_dept`, `exist_receipt_no`, `party_name`, `remarks`,
-`status`. Guarded model; media collections for payment proofs.
+`status`. Guarded model; the payment proof is the Docs slot `amount-proof` (`HasDocuments`, DEC-069).
 
 | Member | Returns |
 |---|---|

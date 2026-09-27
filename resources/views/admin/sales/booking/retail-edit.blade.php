@@ -178,9 +178,9 @@
                         <div id="instrumentProofPreview" class="mt-3"></div>
 
 
-                        @if($finance && $finance->getFirstMediaUrl('instrument_proof'))
+                        @if($finance && $finance->documentUrl('instrument_proof'))
                         @php
-                        $existingUrl = $finance->getFirstMediaUrl('instrument_proof');
+                        $existingUrl = $finance->documentUrl('instrument_proof');
                         $fileName = basename($existingUrl);
                         @endphp
 
@@ -372,8 +372,8 @@
         'use strict';
 
         const originalFinMode = "{{ $booking->fin_mode ?? '' }}".trim();
-        let currentMediaUrl   = "{{ $finance && $finance->getFirstMediaUrl('instrument_proof') ? $finance->getFirstMediaUrl('instrument_proof') : '' }}".trim();
-        let isExistingFile    = {{ $finance && $finance->getFirstMediaUrl('instrument_proof') ? 'true' : 'false' }};
+        let currentMediaUrl   = "{{ $finance && $finance->documentUrl('instrument_proof') ? $finance->documentUrl('instrument_proof') : '' }}".trim();
+        let isExistingFile    = {{ $finance && $finance->documentUrl('instrument_proof') ? 'true' : 'false' }};
 
         function apply() {
             const mode = $('#fin_mode').val();

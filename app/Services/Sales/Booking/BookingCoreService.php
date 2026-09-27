@@ -37,9 +37,10 @@ class BookingCoreService
      * Applies a validated new-booking submission: creates the Booking row,
      * converts a linked Quotation (status, QuoteAction history, seeded
      * Insurance/RTO rows), syncs the linked/new Enquiry, records history,
-     * handles the optional amount-proof upload, creates the initial
-     * Bookingamount receipt row, and seeds XExchange/XFinance when
-     * applicable. Returns the created Booking.
+     * creates the initial Bookingamount receipt row, and seeds
+     * XExchange/XFinance when applicable. Returns the created Booking.
+     * No file is handled here: receipt proofs are attached from the receipt
+     * screens (`$amount->replaceDocument('amount-proof', …)`, DEC-069).
      *
      * BUG-105 (known-bugs-report.md): fixed as part of this extraction -
      * the original's RTO seed read an undefined $quotationData variable

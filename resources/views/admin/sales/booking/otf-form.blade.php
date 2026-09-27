@@ -2633,7 +2633,7 @@ use App\Services\OrgService;
                                                         <td
                                                             style="padding: 5px 8px; vertical-align: middle; text-align: center;">
                                                             @php
-                                                            $receiptImage = $receipt->getFirstMediaUrl('amount-proof');
+                                                            $receiptImage = $receipt->documentUrl('amount-proof');
                                                             @endphp
                                                             @if($receiptImage)
                                                             <a href="{{ $receiptImage }}" data-lightbox="receipt-images"

@@ -267,10 +267,10 @@
 
                     <div id="policyCopyPreview" class="mt-3"></div>
 
-                    @if ($insurance && $insurance->hasMedia('policy_copy'))
+                    @if ($insurance && $insurance->hasDocumentIn('policy_copy'))
                     <div class="mt-2">
-                        @php $media = $insurance->getFirstMedia('policy_copy'); @endphp
-                        <a href="{{ $media->getUrl() }}" target="_blank" class="btn btn-sm btn-info">
+                        @php $media = $insurance->documentFor('policy_copy'); @endphp
+                        <a href="{{ $media['view_url'] }}" target="_blank" class="btn btn-sm btn-info">
                             <i class="la la-file-pdf"></i> View Current Policy
                         </a>
                     </div>

@@ -70,14 +70,13 @@
 @endsection
 
 @push('after_styles')
-<link rel="stylesheet" href="https://unpkg.com/ag-grid-community/styles/ag-theme-quartz.css">
 <style>
     .ag-theme-quartz .center-header .ag-header-cell-label { justify-content: center !important; }
 </style>
 @endpush
 
 @push('after_scripts')
-<script src="https://unpkg.com/ag-grid-community/dist/ag-grid-community.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@36.2.0/dist/ag-grid-community.min.js"></script>
 
 <script>
     const ALL_COLUMNS = @json($gridConfig['columns'] ?? []);

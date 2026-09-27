@@ -59,8 +59,8 @@ class BookingDeliveryServiceTest extends TestCase
             'stepney' => null,
         ]);
 
-        $this->assertCount(1, $delivery->getMedia('bonnet'));
-        $this->assertCount(0, $delivery->getMedia('stepney'));
+        $this->assertCount(1, $delivery->documentsList('bonnet'));
+        $this->assertCount(0, $delivery->documentsList('stepney'));
     }
 
     public function test_apply_updates_the_same_row_on_a_second_call(): void
@@ -84,8 +84,8 @@ class BookingDeliveryServiceTest extends TestCase
         $this->service->apply($booking->id, 'v1', false, ['bonnet' => $first]);
         $delivery = $this->service->apply($booking->id, 'v2', false, ['bonnet' => $second]);
 
-        $this->assertCount(1, $delivery->getMedia('bonnet'));
-        $this->assertSame('bonnet2.jpg', $delivery->getFirstMedia('bonnet')->file_name);
+        $this->assertCount(1, $delivery->documentsList('bonnet'));
+        $this->assertSame('bonnet2.jpg', $delivery->documentFor('bonnet')['name']);   // first photo superseded (DEC-069)
     }
 
     public function test_resolve_edit_data_returns_expected_shape(): void
