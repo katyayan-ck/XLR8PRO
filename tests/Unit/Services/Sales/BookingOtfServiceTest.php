@@ -7,6 +7,7 @@ use App\Models\Module\Booking\Booking;
 use App\Models\User;
 use App\Services\Sales\Booking\BookingOtfService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 class BookingOtfServiceTest extends TestCase
@@ -90,6 +91,31 @@ class BookingOtfServiceTest extends TestCase
         $votf = $this->service->generateVotfNumber($this->makeBooking(), ' jpr ');
 
         $this->assertMatchesRegularExpression('#^\d{2}/JPR\d{4}/\d{4}$#', $votf);
+    }
+
+    public function test_apply_rejects_a_votf_number_another_booking_holds(): void
+    {
+        // BUG-097: the number is previewed and saved in separate requests; the save must not create a duplicate.
+        $votf = '27/TST'.random_int(1000, 9999).'/'.random_int(1000, 9999);
+        $this->service->apply($this->makeBooking(), ['votf_no' => $votf], null);
+
+        try {
+            $this->service->apply($this->makeBooking(), ['votf_no' => $votf], null);
+            $this->fail('Expected a validation error for the duplicate VOTF number.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('votf_no', $e->errors());
+        }
+    }
+
+    public function test_apply_lets_a_booking_save_its_own_votf_number_again(): void
+    {
+        $votf = '27/TST'.random_int(1000, 9999).'/'.random_int(1000, 9999);
+        $booking = $this->makeBooking();
+        $this->service->apply($booking, ['votf_no' => $votf], null);
+
+        $saved = $this->service->apply($booking->fresh(), ['votf_no' => $votf, 'pan_no' => 'ABCDE1234F'], null);
+
+        $this->assertSame($votf, json_decode((string) $saved->fresh()->final_data, true)['votf_no']);
     }
 
     public function test_generate_votf_number_throws_when_branch_code_missing(): void

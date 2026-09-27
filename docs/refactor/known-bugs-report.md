@@ -132,12 +132,12 @@ Entry format:
 | BUG-094 | `EnquiryCrudController::search()`/`showDetailsRow()` delegate to Backpack's `ListOperation` trait methods but their routes in `routes/backpack/core.php` lacked the `'operation'` key — same bug class as BUG-064/BUG-091, so `setupListOperation()`/`setListView('admin.enquiry.list')` never ran for them | Medium | FIXED | 22-09-2026 | 22-09-2026 (ai-changelogs-22-09-2026.md) |
 | BUG-095 | 3 hardcoded user-ID whitelists (`[5, 23, 123]`, one also adds `$user->id`) gate Order Verification / Pending DMS action buttons in `BookingCrudController.php`, bypassing the app's normal `SLS_BKNG_*` Spatie-permission gating | Medium | OPEN (documented only — looks intentional but undocumented; needs a decision, not a guess) | 22-09-2026 | — |
 | BUG-096 | `QuotationCrudController::update()` unconditionally set `status = 'raised'` on every save, silently reverting an already-`booked` Quotation back to `raised` and re-exposing it in the main (non-booked) Quotation list | Medium | FIXED | 22-09-2026 | 22-09-2026 (ai-changelogs-22-09-2026.md) |
-| BUG-097 | VOTF generation (`generateVotfNumber`) and persistence (`otfSave`) are two separate HTTP requests with no shared lock/reservation — a preview endpoint computes the "next" number, and the later save just trusts whatever the client sends back, so two concurrent OTF saves can collide on the same VOTF number | Medium | OPEN (documented only — needs a design decision, not a mechanical fix) | 22-09-2026 | — |
+| BUG-097 | VOTF generation (`generateVotfNumber`) and persistence (`otfSave`) are two separate HTTP requests with no shared lock/reservation — a preview endpoint computes the "next" number, and the later save just trusts whatever the client sends back, so two concurrent OTF saves can collide on the same VOTF number | Medium | FIXED (DEC-070) — duplicate saves rejected | 22-09-2026 | — |
 | BUG-098 | `BookingCrudController::store()`'s `XExchange` creation set a `vehicle_oem_code` field that doesn't exist on `xlr8_booking_exchange` — every "Exchange Buy" booking creation silently failed to create the exchange row (caught by its own try/catch, logged only) | Medium | FIXED | 22-09-2026 | 23-09-2026 (ai-changelogs-22-09-2026.md) |
 | BUG-099 | Neither `store()` nor `update()`'s `XExchange` creation set `vh_id` (`NOT NULL`, no DB default) — `store()` silently failed the same way as BUG-098; `update()`'s copy has no try/catch, so editing a booking to "Exchange Buy" for the first time threw a hard 500 | High | FIXED | 22-09-2026 | 23-09-2026 (ai-changelogs-22-09-2026.md) |
 | BUG-100 | `dmsupdate()` crashes with an uncaught `QueryException` whenever a DMS update clears every remaining pending item — `pending_remark` is `NOT NULL` with no DB default, but the code sets it to `null` when the pending-items list becomes empty | High | FIXED | 23-09-2026 | 24-09-2026 |
 | BUG-101 | `dmsupdate()`'s "BEV/Personal segment → order 3 when DMS SO missing" branch is dead code — `xlr8_booking_master` has no `segment_code` column, so a freshly-loaded `Booking` always has `segment_code = null` there, and `dmsupdate()` (unlike `dmsedit()`) never resolves it from the linked Enquiry before the check runs | Low | OPEN (documented only — long-standing dead branch, not caused by this refactor; needs a product decision on whether `dmsupdate()` should resolve segment_code like `dmsedit()` does) | 23-09-2026 | — |
-| BUG-102 | `exchangeUpdate()`'s `XExchange` upsert payload sets 9 fields (`enum_master1/2`, `vehicle_details/2`, `registration_no`, `manufacturing_year`, `odometer_reading`, `expected_price`, `offered_price`, `exchange_bonus`) that don't exist as columns on `xlr8_booking_exchange` — every save silently drops them (no error; `HasColumnTransformations` strips unknown attributes), so only `vh_id`/`purchase_type`/`verification_status`/`case_status` ever actually persist to that row | Low | OPEN (documented only — data isn't lost, since the same fields are also correctly synced onto the linked Enquiry row; only the intended XExchange mirror copy silently no-ops, and the "changes" history log spuriously reports these fields as changing on every save since the old value read back is always null) | 23-09-2026 | — |
+| BUG-102 | `exchangeUpdate()`'s `XExchange` upsert payload sets 9 fields (`enum_master1/2`, `vehicle_details/2`, `registration_no`, `manufacturing_year`, `odometer_reading`, `expected_price`, `offered_price`, `exchange_bonus`) that don't exist as columns on `xlr8_booking_exchange` — every save silently drops them (no error; `HasColumnTransformations` strips unknown attributes), so only `vh_id`/`purchase_type`/`verification_status`/`case_status` ever actually persist to that row | Low | FIXED (DEC-070) — dead keys removed | 23-09-2026 | — |
 | BUG-103 | `requestRefund()`'s "Refund Requested Again" history branch checks `$booking->status` *after* `$booking->update(['status' => 4, ...])` has already run, so it always compares `4 == 7` and never fires, even when a refund is genuinely requested again after a prior rejection (status 7 → 4) | Low | FIXED | 23-09-2026 | 24-09-2026 |
 | BUG-104 | **CRITICAL, broader than first found** — `xlr8_booking_master` is missing many columns that `BookingCrudController` writes via direct property assignment then `save()`: `final_data`/`consultant`/`buyer_type`/`accessories` (`otfSave()`) **and** `sale_type` (`store()` **and** `update()` — reproduced live against a real pre-existing booking row, id 1). Since `sale_type` is a `required` validated field on both the booking-create and booking-edit forms, **every booking create and every booking edit also throws the same uncaught `QueryException`**, not just OTF Save | **Critical** | FIXED (6 columns added; see BUG-161 for VOTF) | 23-09-2026 | 26-09-2026 |
 | BUG-105 | `store()`'s RTO seed on quotation-to-booking conversion read an undefined `$quotationData` variable (`XlRto::updateOrCreate(['bid' => ...], ['rgn_type' => $quotationData['registration_type'] ?? null])`) instead of `$quotation->standard_data`, unlike the adjacent, correct Insurance seed 3 lines above it — silently produced `rgn_type = null` on every quotation-converted booking (PHP warnings, not a crash) | Medium | FIXED | 23-09-2026 | 23-09-2026 (ai-changelogs-23-09-2026.md, BookingCoreService extraction) |
@@ -227,10 +227,10 @@ Entry format:
 | BUG-189 | `AuthService` writes the full mobile number into `Log::info/error` on every OTP request / verify / logout — against the API rule "never log full phone numbers" | Medium | FIXED (DEC-070) | 28-09-2026 | — |
 | BUG-190 | `App\Services\RBACService` is injected into `UserCrudController` but never called; `canUserAccess()` checks `resource.action` names that don't exist (permissions are `MOD_PROC_ACT`), `getUserPermissions()` uses a missing `User::userRoleAssignments` relation and `UserRoleAssignment::isActive()` | Low | OPEN (removal needs sign-off) | 28-09-2026 | — |
 | BUG-191 | `Booking` scopes `pendingPayment`, `pendingInsurance`, `pendingRTO`, `pendingDeliveries`, `pendingDO` and the static count helpers (`getDynamicBookingCounts`, finance / exchange MTD-YTD) reference `xcelr8_booking_*` / `bookings` tables, a missing `Branches` class and old `branch_id` / `abbr` columns — every call throws; no caller found today | Low | OPEN (booking team) | 28-09-2026 | — |
-| BUG-192 | `Enquiry::quotations()` is `hasMany(Quotation, 'enquiry_no', 'enquiry_no')` but quotations store the enquiry **id** in `enquiry_no` (the inverse `Quotation::enquiry()` uses `enquiry_no → id`) — the relation returns no rows; no caller today | Low | OPEN (booking team) | 28-09-2026 | — |
-| BUG-193 | `Booking::finances()` / `exchanges()` and `XExchange::booking()` / `XFinance::booking()` join on `booking_id`, but both tables key on `bid`; `Booking::finances()` also names `App\Models\Module\Booking\XFinance` (the class is in `Module\Finance`); the `getVerifiedCounts()` / `getPendingCounts()` helpers fail the same way — no caller today | Low | OPEN (booking team) | 28-09-2026 | — |
+| BUG-192 | `Enquiry::quotations()` is `hasMany(Quotation, 'enquiry_no', 'enquiry_no')` but quotations store the enquiry **id** in `enquiry_no` (the inverse `Quotation::enquiry()` uses `enquiry_no → id`) — the relation returns no rows; no caller today | Low | FIXED (DEC-070) | 28-09-2026 | — |
+| BUG-193 | `Booking::finances()` / `exchanges()` and `XExchange::booking()` / `XFinance::booking()` join on `booking_id`, but both tables key on `bid`; `Booking::finances()` also names `App\Models\Module\Booking\XFinance` (the class is in `Module\Finance`); the `getVerifiedCounts()` / `getPendingCounts()` helpers fail the same way — no caller today | Low | FIXED (DEC-070) | 28-09-2026 | — |
 | BUG-194 | `BookingCrudController::fetchPendBkData()` and `fetchCbrData()` call `Cache::remember()` but the file has no `use Illuminate\Support\Facades\Cache;` — in a namespaced class this resolves to `App\Http\Controllers\Admin\Sales\Booking\Cache` and fatals | Medium | FIXED | 28-09-2026 | 28-09-2026 |
-| BUG-195 | `BookingKycService::apply()` recorded the customer's full Aadhaar (and PAN) in the booking history meta, which every booking viewer and the mobile history API can read | Medium | FIXED for new entries (28-09-2026); existing timeline rows unchanged | 28-09-2026 | — |
+| BUG-195 | `BookingKycService::apply()` recorded the customer's full Aadhaar (and PAN) in the booking history meta, which every booking viewer and the mobile history API can read | Medium | FIXED for new entries (PAN + Aadhaar, DEC-070); existing timeline rows unchanged (D26) | 28-09-2026 | — |
 | BUG-196 | Two insurance policy copies sit in `media` with `model_type = App\Models\Module\Insurance\Xlinsurer` (lower-case i, a class that does not exist); the insurance screen reads `XlInsurance` and never shows them | Low | FIXED by the DEC-069 migration | 28-09-2026 | — |
 
 Not a bug (false positive, listed for reference): the original `infer-conventions` sweep flagged
@@ -1259,12 +1259,13 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 
 ### BUG-097 — VOTF number generation and persistence are unlocked across two separate requests
 
-- **Status:** OPEN (documented only — needs a design decision, not a mechanical fix)
+- **Status:** FIXED (DEC-070) — duplicate saves rejected
 - **Severity:** Medium — a real but narrow race window (two users/tabs generating+saving an OTF for different bookings at nearly the same instant); not a routine every-request risk.
 - **Found:** 22-09-2026, during the Sales-system-refactor Phase 1 audit, while evaluating whether to add `lockForUpdate()` to `generateVotfNumber()` to match `ReceiptCrudController::generateReceiptNumber()`'s concurrency safety (as originally scoped in the refactor plan).
 - **Where:** `app/Http/Controllers/Admin/Sales/Booking/BookingCrudController.php::generateVotfNumber()` (scans every Booking's `final_data` JSON to compute the next branch/global sequence, returns it as JSON — no DB write) and `::otfSave()` (persists whatever `votf_no` value the client submitted, with no independent recomputation or uniqueness check).
 - **Description:** unlike Receipt number generation (compute-and-write happen in one atomic action, correctly guarded with `lockForUpdate()`), VOTF generation is a **preview** AJAX call from one HTTP request, and the actual save happens in a **later, separate** request when the user submits the OTF form. A `lockForUpdate()` added to the preview endpoint alone would not close this race — the lock is released the instant that request finishes, long before the save request arrives. Two concurrent users generating a VOTF preview at nearly the same moment could both receive the same "next" number and both successfully save it.
 - **Proposed solution:** needs a design decision, not a guess: (a) reserve the number at generate-time by writing a placeholder/pending row inside a transaction+lock, so a second concurrent generate can't compute the same "next" value, or (b) re-verify uniqueness of the submitted `votf_no` inside `otfSave()`'s own transaction before committing, rejecting (and prompting regeneration) on conflict. Not implemented here — flagging for the app owner to choose the approach before it's built.
+- **Resolution (28-09-2026):** `BookingOtfService::apply()` runs the save under `Cache::lock('sales:booking:votf')` and throws a `votf_no` validation error when another booking's `final_data` already holds the number (`bookingHoldingVotf()`); the OTF form shows the error under the field. Generation stays a preview, so two users may see the same number — the second save is refused and they regenerate. Tests in `BookingOtfServiceTest`.
 
 ### BUG-098 — `store()`'s XExchange creation set a nonexistent `vehicle_oem_code` column
 
@@ -1310,12 +1311,13 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 
 ### BUG-102 — `exchangeUpdate()`'s XExchange payload writes 9 fields that don't exist on the table
 
-- **Status:** OPEN (documented only — no data loss, cosmetic history-log noise only; a schema/scope decision, not a mechanical fix)
+- **Status:** FIXED (DEC-070) — dead keys removed
 - **Severity:** Low — the same field values are correctly persisted onto the linked Enquiry row in the same request, so no customer/business data is actually lost. The only user-visible effect is `exchangeUpdate()`'s "changes" audit trail (written into booking history) reporting these 9 fields as changing on every single save, since the "old" value it reads back from `XExchange` is always `null`.
 - **Found:** 23-09-2026, during the Sales-system-refactor Phase 4 pass (extracting `BookingExchangeService`) — reproduced live in a unit test (`BookingExchangeServiceTest`, caught when an assertion on a saved `offered_price` came back `null`).
 - **Where:** `app/Http/Controllers/Admin/Sales/Booking/BookingCrudController.php::exchangeUpdate()` (now `app/Services/Sales/Booking/BookingExchangeService.php::apply()`, same logic, same bug — extraction faithfully preserved it, did not attempt to fix).
 - **Description:** `SHOW COLUMNS FROM xlr8_booking_exchange` confirms the table has only `id, bid, vh_id, purchase_type, verification_status, case_status, status, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by`. `exchangeUpdate()`'s `$exchangePayload` array additionally sets `enum_master1`, `enum_master2`, `vehicle_details`, `vehicle_details2`, `registration_no`, `manufacturing_year`, `odometer_reading`, `expected_price`, `offered_price`, `exchange_bonus` — none of which exist as columns. `XExchange` (`BaseModel` + `HasColumnTransformations`) silently strips unknown attributes on mass-assignment (the same mechanism documented for BUG-098), so `XExchange::create()`/`->update()` both succeed but simply never write these 9 fields — no exception, no log, nothing to indicate the intended write didn't happen.
 - **Proposed solution:** needs a decision from whoever owns the Exchange/Scrappage workflow: (a) add the 9 missing columns to `xlr8_booking_exchange` via a proper migration if this data genuinely needs to live on the exchange row (not just the Enquiry row) — e.g. for reporting/export queries that join only `xlr8_booking_exchange`; or (b) drop these 9 keys from `$exchangePayload` entirely as dead/aspirational code, since the Enquiry-side sync already captures the same data. Not guessed at here — touches a schema decision and possibly downstream reporting code that may (or may not) expect these columns to exist.
+- **Resolution (28-09-2026):** `BookingExchangeService::apply()` no longer sends the nine vehicle fields to `XExchange` (Eloquent dropped them silently — the table has only status columns). The values are saved on the enquiry, as before; nothing stored changes.
 
 ### BUG-103 — `requestRefund()`'s "Refund Requested Again" history branch never fires
 
@@ -2150,19 +2152,21 @@ guessed at.
 
 ### BUG-192 — Enquiry::quotations() joins on the wrong enquiry column
 
-- **Status:** OPEN (booking team) (28-09-2026).
+- **Status:** FIXED (DEC-070)
 - **Severity:** Low.
 - **Found:** 28-09-2026, while writing docs/domains/crm-enquiry-quotation.md.
 - **Evidence:** `QuotationCrudController.php:1526` writes `'enquiry_no' => $enquiry ? $enquiry->id : $request->enquiry_id`; `Quotation::enquiry()` = `belongsTo(Enquiry::class, 'enquiry_no', 'id')`; no code calls `->quotations`.
 - **Proposed solution:** change the local key to `id`: `hasMany(Quotation::class, 'enquiry_no', 'id')`.
+- **Resolution (28-09-2026):** `Enquiry::quotations()` joins `Quotation.enquiry_no` to the enquiry `id`. Test `tests/Unit/Models/BookingRelationsTest.php`.
 
 ### BUG-193 — Booking ↔ exchange / finance relations use a non-existent booking_id
 
-- **Status:** OPEN (booking team) (28-09-2026).
+- **Status:** FIXED (DEC-070)
 - **Severity:** Low.
 - **Found:** 28-09-2026, while writing docs/domains/sales-booking.md.
 - **Evidence:** `xlr8_booking_exchange` / `xlr8_booking_finance` columns start `id, bid, …`; on `xlrm_testing`: `$booking->exchanges()->count()` → 1054 unknown column `booking_id`; `$booking->finances()->count()` → Class `App\Models\Module\Booking\XFinance` not found; `XFinance::getPendingCounts()` → Class `App\Models\Module\Finance\Booking` not found.
 - **Proposed solution:** use `bid` as the foreign key and import the right classes; services already query these tables directly by `bid`.
+- **Resolution (28-09-2026):** `Booking::finances()` / `exchanges()`, `XExchange::booking()`, `XFinance::booking()` join on `bid`; missing `XFinance` / `Booking` imports added. Test `tests/Unit/Models/BookingRelationsTest.php`.
 
 ### BUG-194 — BookingCrudController uses Cache without importing it
 
@@ -2174,11 +2178,12 @@ guessed at.
 
 ### BUG-195 — Full Aadhaar number written into the booking timeline
 
-- **Status:** FIXED for new entries (28-09-2026); existing timeline rows unchanged (28-09-2026).
+- **Status:** FIXED for new entries (PAN + Aadhaar, DEC-070); existing timeline rows unchanged (D26)
 - **Severity:** Medium.
 - **Found:** 28-09-2026, Sales parity refactor (DEC-068).
 - **Evidence:** `BookingKycService.php` history meta `'adhar_no' => $adharNo` (12 digits); the value is also on the booking row itself, so the timeline copy added exposure without purpose.
 - **Proposed solution:** New entries store `XXXXXXXX1234`. Existing rows: a one-off masking of `xlr8_utils_comm_thread.extra_data->adhar_no` on booking masters — needs owner approval (data change).
+- **Resolution (28-09-2026):** The KYC history meta now masks the PAN as well (`XXXXXX234F`); the Aadhaar was masked in DEC-068. Test `BookingKycServiceTest::test_the_kyc_history_entry_masks_pan_and_aadhaar`. Masking the existing rows is a data change awaiting approval.
 
 ### BUG-196 — Legacy policy copies stored under a misspelled model type
 

@@ -498,7 +498,8 @@ class Enquiry extends BaseModel
 
     public function quotations()
     {
-        return $this->hasMany(Quotation::class, 'enquiry_no', 'enquiry_no');
+        // Quotations store the enquiry id in `enquiry_no` (see Quotation::enquiry()) — BUG-192
+        return $this->hasMany(Quotation::class, 'enquiry_no', 'id');
     }
 
     // Scopes, accessors, and caching remain the same as previous version

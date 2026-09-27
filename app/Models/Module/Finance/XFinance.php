@@ -3,6 +3,7 @@
 namespace App\Models\Module\Finance;
 
 use App\Models\BaseModel;
+use App\Models\Module\Booking\Booking;
 use App\Models\Traits\HasDocuments;
 use App\Models\User;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -30,7 +31,7 @@ class XFinance extends BaseModel implements HasMedia
 
     public function booking()
     {
-        return $this->belongsTo(Booking::class, 'booking_id', 'id');
+        return $this->belongsTo(Booking::class, 'bid', 'id');   // BUG-193
     }
 
     public static function getVerifiedCounts($type, $timeFrame = null)

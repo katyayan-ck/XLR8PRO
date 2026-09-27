@@ -38,14 +38,14 @@ Guarded model (no `$fillable` — the services set columns explicitly). Traits: 
 | `segment()` | by `segment_code` |
 | `branch()`, `location()` | **always null** — the table has no `branch_code` / `location_code`; the branch comes from the linked enquiry (`dealer_branch`) or the consultant's employee record (BUG-161, DEC-029). `resolve*EditData()` fills `branch_code` etc. onto the model as display-only attributes |
 | `bookingAmounts()` | `Bookingamount` receipts (`bid`) |
-| `finances()`, `exchanges()` | **broken** — join on `booking_id`, the tables use `bid` (BUG-193); query `XFinance::where('bid', $id)` / `XExchange::where('bid', $id)` |
+| `finances()`, `exchanges()` | `hasMany` on `bid` (BUG-193 fixed) |
 | `vehicle()` | legacy `XVehicleMaster` link |
 | `totalReceivedAmount(): float` | sum of live receipts — **use this** instead of summing yourself |
 | scopes `liveAll()`, `live()`, `pendingDataAll()`, `pendingData()`, `activeBooking()`, `dummyBooking()`, `onHold()`, `invoiced()`, `pendingInvoice()`, `cancelled()`, `refundQueued()`, `refunded()`, `refundRejected()`, `requestOrder()`, `verifiedOrder()`, `ordered()`, `hotEnquiries()`, `olderThan($days)`, `pendingKYC()`, `pendingDMS()`, `pendingRegNo()` | work-list filters (see codes above) |
 | scopes `pendingPayment()`, `pendingInsurance()`, `pendingRTO()`, `pendingDeliveries()`, `pendingDO()` (declared as `scopependingDO`) and statics `getDynamicBookingCounts()`, `getFinanceCounts()`, `getFinanceMTDPercent()`, `getFinanceYTDPercent()`, `getExchangeScrappageCounts()`, `getExchangeScrappageMTDPercent()`, `getExchangeScrappageYTDPercent()`, `getTSTMaxAge()`, `getBookingsOlderThan()` | **broken legacy** (old `xcelr8_*` tables) — BUG-191; the controller builds these lists itself |
 
 **Related models:** `Bookingamount` (`xlr8_booking_amount`, receipts, media), `XExchange` (`xlr8_booking_exchange`,
-`seedForBooking($id, $purchaseType)`; `booking()`, `getVerifiedCounts()`, `getPendingCounts()` broken — BUG-193), `Module\Finance\XFinance` (`xlr8_booking_finance`; `booking()`, `getVerifiedCounts()`, `getPendingCounts()` broken — BUG-193), `Module\Insurance\XlInsurance`
+`seedForBooking($id, $purchaseType)`, `booking()` on `bid`; `getVerifiedCounts()`, `getPendingCounts()` are legacy), `Module\Finance\XFinance` (`xlr8_booking_finance`; `booking()` on `bid`; `getVerifiedCounts()`, `getPendingCounts()` are legacy), `Module\Insurance\XlInsurance`
 (`xlr8_booking_insurance`), `XlRto` (`xlr8_booking_rto`) + `XlRtoRules` (which RTO fields are required for a
 combination), `XlDelivery` (`xlr8_booking_delivered`, photo collections), `Xl_Refunds` (`xlr8_booking_refund`),
 `Xl_DSA_Master` (DSAs / promoters), `XlFinancier`, `XlInsurer` (duplicated under `Module\Booking` and
@@ -69,7 +69,8 @@ combination), `XlDelivery` (`xlr8_booking_delivered`, photo collections), `Xl_Re
 - `resolveEditData(Booking $b): array` — names for branch / location / segment / model / variant / colour and customer,
   falling back to the enquiry. **Mutates `$b`** (fills the fallbacks onto it) — the form pre-fills from the model.
 - `apply(Booking $b, array $validated, bool $gstNotRequired): Booking` — `$validated = ['pan_no', 'adhar_no', 'gst_no']`,
-  normalised by `IdentifierService`; records "KYC Completed".
+  normalised by `IdentifierService`; records "KYC Completed" with the PAN and Aadhaar masked to their last four
+  characters (`XXXXXX234F`, BUG-195).
 
 ### BookingDmsService
 - `resolveEditData(Booking $b, bool $fromPending): array` — DMS fields with enquiry fallbacks (mutates `$b`).
@@ -82,10 +83,14 @@ combination), `XlDelivery` (`xlr8_booking_delivered`, photo collections), `Xl_Re
 - `apply(Booking $b, array $formData, ?UploadedFile $chassisImage): Booking` — merges submitted data **over** saved
   `final_data` **over** quotation data; keeps important price fields when a disabled input didn't submit them; saves
   `final_data`, KYC / DMS / exchange / chassis / invoice columns, enquiry address, and upserts RTO / finance / insurance.
+  When `votf_no` is submitted, the save runs under a cache lock and throws `ValidationException` on `votf_no` if another
+  booking already holds that number (BUG-097, DEC-070).
+- `bookingHoldingVotf(string $votfNo, int $exceptBookingId): ?int` — id of another booking whose `final_data` carries the
+  number, or null.
 - `generateVotfNumber(Booking $b, string $branchCode): string` — `"{FY}/{BRANCH}{branchSeq:04d}/{globalSeq:04d}"` for the
   branch the user picked on the OTF form (since 27-09; before, it was derived from the enquiry / consultant —
   DEC-027/029). A blank branch throws `InvalidArgumentException` (the controller answers 422 "Please select a branch
-  first"). Scan-then-increment without a lock (BUG-097 — concurrent saves can collide).
+  first"). A preview only: two users can be shown the same number; the save rejects the second (BUG-097).
 - Branch list: after the stage merge this uses `OrgService` (their new code called the deleted `CommonHelper`).
 
 ### BookingFinanceService
@@ -113,7 +118,8 @@ combination), `XlDelivery` (`xlr8_booking_delivered`, photo collections), `Xl_Re
 ### BookingExchangeService
 - `resolveEditData($b)` → `['exchange' => ?XExchange, 'data', 'dsaname', 'uid', 'bookingHistory']` — buyer type,
   prices, referee and address live on the **enquiry**.
-- `apply(Booking $b, array $validated): ['exchange' => XExchange, 'changes' => list<string>]`.
+- `apply(Booking $b, array $validated): ['exchange' => XExchange, 'changes' => list<string>]` — vehicle details are
+  written to the enquiry; the exchange row only gets `vh_id`, the statuses and `purchase_type` (BUG-102).
 
 ### BookingDeliveryService
 - `resolveEditData($b)` → `['insurance' => ?XlInsurance, 'rto' => ?XlRto, 'data']`.

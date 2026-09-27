@@ -429,3 +429,14 @@ Triage of every open bug against HEAD `0386230` (plan approved 28-09); decisions
 - BUG-185: unused, never-matching `scopeOnlyRestored()` removed.
 - BUG-186: `OrgService::variantName()` returns the name (test `tests/Unit/Services/OrgServiceNameLookupTest.php`).
 - Guides: `docs/domains/{core,org,vehicle}.md`.
+
+**W6–W10 — booking:**
+- BUG-192: `Enquiry::quotations()` joins on the enquiry `id`. BUG-193: `Booking::finances()` / `exchanges()`,
+  `XExchange::booking()`, `XFinance::booking()` join on `bid`; missing imports added. Test `tests/Unit/Models/BookingRelationsTest.php`.
+- BUG-102: `BookingExchangeService::apply()` stops sending nine vehicle fields the exchange table doesn't have
+  (Eloquent dropped them); nothing stored changes.
+- BUG-097: `BookingOtfService::apply()` saves under `Cache::lock('sales:booking:votf')` and rejects a VOTF number another
+  booking holds (`votf_no` error, shown under the field in `otf-form.blade.php`); new `bookingHoldingVotf()`.
+- BUG-195: the KYC history meta masks the PAN too (`XXXXXX234F`).
+- Tests: `BookingOtfServiceTest` (+2), `BookingKycServiceTest` (+1); Sales + model unit tests 71 passed.
+- Guides: `docs/domains/{sales-booking,crm-enquiry-quotation}.md`.

@@ -4,6 +4,7 @@ namespace App\Models\Module\Booking;
 
 use App\Models\Admin\Branch;
 use App\Models\BaseModel;
+use App\Models\Module\Finance\XFinance;
 use App\Models\Traits\HasCommunications;
 use App\Models\Traits\HasDocuments;
 use App\Models\Vehicle\Segment;
@@ -61,12 +62,12 @@ class Booking extends BaseModel implements HasMedia
 
     public function finances()
     {
-        return $this->hasMany(XFinance::class, 'booking_id', 'id');
+        return $this->hasMany(XFinance::class, 'bid', 'id');   // satellite tables key on `bid` (BUG-193)
     }
 
     public function exchanges()
     {
-        return $this->hasMany(XExchange::class, 'booking_id', 'id');
+        return $this->hasMany(XExchange::class, 'bid', 'id');
     }
 
     public function vehicle()
