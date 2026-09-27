@@ -61,7 +61,7 @@ dev UI kit). Commits on `dev/admin`: `080c15c` (DEC-066), `15415ed` (DEC-067). N
 
 ## 4. Still open (follow-ups)
 
-1. ~~Pin AG-Grid~~ — done everywhere (§3). `public/css/ag-grid-tabler-theme.css` is unused; delete it once approved.
+1. ~~Pin AG-Grid~~ — done everywhere (§3). `public/css/ag-grid-tabler-theme.css` deleted (unused).
 2. ~~Convert Sales / booking views~~ (done, see §2). Remaining: PDF views are exempt by design; (about 250 violations counted in the DEC-066 scan):
    - native date inputs and hard-coded date formats → `x-ui.date` / `@sitedate`;
    - list boxes → `x-ui.select`;

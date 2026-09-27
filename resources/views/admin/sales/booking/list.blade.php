@@ -157,7 +157,7 @@
 
 @push('after_styles')
 {{-- Maps the grid onto Tabler's own design tokens (light + dark mode) -
-     see .ai/rules/conventions.md section 13 and public/css/ag-grid-tabler-theme.css --}}
+     the grid itself is themed by the global createGrid hook in header_metas (DEC-067) --}}
 
 <style>
     .ag-theme-quartz .center-header .ag-header-cell-label,

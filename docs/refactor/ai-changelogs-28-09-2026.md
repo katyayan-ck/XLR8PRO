@@ -373,10 +373,41 @@
   - BUG-196 (policy copies under the misspelled `…\Insurance\Xlinsurer`) fixed by the migration.
   - Security gain: proofs are no longer public `/storage` URLs; every link checks access.
 - **AG-Grid:** the remaining 37 views pinned to `ag-grid-community@36.2.0` (all 87); legacy grid CSS links dropped.
-  `public/css/ag-grid-tabler-theme.css` is now unused (deletion needs approval).
+  `public/css/ag-grid-tabler-theme.css` was unused and is deleted (approved 28-09).
 - **Phone toolbars:** `xl-ui.css` lets the `#quickFilter` group take the row and the box shrink below 768px (~85 list views had
   fixed 220–360px widths); booking list header wraps and its status select lost its fixed width. Verified at 390px.
 - **Other:** `Document` model `@property` docs; stale `BookingCoreService::store()` docblock corrected.
 - **Tests:** 4 unit tests updated to the Docs API; new `tests/Feature/Platform/BookingProofDocsTest.php` (supersede, invalid file →
   field error, inline preview, 403 without booking access).
 - **Guides:** `docs/utilities/04-docs.md`, `ui-kit.md`, `docs/domains/{sales-booking,accounts,core}.md`, `ui-design-progress.md`.
+
+## Sprint summary 27–28-09-2026 (DEC-059 … DEC-069) — what `stage` gets in this merge
+Range `6ccaf2a..dev/admin` (last stage baseline before the sprint): 491 files, +26k / −8k lines.
+
+| DEC | Area | Delivered |
+|---|---|---|
+| 059 | Entity services | Seeders write through the entity services and are idempotent (last DEC-050 roll-out group). |
+| 060 | Cleanup | `app/Helpers` removed; every caller goes through `OrgService` / `VehicleService` / other services. |
+| 061 | Platform | Settings, Notify, Chat and Docs core (FRS §1–4): services, facades, `HasCommunications` / `HasDocuments`, screens. |
+| 062 | Platform | Task and Ticket utilities with SLA (FRS §5–6). |
+| 063 | Platform | Approval engine: topic tree, rules, power sheet, reports (FRS §7–8). |
+| 064 | Platform | Comms plane: templates, outbox, Email / SMS / WhatsApp / Telephony (sandbox drivers) (FRS §12–17). |
+| 065 | Platform | FRS acceptance pack, `ENTITY_ACTIONS` keyword seeds, platform rules. |
+| 066 | UI | Project-wide UI standards; shared UI layer (`xl-ui.js` / `xl-ui.css`), `x-ui.date` / `select` / `upload`, site dates. |
+| 067 | UI | Tabler-parity shell, Appearance panel (mode / colour / font / radius / layout), AG-Grid theming hook, dev UI kit. |
+| 068 | Process | Developer guides for all models and services (`docs/domains/`), guide-sync rules; Sales team merge; Sales/booking parity (Chat history events, site dates, tokens, pinned libraries). |
+| 069 | Sales / UI | Booking proofs → Docs (migration, access-checked links, BUG-196); AG-Grid pinned in all 87 views; phone list toolbars; unused `ag-grid-tabler-theme.css` deleted; fresh-clone boot verified. |
+
+**Bugs closed this sprint:** BUG-139 (Docs model tables), BUG-194 (`Cache` import), BUG-195 (Aadhaar in KYC history, new entries),
+BUG-196 (misspelled insurer media type). Open items are in `.ai/state/bugs-index.md`.
+
+**Verification at merge:** full suite 342 passed / 1 skipped; `--group=smoke` admin sweep; docs coverage script 0 missing;
+headless screenshots at 1366 / 390 px; fresh clone + `composer install` boots (615 routes, views compile, login 200).
+
+**After pulling `stage` (dev team):**
+1. `composer install`
+2. `php artisan migrate` (adds the platform tables and moves booking proofs into Docs — reversible), then
+   `DB_DATABASE=xlrm_testing php artisan migrate` for the test copy.
+3. `php artisan optimize:clear`. No `npm` step.
+4. New code: history via `$model->recordEvent()`, files via `Docs` / `HasDocuments` (`replaceDocument()` for one-file proofs),
+   dates via `site_date()` / `@sitedate`, UI via `x-ui.*` components and Tabler tokens. Guides: `docs/utilities/`, `docs/domains/`.
