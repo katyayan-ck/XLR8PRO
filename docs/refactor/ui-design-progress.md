@@ -53,20 +53,21 @@ dev UI kit). Commits on `dev/admin`: `080c15c` (DEC-066), `15415ed` (DEC-067). N
   `XL.theme.token()`. `xl-ui.js` no longer wraps selects a page hides on purpose.
 - 2 native date inputs converted; file inputs and multi-selects stay enhanced at runtime (identical result).
 
-## 3. Still open (follow-ups)
+## 3. Later items — done 28-09-2026 (DEC-069)
+- AG-Grid pinned in the remaining 37 views (all 87 now on 36.2.0; legacy grid CSS links dropped).
+- List toolbars: `#quickFilter` shrinks and its group takes the row below 768px (`xl-ui.css`, covers ~85 views); booking
+  list header wraps. Verified at 390px (booking, branch lists).
+- Booking proofs moved to Docs (see `docs/domains/sales-booking.md`).
 
-1. ~~Pin AG-Grid~~ — done for Sales / import / accounts (49); **~37 other views** (org, vehicle, pricing …) still load it unversioned. They load `unpkg.com/ag-grid-community` / jsDelivr unversioned (today v36.2.0), so a new major release can break every grid.
-   - Replace with `https://cdn.jsdelivr.net/npm/ag-grid-community@36.2.0/dist/ag-grid-community.min.js`.
-   - Drop the `styles/ag-theme-quartz.css` link: the hook disables it anyway.
-   - Drop per-view `ag-grid-tabler-theme.css`.
-   - Remove any per-view `theme:` option.
+## 4. Still open (follow-ups)
+
+1. ~~Pin AG-Grid~~ — done everywhere (§3). `public/css/ag-grid-tabler-theme.css` deleted (unused).
 2. ~~Convert Sales / booking views~~ (done, see §2). Remaining: PDF views are exempt by design; (about 250 violations counted in the DEC-066 scan):
    - native date inputs and hard-coded date formats → `x-ui.date` / `@sitedate`;
    - list boxes → `x-ui.select`;
    - bare file inputs → `x-ui.upload`;
    - fixed pixel widths → grid classes.
-3. **Hex colours and inline `<style>` outside Sales** (org, vehicle, pricing, utils legacy views); Sales done. Booking list toolbar
-   search box has a fixed width that clips the Reset button at 390 px. (the safety net only covers the common cases):
+3. **Hex colours and inline `<style>` outside Sales** (org, vehicle, pricing, utils legacy views); Sales done. (The safety net only covers the common cases.)
    - move shared styles to `xl-ui.css` / `xl-theme.css`, colours to tokens;
    - the most frequent value is `border-color:#80bdff` (84 times; an old focus colour → remove).
 4. **`menu_items.blade.php`** has an inline `<style>` block. Nested dropdown menus should be checked in the vertical layouts on real data (checked only at a glance).

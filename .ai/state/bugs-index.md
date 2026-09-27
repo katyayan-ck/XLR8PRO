@@ -57,3 +57,4 @@ Full entries: grep `### BUG-NNN` in `docs/refactor/known-bugs-report.md`. Genera
 | BUG-191 | Low | OPEN (booking team) | `Booking` scopes `pendingPayment`, `pendingInsurance`, `pendingRTO`, `pendingDeliveries`, `pendingDO` and the static count helpers (`getDynamicBookingCounts`, … |
 | BUG-192 | Low | OPEN (booking team) | `Enquiry::quotations()` is `hasMany(Quotation, 'enquiry_no', 'enquiry_no')` but quotations store the enquiry **id** in `enquiry_no` (the inverse `Quotation::en… |
 | BUG-193 | Low | OPEN (booking team) | `Booking::finances()` / `exchanges()` and `XExchange::booking()` / `XFinance::booking()` join on `booking_id`, but both tables key on `bid`; `Booking::finances… |
+| BUG-196 | Low | FIXED by the DEC-069 migration | Two insurance policy copies sit in `media` with `model_type = App\Models\Module\Insurance\Xlinsurer` (lower-case i, a class that does not exist); the insurance screen reads `XlInsurance` and never shows them |

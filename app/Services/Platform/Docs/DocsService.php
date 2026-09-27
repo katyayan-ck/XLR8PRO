@@ -332,6 +332,32 @@ final class DocsService
     }
 
     /** Soft delete; entitlements stay for audit, the purge job removes files later (DOC-09). */
+    /**
+     * The newest live document of one collection on a record (e.g. a booking's current policy copy), or null.
+     */
+    public function latestFor(Model $model, string $collection): ?Document
+    {
+        return Document::query()->where('documentable_type', $model::class)->where('documentable_id', $model->getKey())
+            ->where('collection', $collection)->with('media')->latest('id')->first();
+    }
+
+    /**
+     * Soft-delete every live document of one collection on a record, before a replacement is attached (DEC-069).
+     * The record's own workflow has already authorised the caller, so no owner check here; the purge job removes
+     * the files later, like any other deleted document.
+     */
+    public function supersede(Model $model, string $collection, ?int $actorId = null, ?int $exceptId = null): int
+    {
+        $docs = Document::query()->where('documentable_type', $model::class)->where('documentable_id', $model->getKey())
+            ->where('collection', $collection)->when($exceptId, fn (Builder $q) => $q->whereKeyNot($exceptId))->get();
+        foreach ($docs as $doc) {
+            $doc->forceFill(['deleted_by' => $actorId ?? $this->actor()])->save();
+            $doc->delete();
+        }
+
+        return $docs->count();
+    }
+
     public function delete(int $docId, ?int $actorId = null): Result
     {
         $actorId ??= $this->actor();

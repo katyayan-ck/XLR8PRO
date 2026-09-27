@@ -82,7 +82,10 @@ XL.theme.onChange(state => rebuildMyChart());
 **AG-Grid:**
 - Don't pass `theme`, and don't add `ag-theme-quartz.css` to new screens.
 - The global hook gives every grid a Quartz theme built on Tabler variables, so dark mode, the primary colour, the font and the radius apply live. It also switches off the legacy stylesheet on old screens.
-- Pin `ag-grid-community@36.2.0` in new views.
+- Every view loads `https://cdn.jsdelivr.net/npm/ag-grid-community@36.2.0/dist/ag-grid-community.min.js` (all 87 pinned, DEC-069);
+  copy that tag, never an unversioned one, and no grid stylesheet (the old `ag-grid-tabler-theme.css` was deleted, DEC-069).
+- List toolbars: the `#quickFilter` search box may carry a desktop width; below 768px `xl-ui.css` lets its group take the
+  row and the box shrink. Header action groups use `flex-wrap`, never `flex-nowrap` with fixed-width selects.
 
 **Charts:** ApexCharts 3.54.1 (MIT).
 - Load it with `@basset('https://cdn.jsdelivr.net/npm/apexcharts@3.54.1/dist/apexcharts.min.js')` on the page that needs it.

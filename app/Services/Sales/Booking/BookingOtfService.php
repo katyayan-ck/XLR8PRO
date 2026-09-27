@@ -246,7 +246,7 @@ class BookingOtfService
             ->get();
         $receiptTotal = $receiptLogs->sum(fn ($receipt) => (float) $receipt->amount);
 
-        $chassisImage = $booking->getFirstMediaUrl('chassis_image') ?: '';
+        $chassisImage = $booking->documentUrl('chassis_image');
 
         $enquiry = ! empty($booking->enq_no) ? Enquiry::find($booking->enq_no) : null;
 
@@ -343,7 +343,7 @@ class BookingOtfService
     public function apply(Booking $booking, array $formData, ?UploadedFile $chassisImage): Booking
     {
         if ($chassisImage) {
-            $booking->addMedia($chassisImage)->toMediaCollection('chassis_image');
+            $booking->replaceDocument('chassis_image', $chassisImage, [], 'chassis_image');   // Docs (DEC-069)
         }
 
         $existingFinalData = [];

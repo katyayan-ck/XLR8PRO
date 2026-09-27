@@ -109,7 +109,7 @@ class BookingRtoServiceTest extends TestCase
         ]), null, $file);
 
         $this->assertSame(2, $rto->status);
-        $this->assertTrue($rto->getMedia('tax_receipt_copy')->isNotEmpty());
+        $this->assertTrue($rto->hasDocumentIn('tax_receipt_copy'));
     }
 
     public function test_apply_lets_an_existing_file_satisfy_the_requirement_on_a_later_call(): void

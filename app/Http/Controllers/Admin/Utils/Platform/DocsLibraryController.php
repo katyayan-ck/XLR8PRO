@@ -77,10 +77,18 @@ class DocsLibraryController extends Controller
         return $this->respond($request, $result, 'Document saved.');
     }
 
-    public function download(int $id): BinaryFileResponse
+    /** `?inline=1` shows the file in the browser (image / PDF previews, DEC-069); otherwise it downloads. */
+    public function download(Request $request, int $id): BinaryFileResponse
     {
         abort_unless($this->docs->canView($id, backpack_user()->id), 403);
         $media = Document::query()->findOrFail($id)->media()->firstOrFail();
+
+        if ($request->boolean('inline')) {
+            return response()->file($media->getPath(), [
+                'Content-Type' => $media->mime_type ?: 'application/octet-stream',
+                'Content-Disposition' => 'inline; filename="'.addslashes($media->file_name).'"',
+            ]);
+        }
 
         return response()->download($media->getPath(), $media->file_name);
     }

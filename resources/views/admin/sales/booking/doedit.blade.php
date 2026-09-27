@@ -86,9 +86,9 @@
                     <div class="col-sm-3">
                         <label class="form-label">Instrument Proof</label>
                         <div class="mt-2">
-                            @if($finance && $finance->getFirstMediaUrl('instrument_proof'))
+                            @if($finance && $finance->documentUrl('instrument_proof'))
                             @php
-                            $existingUrl = $finance->getFirstMediaUrl('instrument_proof');
+                            $existingUrl = $finance->documentUrl('instrument_proof');
                             $fileName = basename($existingUrl);
                             @endphp
                             <span

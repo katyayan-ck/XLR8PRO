@@ -638,7 +638,7 @@
                             <tbody>
                                 @if ($receiptLogs->isNotEmpty())
                                 @foreach ($receiptLogs as $log)
-                                @php $iurl = $log->getFirstMediaUrl('amount-proof') @endphp
+                                @php $iurl = $log->documentUrl('amount-proof') @endphp
                                 <tr>
                                     <td>@sitedate($log->date)</td>
                                     <td>{{ $log->type_number ?? 'N/A' }}</td>
@@ -1005,11 +1005,11 @@
 
                     @php
                     $payment = $booking->bookingAmounts()->latest()->first();
-                    $hasProof = $payment && $payment->hasMedia('amount-proof');
-                    $media = $hasProof ? $payment->getFirstMedia('amount-proof') : null;
-                    $fileUrl = $hasProof ? $media->getUrl() : null;
-                    $fileName = $hasProof ? $media->file_name : null;
-                    $isPdf = $hasProof && str_contains($media?->mime_type ?? '', 'pdf');
+                    $hasProof = $payment && $payment->hasDocumentIn('amount-proof');
+                    $media = $hasProof ? $payment->documentFor('amount-proof') : null;
+                    $fileUrl = $hasProof ? $media['view_url'] : null;
+                    $fileName = $hasProof ? $media['name'] : null;
+                    $isPdf = $hasProof && str_contains($media['mime'] ?? '', 'pdf');
                     @endphp
 
                     @if($hasProof)
