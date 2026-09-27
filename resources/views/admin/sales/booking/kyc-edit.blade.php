@@ -3,22 +3,20 @@
 @section('title', 'Complete KYC - Booking #' . $booking->id)
 
 @push('after_styles')
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
 <style>
     .is-valid {
-        border-color: #28a745 !important;
+        border-color: var(--tblr-success) !important;
         box-shadow: 0 0 5px rgba(40, 167, 69, .5) !important;
     }
 
     .is-invalid {
-        border-color: #dc3545 !important;
+        border-color: var(--tblr-danger) !important;
         box-shadow: 0 0 5px rgba(220, 53, 69, .5) !important;
     }
 
     .required-mark {
-        color: #dc3545;
+        color: var(--tblr-danger);
         margin-left: 4px;
     }
 
@@ -37,7 +35,7 @@
     .readonly-value {
         padding: 0.375rem 0.75rem;
         background-color: var(--tblr-bg-surface-secondary);
-        border: 1px solid #ced4da;
+        border: 1px solid var(--tblr-border-color);
         border-radius: 0.25rem;
         min-height: 38px;
         display: flex;
@@ -66,7 +64,7 @@
             <div class="col-md-3 form-group readonly-field">
                 <label class="readonly-label">Booking Date</label>
                 <div class="readonly-value">
-                    {{ $booking->booking_date ? \Carbon\Carbon::parse($booking->booking_date)->format('d M Y') : '—' }}
+                    {{ site_date($booking->booking_date, '—') }}
                 </div>
             </div>
 
@@ -199,8 +197,6 @@
 @endsection
 
 @push('after_scripts')
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/additional-methods.min.js"></script>

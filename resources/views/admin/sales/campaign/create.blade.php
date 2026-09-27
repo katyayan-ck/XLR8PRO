@@ -3,7 +3,6 @@
 @section('title', isset($campaign) ? 'Edit Campaign' : 'Add New Campaign')
 
 @push('after_styles')
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <style>
         .card {
             border-radius: 12px;
@@ -11,7 +10,7 @@
         }
         .form-control:focus,
         .form-select:focus {
-            border-color: #80bdff;
+            border-color: var(--tblr-primary);
             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25);
         }
         .required-mark {
@@ -179,7 +178,6 @@
 @endsection
 
 @push('after_scripts')
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script>
         $(function() {
             // Track old values to re-select if validation fails on Create
@@ -216,6 +214,7 @@
             */
             const startPicker = flatpickr("#start_date", {
                 dateFormat: "Y-m-d",
+                altInput: true, altFormat: XL.flatpickrFormat(),
                 allowInput: true,
                 onChange: function(selectedDates, dateStr) {
                     endPicker.set('minDate', dateStr); // Prevent end date before start date
@@ -224,6 +223,7 @@
 
             const endPicker = flatpickr("#end_date", {
                 dateFormat: "Y-m-d",
+                altInput: true, altFormat: XL.flatpickrFormat(),
                 allowInput: true,
                 onChange: function(selectedDates, dateStr) {
                     startPicker.set('maxDate', dateStr); // Prevent start date after end date

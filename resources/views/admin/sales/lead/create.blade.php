@@ -11,7 +11,7 @@
         }
 
         .form-control:focus {
-            border-color: #80bdff;
+            border-color: var(--tblr-primary);
             box-shadow: 0 0 0 .2rem rgba(0, 123, 255, .25);
         }
 
@@ -32,7 +32,7 @@
 
                 <div class="card">
 
-                    <div class="card-header text-black">
+                    <div class="card-header text-body">
 
                         <h2 class="mb-0">
 
@@ -261,7 +261,7 @@
 
                                     </label>
 
-                                    <input type="date" name="expected_delivery_date" class="form-control">
+                                    <x-ui.date name="expected_delivery_date" />
 
                                 </div>
 

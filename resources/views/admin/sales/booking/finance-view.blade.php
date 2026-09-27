@@ -6,11 +6,10 @@ $isViewMode = request()->routeIs('finance.view');
 @section('title', 'Payout Details')
 
 @push('head')
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
 <style>
     .readonly-field {
         background-color: var(--tblr-bg-surface-secondary);
-        border: 1px solid #ced4da;
+        border: 1px solid var(--tblr-border-color);
         padding: 0.375rem 0.75rem;
         border-radius: 0.25rem;
         color: var(--tblr-body-color);
@@ -23,7 +22,7 @@ $isViewMode = request()->routeIs('finance.view');
     }
 
     .photo-preview img {
-        border: 1px solid #ddd;
+        border: 1px solid var(--tblr-border-color);
         border-radius: 4px;
         padding: 5px;
     }
@@ -98,9 +97,9 @@ $isViewMode = request()->routeIs('finance.view');
                         <input type="text"
                             class="form-control readonly-field"
                             value="{{ $booking->inv_date
-                                ? \Carbon\Carbon::parse($booking->inv_date)->format('d-m-Y')
+                                ? site_date($booking->inv_date)
                                 : ($booking->dealer_inv_date
-                                    ? \Carbon\Carbon::parse($booking->dealer_inv_date)->format('d-m-Y')
+                                    ? site_date($booking->dealer_inv_date)
                                     : 'N/A') }}"
                             readonly>
                     </div>

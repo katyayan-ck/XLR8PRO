@@ -19,14 +19,14 @@
             d-flex justify-content-between align-items-center
             flex-nowrap flex-md-nowrap flex-wrap">
 
-                <h3 class="card-title mb-0 fw-bold text-black text-nowrap">
+                <h3 class="card-title mb-0 fw-bold text-body text-nowrap">
                     Order Verification Dashboard
                 </h3>
 
                 <div class="d-flex align-items-center gap-2
                 flex-nowrap flex-md-nowrap flex-wrap
                 mt-2 mt-md-0">
-                    <label class="text-black mb-0 text-nowrap">Status:</label>
+                    <label class="text-body mb-0 text-nowrap">Status:</label>
 
                     <select id="status_filter" class="form-control w-100 w-md-auto" style="min-width:200px;">
                         <option value="1" {{ request('status_filter', '1' )=='1' ? 'selected' : '' }}>Pending</option>
@@ -42,7 +42,7 @@
 
                 <div class="d-flex justify-content-between align-items-center
                             flex-wrap gap-2
-                            p-3 border-bottom bg-white">
+                            p-3 border-bottom bg-surface">
 
                     <div class="d-flex align-items-center gap-2 flex-wrap">
                         <input type="text" id="quickFilter" class="form-control w-100 w-md-auto"
@@ -77,7 +77,7 @@
             left:0;
             width:260px;
             background: var(--tblr-card-bg);
-            border:1px solid #ddd;
+            border: 1px solid var(--tblr-border-color);
             border-radius:6px;
             box-shadow:0 8px 20px rgba(0,0,0,.15);
             z-index:9999;
@@ -128,12 +128,10 @@
 
 
 @push('after_styles')
-<link rel="stylesheet" href="https://unpkg.com/ag-grid-community/styles/ag-theme-quartz.css">
-<link rel="stylesheet" href="{{ asset('css/ag-grid-tabler-theme.css') }}">
 @endpush
 
 @push('after_scripts')
-<script src="https://unpkg.com/ag-grid-community/dist/ag-grid-community.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@36.2.0/dist/ag-grid-community.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>

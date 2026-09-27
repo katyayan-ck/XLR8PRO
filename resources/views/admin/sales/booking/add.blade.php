@@ -66,10 +66,6 @@
 @extends(backpack_view('blank'))
 
 @section('header')
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
-    <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css">
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 @endsection
@@ -277,7 +273,7 @@
                                 @if ($bookingPaymentLogs->isNotEmpty())
 
                                     <div class="mt-1">
-                                        <div class="border rounded bg-light">
+                                        <div class="border rounded bg-surface-secondary">
 
                                             <div class="px-3 py-2 border-bottom">
                                                 <h5 class="mb-0 fw-semibold">
@@ -1471,9 +1467,8 @@
         }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <style>
-        .required-mark { color: #dc3545; margin-left: 2px; }
+        .required-mark { color: var(--tblr-danger); margin-left: 2px; }
         label .required-mark { display: inline !important; }
         input.numeric-only { -moz-appearance: textfield; }
         input.numeric-only::-webkit-outer-spin-button,
@@ -1481,8 +1476,8 @@
             -webkit-appearance: none; margin: 0;
         }
         .proof-chip {
-            display: inline-flex; align-items: center; background-color: #f1f3f5;
-            border: 1px solid #ced4da; border-radius: 50px; padding: 6px 14px;
+            display: inline-flex; align-items: center; background-color: var(--tblr-bg-surface-secondary);
+            border: 1px solid var(--tblr-border-color); border-radius: 50px; padding: 6px 14px;
             margin-right: 12px; font-size: 0.95rem; max-width: 320px;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); transition: all 0.2s ease; user-select: none;
         }
@@ -1493,8 +1488,8 @@
         .proof-chip .file-name {
             max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-right: 12px;
         }
-        .is-valid { border-color: #28a745 !important; box-shadow: 0 0 5px rgba(40, 167, 69, 0.5); }
-        .is-invalid { border-color: #dc3545 !important; box-shadow: 0 0 5px rgba(220, 53, 69, 0.5); }
+        .is-valid { border-color: var(--tblr-success) !important; box-shadow: 0 0 5px rgba(40, 167, 69, 0.5); }
+        .is-invalid { border-color: var(--tblr-danger) !important; box-shadow: 0 0 5px rgba(220, 53, 69, 0.5); }
         #modalProofPdf, #modalProofImg { max-height: 100vh; object-fit: contain; }
         .select2-container--bootstrap5 .select2-selection--single .select2-selection__arrow,
         .select2-container--default .select2-selection--single .select2-selection__arrow {
@@ -1506,12 +1501,12 @@
             font-size: 1rem; font-weight: 400; line-height: 1.5; color: var(--tblr-body-color); background-color: var(--tblr-card-bg);
             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
             background-repeat: no-repeat !important; background-position: right 0.75rem center !important;
-            background-size: 16px 12px !important; border: 1px solid #ced4da !important; border-radius: 0.375rem !important;
+            background-size: 16px 12px !important; border: 1px solid var(--tblr-border-color) !important; border-radius: 0.375rem !important;
             transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
         }
         .select2-container--bootstrap5.select2-container--focus .select2-selection--single,
         .select2-container.select2-container--focus .select2-selection--single {
-            border-color: #86b7fe !important; outline: 0; box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, .25) !important;
+            border-color: var(--tblr-primary) !important; outline: 0; box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, .25) !important;
         }
         .page-header { display: block; }
 
@@ -1528,18 +1523,18 @@
         .booking-card__header {
             display: flex; align-items: center; gap: 10px;
             padding: 10px 16px; cursor: default;
-            border-bottom: 1px solid #eef0f2;
+            border-bottom: 1px solid var(--tblr-border-color);
         }
-        .booking-card__handle { cursor: grab; color: #9ca3af; font-size: 16px; }
+        .booking-card__handle { cursor: grab; color: var(--tblr-secondary); font-size: 16px; }
         .booking-card__handle:active { cursor: grabbing; }
         .booking-card__title { margin: 0; font-size: 1.1rem; flex: 1; }
         .booking-card__badge {
             font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 999px;
-            background: #eef2ff; color: #4338ca; white-space: nowrap;
+            background: rgba(var(--tblr-primary-rgb), 0.08); color: var(--tblr-primary); white-space: nowrap;
         }
-        .booking-card__badge.is-complete { background: #ecfdf3; color: #027a48; }
+        .booking-card__badge.is-complete { background: rgba(var(--tblr-success-rgb), 0.1); color: var(--tblr-success); }
         .booking-card__toggle {
-            border: none; background: none; color: #6b7280; padding: 4px 6px;
+            border: none; background: none; color: var(--tblr-secondary); padding: 4px 6px;
             transition: transform .18s ease;
         }
         .booking-card__toggle.is-collapsed { transform: rotate(180deg); }
@@ -1550,7 +1545,6 @@
 @endpush
 
 @push('after_scripts')
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
     {{-- Bootstrap 4.6.2's bundle was loaded here only to provide jQuery's $.fn.modal() plugin
@@ -2423,7 +2417,7 @@
                 }
                 
                 if (@json($hasPreviousPayment) && !{{ $isEdit ? 'true' : 'false' }}) {
-                    $('#bookingamount').prop('readonly', true).addClass('bg-light');
+                    $('#bookingamount').prop('readonly', true).addClass('bg-surface-secondary');
                 }
             }
 
@@ -2694,10 +2688,9 @@
         }
     </script>
     @section('after_scripts')
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
         <script>
             $(document).ready(function() {
-                $('.select2').select2({ theme: 'bootstrap-5', width: '100%' });
+                $('.select2').select2({ width: '100%' });
             });
         </script>
     @endsection

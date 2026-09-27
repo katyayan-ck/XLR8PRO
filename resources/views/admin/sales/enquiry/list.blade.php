@@ -6,7 +6,7 @@
             <div class="card">
                 <div
                     class="card-header bg-gradient-primary d-flex justify-content-between align-items-center flex-nowrap flex-md-nowrap flex-wrap gap-3">
-                    <h2 class="card-title mb-0 fw-bold text-black text-nowrap">
+                    <h2 class="card-title mb-0 fw-bold text-body text-nowrap">
                         {{ isset($title) ? trim(explode('(', $title)[0]) : 'Xceler8 Enquiries' }}
                     </h2>
 
@@ -26,7 +26,7 @@
 
                     {{-- HIGHLIGHT FILTERS --}}
                     @isset($highlightCounts)
-                        <div class="px-3 py-2 border-bottom bg-white d-flex gap-2 flex-wrap align-items-center">
+                        <div class="px-3 py-2 border-bottom bg-surface d-flex gap-2 flex-wrap align-items-center">
                             <span class="fw-bold text-muted small me-1">Highlights:</span>
                             @foreach ([
                 'missed_fup' => 'Missed Follow-up',
@@ -51,7 +51,7 @@
 
                     {{-- Grid Controls Bar --}}
                     <div
-                        class="d-flex justify-content-between align-items-center flex-wrap gap-3 p-3 border-bottom bg-white">
+                        class="d-flex justify-content-between align-items-center flex-wrap gap-3 p-3 border-bottom bg-surface">
                         <div class="d-flex align-items-center gap-2 flex-nowrap">
                             <input type="text" id="quickFilter" class="form-control w-100 w-md-auto"
                                 style="width:360px; min-width:260px;" placeholder="Smart Global Search...">
@@ -65,7 +65,7 @@
                                 <button id="btnCustomiseHeaders" class="btn btn-red btn-sm text-nowrap">Customise
                                     Headers</button>
                                 <div id="columnBubble"
-                                    style="display:none; position:absolute; top:110%; left:0; width:320px; background: var(--tblr-card-bg); border:1px solid #ddd; border-radius:6px; box-shadow:0 8px 20px rgba(0,0,0,.15); z-index:9999;">
+                                    style="display:none; position:absolute; top:110%; left:0; width:320px; background: var(--tblr-card-bg); border: 1px solid var(--tblr-border-color); border-radius:6px; box-shadow:0 8px 20px rgba(0,0,0,.15); z-index:9999;">
                                     <div class="d-flex justify-content-between align-items-center px-2 py-1 border-bottom">
                                         <strong style="font-size:13px;">Customise Headers</strong>
                                         <button id="closeColumnBubble"
@@ -119,33 +119,32 @@
 @endsection
 
 @push('after_styles')
-    <link rel="stylesheet" href="https://unpkg.com/ag-grid-community/styles/ag-theme-quartz.css">
     <style>
         .ag-theme-quartz .center-header .ag-header-cell-label {
             justify-content: center !important;
         }
 
         .highlight-filter.active {
-            background-color: #0d6efd;
-            color: #fff;
-            border-color: #0d6efd;
+            background-color: var(--tblr-primary);
+            color: var(--tblr-white);
+            border-color: var(--tblr-primary);
         }
 
         .highlight-filter .count-badge {
             background-color: rgba(13, 110, 253, 0.1);
-            color: #0d6efd;
+            color: var(--tblr-primary);
             border-radius: 50rem;
         }
 
         .highlight-filter.active .count-badge {
             background-color: var(--tblr-card-bg);
-            color: #0d6efd;
+            color: var(--tblr-primary);
         }
     </style>
 @endpush
 
 @push('after_scripts')
-    <script src="https://unpkg.com/ag-grid-community/dist/ag-grid-community.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@36.2.0/dist/ag-grid-community.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
@@ -424,7 +423,7 @@
 
                         confirmButtonText: 'Go to Edit Enquiry',
 
-                        confirmButtonColor: '#3085d6',
+                        confirmButtonColor: XL.theme.token('--tblr-primary'),
 
                         showCancelButton: true,
 

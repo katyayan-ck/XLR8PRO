@@ -48,7 +48,7 @@
             ============================================================ --}}
             <div class="card-header bg-gradient-primary d-flex justify-content-between align-items-center flex-wrap gap-3">
 
-                <h2 class="card-title mb-0 fw-bold text-black text-nowrap">
+                <h2 class="card-title mb-0 fw-bold text-body text-nowrap">
                     {{ $title ?? 'All Live Bookings' }}
                 </h2>
 
@@ -59,7 +59,7 @@
                     </a>
 
                     <select id="statusFilter"
-                            class="form-select form-select-sm bg-white text-dark border-0 shadow-sm"
+                            class="form-select form-select-sm bg-surface text-body border-0 shadow-sm"
                             style="min-width: 200px; max-width: 260px;"
                             aria-label="Switch booking status view">
                         <option value="{{ backpack_url('sales/booking') }}" {{ Route::currentRouteName() === 'booking.index' ? 'selected' : '' }}>
@@ -88,7 +88,7 @@
                      Right : export (Excel / PDF), icon-only but labelled
                              for accessibility
                 ======================================================== --}}
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 p-3 border-bottom bg-white">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 p-3 border-bottom bg-surface">
 
                     <div class="d-flex align-items-center gap-2 flex-nowrap">
                         <input type="text" id="quickFilter" class="form-control form-control-sm"
@@ -112,7 +112,7 @@
                             </button>
 
                             <div id="columnPanel" class="column-panel" style="display:none;">
-                                <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-light">
+                                <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-surface-secondary">
                                     <strong style="font-size:13px;">Customise Headers</strong>
                                     <small class="text-muted">drag <i class="la la-arrows-alt"></i> to reorder</small>
                                     <button id="closeColumnPanel" class="btn btn-sm btn-link text-danger p-0" aria-label="Close">✕</button>
@@ -156,10 +156,8 @@
 @endsection
 
 @push('after_styles')
-<link rel="stylesheet" href="https://unpkg.com/ag-grid-community/styles/ag-theme-quartz.css">
 {{-- Maps the grid onto Tabler's own design tokens (light + dark mode) -
      see .ai/rules/conventions.md section 13 and public/css/ag-grid-tabler-theme.css --}}
-<link rel="stylesheet" href="{{ asset('css/ag-grid-tabler-theme.css') }}">
 
 <style>
     .ag-theme-quartz .center-header .ag-header-cell-label,
@@ -177,7 +175,7 @@
         display: flex;
         flex-direction: column;
         background: var(--tblr-card-bg);
-        border: 1px solid #ddd;
+        border: 1px solid var(--tblr-border-color);
         border-radius: 8px;
         box-shadow: 0 10px 26px rgba(0,0,0,.16);
         z-index: 9999;
@@ -188,7 +186,7 @@
     /* Each column GROUP is a small card: header (drag handle, select-all,
        collapse chevron) + a collapsible body listing its columns. */
     .col-group-card {
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--tblr-border-color);
         border-radius: 6px;
         margin-bottom: 6px;
         background: var(--tblr-card-bg);
@@ -203,12 +201,12 @@
         background: var(--tblr-bg-surface-secondary);
         border-bottom: 1px solid transparent;
     }
-    .col-group-card__header.is-open { border-bottom-color: #e5e7eb; }
-    .col-group-card__handle { cursor: grab; color: #9ca3af; }
+    .col-group-card__header.is-open { border-bottom-color: var(--tblr-border-color); }
+    .col-group-card__handle { cursor: grab; color: var(--tblr-secondary); }
     .col-group-card__handle:active { cursor: grabbing; }
     .col-group-card__title { flex: 1; font-size: 13px; font-weight: 600; }
     .col-group-card__chevron {
-        border: none; background: none; padding: 0 4px; color: #6b7280;
+        border: none; background: none; padding: 0 4px; color: var(--tblr-secondary);
         transition: transform .15s ease;
     }
     .col-group-card__chevron.is-open { transform: rotate(90deg); }
@@ -225,7 +223,7 @@
 
 @push('after_scripts')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://unpkg.com/ag-grid-community/dist/ag-grid-community.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@36.2.0/dist/ag-grid-community.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
@@ -780,8 +778,8 @@
                     showCancelButton: true,
                     confirmButtonText: 'Yes',
                     cancelButtonText: 'No',
-                    confirmButtonColor: '#28a745',
-                    cancelButtonColor: '#d33',
+                    confirmButtonColor: XL.theme.token('--tblr-success'),
+                    cancelButtonColor: XL.theme.token('--tblr-danger'),
                 }).then(result => {
 
                     if (result.isConfirmed) {

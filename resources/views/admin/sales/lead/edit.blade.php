@@ -3,8 +3,6 @@
 @section('title', 'Edit Lead')
 
 @push('after_styles')
-<link rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
     <style>
         .card {
@@ -13,7 +11,7 @@
         }
 
         .form-control:focus {
-            border-color: #80bdff;
+            border-color: var(--tblr-primary);
             box-shadow: 0 0 0 .2rem rgba(0, 123, 255, .25);
         }
 
@@ -34,7 +32,7 @@
 
                 <div class="card">
 
-                    <div class="card-header text-black">
+                    <div class="card-header text-body">
 
                         <h2 class="mb-0">
 
@@ -393,7 +391,6 @@
 
 @endsection
 @push('after_scripts')
-<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.js"></script>
     <script>
 
 

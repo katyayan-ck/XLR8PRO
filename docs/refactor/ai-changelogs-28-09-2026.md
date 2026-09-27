@@ -325,3 +325,33 @@
   - lint, Pint;
   - PHPStan: no runtime-risk findings left in the touched files;
   - Sales service and platform tests: 99 passed, 1 skipped.
+
+## Sales / booking parity — visual (DEC-068, step 4b)
+- **Scope:** Sales, import and accounts views (`admin/pdf/*` exempt; paper output).
+- **Libraries:**
+  - AG-Grid pinned to `ag-grid-community@36.2.0` in 49 views.
+  - Removed: 51 legacy `ag-theme-quartz.css` links, 17 `ag-grid-tabler-theme.css` links, and per-view flatpickr (35) and Select2 (20, including the 4.0.13 and bootstrap-5 theme) tags. The global pinned copies load first.
+  - The `bootstrap-5` Select2 theme option was dropped: `xl-ui.css` styles the default theme with tokens.
+- **Dates:**
+  - `header_metas` defines `XL.dateFormat`, `XL.dateTimeFormat` and `XL.flatpickrFormat(withTime)` synchronously, so view scripts can use them before `xl-ui.js` loads.
+  - 13 view pickers gained `altInput` in the site format; their submitted `dateFormat` is unchanged (controllers parse it). Three hard-coded `altFormat: "d-M-Y"` became the site format.
+  - 23 display dates now use `site_date()` / `site_datetime()`. Picker `value=` attributes keep their picker's format.
+  - Two native date inputs: OTF voucher date (the view's own picker) and lead expected delivery (`<x-ui.date>`).
+- **Colours:**
+  - Classes: `bg-white` → `bg-surface` (102), `bg-light` → `bg-surface-secondary` (31), `text-dark` / `text-black` → `text-body` (94).
+  - 284 hex colours (CSS declarations, inline styles, jQuery `.css()` and `.style` writes) → Tabler variables, mapped by property:
+    - backgrounds → surface tokens;
+    - text → body / secondary / status tokens;
+    - borders → the border token (black document lines → `--tblr-body-color`);
+    - status tints → `rgba(var(--tblr-*-rgb), a)`.
+  - `@media print` blocks untouched. The inline SVG file icon is kept.
+  - SweetAlert button colours → `XL.theme.token(...)`.
+- **Bug fix in `xl-ui.js`:** selects hidden by the page (`display:none` / `hidden`) are no longer wrapped in Select2. Before, OTF's custom accessories picker got a visible duplicate.
+- **Left, on purpose:**
+  - File inputs and multi-selects are enhanced at runtime; converting them renders the same markup.
+  - Small per-view `<style>` duplicates were not merged, to avoid selector collisions.
+  - Fixed widths are left alone; the booking list toolbar clips at 390 px (noted in `ui-design-progress.md`).
+- **Verification:**
+  - `view:cache` OK.
+  - Headless Chrome, JS-error capture: 0 errors on the booking list, booking add, OTF list, pending KYC, quotation create, enquiry create, receipt create, campaign create and lead create.
+  - Screenshots: booking list and quotation (dark, teal), enquiry (dark), booking add (light, purple), booking list and add at 390 px.

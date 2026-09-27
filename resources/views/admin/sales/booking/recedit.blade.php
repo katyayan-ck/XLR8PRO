@@ -3,10 +3,6 @@
 @section('title', 'Edit Receipt')
 
 @section('header')
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
-<link rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css">
 @endsection
 
 @section('content')
@@ -172,7 +168,6 @@
 @endsection
 
 @push('after_scripts')
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
@@ -213,8 +208,8 @@
                 text: "You want to delete this receipt? This action cannot be undone!",
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonColor: '#dc3545',
-                cancelButtonColor: '#6c757d',
+                confirmButtonColor: XL.theme.token('--tblr-danger'),
+                cancelButtonColor: XL.theme.token('--tblr-secondary'),
                 confirmButtonText: 'Yes, Delete It!',
                 cancelButtonText: 'Cancel'
             }).then((result) => {

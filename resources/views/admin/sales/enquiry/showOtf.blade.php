@@ -15,7 +15,7 @@
         }
         .enquiry-card .card-header {
             background: var(--tblr-card-bg);
-            border-bottom: 1px solid #edf2f9;
+            border-bottom: 1px solid var(--tblr-border-color);
             border-top-left-radius: 12px;
             border-top-right-radius: 12px;
             padding: 1.25rem 1.5rem;

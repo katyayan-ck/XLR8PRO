@@ -5,8 +5,8 @@
 @push('after_styles')
     <style>
         .card { border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); }
-        .section-title { font-size: 16px; font-weight: 500; color: #1f4b78; margin-bottom: 15px; border-bottom: 2px solid #e5e7eb; padding-bottom: 5px; }
-        .form-control:disabled, .form-control[readonly] { background-color: var(--tblr-bg-surface-secondary); opacity: 1; border: 1px dashed #ced4da; font-weight: 500;}
+        .section-title { font-size: 16px; font-weight: 500; color: var(--tblr-primary); margin-bottom: 15px; border-bottom: 2px solid var(--tblr-border-color); padding-bottom: 5px; }
+        .form-control:disabled, .form-control[readonly] { background-color: var(--tblr-bg-surface-secondary); opacity: 1; border: 1px dashed var(--tblr-border-color); font-weight: 500;}
     </style>
 @endpush
 
@@ -16,7 +16,7 @@
             <div class="col-md-12">
                 <div class="card">
                     <div class="card-header bg-gradient-primary d-flex justify-content-between align-items-center">
-                        <h4 class="card-title mb-0 text-black">View Receipt: {{ $receipt->type_number }}</h4>
+                        <h4 class="card-title mb-0 text-body">View Receipt: {{ $receipt->type_number }}</h4>
                         <a href="{{ backpack_url('accounts/receipt') }}" class="btn btn-secondary btn-sm">
                             <i class="la la-arrow-left"></i> Back to List
                         </a>

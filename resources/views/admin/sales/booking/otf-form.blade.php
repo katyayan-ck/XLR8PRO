@@ -7,9 +7,7 @@ use App\Services\OrgService;
 @section('title', 'Quotation Form')
 
 @push('after_styles')
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.5/css/lightbox.min.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <style>
     @media print {
         select {
@@ -42,7 +40,7 @@ use App\Services\OrgService;
 
     .quotation-sheet {
         background: var(--tblr-card-bg);
-        border: 1px solid #000;
+        border: 1px solid var(--tblr-body-color);
         padding: 15px;
     }
 
@@ -53,7 +51,7 @@ use App\Services\OrgService;
     }
 
     .bill-table td {
-        border: 1px solid #000;
+        border: 1px solid var(--tblr-body-color);
         padding: 2px 5px;
         height: 26px;
         font-size: 10px;
@@ -158,12 +156,12 @@ use App\Services\OrgService;
         flex-wrap: wrap;
         gap: 0;
         margin-bottom: 15px;
-        border: 1px solid #000;
+        border: 1px solid var(--tblr-body-color);
     }
 
     .quotation-half {
         flex: 0 0 50%;
-        border-right: 1px solid #000;
+        border-right: 1px solid var(--tblr-body-color);
     }
 
     .quotation-half:last-child {
@@ -177,7 +175,7 @@ use App\Services\OrgService;
     }
 
     .quotation-stacked-table td {
-        border: 1px solid #000;
+        border: 1px solid var(--tblr-body-color);
         padding: 3px 5px;
         font-size: 10px;
         height: 26px;
@@ -230,13 +228,13 @@ use App\Services\OrgService;
     .quotation-summary {
         display: flex;
         font-weight: bold;
-        border: solid 1px #000;
+        border: solid 1px var(--tblr-body-color);
         margin-top: -1px;
     }
 
     .quotation-summary .total-row-cell {
         background: var(--tblr-bg-surface-secondary);
-        border: solid 1px #000;
+        border: solid 1px var(--tblr-body-color);
     }
 
     .quotation-summary .total-receivable-label {
@@ -256,8 +254,8 @@ use App\Services\OrgService;
     }
 
     .quotation-summary .onroad-row-cell {
-        background: #abb8ca;
-        color: #000000;
+        background: var(--tblr-bg-surface-tertiary);
+        color: var(--tblr-body-color);
     }
 
     .quotation-summary .onroad-label {
@@ -278,7 +276,7 @@ use App\Services\OrgService;
     }
 
     .section-title {
-        background: #d9d9d9;
+        background: var(--tblr-bg-surface-tertiary);
         font-weight: 700;
         text-align: center;
         font-size: 11px;
@@ -286,7 +284,7 @@ use App\Services\OrgService;
 
     .chassis-box {
         margin-top: 4px;
-        border: 1px solid #000;
+        border: 1px solid var(--tblr-body-color);
         padding: 4px;
         text-align: center;
         min-height: 160px;
@@ -321,8 +319,8 @@ use App\Services\OrgService;
 
     .receipt-table thead th {
         background: var(--tblr-bg-surface-secondary) !important;
-        border: 1px solid #000 !important;
-        border-bottom: 1px solid #000 !important;
+        border: 1px solid var(--tblr-body-color) !important;
+        border-bottom: 1px solid var(--tblr-body-color) !important;
         font-size: 10px;
         font-weight: 600;
         text-transform: none;
@@ -335,7 +333,7 @@ use App\Services\OrgService;
 
     .receipt-table tbody td {
         background: var(--tblr-card-bg) !important;
-        border: 1px solid #000 !important;
+        border: 1px solid var(--tblr-body-color) !important;
         padding: 3px 5px !important;
         height: 26px;
         vertical-align: middle;
@@ -353,7 +351,7 @@ use App\Services\OrgService;
 
     .receipt-table tfoot td {
         background: var(--tblr-bg-surface-secondary) !important;
-        border: 1px solid #000 !important;
+        border: 1px solid var(--tblr-body-color) !important;
         padding: 3px 5px !important;
         height: 26px;
         font-size: 10px;
@@ -363,7 +361,7 @@ use App\Services\OrgService;
 
     .receipt-header {
         padding: 6px 4px 8px 4px;
-        border-bottom: 1px dashed #dee2e6;
+        border-bottom: 1px dashed var(--tblr-border-color);
     }
 
 
@@ -1048,7 +1046,7 @@ use App\Services\OrgService;
                 value="{{ old(
                     'dob',
                     !empty($enquiry?->dob)
-                        ? \Carbon\Carbon::parse($enquiry->dob)->format('d-M-Y')
+                        ? site_date($enquiry->dob)
                         : ''
                 ) }}"
                 readonly
@@ -1421,7 +1419,7 @@ use App\Services\OrgService;
                                     <thead>
                                         <tr>
                                             <td colspan="2"
-                                                style="background:#d9d9d9; font-weight:bold; text-align:center; border:1px solid #000;">
+                                                style="background: var(--tblr-bg-surface-tertiary); font-weight:bold; text-align:center; border: 1px solid var(--tblr-body-color);">
                                                 Price Details
                                             </td>
                                         </tr>
@@ -1836,7 +1834,7 @@ use App\Services\OrgService;
                                     <thead>
                                         <tr>
                                             <td colspan="2"
-                                                style="background:#d9d9d9; font-weight:bold; text-align:center; border:1px solid #000;">
+                                                style="background: var(--tblr-bg-surface-tertiary); font-weight:bold; text-align:center; border: 1px solid var(--tblr-body-color);">
                                                 Discount Details
                                             </td>
                                         </tr>
@@ -2350,10 +2348,10 @@ use App\Services\OrgService;
                                     </tbody>
                                 </table>
                                 {{-- TOTAL DISCOUNT & TOTAL RECEIVABLE & NET RECEIVABLE --}}
-                                <table class="bill-table" style="margin-top:-1px; border-top:1px solid #000;">
+                                <table class="bill-table" style="margin-top:-1px; border-top: 1px solid var(--tblr-body-color);">
                                     <tr>
                                         <td class="title"
-                                            style="width:50%; background: var(--tblr-bg-surface-secondary); font-weight:bold; font-size:10px; border-right:1px solid #000;">
+                                            style="width:50%; background: var(--tblr-bg-surface-secondary); font-weight:bold; font-size:10px; border-right: 1px solid var(--tblr-body-color);">
                                             TOTAL DISCOUNT
                                         </td>
                                         <td style="width:50%; padding:3px 5px;">
@@ -2366,13 +2364,13 @@ use App\Services\OrgService;
                                     </tr>
                                     
                                 </table>
-                                <table class="bill-table" style="margin-top:-1px; border-top:1px solid #000;">
+                                <table class="bill-table" style="margin-top:-1px; border-top: 1px solid var(--tblr-body-color);">
                                     <tr>
                                         <td class="title"
-                                            style="width:50%; background:#abb8ca; font-weight:bold; font-size:10px; border-right:1px solid #000; color: var(--tblr-body-color);">
+                                            style="width:50%; background: var(--tblr-bg-surface-tertiary); font-weight:bold; font-size:10px; border-right: 1px solid var(--tblr-body-color); color: var(--tblr-body-color);">
                                             NET RECEIVABLE
                                         </td>
-                                        <td style="width:50%; padding:3px 5px; background:#abb8ca; color: var(--tblr-body-color);">
+                                        <td style="width:50%; padding:3px 5px; background: var(--tblr-bg-surface-tertiary); color: var(--tblr-body-color);">
                                             <input id="net_receivable_summary" name="net_receivable_summary" readonly
                                                 style="width:100%; border:none; background:transparent; font-size:10px; font-weight:bold; text-align:right;"
                                                 value="{{ old('net_receivable_summary', $otfData['net_receivable_summary'] ?? '') }}">
@@ -2520,7 +2518,7 @@ use App\Services\OrgService;
                                 <tr>
                                     <td class="title">DO Voucher Date</td>
                                     <td>
-                                        <input type="date" id="do_voucher_date" name="do_voucher_date"
+                                        <input type="text" id="do_voucher_date" name="do_voucher_date"
                                             style="width:100%;" readonly>
                                     </td>
                                 </tr>
@@ -2616,8 +2614,8 @@ use App\Services\OrgService;
                                                     @forelse($receiptLogs ?? [] as $receipt)
                                                     <tr style="transition: background 0.2s ease;">
                                                         <td style="padding: 5px 8px; vertical-align: middle;">
-                                                            <span class="badge bg-light text-dark"
-                                                                style="font-size: 10px; font-weight: 600; padding: 4px 10px; border: 1px solid #dee2e6;">
+                                                            <span class="badge bg-surface-secondary text-body"
+                                                                style="font-size: 10px; font-weight: 600; padding: 4px 10px; border: 1px solid var(--tblr-border-color);">
                                                                 {{ $receipt->reciept }}
                                                             </span>
                                                         </td>
@@ -2629,7 +2627,7 @@ use App\Services\OrgService;
                                                             {{ $receipt->mode ?? '' }}
                                                         </td>
                                                         <td
-                                                            style="padding: 5px 8px; vertical-align: middle; font-size: 10px; font-weight: 600; color: #28a745;">
+                                                            style="padding: 5px 8px; vertical-align: middle; font-size: 10px; font-weight: 600; color: var(--tblr-success);">
                                                             ₹ {{ number_format($receipt->amount, 2) }}
                                                         </td>
                                                         <td
@@ -2670,7 +2668,7 @@ use App\Services\OrgService;
                                                             TOTAL:
                                                         </td>
                                                         <td
-                                                            style="padding: 5px 8px; font-size: 10px; font-weight: 700; color: #28a745;">
+                                                            style="padding: 5px 8px; font-size: 10px; font-weight: 700; color: var(--tblr-success);">
                                                             ₹ {{ number_format($receiptLogs->sum('amount') ?? 0, 2) }}
                                                         </td>
                                                         <td style="padding: 5px 8px;"></td>
@@ -2742,7 +2740,7 @@ use App\Services\OrgService;
                                 font-weight:normal;
                                 display:inline-block;
                                 min-width:70%;
-                                border-bottom:1px solid #000;
+                                border-bottom: 1px solid var(--tblr-body-color);
                             ">
                             {{ $insuranceNoteText }}
                         </span>
@@ -2752,7 +2750,7 @@ use App\Services\OrgService;
                     <div class="accessories-note-row">
                         Accessories:
                         <span id="accessories_print"
-                            style="font-weight:normal; display:inline-block; min-width:70%; border-bottom:1px solid #000;">
+                            style="font-weight:normal; display:inline-block; min-width:70%; border-bottom: 1px solid var(--tblr-body-color);">
                             &nbsp;
                         </span>
                     </div>
@@ -2777,7 +2775,7 @@ use App\Services\OrgService;
                             <td style="width:10%; vertical-align:bottom; text-align:center; height:90px;">
 
 
-                                <div style="border-top:1px solid #000; width:85%; margin:0 auto; padding-top:3px;">
+                                <div style="border-top: 1px solid var(--tblr-body-color); width:85%; margin:0 auto; padding-top:3px;">
                                     <span style="font-size:7px; font-weight:bold;">
                                         Customer Signature
                                     </span>
@@ -2844,7 +2842,7 @@ use App\Services\OrgService;
 
                         {{-- CUSTOMER SIGNATURE --}}
                         <td style="width:20%; vertical-align:bottom; text-align:center; height:90px;">
-                            <div style="border-top:1px solid #000; width:85%; margin:0 auto; padding-top:3px;">
+                            <div style="border-top: 1px solid var(--tblr-body-color); width:85%; margin:0 auto; padding-top:3px;">
                                 <span style="font-size:7px; font-weight:bold;">
                                     Customer Signature
                                 </span>
@@ -2886,10 +2884,8 @@ use App\Services\OrgService;
 @endsection
 
 @push('after_scripts')
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.5/js/lightbox.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
 <script>
     // Site-wide date display format (see .ai/rules/conventions.md section 13) - flatpickr's
@@ -3568,7 +3564,7 @@ document.addEventListener("DOMContentLoaded", function () {
         allowInput: false,
         clickOpens: true,
         altInput: true,
-        altFormat: "d-M-Y"
+        altFormat: XL.flatpickrFormat()
     };
 
     // Apply to all date picker inputs
@@ -3584,7 +3580,7 @@ document.addEventListener("DOMContentLoaded", function () {
         allowInput: false,
         clickOpens: true,
         altInput: true,
-        altFormat: "d-M-Y",
+        altFormat: XL.flatpickrFormat(),
         onChange: function(selectedDates, dateStr, instance) {
             if (selectedDates.length > 0) {
                 const yyyyMMdd = selectedDates[0].toISOString().split('T')[0];
@@ -3601,7 +3597,7 @@ document.addEventListener("DOMContentLoaded", function () {
         allowInput: false,
         clickOpens: true,
         altInput: true,
-        altFormat: "d-M-Y"
+        altFormat: XL.flatpickrFormat()
     });
 });
 // ==========================================================

@@ -3,10 +3,9 @@
 @section('title', 'Dealer Invoice - Booking #' . $booking->id)
 
 @push('after_styles')
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <style>
     .required-mark {
-        color: #dc3545;
+        color: var(--tblr-danger);
         margin-left: 4px;
     }
 
@@ -24,7 +23,7 @@
     .readonly-value {
         padding: 0.375rem 0.75rem;
         background-color: var(--tblr-bg-surface-secondary);
-        border: 1px solid #ced4da;
+        border: 1px solid var(--tblr-border-color);
         border-radius: 0.25rem;
         min-height: 38px;
         display: flex;
@@ -212,7 +211,6 @@
      original instance. Removed - see BUG-118. --}}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
     // Site-wide date display format (see .ai/rules/conventions.md section 13) - flatpickr's
     // token syntax matches PHP's date() tokens, so the PHP-side format string is reused as-is.
