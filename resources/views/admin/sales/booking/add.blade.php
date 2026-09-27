@@ -1065,6 +1065,23 @@
                                         </div>
                                     </div>
 
+                                    <div class="col-sm-3">
+                                        <div class="form-group">
+                                            <label for="body_type">Body Type <span class="required-mark">*</span></label>
+
+                                            <select name="body_type" id="body_type" class="form-control form-select" required>
+                                                <option value="">Select Body Type</option>
+
+                                                @foreach ($body_type_map ?? [] as $key => $value)
+                                                    <option value="{{ $key }}"
+                                                        {{ old('body_type', $entry?->body_type ?? '') == $key ? 'selected' : '' }}>
+                                                        {{ $value }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+
                                     <!-- Seating -->
                                     <div class="col-sm-2">
                                         <div class="form-group">

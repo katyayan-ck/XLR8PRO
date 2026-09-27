@@ -120,6 +120,7 @@ class BookingCoreService
         $booking->col_by = $input['user'] ?? null;
         $booking->b_source = $input['bookingsource'] ?? null;
         $booking->sale_type = $input['sale_type'] ?? null;
+        $booking->body_type = $input['body_type'] ?? null;
         $booking->dsa_id = $input['dsadetails'] ?? null;
         $booking->online_bk_ref_no = $input['refrenceno'] ?? null;
         $booking->booking_date = $input['hiddenbookingdate'] ?? null;
@@ -510,6 +511,20 @@ class BookingCoreService
         if ($booking->sale_type != ($input['sale_type'] ?? null)) {
             $rem[] = 'Sale Type Changed from '.($booking->sale_type ?? 'null').' to '.($input['sale_type'] ?? null);
             $booking->sale_type = $input['sale_type'] ?? null;
+        }
+        
+        if ($booking->body_type != ($input['body_type'] ?? null)) {
+            $bodyTypeMap = [
+                '1' => 'Complete',
+                '2' => 'CBC',
+            ];
+
+            $rem[] = 'Body Type Changed from '
+                .($bodyTypeMap[$booking->body_type ?? ''] ?? ($booking->body_type ?? 'null'))
+                .' to '
+                .($bodyTypeMap[$input['body_type'] ?? ''] ?? ($input['body_type'] ?? 'null'));
+
+            $booking->body_type = $input['body_type'] ?? null;
         }
 
         if ($linkedEnquiry && $linkedEnquiry->dob != ($input['hidden_customer_dob'] ?? null)) {

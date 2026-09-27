@@ -10,17 +10,12 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <script src="https://cdn.tailwindcss.com"></script>
+
     <style>
-
         /* =========================================================
-           PAGE
+           TAILWIND CUSTOM CONFIG & FONT
            ========================================================= */
-
-        @page {
-            size: A4 landscape;
-            margin: 0;
-        }
-
         @font-face {
             font-family: 'HindiFont';
             src: url("{{ asset('fonts/Lohit-Devanagari.ttf') }}") format('truetype');
@@ -28,732 +23,34 @@
             font-style: normal;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
+        /* Custom utilities that Tailwind can't easily generate */
+        .font-hindi {
+            font-family: 'HindiFont', DejaVu Sans, sans-serif;
         }
 
-        html,
-        body {
-            margin: 0;
-            padding: 0;
-            width: 297mm;
-            min-height: 210mm;
-            background: #f0f0f0;
-            color: #000;
-            font-family: Arial, Helvetica, sans-serif;
-        }
-
-        body {
-            font-size: 9px;
-        }
-
-
-        /* =========================================================
-           PRINT CONTROLS
-           ========================================================= */
-
-        .print-controls {
-            position: fixed;
-            top: 15px;
-            right: 15px;
-            z-index: 99999;
-
-            display: flex;
-            gap: 10px;
-
-            background: rgba(255, 255, 255, 0.95);
-            padding: 10px;
-
-            border: 1px solid #ccc;
-            border-radius: 6px;
-
-            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
-        }
-
-        .print-controls button {
-            border: none;
-            padding: 9px 16px;
-
-            font-size: 13px;
-            font-weight: bold;
-
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .print-button {
-            background: #198754;
-            color: #fff;
-        }
-
-        .close-button {
-            background: #dc3545;
-            color: #fff;
-        }
-
-        .print-controls button:hover {
-            opacity: 0.9;
-        }
-
-
-        /* =========================================================
-           A4 PAGE
-           ========================================================= */
-
-        .a4-page {
-            width: 297mm;
-            min-height: 210mm;
-
-            position: relative;
-
-            padding-top: 17.5mm;
-            padding-bottom: 17.5mm;
-
-            overflow: visible;
-
-            page-break-inside: avoid;
-        }
-
-
-        /* =========================================================
-           RECEIPT CONTAINER
-           ========================================================= */
-
-        .receipt-container {
-            width: 280mm;
-
-            min-height: 175mm;
-            height: auto;
-
-            margin: 0 auto;
-
-            background: #fff;
-
-            border: 1.2px solid #000;
-
-            padding: 1.5mm;
-
-            color: #000;
-
-            overflow: visible;
-
-            page-break-inside: avoid;
-        }
-
-
-        /* =========================================================
-           TABLE RESET
-           ========================================================= */
-
-        table {
-            width: 100%;
-
-            border-collapse: collapse;
-
-            margin: 0;
-            padding: 0;
-
-            table-layout: fixed;
-        }
-
-        td,
-        th {
-            margin: 0;
-            padding: 0;
-
-            vertical-align: middle;
-        }
-
-
-        /* =========================================================
-           HEADER
-           ========================================================= */
-
-        .header {
-            min-height: 25mm;
-
-            border-bottom: 1.2px solid #000;
-        }
-
-        .header-left {
-            width: 55%;
-
-            vertical-align: top;
-
-            padding: 1mm 2mm 1mm 1mm;
-        }
-
-        .company-name {
-            font-size: 17px;
-
-            line-height: 19px;
-
-            font-weight: 900;
-
-            letter-spacing: .15px;
-
-            white-space: nowrap;
-        }
-
-        .receipt-badge {
-            display: inline-block;
-
-            background: #333;
-
-            color: #fff;
-
-            font-size: 11px;
-
-            font-weight: bold;
-
-            padding: 1px 5px;
-
-            margin-left: 3mm;
-
-            letter-spacing: .5px;
-
-            vertical-align: 2px;
-        }
-
-        .company-address {
-            margin-top: 1.5mm;
-
-            font-size: 8px;
-
-            line-height: 9px;
-
-            font-weight: 600;
-        }
-
-        .header-right {
-            width: 45%;
-
-            vertical-align: top;
-
-            padding: 1mm 2mm 0 0;
-        }
-
-        .header-line {
-            height: 5mm;
-
-            text-align: right;
-
-            white-space: nowrap;
-
-            font-size: 9px;
-
-            font-weight: bold;
-        }
-
-        .receipt-number {
-            display: inline-block;
-
-            margin-left: 4mm;
-
-            color: #d32f2f;
-
-            font-size: 15px;
-
-            line-height: 15px;
-
-            font-weight: 900;
-
+        .receipt-number-font {
             font-family: "Courier New", Courier, monospace;
         }
 
-        .header-line .line {
-            display: inline-block;
-
-            width: 38mm;
-
-            min-height: 4mm;
-
-            margin-left: 3mm;
-
-            border-bottom: 1px solid #000;
-
-            vertical-align: bottom;
-
-            text-align: center;
+        /* Page setup */
+        @page {
+            size: A4 landscape;
+            margin: 0;
         }
 
-
-        /* =========================================================
-           MAIN BODY
-           ========================================================= */
-
-        .main-body {
-            min-height: 91mm;
-
-            height: auto;
+        /* Screen preview background */
+        body {
+            background: #f0f0f0;
         }
 
-        .left-column {
-            width: 64%;
-            padding-right: 1.5mm;
-            vertical-align: top;
-        }
-
-        .right-column {
-            width: 36%;
-            border: 1.2px solid #000;
-            vertical-align: top;
-        }
-
-
-        /* =========================================================
-           LEFT FIELDS
-           ========================================================= */
-
-        .field-row {
-            min-height: 9.6mm;
-
-            height: auto;
-
-            border-bottom: 1.2px solid #000;
-
-            padding: 1mm 0;
-
-            font-size: 9px;
-
-            line-height: 10px;
-
-            font-weight: bold;
-        }
-
-        .field-row td {
-            vertical-align: bottom;
-        }
-
-        .field-label {
-            width: 39%;
-
-            padding-left: 1mm;
-            padding-right: 2mm;
-
-            white-space: nowrap;
-
-            vertical-align: bottom;
-        }
-
-        .field-value {
-            width: 61%;
-
-            padding-right: 1mm;
-
-            white-space: normal;
-
-            word-wrap: break-word;
-
-            overflow-wrap: break-word;
-        }
-
-        .field-value .line {
-            display: block;
-
-            min-height: 5mm;
-
-            height: auto;
-
-            padding-bottom: 1px;
-
-            border-bottom: 1px solid #000;
-
-            white-space: normal;
-
-            word-wrap: break-word;
-
-            overflow-wrap: break-word;
-        }
-
-
-        /* =========================================================
-           RECEIVED
-           ========================================================= */
-
-        .row-received {
-            min-height: 10mm;
-        }
-
-
-        /* =========================================================
-           TELEPHONE
-           ========================================================= */
-
-        .row-tel {
-            min-height: 9.5mm;
-        }
-
-        .row-tel .tel-spacer {
-            width: 62%;
-        }
-
-        .row-tel .tel-label {
-            width: 10%;
-
-            padding-right: 2mm;
-
-            text-align: right;
-
-            white-space: nowrap;
-        }
-
-        .row-tel .tel-value {
-            width: 28%;
-
-            padding-right: 1mm;
-        }
-
-
-        /* =========================================================
-           CHEQUE
-           ========================================================= */
-
-        .row-cheque .cheque-label {
-            width: 25%;
-        }
-
-        .row-cheque .cheque-value {
-            width: 30%;
-        }
-
-        .row-cheque .date-label {
-            width: 10%;
-        }
-
-        .row-cheque .date-value {
-            width: 35%;
-        }
-
-        .row-cheque .cheque-value .line,
-        .row-cheque .date-value .line {
-            white-space: nowrap;
-            overflow: visible;
-            text-overflow: clip;
-        }
-
-
-        /* =========================================================
-           ON / BANK
-           ========================================================= */
-
-        .row-on .on-label {
-            width: 8%;
-
-            padding-left: 1mm;
-
-            white-space: nowrap;
-        }
-
-        .row-on .on-value {
-            width: 72%;
-
-            padding-right: 3mm;
-        }
-
-        .row-on .bank-label {
-            width: 20%;
-
-            text-align: left;
-
-            padding-right: 1mm;
-
-            white-space: nowrap;
-        }
-
-
-        /* =========================================================
-           DENOMINATION
-           ========================================================= */
-
-        .denom-header {
-            height: 8mm;
-
-            font-weight: bold;
-
-            font-size: 9px;
-
-            line-height: 10px;
-
-            text-align: center;
-
-            border-bottom: 1.2px solid #000;
-        }
-
-        .denom-header td {
-            padding: 1mm 1px;
-
-            border-right: 1px solid #000;
-        }
-
-        .denom-header td:last-child {
-            border-right: none;
-        }
-
-        .col-denom {
-            width: 55%;
-        }
-
-        .col-rupees {
-            width: 38%;
-        }
-
-        .col-ps {
-            width: 7%;
-        }
-
-        .denom-row {
-            height: 6.55mm;
-
-            font-size: 8px;
-
-            font-weight: bold;
-
-            border-bottom: 1px solid #000;
-        }
-
-        .denom-row td {
-            border-right: 1px solid #000;
-        }
-
-        .denom-row td:last-child {
-            border-right: none;
-        }
-
-        .denom-label {
-            width: 55%;
-
-            text-align: right;
-
-            padding-right: 4mm;
-        }
-
-        .denom-value {
-            width: 38%;
-
-            text-align: center;
-        }
-
-        .denom-ps {
-            width: 7%;
-
-            text-align: center;
-        }
-
-        .denom-total {
-            height: 7mm;
-
-            font-size: 9px;
-
-            font-weight: bold;
-
-            border-top: 1.2px solid #000;
-        }
-
-        .total-label {
-            width: 55%;
-
-            text-align: right;
-
-            padding-right: 4mm;
-
-            border-right: 1px solid #000;
-        }
-
-        .total-value {
-            width: 38%;
-
-            text-align: center;
-
-            border-right: 1px solid #000;
-        }
-
-        .total-ps {
-            width: 7%;
-
-            text-align: center;
-        }
-
-
-        /* =========================================================
-           RUPEES
-           ========================================================= */
-
-        .rupees-row {
-            min-height: 10mm;
-
-            height: auto;
-
-            border-top: 1.2px solid #000;
-
-            border-bottom: 1px solid #000;
-        }
-
-        .rupees-label {
-            width: 12%;
-
-            padding-left: 2mm;
-
-            font-size: 10px;
-
-            font-weight: bold;
-
-            white-space: nowrap;
-        }
-
-        .rupees-value {
-            width: 78%;
-
-            padding: 0 2mm;
-
-            font-size: 10px;
-
-            font-weight: bold;
-
-            white-space: normal;
-
-            word-wrap: break-word;
-
-            overflow-wrap: break-word;
-
-            border-bottom: 1px solid #000;
-
-            min-height: 6mm;
-
-            vertical-align: bottom;
-        }
-
-        .rupees-only {
-            width: 10%;
-
-            padding-right: 2mm;
-
-            font-size: 10px;
-
-            font-weight: bold;
-
-            text-align: right;
-
-            white-space: nowrap;
-        }
-
-
-        /* =========================================================
-           FOOTER
-           ========================================================= */
-
-        .footer-table {
-            width: 100%;
-        }
-
-        .footer-info {
-            width: 70%;
-
-            padding: 1.5mm 2mm 0 2mm;
-
-            vertical-align: top;
-
-            font-size: 6.5px;
-
-            line-height: 7.5px;
-
-            font-weight: bold;
-
-            word-wrap: break-word;
-
-            overflow-wrap: break-word;
-        }
-
-        .footer-info > div {
-            margin-bottom: 1mm;
-        }
-
-        .hindi-text {
-            font-family: 'HindiFont', DejaVu Sans, sans-serif;
-
-            font-size: 7px;
-
-            line-height: 8px;
-
-            font-weight: normal;
-
-            margin-top: 1mm;
-        }
-
-        .signature-area {
-            width: 30%;
-
-            padding: 1.5mm 2mm 0 2mm;
-
-            vertical-align: top;
-
-            text-align: right;
-
-            font-size: 8px;
-
-            line-height: 9px;
-
-            font-weight: bold;
-        }
-
-        .auth-text {
-            margin-top: 9mm;
-
-            padding-top: 1.5mm;
-
-            border-top: 1px solid #000;
-
-            text-align: center;
-        }
-
-        .customer-signature {
-            height: 8mm;
-
-            border-top: 1.2px solid #000;
-
-            padding: 2mm;
-
-            font-size: 9px;
-
-            line-height: 10px;
-
-            font-weight: bold;
-        }
-
-
-        /* =========================================================
-           SCREEN VIEW
-           ========================================================= */
-
-        @media screen {
-
-            .a4-page {
-                margin-top: 10px;
-                margin-bottom: 10px;
-            }
-
-            .receipt-container {
-                box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
-            }
-        }
-
-
-        /* =========================================================
-           PRINT
-           ========================================================= */
-
+        /* Print adjustments */
         @media print {
-
             html,
             body {
                 width: 297mm !important;
                 min-height: 210mm !important;
-
                 margin: 0 !important;
                 padding: 0 !important;
-
                 background: #fff !important;
             }
 
@@ -763,30 +60,20 @@
 
             .a4-page {
                 width: 297mm !important;
-
                 min-height: 210mm !important;
-
                 margin: 0 !important;
-
                 padding-top: 17.5mm !important;
                 padding-bottom: 17.5mm !important;
-
                 overflow: visible !important;
             }
 
             .receipt-container {
                 width: 280mm !important;
-
                 min-height: 175mm !important;
-
                 height: auto !important;
-
                 margin: 0 auto !important;
-
                 box-shadow: none !important;
-
                 overflow: visible !important;
-
                 page-break-inside: avoid !important;
             }
 
@@ -809,24 +96,39 @@
                 print-color-adjust: exact !important;
             }
         }
-
     </style>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        hindi: ['HindiFont', 'DejaVu Sans', 'sans-serif'],
+                        mono: ['"Courier New"', 'Courier', 'monospace'],
+                    },
+                    screens: {
+                        print: { raw: 'print' },
+                    },
+                }
+            }
+        }
+    </script>
 
 </head>
 
 
-<body>
+<body class="m-0 p-0 w-[297mm] min-h-[210mm] bg-[#f0f0f0] text-black font-[Arial,Helvetica,sans-serif] text-[9px]">
 
 
     <!-- =========================================================
          PRINT CONTROLS
          ========================================================= -->
 
-    <div class="print-controls no-print">
+    <div class="print-controls no-print fixed top-[15px] right-[15px] z-[99999] flex gap-[10px] bg-white/95 p-[10px] border border-[#ccc] rounded-[6px] shadow-[0_3px_12px_rgba(0,0,0,0.15)]">
 
         <button
             type="button"
-            class="print-button"
+            class="print-button bg-[#198754] text-white border-none px-[16px] py-[9px] text-[13px] font-bold rounded-[4px] cursor-pointer hover:opacity-90"
             onclick="window.print()"
         >
             🖨 Print Receipt
@@ -834,7 +136,7 @@
 
         <button
             type="button"
-            class="close-button"
+            class="close-button bg-[#dc3545] text-white border-none px-[16px] py-[9px] text-[13px] font-bold rounded-[4px] cursor-pointer hover:opacity-90"
             onclick="window.close()"
         >
             ✕ Close
@@ -1195,38 +497,38 @@
          A4 PAGE
          ========================================================= -->
 
-    <div class="a4-page">
+    <div class="a4-page w-[297mm] min-h-[210mm] relative pt-[17.5mm] pb-[17.5mm] overflow-visible break-inside-avoid">
 
 
         <!-- =====================================================
              RECEIPT
              ===================================================== -->
 
-        <div class="receipt-container">
+        <div class="receipt-container w-[280mm] min-h-[175mm] h-auto mx-auto bg-white border-[1.2px] border-black p-[1.5mm] text-black overflow-visible break-inside-avoid">
 
 
             <!-- =================================================
                  HEADER
                  ================================================= -->
 
-            <table class="header">
+            <table class="header w-full border-collapse table-fixed border-b-[1.2px] border-black">
 
                 <tr>
 
-                    <td class="header-left">
+                    <td class="header-left w-[62%] align-top p-[1mm_2mm_1mm_1mm]">
 
-                        <div class="company-name">
+                        <div class="company-name text-[17px] leading-[19px] font-black tracking-[.15px] whitespace-nowrap">
 
                             BIKANER MOTORS PRIVATE LIMITED
 
-                            <span class="receipt-badge">
+                            <span class="receipt-badge inline-block bg-[#333] text-white text-[11px] font-bold px-[5px] py-[1px] ml-[36mm] tracking-[.5px] align-[2px]">
                                 RECEIPT
                             </span>
 
                         </div>
 
 
-                        <div class="company-address">
+                        <div class="company-address mt-[1.5mm] text-[8px] leading-[9px] font-semibold">
 
                             Regd. Office :
                             6th Km. Stone, N.H. 11,
@@ -1245,60 +547,49 @@
                     </td>
 
 
-                    <td class="header-right">
+                    <td class="header-right w-[38%] align-top p-[1mm_2mm_0_0]">
 
 
-                        <div class="header-line">
+    <!-- No. (unchanged, top line) -->
+    <div class="header-line h-[5mm] text-right whitespace-nowrap text-[9px] font-bold">
 
-                            <span>
-                                No.
-                            </span>
+        <span>
+            No.
+        </span>
 
-                            <span class="receipt-number">
-                                {{ $receiptNo }}
-                            </span>
+        <span class="receipt-number inline-block ml-[4mm] text-[#d32f2f] text-[15px] leading-[15px] font-black receipt-number-font">
+            {{ $receiptNo }}
+        </span>
 
-                        </div>
-
-
-                        <div class="header-line">
-
-                            <span>
-                                DATE
-                            </span>
-
-                            <span class="line">
-                                {{ $receiptDate }}
-                            </span>
-
-                        </div>
+    </div>
 
 
-                        <div class="header-line">
+    <!-- Date | VOTF No. | Ledger Folio (single line) -->
+    <div class="header-line h-[5mm] text-right whitespace-nowrap text-[9px] font-bold flex justify-end items-end gap-[3mm]">
 
-                            <span>
-                                VOTF No.
-                            </span>
+        <span>
+            DATE
+            <span class="line inline-block w-[22mm] min-h-[4mm] ml-[1mm] border-b border-black align-bottom text-center">
+                {{ $receiptDate }}
+            </span>
+        </span>
 
-                            <span class="line">
-                                {{ $votfNo }}
-                            </span>
+        <span>
+            VOTF No.
+            <span class="line inline-block w-[22mm] min-h-[4mm] ml-[1mm] border-b border-black align-bottom text-center">
+                {{ $votfNo }}
+            </span>
+        </span>
 
-                        </div>
+        <span>
+            LEDGER FOLIO
+            <span class="line inline-block w-[22mm] min-h-[4mm] ml-[1mm] border-b border-black align-bottom text-center"></span>
+        </span>
 
-
-                        <div class="header-line">
-
-                            <span>
-                                LEDGER FOLIO
-                            </span>
-
-                            <span class="line"></span>
-
-                        </div>
+    </div>
 
 
-                    </td>
+</td>
 
                 </tr>
 
@@ -1310,7 +601,7 @@
                  MAIN BODY
                  ================================================= -->
 
-            <table class="main-body">
+            <table class="main-body w-full border-collapse table-fixed min-h-[91mm] h-auto">
 
                 <tr>
 
@@ -1319,24 +610,24 @@
                          LEFT COLUMN
                          ========================================= -->
 
-                    <td class="left-column">
+                    <td class="left-column w-[64%] pr-[1.5mm] align-top">
 
 
-                        <table>
+                        <table class="w-full border-collapse table-fixed border-[1.2px] border-black">
 
 
                             <!-- RECEIVED -->
-                            <tr class="field-row row-received">
+                            <tr class="field-row row-received min-h-[10mm] h-auto border-b-[1.2px] py-[1mm] text-[9px] leading-[10px] font-bold mb-3">
 
-                                <td class="field-label">
+                                <td class="field-label w-[39%] pl-[1mm] pr-[2mm] whitespace-nowrap align-bottom">
 
                                     RECEIVED WITH THANKS FROM
 
                                 </td>
 
-                                <td class="field-value">
+                                <td class="field-value w-[61%] pr-[1mm] whitespace-normal break-words align-bottom">
 
-                                    <span class="line">
+                                    <span class="line block min-h-[5mm] h-auto pb-[1px] border-b border-black whitespace-normal break-words">
                                         {{ $customerName }}
                                     </span>
 
@@ -1346,17 +637,17 @@
 
 
                             <!-- CARE OF -->
-                            <tr class="field-row">
+                            <tr class="field-row min-h-[9.6mm] h-auto border-b-[1.2px]  py-[1mm] text-[9px] leading-[10px] font-bold">
 
-                                <td class="field-label">
+                                <td class="field-label w-[39%] pl-[1mm] pr-[2mm] whitespace-nowrap align-bottom">
 
                                     {{ $careOfType }}
 
                                 </td>
 
-                                <td class="field-value">
+                                <td class="field-value w-[61%] pr-[1mm] whitespace-normal break-words align-bottom">
 
-                                    <span class="line">
+                                    <span class="line block min-h-[5mm] h-auto pb-[1px] border-b border-black whitespace-normal break-words">
                                         {{ $careOf }}
                                     </span>
 
@@ -1366,66 +657,62 @@
 
 
                             <!-- ADDRESS -->
-                            <tr class="field-row">
+                            <tr class="field-row min-h-[9.6mm] h-auto border-b-[1.2px] py-[1mm] text-[9px] leading-[10px] font-bold">
 
-                                <td class="field-label">
-
+                                <td class="field-label w-[39%] pl-[1mm] pr-[2mm] whitespace-nowrap align-bottom">
                                     ADDRESS
-
                                 </td>
 
-                                <td class="field-value">
-
-                                    <span class="line">
+                                <td class="field-value w-[61%] pr-[1mm] whitespace-normal break-words align-bottom">
+                                    <span class="line block min-h-[5mm] h-auto pb-[1px] border-b border-black whitespace-normal break-words">
                                         {{ $address }}
                                     </span>
-
                                 </td>
 
                             </tr>
 
 
-                            <!-- TELEPHONE -->
-                            <tr class="field-row row-tel">
+                            <!-- EMPTY ROW (address badhne ke liye extra line) -->
+                            <tr class="field-row min-h-[9.6mm] h-auto border-b-[1.2px] border-black py-[1mm] text-[9px] leading-[10px] font-bold">
 
-                                <td class="tel-spacer">
+                                <td class="field-label w-[39%] pl-[1mm] pr-[2mm] whitespace-nowrap align-bottom"></td>
 
-                                    <span class="line"></span>
-
+                                <td class="field-value w-[61%] pr-[1mm] whitespace-normal break-words align-bottom">
+                                    <span class="line block min-h-[5mm] h-auto pb-[1px] whitespace-normal break-words"></span>
                                 </td>
 
+                            </tr>
 
-                                <td class="tel-label">
 
+                            <!-- TELEPHONE (normal line, same as RECEIVED row style) -->
+                            <tr class="field-row min-h-[9.5mm] h-auto border-b-[1.2px] py-[1mm] text-[9px] leading-[10px] font-bold">
+
+                                <td class="field-label w-[39%] pl-[1mm] pr-[2mm] whitespace-nowrap align-bottom">
                                     TEL No.
-
                                 </td>
 
-
-                                <td class="tel-value">
-
-                                    <span class="line">
+                                <td class="field-value w-[61%] pr-[1mm] whitespace-normal break-words align-bottom">
+                                    <span class="line block min-h-[5mm] h-auto pb-[1px] border-b border-black whitespace-normal break-words">
                                         {{ $mobile }}
                                     </span>
-
                                 </td>
 
                             </tr>
 
 
                             <!-- ACCOUNT OF -->
-                            <tr class="field-row">
+                            <tr class="field-row min-h-[9.6mm] h-auto border-b-[1.2px] py-[1mm] text-[9px] leading-[10px] font-bold">
 
-                                <td class="field-label">
+                                <td class="field-label w-[39%] pl-[1mm] pr-[2mm] whitespace-nowrap align-bottom">
 
                                     On A/c of
                                     Booking/Dues/Against Delivery
 
                                 </td>
 
-                                <td class="field-value">
+                                <td class="field-value w-[61%] pr-[1mm] whitespace-normal break-words align-bottom">
 
-                                    <span class="line">
+                                    <span class="line block min-h-[5mm] h-auto pb-[1px] border-b border-black whitespace-normal break-words">
                                         {{ $accountOf }}
                                     </span>
 
@@ -1435,17 +722,17 @@
 
 
                             <!-- HYPO -->
-                            <tr class="field-row">
+                            <tr class="field-row min-h-[9.6mm] h-auto border-b-[1.2px] py-[1mm] text-[9px] leading-[10px] font-bold">
 
-                                <td class="field-label">
+                                <td class="field-label w-[39%] pl-[1mm] pr-[2mm] whitespace-nowrap align-bottom">
 
                                     HYPO BY
 
                                 </td>
 
-                                <td class="field-value">
+                                <td class="field-value w-[61%] pr-[1mm] whitespace-normal break-words align-bottom">
 
-                                    <span class="line">
+                                    <span class="line block min-h-[5mm] h-auto pb-[1px] border-b border-black whitespace-normal break-words">
                                         {{ $bankName }}
                                     </span>
 
@@ -1454,10 +741,11 @@
                             </tr>
 
 
-                            <!-- CHEQUE / PAYMENT -->
-                            <tr class="field-row row-cheque">
+                            <!-- BY CHEQUE No. (single line) -->
+                            <tr class="field-row row-cheque min-h-[9.6mm] h-auto border-b-[1.2px]  py-[1mm] text-[9px] leading-[10px] font-bold">
 
-                                <td class="cheque-label">
+                                <!-- BY CHEQUE No. label -->
+                                <td class="cheque-label w-[39%] pl-[1mm] pr-[2mm] whitespace-nowrap align-bottom">
 
                                     BY {{ $paymentMode ?: 'CASH' }}
 
@@ -1468,16 +756,23 @@
                                 </td>
 
 
-                                <td class="cheque-value">
+                                <!-- Cheque No. value -->
+                                <td class="cheque-value w-[61%] pr-[1mm] align-bottom">
 
-                                    <span class="line">
+                                    <span class="line block min-h-[5mm] h-auto pb-[1px] border-b border-black whitespace-nowrap overflow-visible text-clip">
                                         {{ $instrumentNo }}
                                     </span>
 
                                 </td>
 
+                            </tr>
 
-                                <td class="date-label">
+
+                            <!-- DATE (next line, single line) -->
+                            <tr class="field-row min-h-[9.6mm] h-auto border-b-[1.2px]  py-[1mm] text-[9px] leading-[10px] font-bold">
+
+                                <!-- DATE label -->
+                                <td class="field-label w-[39%] pl-[1mm] pr-[2mm] whitespace-nowrap align-bottom">
 
                                     @if(!empty($transactionDate))
                                         DATE
@@ -1486,9 +781,10 @@
                                 </td>
 
 
-                                <td class="date-value">
+                                <!-- Date value -->
+                                <td class="field-value w-[61%] pr-[1mm] align-bottom">
 
-                                    <span class="line">
+                                    <span class="line block min-h-[5mm] h-auto pb-[1px] border-b border-black whitespace-nowrap overflow-visible text-clip">
                                         {{ $transactionDate }}
                                     </span>
 
@@ -1497,35 +793,27 @@
                             </tr>
 
 
-                            <!-- BANK -->
-                            <tr
-                                class="field-row row-on"
-                                style="border-bottom:none;"
-                            >
+                            <!-- ON / BANK (single line) -->
+                            <tr class="field-row row-on min-h-[9.6mm] h-auto py-[1mm] text-[9px] leading-[10px] font-bold" style="border-bottom:none;">
 
-                                <td class="on-label">
+                                <!-- ON label -->
+                                <td class="on-label w-[8%] pl-[1mm] whitespace-nowrap align-bottom">
 
                                     ON
 
                                 </td>
 
 
-                                <td class="on-value">
+                                <!-- Bank name value -->
+                                <td class="on-value w-[72%] pr-[3mm] align-bottom">
 
-                                    <span class="line">
+                                    <span class="line block min-h-[5mm] h-auto pb-[1px] border-b border-black whitespace-normal break-words">
                                         {{ $bankName }}
                                     </span>
 
                                 </td>
 
 
-                                <td class="bank-label">
-
-                                    @if(!empty($bankName))
-                                        (BANK)
-                                    @endif
-
-                                </td>
 
                             </tr>
 
@@ -1541,28 +829,28 @@
                          RIGHT COLUMN
                          ========================================= -->
 
-                    <td class="right-column">
+                    <td class="right-column w-[36%] align-top">
 
 
-                        <table>
+                        <table class="w-full border-collapse table-fixed border-[1.2px] border-black">
 
 
                             <!-- DENOMINATION HEADER -->
-                            <tr class="denom-header">
+                            <tr class="denom-header h-[8mm] font-bold text-[9px] leading-[10px] text-center border-b-[1.2px] border-black">
 
-                                <td class="col-denom">
+                                <td class="col-denom w-[55%] p-[1mm_1px] border-r border-black">
 
                                     DENOMINATION DETAILS
 
                                 </td>
 
-                                <td class="col-rupees">
+                                <td class="col-rupees w-[38%] p-[1mm_1px] border-r border-black">
 
                                     RUPEES
 
                                 </td>
 
-                                <td class="col-ps">
+                                <td class="col-ps w-[7%] p-[1mm_1px]">
 
                                     PS
 
@@ -1575,17 +863,17 @@
 
                             @foreach([500, 200, 100, 50, 20, 10, 5, 2, 1] as $denomination)
 
-                                <tr class="denom-row">
+                                <tr class="denom-row h-[6.55mm] text-[8px] font-bold border-b border-black">
 
-                                    <td class="denom-label">
+                                    <td class="denom-label w-[55%] text-right pr-[4mm] border-r border-black">
 
                                         × {{ $denomination }}
 
                                     </td>
 
-                                    <td class="denom-value"></td>
+                                    <td class="denom-value w-[38%] text-center border-r border-black"></td>
 
-                                    <td class="denom-ps"></td>
+                                    <td class="denom-ps w-[7%] text-center"></td>
 
                                 </tr>
 
@@ -1593,21 +881,21 @@
 
 
                             <!-- TOTAL -->
-                            <tr class="denom-total">
+                            <tr class="denom-total h-[7mm] text-[9px] font-bold border-t-[1.2px] border-black">
 
-                                <td class="total-label">
+                                <td class="total-label w-[55%] text-right pr-[4mm] border-r border-black">
 
                                     TOTAL
 
                                 </td>
 
-                                <td class="total-value">
+                                <td class="total-value w-[38%] text-center border-r border-black">
 
                                     {{ number_format($amount, 2) }}
 
                                 </td>
 
-                                <td class="total-ps"></td>
+                                <td class="total-ps w-[7%] text-center"></td>
 
                             </tr>
 
@@ -1627,25 +915,25 @@
                  RUPEES
                  ================================================= -->
 
-            <table>
+            <table class="w-full border-collapse table-fixed border-[1.2px] border-black">
 
-                <tr class="rupees-row">
+                <tr class="rupees-row min-h-[10mm] h-auto border-t-[1.2px] border-black border-b border-black">
 
-                    <td class="rupees-label">
+                    <td class="rupees-label w-[12%] pl-[2mm] text-[10px] font-bold whitespace-nowrap">
 
                         RUPEES
 
                     </td>
 
 
-                    <td class="rupees-value">
+                    <td class="rupees-value w-[78%] px-[2mm] text-[10px] font-bold whitespace-normal break-words border-b border-black min-h-[6mm] align-bottom">
 
                         {{ $amountWords }}
 
                     </td>
 
 
-                    <td class="rupees-only">
+                    <td class="rupees-only w-[10%] pr-[2mm] text-[10px] font-bold text-right whitespace-nowrap">
 
                         ONLY
 
@@ -1661,16 +949,16 @@
                  FOOTER
                  ================================================= -->
 
-            <table class="footer-table">
+            <table class="footer-table w-full border-collapse table-fixed">
 
                 <tr>
 
 
                     <!-- FOOTER INFORMATION -->
-                    <td class="footer-info">
+                    <td class="footer-info w-[70%] p-[1.5mm_2mm_0_2mm] align-top text-[6.5px] leading-[7.5px] font-bold break-words">
 
 
-                        <div>
+                        <div class="mb-[1mm]">
 
                             1. This receipt is issued subject to
                             realisation of Cheque/Demand draft.
@@ -1683,7 +971,7 @@
                         </div>
 
 
-                        <div>
+                        <div class="mb-[1mm]">
 
                             3. For refund amounts, payment will be made
                             only through bank transfer to the bank account
@@ -1693,7 +981,7 @@
                         </div>
 
 
-                        <div class="hindi-text">
+                        <div class="font-hindi text-[7px] leading-[8px] font-normal mt-[1mm]">
 
                             नोट :
                             "यदि यहाँ दर्ज किया गया कोई भी सुधार साख्य है
@@ -1710,7 +998,7 @@
 
 
                     <!-- SIGNATURE -->
-                    <td class="signature-area">
+                    <td class="signature-area w-[30%] p-[1.5mm_2mm_0_2mm] align-top text-right text-[8px] leading-[9px] font-bold">
 
 
                         <div>
@@ -1721,7 +1009,7 @@
                         </div>
 
 
-                        <div class="auth-text">
+                        <div class="auth-text mt-[9mm] pt-[1.5mm] border-t border-black text-center">
 
                             AUTHORISED SIGNATORY/CASHIER
 
@@ -1738,7 +1026,7 @@
 
                     <td
                         colspan="2"
-                        class="customer-signature"
+                        class="customer-signature h-[8mm] border-t-[1.2px] border-black p-[2mm] text-[9px] leading-[10px] font-bold"
                     >
 
                         SIGNATURE OF CUSTOMER

@@ -3847,39 +3847,30 @@
         }
 
         function toggleRowVisibility() {
-
-            // Make sure all system-generated amounts stay fixed
             enforceFixedAmountFields();
-
-            // ============================================================
-            // PRICE GRID
-            // Empty / N/A = hide
-            // 0 = VALID VALUE, therefore SHOW
-            // ============================================================
 
             $('.price-grid tbody tr').each(function() {
 
                 let $row = $(this);
                 let $input = $row.find('td.cell-amount input').first();
 
+                // RSA row should ALWAYS remain visible
+                if ($input.attr('id') === 'rsa_amount') {
+                    $row.show();
+                    return;
+                }
+
                 let value = $input.length
                     ? ($input.val() ?? '').toString().trim()
                     : '';
 
-                if (value === '' || value === 'N/A') {
+                if (value === '') {
                     $row.hide();
                 } else {
-                    // 0 and 0.00 are valid values
                     $row.show();
                 }
             });
 
-
-            // ============================================================
-            // DISCOUNT GRID
-            // Empty / N/A = hide
-            // 0 = VALID VALUE, therefore SHOW
-            // ============================================================
 
             $('.discount-grid tbody tr').each(function() {
 
@@ -3890,19 +3881,14 @@
                     ? ($input.val() ?? '').toString().trim()
                     : '';
 
-                if (value === '' || value === 'N/A') {
+                if (value === '') {
                     $row.hide();
                 } else {
-                    // 0 and 0.00 are valid values
+                    // 0, 0.00 and N/A are valid values
                     $row.show();
                 }
             });
 
-
-            // ============================================================
-            // TCS
-            // 0 is also a valid system-generated value.
-            // ============================================================
 
             $('.tcs-row').each(function() {
 
@@ -3913,15 +3899,15 @@
                     ? ($input.val() ?? '').toString().trim()
                     : '';
 
-                if (value === '' || value === 'N/A') {
+                if (value === '') {
                     $row.hide();
                 } else {
+                    // N/A should remain visible
                     $row.show();
                 }
             });
 
 
-            // Re-enforce after visibility changes
             enforceFixedAmountFields();
         }
 

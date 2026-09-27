@@ -451,13 +451,14 @@ use App\Services\OrgService;
         <div class="card shadow-sm mb-3">
             <div class="card-body py-2 px-3">
                 @php
-                $segment = strtoupper($booking->segment_code ?? '');
-                if ($segment == 'LMM') {
-                $mahindraLogo = asset('images/mahindra-lmm-logo.png');
-                } elseif ($segment == 'BEV') {
-                $mahindraLogo = asset('images/mahindra-ev-logo.png');
+                $segmentCode = strtoupper($booking->segment_code ?? $enquiry?->segment_code ?? '');
+
+                if ($segmentCode == 'LMM') {
+                    $mahindraLogo = asset('images/mahindra-lmm-logo.png');
+                } elseif ($segmentCode == 'BEV') {
+                    $mahindraLogo = asset('images/mahindra-ev-logo.png');
                 } else {
-                $mahindraLogo = asset('images/mahindra-pv-cv-logo.png');
+                    $mahindraLogo = asset('images/mahindra-pv-cv-logo.png');
                 }
                 @endphp
 
@@ -513,20 +514,14 @@ use App\Services\OrgService;
                                     <td class="title">Customer Category</td>
                                     <td>
                                         <select name="b_cat" id="b_cat">
-                                            <option value="Individual" {{ old('b_cat', $otfData['b_cat'] ?? $booking->
-                                                b_cat ?? '') == 'Individual' ? 'selected' : '' }}>
-                                                Individual
-                                            </option>
+                                            <option value="">Select Customer Category</option>
 
-                                            <option value="CSD-CPC" {{ old('b_cat', $otfData['b_cat'] ?? $booking->b_cat
-                                                ?? '') == 'CSD-CPC' ? 'selected' : '' }}>
-                                                CSD-CPC
-                                            </option>
-
-                                            <option value="Corporate" {{ old('b_cat', $otfData['b_cat'] ?? $booking->
-                                                b_cat ?? '') == 'Corporate' ? 'selected' : '' }}>
-                                                Corporate
-                                            </option>
+                                            @foreach ($customer_categories ?? [] as $item)
+                                                <option value="{{ $item['code'] }}"
+                                                    {{ old('b_cat', $enquiry?->customer_type ?? $booking->b_cat ?? '') == $item['code'] ? 'selected' : '' }}>
+                                                    {{ $item['value'] }}
+                                                </option>
+                                            @endforeach
                                         </select>
                                     </td>
                                 </tr>
@@ -549,7 +544,7 @@ use App\Services\OrgService;
                                 <tr>
                                     <td class="title">Segment</td>
                                     <td><input type="text" id="segment_code"
-                                            value="{{ $segment->name ?? $booking->segment_code }}" readonly></td>
+                                            value="{{ $segment?->name ?? $enquiry?->segment_code ?? $booking->segment_code ?? '' }}" readonly></td>
                                 </tr>
                                 <tr>
                                     <td class="title">Model</td>
@@ -574,9 +569,8 @@ use App\Services\OrgService;
                                             <option value="">Select Body Type</option>
 
                                             @foreach($body_type_map as $key => $value)
-                                            <option value="{{ $key }}" {{ old( 'body_type' , $otfData['body_type'] ??
-                                                $rto?->body_type ?? ''
-                                                ) == $key ? 'selected' : '' }}>
+                                            <option value="{{ $key }}"
+                                                {{ old('body_type', $booking->body_type ?? $rto?->body_type ?? $otfData['body_type'] ?? '') == $key ? 'selected' : '' }}>
                                                 {{ $value }}
                                             </option>
                                             @endforeach
@@ -590,9 +584,7 @@ use App\Services\OrgService;
                                             <option value="">Select Sale Type</option>
 
                                             @foreach($sale_type_map as $key => $value)
-                                            <option value="{{ $key }}" {{ old( 'sale_type' , $otfData['sale_type'] ??
-                                                $rto?->sale_type ?? ''
-                                                ) == $key ? 'selected' : '' }}>
+                                            <option value="{{ $key }}" {{ old('sale_type', $booking->sale_type ?? '') == $key ? 'selected' : '' }}>
                                                 {{ $value }}
                                             </option>
                                             @endforeach
@@ -608,7 +600,7 @@ use App\Services\OrgService;
                                             @foreach($reg_no_type_map as $key => $value)
                                             <option value="{{ $key }}" {{ old(
                                                     'registration_no_type',
-                                                    $otfData['registration_no_type'] ?? $rto?->rgn_no_type ?? ''
+                                                    $otfData['registration_no_type'] ?? ''
                                                 ) == $key ? 'selected' : '' }}>
                                                 {{ $value }}
                                             </option>
@@ -623,7 +615,7 @@ use App\Services\OrgService;
                                             <option value="">Select Category</option>
                                             @foreach($registration_type_map as $key => $value)
                                             <option value="{{ $key }}" {{ old('registration_category',
-                                                $otfData['registration_category'] ?? $rto?->registration_category ?? '')
+                                                    $otfData['registration_category'] ?? '')
                                                 == $key ? 'selected' : '' }}>
                                                 {{ $value }}
                                             </option>
@@ -638,7 +630,7 @@ use App\Services\OrgService;
                                             <option value="">Select Permit</option>
 
                                             @foreach($permit_map as $key => $value)
-                                            <option value="{{ $key }}" {{ old('permit', $otfData['permit'] ?? $rto?->permit ?? '') == $key ?
+                                            <option value="{{ $key }}" {{ old('permit', $otfData['permit'] ?? '') == $key ?
                                                 'selected' : '' }}>
                                                 {{ $value }}
                                             </option>
@@ -653,6 +645,15 @@ use App\Services\OrgService;
                                 <tr>
                                     <td colspan="2" class="section-title">Consultant Details</td>
                                 </tr>
+                                @php
+                                    $selectedConsultant = old(
+                                        'consultant',
+                                        $booking->consultant
+                                            ?? $enquiry?->x8_sc_code
+                                            ?? ''
+                                    );
+                                @endphp
+
                                 <tr>
                                     <td class="title">SC Name</td>
                                     <td>
@@ -660,32 +661,83 @@ use App\Services\OrgService;
                                             <option value="">Select Sales Consultant</option>
 
                                             @foreach($salesconsultants as $consultant)
-                                            <option value="{{ $consultant['person_code'] }}" {{ old('consultant',
-                                                $booking->consultant ?? '') == $consultant['person_code'] ? 'selected' :
-                                                '' }}>
-                                                {{ $consultant['display_name'] }} - {{ $consultant['employee_code'] }}
-                                            </option>
+
+                                                @php
+                                                    $employeeCode = $consultant['employee_code'] ?? '';
+                                                    $personCode   = $consultant['person_code'] ?? '';
+
+                                                    $isSelected =
+                                                        strcasecmp(
+                                                            trim((string) $selectedConsultant),
+                                                            trim((string) $employeeCode)
+                                                        ) === 0
+                                                        ||
+                                                        (
+                                                            !empty($personCode)
+                                                            &&
+                                                            strcasecmp(
+                                                                trim((string) $selectedConsultant),
+                                                                trim((string) $personCode)
+                                                            ) === 0
+                                                        );
+                                                @endphp
+
+                                                <option
+                                                    value="{{ $employeeCode }}"
+                                                    data-mile-id="{{ $consultant['mile_id'] ?? $employeeCode }}"
+                                                    data-branch="{{ $consultant['branch_name'] ?? '' }}"
+                                                    data-location="{{ $consultant['location_name'] ?? '' }}"
+                                                    {{ $isSelected ? 'selected' : '' }}
+                                                >
+                                                    {{ $consultant['display_name'] ?? $consultant['name'] ?? '' }}
+                                                    - {{ $employeeCode }}
+                                                </option>
+
                                             @endforeach
                                         </select>
                                     </td>
                                 </tr>
+
                                 <tr>
                                     <td class="title">SC Mile ID</td>
-                                    <td><input type="text" id="sc_mile_id" readonly></td>
+                                    <td>
+                                        <input
+                                            type="text"
+                                            name="sc_mile_id"
+                                            id="sc_mile_id"
+                                            value="{{ old('sc_mile_id', $selectedScMileId ?? '') }}"
+                                            readonly
+                                        >
+                                    </td>
                                 </tr>
+
                                 <tr>
                                     <td class="title">SC Branch</td>
-                                    <td><input type="text" id="sc_branch" readonly></td>
+                                    <td>
+                                        <input
+                                            type="text"
+                                            id="sc_branch"
+                                            value="{{ old('sc_branch', $selectedScBranch ?? '') }}"
+                                            readonly
+                                        >
+                                    </td>
                                 </tr>
+
                                 <tr>
                                     <td class="title">SC Location</td>
-                                    <td><input type="text" id="sc_location" readonly></td>
+                                    <td>
+                                        <input
+                                            type="text"
+                                            id="sc_location"
+                                            value="{{ old('sc_location', $selectedScLocation ?? '') }}"
+                                            readonly
+                                        >
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td class="title">DMS Enquiry No.</td>
                                     <td>
-                                        <input type="text" name="dms_no" id="dms_no"
-                                            value="{{ old('dms_no', $enquiry->oem_enquiry_no ?? '') }} " readonly>
+                                        <input type="text" id="dms_enq_no" value="{{ $enquiry?->dms_enq_no ?? '' }}" readonly>
                                     </td>
                                 </tr>
                                 <tr>
@@ -696,7 +748,9 @@ use App\Services\OrgService;
                                 </tr>
                                 <tr>
                                     <td class="title">Xcler8 Booking ID</td>
-                                    <td><input type="text" value="{{ $booking->id }}" readonly></td>
+                                    <td>
+                                        <input type="text" value="XB-{{ $booking->id }}" readonly>
+                                    </td>
                                 </tr>
                             </table>
 
@@ -790,100 +844,293 @@ use App\Services\OrgService;
                         {{-- ================= RIGHT COLUMN ================= --}}
                         <div class="col-md-6">
 
-                            {{-- Customer Information --}}
-                            <table class="bill-table">
-                                <tr>
-                                    <td colspan="2" class="section-title">Customer Information</td>
-                                </tr>
-                                <tr>
-                                    <td class="title">VOTF No.</td>
-                                    <td>
-                                        <div style="display:flex; gap:5px; align-items:center;">
-                                            <input type="text"
-                                                name="votf_no"
-                                                id="votf_no"
-                                                value="{{ old('votf_no', $otfData['votf_no'] ?? '') }}">
+                            {{-- ================= CUSTOMER INFORMATION ================= --}}
+<table class="bill-table">
+    <tr>
+        <td colspan="2" class="section-title">Customer Information</td>
+    </tr>
 
-                                            <button type="button"
-                                                    id="generate_votf"
-                                                    class="btn btn-sm btn-primary no-print"
-                                                    style="white-space:nowrap;">
-                                                Generate
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="title">Customer Name</td>
-                                    <td><input type="text" name="customer_name" id="customer_name"
-                                            value="{{ $booking->name ?? '' }}" readonly></td>
-                                </tr>
-                                <tr>
-                                    <td class="title">Registration Address</td>
-                                    <td><input type="text" name="registration_address" id="registration_address"
-                                            value="{{ old('registration_address', $otfData['registration_address'] ?? $booking->address ?? '') }}">
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="title">Customer Tehsil</td>
-                                    <td>
-                                        <input type="text" name="customer_tehsil"
-                                            value="{{ old('customer_tehsil', $otfData['customer_tehsil'] ?? $enquiry?->tehsil ?? '') }}">
-                                    </td>
-                                </tr>
+    {{-- ==========================================================
+         VOTF NUMBER + BRANCH
+         Branch is explicitly selected by the user.
+         VOTF number is generated automatically when branch changes.
+         No Generate button.
+    =========================================================== --}}
+    <tr>
+        <td class="title">VOTF No.</td>
+        <td>
+            <div style="display:flex; gap:5px; align-items:center;">
 
-                                <tr>
-                                    <td class="title">Customer District</td>
-                                    <td>
-                                        <input type="text" name="customer_district"
-                                            value="{{ old('customer_district', $otfData['customer_district'] ?? $enquiry?->district ?? '') }}">
-                                    </td>
-                                </tr>
+                <input
+                    type="text"
+                    name="votf_no"
+                    id="votf_no"
+                    value="{{ old('votf_no', $otfData['votf_no'] ?? '') }}"
+                    readonly
+                >
 
-                                <tr>
-                                    <td class="title">Pincode</td>
-                                    <td>
-                                        <input type="text" name="pincode" class="numeric-only" maxlength="6"
-                                            value="{{ old('pincode', $otfData['pincode'] ?? $enquiry?->zipcode ?? '') }}">
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="title">Customer Contact No.</td>
-                                    <td><input type="text" name="customer_mobile" id="customer_mobile"
-                                            value="{{ $booking->mobile ?? '' }}" readonly></td>
-                                </tr>
-                                <tr>
-                                    <td class="title">Date of Birth</td>
-                                    <td><input type="text" name="dob" id="dob" class="date-picker"
-                                        value="{{ old('dob', site_date($booking->c_dob, '')) }}"></td>
-                                </tr>
-                                <tr>
-                                    <td class="title">Marital Status</td>
-                                    <td>
-                                        <select name="marital_status" id="marital_status">
-                                            <option value="">Select</option>
-                                            <option value="Single" {{ old('marital_status', $otfData['marital_status']
-                                                ?? $booking->marital_status ?? '') == 'Single' ? 'selected' : ''
-                                                }}>Single</option>
-                                            <option value="Married" {{ old('marital_status', $otfData['marital_status']
-                                                ?? $booking->marital_status ?? '') == 'Married' ? 'selected' : ''
-                                                }}>Married</option>
-                                        </select>
-                                    </td>
-                                </tr>
-                                <tr id="anniversary_row">
-                                    <td class="title">Date of Anniversary</td>
-                                    <td><input type="text" name="anniversary_date" id="anniversary_date"
-                                            class="date-picker"
-                                            value="{{ old('anniversary_date', $otfData['anniversary_date'] ?? $booking->anniversary_date ?? '') }}">
-                                    </td>
-                                </tr> 
-                                <tr>
-                                    <td class="title">Email ID</td>
-                                    <td><input type="email" name="email" id="email"
-                                            value="{{ old('email', $otfData['email'] ?? $booking->email ?? '') }}"></td>
-                                </tr>  
-                            </table>
+                <select
+                    name="votf_branch"
+                    id="votf_branch"
+                    class="no-print"
+                    style="width:180px;"
+                >
+                    <option value="">Select Branch</option>
+
+                    @foreach($branches ?? [] as $branch)
+                        @php
+                            $branchCode = $branch->code
+                                ?? $branch->branch_code
+                                ?? '';
+
+                            $branchName = $branch->name
+                                ?? $branch->branch_name
+                                ?? $branchCode;
+                        @endphp
+
+                        <option
+                            value="{{ $branchCode }}"
+                            {{ old(
+                                'votf_branch',
+                                $otfData['votf_branch']
+                                    ?? $enquiry?->dealer_branch
+                                    ?? ''
+                            ) == $branchCode ? 'selected' : '' }}
+                        >
+                            {{ $branchName }}
+                        </option>
+                    @endforeach
+                </select>
+
+            </div>
+        </td>
+    </tr>
+
+    {{-- ==========================================================
+         CUSTOMER NAME
+         Source: xlr8_crm_enquiries.name
+         ========================================================== --}}
+    <tr>
+        <td class="title">Customer Name</td>
+        <td>
+            <input
+                type="text"
+                name="customer_name"
+                id="customer_name"
+                value="{{ old('customer_name', $enquiry?->name ?? '') }}"
+                readonly
+            >
+        </td>
+    </tr>
+
+    {{-- ==========================================================
+         REGISTRATION ADDRESS
+         Source: xlr8_crm_enquiries.customer_address
+         Editable because user may enter it if blank.
+         ========================================================== --}}
+    <tr>
+        <td class="title">Registration Address</td>
+        <td>
+            <input
+                type="text"
+                name="registration_address"
+                id="registration_address"
+                value="{{ old(
+                    'registration_address',
+                    $otfData['registration_address']
+                        ?? $enquiry?->customer_address
+                        ?? ''
+                ) }}"
+            >
+        </td>
+    </tr>
+
+    {{-- ==========================================================
+         CUSTOMER TEHSIL
+         Source: enquiry.tehsil
+         Editable so correction can be saved back to enquiry.
+         ========================================================== --}}
+    <tr>
+        <td class="title">Customer Tehsil</td>
+        <td>
+            <input
+                type="text"
+                name="customer_tehsil"
+                id="customer_tehsil"
+                value="{{ old(
+                    'customer_tehsil',
+                    $otfData['customer_tehsil']
+                        ?? $enquiry?->tehsil
+                        ?? ''
+                ) }}"
+            >
+        </td>
+    </tr>
+
+    {{-- ==========================================================
+         CUSTOMER DISTRICT
+         Source: enquiry.district
+         ========================================================== --}}
+    <tr>
+        <td class="title">Customer District</td>
+        <td>
+            <input
+                type="text"
+                name="customer_district"
+                id="customer_district"
+                value="{{ old(
+                    'customer_district',
+                    $otfData['customer_district']
+                        ?? $enquiry?->district
+                        ?? ''
+                ) }}"
+            >
+        </td>
+    </tr>
+
+    {{-- ==========================================================
+         PINCODE
+         Source: enquiry.zipcode
+         ========================================================== --}}
+    <tr>
+        <td class="title">Pincode</td>
+        <td>
+            <input
+                type="text"
+                name="pincode"
+                id="pincode"
+                class="numeric-only"
+                maxlength="6"
+                value="{{ old(
+                    'pincode',
+                    $otfData['pincode']
+                        ?? $enquiry?->zipcode
+                        ?? ''
+                ) }}"
+            >
+        </td>
+    </tr>
+
+    {{-- ==========================================================
+         CUSTOMER CONTACT
+         Source: enquiry.mobile
+         ========================================================== --}}
+    <tr>
+        <td class="title">Customer Contact No.</td>
+        <td>
+            <input
+                type="text"
+                name="customer_mobile"
+                id="customer_mobile"
+                value="{{ old(
+                    'customer_mobile',
+                    $enquiry?->mobile
+                        ?? ''
+                ) }}"
+                readonly
+            >
+        </td>
+    </tr>
+
+    {{-- ==========================================================
+         DATE OF BIRTH
+         Source: enquiry.dob
+         Display format: 15-Sep-2000
+         ========================================================== --}}
+    <tr>
+        <td class="title">Date of Birth</td>
+        <td>
+            <input
+                type="text"
+                name="dob"
+                id="dob"
+                class="date-picker"
+                value="{{ old(
+                    'dob',
+                    !empty($enquiry?->dob)
+                        ? \Carbon\Carbon::parse($enquiry->dob)->format('d-M-Y')
+                        : ''
+                ) }}"
+                readonly
+            >
+        </td>
+    </tr>
+
+    <tr>
+    <td class="title">Marital Status</td>
+    <td>
+        @php
+            $maritalStatus = old(
+                'marital_status',
+                $otfData['marital_status']
+                    ?? $enquiry?->marital_status
+                    ?? ''
+            );
+
+            // Support existing DB values as well as Yes/No.
+            $maritalStatusNormalized = strtoupper(trim((string) $maritalStatus));
+
+            $isMarried = in_array($maritalStatusNormalized, [
+                'YES',
+                'MARRIED',
+            ], true);
+        @endphp
+
+        <select name="marital_status" id="marital_status">
+            <option value="">Select</option>
+
+            <option value="Yes"
+                {{ $isMarried ? 'selected' : '' }}>
+                Yes
+            </option>
+
+            <option value="No"
+                {{ !$isMarried && in_array($maritalStatusNormalized, ['NO', 'SINGLE'], true) ? 'selected' : '' }}>
+                No
+            </option>
+        </select>
+    </td>
+</tr>
+
+<tr id="anniversary_row">
+    <td class="title">Date of Marriage</td>
+    <td>
+        <input
+            type="text"
+            name="anniversary_date"
+            id="anniversary_date"
+            class="date-picker"
+            value="{{ old(
+                'anniversary_date',
+                $otfData['anniversary_date']
+                    ?? $enquiry?->marriage_date
+                    ?? ''
+            ) }}"
+        >
+    </td>
+</tr>
+
+    {{-- ==========================================================
+         EMAIL
+         Source: enquiry.email
+         ========================================================== --}}
+    <tr>
+        <td class="title">Email ID</td>
+        <td>
+            <input
+                type="email"
+                name="email"
+                id="email"
+                value="{{ old(
+                    'email',
+                    $enquiry?->email ?? ''
+                ) }}"
+                readonly
+            >
+        </td>
+    </tr>
+
+</table>
 
                             {{-- Contact & Personal Details --}}
                             <table class="bill-table">
@@ -913,131 +1160,250 @@ use App\Services\OrgService;
                                 <tr>
                                     <td colspan="2" class="section-title">KYC & Nominee Details</td>
                                 </tr>
+
+                                {{-- PAN: Existing data, not manually editable --}}
                                 <tr>
                                     <td class="title">PAN No.</td>
                                     <td>
-                                        <input type="text" name="pan_no" id="pan_no"
+                                        <input type="text"
+                                            name="pan_no"
+                                            id="pan_no"
                                             value="{{ old('pan_no', $booking->pan_no ?? ($otfData['pan_no'] ?? '')) }}"
-                                            maxlength="10" style="text-transform:uppercase"
+                                            maxlength="10"
+                                            readonly
+                                            style="text-transform:uppercase;">
+                                    </td>
+                                </tr>
+
+                                {{-- Aadhaar: Existing data, not manually editable --}}
+                                <tr>
+                                    <td class="title">Aadhaar No.</td>
+                                    <td>
+                                        <input type="text"
+                                            name="adhar_no"
+                                            id="adhar_no"
+                                            value="{{ old('adhar_no', $booking->adhar_no ?? ($otfData['adhar_no'] ?? '')) }}"
+                                            maxlength="12"
+                                            inputmode="numeric"
+                                            readonly>
+                                    </td>
+                                </tr>
+
+                                {{-- Driving License: Manual --}}
+                                <tr>
+                                    <td class="title">Driving License No.</td>
+                                    <td>
+                                        <input type="text"
+                                            name="driving_license_no"
+                                            id="driving_license_no"
+                                            value="{{ old('driving_license_no', $otfData['driving_license_no'] ?? '') }}"
+                                            style="text-transform:uppercase"
                                             oninput="this.value=this.value.toUpperCase();">
                                     </td>
                                 </tr>
 
-                                <tr>
-                                    <td class="title">Aadhaar No.</td>
-                                    <td>
-                                        <input type="text" name="adhar_no" id="adhar_no"
-                                            value="{{ old('adhar_no', $booking->adhar_no ?? ($otfData['adhar_no'] ?? '')) }}"
-                                            maxlength="12" inputmode="numeric"
-                                            oninput="this.value=this.value.replace(/\D/g,'').slice(0,12);">
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="title">Driving License No.</td>
-                                    <td><input type="text" name="driving_license_no" id="driving_license_no"
-                                            value="{{ old('driving_license_no', $otfData['driving_license_no'] ?? '') }}"
-                                            style="text-transform:uppercase"
-                                            oninput="this.value=this.value.toUpperCase();"></td>
-                                </tr>
+                                {{-- Voter ID: Manual --}}
                                 <tr>
                                     <td class="title">Voter ID No.</td>
-                                    <td><input type="text" name="voter_id_no" id="voter_id_no"
+                                    <td>
+                                        <input type="text"
+                                            name="voter_id_no"
+                                            id="voter_id_no"
                                             value="{{ old('voter_id_no', $otfData['voter_id_no'] ?? '') }}"
                                             style="text-transform:uppercase"
-                                            oninput="this.value=this.value.toUpperCase();"></td>
+                                            oninput="this.value=this.value.toUpperCase();">
+                                    </td>
                                 </tr>
+
+                                {{-- Nominee Name: Manual --}}
                                 <tr>
                                     <td class="title">Nominee Name (For Insurance)</td>
-                                    <td><input type="text" name="nominee_name" id="nominee_name"
-                                            value="{{ old('nominee_name', $otfData['nominee_name'] ?? '') }}"></td>
+                                    <td>
+                                        <input type="text"
+                                            name="nominee_name"
+                                            id="nominee_name"
+                                            value="{{ old('nominee_name', $otfData['nominee_name'] ?? '') }}">
+                                    </td>
                                 </tr>
+
+                                {{-- Relation: Manual --}}
                                 <tr>
                                     <td class="title">Relation with Nominee</td>
                                     <td>
                                         <select name="nominee_relation" id="nominee_relation">
                                             <option value="">Select Relation</option>
-                                            <option value="Spouse" {{ old('nominee_relation',
-                                                $otfData['nominee_relation'] ?? '' )=='Spouse' ? 'selected' : '' }}>
-                                                Spouse</option>
-                                            <option value="Brother" {{ old('nominee_relation',
-                                                $otfData['nominee_relation'] ?? '' )=='Brother' ? 'selected' : '' }}>
-                                                Brother</option>
-                                            <option value="Mother" {{ old('nominee_relation',
-                                                $otfData['nominee_relation'] ?? '' )=='Mother' ? 'selected' : '' }}>
-                                                Mother</option>
-                                            <option value="Father" {{ old('nominee_relation',
-                                                $otfData['nominee_relation'] ?? '' )=='Father' ? 'selected' : '' }}>
-                                                Father</option>
-                                            <option value="Sister" {{ old('nominee_relation',
-                                                $otfData['nominee_relation'] ?? '' )=='Sister' ? 'selected' : '' }}>
-                                                Sister</option>
-                                            <option value="Son" {{ old('nominee_relation', $otfData['nominee_relation']
-                                                ?? '' )=='Son' ? 'selected' : '' }}>Son</option>
-                                            <option value="Daughter" {{ old('nominee_relation',
-                                                $otfData['nominee_relation'] ?? '' )=='Daughter' ? 'selected' : '' }}>
-                                                Daughter</option>
+
+                                            <option value="Spouse"
+                                                {{ old('nominee_relation', $otfData['nominee_relation'] ?? '') == 'Spouse' ? 'selected' : '' }}>
+                                                Spouse
+                                            </option>
+
+                                            <option value="Brother"
+                                                {{ old('nominee_relation', $otfData['nominee_relation'] ?? '') == 'Brother' ? 'selected' : '' }}>
+                                                Brother
+                                            </option>
+
+                                            <option value="Mother"
+                                                {{ old('nominee_relation', $otfData['nominee_relation'] ?? '') == 'Mother' ? 'selected' : '' }}>
+                                                Mother
+                                            </option>
+
+                                            <option value="Father"
+                                                {{ old('nominee_relation', $otfData['nominee_relation'] ?? '') == 'Father' ? 'selected' : '' }}>
+                                                Father
+                                            </option>
+
+                                            <option value="Sister"
+                                                {{ old('nominee_relation', $otfData['nominee_relation'] ?? '') == 'Sister' ? 'selected' : '' }}>
+                                                Sister
+                                            </option>
+
+                                            <option value="Son"
+                                                {{ old('nominee_relation', $otfData['nominee_relation'] ?? '') == 'Son' ? 'selected' : '' }}>
+                                                Son
+                                            </option>
+
+                                            <option value="Daughter"
+                                                {{ old('nominee_relation', $otfData['nominee_relation'] ?? '') == 'Daughter' ? 'selected' : '' }}>
+                                                Daughter
+                                            </option>
                                         </select>
                                     </td>
                                 </tr>
+
+                                {{-- Age: Manual --}}
                                 <tr>
                                     <td class="title">Age of Nominee</td>
                                     <td>
-                                        <input type="text" name="nominee_age" id="nominee_age" class="numeric-only"
-                                            min="0" max="120" maxlength="3"
-                                            value="{{ old('nominee_age', $otfData['nominee_age'] ?? '') }}">
+                                        <input type="text"
+                                            name="nominee_age"
+                                            id="nominee_age"
+                                            class="numeric-only"
+                                            maxlength="3"
+                                            inputmode="numeric"
+                                            value="{{ old('nominee_age', $otfData['nominee_age'] ?? '') }}"
+                                            oninput="this.value=this.value.replace(/\D/g,'').slice(0,3);">
                                     </td>
                                 </tr>
                             </table>
 
 
-
                             {{-- Vehicle Delivery / Invoice Details --}}
                             <table class="bill-table">
                                 <tr>
-                                    <td colspan="2" class="section-title">Vehicle Delivery / Invoice Details</td>
+                                    <td colspan="2" class="section-title">
+                                        Vehicle Delivery / Invoice Details
+                                    </td>
                                 </tr>
+
+                                {{-- Chassis No. --}}
                                 <tr>
                                     <td class="title">Chassis No.</td>
                                     <td>
-                                        <input type="text" name="chassis" id="chassis_no_display"
-                                            value="{{ old('chassis', $booking->chassis_no ?? '') }}">
+                                        <input type="text"
+                                            name="chassis"
+                                            id="chassis_no_display"
+                                            value="{{ old('chassis', $booking->chassis_no ?? '') }}"
+                                            maxlength="30"
+                                            style="text-transform:uppercase"
+                                            oninput="this.value = this.value.toUpperCase();">
+                                        
+                                        <small id="chassis_validation_message"
+                                            style="display:none; font-size:9px; font-weight:600;">
+                                        </small>
                                     </td>
                                 </tr>
+
+                                {{-- Engine No. --}}
                                 <tr>
                                     <td class="title">Engine No.</td>
-                                    <td><input type="text" name="engine_no" id="engine_no"
-                                            value="{{ old('engine_no', $otfData['engine_no'] ?? '') }}"></td>
+                                    <td>
+                                        <input type="text"
+                                            name="engine_no"
+                                            id="engine_no"
+                                            value="{{ old('engine_no', $otfData['engine_no'] ?? '') }}"
+                                            maxlength="50"
+                                            style="text-transform:uppercase"
+                                            oninput="this.value = this.value.toUpperCase();">
+                                    </td>
                                 </tr>
+
+                                {{-- Chassis Image --}}
                                 <tr>
                                     <td class="title">Chassis Image</td>
-                                    <td><input type="file" id="chassis_image" name="chassis_image"></td>
+                                    <td>
+                                        <input type="file"
+                                            id="chassis_image"
+                                            name="chassis_image"
+                                            accept="image/*">
+
+                                        <small style="display:block; margin-top:3px; font-size:9px;">
+                                            Upload chassis image
+                                        </small>
+                                    </td>
                                 </tr>
+
+                                {{-- OEM Model Code --}}
                                 <tr>
                                     <td class="title">OEM Model Code</td>
-                                    <td><input type="text" name="oem_model_code" id="oem_model_code"
-                                            value="{{ old('oem_model_code', $quotation->oem_model_code ?? $variant?->oem_name ?? '') }}"
-                                            readonly></td>
-                                </tr>
-                                <tr>
-                                    <td class="title">GST Slab</td>
                                     <td>
-                                        <input type="text" name="gst_slab" id="gst_slab"
-                                            value="{{ old('gst_slab', $otfData['gst_slab'] ?? $variant?->gst_slab ?? '') }}"
+                                        <input type="text"
+                                            name="oem_model_code"
+                                            id="oem_model_code"
+                                            value="{{ old(
+                                                'oem_model_code',
+                                                $quotation->oem_model_code ?? $variant?->oem_name ?? ''
+                                            ) }}"
                                             readonly>
                                     </td>
                                 </tr>
+
+                                {{-- GST Slab - MANUAL --}}
+                                <tr>
+                                    <td class="title">GST Slab</td>
+                                    <td>
+                                        <input type="text"
+                                            name="gst_slab"
+                                            id="gst_slab"
+                                            value="{{ old(
+                                                'gst_slab',
+                                                $otfData['gst_slab'] ?? $variant?->gst_slab ?? ''
+                                            ) }}"
+                                            placeholder="Enter GST Slab">
+                                    </td>
+                                </tr>
+
+                                {{-- Invoice No. - MANUAL --}}
                                 <tr>
                                     <td class="title">Invoice No.</td>
-                                    <td><input type="text" name="inv_no" id="inv_no"
-                                            value="{{ old('inv_no', $booking->inv_no ?? '') }}"></td>
+                                    <td>
+                                        <input type="text"
+                                            name="inv_no"
+                                            id="inv_no"
+                                            value="{{ old('inv_no', $booking->inv_no ?? '') }}"
+                                            placeholder="Enter Invoice No."
+                                            style="text-transform:uppercase"
+                                            oninput="this.value = this.value.toUpperCase();">
+                                    </td>
                                 </tr>
+
+                                {{-- Invoice Date - MANUAL --}}
                                 <tr>
                                     <td class="title">Invoice Date</td>
                                     <td>
-                                        <input type="text" name="invoice_date_display" id="invoice_date"
-                                            class="flatpickr" placeholder="dd-MMM-yyyy" value="{{ old('invoice_date_display', site_date($booking->inv_date, '')) }}">
+                                        <input type="text"
+                                            name="invoice_date_display"
+                                            id="invoice_date"
+                                            class="flatpickr"
+                                            placeholder="dd-MMM-yyyy"
+                                            value="{{ old(
+                                                'invoice_date_display',
+                                                site_date($booking->inv_date, '')
+                                            ) }}">
 
-                                        <input type="hidden" name="inv_date" id="hidden_invoice_date"
+                                        <input type="hidden"
+                                            name="inv_date"
+                                            id="hidden_invoice_date"
                                             value="{{ old('inv_date', $booking->inv_date) }}">
                                     </td>
                                 </tr>
@@ -2529,33 +2895,51 @@ use App\Services\OrgService;
     // Site-wide date display format (see .ai/rules/conventions.md section 13) - flatpickr's
     // token syntax matches PHP's date() tokens, so the PHP-side format string is reused as-is.
     const SITE_DATE_FORMAT = '@php echo app(\App\Services\DateFormatService::class)->phpFormat(); @endphp';
-    document.addEventListener('DOMContentLoaded', function () {
+    // ==========================================================
+// VOTF NUMBER
+// Branch selection automatically generates VOTF number.
+// No Generate button required.
+// ==========================================================
+document.addEventListener('DOMContentLoaded', function () {
 
-    const generateButton = document.getElementById('generate_votf');
+    const branchSelect = document.getElementById('votf_branch');
     const votfInput = document.getElementById('votf_no');
 
-    if (!generateButton || !votfInput) {
+    if (!branchSelect || !votfInput) {
         return;
     }
 
-    generateButton.addEventListener('click', function () {
+    branchSelect.addEventListener('change', function () {
 
-        generateButton.disabled = true;
-        generateButton.innerText = 'Generating...';
+        const branchCode = this.value;
 
-        fetch("{{ route('sales.booking.generate-votf', $booking->id) }}", {
+        if (!branchCode) {
+            votfInput.value = '';
+            return;
+        }
+
+        votfInput.value = 'Generating...';
+
+        const url =
+            "{{ route('sales.booking.generate-votf', $booking->id) }}"
+            + "?branch_code="
+            + encodeURIComponent(branchCode);
+
+        fetch(url, {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest'
             }
         })
-        .then(response => response.json())
-        .then(data => {
+        .then(async response => {
 
-            if (!data.success) {
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
                 throw new Error(
-                    data.message || 'Unable to generate VOTF number.'
+                    data.message ||
+                    'Unable to generate VOTF number.'
                 );
             }
 
@@ -2566,55 +2950,105 @@ use App\Services\OrgService;
 
             console.error('VOTF generation error:', error);
 
+            votfInput.value = '';
+
             alert(
                 error.message ||
                 'Unable to generate VOTF number.'
             );
-
-        })
-        .finally(() => {
-
-            generateButton.disabled = false;
-            generateButton.innerText = 'Generate';
-
         });
 
     });
 
 });
-    const consultants = @json($salesconsultants);
+    (function () {
 
-    document.getElementById('saleconsultant').addEventListener('change', function () {
-        const personCode = this.value;
-        const consultant = consultants.find(c => c.person_code === personCode);
+            function fillSalesConsultantDetails() {
 
-        console.log('Selected Person Code:', personCode);
-        console.log('Consultants:', consultants);
-        console.log('Matched Consultant:', consultant);
-        console.log('Mile ID:', consultant?.mile_id);
+                const saleConsultant = document.getElementById('saleconsultant');
 
-        if (!consultant) {
-            document.getElementById('sc_mile_id').value = '';
-            document.getElementById('sc_branch').value = '';
-            document.getElementById('sc_location').value = '';
-            return;
-        }
+                if (!saleConsultant) {
+                    return;
+                }
 
-        document.getElementById('sc_mile_id').value = consultant.mile_id ?? '';
-        document.getElementById('sc_branch').value = consultant.branch_name ?? consultant.primary_branch_code ?? '';
-        document.getElementById('sc_location').value = consultant.location_name ?? consultant.primary_loc_code ?? '';
-    });
-        
-    window.addEventListener('DOMContentLoaded', function () {
-        document.getElementById('saleconsultant').dispatchEvent(new Event('change'));
-    });
+                const selectedOption =
+                    saleConsultant.options[saleConsultant.selectedIndex];
+
+                if (!selectedOption) {
+                    return;
+                }
+
+                const mileId =
+                    selectedOption.dataset.mileId || '';
+
+                const branch =
+                    selectedOption.dataset.branch || '';
+
+                const location =
+                    selectedOption.dataset.location || '';
+
+                const mileInput =
+                    document.getElementById('sc_mile_id');
+
+                const branchInput =
+                    document.getElementById('sc_branch');
+
+                const locationInput =
+                    document.getElementById('sc_location');
+
+                if (mileInput) {
+                    mileInput.value = mileId;
+                }
+
+                if (branchInput) {
+                    branchInput.value = branch;
+                }
+
+                if (locationInput) {
+                    locationInput.value = location;
+                }
+            }
+
+            function initSalesConsultant() {
+
+                const saleConsultant =
+                    document.getElementById('saleconsultant');
+
+                if (!saleConsultant) {
+                    return;
+                }
+
+                saleConsultant.addEventListener(
+                    'change',
+                    fillSalesConsultantDetails
+                );
+
+                // IMPORTANT:
+                // Populate values immediately when OTF is opened.
+                fillSalesConsultantDetails();
+            }
+
+            if (document.readyState === 'loading') {
+
+                document.addEventListener(
+                    'DOMContentLoaded',
+                    initSalesConsultant
+                );
+
+            } else {
+
+                initSalesConsultant();
+
+            }
+
+        })();
 
     lightbox.option({
-    resizeDuration: 200,
-    wrapAround: true,
-    fadeDuration: 200,
-    imageFadeDuration: 200
-});
+        resizeDuration: 200,
+        wrapAround: true,
+        fadeDuration: 200,
+        imageFadeDuration: 200
+    });
 
 $(document).on('input', '.numeric-only', function () {
     let value = $(this).val();
@@ -3170,19 +3604,62 @@ document.addEventListener("DOMContentLoaded", function () {
         altFormat: "d-M-Y"
     });
 });
-function toggleAnniversaryRow() {
+// ==========================================================
+// MARITAL STATUS → MARRIAGE DATE
+// Yes  => show Marriage Date
+// No   => hide Marriage Date
+// ==========================================================
+function toggleMarriageDate() {
+
     const maritalStatus = document.getElementById('marital_status');
-    const anniversaryRow = document.getElementById('anniversary_row');
+    const marriageRow = document.getElementById('anniversary_row');
+    const marriageDate = document.getElementById('anniversary_date');
 
-    if (!maritalStatus || !anniversaryRow) return;
+    if (!maritalStatus || !marriageRow) {
+        return;
+    }
 
-    if (maritalStatus.value === 'Single' || maritalStatus.value === '') {
-        anniversaryRow.style.display = 'none';
-        document.getElementById('anniversary_date').value = '';
+    const value = (maritalStatus.value || '').trim().toUpperCase();
+
+    if (value === 'YES') {
+
+        // Married
+        marriageRow.style.display = '';
+
     } else {
-        anniversaryRow.style.display = '';
+
+        // No / blank
+        marriageRow.style.display = 'none';
+
+        // Clear only when user has selected No.
+        if (value === 'NO' && marriageDate) {
+            marriageDate.value = '';
+
+            // Flatpickr instance bhi clear karo
+            if (marriageDate._flatpickr) {
+                marriageDate._flatpickr.clear();
+            }
+        }
     }
 }
+
+
+// Change event
+document.addEventListener('DOMContentLoaded', function () {
+
+    const maritalStatus = document.getElementById('marital_status');
+
+    if (!maritalStatus) {
+        return;
+    }
+
+    maritalStatus.addEventListener('change', toggleMarriageDate);
+
+    // Important:
+    // Page load/edit ke time DB ki existing value ke according
+    // row automatically show/hide hogi.
+    toggleMarriageDate();
+});
 
 document.getElementById('marital_status').addEventListener('change', toggleAnniversaryRow);
 toggleAnniversaryRow();

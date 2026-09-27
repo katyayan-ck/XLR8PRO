@@ -137,6 +137,11 @@ class BookingCrudController extends CrudController
 
         $this->data['customer_categories'] = OrgService::keywordValueByCode('CUSTOMER_TYPE');
 
+        $this->data['body_type_map'] = [
+            '1' => 'Complete',
+            '2' => 'CBC',
+        ];
+
         $this->data['occupation_types'] = OrgService::keywordValueByCode('OCCUPATION_TYPE');
         $booking = Booking::findOrFail($id);
 
@@ -253,9 +258,14 @@ class BookingCrudController extends CrudController
         
         $customer_categories = OrgService::keywordValueByCode('CUSTOMER_TYPE');
         $occupation_types = OrgService::keywordValueByCode('OCCUPATION_TYPE');
+        $body_type_map = [
+            '1' => 'Complete',
+            '2' => 'CBC',
+        ];
 
         $this->data['customer_categories'] = $customer_categories;
         $this->data['occupation_types'] = $occupation_types;
+        $this->data['body_type_map'] = $body_type_map;
 
         return $this->traitCreate();
     }
@@ -293,6 +303,7 @@ class BookingCrudController extends CrudController
             'model' => __('booking.fields.model'),
             'variant' => __('booking.fields.variant'),
             'color' => __('booking.fields.color'),
+            'body_type' => 'Body Type',
             'sale_type' => __('booking.fields.sale_type'),
             'name' => __('booking.fields.customer_name'),
             'careof' => __('booking.fields.care_of_type'),
@@ -342,6 +353,7 @@ class BookingCrudController extends CrudController
             'model' => 'required|string|max:255',
             'variant' => 'required|string|max:255',
             'color' => 'required|string|max:255',
+            'body_type' => 'required|in:1,2',
             'sale_type' => 'required|in:1,2',
             'name' => 'required|string|max:255',
             'careof' => 'nullable|string|max:255',
@@ -443,6 +455,7 @@ class BookingCrudController extends CrudController
             'model' => 'required|string|max:255',
             'variant' => 'required|string|max:255',
             'color' => 'required|string|max:255',
+            'body_type' => 'required|in:1,2',
             'accessories' => 'nullable|array',
             'accessories.*' => 'string',
             'apack_amount' => 'required|numeric',
@@ -503,6 +516,7 @@ class BookingCrudController extends CrudController
             'model' => __('booking.fields.model'),
             'variant' => __('booking.fields.variant'),
             'color' => __('booking.fields.color'),
+            'body_type' => 'Body Type',
             'accessories' => __('booking.fields.accessories'),
             'apack_amount' => __('booking.fields.apack_amount'),
             'chassis' => __('booking.fields.chassis_number'),
@@ -10537,7 +10551,7 @@ class BookingCrudController extends CrudController
             ->with('success', 'OTF form saved successfully.');
     }
 
-    public function generateVotfNumber($id)
+    public function generateVotfNumber(Request $request, $id)
     {
         if (! backpack_user()->can('SLS_BKNG_OTF')) {
             abort(403, 'Unauthorized. You do not have permission to perform this action.');
@@ -10545,9 +10559,24 @@ class BookingCrudController extends CrudController
 
         $booking = Booking::findOrFail($id);
 
+        $branchCode = trim((string) $request->input('branch_code'));
+
+        if ($branchCode === '') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Please select a branch first.',
+            ], 422);
+        }
+
         try {
-            $votfNo = $this->otfService->generateVotfNumber($booking);
+
+            $votfNo = $this->otfService->generateVotfNumber(
+                $booking,
+                $branchCode
+            );
+
         } catch (\InvalidArgumentException $e) {
+
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
