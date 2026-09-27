@@ -97,14 +97,57 @@ class BookingOtfService
             $otfData['insurance_covers'] = $quotationData['insurance_covers'];
         }
 
-        $salesconsultants = OrgService::getUsers(desigCode: 'SLS_CONS');
+        // ==========================================================
+        // SALES CONSULTANT DETAILS
+        // ==========================================================
+
+        // Use the same consultant source as Booking form.
+        $salesconsultants = OrgService::getUsers(desigCode: 'CNS');
+
         $salesconsultants = array_map(function ($consultant) {
-            $consultant['branch_name'] = OrgService::branchName($consultant['primary_branch_code'] ?? '');
-            $consultant['location_name'] = OrgService::locationName($consultant['primary_loc_code'] ?? '');
+            $consultant['branch_name'] = OrgService::branchName(
+                $consultant['primary_branch_code'] ?? ''
+            );
+
+            $consultant['location_name'] = OrgService::locationName(
+                $consultant['primary_loc_code'] ?? ''
+            );
+
+            // Mile ID is the employee code used in the Booking/OTF dropdown.
             $consultant['mile_id'] = $consultant['employee_code'] ?? '';
 
-            return $consultant;
-        }, $salesconsultants);
+                return $consultant;
+            }, $salesconsultants);
+
+
+    // ==========================================================
+    // SELECTED SALES CONSULTANT
+    // ==========================================================
+
+    // Booking consultant is the value selected in the Booking/OTF
+    // Sales Consultant dropdown.
+    $selectedScCode = trim((string) (
+        $booking->consultant
+        ?? $enquiry?->x8_sc_code
+        ?? ''
+    ));
+
+    $selectedSc = null;
+
+    if ($selectedScCode !== '') {
+        $selectedSc = collect($salesconsultants)->first(function ($sc) use ($selectedScCode) {
+            $employeeCode = trim((string) ($sc['employee_code'] ?? ''));
+            $personCode   = trim((string) ($sc['person_code'] ?? ''));
+
+            return strcasecmp($employeeCode, $selectedScCode) === 0
+                || strcasecmp($personCode, $selectedScCode) === 0;
+        });
+    }
+
+    // Values used directly by OTF Blade.
+    $selectedScMileId = $selectedSc['mile_id'] ?? '';
+    $selectedScBranch = $selectedSc['branch_name'] ?? '';
+    $selectedScLocation = $selectedSc['location_name'] ?? '';
 
         $dsaList = Xl_DSA_Master::orderBy('name')->get(['id', 'name', 'dlocation']);
         $finance = XFinance::where('bid', $booking->id)->first();
@@ -138,12 +181,21 @@ class BookingOtfService
 
         $dsa = ! empty($booking->dsa_id) ? Xl_DSA_Master::find($booking->dsa_id) : null;
 
-        $segment = Segment::where('code', $booking->segment_code)->first();
-        $model = VehicleModel::where('code', $booking->model_code)->first();
+        $enquiry = ! empty($booking->enq_no)
+            ? Enquiry::find($booking->enq_no)
+            : null;
+
+        $segmentCode = $enquiry?->segment_code ?? $booking->segment_code;
+        $modelCode = $enquiry?->model_code ?? $booking->model_code;
+        $variantCode = $enquiry?->variant_code ?? $booking->variant_code;
+        $colorCode = $enquiry?->color_code ?? $booking->color_code;
+
+        $segment = Segment::where('code', $segmentCode)->first();
+        $model = VehicleModel::where('code', $modelCode)->first();
         $variant = Variant::with(['permit', 'fuelType', 'bodyType', 'bodyMake'])
-            ->where('code', $booking->variant_code)
+            ->where('code', $variantCode)
             ->first();
-        $color = Color::where('code', $booking->color_code)->first();
+        $color = Color::where('code', $colorCode)->first();
 
         $accessories = 'N/A';
         $selectedAccessories = [];
@@ -184,6 +236,7 @@ class BookingOtfService
             '4' => 'Higher (Nil Dep + Consumables + Add Ons)',
         ];
         $registration_type_map = ['0' => 'Tax Only', '1' => 'TRC + Tax', '2' => 'TRC Only', '3' => 'Exempted'];
+        $customer_categories = OrgService::keywordValueByCode('CUSTOMER_TYPE');
         $deliveryOptions = [1 => 'Payment', 2 => 'DO', 3 => 'Sanction Letter', 4 => 'Mail', 5 => 'Whatsapp'];
 
         $financierName = XlFinancier::find($booking->financier)?->name ?? 'N/A';
@@ -259,13 +312,16 @@ class BookingOtfService
                 $accessoriesPrintData[] = ['name' => 'Accessories', 'price' => $accAmount];
             }
         }
+        $branches = collect(
+            \App\Helpers\CommonHelper::getBranches() ?? []
+        )->map(fn ($branch) => (object) $branch);
 
         return compact(
-            'booking', 'finance', 'salesconsultants', 'taStatement', 'enquiry',
+            'booking', 'finance', 'salesconsultants','selectedSc', 'selectedScMileId', 'selectedScBranch', 'selectedScLocation', 'branches', 'taStatement', 'enquiry',
             'quotationData', 'finalData', 'otfData', 'insurance', 'rto', 'dsa',
             'segment', 'model', 'variant', 'color', 'accessories', 'permit_map',
             'sale_type_map', 'reg_no_type_map', 'registration_category_map',
-            'registration_type_map', 'customer_category_map', 'body_type_map',
+            'registration_type_map', 'customer_category_map', 'customer_categories', 'body_type_map',
             'insurance_type_map', 'dsaList', 'accessoryList', 'selectedAccessories',
             'financierName', 'selectedPolicyType', 'selectedRegistrationType',
             'selectedExShowroomPrice', 'receiptLogs', 'receiptTotal', 'chassisImage',
@@ -465,19 +521,21 @@ class BookingOtfService
      * same number - unchanged by this extraction, still needs the same
      * design decision noted there.
      */
-    public function generateVotfNumber(Booking $booking): string
+    public function generateVotfNumber(
+        Booking $booking,
+        string $branchCode
+    ): string
     {
         // Bookings have no branch column: use the linked enquiry's branch (the source
         // getFullBookingData() uses for display), else the FSC's primary branch
         // (booking.consultant is the consultant's person_code) - DEC-027, DEC-029.
-        $branchCode = strtoupper(trim((string) (
-            $booking->branch_code
-            ?: Enquiry::resolveByAnyReference($booking->enq_no)?->dealer_branch
-            ?: ($booking->consultant
-                ? Employee::where('person_code', $booking->consultant)->value('primary_branch_code')
-                : null)
-            ?: ''
-        )));
+        $branchCode = strtoupper(trim($branchCode));
+
+        if ($branchCode === '') {
+            throw new \InvalidArgumentException(
+                'Branch code is missing.'
+            );
+        }
 
         if ($branchCode === '') {
             throw new \InvalidArgumentException('Branch code is missing for this booking.');

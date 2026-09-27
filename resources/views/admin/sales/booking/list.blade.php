@@ -748,51 +748,86 @@
     //     + downstream-view contract change outside this optimisation's scope).
     // =========================================================================
     function openVOTF(bookingId) {
-        const url = "{{ backpack_url('sales/booking/otf-form') }}/" + bookingId;
 
-        fetch(url, {
-            method: 'GET',
-            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html, application/json' },
-        })
-        .then(async response => {
-            const contentType = response.headers.get('content-type') || '';
+    const url = "{{ backpack_url('sales/booking/otf-form') }}/" + bookingId;
 
-            if (contentType.includes('application/json')) {
-                const data = await response.json();
+    fetch(url, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'text/html, application/json'
+        },
+    })
+    .then(async response => {
 
-                if (data.status === 'quotation_missing') {
-                    Swal.fire({
-                        title: 'Quotation Required',
-                        text: 'This booking has no quotation. Do you want to create a quotation for this booking?',
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonText: 'Yes',
-                        cancelButtonText: 'No',
-                        confirmButtonColor: '#28a745',
-                        cancelButtonColor: '#d33',
-                    }).then(result => {
-                        if (result.isConfirmed) window.location.href = data.quotation_url;
-                    });
-                    return;
-                }
+        const contentType =
+            response.headers.get('content-type') || '';
 
-                if (data.status === 'success' && data.redirect_url) {
-                    window.location.href = data.redirect_url;
-                    return;
-                }
+        // ==========================================
+        // JSON RESPONSE
+        // ==========================================
+        if (contentType.includes('application/json')) {
 
-                throw new Error(data.message || 'Unexpected response.');
+            const data = await response.json();
+
+            // No quotation
+            if (data.status === 'quotation_missing') {
+
+                Swal.fire({
+                    title: 'Quotation Required',
+                    text: 'This booking has no quotation. Do you want to create a quotation for this booking?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes',
+                    cancelButtonText: 'No',
+                    confirmButtonColor: '#28a745',
+                    cancelButtonColor: '#d33',
+                }).then(result => {
+
+                    if (result.isConfirmed) {
+                        window.location.href = data.quotation_url;
+                    }
+
+                });
+
+                return;
             }
 
-            const html = await response.text();
-            document.open();
-            document.write(html);
-            document.close();
-        })
-        .catch(error => {
-            console.error('VOTF Error:', error);
-            Swal.fire({ title: 'Error', text: error.message || 'Unable to process this booking.', icon: 'error' });
+            // Controller wants us to redirect
+            if (data.status === 'success' && data.redirect_url) {
+
+                window.location.href = data.redirect_url;
+
+                return;
+            }
+
+            throw new Error(
+                data.message || 'Unexpected response.'
+            );
+        }
+
+        // ==========================================
+        // HTML RESPONSE
+        // ==========================================
+        const html = await response.text();
+
+        document.open();
+        document.write(html);
+        document.close();
+
+    })
+    .catch(error => {
+
+        console.error('VOTF Error:', error);
+
+        Swal.fire({
+            title: 'Error',
+            text: error.message ||
+                  'Unable to process this booking.',
+            icon: 'error'
         });
-    }
+
+    });
+}
 </script>
 @endpush
