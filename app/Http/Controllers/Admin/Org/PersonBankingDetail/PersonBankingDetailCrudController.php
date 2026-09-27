@@ -2,32 +2,23 @@
 
 namespace App\Http\Controllers\Admin\Org\PersonBankingDetail;
 
-use App\Models\Admin\Person;
 use App\Models\Admin\PersonBankingDetail;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
-use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
-use Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
 
 /**
- * NOTE: this controller's queries/validation reference `person_id`, `swift_code`,
- * and `is_primary`, and validate `account_type` against savings/current/fd/rd/other
- * — none of which match the real `xlr8_admin_person_banking_details` schema
- * (real columns: `person_code`, `micr_code`, no `is_primary` column at all, and
- * `account_type` is actually an enum of Primary/Secondary/Joint/Trust). This is a
- * pre-existing bug, preserved exactly — see known-bugs-report.md BUG-021.
+ * List-only screen (DEC-037): banking details are created and edited on the Person screen through
+ * Person\PersonBankingService; the old id-based create / edit forms were retired (BUG-021, DEC-070).
  */
 class PersonBankingDetailCrudController extends CrudController
 {
-    use CreateOperation;
     use DeleteOperation;
     use ListOperation {
         search as traitSearch;
         showDetailsRow as traitShowDetailsRow;
     }
-    use UpdateOperation;
 
     public function search()
     {

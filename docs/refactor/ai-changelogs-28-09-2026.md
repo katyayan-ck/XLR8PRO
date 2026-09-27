@@ -440,3 +440,12 @@ Triage of every open bug against HEAD `0386230` (plan approved 28-09); decisions
 - BUG-195: the KYC history meta masks the PAN too (`XXXXXX234F`).
 - Tests: `BookingOtfServiceTest` (+2), `BookingKycServiceTest` (+1); Sales + model unit tests 71 passed.
 - Guides: `docs/domains/{sales-booking,crm-enquiry-quotation}.md`.
+
+**W11–W14 — routes, imports, controllers:**
+- BUG-168: Lead / Lead Source `search` / `details` routes carry `'operation' => 'list'` (`routes/backpack/core.php`).
+- BUG-029 (part): `SalesImportController` stamps imports with the Backpack user instead of falling back to user 1 (4 places).
+- BUG-179 (part): `AccessoryImportService::processRow()` no longer echoes / `print_r`s every row.
+- BUG-008 / 020 / 021: Employee, Person Address and Person Banking controllers drop the unused Create / Update operations
+  and `Person` import; the banking docblock describes the list-only screen. No files deleted.
+- HTTP smoke (one request per process, `xlrm_testing`): user 1 → 200 on the three Org lists, lead, lead source, Imports → Sales,
+  OTF list and OTF form; user 40 → 403 on each except Imports → Sales (open by BUG-177, decision D14).

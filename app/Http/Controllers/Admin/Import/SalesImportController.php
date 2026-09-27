@@ -3,26 +3,23 @@
 namespace App\Http\Controllers\Admin\Import;
 
 use App\Http\Controllers\Controller;
-use Carbon\Carbon;
-use PhpOffice\PhpSpreadsheet\Shared\Date;
-use Revolution\Google\Sheets\Facades\Sheets;
 use App\Jobs\ImportEnquiriesJob;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-
+use Illuminate\Support\Facades\Storage;
+use PhpOffice\PhpSpreadsheet\Shared\Date;
 use Prologue\Alerts\Facades\Alert;
+use Revolution\Google\Sheets\Facades\Sheets;
 
 class SalesImportController extends Controller
 {
-
     // Sales Import Page
     public function sales()
     {
         return view('admin.import.sales');
     }
-
 
     public function importEnquiries(Request $request)
     {
@@ -81,7 +78,6 @@ class SalesImportController extends Controller
 
         return response()->json(DB::table('xlr8_crm_import_logs')->orderByDesc('id')->limit(5)->get());
     }
-
 
     public function insimport()
     {
@@ -226,7 +222,7 @@ class SalesImportController extends Controller
                             ? (int) $row[$gs_pos['net_prem']] : null,
                         'status' => 1,
                         'created_at' => $now,
-                        'created_by' => auth()->id() ?? 1,
+                        'created_by' => backpack_user()?->id ?? auth()->id(),
                     ];
                 } else {
 
@@ -297,7 +293,7 @@ class SalesImportController extends Controller
                         'bundle_addon' => substr(trim($row[$gs_pos['bundle_addon']] ?? ''), 0, 50),
                         'status' => 1,
                         'created_at' => $now,
-                        'created_by' => auth()->id() ?? 1,
+                        'created_by' => backpack_user()?->id ?? auth()->id(),
                     ];
                 }
 
@@ -335,6 +331,7 @@ class SalesImportController extends Controller
             return redirect()->back()->with('warning', $message);
         }
     }
+
     public function finimport()
     {
         if (! backpack_user()->can('FIN_IMPORT')) {
@@ -427,7 +424,7 @@ class SalesImportController extends Controller
                         ? -round((float) $row[$gs_pos['running_balance']], 2) : null,
                     'status' => 1,
                     'created_at' => $now,
-                    'created_by' => auth()->id() ?? 1,
+                    'created_by' => backpack_user()?->id ?? auth()->id(),
                 ];
 
                 try {
@@ -464,6 +461,7 @@ class SalesImportController extends Controller
             return redirect()->back()->with('warning', $message);
         }
     }
+
     public function rtoimport()
     {
         if (! backpack_user()->can('RTO_IMPORT')) {
@@ -603,7 +601,7 @@ class SalesImportController extends Controller
         $totalImported = 0;
         $totalSkipped = 0;
         $now = now();
-        $userId = auth()->id() ?? 1;
+        $userId = backpack_user()?->id ?? auth()->id();
 
         foreach ($sheetNames as $sheetName => $sheetConfig) {
             $sheetType = $sheetConfig['type'];
@@ -643,7 +641,7 @@ class SalesImportController extends Controller
 
                 $actualRow = $rowIndex + 2;
 
-                $get = fn(string $field): mixed => $row[$gs_pos[$field] ?? -1] ?? null;
+                $get = fn (string $field): mixed => $row[$gs_pos[$field] ?? -1] ?? null;
 
                 if ($sheetType === 'vaahan') {
 
@@ -789,7 +787,6 @@ class SalesImportController extends Controller
             : redirect()->back()->with('warning', $message);
     }
 
-
     private function resolveBid(
         string $chassis,
         string $otf,
@@ -876,7 +873,6 @@ class SalesImportController extends Controller
 
         return $firstId ?: null;
     }
-
 
     private function parseAmount(mixed $raw): ?int
     {
@@ -970,14 +966,14 @@ class SalesImportController extends Controller
         }
 
         if (preg_match('/^(\d{1,2})[-\/]([A-Za-z]{3})[-\/](\d{2})$/', $raw, $m)) {
-            $date = \DateTime::createFromFormat('j-M-Y', $m[1] . '-' . $m[2] . '-20' . $m[3]);
+            $date = \DateTime::createFromFormat('j-M-Y', $m[1].'-'.$m[2].'-20'.$m[3]);
             if ($date !== false) {
                 return $date->format('Y-m-d');
             }
         }
 
         if (preg_match('/^(\d{1,2})\/(\d{2})\/(\d{2})$/', $raw, $m)) {
-            $date = \DateTime::createFromFormat('d/m/Y', $m[1] . '/' . $m[2] . '/20' . $m[3]);
+            $date = \DateTime::createFromFormat('d/m/Y', $m[1].'/'.$m[2].'/20'.$m[3]);
             if ($date !== false) {
                 return $date->format('Y-m-d');
             }

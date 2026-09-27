@@ -43,7 +43,7 @@ Entry format:
 | BUG-005 | `UserCrudController` checked `user.*` (singular) against real `users.*` (plural) permissions | High | FIXED | 19-09-2026 (~23:00) | 19-09-2026 23:45 |
 | BUG-006 | `checkPermission` middleware registered but wired to no route | Medium | FIXED | 19-09-2026 (pre-rollout sweep) | 27-09-2026 |
 | BUG-007 | `/admin/user` — Backpack's `hasAccessOrFail('list')` throws unconditionally | Critical | FIXED | 19-09-2026 (~22:30) | 26-09-2026 |
-| BUG-008 | `EmployeeCrudController` references non-existent columns (`person_id` etc.) | High | MITIGATED (DEC-037) | 20-09-2026 09:45 | 27-09-2026 |
+| BUG-008 | `EmployeeCrudController` references non-existent columns (`person_id` etc.) | High | MITIGATED (DEC-037); leftovers cleaned (DEC-070) | 20-09-2026 09:45 | 27-09-2026 |
 | BUG-009 | `BrandCrudController` — `xlr8_vehicle_brand` table doesn't exist | High | MITIGATED (DEC-037/038) | 20-09-2026 10:30 | 27-09-2026 |
 | BUG-010 | `SubSegmentCrudController::getSegmentsByBrand` — dead route, method never defined | Low | FIXED | 20-09-2026 11:15 | 27-09-2026 |
 | BUG-011 | `SubSegment.name` validated/submitted but not `$fillable` — silently never saved | Medium | FIXED | 20-09-2026 11:15 | 27-09-2026 |
@@ -55,8 +55,8 @@ Entry format:
 | BUG-017 | Dead/unused traits and classes (`HasAuditFields`, `ScopedQuery`, `AfterImportListener`, `BrandCrudController::import()`) | Low | FIXED | 19-09-2026 / 20-09-2026 (see entry) | 27-09-2026 |
 | BUG-018 | `App\Models\IAM\Role` has a misleading, dead `$table` property | Cosmetic | FIXED | 19-09-2026 22:20 | 27-09-2026 |
 | BUG-019 | Unexplained large external change to `BookingCrudController.php` | Unknown | OPEN — needs owner input | 20-09-2026 13:00 | — |
-| BUG-020 | `PersonAddressCrudController` references columns that don't exist (`type`, `person_id`, `is_primary`) | High | MITIGATED (DEC-037) | 20-09-2026 15:30 | 27-09-2026 |
-| BUG-021 | `PersonBankingDetailCrudController` — missing `CrudTrait` + wrong column names (stacked) | Critical | MITIGATED (DEC-037) | 20-09-2026 16:00 | 27-09-2026 |
+| BUG-020 | `PersonAddressCrudController` references columns that don't exist (`type`, `person_id`, `is_primary`) | High | MITIGATED (DEC-037); leftovers cleaned (DEC-070) | 20-09-2026 15:30 | 27-09-2026 |
+| BUG-021 | `PersonBankingDetailCrudController` — missing `CrudTrait` + wrong column names (stacked) | Critical | MITIGATED (DEC-037); leftovers cleaned (DEC-070) | 20-09-2026 16:00 | 27-09-2026 |
 | BUG-022 | `VehicleAccessoryCrudController` — no Operation traits, `Route::crud()` registers nothing, entirely unreachable | Medium | FIXED | 20-09-2026 16:30 | 27-09-2026 |
 | BUG-023 | `Route::crud('keyvalue', 'KeyvalueCrudController')` — wrong case, works on Windows only | High | FIXED | 20-09-2026 16:30 | 20-09-2026 16:45 |
 | BUG-024 | 20 more CrudControllers entirely unreachable (Garage, GraphNode/Edge, 5x Employee assignment, DesigDeptTree, PostPermission, PostReporting, ReportingHierarchy, TestDrive [commented-out route], DashboardControllerCrudController, SpareOrderingreport, SparePartwise, HRTransfer, HRRelieving, EmployeeJourney, Performance) | Medium | FIXED | 20-09-2026 17:00 | 27-09-2026 |
@@ -105,7 +105,7 @@ Entry format:
 | BUG-026 | `composer dump-autoload`'s `package:discover` post-script fails (exit code 1) whenever a moved/renamed controller class is still referenced by its old name somewhere still-loaded (e.g. a stale `use`/string route registration) | Low | FIXED (self-resolves once every reference is updated — no code fix needed, just an ordering rule) | 20-09-2026 17:40 | 20-09-2026 17:45 |
 | BUG-027 | `CampaignCrudController` mass-assigned raw `$request->all()` via `fill()`, and `created_by`/`updated_by`/`deleted_by` are all in `Campaign::$fillable` — a POST/PUT body could spoof authorship by including those keys directly | Medium | FIXED (side effect of converting to FormRequest's `->validated()`, not separately scoped) | 20-09-2026 18:00 | 20-09-2026 18:10 |
 | BUG-028 | `FinanceCrudController` + `InsuranceCrudController` both declare List/Create/Update/Delete Operation traits + a `ScopedCrud` trait, but neither has a `setup()` (never calls `CRUD::setModel()`) nor a `Route::crud()` registration — 100% dead scaffold on both; only their custom `import()` actions have real routes, and neither has a menu entry | Low | OPEN | 20-09-2026 18:20 | — |
-| BUG-029 | `RtoCrudController::import()` references `$spreadsheetId`, which is never defined anywhere in the file/class — the RTO import feature has likely never worked at all since it was written | High | OPEN | 20-09-2026 18:50 | — |
+| BUG-029 | `RtoCrudController::import()` references `$spreadsheetId`, which is never defined anywhere in the file/class — the RTO import feature has likely never worked at all since it was written | High | OPEN — sheet ID needs owner confirmation (D20); actor fixed (DEC-070) | 20-09-2026 18:50 | — |
 | BUG-030 | `App\Helpers\XCommonHelper` references 8+ model classes (`X_Location`, `X_Segment`, `X_Branch`, `X_Department`, `X_Division`, `X_Designation`, `X_Vertical`, `X_CustomModel`) and `App\User` that **do not exist anywhere in the codebase** — any of its ~26 call sites touching them fatals with "Class not found"; confirmed live via `SpareRequestCrudController::create()` → `XCommonHelper::getServiceBranch()` | Critical | OPEN | 20-09-2026 19:05 | — |
 | BUG-031 | `SpareRequestCrudController`'s own `index()` screen fatals unconditionally (`RouteNotFoundException`) because `list.blade.php` calls `route('spare-request.data')`, which was never registered — plus 3 more missing routes (`admin/fetch-parts`, `spare/partwise-requirement`, `spare/orderingreport`) referenced by its own views | Critical | OPEN | 20-09-2026 19:15 | — |
 | BUG-032 | `SpareRequestCrudController::setup()` never calls `CRUD::setModel()` — `store()`/`update()`/`destroy()` (the unmodified trait defaults) fatal on a null model; confirmed live (`POST /admin/spare-request` → `500`, generic `Error`) | Critical | OPEN | 20-09-2026 19:20 | — |
@@ -203,7 +203,7 @@ Entry format:
 | BUG-165 | User importer rewrote data it wasn't given: absent columns nulled/defaulted employee fields, every row forced `employment_status=active` and `users.is_active=1`, and partial-name `LIKE` guesses mapped unknown values to other masters — incl. designation, i.e. the user's role (a stale `MAN` became `ACS_MGR`) | High | FIXED | 27-09-2026 | 27-09-2026 |
 | BUG-166 | `storage/userdata.xlsx` (source of the user import) has values that match no master: old codes `SJN`/`NKH`/`SDS`/`KLY` (DB: `SUJ`/`NOK`/`SDR`/`KOL`), `BEV` entered as a division ×32, department `IT` ×2; 38 DB users are not in the file | Medium | FIXED | 27-09-2026 | 27-09-2026 |
 | BUG-167 | System settings show page 500 (route lacked `'operation' => 'show'`, so the show component never loaded) and was ungated; key-value / keyword-master `search` + `details` routes lacked `'operation' => 'list'`, so their only permission check never ran | High | FIXED | 27-09-2026 | 27-09-2026 |
-| BUG-168 | Same route trap in the booking team's area: `accounts/receipt/{id}/show`, `sales/lead*` search/details/destroy, `sales/lead-source*`, `sales/enquiry/{id}` destroy, `sales/campaign/{id}` destroy and `spares/spare-request/{id}` destroy are registered without the `operation` key — hook-only permission checks don't run | High | OPEN (booking team's code — reported, not changed) | 27-09-2026 | — |
+| BUG-168 | Same route trap in the booking team's area: `accounts/receipt/{id}/show`, `sales/lead*` search/details/destroy, `sales/lead-source*`, `sales/enquiry/{id}` destroy, `sales/campaign/{id}` destroy and `spares/spare-request/{id}` destroy are registered without the `operation` key — hook-only permission checks don't run | High | FIXED (security part verified 28-09; route keys DEC-070) | 27-09-2026 | — |
 | BUG-169 | App timezone changed from UTC to Asia/Kolkata on origin/stage (booking team, 26-09-2026): timestamps written before are UTC, after are IST, in the same columns; `.ai` architecture rule says "stored UTC" | High | CLOSED — accepted (DEC-046) | 27-09-2026 | 27-09-2026 |
 | BUG-170 | Segment/sub-segment create used Backpack's unvalidated default store (duplicate code = 500); sub-segment edit posted `segment_id` (not a column) so a segment change was silently dropped and the form never pre-selected the current segment | High | FIXED | 27-09-2026 | 27-09-2026 |
 | BUG-171 | Editing any vehicle master re-saved its `code` through the space-stripping transform, orphaning children: 588 variants (+584 legacy colour rows) now reference model codes that no longer exist (`THAR ROXX` vs `THARROXX`, 17 models) | Critical | FIXED (DEC-048/049) | 27-09-2026 | 27-09-2026 |
@@ -213,7 +213,7 @@ Entry format:
 | BUG-176 | `HasColumnTransformations` re-transformed every attribute on every update: editing any field of a keyword value whose legacy code has spaces rewrote the code (hyphens), orphaning its references — 1,903 such codes exist | High | FIXED (DEC-055) | 27-09-2026 | 27-09-2026 |
 | BUG-177 | Imports menu and the `imports/admin` landing page have no permission check (a user with no import permission opens it; the vehicle import POST itself is gated on `VEH_SEG_CREATE`) | Low | OPEN (permission choice needs owner) | 27-09-2026 | — |
 | BUG-178 | Pricing engine ignores imported dealer charges: `dealerCharges()` reads narrow rows (`charge_name`/`amount`) while the importer writes the spec's WIDE columns (CP-06), so the pricing JSON's dealer charges total 0; `scopeHit()` checks a `model` column (table has `model_code`), so model scope is never applied | High | OPEN (price-changing fix — owner approval) | 27-09-2026 | — |
-| BUG-179 | Two divergent accessory importers: the wired one (`import:vehicle-accessories` → `AccessoryImportService`) reads one sheet without type/discount/permit, soft-disables the whole catalogue and echoes every row; the spec-shaped one (`AccessoryService::importExcel*`: typed sheets, discount, permit, hard purge) has no caller | Medium | OPEN (owner: which importer is authoritative) | 27-09-2026 | — |
+| BUG-179 | Two divergent accessory importers: the wired one (`import:vehicle-accessories` → `AccessoryImportService`) reads one sheet without type/discount/permit, soft-disables the whole catalogue and echoes every row; the spec-shaped one (`AccessoryService::importExcel*`: typed sheets, discount, permit, hard purge) has no caller | Medium | OPEN (owner: which importer is authoritative — D19); debug output removed (DEC-070) | 27-09-2026 | — |
 | BUG-180 | `/export/vehicle-data` (`ExportController::vehicleDataExcel`) references `App\Exports\VehicleDataExport`, which does not exist — the route 500s | Low | OPEN | 28-09-2026 | — |
 | BUG-181 | `User::getOrCreateNotificationsMaster()` and the `NotificationsMaster` model did not exist, so the v1 notification endpoints (unread count, mark-all-read) and every legacy `NotificationService` send 500'd; the docs models pointed at non-existent tables (`xlr8_docs_*`, pivot `doc_group_documents`) and the v1 add-to-group rule validated against `documents` | High | FIXED (DEC-061) | 28-09-2026 | 28-09-2026 |
 | BUG-182 | v1 `docs/upload` and `history/{entityType}/{entityId}` (+ `/thread`) resolve `App\Models\{entityType}` straight from request input and never check the caller may see that record — any signed-in mobile user can read or append history on, or attach files to, any model row | High | OPEN (auth change — owner approval) | 28-09-2026 | — |
@@ -315,7 +315,7 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 
 ### BUG-008 — `EmployeeCrudController` references non-existent columns
 
-- **Status:** PARTIALLY FIXED — list screen fixed; create/edit still OPEN (was: OPEN)
+- **Status:** MITIGATED (DEC-037); leftovers cleaned (DEC-070)
 - **Severity:** High (entire Employee admin screen — list, create, edit, update — likely never worked)
 - **Found:** 20-09-2026 09:45, batch 4 of the permission rollout.
 - **Modified:** 24-09-2026 22:00 — `index()` rewritten against the real code-based columns (`person_code`, `designation_code`, `primary_branch_code`, `primary_dept_code`, `employment_status`); branch/department names via `OrgService`. List returns 200 in the admin smoke sweep. `store()`/`update()` and the create/edit forms still validate and submit `*_id` fields — rebuilding them against the code-based schema is a form redesign, tracked in BUG-154.
@@ -324,6 +324,7 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 - **Proposed solution:** rewrite `index()`'s `select()`, and `store()`/`update()`'s validation + mass-assignment, to use the real code-based columns. First confirm whether `Employee`'s relationship methods (`person()`, `designation()`, `primaryBranch()`, `primaryDepartment()`) are already correct — if so, only the controller needs fixing, not the model.
 
 - **Update 27-09-2026:** standalone Employee create/edit retired (URLs redirect to the list); employees are onboarded via Users → Bulk import (BUG-162 fix) and edited on the Person/User screens. — [ai-changelogs-27-09-2026.md](ai-changelogs-27-09-2026.md)
+- **Resolution (28-09-2026):** Triage 28-09: list works; create / edit URLs redirect to the list. DEC-070 removed the unused Create / Update operations and the unused `Person` import. The dead `create` / `edit` views are left until deletion is approved (D10).
 
 ### BUG-009 — `BrandCrudController` — backing table doesn't exist
 
@@ -449,7 +450,7 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 
 ### BUG-020 — `PersonAddressCrudController` references columns that don't exist
 
-- **Status:** PARTIALLY FIXED — list screen fixed; create/edit still OPEN (was: OPEN)
+- **Status:** MITIGATED (DEC-037); leftovers cleaned (DEC-070)
 - **Severity:** High (entire Person Address admin screen — list, create, update — likely never worked)
 - **Found:** 20-09-2026 15:30, batch 11 of the permission rollout.
 - **Modified:** 24-09-2026 22:00 — list now selects `address_type` and derives `is_primary` from `address_type === 'Primary'` (there is no `is_primary` column). 200 in the smoke sweep. Create/edit remain id-based — see BUG-154.
@@ -458,10 +459,11 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 - **Proposed solution:** rewrite `index()`'s `select()`, and `store()`/`update()`'s validation and mass-assignment, to use `address_type` (with the real enum values) and `person_code` instead of `type`/`person_id`, and remove or replace the `is_primary` handling with an `address_type === 'Primary'` check. Needs a look at the `PersonAddress` model's actual relationships/casts first to confirm nothing else assumes the wrong column names too.
 
 - **Update 27-09-2026:** standalone Person Address create/edit retired; addresses are edited inline on the Person screen ("Open person"). — [ai-changelogs-27-09-2026.md](ai-changelogs-27-09-2026.md)
+- **Resolution (28-09-2026):** As BUG-008: unused Create / Update operations and `Person` import removed; dead views await D10.
 
 ### BUG-021 — `PersonBankingDetailCrudController` — two stacked independent bugs (missing `CrudTrait` + wrong column names)
 
-- **Status:** PARTIALLY FIXED — list and create render; form persistence still OPEN (was: OPEN)
+- **Status:** MITIGATED (DEC-037); leftovers cleaned (DEC-070)
 - **Severity:** Critical (screen 500s for everyone, before any permission check runs)
 - **Found:** 20-09-2026 16:00, batch 12 of the permission rollout.
 - **Modified:** 24-09-2026 22:00 — `PersonBankingDetail` now uses `CrudTrait`; list selects `person_code`, derives `is_primary` from `account_type === 'Primary'` and no longer requests the nonexistent `swift_code`. List and create return 200. Form save still id-based — see BUG-154.
@@ -472,6 +474,7 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 - **Proposed solution:** add `use Backpack\CRUD\app\Models\Traits\CrudTrait;` to `PersonBankingDetail` first (same low-risk fix as BUG-013's proposal), then separately rewrite the controller's column references to match the real schema (`person_code`, `micr_code`, drop or replace `is_primary`, correct the `account_type` enum values). Both fixes are needed before this screen works at all — fixing only one leaves the other blocking.
 
 - **Update 27-09-2026:** standalone Person Banking create/edit retired; banking is edited inline on the Person screen ("Open person"). — [ai-changelogs-27-09-2026.md](ai-changelogs-27-09-2026.md)
+- **Resolution (28-09-2026):** As BUG-008; the stale class docblock describing the old column mismatch now says the screen is list-only and banking details are edited on the Person screen.
 
 ### BUG-022 — `VehicleAccessoryCrudController` is entirely unreachable — no Operation traits, so `Route::crud()` registers nothing
 
@@ -535,13 +538,14 @@ the vehicle-pricing pipeline only). No entry needed; no fix needed.
 
 ### BUG-029 — `RtoCrudController::import()` uses an undefined variable (`$spreadsheetId`) — the feature has almost certainly never worked
 
-- **Status:** OPEN
+- **Status:** OPEN — sheet ID needs owner confirmation (D20); actor fixed (DEC-070)
 - **Severity:** High (unlike BUG-028's "reachable but no menu link" controllers, this one is reachable *and* broken — anyone who does hit `/admin/rto/import` directly gets a real runtime error, not a working import)
 - **Found:** 20-09-2026 18:50, batch 19 of the permission rollout, while reading the full file before wiring.
 - **Modified:** 24-09-2026 22:00 — still blocked on configuration, not code: the RTO import needs its Google Sheet ID, and the sibling Finance/Insurance imports currently fail with Google `Invalid JWT Signature` (service-account credentials). Needs the owner to supply both.
 - **Where:** `app/Http/Controllers/Admin/RtoCrudController.php`, `import()`, line 176: `Sheets::spreadsheet($spreadsheetId)->sheet($sheetSafe)->all();`.
 - **Description:** Every sibling controller with this Google-Sheets-import shape (`FinanceCrudController`, `InsuranceCrudController` — BUG-028) hardcodes its own `$spreadsheetId = '...';` as the first line of `import()`. `RtoCrudController::import()` is 330+ lines long and references `$spreadsheetId` exactly once, at line 176 — **it is never assigned anywhere in the method, the class, or any parent/trait.** Confirmed via `grep -n "spreadsheetId" RtoCrudController.php` returning only that one usage. In PHP 8.3 this is `Undefined variable $spreadsheetId` (a warning, not fatal on its own), but the resulting `null` is then passed into `Sheets::spreadsheet(null)`, which is virtually certain to fail (either immediately, or when the Google API client tries to build a request URL with no spreadsheet id) before any row of any sheet is ever read. This strongly suggests the hardcoded spreadsheet ID was accidentally deleted at some point (e.g. during a refactor or a bad merge) and never restored, or was never filled in when this controller was copy-pasted from `FinanceCrudController`/`InsuranceCrudController` in the first place.
 - **Proposed solution:** needs the real RTO Google Sheet's spreadsheet ID from whoever owns this integration — not something this rollout can guess or safely fabricate. Once known, add `$spreadsheetId = '<real-id>';` as the first line of `import()`, matching the sibling controllers' pattern exactly. Left the method entirely untouched (including this bug) in batch 19 — only added the permission check, consistent with not fixing pre-existing bugs outside the scoped task, and doubly so here since there is no safe guess for the missing value.
+- **Resolution (28-09-2026):** Triage 28-09: the RTO import is reachable from Imports → Sales, so the undefined `$spreadsheetId` error is user-facing. The old ID `1pZAC7e7uxc-5nco2ERABj6dWPqfK511m0tQPcXGyhZk` is in history (commit `e6147f7`) — owner to confirm; plan: move all four hardcoded sheet IDs to config. DEC-070: the four `auth()->id() ?? 1` actor stamps in `SalesImportController` now record the Backpack user.
 
 ### BUG-030 — `App\Helpers\XCommonHelper` depends on 8+ model classes that don't exist anywhere in the codebase — a large fraction of it is unconditionally broken
 
@@ -1964,9 +1968,10 @@ guessed at.
 
 ### BUG-168 — Booking-team routes that skip hook-only permission checks
 
-- **Status:** OPEN (reported to the booking team; not changed by us)
+- **Status:** FIXED (security part verified 28-09; route keys DEC-070)
 - **Where:** `routes/backpack/core.php` — `accounts/receipt/{id}/show`, `sales/lead` + `sales/lead-source` search/details/destroy, `sales/enquiry/{id}`, `sales/campaign/{id}` and `spares/spare-request/{id}` destroy.
 - **Fix:** register with `['uses' => …, 'as' => …, 'operation' => 'list'|'show'|'delete']`, or gate the action inline (see `.ai/rules/admin-backpack.md`).
+- **Resolution (28-09-2026):** Triage 28-09: every listed action now opens with its permission check (Receipt show, Lead / Lead Source search / details / destroy, Enquiry / Campaign / Spare Request destroy); no GET `sales/enquiry/{id}` route remains. DEC-070 registers the Lead and Lead Source `search` / `details` routes with `'operation' => 'list'` so `setupListOperation()` runs. Still open elsewhere: Lead `getVariants` / `getColors` have no permission check (decision D4).
 
 ### BUG-169 — Mixed UTC / IST timestamps after the timezone change
 
@@ -2038,7 +2043,7 @@ guessed at.
 
 ### BUG-179 — Two divergent accessory importers
 
-- **Status:** OPEN (27-09-2026). It blocks the DEC-050 roll-out for accessories (pricing group 4).
+- **Status:** OPEN (owner: which importer is authoritative — D19); debug output removed (DEC-070)
 - **Evidence:**
   - **Wired:** `app/Console/Commands/ImportVehicleAccessories.php` (`import:vehicle-accessories`) and `App\Imports\VehicleAccessoriesImport` (no caller) use `AccessoryImportService::execute()`:
     - it reads only the first sheet and no type, discount or permit;
@@ -2049,6 +2054,7 @@ guessed at.
     - it hard-deletes both tables inside a transaction.
   - The Machine Spec says "AccessoryService — existing packs/discounts (DO NOT rewrite)".
 - **Decision needed:** which importer (and which purge semantics) is authoritative. Then both entity services (accessory, accessory scope) are added and the chosen importer writes through them, and the other is removed.
+- **Resolution (28-09-2026):** DEC-070 removed the `echo` / `print_r` row dumps from `AccessoryImportService::processRow()`. Recommendation for D19: keep `AccessoryService::importExcelWithSheetOrder()` (sheet types, discount / permit data), make its purge expire rows instead of hard-deleting, retire `AccessoryImportService` and `import:vehicle-accessories`.
 
 ### BUG-180 — Vehicle data export class missing
 
