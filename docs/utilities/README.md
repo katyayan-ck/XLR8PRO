@@ -2,6 +2,7 @@
 
 Shared services every module uses instead of building its own notifications, comments, files, tasks,
 tickets, approvals, settings or messaging. Spec: `docs/refactor/Platform-Utilities-FRS.md` (FRS v1.1).
+Models and services of the business domains (org, person, vehicle, pricing, sales …): [`docs/domains/`](../domains/README.md).
 Decisions: DEC-060 … DEC-067 in `docs/decisions/decision-log.md`. Rules for agents: `.ai/rules/modules/platform.md`.
 
 | # | Utility | Use it when you need to… | Facade | Guide |

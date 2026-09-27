@@ -20,6 +20,7 @@ Next: accessories. Engine-written records (sessions, flags, snapshots, history) 
 Scopes: grant/revoke/sync only via `UserScopeService` (revoke = deactivate, never delete).
 
 Never re-implement a capability below; open the service, match its contract, extend it if needed.
+Developer guides with every public method, response and example: `docs/domains/` (models + services) and `docs/utilities/` (platform).
 Full health notes: `docs/reference/Shared-Services-Utilities-Catalog.md`.
 
 | Capability | Service | Notes |
@@ -35,7 +36,7 @@ Full health notes: `docs/reference/Shared-Services-Utilities-Catalog.md`.
 | Row-level data scope | `App\Services\IAM\DataScopeService`, `OrgScopeService` | enforcement not yet switched on |
 | OTP login, devices, tokens | `App\Services\AuthService` | Sanctum tokens (User has `HasApiTokens`) |
 | Vehicle completeness/status, dropdown options | `App\Services\Vehicle\VehicleService` | `segmentOptions()`, `modelOptions(For)()`, `variantOptions()`, `colorOptions()` (colour rows, DEC-060) |
-| Pricing pipeline & engine | `App\Services\Vehicle\Pricing\*` (`PricingEngineService::getPricing()`) | see `.ai/rules/modules/vehicle-pricing.md` |
+| Pricing pipeline & engine | `App\Services\Vehicle\Pricing\*` (`PricingEngineService::getPricingPayload($oemCode, $options)`) | see `.ai/rules/modules/vehicle-pricing.md` |
 | Accessories | `App\Services\Vehicle\AccessoryService` | |
 | Booking sub-domains | `App\Services\Sales\Booking\Booking{Core,Kyc,Dms,Insurance,Rto,Delivery,Finance,Exchange,Refund,Otf}Service` | each tested |
 | Settings | `App\Services\Platform\Settings\SettingsService` (`Settings` facade, `setting()`, `feature()`, `@setting`, `@feature`) | only write path; dotted keys, typed, scoped (`getFor`), audited; seeds in `config/platform.php` (read by exact key). `SystemSettingService` backs the legacy CRUD screen |

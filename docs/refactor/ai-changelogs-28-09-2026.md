@@ -265,3 +265,23 @@
   - The outbox derives an idempotency key when none is given, so identical re-sends are duplicates.
 - **Rules:** `.ai/rules/modules/platform.md` points to the guides (synced to `.claude/rules`).
 - **Verification:** no code changed. Every API, code, event, setting and permission in the new pages was checked against `app/Services/Platform/*`, the events, jobs, `config/platform.php` and the permissions migration.
+
+## Developer guides for all models and services; doc-sync rules (DEC-068, step 1)
+- **New `docs/domains/`:**
+  - `README`, `core`, `org`, `person`, `iam-auth`, `hr`, `vehicle`, `pricing`, `crm-enquiry-quotation`, `sales-booking`, `accounts`, `spares`, `utils-legacy`, `api-v1-adapters`.
+  - `reference.md`: 127 models → table → writer → guide, generated from the code.
+  - Written from a reflection inventory of every project-defined public member. A coverage script checked 916 members of services, models and traits: **0 missing**.
+- **Links:** `docs/index.md`, `docs/utilities/README.md`, `.ai/rules/services.md`.
+- **Rule corrections:** the rules and `services.md` named a non-existent `PricingEngineService::getPricing()`. The real call is `getPricingPayload($oemCode, $options)`. Fixed in `services.md`, `modules/vehicle-pricing.md` and `modules/sales.md`.
+- **Rules recorded on request:** `.ai/rules/app.md` (`app/**`) and `.ai/rules/components.md` (components, `xl-*` assets, `config/platform.php`). Guides must change with the code; synced to `.claude/rules`.
+- **Bugs found while documenting** (logged, not fixed; the booking and auth ones need their owners):
+  - BUG-184: audit-detail helpers always report "System".
+  - BUG-185: `onlyRestored()` never matches.
+  - BUG-186: `OrgService::variantName()` throws a TypeError.
+  - BUG-187: v1 auth returns null name / email / mobile.
+  - BUG-188: login OTP generated with `rand()`.
+  - BUG-189: AuthService logs full mobile numbers.
+  - BUG-190: legacy `RBACService` is unused and broken.
+  - BUG-191: Booking scopes and count helpers query `xcelr8_*` tables.
+  - BUG-192: `Enquiry::quotations()` uses the wrong key.
+  - BUG-193: booking ↔ exchange / finance relations use `booking_id` instead of `bid`.

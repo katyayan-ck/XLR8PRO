@@ -850,3 +850,27 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
     - No Tabler Icons: Line Awesome stays the single icon set.
     - No composer changes.
 - **Approved-by:** user (request of 28-09: "free/oss or our own custom functionality only") · **Risk:** MED — global CSS/JS on every page and a new admin middleware; all opt-in or guarded · **Reversal:** remove the layout overrides, the `xl-theme` includes and the middleware entry.
+
+### DEC-068 | 28-09-2026 | A (process) | Guides, stage merge, Sales/booking parity, branches in sync
+- **Why:** the Sales team's code is on `stage` (`26ab25b`, 27-09). The user wants, in this order:
+  1. developer guides for every model and service;
+  2. `dev/admin` merged into `stage`;
+  3. the merged code pulled into `dev/admin` and local;
+  4. our backend and visual standards applied to Sales / booking;
+  5. a merge back, so that `stage`, `origin/dev/admin` and local hold the same code and schema before the dev team starts.
+- **Decision (user):**
+  - Backend: **parity refactor**, same behaviour.
+    - Their new `CommonHelper` call → `OrgService` (fixed inside the merge commit, so `stage` never breaks).
+    - Legacy history / docs / notification adapters → Chat / Docs / Notify.
+    - Raw KeyValue reads → `KeywordValueService`.
+    - Display dates → `site_date()`.
+    - No new business flows (approvals, tasks and messaging are not wired into sales yet).
+  - Visual: **standards + tokens**.
+    - AG-Grid pinned to 36.2.0 and themed by the global hook.
+    - Per-view flatpickr / Select2 removed (the global copies stay).
+    - Site date format, Select2 multi-selects, drop-zone uploads.
+    - Hex / `bg-white` → Tabler tokens.
+    - View `<style>` blocks kept but token-only.
+    - PDF / print views exempt.
+  - Guides: `docs/domains/` (per domain, models + services, every public method), coverage checked by a script. Two rules recorded on request (`.ai/rules/app.md`, `.ai/rules/components.md`): guides are updated in the same change as the code.
+- **Approved-by:** user (plan approved 28-09, including pushes to `origin/dev/admin` and `origin/stage`, merges only) · **Risk:** MED (a large Sales diff; the booking team is asked not to edit Sales views until the final merge) · **Reversal:** revert the merge commits.

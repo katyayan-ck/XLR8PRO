@@ -218,7 +218,17 @@ Entry format:
 | BUG-181 | `User::getOrCreateNotificationsMaster()` and the `NotificationsMaster` model did not exist, so the v1 notification endpoints (unread count, mark-all-read) and every legacy `NotificationService` send 500'd; the docs models pointed at non-existent tables (`xlr8_docs_*`, pivot `doc_group_documents`) and the v1 add-to-group rule validated against `documents` | High | FIXED (DEC-061) | 28-09-2026 | 28-09-2026 |
 | BUG-182 | v1 `docs/upload` and `history/{entityType}/{entityId}` (+ `/thread`) resolve `App\Models\{entityType}` straight from request input and never check the caller may see that record — any signed-in mobile user can read or append history on, or attach files to, any model row | High | OPEN (auth change — owner approval) | 28-09-2026 | — |
 | BUG-183 | 36 active employees hold designation codes that are not in the designation master (GM ×4, MAN ×18, CNS ×6, DSA ×3, RTO ×2, SWD, API, TST) — no approval rule (or designation-based notification / docs entitlement) can reach them | Medium | OPEN (data — owner to map codes) | 28-09-2026 | — |
+| BUG-184 | `BaseModel::getCreationDetails()` / `getUpdateDetails()` / `getDeletionDetails()` read `createdByUser?->name`, but `users` has no `name` column — the actor name is always "System" | Low | OPEN | 28-09-2026 | — |
+| BUG-185 | `BaseModel::scopeOnlyRestored()` selects live rows with `deleted_by` set, but the `restoring` hook clears `deleted_by` — rows restored through `restore()` never match | Low | OPEN | 28-09-2026 | — |
 | BUG-175 | Person contacts/addresses/banking: the per-person type-slot unique keys include soft-deleted rows, so re-adding a deleted slot (e.g. a new Primary address after deleting one) failed with a duplicate-key 500; promoting a non-Alternate row to Primary while Alternate was used also collided | High | FIXED (DEC-053) | 27-09-2026 | 27-09-2026 |
+| BUG-186 | `OrgService::variantName()` is typed `: string` but `variants()` returns an array per code — TypeError; breaks `getUsersForListing()` with vehicle names and any caller | Medium | OPEN | 28-09-2026 | — |
+| BUG-187 | `AuthService::verifyOtp()` / `getUserDetails()` / `logout()` read `$user->name`, `->email`, `->mobile`, which do not exist on `users` — the mobile app gets null user name, email and mobile | Medium | OPEN (API contract — owner approval) | 28-09-2026 | — |
+| BUG-188 | `AuthService::generateOtp()` uses `rand()` (not cryptographically secure) for the mobile-app login OTP | High | OPEN (security — owner approval) | 28-09-2026 | — |
+| BUG-189 | `AuthService` writes the full mobile number into `Log::info/error` on every OTP request / verify / logout — against the API rule "never log full phone numbers" | Medium | OPEN | 28-09-2026 | — |
+| BUG-190 | `App\Services\RBACService` is injected into `UserCrudController` but never called; `canUserAccess()` checks `resource.action` names that don't exist (permissions are `MOD_PROC_ACT`), `getUserPermissions()` uses a missing `User::userRoleAssignments` relation and `UserRoleAssignment::isActive()` | Low | OPEN (removal needs sign-off) | 28-09-2026 | — |
+| BUG-191 | `Booking` scopes `pendingPayment`, `pendingInsurance`, `pendingRTO`, `pendingDeliveries`, `pendingDO` and the static count helpers (`getDynamicBookingCounts`, finance / exchange MTD-YTD) reference `xcelr8_booking_*` / `bookings` tables, a missing `Branches` class and old `branch_id` / `abbr` columns — every call throws; no caller found today | Low | OPEN (booking team) | 28-09-2026 | — |
+| BUG-192 | `Enquiry::quotations()` is `hasMany(Quotation, 'enquiry_no', 'enquiry_no')` but quotations store the enquiry **id** in `enquiry_no` (the inverse `Quotation::enquiry()` uses `enquiry_no → id`) — the relation returns no rows; no caller today | Low | OPEN (booking team) | 28-09-2026 | — |
+| BUG-193 | `Booking::finances()` / `exchanges()` and `XExchange::booking()` / `XFinance::booking()` join on `booking_id`, but both tables key on `bid`; `Booking::finances()` also names `App\Models\Module\Booking\XFinance` (the class is in `Module\Finance`); the `getVerifiedCounts()` / `getPendingCounts()` helpers fail the same way — no caller today | Low | OPEN (booking team) | 28-09-2026 | — |
 
 Not a bug (false positive, listed for reference): the original `infer-conventions` sweep flagged
 "`SheetHeaderService`/`SynonymService` not used by importers" — re-investigation on 19-09-2026
@@ -2065,3 +2075,83 @@ guessed at.
 - **Found:** 28-09-2026, approval engine verification (a rule with level designation GM was rejected as unknown).
 - **Evidence:** `select e.designation_code, count(*) from xlr8_admin_employee e left join xlr8_admin_designation d on d.code = e.designation_code where d.code is null and e.deleted_at is null group by 1` → GM 4, MAN 18, CNS 6, DSA 3, RTO 2, SWD 1, API 1, TST 1.
 - **Proposed solution:** map each legacy code to a real designation (or add the missing designations) through `EmployeeService` / `DesignationService`; the power-sheet import already rejects unknown designations, so rules stay consistent.
+
+### BUG-184 — Audit detail helpers always name the actor "System"
+
+- **Status:** OPEN (28-09-2026).
+- **Severity:** Low — only the audit-detail arrays are affected; `created_by` ids are correct.
+- **Found:** 28-09-2026, while writing `docs/domains/core.md`.
+- **Evidence:** `app/Models/BaseModel.php` `getCreationDetails()` returns `'created_by_name' => $this->createdByUser?->name ?? 'System'`; `users` has `username` and the `display_name` accessor, no `name`.
+- **Proposed solution:** use `->display_name` in the three helpers.
+
+### BUG-185 — `onlyRestored()` scope never matches a model restore
+
+- **Status:** OPEN (28-09-2026).
+- **Severity:** Low — no caller found (`grep onlyRestored` in app/resources shows none).
+- **Found:** 28-09-2026, while writing `docs/domains/core.md`.
+- **Evidence:** the scope is `whereNull('deleted_at')->whereNotNull('deleted_by')`, while `BaseModel::booted()` `restoring` sets `deleted_by = null`.
+- **Proposed solution:** keep `deleted_by` on restore (or add a `restored_at` column), or drop the unused scope.
+
+### BUG-186 — OrgService::variantName() throws a TypeError
+
+- **Status:** OPEN (28-09-2026).
+- **Severity:** Medium.
+- **Found:** 28-09-2026, while writing docs/domains/org.md.
+- **Evidence:** `DB_DATABASE=xlrm_testing php artisan tinker --execute 'OrgService::variantName(array_key_first(OrgService::variants()))'` → `TypeError: Return value must be of type string, array returned`. Caller: `OrgService::getUsersForListing()` (vehFormat `name` / `code_name`).
+- **Proposed solution:** return `self::variants()[$code]['name'] ?? $code` (the display name); add a unit test.
+
+### BUG-187 — v1 auth responses return null name / email / mobile
+
+- **Status:** OPEN (API contract — owner approval) (28-09-2026).
+- **Severity:** Medium.
+- **Found:** 28-09-2026, while writing docs/domains/iam-auth.md.
+- **Evidence:** `Schema::getColumnListing('users')` has no name / email / mobile; the User model has `display_name`, `primary_email`, `primary_mobile` accessors. AuthService lines ~308-313 and ~348-353.
+- **Proposed solution:** fill the same keys from `display_name`, `primary_email`, `primary_mobile` (additive, keeps the v1 contract shape); add an API test asserting non-null values.
+
+### BUG-188 — Login OTP generated with rand()
+
+- **Status:** OPEN (security — owner approval) (28-09-2026).
+- **Severity:** High.
+- **Found:** 28-09-2026, while writing docs/domains/iam-auth.md.
+- **Evidence:** `app/Services/AuthService.php` ~line 430: `str_pad(rand(0, pow(10, self::OTP_LENGTH) - 1), …)`. The platform SMS OTP (`SmsService::otp`) already uses `random_int`.
+- **Proposed solution:** use `random_int(0, 10 ** self::OTP_LENGTH - 1)`; longer term route login OTPs through `Sms::otp()` / `Sms::verify()` (hashed, rate-limited, never logged).
+
+### BUG-189 — AuthService logs full mobile numbers
+
+- **Status:** OPEN (28-09-2026).
+- **Severity:** Medium.
+- **Found:** 28-09-2026, while writing docs/domains/iam-auth.md.
+- **Evidence:** `app/Services/AuthService.php` Log calls at ~lines 135, 152, 175, 298, 325, 388 pass `'mobile' => $mobile`. (`OtpAttemptLog` rows also keep it — that is an audit table, acceptable if access-controlled.)
+- **Proposed solution:** log `ContactService::mask($mobile)` (or the user id only) instead of the number.
+
+### BUG-190 — Legacy RBACService (App\Services\RBACService) is unused and partly broken
+
+- **Status:** OPEN (removal needs sign-off) (28-09-2026).
+- **Severity:** Low.
+- **Found:** 28-09-2026, while writing docs/domains/iam-auth.md.
+- **Evidence:** `grep -n 'rbacService->' UserCrudController.php` returns nothing; `User` has no `userRoleAssignments()`; `UserRoleAssignment` has no `isActive()`. Permission checks everywhere use `can('SLS_BKNG_VIEW')`.
+- **Proposed solution:** remove the service and its injection (dead code, DEC-030 style), or rewrite the two methods against Spatie + `UserPermissionDenial`. `App\Services\IAM\RbacService` (modules / processes) is a different, used class.
+
+### BUG-191 — Booking model scopes / count helpers query legacy xcelr8_* tables
+
+- **Status:** OPEN (booking team) (28-09-2026).
+- **Severity:** Low.
+- **Found:** 28-09-2026, while writing docs/domains/sales-booking.md.
+- **Evidence:** `DB_DATABASE=xlrm_testing php artisan tinker`: `Booking::query()->pendingInsurance()->count()` → SQLSTATE 42S02 `xcelr8_booking_insurance` doesn't exist (same for pendingRTO, pendingDeliveries, pendingPayment). `grep` finds no callers of these scopes or of `getDynamicBookingCounts`.
+- **Proposed solution:** rewrite the scopes against `xlr8_booking_*` (they are the natural SSOT for the pending lists) or delete them with the dead count helpers; decide with the booking team.
+
+### BUG-192 — Enquiry::quotations() joins on the wrong enquiry column
+
+- **Status:** OPEN (booking team) (28-09-2026).
+- **Severity:** Low.
+- **Found:** 28-09-2026, while writing docs/domains/crm-enquiry-quotation.md.
+- **Evidence:** `QuotationCrudController.php:1526` writes `'enquiry_no' => $enquiry ? $enquiry->id : $request->enquiry_id`; `Quotation::enquiry()` = `belongsTo(Enquiry::class, 'enquiry_no', 'id')`; no code calls `->quotations`.
+- **Proposed solution:** change the local key to `id`: `hasMany(Quotation::class, 'enquiry_no', 'id')`.
+
+### BUG-193 — Booking ↔ exchange / finance relations use a non-existent booking_id
+
+- **Status:** OPEN (booking team) (28-09-2026).
+- **Severity:** Low.
+- **Found:** 28-09-2026, while writing docs/domains/sales-booking.md.
+- **Evidence:** `xlr8_booking_exchange` / `xlr8_booking_finance` columns start `id, bid, …`; on `xlrm_testing`: `$booking->exchanges()->count()` → 1054 unknown column `booking_id`; `$booking->finances()->count()` → Class `App\Models\Module\Booking\XFinance` not found; `XFinance::getPendingCounts()` → Class `App\Models\Module\Finance\Booking` not found.
+- **Proposed solution:** use `bid` as the foreign key and import the right classes; services already query these tables directly by `bid`.
