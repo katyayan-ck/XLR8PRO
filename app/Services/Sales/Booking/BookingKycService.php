@@ -2,7 +2,6 @@
 
 namespace App\Services\Sales\Booking;
 
-use App\Services\Vehicle\VehicleService;
 use App\Models\Admin\Branch;
 use App\Models\Admin\Location;
 use App\Models\CRM\Enquiry;
@@ -10,6 +9,7 @@ use App\Models\Module\Booking\Booking;
 use App\Models\Vehicle\VehicleModel;
 use App\Services\IdentifierService;
 use App\Services\OrgService;
+use App\Services\Vehicle\VehicleService;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -158,18 +158,17 @@ class BookingKycService
 
         $booking->refresh();
 
-        $booking->addHistory(
-            'commented',
+        $booking->recordEvent(
+            'UPDATED',
             'KYC Completed',
-            'Customer KYC details updated successfully',
             [
                 'module' => 'Pending KYC',
                 'pan_no' => $panNo,
-                'adhar_no' => $adharNo,
+                // BUG-195: the timeline is widely visible — never store the full Aadhaar there.
+                'adhar_no' => $adharNo ? str_repeat('X', max(0, strlen($adharNo) - 4)).substr($adharNo, -4) : $adharNo,
                 'gstn' => $gstValue,
             ],
-            null,
-            backpack_user()
+            'Customer KYC details updated successfully'
         );
 
         return $booking;

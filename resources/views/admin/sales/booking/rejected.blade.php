@@ -13,15 +13,15 @@
 
             <div
                 class="card-header bg-gradient-danger d-flex justify-content-between align-items-center flex-wrap gap-3">
-                <h2 class="card-title mb-0 fw-bold text-black text-nowrap">
+                <h2 class="card-title mb-0 fw-bold text-body text-nowrap">
                     Refund Rejected Dashboard
                 </h2>
             </div>
 
-            <div class="card-body p-0 bg-light">
+            <div class="card-body p-0 bg-surface-secondary">
 
                 <div
-                    class="d-flex justify-content-between align-items-center flex-wrap gap-2 p-3 border-bottom bg-white">
+                    class="d-flex justify-content-between align-items-center flex-wrap gap-2 p-3 border-bottom bg-surface">
                     <div class="d-flex align-items-center gap-2 flex-nowrap">
                         <input type="text" id="quickFilter" class="form-control w-100 w-md-auto"
                             style="width: 360px; min-width: 260px;" placeholder="Smart Search...">
@@ -50,7 +50,7 @@
                                 left:0;
                                 width:260px;
                                 background: var(--tblr-card-bg);
-                                border:1px solid #ddd;
+                                border: 1px solid var(--tblr-border-color);
                                 border-radius:6px;
                                 box-shadow:0 8px 20px rgba(0,0,0,.15);
                                 z-index:9999;
@@ -99,8 +99,6 @@
 @endsection
 
 @push('after_styles')
-<link rel="stylesheet" href="https://unpkg.com/ag-grid-community/styles/ag-theme-quartz.css">
-<link rel="stylesheet" href="{{ asset('css/ag-grid-tabler-theme.css') }}">
 
 <style>
     .ag-theme-quartz .center-header .ag-header-cell-label,
@@ -128,7 +126,7 @@
 
     .ag-pinned-left-cols-container .ag-header-group-cell,
     .ag-pinned-right-cols-container .ag-header-group-cell {
-        background-color: #f8d7da !important;
+        background-color: rgba(var(--tblr-danger-rgb), 0.12) !important;
         /* light red */
         font-weight: 600;
     }
@@ -140,7 +138,7 @@
 @endpush
 
 @push('after_scripts')
-<script src="https://unpkg.com/ag-grid-community/dist/ag-grid-community.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@36.2.0/dist/ag-grid-community.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
@@ -317,7 +315,7 @@
             if (groupName === 'Action') return;
 
             const groupTr = document.createElement('tr');
-            groupTr.style.background = '#f0f0f0';
+            groupTr.style.background = 'var(--tblr-bg-surface-secondary)';
 
             const groupCheckTd = document.createElement('td');
             groupCheckTd.style.width = '30px';

@@ -17,7 +17,7 @@
                 @method('PUT')
 
                 <div class="card shadow-sm">
-                    <div class="card-header bg-white">
+                    <div class="card-header bg-surface">
                         <h2 class="mb-0">{{ __('Purchase Type Details') }}</h2>
                     </div>
                     <div class="card-body">
@@ -223,7 +223,7 @@
 
                     </div>
 
-                    <div class="card-footer bg-white text-end">
+                    <div class="card-footer bg-surface text-end">
                         <button type="submit" id="submitBtn" class="btn btn-primary">
                             <i class="la la-save"></i> Save & Submit Details
                         </button>
@@ -550,27 +550,25 @@
 @endsection
 
 @push('after_styles')
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <style>
         .is-valid {
-            border-color: #28a745 !important;
+            border-color: var(--tblr-success) !important;
             box-shadow: 0 0 5px rgba(40, 167, 69, 0.5);
         }
 
         .is-invalid {
-            border-color: #dc3545 !important;
+            border-color: var(--tblr-danger) !important;
             box-shadow: 0 0 5px rgba(220, 53, 69, 0.5);
         }
 
         .required-mark {
-            color: #dc3545;
+            color: var(--tblr-danger);
             margin-left: 2px;
         }
 
         .readonly-field {
             background-color: var(--tblr-bg-surface-secondary);
-            border-color: #ced4da;
+            border-color: var(--tblr-border-color);
             cursor: not-allowed;
         }
 
@@ -585,14 +583,12 @@
         }
 
         .text-red {
-            color: #dc3545;
+            color: var(--tblr-danger);
         }
     </style>
 @endpush
 
 @push('after_scripts')
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
     {{-- Bootstrap 4.6.2's bundle was loaded here with no .modal()/.dropdown()/etc usage anywhere

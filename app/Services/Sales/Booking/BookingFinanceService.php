@@ -2,7 +2,6 @@
 
 namespace App\Services\Sales\Booking;
 
-use App\Services\Vehicle\VehicleService;
 use App\Models\Admin\Branch;
 use App\Models\Admin\Location;
 use App\Models\CRM\Enquiry;
@@ -14,6 +13,7 @@ use App\Models\Module\Booking\XlFinancier;
 use App\Models\Module\Finance\XFinance;
 use App\Models\User;
 use App\Services\OrgService;
+use App\Services\Vehicle\VehicleService;
 use Illuminate\Support\Collection;
 
 /**
@@ -297,17 +297,15 @@ class BookingFinanceService
                 $message .= "\n\n,Remarks: ".$remark;
             }
 
-            $booking->addHistory(
-                'commented',
+            $booking->recordEvent(
+                'UPDATED',
                 $title,
-                $message,
                 [
                     'finance_mode' => $finance->fin_mode,
                     'financier' => $finance->financier,
                     'loan_amount' => $finance->loan_amount,
                 ],
-                null,
-                backpack_user()
+                $message
             );
         }
 
@@ -315,16 +313,14 @@ class BookingFinanceService
             $booking->retail = 1;
             $booking->save();
 
-            $booking->addHistory(
-                'commented',
+            $booking->recordEvent(
+                'UPDATED',
                 'Retail Process Completed',
-                'Finance retail process completed .',
                 [
                     'finance_mode' => $finance->fin_mode,
                     'remark' => $remark,
                 ],
-                null,
-                backpack_user()
+                'Finance retail process completed .'
             );
         }
 
@@ -393,10 +389,9 @@ class BookingFinanceService
 
         $finance->save();
 
-        $booking->addHistory(
-            'commented',
+        $booking->recordEvent(
+            'UPDATED',
             'Payout Completed',
-            'Finance payout process completed .',
             [
                 'payout_category' => $payoutCategory,
                 'loan_amount' => $validated['loan_amount'] ?? null,
@@ -405,8 +400,7 @@ class BookingFinanceService
                 'difference' => $validated['difference_no_gst'] ?? null,
                 'remarks' => $validated['payout_remarks'] ?? null,
             ],
-            null,
-            backpack_user()
+            'Finance payout process completed .'
         );
 
         return $finance;

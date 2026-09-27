@@ -10,7 +10,7 @@
             Quotation History
         </h3>
 
-        <div style="font-size: 12px; color: #666; margin-top: 5px;">
+        <div style="font-size: 12px; color: var(--tblr-secondary); margin-top: 5px;">
 
             <strong>Quotation No.:</strong> {{ $quotation->id }}
 
@@ -82,7 +82,7 @@
 
                     <td>
 
-                        {{ $row->created_at->format('d M Y h:i A') }}
+                        {{ site_datetime($row->created_at) }}
 
                     </td>
                     <td>

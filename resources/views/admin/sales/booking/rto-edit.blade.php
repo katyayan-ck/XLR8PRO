@@ -9,7 +9,7 @@
         align-items: center;
         padding: 6px 10px;
         border-radius: 6px;
-        color: #fff;
+        color: var(--tblr-white);
         font-size: 13px;
     }
 
@@ -27,20 +27,19 @@
     .btn-action {
         background: none;
         border: none;
-        color: #fff;
+        color: var(--tblr-white);
         cursor: pointer;
     }
 
     .btn-download {
-        color: #fff;
+        color: var(--tblr-white);
     }
 </style>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
 <style>
     .required-mark {
-        color: #dc3545;
+        color: var(--tblr-danger);
         margin-left: 4px;
     }
 
@@ -58,7 +57,7 @@
     .readonly-value {
         padding: 0.375rem 0.75rem;
         background-color: var(--tblr-bg-surface-secondary);
-        border: 1px solid #ced4da;
+        border: 1px solid var(--tblr-border-color);
         border-radius: 0.25rem;
         min-height: 38px;
         display: flex;
@@ -92,7 +91,7 @@
             <div class="col-md-2 form-group readonly-field">
                 <label class="readonly-label">Booking Date</label>
                 <div class="readonly-value">
-                    {{ $booking->booking_date ? \Carbon\Carbon::parse($booking->booking_date)->format('d M Y') : '—' }}
+                    {{ site_date($booking->booking_date, '—') }}
                 </div>
             </div>
 
@@ -177,7 +176,7 @@
             <div class="col-md-2 form-group readonly-field">
                 <label class="readonly-label">Invoice Date</label>
                 <div class="readonly-value">
-                    {{ $booking->inv_date ? \Carbon\Carbon::parse($booking->inv_date)->format('d M Y') : '—' }}
+                    {{ site_date($booking->inv_date, '—') }}
                 </div>
             </div>
 
@@ -454,7 +453,6 @@
 
 @push('after_scripts')
 
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 {{-- jQuery is already loaded by Backpack's base layout (theme-tabler); loading it again here
      redeclares window.jQuery/$, which can orphan handlers/plugins already bound against the
      original instance. Removed - see BUG-118. --}}
@@ -479,7 +477,7 @@
                     icon: 'error',
                     title: 'File Too Large',
                     text: 'File size must be less than 2MB',
-                    confirmButtonColor: '#3085d6'
+                    confirmButtonColor: XL.theme.token('--tblr-primary')
                 });
                 input.value = '';
                 return;
@@ -551,7 +549,7 @@
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Yes, remove',
-            confirmButtonColor: '#dc3545'
+            confirmButtonColor: XL.theme.token('--tblr-danger')
         }).then(function(result) {
             if (!result.isConfirmed) return;
 

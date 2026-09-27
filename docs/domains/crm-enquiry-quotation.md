@@ -52,7 +52,9 @@ fuel_type, transmission, drivetrain, seating, color_code, tehsil, district, …)
 | scopes `open()`, `forConsultant($userId)`, `assigned()`, `unassigned()`, `assignedQuick()`, `unassignedQuick()`, `assignedLong()`, `unassignedLong()` | work lists |
 | `full_name`; `static getOpenCountByConsultant($userId)` / `clearConsultantCache($userId)` | helpers |
 
-`HasCommunications` is commented out on Enquiry and Lead today — enabling it is part of the Sales parity work (DEC-068).
+`Enquiry`, `Lead` and `Quotation` use `HasCommunications` (DEC-068): `$enquiry->recordEvent(...)`, `->addRemark(...)`,
+`->history()`, `<x-chat.thread :model="$enquiry" />`. `HasColumnTransformations` stays off on Enquiry / Lead (it would
+change stored values).
 
 ### Quotation (`xlr8_crm_quotations`) and QuoteAction (`xlr8_crm_quote_actions`)
 Quotation fields: `quotation_no`, `enquiry_no` (holds the **enquiry id**), `booking_id`, `person_code`, vehicle codes,

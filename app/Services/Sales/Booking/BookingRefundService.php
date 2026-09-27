@@ -4,7 +4,6 @@ namespace App\Services\Sales\Booking;
 
 use App\Models\Module\Booking\Booking;
 use App\Models\Module\Booking\Xl_Refunds;
-use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
 
@@ -76,8 +75,8 @@ class BookingRefundService
                 'holder_name' => $refund->holder_name ?? 'N/A',
                 'ifsc_code' => $refund->ifsc_code ?? 'N/A',
                 'details' => $refund->details ?? 'N/A',
-                'req_date' => $refund->req_date ? Carbon::parse($refund->req_date)->format('d-M-Y') : 'N/A',
-                'ref_date' => $refund->ref_date ? Carbon::parse($refund->ref_date)->format('d-M-Y') : 'N/A',
+                'req_date' => site_date($refund->req_date, 'N/A'),
+                'ref_date' => site_date($refund->ref_date, 'N/A'),
                 'mode' => $refund->mode ?? 'N/A',
                 'transaction_details' => $refund->transaction_details ?? 'N/A',
                 'remark' => $refund->remark ?? 'N/A',
@@ -144,23 +143,20 @@ class BookingRefundService
         ]);
 
         if ($previousStatus === 7) {
-            $booking->addHistory(
-                'commented',
+            $booking->recordEvent(
+                'STATUS_CHANGED',
                 'Refund Requested Again',
-                'Refund requested again after rejection.',
                 [
                     'old_status' => 'Refund Rejected',
                     'new_status' => 'Refund Queued',
                 ],
-                null,
-                backpack_user()
+                'Refund requested again after rejection.'
             );
         }
 
-        $booking->addHistory(
-            'commented',
+        $booking->recordEvent(
+            'STATUS_CHANGED',
             'Refund Requested',
-            'Customer refund request has been submitted .',
             [
                 'refund_amount' => $refund->amount ?? 0,
                 'booking_amount' => $booking->booking_amount ?? 0,
@@ -172,8 +168,7 @@ class BookingRefundService
                 'deduction_reason' => $validated['deduction_reason'] ?? 'N/A',
                 'status' => 'refund_requested',
             ],
-            null,
-            backpack_user()
+            'Customer refund request has been submitted .'
         );
 
         return $refund;
@@ -212,13 +207,11 @@ class BookingRefundService
 
         $refund->update($new);
 
-        $booking->addHistory(
-            'commented',
+        $booking->recordEvent(
+            'UPDATED',
             'Refund Details Edited',
-            'Refund request details were updated.',
             ['changes' => $changes, 'deduction' => $validated['deduction'] ?? null],
-            null,
-            backpack_user()
+            'Refund request details were updated.'
         );
 
         return $refund;
@@ -259,10 +252,9 @@ class BookingRefundService
             'refund_date' => now()->format('Y-m-d'),
         ]);
 
-        $booking->addHistory(
-            'commented',
+        $booking->recordEvent(
+            'STATUS_CHANGED',
             'Refund Completed',
-            'Refund processed successfully.',
             [
                 'old_status' => $oldName,
                 'new_status' => $newName,
@@ -271,8 +263,7 @@ class BookingRefundService
                 'transaction_details' => $validated['transaction_details'],
                 'remark' => $validated['remark'],
             ],
-            null,
-            backpack_user()
+            'Refund processed successfully.'
         );
 
         return $refund;
@@ -293,8 +284,8 @@ class BookingRefundService
         $newRefDate = $validated['hidden_ref'] ?? $validated['ref_date'];
         if ($refund->ref_date != $newRefDate) {
             $changes[] = 'Refund Date changed from '
-                .($refund->ref_date ? Carbon::parse($refund->ref_date)->format('d-M-Y') : 'N/A')
-                .' to '.Carbon::parse($newRefDate)->format('d-M-Y');
+                .(site_date($refund->ref_date, 'N/A'))
+                .' to '.site_date($newRefDate);
             $refund->ref_date = $newRefDate;
         }
 
@@ -322,15 +313,13 @@ class BookingRefundService
         $refund->ref_by = backpack_auth()->id();
         $refund->save();
 
-        $booking->addHistory(
-            'commented',
+        $booking->recordEvent(
+            'UPDATED',
             'Refund Details Updated',
-            'Refund details modified .',
             [
                 'changes' => $changes,
             ],
-            null,
-            backpack_user()
+            'Refund details modified .'
         );
 
         return $refund;

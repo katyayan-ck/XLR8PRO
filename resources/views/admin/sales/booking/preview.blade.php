@@ -11,7 +11,7 @@
     }
 
     .box {
-        border: 1px solid #dcdcdc;
+        border: 1px solid var(--tblr-border-color);
         padding: 10px;
         margin-bottom: 10px;
     }
@@ -34,7 +34,7 @@
 
     .label {
         width: 35%;
-        color: #666;
+        color: var(--tblr-secondary);
     }
 
     @media print {

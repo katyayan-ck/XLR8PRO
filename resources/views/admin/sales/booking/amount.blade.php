@@ -9,7 +9,7 @@
        
         <div class="col-12 mb-4">
             <div class="card">
-                <div class="card-header text-black">
+                <div class="card-header text-body">
                     <h2 class="mb-0">
                         Booking Summary
                     </h2>
@@ -81,7 +81,7 @@
 
         <div class="col-12">
             <div class="card shadow-sm">
-                <div class="card-header bg-gradient-primary text-black">
+                <div class="card-header bg-gradient-primary text-body">
                     <h2 class="mb-0">
                         Add Receipt of Received Amount
                     </h2>
@@ -191,8 +191,6 @@
 @endsection
 
 @push('after_scripts')
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     // Site-wide date display format (see .ai/rules/conventions.md section 13) - flatpickr's

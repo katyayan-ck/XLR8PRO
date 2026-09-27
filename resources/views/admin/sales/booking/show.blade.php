@@ -2,7 +2,6 @@
 @extends(backpack_view('blank'))
 
 @section('header')
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
 
 <style>
@@ -25,7 +24,7 @@
         display: inline-flex;
         align-items: center;
         background-color: var(--tblr-bg-surface-secondary);
-        border: 1px solid #dee2e6;
+        border: 1px solid var(--tblr-border-color);
         border-radius: 50px;
         padding: 6px 16px;
         font-size: 0.95rem;
@@ -60,7 +59,7 @@
     }
 
     .proof-chip .btn-download:hover {
-        color: #0d6efd;
+        color: var(--tblr-primary);
     }
 
     / #proofPreviewModal .modal-content {
@@ -71,13 +70,13 @@
     }
 
     #proofPreviewModal .modal-header {
-        background: #0d6efd !important;
-        color: white !important;
+        background: var(--tblr-primary) !important;
+        color: var(--tblr-white) !important;
         border-bottom: none !important;
     }
 
     #proofPreviewModal .modal-body {
-        background: white !important;
+        background: var(--tblr-bg-surface) !important;
         padding: 0 !important;
         min-height: 65vh;
         max-height: 85vh;
@@ -241,7 +240,7 @@
 
         @if ($booking->status == 3)
         <div class="card mt-4 shadow-sm" style="border-radius: 12px">
-            <div class="card-header text-black">
+            <div class="card-header text-body">
                 <h2 class="mb-0 fw-bold">
                     Actions for Cancelled Booking
                 </h2>
@@ -388,7 +387,7 @@
         @if($booking->status == 4)
 
         <div class="card mt-4 shadow-sm" style="border-radius: 12px">
-            <div class="card-header text-dark">
+            <div class="card-header text-body">
                 <h2 class="mb-0">{{ __('Refund Queue') }}</h2>
             </div>
             <div class="card-body">
@@ -492,7 +491,7 @@
         </div>
 
         <div class="card mt-4 shadow-sm" style="border-radius: 12px">
-            <div class="card-header text-black">
+            <div class="card-header text-body">
                 <h2 class="mb-0">{{ __('Refund Details') }}</h2>
             </div>
             <div class="card-body">
@@ -569,7 +568,7 @@
         </div>
 
         <div class="card mt-4" id="rejectionCard" style="border-radius: 12px; display: none;">
-            <div class="card-header  text-black">
+            <div class="card-header  text-body">
                 <h2 class="mb-0">{{ __('Reject Refund Request') }}</h2>
             </div>
             <div class="card-body">
@@ -1397,7 +1396,7 @@
                     </div>
                 </div>
             </div>
-            <div class="modal-footer bg-light border-0 py-3">
+            <div class="modal-footer bg-surface-secondary border-0 py-3">
                 <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Close</button>
                 <a id="modalDownloadLink" href="#" class="btn btn-primary px-4" download>
                     {{-- <i class="fas fa-download me-1"></i> --}}
@@ -1450,7 +1449,7 @@
 <div class="modal fade" id="fdocProofModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header text-black">
+            <div class="modal-header text-body">
                 <h5 class="modal-title" id="fdocProofModalLabel"></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
@@ -1505,7 +1504,6 @@
 @endsection
 @section('after_scripts')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
 <script>
     function openPaymentProof(url, fileName = 'Proof File') {
@@ -1584,7 +1582,7 @@
                     icon: 'error',
                     title: 'Invalid File',
                     text: 'File must be less than 2MB!',
-                    confirmButtonColor: '#dc3545'
+                    confirmButtonColor: XL.theme.token('--tblr-danger')
                 });
                 input.value = '';
                 return;
@@ -1634,7 +1632,7 @@
                     icon: 'error',
                     title: 'Invalid File',
                     text: 'File must be less than 2MB!',
-                    confirmButtonColor: '#dc3545'
+                    confirmButtonColor: XL.theme.token('--tblr-danger')
                 });
                 input.value = '';
                 return;
@@ -1733,7 +1731,7 @@
         setTimeout(() => {
             document.querySelectorAll('.modal').forEach(el => {
                 el.style.opacity = '1';
-                el.style.backgroundColor = '#000';
+                el.style.backgroundColor = 'var(--tblr-dark)';
             });
             if (type === 'pdf') pdfEl.contentWindow?.focus();
         }, 150);
@@ -1835,7 +1833,7 @@
             setTimeout(() => {
                 document.querySelectorAll('.modal').forEach(el => {
                     el.style.opacity = '0.45';
-                    el.style.backgroundColor = '#000';
+                    el.style.backgroundColor = 'var(--tblr-dark)';
                 });
                 if (type === 'pdf') pdfEl.contentWindow?.focus();
             }, 150);
@@ -1977,6 +1975,7 @@
         document.addEventListener('DOMContentLoaded', function () {
             flatpickr(".flatpickr", {
                 dateFormat: "d-M-Y",
+                altInput: true, altFormat: XL.flatpickrFormat(),
                 maxDate: "today",
                 allowInput: true,
                 onChange: function(selectedDates, dateStr, instance) {
@@ -2153,6 +2152,7 @@
         document.addEventListener('DOMContentLoaded', function () {
             flatpickr(".flatpickr", {
                 dateFormat: "d-M-Y",
+                altInput: true, altFormat: XL.flatpickrFormat(),
                 maxDate: "today",
                 allowInput: true,
                 onChange: function(selectedDates, dateStr, instance) {
@@ -2220,7 +2220,7 @@
                             icon: 'error',
                             title: 'File Too Large',
                             text: 'File must be less than 2MB!',
-                            confirmButtonColor: '#dc3545'
+                            confirmButtonColor: XL.theme.token('--tblr-danger')
                         });
                         this.value = '';
                         return;
@@ -2244,6 +2244,7 @@
 
         flatpickr("#ref_date", {
             dateFormat: "d-M-Y",
+            altInput: true, altFormat: XL.flatpickrFormat(),
             maxDate: "today",
             allowInput: true,
             onChange: function(selectedDates, dateStr, instance) {
@@ -2270,7 +2271,7 @@
                 icon: 'error',
                 title: 'Invalid File',
                 text: 'File must be less than 2MB!',
-                confirmButtonColor: '#dc3545'
+                confirmButtonColor: XL.theme.token('--tblr-danger')
             });
             this.value = "";
             return;
@@ -2351,8 +2352,8 @@ modal.show();
     text: "You won't be able to revert this!",
     icon: 'warning',
     showCancelButton: true,
-    confirmButtonColor: '#dc3545',
-    cancelButtonColor: '#6c757d',
+    confirmButtonColor: XL.theme.token('--tblr-danger'),
+    cancelButtonColor: XL.theme.token('--tblr-secondary'),
     confirmButtonText: 'Yes, remove it!'
 }).then((result) => {
     if (result.isConfirmed) {
@@ -2505,7 +2506,7 @@ function handleFdocAttachment(input) {
     icon: 'error',
     title: 'Invalid File',
     text: 'File must be less than 2MB!',
-    confirmButtonColor: '#dc3545'
+    confirmButtonColor: XL.theme.token('--tblr-danger')
 });
             input.value = '';
             return;
@@ -2516,7 +2517,7 @@ function handleFdocAttachment(input) {
     icon: 'error',
     title: 'Invalid File Type',
     text: 'Only JPG, PNG, PDF allowed!',
-    confirmButtonColor: '#dc3545'
+    confirmButtonColor: XL.theme.token('--tblr-danger')
 });
             input.value = '';
             return;
@@ -2585,8 +2586,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 text: "Are you sure you want to restore this booking?",
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonColor: '#28a745',
-                cancelButtonColor: '#d33',
+                confirmButtonColor: XL.theme.token('--tblr-success'),
+                cancelButtonColor: XL.theme.token('--tblr-danger'),
                 confirmButtonText: 'Yes, Restore It',
                 cancelButtonText: 'Cancel'
             }).then((result) => {
@@ -2608,8 +2609,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 text: "Are you sure you want to restore this booking and cancel the refund request?",
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonColor: '#28a745',
-                cancelButtonColor: '#d33',
+                confirmButtonColor: XL.theme.token('--tblr-success'),
+                cancelButtonColor: XL.theme.token('--tblr-danger'),
                 confirmButtonText: 'Yes, Restore',
                 cancelButtonText: 'Cancel'
             }).then((result) => {
@@ -2713,7 +2714,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         title: 'Remarks Required',
                         text: 'Please enter a remark before saving.',
                         confirmButtonText: 'OK',
-                        confirmButtonColor: '#0d6efd',
+                        confirmButtonColor: XL.theme.token('--tblr-primary'),
                     }).then(function () {
                         remarkField.focus();
                     });

@@ -11,7 +11,7 @@
 
         .form-control:focus,
         .form-select:focus {
-            border-color: #80bdff;
+            border-color: var(--tblr-primary);
             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25);
         }
     </style>
@@ -22,7 +22,7 @@
         <div class="row">
             <div class="col-12">
                 <div class="card">
-                    <div class="card-header text-black">
+                    <div class="card-header text-body">
                         <h2 class="mb-0">Add Reference Enquiry</h2>
                     </div>
                     <div class="card-body">
