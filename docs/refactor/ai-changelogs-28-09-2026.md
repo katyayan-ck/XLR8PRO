@@ -449,3 +449,10 @@ Triage of every open bug against HEAD `0386230` (plan approved 28-09); decisions
   and `Person` import; the banking docblock describes the list-only screen. No files deleted.
 - HTTP smoke (one request per process, `xlrm_testing`): user 1 → 200 on the three Org lists, lead, lead source, Imports → Sales,
   OTF list and OTF form; user 40 → 403 on each except Imports → Sales (open by BUG-177, decision D14).
+
+**W15 — tracker accuracy:**
+- Closed with evidence: BUG-019, 028, 030, 033, 045, 061, 106, 107, 109, 111, 119; BUG-090 marked a duplicate of 183.
+- Triage notes and decision numbers on the open ones (009, 056, 062, 069, 083, 092, 095, 101, 122, 153, 161, 173, 177,
+  178, 180, 182, 183, 188, 190, 191); BUG-106 / 109 got entries (they only had index rows).
+- `AdminScreenSmokeTest::KNOWN_BROKEN`: `spares/spare-request/create` removed (it returns 200 now); the list cites BUG-031.
+- `.ai/state/current.md` and the generated bugs index (`ai:refresh-context`): 35 open.
