@@ -651,3 +651,35 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
   - comment-only or `class_exists`-guarded mentions (RBACService, SystemSettingServiceProvider, AccessoryExportService);
   - `ApprovalService` (retired in DEC-063);
   - `ExportController` (BUG-180, logged).
+### DEC-061 | 28-09-2026 | A (platform) | Platform core: Settings, Notify, Chat, Docs (FRS §1–4)
+- **Where and how:** built in Track A (user choice, 28-09), in the Track B style.
+  - `App\Services\Platform\*` services, each the only write path.
+  - Facades in `App\Support\Facades\*`.
+  - `App\Support\Result` `{ok, code, message, data}`.
+  - Events in `App\Events\Platform\*`, traits, Blade components.
+  - Entity types map to model classes through `config/platform.php`, not an enforced morph map, because existing comm rows store class names.
+- **Settings:** extends the existing `xlr8_utils_system_setting` and audit tables.
+  - Scoped overrides (Company → Branch → Desk) live in a new `xlr8_utils_setting_scope` table.
+  - Types: string, int, decimal, bool, json, encrypted. Encrypted values are stored with `Crypt` and never listed.
+  - `SettingsChanged` event plus cache bust; `@setting`, `@feature`, `setting()`, `feature()`; `settings:cache` / `settings:clear`.
+- **Notify:**
+  - A new dispatch master, `xlr8_utils_noty_dispatch` (unique idempotency key).
+  - Inbox rows stay in the existing tables so the mobile v1 API is unchanged: kinds N and M go to `noty_notification` (new `kind` column), kind A to `noty_alert`. New `dispatch_id` and `archived_at` columns.
+  - FCM is sent by a queued job. The actor is not notified unless `notifySelf`; a zero audience returns `ok` with `sent: 0`.
+- **Chat:** on the existing `comm_master` / `comm_thread` (nested set).
+  - New thread columns: `kind` (EVENT / REMARK), `is_internal`, `edited_at`.
+  - New tables `xlr8_utils_comm_subscription` (follow a thread) and `xlr8_utils_comm_remark_read`.
+  - `EntityHistoryService` / `HasCommunications::addHistory()` remain as adapters, so Booking and v1 keep working.
+- **Docs:** the models pointed at non-existent `xlr8_docs_*` tables (the core of BUG-139). They now use the real `xlr8_utils_docs_*` tables.
+  - New document columns: kind (IMAGE / DOCUMENT / INFORMATION), collection, library path (entity / location / category / sub / item / FY), `info_body`.
+  - Entitlements in `docs_access` (user / designation / department / scope / `parent`).
+  - The cart is the user's `_temp` group. Soft delete, with a purge job.
+  - `DocService` stays as the v1 adapter.
+- **Permissions:** new `UTL_{SET,NOTY,CHAT,DOCS}_*` codes (web guard), minted by migration.
+- **Approved-by:** user (28-09 plan) · **Risk:** MED (additive schema; mobile contract preserved) · **Reversal:** migration `down()` plus revert.
+- **Addendum (28-09, at implementation):**
+  - `xlr8_utils_comm_remark_read` was not built (read receipts are not needed by any screen yet).
+  - The permission migration mints every platform process up front (NOTY, CHAT, DOCS, TASK, TCKT, APPR, TPL, COMM). Everyday codes (`UTL_DOCS_VIEW/UPLOAD`, `UTL_TASK_VIEW/CREATE`, `UTL_TCKT_VIEW/CREATE`, `UTL_APPR_VIEW/REQUEST`) go to every designation in one bulk insert; administration codes stay with SuperAdmin.
+  - Access follows the record. Each `config('platform.entities')` row names its view permission (e.g. BOOKING → `SLS_BKNG_VIEW`); a model may refine it with `chatCanView()`. A document attached to a record with no explicit entitlements follows that record; only an unattached library document falls back to `UTL_DOCS_VIEW`.
+  - UAT-visible: the topbar alerts / notifications / messages dropdowns showed hard-coded sample data and now show the user's real inbox (`<x-notify.bell>`). The Utilities menu gains My Inbox (everyone), Documents (`UTL_DOCS_VIEW`) and Settings (`UTL_SETTINGS_VIEW`).
+  - `NotificationService` and `DocService` are now adapters over Notify and Docs (the legacy Google Vision tag path is removed). The v1 envelope and routes are unchanged.

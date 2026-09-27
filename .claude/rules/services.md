@@ -38,17 +38,18 @@ Full health notes: `docs/reference/Shared-Services-Utilities-Catalog.md`.
 | Pricing pipeline & engine | `App\Services\Vehicle\Pricing\*` (`PricingEngineService::getPricing()`) | see `.ai/rules/modules/vehicle-pricing.md` |
 | Accessories | `App\Services\Vehicle\AccessoryService` | |
 | Booking sub-domains | `App\Services\Sales\Booking\Booking{Core,Kyc,Dms,Insurance,Rto,Delivery,Finance,Exchange,Refund,Otf}Service` | each tested |
-| Settings | `App\Services\SystemSettingService` / `SystemSetting::get/set/getByTopic` | |
+| Settings | `App\Services\Platform\Settings\SettingsService` (`Settings` facade, `setting()`, `feature()`, `@setting`, `@feature`) | only write path; dotted keys, typed, scoped (`getFor`), audited; seeds in `config/platform.php` (read by exact key). `SystemSettingService` backs the legacy CRUD screen |
 | Date display | `DateFormatService`, `site_date()`, `@sitedate` | |
-| Entity history (timeline) | `App\Services\Utils\EntityHistoryService`, `HasCommunications` trait | Booking uses `addHistory()` |
-| Notifications / push | `NotificationService` → `FirebaseService` | legacy; rebuilt in Track B |
-| Documents | `DocService` | partly broken (BUG-139); rebuilt in Track B |
+| Chat / timeline | `App\Services\Platform\Chat\ChatService` (`Chat` facade), `HasCommunications`, `<x-chat.thread>` | EVENT vs REMARK; access = `canView()` (entity permission in `config('platform.entities')` or model `chatCanView`); `EntityHistoryService` is the v1 adapter |
+| Notifications / push | `App\Services\Platform\Notify\NotifyService` (`Notify::to()->…->send()`), `<x-notify.bell>` | inbox rows + queued FCM; idempotency key; `NotificationService` is the v1 adapter |
+| Documents | `App\Services\Platform\Docs\DocsService` (`Docs` facade), `HasDocuments`, `<x-docs.uploader>` | only writer of docs tables; `canView()` is the only visibility check; `DocService` is the v1 adapter |
 
 Removed 26-09-2026 (dead, DEC-030): AuthenticationService, BookingStateService, VehicleMasterService,
 SegmentService, PricingService, legacy Chat/Quotes/Task/Docs/Notification/Vehicle helpers. 28-09-2026 (DEC-060): the
 last helpers (`CommonHelper`, `XCommonHelper`, `XpricingHelper`) — `app/Helpers/` no longer exists; never add helper
 classes: put logic in a service, and only one-line aliases in `app/Support/helpers.php`. Legacy
-`ApprovalService` (graph approve/reject) is deprecated — the FRS approval engine is built in Track B.
+`ApprovalService` (graph approve/reject) is deprecated — the FRS approval engine replaces it (DEC-063).
+Platform services (DEC-061) return `App\Support\Result`; a state change goes persist → `Chat::event` → `Notify` → domain event.
 
 ## Anti-patterns
 Business math in controllers · raw org/keyvalue queries · duplicate services · `Model::all()` on big tables ·

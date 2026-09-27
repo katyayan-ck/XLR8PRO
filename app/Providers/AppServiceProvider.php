@@ -64,11 +64,7 @@ class AppServiceProvider extends ServiceProvider
             return new FirebaseService;
         });
 
-        $this->app->singleton(NotificationService::class, function ($app) {
-            return new NotificationService(
-                $app->make(FirebaseService::class)
-            );
-        });
+        $this->app->singleton(NotificationService::class);
 
         // $this->app->singleton(\App\Services\IAM\DataScopeService::class);
         $this->app->singleton(HRJourneyService::class);

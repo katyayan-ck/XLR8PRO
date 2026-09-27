@@ -19,3 +19,45 @@
 - **Smoke:**
   - As user 1: the booking models/variants/colors/branch-locations/locations endpoints, booking create/edit, the insurance/rto/finance/exchange edits and spares create all return 200.
   - As user 40: 403.
+## Platform core: Settings, Notify, Chat, Docs (DEC-061)
+- **Migrations (local, then `xlrm_testing`):**
+  - `2026_09_28_100000_platform_permissions`: UTL processes plus `UTL_*` codes; everyday codes go to all 76 designations in one bulk insert.
+  - `2026_09_28_100100_platform_core_tables`: `setting_scope`, `noty_dispatch`, `comm_subscription`; inbox `kind` / `dispatch_id` / `archived_at`; thread `kind` / `is_internal` / `edited_at`; the docs library columns (documentable nullable).
+- **New services** (`App\Services\Platform\*`): `Settings\SettingsService`, `Notify\{NotifyService, PendingNotification, Audience}`, `Chat\ChatService`, `Docs\DocsService`.
+- **Other new code:**
+  - `App\Support\{Result, Facades\*}`, `App\Events\Platform\*`, `PlatformServiceProvider`.
+  - Jobs `SendPushNotification` and `PurgeDeletedDocuments` (daily 02:30).
+  - Commands `settings:cache` / `settings:clear`.
+- **Adapters** (before → after):
+  - `EntityHistoryService`, `NotificationService` and `DocService` were standalone implementations, broken in places (BUG-139, BUG-181). They are now thin adapters over the platform services; v1 routes and envelope are unchanged.
+  - `HasCommunications` delegates to Chat. `HasDocuments` is new.
+- **Models:**
+  - `Document` / `DocAccess` / `DocGroup` → the real `xlr8_utils_docs_*` tables and pivot.
+  - New `NotificationsMaster`, `NotificationDispatch`; `User::getOrCreateNotificationsMaster()`.
+  - `Notification` / `Alert` gain the new fillable columns.
+  - `CommThread` relations are typed; `is_internal` / `edited_at` casts.
+  - `SystemSetting::flushCache` also forgets the row cache.
+- **Admin** (`routes/backpack/utils.php`; views under `admin/utils/platform`):
+  - My inbox (`utils/inbox`: tabs N/A/M × Inbox/Unread/Read/Archive, mark, open → deep link).
+  - Documents (`utils/docs`: library with path facets, upload / info card, my uploads, cart → pack, pack zip, download through `canView`).
+  - Settings (`utils/settings`: grouped, search, typed edit, secrets masked and kept when left blank, scoped overrides, reset).
+  - Chat endpoints for `<x-chat.composer>`.
+- **Components:** `x-notify.bell`, `x-chat.thread`, `x-chat.composer`, `x-docs.uploader`, `x-docs.preview`, `x-docs.library-path`.
+- **Topbar:** the three dropdowns showed hard-coded sample data; they now render `x-notify.bell` for A/N/M. The dummy "Read" script in `theme-tabler/inc/menu.blade.php` is removed.
+- **Menu:** the Utilities dropdown gains My Inbox (all users), Documents (`UTL_DOCS_VIEW`) and Settings (`UTL_SETTINGS_VIEW`). Keyword Master / Key Values stay under `UTL_SETTINGS_VIEW`.
+- **Fixes found while verifying:**
+  - Settings seeds were read with `config("platform.settings.{$key}")`, which fails for dotted keys. They are now read by exact key; a declared seed type wins over a bare `string` row.
+  - `fileError()` passed `''` as the default, so the MIME allow-list was skipped.
+  - Info-card HTML attributes (e.g. `onclick`) are now stripped.
+  - A record-attached document without entitlements now follows its record, not `UTL_DOCS_VIEW`.
+  - `NotifyService` READ/UNREAD restore archived rows.
+  - v1 `DocController`: upload no longer 500s when there is no entity; the add-to-group rule uses the real table; the zip return type is fixed.
+  - v1 `EntityHistoryController::addThread`: `parent_id` is optional.
+  - v1 `NotificationController`: `sender:id,name` → `id,username,person_code` (`users` has no `name`; the lists 500'd when a sender existed).
+  - `DocService::getAnalytics` reads OwenIt audits.
+- **Bugs:** BUG-139 and BUG-181 fixed; BUG-182 logged (v1 history/docs record access, needs owner approval).
+- **Verification:**
+  - `php -l` and Pint on all touched files; scoped PHPStan shows no new actionable errors (the remaining ones are Sprint 3–5 classes and model-property noise).
+  - 49/49 functional checks on `xlrm_testing` (settings scope/type/reset, notify idempotency / self / audience / mark, chat event / remark / edit / delete / access, docs attach / entitle / library / card / cart / pack / zip, legacy adapters).
+  - v1 API, 15 endpoints as users 1 and 40: all 200/201 with the unchanged envelope.
+  - Admin GET smoke: inbox / docs / settings return 200 for user 1; user 40 gets 200 on inbox / docs and 403 on settings.

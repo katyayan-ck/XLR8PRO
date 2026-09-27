@@ -173,7 +173,7 @@ class EntityHistoryController extends BaseController
             $entity = app("App\\Models\\{$entityType}")->findOrFail($entityId);
             $master = $entity->commMaster ?? $this->historyService->createMaster($entity, $entity->title ?? 'Entity History', null, 'active');
 
-            $parent = $validated['parent_id'] ? CommThread::findOrFail($validated['parent_id']) : null;
+            $parent = ($validated['parent_id'] ?? null) ? CommThread::findOrFail($validated['parent_id']) : null;
 
             $attachments = [];
             if ($request->hasFile('attachments')) {

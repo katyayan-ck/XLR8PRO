@@ -7,19 +7,23 @@ id bigint unsigned PK, type varchar(255), participants longtext, created_at time
 id bigint unsigned PK, entityable_type varchar(255), entityable_id bigint unsigned, title varchar(255)?, description text?, status_id bigint unsigned?, action_id bigint unsigned?, extra_data json?, created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?
 Indexes: (entityable_type,entityable_id), (action_id), (status_id)
 
-## `xlr8_utils_comm_thread` · ~151 rows · model: App\Models\Utilities\CommHistory\CommThread
-id bigint unsigned PK, comm_master_id bigint unsigned, parent_id bigint unsigned?, actor_id bigint unsigned, action_id bigint unsigned?, title varchar(255)?, body text?, extra_data json?, _lft bigint unsigned, _rgt bigint unsigned, depth int unsigned, created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?
-Indexes: (comm_master_id,_lft,_rgt), (action_id), (actor_id), (parent_id)
+## `xlr8_utils_comm_subscription` · ~0 rows · model: —
+id bigint unsigned PK, comm_master_id bigint unsigned, user_id bigint unsigned, created_at timestamp?, updated_at timestamp?
+Indexes: UNIQUE (comm_master_id,user_id)
 
-## `xlr8_utils_docs_access` · ~0 rows · model: —
+## `xlr8_utils_comm_thread` · ~151 rows · model: App\Models\Utilities\CommHistory\CommThread
+id bigint unsigned PK, comm_master_id bigint unsigned, parent_id bigint unsigned?, actor_id bigint unsigned, kind varchar(10), action_id bigint unsigned?, title varchar(255)?, body text?, extra_data json?, _lft bigint unsigned, _rgt bigint unsigned, depth int unsigned, created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?, is_internal tinyint(1), edited_at timestamp?
+Indexes: (comm_master_id,_lft,_rgt), (action_id), (actor_id), (kind), (parent_id)
+
+## `xlr8_utils_docs_access` · ~0 rows · model: App\Models\Utilities\Docs\DocAccess
 id bigint unsigned PK, document_id bigint unsigned, user_id bigint unsigned?, access_type varchar(255)?, access_combo longtext?, created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?
 Indexes: (created_by), (deleted_by), (document_id), (updated_by), (user_id)
 
-## `xlr8_utils_docs_document` · ~0 rows · model: —
-id bigint unsigned PK, documentable_type varchar(255), documentable_id bigint unsigned, title varchar(255), description text?, category_id bigint unsigned?, expiry_date date?, tags longtext?, created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?
-Indexes: (category_id), (created_by), (deleted_by), (documentable_type,documentable_id), (updated_by)
+## `xlr8_utils_docs_document` · ~0 rows · model: App\Models\Utilities\Docs\Document
+id bigint unsigned PK, documentable_type varchar(255)?, documentable_id bigint unsigned?, kind varchar(20), collection varchar(50), title varchar(255), description text?, category_id bigint unsigned?, expiry_date date?, tags longtext?, created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?, path_entity varchar(100)?, path_location varchar(100)?, path_category varchar(100)?, path_sub varchar(100)?, path_item varchar(150)?, fy varchar(9)?, info_body text?, owner_id bigint unsigned?
+Indexes: (category_id), (created_by), (deleted_by), (documentable_type,documentable_id), (updated_by), (owner_id)
 
-## `xlr8_utils_docs_group` · ~0 rows · model: —
+## `xlr8_utils_docs_group` · ~0 rows · model: App\Models\Utilities\Docs\DocGroup
 id bigint unsigned PK, user_id bigint unsigned, name varchar(255), description text?, created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?
 Indexes: (created_by), (deleted_by), (updated_by), (user_id)
 
@@ -40,10 +44,14 @@ id bigint unsigned PK, code varchar(50)?, keyword varchar(255), description text
 Indexes: UNIQUE (keyword), (created_by), (deleted_by), (keyword), UNIQUE (keyword), (status), (updated_by), UNIQUE (code)
 
 ## `xlr8_utils_noty_alert` · ~0 rows · model: App\Models\Utilities\Noty\Alert
-id bigint unsigned PK, user_id bigint unsigned, sender_id bigint unsigned?, severity varchar(255), title varchar(255), description text, reference_type varchar(255)?, reference_id bigint unsigned?, is_read tinyint(1), read_at timestamp?, is_sent_via_fcm tinyint(1), sent_at timestamp?, payload longtext?, metadata longtext?, created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?
-Indexes: (created_at), (created_by), (deleted_by), (is_read), (reference_type,reference_id), (sender_id), (severity), (updated_by), (user_id)
+id bigint unsigned PK, user_id bigint unsigned, sender_id bigint unsigned?, severity varchar(255), title varchar(255), description text, reference_type varchar(255)?, reference_id bigint unsigned?, is_read tinyint(1), read_at timestamp?, is_sent_via_fcm tinyint(1), sent_at timestamp?, payload longtext?, metadata longtext?, created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?, dispatch_id bigint unsigned?, archived_at timestamp?
+Indexes: (created_at), (created_by), (deleted_by), (is_read), (reference_type,reference_id), (sender_id), (severity), (updated_by), (user_id), (dispatch_id)
 
-## `xlr8_utils_noty_master` · ~0 rows · model: —
+## `xlr8_utils_noty_dispatch` · ~0 rows · model: App\Models\Utilities\Noty\NotificationDispatch
+id bigint unsigned PK, kind char(1), title varchar(255), body text?, ref_type varchar(30)?, ref_id bigint unsigned?, channels json?, data json?, template varchar(150)?, idempotency_key varchar(191)?, sender_id bigint unsigned?, recipient_count int unsigned, created_by bigint unsigned?, updated_by bigint unsigned?, created_at timestamp?, updated_at timestamp?
+Indexes: UNIQUE (idempotency_key), (ref_type,ref_id)
+
+## `xlr8_utils_noty_master` · ~0 rows · model: App\Models\Utilities\Noty\NotificationsMaster
 id bigint unsigned PK, user_id bigint unsigned, total_count int unsigned, unread_count int unsigned, created_by bigint unsigned?, updated_by bigint unsigned?, created_at timestamp?, updated_at timestamp?
 Indexes: (created_by), (unread_count), (updated_by), UNIQUE (user_id)
 
@@ -52,8 +60,12 @@ id bigint unsigned PK, sender_id bigint unsigned, receiver_id bigint unsigned, m
 Indexes: (created_at), (created_by), (deleted_by), (is_read), (receiver_id), (sender_id), (sender_id,receiver_id), (updated_by)
 
 ## `xlr8_utils_noty_notification` · ~0 rows · model: App\Models\Utilities\Noty\Notification
-id bigint unsigned PK, user_id bigint unsigned, sender_id bigint unsigned?, type varchar(255), title varchar(255), description text, reference_type varchar(255)?, reference_id bigint unsigned?, is_read tinyint(1), read_at timestamp?, is_sent_via_fcm tinyint(1), sent_at timestamp?, priority varchar(255), category varchar(255)?, payload longtext?, metadata longtext?, created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?
-Indexes: (created_at), (created_by), (deleted_by), (is_read), (priority), (reference_type,reference_id), (sender_id), (type), (updated_by), (user_id)
+id bigint unsigned PK, user_id bigint unsigned, sender_id bigint unsigned?, type varchar(255), kind char(1), title varchar(255), description text, reference_type varchar(255)?, reference_id bigint unsigned?, is_read tinyint(1), read_at timestamp?, is_sent_via_fcm tinyint(1), sent_at timestamp?, priority varchar(255), category varchar(255)?, payload longtext?, metadata longtext?, created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?, dispatch_id bigint unsigned?, archived_at timestamp?
+Indexes: (created_at), (created_by), (deleted_by), (is_read), (priority), (reference_type,reference_id), (sender_id), (type), (updated_by), (user_id), (dispatch_id), (kind)
+
+## `xlr8_utils_setting_scope` · ~0 rows · model: —
+id bigint unsigned PK, setting_key varchar(191), scope_type varchar(20), scope_code varchar(50), value text?, created_by bigint unsigned?, updated_by bigint unsigned?, created_at timestamp?, updated_at timestamp?
+Indexes: UNIQUE (setting_key,scope_type,scope_code)
 
 ## `xlr8_utils_synonyms` · ~24 rows · model: App\Models\Utilities\Synonym
 id bigint unsigned PK, entity_type varchar(64), canonical varchar(128), synonym varchar(128), is_active tinyint(1), created_at timestamp?, created_by bigint unsigned?, updated_at timestamp?, updated_by bigint unsigned?, deleted_at timestamp?, deleted_by bigint unsigned?

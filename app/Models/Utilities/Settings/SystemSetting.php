@@ -131,6 +131,7 @@ class SystemSetting extends BaseModel
     public static function flushCache(string $key): void
     {
         Cache::forget('setting.'.$key);
+        Cache::forget('setting.row.'.$key); // Platform SettingsService row cache (DEC-061)
     }
 
     /**

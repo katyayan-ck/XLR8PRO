@@ -3,198 +3,95 @@
 namespace App\Services;
 
 use App\Models\User;
-use App\Models\Utilities\Docs\DocAccess;
 use App\Models\Utilities\Docs\DocGroup;
 use App\Models\Utilities\Docs\Document;
-use App\Services\Utils\EntityHistoryService;
-use Google\Cloud\Vision\V1\ImageAnnotatorClient;
+use App\Services\Platform\Chat\ChatService;
+use App\Services\Platform\Docs\DocsService;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
-use Throwable;
-use ZipArchive;
+use OwenIt\Auditing\Models\Audit;
+use RuntimeException;
 
+/**
+ * Legacy document API kept as a thin adapter over the Docs platform service (DEC-061) for the
+ * mobile v1 docs endpoints. New code uses the Docs facade. BUG-139: the old implementation wrote
+ * to non-existent tables and called missing methods (getMyDocuments, ApprovalService::approve).
+ */
 class DocService
 {
-    protected $historyService;
+    public function __construct(private readonly DocsService $docs) {}
 
-    protected $notificationService;
-
-    protected $rbacService;
-
-    protected $approvalService;
-
-    protected $settingService;
-
-    public function __construct(
-        EntityHistoryService $historyService,
-        NotificationService $notificationService,
-        RBACService $rbacService,
-        ApprovalService $approvalService,
-        SystemSettingService $settingService
-    ) {
-        $this->historyService = $historyService;
-        $this->notificationService = $notificationService;
-        $this->rbacService = $rbacService;
-        $this->approvalService = $approvalService;
-        $this->settingService = $settingService;
-    }
-
-    public function upload(array $data, $entity = null): Document
+    /** @param  array<string, mixed>  $data */
+    public function upload(array $data, ?Model $entity = null): Document
     {
-        try {
-            $categoryId = KeywordValueService::getValueId('doc_categories', $data['category_key']);
+        $meta = ['title' => $data['title'] ?? null, 'description' => $data['description'] ?? null, 'expiry_date' => $data['expiry_date'] ?? null];
+        $result = isset($data['file'])
+            ? $this->docs->attach($entity, $data['file'], $data['collection'] ?? 'docs', array_filter($meta))
+            : $this->docs->card($meta + ['info_body' => $data['info_body'] ?? $data['description'] ?? ''], $entity);
 
-            $doc = Document::create([
-                'title' => $data['title'],
-                'description' => $data['description'],
-                'category_id' => $categoryId,
-                'expiry_date' => $data['expiry_date'] ?? null,
-            ]);
-
-            if ($entity) {
-                $doc->documentable_type = get_class($entity);
-                $doc->documentable_id = $entity->id;
-                $doc->save();
-            }
-
-            // Upload file
-            if (isset($data['file'])) {
-                $media = $doc->addMedia($data['file'])->toMediaCollection('documents');
-
-                // AI Tagging if enabled and image
-                if ($this->settingService->get('ai_tagging_enabled', false) && in_array($media->mime_type, ['image/jpeg', 'image/png'])) {
-                    $tags = $this->getAiTags($media->getPath());
-                    $doc->update(['tags' => $tags]);
-                }
-            }
-
-            // Log history
-            $master = $doc->commMaster ?? $this->historyService->createMaster($doc, $doc->title, $doc->description);
-            $this->historyService->addThread($master, 'created', 'Document Uploaded');
-
-            // If approval needed
-            if ($data['requires_approval']) {
-                $this->approvalService->initializeApproval('document', [], Auth::user());
-            }
-
-            // Notify on expiry if set
-            if ($doc->expiry_date) {
-                $this->scheduleExpiryNotification($doc);
-            }
-
-            return $doc;
-        } catch (Throwable $e) {
-            Log::error('Document upload failed', ['error' => $e->getMessage()]);
-            throw $e;
+        if (! $result->ok) {
+            throw new RuntimeException($result->message);
         }
-    }
 
-    private function getAiTags(string $path): array
-    {
-        $client = new ImageAnnotatorClient;
-        $image = file_get_contents($path);
-        $response = $client->labelDetection($image);
-        $labels = $response->getLabelAnnotations();
-
-        $tags = [];
-        if ($labels) {
-            foreach ($labels as $label) {
-                $tags[] = $label->getDescription();
-            }
-        }
-        $client->close();
-
-        return $tags;
+        return Document::query()->findOrFail($result->get('id'));
     }
 
     public function hasAccess(User $user, Document $doc): bool
     {
-        if ($doc->created_by === $user->id) {
-            return true;
-        }
-
-        if (DocAccess::where('document_id', $doc->id)->where('user_id', $user->id)->exists()) {
-            return true;
-        }
-
-        if ($this->rbacService->canUserAccess($user, 'document', 'view')) {
-            return true;
-        }
-
-        if ($doc->documentable && method_exists($doc->documentable, 'hasAccess')) {
-            return $doc->documentable->hasAccess($user);
-        }
-
-        return false;
+        return $this->docs->canView($doc->id, $user->id);
     }
 
+    /** @return Collection<int, array<string, mixed>> */
+    public function getMyDocuments(User $user): Collection
+    {
+        return collect($this->docs->mine($user->id));
+    }
+
+    /** @param  array<string, mixed>  $data */
     public function createGroup(array $data): DocGroup
     {
-        return DocGroup::create([
-            'user_id' => Auth::id(),
-            'name' => $data['name'],
-            'description' => $data['description'],
-        ]);
+        return $this->docs->createGroup((int) (backpack_auth()->id() ?? auth()->id()), (string) ($data['name'] ?? ''), $data['description'] ?? null);
     }
 
     public function addToGroup(DocGroup $group, Document $doc): void
     {
-        $group->documents()->attach($doc->id);
+        $this->docs->addToGroup((int) $group->user_id, $group->id, $doc->id);
     }
 
     public function removeFromGroup(DocGroup $group, Document $doc): void
     {
-        $group->documents()->detach($doc->id);
+        $this->docs->removeFromGroup((int) $group->user_id, $group->id, $doc->id);
     }
 
     public function downloadGroupZip(DocGroup $group): string
     {
-        $zipPath = storage_path('app/temp/'.Str::uuid().'.zip');
-        $zip = new ZipArchive;
-        $zip->open($zipPath, ZipArchive::CREATE);
-
-        foreach ($group->documents as $doc) {
-            foreach ($doc->media as $media) {
-                $zip->addFile($media->getPath(), $media->file_name);
-            }
+        $result = $this->docs->zip((int) $group->user_id, $group->id);
+        if (! $result->ok) {
+            throw new RuntimeException($result->message);
         }
 
-        $zip->close();
-
-        return $zipPath;
+        return (string) $result->get('path');
     }
 
+    /** @return Collection<int, array<string, mixed>> */
     public function search(string $query, User $user): Collection
     {
-        return Document::search($query)->where(function ($q) use ($user) {
-            $q->where('created_by', $user->id)
-                ->orWhereHas('accesses', function ($qa) use ($user) {
-                    $qa->where('user_id', $user->id);
-                });
-            // Add RBAC/scope
-        })->get();
+        return collect($this->docs->library(['q' => $query], $user->id)['items'])
+            ->merge(collect($this->docs->mine($user->id))->filter(fn ($d) => str_contains(strtolower($d['name']), strtolower($query))))
+            ->unique('id')->values();
     }
 
+    /** @return array{views: int, downloads: int} */
     public function getAnalytics(User $user): array
     {
-        return [
-            'views' => $user->audits()->where('event', 'viewed')->count(),
-            'downloads' => $user->audits()->where('event', 'downloaded')->count(),
-        ];
+        $audits = fn (string $event) => Audit::query()->where('user_id', $user->id)->where('auditable_type', Document::class)->where('event', $event)->count();
+
+        return ['views' => $audits('viewed'), 'downloads' => $audits('downloaded')];
     }
 
-    private function scheduleExpiryNotification(Document $doc): void
-    {
-        // Queue job for 7 days before expiry
-        // Example: dispatch(new NotifyExpiry($doc))->delay(Carbon::parse($doc->expiry_date)->subDays(7));
-        // In job: $this->notificationService->sendAndLogNotification($doc->created_by_user, 'expiry', 'Document Expiring', 'Expires soon');
-    }
-
+    /** Records the approval on the document's timeline (formal approvals use the Approval service). */
     public function approve(Document $doc, User $approver): void
     {
-        $this->approvalService->approve($doc, $approver);
-        $this->historyService->addThread($doc->commMaster, 'approved', 'Approved');
+        app(ChatService::class)->event($doc, 'APPROVED', 'Approved by '.$approver->display_name, [], $approver->id);
     }
 }

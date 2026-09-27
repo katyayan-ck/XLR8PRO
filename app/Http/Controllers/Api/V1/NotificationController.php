@@ -598,7 +598,7 @@ class NotificationController extends BaseController
             });
 
             $query = Notification::forUser(auth('sanctum')->id())
-                ->with('sender:id,name')
+                ->with('sender:id,username,person_code')
                 ->orderBy($request->get('sort_by', 'created_at'), $request->get('sort_order', 'desc'));
 
             if ($request->filled('type')) {
@@ -741,7 +741,7 @@ class NotificationController extends BaseController
             });
 
             $query = Notification::forUser(auth('sanctum')->id())
-                ->with('sender:id,name')
+                ->with('sender:id,username,person_code')
                 ->unread()
                 ->orderBy($request->get('sort_by', 'created_at'), $request->get('sort_order', 'desc'));
 
@@ -885,7 +885,7 @@ class NotificationController extends BaseController
             });
 
             $query = Alert::forUser(auth('sanctum')->id())
-                ->with('sender:id,name')
+                ->with('sender:id,username,person_code')
                 ->orderBy($request->get('sort_by', 'created_at'), $request->get('sort_order', 'desc'));
 
             if ($request->filled('severity')) {
@@ -1047,7 +1047,7 @@ class NotificationController extends BaseController
             });
 
             $query = Message::forUser(auth('sanctum')->id())
-                ->with(['sender:id,name,avatar_url', 'receiver:id,name'])
+                ->with(['sender:id,username,person_code,avatar', 'receiver:id,username,person_code'])
                 ->orderBy($request->get('sort_by', 'created_at'), $request->get('sort_order', 'desc'));
 
             if ($request->filled('type')) {
@@ -1173,7 +1173,7 @@ class NotificationController extends BaseController
             });
 
             $messages = Message::conversation(auth('sanctum')->id(), $userId)
-                ->with(['sender:id,name,avatar_url', 'receiver:id,name'])
+                ->with(['sender:id,username,person_code,avatar', 'receiver:id,username,person_code'])
                 ->orderBy('created_at', 'desc')
                 ->paginate($perPage);
 

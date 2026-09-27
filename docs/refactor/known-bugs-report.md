@@ -174,7 +174,7 @@ Entry format:
 | BUG-136 | Data-scoping enforcement layer (`DataScopeFilter`, `ScopedCrud`, `RBACService::getAccessibleResources()`) was built against a model (`UserDataScope`) whose table doesn't exist and a service (`App\Services\IAM\DataScopeService`) that was never written, plus undefined `User::userDataScopes()`/`getScopedIds()` and wrong `scopeColumn`s on `Stock`/`XlSpareRequest`. Not live-reachable, but it means **no row-level data scoping is enforced anywhere** | High | FIXED (code); enforcement switch-on OPEN — needs decision | 24-09-2026 | 24-09-2026 (ai-changelogs-24-09-2026.md) |
 | BUG-137 | `UserImporter::createDataScopes()` inserted scope rows via `UserDataScope::insert()` with keys `userid`/`scopetype`/`scopevalue`/`status` into a nonexistent table — any bulk-user-import row with an "Accessible Branches/Departments/Locations" value failed | High | FIXED | 24-09-2026 | 24-09-2026 (ai-changelogs-24-09-2026.md) |
 | BUG-138 | `DocService::hasAccess()` returned `true` for every document attached to an entity (a "Placeholder" that discarded the scope lookup) — any user passing the earlier checks' fall-through got access | High (unreachable today: `DocService` can't construct) | FIXED | 24-09-2026 | 24-09-2026 (ai-changelogs-24-09-2026.md) |
-| BUG-139 | `DocService`: `search()` return type `Collection` is unimported (resolves to nonexistent `App\Services\Collection`); `approve()` calls `ApprovalService::approve()`, which doesn't exist; `getAiTags()` needs the uninstalled `google/cloud-vision` package | Medium (unreachable today) | PARTIALLY FIXED — (1) fixed; (2)/(3) OPEN | 24-09-2026 | — |
+| BUG-139 | `DocService`: `search()` return type `Collection` is unimported (resolves to nonexistent `App\Services\Collection`); `approve()` calls `ApprovalService::approve()`, which doesn't exist; `getAiTags()` needs the uninstalled `google/cloud-vision` package | Medium (unreachable today) | FIXED (DEC-061) | 24-09-2026 | 28-09-2026 |
 | BUG-140 | `app/Models_backup/User.php` declares `App\Models\User`; `phpstan.neon` scans all of `app/`, so Larastan resolves the stale backup class and reports false "undefined method" errors (e.g. `isSuperAdmin()`) app-wide | Low (tooling only; no runtime effect) | FIXED (PHPStan config) — deleting the directory still pending sign-off | 24-09-2026 | 25-09-2026 |
 | BUG-141 | `App\Models\XlSpareRequest` (+ `XlSpareRequestDetail`) live in `app/Models/Module/Spare/` but declare `namespace App\Models` — PSR-4 mismatch, class can't autoload; nothing else references it | Low | FIXED | 24-09-2026 | 24-09-2026 |
 | BUG-142 | `CalculatePricingSessionJob` had output before `<?php`, breaking `declare(strict_types=1)` — the pricing "Calculate" dispatch always fataled | Critical | FIXED | 24-09-2026 | 24-09-2026 |
@@ -215,6 +215,8 @@ Entry format:
 | BUG-178 | Pricing engine ignores imported dealer charges: `dealerCharges()` reads narrow rows (`charge_name`/`amount`) while the importer writes the spec's WIDE columns (CP-06), so the pricing JSON's dealer charges total 0; `scopeHit()` checks a `model` column (table has `model_code`), so model scope is never applied | High | OPEN (price-changing fix — owner approval) | 27-09-2026 | — |
 | BUG-179 | Two divergent accessory importers: the wired one (`import:vehicle-accessories` → `AccessoryImportService`) reads one sheet without type/discount/permit, soft-disables the whole catalogue and echoes every row; the spec-shaped one (`AccessoryService::importExcel*`: typed sheets, discount, permit, hard purge) has no caller | Medium | OPEN (owner: which importer is authoritative) | 27-09-2026 | — |
 | BUG-180 | `/export/vehicle-data` (`ExportController::vehicleDataExcel`) references `App\Exports\VehicleDataExport`, which does not exist — the route 500s | Low | OPEN | 28-09-2026 | — |
+| BUG-181 | `User::getOrCreateNotificationsMaster()` and the `NotificationsMaster` model did not exist, so the v1 notification endpoints (unread count, mark-all-read) and every legacy `NotificationService` send 500'd; the docs models pointed at non-existent tables (`xlr8_docs_*`, pivot `doc_group_documents`) and the v1 add-to-group rule validated against `documents` | High | FIXED (DEC-061) | 28-09-2026 | 28-09-2026 |
+| BUG-182 | v1 `docs/upload` and `history/{entityType}/{entityId}` (+ `/thread`) resolve `App\Models\{entityType}` straight from request input and never check the caller may see that record — any signed-in mobile user can read or append history on, or attach files to, any model row | High | OPEN (auth change — owner approval) | 28-09-2026 | — |
 | BUG-175 | Person contacts/addresses/banking: the per-person type-slot unique keys include soft-deleted rows, so re-adding a deleted slot (e.g. a new Primary address after deleting one) failed with a duplicate-key 500; promoting a non-Alternate row to Primary while Alternate was used also collided | High | FIXED (DEC-053) | 27-09-2026 | 27-09-2026 |
 
 Not a bug (false positive, listed for reference): the original `infer-conventions` sweep flagged
@@ -1668,7 +1670,8 @@ guessed at.
 
 ### BUG-139 — Three further `DocService` defects
 
-- **Status:** PARTIALLY FIXED — item (1) fixed; (2) and (3) still OPEN (was: OPEN (documented only))
+- **Status:** FIXED (28-09-2026, DEC-061) (was: PARTIALLY FIXED — item (1) fixed; (2) and (3) OPEN)
+- **Fixed:** 28-09-2026 — `DocService` is now a thin adapter over `App\Services\Platform\Docs\DocsService` (docs tables + media library). (2) `approve()` records an `APPROVED` event on the document's timeline; formal document approval moves to the approval engine topic `DOCS.APPROVAL` (DEC-063). (3) the Google Vision AI-tag path was removed (no dependency added). [ai-changelogs-28-09-2026.md](ai-changelogs-28-09-2026.md)
 - **Severity:** Medium — unreachable until `DocService` can construct.
 - **Found:** 24-09-2026, IDE diagnostics while fixing BUG-138.
 - **Modified:** 24-09-2026 22:00 — (1) fixed: `Illuminate\Support\Collection` imported. `DocService` now constructs, so (2) and (3) are reachable and still need their decisions (locked Approval Engine; dependency approval).
@@ -2035,3 +2038,21 @@ guessed at.
 
 - **Status:** OPEN (28-09-2026). Found by the DEC-060 class-resolution sweep.
 - **Evidence:** `routes/web.php` `export/vehicle-data` → `ExportController::vehicleDataExcel()` → `new VehicleDataExport`. No such class exists under `app/Exports`.
+
+### BUG-181 — Notification master and docs tables missing behind the v1 API
+
+- **Status:** FIXED (28-09-2026, DEC-061)
+- **Severity:** High — the mobile notification counters/mark-all-read and every document endpoint failed.
+- **Found:** 28-09-2026, while rebuilding Notify and Docs (Sprint 2).
+- **Where:** `app/Models/User.php`, `app/Services/NotificationService.php`, `app/Models/Utilities/Docs/*`, `app/Http/Controllers/Api/V1/DocController.php`.
+- **Description:** `NotificationService` and the v1 `NotificationController` call `$user->getOrCreateNotificationsMaster()`, which did not exist (no `NotificationsMaster` model either). The docs models used table names that do not exist (`xlr8_docs_document`, `xlr8_docs_access`, `xlr8_docs_group`, pivot `doc_group_documents`) — the real tables are `xlr8_utils_docs_*`; `DocController::addToGroup` validated `exists:documents,id`.
+- **Fix:** `NotificationsMaster` model (`xlr8_utils_noty_master`) + `User::getOrCreateNotificationsMaster()`; `NotificationService` delegates to `NotifyService`; docs models set their real tables and pivot keys; the rule validates `exists:xlr8_utils_docs_document,id`. [ai-changelogs-28-09-2026.md](ai-changelogs-28-09-2026.md)
+
+### BUG-182 — v1 history/docs endpoints trust a client-supplied model class and skip record access
+
+- **Status:** OPEN (28-09-2026) — fix is an auth change, needs owner approval.
+- **Severity:** High — data exposure across records for any authenticated mobile user.
+- **Found:** 28-09-2026, v1 API smoke during DEC-061.
+- **Where:** `app/Http/Controllers/Api/V1/EntityHistoryController.php` (`getHistory`, `addThread`), `app/Http/Controllers/Api/V1/DocController.php` (`upload`).
+- **Description:** `app("App\\Models\\{$entityType}")->findOrFail($entityId)` builds any class under `App\Models` from the URL/body and loads the row with no permission or scope check, so a user can read the timeline of, post to, or attach files to records they cannot open in the admin.
+- **Proposed solution:** accept only entity codes from `config('platform.entities')` (with the legacy class names mapped to them for the app) and gate with `ChatService::canView()` — the same rule the admin chat/docs endpoints already use. Needs the mobile team to confirm the `entityType` values the app sends.
