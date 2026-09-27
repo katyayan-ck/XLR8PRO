@@ -76,7 +76,7 @@ final class SettingsService
     public function set(string $key, mixed $value, ?string $scopeType = null, ?string $scopeCode = null, ?int $actorId = null): Result
     {
         $actorId ??= auth(backpack_guard_name())->id() ?? auth()->id();
-        $row = $this->ensureRow($key);
+        $row = $this->ensureRow($key, $value);
         $type = $this->typeFor($key, $row);
         if ($this->typeOf($row->type) !== $type) {
             $row->forceFill(['type' => $type])->save();
@@ -204,12 +204,18 @@ final class SettingsService
         return Cache::rememberForever("setting.row.{$key}", fn () => SystemSetting::query()->where('key', $key)->first()) ?: null;
     }
 
-    /** The row for a key, created from the config seed when it does not exist yet. */
-    private function ensureRow(string $key): SystemSetting
+    /** The row for a key, created from the config seed — or, for an undeclared key, typed from its first value. */
+    private function ensureRow(string $key, mixed $firstValue = null): SystemSetting
     {
         Cache::forget("setting.row.{$key}");
         $seed = $this->seed($key);
-        $type = $seed['type'] ?? 'string';
+        $type = $seed['type'] ?? match (true) {
+            is_bool($firstValue) => 'bool',
+            is_int($firstValue) => 'int',
+            is_float($firstValue) => 'decimal',
+            is_array($firstValue) => 'json',
+            default => 'string',
+        };
         $row = SystemSetting::query()->firstOrCreate(['key' => $key], [
             'label' => $seed['label'] ?? $key,
             'type' => $type,

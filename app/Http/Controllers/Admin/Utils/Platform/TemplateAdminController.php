@@ -9,10 +9,10 @@ use App\Services\Platform\Templates\TemplateService;
 use App\Support\Result;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Response;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Prologue\Alerts\Facades\Alert;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Template admin (FRS TPL-09): list / filter, draft editor, preview, version diff, submit /
@@ -120,12 +120,15 @@ class TemplateAdminController extends Controller
         return response()->json($result->toArray());
     }
 
-    public function export(): StreamedResponse
+    public function export(): Response
     {
         $this->gate('UTL_TPL_VIEW');
         $json = json_encode($this->templates->export(), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
-        return response()->streamDownload(fn () => print ($json), 'templates-'.now()->format('Ymd-Hi').'.json', ['Content-Type' => 'application/json']);
+        return response($json, 200, [
+            'Content-Type' => 'application/json',
+            'Content-Disposition' => 'attachment; filename="templates-'.now()->format('Ymd-Hi').'.json"',
+        ]);
     }
 
     public function import(Request $request): RedirectResponse

@@ -778,3 +778,13 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
   - KeyValue `CALL_DISPOSITION` (CONNECTED, NO_ANSWER, BUSY, WRONG_NUMBER, VOICEMAIL, CALLBACK_REQUESTED).
 - **Screens:** templates admin (list, draft editor, preview, version diff, submit / approve / activate), outbox + sandbox viewer with resend, WhatsApp inbox, call log. Components `x-template.preview`, `x-telephony.click-to-call`, `x-whatsapp.inbox|thread|composer`, `x-email.send-panel`.
 - **Approved-by:** user (28-09 plan: sandbox SMS / WhatsApp / telephony, real mail) · **Risk:** MED (new tables; no vendor credentials; the mail default stays the Laravel mailer as decided) · **Reversal:** migration `down()` plus revert.
+
+### DEC-065 | 28-09-2026 | A (platform) | Platform integration: acceptance pack, keyword seeds, rules
+- **Tests:** `tests/Feature/Platform/*`. They use `DatabaseTransactions` on `xlrm_testing` and real users picked from the copy, per the suite convention.
+  - The FRS §11 acceptance pack is one test per item: `PlatformAcceptanceTest`.
+  - Service tests: approval decisions and precedence, the task rights matrix, the ticket SLA clock, template rendering, webhook signature and idempotency.
+  - Item 10 (flip the SMS driver to MSG91) is skipped with its reason until a real SMS vendor driver and credentials exist.
+- **Seed:** KeyValue `ENTITY_ACTIONS` (the Chat event vocabulary), through the keyword services.
+- **Settings:** a key that is not in the seed pack now takes its type from its first value (bool / int / decimal / json / string). A flag such as `quote.csd_enabled` can be created from the admin screen or by code without a deploy (acceptance item 5).
+- **Rules:** a new `.ai/rules/modules/platform.md` (laws, traps, permissions, tests), loaded by path for all platform code.
+- **Approved-by:** user (28-09 plan) · **Risk:** LOW · **Reversal:** revert.

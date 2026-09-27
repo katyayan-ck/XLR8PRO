@@ -1,7 +1,7 @@
 # Current state (keep ≤ 50 lines; update at every checkpoint)
 
 **Branch:** `dev/admin` (working branch). **`stage`** = `6ccaf2a` (dev/admin merged and pushed 27-09-2026, deploys to dev.xceler8.in).
-**Updated:** 27-09-2026.
+**Updated:** 28-09-2026 — dev/admin is 7 commits ahead of stage (DEC-059…065), not pushed.
 
 **Entity services (DEC-050…059), done:**
 - Every data-entry entity has one write path, an `App\Support\Entity\EntityService` subclass whose `fields()` is the only rule set. It covers:
@@ -12,6 +12,18 @@
   - seeders.
 - On update only changed values are validated. The model backstop (`HasColumnTransformations`) transforms only changed attributes and never blanks a value.
 - Engine records (sessions, change flags, snapshots, history, completeness profiles) stay engine-written by design.
+
+**Platform utilities (DEC-060…065, 28-09), done in Track A:**
+- Helpers purged (`app/Helpers` gone).
+- Services: Settings / Notify / Chat / Docs, Task / Ticket, approval engine (topics, rules, power sheet, report), Templates plus Email / SMS / WhatsApp / Telephony.
+  - SMS, WhatsApp and telephony run on sandbox drivers; mail uses the Laravel mailer, with a `log` driver option.
+- Rules: `.ai/rules/modules/platform.md`. Tests: `tests/Feature/Platform`.
+- Open items:
+  - BUG-182: v1 history/docs record access, an auth change.
+  - BUG-183: 36 employees on unknown designation codes.
+  - Real SMS / WhatsApp / telephony vendor drivers are needed before FRS acceptance #10.
+  - No Sales flow calls the utilities yet.
+  - Dead `App\Models\Core\{ApprovalHierarchy, GraphNode, GraphEdge}` await removal sign-off.
 
 **Waiting on the user (left as they are, 27-09):**
 - BUG-173: variant code convention; a fresh vehicle import is pending and needs `gscreds.json`.
@@ -34,6 +46,6 @@
 
 **Deferred until after UAT:** Laravel 13, Excel 4, Permission 8, Firebase 8, PHPUnit 12/13, Swagger 11.
 
-**Verification cadence:** targeted smoke per change; full suite periodically (288 passed, 1 skipped on 27-09); `--group=smoke` sweep before merges.
+**Verification cadence:** targeted smoke per change; full suite periodically (333 passed, 2 skipped on 28-09); `--group=smoke` sweep before merges.
 
-**Environment:** Laragon, PHP 8.4.26 (+redis), MySQL 8.4.3. After schema/data changes, run `php artisan testing:refresh-db --force --bin-dir="D:\laragon\bin\mysql\mysql-8.4.3-winx64\bin"`.
+**Environment:** Laragon, PHP 8.4.26 (+redis), MySQL 8.4.3. After a migration, run `DB_DATABASE=xlrm_testing php artisan migrate`. Do not `testing:refresh-db` until the vehicle import is in (DEC-051); it copies the empty vehicle tables over the test data.

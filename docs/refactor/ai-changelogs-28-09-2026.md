@@ -163,3 +163,19 @@
   - GET smoke: every new screen returns 200 for user 1 and 403 for user 40.
   - Pint clean. PHPStan: two cosmetic notes only.
 
+
+## Platform integration: acceptance pack, seeds, rules (DEC-065)
+- **Tests** (`tests/Feature/Platform/`):
+  - `PlatformAcceptanceTest`: FRS §11 items 1–15; item 10 skipped with its reason (no real SMS vendor driver yet).
+  - `ApprovalServiceTest` (§7.5 decisions, precedence, snapshot, auto-accept), `TaskServiceTest` (rights matrix, inboxes, people rebuild), `TicketServiceTest` (numbering, SLA and pause, edges, breach once), `TemplateServiceTest` (escaping, render errors, fork), `CommsWebhookControllerTest` (401 / duplicate / 404).
+  - Fixtures: `Concerns\PlatformFixtures`.
+- **Migration:** `2026_09_28_140000_platform_entity_actions_keyword` (the Chat action vocabulary), run on `xlrm` and on `xlrm_testing`.
+- **Settings:** an undeclared key takes its type from its first value. Before this, a new flag was typed `string`, so a boolean write failed validation and the flag never changed.
+- **Rules:** new `.ai/rules/modules/platform.md`.
+- **Test-DB incident:**
+  - This session ran `testing:refresh-db` several times, against DEC-051's instruction. That copied the purged (empty) local vehicle masters over `xlrm_testing`, and 8 vehicle tests failed.
+  - Fixed by reloading the five vehicle tables into `xlrm_testing` only from `storage/app/backups/xlrm-vehicle-masters-pre-purge-27-09-2026.sql`. Live `xlrm` is unchanged and still waits for the fresh import.
+  - The platform rules now say to migrate the test copy in place.
+- **Verification:**
+  - Platform tests 44 passed / 1 skipped.
+  - Full suite 333 passed / 2 skipped / 0 failed.
