@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Services\Utils\KeyvalueService;
+use App\Services\Utils\KeywordMasterService;
 use Illuminate\Database\Seeder;
-use App\Models\Core\KeywordMaster;
-use App\Models\Core\Keyvalue;
 
 class KeywordKeyvalueSeeder extends Seeder
 {
@@ -22,16 +22,21 @@ class KeywordKeyvalueSeeder extends Seeder
             'vehicle_status' => ['ACTIVE', 'DISCONTINUED'],
         ];
 
+        // Through the entity services (DEC-050/055). Values belong to a keyword by its code (the old
+        // version matched on a non-existent `keyword_master_id` column and could not run).
+        $masters = app(KeywordMasterService::class);
+        $keyvalues = app(KeyvalueService::class);
+
         foreach ($keywords as $keyword => $values) {
-            $master = KeywordMaster::firstOrCreate(
-                ['keyword' => $keyword],
-                ['details' => ucwords(str_replace('_', ' ', $keyword)), 'status' => 1]
+            $master = $masters->firstOrCreate(
+                ['code' => strtoupper($keyword)],
+                ['keyword' => $keyword, 'details' => ucwords(str_replace('_', ' ', $keyword)), 'status' => 1]
             );
 
             foreach ($values as $key) {
-                Keyvalue::firstOrCreate(
-                    ['keyword_master_id' => $master->id, 'key' => $key],
-                    ['value' => ucwords(strtolower(str_replace('_', ' ', $key))), 'status' => 1]
+                $keyvalues->firstOrCreate(
+                    ['keyword_code' => $master->code, 'code' => $key],
+                    ['key' => $key, 'value' => ucwords(strtolower(str_replace('_', ' ', $key))), 'status' => 1]
                 );
             }
         }

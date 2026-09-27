@@ -108,6 +108,24 @@ abstract class EntityService
     }
 
     /**
+     * The record matching $match (compared in its normalised form), or a new one created from
+     * $match + $values through create() (seeders, idempotent set-ups). An existing record is left
+     * as it is.
+     *
+     * @param  array<string, mixed>  $match
+     * @param  array<string, mixed>  $values
+     * @return TModel
+     *
+     * @throws ValidationException
+     */
+    public function firstOrCreate(array $match, array $values = []): Model
+    {
+        $normalised = array_intersect_key($this->normalise($match), $match);
+
+        return $this->model()::query()->where($normalised)->first() ?? $this->create($match + $values);
+    }
+
+    /**
      * Normalise then validate. Returns only defined fields, transformed.
      *
      * @param  array<string, mixed>  $input

@@ -1,61 +1,39 @@
 # Current state (keep ≤ 50 lines; update at every checkpoint)
 
-**Branch:** `dev/admin` (our working branch; kept in sync with `stage`). **Updated:** 27-09-2026.
+**Branch:** `dev/admin` (working branch). **`stage`** = `6ccaf2a` (dev/admin merged and pushed 27-09-2026, deploys to dev.xceler8.in).
+**Updated:** 27-09-2026.
 
-**Booking-team merge done (DEC-041):**
-- `origin/stage` (93 commits) was merged with our Track A work into `stage` (`0116ec0`), then `stage` into `dev/admin` (`f34e2c5`). Both are pushed.
-- `feature/integrations` and `refactor/admin-permissions-formrequest-restructure` were deleted. Local backup tags: `backup/feature-integrations-pre-merge`, `backup/stage-local-pre-merge`.
-- **Pending (needs user OK):** `php artisan migrate` on local `xlrm` for the booking team's 5 migrations + `align_sale_type`, then `testing:refresh-db`. The `sales/booking` list 500s until then (`referee_model` column).
-- Their menu still has ~37 visible links without routes (Sales/CRM/Accounts: `booking/dummy`, `crm-sales/*`, `accounts/manager/*`, …). This is the booking team's area.
+**Entity services (DEC-050…059), done:**
+- Every data-entry entity has one write path, an `App\Support\Entity\EntityService` subclass whose `fields()` is the only rule set. It covers:
+  - vehicle masters, Org masters, Person (+ contacts/addresses/banking), Employee, User, UserScope;
+  - keyword masters/values;
+  - pricing rules / add-ons / discounts / dealer charges / prices;
+  - `VehicleService` (price-list stubs, Vehicle Info);
+  - seeders.
+- On update only changed values are validated. The model backstop (`HasColumnTransformations`) transforms only changed attributes and never blanks a value.
+- Engine records (sessions, change flags, snapshots, history, completeness profiles) stay engine-written by design.
 
-**UAT (target ~30-09-2026, with the booking-team merge):**
-- Scope: Org/HR/User admin plus Vehicle master and Pricing (DEC-034). Sales is owned by the other team, so we don't touch it.
-- Done:
-  - User bulk importer fixed, web import page (DEC-035/036).
-  - Standalone HR create/edit retired; Brand, booking reports, Spares and Price List hidden (DEC-037/038).
-  - In-scope smoke: 64 of 65 screens return 200/302; the only 500 was Brand, now redirected.
-
-**Sales-area merge note (for the booking-team merge).** This branch changed these Sales files since `280d052`; check them for conflicts:
-- `BookingCrudController`: `editRefund()` (refund-details edit).
-- `BookingCoreService`: `store()` `dd()` replaced by log + rethrow; `update()` keeps `col_type`.
-- `BookingOtfService`: VOTF branch fallback via the consultant's `primary_branch_code` (BUG-161).
-- `BookingRefundService`: `applyRefundDetailsEdit()`.
-- `routes/backpack/booking.php`: refund-edit route; dead routes removed.
-- Migration `2026_09_26_120000_add_missing_columns_to_xlr8_booking_master` (BUG-104).
-- Deleted as dead: `oldImportEnquiriesJob`, `show-invoiced.blade.php`.
-- `menu_items.blade.php` Sales section: Reports and Price List hidden (Blade comments).
-
-After the merge: run `php artisan test --compact` plus a smoke of `sales/*` as users 1 and 40, then triage.
-
-**Track B:** paused after B0 (DEC-033). Resume from xceler8 `d9009db`.
-
-**Users & RBAC workbook (DEC-040):** run `php artisan users:export-rbac` or use Users → Bulk import → Export. Edit the file, then re-import it. An unchanged re-import is a no-op.
-
-**Done 27-09 (DEC-042…047):**
-- BUG-055 guard fix.
-- 34 role-less users disabled.
-- Dump codes corrected.
-- IT department.
-- IST kept.
-- composer.json trimmed for PHP 8.4 (fast autoload).
-- Dead-code follow-ups.
-- `dev/admin` is ahead of `stage` with all of this.
-
-**Vehicle masters (DEC-050/051):** rules live in the entity services; local vehicle tables purged, awaiting a fresh import (needs gscreds.json). Keep xlrm_testing as is until then.
-
-**Waiting on the user:**
-- OK to merge `dev/admin` → `stage`? Merging deploys to dev.xceler8.in; PHP 8.4 is confirmed there.
+**Waiting on the user (left as they are, 27-09):**
+- BUG-173: variant code convention; a fresh vehicle import is pending and needs `gscreds.json`.
+- BUG-177: which permission gates the Imports menu / `imports/admin`.
+- BUG-178: the engine ignores WIDE dealer charges and the model-scope column (price-changing fix).
+- BUG-179: which accessory importer is authoritative. The accessories entity services wait on this.
+- `ProductionRBACSeeder` test users are broken (DEC-059).
 - Data scoping switch-on (BUG-083).
-- Rotate the Google service-account key once the code is final (user decision; history purge needs approval).
+- Google service-account key rotation (history purge needs approval).
 
 **For the booking team:**
-- BUG-168: routes skipping their permission checks.
-- About 37 visible menu links with no routes.
+- BUG-168: routes skipping permission checks.
+- About 37 menu links with no routes.
 - BUG-153: chassis status rule.
 - BUG-030: XCommonHelper.
 
+**Local data:** vehicle master tables in `xlrm` purged (DEC-051), awaiting a fresh import. Keep `xlrm_testing` as is until then; both have the DEC-055 keyword masters migrated.
+
+**Track B:** paused after B0 (DEC-033). Resume from xceler8 `d9009db`.
+
 **Deferred until after UAT:** Laravel 13, Excel 4, Permission 8, Firebase 8, PHPUnit 12/13, Swagger 11.
 
-**Environment:** Laragon, PHP 8.4.26 (+redis), MySQL 8.4.3, Redis + Mailpit available.
-After local schema or data changes, run `php artisan testing:refresh-db --force --bin-dir="D:\laragon\bin\mysql\mysql-8.4.3-winx64\bin"`.
-Tests: see the latest changelog.
+**Verification cadence:** targeted smoke per change; full suite periodically (288 passed, 1 skipped on 27-09); `--group=smoke` sweep before merges.
+
+**Environment:** Laragon, PHP 8.4.26 (+redis), MySQL 8.4.3. After schema/data changes, run `php artisan testing:refresh-db --force --bin-dir="D:\laragon\bin\mysql\mysql-8.4.3-winx64\bin"`.

@@ -8,7 +8,7 @@ Indexes: (approver_id), (created_by), (deleted_by), (topic,level), (updated_by)
 id bigint unsigned PK, code varchar(255), branch_code varchar(10)?, name varchar(255), short_name varchar(255)?, description text?, phone varchar(255)?, email varchar(255)?, address text?, city varchar(255)?, state varchar(255)?, pincode varchar(255)?, country varchar(255), latitude decimal(10,8)?, longitude decimal(11,8)?, is_head_office tinyint(1), is_active tinyint(1), created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?
 Indexes: (code), UNIQUE (code), (is_active), (is_active), (code), (created_by), (updated_by), (branch_code)
 
-## `xlr8_admin_department` · ~6 rows · model: App\Models\Admin\Department
+## `xlr8_admin_department` · ~7 rows · model: App\Models\Admin\Department
 id bigint unsigned PK, code varchar(255), name varchar(255), description text?, parent_department_code varchar(10)?, branch_code varchar(10)?, head_code varchar(10)?, is_active tinyint(1), created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?
 Indexes: (branch_code), (code), UNIQUE (code), (is_active), (parent_department_code), (is_active), (code), (created_by), (parent_department_code), (updated_by)
 

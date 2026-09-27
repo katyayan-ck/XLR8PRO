@@ -616,3 +616,17 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
   - profiles (detect stubs and completeness flags);
   - change flags, affected rows, snapshots, sessions.
 - **Approved-by:** user (DEC-050 roll-out, "continue") · **Risk:** MED (Vehicle Info names now Title Case; bad cells reject rows) · **Reversal:** revert.
+
+### DEC-059 | 27-09-2026 | A3 | Seeders write through the entity services and are idempotent (DEC-050 roll-out, last group)
+- **`EntityService::firstOrCreate($match, $values)`:** matches on the normalised values, else creates through `create()` (validated); an existing record is never changed.
+- **Converted seeders:**
+  - **`ItDepartmentSeeder`** (runs on deploy through its migration): Department/Division/Employee services and `UserScopeService::grant()`.
+  - **`MasterDataSeeder`** (the default `db:seed` path):
+    - Before, it **truncated every Org and vehicle master table**, the roles table (designations) included, then bulk-inserted demo rows. Running `db:seed` on a real database wiped it.
+    - Now each row is found by code or created through its service; a rejected row is reported.
+  - **`SuperAdminSeeder`:** Person/User services, username `sup001`. It assigns the real `superadmin` role; the old `super_admin` role does not exist, so it failed.
+  - **`KeywordKeyvalueSeeder`, `SiteSettingSeeder`:** these matched on a non-existent `keyword_master_id` column and could not run. They now go through the keyword services by keyword code + code.
+  - **`CrmStatusSeeder`, `EnumToKeyValueSeeder`:** keyword services.
+- **Verified:** each seeder was run twice inside a rolled-back transaction on `xlrm_testing`. Both passes succeed and the second creates nothing.
+- **Not converted:** `ProductionRBACSeeder::createTestUsers()`. It writes columns and pivot tables that no longer exist (`email_primary`, `person_id`, `designation_id`, users `email`, employee branch/department pivots) and hard-codes real names and phone numbers, so it cannot run. Rewriting it means designing new demo users (owner's call). The IAM seeders (permissions/roles) are outside the entity rule.
+- **Approved-by:** user ("continue" — DEC-050 roll-out) · **Risk:** LOW (seeders are fresh-install / idempotent) · **Reversal:** revert.
