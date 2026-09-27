@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use DataTables, Auth;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
-use App\Models\Traits\HasHashedMediaTrait;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 use App\Models\BaseModel;

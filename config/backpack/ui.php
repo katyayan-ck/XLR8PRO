@@ -32,8 +32,9 @@ return [
 
     'show_getting_started' => env('APP_ENV') == 'local',
 
+    // Shared UI layer (DEC-066): version-pinned, cached locally by Basset; initialised by public/js/xl-ui.js
+    // styles of the shared UI layer live in config/backpack/theme-tabler.php (the theme key wins)
     'styles' => [
-
     ],
 
     'mix_styles' => [
@@ -43,7 +44,8 @@ return [
     ],
 
     'scripts' => [
-
+        'https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js',
+        'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js',
     ],
 
     'mix_scripts' => [

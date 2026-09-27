@@ -31,7 +31,7 @@
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label class="form-label text-muted">Receipt Date</label>
-                                <input type="text" class="form-control" value="{{ \Carbon\Carbon::parse($receipt->date)->format('d-m-Y') }}" readonly>
+                                <input type="text" class="form-control" value="{{ site_date($receipt->date) }}" readonly>
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label class="form-label text-muted">Issued For Location</label>
@@ -131,7 +131,7 @@
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label class="form-label text-muted">Transaction Date</label>
-                                <input type="text" class="form-control" value="{{ $receipt->trans_date ? \Carbon\Carbon::parse($receipt->trans_date)->format('d-m-Y') : 'N/A' }}" readonly>
+                                <input type="text" class="form-control" value="{{ site_date($receipt->trans_date) }}" readonly>
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label class="form-label text-muted">Bank Name</label>

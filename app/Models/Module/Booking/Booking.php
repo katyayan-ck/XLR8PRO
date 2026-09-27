@@ -4,7 +4,7 @@ namespace App\Models\Module\Booking;
 
 use App\Models\Admin\Branch;
 use App\Models\BaseModel;
-use App\Models\EnumMaster;
+use App\Models\Vehicle\Segment;
 use App\Models\Traits\HasCommunications;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -34,7 +34,7 @@ class Booking extends BaseModel implements HasMedia
 
     public function segment()
     {
-        return $this->belongsTo(EnumMaster::class, 'segment_id', 'id');
+        return $this->belongsTo(Segment::class, 'segment_code', 'code');
     }
 
     /**

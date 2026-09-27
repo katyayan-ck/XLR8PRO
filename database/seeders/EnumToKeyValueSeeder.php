@@ -2,8 +2,10 @@
 
 namespace Database\Seeders;
 
-use App\Models\Utilities\KeyValue\KeywordMaster;
 use App\Models\Utilities\KeyValue\Keyvalue;
+use App\Models\Utilities\KeyValue\KeywordMaster;
+use App\Services\Utils\KeyvalueService;
+use App\Services\Utils\KeywordMasterService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -21,13 +23,13 @@ class EnumToKeyValueSeeder extends Seeder
             $keywordName = trim($col->name ?? $keywordCode);
 
             $master = KeywordMaster::where('keyword', $keywordName)->first()
-                ?? KeywordMaster::firstOrCreate(
+                ?? app(KeywordMasterService::class)->firstOrCreate(
                     ['code' => $keywordCode],
                     [
-                        'keyword'      => $keywordName,
-                        'description'  => $col->details ?? $keywordName,
-                        'is_active'    => true,
-                        'is_recursive' => (int)($col->recursive ?? 0) === 1,
+                        'keyword' => $keywordName,
+                        'description' => $col->details ?? $keywordName,
+                        'is_active' => true,
+                        'is_recursive' => (int) ($col->recursive ?? 0) === 1,
                     ]
                 );
 
@@ -36,14 +38,14 @@ class EnumToKeyValueSeeder extends Seeder
             $added = 0;
             foreach ($values as $val) {
                 $valueText = trim($val->value ?? '');
-                $rawCode   = trim($val->value_code ?? $valueText);
+                $rawCode = trim($val->value_code ?? $valueText);
 
                 // Generate safe short code (max 80 chars)
                 $code = strtoupper($rawCode);
                 if (empty($code) || $code === '0' || $code === 'NULL' || strlen($code) > 80) {
                     $code = strtoupper(Str::slug($valueText, '_'));
                     if (empty($code) || strlen($code) > 80) {
-                        $code = 'VAL_' . strtoupper(Str::random(8));
+                        $code = 'VAL_'.strtoupper(Str::random(8));
                     }
                 }
 
@@ -53,24 +55,26 @@ class EnumToKeyValueSeeder extends Seeder
                 while (Keyvalue::where('keyword_code', $master->code)
                     ->where('code', $finalCode)
                     ->exists()) {
-                    $finalCode = substr($code, 0, 70) . '_' . $counter++;
+                    $finalCode = substr($code, 0, 70).'_'.$counter++;
                 }
 
-                $parentId = !empty($val->parent_id) && $val->parent_id != 0 ? $val->parent_id : null;
+                $parentId = ! empty($val->parent_id) && $val->parent_id != 0 ? $val->parent_id : null;
 
-                $created = Keyvalue::firstOrCreate(
+                $created = app(KeyvalueService::class)->firstOrCreate(
                     ['keyword_code' => $master->code, 'code' => $finalCode],
                     [
-                        'value'     => $valueText,
-                        'key'       => trim($val->value_key ?? ''),
+                        'value' => $valueText,
+                        'key' => trim($val->value_key ?? ''),
                         'is_active' => true,
                         'parent_id' => $parentId,
-                        'level'     => 0,
-                        'path'      => '',
+                        'level' => 0,
+                        'path' => '',
                     ]
                 );
 
-                if ($created->wasRecentlyCreated) $added++;
+                if ($created->wasRecentlyCreated) {
+                    $added++;
+                }
             }
 
             echo "✅ {$keywordCode} → {$added} values\n";

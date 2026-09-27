@@ -15,16 +15,74 @@
     <x-backpack::menu-separator title="Configuration" />
 
     {{-- Utilities Section --}}
-    @if (backpack_user() && backpack_user()->can('UTL_SETTINGS_VIEW'))
+    @if (backpack_user())
         <x-backpack::menu-dropdown title="Utilities" icon="la la-wrench" nested="true">
             <a class="dropdown-item d-flex align-items-center justify-content-between"
-                href="{{ backpack_url('utils/keyword-master') }}">
-                <span><i class="la la-tag me-2"></i>Keyword Master</span>
+                href="{{ route('utils.inbox.index') }}">
+                <span><i class="la la-inbox me-2"></i>My Inbox</span>
             </a>
-            <a class="dropdown-item d-flex align-items-center justify-content-between"
-                href="{{ backpack_url('utils/key-value') }}">
-                <span><i class="la la-key me-2"></i>Key Values</span>
-            </a>
+            @if (backpack_user()->can('UTL_TASK_VIEW'))
+                <a class="dropdown-item d-flex align-items-center justify-content-between"
+                    href="{{ route('utils.tasks.index') }}">
+                    <span><i class="la la-tasks me-2"></i>Tasks</span>
+                </a>
+            @endif
+            @if (backpack_user()->can('UTL_TCKT_VIEW'))
+                <a class="dropdown-item d-flex align-items-center justify-content-between"
+                    href="{{ route('utils.tickets.index') }}">
+                    <span><i class="la la-life-ring me-2"></i>Tickets</span>
+                </a>
+            @endif
+            @if (backpack_user()->can('UTL_APPR_VIEW'))
+                <a class="dropdown-item d-flex align-items-center justify-content-between"
+                    href="{{ route('utils.approvals.index') }}">
+                    <span><i class="la la-gavel me-2"></i>Approvals</span>
+                </a>
+            @endif
+            @if (backpack_user()->can('UTL_COMM_WA_INBOX'))
+                <a class="dropdown-item d-flex align-items-center justify-content-between"
+                    href="{{ route('utils.whatsapp.index') }}">
+                    <span><i class="la la-whatsapp me-2"></i>WhatsApp</span>
+                </a>
+            @endif
+            @if (backpack_user()->can('UTL_COMM_CALL'))
+                <a class="dropdown-item d-flex align-items-center justify-content-between"
+                    href="{{ route('utils.calls.index') }}">
+                    <span><i class="la la-phone me-2"></i>Calls</span>
+                </a>
+            @endif
+            @if (backpack_user()->can('UTL_COMM_VIEW'))
+                <a class="dropdown-item d-flex align-items-center justify-content-between"
+                    href="{{ route('utils.comms.outbox') }}">
+                    <span><i class="la la-paper-plane me-2"></i>Outbox</span>
+                </a>
+            @endif
+            @if (backpack_user()->can('UTL_TPL_VIEW'))
+                <a class="dropdown-item d-flex align-items-center justify-content-between"
+                    href="{{ route('utils.templates.index') }}">
+                    <span><i class="la la-file-alt me-2"></i>Message templates</span>
+                </a>
+            @endif
+            @if (backpack_user()->can('UTL_DOCS_VIEW'))
+                <a class="dropdown-item d-flex align-items-center justify-content-between"
+                    href="{{ route('utils.docs.index') }}">
+                    <span><i class="la la-folder-open me-2"></i>Documents</span>
+                </a>
+            @endif
+            @if (backpack_user()->can('UTL_SETTINGS_VIEW'))
+                <a class="dropdown-item d-flex align-items-center justify-content-between"
+                    href="{{ route('utils.settings.index') }}">
+                    <span><i class="la la-sliders-h me-2"></i>Settings</span>
+                </a>
+                <a class="dropdown-item d-flex align-items-center justify-content-between"
+                    href="{{ backpack_url('utils/keyword-master') }}">
+                    <span><i class="la la-tag me-2"></i>Keyword Master</span>
+                </a>
+                <a class="dropdown-item d-flex align-items-center justify-content-between"
+                    href="{{ backpack_url('utils/key-value') }}">
+                    <span><i class="la la-key me-2"></i>Key Values</span>
+                </a>
+            @endif
         </x-backpack::menu-dropdown>
     @endif
 

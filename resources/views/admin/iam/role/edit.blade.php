@@ -49,7 +49,7 @@
                                     </div>
                                     <div class="col-md-3">
                                         <label class="form-label fw-bold">Created At</label>
-                                        <div class="readonly-value">{{ $role->created_at?->format('d-m-Y H:i') ?? '—' }}
+                                        <div class="readonly-value">{{ site_datetime($role->created_at, '—') }}
                                         </div>
                                     </div>
                                 </div>

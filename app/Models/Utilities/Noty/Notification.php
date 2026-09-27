@@ -26,6 +26,9 @@ class Notification extends BaseModel
         'category',
         'payload',
         'metadata',
+        'kind',
+        'dispatch_id',
+        'archived_at',
         'created_by',
         'updated_by',
     ];
@@ -40,6 +43,7 @@ class Notification extends BaseModel
         'deleted_at' => 'datetime',
         'read_at' => 'datetime',
         'sent_at' => 'datetime',
+        'archived_at' => 'datetime',
     ];
 
     // ========== RELATIONSHIPS ==========
@@ -139,7 +143,7 @@ class Notification extends BaseModel
 
     public function getDeepLink(): ?string
     {
-        if (!$this->payload || !isset($this->payload['deep_link'])) {
+        if (! $this->payload || ! isset($this->payload['deep_link'])) {
             return null;
         }
 
@@ -148,7 +152,7 @@ class Notification extends BaseModel
 
     public function getAction(): ?string
     {
-        if (!$this->payload || !isset($this->payload['action'])) {
+        if (! $this->payload || ! isset($this->payload['action'])) {
             return null;
         }
 

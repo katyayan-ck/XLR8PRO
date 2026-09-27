@@ -4,7 +4,7 @@
             <strong>{{ $thread->actor?->name ?? $thread->actor?->username ?? 'System' }}</strong>
             <span class="badge bg-info ms-2">{{ $thread->action?->value ?? $thread->title }}</span>
         </div>
-        <small class="text-muted">{{ $thread->created_at->format('d M, Y • h:i A') }}</small>
+        <small class="text-muted">{{ site_datetime($thread->created_at) }}</small>
     </div>
 
     <h6 class="mt-1 mb-2">{{ $thread->title }}</h6>

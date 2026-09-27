@@ -95,6 +95,84 @@ class OrgService
         );
     }
 
+    /**
+     * Active branches as full rows keyed by code (`id, code, name, short_name`), for dropdowns
+     * that need more than the code => name map of branches() (DEC-060, replaced CommonHelper).
+     *
+     * @return array<string, array{id: int, code: string, name: string, short_name: ?string}>
+     */
+    public static function branchRows(): array
+    {
+        return Branch::where('is_active', true)
+            ->select('id', 'code', 'name', 'short_name')
+            ->orderBy('name')
+            ->get()
+            ->keyBy('code')
+            ->toArray();
+    }
+
+    /**
+     * Active locations as full rows, optionally of one branch (DEC-060).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public static function locationRows(?string $branchCode = null): array
+    {
+        return Location::where('is_active', true)
+            ->when($branchCode, fn ($q) => $q->where('branch_code', $branchCode))
+            ->orderBy('name')
+            ->get()
+            ->toArray();
+    }
+
+    /**
+     * Places (cities/districts) under a state in the pincode master (`bmpl_pincodes.parent`).
+     *
+     * @return Collection<int, PinCodes>
+     */
+    public static function locationsByState(int|string $stateId): Collection
+    {
+        return PinCodes::where('parent', $stateId)->get(['id', 'name']);
+    }
+
+    /**
+     * Service branches for workshop screens: active locations flagged `is_workshop`, keyed by id
+     * (DEC-060 — replaced XCommonHelper::getServiceBranch(), which read a non-existent column).
+     *
+     * @return array<int, array{id: int, name: string}>
+     */
+    public static function serviceBranches(): array
+    {
+        return Location::where('is_active', true)
+            ->where('is_workshop', true)
+            ->orderBy('name')
+            ->get(['id', 'name'])
+            ->mapWithKeys(fn ($l) => [$l->id => ['id' => $l->id, 'name' => $l->name]])
+            ->all();
+    }
+
+    /**
+     * People picker for tasks / tickets (FRS §5.2 "team picker sourced from Org"): active users who
+     * have an employee record, labelled "Name (Branch · Designation)", sorted by name.
+     *
+     * @return array<int, string> user id => label
+     */
+    public static function teamOptions(): array
+    {
+        return Cache::remember('org.team_options', self::CACHE_TTL, fn () => User::query()
+            ->with(['person', 'employee'])
+            ->where('is_active', true)
+            ->whereHas('employee')
+            ->get(['id', 'username', 'person_code', 'employee_code'])
+            ->mapWithKeys(function (User $u) {
+                $context = implode(' · ', array_filter([$u->employee?->primary_branch_code, $u->employee?->designation_code]));
+
+                return [$u->id => $context === '' ? $u->display_name : "{$u->display_name} ({$context})"];
+            })
+            ->sort()
+            ->all());
+    }
+
     public static function departments(): array
     {
         return Cache::remember(
@@ -314,18 +392,6 @@ class OrgService
     }
 
     // ── User Query Helpers ───────────────────────────────────────────────
-    public static function usersByPost(string $postCode, string $branchCode = 'ALL', string $locationCode = 'ALL'): array
-    {
-        return User::whereHas('posts', function ($q) use ($postCode) {
-            $q->where('xlr8_iam_roles.post_code', $postCode);   // ← qualified
-        })
-            ->when($branchCode !== 'ALL', fn ($q) => $q->whereHas('branches', fn ($b) => $b->where('code', $branchCode)))
-            ->when($locationCode !== 'ALL', fn ($q) => $q->whereHas('locations', fn ($l) => $l->where('code', $locationCode)))
-            ->select('id', 'username', 'employee_code')
-            ->get()
-            ->toArray();
-    }
-
     // ── Single lookups ───────────────────────────────────────────────────
     public static function branchName(string $code): string
     {

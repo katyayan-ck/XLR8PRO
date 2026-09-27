@@ -2,8 +2,7 @@
 
 namespace App\Http\Controllers\Admin\Sales\Booking;
 
-use App\Helpers\CommonHelper;
-use App\Helpers\XCommonHelper;
+use App\Services\Vehicle\VehicleService;
 use App\Http\Requests\BookingRequest;
 use App\Models\Admin\Branch;
 use App\Models\Admin\Location;
@@ -674,10 +673,10 @@ class BookingCrudController extends CrudController
             'location' => 'N/A',
             'flocation' => 'N/A',
 
-            'segments' => CommonHelper::getVehicleSegments() ?? [],
-            'models' => CommonHelper::getVehicleModels($booking->segment_code ?? null) ?? [],
-            'variants' => CommonHelper::getVehicleVariants($booking->model_code ?? null) ?? [],
-            'colors' => CommonHelper::getVehicleColors($booking->variant_code ?? null) ?? [],
+            'segments' => app(VehicleService::class)->segmentOptions() ?? [],
+            'models' => app(VehicleService::class)->modelOptionsFor($booking->segment_code ?? null) ?? [],
+            'variants' => app(VehicleService::class)->variantOptions($booking->model_code ?? null) ?? [],
+            'colors' => app(VehicleService::class)->colorOptions($booking->variant_code ?? null) ?? [],
             'saleconsultants' => OrgService::usersByDesignation('CNS'),
             'allusers' => OrgService::usersByDepartment('SLS'),
 
@@ -685,7 +684,7 @@ class BookingCrudController extends CrudController
             'insurances' => [],
             'rto_rules' => [],
             'dsa_details' => [],
-            'branches' => CommonHelper::getBranches() ?? [],
+            'branches' => OrgService::branchRows() ?? [],
             'locations' => [],
             'accessories_dropdown' => [],
             'enum_master' => [],
@@ -812,7 +811,7 @@ class BookingCrudController extends CrudController
                 'location' => $dsa->dlocation,
             ])->toArray() ?? [];
 
-        $locations = CommonHelper::getLocations($booking->branch_code) ?? [];
+        $locations = OrgService::locationRows($booking->branch_code) ?? [];
         usort($locations, fn ($a, $b) => strcmp(
             ($a['name'] ?? '').' - '.($a['code'] ?? ''),
             ($b['name'] ?? '').' - '.($b['code'] ?? '')
@@ -2542,18 +2541,18 @@ class BookingCrudController extends CrudController
         $data = [];
 
         // ✅ ADD: Models, Variants, Colors for dropdowns
-        $data['segments'] = CommonHelper::getVehicleSegments();
-        $data['models'] = CommonHelper::getVehicleModels($quotation?->segment_code ?? $enquiry?->segment_code ?? null) ?? [];
-        $data['variants'] = CommonHelper::getVehicleVariants($quotation?->model_code ?? $enquiry?->model_code ?? null) ?? [];
-        $data['colors'] = CommonHelper::getVehicleColors($quotation?->variant_code ?? $enquiry?->variant_code ?? null) ?? [];
+        $data['segments'] = app(VehicleService::class)->segmentOptions();
+        $data['models'] = app(VehicleService::class)->modelOptionsFor($quotation?->segment_code ?? $enquiry?->segment_code ?? null) ?? [];
+        $data['variants'] = app(VehicleService::class)->variantOptions($quotation?->model_code ?? $enquiry?->model_code ?? null) ?? [];
+        $data['colors'] = app(VehicleService::class)->colorOptions($quotation?->variant_code ?? $enquiry?->variant_code ?? null) ?? [];
         $data['accessories_dropdown'] = Accessory::getAccessories(
             $quotation?->segment_code ?? $enquiry?->segment_code ?? null,
             $quotation?->model_code ?? $enquiry?->model_code ?? null,
             $quotation?->variant_code ?? $enquiry?->variant_code ?? null
         );
 
-        $data['branches'] = collect(CommonHelper::getBranches())->map(fn ($b) => (object) $b);
-        $data['location'] = collect(CommonHelper::getLocations())->map(fn ($l) => (object) $l);
+        $data['branches'] = collect(OrgService::branchRows())->map(fn ($b) => (object) $b);
+        $data['location'] = collect(OrgService::locationRows())->map(fn ($l) => (object) $l);
         $data['allusers'] = OrgService::getUsers(deptCode: 'SLS');
         $data['financiers'] = collect(XlFinancier::select('id', 'name', 'short_name')->get()->toArray())->map(fn ($f) => (object) $f);
         $data['salesconsultants'] = OrgService::getUsers(desigCode: 'CNS');
@@ -2800,10 +2799,10 @@ class BookingCrudController extends CrudController
         $data['finance'] = $finance;
         $data['loan_status'] = $finance?->loan_status;
 
-        $data['branches'] = collect(CommonHelper::getBranches())
+        $data['branches'] = collect(OrgService::branchRows())
             ->map(fn ($b) => (object) $b);
 
-        $data['locations'] = collect(CommonHelper::getLocations())
+        $data['locations'] = collect(OrgService::locationRows())
             ->map(fn ($l) => (object) $l);
 
         $data['allusers'] = OrgService::getUsers(deptCode: 'SLS');
@@ -2906,17 +2905,17 @@ class BookingCrudController extends CrudController
         // 4. VEHICLE DROPDOWNS
         // USE BOOKING VALUES
         // ==========================================================
-        $data['segments'] = CommonHelper::getVehicleSegments();
+        $data['segments'] = app(VehicleService::class)->segmentOptions();
 
-        $data['models'] = CommonHelper::getVehicleModels(
+        $data['models'] = app(VehicleService::class)->modelOptionsFor(
             $linkedEnquiry?->segment_code ?? $entry->segment_code ?? null
         ) ?? [];
 
-        $data['variants'] = CommonHelper::getVehicleVariants(
+        $data['variants'] = app(VehicleService::class)->variantOptions(
             $linkedEnquiry?->model_code ?? $entry->model_code ?? null
         ) ?? [];
 
-        $data['colors'] = CommonHelper::getVehicleColors(
+        $data['colors'] = app(VehicleService::class)->colorOptions(
             $linkedEnquiry?->variant_code ?? $entry->variant_code ?? null
         ) ?? [];
 
@@ -3733,7 +3732,7 @@ class BookingCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to perform this action.');
         }
 
-        $models = CommonHelper::getVehicleModels($segmentCode);
+        $models = app(VehicleService::class)->modelOptionsFor($segmentCode);
 
         return response()->json($models);
     }
@@ -3744,7 +3743,7 @@ class BookingCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to perform this action.');
         }
 
-        $variants = CommonHelper::getVehicleVariants($modelCode);
+        $variants = app(VehicleService::class)->variantOptions($modelCode);
 
         return response()->json($variants);
     }
@@ -3755,7 +3754,7 @@ class BookingCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to perform this action.');
         }
 
-        $colors = CommonHelper::getVehicleColors($variantCode);
+        $colors = app(VehicleService::class)->colorOptions($variantCode);
 
         return response()->json($colors);
     }
@@ -3781,7 +3780,7 @@ class BookingCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to perform this action.');
         }
 
-        $data = CommonHelper::getLocations($bids);
+        $data = OrgService::locationRows($bids);
 
         return $data;
     }
@@ -3834,7 +3833,7 @@ class BookingCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to perform this action.');
         }
 
-        $locations = XCommonHelper::getLocationsByState($state_id);
+        $locations = OrgService::locationsByState($state_id);
 
         return response()->json($locations);
     }
@@ -3970,7 +3969,7 @@ class BookingCrudController extends CrudController
     private function getCommonLookups()
     {
         return [
-            'segments' => CommonHelper::getVehicleSegments(),
+            'segments' => app(VehicleService::class)->segmentOptions(),
             'saleConsultants' => OrgService::usersByDesignation('CNS') ?? [],
             'financiers' => XlFinancier::select('id', 'name')->get()->keyBy('id')->toArray(),
         ];
@@ -4326,7 +4325,7 @@ class BookingCrudController extends CrudController
     //     $data = [
     //         'branches'       => Branch::pluck('name', 'id')->toArray(),
     //         'locations'      => Location::pluck('name', 'id')->toArray(),
-    //         'segments' => CommonHelper::getVehicleSegments(),
+    //         'segments' => app(VehicleService::class)->segmentOptions(),
     //         'saleConsultants' => OrgService::usersByDesignation('CNS') ?? [],
     //     ];
 
@@ -9040,7 +9039,7 @@ class BookingCrudController extends CrudController
             ->groupBy('vm.id', 'vm.segment_code', 'vm.custom_model', 'vm.custom_variant', 'vm.color', 'vm.lorder')
             ->get();
 
-        $segments = CommonHelper::getVehicleSegments();
+        $segments = app(VehicleService::class)->segmentOptions();
 
         $gridData = $vehicles->map(function ($vh, $index) {
             $seg = $vh->segment_code ?? 'N/A';

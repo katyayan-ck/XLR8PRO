@@ -1,54 +1,64 @@
+{{-- DEC-067: Tabler-style user block — avatar (photo over initials), name and designation, and the account menu. --}}
 @php
     $user = backpack_user();
+    $avatarUrl = backpack_avatar_url($user);
 @endphp
 
-<div class="nav-item dropdown pe-3">
-    <a href="#" 
-       class="nav-link d-flex lh-1 text-reset p-0 align-items-center" 
-       data-bs-toggle="dropdown" 
-       aria-label="Open user menu">
-
-        {{-- Avatar --}}
-        <span class="avatar avatar-sm rounded-circle position-relative" 
-              style="width: 36px; height: 36px; background: #0d6efd; color: white; font-weight: 600; font-size: 14px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-            
-            @if(backpack_avatar_url($user))
-                <img src="{{ backpack_avatar_url($user) }}" 
-                     alt="{{ $user->display_name }}" 
-                     class="w-100 h-100 object-fit-cover"
-                     onerror="this.style.display='none'">
+<div class="nav-item dropdown xl-user">
+    <a href="#" class="nav-link d-flex lh-1 text-reset px-2" data-bs-toggle="dropdown" aria-label="Open user menu" aria-expanded="false">
+        <span class="avatar avatar-sm bg-primary-lt xl-avatar">
+            {{ $user->avatar_initials ?? 'U' }}
+            @if ($avatarUrl)
+                <img src="{{ $avatarUrl }}" alt="" onerror="this.remove()">
             @endif
-            
-            {{-- Initials Fallback --}}
-            <span class="avatar-initials" 
-                  style="{{ backpack_avatar_url($user) ? 'display:none;' : '' }}">
-                {{ $user->avatar_initials ?? 'U' }}
-            </span>
+            <span class="badge bg-success"></span>
         </span>
-
-        {{-- Name + Designation --}}
-        <div class="d-none d-xl-block ps-2" style="line-height: 1.15;">
-            <div style="font-weight: 600; font-size: 13.5px; color: #2c3e50;">
-                {{ $user->display_name ?? $user->username }}
-            </div>
-            <div class="mt-0 small text-muted" style="font-size: 11.5px;">
-                {{ $user->primary_designation ?? 'Employee' }}
-            </div>
+        <div class="d-none d-xl-block ps-2 text-start">
+            <div class="fw-medium">{{ $user->display_name ?? $user->username }}</div>
+            <div class="mt-1 small text-secondary">{{ $user->primary_designation ?? 'Employee' }}</div>
         </div>
     </a>
 
-    {{-- Dropdown Menu --}}
-    <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow shadow-sm" style="min-width: 220px;">
-        
-        @if(config('backpack.base.setup_my_account_routes'))
+    <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow xl-user-menu">
+        <div class="dropdown-header d-flex align-items-center gap-2">
+            <span class="avatar avatar-sm bg-primary-lt xl-avatar">
+                {{ $user->avatar_initials ?? 'U' }}
+                @if ($avatarUrl)
+                    <img src="{{ $avatarUrl }}" alt="" onerror="this.remove()">
+                @endif
+            </span>
+            <div class="text-truncate">
+                <div class="fw-medium text-body text-truncate">{{ $user->display_name ?? $user->username }}</div>
+                <div class="small text-secondary text-truncate">{{ $user->email ?: $user->username }}</div>
+            </div>
+        </div>
+        <div class="dropdown-divider"></div>
+
+        @if (config('backpack.base.setup_my_account_routes'))
             <a href="{{ route('backpack.account.info') }}" class="dropdown-item">
-                <i class="la la-user me-2"></i> {{ trans('backpack::base.my_account') }}
+                <i class="la la-user-circle dropdown-item-icon"></i> {{ trans('backpack::base.my_account') }}
             </a>
-            <div class="dropdown-divider"></div>
+        @endif
+        <a href="{{ route('utils.inbox.index') }}" class="dropdown-item">
+            <i class="la la-inbox dropdown-item-icon"></i> My inbox
+        </a>
+        @if ($user->can('UTL_TASK_VIEW'))
+            <a href="{{ route('utils.tasks.index') }}" class="dropdown-item">
+                <i class="la la-tasks dropdown-item-icon"></i> My tasks
+            </a>
+        @endif
+        <a href="#xl-theme-settings" class="dropdown-item" data-bs-toggle="offcanvas" role="button" aria-controls="xl-theme-settings">
+            <i class="la la-palette dropdown-item-icon"></i> Appearance
+        </a>
+        @if (config('platform.dev_ui_kit'))
+            <a href="{{ route('dev.ui.show') }}" class="dropdown-item">
+                <i class="la la-swatchbook dropdown-item-icon"></i> UI kit <span class="badge bg-azure-lt ms-auto">dev</span>
+            </a>
         @endif
 
-        <a href="{{ backpack_url('logout') }}" class="dropdown-item">
-            <i class="la la-lock me-2"></i> {{ trans('backpack::base.logout') }}
+        <div class="dropdown-divider"></div>
+        <a href="{{ backpack_url('logout') }}" class="dropdown-item text-danger">
+            <i class="la la-sign-out-alt dropdown-item-icon"></i> {{ trans('backpack::base.logout') }}
         </a>
     </div>
 </div>

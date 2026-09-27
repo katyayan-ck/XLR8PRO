@@ -3,7 +3,6 @@
 namespace App\Models\Admin;
 
 use App\Models\BaseModel;
-use App\Models\Iam\Post;
 use App\Models\Traits\HasColumnTransformations;
 use App\Services\Org\DepartmentService;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
@@ -92,12 +91,6 @@ class Department extends BaseModel
     public function designationTree(): HasMany
     {
         return $this->hasMany(DesigDeptTree::class, 'dept_code', 'code');
-    }
-
-    /** Posts: xlr8_iam_roles.dept_code → department.code */
-    public function posts(): HasMany
-    {
-        return $this->hasMany(Post::class, 'dept_code', 'code');
     }
 
     /**

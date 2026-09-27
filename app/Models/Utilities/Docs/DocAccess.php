@@ -14,7 +14,7 @@ class DocAccess extends BaseModel implements Auditable
     use AuditableTrait;
     use SoftDeletes;
 
-    protected $table = 'xlr8_docs_access';
+    protected $table = 'xlr8_utils_docs_access';
 
     protected $fillable = [
         'document_id',
@@ -32,7 +32,7 @@ class DocAccess extends BaseModel implements Auditable
 
     public function document(): BelongsTo
     {
-        return $this->belongsTo(Document::class);
+        return $this->belongsTo(Document::class, 'document_id');
     }
 
     public function user(): BelongsTo

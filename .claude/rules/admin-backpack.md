@@ -22,7 +22,7 @@ Every admin entity belongs to one Module and one Process; every user-facing acti
 | Org | ORG | Branch `BRCH`, Department `DEPT`, Designation `DESG`, Division `DIVN` (+Vertical), Employee `EMPL`, Location `LOCN`, Person `PRSN` (+Address/Banking/Contact), User |
 | Iam | IAM | Modules, Permission, Process (Role screen retired → Designation, DEC-018) |
 | Pricing | PRC | Hold, Insurance, PricingReset, PricingWorkflow, RtoRule, TcsConfig |
-| Utils | UTL | KeyValue, KeywordMaster, SystemSetting |
+| Utils | UTL | KeyValue, KeywordMaster, SystemSetting `SETTINGS`, Notifications `NOTY`, Chat `CHAT`, Documents `DOCS`, Tasks `TASK`, Tickets `TCKT`, Approvals `APPR`, Templates `TPL`, Comms `COMM` (DEC-061) |
 
 New module/process → add its code here in the same change; codes never change once shipped.
 Module is chosen by business domain, not menu placement.

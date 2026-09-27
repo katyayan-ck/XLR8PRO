@@ -2,7 +2,7 @@
 
 namespace App\Services\Sales\Booking;
 
-use App\Helpers\CommonHelper;
+use App\Services\Vehicle\VehicleService;
 use App\Models\Admin\Branch;
 use App\Models\Admin\Location;
 use App\Models\CRM\Enquiry;
@@ -148,7 +148,7 @@ class BookingFinanceService
         $user = backpack_user();
 
         $data = $this->baseDisplayData($booking);
-        $data['segments'] = CommonHelper::getVehicleSegments();
+        $data['segments'] = app(VehicleService::class)->segmentOptions();
         $data['saleconsultants'] = OrgService::usersByDesignation('CNS') ?? [];
         $data['remark'] = $this->remarkForDepartments($user->department ?? '', useKeywordLookup: false);
 

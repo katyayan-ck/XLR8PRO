@@ -174,7 +174,7 @@ Entry format:
 | BUG-136 | Data-scoping enforcement layer (`DataScopeFilter`, `ScopedCrud`, `RBACService::getAccessibleResources()`) was built against a model (`UserDataScope`) whose table doesn't exist and a service (`App\Services\IAM\DataScopeService`) that was never written, plus undefined `User::userDataScopes()`/`getScopedIds()` and wrong `scopeColumn`s on `Stock`/`XlSpareRequest`. Not live-reachable, but it means **no row-level data scoping is enforced anywhere** | High | FIXED (code); enforcement switch-on OPEN — needs decision | 24-09-2026 | 24-09-2026 (ai-changelogs-24-09-2026.md) |
 | BUG-137 | `UserImporter::createDataScopes()` inserted scope rows via `UserDataScope::insert()` with keys `userid`/`scopetype`/`scopevalue`/`status` into a nonexistent table — any bulk-user-import row with an "Accessible Branches/Departments/Locations" value failed | High | FIXED | 24-09-2026 | 24-09-2026 (ai-changelogs-24-09-2026.md) |
 | BUG-138 | `DocService::hasAccess()` returned `true` for every document attached to an entity (a "Placeholder" that discarded the scope lookup) — any user passing the earlier checks' fall-through got access | High (unreachable today: `DocService` can't construct) | FIXED | 24-09-2026 | 24-09-2026 (ai-changelogs-24-09-2026.md) |
-| BUG-139 | `DocService`: `search()` return type `Collection` is unimported (resolves to nonexistent `App\Services\Collection`); `approve()` calls `ApprovalService::approve()`, which doesn't exist; `getAiTags()` needs the uninstalled `google/cloud-vision` package | Medium (unreachable today) | PARTIALLY FIXED — (1) fixed; (2)/(3) OPEN | 24-09-2026 | — |
+| BUG-139 | `DocService`: `search()` return type `Collection` is unimported (resolves to nonexistent `App\Services\Collection`); `approve()` calls `ApprovalService::approve()`, which doesn't exist; `getAiTags()` needs the uninstalled `google/cloud-vision` package | Medium (unreachable today) | FIXED (DEC-061) | 24-09-2026 | 28-09-2026 |
 | BUG-140 | `app/Models_backup/User.php` declares `App\Models\User`; `phpstan.neon` scans all of `app/`, so Larastan resolves the stale backup class and reports false "undefined method" errors (e.g. `isSuperAdmin()`) app-wide | Low (tooling only; no runtime effect) | FIXED (PHPStan config) — deleting the directory still pending sign-off | 24-09-2026 | 25-09-2026 |
 | BUG-141 | `App\Models\XlSpareRequest` (+ `XlSpareRequestDetail`) live in `app/Models/Module/Spare/` but declare `namespace App\Models` — PSR-4 mismatch, class can't autoload; nothing else references it | Low | FIXED | 24-09-2026 | 24-09-2026 |
 | BUG-142 | `CalculatePricingSessionJob` had output before `<?php`, breaking `declare(strict_types=1)` — the pricing "Calculate" dispatch always fataled | Critical | FIXED | 24-09-2026 | 24-09-2026 |
@@ -214,7 +214,22 @@ Entry format:
 | BUG-177 | Imports menu and the `imports/admin` landing page have no permission check (a user with no import permission opens it; the vehicle import POST itself is gated on `VEH_SEG_CREATE`) | Low | OPEN (permission choice needs owner) | 27-09-2026 | — |
 | BUG-178 | Pricing engine ignores imported dealer charges: `dealerCharges()` reads narrow rows (`charge_name`/`amount`) while the importer writes the spec's WIDE columns (CP-06), so the pricing JSON's dealer charges total 0; `scopeHit()` checks a `model` column (table has `model_code`), so model scope is never applied | High | OPEN (price-changing fix — owner approval) | 27-09-2026 | — |
 | BUG-179 | Two divergent accessory importers: the wired one (`import:vehicle-accessories` → `AccessoryImportService`) reads one sheet without type/discount/permit, soft-disables the whole catalogue and echoes every row; the spec-shaped one (`AccessoryService::importExcel*`: typed sheets, discount, permit, hard purge) has no caller | Medium | OPEN (owner: which importer is authoritative) | 27-09-2026 | — |
+| BUG-180 | `/export/vehicle-data` (`ExportController::vehicleDataExcel`) references `App\Exports\VehicleDataExport`, which does not exist — the route 500s | Low | OPEN | 28-09-2026 | — |
+| BUG-181 | `User::getOrCreateNotificationsMaster()` and the `NotificationsMaster` model did not exist, so the v1 notification endpoints (unread count, mark-all-read) and every legacy `NotificationService` send 500'd; the docs models pointed at non-existent tables (`xlr8_docs_*`, pivot `doc_group_documents`) and the v1 add-to-group rule validated against `documents` | High | FIXED (DEC-061) | 28-09-2026 | 28-09-2026 |
+| BUG-182 | v1 `docs/upload` and `history/{entityType}/{entityId}` (+ `/thread`) resolve `App\Models\{entityType}` straight from request input and never check the caller may see that record — any signed-in mobile user can read or append history on, or attach files to, any model row | High | OPEN (auth change — owner approval) | 28-09-2026 | — |
+| BUG-183 | 36 active employees hold designation codes that are not in the designation master (GM ×4, MAN ×18, CNS ×6, DSA ×3, RTO ×2, SWD, API, TST) — no approval rule (or designation-based notification / docs entitlement) can reach them | Medium | OPEN (data — owner to map codes) | 28-09-2026 | — |
+| BUG-184 | `BaseModel::getCreationDetails()` / `getUpdateDetails()` / `getDeletionDetails()` read `createdByUser?->name`, but `users` has no `name` column — the actor name is always "System" | Low | OPEN | 28-09-2026 | — |
+| BUG-185 | `BaseModel::scopeOnlyRestored()` selects live rows with `deleted_by` set, but the `restoring` hook clears `deleted_by` — rows restored through `restore()` never match | Low | OPEN | 28-09-2026 | — |
 | BUG-175 | Person contacts/addresses/banking: the per-person type-slot unique keys include soft-deleted rows, so re-adding a deleted slot (e.g. a new Primary address after deleting one) failed with a duplicate-key 500; promoting a non-Alternate row to Primary while Alternate was used also collided | High | FIXED (DEC-053) | 27-09-2026 | 27-09-2026 |
+| BUG-186 | `OrgService::variantName()` is typed `: string` but `variants()` returns an array per code — TypeError; breaks `getUsersForListing()` with vehicle names and any caller | Medium | OPEN | 28-09-2026 | — |
+| BUG-187 | `AuthService::verifyOtp()` / `getUserDetails()` / `logout()` read `$user->name`, `->email`, `->mobile`, which do not exist on `users` — the mobile app gets null user name, email and mobile | Medium | OPEN (API contract — owner approval) | 28-09-2026 | — |
+| BUG-188 | `AuthService::generateOtp()` uses `rand()` (not cryptographically secure) for the mobile-app login OTP | High | OPEN (security — owner approval) | 28-09-2026 | — |
+| BUG-189 | `AuthService` writes the full mobile number into `Log::info/error` on every OTP request / verify / logout — against the API rule "never log full phone numbers" | Medium | OPEN | 28-09-2026 | — |
+| BUG-190 | `App\Services\RBACService` is injected into `UserCrudController` but never called; `canUserAccess()` checks `resource.action` names that don't exist (permissions are `MOD_PROC_ACT`), `getUserPermissions()` uses a missing `User::userRoleAssignments` relation and `UserRoleAssignment::isActive()` | Low | OPEN (removal needs sign-off) | 28-09-2026 | — |
+| BUG-191 | `Booking` scopes `pendingPayment`, `pendingInsurance`, `pendingRTO`, `pendingDeliveries`, `pendingDO` and the static count helpers (`getDynamicBookingCounts`, finance / exchange MTD-YTD) reference `xcelr8_booking_*` / `bookings` tables, a missing `Branches` class and old `branch_id` / `abbr` columns — every call throws; no caller found today | Low | OPEN (booking team) | 28-09-2026 | — |
+| BUG-192 | `Enquiry::quotations()` is `hasMany(Quotation, 'enquiry_no', 'enquiry_no')` but quotations store the enquiry **id** in `enquiry_no` (the inverse `Quotation::enquiry()` uses `enquiry_no → id`) — the relation returns no rows; no caller today | Low | OPEN (booking team) | 28-09-2026 | — |
+| BUG-193 | `Booking::finances()` / `exchanges()` and `XExchange::booking()` / `XFinance::booking()` join on `booking_id`, but both tables key on `bid`; `Booking::finances()` also names `App\Models\Module\Booking\XFinance` (the class is in `Module\Finance`); the `getVerifiedCounts()` / `getPendingCounts()` helpers fail the same way — no caller today | Low | OPEN (booking team) | 28-09-2026 | — |
+| BUG-194 | `BookingCrudController::fetchPendBkData()` and `fetchCbrData()` call `Cache::remember()` but the file has no `use Illuminate\Support\Facades\Cache;` — in a namespaced class this resolves to `App\Http\Controllers\Admin\Sales\Booking\Cache` and fatals | Medium | OPEN — fix scheduled in the Sales parity step (DEC-068) | 28-09-2026 | — |
 
 Not a bug (false positive, listed for reference): the original `infer-conventions` sweep flagged
 "`SheetHeaderService`/`SynonymService` not used by importers" — re-investigation on 19-09-2026
@@ -1667,7 +1682,8 @@ guessed at.
 
 ### BUG-139 — Three further `DocService` defects
 
-- **Status:** PARTIALLY FIXED — item (1) fixed; (2) and (3) still OPEN (was: OPEN (documented only))
+- **Status:** FIXED (28-09-2026, DEC-061) (was: PARTIALLY FIXED — item (1) fixed; (2) and (3) OPEN)
+- **Fixed:** 28-09-2026 — `DocService` is now a thin adapter over `App\Services\Platform\Docs\DocsService` (docs tables + media library). (2) `approve()` records an `APPROVED` event on the document's timeline; formal document approval moves to the approval engine topic `DOCS.APPROVAL` (DEC-063). (3) the Google Vision AI-tag path was removed (no dependency added). [ai-changelogs-28-09-2026.md](ai-changelogs-28-09-2026.md)
 - **Severity:** Medium — unreachable until `DocService` can construct.
 - **Found:** 24-09-2026, IDE diagnostics while fixing BUG-138.
 - **Modified:** 24-09-2026 22:00 — (1) fixed: `Illuminate\Support\Collection` imported. `DocService` now constructs, so (2) and (3) are reachable and still need their decisions (locked Approval Engine; dependency approval).
@@ -2029,3 +2045,122 @@ guessed at.
     - it hard-deletes both tables inside a transaction.
   - The Machine Spec says "AccessoryService — existing packs/discounts (DO NOT rewrite)".
 - **Decision needed:** which importer (and which purge semantics) is authoritative. Then both entity services (accessory, accessory scope) are added and the chosen importer writes through them, and the other is removed.
+
+### BUG-180 — Vehicle data export class missing
+
+- **Status:** OPEN (28-09-2026). Found by the DEC-060 class-resolution sweep.
+- **Evidence:** `routes/web.php` `export/vehicle-data` → `ExportController::vehicleDataExcel()` → `new VehicleDataExport`. No such class exists under `app/Exports`.
+
+### BUG-181 — Notification master and docs tables missing behind the v1 API
+
+- **Status:** FIXED (28-09-2026, DEC-061)
+- **Severity:** High — the mobile notification counters/mark-all-read and every document endpoint failed.
+- **Found:** 28-09-2026, while rebuilding Notify and Docs (Sprint 2).
+- **Where:** `app/Models/User.php`, `app/Services/NotificationService.php`, `app/Models/Utilities/Docs/*`, `app/Http/Controllers/Api/V1/DocController.php`.
+- **Description:** `NotificationService` and the v1 `NotificationController` call `$user->getOrCreateNotificationsMaster()`, which did not exist (no `NotificationsMaster` model either). The docs models used table names that do not exist (`xlr8_docs_document`, `xlr8_docs_access`, `xlr8_docs_group`, pivot `doc_group_documents`) — the real tables are `xlr8_utils_docs_*`; `DocController::addToGroup` validated `exists:documents,id`.
+- **Fix:** `NotificationsMaster` model (`xlr8_utils_noty_master`) + `User::getOrCreateNotificationsMaster()`; `NotificationService` delegates to `NotifyService`; docs models set their real tables and pivot keys; the rule validates `exists:xlr8_utils_docs_document,id`. [ai-changelogs-28-09-2026.md](ai-changelogs-28-09-2026.md)
+
+### BUG-182 — v1 history/docs endpoints trust a client-supplied model class and skip record access
+
+- **Status:** OPEN (28-09-2026) — fix is an auth change, needs owner approval.
+- **Severity:** High — data exposure across records for any authenticated mobile user.
+- **Found:** 28-09-2026, v1 API smoke during DEC-061.
+- **Where:** `app/Http/Controllers/Api/V1/EntityHistoryController.php` (`getHistory`, `addThread`), `app/Http/Controllers/Api/V1/DocController.php` (`upload`).
+- **Description:** `app("App\\Models\\{$entityType}")->findOrFail($entityId)` builds any class under `App\Models` from the URL/body and loads the row with no permission or scope check, so a user can read the timeline of, post to, or attach files to records they cannot open in the admin.
+- **Proposed solution:** accept only entity codes from `config('platform.entities')` (with the legacy class names mapped to them for the app) and gate with `ChatService::canView()` — the same rule the admin chat/docs endpoints already use. Needs the mobile team to confirm the `entityType` values the app sends.
+
+### BUG-183 — Employees on designation codes missing from the designation master
+
+- **Status:** OPEN (28-09-2026) — data fix; the owner decides the mapping.
+- **Severity:** Medium — these people are invisible to designation-based features: approval levels (DEC-063), `Audience::designation()`, DESIGNATION document entitlements, and Spatie role = designation.
+- **Found:** 28-09-2026, approval engine verification (a rule with level designation GM was rejected as unknown).
+- **Evidence:** `select e.designation_code, count(*) from xlr8_admin_employee e left join xlr8_admin_designation d on d.code = e.designation_code where d.code is null and e.deleted_at is null group by 1` → GM 4, MAN 18, CNS 6, DSA 3, RTO 2, SWD 1, API 1, TST 1.
+- **Proposed solution:** map each legacy code to a real designation (or add the missing designations) through `EmployeeService` / `DesignationService`; the power-sheet import already rejects unknown designations, so rules stay consistent.
+
+### BUG-184 — Audit detail helpers always name the actor "System"
+
+- **Status:** OPEN (28-09-2026).
+- **Severity:** Low — only the audit-detail arrays are affected; `created_by` ids are correct.
+- **Found:** 28-09-2026, while writing `docs/domains/core.md`.
+- **Evidence:** `app/Models/BaseModel.php` `getCreationDetails()` returns `'created_by_name' => $this->createdByUser?->name ?? 'System'`; `users` has `username` and the `display_name` accessor, no `name`.
+- **Proposed solution:** use `->display_name` in the three helpers.
+
+### BUG-185 — `onlyRestored()` scope never matches a model restore
+
+- **Status:** OPEN (28-09-2026).
+- **Severity:** Low — no caller found (`grep onlyRestored` in app/resources shows none).
+- **Found:** 28-09-2026, while writing `docs/domains/core.md`.
+- **Evidence:** the scope is `whereNull('deleted_at')->whereNotNull('deleted_by')`, while `BaseModel::booted()` `restoring` sets `deleted_by = null`.
+- **Proposed solution:** keep `deleted_by` on restore (or add a `restored_at` column), or drop the unused scope.
+
+### BUG-186 — OrgService::variantName() throws a TypeError
+
+- **Status:** OPEN (28-09-2026).
+- **Severity:** Medium.
+- **Found:** 28-09-2026, while writing docs/domains/org.md.
+- **Evidence:** `DB_DATABASE=xlrm_testing php artisan tinker --execute 'OrgService::variantName(array_key_first(OrgService::variants()))'` → `TypeError: Return value must be of type string, array returned`. Caller: `OrgService::getUsersForListing()` (vehFormat `name` / `code_name`).
+- **Proposed solution:** return `self::variants()[$code]['name'] ?? $code` (the display name); add a unit test.
+
+### BUG-187 — v1 auth responses return null name / email / mobile
+
+- **Status:** OPEN (API contract — owner approval) (28-09-2026).
+- **Severity:** Medium.
+- **Found:** 28-09-2026, while writing docs/domains/iam-auth.md.
+- **Evidence:** `Schema::getColumnListing('users')` has no name / email / mobile; the User model has `display_name`, `primary_email`, `primary_mobile` accessors. AuthService lines ~308-313 and ~348-353.
+- **Proposed solution:** fill the same keys from `display_name`, `primary_email`, `primary_mobile` (additive, keeps the v1 contract shape); add an API test asserting non-null values.
+
+### BUG-188 — Login OTP generated with rand()
+
+- **Status:** OPEN (security — owner approval) (28-09-2026).
+- **Severity:** High.
+- **Found:** 28-09-2026, while writing docs/domains/iam-auth.md.
+- **Evidence:** `app/Services/AuthService.php` ~line 430: `str_pad(rand(0, pow(10, self::OTP_LENGTH) - 1), …)`. The platform SMS OTP (`SmsService::otp`) already uses `random_int`.
+- **Proposed solution:** use `random_int(0, 10 ** self::OTP_LENGTH - 1)`; longer term route login OTPs through `Sms::otp()` / `Sms::verify()` (hashed, rate-limited, never logged).
+
+### BUG-189 — AuthService logs full mobile numbers
+
+- **Status:** OPEN (28-09-2026).
+- **Severity:** Medium.
+- **Found:** 28-09-2026, while writing docs/domains/iam-auth.md.
+- **Evidence:** `app/Services/AuthService.php` Log calls at ~lines 135, 152, 175, 298, 325, 388 pass `'mobile' => $mobile`. (`OtpAttemptLog` rows also keep it — that is an audit table, acceptable if access-controlled.)
+- **Proposed solution:** log `ContactService::mask($mobile)` (or the user id only) instead of the number.
+
+### BUG-190 — Legacy RBACService (App\Services\RBACService) is unused and partly broken
+
+- **Status:** OPEN (removal needs sign-off) (28-09-2026).
+- **Severity:** Low.
+- **Found:** 28-09-2026, while writing docs/domains/iam-auth.md.
+- **Evidence:** `grep -n 'rbacService->' UserCrudController.php` returns nothing; `User` has no `userRoleAssignments()`; `UserRoleAssignment` has no `isActive()`. Permission checks everywhere use `can('SLS_BKNG_VIEW')`.
+- **Proposed solution:** remove the service and its injection (dead code, DEC-030 style), or rewrite the two methods against Spatie + `UserPermissionDenial`. `App\Services\IAM\RbacService` (modules / processes) is a different, used class.
+
+### BUG-191 — Booking model scopes / count helpers query legacy xcelr8_* tables
+
+- **Status:** OPEN (booking team) (28-09-2026).
+- **Severity:** Low.
+- **Found:** 28-09-2026, while writing docs/domains/sales-booking.md.
+- **Evidence:** `DB_DATABASE=xlrm_testing php artisan tinker`: `Booking::query()->pendingInsurance()->count()` → SQLSTATE 42S02 `xcelr8_booking_insurance` doesn't exist (same for pendingRTO, pendingDeliveries, pendingPayment). `grep` finds no callers of these scopes or of `getDynamicBookingCounts`.
+- **Proposed solution:** rewrite the scopes against `xlr8_booking_*` (they are the natural SSOT for the pending lists) or delete them with the dead count helpers; decide with the booking team.
+
+### BUG-192 — Enquiry::quotations() joins on the wrong enquiry column
+
+- **Status:** OPEN (booking team) (28-09-2026).
+- **Severity:** Low.
+- **Found:** 28-09-2026, while writing docs/domains/crm-enquiry-quotation.md.
+- **Evidence:** `QuotationCrudController.php:1526` writes `'enquiry_no' => $enquiry ? $enquiry->id : $request->enquiry_id`; `Quotation::enquiry()` = `belongsTo(Enquiry::class, 'enquiry_no', 'id')`; no code calls `->quotations`.
+- **Proposed solution:** change the local key to `id`: `hasMany(Quotation::class, 'enquiry_no', 'id')`.
+
+### BUG-193 — Booking ↔ exchange / finance relations use a non-existent booking_id
+
+- **Status:** OPEN (booking team) (28-09-2026).
+- **Severity:** Low.
+- **Found:** 28-09-2026, while writing docs/domains/sales-booking.md.
+- **Evidence:** `xlr8_booking_exchange` / `xlr8_booking_finance` columns start `id, bid, …`; on `xlrm_testing`: `$booking->exchanges()->count()` → 1054 unknown column `booking_id`; `$booking->finances()->count()` → Class `App\Models\Module\Booking\XFinance` not found; `XFinance::getPendingCounts()` → Class `App\Models\Module\Finance\Booking` not found.
+- **Proposed solution:** use `bid` as the foreign key and import the right classes; services already query these tables directly by `bid`.
+
+### BUG-194 — BookingCrudController uses Cache without importing it
+
+- **Status:** OPEN — fix scheduled in the Sales parity step (DEC-068) (28-09-2026).
+- **Severity:** Medium.
+- **Found:** 28-09-2026, PHPStan sweep of the files merged from stage.
+- **Evidence:** PHPStan `class.notFound` at lines ~5329 and ~9092; the import is missing on origin/stage, dev/admin and 6ed4a45 alike (pre-existing).
+- **Proposed solution:** add the facade import; smoke both AJAX endpoints.

@@ -9,10 +9,12 @@ use App\Models\Admin\UserScope;
 use App\Models\IAM\UserDeviceToken;
 use App\Models\IAM\UserPermissionDenial;
 use App\Models\Traits\HasColumnTransformations;
+use App\Models\Utilities\Noty\NotificationsMaster;
 use App\Services\IAM\UserService;
 use App\Services\OrgService;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -65,7 +67,8 @@ class User extends Authenticatable
         'deleted_at' => 'datetime',
     ];
 
-    public function employee()
+    /** @return BelongsTo<Employee, $this> */
+    public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class, 'employee_code', 'code');
     }
@@ -111,7 +114,8 @@ class User extends Authenticatable
         ];
     }
 
-    public function person()
+    /** @return BelongsTo<Person, $this> */
+    public function person(): BelongsTo
     {
         return $this->belongsTo(Person::class, 'person_code', 'person_code');
     }
@@ -124,6 +128,12 @@ class User extends Authenticatable
     public function deviceTokens()
     {
         return $this->hasMany(UserDeviceToken::class);
+    }
+
+    /** Inbox counters (BUG-181: the v1 API and NotificationService called this, it did not exist). */
+    public function getOrCreateNotificationsMaster(): NotificationsMaster
+    {
+        return NotificationsMaster::firstOrCreate(['user_id' => $this->id]);
     }
 
     public function activeScopes()

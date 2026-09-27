@@ -1,7 +1,10 @@
 <?php
+
 namespace App\Providers;
-use App\Services\SystemSettingService;
+
 use App\Facades\SystemSetting;
+use App\Services\SystemSettingExportImportService;
+use App\Services\SystemSettingService;
 use Illuminate\Support\ServiceProvider;
 
 class SystemSettingServiceProvider extends ServiceProvider
@@ -13,14 +16,14 @@ class SystemSettingServiceProvider extends ServiceProvider
     {
         // Register service
         $this->app->singleton(SystemSettingService::class, function ($app) {
-            return new SystemSettingService();
+            return new SystemSettingService;
         });
 
         // Register export/import service
         $this->app->singleton(
-            \App\Services\SystemSettingExportImportService::class,
+            SystemSettingExportImportService::class,
             function ($app) {
-                return new \App\Services\SystemSettingExportImportService();
+                return new SystemSettingExportImportService;
             }
         );
     }
@@ -33,7 +36,6 @@ class SystemSettingServiceProvider extends ServiceProvider
         //
     }
 }
-
 
 // Add to config/app.php in the 'providers' array:
 // \App\Providers\SystemSettingServiceProvider::class,

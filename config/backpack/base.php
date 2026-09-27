@@ -1,5 +1,11 @@
 <?php
 
+use App\Http\Middleware\ApplyUiPreferences;
+use App\Http\Middleware\CheckIfAdmin;
+use Backpack\CRUD\app\Http\Middleware\AuthenticateSession;
+use Backpack\CRUD\app\Http\Middleware\UseBackpackAuthGuardInsteadOfDefaultAuthGuard;
+use Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull;
+
 return [
 
     /*
@@ -110,11 +116,13 @@ return [
     // The classes for the middleware to check if the visitor is an admin
     // Can be a single class or an array of classes
     'middleware_class' => [
-        App\Http\Middleware\CheckIfAdmin::class,
-        \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
-        \Backpack\CRUD\app\Http\Middleware\AuthenticateSession::class,
+        CheckIfAdmin::class,
+        ConvertEmptyStringsToNull::class,
+        AuthenticateSession::class,
         // Makes auth()/@can/Gate resolve the admin (backpack) user during admin requests (BUG-055, DEC-042).
-        \Backpack\CRUD\app\Http\Middleware\UseBackpackAuthGuardInsteadOfDefaultAuthGuard::class,
+        UseBackpackAuthGuardInsteadOfDefaultAuthGuard::class,
+        // Applies the per-browser menu layout chosen in the Appearance panel (DEC-067).
+        ApplyUiPreferences::class,
     ],
 
     // Alias for that middleware

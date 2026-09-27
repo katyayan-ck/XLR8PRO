@@ -25,7 +25,7 @@ paths:
 
 ## Quotation (FRS v1.0, July 2026)
 - Form locked until a valid enquiry resolves; reject closed/converted/cancelled enquiries.
-- Variant → colour → `getPricing(oemCode)`; UI is driven only by pricing JSON keys (missing key = hidden).
+- Variant → colour → `PricingEngineService::getPricingPayload(oemCode)`; UI is driven only by pricing JSON keys (missing key = hidden).
 - Maxicare/PPF/Ceramic are accessories, not grid rows. Discount types I, C, C1, C2, B.
 - Gate: any ordinary C > 0 ⇒ CreditNoteDiscount ≥ OEM scheme (C1/C2 excluded both sides). Server re-validates on save; store full snapshot.
 - TCS = 1% of FinvoiceAmount (Subtotal − InvoicedDiscount), threshold ₹10,00,000 or financier invoice.

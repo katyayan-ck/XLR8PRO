@@ -1,7 +1,13 @@
 <?php
 
+use App\Providers\AppServiceProvider;
+use App\Providers\KeywordValueServiceProvider;
+use App\Providers\PlatformServiceProvider;
+use App\Providers\SystemSettingServiceProvider;
+
 return [
-    App\Providers\AppServiceProvider::class,
-    App\Providers\KeywordValueServiceProvider::class,
-    App\Providers\SystemSettingServiceProvider::class,
+    AppServiceProvider::class,
+    KeywordValueServiceProvider::class,
+    SystemSettingServiceProvider::class,
+    PlatformServiceProvider::class,
 ];

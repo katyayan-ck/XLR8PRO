@@ -6,7 +6,7 @@
         <p class="text-muted mb-0">
             Session #{{ $session->id }}
             · stage <code>{{ $session->current_stage }}</code>
-            · WEF <code>{{ $session->wef_date?->format('Y-m-d') }}</code>
+            · WEF <code>{{ site_date($session->wef_date, '—') }}</code>
         </p>
     </section>
 @endsection

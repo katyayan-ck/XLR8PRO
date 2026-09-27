@@ -254,8 +254,8 @@
                             <tbody>
                                 @foreach ($history as $entry)
                                     <tr>
-                                        <td>{{ $entry->effective_from?->format('d-M-Y') }}</td>
-                                        <td>{{ $entry->effective_to?->format('d-M-Y') ?? 'Current' }}</td>
+                                        <td>{{ site_date($entry->effective_from, '—') }}</td>
+                                        <td>{{ site_date($entry->effective_to, 'Current') }}</td>
                                         <td><span class="badge text-bg-info text-capitalize">{{ str_replace('_', ' ', $entry->change_reason) }}</span></td>
                                         <td>{{ $entry->designation_code ?? '—' }}</td>
                                         <td>{{ $entry->primary_branch_code ?? '—' }}</td>
