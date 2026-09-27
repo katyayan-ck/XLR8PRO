@@ -204,3 +204,42 @@
     - the drop-zone previews a file and removes it before upload, and refuses a second file on a single-file input;
     - the bell panel renders;
     - a legacy screen (user create) is enhanced with no JS errors.
+
+## Tabler-parity shell, theme settings, AG-Grid theming, dev UI kit (DEC-067)
+- **Root causes of "mode / colour switch doesn't work":**
+  - `layouts/horizontal` hard-coded `#FFFFFF !important` / `#F4F2EE`.
+  - The user block used inline hex colours.
+  - AG-Grid v36 (unversioned CDN) themes itself in JS, so the CSS-variable mapping never reached it.
+  - Its UMD exports are getter-only, so the DEC-066 `createGrid` hook never actually ran: it assigned into a read-only export. As a result, grid date columns were **not** site-formatted either.
+  - Legacy `ag-theme-quartz.css` overrode the JS theme.
+  - Backpack's dark adjustments used a fixed blue for inputs and checkboxes.
+- **Theme:**
+  - New `inc/theme_styles` override: a render-blocking mode and theme bootstrap (resolves "system", no white flash), plus Tabler 1.4 `tabler-themes.min.css` (pinned, SRI, Basset) and `public/css/xl-theme.css`.
+  - New `public/js/xl-theme.js` (`XL.theme` API) and the `inc/theme_settings` Appearance off-canvas: mode, 12 primary colours, base, font, radius, layout, reset.
+- **Layout:**
+  - `xl_layout` cookie (unencrypted, whitelisted in `bootstrap/app.php`) read by the new `App\Http\Middleware\ApplyUiPreferences` (added to `backpack.base.middleware_class`). Allowed: `horizontal` (default), `vertical`, `vertical_dark`.
+  - New overrides `layouts/vertical`, `layouts/vertical_dark`, `layouts/_vertical/menu_container`: sidebar, top header, dark sidebar via `data-bs-theme="dark"`.
+- **Shell:**
+  - `layouts/horizontal` has no hard-coded colours.
+  - `inc/menu` gains an Appearance button.
+  - `inc/menu_user_dropdown` is a Tabler user block: photo over initials, online dot, name / designation, and a menu with header, account, inbox, tasks, appearance, UI kit (dev) and log-out.
+  - New partial `inc/appearance_button`.
+- **AG-Grid (`header_metas`):**
+  - The hook now wraps a copy of the module, and applies a Quartz Theming-API theme whose parameters are Tabler variables to every grid without its own theme.
+  - It disables the legacy `styles/ag-theme-*` sheets.
+  - `xl-ui.js` re-assigns the wrapped module when late.
+  - Verified on the legacy branch list: dark mode, orange primary, centred headers kept.
+- **Dark-mode safety net** in `xl-theme.css`: `bg-white`, `bg-light`, `text-black`, `text-dark`, `table-light`, common inline light backgrounds and dark text, and Backpack input / checkbox colours.
+- **Dev UI kit:**
+  - `routes/backpack/dev.php` and `App\Http\Controllers\Admin\Dev\UiKitController`, gated by `config('platform.dev_ui_kit')` (env `XL_DEV_UI_KIT`, default local only).
+  - Views `resources/views/admin/dev/ui/{_layout,index,forms,lists,elements,dashboard,chat,pages}.blade.php`.
+  - ApexCharts 3.54.1 (pinned, SRI) on the dashboard only.
+- **Rules / docs:** `.ai/rules/ui.md` (AG-Grid and theme bullets, synced), `docs/utilities/ui-kit.md` (theme section).
+- **Tests:** `tests/Feature/Admin/UiKitAndLayoutTest` (5): every page renders when enabled, 404 when disabled, login required, layout cookie honoured, unknown layout ignored.
+- **Verification:** headless Chrome at 1366 px and 390 px:
+  - light and dark;
+  - purple / teal / red / green / orange primaries;
+  - serif font and radius 1.5;
+  - top-menu, sidebar and dark-sidebar layouts;
+  - the Appearance panel;
+  - the legacy branch grid.

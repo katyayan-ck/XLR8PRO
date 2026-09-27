@@ -305,7 +305,7 @@
 
     function start() {
         // grids created before this file loaded: wrap late AG-Grid loads and re-render date cells
-        if (window.agGrid && XL.wrapAgGrid) XL.wrapAgGrid(window.agGrid);
+        if (window.agGrid && XL.wrapAgGrid && !window.agGrid.__xl) window.agGrid = XL.wrapAgGrid(window.agGrid);
         (XL.grids || []).forEach((api) => { try { api && api.refreshCells && api.refreshCells({ force: true }); } catch (e) { /* destroyed grid */ } });
         XL.enhance(document);
         let queued = [];

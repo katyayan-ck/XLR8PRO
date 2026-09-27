@@ -26,6 +26,9 @@ use App\Models\Vehicle\Variant;
 
 return [
 
+    /* Dev-only UI kit at /admin/dev/ui (DEC-067): on for local environments unless XL_DEV_UI_KIT says otherwise. */
+    'dev_ui_kit' => (bool) env('XL_DEV_UI_KIT', env('APP_ENV') === 'local'),
+
     'entities' => [
         'QUOTE' => ['model' => Quotation::class, 'url' => 'sales/quotation/{id}/edit', 'label' => 'Quotation', 'permission' => 'SLS_QUOT_VIEW'],
         'ENQUIRY' => ['model' => Enquiry::class, 'url' => 'sales/enquiry/{id}/edit', 'label' => 'Enquiry', 'permission' => 'SLS_ENQR_VIEW'],

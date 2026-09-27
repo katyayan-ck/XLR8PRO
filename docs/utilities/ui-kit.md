@@ -54,3 +54,40 @@ Helper classes: `.xl-toolbar` (wrapping filter bar), `.xl-empty` (empty state), 
 ## Verifying at phone / tablet widths
 Chrome DevTools device mode (iPhone 12 Pro 390px, iPad Mini 768px). Desktop Chrome windows can't be narrower than
 ~500px, so resize the browser only for tablet checks.
+
+## Theme, layout and the dev UI kit (DEC-067)
+**Appearance panel** — the palette icon in the top bar, or *Appearance* in the user menu. Every user can choose:
+- colour mode: light / dark / system;
+- colour scheme: 12 Tabler colours;
+- theme base: slate / gray / zinc / neutral / stone;
+- font: sans / serif / mono / comic;
+- corner radius: 0 – 2;
+- menu layout: top menu / sidebar / dark sidebar.
+
+The choice is saved in that browser only. All of it is Tabler 1.4's own theming, so **your screen follows it for free
+as long as you style with tokens** (`bg-*-lt`, `text-secondary`, `var(--tblr-*)`).
+
+```js
+XL.theme.get();                        // {mode, primary, base, font, radius, layout}
+XL.theme.set('primary', 'teal');       // also 'mode' → light|dark|system, 'layout' → horizontal|vertical|vertical_dark
+XL.theme.token('--tblr-primary');      // resolved colour, for charts / canvas
+XL.theme.onChange(state => rebuildMyChart());
+```
+
+**AG-Grid:**
+- Don't pass `theme`, and don't add `ag-theme-quartz.css` to new screens.
+- The global hook gives every grid a Quartz theme built on Tabler variables, so dark mode, the primary colour, the font and the radius apply live. It also switches off the legacy stylesheet on old screens.
+- Pin `ag-grid-community@36.2.0` in new views.
+
+**Charts:** ApexCharts 3.54.1 (MIT).
+- Load it with `@basset('https://cdn.jsdelivr.net/npm/apexcharts@3.54.1/dist/apexcharts.min.js')` on the page that needs it.
+- Take its colours from `XL.theme.token()`, and rebuild the chart on `XL.theme.onChange`.
+- The UI-kit dashboard source is the pattern to copy.
+
+**Dev UI kit** — `/admin/dev/ui`:
+- Pages: Overview · Forms · Lists & tables · Elements · CRM dashboard · Chat · Pages.
+- Static reference markup to copy; it reads and writes no data.
+- On for `APP_ENV=local`. Elsewhere it returns 404 unless `.env` has `XL_DEV_UI_KIT=true`.
+- Linked from the user menu when it is on.
+
+**Legacy screens:** `public/css/xl-theme.css` has a dark-mode safety net for `bg-white`, `bg-light`, `text-black`, `text-dark`, `table-light` and common inline light colours. It is a stop-gap: convert a screen to tokens when you touch it.

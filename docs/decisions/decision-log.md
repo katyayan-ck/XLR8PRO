@@ -812,3 +812,41 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
   - Hex colours and inline `<style>` in legacy views (227 files).
   - These are the follow-up work.
 - **Approved-by:** user (28-09) · **Risk:** MED (global JS on every page; guarded, idempotent, opt-out) · **Reversal:** remove the `header_metas` include / config entries.
+
+### DEC-067 | 28-09-2026 | A (UI) | Tabler-parity shell, theme settings, AG-Grid theming and the dev UI kit
+- **Why:** the user asked for the look and features of the Tabler admin preview: its menu system, a user block with an avatar and dropdown, a mode switcher and a colour switcher. They also want Tabler-level form elements, a CRM dashboard, a chat interface, and static sample pages on a dev-only route.
+  - AG-Grid and whole pages must follow the mode and colour switches.
+  - Only free / OSS or in-house code may be used.
+- **Diagnosis (why dark mode broke):**
+  - Our `layouts/horizontal` override hard-codes `#FFFFFF !important` on the header and `#F4F2EE` on the page.
+  - The user dropdown uses inline hex colours.
+  - AG-Grid is loaded unversioned (it resolves to v36). Since v33 the grid themes itself through its JS Theming API with a light Quartz theme, so the `--ag-*` → `--tblr-*` mapping in `ag-grid-tabler-theme.css` never reaches it.
+  - Legacy views carry `bg-white`, `text-black` and inline hex colours.
+- **Decision:**
+  - **Theme settings panel** (off-canvas, like Tabler's), opened from the top bar and the user menu. Settings:
+    - colour mode: light / dark / system (Backpack's `colorMode`);
+    - primary colour: 12 Tabler colours;
+    - base palette: slate / gray / zinc / neutral / stone;
+    - font: sans / serif / mono / comic;
+    - corner radius: 0 – 2;
+    - menu layout: horizontal / vertical / vertical with a dark sidebar;
+    - a reset button.
+  - How it works:
+    - Colours, fonts and radius come from Tabler 1.4's own `tabler-themes.min.css`: the same MIT package, pinned `@tabler/core@1.4.0` and cached by Basset. They are applied as `data-bs-theme-*` attributes on `<html>` by a render-blocking script, so nothing flashes.
+    - The choice is stored per browser (`localStorage xl.theme`).
+    - The layout is a per-browser cookie `xl_layout`, whitelisted, unencrypted, and read by the new `ApplyUiPreferences` admin middleware. The default stays `horizontal`.
+  - **Shell:**
+    - Hard-coded colours are removed from the horizontal layout.
+    - A Tabler-style user block: avatar image or initials, name and designation, and a dropdown with profile, inbox, appearance and log-out.
+    - The vertical layouts get a top header (search slot, mode, appearance, bell, user block).
+  - **AG-Grid:** the existing global `createGrid` hook gives every grid that sets no `theme` of its own a Quartz Theming-API theme whose parameters are Tabler CSS variables. Every grid (86 views) therefore follows mode, primary colour, font and radius live, with no view edits.
+  - **Dark-mode safety net** (`public/css/xl-theme.css`): under `[data-bs-theme=dark]` it remaps `bg-white`, `bg-light`, `text-black`, `text-dark`, `table-light` / `thead-light` and the common inline white or black colours. This covers the Sales views without editing them.
+  - **Dev UI kit** `/admin/dev/ui/{page}`:
+    - Pages: overview, forms, lists, elements, CRM dashboard, chat, pages.
+    - Static reference screens built only from Tabler, the shared layer and the components.
+    - Available only when `platform.dev_ui_kit` is on. It follows `XL_DEV_UI_KIT` and defaults to on only for `APP_ENV=local`; when off the route returns 404. No new permission.
+  - **Libraries:**
+    - ApexCharts 3.54.1 (MIT), pinned and Basset-cached, only on the UI-kit dashboard. It is the chart library Tabler itself uses.
+    - No Tabler Icons: Line Awesome stays the single icon set.
+    - No composer changes.
+- **Approved-by:** user (request of 28-09: "free/oss or our own custom functionality only") · **Risk:** MED — global CSS/JS on every page and a new admin middleware; all opt-in or guarded · **Reversal:** remove the layout overrides, the `xl-theme` includes and the middleware entry.

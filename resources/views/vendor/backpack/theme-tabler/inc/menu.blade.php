@@ -5,8 +5,8 @@
 </ul>
 @endif
 
-{{-- Top menu right items (ordered right) --}}
-<ul class="nav navbar-nav d-flex flex-row flex-shrink-0 @if(backpack_theme_config('html_direction') == 'rtl') me-0 @endif">
+{{-- Top menu right items: colour mode, appearance, notifications, user block (DEC-067) --}}
+<ul class="nav navbar-nav d-flex flex-row flex-shrink-0 align-items-center @if(backpack_theme_config('html_direction') == 'rtl') me-0 @endif">
 
     @if (backpack_auth()->guest())
     <li class="nav-item">
@@ -19,16 +19,14 @@
     @endif
     @else
 
-    {{-- Dark Mode Toggle --}}
-    <li class="nav-item">
+    <li class="nav-item d-flex align-items-center">
         @includeWhen(backpack_theme_config('options.showColorModeSwitcher'), backpack_view('layouts.partials.switch_theme'))
     </li>
 
-    {{-- Original Topbar Right Content (यहाँ से तीनों आइकॉन्स आएंगे) --}}
+    @include(backpack_view('inc.appearance_button'))
+
     @include(backpack_view('inc.topbar_right_content'))
 
-    {{-- User Dropdown (profile, logout) --}}
     @include(backpack_view('inc.menu_user_dropdown'))
     @endif
 </ul>
-

@@ -15,8 +15,16 @@ paths:
   converge a screen to the shared pattern when you touch it.
 - **Colours:** Tabler/Bootstrap tokens (`var(--tblr-*)`, `bg-body`, `text-body-secondary`) — never hardcoded
   hex / `bg-white` (breaks dark mode). Bootstrap **5** classes only (`ms-/me-`, `float-end`, `mb-3` not `form-group`).
-- **AG-Grid:** include `public/css/ag-grid-tabler-theme.css` on every grid page; pin library versions
+- **AG-Grid:** never pass a `theme` option — the global `createGrid` hook (`header_metas`, DEC-067) gives every grid
+  the Quartz Theming-API theme bound to Tabler tokens (mode / primary / font / radius follow live) and switches off
+  legacy `styles/ag-theme-*.css`. New grids: pinned `ag-grid-community@36.2.0`, no legacy CSS. Pin library versions
   (no unversioned CDN URLs); don't copy-paste export code — reuse the shared helper when one exists.
+- **Theme & shell (DEC-067):** Appearance panel (`inc/theme_settings`, `public/js/xl-theme.js`) sets colour mode,
+  primary colour, base, font, radius (Tabler 1.4 `data-bs-theme-*`, per browser) and the menu layout (`xl_layout`
+  cookie → `ApplyUiPreferences`). Style only with tokens so all of it reaches your screen; charts / canvas read colours
+  via `XL.theme.token('--tblr-primary')` and rebuild on `XL.theme.onChange`. `public/css/xl-theme.css` holds shell,
+  kit patterns (chat, KPI, kanban) and the dark-mode safety net for legacy markup — not a licence for new hex.
+  Reference markup: dev UI kit `/admin/dev/ui` (local only, `XL_DEV_UI_KIT`). Charts: ApexCharts 3.54.1 via `@basset`.
 - **Shared UI layer (DEC-066):** `public/js/xl-ui.js` + `public/css/xl-ui.css` load on every admin page and
   auto-enhance date inputs (flatpickr, site format), `select[multiple]` (Select2), file inputs (drop-zone) and bare
   tables (`.table-responsive`); opt out with `data-xl="off"`. In new code use the components:
