@@ -47,7 +47,7 @@ class Branch extends BaseModel
 | Scope | SQL |
 |---|---|
 | `active()` / `inactive()` | `is_active = 1 / 0` — only on tables that have `is_active` |
-| `onlyTrashed()` / `includingTrashed()` / `onlyRestored()` | soft-delete filters. `onlyRestored` = live rows with `deleted_by` set — but `restore()` clears `deleted_by`, so it misses model restores (BUG-185) |
+| `onlyTrashed()` / `includingTrashed()` | soft-delete filters (`onlyRestored()` was removed — it could never match, BUG-185) |
 | `newest()` / `oldest()` | order by `created_at` desc / asc |
 | `dateRange($column, $from, $to)` | `whereBetween($column, [$from, $to])` — pass ISO dates |
 | `createdBy($userId)` / `updatedBy($userId)` / `deletedBy($userId)` | audit filters |
@@ -55,7 +55,7 @@ class Branch extends BaseModel
 **Audit helpers**
 | Method | Returns |
 |---|---|
-| `getCreationDetails()` | `['created_at' => ISO8601, 'created_by_id' => id, 'created_by_name' => …]` — the name currently always reads "System" (BUG-184) |
+| `getCreationDetails()` | `['created_at' => ISO8601, 'created_by_id' => id, 'created_by_name' => …]` — the actor's `display_name`, or "System" when there is none (BUG-184 fixed) |
 | `getUpdateDetails()` / `getDeletionDetails()` | same shape for update / delete (`null` when never deleted) |
 | `getAllAuditDetails()` | the three above in one array |
 | `getCreatedAtForHumans()` / `getUpdatedAtForHumans()` | "3 hours ago" |

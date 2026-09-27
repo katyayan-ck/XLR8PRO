@@ -218,13 +218,13 @@ Entry format:
 | BUG-181 | `User::getOrCreateNotificationsMaster()` and the `NotificationsMaster` model did not exist, so the v1 notification endpoints (unread count, mark-all-read) and every legacy `NotificationService` send 500'd; the docs models pointed at non-existent tables (`xlr8_docs_*`, pivot `doc_group_documents`) and the v1 add-to-group rule validated against `documents` | High | FIXED (DEC-061) | 28-09-2026 | 28-09-2026 |
 | BUG-182 | v1 `docs/upload` and `history/{entityType}/{entityId}` (+ `/thread`) resolve `App\Models\{entityType}` straight from request input and never check the caller may see that record — any signed-in mobile user can read or append history on, or attach files to, any model row | High | OPEN (auth change — owner approval) | 28-09-2026 | — |
 | BUG-183 | 36 active employees hold designation codes that are not in the designation master (GM ×4, MAN ×18, CNS ×6, DSA ×3, RTO ×2, SWD, API, TST) — no approval rule (or designation-based notification / docs entitlement) can reach them | Medium | OPEN (data — owner to map codes) | 28-09-2026 | — |
-| BUG-184 | `BaseModel::getCreationDetails()` / `getUpdateDetails()` / `getDeletionDetails()` read `createdByUser?->name`, but `users` has no `name` column — the actor name is always "System" | Low | OPEN | 28-09-2026 | — |
-| BUG-185 | `BaseModel::scopeOnlyRestored()` selects live rows with `deleted_by` set, but the `restoring` hook clears `deleted_by` — rows restored through `restore()` never match | Low | OPEN | 28-09-2026 | — |
+| BUG-184 | `BaseModel::getCreationDetails()` / `getUpdateDetails()` / `getDeletionDetails()` read `createdByUser?->name`, but `users` has no `name` column — the actor name is always "System" | Low | FIXED (DEC-070) | 28-09-2026 | — |
+| BUG-185 | `BaseModel::scopeOnlyRestored()` selects live rows with `deleted_by` set, but the `restoring` hook clears `deleted_by` — rows restored through `restore()` never match | Low | FIXED (DEC-070) — scope removed | 28-09-2026 | — |
 | BUG-175 | Person contacts/addresses/banking: the per-person type-slot unique keys include soft-deleted rows, so re-adding a deleted slot (e.g. a new Primary address after deleting one) failed with a duplicate-key 500; promoting a non-Alternate row to Primary while Alternate was used also collided | High | FIXED (DEC-053) | 27-09-2026 | 27-09-2026 |
-| BUG-186 | `OrgService::variantName()` is typed `: string` but `variants()` returns an array per code — TypeError; breaks `getUsersForListing()` with vehicle names and any caller | Medium | OPEN | 28-09-2026 | — |
-| BUG-187 | `AuthService::verifyOtp()` / `getUserDetails()` / `logout()` read `$user->name`, `->email`, `->mobile`, which do not exist on `users` — the mobile app gets null user name, email and mobile | Medium | OPEN (API contract — owner approval) | 28-09-2026 | — |
+| BUG-186 | `OrgService::variantName()` is typed `: string` but `variants()` returns an array per code — TypeError; breaks `getUsersForListing()` with vehicle names and any caller | Medium | FIXED (DEC-070) | 28-09-2026 | — |
+| BUG-187 | `AuthService::verifyOtp()` / `getUserDetails()` / `logout()` read `$user->name`, `->email`, `->mobile`, which do not exist on `users` — the mobile app gets null user name, email and mobile | Medium | OPEN (owner approval — D1); worse than logged: mobile login is broken | 28-09-2026 | — |
 | BUG-188 | `AuthService::generateOtp()` uses `rand()` (not cryptographically secure) for the mobile-app login OTP | High | OPEN (security — owner approval) | 28-09-2026 | — |
-| BUG-189 | `AuthService` writes the full mobile number into `Log::info/error` on every OTP request / verify / logout — against the API rule "never log full phone numbers" | Medium | OPEN | 28-09-2026 | — |
+| BUG-189 | `AuthService` writes the full mobile number into `Log::info/error` on every OTP request / verify / logout — against the API rule "never log full phone numbers" | Medium | FIXED (DEC-070) | 28-09-2026 | — |
 | BUG-190 | `App\Services\RBACService` is injected into `UserCrudController` but never called; `canUserAccess()` checks `resource.action` names that don't exist (permissions are `MOD_PROC_ACT`), `getUserPermissions()` uses a missing `User::userRoleAssignments` relation and `UserRoleAssignment::isActive()` | Low | OPEN (removal needs sign-off) | 28-09-2026 | — |
 | BUG-191 | `Booking` scopes `pendingPayment`, `pendingInsurance`, `pendingRTO`, `pendingDeliveries`, `pendingDO` and the static count helpers (`getDynamicBookingCounts`, finance / exchange MTD-YTD) reference `xcelr8_booking_*` / `bookings` tables, a missing `Branches` class and old `branch_id` / `abbr` columns — every call throws; no caller found today | Low | OPEN (booking team) | 28-09-2026 | — |
 | BUG-192 | `Enquiry::quotations()` is `hasMany(Quotation, 'enquiry_no', 'enquiry_no')` but quotations store the enquiry **id** in `enquiry_no` (the inverse `Quotation::enquiry()` uses `enquiry_no → id`) — the relation returns no rows; no caller today | Low | OPEN (booking team) | 28-09-2026 | — |
@@ -2081,35 +2081,39 @@ guessed at.
 
 ### BUG-184 — Audit detail helpers always name the actor "System"
 
-- **Status:** OPEN (28-09-2026).
+- **Status:** FIXED (DEC-070)
 - **Severity:** Low — only the audit-detail arrays are affected; `created_by` ids are correct.
 - **Found:** 28-09-2026, while writing `docs/domains/core.md`.
 - **Evidence:** `app/Models/BaseModel.php` `getCreationDetails()` returns `'created_by_name' => $this->createdByUser?->name ?? 'System'`; `users` has `username` and the `display_name` accessor, no `name`.
 - **Proposed solution:** use `->display_name` in the three helpers.
+- **Resolution (28-09-2026):** `getCreationDetails()` / `getUpdateDetails()` / `getDeletionDetails()` read `display_name`. Test `tests/Unit/Models/BaseModelAuditDetailsTest.php`.
 
 ### BUG-185 — `onlyRestored()` scope never matches a model restore
 
-- **Status:** OPEN (28-09-2026).
+- **Status:** FIXED (DEC-070) — scope removed
 - **Severity:** Low — no caller found (`grep onlyRestored` in app/resources shows none).
 - **Found:** 28-09-2026, while writing `docs/domains/core.md`.
 - **Evidence:** the scope is `whereNull('deleted_at')->whereNotNull('deleted_by')`, while `BaseModel::booted()` `restoring` sets `deleted_by = null`.
 - **Proposed solution:** keep `deleted_by` on restore (or add a `restored_at` column), or drop the unused scope.
+- **Resolution (28-09-2026):** `scopeOnlyRestored()` had no callers and could never match; removed from `BaseModel` and `docs/domains/core.md`.
 
 ### BUG-186 — OrgService::variantName() throws a TypeError
 
-- **Status:** OPEN (28-09-2026).
+- **Status:** FIXED (DEC-070)
 - **Severity:** Medium.
 - **Found:** 28-09-2026, while writing docs/domains/org.md.
 - **Evidence:** `DB_DATABASE=xlrm_testing php artisan tinker --execute 'OrgService::variantName(array_key_first(OrgService::variants()))'` → `TypeError: Return value must be of type string, array returned`. Caller: `OrgService::getUsersForListing()` (vehFormat `name` / `code_name`).
 - **Proposed solution:** return `self::variants()[$code]['name'] ?? $code` (the display name); add a unit test.
+- **Resolution (28-09-2026):** `variantName()` returns `variants()[$code]['name'] ?? $code`. Test `tests/Unit/Services/OrgServiceNameLookupTest.php`.
 
 ### BUG-187 — v1 auth responses return null name / email / mobile
 
-- **Status:** OPEN (API contract — owner approval) (28-09-2026).
+- **Status:** OPEN (owner approval — D1); worse than logged: mobile login is broken
 - **Severity:** Medium.
 - **Found:** 28-09-2026, while writing docs/domains/iam-auth.md.
 - **Evidence:** `Schema::getColumnListing('users')` has no name / email / mobile; the User model has `display_name`, `primary_email`, `primary_mobile` accessors. AuthService lines ~308-313 and ~348-353.
 - **Proposed solution:** fill the same keys from `display_name`, `primary_email`, `primary_mobile` (additive, keeps the v1 contract shape); add an API test asserting non-null values.
+- **Resolution (28-09-2026):** Triage 28-09: `requestOtp()` and `lockAccount()` query `User::where('mobile', …)` but `users` has no `mobile` column, so every OTP request fails before sending; OTP is the only mobile login route. `sendViaEmail($user->email, …)` would also TypeError (no email column). Proposed repair (D1): look the user up via `PersonContact` mobiles → `person_code` → `User`; fill the existing `name`/`email`/`mobile` keys from `display_name`/`primary_email`/`primary_mobile` (same response shape).
 
 ### BUG-188 — Login OTP generated with rand()
 
@@ -2121,11 +2125,12 @@ guessed at.
 
 ### BUG-189 — AuthService logs full mobile numbers
 
-- **Status:** OPEN (28-09-2026).
+- **Status:** FIXED (DEC-070)
 - **Severity:** Medium.
 - **Found:** 28-09-2026, while writing docs/domains/iam-auth.md.
 - **Evidence:** `app/Services/AuthService.php` Log calls at ~lines 135, 152, 175, 298, 325, 388 pass `'mobile' => $mobile`. (`OtpAttemptLog` rows also keep it — that is an audit table, acceptable if access-controlled.)
 - **Proposed solution:** log `ContactService::mask($mobile)` (or the user id only) instead of the number.
+- **Resolution (28-09-2026):** Worse than logged: `OtpNotificationService` wrote the OTP itself to the log (and again to `stack` in debug). Now no log line carries an OTP; phone numbers and emails are masked with `ContactService::mask()` in `AuthService`, `OtpNotificationService` and `Api/V1/AuthController`. `AuthService` also gained its missing `Throwable` import (its catch blocks never matched) and the device-limit check throws the concrete `AuthenticationException` (the abstract `ApplicationException` could not be instantiated). Test `tests/Feature/Api/OtpLoggingTest.php`. Remaining: the user lookup's SQL error (BUG-187) still echoes the number until D1 is approved.
 
 ### BUG-190 — Legacy RBACService (App\Services\RBACService) is unused and partly broken
 

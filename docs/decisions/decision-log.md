@@ -895,3 +895,21 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
   - The list toolbars wrap instead of using fixed widths.
   - A fresh clone is installed and booted in a temporary directory against the local database.
 - **Approved-by:** user (28-09: "fix all issues marked for later"). A backup of `media` and the docs tables is taken before the migration. · **Risk:** MED (data re-pointing on local; reversible) · **Reversal:** `php artisan migrate:rollback --step=1`, then revert the commit.
+
+### DEC-070 | 28-09-2026 | A (all modules) | Bug-fix sprint, wave 1: fixes that need no owner decision
+- **Why:** the user asked to clear all bugs one by one after triaging each against the code (plan approved 28-09).
+  The triage found mobile OTP login broken (`users` has no `mobile` column) and the login OTP written to the log in
+  plain text; both are in scope here only as far as no auth behaviour changes.
+- **Decision (wave 1, no business / auth choice):**
+  - BUG-189: never log an OTP; log user id and masked numbers only. `AuthService` gets its missing imports.
+  - BUG-184 audit names via `display_name`; BUG-185 unused `onlyRestored()` scope removed; BUG-186 `variantName()` returns the name.
+  - BUG-192 / 193 relation keys (`id`, `bid`); BUG-102 dead exchange payload keys dropped (nothing saved changes).
+  - BUG-097: OTF save rejects a VOTF number another booking already holds (row lock in a transaction).
+  - BUG-195: PAN masked in new KYC history entries, like the Aadhaar.
+  - BUG-168: Lead / Lead Source search and details routes carry `'operation' => 'list'`.
+  - BUG-029 / 055 pattern: imports record the real actor, not user 1. BUG-179: importer debug output removed.
+  - BUG-008 / 020 / 021: unused Create / Update traits removed (screens stay list-only; no files deleted).
+  - Tracker, state and smoke-test citations corrected; fixed bugs closed with evidence.
+- **Not in wave 1 (owner decisions D1–D29 in the plan):** mobile login repair, OTP randomness, v1 entity access,
+  deletions of tracked files, menu / permission changes, pricing, data mappings and migrations.
+- **Approved-by:** user (plan approval 28-09). · **Risk:** LOW · **Reversal:** revert the wave-1 commits.

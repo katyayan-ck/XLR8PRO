@@ -411,3 +411,21 @@ headless screenshots at 1366 / 390 px; fresh clone + `composer install` boots (6
 3. `php artisan optimize:clear`. No `npm` step.
 4. New code: history via `$model->recordEvent()`, files via `Docs` / `HasDocuments` (`replaceDocument()` for one-file proofs),
    dates via `site_date()` / `@sitedate`, UI via `x-ui.*` components and Tabler tokens. Guides: `docs/utilities/`, `docs/domains/`.
+
+## Bug-fix sprint, wave 1 — fixes without an owner decision (DEC-070)
+Triage of every open bug against HEAD `0386230` (plan approved 28-09); decisions D1–D29 wait for the owner.
+
+**W1–W2 — mobile login logging (BUG-189):**
+- `OtpNotificationService`: the SMS placeholder logged the OTP itself (and again to `stack` in debug) — removed; emails and
+  numbers in every log line go through `ContactService::mask()`.
+- `AuthService`: log contexts mask the number (8 places); the "not registered" error no longer echoes it; missing
+  `use Throwable;` added (its catch blocks never matched); the device-limit check throws `AuthenticationException`
+  (the abstract `ApplicationException` could not be created). `Api/V1/AuthController` masks the number in exception context.
+- Test: `tests/Feature/Api/OtpLoggingTest.php`.
+- Still broken until D1: the user lookup (`users.mobile` doesn't exist, BUG-187).
+
+**W3–W5 — core:**
+- BUG-184: `BaseModel` audit helpers read `display_name` (test `tests/Unit/Models/BaseModelAuditDetailsTest.php`).
+- BUG-185: unused, never-matching `scopeOnlyRestored()` removed.
+- BUG-186: `OrgService::variantName()` returns the name (test `tests/Unit/Services/OrgServiceNameLookupTest.php`).
+- Guides: `docs/domains/{core,org,vehicle}.md`.

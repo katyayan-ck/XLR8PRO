@@ -1330,9 +1330,9 @@ class OrgService
     public static function variantName(string $code): string
     {
         $code = strtoupper(trim($code));
-        $variants = self::variants(null); // [code => display_name]
+        $variants = self::variants(null); // [code => ['name' => …, 'fuel_type' => …, …]] (BUG-186)
 
-        return $variants[$code] ?? $code;
+        return $variants[$code]['name'] ?? $code;
     }
 
     /**
