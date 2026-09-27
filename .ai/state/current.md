@@ -1,7 +1,7 @@
 # Current state (keep ≤ 50 lines; update at every checkpoint)
 
 **Branch:** `dev/admin` (working branch). **`stage`** = `6ccaf2a` (dev/admin merged and pushed 27-09-2026, deploys to dev.xceler8.in).
-**Updated:** 28-09-2026 — dev/admin is 10 commits ahead of stage (DEC-059…067), not pushed.
+**Updated:** 28-09-2026 — dev/admin is 11 commits ahead of stage (DEC-059…067 + guides), not pushed.
 
 **Entity services (DEC-050…059), done:**
 - Every data-entry entity has one write path, an `App\Support\Entity\EntityService` subclass whose `fields()` is the only rule set. It covers:
