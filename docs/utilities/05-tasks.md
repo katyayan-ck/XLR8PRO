@@ -26,10 +26,10 @@ remarks and files, four inboxes. Service `App\Services\Platform\Task\TaskService
 ## API
 | Call | Returns |
 |---|---|
-| `Task::create($payload, $actorId = null)` | Result `{id}` — `INVALID`, `INVALID_TYPE`, `INVALID_PRIORITY`, `ASSIGNEE_REQUIRED`, `INVALID_PEOPLE`, `INVALID_DEADLINE` |
+| `Task::create($payload, $actorId = null)` | Result `{id}` — `INVALID`, `INVALID_TYPE`, `INVALID_PRIORITY`, `INVALID_OWNER`, `ASSIGNEE_REQUIRED`, `INVALID_PEOPLE`, `INVALID_DEADLINE` |
 | `Task::update($taskId, $payload)` | Result — owner only (`FORBIDDEN`); people rebuilt, added/removed notified |
 | `Task::followUp($taskId, $actorId, $remark, $status = null, $file = null)` | Result — `FORBIDDEN`, `FORBIDDEN_TRANSITION`, `EMPTY` |
-| `Task::inbox($userId, 'CREATED'|'ASSIGNED'|'FOLLOWED'|'SNOOPED', ['status' =>, 'q' =>])` | paginator |
+| `Task::inbox($userId, 'CREATED'|'ASSIGNED'|'FOLLOWED'|'SNOOPED', ['status' =>, 'q' =>, 'open' => true])` | paginator of `Task` models (closed last, then by deadline) |
 | `Task::inboxCounts($userId)` | open count per box |
 | `Task::get($taskId, $viewerId)` | Result DTO incl. `user_role`, `user_can[]`, deadline math — `UNAUTHORISED` (no data) |
 | `Task::delete($taskId, $actorId, $confirm = false)` | Result — owner; a CLOSED task needs `$confirm` |
@@ -72,6 +72,26 @@ or just `<x-task.composer :task="$task" />` (remark + allowed statuses + upload)
 ```blade
 <x-task.inbox box="ASSIGNED" :limit="5" />
 ```
+
+**6. Hand a task to someone else / add a follower** (owner). People are rebuilt from the payload, so send the full lists:
+```php
+Task::update($taskId, ['assignees' => [$newUserId], 'followers' => [$smUserId]], $ownerId);   // removed people are told and lose it
+```
+
+**7. Tasks for one record** (e.g. a booking side panel)
+```php
+$open = Task::inbox($userId, 'ASSIGNED', ['open' => true]);     // the user's view
+// all tasks of a record, read-only: App\Models\Utilities\Task\Task::where('ref_type', 'BOOKING')->where('ref_id', $id)->get()
+```
+
+**8. React when work is submitted**
+```php
+Event::listen(TaskChanged::class, function ($e) { if ($e->change === 'SUBMITTED') { /* notify QA */ } });
+```
+
+## Events & testing
+`TaskChanged` (`CREATED`, `UPDATED`, `DELETED`, `REMARKED`, or the new status). Test the rights with
+`Task::get($id, $userId)->get('user_can')`: see [15-testing.md](15-testing.md). Codes: [16-reference.md](16-reference.md).
 
 ## Screens & permissions
 **Utilities → Tasks** `/admin/utils/tasks` (inboxes), `/tasks/create`, `/tasks/{id}` (view + follow-up + timeline +

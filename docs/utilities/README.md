@@ -2,7 +2,7 @@
 
 Shared services every module uses instead of building its own notifications, comments, files, tasks,
 tickets, approvals, settings or messaging. Spec: `docs/refactor/Platform-Utilities-FRS.md` (FRS v1.1).
-Decisions: DEC-060 … DEC-066 in `docs/decisions/decision-log.md`. Rules for agents: `.ai/rules/modules/platform.md`.
+Decisions: DEC-060 … DEC-067 in `docs/decisions/decision-log.md`. Rules for agents: `.ai/rules/modules/platform.md`.
 
 | # | Utility | Use it when you need to… | Facade | Guide |
 |---|---|---|---|---|
@@ -19,7 +19,12 @@ Decisions: DEC-060 … DEC-066 in `docs/decisions/decision-log.md`. Rules for ag
 | 11 | SMS | send SMS; one-time passwords | `Sms` | [11-sms.md](11-sms.md) |
 | 12 | WhatsApp | send / receive WhatsApp, agent inbox | `WhatsApp` | [12-whatsapp.md](12-whatsapp.md) |
 | 13 | Telephony | click-to-call, call log, recordings | `Telephony` | [13-telephony.md](13-telephony.md) |
-| — | UI kit | dates, multi-selects, uploads, responsive screens | Blade `x-ui.*`, `XL.*` | [ui-kit.md](ui-kit.md) |
+| — | UI kit | dates, multi-selects, uploads, theme / Appearance, AG-Grid, charts, dev UI kit `/admin/dev/ui` | Blade `x-ui.*`, `XL.*` | [ui-kit.md](ui-kit.md) |
+| 14 | Cookbook | wire a new module to all utilities, end to end (worked example + checklist) | — | [14-cookbook.md](14-cookbook.md) |
+| 15 | Testing | write feature tests for code that uses the utilities | — | [15-testing.md](15-testing.md) |
+| 16 | Reference | every result code, event, job, setting, permission, webhook rule | — | [16-reference.md](16-reference.md) |
+
+**New here?** Read the rules below, then [14-cookbook.md](14-cookbook.md), then the guide for each utility you touch.
 
 ## Rules that apply to all of them
 

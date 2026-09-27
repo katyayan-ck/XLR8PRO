@@ -61,6 +61,13 @@ Webhook `POST /api/webhooks/comms/whatsapp`:
 - status: `{"event_id","type":"status","message_id":"<provider id>","status":"DELIVERED|READ|FAILED"}`
 - template approval: `{"event_id","type":"template_status","provider_template_id":"…","status":"APPROVED|REJECTED"}`
 
+## Events & testing
+`OutboxAccepted`, `ChannelLinked`; timeline `WHATSAPP_SENT` / `WHATSAPP_INBOUND`. Webhooks are HMAC-signed. See [15-testing.md](15-testing.md); every code is in
+[16-reference.md](16-reference.md).
+
 ## Gotchas
+- Without an `idempotency_key` the outbox derives one from channel + recipient + template + content + record, so an
+  identical second send is a **duplicate** (`ok`, `duplicate: true`, nothing sent). Give deliberate repeats (reminders)
+  their own key.
 - Webhooks are HMAC-signed (`comms.webhook_secret`, header `X-Signature`) and idempotent on `event_id` / message id.
 - A real provider (Gupshup / 360dialog / Meta) is one driver class + `whatsapp.driver`.

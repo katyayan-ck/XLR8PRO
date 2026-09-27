@@ -33,7 +33,8 @@ people roles as tasks. Service `App\Services\Platform\Ticket\TicketService` · f
 | `Ticket::sla($ticket)` | `{state: ok|due_soon|breached|paused|done, due_at, minutes_left, paused}` |
 | `Ticket::report(['from','to','branch'])` | open by category / priority, breached, resolved, mean time to resolve |
 
-Payload for `open`: `title`, `category`, `priority`, `details`, `requester_id` (default actor), `owner_id`,
+Payload for `open` (priority defaults to `P3`; a `P1` ticket reaches the desk as an **Alert** with severity critical,
+others as a notification): `title`, `category`, `priority`, `details`, `requester_id` (default actor), `owner_id`,
 `assignees[]`, `followers[]`, `snoopers[]`, `ref_type`, `ref_id`.
 
 ## Use cases
@@ -61,6 +62,24 @@ Ticket::transition($id, $itUserId, 'WAITING_USER', 'Please send a screenshot');
 ```
 
 **5. SLA badge anywhere** `<x-ticket.sla-badge :ticket="$ticket" />` · inbox `<x-ticket.inbox box="QUEUE" />`
+
+**6. Requester closes after it is resolved, or reopens**
+```php
+Ticket::transition($id, $requesterId, 'CLOSED', 'Works now, thanks');
+Ticket::transition($id, $requesterId, 'REOPENED', 'Broke again this morning');
+```
+
+**7. Force-close a duplicate** (owner; a reason is required)
+```php
+Ticket::transition($id, $ownerId, 'CLOSED', 'Duplicate of TCK/JPR/26-27/00041');
+```
+
+**8. A branch with a tighter SLA:** `Settings::set('sla.ticket.p2_hours', 4, 'BRANCH', 'JPR')`. It applies to new tickets
+and to priority changes.
+
+## Events & testing
+`TicketChanged` (`CREATED`, `UPDATED`, the new status, `SLA_BREACHED`, auto `CLOSED`). Test SLA with `$this->travel()`
+and `TicketService::flagBreaches()`: see [15-testing.md](15-testing.md). Codes: [16-reference.md](16-reference.md).
 
 ## Screens & permissions
 **Utilities → Tickets** `/admin/utils/tickets` (+ desk queue), `/tickets/create`, `/tickets/{id}`, `/tickets/report`.

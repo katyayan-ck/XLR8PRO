@@ -21,6 +21,8 @@ paths:
 
 # Platform utilities (FRS v1.1, DEC-061..065)
 
+Developer guides: `docs/utilities/` (one per utility, cookbook `14`, testing `15`, codes / events / settings reference `16`) — keep the guide and `16-reference.md` in step when you change a service contract.
+
 Spec: `docs/refactor/Platform-Utilities-FRS.md`. Modules **consume** these services; they never re-implement
 notify, chat, docs, tasks, tickets, settings, approval or messaging, and never add a table for them.
 

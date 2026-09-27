@@ -38,6 +38,19 @@ Notify::to($userId)            // or ->toMany([$a, $b]) / ->audience(Audience::d
 `Audience`: `Audience::users([..])`, `::designation('SM', 'GM')`, `::branch('JPR')`, `::persons('P123')`,
 `::watchersOf('QUOTE', $id)`, chain with `->andUsers()`, `->andDesignation()`, … and `->except($id)`.
 
+## Details worth knowing
+- **Placeholders** in title / body: `{actor}` (display name, or `System`), `{id}` (ref id), `{brand}`, plus anything in
+  `->vars()`. Unknown placeholders are left as typed.
+- **`->template($code, $vars)`** renders the ACTIVE `PUSH`-channel template for the title / body; if there is none the
+  plain `title()` / `body()` are used (no error).
+- **Channels without options** (`'EMAIL' => true`) send the generic template `notify.generic` with the title, body and
+  link to every recipient user (their Person email / mobile). Email goes as **one** message with all recipients in To
+  unless you pass `to`; SMS / WhatsApp go one per person. Each channel gets the key `"{key}.{CHANNEL}"`.
+- **Actor:** defaults to the signed-in admin; set `->actor($id)` in jobs / imports so `{actor}` and "exclude the
+  actor" work.
+- **`priority()`** is stored on notifications (`normal` by default) for sorting in the app; alerts use
+  `data(['severity' => …])`.
+
 ## Use cases
 
 **1. Tell one person their record changed**
@@ -85,10 +98,30 @@ Notify::purgeFor(backpack_user()->id, 'TICKET', $ticket->id);
 - Mobile v1 API (`/api/v1/notifications…`) reads the same rows.
 
 ## Settings
-`notify.quiet_hours` (`HH:MM-HH:MM`, push held back), plus the channel settings in guides 10–12.
+`notify.quiet_hours` (`HH:MM-HH:MM`, may cross midnight, e.g. `22:00-07:00`). Inside the window **push is skipped, not
+delayed**: the bell / inbox row is still written, so users see it when they next open the app. Plus the channel
+settings in guides 10–12.
 
 ## Errors
-`INVALID_KIND`. An empty audience is **not** an error: `ok` with `sent: 0` (logged).
+`INVALID_KIND`. An empty audience is **not** an error: `ok` with `sent: 0` (logged). A repeated idempotency key returns
+`ok` with `duplicate: true`, `sent: 0`.
+
+**7. From a queued job** (no signed-in user): name the actor and use a key so retries don't duplicate
+```php
+Notify::audience(Audience::designation('ACC_MGR'))->actor($systemUserId)->kind('A')
+    ->title('{count} receipts failed to post')->vars(['count' => $failed])->data(['severity' => 'critical'])
+    ->idempotency("receipts.post.{$batchId}")->send();
+```
+
+**8. Message a person directly** (kind `M`, shows under Messages)
+```php
+Notify::to($colleagueId)->kind('M')->title('{actor}: can you cover my 4 pm test drive?')->send();
+```
+
+## Events & testing
+`NotificationSent` after every dispatch; one `SendPushNotification` job per inbox row. Test with `Notify::counts()` /
+`Notify::list()` and `Bus::fake([SendPushNotification::class])`: see [15-testing.md](15-testing.md). Codes:
+[16-reference.md](16-reference.md).
 
 ## Gotchas
 - Don't write `Notification` / `Alert` models directly; don't call `FirebaseService` directly — push is queued by Notify.

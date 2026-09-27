@@ -59,7 +59,14 @@ Email::send(['to' => [$quote->customer_person_code], 'cc' => ['sm@bmpl.in'], 'bc
 tab, details, **Resend**) — `UTL_COMM_VIEW`; resend / send panel `UTL_COMM_SEND`. Bounce / complaint webhooks
 (`POST /api/webhooks/comms/email`) mark the row and suppress the address.
 
+## Events & testing
+`OutboxAccepted` when the driver takes a message; timeline `EMAIL_SENT`. Assert the outbox / sandbox row, not `Mail::fake()`. See [15-testing.md](15-testing.md); every code is in
+[16-reference.md](16-reference.md).
+
 ## Gotchas
+- Without an `idempotency_key` the outbox derives one from channel + recipient + template + content + record, so an
+  identical second send is a **duplicate** (`ok`, `duplicate: true`, nothing sent). Give deliberate repeats (reminders)
+  their own key.
 - Never `Mail::send/raw` in module code — only the mail driver may.
 - Never put customer copy in code; pass `vars`, and escape nothing yourself (HTML vars are escaped by the renderer).
 - Local `.env` points at a real SMTP host — use `mail.driver = log`, `Mail::fake()` in tests, or `mail.redirect_to`.

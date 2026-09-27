@@ -243,3 +243,25 @@
   - top-menu, sidebar and dark-sidebar layouts;
   - the Appearance panel;
   - the legacy branch grid.
+
+## Design work parked; utility developer guides completed (docs only)
+- **Design progress record:** new `docs/refactor/ui-design-progress.md`.
+  - What DEC-066 / DEC-067 delivered, with file lists and how it was verified.
+  - The resume list for after the Sales merge: pin AG-Grid in about 86 views, convert the Sales views, remove hex and inline styles, a real dashboard, and the logo / avatar checks.
+  - How to verify.
+  - `.ai/state/current.md` points to it and was trimmed to stay within 50 lines.
+- **Guides (`docs/utilities/`):**
+  - New `14-cookbook.md`: wiring a module to every utility end to end (hypothetical JobCard) plus a checklist.
+  - New `15-testing.md`: testing code that uses the utilities (sync queue, sandbox rows, fixtures, idempotency, time travel, event / push faking, webhooks, templates, approvals).
+  - New `16-reference.md`: every Result code with its meaning, events and payloads, Chat action codes, jobs and schedule, the settings seed pack, `UTL_*` permissions, webhook rules.
+  - Guides 01–13 each gain an "Events & testing" section, and guides 02–06 gain extra use cases.
+  - The README index lists 14–16.
+- **Corrections found while checking the guides against the code:**
+  - Notify quiet hours **skip** push (the guide said "held back").
+  - `docs.allowed_mimes` is a list of file **extensions**.
+  - Tasks' `create` can also return `INVALID_OWNER`; the `open` inbox filter was undocumented.
+  - A ticket's default priority is P3, and a P1 alerts the desk.
+  - The chat component's `filter` / `allowInternal` options were undocumented.
+  - The outbox derives an idempotency key when none is given, so identical re-sends are duplicates.
+- **Rules:** `.ai/rules/modules/platform.md` points to the guides (synced to `.claude/rules`).
+- **Verification:** no code changed. Every API, code, event, setting and permission in the new pages was checked against `app/Services/Platform/*`, the events, jobs, `config/platform.php` and the permissions migration.

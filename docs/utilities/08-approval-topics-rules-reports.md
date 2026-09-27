@@ -71,6 +71,10 @@ actor, source.
 ## Permissions
 `UTL_APPR_ADMIN` — topics, rules, import, simulation. `UTL_APPR_REPORT` — report.
 
+## Events & testing
+Topics and rules are master data (entity services); requests fire `ApprovalChanged` (guide 7). See [15-testing.md](15-testing.md); every code is in
+[16-reference.md](16-reference.md).
+
 ## Gotchas
 - Designations must exist in the designation master (BUG-183 lists employees on unknown codes).
 - Company / zone / state / desk / channel match only when callers pass them in the scope.

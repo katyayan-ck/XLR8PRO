@@ -49,6 +49,10 @@ calls with `UTL_COMM_VIEW`, otherwise only your own. Webhook `POST /api/webhooks
 `{"event_id","vendor_call_id","status":"ANSWERED|COMPLETED|NO_ANSWER|BUSY|FAILED","duration":64,"recording_ready":true}`;
 inbound: `{"event_id","vendor_call_id","direction":"IN","from":"+91…","to":"<DID>"}`.
 
+## Events & testing
+`CallRecorded`; timeline `CALL_DIALLED`, `CALL_DISPOSED`, `CALL_RECORDED`. The sandbox driver simulates the call. See [15-testing.md](15-testing.md); every code is in
+[16-reference.md](16-reference.md).
+
 ## Gotchas
 - Never send raw customer numbers to the browser; use `display()` or the component.
 - Listen / whisper / barge return `NOT_SUPPORTED` on drivers without them — never let that break dialling.

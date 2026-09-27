@@ -32,6 +32,11 @@ is_internal, removed, edited, can_edit, can_delete`.
 Trait on your model (`use HasCommunications;`): `$model->recordEvent('CREATED', 'Quote created')`,
 `$model->addRemark('text', $file)`, `$model->history()`, `$model->commMaster`.
 
+Components: `<x-chat.thread :model=… title=… filter="combined|events|remarks" :composer="true|false" />` and the
+composer alone `<x-chat.composer :model=… :parent-id=… :allow-internal="true" />` (the internal-remark checkbox only
+shows when allowed). `Chat::eventOnMaster($master, …)` writes on a conversation you already hold, with a body and a
+parent.
+
 ## Use cases
 
 **1. Log every status change of a record**
@@ -62,6 +67,25 @@ Chat::remark($enquiry, 'Imported from DMS; 3 fields corrected', null, null, fals
 ```php
 Chat::subscribe($quote, backpack_user()->id);    // they now get "New remark by …" messages
 ```
+
+**6. System reply under a person's remark** (e.g. an integration answering a question)
+```php
+Chat::eventOnMaster(Chat::master($booking), 'UPDATED', 'DMS number assigned', 'DMS-88213', ['dms' => 'DMS-88213'], $remarkId, $systemUserId);
+```
+
+**7. Internal note only its author and moderators see**
+```php
+Chat::remark($quote, 'Customer is price-shopping at the other dealer', null, null, internal: true);
+```
+
+**8. Only the events, e.g. an audit panel**
+```blade
+<x-chat.thread :model="$booking" filter="events" :composer="false" title="Audit trail" />
+```
+
+## Events & testing
+`ChatEntryAdded` for every entry. Assert with `Chat::events($model)` / `Chat::timeline($model, $viewerId)`: see
+[15-testing.md](15-testing.md). Codes: [16-reference.md](16-reference.md).
 
 ## Screens & API
 Component posts go to `/admin/utils/chat/remark` (and `…/subscribe`, `PUT/DELETE …/remark/{id}`).

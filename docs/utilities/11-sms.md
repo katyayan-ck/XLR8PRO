@@ -56,6 +56,13 @@ Outbox / Sandbox `/admin/utils/comms/outbox`. Webhook `POST /api/webhooks/comms/
 `{"event_id": "…", "type": "dlr", "message_id": "<provider id>", "status": "DELIVERED|FAILED|EXPIRED"}` or
 `{"event_id": "…", "type": "inbound", "from": "+91…", "text": "STOP"}`.
 
+## Events & testing
+`OutboxAccepted`; timeline `SMS_SENT`. With `sms.dlt_required` on, test templates need DLT fields. See [15-testing.md](15-testing.md); every code is in
+[16-reference.md](16-reference.md).
+
 ## Gotchas
+- Without an `idempotency_key` the outbox derives one from channel + recipient + template + content + record, so an
+  identical second send is a **duplicate** (`ok`, `duplicate: true`, nothing sent). Give deliberate repeats (reminders)
+  their own key.
 - Never call a vendor SDK / HTTP API from a module — only `Services\Platform\Comms\Drivers\*`.
 - A real vendor driver (MSG91 / Kaleyra …) is one class + `sms.driver`; module code does not change.

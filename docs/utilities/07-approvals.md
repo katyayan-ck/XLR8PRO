@@ -83,6 +83,10 @@ accept / withdraw actions allowed for the viewer.
 (raise by hand), `/approvals/{id}`. Everyone `UTL_APPR_VIEW` / `UTL_APPR_REQUEST`; `UTL_APPR_ADMIN` may close any
 request and manages topics / rules (guide 8); `UTL_APPR_REPORT` for the report.
 
+## Events & testing
+`ApprovalChanged` (`OPENED`, `COUNTERED`, `REVISED`, `ACCEPTED`, `WITHDRAWN`). Fixture `approvalRule()` builds authority in tests. See [15-testing.md](15-testing.md); every code is in
+[16-reference.md](16-reference.md).
+
 ## Gotchas
 - Callers never compute "who is next" and never store an `assigned_to` baton.
 - Authority comes from the power sheet (guide 8), never from code.

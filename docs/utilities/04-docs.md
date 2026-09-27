@@ -13,7 +13,8 @@ Service `App\Services\Platform\Docs\DocsService` · facade `Docs` · model trait
   - owner, `UTL_DOCS_MANAGE` and superadmin always;
   - with entitlements: any matching `USER`, `DESIGNATION`, `DEPARTMENT`, `SCOPE` (type+code) or `PARENT` (whoever may see the record);
   - without entitlements: an attached file follows its record; an unattached library file follows `UTL_DOCS_VIEW`.
-- Upload limits come from Settings: `docs.max_upload_kb`, `docs.allowed_mimes`. Soft delete; the daily purge job
+- Upload limits come from Settings: `docs.max_upload_kb`, `docs.allowed_mimes` (a comma list of file **extensions**, e.g.
+  `pdf,jpg,png`; blank = any). The drop-zone checks the same list in the browser. Soft delete; the daily purge job
   removes files after `docs.purge_after_days`.
 
 ## API
@@ -78,6 +79,10 @@ return response()->download(Docs::zip($uid, $pack->get('group_id'))->get('path')
 **Utilities → Documents** `/admin/utils/docs` (library, my uploads, cart, packs). `UTL_DOCS_VIEW` to browse,
 `UTL_DOCS_UPLOAD` to upload, `UTL_DOCS_MANAGE` to delete anyone's. Download `/admin/utils/docs/{id}/download`
 always checks `canView`. Mobile v1 `/api/v1/docs/*` uses the adapter `DocService`.
+
+## Events & testing
+No domain event of its own; attaching writes a Chat `ATTACHED` event. Purge job `PurgeDeletedDocuments`. See [15-testing.md](15-testing.md); every code is in
+[16-reference.md](16-reference.md).
 
 ## Gotchas
 - Never call `$model->addMedia()` for business documents, never add file columns — use Docs.

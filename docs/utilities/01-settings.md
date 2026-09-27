@@ -70,6 +70,10 @@ Event::listen(\App\Events\Platform\SettingsChanged::class, fn ($e) => $e->key ==
 ## Screens & permissions
 `/admin/utils/settings` — `UTL_SETTINGS_VIEW` to see, `UTL_SETTINGS_MANAGE` to change / reset / add overrides.
 
+## Events & testing
+`SettingsChanged` (key, old, new, scope, actor; values hidden for encrypted keys). See [15-testing.md](15-testing.md); every code is in
+[16-reference.md](16-reference.md).
+
 ## Gotchas
 - Never `config("platform.settings.{$key}")` — dotted keys are read as nesting. Use the service.
 - Don't cache settings yourself; the service caches and busts on write.

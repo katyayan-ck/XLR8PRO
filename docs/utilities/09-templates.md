@@ -55,6 +55,10 @@ activate there.
 `/admin/utils/templates` — `UTL_TPL_VIEW` (list / preview), `UTL_TPL_EDIT` (drafts, submit, import),
 `UTL_TPL_ACTIVATE` (approve directly, activate).
 
+## Events & testing
+Going live runs through approval topic `COMMS.TEMPLATE` (`ApprovalChanged`). In tests use `approveDirect()` + `activate()`. See [15-testing.md](15-testing.md); every code is in
+[16-reference.md](16-reference.md).
+
 ## Gotchas
 - No customer-facing text in PHP / Blade for messages — it belongs here.
 - Put a date into a variable already formatted with `site_date()`.
