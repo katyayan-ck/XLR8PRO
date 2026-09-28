@@ -9,6 +9,7 @@
 namespace App\Models\Vehicle\Pricing;
 
 use App\Models\BaseModel;
+use App\Services\Vehicle\Pricing\Session\PricingStage;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Schema;
@@ -19,21 +20,37 @@ class ImportSession extends BaseModel
 
     protected $table = 'xlr8_vehicle_pricing_import_sessions';
 
-    public const STAGE_IDLE             = 'idle';
-    public const STAGE_DETECTING        = 'detecting';
-    public const STAGE_AWAITING_VEHICLE = 'awaiting_vehicle';
-    public const STAGE_IMPORTING_PRICES = 'importing_prices';
-    public const STAGE_AWAITING_ADDONS  = 'awaiting_addons';
-    public const STAGE_IMPORTING_ADDONS = 'importing_addons';
-    public const STAGE_AWAITING_RULES   = 'awaiting_rules';
-    public const STAGE_CALCULATING      = 'calculating';
-    public const STAGE_SUMMARY          = 'summary';
-    public const STAGE_COMPLETED        = 'completed';
-    public const STAGE_CANCELLED        = 'cancelled';
+    public const STAGE_IDLE = 'idle';
 
-    public const STATUS_IDLE      = 'idle';
-    public const STATUS_ACTIVE    = 'active';
+    public const STAGE_DETECTING = 'detecting';
+
+    public const STAGE_AWAITING_VEHICLE = 'awaiting_vehicle';
+
+    public const STAGE_IMPORTING_PRICES = 'importing_prices';
+
+    public const STAGE_AWAITING_ADDONS = 'awaiting_addons';
+
+    public const STAGE_IMPORTING_ADDONS = 'importing_addons';
+
+    public const STAGE_AWAITING_RULES = 'awaiting_rules';
+
+    public const STAGE_CALCULATING = 'calculating';
+
+    public const STAGE_SUMMARY = 'summary';
+
+    public const STAGE_COMPLETED = 'completed';
+
+    public const STAGE_CANCELLED = 'cancelled';
+
+    /** DEC-073: terminal stage of a discarded session (PricingStage::Discarded) */
+    public const STAGE_DISCARDED = 'discarded';
+
+    public const STATUS_IDLE = 'idle';
+
+    public const STATUS_ACTIVE = 'active';
+
     public const STATUS_COMPLETED = 'completed';
+
     public const STATUS_CANCELLED = 'cancelled';
 
     protected $fillable = [
@@ -49,6 +66,12 @@ class ImportSession extends BaseModel
         'remarks',
         'cancelled_at',
         'cancelled_by',
+        'progress',
+        'hold_lists',
+        'upload_path',
+        'published_at',
+        'completed_at',
+        'completed_by',
         'created_by',
         'updated_by',
         'deleted_by',
@@ -57,12 +80,16 @@ class ImportSession extends BaseModel
     protected function casts(): array
     {
         return array_merge(parent::casts(), [
-            'selected_sheets'   => 'array',
+            'selected_sheets' => 'array',
             'selected_segments' => 'array',
-            'hold_scopes'       => 'array',
-            'stats'             => 'array',
-            'wef_date'          => 'date',
-            'cancelled_at'      => 'datetime',
+            'hold_scopes' => 'array',
+            'stats' => 'array',
+            'wef_date' => 'date',
+            'cancelled_at' => 'datetime',
+            'progress' => 'array',
+            'hold_lists' => 'array',
+            'published_at' => 'datetime',
+            'completed_at' => 'datetime',
         ]);
     }
 
@@ -72,7 +99,20 @@ class ImportSession extends BaseModel
             ->whereNotIn('current_stage', [
                 self::STAGE_COMPLETED,
                 self::STAGE_CANCELLED,
+                self::STAGE_DISCARDED,
             ]);
+    }
+
+    /** The session's stage as the DEC-073 enum (legacy stage strings are mapped). */
+    public function stage(): PricingStage
+    {
+        return PricingStage::fromStored($this->current_stage);
+    }
+
+    /** Anything published from this session? Then it can only be completed, never discarded. */
+    public function isPublished(): bool
+    {
+        return $this->published_at !== null;
     }
 
     public function isTerminal(): bool
@@ -80,6 +120,7 @@ class ImportSession extends BaseModel
         return in_array($this->current_stage, [
             self::STAGE_COMPLETED,
             self::STAGE_CANCELLED,
+            self::STAGE_DISCARDED,
         ], true)
             || in_array($this->status, [
                 self::STATUS_COMPLETED,

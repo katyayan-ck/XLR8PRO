@@ -15,7 +15,9 @@ keys everywhere (`model_code`, `variant_code`). Pricing lives on top of this —
 
 **Status (four values, KeyValue `status_id`):** `INCOMPLETE` (fresh price-list stub, not sellable) · `ACTIVE` (complete
 and on sale — the only state with `is_active = true`) · `INACTIVE` (taken off sale) · `DISCONTINUED`. Detection never
-creates `INACTIVE`; completeness is checked only on the Vehicle Info import. Free-text model names are matched through
+creates `INACTIVE`. **Only a complete vehicle may be Active — enforced by `VariantService` on every write** (screen,
+import, service; DEC-073). New variants start inactive; `wheels` / `taxi_price` have no DB default. `VEHICLE_STATUS` holds
+all four codes. Free-text model names are matched through
 the canonical hyphenated code (`modelCodeCandidates()` below).
 
 **Local data note:** the local `xlrm` vehicle masters were purged for a fresh import (DEC-051); `xlrm_testing` still has
@@ -61,12 +63,13 @@ Inject or `app(VehicleService::class)`. All writes go through the entity service
 | `colorsOfVariant($oemCode)`, `colorsOfModel($oemModel)`, `colorsOfSegment($seg, ?$sub)` | colour rows for a level |
 | `findByOemCode($oemCode)` | `?Variant` |
 
-### Completeness (Vehicle Info)
-`isComplete(Variant $v): bool` and `missingFields(Variant $v): list<string>`. Always required: `segment_code`,
-`sub_segment_code`, `fuel_type_id`, `seating_capacity`, `wheels`, `transmission`, `drivetrain`, `body_make_id`,
-`body_type_id`, `gst_percent`, `permit_id`, `taxi_price`, `custom_name`, `display_name`, `color`, and a model name
-(`custom_model`). Then by permit / fuel / wheels: Goods → `gvw`; Private or 4-wheel Passenger → `motor` (electric) or
-`cc_capacity` (ICE); … (see the method for the full matrix). Helpers `permitCode($v)`, `fuelCode($v)` (KeyValue codes).
+### Completeness — `App\Services\Vehicle\VehicleCompleteness` (the single rule, DEC-073)
+`missing(Variant $v): list<string>` (attribute keys), `missingLabels($v)` (Vehicle Info column names), `isComplete($v)`,
+`permitCode($v)`, `isElectric($fuelCode)`. `VehicleService::isComplete()` / `missingFields()` delegate to it.
+Always required: Segment, Sub Segment, Fuel, Seating, Wheels, Transmission, Drivetrain, Body Make, Body Type, GST%,
+Permit, Taxi Price, Custom Model (model name), Custom Variant, Display Name, Colour Name. Then: **Private + ICE → CC;
+Private + EV → Motor; Goods → GVW; Passenger and Misc → none** (user decision 28-09; amends spec v3.1.1 §3.3).
+Helpers `permitCode($v)`, `fuelCode($v)` on VehicleService (KeyValue codes).
 
 ```php
 $missing = app(VehicleService::class)->missingFields($variant);   // ['gvw', 'body_type_id'] → show on the completeness screen
@@ -81,7 +84,7 @@ $missing = app(VehicleService::class)->missingFields($variant);   // ['gvw', 'bo
 | `findOrCreateSegment($code, ?$name, ?$userId)` / `findOrCreateSubSegment($seg, ?$code, ?$name, ?$userId)` | the row (created through the entity service when missing) |
 | `findOrCreateModel($oemModel, $seg, ?$sub, ?$userId)` | the model; code in the hyphenated format |
 | `modelCodeCandidates($oemModel)` | `['THAR-ROXX', 'THAR ROXX', 'THARROXX']` — canonical first, legacy spellings after |
-| `createStubFromPriceList($oemCode, $oemModel, $oemVariant, $sheetTitle, ?$userId)` | `['variant' => Variant, 'created' => bool, 'model' => VehicleModel]` — creates a stub only when the OEM code is new |
+| `createStubFromPriceList($oemCode, $oemModel, $oemVariant, $sheetTitle, ?$userId)` | `['variant' => Variant, 'created' => bool, 'model' => VehicleModel]` — creates a stub only when the OEM code is new: code, OEM names, colour code (LMM TZU → `NA`), status INCOMPLETE, inactive; colour name / custom variant / taxi flag left for Vehicle Info (DEC-073) |
 | `applyVehicleInfo(Variant $v, array $row, ?$userId)` | `['complete' => bool, 'missing' => [...], 'active' => bool, 'variant' => Variant]`; a value that breaks a field rule throws `ValidationException` (the importer reports the row) |
 | `kkvId($keyword, $value, $create = false)` | KeyValue id for a label (creates through `KeyvalueService` when `$create`) |
 | `copySpecifications($fromOem, $toOem, ?$userId)` | the updated target variant, or null when either is missing |

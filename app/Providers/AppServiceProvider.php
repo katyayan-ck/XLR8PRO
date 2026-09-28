@@ -2,6 +2,25 @@
 
 namespace App\Providers;
 
+use App\Models\Vehicle\Pricing\Addon;
+use App\Models\Vehicle\Pricing\ChangeFlag;
+use App\Models\Vehicle\Pricing\DealerCharge;
+use App\Models\Vehicle\Pricing\Discount;
+use App\Models\Vehicle\Pricing\Hold;
+use App\Models\Vehicle\Pricing\InsAddonRate;
+use App\Models\Vehicle\Pricing\InsBaseRule;
+use App\Models\Vehicle\Pricing\InsDefault;
+use App\Models\Vehicle\Pricing\InsIdvSlot;
+use App\Models\Vehicle\Pricing\Pricing;
+use App\Models\Vehicle\Pricing\PricingHistory;
+use App\Models\Vehicle\Pricing\Profile;
+use App\Models\Vehicle\Pricing\RtoRule;
+use App\Models\Vehicle\Pricing\Snapshot;
+use App\Models\Vehicle\Pricing\TcsConfig;
+use App\Models\Vehicle\Segment;
+use App\Models\Vehicle\SubSegment;
+use App\Models\Vehicle\Variant;
+use App\Models\Vehicle\VehicleModel;
 use App\Services\AuthService;
 use App\Services\DateFormatService;
 use App\Services\EnquiryReferenceService;
@@ -25,6 +44,8 @@ use App\Services\Sales\Booking\BookingOtfService;
 use App\Services\Sales\Booking\BookingRefundService;
 use App\Services\Sales\Booking\BookingRtoService;
 use App\Services\SystemSettingService;
+use App\Services\Vehicle\Pricing\Session\PricingChangeObserver;
+use App\Services\Vehicle\Pricing\Session\PricingChangeRecorder;
 use Illuminate\Cache\CacheManager;
 use Illuminate\Contracts\Auth\Access\Gate as GateContract;
 use Illuminate\Http\Request;
@@ -61,6 +82,8 @@ class AppServiceProvider extends ServiceProvider
         // DEC-071: one scope resolver / manager per request (memoised scopes, opt-out state)
         $this->app->scoped(ScopeResolver::class);
         $this->app->scoped(DataScopeManager::class);
+        // DEC-073: one change recorder per request / job (the pricing session it records into)
+        $this->app->scoped(PricingChangeRecorder::class);
         $this->app->singleton(HRJourneyService::class);
         $this->app->singleton(EmployeeJourneyService::class);
         $this->app->singleton(IdentifierService::class);
@@ -120,6 +143,21 @@ class AppServiceProvider extends ServiceProvider
     {
         foreach (glob(base_path('routes/backpack/*.php')) as $file) {
             require $file;
+        }
+
+        // DEC-073: a pricing session records every row it writes so Discard can undo exactly its own changes
+        foreach ([
+            Pricing::class, PricingHistory::class,
+            Addon::class, Discount::class,
+            DealerCharge::class, RtoRule::class,
+            InsBaseRule::class, InsIdvSlot::class,
+            InsDefault::class, InsAddonRate::class,
+            TcsConfig::class, Snapshot::class,
+            Profile::class, Hold::class,
+            ChangeFlag::class, Variant::class,
+            VehicleModel::class, Segment::class, SubSegment::class,
+        ] as $model) {
+            $model::observe(PricingChangeObserver::class);
         }
 
         // {{-- @sitedate($booking->booking_date) --}} - one source of truth for

@@ -565,3 +565,28 @@ unscoped, department / division / vertical only where a column exists, bookings 
 - Tests: `tests/Feature/Dashboard/DashboardTest.php` (4). Verified: page 200 for users 1 / 4 / 40; all 23 endpoints
   200 (catalogue 403 for user 4 without `VEH_VAR_VIEW`), 0.15–0.8 s each; screenshots.
 - Guide: new `docs/domains/dashboard.md`. New BUG-198 (permission cache rebuild ~10 s).
+
+## Pricing redesign — Phase 1 foundations (DEC-073)
+Plan: `docs/plans/2026-09-28-pricing-redesign-DEC-073.md` (12 phases; user decisions recorded in DEC-073).
+- **Completeness (single rule):** new `App\Services\Vehicle\VehicleCompleteness` (16 always-required fields; Private + ICE →
+  CC, Private + EV → Motor, Goods → GVW, Passenger / Misc → none — user decision, amends spec §3.3).
+  `VehicleService::isComplete/missingFields` delegate. `VariantService` refuses `is_active = 1` for an incomplete vehicle
+  (all write paths), new variants start inactive, taxi flag accepts Y/N.
+- **Stubs:** price-list stubs carry only code / OEM names / colour code (LMM TZU → `NA`), status INCOMPLETE; colour name,
+  custom variant and taxi flag are left for Vehicle Info. Unknown Fuel / Permit / Body values reject the Vehicle Info row
+  (no more auto-created key values).
+- **Migrations** (run on `xlrm` + `xlrm_testing`, rollback verified, backup `storage/app/backups/xlrm-vehicle-pricing-pre-DEC073-28-09-2026.sql`):
+  `2026_09_28_210413_pricing_redesign_foundations` (snapshot key + permit, session change log, permit map seeded from the
+  insurance Rules sheet, session progress / hold lists / upload / published / completed, holds.import_session_id,
+  VEHICLE_STATUS INCOMPLETE + DISCONTINUED); `2026_09_28_210553_relax_variant_stub_defaults` (wheels / taxi_price
+  nullable, is_active default 0).
+- **Process engine:** `Session\PricingStage` enum, `Session\PricingSessionService` (gate, start with upload + holds,
+  forward-only advance, record, markPublished, exact discard before publish, complete + reopen),
+  `Session\PricingChangeRecorder` + `PricingChangeObserver` (every insert / update / soft delete / bulk expiry of a session
+  is logged; discard replays it backwards), `PricingHoldService` (lists incl. LMM_TZU, CSD, TAXI).
+- **Reader:** `Import\PricingWorkbookReader` — one sheet, columns ≤ BJ, 250-row chunks, formula cells → saved values,
+  number / percent / yes-no normalisers (real BEV sheet: 421 rows in ~2 s, 62 MB).
+- **Tests:** `VehicleCompletenessTest` (4), `PricingSessionTest` (4: one open process, exact discard incl. expired rows
+  restored and stubs removed, no discard after publish, complete + reopen, forward-only stages); 2 existing tests updated
+  for the new stub rules. Vehicle + pricing suites: 52 passed.
+- **Guides:** `docs/domains/vehicle.md` (completeness, statuses, stubs), `docs/domains/pricing.md` (engine section).

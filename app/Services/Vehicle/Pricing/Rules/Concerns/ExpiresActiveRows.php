@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Vehicle\Pricing\Rules\Concerns;
 
+use App\Services\Vehicle\Pricing\Session\PricingChangeRecorder;
 use Illuminate\Support\Facades\Schema;
 
 /**
@@ -32,6 +33,10 @@ trait ExpiresActiveRows
             $changes['updated_by'] = auth(backpack_guard_name())->id() ?? auth()->id();
         }
 
-        return $this->model()::query()->where($group)->where('is_active', 1)->update($changes);
+        $query = $this->model()::query()->where($group)->where('is_active', 1);
+        // a pricing session records what it expires so Discard can restore it (DEC-073)
+        app(PricingChangeRecorder::class)->captureBulk($query, array_keys($changes));
+
+        return $query->update($changes);
     }
 }

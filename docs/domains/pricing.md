@@ -61,7 +61,19 @@ API v1: `Api\V1\Vehicle\Pricing\PricingController::getPricing()` wraps this for 
 
 ---
 
-## The import workflow (one active session at a time)
+## DEC-073 redesign — process engine (being rolled out phase by phase; plan `docs/plans/2026-09-28-pricing-redesign-DEC-073.md`)
+| Piece | API |
+|---|---|
+| `Session\PricingStage` (enum) | `Started → Detecting → VehicleInfo → Prices → Addons → Rules → Impact → HoldCheck → Calculating → Summary`, terminal `Completed` / `Discarded`; `label()`, `order()`, `isTerminal()`, `steps()`, `fromStored($legacy)`; `ImportSession::stage()` returns it |
+| `Session\PricingSessionService` | `gate(): ?ImportSession` (the one open process) · `start(UploadedFile, $sheets, $wef, $holdLists = [], ?$userId)` → Result (`ALREADY_ACTIVE`, `NO_SHEETS`; stores the upload under `storage/app/pricing/{id}/`) · `storeUpload($s, $file, $kind)` / `uploadAbsolutePath($s, $path)` · `record($s, fn)` (run writes that Discard can undo) · `advance($s, PricingStage, $stats)` (forward-only, except back to Vehicle Info) · `progress($s, [...])` · `markPublished($s)` · `discard($s)` → Result (`PUBLISHED` after publish; undoes exactly the session's changes) · `complete($s, $reopenLists)` → Result (`NOT_READY` before Summary) |
+| `Session\PricingChangeRecorder` | `within($sessionId, fn)`, `active()`, `created/updated/softDeleted(Model)`, `captureBulk($query, $columns)` (called by `ExpiresActiveRows::expireActive()`), `rollback($sessionId)` — log table `xlr8_vehicle_pricing_session_changes`; inserted rows are removed, updated / expired rows restored |
+| `Session\PricingChangeObserver` | model observer on the pricing, rule, add-on, snapshot, hold, profile and vehicle master models (records only inside `within()`) |
+| `PricingHoldService` | `LISTS` (ALL, PV, CV, BEV, LMM, LMM_TZU, CSD, TAXI) · `hold($lists, ?$session, ?$reason, ?$userId)` · `reopen($lists, …)` · `heldLists()` · `isHeld($list, $channel = 'normal', ?$permit, $taxi = false)` (CSD channel and taxi Passenger snapshots included) |
+| `Import\PricingWorkbookReader` | `sheetNames($path)` (no cells loaded) · `rows($path, $sheet, $fromRow = 1, ?$maxCol)` (generator `rowNo => cells`, one sheet, columns ≤ BJ, 250-row chunks, formulas → saved value) · `header($path, $sheet, $sheetCode)` → `['row', 'map', 'cells']` · statics `number()` ("3,00,752", "-"), `percent()` (0.4 → 40), `yesNo()` (Y/N/YES/NO), `text()`, `code()` |
+| permit map | table `xlr8_vehicle_pricing_permit_map` (vehicle permit + wheels → RTO rule permit, insurance permit): 4W Passenger (taxi) → RTO "Taxi" / insurance "Passenger"; MISC → "Ambulance" / "Misc" |
+| snapshots | unique key `(model_code, channel, vin_type, permit, wef_date)` + `rto_permit`, `insu_permit` |
+
+## The import workflow (legacy flow — replaced step by step by the DEC-073 engine above)
 `ImportSession` stages: `idle → detecting → awaiting_vehicle → importing_prices → awaiting_addons → importing_addons →
 awaiting_rules → calculating → summary → completed` (or `cancelled`). Status `active` / `completed` / `cancelled`.
 
