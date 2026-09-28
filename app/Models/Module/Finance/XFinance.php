@@ -1,31 +1,19 @@
 <?php
 
 namespace App\Models\Module\Finance;
-
 use App\Models\BaseModel;
-use App\Models\Traits\HasDocuments;
-use App\Models\User;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class XFinance extends BaseModel implements HasMedia
+class XFinance extends BaseModel  implements HasMedia
 {
-    use HasDocuments;
     use SoftDeletes;
 
-    /** Proof files live in Docs (DEC-069) and follow booking access: SLS_BKNG_VIEW. */
-    public function chatCanView(int $userId): bool
-    {
-        $user = User::query()->find($userId);
-
-        return $user !== null && ($user->can('SLS_BKNG_VIEW'));
-    }
-
     protected $table = 'xlr8_booking_finance';
-
     protected $fillable = [];
-
     protected $guarded = ['id'];
 
     public function booking()

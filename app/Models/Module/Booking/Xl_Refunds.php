@@ -2,35 +2,22 @@
 
 namespace App\Models\Module\Booking;
 
-use App\Models\BaseModel;
-use App\Models\Traits\HasDocuments;
-use App\Models\User;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use DataTables, Auth;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use App\Models\BaseModel;
 
-class Xl_Refunds extends BaseModel implements HasMedia
+class Xl_Refunds extends BaseModel  implements HasMedia
 {
-    use HasDocuments;
-
     /**
      * The database table used by the model.
      *
      * @var string
      */
     use SoftDeletes;
-
-    /** Proof files live in Docs (DEC-069) and follow booking access: SLS_BKNG_VIEW. */
-    public function chatCanView(int $userId): bool
-    {
-        $user = User::query()->find($userId);
-
-        return $user !== null && ($user->can('SLS_BKNG_VIEW'));
-    }
-
     use InteractsWithMedia;
-
     protected $table = 'xlr8_booking_refund';
 
     /**
@@ -40,10 +27,9 @@ class Xl_Refunds extends BaseModel implements HasMedia
      *
      * @var array
      */
+
     protected $fillable = [];
-
     protected $guarded = ['id'];
-
     /**
      * The attributes excluded from the model's JSON form.
      *

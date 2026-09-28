@@ -175,7 +175,7 @@
                     <tbody>
                         @if ($receiptLogs->isNotEmpty())
                         @foreach ($receiptLogs as $log)
-                        @php $iurl = $log->documentUrl('amount-proof') @endphp
+                        @php $iurl = $log->getFirstMediaUrl('amount-proof') @endphp
                         <tr>
                             <td>@sitedate($log->date)</td>
                             <td>{{ $log->type_number ?? 'N/A' }}</td>

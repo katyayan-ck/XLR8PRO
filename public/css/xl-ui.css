@@ -177,11 +177,3 @@ input.xl-date { background-image: none; cursor: pointer; }
 .xl-scroll-y { max-height: min(70vh, 40rem); overflow-y: auto; -webkit-overflow-scrolling: touch; }
 .xl-thumb { width: 3.5rem; height: 3.5rem; object-fit: cover; }
 .xl-cell-wide { min-width: 14rem; max-width: 32rem; }
-
-/* ── List toolbars (DEC-069): ~85 grid views give the quick-filter box a fixed inline width (260–360px);
-      on phones and small tablets its group takes the whole row and the box shrinks to fit ─────────── */
-#quickFilter { max-width: 100%; }
-@media (max-width: 767.98px) {
-    *:has(> #quickFilter) { flex: 1 1 100%; min-width: 0; }
-    #quickFilter { width: auto !important; min-width: 0 !important; flex: 1 1 auto; }
-}

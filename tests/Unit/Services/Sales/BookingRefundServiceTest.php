@@ -78,8 +78,8 @@ class BookingRefundServiceTest extends TestCase
             'pan' => null,
         ]);
 
-        $this->assertTrue($refund->hasDocumentIn('acc-proof'));
-        $this->assertTrue(! $refund->hasDocumentIn('aadhar'));
+        $this->assertTrue($refund->getMedia('acc-proof')->isNotEmpty());
+        $this->assertTrue($refund->getMedia('aadhar')->isEmpty());
     }
 
     public function test_apply_records_requested_again_when_the_booking_was_previously_rejected(): void

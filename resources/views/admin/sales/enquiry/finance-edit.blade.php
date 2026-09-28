@@ -125,9 +125,9 @@
                             <div class="col-sm-6 mb-3 finance-field" id="instrument_proof_wrapper">
                                 <label class="form-label">Instrument Proof <span class="text-danger">*</span></label>
                                 <input type="file" class="form-control" name="instrument_proof" id="instrumentProofInput" accept="image/jpeg,image/png,application/pdf">
-                                @if($finance && $finance->documentUrl('instrument_proof'))
+                                @if($finance && $finance->getFirstMediaUrl('instrument_proof'))
                                 <div class="mt-2">
-                                    <a href="{{ $finance->documentUrl('instrument_proof') }}" target="_blank" class="btn btn-sm btn-info">View Current Proof</a>
+                                    <a href="{{ $finance->getFirstMediaUrl('instrument_proof') }}" target="_blank" class="btn btn-sm btn-info">View Current Proof</a>
                                 </div>
                                 @endif
                             </div>

@@ -231,7 +231,6 @@ Entry format:
 | BUG-193 | `Booking::finances()` / `exchanges()` and `XExchange::booking()` / `XFinance::booking()` join on `booking_id`, but both tables key on `bid`; `Booking::finances()` also names `App\Models\Module\Booking\XFinance` (the class is in `Module\Finance`); the `getVerifiedCounts()` / `getPendingCounts()` helpers fail the same way — no caller today | Low | OPEN (booking team) | 28-09-2026 | — |
 | BUG-194 | `BookingCrudController::fetchPendBkData()` and `fetchCbrData()` call `Cache::remember()` but the file has no `use Illuminate\Support\Facades\Cache;` — in a namespaced class this resolves to `App\Http\Controllers\Admin\Sales\Booking\Cache` and fatals | Medium | FIXED | 28-09-2026 | 28-09-2026 |
 | BUG-195 | `BookingKycService::apply()` recorded the customer's full Aadhaar (and PAN) in the booking history meta, which every booking viewer and the mobile history API can read | Medium | FIXED for new entries (28-09-2026); existing timeline rows unchanged | 28-09-2026 | — |
-| BUG-196 | Two insurance policy copies sit in `media` with `model_type = App\Models\Module\Insurance\Xlinsurer` (lower-case i, a class that does not exist); the insurance screen reads `XlInsurance` and never shows them | Low | FIXED by the DEC-069 migration | 28-09-2026 | — |
 
 Not a bug (false positive, listed for reference): the original `infer-conventions` sweep flagged
 "`SheetHeaderService`/`SynonymService` not used by importers" — re-investigation on 19-09-2026
@@ -2174,11 +2173,3 @@ guessed at.
 - **Found:** 28-09-2026, Sales parity refactor (DEC-068).
 - **Evidence:** `BookingKycService.php` history meta `'adhar_no' => $adharNo` (12 digits); the value is also on the booking row itself, so the timeline copy added exposure without purpose.
 - **Proposed solution:** New entries store `XXXXXXXX1234`. Existing rows: a one-off masking of `xlr8_utils_comm_thread.extra_data->adhar_no` on booking masters — needs owner approval (data change).
-
-### BUG-196 — Legacy policy copies stored under a misspelled model type
-
-- **Status:** FIXED by the DEC-069 migration (28-09-2026).
-- **Severity:** Low.
-- **Found:** 28-09-2026, while moving booking proofs to Docs (DEC-069).
-- **Evidence:** `select model_type, collection_name, count(*) from media group by 1,2` returns `...\Xlinsurer | policy_copy | 2` (model_id 1 and 2 = xlr8_booking_insurance ids; files policy_9_..., policy_18_...).
-- **Proposed solution:** The DEC-069 migration attaches them as Docs documents to XlInsurance rows 1 and 2; down() restores the original rows.

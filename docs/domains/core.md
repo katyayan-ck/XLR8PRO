@@ -9,7 +9,7 @@ The foundation every module builds on. Read this first; the domain guides assume
 | `HasColumnTransformations` | `app/Models/Traits/` | declarative cleanup of column values on write (and optionally read) |
 | `HasTreeStructure` | `app/Models/Traits/` | parent / children / materialised path for tree tables |
 | `ScopedQuery` | `app/Models/Traits/` | row-level data scope global scope — **not switched on yet** (BUG-083) |
-| `HasCommunications`, `HasDocuments` | `app/Models/Traits/` | opt a model into Chat / Docs — `commMaster()`, `getOrCreateCommMaster()`, `recordEvent($action, $summary, $meta = [], ?$body = null)`, `addRemark()`, `history()`, `addHistory()` (legacy) / `documents()`, `attachDocument()`, `documentsList()`, one-file slots `replaceDocument()`, `documentFor()`, `documentUrl()`, `hasDocumentIn()`, `removeDocuments()`; see `docs/utilities/03-chat.md`, `04-docs.md` |
+| `HasCommunications`, `HasDocuments` | `app/Models/Traits/` | opt a model into Chat / Docs — `commMaster()`, `getOrCreateCommMaster()`, `recordEvent($action, $summary, $meta = [], ?$body = null)`, `addRemark()`, `history()`, `addHistory()` (legacy) / `documents()`, `attachDocument()`, `documentsList()`; see `docs/utilities/03-chat.md`, `04-docs.md` |
 | `EntityService` + `Field` | `app/Support/Entity/` | **the only write path** for master / entry data (DEC-050) |
 | `Result` | `app/Support/Result.php` | return value of platform services |
 | helpers | `app/Support/helpers.php` | `site_date()`, `site_datetime()`, `setting()`, `feature()` |

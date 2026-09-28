@@ -850,15 +850,18 @@ class BookingCrudController extends CrudController
                 'remark' => $refund->remark ?? 'N/A',
             ];
 
-            $data['acc_proof'] = $refund->documentUrl('acc-proof')
+            $data['acc_proof'] = $refund->getFirstMediaUrl('acc-proof')
+                ?: $refund->getFirstMediaUrl('acc_proof')
                 ?: '';
 
-            $data['aadhar'] = $refund->documentUrl('aadhar')
+            $data['aadhar'] = $refund->getFirstMediaUrl('aadhar')
+                ?: $refund->getFirstMediaUrl('aadhaar')
                 ?: '';
 
-            $data['pan'] = $refund->documentUrl('pan') ?: '';
+            $data['pan'] = $refund->getFirstMediaUrl('pan') ?: '';
 
-            $data['pay_proof'] = $refund->documentUrl('pay-proof')
+            $data['pay_proof'] = $refund->getFirstMediaUrl('pay-proof')
+                ?: $refund->getFirstMediaUrl('pay_proof')
                 ?: '';
         }
 
@@ -3183,6 +3186,17 @@ class BookingCrudController extends CrudController
 
             return DB::transaction(function () use ($request, $booking) {
 
+                $tempDir = public_path('Uploads/temp/');
+                if (! File::exists($tempDir)) {
+                    File::makeDirectory($tempDir, 0755, true);
+                }
+
+                $file = $request->file('amount_proof');
+                $ext = $file->extension();
+                $fileName = 'tf_ap_'.date('d-m-Y_His').'.'.$ext;
+
+                $file->move($tempDir, $fileName);
+
                 $amountRecord = new Bookingamount;
                 $amountRecord->bid = $booking->id;
                 $amountRecord->date = Carbon::parse($request->receipt_date)->format('Y-m-d');
@@ -3191,8 +3205,8 @@ class BookingCrudController extends CrudController
                 $amountRecord->mode = $request->mode;
                 $amountRecord->save();
 
-                // DEC-069: the proof is a Docs document on the receipt (access-checked links, no public copy).
-                $amountRecord->replaceDocument('amount-proof', $request->file('amount_proof'), [], 'amount_proof');
+                $amountRecord->addMedia($tempDir.$fileName)
+                    ->toMediaCollection('amount-proof');
 
                 $remarks = [];
 
@@ -3298,6 +3312,10 @@ class BookingCrudController extends CrudController
                     );
                 }
 
+                if (File::exists($tempDir.$fileName)) {
+                    File::delete($tempDir.$fileName);
+                }
+
                 return redirect(backpack_url('sales/booking'))
                     ->with('success', 'Amount & receipt added successfully!');
             });
@@ -3361,7 +3379,8 @@ class BookingCrudController extends CrudController
                 $receipt->mode = $request->input('mode');
                 $receipt->save();
 
-                $receipt->replaceDocument('amount-proof', $request->file('amount_proof'), [], 'amount_proof');   // Docs (DEC-069)
+                $receipt->addMediaFromRequest('amount_proof')
+                    ->toMediaCollection('amount-proof');
 
                 $remarks = [];
                 if ($booking->receipt_no !== $receiptNo) {
@@ -6746,7 +6765,7 @@ class BookingCrudController extends CrudController
                     ' deducted from booking. New Booking Amount: ₹'.number_format($booking->booking_amount, 2)
             );
 
-            $receipt->removeDocuments('amount-proof');
+            $receipt->clearMediaCollection('amount-proof');
             $receipt->delete();
 
             \Alert::warning('Receipt deleted and amount deducted from booking .')->flash();
@@ -6777,7 +6796,10 @@ class BookingCrudController extends CrudController
         $receipt->amount = $request->amount;
 
         if ($request->hasFile('amount_proof') && $request->file('amount_proof')->isValid()) {
-            $receipt->replaceDocument('amount-proof', $request->file('amount_proof'), [], 'amount_proof');
+            $receipt->clearMediaCollection('amount-proof');
+
+            $receipt->addMediaFromRequest('amount_proof')
+                ->toMediaCollection('amount-proof');
         }
 
         $receipt->save();
@@ -10609,7 +10631,7 @@ class BookingCrudController extends CrudController
             return (float) $receipt->amount;
         });
 
-        $chassisImage = $booking->documentUrl('chassis_image');
+        $chassisImage = $booking->getFirstMediaUrl('chassis_image') ?: '';
 
         $segment = Segment::where('code', $booking->segment_code)->first();
         $model = VehicleModel::where('code', $booking->model_code)->first();

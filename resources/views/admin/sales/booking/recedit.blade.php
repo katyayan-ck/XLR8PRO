@@ -74,11 +74,11 @@
                         <label class="form-label fw-bold">Current Proof</label>
 
                         @php
-                        $media = $entry->documentFor('amount-proof');
+                        $media = $entry->getFirstMedia('amount-proof');
                         $hasProof = $media !== null;
-                        $fileUrl = $hasProof ? $media['view_url'] : '';
-                        $fileName = $hasProof ? $media['name'] : 'No proof uploaded';
-                        $isPdf = $hasProof && str_contains($media['mime'] ?? '', 'pdf');
+                        $fileUrl = $hasProof ? $media->getUrl() : '';
+                        $fileName = $hasProof ? $media->file_name : 'No proof uploaded';
+                        $isPdf = $hasProof && str_contains($media->mime_type ?? '', 'pdf');
                         @endphp
 
                         @if($hasProof)

@@ -2,6 +2,7 @@
 
 namespace App\Services\Sales\Booking;
 
+use App\Services\Vehicle\VehicleService;
 use App\Models\Admin\Branch;
 use App\Models\Admin\Location;
 use App\Models\CRM\Enquiry;
@@ -12,7 +13,6 @@ use App\Models\Module\Booking\XlRto;
 use App\Models\Module\Booking\XlRtoRules;
 use App\Models\User;
 use App\Services\OrgService;
-use App\Services\Vehicle\VehicleService;
 use Illuminate\Http\UploadedFile;
 
 /**
@@ -216,11 +216,13 @@ class BookingRtoService
         $rto = XlRto::updateOrCreate(['bid' => $bookingId], $data);
 
         if ($trcCopy && $trcCopy->isValid()) {
-            $rto->replaceDocument('trc_copy', $trcCopy, [], 'trc_copy');   // Docs (DEC-069)
+            $rto->clearMediaCollection('trc_copy');
+            $rto->addMedia($trcCopy)->toMediaCollection('trc_copy');
         }
 
         if ($taxReceiptCopy && $taxReceiptCopy->isValid()) {
-            $rto->replaceDocument('tax_receipt_copy', $taxReceiptCopy, [], 'tax_receipt_copy');
+            $rto->clearMediaCollection('tax_receipt_copy');
+            $rto->addMedia($taxReceiptCopy)->toMediaCollection('tax_receipt_copy');
         }
 
         return $rto;
@@ -230,7 +232,7 @@ class BookingRtoService
     {
         $rto = XlRto::where('bid', $bookingId)->first();
 
-        return $rto !== null && $rto->hasDocumentIn($collection);
+        return $rto && $rto->getFirstMedia($collection) !== null;
     }
 
     /**

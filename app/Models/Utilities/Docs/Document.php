@@ -18,28 +18,6 @@ use Spatie\MediaLibrary\InteractsWithMedia;
  * A document, image or information card (FRS §4), attached to a record and/or filed in the library
  * (path Entity → Location → Category → Sub-category → Item → FY). Written only by DocsService.
  * BUG-139: the model pointed at non-existent `xlr8_docs_*` tables; DEC-061 fixes the mapping.
- *
- * @property int $id
- * @property string|null $documentable_type
- * @property int|null $documentable_id
- * @property string $kind
- * @property string|null $collection
- * @property string|null $title
- * @property string|null $description
- * @property int|null $category_id
- * @property \Illuminate\Support\Carbon|null $expiry_date
- * @property array<string, mixed>|null $tags
- * @property string|null $path_entity
- * @property string|null $path_location
- * @property string|null $path_category
- * @property string|null $path_sub
- * @property string|null $path_item
- * @property string|null $fy
- * @property string|null $info_body
- * @property int|null $owner_id
- * @property int|null $created_by
- * @property int|null $deleted_by
- * @property \Illuminate\Support\Carbon|null $created_at
  */
 class Document extends BaseModel implements Auditable, HasMedia
 {

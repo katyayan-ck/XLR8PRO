@@ -2240,7 +2240,8 @@ class EnquiryCrudController extends CrudController
         $finance->save();
 
         if ($request->hasFile('instrument_proof')) {
-            $finance->replaceDocument('instrument_proof', $request->file('instrument_proof'), [], 'instrument_proof');   // Docs (DEC-069)
+            $finance->clearMediaCollection('instrument_proof');
+            $finance->addMediaFromRequest('instrument_proof')->toMediaCollection('instrument_proof');
         }
 
         // Process New Finance Follow-up Remark

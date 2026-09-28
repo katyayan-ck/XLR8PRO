@@ -31,31 +31,9 @@ Service `App\Services\Platform\Docs\DocsService` · facade `Docs` · model trait
 | `Docs::zip($userId, $groupId)` | Result `{path, files}` — only files the user may see |
 | `Docs::delete($docId)` | Result — owner or `UTL_DOCS_MANAGE` |
 | `Docs::mine($userId)`, `Docs::recent($viewerId)` | lists |
-| `Docs::latestFor($model, $collection)` | `?Document` (with media) — newest document in a record's slot, no access filter |
-| `Docs::supersede($model, $collection, $actorId = null, $exceptId = null)` | int — soft-deletes the slot's documents (except one) |
 
 DTO: `id, name, kind, collection, mime, size, url, is_image, info, path[], fy, owner_id, created_at`.
 Trait (`use HasDocuments;`): `$model->attachDocument($file, 'kyc')`, `$model->documentsList('kyc')`, `$model->documents()`.
-
-**One-file slots** (a record's proof: receipt, policy copy, TRC, delivery photo — DEC-069):
-
-| Trait call | Returns |
-|---|---|
-| `$m->replaceDocument('trc_copy', $file, $meta = [], $errorField = null)` | `Document` — attaches without a Chat event, then supersedes the older ones; a rejected file throws `ValidationException` on `$errorField` (default: the collection) |
-| `$m->documentFor('trc_copy')` | `?array{id, name, mime, size, is_image, view_url, download_url}` |
-| `$m->documentUrl('trc_copy', $inline = true)` | string, `''` when empty — the access-checked download route (`?inline=1` previews in the browser) |
-| `$m->hasDocumentIn('trc_copy')` | bool |
-| `$m->removeDocuments('trc_copy')` | int removed |
-
-```php
-// service: replace the RTO's TRC copy; show the error under the form field on a bad file
-$rto->replaceDocument('trc_copy', $request->file('trc_copy'), [], 'trc_copy');
-// Blade: link or preview
-@if ($rto->hasDocumentIn('trc_copy'))<a href="{{ $rto->documentUrl('trc_copy') }}" target="_blank">TRC</a>@endif
-```
-
-Access: the owning model's `chatCanView($userId)` (booking satellites check `SLS_BKNG_VIEW`) or its entity
-permission in `config/platform.php`.
 
 ## Use cases
 
@@ -100,7 +78,7 @@ return response()->download(Docs::zip($uid, $pack->get('group_id'))->get('path')
 ## Screens & permissions
 **Utilities → Documents** `/admin/utils/docs` (library, my uploads, cart, packs). `UTL_DOCS_VIEW` to browse,
 `UTL_DOCS_UPLOAD` to upload, `UTL_DOCS_MANAGE` to delete anyone's. Download `/admin/utils/docs/{id}/download`
-always checks `canView`; `?inline=1` serves the file with `Content-Disposition: inline` (previews). Mobile v1 `/api/v1/docs/*` uses the adapter `DocService`.
+always checks `canView`. Mobile v1 `/api/v1/docs/*` uses the adapter `DocService`.
 
 ## Events & testing
 No domain event of its own; attaching writes a Chat `ATTACHED` event. Purge job `PurgeDeletedDocuments`. See [15-testing.md](15-testing.md); every code is in

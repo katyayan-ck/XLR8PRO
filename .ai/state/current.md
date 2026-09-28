@@ -27,8 +27,7 @@
 
 **UI / design (DEC-066…068):** Sales / booking converted 28-09; the shared UI layer, the Appearance panel (mode / colour / font /
 radius / layout), AG-Grid themed via the global hook, and the dev UI kit `/admin/dev/ui`. The resume list and how to verify are in
-`docs/refactor/ui-design-progress.md` (remaining: hex outside Sales, real dashboard).
-**DEC-069 (28-09, dev/admin, not yet on stage):** booking proofs are Docs one-file slots (migration run on both DBs), AG-Grid pinned in all 87 views, phone list toolbars fixed. Next: bug fixing one by one (`.ai/state/bugs-index.md`).
+`docs/refactor/ui-design-progress.md` (pin AG-Grid in about 86 views, convert the Sales views, remove hex, real dashboard).
 
 **Waiting on the user (left as they are, 27-09):**
 - BUG-173: variant code convention; a fresh vehicle import is pending and needs `gscreds.json`.

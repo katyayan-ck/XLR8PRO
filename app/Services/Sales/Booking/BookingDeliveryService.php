@@ -144,7 +144,8 @@ class BookingDeliveryService
             $file = $photos[$collection] ?? null;
 
             if ($file && $file->isValid()) {
-                $delivery->replaceDocument($collection, $file, [], "photos.{$collection}");   // Docs (DEC-069)
+                $delivery->clearMediaCollection($collection);
+                $delivery->addMedia($file)->toMediaCollection($collection, 'public');
             }
         }
 

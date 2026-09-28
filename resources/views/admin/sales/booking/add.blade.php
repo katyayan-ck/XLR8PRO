@@ -312,7 +312,7 @@
 
                                                                 $paymentAmount = (float) ($payment->amount ?? 0);
 
-                                                                $proofUrl = $payment->documentUrl('amount-proof');
+                                                                $proofUrl = $payment->getFirstMediaUrl('amount-proof');
                                                             @endphp
 
                                                             <tr>

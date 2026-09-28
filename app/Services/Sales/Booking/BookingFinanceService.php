@@ -218,6 +218,19 @@ class BookingFinanceService
         $finance = XFinance::firstOrNew(['bid' => $booking->id]);
         $isNew = ! $finance->exists;
 
+        if ($hasInstrumentProofFile && ! empty($validated['instrument_proof_file'])) {
+            $finance->clearMediaCollection('instrument_proof');
+
+            $file = $validated['instrument_proof_file'];
+            $finance->addMedia($file)
+                ->usingFileName('instrument_proof_'.$booking->id.'_'.time().'.'.$file->extension())
+                ->toMediaCollection('instrument_proof');
+        }
+
+        if ($deleteInstrumentProof) {
+            $finance->clearMediaCollection('instrument_proof');
+        }
+
         $finance->fin_mode = $validated['fin_mode'];
         $finance->loan_status = $validated['loan_status'] ?? null;
         $finance->financier = $validated['financier'] ?? null;
@@ -270,14 +283,6 @@ class BookingFinanceService
             ?? 1;
 
         $finance->save();
-
-        // DEC-069: the proof is a Docs document on the finance row, so it needs the saved id.
-        if ($deleteInstrumentProof) {
-            $finance->removeDocuments('instrument_proof');
-        }
-        if ($hasInstrumentProofFile && ! empty($validated['instrument_proof_file'])) {
-            $finance->replaceDocument('instrument_proof', $validated['instrument_proof_file'], [], 'instrument_proof');
-        }
 
         if (
             ($finance->fin_mode === 'In-house' && $finance->case_status == 2)

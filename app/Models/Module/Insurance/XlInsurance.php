@@ -2,30 +2,17 @@
 
 namespace App\Models\Module\Insurance;
 
-use App\Models\BaseModel;
-use App\Models\Traits\HasDocuments;
-use App\Models\User;
 use Illuminate\Database\Eloquent\SoftDeletes;
-
+use DataTables, Auth;
+use App\Models\BaseModel;
 class XlInsurance extends BaseModel
 {
-    use HasDocuments;
-
     /**
      * The database table used by the model.
      *
      * @var string
      */
     use SoftDeletes;
-
-    /** Proof files live in Docs (DEC-069) and follow booking access: SLS_BKNG_VIEW. */
-    public function chatCanView(int $userId): bool
-    {
-        $user = User::query()->find($userId);
-
-        return $user !== null && ($user->can('SLS_BKNG_VIEW'));
-    }
-
     protected $table = 'xlr8_booking_insurance';
 
     /**
@@ -35,8 +22,8 @@ class XlInsurance extends BaseModel
      *
      * @var array
      */
-    protected $fillable = [];
 
+    protected $fillable = [];
     protected $guarded = ['id'];
     /**
      * The attributes excluded from the model's JSON form.

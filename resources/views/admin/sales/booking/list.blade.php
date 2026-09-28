@@ -52,7 +52,7 @@
                     {{ $title ?? 'All Live Bookings' }}
                 </h2>
 
-                <div class="d-flex align-items-center gap-2 flex-wrap">
+                <div class="d-flex align-items-center gap-3 flex-nowrap">
 
                     <a href="{{ backpack_url('sales/booking/create') }}" class="btn btn-blue btn-sm fw-bold shadow-sm">
                         <i class="la la-plus me-1"></i> Add New Booking
@@ -60,7 +60,7 @@
 
                     <select id="statusFilter"
                             class="form-select form-select-sm bg-surface text-body border-0 shadow-sm"
-                            style="width: auto; max-width: 100%;"
+                            style="min-width: 200px; max-width: 260px;"
                             aria-label="Switch booking status view">
                         <option value="{{ backpack_url('sales/booking') }}" {{ Route::currentRouteName() === 'booking.index' ? 'selected' : '' }}>
                             All Live Bookings
@@ -157,7 +157,7 @@
 
 @push('after_styles')
 {{-- Maps the grid onto Tabler's own design tokens (light + dark mode) -
-     the grid itself is themed by the global createGrid hook in header_metas (DEC-067) --}}
+     see .ai/rules/conventions.md section 13 and public/css/ag-grid-tabler-theme.css --}}
 
 <style>
     .ag-theme-quartz .center-header .ag-header-cell-label,

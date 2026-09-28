@@ -264,8 +264,8 @@ $isViewMode = request()->routeIs('finance.view');
                 <label>Instrument Proof</label>
 
                 @php
-                $media = $finance->documentFor('instrument_proof');
-                $url = $media ? $media['view_url'] : null;
+                $media = $finance->getFirstMedia('instrument_proof');
+                $url = $media ? $media->getUrl() : null;
                 $fileName = $media ? basename($url) : null;
                 @endphp
 

@@ -2,35 +2,23 @@
 
 namespace App\Models\Module\Booking;
 
-use App\Models\BaseModel;
-use App\Models\Traits\HasDocuments;
-use App\Models\User;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use DataTables, Auth;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class XlDelivery extends BaseModel implements HasMedia
-{
-    use HasDocuments;
+use App\Models\BaseModel;
 
+class XlDelivery extends BaseModel  implements HasMedia
+{
     /**
      * The database table used by the model.
      *
      * @var string
      */
     use SoftDeletes;
-
-    /** Proof files live in Docs (DEC-069) and follow booking access: SLS_BKNG_VIEW. */
-    public function chatCanView(int $userId): bool
-    {
-        $user = User::query()->find($userId);
-
-        return $user !== null && ($user->can('SLS_BKNG_VIEW'));
-    }
-
     use InteractsWithMedia;
-
     protected $table = 'xlr8_booking_delivered';
 
     /**
@@ -40,15 +28,16 @@ class XlDelivery extends BaseModel implements HasMedia
      *
      * @var array
      */
+
     protected $fillable = [];
-
     protected $guarded = ['id'];
-
     /**
      * The attributes excluded from the model's JSON form.
      *
      * @var array
      */
+
+
     public function registerMediaCollections(): void
     {
         $collections = [
@@ -68,7 +57,7 @@ class XlDelivery extends BaseModel implements HasMedia
             'tool_kit',
             'vehicle_chassis_no_photo',
             'chassis_no_screenshot_invoice',
-            'chassis_no_screenshot_insurance',
+            'chassis_no_screenshot_insurance'
         ];
         foreach ($collections as $collection) {
             $this->addMediaCollection($collection)

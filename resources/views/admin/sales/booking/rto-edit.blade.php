@@ -323,7 +323,7 @@
                     <label class="form-label">TRC Copy</label>
 
                     @php
-                    $trcMedia = $rto?->documentFor('trc_copy');
+                    $trcMedia = $rto?->getFirstMedia('trc_copy');
                     @endphp
 
                     <!-- Existing saved file (shown only if one is already uploaded) -->
@@ -331,10 +331,10 @@
                         @if($trcMedia)
                         <span class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-2 px-3 py-2"
                             style="cursor:pointer;"
-                            onclick="openPolicyModal('{{ $trcMedia['view_url'] }}', '{{ addslashes($trcMedia['name']) }}')">
+                            onclick="openPolicyModal('{{ $trcMedia->getUrl() }}', '{{ addslashes($trcMedia->file_name) }}')">
                             <i class="la la-paperclip"></i>
                             <span class="fw-medium small text-truncate" style="max-width:140px;">
-                                {{ Str::limit($trcMedia['name'], 20) }}
+                                {{ Str::limit($trcMedia->file_name, 20) }}
                             </span>
                         </span>
                         <button type="button" class="btn btn-outline-danger btn-sm ms-1" title="Remove file"
@@ -373,7 +373,7 @@
                     <label class="form-label">Tax Receipt Copy</label>
 
                     @php
-                    $taxMedia = $rto?->documentFor('tax_receipt_copy');
+                    $taxMedia = $rto?->getFirstMedia('tax_receipt_copy');
                     @endphp
 
                     <!-- Existing saved file (shown only if one is already uploaded) -->
@@ -381,10 +381,10 @@
                         @if($taxMedia)
                         <span class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-2 px-3 py-2"
                             style="cursor:pointer;"
-                            onclick="openPolicyModal('{{ $taxMedia['view_url'] }}', '{{ addslashes($taxMedia['name']) }}')">
+                            onclick="openPolicyModal('{{ $taxMedia->getUrl() }}', '{{ addslashes($taxMedia->file_name) }}')">
                             <i class="la la-paperclip"></i>
                             <span class="fw-medium small text-truncate" style="max-width:140px;">
-                                {{ Str::limit($taxMedia['name'], 20) }}
+                                {{ Str::limit($taxMedia->file_name, 20) }}
                             </span>
                         </span>
                         <button type="button" class="btn btn-outline-danger btn-sm ms-1" title="Remove file"
