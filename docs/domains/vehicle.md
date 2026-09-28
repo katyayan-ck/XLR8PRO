@@ -70,6 +70,8 @@ Always required: Segment, Sub Segment, Fuel, Seating, Wheels, Transmission, Driv
 Permit, Taxi Price, Custom Model (model name), Custom Variant, Display Name, Colour Name. Then: **Private + ICE → CC;
 Private + EV → Motor; Goods → GVW; Passenger and Misc → none** (user decision 28-09; amends spec v3.1.1 §3.3).
 Helpers `permitCode($v)`, `fuelCode($v)` on VehicleService (KeyValue codes).
+`VariantService` field formats (all write paths): `gst_percent` is stored as a percent — a fraction from the OEM sheets
+(0.28) becomes 28; `transmission` "At" / "AT" → Automatic, "Mt" / "MT" → Manual (DEC-073).
 
 ```php
 $missing = app(VehicleService::class)->missingFields($variant);   // ['gvw', 'body_type_id'] → show on the completeness screen
@@ -85,7 +87,8 @@ $missing = app(VehicleService::class)->missingFields($variant);   // ['gvw', 'bo
 | `findOrCreateModel($oemModel, $seg, ?$sub, ?$userId)` | the model; code in the hyphenated format |
 | `modelCodeCandidates($oemModel)` | `['THAR-ROXX', 'THAR ROXX', 'THARROXX']` — canonical first, legacy spellings after |
 | `createStubFromPriceList($oemCode, $oemModel, $oemVariant, $sheetTitle, ?$userId)` | `['variant' => Variant, 'created' => bool, 'model' => VehicleModel]` — creates a stub only when the OEM code is new: code, OEM names, colour code (LMM TZU → `NA`), status INCOMPLETE, inactive; colour name / custom variant / taxi flag left for Vehicle Info (DEC-073) |
-| `applyVehicleInfo(Variant $v, array $row, ?$userId)` | `['complete' => bool, 'missing' => [...], 'active' => bool, 'variant' => Variant]`; a value that breaks a field rule throws `ValidationException` (the importer reports the row) |
+| `applyVehicleInfo(Variant $v, array $row, ?$userId)` | `['complete' => bool, 'missing' => [...], 'active' => bool, 'variant' => Variant]`; a value that breaks a field rule throws `ValidationException` (the importer reports the row). Status column: ACTIVE on an incomplete vehicle → stays INCOMPLETE; INACTIVE / DISCONTINUED allowed; blank → ACTIVE / INACTIVE kept when complete, else INCOMPLETE |
+| `statusCounts()` | `['ACTIVE' => n, 'INACTIVE' => n, 'INCOMPLETE' => n, 'DISCONTINUED' => n]` over the whole master (rows without a status count as INCOMPLETE) |
 | `kkvId($keyword, $value, $create = false)` | KeyValue id for a label (creates through `KeyvalueService` when `$create`) |
 | `copySpecifications($fromOem, $toOem, ?$userId)` | the updated target variant, or null when either is missing |
 

@@ -635,3 +635,41 @@ Plan: `docs/plans/2026-09-28-pricing-redesign-DEC-073.md` (12 phases; user decis
   screen shows a warning while any exist. It is a warning only: the test copy keeps its legacy rows (DEC-051).
 - **Test:** `PricingProcessStartTest::test_the_start_screen_warns_about_old_format_vehicle_codes`.
 - **Tracker:** BUG-199 → DECIDED (DEC-074). The purge is still to be done per environment.
+
+## Pricing redesign — Phase 3: Vehicle Info round-trip (DEC-073, DEC-075)
+- **New `Import\VehicleInfoWorkbookService`:**
+  - **Export:** every vehicle, in the reference layout plus a `Missing Fields` column, sorted Segment → OEM Model → code.
+    Fuel / Permit / Body Make / Body Type / Status are written as key-value codes.
+  - **Import:** each row goes through `VehicleService::applyVehicleInfo()`. The summary counts completed / newly
+    completed / still incomplete / rejected / unknown and lists the row issues.
+  - **Before → after:**
+    - The old export read a non-existent key-value table, so every lookup column came out blank. The lookups are now
+      filled.
+    - The old import created vehicles for unknown codes. Those codes are now rejected.
+    - The old import set an incomplete "ACTIVE" row to inactive and kept its old status. It is now INCOMPLETE, with the
+      missing fields listed.
+- **New `ImportVehicleInfoJob`** (queued, inside the session change log, so Discard undoes it; round summary kept in
+  `stats.vehicle_info`) and **`VehicleInfoController`** (screen, download, queued import, issues workbook, Continue to
+  prices). The route names are unchanged, plus `vehicle-info-issues` and `vehicle-info-continue`.
+- **Removed:**
+  - `VehicleInfoExportService` and `VehicleInfoImportService`.
+  - The legacy `vehicle-info` actions and view.
+  - The unused `vehicle-info-progress` route and its cache-key progress.
+- **Formats (DEC-075), in `VariantService` so every write path agrees:** GST% fraction 0.28 → 28; transmission At / Mt →
+  Automatic / Manual.
+- **Service additions:**
+  - `VehicleService::statusCounts()`.
+  - `PricingSessionService::putStats()`.
+  - `@property` docs on `Variant`, `VehicleModel`, `Segment`, `SubSegment` and `Keyvalue`.
+  - `Variant::vehicleModel()` gets a typed relation.
+- **End-to-end (xlrm_testing, real files):** detect → export 6,066 vehicles in 17.5 s (lookups filled) → import
+  `Vehicle_Info_6_COMPLETED.xlsx` in 428 s. Result: 3,803 rows; 2,551 complete (2,471 newly); 987 still incomplete — 923
+  have Transmission and CC blank in the reference sheet, the rest miss Motor / GVW / Colour Name; 265 codes not in the
+  master. Discard undid all 7,133 changes (variants back to 2,652).
+- **Tests:** `PricingVehicleInfoTest` (4):
+  - import outcomes (complete → ACTIVE, incomplete kept INCOMPLETE with its reason, unknown lookup and unknown code
+    rejected, GST / transmission formats);
+  - export codes + missing fields;
+  - view-only user;
+  - queued import + continue.
+- **Guides:** `docs/domains/pricing.md`, `docs/domains/vehicle.md`.

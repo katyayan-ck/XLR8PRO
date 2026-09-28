@@ -10,6 +10,13 @@ use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
+/**
+ * @property int $id
+ * @property string $keyword_code
+ * @property string $code
+ * @property string|null $value
+ * @property bool $is_active
+ */
 class Keyvalue extends BaseModel
 {
     use CrudTrait,

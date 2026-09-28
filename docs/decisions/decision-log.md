@@ -992,3 +992,15 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
   3. Run the pricing process.
   `xlrm_testing` keeps its legacy copy until the local fresh import is complete (DEC-051).
 - **Approved-by:** user (28-09). · **Risk:** HIGH (destructive per environment, done manually with a backup) · **Reversal:** restore the backup.
+
+### DEC-075 | 28-09-2026 | A (Vehicle pricing) | Vehicle Info (DEC-073 step 3): value formats and import rules
+- **Facts:** the reference `Vehicle_Info_6_COMPLETED.xlsx` gives GST% as a fraction (0.4, 0.28). The field format and the
+  engine treat it as a percent. Transmission mixes spellings (At / Mt / Automatic / MANUAL).
+- **Decision (technical, no business change):**
+  1. `VariantService` stores GST as a percent: a value between 0 and 1 is multiplied by 100 on every write path.
+  2. `VariantService` maps transmission "AT" → Automatic and "MT" → Manual. Other values keep their title-cased spelling.
+  3. The Vehicle Info import never creates vehicles: unknown codes are rejected (vehicles come from price lists only, step 2).
+  4. Blank cells keep the stored value.
+  5. OEM Model / OEM Variant cells are not imported (they are OEM facts from the price lists).
+  6. Status ACTIVE on an incomplete vehicle leaves it INCOMPLETE and lists the missing fields.
+- **Approved-by:** auto (implements the approved DEC-073 step 3) · **Risk:** LOW · **Reversal:** revert the Phase 3 commit.

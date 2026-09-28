@@ -18,8 +18,6 @@ use App\Services\Vehicle\Pricing\AddonDiscountExportService;
 use App\Services\Vehicle\Pricing\AddonDiscountImportService;
 use App\Services\Vehicle\Pricing\PricingSessionService;
 use App\Services\Vehicle\Pricing\RulesWorkbookService;
-use App\Services\Vehicle\Pricing\VehicleInfoExportService;
-use App\Services\Vehicle\Pricing\VehicleInfoImportService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -29,8 +27,6 @@ class PricingWorkflowController extends Controller
 {
     public function __construct(
         protected PricingSessionService $sessions,
-        protected VehicleInfoExportService $vehicleInfoExport,
-        protected VehicleInfoImportService $vehicleInfoImport,
         protected AddonDiscountImportService $addonsImport,
         protected AddonDiscountExportService $addonsExport,
         protected RulesWorkbookService $rules
@@ -63,101 +59,6 @@ class PricingWorkflowController extends Controller
         }
 
         return response()->json($data);
-    }
-
-    public function vehicleInfoForm()
-    {
-        if (! backpack_user()->can('PRC_WKFL_VIEW')) {
-            abort(403, 'Unauthorized. You do not have permission to view the pricing workflow.');
-        }
-
-        $session = $this->sessions->activeSession();
-        if (! $session) {
-            return redirect()->route('pricing.workflow.index')
-                ->with('warning', 'No active pricing session.');
-        }
-
-        return view('admin.pricing.workflow.vehicle-info', [
-            'title' => 'Complete Vehicle Info',
-            'session' => $session,
-        ]);
-    }
-
-    public function vehicleInfoExport(int $sessionId)
-    {
-        if (! backpack_user()->can('PRC_WKFL_VIEW')) {
-            abort(403, 'Unauthorized. You do not have permission to view the pricing workflow.');
-        }
-
-        $session = ImportSession::findOrFail($sessionId);
-        $export = $this->vehicleInfoExport->exportForSession($session);
-
-        return response()->download($export['path'], $export['filename'])->deleteFileAfterSend(false);
-    }
-
-    public function vehicleInfoImport(Request $request)
-    {
-        if (! backpack_user()->can('PRC_WKFL_MANAGE')) {
-            abort(403, 'Unauthorized. You do not have permission to run the pricing workflow.');
-        }
-
-        $request->validate(['file' => 'required|file|mimes:xlsx,xls']);
-
-        $session = $this->sessions->activeSession();
-        if (! $session) {
-            return response()->json(['success' => false, 'message' => 'No active session.'], 409);
-        }
-
-        $path = $request->file('file')->store('pricing-uploads');
-        $absolute = Storage::path($path);
-
-        try {
-            $stats = $this->vehicleInfoImport->importFile($absolute, $session);
-            $this->sessions->updateStats($session, [
-                'incomplete' => $stats['left_inactive'] ?? 0,
-                'completed' => $stats['completed'] ?? 0,
-            ]);
-            $this->sessions->advance($session, ImportSession::STAGE_IMPORTING_PRICES);
-
-            $rejected = $stats['rejected'] ?? [];
-            $statsOut = $stats;
-            $statsOut['rejected_total'] = count($rejected);
-            $statsOut['rejected'] = array_slice($rejected, 0, 50);
-
-            return response()->json([
-                'success' => true,
-                'session_id' => $session->id,
-                'stats' => $statsOut,
-                'stage' => ImportSession::STAGE_IMPORTING_PRICES,
-                'message' => sprintf(
-                    'Vehicle Info updated. Completed: %d | Still incomplete: %d | Rejected: %d',
-                    $stats['completed'] ?? 0,
-                    $stats['left_inactive'] ?? 0,
-                    count($rejected)
-                ),
-                'next_step' => 'prices',
-                'prices_url' => route('pricing.workflow.prices-form'),
-            ]);
-        } catch (\Throwable $e) {
-            Log::error('[PricingWorkflow] vehicleInfoImport failed', ['error' => $e->getMessage()]);
-
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
-        }
-    }
-
-    public function vehicleInfoProgress(int $sessionId)
-    {
-        if (! backpack_user()->can('PRC_WKFL_VIEW')) {
-            abort(403, 'Unauthorized. You do not have permission to view the pricing workflow.');
-        }
-
-        return response()->json(Cache::get('pricing_vi_progress_'.$sessionId, [
-            'phase' => 'idle',
-            'message' => 'Waiting…',
-            'percent' => 0,
-            'done' => false,
-            'logs' => [],
-        ]));
     }
 
     public function pricesForm()

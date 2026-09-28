@@ -8,6 +8,13 @@ use App\Models\Traits\HasCommunications;
 use App\Services\Vehicle\SegmentService;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 
+/**
+ * @property int $id
+ * @property string $code
+ * @property string|null $name
+ * @property string|null $description
+ * @property bool $is_active
+ */
 class Segment extends BaseModel
 {
     use CrudTrait;

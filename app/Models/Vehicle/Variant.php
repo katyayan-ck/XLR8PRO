@@ -8,7 +8,41 @@ use App\Models\Utilities\KeyValue\Keyvalue;
 use App\Services\KeywordValueService;
 use App\Services\Vehicle\VariantService;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * One sellable vehicle = one row per colour; `code` is the full OEM code with colour (DEC-048 / DEC-073).
+ *
+ * @property int $id
+ * @property string|null $segment_code
+ * @property string|null $sub_segment_code
+ * @property string|null $model_code
+ * @property string $code
+ * @property string|null $color
+ * @property string|null $color_code
+ * @property string|null $oem_name
+ * @property string|null $custom_name
+ * @property string|null $display_name
+ * @property int|null $permit_id
+ * @property string|null $taxi_price
+ * @property int|null $fuel_type_id
+ * @property int|null $seating_capacity
+ * @property int|null $wheels
+ * @property int|null $gvw
+ * @property string|null $cc_capacity
+ * @property string|null $transmission
+ * @property string|null $drivetrain
+ * @property string|null $motor
+ * @property string|null $gst_percent
+ * @property string|null $shield_pack
+ * @property int|null $body_type_id
+ * @property int|null $body_make_id
+ * @property bool $is_csd
+ * @property string|null $csd_index
+ * @property int|null $status_id
+ * @property bool $is_active
+ * @property-read VehicleModel|null $vehicleModel
+ */
 class Variant extends BaseModel
 {
     use CrudTrait;
@@ -91,7 +125,8 @@ class Variant extends BaseModel
         );
     }
 
-    public function vehicleModel()
+    /** @return BelongsTo<VehicleModel, $this> */
+    public function vehicleModel(): BelongsTo
     {
         return $this->belongsTo(
             VehicleModel::class,

@@ -316,10 +316,9 @@ class VehicleService
         $complete = $missing === [];
 
         if (in_array($status, [self::STATUS_ACTIVE, '1', 'Y', 'YES'], true)) {
+            // only a complete vehicle can be Active; asking for Active on an incomplete one leaves it INCOMPLETE
             $changes['is_active'] = $complete;
-            if ($complete) {
-                $changes['status_id'] = $this->kkvId('VEHICLE_STATUS', 'ACTIVE') ?? $variant->status_id;
-            }
+            $changes['status_id'] = $this->kkvId('VEHICLE_STATUS', $complete ? self::STATUS_ACTIVE : self::STATUS_INCOMPLETE) ?? $variant->status_id;
         } elseif (in_array($status, [self::STATUS_INACTIVE, '0', 'N', 'NO'], true)) {
             $changes['is_active'] = false;
             $changes['status_id'] = $this->kkvId('VEHICLE_STATUS', 'INACTIVE') ?? $variant->status_id;
@@ -580,6 +579,24 @@ class VehicleService
             ->where('segment_code', $this->norm($segmentCode))
             ->when($subSegmentCode, fn ($q) => $q->where('sub_segment_code', $this->norm($subSegmentCode)))
             ->get(['code', 'model_code', 'color', 'color_code']);
+    }
+
+    /**
+     * Vehicles (variant rows) per status across the whole master; rows without a status are counted under INCOMPLETE.
+     *
+     * @return array{ACTIVE: int, INACTIVE: int, INCOMPLETE: int, DISCONTINUED: int}
+     */
+    public function statusCounts(): array
+    {
+        $ids = [];
+        foreach ([self::STATUS_ACTIVE, self::STATUS_INACTIVE, self::STATUS_INCOMPLETE, self::STATUS_DISCONTINUED] as $status) {
+            $ids[$status] = $this->kkvId('VEHICLE_STATUS', $status);
+        }
+        $byId = Variant::query()->selectRaw('status_id, count(*) as c')->groupBy('status_id')->pluck('c', 'status_id');
+        $counts = array_map(fn (?int $id) => $id ? (int) ($byId[$id] ?? 0) : 0, $ids);
+        $counts[self::STATUS_INCOMPLETE] += (int) $byId->except(array_filter($ids))->sum();
+
+        return $counts;
     }
 
     public function findByOemCode(string $oemCode): ?Variant

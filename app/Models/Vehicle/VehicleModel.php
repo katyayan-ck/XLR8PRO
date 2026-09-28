@@ -7,6 +7,16 @@ use App\Models\Traits\HasColumnTransformations;
 use App\Services\Vehicle\VehicleModelService;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 
+/**
+ * @property int $id
+ * @property string|null $segment_code
+ * @property string|null $sub_segment_code
+ * @property string $code
+ * @property string|null $name
+ * @property string|null $oem_name
+ * @property string|null $custom_name
+ * @property bool $is_active
+ */
 class VehicleModel extends BaseModel
 {
     use CrudTrait;

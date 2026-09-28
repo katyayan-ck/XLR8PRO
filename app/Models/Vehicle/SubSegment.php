@@ -7,6 +7,13 @@ use App\Models\Traits\HasColumnTransformations;
 use App\Services\Vehicle\SubSegmentService;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 
+/**
+ * @property int $id
+ * @property string $segment_code
+ * @property string $code
+ * @property string|null $name
+ * @property bool $is_active
+ */
 class SubSegment extends BaseModel
 {
     use CrudTrait;

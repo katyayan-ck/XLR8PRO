@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\Pricing\InsuranceController;
 use App\Http\Controllers\Admin\Pricing\PricingResetController;
 use App\Http\Controllers\Admin\Pricing\PricingWorkflowController;
 use App\Http\Controllers\Admin\Pricing\Process\PricingProcessController;
+use App\Http\Controllers\Admin\Pricing\Process\VehicleInfoController;
 use App\Http\Controllers\Admin\Pricing\RtoRuleController;
 use App\Http\Controllers\Admin\Pricing\TcsConfigController;
 use Illuminate\Support\Facades\Route;
@@ -43,10 +44,11 @@ Route::group([
     Route::get('workflow/status/{sessionId}', [PricingProcessController::class, 'status'])->whereNumber('sessionId')->name('pricing.workflow.status');
     Route::get('workflow/progress/{sessionId}', [PricingWorkflowController::class, 'progress'])->name('pricing.workflow.progress');
 
-    Route::get('workflow/vehicle-info', [PricingWorkflowController::class, 'vehicleInfoForm'])->name('pricing.workflow.vehicle-info-form');
-    Route::get('workflow/vehicle-info-export/{sessionId}', [PricingWorkflowController::class, 'vehicleInfoExport'])->name('pricing.workflow.vehicle-info-export');
-    Route::post('workflow/vehicle-info-import', [PricingWorkflowController::class, 'vehicleInfoImport'])->name('pricing.workflow.vehicle-info-import');
-    Route::get('workflow/vehicle-info-progress/{sessionId}', [PricingWorkflowController::class, 'vehicleInfoProgress'])->name('pricing.workflow.vehicle-info-progress');
+    Route::get('workflow/vehicle-info', [VehicleInfoController::class, 'show'])->name('pricing.workflow.vehicle-info-form');
+    Route::get('workflow/vehicle-info-export/{sessionId}', [VehicleInfoController::class, 'export'])->whereNumber('sessionId')->name('pricing.workflow.vehicle-info-export');
+    Route::post('workflow/vehicle-info-import', [VehicleInfoController::class, 'import'])->name('pricing.workflow.vehicle-info-import');
+    Route::get('workflow/vehicle-info-issues/{sessionId}', [VehicleInfoController::class, 'issues'])->whereNumber('sessionId')->name('pricing.workflow.vehicle-info-issues');
+    Route::post('workflow/vehicle-info-continue', [VehicleInfoController::class, 'continue'])->name('pricing.workflow.vehicle-info-continue');
 
     Route::get('workflow/prices', [PricingWorkflowController::class, 'pricesForm'])->name('pricing.workflow.prices-form');
     Route::post('workflow/prices', [PricingWorkflowController::class, 'pricesImport'])->name('pricing.workflow.prices');

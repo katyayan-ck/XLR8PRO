@@ -12,6 +12,7 @@ return [
         'wef_date' => 'WEF date',
         'hold_lists' => 'Hold lists',
         'hold_lists.*' => 'Hold list',
+        'vehicle_info_file' => 'Vehicle Info workbook',
     ],
 
     'lists' => [

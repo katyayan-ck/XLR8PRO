@@ -58,10 +58,16 @@ final class VariantService extends EntityService
             Field::integer('wheels', 1)->label(__('vehicle.fields.wheels')),
             Field::integer('gvw', 0)->label(__('vehicle.fields.gvw')),
             Field::text('cc_capacity')->label(__('vehicle.fields.cc_capacity')),
-            Field::name('transmission')->label(__('vehicle.fields.transmission')),
+            // one spelling per value: "At" / "AT" → Automatic, "Mt" / "MT" → Manual (the OEM sheets mix both, DEC-073)
+            Field::name('transmission')->label(__('vehicle.fields.transmission'))
+                ->transform(fn (string $v) => match (strtoupper(trim($v))) {
+                    'AT' => 'Automatic', 'MT' => 'Manual', default => $v
+                }),
             Field::text('drivetrain')->label(__('vehicle.fields.drivetrain'))->transform('uppercase'),
             Field::text('motor', 50)->label('Motor'),
-            Field::percent('gst_percent')->label('GST %')->rules('max:100'),
+            // stored as a percent (40); the OEM Vehicle Info sheets give a fraction (0.4) — DEC-073
+            Field::percent('gst_percent')->label('GST %')->rules('max:100')
+                ->transform(fn (string $v) => is_numeric($v) && (float) $v > 0 && (float) $v < 1 ? (string) round((float) $v * 100, 2) : $v),
             Field::text('shield_pack', 25)->label('Shield Pack')->transform('uppercase'),
             Field::flag('is_csd', false)->label(__('vehicle.fields.is_csd')),
             Field::text('csd_index')->label(__('vehicle.fields.csd_index')),

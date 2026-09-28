@@ -114,6 +114,16 @@ class PricingSessionService
         return $session;
     }
 
+    /** Replace one stats section (e.g. this round's `vehicle_info` summary) — unlike advance(), which merges. */
+    public function putStats(ImportSession $session, string $key, mixed $value): ImportSession
+    {
+        $stats = $session->stats ?? [];
+        $stats[$key] = $value;
+        $session->forceFill(['stats' => $stats])->save();
+
+        return $session;
+    }
+
     /** @param  array<string, mixed>  $progress  e.g. ['step' => 'detect', 'done' => 120, 'total' => 900, 'message' => …] */
     public function progress(ImportSession $session, array $progress): void
     {
