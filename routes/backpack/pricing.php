@@ -1,15 +1,16 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Admin\Pricing\PricingWorkflowController;
-use App\Http\Controllers\Admin\Pricing\TcsConfigController;
 use App\Http\Controllers\Admin\Pricing\HoldController;
-use App\Http\Controllers\Admin\Pricing\RtoRuleController;
 use App\Http\Controllers\Admin\Pricing\InsuranceController;
 use App\Http\Controllers\Admin\Pricing\PricingResetController;
+use App\Http\Controllers\Admin\Pricing\PricingWorkflowController;
+use App\Http\Controllers\Admin\Pricing\Process\PricingProcessController;
+use App\Http\Controllers\Admin\Pricing\RtoRuleController;
+use App\Http\Controllers\Admin\Pricing\TcsConfigController;
+use Illuminate\Support\Facades\Route;
 
 Route::group([
-    'prefix'     => 'admin/pricing',
+    'prefix' => 'admin/pricing',
     'middleware' => array_merge(
         (array) config('backpack.base.web_middleware', 'web'),
         (array) config('backpack.base.middleware_key', 'admin')
@@ -35,9 +36,11 @@ Route::group([
     Route::get('insurance/addon-rates', [InsuranceController::class, 'addonRatesIndex'])->name('pricing.insurance.addon-rates');
     Route::post('insurance/test-calculate', [InsuranceController::class, 'testCalculate'])->name('pricing.insurance.test');
 
-    Route::get('workflow', [PricingWorkflowController::class, 'index'])->name('pricing.workflow.index');
-    Route::get('workflow/start', [PricingWorkflowController::class, 'startForm'])->name('pricing.workflow.start-form');
-    Route::post('workflow/start', [PricingWorkflowController::class, 'startDetect'])->name('pricing.workflow.start');
+    // DEC-073 pricing process — steps 0–2 (gate, start, detect)
+    Route::get('workflow', [PricingProcessController::class, 'index'])->name('pricing.workflow.index');
+    Route::get('workflow/start', [PricingProcessController::class, 'startForm'])->name('pricing.workflow.start-form');
+    Route::post('workflow/start', [PricingProcessController::class, 'start'])->name('pricing.workflow.start');
+    Route::get('workflow/status/{sessionId}', [PricingProcessController::class, 'status'])->whereNumber('sessionId')->name('pricing.workflow.status');
     Route::get('workflow/progress/{sessionId}', [PricingWorkflowController::class, 'progress'])->name('pricing.workflow.progress');
 
     Route::get('workflow/vehicle-info', [PricingWorkflowController::class, 'vehicleInfoForm'])->name('pricing.workflow.vehicle-info-form');
@@ -57,7 +60,7 @@ Route::group([
     Route::post('workflow/rules-keep', [PricingWorkflowController::class, 'rulesKeep'])->name('pricing.workflow.rules-keep');
     Route::post('workflow/rules', [PricingWorkflowController::class, 'rulesImport'])->name('pricing.workflow.rules');
 
-    Route::post('workflow/discard', [PricingWorkflowController::class, 'discard'])->name('pricing.workflow.discard');
+    Route::post('workflow/discard', [PricingProcessController::class, 'discard'])->name('pricing.workflow.discard');
 
     Route::get('workflow/impact-summary/{sessionId}', [PricingWorkflowController::class, 'impactSummary'])->name('pricing.workflow.impact-summary');
     Route::get('workflow/impact-summary-view/{sessionId}', [PricingWorkflowController::class, 'impactSummaryView'])->name('pricing.workflow.impact-summary-view');
@@ -65,9 +68,9 @@ Route::group([
     Route::get('workflow/session-status/{sessionId}', [PricingWorkflowController::class, 'sessionStatus'])->name('pricing.workflow.session-status');
     Route::get('workflow/failed-vehicles/{sessionId}', [PricingWorkflowController::class, 'failedVehicles'])->name('pricing.workflow.failed-vehicles');
 
-// RESET To Date
-// For Preview Only : http://xlrm.test/admin/pricing/reset?after=2026-08-20&confirm=1
-// For Actual Run : http://xlrm.test/admin/pricing/reset?after=2026-08-20
+    // RESET To Date
+    // For Preview Only : http://xlrm.test/admin/pricing/reset?after=2026-08-20&confirm=1
+    // For Actual Run : http://xlrm.test/admin/pricing/reset?after=2026-08-20
 
     Route::get('reset', PricingResetController::class)->name('pricing.reset');
-    });
+});

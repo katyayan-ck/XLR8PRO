@@ -72,6 +72,9 @@ API v1: `Api\V1\Vehicle\Pricing\PricingController::getPricing()` wraps this for 
 | `Import\PricingWorkbookReader` | `sheetNames($path)` (no cells loaded) · `rows($path, $sheet, $fromRow = 1, ?$maxCol)` (generator `rowNo => cells`, one sheet, columns ≤ BJ, 250-row chunks, formulas → saved value) · `header($path, $sheet, $sheetCode)` → `['row', 'map', 'cells']` · statics `number()` ("3,00,752", "-"), `percent()` (0.4 → 40), `yesNo()` (Y/N/YES/NO), `text()`, `code()` |
 | permit map | table `xlr8_vehicle_pricing_permit_map` (vehicle permit + wheels → RTO rule permit, insurance permit): 4W Passenger (taxi) → RTO "Taxi" / insurance "Passenger"; MISC → "Ambulance" / "Misc" |
 | snapshots | unique key `(model_code, channel, vin_type, permit, wef_date)` + `rto_permit`, `insu_permit` |
+| `Import\PriceListDetectService` | step 2. `detect($path, $sheetTitles, ?$onProgress)` → per sheet `rows, known, created, csd_unknown, duplicates, blank_code, errors[], new_codes[], csd_unknown_codes[]` (lists capped at 500). Known = a variant with the full OEM code; new → `VehicleService::createStubFromPriceList()` (INCOMPLETE; LMM TZU colour `NA`); CSD never creates vehicles; a blank OEM Model is an error, not a stub. Statics `sheetCode($title)` ("Price List LMM TZU" → `PRICE_LIST_LMM_TZU`), `matchSheets($titles, $lists)` → `['found' => [list => title], 'missing' => [list]]`. Run inside `record()` |
+| `Jobs\Vehicle\Pricing\Process\DetectPriceListsJob($sessionId)` | timeout 1800, tries 1. Runs detect inside `record()`, writes `progress` (`step, state running/done/failed, message, error`), then `advance(VehicleInfo, ['detect' => ['sheets' => …, 'totals' => [created, known, csd_unknown, duplicates, errors]]])`. Real Pricing.xlsx (6 lists, 4,862 codes): 3,414 stubs in ~5 min, 98 MB |
+| screens (`Admin\Pricing\Process\PricingProcessController`) | `pricing.workflow.index` (gate: Resume / Discard, stepper, Detect report; `PRC_WKFL_VIEW`) · `pricing.workflow.start-form` / `pricing.workflow.start` (POST `file` .xlsx ≤ 20 MB, `lists[]` of PV/CV/BEV/LMM/LMM_TZU/CSD — each must exist in the workbook, `wef_date` required, `hold_lists[]` optional; `PRC_WKFL_MANAGE`) · `pricing.workflow.status/{id}` (JSON `stage, stage_label, terminal, progress, totals`; polled while detecting) · `pricing.workflow.discard` (POST; before publish only). Labels in `lang/en/pricing.php` |
 
 ## The import workflow (legacy flow — replaced step by step by the DEC-073 engine above)
 `ImportSession` stages: `idle → detecting → awaiting_vehicle → importing_prices → awaiting_addons → importing_addons →
@@ -79,8 +82,8 @@ awaiting_rules → calculating → summary → completed` (or `cancelled`). Stat
 
 | Step | Service call | Returns (`stats` merged into the session) |
 |---|---|---|
-| start | `PricingSessionService::start($selectedSheets, $wefDate, $notes, $userId)` | the session (refuses when one is active) |
-| detect vehicles from price lists | `PriceListVehicleDetector::detectFromFile($path, $session, $sheetCodes, $userId, $onProgress)` | per sheet: `stubs` created (INCOMPLETE variants), `known`, `fresh`, profiles, logs |
+| start | **replaced** by `Session\PricingSessionService::start()` + `DetectPriceListsJob` (above) | |
+| detect vehicles from price lists | **replaced** by `Import\PriceListDetectService` (above); `PriceListVehicleDetector` remains only for the legacy price importer until Phase 4 | |
 | Vehicle Info (specs) | `VehicleInfoImportService::importFile($path, $session, $userId)`; export the template with `VehicleInfoExportService::exportForSession($session)` | `updated`, `completed`, `left_inactive`, `rejected` rows with reasons |
 | prices | `PriceListPricingImporter::importFile($path, $session, $sheetCodes, $wefDate, $channel, $userId, $onProgress)` | `prices_written`, `price_changes`, `skipped_incomplete`, `skipped_no_price`; writes `ChangeFlag` rows |
 | add-ons & discounts | `AddonDiscountImportService::importFile($path, $session, $selectedSheets, $wefDate, $userId)`; template `AddonDiscountExportService::exportForSession($session)` | per sheet (`DEALER_CHARGES`, `SHIELD`, `RSA`, `EXCHANGE`, `CORPORATE`): `written`, `skipped`, `errors` |

@@ -8,7 +8,6 @@ namespace App\Http\Controllers\Admin\Pricing;
 
 use App\Http\Controllers\Controller;
 use App\Jobs\Vehicle\Pricing\CalculatePricingSessionJob;
-use App\Jobs\Vehicle\Pricing\DetectPricingWorkbookJob;
 use App\Jobs\Vehicle\Pricing\ImportPriceListsJob;
 use App\Models\Vehicle\Pricing\Affected;
 use App\Models\Vehicle\Pricing\ChangeFlag;
@@ -36,106 +35,6 @@ class PricingWorkflowController extends Controller
         protected AddonDiscountExportService $addonsExport,
         protected RulesWorkbookService $rules
     ) {}
-
-    public function index()
-    {
-        if (! backpack_user()->can('PRC_WKFL_VIEW')) {
-            abort(403, 'Unauthorized. You do not have permission to view the pricing workflow.');
-        }
-
-        return view('admin.pricing.workflow.index', [
-            'title' => 'Pricing Workflow',
-            'session' => $this->sessions->activeSession(),
-        ]);
-    }
-
-    public function startForm()
-    {
-        if (! backpack_user()->can('PRC_WKFL_VIEW')) {
-            abort(403, 'Unauthorized. You do not have permission to view the pricing workflow.');
-        }
-
-        if ($this->sessions->activeSession()) {
-            return redirect()
-                ->route('pricing.workflow.index')
-                ->with('warning', 'A pricing process is already active. Resume or discard it first.');
-        }
-
-        return view('admin.pricing.workflow.start', [
-            'title' => 'Start Pricing Process — Upload Price Lists',
-            'sheetOptions' => $this->sheetOptions(),
-        ]);
-    }
-
-    public function startDetect(Request $request)
-    {
-        if (! backpack_user()->can('PRC_WKFL_MANAGE')) {
-            abort(403, 'Unauthorized. You do not have permission to start a pricing workflow.');
-        }
-
-        $request->validate([
-            'file' => 'required|file|mimes:xlsx,xls',
-            'sheet_types' => 'required|array|min:1',
-            'sheet_types.*' => 'string',
-            'wef_date' => 'nullable|date',
-        ]);
-
-        if ($this->sessions->activeSession()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Another pricing process is active. Resume or discard it first.',
-            ], 409);
-        }
-
-        $path = $request->file('file')->store('pricing-uploads');
-        $absolute = Storage::path($path);
-        $sheets = array_map('strtoupper', $request->input('sheet_types', []));
-        $wef = $request->input('wef_date', now()->toDateString());
-        $userId = auth()->id();
-
-        try {
-            $session = $this->sessions->start(
-                $sheets,
-                $wef,
-                'Price list upload: '.$request->file('file')->getClientOriginalName()
-            );
-            $this->sessions->updateStats($session, [
-                'workbook_path' => $absolute,
-                'workbook_disk' => $path,
-            ]);
-
-            Cache::put('pricing_progress_'.$session->id, [
-                'phase' => 'queued',
-                'message' => 'Queued detect job — start queue worker if not running',
-                'percent' => 1,
-                'processed' => 0,
-                'total' => 0,
-                'done' => false,
-                'failed' => false,
-                'logs' => ['['.now()->format('H:i:s').'] Detect job dispatched for session #'.$session->id],
-            ], now()->addHours(6));
-
-            DetectPricingWorkbookJob::dispatch(
-                $session->id,
-                $absolute,
-                $sheets,
-                $wef,
-                $userId
-            );
-
-            return response()->json([
-                'success' => true,
-                'async' => true,
-                'session_id' => $session->id,
-                'message' => 'Detect started in background. Watch the progress panel.',
-                'progress_url' => route('pricing.workflow.progress', $session->id),
-            ]);
-        } catch (\Throwable $e) {
-            Log::error('[PricingWorkflow] startDetect failed', ['error' => $e->getMessage()]);
-
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
-        }
-    }
 
     public function progress(int $sessionId)
     {
@@ -325,30 +224,6 @@ class PricingWorkflowController extends Controller
             'message' => 'Price import queued. Keep this page open — progress updates live.',
             'progress_url' => route('pricing.workflow.progress', $session->id),
         ]);
-    }
-
-    public function discard(Request $request)
-    {
-        if (! backpack_user()->can('PRC_WKFL_MANAGE')) {
-            abort(403, 'Unauthorized. You do not have permission to run the pricing workflow.');
-        }
-
-        $session = $this->sessions->activeSession();
-        if (! $session) {
-            return redirect()->route('pricing.workflow.index')
-                ->with('warning', 'No active session to discard.');
-        }
-
-        try {
-            $this->sessions->discard($session);
-            Cache::forget('pricing_progress_'.$session->id);
-            Cache::forget('pricing_vi_progress_'.$session->id);
-            \Alert::success('Pricing process discarded. Session-tagged data rolled back.')->flash();
-        } catch (\Throwable $e) {
-            \Alert::error($e->getMessage())->flash();
-        }
-
-        return redirect()->route('pricing.workflow.index');
     }
 
     public function impactSummary(int $sessionId)

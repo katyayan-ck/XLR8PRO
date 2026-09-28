@@ -590,3 +590,40 @@ Plan: `docs/plans/2026-09-28-pricing-redesign-DEC-073.md` (12 phases; user decis
   restored and stubs removed, no discard after publish, complete + reopen, forward-only stages); 2 existing tests updated
   for the new stub rules. Vehicle + pricing suites: 52 passed.
 - **Guides:** `docs/domains/vehicle.md` (completeness, statuses, stubs), `docs/domains/pricing.md` (engine section).
+
+## Pricing redesign — Phase 2: gate, start, detect (DEC-073)
+- **Screens:** new `App\Http\Controllers\Admin\Pricing\Process\PricingProcessController` behind the existing route names
+  `pricing.workflow.index` / `start-form` / `start` / `discard`, plus `pricing.workflow.status/{id}` (JSON, polled).
+  Views `resources/views/admin/pricing/process/{index,start}.blade.php`:
+  - Gate: one open process; Resume / Discard (before publish only).
+  - Stepper (phones: "Step n of 9" bar).
+  - Detect report per sheet.
+  - Start form: drop-zone upload, price-list checkboxes (CSD off by default), WEF picker, holds + Hold all.
+  - `PRC_WKFL_VIEW` views; `PRC_WKFL_MANAGE` starts / discards.
+  - Labels in the new `resources/lang/en/pricing.php`.
+  - Before → after: the old start page posted by AJAX with a dead "import prices now" box, WEF optional, and PV/CV only
+    pre-selected. Now WEF is required and every chosen list must exist in the workbook (validation error names the
+    missing ones).
+- **Detect:** new `Import\PriceListDetectService` (streaming, 250-code chunks, known = full OEM code on the variant
+  master, INCOMPLETE stubs, LMM TZU colour NA, CSD never creates, duplicates counted once, blank OEM Model reported) and
+  `Jobs\Vehicle\Pricing\Process\DetectPriceListsJob` (inside the session change log, so Discard removes the stubs).
+- **Migration** `2026_09_28_211919_pricing_sheet_headers_tzu_and_status` (run on `xlrm` + `xlrm_testing`, rollback verified):
+  - Adds the `PRICE_LIST_LMM_TZU` header rows. Before, that sheet had none, so it was never read.
+  - Adds a `status` column header to every price list.
+- **Removed (replaced):**
+  - `DetectPricingWorkbookJob` and the dead `ProcessPricingWorkbookJob`.
+  - The legacy `index` / `startForm` / `startDetect` / `discard` actions and the `workflow/index`, `workflow/start` views.
+  - The remaining legacy step screens still run until their phases.
+- **End-to-end (xlrm_testing, real `Pricing.xlsx`, all 6 lists):** 4,862 codes; 3,414 stubs, 1,390 known, 14 CSD codes not
+  in the master, 58 duplicate rows, 0 errors; ~5 min, 98 MB peak. Discard undid all 3,430 changes in 4 s (variant count
+  back to 2,652). Found **BUG-199**: pre-DEC-051 variant rows keep the code without the colour, so Detect duplicates them
+  on databases that were not purged (needs a decision).
+- **Tests:** `PricingProcessStartTest` (4):
+  - view-only user;
+  - start + holds + job queued + gate;
+  - missing list / WEF rejected;
+  - detect stubs / TZU NA / CSD skipped / status JSON / report / discard.
+  Pricing suite: 18 passed.
+- **Guides:** `docs/domains/pricing.md` (detect service, job, screens; legacy start / detect rows marked replaced).
+- **Phase 1 follow-up:** `VehicleMasterWriteTest` (2 tests) saved incomplete variants as Active, which the DEC-073 gate now
+  refuses. The tests are about codes and colours, so they now save the rows inactive. Full suite: 385 passed, 1 skipped.

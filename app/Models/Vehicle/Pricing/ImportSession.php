@@ -12,8 +12,24 @@ use App\Models\BaseModel;
 use App\Services\Vehicle\Pricing\Session\PricingStage;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Schema;
 
+/**
+ * @property int $id
+ * @property string|null $status
+ * @property string|null $current_stage
+ * @property list<string>|null $selected_sheets
+ * @property array<string, mixed>|null $stats
+ * @property array<string, mixed>|null $progress
+ * @property list<string>|null $hold_lists
+ * @property Carbon|null $wef_date
+ * @property string|null $source_filename
+ * @property string|null $upload_path
+ * @property Carbon|null $published_at
+ * @property Carbon|null $completed_at
+ * @property int|null $updated_by
+ */
 class ImportSession extends BaseModel
 {
     use SoftDeletes;

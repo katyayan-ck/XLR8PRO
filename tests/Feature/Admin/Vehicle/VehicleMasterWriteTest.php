@@ -108,7 +108,7 @@ class VehicleMasterWriteTest extends TestCase
         $this->assertDatabaseHas('xlr8_vehicle_model', ['id' => $modelId, 'code' => 'ZTMODEL', 'name' => 'Zeta Model Two']);
 
         // One variant = one row per colour, sharing the full OEM code.
-        $row = ['segment_code' => $sub->segment_code, 'sub_segment_code' => $sub->code, 'model_code' => 'ZTMODEL', 'code' => '1ZT2NR1T9LVB1', 'oem_name' => 'ZETA VX', 'taxi_price' => 'No', 'is_active' => 1];
+        $row = ['segment_code' => $sub->segment_code, 'sub_segment_code' => $sub->code, 'model_code' => 'ZTMODEL', 'code' => '1ZT2NR1T9LVB1', 'oem_name' => 'ZETA VX', 'taxi_price' => 'No', 'is_active' => 0]; // incomplete vehicles cannot be Active (DEC-073)
         $this->post('/admin/vehicle/variant', $row + ['color' => 'WARM RED', 'color_code' => 'WR'])->assertRedirect('/admin/vehicle/variant');
         $this->post('/admin/vehicle/variant', $row + ['color' => 'WHITE', 'color_code' => 'WS'])->assertRedirect('/admin/vehicle/variant');
         $this->assertSame(2, DB::table('xlr8_vehicle_variant')->where('code', '1ZT2NR1T9LVB1')->whereNull('deleted_at')->count());
@@ -141,7 +141,7 @@ class VehicleMasterWriteTest extends TestCase
         $this->put("/admin/vehicle/variant/{$v->id}", [
             'segment_code' => $v->segment_code, 'sub_segment_code' => $v->sub_segment_code, 'model_code' => $v->model_code,
             'code' => $v->code, 'color' => $v->color, 'color_code' => $v->color_code,
-            'oem_name' => $v->oem_name, 'display_name' => 'Edited In Test', 'taxi_price' => $v->taxi_price ?: 'No', 'is_active' => 1,
+            'oem_name' => $v->oem_name, 'display_name' => 'Edited In Test', 'taxi_price' => $v->taxi_price ?: 'No', 'is_active' => 0,
         ])->assertRedirect('/admin/vehicle/variant')->assertSessionHasNoErrors();
 
         $this->assertDatabaseHas('xlr8_vehicle_variant', ['id' => $v->id, 'code' => $v->code, 'display_name' => 'Edited In Test']);
